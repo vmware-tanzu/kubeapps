@@ -1,0 +1,9 @@
+package: github.com/kubeapps/installer
+import:
+- package: github.com/spf13/cobra
+- package: k8s.io/client-go
+  version: ^4.0.0
+  subpackages:
+  - pkg/api
+- package: github.com/Sirupsen/logrus
+  version: ^1.0.3
