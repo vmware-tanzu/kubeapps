@@ -1,11 +1,8 @@
 # Setup
 
-TODO: vendor some of this, or otherwise reduce the external
-dependencies.
-
 ```
 # NB: need submodules
-d=kubeapps-manifest
+d=$PWD/kubeapps-manifest
 git clone --recurse-submodules https://github.com/kubeapps/manifest $d
 
 # Install kubecfg somewhere in $PATH
