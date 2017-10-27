@@ -1,0 +1,9 @@
+[submodule "kubeless"]
+	path = vendor/kubeless
+	url = https://github.com/bitnami/kubeless.git
+[submodule "kubecfg"]
+	path = vendor/kubecfg
+	url = https://github.com/ksonnet/kubecfg.git
+[submodule "ksonnet-lib"]
+	path = vendor/ksonnet-lib
+	url = https://github.com/ksonnet/ksonnet-lib.git
