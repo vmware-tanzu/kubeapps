@@ -11,7 +11,11 @@ case "$1" in
         exec kubecfg update -v --gc-tag=$GCTAG kubeapps.jsonnet
         ;;
     down)
-        exec kubecfg delete -v --gc-tag=$GCTAG kubeapps.jsonnet
+        # This assumes kubeapps.jsonnet is in sync with what's
+        # currently running.
+        # FIXME(gus): add support for deletion using the garbage
+        # collection mechanism.
+        exec kubecfg delete -v kubeapps.jsonnet
         ;;
     *)
         echo "Unknown subcommand: $1" >&2

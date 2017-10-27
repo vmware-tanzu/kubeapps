@@ -22,7 +22,7 @@ install:
     fi
   - |
     if ! which kubectl; then
-      wget https://storage.googleapis.com/kubernetes-release/release/$INT_KVERS/bin/$(go env GOOS)/$(go env GOARCH)/kubectl
+      wget https://storage.googleapis.com/kubernetes-release/release/$KVERS/bin/$(go env GOOS)/$(go env GOARCH)/kubectl
       install -m 755 kubectl $GOPATH/bin/kubectl
     fi
   - |
@@ -31,23 +31,22 @@ install:
       install -m 755 kubecfg $GOPATH/bin/kubecfg
     fi
   - mkdir -p $HOME/.kube && touch $HOME/.kube/config
-  - git clone --depth=1 https://github.com/ksonnet/ksonnet-lib.git
-  - wget https://github.com/ksonnet/kubecfg/blob/v0.5.0/lib/kubecfg.libsonnet
-  - export KUBECFG_JPATH=$PWD/ksonnet-lib:$PWD
   - >-
     sudo -E $GOPATH/bin/minikube start --vm-driver=none
     --kubernetes-version $KVERS
     $MK_ARGS
+  - export KUBECFG_JPATH=$PWD/lib:$PWD/vendor/kubecfg/lib:$PWD/vendor/ksonnet-lib
   - |
     minikube update-context
     minikube status
-    kubectl version
+    while ! kubectl version; do sleep 1; done
 
 script:
   # FIXME(gus): `validate` fails on CRDs, because the server doens't
   # publish a schema :(  The following `kubeapps up` will verify that the
   # server accepts them.
-  - kubecfg validate -v kubeapps.jsonnet || :
+  - >-
+    kubecfg validate -v kubeapps.jsonnet || :
   - ./kubeapps.sh up
   # FIXME: Do some sort of test here
   # (perhaps just "did all the pods become Ready?")
