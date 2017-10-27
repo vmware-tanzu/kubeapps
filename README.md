@@ -10,7 +10,7 @@ git clone --recurse-submodules https://github.com/kubeapps/manifest $d
 wget -O $HOME/bin/kubecfg https://github.com/ksonnet/kubecfg/releases/download/v0.5.0/kubecfg-linux-amd64
 chmod +x $HOME/bin/kubecfg
 
-export KUBECFG_JPATH=$d/lib:$d/vendor/kubecfg/lib:$d/ksonnet-lib
+export KUBECFG_JPATH=$d/lib:$d/vendor/kubecfg/lib:$d/vendor/ksonnet-lib
 
 # Make sure your ~/.kube/config points to a working cluster
 # If required: minikube start
