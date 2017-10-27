@@ -22,7 +22,7 @@ install:
     fi
   - |
     if ! which kubectl; then
-      wget https://storage.googleapis.com/kubernetes-release/release/$INT_KVERS/bin/$(go env GOOS)/$(go env GOARCH)/kubectl
+      wget https://storage.googleapis.com/kubernetes-release/release/$KVERS/bin/$(go env GOOS)/$(go env GOARCH)/kubectl
       install -m 755 kubectl $GOPATH/bin/kubectl
     fi
   - |
