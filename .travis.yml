@@ -49,7 +49,8 @@ script:
   # FIXME(gus): `validate` fails on CRDs, because the server doens't
   # publish a schema :(  The following `kubeapps up` will verify that the
   # server accepts them.
-  - kubecfg validate -v kubeapps.jsonnet || :
+  - >-
+    kubecfg validate -v kubeapps.jsonnet || :
   - ./kubeapps.sh up
   # FIXME: Do some sort of test here
   # (perhaps just "did all the pods become Ready?")
