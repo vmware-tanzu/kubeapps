@@ -34,7 +34,7 @@ install:
   - git clone --depth=1 https://github.com/ksonnet/ksonnet-lib.git /tmp/ksonnet-lib
   - |
     mkdir /tmp/kubecfg-lib
-    wget -O /tmp/kubecfg-lib/kubecfg.libsonnet https://github.com/ksonnet/kubecfg/blob/v0.5.0/lib/kubecfg.libsonnet
+    wget -O /tmp/kubecfg-lib/kubecfg.libsonnet https://raw.githubusercontent.com/ksonnet/kubecfg/v0.5.0/lib/kubecfg.libsonnet
   - export KUBECFG_JPATH=$PWD/lib:/tmp/ksonnet-lib:/tmp/kubecfg-lib
   - >-
     sudo -E $GOPATH/bin/minikube start --vm-driver=none
