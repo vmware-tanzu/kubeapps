@@ -23,6 +23,11 @@ kubectl cluster-info
 # Usage
 
 ```
+# Set mongodb passwords (manual step for now)
+kubectl -n kubeapps create secret generic mongodb \
+ --from-literal=mongodb-password=sekret-$RANDOM \
+ --from-literal=mongodb-root-password=sekret-$RANDOM \
+
 # Bring up cluster
 ./kubeapps.sh up
 
