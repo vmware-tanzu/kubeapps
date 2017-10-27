@@ -1,0 +1,64 @@
+env:
+  global:
+    - PATH=$PATH:$GOPATH/bin
+    - MINIKUBE_WANTUPDATENOTIFICATION=false
+    - MINIKUBE_WANTREPORTERRORPROMPT=false
+    - MINIKUBE_HOME=${HOME}
+    - CHANGE_MINIKUBE_NONE_USER=true
+  matrix:
+    - KVERS=v1.7.5 MK_ARGS=""
+    - KVERS=v1.7.5 MK_ARGS="--extra-config apiserver.Authorization.Mode=RBAC"
+    - KVERS=v1.8.0 MK_ARGS="--extra-config apiserver.Authorization.Mode=RBAC"
+
+services:
+  - docker
+
+install:
+  - |
+    if ! which minikube; then
+      wget -O minikube \
+         https://storage.googleapis.com/minikube/releases/v0.23.0/minikube-$(go env GOOS)-$(go env GOARCH)
+      install -m 755 minikube $GOPATH/bin/minikube
+    fi
+  - |
+    if ! which kubectl; then
+      wget https://storage.googleapis.com/kubernetes-release/release/$INT_KVERS/bin/$(go env GOOS)/$(go env GOARCH)/kubectl
+      install -m 755 kubectl $GOPATH/bin/kubectl
+    fi
+  - |
+    if ! which kubecfg; then
+      wget -O kubecfg https://github.com/ksonnet/kubecfg/releases/download/v0.5.0/kubecfg-$(go env GOOS)-$(go env GOARCH)
+      install -m 755 kubecfg $GOPATH/bin/kubecfg
+    fi
+  - mkdir -p $HOME/.kube && touch $HOME/.kube/config
+  - git clone --depth=1 https://github.com/ksonnet/ksonnet-lib.git
+  - wget https://github.com/ksonnet/kubecfg/blob/v0.5.0/lib/kubecfg.libsonnet
+  - export KUBECFG_JPATH=$PWD/ksonnet-lib:$PWD
+  - >-
+    sudo -E $GOPATH/bin/minikube start --vm-driver=none
+    --kubernetes-version $KVERS
+    $MK_ARGS
+  - |
+    minikube update-context
+    minikube status
+    kubectl version
+
+script:
+  # FIXME(gus): `validate` fails on CRDs, because the server doens't
+  # publish a schema :(  The following `kubeapps up` will verify that the
+  # server accepts them.
+  - kubecfg validate -v kubeapps.jsonnet || :
+  - ./kubeapps.sh up
+  # FIXME: Do some sort of test here
+  # (perhaps just "did all the pods become Ready?")
+  - ./kubeapps.sh down
+
+cache:
+  directories:
+    - $GOPATH/pkg
+    - $GOPATH/bin
+    - $HOME/.minikube/cache
+
+notifications:
+  email:
+    on_success: never
