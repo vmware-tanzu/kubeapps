@@ -13,7 +13,7 @@ import (
 var (
 	ctlOpts = [ctlMax]ctlOpt{
 		ctlTTL:        {sysIP_TTL, 1, marshalTTL, parseTTL},
-		ctlPacketInfo: {sysIP_PKTINFO, sizeofInetPktinfo, marshalPacketInfo, parsePacketInfo},
+		ctlPacketInfo: {sysIP_PKTINFO, sysSizeofInetPktinfo, marshalPacketInfo, parsePacketInfo},
 	}
 
 	sockOpts = [ssoMax]sockOpt{
@@ -35,21 +35,21 @@ var (
 	}
 )
 
-func (pi *inetPktinfo) setIfindex(i int) {
+func (pi *sysInetPktinfo) setIfindex(i int) {
 	pi.Ifindex = int32(i)
 }
 
-func (gr *groupReq) setGroup(grp net.IP) {
-	sa := (*sockaddrInet)(unsafe.Pointer(&gr.Group))
+func (gr *sysGroupReq) setGroup(grp net.IP) {
+	sa := (*sysSockaddrInet)(unsafe.Pointer(&gr.Group))
 	sa.Family = syscall.AF_INET
 	copy(sa.Addr[:], grp)
 }
 
-func (gsr *groupSourceReq) setSourceGroup(grp, src net.IP) {
-	sa := (*sockaddrInet)(unsafe.Pointer(&gsr.Group))
+func (gsr *sysGroupSourceReq) setSourceGroup(grp, src net.IP) {
+	sa := (*sysSockaddrInet)(unsafe.Pointer(&gsr.Group))
 	sa.Family = syscall.AF_INET
 	copy(sa.Addr[:], grp)
-	sa = (*sockaddrInet)(unsafe.Pointer(&gsr.Source))
+	sa = (*sysSockaddrInet)(unsafe.Pointer(&gsr.Source))
 	sa.Family = syscall.AF_INET
 	copy(sa.Addr[:], src)
 }

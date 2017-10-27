@@ -37,8 +37,9 @@ func init() {
 func Install(groupFactoryRegistry announced.APIGroupFactoryRegistry, registry *registered.APIRegistrationManager, scheme *runtime.Scheme) {
 	if err := announced.NewGroupMetaFactory(
 		&announced.GroupMetaFactoryArgs{
-			GroupName:                  storage.GroupName,
-			VersionPreferenceOrder:     []string{v1.SchemeGroupVersion.Version, v1beta1.SchemeGroupVersion.Version},
+			GroupName: storage.GroupName,
+			// TODO:  change the order when GKE supports v1
+			VersionPreferenceOrder:     []string{v1beta1.SchemeGroupVersion.Version, v1.SchemeGroupVersion.Version},
 			ImportPrefix:               "k8s.io/client-go/pkg/apis/storage",
 			RootScopedKinds:            sets.NewString("StorageClass"),
 			AddInternalObjectsToScheme: storage.AddToScheme,

@@ -21,6 +21,7 @@ package v1beta1
 import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	policy "k8s.io/client-go/pkg/apis/policy"
 	v1beta1 "k8s.io/client-go/pkg/apis/policy/v1beta1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -88,7 +89,7 @@ func (s evictionNamespaceLister) Get(name string) (*v1beta1.Eviction, error) {
 		return nil, err
 	}
 	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("eviction"), name)
+		return nil, errors.NewNotFound(policy.Resource("eviction"), name)
 	}
 	return obj.(*v1beta1.Eviction), nil
 }

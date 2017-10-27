@@ -1,6 +1,4 @@
-// Protocol Buffers for Go with Gadgets
-//
-// Copyright (c) 2013, The GoGo Authors. All rights reserved.
+// Copyright (c) 2013, Vastech SA (PTY) LTD. All rights reserved.
 // http://github.com/gogo/protobuf
 //
 // Redistribution and use in source and binary forms, with or without
@@ -76,7 +74,7 @@ func (p *enumstringer) Generate(file *generator.FileDescriptor) {
 			continue
 		}
 		if gogoproto.IsGoEnumStringer(file.FileDescriptorProto, enum.EnumDescriptorProto) {
-			panic("Go enum stringer conflicts with new enumstringer plugin: please use gogoproto.goproto_enum_stringer or gogoproto.goproto_enum_string_all and set it to false")
+			panic("old enum string method needs to be disabled, please use gogoproto.old_enum_stringer or gogoproto.old_enum_string_all and set it to false")
 		}
 		p.atleastOne = true
 		ccTypeName := generator.CamelCaseSlice(enum.TypeName())

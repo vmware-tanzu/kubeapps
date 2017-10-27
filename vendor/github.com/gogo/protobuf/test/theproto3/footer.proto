@@ -19,7 +19,3 @@ message ContainsNestedMap {
 		map<string, double> NestedMapField = 1;
 	}
 }
-
-message NotPacked {
-	repeated uint64 key = 5 [packed=false];
-}

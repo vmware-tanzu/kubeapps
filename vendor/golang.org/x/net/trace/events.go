@@ -21,6 +21,11 @@ import (
 	"time"
 )
 
+var eventsTmpl = template.Must(template.New("events").Funcs(template.FuncMap{
+	"elapsed":   elapsed,
+	"trimSpace": strings.TrimSpace,
+}).Parse(eventsHTML))
+
 const maxEventsPerLog = 100
 
 type bucket struct {
@@ -96,7 +101,7 @@ func RenderEvents(w http.ResponseWriter, req *http.Request, sensitive bool) {
 
 	famMu.RLock()
 	defer famMu.RUnlock()
-	if err := eventsTmpl().Execute(w, data); err != nil {
+	if err := eventsTmpl.Execute(w, data); err != nil {
 		log.Printf("net/trace: Failed executing template: %v", err)
 	}
 }
@@ -414,19 +419,6 @@ func freeEventLog(el *eventLog) {
 	case freeEventLogs <- el:
 	default:
 	}
-}
-
-var eventsTmplCache *template.Template
-var eventsTmplOnce sync.Once
-
-func eventsTmpl() *template.Template {
-	eventsTmplOnce.Do(func() {
-		eventsTmplCache = template.Must(template.New("events").Funcs(template.FuncMap{
-			"elapsed":   elapsed,
-			"trimSpace": strings.TrimSpace,
-		}).Parse(eventsHTML))
-	})
-	return eventsTmplCache
 }
 
 const eventsHTML = `

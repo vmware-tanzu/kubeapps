@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	api "k8s.io/client-go/pkg/api"
 	v1 "k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -61,7 +62,7 @@ func (s *nodeLister) Get(name string) (*v1.Node, error) {
 		return nil, err
 	}
 	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("node"), name)
+		return nil, errors.NewNotFound(api.Resource("node"), name)
 	}
 	return obj.(*v1.Node), nil
 }

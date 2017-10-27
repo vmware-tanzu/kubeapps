@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build !darwin,!freebsd,!linux,!solaris
+// +build !darwin,!freebsd,!linux
 
 package ipv6
 
 import "net"
 
-func setsockoptGroupReq(s uintptr, opt *sockOpt, ifi *net.Interface, grp net.IP) error {
+func setsockoptGroupReq(fd int, opt *sockOpt, ifi *net.Interface, grp net.IP) error {
 	return errOpNoSupport
 }
 
-func setsockoptGroupSourceReq(s uintptr, opt *sockOpt, ifi *net.Interface, grp, src net.IP) error {
+func setsockoptGroupSourceReq(fd int, opt *sockOpt, ifi *net.Interface, grp, src net.IP) error {
 	return errOpNoSupport
 }

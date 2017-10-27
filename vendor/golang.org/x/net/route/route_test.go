@@ -235,7 +235,7 @@ func (a *LinkAddr) String() string {
 	return fmt.Sprintf("(%v %d %s %s)", addrFamily(a.Family()), a.Index, name, lla)
 }
 
-func (a *Inet4Addr) String() string {
+func (a Inet4Addr) String() string {
 	return fmt.Sprintf("(%v %v)", addrFamily(a.Family()), ipAddr(a.IP[:]))
 }
 
@@ -325,7 +325,6 @@ func fetchAndParseRIB(af int, typ RIBType) ([]Message, error) {
 	return ms, nil
 }
 
-// propVirtual is a proprietary virtual network interface.
 type propVirtual struct {
 	name         string
 	addr, mask   string
@@ -333,18 +332,18 @@ type propVirtual struct {
 	teardownCmds []*exec.Cmd
 }
 
-func (pv *propVirtual) setup() error {
-	for _, cmd := range pv.setupCmds {
+func (ti *propVirtual) setup() error {
+	for _, cmd := range ti.setupCmds {
 		if err := cmd.Run(); err != nil {
-			pv.teardown()
+			ti.teardown()
 			return err
 		}
 	}
 	return nil
 }
 
-func (pv *propVirtual) teardown() error {
-	for _, cmd := range pv.teardownCmds {
+func (ti *propVirtual) teardown() error {
+	for _, cmd := range ti.teardownCmds {
 		if err := cmd.Run(); err != nil {
 			return err
 		}
@@ -352,35 +351,35 @@ func (pv *propVirtual) teardown() error {
 	return nil
 }
 
-func (pv *propVirtual) configure(suffix int) error {
+func (ti *propVirtual) configure(suffix int) error {
 	if runtime.GOOS == "openbsd" {
-		pv.name = fmt.Sprintf("vether%d", suffix)
+		ti.name = fmt.Sprintf("vether%d", suffix)
 	} else {
-		pv.name = fmt.Sprintf("vlan%d", suffix)
+		ti.name = fmt.Sprintf("vlan%d", suffix)
 	}
 	xname, err := exec.LookPath("ifconfig")
 	if err != nil {
 		return err
 	}
-	pv.setupCmds = append(pv.setupCmds, &exec.Cmd{
+	ti.setupCmds = append(ti.setupCmds, &exec.Cmd{
 		Path: xname,
-		Args: []string{"ifconfig", pv.name, "create"},
+		Args: []string{"ifconfig", ti.name, "create"},
 	})
 	if runtime.GOOS == "netbsd" {
 		// NetBSD requires an underlying dot1Q-capable network
 		// interface.
-		pv.setupCmds = append(pv.setupCmds, &exec.Cmd{
+		ti.setupCmds = append(ti.setupCmds, &exec.Cmd{
 			Path: xname,
-			Args: []string{"ifconfig", pv.name, "vlan", fmt.Sprintf("%d", suffix&0xfff), "vlanif", "wm0"},
+			Args: []string{"ifconfig", ti.name, "vlan", fmt.Sprintf("%d", suffix&0xfff), "vlanif", "wm0"},
 		})
 	}
-	pv.setupCmds = append(pv.setupCmds, &exec.Cmd{
+	ti.setupCmds = append(ti.setupCmds, &exec.Cmd{
 		Path: xname,
-		Args: []string{"ifconfig", pv.name, "inet", pv.addr, "netmask", pv.mask},
+		Args: []string{"ifconfig", ti.name, "inet", ti.addr, "netmask", ti.mask},
 	})
-	pv.teardownCmds = append(pv.teardownCmds, &exec.Cmd{
+	ti.teardownCmds = append(ti.teardownCmds, &exec.Cmd{
 		Path: xname,
-		Args: []string{"ifconfig", pv.name, "destroy"},
+		Args: []string{"ifconfig", ti.name, "destroy"},
 	})
 	return nil
 }

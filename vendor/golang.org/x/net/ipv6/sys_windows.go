@@ -1,4 +1,4 @@
-// Copyright 2013 The Go Authors. All rights reserved.
+// Copyright 2013 The Go Authors.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -21,14 +21,12 @@ const (
 	sysIPV6_LEAVE_GROUP    = 0xd
 	sysIPV6_PKTINFO        = 0x13
 
-	sizeofSockaddrInet6 = 0x1c
+	sysSizeofSockaddrInet6 = 0x1c
 
-	sizeofIPv6Mreq     = 0x14
-	sizeofIPv6Mtuinfo  = 0x20
-	sizeofICMPv6Filter = 0
+	sysSizeofIPv6Mreq = 0x14
 )
 
-type sockaddrInet6 struct {
+type sysSockaddrInet6 struct {
 	Family   uint16
 	Port     uint16
 	Flowinfo uint32
@@ -36,18 +34,9 @@ type sockaddrInet6 struct {
 	Scope_id uint32
 }
 
-type ipv6Mreq struct {
+type sysIPv6Mreq struct {
 	Multiaddr [16]byte /* in6_addr */
 	Interface uint32
-}
-
-type ipv6Mtuinfo struct {
-	Addr sockaddrInet6
-	Mtu  uint32
-}
-
-type icmpv6Filter struct {
-	// TODO(mikio): implement this
 }
 
 var (
@@ -63,12 +52,12 @@ var (
 	}
 )
 
-func (sa *sockaddrInet6) setSockaddr(ip net.IP, i int) {
+func (sa *sysSockaddrInet6) setSockaddr(ip net.IP, i int) {
 	sa.Family = syscall.AF_INET6
 	copy(sa.Addr[:], ip)
 	sa.Scope_id = uint32(i)
 }
 
-func (mreq *ipv6Mreq) setIfindex(i int) {
+func (mreq *sysIPv6Mreq) setIfindex(i int) {
 	mreq.Interface = uint32(i)
 }

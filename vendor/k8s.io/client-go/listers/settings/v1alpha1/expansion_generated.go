@@ -23,5 +23,5 @@ package v1alpha1
 type PodPresetListerExpansion interface{}
 
 // PodPresetNamespaceListerExpansion allows custom methods to be added to
-// PodPresetNamespaceLister.
+// PodPresetNamespaeLister.
 type PodPresetNamespaceListerExpansion interface{}

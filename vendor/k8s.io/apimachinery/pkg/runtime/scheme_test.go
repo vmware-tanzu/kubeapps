@@ -571,7 +571,6 @@ func TestAddKnownTypesIdemPotent(t *testing.T) {
 	}
 
 	s.AddUnversionedTypes(gv, &InternalSimple{})
-	s.AddUnversionedTypes(gv, &InternalSimple{})
 	if len(s.KnownTypes(gv)) != 1 {
 		t.Errorf("expected only one %v type after double registration with custom name", gv)
 	}
@@ -584,14 +583,9 @@ func TestAddKnownTypesIdemPotent(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if len(kinds) != 1 {
-		t.Errorf("expected only one kind for InternalSimple after double registration")
+		t.Errorf("expected only one kind for InternalSimple after double registration", gv)
 	}
 }
-
-// EmbeddableTypeMeta passes GetObjectKind to the type which embeds it.
-type EmbeddableTypeMeta runtime.TypeMeta
-
-func (tm *EmbeddableTypeMeta) GetObjectKind() schema.ObjectKind { return (*runtime.TypeMeta)(tm) }
 
 func TestConflictingAddKnownTypes(t *testing.T) {
 	s := runtime.NewScheme()
@@ -618,14 +612,7 @@ func TestConflictingAddKnownTypes(t *testing.T) {
 				panicked <- true
 			}
 		}()
-
 		s.AddUnversionedTypes(gv, &InternalSimple{})
-
-		// redefine InternalSimple with the same name, but obviously as a different type
-		type InternalSimple struct {
-			EmbeddableTypeMeta `json:",inline"`
-			TestString         string `json:"testString"`
-		}
 		s.AddUnversionedTypes(gv, &InternalSimple{})
 		panicked <- false
 	}()

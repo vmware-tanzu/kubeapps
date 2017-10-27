@@ -350,6 +350,10 @@ func (m fixedRESTMapper) RESTMappings(gk schema.GroupKind, versions ...string) (
 	return m.mappings, m.err
 }
 
+func (m fixedRESTMapper) AliasesForResource(alias string) (aliases []string, ok bool) {
+	return nil, false
+}
+
 func (m fixedRESTMapper) ResourceIsValid(resource schema.GroupVersionResource) bool {
 	return false
 }

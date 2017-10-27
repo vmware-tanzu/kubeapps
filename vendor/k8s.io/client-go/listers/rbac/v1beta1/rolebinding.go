@@ -21,6 +21,7 @@ package v1beta1
 import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	rbac "k8s.io/client-go/pkg/apis/rbac"
 	v1beta1 "k8s.io/client-go/pkg/apis/rbac/v1beta1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -88,7 +89,7 @@ func (s roleBindingNamespaceLister) Get(name string) (*v1beta1.RoleBinding, erro
 		return nil, err
 	}
 	if !exists {
-		return nil, errors.NewNotFound(v1beta1.Resource("rolebinding"), name)
+		return nil, errors.NewNotFound(rbac.Resource("rolebinding"), name)
 	}
 	return obj.(*v1beta1.RoleBinding), nil
 }
