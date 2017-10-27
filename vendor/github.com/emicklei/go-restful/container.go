@@ -32,7 +32,7 @@ type Container struct {
 	contentEncodingEnabled bool          // default is false
 }
 
-// NewContainer creates a new Container using a new ServeMux and default router (CurlyRouter)
+// NewContainer creates a new Container using a new ServeMux and default router (RouterJSR311)
 func NewContainer() *Container {
 	return &Container{
 		webServices:            []*WebService{},
@@ -74,7 +74,7 @@ func (c *Container) DoNotRecover(doNot bool) {
 	c.doNotRecover = doNot
 }
 
-// Router changes the default Router (currently CurlyRouter)
+// Router changes the default Router (currently RouterJSR311)
 func (c *Container) Router(aRouter RouteSelector) {
 	c.router = aRouter
 }
@@ -189,17 +189,6 @@ func writeServiceError(err ServiceError, req *Request, resp *Response) {
 }
 
 // Dispatch the incoming Http Request to a matching WebService.
-func (c *Container) Dispatch(httpWriter http.ResponseWriter, httpRequest *http.Request) {
-	if httpWriter == nil {
-		panic("httpWriter cannot be nil")
-	}
-	if httpRequest == nil {
-		panic("httpRequest cannot be nil")
-	}
-	c.dispatch(httpWriter, httpRequest)
-}
-
-// Dispatch the incoming Http Request to a matching WebService.
 func (c *Container) dispatch(httpWriter http.ResponseWriter, httpRequest *http.Request) {
 	writer := httpWriter
 
@@ -219,6 +208,12 @@ func (c *Container) dispatch(httpWriter http.ResponseWriter, httpRequest *http.R
 			}
 		}()
 	}
+	// Install closing the request body (if any)
+	defer func() {
+		if nil != httpRequest.Body {
+			httpRequest.Body.Close()
+		}
+	}()
 
 	// Detect if compression is needed
 	// assume without compression, test for override

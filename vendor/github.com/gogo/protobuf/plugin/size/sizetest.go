@@ -1,6 +1,4 @@
-// Protocol Buffers for Go with Gadgets
-//
-// Copyright (c) 2013, The GoGo Authors. All rights reserved.
+// Copyright (c) 2013, Vastech SA (PTY) LTD. All rights reserved.
 // http://github.com/gogo/protobuf
 //
 // Redistribution and use in source and binary forms, with or without
@@ -73,16 +71,16 @@ func (p *test) Generate(imports generator.PluginImports, file *generator.FileDes
 			p.P(`popr := `, randPkg.Use(), `.New(`, randPkg.Use(), `.NewSource(seed))`)
 			p.P(`p := NewPopulated`, ccTypeName, `(popr, true)`)
 			p.P(`size2 := `, protoPkg.Use(), `.Size(p)`)
-			p.P(`dAtA, err := `, protoPkg.Use(), `.Marshal(p)`)
+			p.P(`data, err := `, protoPkg.Use(), `.Marshal(p)`)
 			p.P(`if err != nil {`)
 			p.In()
 			p.P(`t.Fatalf("seed = %d, err = %v", seed, err)`)
 			p.Out()
 			p.P(`}`)
 			p.P(`size := p.`, sizeName, `()`)
-			p.P(`if len(dAtA) != size {`)
+			p.P(`if len(data) != size {`)
 			p.In()
-			p.P(`t.Errorf("seed = %d, size %v != marshalled size %v", seed, size, len(dAtA))`)
+			p.P(`t.Errorf("seed = %d, size %v != marshalled size %v", seed, size, len(data))`)
 			p.Out()
 			p.P(`}`)
 			p.P(`if size2 != size {`)

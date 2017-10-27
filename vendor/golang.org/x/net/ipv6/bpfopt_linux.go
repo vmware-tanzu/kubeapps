@@ -9,20 +9,19 @@ import (
 	"unsafe"
 
 	"golang.org/x/net/bpf"
-	"golang.org/x/net/internal/netreflect"
 )
 
 // SetBPF attaches a BPF program to the connection.
 //
 // Only supported on Linux.
 func (c *dgramOpt) SetBPF(filter []bpf.RawInstruction) error {
-	s, err := netreflect.PacketSocketOf(c.PacketConn)
+	fd, err := c.sysfd()
 	if err != nil {
 		return err
 	}
-	prog := sockFProg{
+	prog := sysSockFProg{
 		Len:    uint16(len(filter)),
-		Filter: (*sockFilter)(unsafe.Pointer(&filter[0])),
+		Filter: (*sysSockFilter)(unsafe.Pointer(&filter[0])),
 	}
-	return os.NewSyscallError("setsockopt", setsockopt(s, sysSOL_SOCKET, sysSO_ATTACH_FILTER, unsafe.Pointer(&prog), uint32(unsafe.Sizeof(prog))))
+	return os.NewSyscallError("setsockopt", setsockopt(fd, sysSOL_SOCKET, sysSO_ATTACH_FILTER, unsafe.Pointer(&prog), uint32(unsafe.Sizeof(prog))))
 }

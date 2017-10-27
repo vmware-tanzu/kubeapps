@@ -1,9 +1,18 @@
 package: github.com/kubeapps/installer
 import:
-- package: github.com/spf13/cobra
 - package: k8s.io/client-go
-  version: ^4.0.0
+  version: ^3.0.0
   subpackages:
   - pkg/api
-- package: github.com/Sirupsen/logrus
-  version: ^1.0.3
+  - dynamic
+  - discovery
+  - tools/clientcmd
+- package: github.com/ksonnet/kubecfg
+  subpackages:
+  - utils
+  - metadata
+  - pkg/kubecfg
+- package: github.com/spf13/cobra
+  version: f62e98d28ab7ad31d707ba837a966378465c7b57
+- package: github.com/spf13/pflag
+  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7

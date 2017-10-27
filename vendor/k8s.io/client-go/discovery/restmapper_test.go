@@ -25,11 +25,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/version"
 	. "k8s.io/client-go/discovery"
+	"k8s.io/client-go/pkg/api"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/rest/fake"
 
-	"github.com/emicklei/go-restful-swagger12"
-	"github.com/go-openapi/spec"
+	"github.com/emicklei/go-restful/swagger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -208,7 +208,7 @@ func TestDeferredDiscoveryRESTMapper_CacheMiss(t *testing.T) {
 	assert := assert.New(t)
 
 	cdc := fakeCachedDiscoveryInterface{fresh: false}
-	m := NewDeferredDiscoveryRESTMapper(&cdc, nil)
+	m := NewDeferredDiscoveryRESTMapper(&cdc, api.Registry.InterfacesFor)
 	assert.False(cdc.fresh, "should NOT be fresh after instantiation")
 	assert.Zero(cdc.invalidateCalls, "should not have called Invalidate()")
 
@@ -346,8 +346,4 @@ func (c *fakeCachedDiscoveryInterface) ServerVersion() (*version.Info, error) {
 
 func (c *fakeCachedDiscoveryInterface) SwaggerSchema(version schema.GroupVersion) (*swagger.ApiDeclaration, error) {
 	return &swagger.ApiDeclaration{}, nil
-}
-
-func (c *fakeCachedDiscoveryInterface) OpenAPISchema() (*spec.Swagger, error) {
-	return &spec.Swagger{}, nil
 }

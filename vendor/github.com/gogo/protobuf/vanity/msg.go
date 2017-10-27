@@ -1,7 +1,7 @@
-// Protocol Buffers for Go with Gadgets
+// Extensions for Protocol Buffers to create more go like structures.
 //
-// Copyright (c) 2015, The GoGo Authors.  rights reserved.
-// http://github.com/gogo/protobuf
+// Copyright (c) 2015, Vastech SA (PTY) LTD.  rights reserved.
+// http://github.com/gogo/protobuf/gogoproto
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -135,8 +135,4 @@ func TurnOffGoExtensionsMap(msg *descriptor.DescriptorProto) {
 
 func TurnOffGoUnrecognized(msg *descriptor.DescriptorProto) {
 	SetBoolMessageOption(gogoproto.E_GoprotoUnrecognized, false)(msg)
-}
-
-func TurnOnCompare(msg *descriptor.DescriptorProto) {
-	SetBoolMessageOption(gogoproto.E_Compare, true)(msg)
 }

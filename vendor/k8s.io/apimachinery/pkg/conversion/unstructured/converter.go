@@ -29,6 +29,7 @@ import (
 	"sync/atomic"
 
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/diff"
 	"k8s.io/apimachinery/pkg/util/json"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -36,11 +37,11 @@ import (
 	"github.com/golang/glog"
 )
 
-// Converter is an interface for converting between interface{}
+// Converter is an interface for converting between runtime.Object
 // and map[string]interface representation.
 type Converter interface {
-	ToUnstructured(obj interface{}, u *map[string]interface{}) error
-	FromUnstructured(u map[string]interface{}, obj interface{}) error
+	ToUnstructured(obj runtime.Object, u *map[string]interface{}) error
+	FromUnstructured(u map[string]interface{}, obj runtime.Object) error
 }
 
 type structField struct {
@@ -91,7 +92,7 @@ func parseBool(key string) bool {
 	return value
 }
 
-// ConverterImpl knows how to convert between interface{} and
+// ConverterImpl knows how to convert betweek runtime.Object and
 // Unstructured in both ways.
 type converterImpl struct {
 	// If true, we will be additionally running conversion via json
@@ -106,15 +107,10 @@ func NewConverter(mismatchDetection bool) Converter {
 	}
 }
 
-func (c *converterImpl) FromUnstructured(u map[string]interface{}, obj interface{}) error {
-	t := reflect.TypeOf(obj)
-	value := reflect.ValueOf(obj)
-	if t.Kind() != reflect.Ptr || value.IsNil() {
-		return fmt.Errorf("FromUnstructured requires a non-nil pointer to an object, got %v", t)
-	}
-	err := fromUnstructured(reflect.ValueOf(u), value.Elem())
+func (c *converterImpl) FromUnstructured(u map[string]interface{}, obj runtime.Object) error {
+	err := fromUnstructured(reflect.ValueOf(u), reflect.ValueOf(obj).Elem())
 	if c.mismatchDetection {
-		newObj := reflect.New(t.Elem()).Interface()
+		newObj := reflect.New(reflect.TypeOf(obj).Elem()).Interface().(runtime.Object)
 		newErr := fromUnstructuredViaJSON(u, newObj)
 		if (err != nil) != (newErr != nil) {
 			glog.Fatalf("FromUnstructured unexpected error for %v: error: %v", u, err)
@@ -126,7 +122,7 @@ func (c *converterImpl) FromUnstructured(u map[string]interface{}, obj interface
 	return err
 }
 
-func fromUnstructuredViaJSON(u map[string]interface{}, obj interface{}) error {
+func fromUnstructuredViaJSON(u map[string]interface{}, obj runtime.Object) error {
 	data, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -388,13 +384,8 @@ func interfaceFromUnstructured(sv, dv reflect.Value) error {
 	return nil
 }
 
-func (c *converterImpl) ToUnstructured(obj interface{}, u *map[string]interface{}) error {
-	t := reflect.TypeOf(obj)
-	value := reflect.ValueOf(obj)
-	if t.Kind() != reflect.Ptr || value.IsNil() {
-		return fmt.Errorf("ToUnstructured requires a non-nil pointer to an object, got %v", t)
-	}
-	err := toUnstructured(value.Elem(), reflect.ValueOf(u).Elem())
+func (c *converterImpl) ToUnstructured(obj runtime.Object, u *map[string]interface{}) error {
+	err := toUnstructured(reflect.ValueOf(obj).Elem(), reflect.ValueOf(u).Elem())
 	if c.mismatchDetection {
 		newUnstr := &map[string]interface{}{}
 		newErr := toUnstructuredViaJSON(obj, newUnstr)
@@ -408,7 +399,7 @@ func (c *converterImpl) ToUnstructured(obj interface{}, u *map[string]interface{
 	return err
 }
 
-func toUnstructuredViaJSON(obj interface{}, u *map[string]interface{}) error {
+func toUnstructuredViaJSON(obj runtime.Object, u *map[string]interface{}) error {
 	data, err := json.Marshal(obj)
 	if err != nil {
 		return err

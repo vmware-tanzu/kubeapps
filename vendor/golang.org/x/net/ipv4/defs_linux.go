@@ -81,40 +81,40 @@ const (
 	sysSOL_SOCKET       = C.SOL_SOCKET
 	sysSO_ATTACH_FILTER = C.SO_ATTACH_FILTER
 
-	sizeofKernelSockaddrStorage = C.sizeof_struct___kernel_sockaddr_storage
-	sizeofSockaddrInet          = C.sizeof_struct_sockaddr_in
-	sizeofInetPktinfo           = C.sizeof_struct_in_pktinfo
-	sizeofSockExtendedErr       = C.sizeof_struct_sock_extended_err
+	sysSizeofKernelSockaddrStorage = C.sizeof_struct___kernel_sockaddr_storage
+	sysSizeofSockaddrInet          = C.sizeof_struct_sockaddr_in
+	sysSizeofInetPktinfo           = C.sizeof_struct_in_pktinfo
+	sysSizeofSockExtendedErr       = C.sizeof_struct_sock_extended_err
 
-	sizeofIPMreq         = C.sizeof_struct_ip_mreq
-	sizeofIPMreqn        = C.sizeof_struct_ip_mreqn
-	sizeofIPMreqSource   = C.sizeof_struct_ip_mreq_source
-	sizeofGroupReq       = C.sizeof_struct_group_req
-	sizeofGroupSourceReq = C.sizeof_struct_group_source_req
+	sysSizeofIPMreq         = C.sizeof_struct_ip_mreq
+	sysSizeofIPMreqn        = C.sizeof_struct_ip_mreqn
+	sysSizeofIPMreqSource   = C.sizeof_struct_ip_mreq_source
+	sysSizeofGroupReq       = C.sizeof_struct_group_req
+	sysSizeofGroupSourceReq = C.sizeof_struct_group_source_req
 
-	sizeofICMPFilter = C.sizeof_struct_icmp_filter
+	sysSizeofICMPFilter = C.sizeof_struct_icmp_filter
 )
 
-type kernelSockaddrStorage C.struct___kernel_sockaddr_storage
+type sysKernelSockaddrStorage C.struct___kernel_sockaddr_storage
 
-type sockaddrInet C.struct_sockaddr_in
+type sysSockaddrInet C.struct_sockaddr_in
 
-type inetPktinfo C.struct_in_pktinfo
+type sysInetPktinfo C.struct_in_pktinfo
 
-type sockExtendedErr C.struct_sock_extended_err
+type sysSockExtendedErr C.struct_sock_extended_err
 
-type ipMreq C.struct_ip_mreq
+type sysIPMreq C.struct_ip_mreq
 
-type ipMreqn C.struct_ip_mreqn
+type sysIPMreqn C.struct_ip_mreqn
 
-type ipMreqSource C.struct_ip_mreq_source
+type sysIPMreqSource C.struct_ip_mreq_source
 
-type groupReq C.struct_group_req
+type sysGroupReq C.struct_group_req
 
-type groupSourceReq C.struct_group_source_req
+type sysGroupSourceReq C.struct_group_source_req
 
-type icmpFilter C.struct_icmp_filter
+type sysICMPFilter C.struct_icmp_filter
 
-type sockFProg C.struct_sock_fprog
+type sysSockFProg C.struct_sock_fprog
 
-type sockFilter C.struct_sock_filter
+type sysSockFilter C.struct_sock_filter

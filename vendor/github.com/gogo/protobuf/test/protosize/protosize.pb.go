@@ -29,15 +29,13 @@ var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.GoGoProtoPackageIsVersion1
 
 type SizeMessage struct {
 	Size             *int64  `protobuf:"varint,1,opt,name=size" json:"size,omitempty"`
 	ProtoSize_       *int64  `protobuf:"varint,2,opt,name=proto_size,json=protoSize" json:"proto_size,omitempty"`
-	Equal_           *bool   `protobuf:"varint,3,opt,name=Equal" json:"Equal,omitempty"`
-	String_          *string `protobuf:"bytes,4,opt,name=String" json:"String,omitempty"`
+	Equal_           *bool   `protobuf:"varint,3,opt,name=Equal,json=equal" json:"Equal,omitempty"`
+	String_          *string `protobuf:"bytes,4,opt,name=String,json=string" json:"String,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -143,78 +141,78 @@ func (this *SizeMessage) Equal(that interface{}) bool {
 	}
 	return true
 }
-func (m *SizeMessage) Marshal() (dAtA []byte, err error) {
+func (m *SizeMessage) Marshal() (data []byte, err error) {
 	size := m.ProtoSize()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
 	if err != nil {
 		return nil, err
 	}
-	return dAtA[:n], nil
+	return data[:n], nil
 }
 
-func (m *SizeMessage) MarshalTo(dAtA []byte) (int, error) {
+func (m *SizeMessage) MarshalTo(data []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
 	if m.Size != nil {
-		dAtA[i] = 0x8
+		data[i] = 0x8
 		i++
-		i = encodeVarintProtosize(dAtA, i, uint64(*m.Size))
+		i = encodeVarintProtosize(data, i, uint64(*m.Size))
 	}
 	if m.ProtoSize_ != nil {
-		dAtA[i] = 0x10
+		data[i] = 0x10
 		i++
-		i = encodeVarintProtosize(dAtA, i, uint64(*m.ProtoSize_))
+		i = encodeVarintProtosize(data, i, uint64(*m.ProtoSize_))
 	}
 	if m.Equal_ != nil {
-		dAtA[i] = 0x18
+		data[i] = 0x18
 		i++
 		if *m.Equal_ {
-			dAtA[i] = 1
+			data[i] = 1
 		} else {
-			dAtA[i] = 0
+			data[i] = 0
 		}
 		i++
 	}
 	if m.String_ != nil {
-		dAtA[i] = 0x22
+		data[i] = 0x22
 		i++
-		i = encodeVarintProtosize(dAtA, i, uint64(len(*m.String_)))
-		i += copy(dAtA[i:], *m.String_)
+		i = encodeVarintProtosize(data, i, uint64(len(*m.String_)))
+		i += copy(data[i:], *m.String_)
 	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func encodeFixed64Protosize(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
+func encodeFixed64Protosize(data []byte, offset int, v uint64) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
+	data[offset+4] = uint8(v >> 32)
+	data[offset+5] = uint8(v >> 40)
+	data[offset+6] = uint8(v >> 48)
+	data[offset+7] = uint8(v >> 56)
 	return offset + 8
 }
-func encodeFixed32Protosize(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
+func encodeFixed32Protosize(data []byte, offset int, v uint32) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
 	return offset + 4
 }
-func encodeVarintProtosize(dAtA []byte, offset int, v uint64) int {
+func encodeVarintProtosize(data []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
-		dAtA[offset] = uint8(v&0x7f | 0x80)
+		data[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
-	dAtA[offset] = uint8(v)
+	data[offset] = uint8(v)
 	return offset + 1
 }
 func NewPopulatedSizeMessage(r randyProtosize, easy bool) *SizeMessage {
@@ -238,7 +236,7 @@ func NewPopulatedSizeMessage(r randyProtosize, easy bool) *SizeMessage {
 		this.Equal_ = &v3
 	}
 	if r.Intn(10) != 0 {
-		v4 := string(randStringProtosize(r))
+		v4 := randStringProtosize(r)
 		this.String_ = &v4
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -273,7 +271,7 @@ func randStringProtosize(r randyProtosize) string {
 	}
 	return string(tmps)
 }
-func randUnrecognizedProtosize(r randyProtosize, maxFieldNumber int) (dAtA []byte) {
+func randUnrecognizedProtosize(r randyProtosize, maxFieldNumber int) (data []byte) {
 	l := r.Intn(5)
 	for i := 0; i < l; i++ {
 		wire := r.Intn(4)
@@ -281,43 +279,43 @@ func randUnrecognizedProtosize(r randyProtosize, maxFieldNumber int) (dAtA []byt
 			wire = 5
 		}
 		fieldNumber := maxFieldNumber + r.Intn(100)
-		dAtA = randFieldProtosize(dAtA, r, fieldNumber, wire)
+		data = randFieldProtosize(data, r, fieldNumber, wire)
 	}
-	return dAtA
+	return data
 }
-func randFieldProtosize(dAtA []byte, r randyProtosize, fieldNumber int, wire int) []byte {
+func randFieldProtosize(data []byte, r randyProtosize, fieldNumber int, wire int) []byte {
 	key := uint32(fieldNumber)<<3 | uint32(wire)
 	switch wire {
 	case 0:
-		dAtA = encodeVarintPopulateProtosize(dAtA, uint64(key))
+		data = encodeVarintPopulateProtosize(data, uint64(key))
 		v6 := r.Int63()
 		if r.Intn(2) == 0 {
 			v6 *= -1
 		}
-		dAtA = encodeVarintPopulateProtosize(dAtA, uint64(v6))
+		data = encodeVarintPopulateProtosize(data, uint64(v6))
 	case 1:
-		dAtA = encodeVarintPopulateProtosize(dAtA, uint64(key))
-		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
+		data = encodeVarintPopulateProtosize(data, uint64(key))
+		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
 	case 2:
-		dAtA = encodeVarintPopulateProtosize(dAtA, uint64(key))
+		data = encodeVarintPopulateProtosize(data, uint64(key))
 		ll := r.Intn(100)
-		dAtA = encodeVarintPopulateProtosize(dAtA, uint64(ll))
+		data = encodeVarintPopulateProtosize(data, uint64(ll))
 		for j := 0; j < ll; j++ {
-			dAtA = append(dAtA, byte(r.Intn(256)))
+			data = append(data, byte(r.Intn(256)))
 		}
 	default:
-		dAtA = encodeVarintPopulateProtosize(dAtA, uint64(key))
-		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
+		data = encodeVarintPopulateProtosize(data, uint64(key))
+		data = append(data, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
 	}
-	return dAtA
+	return data
 }
-func encodeVarintPopulateProtosize(dAtA []byte, v uint64) []byte {
+func encodeVarintPopulateProtosize(data []byte, v uint64) []byte {
 	for v >= 1<<7 {
-		dAtA = append(dAtA, uint8(uint64(v)&0x7f|0x80))
+		data = append(data, uint8(uint64(v)&0x7f|0x80))
 		v >>= 7
 	}
-	dAtA = append(dAtA, uint8(v))
-	return dAtA
+	data = append(data, uint8(v))
+	return data
 }
 func (m *SizeMessage) ProtoSize() (n int) {
 	var l int
@@ -354,8 +352,8 @@ func sovProtosize(x uint64) (n int) {
 func sozProtosize(x uint64) (n int) {
 	return sovProtosize(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *SizeMessage) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
+func (m *SizeMessage) Unmarshal(data []byte) error {
+	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
 		preIndex := iNdEx
@@ -367,7 +365,7 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
-			b := dAtA[iNdEx]
+			b := data[iNdEx]
 			iNdEx++
 			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
@@ -395,7 +393,7 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -415,7 +413,7 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -435,7 +433,7 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -456,7 +454,7 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				stringLen |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -471,12 +469,12 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
+			s := string(data[iNdEx:postIndex])
 			m.String_ = &s
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
-			skippy, err := skipProtosize(dAtA[iNdEx:])
+			skippy, err := skipProtosize(data[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -486,7 +484,7 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -496,8 +494,8 @@ func (m *SizeMessage) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func skipProtosize(dAtA []byte) (n int, err error) {
-	l := len(dAtA)
+func skipProtosize(data []byte) (n int, err error) {
+	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
 		var wire uint64
@@ -508,7 +506,7 @@ func skipProtosize(dAtA []byte) (n int, err error) {
 			if iNdEx >= l {
 				return 0, io.ErrUnexpectedEOF
 			}
-			b := dAtA[iNdEx]
+			b := data[iNdEx]
 			iNdEx++
 			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
@@ -526,7 +524,7 @@ func skipProtosize(dAtA []byte) (n int, err error) {
 					return 0, io.ErrUnexpectedEOF
 				}
 				iNdEx++
-				if dAtA[iNdEx-1] < 0x80 {
+				if data[iNdEx-1] < 0x80 {
 					break
 				}
 			}
@@ -543,7 +541,7 @@ func skipProtosize(dAtA []byte) (n int, err error) {
 				if iNdEx >= l {
 					return 0, io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				length |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -566,7 +564,7 @@ func skipProtosize(dAtA []byte) (n int, err error) {
 					if iNdEx >= l {
 						return 0, io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					innerWire |= (uint64(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -577,7 +575,7 @@ func skipProtosize(dAtA []byte) (n int, err error) {
 				if innerWireType == 4 {
 					break
 				}
-				next, err := skipProtosize(dAtA[start:])
+				next, err := skipProtosize(data[start:])
 				if err != nil {
 					return 0, err
 				}
@@ -601,20 +599,18 @@ var (
 	ErrIntOverflowProtosize   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("protosize.proto", fileDescriptorProtosize) }
-
 var fileDescriptorProtosize = []byte{
-	// 182 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2f, 0x28, 0xca, 0x2f,
+	// 177 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xe2, 0xe2, 0x2f, 0x28, 0xca, 0x2f,
 	0xc9, 0x2f, 0xce, 0xac, 0x4a, 0xd5, 0x03, 0xb3, 0x84, 0x38, 0xe1, 0x02, 0x52, 0xba, 0xe9, 0x99,
 	0x25, 0x19, 0xa5, 0x49, 0x7a, 0xc9, 0xf9, 0xb9, 0xfa, 0xe9, 0xf9, 0xe9, 0xf9, 0xfa, 0x60, 0xa9,
-	0xa4, 0xd2, 0x34, 0x30, 0x0f, 0xcc, 0x01, 0xb3, 0x20, 0x3a, 0x95, 0xf2, 0xb8, 0xb8, 0x83, 0x33,
-	0xab, 0x52, 0x7d, 0x53, 0x8b, 0x8b, 0x13, 0xd3, 0x53, 0x85, 0x84, 0xb8, 0x58, 0x40, 0xa6, 0x48,
-	0x30, 0x2a, 0x30, 0x6a, 0x30, 0x07, 0x81, 0xd9, 0x42, 0xb2, 0x5c, 0x5c, 0x60, 0xb5, 0xf1, 0x60,
-	0x19, 0x26, 0xb0, 0x0c, 0xc4, 0x42, 0x90, 0x4e, 0x21, 0x11, 0x2e, 0x56, 0xd7, 0xc2, 0xd2, 0xc4,
-	0x1c, 0x09, 0x66, 0x05, 0x46, 0x0d, 0x8e, 0x20, 0x08, 0x47, 0x48, 0x8c, 0x8b, 0x2d, 0xb8, 0xa4,
-	0x28, 0x33, 0x2f, 0x5d, 0x82, 0x45, 0x81, 0x51, 0x83, 0x33, 0x08, 0xca, 0x73, 0x92, 0xf8, 0xf1,
-	0x50, 0x8e, 0x71, 0xc5, 0x23, 0x39, 0xc6, 0x1d, 0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92, 0x63, 0xbc,
-	0xf0, 0x48, 0x8e, 0x71, 0xc1, 0x63, 0x39, 0x46, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x8b, 0xf7,
-	0x87, 0xb3, 0xd5, 0x00, 0x00, 0x00,
+	0xa4, 0xd2, 0x34, 0x30, 0x0f, 0xcc, 0x01, 0xb3, 0x20, 0x3a, 0x95, 0xf2, 0xb8, 0xb8, 0x83, 0x81,
+	0xda, 0x7c, 0x53, 0x8b, 0x8b, 0x13, 0xd3, 0x53, 0x85, 0x84, 0xb8, 0x58, 0x40, 0xa6, 0x48, 0x30,
+	0x2a, 0x30, 0x6a, 0x30, 0x07, 0x81, 0xd9, 0x42, 0xb2, 0x5c, 0x5c, 0x60, 0xb5, 0xf1, 0x60, 0x19,
+	0x26, 0xb0, 0x0c, 0xc4, 0x42, 0x90, 0x4e, 0x21, 0x11, 0x2e, 0x56, 0xd7, 0xc2, 0xd2, 0xc4, 0x1c,
+	0x09, 0x66, 0xa0, 0x0c, 0x47, 0x10, 0x6b, 0x2a, 0x88, 0x23, 0x24, 0xc6, 0xc5, 0x16, 0x5c, 0x52,
+	0x94, 0x99, 0x97, 0x2e, 0xc1, 0x02, 0x14, 0xe6, 0x0c, 0x62, 0x2b, 0x06, 0xf3, 0x9c, 0x24, 0x7e,
+	0x3c, 0x94, 0x63, 0x5c, 0xf1, 0x48, 0x8e, 0x71, 0x07, 0x10, 0x9f, 0x00, 0xe2, 0x0b, 0x40, 0xbc,
+	0xe0, 0xb1, 0x1c, 0x23, 0x20, 0x00, 0x00, 0xff, 0xff, 0xdf, 0x5d, 0x65, 0x12, 0xd5, 0x00, 0x00,
+	0x00,
 }

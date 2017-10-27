@@ -52,7 +52,7 @@ func TestMakeCSR(t *testing.T) {
 	if len(rest) != 0 {
 		t.Error("Found more than one PEM encoded block in the result.")
 	}
-	if csrBlock.Type != CertificateRequestBlockType {
+	if csrBlock.Type != "CERTIFICATE REQUEST" {
 		t.Errorf("Found block type %q, wanted 'CERTIFICATE REQUEST'", csrBlock.Type)
 	}
 	csr, err := x509.ParseCertificateRequest(csrBlock.Bytes)

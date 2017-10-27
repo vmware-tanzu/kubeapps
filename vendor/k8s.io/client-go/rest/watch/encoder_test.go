@@ -24,51 +24,49 @@ import (
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
-	runtimejson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/apimachinery/pkg/runtime/serializer/streaming"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
 	restclientwatch "k8s.io/client-go/rest/watch"
-)
 
-// getEncoder mimics how k8s.io/client-go/rest.createSerializers creates a encoder
-func getEncoder() runtime.Encoder {
-	jsonSerializer := runtimejson.NewSerializer(runtimejson.DefaultMetaFactory, scheme.Scheme, scheme.Scheme, false)
-	directCodecFactory := serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
-	return directCodecFactory.EncoderForVersion(jsonSerializer, v1.SchemeGroupVersion)
-}
+	_ "k8s.io/client-go/pkg/api/install"
+)
 
 func TestEncodeDecodeRoundTrip(t *testing.T) {
 	testCases := []struct {
 		Type   watch.EventType
 		Object runtime.Object
+		Codec  runtime.Codec
 	}{
 		{
 			watch.Added,
-			&v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			&api.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			api.Codecs.LegacyCodec(v1.SchemeGroupVersion),
 		},
 		{
 			watch.Modified,
-			&v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			&api.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			api.Codecs.LegacyCodec(v1.SchemeGroupVersion),
 		},
 		{
 			watch.Deleted,
-			&v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			&api.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			api.Codecs.LegacyCodec(v1.SchemeGroupVersion),
 		},
 	}
 	for i, testCase := range testCases {
 		buf := &bytes.Buffer{}
 
-		encoder := restclientwatch.NewEncoder(streaming.NewEncoder(buf, getEncoder()), getEncoder())
+		codec := testCase.Codec
+		encoder := restclientwatch.NewEncoder(streaming.NewEncoder(buf, codec), codec)
 		if err := encoder.Encode(&watch.Event{Type: testCase.Type, Object: testCase.Object}); err != nil {
 			t.Errorf("%d: unexpected error: %v", i, err)
 			continue
 		}
 
 		rc := ioutil.NopCloser(buf)
-		decoder := restclientwatch.NewDecoder(streaming.NewDecoder(rc, getDecoder()), getDecoder())
+		decoder := restclientwatch.NewDecoder(streaming.NewDecoder(rc, codec), codec)
 		event, obj, err := decoder.Decode()
 		if err != nil {
 			t.Errorf("%d: unexpected error: %v", i, err)

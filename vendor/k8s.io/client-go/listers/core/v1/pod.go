@@ -21,6 +21,7 @@ package v1
 import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	api "k8s.io/client-go/pkg/api"
 	v1 "k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/cache"
 )
@@ -88,7 +89,7 @@ func (s podNamespaceLister) Get(name string) (*v1.Pod, error) {
 		return nil, err
 	}
 	if !exists {
-		return nil, errors.NewNotFound(v1.Resource("pod"), name)
+		return nil, errors.NewNotFound(api.Resource("pod"), name)
 	}
 	return obj.(*v1.Pod), nil
 }

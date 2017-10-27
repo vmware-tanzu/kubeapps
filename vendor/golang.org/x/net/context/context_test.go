@@ -243,51 +243,45 @@ func testDeadline(c Context, wait time.Duration, t *testing.T) {
 }
 
 func TestDeadline(t *testing.T) {
-	t.Parallel()
-	const timeUnit = 500 * time.Millisecond
-	c, _ := WithDeadline(Background(), time.Now().Add(1*timeUnit))
+	c, _ := WithDeadline(Background(), time.Now().Add(100*time.Millisecond))
 	if got, prefix := fmt.Sprint(c), "context.Background.WithDeadline("; !strings.HasPrefix(got, prefix) {
 		t.Errorf("c.String() = %q want prefix %q", got, prefix)
 	}
-	testDeadline(c, 2*timeUnit, t)
+	testDeadline(c, 200*time.Millisecond, t)
 
-	c, _ = WithDeadline(Background(), time.Now().Add(1*timeUnit))
+	c, _ = WithDeadline(Background(), time.Now().Add(100*time.Millisecond))
 	o := otherContext{c}
-	testDeadline(o, 2*timeUnit, t)
+	testDeadline(o, 200*time.Millisecond, t)
 
-	c, _ = WithDeadline(Background(), time.Now().Add(1*timeUnit))
+	c, _ = WithDeadline(Background(), time.Now().Add(100*time.Millisecond))
 	o = otherContext{c}
-	c, _ = WithDeadline(o, time.Now().Add(3*timeUnit))
-	testDeadline(c, 2*timeUnit, t)
+	c, _ = WithDeadline(o, time.Now().Add(300*time.Millisecond))
+	testDeadline(c, 200*time.Millisecond, t)
 }
 
 func TestTimeout(t *testing.T) {
-	t.Parallel()
-	const timeUnit = 500 * time.Millisecond
-	c, _ := WithTimeout(Background(), 1*timeUnit)
+	c, _ := WithTimeout(Background(), 100*time.Millisecond)
 	if got, prefix := fmt.Sprint(c), "context.Background.WithDeadline("; !strings.HasPrefix(got, prefix) {
 		t.Errorf("c.String() = %q want prefix %q", got, prefix)
 	}
-	testDeadline(c, 2*timeUnit, t)
+	testDeadline(c, 200*time.Millisecond, t)
 
-	c, _ = WithTimeout(Background(), 1*timeUnit)
+	c, _ = WithTimeout(Background(), 100*time.Millisecond)
 	o := otherContext{c}
-	testDeadline(o, 2*timeUnit, t)
+	testDeadline(o, 200*time.Millisecond, t)
 
-	c, _ = WithTimeout(Background(), 1*timeUnit)
+	c, _ = WithTimeout(Background(), 100*time.Millisecond)
 	o = otherContext{c}
-	c, _ = WithTimeout(o, 3*timeUnit)
-	testDeadline(c, 2*timeUnit, t)
+	c, _ = WithTimeout(o, 300*time.Millisecond)
+	testDeadline(c, 200*time.Millisecond, t)
 }
 
 func TestCanceledTimeout(t *testing.T) {
-	t.Parallel()
-	const timeUnit = 500 * time.Millisecond
-	c, _ := WithTimeout(Background(), 2*timeUnit)
+	c, _ := WithTimeout(Background(), 200*time.Millisecond)
 	o := otherContext{c}
-	c, cancel := WithTimeout(o, 4*timeUnit)
+	c, cancel := WithTimeout(o, 400*time.Millisecond)
 	cancel()
-	time.Sleep(1 * timeUnit) // let cancelation propagate
+	time.Sleep(100 * time.Millisecond) // let cancelation propagate
 	select {
 	case <-c.Done():
 	default:

@@ -22,6 +22,9 @@ import math "math"
 import _ "github.com/gogo/protobuf/gogoproto"
 
 import strings "strings"
+import github_com_gogo_protobuf_proto "github.com/gogo/protobuf/proto"
+import sort "sort"
+import strconv "strconv"
 import reflect "reflect"
 
 import io "io"
@@ -33,9 +36,7 @@ var _ = math.Inf
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the proto package it is being compiled against.
-// A compilation error at this line likely means your copy of the
-// proto package needs to be updated.
-const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.GoGoProtoPackageIsVersion1
 
 type Nil struct {
 	XXX_unrecognized []byte `json:"-"`
@@ -47,19 +48,19 @@ func (*Nil) ProtoMessage()               {}
 func (*Nil) Descriptor() ([]byte, []int) { return fileDescriptorFuzz, []int{0} }
 
 type NinRepPackedNative struct {
-	Field1           []float64 `protobuf:"fixed64,1,rep,packed,name=Field1" json:"Field1,omitempty"`
-	Field2           []float32 `protobuf:"fixed32,2,rep,packed,name=Field2" json:"Field2,omitempty"`
-	Field3           []int32   `protobuf:"varint,3,rep,packed,name=Field3" json:"Field3,omitempty"`
-	Field4           []int64   `protobuf:"varint,4,rep,packed,name=Field4" json:"Field4,omitempty"`
-	Field5           []uint32  `protobuf:"varint,5,rep,packed,name=Field5" json:"Field5,omitempty"`
-	Field6           []uint64  `protobuf:"varint,6,rep,packed,name=Field6" json:"Field6,omitempty"`
-	Field7           []int32   `protobuf:"zigzag32,7,rep,packed,name=Field7" json:"Field7,omitempty"`
-	Field8           []int64   `protobuf:"zigzag64,8,rep,packed,name=Field8" json:"Field8,omitempty"`
-	Field9           []uint32  `protobuf:"fixed32,9,rep,packed,name=Field9" json:"Field9,omitempty"`
-	Field10          []int32   `protobuf:"fixed32,10,rep,packed,name=Field10" json:"Field10,omitempty"`
-	Field11          []uint64  `protobuf:"fixed64,11,rep,packed,name=Field11" json:"Field11,omitempty"`
-	Field12          []int64   `protobuf:"fixed64,12,rep,packed,name=Field12" json:"Field12,omitempty"`
-	Field13          []bool    `protobuf:"varint,13,rep,packed,name=Field13" json:"Field13,omitempty"`
+	Field1           []float64 `protobuf:"fixed64,1,rep,packed,name=Field1,json=field1" json:"Field1,omitempty"`
+	Field2           []float32 `protobuf:"fixed32,2,rep,packed,name=Field2,json=field2" json:"Field2,omitempty"`
+	Field3           []int32   `protobuf:"varint,3,rep,packed,name=Field3,json=field3" json:"Field3,omitempty"`
+	Field4           []int64   `protobuf:"varint,4,rep,packed,name=Field4,json=field4" json:"Field4,omitempty"`
+	Field5           []uint32  `protobuf:"varint,5,rep,packed,name=Field5,json=field5" json:"Field5,omitempty"`
+	Field6           []uint64  `protobuf:"varint,6,rep,packed,name=Field6,json=field6" json:"Field6,omitempty"`
+	Field7           []int32   `protobuf:"zigzag32,7,rep,packed,name=Field7,json=field7" json:"Field7,omitempty"`
+	Field8           []int64   `protobuf:"zigzag64,8,rep,packed,name=Field8,json=field8" json:"Field8,omitempty"`
+	Field9           []uint32  `protobuf:"fixed32,9,rep,packed,name=Field9,json=field9" json:"Field9,omitempty"`
+	Field10          []int32   `protobuf:"fixed32,10,rep,packed,name=Field10,json=field10" json:"Field10,omitempty"`
+	Field11          []uint64  `protobuf:"fixed64,11,rep,packed,name=Field11,json=field11" json:"Field11,omitempty"`
+	Field12          []int64   `protobuf:"fixed64,12,rep,packed,name=Field12,json=field12" json:"Field12,omitempty"`
+	Field13          []bool    `protobuf:"varint,13,rep,packed,name=Field13,json=field13" json:"Field13,omitempty"`
 	XXX_unrecognized []byte    `json:"-"`
 }
 
@@ -160,21 +161,21 @@ func (m *NinRepPackedNative) GetField13() []bool {
 }
 
 type NinOptNative struct {
-	Field1           *float64 `protobuf:"fixed64,1,opt,name=Field1" json:"Field1,omitempty"`
-	Field2           *float32 `protobuf:"fixed32,2,opt,name=Field2" json:"Field2,omitempty"`
-	Field3           *int32   `protobuf:"varint,3,opt,name=Field3" json:"Field3,omitempty"`
-	Field4           *int64   `protobuf:"varint,4,opt,name=Field4" json:"Field4,omitempty"`
-	Field5           *uint32  `protobuf:"varint,5,opt,name=Field5" json:"Field5,omitempty"`
-	Field6           *uint64  `protobuf:"varint,6,opt,name=Field6" json:"Field6,omitempty"`
-	Field7           *int32   `protobuf:"zigzag32,7,opt,name=Field7" json:"Field7,omitempty"`
-	Field8           *int64   `protobuf:"zigzag64,8,opt,name=Field8" json:"Field8,omitempty"`
-	Field9           *uint32  `protobuf:"fixed32,9,opt,name=Field9" json:"Field9,omitempty"`
-	Field10          *int32   `protobuf:"fixed32,10,opt,name=Field10" json:"Field10,omitempty"`
-	Field11          *uint64  `protobuf:"fixed64,11,opt,name=Field11" json:"Field11,omitempty"`
-	Field12          *int64   `protobuf:"fixed64,12,opt,name=Field12" json:"Field12,omitempty"`
-	Field13          *bool    `protobuf:"varint,13,opt,name=Field13" json:"Field13,omitempty"`
-	Field14          *string  `protobuf:"bytes,14,opt,name=Field14" json:"Field14,omitempty"`
-	Field15          []byte   `protobuf:"bytes,15,opt,name=Field15" json:"Field15,omitempty"`
+	Field1           *float64 `protobuf:"fixed64,1,opt,name=Field1,json=field1" json:"Field1,omitempty"`
+	Field2           *float32 `protobuf:"fixed32,2,opt,name=Field2,json=field2" json:"Field2,omitempty"`
+	Field3           *int32   `protobuf:"varint,3,opt,name=Field3,json=field3" json:"Field3,omitempty"`
+	Field4           *int64   `protobuf:"varint,4,opt,name=Field4,json=field4" json:"Field4,omitempty"`
+	Field5           *uint32  `protobuf:"varint,5,opt,name=Field5,json=field5" json:"Field5,omitempty"`
+	Field6           *uint64  `protobuf:"varint,6,opt,name=Field6,json=field6" json:"Field6,omitempty"`
+	Field7           *int32   `protobuf:"zigzag32,7,opt,name=Field7,json=field7" json:"Field7,omitempty"`
+	Field8           *int64   `protobuf:"zigzag64,8,opt,name=Field8,json=field8" json:"Field8,omitempty"`
+	Field9           *uint32  `protobuf:"fixed32,9,opt,name=Field9,json=field9" json:"Field9,omitempty"`
+	Field10          *int32   `protobuf:"fixed32,10,opt,name=Field10,json=field10" json:"Field10,omitempty"`
+	Field11          *uint64  `protobuf:"fixed64,11,opt,name=Field11,json=field11" json:"Field11,omitempty"`
+	Field12          *int64   `protobuf:"fixed64,12,opt,name=Field12,json=field12" json:"Field12,omitempty"`
+	Field13          *bool    `protobuf:"varint,13,opt,name=Field13,json=field13" json:"Field13,omitempty"`
+	Field14          *string  `protobuf:"bytes,14,opt,name=Field14,json=field14" json:"Field14,omitempty"`
+	Field15          []byte   `protobuf:"bytes,15,opt,name=Field15,json=field15" json:"Field15,omitempty"`
 	XXX_unrecognized []byte   `json:"-"`
 }
 
@@ -289,16 +290,16 @@ func (m *NinOptNative) GetField15() []byte {
 }
 
 type NinOptStruct struct {
-	Field1           *float64      `protobuf:"fixed64,1,opt,name=Field1" json:"Field1,omitempty"`
-	Field2           *float32      `protobuf:"fixed32,2,opt,name=Field2" json:"Field2,omitempty"`
-	Field3           *NinOptNative `protobuf:"bytes,3,opt,name=Field3" json:"Field3,omitempty"`
-	Field4           *NinOptNative `protobuf:"bytes,4,opt,name=Field4" json:"Field4,omitempty"`
-	Field6           *uint64       `protobuf:"varint,6,opt,name=Field6" json:"Field6,omitempty"`
-	Field7           *int32        `protobuf:"zigzag32,7,opt,name=Field7" json:"Field7,omitempty"`
-	Field8           *NinOptNative `protobuf:"bytes,8,opt,name=Field8" json:"Field8,omitempty"`
-	Field13          *bool         `protobuf:"varint,13,opt,name=Field13" json:"Field13,omitempty"`
-	Field14          *string       `protobuf:"bytes,14,opt,name=Field14" json:"Field14,omitempty"`
-	Field15          []byte        `protobuf:"bytes,15,opt,name=Field15" json:"Field15,omitempty"`
+	Field1           *float64      `protobuf:"fixed64,1,opt,name=Field1,json=field1" json:"Field1,omitempty"`
+	Field2           *float32      `protobuf:"fixed32,2,opt,name=Field2,json=field2" json:"Field2,omitempty"`
+	Field3           *NinOptNative `protobuf:"bytes,3,opt,name=Field3,json=field3" json:"Field3,omitempty"`
+	Field4           *NinOptNative `protobuf:"bytes,4,opt,name=Field4,json=field4" json:"Field4,omitempty"`
+	Field6           *uint64       `protobuf:"varint,6,opt,name=Field6,json=field6" json:"Field6,omitempty"`
+	Field7           *int32        `protobuf:"zigzag32,7,opt,name=Field7,json=field7" json:"Field7,omitempty"`
+	Field8           *NinOptNative `protobuf:"bytes,8,opt,name=Field8,json=field8" json:"Field8,omitempty"`
+	Field13          *bool         `protobuf:"varint,13,opt,name=Field13,json=field13" json:"Field13,omitempty"`
+	Field14          *string       `protobuf:"bytes,14,opt,name=Field14,json=field14" json:"Field14,omitempty"`
+	Field15          []byte        `protobuf:"bytes,15,opt,name=Field15,json=field15" json:"Field15,omitempty"`
 	XXX_unrecognized []byte        `json:"-"`
 }
 
@@ -553,504 +554,521 @@ func valueToGoStringFuzz(v interface{}, typ string) string {
 	pv := reflect.Indirect(rv).Interface()
 	return fmt.Sprintf("func(v %v) *%v { return &v } ( %#v )", typ, typ, pv)
 }
-func (m *Nil) Marshal() (dAtA []byte, err error) {
+func extensionToGoStringFuzz(e map[int32]github_com_gogo_protobuf_proto.Extension) string {
+	if e == nil {
+		return "nil"
+	}
+	s := "map[int32]proto.Extension{"
+	keys := make([]int, 0, len(e))
+	for k := range e {
+		keys = append(keys, int(k))
+	}
+	sort.Ints(keys)
+	ss := []string{}
+	for _, k := range keys {
+		ss = append(ss, strconv.Itoa(k)+": "+e[int32(k)].GoString())
+	}
+	s += strings.Join(ss, ",") + "}"
+	return s
+}
+func (m *Nil) Marshal() (data []byte, err error) {
 	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
 	if err != nil {
 		return nil, err
 	}
-	return dAtA[:n], nil
+	return data[:n], nil
 }
 
-func (m *Nil) MarshalTo(dAtA []byte) (int, error) {
+func (m *Nil) MarshalTo(data []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func (m *NinRepPackedNative) Marshal() (dAtA []byte, err error) {
+func (m *NinRepPackedNative) Marshal() (data []byte, err error) {
 	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
 	if err != nil {
 		return nil, err
 	}
-	return dAtA[:n], nil
+	return data[:n], nil
 }
 
-func (m *NinRepPackedNative) MarshalTo(dAtA []byte) (int, error) {
+func (m *NinRepPackedNative) MarshalTo(data []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
 	if len(m.Field1) > 0 {
-		dAtA[i] = 0xa
+		data[i] = 0xa
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field1)*8))
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field1)*8))
 		for _, num := range m.Field1 {
 			f1 := math.Float64bits(float64(num))
-			dAtA[i] = uint8(f1)
+			data[i] = uint8(f1)
 			i++
-			dAtA[i] = uint8(f1 >> 8)
+			data[i] = uint8(f1 >> 8)
 			i++
-			dAtA[i] = uint8(f1 >> 16)
+			data[i] = uint8(f1 >> 16)
 			i++
-			dAtA[i] = uint8(f1 >> 24)
+			data[i] = uint8(f1 >> 24)
 			i++
-			dAtA[i] = uint8(f1 >> 32)
+			data[i] = uint8(f1 >> 32)
 			i++
-			dAtA[i] = uint8(f1 >> 40)
+			data[i] = uint8(f1 >> 40)
 			i++
-			dAtA[i] = uint8(f1 >> 48)
+			data[i] = uint8(f1 >> 48)
 			i++
-			dAtA[i] = uint8(f1 >> 56)
+			data[i] = uint8(f1 >> 56)
 			i++
 		}
 	}
 	if len(m.Field2) > 0 {
-		dAtA[i] = 0x12
+		data[i] = 0x12
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field2)*4))
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field2)*4))
 		for _, num := range m.Field2 {
 			f2 := math.Float32bits(float32(num))
-			dAtA[i] = uint8(f2)
+			data[i] = uint8(f2)
 			i++
-			dAtA[i] = uint8(f2 >> 8)
+			data[i] = uint8(f2 >> 8)
 			i++
-			dAtA[i] = uint8(f2 >> 16)
+			data[i] = uint8(f2 >> 16)
 			i++
-			dAtA[i] = uint8(f2 >> 24)
+			data[i] = uint8(f2 >> 24)
 			i++
 		}
 	}
 	if len(m.Field3) > 0 {
-		dAtA4 := make([]byte, len(m.Field3)*10)
+		data4 := make([]byte, len(m.Field3)*10)
 		var j3 int
 		for _, num1 := range m.Field3 {
 			num := uint64(num1)
 			for num >= 1<<7 {
-				dAtA4[j3] = uint8(uint64(num)&0x7f | 0x80)
+				data4[j3] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
 				j3++
 			}
-			dAtA4[j3] = uint8(num)
+			data4[j3] = uint8(num)
 			j3++
 		}
-		dAtA[i] = 0x1a
+		data[i] = 0x1a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(j3))
-		i += copy(dAtA[i:], dAtA4[:j3])
+		i = encodeVarintFuzz(data, i, uint64(j3))
+		i += copy(data[i:], data4[:j3])
 	}
 	if len(m.Field4) > 0 {
-		dAtA6 := make([]byte, len(m.Field4)*10)
+		data6 := make([]byte, len(m.Field4)*10)
 		var j5 int
 		for _, num1 := range m.Field4 {
 			num := uint64(num1)
 			for num >= 1<<7 {
-				dAtA6[j5] = uint8(uint64(num)&0x7f | 0x80)
+				data6[j5] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
 				j5++
 			}
-			dAtA6[j5] = uint8(num)
+			data6[j5] = uint8(num)
 			j5++
 		}
-		dAtA[i] = 0x22
+		data[i] = 0x22
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(j5))
-		i += copy(dAtA[i:], dAtA6[:j5])
+		i = encodeVarintFuzz(data, i, uint64(j5))
+		i += copy(data[i:], data6[:j5])
 	}
 	if len(m.Field5) > 0 {
-		dAtA8 := make([]byte, len(m.Field5)*10)
+		data8 := make([]byte, len(m.Field5)*10)
 		var j7 int
 		for _, num := range m.Field5 {
 			for num >= 1<<7 {
-				dAtA8[j7] = uint8(uint64(num)&0x7f | 0x80)
+				data8[j7] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
 				j7++
 			}
-			dAtA8[j7] = uint8(num)
+			data8[j7] = uint8(num)
 			j7++
 		}
-		dAtA[i] = 0x2a
+		data[i] = 0x2a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(j7))
-		i += copy(dAtA[i:], dAtA8[:j7])
+		i = encodeVarintFuzz(data, i, uint64(j7))
+		i += copy(data[i:], data8[:j7])
 	}
 	if len(m.Field6) > 0 {
-		dAtA10 := make([]byte, len(m.Field6)*10)
+		data10 := make([]byte, len(m.Field6)*10)
 		var j9 int
 		for _, num := range m.Field6 {
 			for num >= 1<<7 {
-				dAtA10[j9] = uint8(uint64(num)&0x7f | 0x80)
+				data10[j9] = uint8(uint64(num)&0x7f | 0x80)
 				num >>= 7
 				j9++
 			}
-			dAtA10[j9] = uint8(num)
+			data10[j9] = uint8(num)
 			j9++
 		}
-		dAtA[i] = 0x32
+		data[i] = 0x32
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(j9))
-		i += copy(dAtA[i:], dAtA10[:j9])
+		i = encodeVarintFuzz(data, i, uint64(j9))
+		i += copy(data[i:], data10[:j9])
 	}
 	if len(m.Field7) > 0 {
-		dAtA11 := make([]byte, len(m.Field7)*5)
+		data11 := make([]byte, len(m.Field7)*5)
 		var j12 int
 		for _, num := range m.Field7 {
 			x13 := (uint32(num) << 1) ^ uint32((num >> 31))
 			for x13 >= 1<<7 {
-				dAtA11[j12] = uint8(uint64(x13)&0x7f | 0x80)
+				data11[j12] = uint8(uint64(x13)&0x7f | 0x80)
 				j12++
 				x13 >>= 7
 			}
-			dAtA11[j12] = uint8(x13)
+			data11[j12] = uint8(x13)
 			j12++
 		}
-		dAtA[i] = 0x3a
+		data[i] = 0x3a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(j12))
-		i += copy(dAtA[i:], dAtA11[:j12])
+		i = encodeVarintFuzz(data, i, uint64(j12))
+		i += copy(data[i:], data11[:j12])
 	}
 	if len(m.Field8) > 0 {
 		var j14 int
-		dAtA16 := make([]byte, len(m.Field8)*10)
+		data16 := make([]byte, len(m.Field8)*10)
 		for _, num := range m.Field8 {
 			x15 := (uint64(num) << 1) ^ uint64((num >> 63))
 			for x15 >= 1<<7 {
-				dAtA16[j14] = uint8(uint64(x15)&0x7f | 0x80)
+				data16[j14] = uint8(uint64(x15)&0x7f | 0x80)
 				j14++
 				x15 >>= 7
 			}
-			dAtA16[j14] = uint8(x15)
+			data16[j14] = uint8(x15)
 			j14++
 		}
-		dAtA[i] = 0x42
+		data[i] = 0x42
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(j14))
-		i += copy(dAtA[i:], dAtA16[:j14])
+		i = encodeVarintFuzz(data, i, uint64(j14))
+		i += copy(data[i:], data16[:j14])
 	}
 	if len(m.Field9) > 0 {
-		dAtA[i] = 0x4a
+		data[i] = 0x4a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field9)*4))
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field9)*4))
 		for _, num := range m.Field9 {
-			dAtA[i] = uint8(num)
+			data[i] = uint8(num)
 			i++
-			dAtA[i] = uint8(num >> 8)
+			data[i] = uint8(num >> 8)
 			i++
-			dAtA[i] = uint8(num >> 16)
+			data[i] = uint8(num >> 16)
 			i++
-			dAtA[i] = uint8(num >> 24)
+			data[i] = uint8(num >> 24)
 			i++
 		}
 	}
 	if len(m.Field10) > 0 {
-		dAtA[i] = 0x52
+		data[i] = 0x52
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field10)*4))
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field10)*4))
 		for _, num := range m.Field10 {
-			dAtA[i] = uint8(num)
+			data[i] = uint8(num)
 			i++
-			dAtA[i] = uint8(num >> 8)
+			data[i] = uint8(num >> 8)
 			i++
-			dAtA[i] = uint8(num >> 16)
+			data[i] = uint8(num >> 16)
 			i++
-			dAtA[i] = uint8(num >> 24)
+			data[i] = uint8(num >> 24)
 			i++
 		}
 	}
 	if len(m.Field11) > 0 {
-		dAtA[i] = 0x5a
+		data[i] = 0x5a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field11)*8))
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field11)*8))
 		for _, num := range m.Field11 {
-			dAtA[i] = uint8(num)
+			data[i] = uint8(num)
 			i++
-			dAtA[i] = uint8(num >> 8)
+			data[i] = uint8(num >> 8)
 			i++
-			dAtA[i] = uint8(num >> 16)
+			data[i] = uint8(num >> 16)
 			i++
-			dAtA[i] = uint8(num >> 24)
+			data[i] = uint8(num >> 24)
 			i++
-			dAtA[i] = uint8(num >> 32)
+			data[i] = uint8(num >> 32)
 			i++
-			dAtA[i] = uint8(num >> 40)
+			data[i] = uint8(num >> 40)
 			i++
-			dAtA[i] = uint8(num >> 48)
+			data[i] = uint8(num >> 48)
 			i++
-			dAtA[i] = uint8(num >> 56)
+			data[i] = uint8(num >> 56)
 			i++
 		}
 	}
 	if len(m.Field12) > 0 {
-		dAtA[i] = 0x62
+		data[i] = 0x62
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field12)*8))
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field12)*8))
 		for _, num := range m.Field12 {
-			dAtA[i] = uint8(num)
+			data[i] = uint8(num)
 			i++
-			dAtA[i] = uint8(num >> 8)
+			data[i] = uint8(num >> 8)
 			i++
-			dAtA[i] = uint8(num >> 16)
+			data[i] = uint8(num >> 16)
 			i++
-			dAtA[i] = uint8(num >> 24)
+			data[i] = uint8(num >> 24)
 			i++
-			dAtA[i] = uint8(num >> 32)
+			data[i] = uint8(num >> 32)
 			i++
-			dAtA[i] = uint8(num >> 40)
+			data[i] = uint8(num >> 40)
 			i++
-			dAtA[i] = uint8(num >> 48)
+			data[i] = uint8(num >> 48)
 			i++
-			dAtA[i] = uint8(num >> 56)
+			data[i] = uint8(num >> 56)
 			i++
 		}
 	}
 	if len(m.Field13) > 0 {
-		dAtA[i] = 0x6a
+		data[i] = 0x6a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field13)))
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field13)))
 		for _, b := range m.Field13 {
 			if b {
-				dAtA[i] = 1
+				data[i] = 1
 			} else {
-				dAtA[i] = 0
+				data[i] = 0
 			}
 			i++
 		}
 	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func (m *NinOptNative) Marshal() (dAtA []byte, err error) {
+func (m *NinOptNative) Marshal() (data []byte, err error) {
 	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
 	if err != nil {
 		return nil, err
 	}
-	return dAtA[:n], nil
+	return data[:n], nil
 }
 
-func (m *NinOptNative) MarshalTo(dAtA []byte) (int, error) {
+func (m *NinOptNative) MarshalTo(data []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
 	if m.Field1 != nil {
-		dAtA[i] = 0x9
+		data[i] = 0x9
 		i++
-		i = encodeFixed64Fuzz(dAtA, i, uint64(math.Float64bits(float64(*m.Field1))))
+		i = encodeFixed64Fuzz(data, i, uint64(math.Float64bits(float64(*m.Field1))))
 	}
 	if m.Field2 != nil {
-		dAtA[i] = 0x15
+		data[i] = 0x15
 		i++
-		i = encodeFixed32Fuzz(dAtA, i, uint32(math.Float32bits(float32(*m.Field2))))
+		i = encodeFixed32Fuzz(data, i, uint32(math.Float32bits(float32(*m.Field2))))
 	}
 	if m.Field3 != nil {
-		dAtA[i] = 0x18
+		data[i] = 0x18
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(*m.Field3))
+		i = encodeVarintFuzz(data, i, uint64(*m.Field3))
 	}
 	if m.Field4 != nil {
-		dAtA[i] = 0x20
+		data[i] = 0x20
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(*m.Field4))
+		i = encodeVarintFuzz(data, i, uint64(*m.Field4))
 	}
 	if m.Field5 != nil {
-		dAtA[i] = 0x28
+		data[i] = 0x28
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(*m.Field5))
+		i = encodeVarintFuzz(data, i, uint64(*m.Field5))
 	}
 	if m.Field6 != nil {
-		dAtA[i] = 0x30
+		data[i] = 0x30
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(*m.Field6))
+		i = encodeVarintFuzz(data, i, uint64(*m.Field6))
 	}
 	if m.Field7 != nil {
-		dAtA[i] = 0x38
+		data[i] = 0x38
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64((uint32(*m.Field7)<<1)^uint32((*m.Field7>>31))))
+		i = encodeVarintFuzz(data, i, uint64((uint32(*m.Field7)<<1)^uint32((*m.Field7>>31))))
 	}
 	if m.Field8 != nil {
-		dAtA[i] = 0x40
+		data[i] = 0x40
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64((uint64(*m.Field8)<<1)^uint64((*m.Field8>>63))))
+		i = encodeVarintFuzz(data, i, uint64((uint64(*m.Field8)<<1)^uint64((*m.Field8>>63))))
 	}
 	if m.Field9 != nil {
-		dAtA[i] = 0x4d
+		data[i] = 0x4d
 		i++
-		i = encodeFixed32Fuzz(dAtA, i, uint32(*m.Field9))
+		i = encodeFixed32Fuzz(data, i, uint32(*m.Field9))
 	}
 	if m.Field10 != nil {
-		dAtA[i] = 0x55
+		data[i] = 0x55
 		i++
-		i = encodeFixed32Fuzz(dAtA, i, uint32(*m.Field10))
+		i = encodeFixed32Fuzz(data, i, uint32(*m.Field10))
 	}
 	if m.Field11 != nil {
-		dAtA[i] = 0x59
+		data[i] = 0x59
 		i++
-		i = encodeFixed64Fuzz(dAtA, i, uint64(*m.Field11))
+		i = encodeFixed64Fuzz(data, i, uint64(*m.Field11))
 	}
 	if m.Field12 != nil {
-		dAtA[i] = 0x61
+		data[i] = 0x61
 		i++
-		i = encodeFixed64Fuzz(dAtA, i, uint64(*m.Field12))
+		i = encodeFixed64Fuzz(data, i, uint64(*m.Field12))
 	}
 	if m.Field13 != nil {
-		dAtA[i] = 0x68
+		data[i] = 0x68
 		i++
 		if *m.Field13 {
-			dAtA[i] = 1
+			data[i] = 1
 		} else {
-			dAtA[i] = 0
+			data[i] = 0
 		}
 		i++
 	}
 	if m.Field14 != nil {
-		dAtA[i] = 0x72
+		data[i] = 0x72
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(*m.Field14)))
-		i += copy(dAtA[i:], *m.Field14)
+		i = encodeVarintFuzz(data, i, uint64(len(*m.Field14)))
+		i += copy(data[i:], *m.Field14)
 	}
 	if m.Field15 != nil {
-		dAtA[i] = 0x7a
+		data[i] = 0x7a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field15)))
-		i += copy(dAtA[i:], m.Field15)
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field15)))
+		i += copy(data[i:], m.Field15)
 	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func (m *NinOptStruct) Marshal() (dAtA []byte, err error) {
+func (m *NinOptStruct) Marshal() (data []byte, err error) {
 	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	data = make([]byte, size)
+	n, err := m.MarshalTo(data)
 	if err != nil {
 		return nil, err
 	}
-	return dAtA[:n], nil
+	return data[:n], nil
 }
 
-func (m *NinOptStruct) MarshalTo(dAtA []byte) (int, error) {
+func (m *NinOptStruct) MarshalTo(data []byte) (int, error) {
 	var i int
 	_ = i
 	var l int
 	_ = l
 	if m.Field1 != nil {
-		dAtA[i] = 0x9
+		data[i] = 0x9
 		i++
-		i = encodeFixed64Fuzz(dAtA, i, uint64(math.Float64bits(float64(*m.Field1))))
+		i = encodeFixed64Fuzz(data, i, uint64(math.Float64bits(float64(*m.Field1))))
 	}
 	if m.Field2 != nil {
-		dAtA[i] = 0x15
+		data[i] = 0x15
 		i++
-		i = encodeFixed32Fuzz(dAtA, i, uint32(math.Float32bits(float32(*m.Field2))))
+		i = encodeFixed32Fuzz(data, i, uint32(math.Float32bits(float32(*m.Field2))))
 	}
 	if m.Field3 != nil {
-		dAtA[i] = 0x1a
+		data[i] = 0x1a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(m.Field3.Size()))
-		n17, err := m.Field3.MarshalTo(dAtA[i:])
+		i = encodeVarintFuzz(data, i, uint64(m.Field3.Size()))
+		n17, err := m.Field3.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n17
 	}
 	if m.Field4 != nil {
-		dAtA[i] = 0x22
+		data[i] = 0x22
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(m.Field4.Size()))
-		n18, err := m.Field4.MarshalTo(dAtA[i:])
+		i = encodeVarintFuzz(data, i, uint64(m.Field4.Size()))
+		n18, err := m.Field4.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n18
 	}
 	if m.Field6 != nil {
-		dAtA[i] = 0x30
+		data[i] = 0x30
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(*m.Field6))
+		i = encodeVarintFuzz(data, i, uint64(*m.Field6))
 	}
 	if m.Field7 != nil {
-		dAtA[i] = 0x38
+		data[i] = 0x38
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64((uint32(*m.Field7)<<1)^uint32((*m.Field7>>31))))
+		i = encodeVarintFuzz(data, i, uint64((uint32(*m.Field7)<<1)^uint32((*m.Field7>>31))))
 	}
 	if m.Field8 != nil {
-		dAtA[i] = 0x42
+		data[i] = 0x42
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(m.Field8.Size()))
-		n19, err := m.Field8.MarshalTo(dAtA[i:])
+		i = encodeVarintFuzz(data, i, uint64(m.Field8.Size()))
+		n19, err := m.Field8.MarshalTo(data[i:])
 		if err != nil {
 			return 0, err
 		}
 		i += n19
 	}
 	if m.Field13 != nil {
-		dAtA[i] = 0x68
+		data[i] = 0x68
 		i++
 		if *m.Field13 {
-			dAtA[i] = 1
+			data[i] = 1
 		} else {
-			dAtA[i] = 0
+			data[i] = 0
 		}
 		i++
 	}
 	if m.Field14 != nil {
-		dAtA[i] = 0x72
+		data[i] = 0x72
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(*m.Field14)))
-		i += copy(dAtA[i:], *m.Field14)
+		i = encodeVarintFuzz(data, i, uint64(len(*m.Field14)))
+		i += copy(data[i:], *m.Field14)
 	}
 	if m.Field15 != nil {
-		dAtA[i] = 0x7a
+		data[i] = 0x7a
 		i++
-		i = encodeVarintFuzz(dAtA, i, uint64(len(m.Field15)))
-		i += copy(dAtA[i:], m.Field15)
+		i = encodeVarintFuzz(data, i, uint64(len(m.Field15)))
+		i += copy(data[i:], m.Field15)
 	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i += copy(data[i:], m.XXX_unrecognized)
 	}
 	return i, nil
 }
 
-func encodeFixed64Fuzz(dAtA []byte, offset int, v uint64) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
-	dAtA[offset+4] = uint8(v >> 32)
-	dAtA[offset+5] = uint8(v >> 40)
-	dAtA[offset+6] = uint8(v >> 48)
-	dAtA[offset+7] = uint8(v >> 56)
+func encodeFixed64Fuzz(data []byte, offset int, v uint64) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
+	data[offset+4] = uint8(v >> 32)
+	data[offset+5] = uint8(v >> 40)
+	data[offset+6] = uint8(v >> 48)
+	data[offset+7] = uint8(v >> 56)
 	return offset + 8
 }
-func encodeFixed32Fuzz(dAtA []byte, offset int, v uint32) int {
-	dAtA[offset] = uint8(v)
-	dAtA[offset+1] = uint8(v >> 8)
-	dAtA[offset+2] = uint8(v >> 16)
-	dAtA[offset+3] = uint8(v >> 24)
+func encodeFixed32Fuzz(data []byte, offset int, v uint32) int {
+	data[offset] = uint8(v)
+	data[offset+1] = uint8(v >> 8)
+	data[offset+2] = uint8(v >> 16)
+	data[offset+3] = uint8(v >> 24)
 	return offset + 4
 }
-func encodeVarintFuzz(dAtA []byte, offset int, v uint64) int {
+func encodeVarintFuzz(data []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
-		dAtA[offset] = uint8(v&0x7f | 0x80)
+		data[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
-	dAtA[offset] = uint8(v)
+	data[offset] = uint8(v)
 	return offset + 1
 }
 func (m *Nil) Size() (n int) {
@@ -1247,8 +1265,8 @@ func sovFuzz(x uint64) (n int) {
 func sozFuzz(x uint64) (n int) {
 	return sovFuzz(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *Nil) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
+func (m *Nil) Unmarshal(data []byte) error {
+	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
 		preIndex := iNdEx
@@ -1260,7 +1278,7 @@ func (m *Nil) Unmarshal(dAtA []byte) error {
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
-			b := dAtA[iNdEx]
+			b := data[iNdEx]
 			iNdEx++
 			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
@@ -1278,7 +1296,7 @@ func (m *Nil) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		default:
 			iNdEx = preIndex
-			skippy, err := skipFuzz(dAtA[iNdEx:])
+			skippy, err := skipFuzz(data[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -1288,7 +1306,7 @@ func (m *Nil) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -1298,8 +1316,8 @@ func (m *Nil) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
+func (m *NinRepPackedNative) Unmarshal(data []byte) error {
+	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
 		preIndex := iNdEx
@@ -1311,7 +1329,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
-			b := dAtA[iNdEx]
+			b := data[iNdEx]
 			iNdEx++
 			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
@@ -1328,23 +1346,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType == 1 {
-				var v uint64
-				if (iNdEx + 8) > l {
-					return io.ErrUnexpectedEOF
-				}
-				iNdEx += 8
-				v = uint64(dAtA[iNdEx-8])
-				v |= uint64(dAtA[iNdEx-7]) << 8
-				v |= uint64(dAtA[iNdEx-6]) << 16
-				v |= uint64(dAtA[iNdEx-5]) << 24
-				v |= uint64(dAtA[iNdEx-4]) << 32
-				v |= uint64(dAtA[iNdEx-3]) << 40
-				v |= uint64(dAtA[iNdEx-2]) << 48
-				v |= uint64(dAtA[iNdEx-1]) << 56
-				v2 := float64(math.Float64frombits(v))
-				m.Field1 = append(m.Field1, v2)
-			} else if wireType == 2 {
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1353,7 +1355,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1373,34 +1375,38 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						return io.ErrUnexpectedEOF
 					}
 					iNdEx += 8
-					v = uint64(dAtA[iNdEx-8])
-					v |= uint64(dAtA[iNdEx-7]) << 8
-					v |= uint64(dAtA[iNdEx-6]) << 16
-					v |= uint64(dAtA[iNdEx-5]) << 24
-					v |= uint64(dAtA[iNdEx-4]) << 32
-					v |= uint64(dAtA[iNdEx-3]) << 40
-					v |= uint64(dAtA[iNdEx-2]) << 48
-					v |= uint64(dAtA[iNdEx-1]) << 56
+					v = uint64(data[iNdEx-8])
+					v |= uint64(data[iNdEx-7]) << 8
+					v |= uint64(data[iNdEx-6]) << 16
+					v |= uint64(data[iNdEx-5]) << 24
+					v |= uint64(data[iNdEx-4]) << 32
+					v |= uint64(data[iNdEx-3]) << 40
+					v |= uint64(data[iNdEx-2]) << 48
+					v |= uint64(data[iNdEx-1]) << 56
 					v2 := float64(math.Float64frombits(v))
 					m.Field1 = append(m.Field1, v2)
 				}
+			} else if wireType == 1 {
+				var v uint64
+				if (iNdEx + 8) > l {
+					return io.ErrUnexpectedEOF
+				}
+				iNdEx += 8
+				v = uint64(data[iNdEx-8])
+				v |= uint64(data[iNdEx-7]) << 8
+				v |= uint64(data[iNdEx-6]) << 16
+				v |= uint64(data[iNdEx-5]) << 24
+				v |= uint64(data[iNdEx-4]) << 32
+				v |= uint64(data[iNdEx-3]) << 40
+				v |= uint64(data[iNdEx-2]) << 48
+				v |= uint64(data[iNdEx-1]) << 56
+				v2 := float64(math.Float64frombits(v))
+				m.Field1 = append(m.Field1, v2)
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field Field1", wireType)
 			}
 		case 2:
-			if wireType == 5 {
-				var v uint32
-				if (iNdEx + 4) > l {
-					return io.ErrUnexpectedEOF
-				}
-				iNdEx += 4
-				v = uint32(dAtA[iNdEx-4])
-				v |= uint32(dAtA[iNdEx-3]) << 8
-				v |= uint32(dAtA[iNdEx-2]) << 16
-				v |= uint32(dAtA[iNdEx-1]) << 24
-				v2 := float32(math.Float32frombits(v))
-				m.Field2 = append(m.Field2, v2)
-			} else if wireType == 2 {
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1409,7 +1415,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1429,35 +1435,30 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						return io.ErrUnexpectedEOF
 					}
 					iNdEx += 4
-					v = uint32(dAtA[iNdEx-4])
-					v |= uint32(dAtA[iNdEx-3]) << 8
-					v |= uint32(dAtA[iNdEx-2]) << 16
-					v |= uint32(dAtA[iNdEx-1]) << 24
+					v = uint32(data[iNdEx-4])
+					v |= uint32(data[iNdEx-3]) << 8
+					v |= uint32(data[iNdEx-2]) << 16
+					v |= uint32(data[iNdEx-1]) << 24
 					v2 := float32(math.Float32frombits(v))
 					m.Field2 = append(m.Field2, v2)
 				}
+			} else if wireType == 5 {
+				var v uint32
+				if (iNdEx + 4) > l {
+					return io.ErrUnexpectedEOF
+				}
+				iNdEx += 4
+				v = uint32(data[iNdEx-4])
+				v |= uint32(data[iNdEx-3]) << 8
+				v |= uint32(data[iNdEx-2]) << 16
+				v |= uint32(data[iNdEx-1]) << 24
+				v2 := float32(math.Float32frombits(v))
+				m.Field2 = append(m.Field2, v2)
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field Field2", wireType)
 			}
 		case 3:
-			if wireType == 0 {
-				var v int32
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowFuzz
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= (int32(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				m.Field3 = append(m.Field3, v)
-			} else if wireType == 2 {
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1466,7 +1467,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1489,7 +1490,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						if iNdEx >= l {
 							return io.ErrUnexpectedEOF
 						}
-						b := dAtA[iNdEx]
+						b := data[iNdEx]
 						iNdEx++
 						v |= (int32(b) & 0x7F) << shift
 						if b < 0x80 {
@@ -1498,12 +1499,8 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					}
 					m.Field3 = append(m.Field3, v)
 				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field Field3", wireType)
-			}
-		case 4:
-			if wireType == 0 {
-				var v int64
+			} else if wireType == 0 {
+				var v int32
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflowFuzz
@@ -1511,15 +1508,19 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
-					v |= (int64(b) & 0x7F) << shift
+					v |= (int32(b) & 0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				m.Field4 = append(m.Field4, v)
-			} else if wireType == 2 {
+				m.Field3 = append(m.Field3, v)
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field3", wireType)
+			}
+		case 4:
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1528,7 +1529,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1551,7 +1552,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						if iNdEx >= l {
 							return io.ErrUnexpectedEOF
 						}
-						b := dAtA[iNdEx]
+						b := data[iNdEx]
 						iNdEx++
 						v |= (int64(b) & 0x7F) << shift
 						if b < 0x80 {
@@ -1560,12 +1561,8 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					}
 					m.Field4 = append(m.Field4, v)
 				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field Field4", wireType)
-			}
-		case 5:
-			if wireType == 0 {
-				var v uint32
+			} else if wireType == 0 {
+				var v int64
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflowFuzz
@@ -1573,15 +1570,19 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
-					v |= (uint32(b) & 0x7F) << shift
+					v |= (int64(b) & 0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				m.Field5 = append(m.Field5, v)
-			} else if wireType == 2 {
+				m.Field4 = append(m.Field4, v)
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field4", wireType)
+			}
+		case 5:
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1590,7 +1591,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1613,7 +1614,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						if iNdEx >= l {
 							return io.ErrUnexpectedEOF
 						}
-						b := dAtA[iNdEx]
+						b := data[iNdEx]
 						iNdEx++
 						v |= (uint32(b) & 0x7F) << shift
 						if b < 0x80 {
@@ -1622,12 +1623,8 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					}
 					m.Field5 = append(m.Field5, v)
 				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field Field5", wireType)
-			}
-		case 6:
-			if wireType == 0 {
-				var v uint64
+			} else if wireType == 0 {
+				var v uint32
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflowFuzz
@@ -1635,15 +1632,19 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
-					v |= (uint64(b) & 0x7F) << shift
+					v |= (uint32(b) & 0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				m.Field6 = append(m.Field6, v)
-			} else if wireType == 2 {
+				m.Field5 = append(m.Field5, v)
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field5", wireType)
+			}
+		case 6:
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1652,7 +1653,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1675,7 +1676,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						if iNdEx >= l {
 							return io.ErrUnexpectedEOF
 						}
-						b := dAtA[iNdEx]
+						b := data[iNdEx]
 						iNdEx++
 						v |= (uint64(b) & 0x7F) << shift
 						if b < 0x80 {
@@ -1684,12 +1685,8 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					}
 					m.Field6 = append(m.Field6, v)
 				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field Field6", wireType)
-			}
-		case 7:
-			if wireType == 0 {
-				var v int32
+			} else if wireType == 0 {
+				var v uint64
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflowFuzz
@@ -1697,16 +1694,19 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
-					v |= (int32(b) & 0x7F) << shift
+					v |= (uint64(b) & 0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				v = int32((uint32(v) >> 1) ^ uint32(((v&1)<<31)>>31))
-				m.Field7 = append(m.Field7, v)
-			} else if wireType == 2 {
+				m.Field6 = append(m.Field6, v)
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field6", wireType)
+			}
+		case 7:
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1715,7 +1715,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1738,7 +1738,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						if iNdEx >= l {
 							return io.ErrUnexpectedEOF
 						}
-						b := dAtA[iNdEx]
+						b := data[iNdEx]
 						iNdEx++
 						v |= (int32(b) & 0x7F) << shift
 						if b < 0x80 {
@@ -1748,12 +1748,8 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					v = int32((uint32(v) >> 1) ^ uint32(((v&1)<<31)>>31))
 					m.Field7 = append(m.Field7, v)
 				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field Field7", wireType)
-			}
-		case 8:
-			if wireType == 0 {
-				var v uint64
+			} else if wireType == 0 {
+				var v int32
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
 						return ErrIntOverflowFuzz
@@ -1761,16 +1757,20 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
-					v |= (uint64(b) & 0x7F) << shift
+					v |= (int32(b) & 0x7F) << shift
 					if b < 0x80 {
 						break
 					}
 				}
-				v = (v >> 1) ^ uint64((int64(v&1)<<63)>>63)
-				m.Field8 = append(m.Field8, int64(v))
-			} else if wireType == 2 {
+				v = int32((uint32(v) >> 1) ^ uint32(((v&1)<<31)>>31))
+				m.Field7 = append(m.Field7, v)
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field7", wireType)
+			}
+		case 8:
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1779,7 +1779,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1802,7 +1802,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						if iNdEx >= l {
 							return io.ErrUnexpectedEOF
 						}
-						b := dAtA[iNdEx]
+						b := data[iNdEx]
 						iNdEx++
 						v |= (uint64(b) & 0x7F) << shift
 						if b < 0x80 {
@@ -1812,22 +1812,29 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					v = (v >> 1) ^ uint64((int64(v&1)<<63)>>63)
 					m.Field8 = append(m.Field8, int64(v))
 				}
+			} else if wireType == 0 {
+				var v uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowFuzz
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := data[iNdEx]
+					iNdEx++
+					v |= (uint64(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				v = (v >> 1) ^ uint64((int64(v&1)<<63)>>63)
+				m.Field8 = append(m.Field8, int64(v))
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field Field8", wireType)
 			}
 		case 9:
-			if wireType == 5 {
-				var v uint32
-				if (iNdEx + 4) > l {
-					return io.ErrUnexpectedEOF
-				}
-				iNdEx += 4
-				v = uint32(dAtA[iNdEx-4])
-				v |= uint32(dAtA[iNdEx-3]) << 8
-				v |= uint32(dAtA[iNdEx-2]) << 16
-				v |= uint32(dAtA[iNdEx-1]) << 24
-				m.Field9 = append(m.Field9, v)
-			} else if wireType == 2 {
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1836,7 +1843,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1856,28 +1863,28 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						return io.ErrUnexpectedEOF
 					}
 					iNdEx += 4
-					v = uint32(dAtA[iNdEx-4])
-					v |= uint32(dAtA[iNdEx-3]) << 8
-					v |= uint32(dAtA[iNdEx-2]) << 16
-					v |= uint32(dAtA[iNdEx-1]) << 24
+					v = uint32(data[iNdEx-4])
+					v |= uint32(data[iNdEx-3]) << 8
+					v |= uint32(data[iNdEx-2]) << 16
+					v |= uint32(data[iNdEx-1]) << 24
 					m.Field9 = append(m.Field9, v)
 				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field Field9", wireType)
-			}
-		case 10:
-			if wireType == 5 {
-				var v int32
+			} else if wireType == 5 {
+				var v uint32
 				if (iNdEx + 4) > l {
 					return io.ErrUnexpectedEOF
 				}
 				iNdEx += 4
-				v = int32(dAtA[iNdEx-4])
-				v |= int32(dAtA[iNdEx-3]) << 8
-				v |= int32(dAtA[iNdEx-2]) << 16
-				v |= int32(dAtA[iNdEx-1]) << 24
-				m.Field10 = append(m.Field10, v)
-			} else if wireType == 2 {
+				v = uint32(data[iNdEx-4])
+				v |= uint32(data[iNdEx-3]) << 8
+				v |= uint32(data[iNdEx-2]) << 16
+				v |= uint32(data[iNdEx-1]) << 24
+				m.Field9 = append(m.Field9, v)
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field9", wireType)
+			}
+		case 10:
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1886,7 +1893,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1906,32 +1913,28 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						return io.ErrUnexpectedEOF
 					}
 					iNdEx += 4
-					v = int32(dAtA[iNdEx-4])
-					v |= int32(dAtA[iNdEx-3]) << 8
-					v |= int32(dAtA[iNdEx-2]) << 16
-					v |= int32(dAtA[iNdEx-1]) << 24
+					v = int32(data[iNdEx-4])
+					v |= int32(data[iNdEx-3]) << 8
+					v |= int32(data[iNdEx-2]) << 16
+					v |= int32(data[iNdEx-1]) << 24
 					m.Field10 = append(m.Field10, v)
 				}
+			} else if wireType == 5 {
+				var v int32
+				if (iNdEx + 4) > l {
+					return io.ErrUnexpectedEOF
+				}
+				iNdEx += 4
+				v = int32(data[iNdEx-4])
+				v |= int32(data[iNdEx-3]) << 8
+				v |= int32(data[iNdEx-2]) << 16
+				v |= int32(data[iNdEx-1]) << 24
+				m.Field10 = append(m.Field10, v)
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field Field10", wireType)
 			}
 		case 11:
-			if wireType == 1 {
-				var v uint64
-				if (iNdEx + 8) > l {
-					return io.ErrUnexpectedEOF
-				}
-				iNdEx += 8
-				v = uint64(dAtA[iNdEx-8])
-				v |= uint64(dAtA[iNdEx-7]) << 8
-				v |= uint64(dAtA[iNdEx-6]) << 16
-				v |= uint64(dAtA[iNdEx-5]) << 24
-				v |= uint64(dAtA[iNdEx-4]) << 32
-				v |= uint64(dAtA[iNdEx-3]) << 40
-				v |= uint64(dAtA[iNdEx-2]) << 48
-				v |= uint64(dAtA[iNdEx-1]) << 56
-				m.Field11 = append(m.Field11, v)
-			} else if wireType == 2 {
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1940,7 +1943,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -1960,36 +1963,36 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						return io.ErrUnexpectedEOF
 					}
 					iNdEx += 8
-					v = uint64(dAtA[iNdEx-8])
-					v |= uint64(dAtA[iNdEx-7]) << 8
-					v |= uint64(dAtA[iNdEx-6]) << 16
-					v |= uint64(dAtA[iNdEx-5]) << 24
-					v |= uint64(dAtA[iNdEx-4]) << 32
-					v |= uint64(dAtA[iNdEx-3]) << 40
-					v |= uint64(dAtA[iNdEx-2]) << 48
-					v |= uint64(dAtA[iNdEx-1]) << 56
+					v = uint64(data[iNdEx-8])
+					v |= uint64(data[iNdEx-7]) << 8
+					v |= uint64(data[iNdEx-6]) << 16
+					v |= uint64(data[iNdEx-5]) << 24
+					v |= uint64(data[iNdEx-4]) << 32
+					v |= uint64(data[iNdEx-3]) << 40
+					v |= uint64(data[iNdEx-2]) << 48
+					v |= uint64(data[iNdEx-1]) << 56
 					m.Field11 = append(m.Field11, v)
 				}
-			} else {
-				return fmt.Errorf("proto: wrong wireType = %d for field Field11", wireType)
-			}
-		case 12:
-			if wireType == 1 {
-				var v int64
+			} else if wireType == 1 {
+				var v uint64
 				if (iNdEx + 8) > l {
 					return io.ErrUnexpectedEOF
 				}
 				iNdEx += 8
-				v = int64(dAtA[iNdEx-8])
-				v |= int64(dAtA[iNdEx-7]) << 8
-				v |= int64(dAtA[iNdEx-6]) << 16
-				v |= int64(dAtA[iNdEx-5]) << 24
-				v |= int64(dAtA[iNdEx-4]) << 32
-				v |= int64(dAtA[iNdEx-3]) << 40
-				v |= int64(dAtA[iNdEx-2]) << 48
-				v |= int64(dAtA[iNdEx-1]) << 56
-				m.Field12 = append(m.Field12, v)
-			} else if wireType == 2 {
+				v = uint64(data[iNdEx-8])
+				v |= uint64(data[iNdEx-7]) << 8
+				v |= uint64(data[iNdEx-6]) << 16
+				v |= uint64(data[iNdEx-5]) << 24
+				v |= uint64(data[iNdEx-4]) << 32
+				v |= uint64(data[iNdEx-3]) << 40
+				v |= uint64(data[iNdEx-2]) << 48
+				v |= uint64(data[iNdEx-1]) << 56
+				m.Field11 = append(m.Field11, v)
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Field11", wireType)
+			}
+		case 12:
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -1998,7 +2001,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -2018,38 +2021,36 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						return io.ErrUnexpectedEOF
 					}
 					iNdEx += 8
-					v = int64(dAtA[iNdEx-8])
-					v |= int64(dAtA[iNdEx-7]) << 8
-					v |= int64(dAtA[iNdEx-6]) << 16
-					v |= int64(dAtA[iNdEx-5]) << 24
-					v |= int64(dAtA[iNdEx-4]) << 32
-					v |= int64(dAtA[iNdEx-3]) << 40
-					v |= int64(dAtA[iNdEx-2]) << 48
-					v |= int64(dAtA[iNdEx-1]) << 56
+					v = int64(data[iNdEx-8])
+					v |= int64(data[iNdEx-7]) << 8
+					v |= int64(data[iNdEx-6]) << 16
+					v |= int64(data[iNdEx-5]) << 24
+					v |= int64(data[iNdEx-4]) << 32
+					v |= int64(data[iNdEx-3]) << 40
+					v |= int64(data[iNdEx-2]) << 48
+					v |= int64(data[iNdEx-1]) << 56
 					m.Field12 = append(m.Field12, v)
 				}
+			} else if wireType == 1 {
+				var v int64
+				if (iNdEx + 8) > l {
+					return io.ErrUnexpectedEOF
+				}
+				iNdEx += 8
+				v = int64(data[iNdEx-8])
+				v |= int64(data[iNdEx-7]) << 8
+				v |= int64(data[iNdEx-6]) << 16
+				v |= int64(data[iNdEx-5]) << 24
+				v |= int64(data[iNdEx-4]) << 32
+				v |= int64(data[iNdEx-3]) << 40
+				v |= int64(data[iNdEx-2]) << 48
+				v |= int64(data[iNdEx-1]) << 56
+				m.Field12 = append(m.Field12, v)
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field Field12", wireType)
 			}
 		case 13:
-			if wireType == 0 {
-				var v int
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowFuzz
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					v |= (int(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				m.Field13 = append(m.Field13, bool(v != 0))
-			} else if wireType == 2 {
+			if wireType == 2 {
 				var packedLen int
 				for shift := uint(0); ; shift += 7 {
 					if shift >= 64 {
@@ -2058,7 +2059,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					if iNdEx >= l {
 						return io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -2081,7 +2082,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 						if iNdEx >= l {
 							return io.ErrUnexpectedEOF
 						}
-						b := dAtA[iNdEx]
+						b := data[iNdEx]
 						iNdEx++
 						v |= (int(b) & 0x7F) << shift
 						if b < 0x80 {
@@ -2090,12 +2091,29 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 					}
 					m.Field13 = append(m.Field13, bool(v != 0))
 				}
+			} else if wireType == 0 {
+				var v int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowFuzz
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := data[iNdEx]
+					iNdEx++
+					v |= (int(b) & 0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Field13 = append(m.Field13, bool(v != 0))
 			} else {
 				return fmt.Errorf("proto: wrong wireType = %d for field Field13", wireType)
 			}
 		default:
 			iNdEx = preIndex
-			skippy, err := skipFuzz(dAtA[iNdEx:])
+			skippy, err := skipFuzz(data[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -2105,7 +2123,7 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -2115,8 +2133,8 @@ func (m *NinRepPackedNative) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *NinOptNative) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
+func (m *NinOptNative) Unmarshal(data []byte) error {
+	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
 		preIndex := iNdEx
@@ -2128,7 +2146,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
-			b := dAtA[iNdEx]
+			b := data[iNdEx]
 			iNdEx++
 			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
@@ -2153,14 +2171,14 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 8
-			v = uint64(dAtA[iNdEx-8])
-			v |= uint64(dAtA[iNdEx-7]) << 8
-			v |= uint64(dAtA[iNdEx-6]) << 16
-			v |= uint64(dAtA[iNdEx-5]) << 24
-			v |= uint64(dAtA[iNdEx-4]) << 32
-			v |= uint64(dAtA[iNdEx-3]) << 40
-			v |= uint64(dAtA[iNdEx-2]) << 48
-			v |= uint64(dAtA[iNdEx-1]) << 56
+			v = uint64(data[iNdEx-8])
+			v |= uint64(data[iNdEx-7]) << 8
+			v |= uint64(data[iNdEx-6]) << 16
+			v |= uint64(data[iNdEx-5]) << 24
+			v |= uint64(data[iNdEx-4]) << 32
+			v |= uint64(data[iNdEx-3]) << 40
+			v |= uint64(data[iNdEx-2]) << 48
+			v |= uint64(data[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.Field1 = &v2
 		case 2:
@@ -2172,10 +2190,10 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 4
-			v = uint32(dAtA[iNdEx-4])
-			v |= uint32(dAtA[iNdEx-3]) << 8
-			v |= uint32(dAtA[iNdEx-2]) << 16
-			v |= uint32(dAtA[iNdEx-1]) << 24
+			v = uint32(data[iNdEx-4])
+			v |= uint32(data[iNdEx-3]) << 8
+			v |= uint32(data[iNdEx-2]) << 16
+			v |= uint32(data[iNdEx-1]) << 24
 			v2 := float32(math.Float32frombits(v))
 			m.Field2 = &v2
 		case 3:
@@ -2190,7 +2208,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int32(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2210,7 +2228,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2230,7 +2248,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (uint32(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2250,7 +2268,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2270,7 +2288,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int32(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2291,7 +2309,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2310,10 +2328,10 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 4
-			v = uint32(dAtA[iNdEx-4])
-			v |= uint32(dAtA[iNdEx-3]) << 8
-			v |= uint32(dAtA[iNdEx-2]) << 16
-			v |= uint32(dAtA[iNdEx-1]) << 24
+			v = uint32(data[iNdEx-4])
+			v |= uint32(data[iNdEx-3]) << 8
+			v |= uint32(data[iNdEx-2]) << 16
+			v |= uint32(data[iNdEx-1]) << 24
 			m.Field9 = &v
 		case 10:
 			if wireType != 5 {
@@ -2324,10 +2342,10 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 4
-			v = int32(dAtA[iNdEx-4])
-			v |= int32(dAtA[iNdEx-3]) << 8
-			v |= int32(dAtA[iNdEx-2]) << 16
-			v |= int32(dAtA[iNdEx-1]) << 24
+			v = int32(data[iNdEx-4])
+			v |= int32(data[iNdEx-3]) << 8
+			v |= int32(data[iNdEx-2]) << 16
+			v |= int32(data[iNdEx-1]) << 24
 			m.Field10 = &v
 		case 11:
 			if wireType != 1 {
@@ -2338,14 +2356,14 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 8
-			v = uint64(dAtA[iNdEx-8])
-			v |= uint64(dAtA[iNdEx-7]) << 8
-			v |= uint64(dAtA[iNdEx-6]) << 16
-			v |= uint64(dAtA[iNdEx-5]) << 24
-			v |= uint64(dAtA[iNdEx-4]) << 32
-			v |= uint64(dAtA[iNdEx-3]) << 40
-			v |= uint64(dAtA[iNdEx-2]) << 48
-			v |= uint64(dAtA[iNdEx-1]) << 56
+			v = uint64(data[iNdEx-8])
+			v |= uint64(data[iNdEx-7]) << 8
+			v |= uint64(data[iNdEx-6]) << 16
+			v |= uint64(data[iNdEx-5]) << 24
+			v |= uint64(data[iNdEx-4]) << 32
+			v |= uint64(data[iNdEx-3]) << 40
+			v |= uint64(data[iNdEx-2]) << 48
+			v |= uint64(data[iNdEx-1]) << 56
 			m.Field11 = &v
 		case 12:
 			if wireType != 1 {
@@ -2356,14 +2374,14 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 8
-			v = int64(dAtA[iNdEx-8])
-			v |= int64(dAtA[iNdEx-7]) << 8
-			v |= int64(dAtA[iNdEx-6]) << 16
-			v |= int64(dAtA[iNdEx-5]) << 24
-			v |= int64(dAtA[iNdEx-4]) << 32
-			v |= int64(dAtA[iNdEx-3]) << 40
-			v |= int64(dAtA[iNdEx-2]) << 48
-			v |= int64(dAtA[iNdEx-1]) << 56
+			v = int64(data[iNdEx-8])
+			v |= int64(data[iNdEx-7]) << 8
+			v |= int64(data[iNdEx-6]) << 16
+			v |= int64(data[iNdEx-5]) << 24
+			v |= int64(data[iNdEx-4]) << 32
+			v |= int64(data[iNdEx-3]) << 40
+			v |= int64(data[iNdEx-2]) << 48
+			v |= int64(data[iNdEx-1]) << 56
 			m.Field12 = &v
 		case 13:
 			if wireType != 0 {
@@ -2377,7 +2395,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2398,7 +2416,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				stringLen |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2413,7 +2431,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
+			s := string(data[iNdEx:postIndex])
 			m.Field14 = &s
 			iNdEx = postIndex
 		case 15:
@@ -2428,7 +2446,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2442,14 +2460,14 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Field15 = append(m.Field15[:0], dAtA[iNdEx:postIndex]...)
+			m.Field15 = append(m.Field15[:0], data[iNdEx:postIndex]...)
 			if m.Field15 == nil {
 				m.Field15 = []byte{}
 			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
-			skippy, err := skipFuzz(dAtA[iNdEx:])
+			skippy, err := skipFuzz(data[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -2459,7 +2477,7 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -2469,8 +2487,8 @@ func (m *NinOptNative) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
+func (m *NinOptStruct) Unmarshal(data []byte) error {
+	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
 		preIndex := iNdEx
@@ -2482,7 +2500,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 			if iNdEx >= l {
 				return io.ErrUnexpectedEOF
 			}
-			b := dAtA[iNdEx]
+			b := data[iNdEx]
 			iNdEx++
 			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
@@ -2507,14 +2525,14 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 8
-			v = uint64(dAtA[iNdEx-8])
-			v |= uint64(dAtA[iNdEx-7]) << 8
-			v |= uint64(dAtA[iNdEx-6]) << 16
-			v |= uint64(dAtA[iNdEx-5]) << 24
-			v |= uint64(dAtA[iNdEx-4]) << 32
-			v |= uint64(dAtA[iNdEx-3]) << 40
-			v |= uint64(dAtA[iNdEx-2]) << 48
-			v |= uint64(dAtA[iNdEx-1]) << 56
+			v = uint64(data[iNdEx-8])
+			v |= uint64(data[iNdEx-7]) << 8
+			v |= uint64(data[iNdEx-6]) << 16
+			v |= uint64(data[iNdEx-5]) << 24
+			v |= uint64(data[iNdEx-4]) << 32
+			v |= uint64(data[iNdEx-3]) << 40
+			v |= uint64(data[iNdEx-2]) << 48
+			v |= uint64(data[iNdEx-1]) << 56
 			v2 := float64(math.Float64frombits(v))
 			m.Field1 = &v2
 		case 2:
@@ -2526,10 +2544,10 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			iNdEx += 4
-			v = uint32(dAtA[iNdEx-4])
-			v |= uint32(dAtA[iNdEx-3]) << 8
-			v |= uint32(dAtA[iNdEx-2]) << 16
-			v |= uint32(dAtA[iNdEx-1]) << 24
+			v = uint32(data[iNdEx-4])
+			v |= uint32(data[iNdEx-3]) << 8
+			v |= uint32(data[iNdEx-2]) << 16
+			v |= uint32(data[iNdEx-1]) << 24
 			v2 := float32(math.Float32frombits(v))
 			m.Field2 = &v2
 		case 3:
@@ -2544,7 +2562,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2561,7 +2579,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 			if m.Field3 == nil {
 				m.Field3 = &NinOptNative{}
 			}
-			if err := m.Field3.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Field3.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2577,7 +2595,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2594,7 +2612,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 			if m.Field4 == nil {
 				m.Field4 = &NinOptNative{}
 			}
-			if err := m.Field4.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Field4.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2610,7 +2628,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2630,7 +2648,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int32(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2651,7 +2669,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2668,7 +2686,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 			if m.Field8 == nil {
 				m.Field8 = &NinOptNative{}
 			}
-			if err := m.Field8.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Field8.Unmarshal(data[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2684,7 +2702,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				v |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2705,7 +2723,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				stringLen |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2720,7 +2738,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			s := string(dAtA[iNdEx:postIndex])
+			s := string(data[iNdEx:postIndex])
 			m.Field14 = &s
 			iNdEx = postIndex
 		case 15:
@@ -2735,7 +2753,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 				if iNdEx >= l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				byteLen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2749,14 +2767,14 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Field15 = append(m.Field15[:0], dAtA[iNdEx:postIndex]...)
+			m.Field15 = append(m.Field15[:0], data[iNdEx:postIndex]...)
 			if m.Field15 == nil {
 				m.Field15 = []byte{}
 			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
-			skippy, err := skipFuzz(dAtA[iNdEx:])
+			skippy, err := skipFuzz(data[iNdEx:])
 			if err != nil {
 				return err
 			}
@@ -2766,7 +2784,7 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 			if (iNdEx + skippy) > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
+			m.XXX_unrecognized = append(m.XXX_unrecognized, data[iNdEx:iNdEx+skippy]...)
 			iNdEx += skippy
 		}
 	}
@@ -2776,8 +2794,8 @@ func (m *NinOptStruct) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func skipFuzz(dAtA []byte) (n int, err error) {
-	l := len(dAtA)
+func skipFuzz(data []byte) (n int, err error) {
+	l := len(data)
 	iNdEx := 0
 	for iNdEx < l {
 		var wire uint64
@@ -2788,7 +2806,7 @@ func skipFuzz(dAtA []byte) (n int, err error) {
 			if iNdEx >= l {
 				return 0, io.ErrUnexpectedEOF
 			}
-			b := dAtA[iNdEx]
+			b := data[iNdEx]
 			iNdEx++
 			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
@@ -2806,7 +2824,7 @@ func skipFuzz(dAtA []byte) (n int, err error) {
 					return 0, io.ErrUnexpectedEOF
 				}
 				iNdEx++
-				if dAtA[iNdEx-1] < 0x80 {
+				if data[iNdEx-1] < 0x80 {
 					break
 				}
 			}
@@ -2823,7 +2841,7 @@ func skipFuzz(dAtA []byte) (n int, err error) {
 				if iNdEx >= l {
 					return 0, io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
+				b := data[iNdEx]
 				iNdEx++
 				length |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
@@ -2846,7 +2864,7 @@ func skipFuzz(dAtA []byte) (n int, err error) {
 					if iNdEx >= l {
 						return 0, io.ErrUnexpectedEOF
 					}
-					b := dAtA[iNdEx]
+					b := data[iNdEx]
 					iNdEx++
 					innerWire |= (uint64(b) & 0x7F) << shift
 					if b < 0x80 {
@@ -2857,7 +2875,7 @@ func skipFuzz(dAtA []byte) (n int, err error) {
 				if innerWireType == 4 {
 					break
 				}
-				next, err := skipFuzz(dAtA[start:])
+				next, err := skipFuzz(data[start:])
 				if err != nil {
 					return 0, err
 				}
@@ -2881,36 +2899,34 @@ var (
 	ErrIntOverflowFuzz   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("fuzz.proto", fileDescriptorFuzz) }
-
 var fileDescriptorFuzz = []byte{
-	// 445 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0xd3, 0xbf, 0x6e, 0x1a, 0x41,
-	0x10, 0xc7, 0x71, 0xcd, 0x0d, 0x7f, 0xd7, 0x10, 0xf0, 0x15, 0x9b, 0x91, 0x15, 0xa1, 0x15, 0xd5,
-	0x34, 0xe1, 0xc2, 0x71, 0xd8, 0xb8, 0x75, 0x91, 0x92, 0x44, 0xce, 0x13, 0xd8, 0xf8, 0x4c, 0x4e,
-	0x71, 0x7c, 0xc8, 0x5e, 0x52, 0xb8, 0x4c, 0x95, 0x47, 0x4b, 0x97, 0x3c, 0x42, 0xc2, 0x13, 0xe4,
-	0x11, 0xa2, 0x9c, 0xcd, 0xec, 0x50, 0x59, 0x48, 0xe9, 0xee, 0xf6, 0xc3, 0x0a, 0xf1, 0xfd, 0x09,
-	0x63, 0xae, 0xd7, 0x0f, 0x0f, 0xa3, 0xd5, 0x5d, 0xe9, 0xcb, 0xb8, 0xfd, 0xef, 0xd9, 0xe7, 0xf7,
-	0xfe, 0xfe, 0xe8, 0xf5, 0xb2, 0xf0, 0x1f, 0xd7, 0x97, 0xa3, 0x45, 0xf9, 0x39, 0x59, 0x96, 0xcb,
-	0x32, 0xa9, 0x3e, 0x71, 0xb9, 0xbe, 0xae, 0xde, 0xaa, 0x97, 0xea, 0xe9, 0xf1, 0xe6, 0xb0, 0x6e,
-	0x70, 0x5e, 0xdc, 0x0c, 0xbf, 0xa1, 0x89, 0xe7, 0xc5, 0xed, 0x79, 0xbe, 0x7a, 0x7f, 0xb1, 0xf8,
-	0x94, 0x5f, 0xcd, 0x2f, 0x7c, 0xf1, 0x25, 0x8f, 0x8f, 0x4c, 0xe3, 0x6d, 0x91, 0xdf, 0x5c, 0x8d,
-	0x09, 0x1c, 0x32, 0x9c, 0x45, 0x7d, 0x38, 0x7f, 0x3a, 0x11, 0x4b, 0x29, 0x72, 0xc8, 0x91, 0xb2,
-	0x54, 0x6c, 0x42, 0xe8, 0x90, 0xeb, 0xca, 0x26, 0x62, 0x19, 0xd5, 0x1c, 0x32, 0x2a, 0xcb, 0xc4,
-	0xa6, 0x54, 0x77, 0xc8, 0x5d, 0x65, 0x53, 0xb1, 0x63, 0x6a, 0x38, 0xe4, 0x9a, 0xb2, 0x63, 0xb1,
-	0x13, 0x6a, 0x3a, 0xe4, 0x43, 0x65, 0x27, 0x62, 0x33, 0x6a, 0x39, 0xe4, 0x58, 0xd9, 0x4c, 0xec,
-	0x94, 0xda, 0x0e, 0xb9, 0xa9, 0xec, 0x34, 0x7e, 0x65, 0x9a, 0x8f, 0xbf, 0xf4, 0x0d, 0x19, 0x87,
-	0xdc, 0xab, 0x70, 0x7b, 0x14, 0x74, 0x4c, 0x07, 0x0e, 0xb9, 0xa1, 0x75, 0x1c, 0x34, 0xa5, 0x8e,
-	0x43, 0xee, 0x6b, 0x4d, 0x83, 0x4e, 0xa8, 0xeb, 0x90, 0x5b, 0x5a, 0x27, 0xc3, 0xaf, 0x68, 0x3a,
-	0xf3, 0xe2, 0xf6, 0xdd, 0xca, 0x3f, 0x8d, 0x60, 0xd5, 0x08, 0xc0, 0x61, 0x00, 0xab, 0x06, 0x00,
-	0x8e, 0x24, 0xbe, 0x55, 0xf1, 0x81, 0xeb, 0x12, 0xde, 0xaa, 0xf0, 0xc0, 0x28, 0xd1, 0xad, 0x8a,
-	0x0e, 0xdc, 0x95, 0xe0, 0x56, 0x05, 0x07, 0xae, 0x49, 0x6c, 0xab, 0x62, 0x03, 0x1f, 0x4a, 0x68,
-	0xab, 0x42, 0x03, 0xc7, 0x12, 0xd9, 0xaa, 0xc8, 0xc0, 0x4d, 0x09, 0x4c, 0x3a, 0x30, 0x70, 0x2f,
-	0xc4, 0x25, 0x1d, 0x17, 0xb8, 0x11, 0xc2, 0x92, 0x0e, 0x0b, 0xdc, 0x0f, 0x51, 0x49, 0x47, 0x05,
-	0x6e, 0x49, 0xd0, 0x20, 0x19, 0xbd, 0x70, 0xc0, 0xed, 0xad, 0x64, 0x41, 0xa6, 0xd4, 0x73, 0xc0,
-	0x9d, 0xad, 0x4c, 0x87, 0x3f, 0xa2, 0xed, 0x08, 0x1f, 0xfc, 0xdd, 0x7a, 0xe1, 0xf7, 0x1e, 0x21,
-	0xd9, 0x19, 0xe1, 0x20, 0x7d, 0x39, 0x92, 0xbf, 0xe8, 0x48, 0xaf, 0x2b, 0xeb, 0x24, 0x3b, 0xeb,
-	0x3c, 0x7b, 0x21, 0xdb, 0x7b, 0x9e, 0x64, 0x67, 0x9e, 0x67, 0xbf, 0x60, 0xf6, 0x7f, 0x8b, 0x9e,
-	0xf5, 0xff, 0xfc, 0x1e, 0xc0, 0xf7, 0xcd, 0x00, 0x7e, 0x6e, 0x06, 0xf0, 0x6b, 0x33, 0x80, 0xbf,
-	0x01, 0x00, 0x00, 0xff, 0xff, 0xc0, 0x67, 0xe2, 0xa2, 0xc1, 0x04, 0x00, 0x00,
+	// 439 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x09, 0x6e, 0x88, 0x02, 0xff, 0xac, 0xd3, 0xbf, 0x6e, 0xd3, 0x50,
+	0x14, 0xc7, 0x71, 0x1d, 0x3b, 0xb1, 0x93, 0xdb, 0x84, 0xa4, 0x1e, 0x2e, 0x47, 0x15, 0xaa, 0x50,
+	0xa6, 0xbb, 0x60, 0x37, 0xfe, 0xd3, 0xa6, 0x6b, 0x07, 0xc6, 0x80, 0xca, 0x13, 0xb4, 0xa9, 0x13,
+	0x2c, 0x0a, 0x8e, 0xda, 0x6b, 0x86, 0x8e, 0x4c, 0x3c, 0x1a, 0x1b, 0x3c, 0x02, 0xf0, 0x04, 0x3c,
+	0x02, 0x07, 0x87, 0x9c, 0x7b, 0x32, 0x55, 0x91, 0x3a, 0x58, 0xb2, 0xf3, 0x89, 0x15, 0xdd, 0xef,
+	0x4f, 0x51, 0x6a, 0xd9, 0x3c, 0x3c, 0xc4, 0xeb, 0xbb, 0xda, 0xd6, 0x51, 0xff, 0xdf, 0xbd, 0x2d,
+	0xef, 0xed, 0xfd, 0xd1, 0xab, 0x55, 0x65, 0xdf, 0x37, 0xd7, 0xf1, 0xa2, 0xfe, 0x98, 0xac, 0xea,
+	0x55, 0x9d, 0xb4, 0xdf, 0xb8, 0x6e, 0x96, 0xed, 0x53, 0xfb, 0xd0, 0xde, 0x6d, 0xde, 0x9c, 0x74,
+	0x95, 0x3f, 0xaf, 0x6e, 0x27, 0x5f, 0x7d, 0x15, 0xcd, 0xab, 0x4f, 0x97, 0xe5, 0xfa, 0xed, 0xd5,
+	0xe2, 0x43, 0x79, 0x33, 0xbf, 0xb2, 0xd5, 0xe7, 0x32, 0x3a, 0x52, 0xc1, 0xeb, 0xaa, 0xbc, 0xbd,
+	0x99, 0x22, 0xbc, 0xf4, 0x0d, 0x5c, 0x78, 0x63, 0xb8, 0x0c, 0x96, 0xed, 0x27, 0x6c, 0x29, 0x7a,
+	0x64, 0x9e, 0xb0, 0x94, 0x2d, 0x43, 0x9f, 0xac, 0x2b, 0x2c, 0x63, 0xcb, 0xb1, 0x43, 0xe6, 0x0b,
+	0xcb, 0xd9, 0x0a, 0xec, 0x92, 0x0d, 0x85, 0x15, 0x6c, 0xa7, 0x18, 0x90, 0x75, 0x84, 0x9d, 0xb2,
+	0x9d, 0x61, 0x48, 0x76, 0x28, 0xec, 0x8c, 0x6d, 0x86, 0x3d, 0xb2, 0x48, 0xd8, 0x8c, 0xed, 0x1c,
+	0xfb, 0x64, 0xa1, 0xb0, 0xf3, 0xe8, 0x85, 0x0a, 0x37, 0x67, 0x3f, 0x41, 0x45, 0x38, 0x6a, 0x31,
+	0xdc, 0x1c, 0xfe, 0xc4, 0xe9, 0x14, 0x0f, 0x48, 0x03, 0xa9, 0x53, 0xa7, 0x29, 0x0e, 0x48, 0xc7,
+	0x52, 0x53, 0xa7, 0x19, 0x0e, 0x49, 0x7b, 0x52, 0xb3, 0xc9, 0x17, 0x5f, 0x0d, 0x68, 0x8a, 0x37,
+	0x6b, 0xfb, 0x7f, 0x04, 0x2d, 0x46, 0x00, 0xe3, 0x06, 0xd0, 0x62, 0x00, 0x30, 0x1e, 0xc7, 0xd7,
+	0x22, 0x3e, 0x98, 0x2e, 0x87, 0xd7, 0x22, 0x3c, 0x18, 0x9f, 0xa3, 0x6b, 0x11, 0x1d, 0xcc, 0x90,
+	0x83, 0x6b, 0x11, 0x1c, 0x4c, 0x87, 0x63, 0x6b, 0x11, 0x1b, 0xcc, 0x21, 0x87, 0xd6, 0x22, 0x34,
+	0x98, 0x88, 0x23, 0x6b, 0x11, 0x19, 0x4c, 0xc8, 0x81, 0x51, 0x06, 0x06, 0x33, 0x72, 0x71, 0x51,
+	0xc6, 0x05, 0x13, 0xb8, 0xb0, 0x28, 0xc3, 0x82, 0x19, 0xbb, 0xa8, 0x28, 0xa3, 0x82, 0xe9, 0x71,
+	0x50, 0x27, 0x39, 0x3e, 0x23, 0xe9, 0x6f, 0x25, 0x77, 0x52, 0xe0, 0x88, 0x64, 0xb0, 0x95, 0x62,
+	0xf2, 0xdd, 0xdb, 0x8e, 0xf0, 0xce, 0xde, 0x35, 0x0b, 0xbb, 0xf7, 0x08, 0xc9, 0xce, 0x08, 0x07,
+	0xe9, 0xf3, 0x98, 0xff, 0xa2, 0xb1, 0x5c, 0x97, 0xd7, 0x49, 0x76, 0xd6, 0x79, 0xf4, 0x85, 0x7c,
+	0xef, 0x79, 0x92, 0x9d, 0x79, 0x1e, 0xfd, 0x81, 0xd9, 0xd3, 0x16, 0xbd, 0x18, 0xff, 0xf9, 0x75,
+	0x0c, 0xdf, 0x7e, 0x1f, 0xc3, 0x0f, 0xba, 0x7e, 0xd2, 0xf5, 0x37, 0x00, 0x00, 0xff, 0xff, 0xce,
+	0xa6, 0x95, 0x94, 0xc1, 0x04, 0x00, 0x00,
 }

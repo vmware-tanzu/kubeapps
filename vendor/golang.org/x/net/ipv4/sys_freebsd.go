@@ -54,20 +54,20 @@ func init() {
 	}
 }
 
-func (gr *groupReq) setGroup(grp net.IP) {
-	sa := (*sockaddrInet)(unsafe.Pointer(&gr.Group))
-	sa.Len = sizeofSockaddrInet
+func (gr *sysGroupReq) setGroup(grp net.IP) {
+	sa := (*sysSockaddrInet)(unsafe.Pointer(&gr.Group))
+	sa.Len = sysSizeofSockaddrInet
 	sa.Family = syscall.AF_INET
 	copy(sa.Addr[:], grp)
 }
 
-func (gsr *groupSourceReq) setSourceGroup(grp, src net.IP) {
-	sa := (*sockaddrInet)(unsafe.Pointer(&gsr.Group))
-	sa.Len = sizeofSockaddrInet
+func (gsr *sysGroupSourceReq) setSourceGroup(grp, src net.IP) {
+	sa := (*sysSockaddrInet)(unsafe.Pointer(&gsr.Group))
+	sa.Len = sysSizeofSockaddrInet
 	sa.Family = syscall.AF_INET
 	copy(sa.Addr[:], grp)
-	sa = (*sockaddrInet)(unsafe.Pointer(&gsr.Source))
-	sa.Len = sizeofSockaddrInet
+	sa = (*sysSockaddrInet)(unsafe.Pointer(&gsr.Source))
+	sa.Len = sysSizeofSockaddrInet
 	sa.Family = syscall.AF_INET
 	copy(sa.Addr[:], src)
 }

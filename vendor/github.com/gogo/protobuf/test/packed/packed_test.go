@@ -1,7 +1,5 @@
-// Protocol Buffers for Go with Gadgets
-//
-// Copyright (c) 2013, The GoGo Authors. All rights reserved.
-// http://github.com/gogo/protobuf
+// Copyright (c) 2013, Vastech SA (PTY) LTD. All rights reserved.
+// http://github.com/gogo/protobuf/gogoproto
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
@@ -35,7 +33,6 @@ import (
 	math_rand "math/rand"
 	"testing"
 	"time"
-	"unsafe"
 )
 
 /*
@@ -48,12 +45,12 @@ func TestSafeIssue21(t *testing.T) {
 	msg1 := NewPopulatedNinRepNative(popr, true)
 	data1, err := proto.Marshal(msg1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	packedmsg := &NinRepPackedNative{}
 	err = proto.Unmarshal(data1, packedmsg)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	if len(packedmsg.XXX_unrecognized) != 0 {
 		t.Fatalf("packed msg unmarshaled unrecognized fields, even though there aren't any")
@@ -64,20 +61,16 @@ func TestSafeIssue21(t *testing.T) {
 }
 
 func TestUnsafeIssue21(t *testing.T) {
-	var bigendian uint32 = 0x01020304
-	if *(*byte)(unsafe.Pointer(&bigendian)) == 1 {
-		t.Skip("unsafe does not work on big endian architectures")
-	}
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
 	msg1 := NewPopulatedNinRepNativeUnsafe(popr, true)
 	data1, err := proto.Marshal(msg1)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	packedmsg := &NinRepPackedNativeUnsafe{}
 	err = proto.Unmarshal(data1, packedmsg)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 	if len(packedmsg.XXX_unrecognized) != 0 {
 		t.Fatalf("packed msg unmarshaled unrecognized fields, even though there aren't any")
