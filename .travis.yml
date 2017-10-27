@@ -41,7 +41,7 @@ install:
   - |
     minikube update-context
     minikube status
-    kubectl version
+    while ! kubectl version; do sleep 1; done
 
 script:
   # FIXME(gus): `validate` fails on CRDs, because the server doens't
