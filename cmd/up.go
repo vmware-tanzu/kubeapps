@@ -2,12 +2,11 @@ package cmd
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/pkg/api"
-	"path/filepath"
 )
 
 const (
@@ -68,7 +67,6 @@ var upCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(upCmd)
-	upCmd.Flags().StringP("namespace", "", api.NamespaceDefault, "Specify namespace for the KubeApps components")
 	upCmd.Flags().Bool("dry-run", false, "Provides output to be submitted to the server")
-	upCmd.Flags().String("path", "", "Specify folder contains the manifests")
+	bindFlags(upCmd)
 }

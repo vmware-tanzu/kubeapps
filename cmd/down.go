@@ -5,7 +5,6 @@ import (
 
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/pkg/api"
 )
 
 var downCmd = &cobra.Command{
@@ -52,7 +51,6 @@ var downCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(downCmd)
-	downCmd.Flags().StringP("namespace", "", api.NamespaceDefault, "Specify namespace for the KubeApps components")
 	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored")
-	downCmd.Flags().String("path", "", "Specify folder contains the manifests")
+	bindFlags(downCmd)
 }
