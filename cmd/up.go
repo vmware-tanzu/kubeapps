@@ -25,6 +25,17 @@ var upCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		kaManifestDir, err := cmd.Flags().GetString("path")
+		if err != nil {
+			return err
+		}
+		if kaManifestDir == "" {
+			home, err := getHome()
+			if err != nil {
+				return err
+			}
+			kaManifestDir = filepath.Join(home, KUBEAPPS_DIR)
+		}
 
 		c.Create = true
 
@@ -46,12 +57,6 @@ var upCmd = &cobra.Command{
 		}
 		wd := metadata.AbsPath(cwd)
 
-		home, err := getHome()
-		if err != nil {
-			return err
-		}
-		kaManifestDir := filepath.Join(home, KUBEAPPS_DIR)
-
 		objs, err := parseObjects(kaManifestDir)
 		if err != nil {
 			return err
@@ -65,4 +70,5 @@ func init() {
 	RootCmd.AddCommand(upCmd)
 	upCmd.Flags().StringP("namespace", "", api.NamespaceDefault, "Specify namespace for the KubeApps components")
 	upCmd.Flags().Bool("dry-run", false, "Provides output to be submitted to the server")
+	upCmd.Flags().String("path", "", "Specify folder contains the manifests")
 }
