@@ -30,11 +30,17 @@ var downCmd = &cobra.Command{
 			return err
 		}
 
-		home, err := getHome()
+		kaManifestDir, err := cmd.Flags().GetString("path")
 		if err != nil {
 			return err
 		}
-		kaManifestDir := filepath.Join(home, KUBEAPPS_DIR)
+		if kaManifestDir == "" {
+			home, err := getHome()
+			if err != nil {
+				return err
+			}
+			kaManifestDir = filepath.Join(home, KUBEAPPS_DIR)
+		}
 
 		objs, err := parseObjects(kaManifestDir)
 		if err != nil {
@@ -48,4 +54,5 @@ func init() {
 	RootCmd.AddCommand(downCmd)
 	downCmd.Flags().StringP("namespace", "", api.NamespaceDefault, "Specify namespace for the KubeApps components")
 	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored")
+	downCmd.Flags().String("path", "", "Specify folder contains the manifests")
 }
