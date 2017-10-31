@@ -29,19 +29,26 @@ var downCmd = &cobra.Command{
 			return err
 		}
 
-		kaManifestDir, err := cmd.Flags().GetString("path")
+		kaFile, err := cmd.Flags().GetString("file")
 		if err != nil {
 			return err
 		}
-		if kaManifestDir == "" {
-			home, err := getHome()
+
+		if kaFile == "" {
+			kaFile, err = cmd.Flags().GetString("path")
 			if err != nil {
 				return err
 			}
-			kaManifestDir = filepath.Join(home, KUBEAPPS_DIR)
+			if kaFile == "" {
+				home, err := getHome()
+				if err != nil {
+					return err
+				}
+				kaFile = filepath.Join(home, KUBEAPPS_DIR)
+			}
 		}
 
-		objs, err := parseObjects(kaManifestDir)
+		objs, err := parseObjects(kaFile)
 		if err != nil {
 			return err
 		}

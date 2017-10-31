@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/ksonnet/kubecfg/template"
 	"github.com/ksonnet/kubecfg/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -33,10 +33,11 @@ var RootCmd = &cobra.Command{
 func bindFlags(cmd *cobra.Command) {
 	cmd.Flags().StringP("namespace", "", api.NamespaceDefault, "Specify namespace for the KubeApps components")
 	cmd.Flags().String("path", "", "Specify folder contains the manifests")
+	cmd.Flags().String("file", "", "Specify the kubeapps.jsonnet file")
 
 }
 
-func appendObj(res *[]*unstructured.Unstructured) filepath.WalkFunc {
+func walkYaml(f *[]string) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -44,11 +45,7 @@ func appendObj(res *[]*unstructured.Unstructured) filepath.WalkFunc {
 		if !info.IsDir() {
 			ext := filepath.Ext(path)
 			if ext == ".yaml" {
-				objs, err := utils.Read(nil, path)
-				if err != nil {
-					return fmt.Errorf("Error reading %s: %v", path, err)
-				}
-				*res = append(*res, utils.FlattenToV1(objs)...)
+				*f = append(*f, path)
 			}
 		}
 
@@ -56,13 +53,23 @@ func appendObj(res *[]*unstructured.Unstructured) filepath.WalkFunc {
 	}
 }
 
-func parseObjects(dirPath string) ([]*unstructured.Unstructured, error) {
-	res := []*unstructured.Unstructured{}
-	err := filepath.Walk(dirPath, appendObj(&res))
-	if err != nil {
-		return nil, err
+func parseObjects(path string) ([]*unstructured.Unstructured, error) {
+	files := &[]string{}
+	if filepath.Ext(path) == ".jsonnet" {
+		files = &[]string{path}
+	} else {
+		err := filepath.Walk(path, walkYaml(files))
+		if err != nil {
+			return nil, err
+		}
 	}
-	return res, nil
+
+	expander := &template.Expander{
+		EnvJPath:   filepath.SplitList(os.Getenv("KUBECFG_JPATH")),
+		FailAction: "warn",
+		Resolver:   "noop",
+	}
+	return expander.Expand(*files)
 }
 
 func restClientPool() (dynamic.ClientPool, discovery.DiscoveryInterface, error) {
