@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
@@ -23,17 +22,6 @@ var upCmd = &cobra.Command{
 		c.DefaultNamespace = ns
 		if err != nil {
 			return err
-		}
-		kaManifestDir, err := cmd.Flags().GetString("path")
-		if err != nil {
-			return err
-		}
-		if kaManifestDir == "" {
-			home, err := getHome()
-			if err != nil {
-				return err
-			}
-			kaManifestDir = filepath.Join(home, KUBEAPPS_DIR)
 		}
 
 		c.Create = true
@@ -56,7 +44,15 @@ var upCmd = &cobra.Command{
 		}
 		wd := metadata.AbsPath(cwd)
 
-		objs, err := parseObjects(kaManifestDir)
+		objs, err := parseObjects(KUBEAPPSNS)
+		if err != nil {
+			return err
+		}
+		if err = c.Run(objs, wd); err != nil {
+			return err
+		}
+
+		objs, err = parseObjects(MANIFEST)
 		if err != nil {
 			return err
 		}

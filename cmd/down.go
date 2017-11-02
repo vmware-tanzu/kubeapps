@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"path/filepath"
-
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/spf13/cobra"
 )
@@ -29,19 +27,7 @@ var downCmd = &cobra.Command{
 			return err
 		}
 
-		kaManifestDir, err := cmd.Flags().GetString("path")
-		if err != nil {
-			return err
-		}
-		if kaManifestDir == "" {
-			home, err := getHome()
-			if err != nil {
-				return err
-			}
-			kaManifestDir = filepath.Join(home, KUBEAPPS_DIR)
-		}
-
-		objs, err := parseObjects(kaManifestDir)
+		objs, err := parseObjects(MANIFEST)
 		if err != nil {
 			return err
 		}
