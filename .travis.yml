@@ -42,15 +42,29 @@ install:
     while ! kubectl version; do sleep 1; done
 
 script:
-  # FIXME(gus): `validate` fails on CRDs, because the server doens't
+  # FIXME(gus): `validate` fails on CRDs, because the server doesn't
   # publish a schema :(  The following `kubeapps up` will verify that the
   # server accepts them.
   - >-
     kubecfg validate -v kubeapps.jsonnet || :
   - ./kubeapps.sh up
-  # FIXME: Do some sort of test here
-  # (perhaps just "did all the pods become Ready?")
+  - ./tests.sh $(./kubeapps.sh dashboard --url)
+
+after_success:
+  - kubectl get all --all-namespaces
   - ./kubeapps.sh down
+
+after_failure:
+  - kubectl get all --all-namespaces
+  - |
+    kubectl get pods --all-namespaces -o go-template='{{range .items}}{{.status.phase}} {{.metadata.namespace}} {{.metadata.name}} {{(index .spec.containers 0).name}}!{{end}}' |
+    tr \! '\n' |
+    grep -v '^Running' |
+    while read phase ns name container; do
+      kubectl describe pod -n $ns $name
+      echo Logs from $ns/$name/$container:
+      kubectl logs -n $ns $name -c $container || :
+    done
 
 cache:
   directories:
