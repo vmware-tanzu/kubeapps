@@ -21,12 +21,12 @@ func init() {
 
 func fsGetFile(fname string) (string, error) {
 	buf := bytes.NewBuffer(nil)
-	manifest_f, err := statikFS.Open(fname)
+	statik_file, err := statikFS.Open(fname)
 	if err != nil {
 		log.Fatalf("ERROR: Static file '%s' not found", fname)
 		return "", err
 	}
-	io.Copy(buf, manifest_f)
-	manifest_s := string(buf.Bytes())
-	return manifest_s, nil
+	io.Copy(buf, statik_file)
+	content := string(buf.Bytes())
+	return content, nil
 }
