@@ -1090,10 +1090,15 @@ spec:
 `
 )
 
+var (
+	// VERSION will be overwritten automatically by the build system
+	VERSION = "devel"
+)
+
 // RootCmd is the root of cobra subcommand tree
 var RootCmd = &cobra.Command{
 	Use:   "kubeapps",
-	Short: "Manage KubeApps infrastructure",
+	Short: "Kubeapps Installer manages to install Kubeapps components to your cluster",
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		out := cmd.OutOrStderr()
 		logrus.SetOutput(out)
