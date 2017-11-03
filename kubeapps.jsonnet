@@ -1,5 +1,8 @@
 local kube = import "kube.libsonnet";
 
+local host = null;
+local tls = false;
+
 {
   namespace:: {metadata+: {namespace: "kubeapps"}},
 
@@ -10,13 +13,89 @@ local kube = import "kube.libsonnet";
   kubeless: (import "kubeless.jsonnet"),
   tiller: (import "tiller.jsonnet"),
   ssecrets: (import "sealed-secrets.jsonnet"),
+  nginx: (import "ingress-nginx.jsonnet") {
+    service+: {
+      spec+: {
+        local maybe_https = if tls then [
+          {name: "https", port: 443, protocol: "TCP"},
+        ] else [],
+
+        ports: [
+          {name: "http", port: 80, protocol: "TCP"},
+        ] + maybe_https,
+      },
+    },
+  },
+
+  kubelessui: (import "kubeless-ui.jsonnet") {
+    namespace:: $.namespace,
+  },
 
   hub: (import "kubeapps-dashboard.jsonnet") + {
     namespace:: $.namespace,
     mongodb:: $.mongodb.svc,
+    ingress:: null,
+    values+: {
+      api+: {
+        service+: {type: "ClusterIP"},
+        // FIXME: api server downloads metadata/icons/etc for *every
+        // chart* *before* it starts answering /healthz
+        livenessProbe+: {initialDelaySeconds: 10*60},
+      },
+      ui+: {service+: {type: "ClusterIP"}},
+      prerender+: {service+: {type: "ClusterIP"}},
+    },
+
+    // FIXME(gus): I think these are bugs in the monocular chart
+    local readinessDelay(value) = {
+      deploy+: {
+        spec+: {
+          template+: {
+            spec+: {
+              containers_+: {
+                default+: {
+                  readinessProbe+: {
+                    initialDelaySeconds: value,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    ui+: readinessDelay(0),
+    api+: readinessDelay(0),
   },
 
-  mongodb: (import "mongodb.jsonnet") + {
+  mongodb: (import "mongodb.jsonnet") {
     namespace:: $.namespace,
+  },
+
+  ingress: kube.Ingress("kubeapps") + $.namespace {
+    metadata+: {
+      annotations+: {
+        "ingress.kubernetes.io/rewrite-target": "/",
+        "kubernetes.io/ingress.class": "nginx",
+        "ingress.kubernetes.io/ssl-redirect": std.toString(tls),
+      },
+    },
+    spec+: {
+      rules: [{
+        http: {
+          paths: [
+            {path: "/", backend: $.hub.ui.svc.name_port},
+            {path: "/api/", backend: $.hub.api.svc.name_port},
+            {path: "/kubeless", backend: $.kubelessui.svc.name_port},
+          ],
+        },
+        host: host,
+      }],
+
+      tls: if tls then [{
+        secretName: $.ingressTls.metadata.name,
+        hosts: host,
+      }] else [],
+    },
   },
 }
