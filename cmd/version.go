@@ -11,7 +11,7 @@ var versionCmd = &cobra.Command{
 	Short: "Print the version of Kubeapps Installer",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Installer version: " + VERSION)
+		fmt.Println("Kubeapps Installer version: " + VERSION)
 	},
 }
 
