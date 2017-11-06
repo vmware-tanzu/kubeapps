@@ -9,13 +9,16 @@ BINARY = kubeapps
 GO_PACKAGES = ./cmd/...
 GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 GO_FLAGS = -ldflags="-w -X github.com/kubeapps/installer/cmd.VERSION=${VERSION}"
-
-.PHONY: binary
+EMBEDDED_STATIC = generated/statik/statik.go
 
 default: binary
 
-binary:
+binary: $(EMBEDDED_STATIC)
 	$(GO) build -o $(BINARY) $(GO_FLAGS) .
+
+$(EMBEDDED_STATIC): $(wilcard static/*)
+	$(GO) get github.com/rakyll/statik
+	$(GO) generate
 
 test:
 	$(GO) test $(GO_FLAGS) $(GO_PACKAGES)
@@ -25,3 +28,8 @@ fmt:
 
 vet:
 	$(GO) vet $(GO_FLAGS) $(GO_PACKAGES)
+
+clean:
+	$(RM) kubeapps $(EMBEDDED_STATIC)
+
+.PHONY: default binary test fmt vet clean
