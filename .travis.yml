@@ -17,7 +17,7 @@ script:
   - make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
 
 before_deploy:
-  - echo TARGET=$TARGET OS_NAME=$TRAVIS_OS_NAME GO_VERSION=$TRAVIS_GO_VERSION
+  - echo OS_NAME=$TRAVIS_OS_NAME GO_VERSION=$TRAVIS_GO_VERSION
   - EXE_NAME=kubeapps-$(go env GOOS)-$(go env GOARCH)
   - cp kubeapps $EXE_NAME
   - strip $EXE_NAME && ./$EXE_NAME version
@@ -27,11 +27,12 @@ before_deploy:
 deploy:
   provider: releases
   api_key:
-    secure: h+7za6WZBQ6WOGxdux9zztQTW03wE+stVrio8zKVt/fzX5mAphNFoifWcBmvsjm66jHNuhqA5VX5o3phVvf6mbieoxO56CMQzeIg9yIRLM4oWnAdJ4k7ZuOJBRCGtEX0Bs9CgnHzFP8L+Lp+FTe7f31jVll/IPSdvtELzx2ormilK01co201Kctx3yjDG7nWVRygvHcCDY5aLpqcvZVJspwF2izPCsz9GR5+ydCF4w3TvdDqcMxAS3Z+sF8sofnlrnUIWSfrOAmR7qrQpPTR+5gB53h+1rF3kTF49jyvuuCwElUQRl0jsHjX/Uz0qg4d3JPd5TZ16HM6XBtmz6hSkEXoV9o5bwsMG3URODMSk5WVK5WVsMrdJs8i5Ka6KhRSs4/YdoJAy8YlFpMxHdsmycqXBGUw6UahBGdCDxs7KfRSsh713fpQSvOrvupA6NHf/a5atxQcGSLs6uKRV3hvBbP76lYTO8bbf40m5pJ78mG8GVkmezOlygjcPrZmxIl/YYVEYcYhrRJCJk76ok/Iq/HBXJn0cj0aYW52TVitrehDiu+a5EBFs+I66Ib12WFGAFU/VYwkezA42f4Sgvfifa9pzslg8QUcVNBXOteZa7n2Z+6iULorCQ4MlKzv7Mjz/ac1RAEwfd74JP7zV3PDMHeQ2qkzahHwaLDdC9vJ2Vs=
+    secure: "G0BmT6tXyXkXlgo9pa4/SNWYZHfwKqxWJ9hVz0LybYnon0IbEjpo5mppsltezEHEQvgdX6H+tujcmOIDAHK2hh3KdeYzZ7GjM1oGRau4x2sN42o6bw7wQ7lC9+ZgPvH9vWiBxf3bZ0TYVjmZ2OcvzBSycg2T5XFKEQKGyJc1cGABFm6At8WXimbaXhWLsrQ0MP9yd5uwvp9PBG+SxJmInDdUIw7sFtEYDL4YDIG6JVgJOV1+3f8oTNiM1wwTPJuaHoybbyeE8xdT9pN6DOk0HZXP+/f6rjx63lMoKCqsqMi6Bz6rDpmI5YfSRh7M2RVebaKnHxYhVKQ20+y0+0UznFmArVSSH4SbFCwz9fYn3NBPLMaSdR91HS4BZe1AeOdXZlfowGOdQuZf3oY/aLtB6cu2jwiUh58CtoTFbg53iZcYwiW69Ap6G40SD2JZNlHPScB5eFJkj1f+3CFHAmB89nLgpZw+S12/HZGQa/OmdB4wd73mqe2XQa7ez60UOjhURwU2LzI02/0NaSswcpu9ygCAYgz1Cy6jAJnmxdvIdcACzYDpgNKNj+yC8GSvAqxEDX+wi6WdUVhy+jwaCzhRgbBZScP8kcFFOKjmdLdeeujRpw3qUzqEh4HW8oNvlg6yXHpoNwjgQJlDIbCHsevPIs/duBCMPy+3st+KaLLwZig="
   file_glob: true
   file: $EXE_NAME
   skip_cleanup: true
   overwrite: true
   on:
     tags: true
+    branch: master
     repo: kubeapps/installer
