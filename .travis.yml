@@ -1,0 +1,38 @@
+language: go
+
+os:
+  - linux
+  - osx
+
+go:
+  - 1.8.3
+
+go_import_path: github.com/kubeapps/installer
+
+before_install:
+  - set -e
+
+script:
+  - make test
+  - make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
+
+before_deploy:
+  - echo OS_NAME=$TRAVIS_OS_NAME GO_VERSION=$TRAVIS_GO_VERSION
+  - EXE_NAME=kubeapps-$(go env GOOS)-$(go env GOARCH)
+  - cp kubeapps $EXE_NAME
+  - strip $EXE_NAME && ./$EXE_NAME version
+  - >
+    size $EXE_NAME || :
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "G0BmT6tXyXkXlgo9pa4/SNWYZHfwKqxWJ9hVz0LybYnon0IbEjpo5mppsltezEHEQvgdX6H+tujcmOIDAHK2hh3KdeYzZ7GjM1oGRau4x2sN42o6bw7wQ7lC9+ZgPvH9vWiBxf3bZ0TYVjmZ2OcvzBSycg2T5XFKEQKGyJc1cGABFm6At8WXimbaXhWLsrQ0MP9yd5uwvp9PBG+SxJmInDdUIw7sFtEYDL4YDIG6JVgJOV1+3f8oTNiM1wwTPJuaHoybbyeE8xdT9pN6DOk0HZXP+/f6rjx63lMoKCqsqMi6Bz6rDpmI5YfSRh7M2RVebaKnHxYhVKQ20+y0+0UznFmArVSSH4SbFCwz9fYn3NBPLMaSdR91HS4BZe1AeOdXZlfowGOdQuZf3oY/aLtB6cu2jwiUh58CtoTFbg53iZcYwiW69Ap6G40SD2JZNlHPScB5eFJkj1f+3CFHAmB89nLgpZw+S12/HZGQa/OmdB4wd73mqe2XQa7ez60UOjhURwU2LzI02/0NaSswcpu9ygCAYgz1Cy6jAJnmxdvIdcACzYDpgNKNj+yC8GSvAqxEDX+wi6WdUVhy+jwaCzhRgbBZScP8kcFFOKjmdLdeeujRpw3qUzqEh4HW8oNvlg6yXHpoNwjgQJlDIbCHsevPIs/duBCMPy+3st+KaLLwZig="
+  file_glob: true
+  file: $EXE_NAME
+  skip_cleanup: true
+  overwrite: true
+  on:
+    tags: true
+    branch: master
+    repo: kubeapps/installer
