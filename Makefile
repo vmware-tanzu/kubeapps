@@ -16,12 +16,12 @@ default: binary
 binary: $(EMBEDDED_STATIC)
 	$(GO) build -o $(BINARY) $(GO_FLAGS) .
 
-$(EMBEDDED_STATIC): $(wilcard static/*)
-	$(GO) get github.com/rakyll/statik
-	$(GO) generate
-
-test:
+test: $(EMBEDDED_STATIC)
 	$(GO) test $(GO_FLAGS) $(GO_PACKAGES)
+
+$(EMBEDDED_STATIC): $(wilcard static/*)
+	$(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
+	$(GO) generate
 
 fmt:
 	$(GOFMT) -s -w $(GO_FILES)

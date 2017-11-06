@@ -1,4 +1,4 @@
-//go:generate statik -f -src=./static -dest=./generated
+//go:generate ./statik -f -src=./static -dest=./generated
 package main
 
 import (
