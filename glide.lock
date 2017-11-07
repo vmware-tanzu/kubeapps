@@ -1,6 +1,11 @@
-hash: 9403a8dca444dbc20ba2b2b6c41b0c42e4bba974e597a5f067ed0bce77120f1f
-updated: 2017-11-07T11:49:21.150617195+07:00
+hash: a87c33313517efd34a132b68f97286161ba0f55d4f652241f17283eb6de81405
+updated: 2017-11-07T13:50:18.914808625+07:00
 imports:
+- name: cloud.google.com/go
+  version: 3b1ae45394a234c385be014e9a488f2bb6eef821
+  subpackages:
+  - compute/metadata
+  - internal
 - name: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
   subpackages:
@@ -32,6 +37,10 @@ imports:
   - sortkeys
 - name: github.com/golang/glog
   version: 44145f04b68cf362d9c4df2182967c2275eaefed
+- name: github.com/golang/protobuf
+  version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
+  subpackages:
+  - proto
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/howeyc/gopass
@@ -63,7 +72,7 @@ imports:
   - jlexer
   - jwriter
 - name: github.com/mattn/go-isatty
-  version: b5b82d9448db2a8dd98d431b04120dcc303a024d
+  version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/PuerkitoBio/purell
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
@@ -107,10 +116,19 @@ imports:
 - name: golang.org/x/net
   version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
   subpackages:
+  - context
+  - context/ctxhttp
   - http2
   - http2/hpack
   - idna
   - lex/httplex
+- name: golang.org/x/oauth2
+  version: 3c3a985cb79f52a3190fbc056984415ca6763d01
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
 - name: golang.org/x/sys
   version: d4266bc12aae0b4128952c889b769442fce5d2f1
   subpackages:
@@ -128,6 +146,18 @@ imports:
   - unicode/bidi
   - unicode/norm
   - width
+- name: google.golang.org/appengine
+  version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
@@ -185,8 +215,10 @@ imports:
   - pkg/util
   - pkg/util/parsers
   - pkg/version
+  - plugin/pkg/client/auth/gcp
   - rest
   - rest/watch
+  - third_party/forked/golang/template
   - tools/auth
   - tools/clientcmd
   - tools/clientcmd/api
@@ -199,4 +231,5 @@ imports:
   - util/flowcontrol
   - util/homedir
   - util/integer
+  - util/jsonpath
 testImports: []
