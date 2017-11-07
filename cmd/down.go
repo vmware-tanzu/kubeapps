@@ -27,7 +27,11 @@ var downCmd = &cobra.Command{
 			return err
 		}
 
-		objs, err := parseObjects(MANIFEST)
+		manifest, err := fsGetFile("/kubeapps-objs.yaml")
+		if err != nil {
+			return err
+		}
+		objs, err := parseObjects(manifest)
 		if err != nil {
 			return err
 		}

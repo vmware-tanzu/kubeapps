@@ -16,3 +16,9 @@ import:
   version: f62e98d28ab7ad31d707ba837a966378465c7b57
 - package: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+- package: github.com/rakyll/statik
+  version: ^0.1.1
+- package: golang.org/x/sys
+  version: d4266bc12aae0b4128952c889b769442fce5d2f1
+  subpackages:
+  - unix
