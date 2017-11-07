@@ -72,5 +72,4 @@ var upCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(upCmd)
 	upCmd.Flags().Bool("dry-run", false, "Provides output to be submitted to the server")
-	bindFlags(upCmd)
 }
