@@ -1,5 +1,5 @@
 hash: a87c33313517efd34a132b68f97286161ba0f55d4f652241f17283eb6de81405
-updated: 2017-11-07T13:50:18.914808625+07:00
+updated: 2017-11-08T15:21:50.147688312+07:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -59,7 +59,7 @@ imports:
   - ksonnet-gen/kubespec
   - ksonnet-gen/kubeversion
 - name: github.com/ksonnet/kubecfg
-  version: 2169ce8baf09ef5403f4d5e6eb0e4f1c65df88a9
+  version: 897a3db8a83ca195a2825b1fabe59ffca103e700
   subpackages:
   - metadata
   - pkg/kubecfg

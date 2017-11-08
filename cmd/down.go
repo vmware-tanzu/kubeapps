@@ -10,13 +10,11 @@ var downCmd = &cobra.Command{
 	Short: "uninstall KubeApps components",
 	Long:  `uninstall KubeApps components`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c := kubecfg.DeleteCmd{}
-		ns, err := cmd.Flags().GetString("namespace")
-		if err != nil {
-			return err
+		c := kubecfg.DeleteCmd{
+			DefaultNamespace: "default",
 		}
-		c.DefaultNamespace = ns
 
+		var err error
 		c.GracePeriod, err = cmd.Flags().GetInt64("grace-period")
 		if err != nil {
 			return err
