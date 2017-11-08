@@ -42,5 +42,4 @@ var downCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(downCmd)
 	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored")
-	bindFlags(downCmd)
 }

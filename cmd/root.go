@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -38,10 +37,6 @@ var RootCmd = &cobra.Command{
 		logrus.SetOutput(out)
 		return nil
 	},
-}
-
-func bindFlags(cmd *cobra.Command) {
-	cmd.Flags().StringP("namespace", "", api.NamespaceDefault, "Specify namespace for the Kubeapps components")
 }
 
 func parseObjects(manifest string) ([]*unstructured.Unstructured, error) {
