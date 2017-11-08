@@ -17,13 +17,10 @@ var upCmd = &cobra.Command{
 	Short: "install KubeApps components",
 	Long:  `install KubeApps components`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c := kubecfg.ApplyCmd{}
-		ns, err := cmd.Flags().GetString("namespace")
-		c.DefaultNamespace = ns
-		if err != nil {
-			return err
+		c := kubecfg.ApplyCmd{
+			DefaultNamespace: "default",
 		}
-
+		var err error
 		c.Create = true
 
 		c.DryRun, err = cmd.Flags().GetBool("dry-run")

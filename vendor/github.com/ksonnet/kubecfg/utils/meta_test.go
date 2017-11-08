@@ -29,6 +29,10 @@ func TestParseVersion(t *testing.T) {
 			input: version.Info{Major: "1", Minor: "6x"},
 			error: true,
 		},
+		{
+			input:    version.Info{Major: "1", Minor: "8+"},
+			expected: ServerVersion{Major: 1, Minor: 8},
+		},
 	}
 
 	for _, test := range tests {

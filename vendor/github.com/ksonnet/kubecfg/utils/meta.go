@@ -24,6 +24,10 @@ func ParseVersion(v *version.Info) (ret ServerVersion, err error) {
 	if err != nil {
 		return
 	}
+
+	// trim "+" in minor version (happened on GKE)
+	v.Minor = strings.Trim(v.Minor, "+")
+
 	ret.Minor, err = strconv.Atoi(v.Minor)
 	if err != nil {
 		return
