@@ -17,12 +17,14 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
 	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/kubeapps/kubeapps/pkg/gke"
+	"github.com/ksonnet/kubecfg/utils"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/discovery"
 )
@@ -51,29 +53,40 @@ List of components that kubeapps up installs:
 
 		c.DryRun, err = cmd.Flags().GetBool("dry-run")
 		if err != nil {
-			return err
+			return fmt.Errorf("can't get --dry-run flag: %v", err)
 		}
 
 		c.GcTag = GcTag
 
 		c.ClientPool, c.Discovery, err = restClientPool()
 		if err != nil {
-			return err
+			return fmt.Errorf("can't get Kubernetes client: %v", err)
+		}
+
+		// validate k8s version
+		version, err := utils.FetchVersion(c.Discovery)
+		if err != nil {
+			return fmt.Errorf("can't verify Kubernetes version: %v", err)
+		}
+		if version.Major <= 1 && version.Minor < 7 {
+			fmt.Println("warning: Kubernetes with RBAC enabled (v1.7+) is required to run Kubeapps")
+			os.Exit(0)
 		}
 
 		cwd, err := os.Getwd()
 		if err != nil {
-			return err
+			return fmt.Errorf("can't get current directory: %v", err)
 		}
 		wd := metadata.AbsPath(cwd)
 
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
 		if err != nil {
-			return err
+			return fmt.Errorf("can't read kubeapps manifest: %v", err)
 		}
+
 		objs, err := parseObjects(manifest)
 		if err != nil {
-			return err
+			return fmt.Errorf("can't parse kubeapps manifest: %v", err)
 		}
 
 		// k8s on GKE
@@ -82,28 +95,35 @@ List of components that kubeapps up installs:
 		} else if ok {
 			gcloudPath, err := gke.SdkConfigPath()
 			if err != nil {
-				return err
+				return fmt.Errorf("can't get sdk config path: %v", err)
 			}
 
 			user, err := gke.GetActiveUser(gcloudPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("can't get active gke user: %v", err)
 			}
 
 			crb, err := gke.BuildCrbObject(user)
 			if err != nil {
-				return err
+				return fmt.Errorf("can't assign cluster-admin permission to the current user: %v", err)
 			}
 
 			//(tuna): we force the deployment ordering here:
 			// this clusterrolebinding will be created before others for granting the proper permission.
 			// when the installation finishes, it will be gc'd immediately.
 			c.SkipGc = true
-			c.Run(crb, wd)
+			err = c.Run(crb, wd)
+			if err != nil {
+				return fmt.Errorf("can't assign cluster-admin permission to the current user: %v", err)
+			}
 			c.SkipGc = false
 		}
 
-		return c.Run(objs, wd)
+		if err = c.Run(objs, wd); err != nil {
+			return fmt.Errorf("can't install kubeapps components: %v", err)
+		}
+		fmt.Println("successfully installed kubeapps")
+		return nil
 	},
 }
 
