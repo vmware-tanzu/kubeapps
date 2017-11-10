@@ -41,23 +41,11 @@ var upCmd = &cobra.Command{
 		}
 		wd := metadata.AbsPath(cwd)
 
-		manifest, err := fsGetFile("/kubeapps-ns.yaml")
+		manifest, err := fsGetFile("/kubeapps-objs.yaml")
 		if err != nil {
 			return err
 		}
 		objs, err := parseObjects(manifest)
-		if err != nil {
-			return err
-		}
-		if err = c.Run(objs, wd); err != nil {
-			return err
-		}
-
-		manifest, err = fsGetFile("/kubeapps-objs.yaml")
-		if err != nil {
-			return err
-		}
-		objs, err = parseObjects(manifest)
 		if err != nil {
 			return err
 		}
