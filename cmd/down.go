@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/ksonnet/kubecfg/utils"
@@ -50,8 +49,7 @@ var downCmd = &cobra.Command{
 			return fmt.Errorf("can't verify Kubernetes version: %v", err)
 		}
 		if version.Major <= 1 && version.Minor < 7 {
-			fmt.Println("warning: Kubernetes with RBAC enabled (v1.7+) is required to run Kubeapps")
-			os.Exit(0)
+			return fmt.Errorf("kubernetes with RBAC enabled (v1.7+) is required to run Kubeapps")
 		}
 
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
