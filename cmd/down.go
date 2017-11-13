@@ -7,8 +7,8 @@ import (
 
 var downCmd = &cobra.Command{
 	Use:   "down FLAG",
-	Short: "uninstall KubeApps components",
-	Long:  `uninstall KubeApps components`,
+	Short: "Uninstall KubeApps components.",
+	Long:  `Uninstall KubeApps components.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c := kubecfg.DeleteCmd{
 			DefaultNamespace: "default",
@@ -39,5 +39,5 @@ var downCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(downCmd)
-	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored")
+	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored.")
 }

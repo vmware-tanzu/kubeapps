@@ -31,7 +31,10 @@ var (
 // RootCmd is the root of cobra subcommand tree
 var RootCmd = &cobra.Command{
 	Use:   "kubeapps",
-	Short: "Kubeapps Installer manages to install Kubeapps components to your cluster",
+	Short: "kubeapps installs the Kubeapps components into your cluster",
+	Long: `kubeapps installs the Kubeapps components into your cluster.
+  
+Find more information at https://github.com/kubeapps/installer.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		out := cmd.OutOrStderr()
 		logrus.SetOutput(out)
@@ -129,5 +132,5 @@ func getHome() (string, error) {
 		return home, nil
 	}
 
-	return "", errors.New("can't get home directory")
+	return "", errors.New("Can't get home directory")
 }
