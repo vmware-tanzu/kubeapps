@@ -2,7 +2,7 @@
 
 # Kubeapps Installer
 
-Kubeapps Installer is a tool to super-charge your kubernetes cluster with:
+Kubeapps Installer is a [Bitnami](https://bitnami.com) tool to super-charge your Kubernetes cluster with:
  * Your own app [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready apps into your cluster with a single click.
  * [Kubeless](http://kubeless.io/) - a Kubernetes-native Serverless Framework, compatible with [serverless.com](serverless.com).
  * [SealedSecrets](https://github.com/bitnami/sealed-secrets) - a SealedSecret can be decrypted only by the controller running in the cluster and nobody else (not even the original author).
