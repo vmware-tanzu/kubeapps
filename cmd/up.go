@@ -14,8 +14,15 @@ const (
 
 var upCmd = &cobra.Command{
 	Use:   "up FLAG",
-	Short: "install KubeApps components",
-	Long:  `install KubeApps components`,
+	Short: "Install KubeApps components.",
+	Long: `Install KubeApps components.
+
+List of components that kubeapps up installs:
+
+- Kubeless (https://github.com/kubeless/kubeless)
+- Sealed-Secrets (https://github.com/bitnami/sealed-secrets)
+- Helm/Tiller (https://github.com/kubernetes/helm)
+- Kubeapps Dashboard (https://github.com/kubeapps/dashboard)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c := kubecfg.ApplyCmd{
 			DefaultNamespace: "default",
