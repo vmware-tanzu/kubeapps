@@ -35,8 +35,27 @@ var RootCmd = &cobra.Command{
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		out := cmd.OutOrStderr()
 		logrus.SetOutput(out)
+		verbosity, err := cmd.Flags().GetCount("verbose")
+		if err != nil {
+			return err
+		}
+		logrus.SetLevel(logLevel(verbosity))
 		return nil
 	},
+}
+
+func init() {
+	RootCmd.PersistentFlags().CountP("verbose", "v", "Increase verbosity.")
+	RootCmd.PersistentFlags().Set("logtostderr", "true")
+}
+
+func logLevel(verbosity int) logrus.Level {
+	switch verbosity {
+	case 0:
+		return logrus.InfoLevel
+	default:
+		return logrus.DebugLevel
+	}
 }
 
 func parseObjects(manifest string) ([]*unstructured.Unstructured, error) {
