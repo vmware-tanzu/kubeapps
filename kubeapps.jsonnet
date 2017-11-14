@@ -11,7 +11,7 @@ local kube = import "kube.libsonnet";
   tiller: (import "tiller.jsonnet"),
   ssecrets: (import "sealed-secrets.jsonnet"),
 
-  hub: (import "kubeapps-hub.jsonnet") + {
+  hub: (import "kubeapps-dashboard.jsonnet") + {
     namespace:: $.namespace,
     mongodb:: $.mongodb.svc,
   },

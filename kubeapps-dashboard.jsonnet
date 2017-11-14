@@ -6,10 +6,10 @@ local kube = import "kube.libsonnet";
 local kubecfg = import "kubecfg.libsonnet";
 
 local labels = {
-  app: "kubeapps-hub",
+  app: "kubeapps-dashboard",
 };
 
-local valuesDefault = kubecfg.parseYaml(importstr "kubeapps-hub-values.yaml")[0];
+local valuesDefault = kubecfg.parseYaml(importstr "kubeapps-dashboard-values.yaml")[0];
 
 // ConfigMap, with a content-hash appended to the name.
 local HashedConfigMap(name) = kube.ConfigMap(name) {
@@ -75,7 +75,6 @@ local serviceDeployFromValues(parentName, componentName, values) = {
           paths: [
             {path: "/", backend: $.ui.svc.name_port},
             {path: "/api/", backend: $.api.svc.name_port},
-            {path: "/api/ratesvc", backend: $.ratesvc.svc.name_port},
           ],
         },
         host: host,
@@ -138,63 +137,6 @@ local serviceDeployFromValues(parentName, componentName, values) = {
             volumes_+: {
               config: kube.ConfigMapVolume($.api.config),
               cache: kube.EmptyDirVolume(),
-            },
-          },
-        },
-      },
-    },
-  },
-
-  prerender: serviceDeployFromValues(name, "prerender", $.values.prerender) {
-    svc+: $.namespace,
-
-    deploy+: $.namespace {
-      spec+: {
-        template+: {
-          spec+: {
-            containers_+: {
-              default+: {
-                env_+: {
-                  IN_MEMORY_CACHE: $.values.prerender.cacheEnabled,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-
-  ratesvc: serviceDeployFromValues(name, "ratesvc", $.values.ratesvc) {
-    svc+: $.namespace,
-
-    deploy+: $.namespace {
-      spec+: {
-        template+: {
-          spec+: {
-            containers_+: {
-              default+: {
-                args: [
-                  "/ratesvc",
-                  "-mongo-host", mongoDbHost,
-                  "-mongo-database", "ratesvc",
-                ],
-                env_+: {
-                  JWT_KEY: $.values.api.auth.signingKey,
-                },
-                livenessProbe: {
-                  httpGet: {
-                    path: "/live",
-                    port: $.values.ratesvc.service.internalPort,
-                  },
-                },
-                readinessProbe: self.livenessProbe {
-                  httpGet+: {path: "/ready"},
-                },
-
-                // Remove when we have ratesvc.resources in config
-                resources: {},
-              },
             },
           },
         },
