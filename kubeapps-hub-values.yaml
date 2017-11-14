@@ -16,7 +16,7 @@ api:
       clientSecret:
   service:
     name: monocular-api
-    type: NodePort
+    type: ClusterIP
     externalPort: 80
     internalPort: 8081
   resources:
@@ -61,7 +61,7 @@ ui:
     pullPolicy: Always
   service:
     name: monocular-ui
-    type: NodePort
+    type: ClusterIP
     externalPort: 80
     internalPort: 8080
   resources:
@@ -88,7 +88,7 @@ prerender:
   cacheEnabled: true
   service:
     name: prerender
-    type: NodePort
+    type: ClusterIP
     externalPort: 80
     internalPort: 3000
   resources:
