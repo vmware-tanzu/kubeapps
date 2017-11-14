@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/kubeapps/hub.svg?style=svg)](https://circleci.com/gh/kubeapps/hub)
+[![CircleCI](https://circleci.com/gh/kubeapps/dashboard.svg?style=svg)](https://circleci.com/gh/kubeapps/dashboard)
 
 # Monocular UI
 
