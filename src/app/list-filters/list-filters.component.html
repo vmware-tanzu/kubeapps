@@ -1,0 +1,8 @@
+<div class="list-filters">
+  <div class="list-filters_section" *ngFor="let filter of filters">
+    <h3 class="list-filters_section_title">{{ filter.title }}</h3>
+    <div class="list-filters_section_link" *ngFor="let item of filter.items; let i = index" [class.active]="item.selected" (click)='filter.onSelect(i)'>
+      {{ item.title }}
+    </div>
+  </div>
+</div>

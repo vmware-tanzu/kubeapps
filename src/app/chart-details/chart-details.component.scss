@@ -1,0 +1,115 @@
+// Import your custom theme
+@import '../../theme.scss';
+
+$header-height: 200px;
+$icon-height: 150px;
+
+.chart-details {
+  display: flex;
+  flex-direction: column;
+
+  &__header {
+    margin-top: -80px;
+    margin-bottom: 40px;
+
+    &__background {
+      height: $header-height;
+      background: $header-backgound-gradient;
+    }
+
+    &__content {
+      padding: 0 2em;
+      max-width: $layout-max-width;
+      margin: auto;
+      margin-top: -$icon-height / 2;
+      display: flex;
+    }
+
+    &__text {
+      flex: 1;
+
+      h1 {
+        min-height: $icon-height / 2;
+        color: $text-white;
+        margin: 0;
+        margin-top: -5px;
+        display: flex;
+        align-items: flex-end;
+      }
+
+      p {
+        line-height: 1.6em;
+      }
+
+      &__repo {
+        color: md-color($monocular-app-accent);
+
+        &.repo-incubator {
+          color: md-color($monocular-app-warn, 600);
+        }
+
+        a {
+          color: inherit;
+        }
+      }
+    }
+
+    &__icon {
+      width: $icon-height;
+      height: $icon-height;
+      background: $background-white;
+      border: 2px solid $layout-base;
+      margin-right: 1em;
+      border-radius: $border-radius;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      img {
+        width: 70%;
+        max-height: 70%;
+      }
+    }
+  }
+
+  &__content {
+    width: 100%;
+    max-width: $layout-max-width;
+    margin: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    padding: 0 2em 2em 2em;
+  }
+
+  @include mappy-bp(medium) {
+
+    &__content {
+      flex-direction: row;
+
+      &__info {
+        width: 35%;
+        padding-left: 1em;
+      }
+
+      &__docs {
+        padding-right: 1em;
+        min-width: 0;
+        flex: 3;
+      }
+    }
+  }
+
+  @include mappy-bp(max-width small) {
+
+    &__header {
+
+      &__content {
+        flex-direction: column;
+
+        h1 {
+          color: inherit;
+        }
+      }
+    }
+  }
+}

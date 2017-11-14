@@ -1,0 +1,43 @@
+<app-header-bar></app-header-bar>
+<app-loader [loading]="loading">
+  <app-panel class="app-panel--container">
+    <section class="repositories">
+      <header class="repositories__header">
+        <div class="repositories__header__block">
+          <h1 class="repositories__header__title">
+            Repositories
+          </h1>
+        </div>
+        <div class="repositories__header__block repositories__header__new">
+          <button mat-button mat-raised-button color="accent" (click)="addRepo()">
+            Add repository
+          </button>
+        </div>
+      </header>
+      <div class="repositories__table">
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>URL</th>
+            <th>Source</th>
+            <th></th>
+          </tr>
+          <tr *ngFor="let repo of repos">
+            <td data-label="Name" class="name repo-{{repo.attributes.name}}">
+              <a [href]="goToRepoUrl(repo)" [routerLink]="goToRepoUrl(repo)">
+                {{repo.attributes.name}}
+              </a>
+            </td>
+            <td data-label="URL">{{repo.attributes.url}}</td>
+            <td data-label="Source">{{repo.attributes.source}}</td>
+            <td class="actions">
+              <button color="warn" mat-icon-button (click)="deleteRepo(repo)">
+                <mat-icon svgIcon="delete"></mat-icon>
+              </button>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </section>
+  </app-panel>
+</app-loader>

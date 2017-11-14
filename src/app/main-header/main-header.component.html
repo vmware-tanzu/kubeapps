@@ -1,0 +1,20 @@
+<section class="main-header">
+  <app-header-bar [showSearch]="false"></app-header-bar>
+  <div class="main-header-content">
+    <div class="main-header-content__slogan">
+      <p>
+        Discover & launch great Kubernetes-<wbr>ready apps
+      </p>
+    </div>
+    <div class="main-header-search">
+      <form (ngSubmit)="searchCharts(searchBox)">
+        <mat-form-field class="mat-input--reverse mat-input--full mat-input--big">
+          <input matInput placeholder="Search charts..." floatingPlaceholder="false" #searchBox />
+        </mat-form-field>
+      </form>
+      <p class="main-header-search__summary" *ngIf="totalChartsNumber">
+        <b>{{ totalChartsNumber }}</b> charts ready to deploy
+      </p>
+    </div>
+  </div>
+</section>

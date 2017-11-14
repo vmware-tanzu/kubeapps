@@ -1,0 +1,53 @@
+// Import your custom theme
+@import '../../../theme.scss';
+
+mat-tab-body {
+  margin-top: 1em;
+}
+.chart-details-usage {
+  display: block;
+  margin: 2em 0;
+  box-shadow: 1px 1px 10px rgba(black, 0.07);
+  h1 {
+    margin: 0;
+  }
+
+  &__label {
+    margin: 0 0 .1em;
+    font-size: 1em;
+  }
+
+  &__repository {
+    margin-bottom: 1.5em;
+  }
+
+  .mat-input-element {
+    width: calc(100% - 5em);
+
+    .mat-input-wrapper {
+      margin: 1em 0 .5em;
+    }
+  }
+
+  .mat-tab-label {
+    min-width: auto !important;
+  }
+  [mat-button] {
+    margin-left: 1em;
+    min-width: auto;
+    width: 4em;
+  }
+
+  svg {
+    fill: mat-color($monocular-app-primary);
+  }
+
+  p {
+    &.help-link {
+      font-size: 0.8em;
+      text-align: center;
+      margin-top: 20px;
+      margin-bottom: 0;
+    }
+  }
+}

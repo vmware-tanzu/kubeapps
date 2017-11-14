@@ -1,0 +1,19 @@
+<div class="versions">
+  <h1>Chart Versions</h1>
+  <div class="version" *ngFor="let version of shownVersions(versions)">
+    <span class='number' [class.selected]="isSelected(version)">
+      <a [href]="goToVersionUrl(version)" [routerLink]="goToVersionUrl(version)">
+        {{ version.attributes.version }}</a>
+    </span> -
+    <span class='creation-date'>{{ version.attributes.created | date: 'MMM d, y' }}</span>
+  </div>
+  <div class="more-link" *ngIf="showMoreLink()">
+    <a (click)="setShowAllVersions()">show all...</a>
+  </div>
+</div>
+<div class="app-version" *ngIf="currentVersion && currentVersion.attributes.app_version">
+  <h1>Application Version</h1>
+  <div class="version">
+    <span class="number">{{ currentVersion.attributes.app_version }}</span>
+  </div>
+</div>

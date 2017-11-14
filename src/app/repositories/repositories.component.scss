@@ -1,0 +1,133 @@
+@import '../../theme.scss';
+
+.repositories {
+  &__header {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+
+    &__title {
+      margin-top: 0;
+    }
+
+    &__filters {
+      display: none;
+      font-size: 0.5em;
+
+      mat-icon {
+        margin-left: 10px;
+        top: 6px;
+        position: relative;
+      }
+    }
+
+    &__new {
+      margin-left: 1em;
+      margin-bottom: 1em;
+      text-align: center;
+    }
+
+  }
+
+  table {
+    border-collapse: collapse;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    word-break: break-word;
+
+    tr {
+      border-bottom: 1px solid $border-color;
+      padding: .35em;
+
+      &:nth-child(even) {
+        background-color: $layout-light;
+      }
+
+      &:not(:first-child):hover {
+        background-color: $background-light;
+      }
+    }
+
+    th,
+    td {
+      padding: .625em;
+      text-align: left;
+      text-overflow: ellipsis;
+      min-width: 150px;
+
+      &.name {
+        font-weight: 500;
+        color: md-color($monocular-app-accent);
+
+        &.repo-incubator {
+          color: md-color($monocular-app-warn, 600);
+        }
+
+        a {
+          color: inherit ;
+        }
+      }
+      &.actions {
+        text-align: right;
+      }
+    }
+
+    th {
+      font-size: .85em;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      opacity: 0.5;
+    }
+  }
+
+  @include mappy-bp(max-width medium) {
+    table {
+      border: 0;
+
+      tr {
+        display: block;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 1em;
+        background-color: $layout-light !important;
+        border-radius: $border-radius;
+        border: 1px solid $border-color;
+        padding-right: 100px;
+        &:first-child {
+          display: none;
+        }
+
+      }
+
+      td {
+        border: 0;
+        display: block;
+        font-size: .8em;
+        text-align: left;
+        padding: .5em .625em;
+
+        &.actions {
+          position: absolute;
+          right: .35em;
+          bottom: .35em;
+        }
+
+        &:before {
+          /*
+          * aria-label has no advantage, it won't be read inside a table
+          content: attr(aria-label);
+          */
+          content: attr(data-label);
+          display: block;
+          font-size: .85em;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+          opacity: 0.5;
+          color: black;
+        }
+
+      }
+    }
+  }
+}

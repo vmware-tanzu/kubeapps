@@ -1,0 +1,56 @@
+<app-header-bar></app-header-bar>
+<div>
+  <nav class="deployment-details__header">
+    <a routerLink="/deployments" href="/deployments"><mat-icon mat-list-avatar svgIcon="arrow-back"></mat-icon>Deployments</a>
+    <h1>{{ this.name }}</h1>
+    <h2 *ngIf="!deployment && !loading" >Sorry, we couldn't find the deployment</h2>
+  </nav>
+  <app-loader [loading]="loading">
+    <section class="deployment-details" *ngIf="deployment">
+      <aside class="deployment-details__info">
+        <div class="deployment-details__info__container">
+          <div class="deployment-details__info__icon">
+            <img alt="{{ deployment.chartName }}'s logo" src="{{ getIconUrl() }}"/>
+          </div>
+          <div class="deployment-details__info__list">
+            <div class="deployment-details__info__list__item">
+              <p>Chart</p>
+              <h4>{{ deployment.attributes.chartName }} v.{{ deployment.attributes.chartVersion }}</h4>
+            </div>
+            <div class="deployment-details__info__list__item">
+              <p>Namespace</p>
+              <h4>{{ deployment.attributes.namespace }}</h4>
+            </div>
+            <div class="deployment-details__info__list__item">
+              <p>Status</p>
+              <h4>{{ deployment.attributes.status }}</h4>
+            </div>
+            <div class="deployment-details__info__list__item" *ngIf="deployment.attributes.urls.length">
+              <p>URL</p>
+              <h4>
+                <a *ngFor="let url of deployment.attributes.urls" href="{{url}}" target="_blank"> {{url}}</a>
+              </h4>
+            </div>
+            <div class="deployment-details__info__list__item">
+              <p>Last Updated</p>
+              <h4>{{ deployment.attributes.updated | date }}</h4>
+            </div>
+          </div>
+        </div>
+        <div class="deployment-details__info__container actions" [style.background-color]="backgroundColor">
+          <h3 class="actions__title">Actions</h3>
+          <app-deployment-controls [deployment]="deployment" (onDelete)="deploymentDeleted($event)"></app-deployment-controls>
+        </div>
+      </aside>
+      <article class="deployment-details__main">
+        <h3 class="deployment-details__title">Resources</h3>
+        <app-deployment-resource [resource]="resource" *ngFor="let resource of resources">
+        </app-deployment-resource>
+        <div class="deployment-details__main__notes">
+          <h3 class="deployment-details__title">Notes</h3>
+          <pre>{{ deployment.attributes.notes }}</pre>
+        </div>
+      </article>
+    </section>
+  </app-loader>
+</div>

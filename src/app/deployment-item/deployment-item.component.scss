@@ -1,0 +1,43 @@
+// Import your custom theme
+@import '../../theme.scss';
+
+.deployment-item {
+
+
+  &-logo {
+    max-height: 70%;
+    max-width: 80%;
+  }
+
+  &-info {
+    color: $layout-text;
+    text-align: left;
+
+    &__title {
+      margin: 0;
+      margin-bottom: 5px;
+      font-size: 1.2em;
+    }
+
+    &__subtitle {
+      font-size: 0.8em;
+      line-height: 1.5em;
+
+      b {
+        background: rgba($layout-base, 0.1);
+        border-radius: 4px;
+        padding: 1px 4px;
+        font-size: 0.9em;
+        font-weight: 600;
+      }
+    }
+
+    &__version {
+      position: absolute;
+      top: -18px;
+      right: 6px;
+      font-size: 0.7em;
+      background: white;
+    }
+  }
+}

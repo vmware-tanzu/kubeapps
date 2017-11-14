@@ -1,0 +1,28 @@
+<!-- Routed views go here -->
+<div [ngClass]="{ 'App': true, 'App--openMenu': showMenu }">
+  <nav class="App__Menu">
+    <ul>
+      <li>
+        <a class="reverse" routerLink="/charts" routerLinkActive="active">
+          Charts
+        </a>
+      </li>
+      <li *ngIf="config.releasesEnabled">
+        <a class="reverse" routerLink="/repos" routerLinkActive="active">
+          Repositories
+        </a>
+      </li>
+      <li *ngIf="config.releasesEnabled">
+        <a class="reverse" routerLink="/deployments" routerLinkActive="active">
+          Deployments
+        </a>
+      </li>
+    </ul>
+  </nav>
+  <div class="App__Wrap">
+    <main class="App__Content">
+      <router-outlet></router-outlet>
+    </main>
+    <app-footer></app-footer>
+  </div>
+</div>

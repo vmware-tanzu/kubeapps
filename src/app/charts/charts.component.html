@@ -1,0 +1,30 @@
+<app-header-bar></app-header-bar>
+<app-loader [loading]="loading">
+  <app-panel>
+    <section class="charts">
+      <header class="charts__header">
+        <div class="charts__header__block">
+          <h1 class="charts__header__title">
+            Charts
+            <div class="charts__header__filters" (click)="filtersOpen = !filtersOpen">
+              <mat-icon *ngIf="filtersOpen" svgIcon="close"></mat-icon>
+              <mat-icon *ngIf="!filtersOpen" svgIcon="menu"></mat-icon>
+              Filters
+            </div>
+          </h1>
+        </div>
+      </header>
+      <div class="charts__gallery">
+
+        <app-list-filters [filters]="filters" [class.open]="filtersOpen"></app-list-filters>
+        <div class="charts__gallery__content">
+          <div class="charts__gallery__content__topbar">
+            <mat-icon svgIcon="search"></mat-icon>
+            <input type="text" placeholder="Search charts..." value="{{searchTerm}}" (keyup)="searchChange($event)" />
+          </div>
+          <app-chart-list [charts]="orderedCharts"></app-chart-list>
+        </div>
+      </div>
+    </section>
+  </app-panel>
+</app-loader>

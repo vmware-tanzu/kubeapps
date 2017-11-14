@@ -1,0 +1,124 @@
+# Default values for monocular.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+api:
+  replicaCount: 2
+  image:
+    repository: bitnami/monocular-api
+    tag: v0.5.2
+    pullPolicy: Always
+  auth:
+    signingKey: secret
+    github:
+      clientID:
+      clientSecret:
+  service:
+    name: monocular-api
+    type: NodePort
+    externalPort: 80
+    internalPort: 8081
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  livenessProbe:
+    initialDelaySeconds: 180
+  config:
+    repos:
+      # Official repositories
+      - name: stable
+        url: https://kubernetes-charts.storage.googleapis.com
+        source: https://github.com/kubernetes/charts/tree/master/stable
+      - name: incubator
+        url: https://kubernetes-charts-incubator.storage.googleapis.com
+        source: https://github.com/kubernetes/charts/tree/master/incubator
+      # Add your own repository
+      #- name: my-repo-name
+      #  url: my-repository-url
+      #  source: my-repository-source
+    cors:
+      allowed_origins:
+        - ""
+        # e.g. UI served on a different domain
+        # - http://monocular.local
+      allowed_headers:
+        - "content-type"
+        - "x-xsrf-token"
+    # Enable Helm deployment integration
+    releasesEnabled: true
+    # Cache refresh interval in sec.
+    cacheRefreshInterval: 3600
+ui:
+  replicaCount: 2
+  image:
+    repository: kubeapps/dashboard
+    tag: latest
+    pullPolicy: Always
+  service:
+    name: monocular-ui
+    type: NodePort
+    externalPort: 80
+    internalPort: 8080
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  # ui-config populate
+  googleAnalyticsId: UA-XXXXXX-X
+  # API served on same-domain at /api path using Nginx Ingress controller
+  backendHostname: /api
+  # e.g. API served on a different domain
+  # backendHostname: http://monocular-api.local
+
+prerender:
+  replicaCount: 1
+  image:
+    repository: migmartri/prerender
+    tag: latest
+    pullPolicy: Always
+  cacheEnabled: true
+  service:
+    name: prerender
+    type: NodePort
+    externalPort: 80
+    internalPort: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+ingress:
+  enabled: true
+  hosts:
+  # Wildcard
+  -
+  # - monocular.local
+
+  ## Ingress annotations
+  ##
+  annotations:
+    ## Nginx ingress controller (default)
+    ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: 'true'
+    ## Traefik ingress controller
+    # traefik.frontend.rule.type: PathPrefixStrip
+    # kubernetes.io/ingress.class: traefik
+  
+  ## Ingress labels
+  #
+  labels: {}
+    ## e.g. for PalmStoneGames kube-cert-manager
+    # stable.k8s.psg.io/kcm.class: default
+
+  ## Ingress TLS configuration
+  ## Secrets must be manually created in the namespace
+  ##
+  # tls:
+  #   secretName: monocular.local-tls

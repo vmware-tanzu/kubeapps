@@ -1,0 +1,29 @@
+@import '../../theme.scss';
+
+.repository-new {
+  padding: 1em;
+
+  &__title {
+    margin: 0 0 .5em;
+  }
+
+  &__buttons {
+    margin-top: 2em;
+    text-align: right;
+
+    button + button {
+      margin-left: 1em;
+    }
+  }
+
+  &__form {
+    &__errors {
+      margin: 1em 0;
+      color: md-color($monocular-app-warn);
+    }
+    
+    &__field {
+      width: 100%;
+    }
+  }
+}

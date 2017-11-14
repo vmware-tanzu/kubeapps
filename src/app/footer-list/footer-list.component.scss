@@ -1,0 +1,39 @@
+// Import your custom theme
+@import '../../theme.scss';
+
+.footer-list {
+  padding: 0 2em;
+  margin-bottom: 2em;
+
+  &__title {
+    color: mat-color($monocular-app-primary);
+    font-weight: bold;
+    vertical-align: top;
+    margin-bottom: 1em;
+  }
+
+  &__list {
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li {
+        padding: 0;
+        margin-bottom: .5em;
+      }
+    }
+  }
+
+  @include mappy-bp(small) {
+    &, &__title, &__list {
+      display: inline-block;
+    }
+
+    &__list {
+      ul {
+        padding-left: 2em;
+      }
+    }
+  }
+}

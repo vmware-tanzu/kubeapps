@@ -1,0 +1,10 @@
+<div class="confirm-dialog">
+  <h2 class="confirm-dialog__title">{{ title }}</h2>
+  <p>{{ message }}</p>
+  <div class="confirm-dialog__buttons">
+    <button type="button" mat-button
+      (click)="dialogRef.close()">{{ cancel }}</button>
+    <button type="button" mat-raised-button [color]="actionButtonClass"
+      (click)="dialogRef.close(true)">{{ ok }}</button>
+  </div>
+</div>

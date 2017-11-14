@@ -1,0 +1,27 @@
+<div class="repository-new">
+  <h2 class="repository-new__title">Add Repository</h2>
+  <form #repositoryForm="ngForm" (ngSubmit)="addRepo()" class="repository-new__form">
+    <div class="repository-new__form__errors" *ngIf="formError">
+      {{formError}}
+    </div>
+    <mat-form-field class="repository-new__form__field">
+      <input matInput name="repository-name" placeholder="Name" required
+        [(ngModel)]="repoAttributes.name" (ngModelChange)="formError=null">
+    </mat-form-field>
+    <mat-form-field class="repository-new__form__field">
+      <input matInput name="repository-url" placeholder="URL" required
+        [(ngModel)]="repoAttributes.URL" (ngModelChange)="formError=null">
+    </mat-form-field>
+    <mat-form-field class="repository-new__form__field">
+      <input matInput name="repository-source" placeholder="Source"
+        [(ngModel)]="repoAttributes.source" (ngModelChange)="formError=null">
+    </mat-form-field>
+
+    <div class="repository-new__buttons">
+      <button type="button" mat-button
+        (click)="dialogRef.close()">Cancel</button>
+      <button type="submit" mat-raised-button color="accent"
+        [disabled]="!repositoryForm.form.valid">Add</button>
+    </div>
+  </form>
+</div>

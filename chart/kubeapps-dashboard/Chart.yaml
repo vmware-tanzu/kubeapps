@@ -1,0 +1,11 @@
+apiVersion: v1
+name: kubeapps-dashboard
+description: KubeApps Dashboard is an in-cluster Kubernetes app-focused dashboard
+version: 0.1.0
+appVersion: v0.1.0
+home: https://github.com/kubeapps/dashboard
+sources:
+- https://github.com/kubeapps/dashboard
+maintainers:
+- name: prydonius
+  email: adnan@bitnami.com

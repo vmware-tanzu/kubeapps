@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+  ui:
+    tty: true # Enables debugging capabilities when attached to this container.
+    build: ./docker
+    ports:
+      - 4200:4200
+    volumes:
+      - .:/app
+    command: "ng serve --host 0.0.0.0 --proxy-config proxy.conf.json"
+  api:
+    tty: true
+    image: bitnami/monocular-api:latest
+    volumes:
+      - ./docs/config.example.yaml:/root/monocular/config/monocular.yaml
+      # Used for loading kubernetes context used on Helm releases integration
+      - $HOME/.kube/:/root/.kube
+      - monocular-data:/root/monocular
+    environment:
+      - ENVIRONMENT=development
+      - MONOCULAR_AUTH_GITHUB_CLIENT_ID=${MONOCULAR_AUTH_GITHUB_CLIENT_ID}
+      - MONOCULAR_AUTH_GITHUB_CLIENT_SECRET=${MONOCULAR_AUTH_GITHUB_CLIENT_SECRET}
+      - MONOCULAR_AUTH_SIGNING_KEY=${JWT_KEY}
+  mongodb:
+    image: bitnami/mongodb:3
+volumes:
+  monocular-data:

@@ -1,0 +1,26 @@
+@import '../../theme.scss';
+
+.list-filters {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+
+  &_section {
+    margin-bottom: 40px;
+
+    &_title {
+      margin-bottom: 10px;
+    }
+
+    &_link {
+      cursor: pointer;
+      font-size: 1.1em;
+      margin-bottom: 0.3em;
+      opacity: 0.5;
+      &.active {
+        opacity: 1;
+        color: md-color($monocular-app-primary);
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+<app-header-bar [transparent]=true></app-header-bar>
+<div>
+  <app-panel *ngIf="!chart && !loading" class="app-panel--container">
+    <h2>Sorry, we couldn't find the chart</h2>
+  </app-panel>
+  <app-loader [loading]="loading">
+    <section class="chart-details" *ngIf="chart">
+      <div class="chart-details__header">
+        <div class="chart-details__header__background"></div>
+        <div class="chart-details__header__content">
+          <div class="chart-details__header__icon">
+            <img alt="{{ chart.attributes.name }}'s logo" src="{{ iconUrl }}"/>
+          </div>
+          <div class="chart-details__header__text">
+            <h1>
+              {{ chart.attributes.name }}
+            </h1>
+            <p>
+              <span *ngIf="currentVersion && currentVersion.attributes.app_version">{{ currentVersion.attributes.app_version }} -</span>
+              <span class="chart-details__header__text__repo">
+                <a [href]="goToRepoUrl()" [routerLink]="goToRepoUrl()">{{ chart.attributes.repo.name }}</a>
+              </span><br/>
+              <span>{{ chart.attributes.description }}</span>
+            </p>
+          </div>
+        </div>
+
+      </div>
+      <div class="chart-details__content">
+        <article class="chart-details__content__docs">
+          <app-chart-details-readme [chart]=chart [currentVersion]=currentVersion></app-chart-details-readme>
+        </article>
+        <aside class="chart-details__content__info">
+          <app-chart-details-info [chart]=chart [currentVersion]=currentVersion></app-chart-details-info>
+        </aside>
+      </div>
+    </section>
+  </app-loader>
+</div>

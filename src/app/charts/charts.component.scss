@@ -1,0 +1,112 @@
+@import '../../theme.scss';
+
+$filters-width: 175px;
+
+.charts {
+  max-width: $layout-max-width;
+  margin: auto;
+
+  &__header {
+
+    &__title {
+      margin-top: 0;
+    }
+
+    &__filters {
+      display: none;
+      font-size: 0.5em;
+
+      mat-icon {
+        margin-left: 10px;
+        top: 6px;
+        position: relative;
+      }
+    }
+  }
+
+  &__gallery {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+
+    app-list-filters {
+      width: $filters-width;
+      display: flex;
+      overflow: hidden;
+    }
+
+    &__content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid $border-color;
+
+      app-chart-list {
+        flex: 1;
+        display: flex;
+        padding: 1.5em 0 0 1.5em;
+      }
+
+      &__topbar {
+        display: flex;
+        height: 40px;
+        border-bottom: 1px solid $border-color;
+        align-items: center;
+        padding-left: 10px;
+
+        * {
+          fill: lighten($layout-base, 50%);
+        }
+
+        input {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          font-size: 1.1em;
+          background: none;
+          outline: none;
+          margin-left: 5px;
+          color: $layout-base;
+          @include placeholder {
+            color: lighten($layout-base, 50%);
+          }
+        }
+      }
+    }
+  }
+
+  @include mappy-bp(max-width small) {
+
+    &__header__filters {
+      display: inline-block;
+    }
+
+    &__gallery {
+      flex-direction: column;
+
+      app-list-filters {
+        position: relative;
+        left: -100%;
+        width: auto;
+        height: 0;
+        transition: left .2s ease-out;
+        &.open {
+          height: auto;
+          left: 0;
+        }
+      }
+
+      &__content {
+        border: 0;
+
+        &__topbar {
+          padding-left: 0;
+        }
+
+        app-chart-list {
+          padding: 1.5em 0 0 0;
+        }
+      }
+    }
+  }
+}

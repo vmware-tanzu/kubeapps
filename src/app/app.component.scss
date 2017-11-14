@@ -1,0 +1,59 @@
+// Import your custom theme
+@import '../theme.scss';
+
+$menu-height: 140px;
+
+.App {
+
+  &__Wrap {
+    background: $background-white;
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+    transition: transform .3s ease-out;
+    will-change: transform;
+
+    .App__Content {
+      flex: 1;
+      padding-top: 70px;
+    }
+  }
+
+  &__Menu {
+    position: absolute;
+    background-color: $layout-base;
+    top: 0;
+    height: 0;
+    width: 100%;
+    transition: height .3s ease-out;
+    will-change: height;
+    display: flex;
+    align-items: center;
+
+    ul {
+      list-style: none;
+    }
+
+    li {
+      font-weight: normal;
+      margin-bottom: .5em;
+      font-size: 1.2em;
+      color: mat-color($monocular-app-primary);
+      a.active {
+        font-weight: bold;
+        color: $text-white;
+      }
+    }
+  }
+
+  &--openMenu {
+
+    .App__Wrap {
+      transform: translateY($menu-height);
+    }
+
+    .App__Menu {
+      height: $menu-height;
+    }
+  }
+}

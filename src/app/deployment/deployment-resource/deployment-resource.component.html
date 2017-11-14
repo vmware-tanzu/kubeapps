@@ -1,0 +1,21 @@
+<div class="resource">
+  <h3 matSubheader class="resource__title">
+    {{ resource.name }}
+  </h3>
+  <table class="resource__table" cellspacing="0">
+    <thead>
+      <tr>
+        <th *ngFor="let attr of serviceKeys">
+          {{ attr }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let service of resource.services">
+        <td *ngFor="let attr of serviceKeys">
+          {{ service[attr] }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,10 @@
+<app-main-header [totalChartsNumber]=totalChartsNumber></app-main-header>
+<section class="chart-index__list">
+  <app-panel>
+    <app-loader [loading]="loading">
+      <div class="chart-list">
+        <app-chart-list [charts]="charts"></app-chart-list>
+      </div>
+    </app-loader>
+  </app-panel>
+</section>

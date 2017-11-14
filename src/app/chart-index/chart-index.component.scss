@@ -1,0 +1,14 @@
+
+@import '../../theme.scss';
+
+.chart-list {
+  width: 100%;
+  max-width: $layout-max-width;
+  margin: auto;
+  display: flex;
+  align-items: center;
+
+  app-chart-list {
+    flex: 1;
+  }
+}

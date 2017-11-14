@@ -1,0 +1,50 @@
+// Import your custom theme
+@import '../../theme.scss';
+
+// Vars
+$list-item-content-height: 200px;
+
+.list-item {
+  border-radius: $border-radius;
+  overflow: hidden;
+  border: 1px solid $border-color;
+  transition: transform 0.2s ease;
+  background-color: $background-light;
+
+  &:hover {
+    transform: scale(1.02);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &-content {
+    width: 100%;
+    height: $list-item-content-height;
+    display: flex;
+    flex-direction: column;
+    color: $layout-text;
+  }
+
+  &-logo {
+    width: 100%;
+    height: $list-item-content-height/2 + 10px;
+    background-color: $background-white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &-info {
+    position: relative;
+    flex: 1;
+    border-top: 1px solid $border-color;
+    padding: 0 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    word-wrap: break-word;
+    text-align: center;
+  }
+}

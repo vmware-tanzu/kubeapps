@@ -1,0 +1,18 @@
+.chartInfo {
+
+  app-panel {
+    box-shadow: 1px 1px 10px rgba(black, 0.07);
+    border: 0 !important;
+  }
+
+  &__source, &__related, &__home{
+    a {
+      word-break: break-all;
+    }
+  }
+
+  &__properties {
+    display: block;
+    margin-bottom: 2em;
+  }
+}

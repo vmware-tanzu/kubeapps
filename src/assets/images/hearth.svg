@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512px" height="512px" viewBox="0 0 512 512" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Hearth</title>
+    <desc>Created by Angel</desc>
+    <defs></defs>
+    <g id="hearth" fill="#ECECEC">
+      <path d="M256,118 C235,65 204.065031,24 140,24 C75.934969,24 24,71 24,171 C24,287 100,488 256,488 C256.164054,488 256.327786,487.999649 256.491197,487.998949 C256.325871,487.999655 256.162777,488 256,488 C412,488 488,287 488,171 C488,70 436.065031,24 372,24 C307.934969,24 277,65 256,118 Z" id="Hearth"></path>
+    </g>
+</svg>

@@ -1,0 +1,17 @@
+<div class="deployment-new">
+  <h2 class="deployment-new__title">Deploy {{chartID}} v{{version}}</h2>
+  <p>You are going to deploy this chart in your cluster</p>
+  <form #deploymentForm="ngForm" (ngSubmit)="dialogRef.close(namespace)" class="deployment-new__form">
+    <mat-form-field class="deployment-new__form__field">
+      <input matInput name="deployment-namespace" placeholder="Namespace" required
+        [(ngModel)]="namespace">
+    </mat-form-field>
+
+    <div class="deployment-new__buttons">
+      <button type="button" mat-button
+        (click)="dialogRef.close()">Cancel</button>
+      <button type="submit" mat-raised-button color="accent"
+        [disabled]="!deploymentForm.form.valid">Deploy</button>
+    </div>
+  </form>
+</div>

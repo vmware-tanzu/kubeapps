@@ -1,0 +1,28 @@
+@import '../../../theme.scss';
+
+.resource {
+  margin-bottom: 1em;
+
+  &__title {
+    margin-bottom: .5em;
+    margin-top: 1.5em;
+    color: md-color($monocular-app-primary);
+  }
+
+  &__table {
+    width: 100%;
+
+    th {
+      text-align: left;
+      font-size: .8em;
+      font-weight: normal;
+      border-bottom: 1px solid $border-color;
+      color: rgba(black, 0.4);
+    }
+
+    th,
+    td {
+      padding: .5em;
+    }
+  }
+}

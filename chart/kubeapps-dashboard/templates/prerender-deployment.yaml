@@ -1,0 +1,24 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}-prerender
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  replicas: {{ .Values.prerender.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}-prerender
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.prerender.image.repository }}:{{ .Values.prerender.image.tag }}"
+        imagePullPolicy: {{ .Values.prerender.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.prerender.service.internalPort }}
+        env:
+          - name: IN_MEMORY_CACHE
+            value: {{ .Values.prerender.cacheEnabled | quote }}
+        resources:
+{{ toYaml .Values.prerender.resources | indent 12 }}

@@ -1,0 +1,68 @@
+// Import your custom theme
+@import '../../theme.scss';
+
+// Variables
+$main-header-height: 400px - $header-bar-height;
+
+.main-header {
+  height: $main-header-height;
+  background: $header-backgound-gradient;
+  border-bottom: 3px solid black;
+  padding: $header-bar-height 2em 0;
+
+  &-content {
+    width: 100%;
+    max-width: $layout-max-width;
+    margin: auto;
+
+    @include mappy-bp(medium) {
+      display: flex;
+      justify-content: space-between;
+
+      & > div {
+        width: 47%;
+      }
+    }
+
+    &__slogan {
+      color: $layout-light;
+      font-weight: 100;
+
+      @include mappy-bp(medium) {
+        padding: 3em 0 1em;
+      }
+
+      p {
+        font-size: 2em;
+        margin: 0;
+
+        @include mappy-bp(medium) {
+          font-size: 2.5em;
+        }
+
+        @include mappy-bp(large) {
+          font-size: 3em;
+        }
+      }
+    }
+
+  }
+
+  &-search {
+    @include mappy-bp(medium) {
+      padding-top: 4em;
+    }
+
+    mat-form-field input {
+      margin: 0 auto 5px;
+    }
+
+    &__summary {
+      font-size: .9em;
+      font-style: italic;
+      margin: 0;
+      text-align: center;
+      color: lighten(mat-color($monocular-app-primary), 10%);
+    }
+  }
+}

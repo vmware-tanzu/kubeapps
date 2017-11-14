@@ -1,0 +1,4 @@
+<section class="chart-list">
+  <h3 *ngIf="!charts || !charts.length" class="chart-list__empty">There are no charts</h3>
+  <app-chart-item *ngFor="let chart of charts" [chart]=chart [showDescription]=false></app-chart-item>
+</section>

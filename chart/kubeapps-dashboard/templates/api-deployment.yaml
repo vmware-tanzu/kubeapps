@@ -1,0 +1,61 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}-api
+  labels:
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "fullname" . }}-api
+      annotations:
+        checksum/config: {{ print .Values.api.config | sha256sum }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+        imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+        env:
+        - name: MONOCULAR_HOME
+          value: /monocular
+        {{- if .Values.api.auth.signingKey }}
+        - name: MONOCULAR_AUTH_SIGNING_KEY
+          value: {{ .Values.api.auth.signingKey }}
+        {{- end }}
+        {{- if .Values.api.auth.github.clientID }}
+        - name: MONOCULAR_AUTH_GITHUB_CLIENT_ID
+          value: {{ .Values.api.auth.github.clientID }}
+        {{- end }}
+        {{- if .Values.api.auth.github.clientSecret }}
+        - name: MONOCULAR_AUTH_GITHUB_CLIENT_SECRET
+          value: {{ .Values.api.auth.github.clientSecret }}
+        {{- end }}
+        ports:
+        - containerPort: {{ .Values.api.service.internalPort }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.api.service.internalPort }}
+          initialDelaySeconds: {{ .Values.api.livenessProbe.initialDelaySeconds }}
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: {{ .Values.api.service.internalPort }}
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        volumeMounts:
+          - name: cache
+            mountPath: /monocular
+          - name: config
+            mountPath: /monocular/config
+        resources:
+{{ toYaml .Values.api.resources | indent 12 }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "fullname" . }}-api-config
+      - name: cache
+        emptyDir: {}

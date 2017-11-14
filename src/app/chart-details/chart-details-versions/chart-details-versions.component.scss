@@ -1,0 +1,23 @@
+@import '../../../theme.scss';
+
+.versions {
+
+  h1 {
+    margin-top: 0;
+  }
+  .more-link {
+    margin-top: .5em;
+  }
+}
+
+.version {
+  display: block;
+
+  .creation-date {
+    color: lighten($layout-base, 20%);
+  }
+
+  .number.selected {
+    font-weight: bold;
+  }
+}

@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "fullname" . }}-ui-vhost
+  labels:
+    app: {{ template "fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  vhost.conf: |+
+    upstream target_service {
+      server {{ template "fullname" . }}-prerender;
+    }
+
+    server {
+      listen {{ .Values.ui.service.internalPort }};
+
+      gzip on;
+      # Angular CLI already has gzipped the assets (ng build --prod --aot)
+      gzip_static  on;
+
+      location / {
+        try_files $uri @prerender;
+      }
+
+      location @prerender {
+        set $prerender 0;
+
+        if ($http_user_agent ~* "baiduspider|twitterbot|facebookexternalhit|rogerbot|linkedinbot|embedly|quora link preview|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator") {
+          set $prerender 1;
+        }
+
+        if ($args ~ "_escaped_fragment_") {
+          set $prerender 1;
+        }
+
+        if ($http_user_agent ~ "Prerender") {
+          set $prerender 0;
+        }
+
+        if ($uri ~* "\.(js|css|xml|less|png|jpg|jpeg|gif|pdf|doc|txt|ico|rss|zip|mp3|rar|exe|wmv|doc|avi|ppt|mpg|mpeg|tif|wav|mov|psd|ai|xls|mp4|m4a|swf|dat|dmg|iso|flv|m4v|torrent|ttf|woff|svg|eot)") {
+          set $prerender 0;
+        }
+
+        if ($prerender = 1) {
+          rewrite .* /https://$host$request_uri? break;
+          proxy_pass http://target_service;
+        }
+        if ($prerender = 0) {
+          rewrite .* /index.html break;
+        }
+      }
+    }
+
+    # Redirect www to non-www
+    # Taken from https://easyengine.io/tutorials/nginx/www-non-www-redirection/
+    server {
+      server_name "~^www\.(.*)$" ;
+      return 301 $scheme://$1$request_uri ;
+    }

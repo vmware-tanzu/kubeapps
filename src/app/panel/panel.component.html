@@ -1,0 +1,4 @@
+<div [ngClass]="{ 'panel': true, 'panel--background': background, 'panel--container': container, 'panel--border': border }">
+  <h1 *ngIf="title.length > 0" class="panel__title">{{ title }}</h1>
+  <ng-content></ng-content>
+</div>

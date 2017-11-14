@@ -1,0 +1,55 @@
+// Imports
+@import './theme.scss';
+@import './index.scss';
+
+body {
+  // Use system font-families now
+  font-family: -apple-system, BlinkMacSystemFont, 'avenir next', avenir,
+               'Segoe UI', 'lucida grande', 'helvetica neue', helvetica,
+               'Fira Sans', roboto, noto, 'Droid Sans', cantarell, oxygen,
+               ubuntu, 'franklin gothic medium', 'century gothic',
+               'Liberation Sans', sans-serif;
+  // reset
+  margin: 0;
+  padding: 0;
+  color: $layout-text;
+  background: $background-white;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+// Text
+h1, h2, h3, h4, h5, h6 {
+  color: lighten($layout-base, 10%);
+}
+
+// Set the h1 size
+h1 {
+  font-size: 2em;
+}
+
+// Anchors
+a {
+  text-decoration: none;
+  transition: color .1s ease-out;
+  color: mat-color($monocular-app-primary);
+  cursor: pointer;
+
+  &:hover {
+    color: darken(mat-color($monocular-app-primary), 10%);
+  }
+
+  &.reverse {
+    color: $layout-light;
+
+    &:hover {
+      color: lighten(mat-color($monocular-app-primary), 10%);
+    }
+
+    &.active {
+      color: mat-color($monocular-app-primary);
+    }
+  }
+}

@@ -1,0 +1,20 @@
+<app-list-item class="chart-item" [detailUrl]="goToDetailUrl()">
+  <img class="list-item-logo chart-item-logo" alt="{{ chart.attributes.name }}'s logo" src="{{ iconUrl }}"/>
+  <div class="list-item-info chart-item-info">
+    <h2 class="chart-item-info__title">
+      <a [href]="goToDetailUrl()" [routerLink]="goToDetailUrl()">
+        {{ chart.attributes.name }}</a>
+    </h2>
+    <p>
+      <span class="chart-item-info__version" *ngIf="showVersion && chart.relationships.latestChartVersion.data.app_version">
+        {{ chart.relationships.latestChartVersion.data.app_version }}</span>
+      <span class="chart-item-info__repo repo-{{chart.attributes.repo.name}}">
+        <a [href]="goToRepoUrl()" [routerLink]="goToRepoUrl()">
+          {{ chart.attributes.repo.name }}</a>
+      </span>
+    </p>
+    <div class="chart-item-info__description" *ngIf="showDescription">
+      {{ chart.attributes.description }}
+    </div>
+  </div>
+</app-list-item>

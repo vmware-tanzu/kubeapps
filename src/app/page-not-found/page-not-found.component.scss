@@ -1,0 +1,24 @@
+// Import your custom theme
+@import '../../theme.scss';
+
+.NotFound {
+  text-align: center;
+
+  &__Image {
+    margin-top: 3em;
+
+    img {
+      width: 256px;
+    }
+  }
+
+  &__Links {
+    font-weight: bold;
+    padding: 0;
+
+    li {
+      display: inline-block;
+      margin: 0 1em 1em;
+    }
+  }
+}

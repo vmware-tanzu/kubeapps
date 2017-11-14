@@ -1,0 +1,204 @@
+// Import your custom theme
+@import '../../theme.scss';
+
+// Variables
+$header-bar-padding: 0 2em;
+$header-bar-padding-small: 0 2em;
+
+.header-bar {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: $header-bar-height;
+  background-color: $layout-base;
+  background: $header-backgound-gradient;
+  z-index: 10;
+  padding: $header-bar-padding;
+  display: flex;
+  justify-content: center;
+
+  &__content {
+    flex: 1;
+    max-width: $layout-max-width;
+    display: flex;
+    align-items: center;
+  }
+
+  &__logo {
+    display: inline-block;
+
+    h1 {
+      // Adjust it vertically
+      padding-top: .1em;
+      font-size: 1.5em;
+      margin: 0;
+      font-family: 'Ubuntu', sans-serif;
+    }
+    a:hover {
+      color: $text-white;
+    }
+  }
+
+  &__navigation {
+    margin-left: auto;
+    display: none;
+    color: $text-white;
+
+    ul {
+      margin: .5em 0;
+
+      li {
+        display: inline-block;
+        position: relative;
+        margin: 0;
+        vertical-align: middle;
+
+        &.separator {
+          width: 4px;
+          height: 4px;
+          background: $background-white;
+          border-radius: 2px;
+          margin: 0 1em;
+          margin-bottom: 2px;
+        }
+
+        a {
+          transition: opacity 0.2s ease;
+
+          &:hover {
+            color: $text-white;
+            opacity: 0.5;
+          }
+
+          &::after{
+            background: $background-white none repeat scroll 0 0;
+            bottom: -10px;
+            content: "";
+            display: inline-block;
+            height: 2px;
+            left: 0;
+            position: absolute;
+            width: 0;
+            z-index: 1;
+            transition: width 0.3s ease;
+          }
+        }
+
+        &.active {
+
+          a {
+            color: $text-white;
+            font-weight: 600;
+
+            &::after {
+              width: 100%;
+            }
+
+            &:hover {
+              opacity: 1;
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+  &__search {
+    margin-top: .5em;
+    background: rgba($background-white, 0.125);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    padding: 0.3em 0.5em;
+
+    svg {
+      fill: rgba($text-white, 0.6);
+    }
+
+    form {
+      display: flex;
+      align-items: center;
+      flex-direction: row;
+    }
+
+    &.focused {
+      background: rgba($background-white, 0.175);
+
+      svg {
+        fill: $text-white;
+      }
+    }
+
+    input {
+      background: none;
+      border: 0;
+      color: $text-white;
+      font-size: 1em;
+      outline: none;
+
+      @include placeholder {
+        color: rgba($text-white, 0.6);
+      }
+    }
+  }
+
+  &__login {
+    margin-top: .5em;
+    background: rgba($background-white, 0.125);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    padding: 0.3em 0.5em;
+
+    a {
+      display: flex;
+      align-items: center;
+      flex-direction: row;
+    }
+
+    span {
+      margin-left: .3em;
+    }
+  }
+
+  &__open {
+    color: $text-white;
+    margin-left: auto;
+    margin-right: 4em;
+    svg {
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  @include mappy-bp(max-width medium) {
+    padding: $header-bar-padding-small;
+  }
+
+  @include mappy-bp(medium) {
+
+    &__open {
+      display: none;
+    }
+
+    &__navigation {
+      display: block;
+    }
+  }
+
+  @include mappy-bp(max-width $layout-max-width + 80px) {
+    &__navigation {
+      margin-right: 2em;
+    }
+  }
+
+  @include mappy-bp(max-width large) {
+    &.releases-enabled &__search {
+      display: none !important;
+      & + li { // separator
+        display: none !important;
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+@import '../../theme.scss';
+
+.panel {
+  padding: 2em;
+
+  &--container {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  &--background {
+    background-color: $layout-light;
+  }
+
+  &--border {
+    border-radius: $border-radius;
+    border: 1px solid darken($layout-light, 5);
+  }
+
+  &__title {
+    margin-top: 0;
+  }
+}

@@ -1,0 +1,165 @@
+@import '../../theme.scss';
+$filters-width: 175px;
+
+.deployments {
+  max-width: $layout-max-width;
+  margin: auto;
+
+  &__header {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+
+    &__title {
+      margin-top: 0;
+    }
+
+    &__filters {
+      display: none;
+      font-size: 0.5em;
+
+      mat-icon {
+        margin-left: 10px;
+        top: 6px;
+        position: relative;
+      }
+    }
+
+    &__new {
+      margin-left: 1em;
+      margin-bottom: 1em;
+      text-align: center;
+    }
+
+  }
+
+  &__gallery {
+    width: 100%;
+    display: flex;
+
+    app-list-filters {
+      width: $filters-width;
+      display: flex;
+    }
+
+    &__content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid $border-color;
+
+      &__topbar {
+        display: flex;
+        height: 40px;
+        border-bottom: 1px solid $border-color;
+        align-items: center;
+        padding-left: 10px;
+
+        * {
+          fill: lighten($layout-base, 50%);
+        }
+
+        input {
+          width: 100%;
+          height: 100%;
+          border: 0;
+          font-size: 1.1em;
+          background: none;
+          outline: none;
+          margin-left: 5px;
+          color: $layout-base;
+
+          @include placeholder {
+            color: lighten($layout-base, 50%);
+          }
+        }
+      }
+
+      &__list {
+        flex: 1;
+        display: flex;
+        flex-flow: row wrap;
+        padding: 1.5em 0 0 1.5em;
+
+        &__empty {
+          align-self: center;
+          margin: auto;
+          opacity: 0.7;
+        }
+
+        app-deployment-item {
+          padding-bottom: 1.5em;
+          width: 100%;
+
+          @include mappy-bp(medium large) {
+            width: 50%;
+            padding-right: 1.5em;
+            &:nth-child(2n) {
+              padding-right: 0;
+            }
+          }
+
+          @include mappy-bp(large xlarge) {
+            width: 33.3%;
+            padding-right: 1.5em;
+            &:nth-child(3n) {
+              padding-right: 0;
+            }
+          }
+
+          @include mappy-bp(xlarge) {
+            width: 25%;
+            padding-right: 1.5em;
+            &:nth-child(4n) {
+              padding-right: 0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @include mappy-bp(max-width small) {
+
+    &__header {
+      flex-direction: column-reverse;
+    }
+
+    &__header__filters {
+      display: inline-block;
+    }
+
+    &__gallery {
+      flex-direction: column;
+
+      &__toggle {
+        display: inline-block;
+      }
+
+      app-list-filters {
+        position: relative;
+        left: -100%;
+        width: auto;
+        height: 0;
+        transition: left .2s ease-out;
+
+        &.open {
+          height: auto;
+          left: 0;
+        }
+      }
+
+      &__content {
+        border: 0;
+
+        &__topbar {
+          padding-left: 0;
+        }
+
+        &__list {
+          padding: 1.5em 0 0 0;
+        }
+      }
+    }
+  }
+}

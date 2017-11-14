@@ -1,0 +1,12 @@
+<div class="list-item">
+  <a [href]="detailUrl" [routerLink]="detailUrl">
+    <div class="list-item-content">
+      <div class="list-item-logo">
+        <ng-content select=".list-item-logo"></ng-content>
+      </div>
+      <div class="list-item-info">
+        <ng-content select=".list-item-info"></ng-content>
+      </div>
+    </div>
+  </a>
+</div>
