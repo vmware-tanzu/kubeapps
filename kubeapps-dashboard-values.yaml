@@ -57,6 +57,7 @@ ui:
   replicaCount: 2
   image:
     repository: kubeapps/dashboard
+    # FIXME: point to a real tag
     tag: latest
     pullPolicy: Always
   service:
