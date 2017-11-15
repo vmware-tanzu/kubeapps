@@ -67,8 +67,9 @@ export class HeaderBarComponent implements OnInit {
   }
 
   logout() {
-    this.authService.logout();
-    window.location.reload();
+    this.authService.logout().subscribe(() => {
+      window.location.reload();
+    });
   }
 
   searchCharts(input: HTMLInputElement): void {

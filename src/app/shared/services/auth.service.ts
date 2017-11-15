@@ -45,8 +45,8 @@ export class AuthService {
   /**
    * Logs user out
    */
-  logout() {
+  logout(): Observable<Response> {
     this.cookieService.remove('ka_claims');
-    this.http.delete(`${this.hostname}/auth/logout`, {withCredentials: true}).subscribe();
+    return this.http.delete(`${this.hostname}/auth/logout`, {withCredentials: true});
   }
 }
