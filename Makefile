@@ -11,7 +11,7 @@ VERSION = dev-$(shell date +%FT%T%z)
 OS = linux
 ARCH = amd64
 BINARY = kubeapps
-GO_PACKAGES = $(IMPORT_PATH)/cmd
+GO_PACKAGES = $(IMPORT_PATH)/cmd $(IMPORT_PATH)/pkg/...
 GO_FILES := $(shell find $(shell $(GOBIN) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 GO_FLAGS = -ldflags="-w -X github.com/kubeapps/installer/cmd.VERSION=${VERSION}"
 EMBEDDED_STATIC = generated/statik/statik.go

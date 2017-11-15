@@ -21,7 +21,9 @@ import (
 
 	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
+	"github.com/kubeapps/installer/pkg/gke"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -57,6 +59,10 @@ List of components that kubeapps up installs:
 		if err != nil {
 			return err
 		}
+		provider, err := cmd.Flags().GetString("cloud-provider")
+		if err != nil {
+			return err
+		}
 
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -73,11 +79,21 @@ List of components that kubeapps up installs:
 			return err
 		}
 
+		// k8s on GKE
+		crb := &unstructured.Unstructured{}
+		if provider == "gke" {
+			crb, err = gke.BuildCrbObject()
+			if err != nil {
+				return err
+			}
+			objs = append(objs, crb)
+		}
+
 		return c.Run(objs, wd)
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(upCmd)
-	upCmd.Flags().Bool("dry-run", false, "Provides output to be submitted to the server")
+	upCmd.Flags().Bool("dry-run", false, "Provides output to be submitted to the server.")
 }
