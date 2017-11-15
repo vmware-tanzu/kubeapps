@@ -1,4 +1,5 @@
 local kube = import "kube.libsonnet";
+local kubecfg = import "kubecfg.libsonnet";
 
 local host = null;
 local tls = false;
@@ -11,7 +12,10 @@ local tls = false;
   // NB: these are left in their usual namespaces, to avoid forcing
   // non-default command line options onto client tools
   kubeless: (import "kubeless.jsonnet"),
-  tiller: (import "tiller.jsonnet"),
+  tiller: {
+    deployment: (import "tiller-deployment.jsonnet"),
+    service: kubecfg.parseYaml(importstr "tiller-service.yaml"),
+  },
   ssecrets: (import "sealed-secrets.jsonnet"),
   nginx: (import "ingress-nginx.jsonnet") {
     service+: {
