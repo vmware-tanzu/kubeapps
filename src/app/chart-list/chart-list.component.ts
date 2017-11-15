@@ -8,6 +8,7 @@ import { Chart } from '../shared/models/chart';
 })
 export class ChartListComponent implements OnInit {
   @Input() charts: Chart[];
+  @Input() apiNotReady: boolean;
 
   constructor() {}
 

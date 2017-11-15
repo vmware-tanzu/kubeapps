@@ -22,7 +22,7 @@
             <mat-icon svgIcon="search"></mat-icon>
             <input type="text" placeholder="Search charts..." value="{{searchTerm}}" (keyup)="searchChange($event)" />
           </div>
-          <app-chart-list [charts]="orderedCharts"></app-chart-list>
+          <app-chart-list [apiNotReady]="apiNotReady" [charts]="orderedCharts"></app-chart-list>
         </div>
       </div>
     </section>
