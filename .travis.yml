@@ -48,7 +48,9 @@ script:
   - >-
     kubecfg validate -v kubeapps.jsonnet || :
   - ./kubeapps.sh up
-  - ./tests.sh $(./kubeapps.sh dashboard --url)
+  # We can't port-forward in Travis, so instead we patch the service type to node port
+  - kubectl patch -n kube-system svc nginx-ingress -p '{"spec":{"type":"NodePort"}}' && sleep 5
+  - ./tests.sh $(minikube service --namespace kube-system nginx-ingress --url)
 
 after_success:
   - kubectl get all --all-namespaces

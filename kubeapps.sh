@@ -46,8 +46,9 @@ case "$subcommand" in
         exec kubecfg show kubeapps.jsonnet "$@"
         ;;
     dashboard)
-        echo "NB until front page is updated: kubeless-ui is at /kubeless" >&2
-        exec minikube service -n kube-system nginx-ingress "$@"
+        podname=$(kubectl get pods --namespace kube-system -l name=nginx-ingress-controller -o jsonpath="{.items[0].metadata.name}")
+        echo "Visit http://localhost:8002 in your browser"
+        exec kubectl port-forward --namespace kube-system "$podname" 8002:80
         ;;
     *)
         echo "Unknown subcommand: $subcommand" >&2
