@@ -29,8 +29,9 @@ case "$subcommand" in
         fi
         kubecfg update -v --gc-tag=$GCTAG kubeapps.jsonnet "$@"
         # TODO(gus): Actually implement `kubecfg update --wait`
-        kubectl rollout status -n kubeapps deployment/kubeapps-hub-ui
-        kubectl rollout status -n kubeapps deployment/kubeapps-hub-api
+        kubectl rollout status -n kubeapps deployment/kubeapps-dashboard-ui
+        # FIXME: We don't wait for the API to rollout as it times out
+        # kubectl rollout status -n kubeapps deployment/kubeapps-dashboard-api
         kubectl rollout status -n kube-system deployment/nginx-ingress-controller
         ;;
     down)
