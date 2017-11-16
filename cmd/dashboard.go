@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 )
 
 const (
@@ -47,17 +48,11 @@ var dashboardCmd = &cobra.Command{
 		}
 
 		gvk := schema.GroupVersionKind{Version: "v1", Kind: "Pod"}
-		client, err := pool.ClientForGroupVersionKind(gvk)
+		rc, err := clientForGroupVersionKind(pool, disco, gvk, ingressNamespace)
 		if err != nil {
 			return err
 		}
 
-		resource, err := serverResourceForGroupVersionKind(disco, gvk)
-		if err != nil {
-			return err
-		}
-
-		rc := client.Resource(resource, ingressNamespace)
 		podList, err := rc.List(metav1.ListOptions{LabelSelector: selector})
 		if err != nil {
 			return err
@@ -105,6 +100,22 @@ func openInBrowser(url string) error {
 	return cmd.Start()
 }
 
+func clientForGroupVersionKind(pool dynamic.ClientPool, disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind, namespace string) (*dynamic.ResourceClient, error) {
+	client, err := pool.ClientForGroupVersionKind(gvk)
+	if err != nil {
+		return nil, err
+	}
+
+	resource, err := serverResourceForGroupVersionKind(disco, gvk)
+	if err != nil {
+		return nil, err
+	}
+
+	rc := client.Resource(resource, namespace)
+	return rc, nil
+}
+
+// taken from https://github.com/ksonnet/kubecfg/blob/897a3db8a83ca195a2825b1fabe59ffca103e700/utils/client.go#L156
 func serverResourceForGroupVersionKind(disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (*metav1.APIResource, error) {
 	resources, err := disco.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
 	if err != nil {
