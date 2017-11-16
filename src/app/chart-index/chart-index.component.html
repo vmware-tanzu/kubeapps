@@ -3,7 +3,7 @@
   <app-panel>
     <app-loader [loading]="loading">
       <div class="chart-list">
-        <app-chart-list [charts]="charts"></app-chart-list>
+        <app-chart-list [apiNotReady]="apiNotReady" [charts]="charts"></app-chart-list>
       </div>
     </app-loader>
   </app-panel>

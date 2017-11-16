@@ -33,8 +33,8 @@ export class AuthService {
     return this.http.get(`${this.hostname}/auth/verify`, {withCredentials: true})
       .map((res: Response) => { return res.ok; })
       .catch(res => {
-        if (res.status == 404) {
-          // If 404, authentication is disabled on the API server and we are considered logged in
+        if (res.status != 401) {
+          // If not 401, authentication is disabled on the API server and we are considered logged in
           return Observable.of(true);
         } else {
           return Observable.of(false);

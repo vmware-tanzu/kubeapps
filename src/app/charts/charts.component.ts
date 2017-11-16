@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ChartsService } from '../shared/services/charts.service';
 import { ReposService } from '../shared/services/repos.service';
 import { Chart } from '../shared/models/chart';
@@ -8,6 +8,7 @@ import { SeoService } from '../shared/services/seo.service';
 import { ConfigService } from '../shared/services/config.service';
 import { MatIconRegistry } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
+import { IntervalObservable } from 'rxjs/observable/IntervalObservable';
 
 @Component({
   selector: 'app-charts',
@@ -15,10 +16,11 @@ import { DomSanitizer } from '@angular/platform-browser';
   styleUrls: ['./charts.component.scss'],
   viewProviders: [MatIconRegistry]
 })
-export class ChartsComponent implements OnInit {
+export class ChartsComponent implements OnInit, OnDestroy {
   charts: Chart[] = [];
   orderedCharts: Chart[] = [];
   loading: boolean = true;
+  apiNotReady: boolean = false;
   searchTerm: string;
   searchTimeout: any;
   filtersOpen: boolean = false;
@@ -89,14 +91,33 @@ export class ChartsComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    // This ensures the IntervalObservable is cancelled
+    this.apiNotReady = false;
+  }
+
   loadCharts(): void {
-    this.chartsService.getCharts(this.repoName).subscribe(charts => {
+		this.chartsService.getCharts(this.repoName).subscribe(c => this.setCharts(c), () => {
       this.loading = false;
-      this.charts = charts;
-      if (!this.searchTerm) {
-        this.orderedCharts = this.orderCharts(this.charts);
-      }
+      this.apiNotReady = true;
+      IntervalObservable.create(2000)
+        .takeWhile(() => this.apiNotReady === true)
+        .subscribe(() => {
+          this.chartsService.getCharts().subscribe(c => {
+            this.setCharts(c);
+            this.loadRepos();
+          });
+        });
     });
+  }
+  
+  setCharts(charts: Chart[]) {
+    this.loading = false;
+    this.apiNotReady = false;
+    this.charts = charts;
+    if (!this.searchTerm) {
+      this.orderedCharts = this.orderCharts(this.charts);
+    }
   }
 
   loadRepos(): void {
