@@ -679,7 +679,7 @@ spec:
         kubeless: controller
     spec:
       containers:
-      - image: bitnami/kubeless-controller:latest
+      - image: bitnami/kubeless-controller:v0.2.4
         imagePullPolicy: IfNotPresent
         name: kubeless-controller
       serviceAccountName: controller-acct
