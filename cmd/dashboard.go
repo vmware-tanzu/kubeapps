@@ -1,3 +1,19 @@
+/*
+Copyright (c) 2017 Bitnami
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package cmd
 
 import (
@@ -10,7 +26,9 @@ import (
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 )
 
 const (
@@ -23,26 +41,35 @@ var dashboardCmd = &cobra.Command{
 	Short: "Opens the KubeApps Dashboard",
 	Long:  "Opens the KubeApps Dashboard",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		config, err := buildOutOfClusterConfig()
+		pool, disco, err := restClientPool()
 		if err != nil {
 			return err
 		}
 
-		clientset, err := kubernetes.NewForConfig(config)
+		gvk := schema.GroupVersionKind{Version: "v1", Kind: "Pod"}
+		client, err := pool.ClientForGroupVersionKind(gvk)
 		if err != nil {
 			return err
 		}
 
-		pods, err := clientset.CoreV1().Pods(ingressNamespace).List(metav1.ListOptions{LabelSelector: selector})
+		resource, err := serverResourceForGroupVersionKind(disco, gvk)
 		if err != nil {
 			return err
 		}
 
-		if len(pods.Items) == 0 {
+		rc := client.Resource(resource, ingressNamespace)
+		podList, err := rc.List(metav1.ListOptions{LabelSelector: selector})
+		if err != nil {
+			return err
+		}
+
+		pods := podList.(*unstructured.UnstructuredList).Items
+
+		if len(pods) == 0 {
 			return errors.New("nginx ingress controller pod not found, run kubeapps up first")
 		}
 
-		podName := pods.Items[0].Name
+		podName := pods[0].GetName()
 
 		localPort, err := cmd.Flags().GetInt("port")
 		if err != nil {
@@ -76,6 +103,21 @@ func openInBrowser(url string) error {
 	}
 	cmd := exec.Command(args[0], append(args[1:], url)...)
 	return cmd.Start()
+}
+
+func serverResourceForGroupVersionKind(disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (*metav1.APIResource, error) {
+	resources, err := disco.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range resources.APIResources {
+		if r.Kind == gvk.Kind {
+			return &r, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Server is unable to handle %s", gvk)
 }
 
 func init() {
