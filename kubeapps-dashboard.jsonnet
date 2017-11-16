@@ -112,9 +112,6 @@ local serviceDeployFromValues(parentName, componentName, values) = {
               default+: {
                 env_+: {
                   MONOCULAR_HOME: "/monocular",
-                  MONOCULAR_AUTH_SIGNING_KEY: $.values.api.auth.signingKey,
-                  MONOCULAR_AUTH_GITHUB_CLIENT_ID: $.values.api.auth.github.clientID,
-                  MONOCULAR_AUTH_GITHUB_CLIENT_SECRET: $.values.api.auth.github.clientSecret,
                 },
                 livenessProbe: {
                   httpGet: {

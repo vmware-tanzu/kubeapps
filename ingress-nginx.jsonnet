@@ -142,7 +142,7 @@ local kube = import "kube.libsonnet";
         {name: "http", port: 80, protocol: "TCP"},
         {name: "https", port: 443, protocol: "TCP"},
       ],
-      type: "LoadBalancer",
+      type: "ClusterIP",
     },
   },
 
