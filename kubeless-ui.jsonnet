@@ -35,7 +35,6 @@ local host = "kubeless-ui";
             default: kube.Container("ui") {
               // FIXME: point to real tag
               image: "bitnami/kubeless-ui:latest",
-              imagePullPolicy: "Always",
               ports_: {
                 ui: {containerPort: 3000, protocol: "TCP"},
               },
