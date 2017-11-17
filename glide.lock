@@ -1,5 +1,5 @@
-hash: a87c33313517efd34a132b68f97286161ba0f55d4f652241f17283eb6de81405
-updated: 2017-11-08T15:21:50.147688312+07:00
+hash: 28b01f680c94a23f62faa9b9bbff072b63c443d0dc44b9fd10467c95358119ab
+updated: 2017-11-19T15:02:37.294063118+07:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -22,6 +22,8 @@ imports:
   - swagger
 - name: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+- name: github.com/go-ini/ini
+  version: 32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a
 - name: github.com/go-openapi/jsonpointer
   version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
 - name: github.com/go-openapi/jsonreference
@@ -87,9 +89,9 @@ imports:
   subpackages:
   - diffmatchpatch
 - name: github.com/sirupsen/logrus
-  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
+  version: 95cd2b9c79aa5e72ab0bc69b7ccc2be15bf850f6
 - name: github.com/spf13/afero
-  version: 5660eeed305fe5f69c8fc6cf899132a459a97064
+  version: 8d919cbe7e2627e417f3e45c3c0e489a5b7e2536
   subpackages:
   - mem
 - name: github.com/spf13/cobra
