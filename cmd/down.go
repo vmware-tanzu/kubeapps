@@ -18,9 +18,7 @@ package cmd
 
 import (
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
-	"github.com/kubeapps/installer/pkg/gke"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 var downCmd = &cobra.Command{
@@ -42,10 +40,6 @@ var downCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		provider, err := cmd.Flags().GetString("cloud-provider")
-		if err != nil {
-			return err
-		}
 
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
 		if err != nil {
@@ -54,16 +48,6 @@ var downCmd = &cobra.Command{
 		objs, err := parseObjects(manifest)
 		if err != nil {
 			return err
-		}
-
-		// k8s on GKE
-		crb := &unstructured.Unstructured{}
-		if provider == "gke" {
-			crb, err = gke.BuildCrbObject()
-			if err != nil {
-				return err
-			}
-			objs = append(objs, crb)
 		}
 
 		return c.Run(objs)

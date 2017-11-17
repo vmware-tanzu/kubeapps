@@ -14,7 +14,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-func BuildCrbObject() (*unstructured.Unstructured, error) {
+// BuildCrbObject builds the clusterrolebinding for granting
+// cluster-admin permission to the active user.
+func BuildCrbObject() ([]*unstructured.Unstructured, error) {
 	user, err := getActiveUser()
 	if err != nil {
 		return nil, err
@@ -41,7 +43,9 @@ func BuildCrbObject() (*unstructured.Unstructured, error) {
 			},
 		},
 	}
-	return crb, nil
+	crbs := []*unstructured.Unstructured{}
+	crbs = append(crbs, crb)
+	return crbs, nil
 }
 
 func getActiveUser() (string, error) {

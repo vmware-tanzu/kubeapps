@@ -23,7 +23,6 @@ import (
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/kubeapps/installer/pkg/gke"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 const (
@@ -80,13 +79,18 @@ List of components that kubeapps up installs:
 		}
 
 		// k8s on GKE
-		crb := &unstructured.Unstructured{}
 		if provider == "gke" {
-			crb, err = gke.BuildCrbObject()
+			crb, err := gke.BuildCrbObject()
 			if err != nil {
 				return err
 			}
-			objs = append(objs, crb)
+
+			//(tuna): we force the deployment ordering here:
+			// this clusterrolebinding will be created before others for granting the proper permission.
+			// when the installation finishes, it will be gc'd immediately.
+			c.SkipGc = true
+			c.Run(crb, wd)
+			c.SkipGc = false
 		}
 
 		return c.Run(objs, wd)
@@ -96,4 +100,5 @@ List of components that kubeapps up installs:
 func init() {
 	RootCmd.AddCommand(upCmd)
 	upCmd.Flags().Bool("dry-run", false, "Provides output to be submitted to the server.")
+	upCmd.Flags().String("cloud-provider", "gke", "Specify the cloud provider (gke|aws). If you are on minikube, use --cloud-provider=none")
 }

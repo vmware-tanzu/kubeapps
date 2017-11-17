@@ -66,7 +66,6 @@ Find more information at https://github.com/kubeapps/installer.`,
 func init() {
 	RootCmd.PersistentFlags().CountP("verbose", "v", "Increase verbosity.")
 	RootCmd.PersistentFlags().Set("logtostderr", "true")
-	RootCmd.PersistentFlags().String("cloud-provider", "gke", "Specify the cloud provider.")
 }
 
 func logLevel(verbosity int) logrus.Level {
