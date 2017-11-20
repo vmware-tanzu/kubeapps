@@ -1,0 +1,4 @@
+{
+"namespaces":["kubeless","kubeapps","kube-system"],
+"endpoints":["/","/api/v1/repos","/kubeless"]
+}

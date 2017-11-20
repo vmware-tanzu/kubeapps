@@ -1,0 +1,81 @@
+package cmd
+
+import (
+	"encoding/json"
+	"errors"
+	"github.com/spf13/cobra"
+	"k8s.io/client-go/kubernetes"
+)
+
+var validateCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "validate KubeApps components",
+	Long:  `validate KubeApps components`,
+	RunE:  validateRun,
+}
+
+type ConfigurationVal struct {
+	Namespaces []string `json:"namespaces"`
+	Endpoints  []string `json:"endpoints"`
+}
+
+var kpass_val bool
+var passcount, passfail int
+
+func parseJson(filename string) (*ConfigurationVal, error) {
+	filesdata, err := fsGetFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	var res ConfigurationVal
+	if err := json.Unmarshal([]byte(filesdata), &res); err != nil {
+		return nil, err
+	}
+	return &res, nil
+}
+
+func kubernetesClient() (*kubernetes.Clientset, error) {
+
+	config, err := buildOutOfClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
+}
+
+func validateRun(cmd *cobra.Command, args []string) error {
+	kpass_val = true
+
+	config, err := parseJson("test_conf.json")
+	if err != nil {
+		return err
+	}
+
+	client, err := kubernetesClient()
+	if err != nil {
+		return err
+	}
+
+	for _, n := range config.Namespaces {
+		CheckPods(n, client)
+		CheckEndpoints(n, client)
+	}
+	for _, p := range config.Endpoints {
+		PingPath(p, "http://localhost")
+	}
+	if Report() {
+		return nil
+	} else {
+		return errors.New("Failed validation")
+	}
+}
+
+func init() {
+	RootCmd.AddCommand(validateCmd)
+}
