@@ -21,11 +21,11 @@ type ConfigurationVal struct {
 var kpass_val bool
 var passcount, passfail int
 
-func parseJson(filename string) (*ConfigurationVal, error) {
+func getTestConfig() *ConfigurationVal {
 	var testConf ConfigurationVal
 	testConf.Namespaces = []string{"kubeless", "kubeapps", "kube-system"}
 	testConf.Endpoints = []string{"/", "/api/v1/repos", "/kubeless"}
-	return &testConf, nil
+	return &testConf
 }
 
 func kubernetesClient() (*kubernetes.Clientset, error) {
@@ -47,10 +47,7 @@ func validateRun(cmd *cobra.Command, args []string) error {
 	defer Report()
 	kpass_val = true
 
-	config, err := parseJson("test_conf.json")
-	if err != nil {
-		return err
-	}
+	config := getTestConfig()
 
 	client, err := kubernetesClient()
 	if err != nil {
@@ -66,8 +63,14 @@ func validateRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	url, err := cmd.Flags().GetString("url")
+	if err != nil {
+		return err
+	}
+
 	for _, p := range config.Endpoints {
-		PingPath(p, "http://localhost:"+strconv.Itoa(localPort))
+		PingPath(p, url+":"+strconv.Itoa(localPort))
 	}
 
 	return nil
@@ -77,4 +80,6 @@ func validateRun(cmd *cobra.Command, args []string) error {
 func init() {
 	RootCmd.AddCommand(validateCmd)
 	validateCmd.Flags().Int("port", 8002, "local port")
+	validateCmd.Flags().String("url", "http://localhost", "base url")
+
 }
