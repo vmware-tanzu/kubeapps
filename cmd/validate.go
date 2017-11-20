@@ -44,6 +44,7 @@ func kubernetesClient() (*kubernetes.Clientset, error) {
 }
 
 func validateRun(cmd *cobra.Command, args []string) error {
+	defer Report()
 	kpass_val = true
 
 	config, err := parseJson("test_conf.json")
