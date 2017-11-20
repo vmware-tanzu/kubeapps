@@ -18,7 +18,7 @@ package cmd
 
 import (
 	"bytes"
-	_ "github.com/kubeapps/installer/generated/statik"
+	_ "github.com/kubeapps/kubeapps/generated/statik"
 	"github.com/rakyll/statik/fs"
 	"io"
 	"log"

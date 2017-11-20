@@ -7,7 +7,7 @@ os:
 go:
   - 1.8.3
 
-go_import_path: github.com/kubeapps/installer
+go_import_path: github.com/kubeapps/kubeapps
 
 before_install:
   - set -e
@@ -35,4 +35,4 @@ deploy:
   on:
     tags: true
     branch: master
-    repo: kubeapps/installer
+    repo: kubeapps/kubeapps

@@ -1,4 +1,4 @@
-package: github.com/kubeapps/installer
+package: github.com/kubeapps/kubeapps
 import:
 - package: k8s.io/client-go
   version: ^3.0.0
