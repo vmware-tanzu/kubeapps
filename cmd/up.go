@@ -22,7 +22,7 @@ import (
 
 	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
-	"github.com/kubeapps/installer/pkg/gke"
+	"github.com/kubeapps/kubeapps/pkg/gke"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/discovery"
 )

@@ -50,7 +50,7 @@ var RootCmd = &cobra.Command{
 	Short: "kubeapps installs the Kubeapps components into your cluster",
 	Long: `kubeapps installs the Kubeapps components into your cluster.
   
-Find more information at https://github.com/kubeapps/installer.`,
+Find more information at https://github.com/kubeapps/kubeapps.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		out := cmd.OutOrStderr()
 		logrus.SetOutput(out)

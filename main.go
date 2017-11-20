@@ -20,7 +20,7 @@ package main
 import (
 	"os"
 
-	"github.com/kubeapps/installer/cmd"
+	"github.com/kubeapps/kubeapps/cmd"
 	"github.com/sirupsen/logrus"
 )
 

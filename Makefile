@@ -1,4 +1,4 @@
-IMPORT_PATH:= github.com/kubeapps/installer
+IMPORT_PATH:= github.com/kubeapps/kubeapps
 GOBIN = go
 # Force builds to only use vendor/'ed dependencies
 # i.e. ignore local $GOPATH/src installed sources
@@ -13,7 +13,7 @@ ARCH = amd64
 BINARY = kubeapps
 GO_PACKAGES = $(IMPORT_PATH)/cmd $(IMPORT_PATH)/pkg/...
 GO_FILES := $(shell find $(shell $(GOBIN) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
-GO_FLAGS = -ldflags="-w -X github.com/kubeapps/installer/cmd.VERSION=${VERSION}"
+GO_FLAGS = -ldflags="-w -X github.com/kubeapps/kubeapps/cmd.VERSION=${VERSION}"
 EMBEDDED_STATIC = generated/statik/statik.go
 
 default: binary
