@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"errors"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	"strconv"
+	"strings"
 )
 
 var validateCmd = &cobra.Command{
@@ -67,6 +69,9 @@ func validateRun(cmd *cobra.Command, args []string) error {
 	url, err := cmd.Flags().GetString("url")
 	if err != nil {
 		return err
+	}
+	if !strings.Contains(url, "http") {
+		return errors.New("badly formed url")
 	}
 
 	for _, p := range config.Endpoints {
