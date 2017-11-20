@@ -1,0 +1,5 @@
+[core]
+foo = bar
+
+[compute]
+bar = baz

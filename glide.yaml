@@ -9,6 +9,7 @@ import:
   - tools/clientcmd
   - plugin/pkg/client/auth/gcp
 - package: github.com/ksonnet/kubecfg
+  version: 897a3db8a83ca195a2825b1fabe59ffca103e700
   subpackages:
   - utils
   - metadata
@@ -23,3 +24,4 @@ import:
   version: d4266bc12aae0b4128952c889b769442fce5d2f1
   subpackages:
   - unix
+- package: github.com/go-ini/ini

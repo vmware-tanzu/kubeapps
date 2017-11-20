@@ -49,6 +49,7 @@ var downCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+
 		return c.Run(objs)
 	},
 }

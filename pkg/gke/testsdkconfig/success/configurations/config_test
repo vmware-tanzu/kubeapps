@@ -1,0 +1,7 @@
+[core]
+account = foo@example.com
+foo = bar
+
+[baz]
+bar = baz
+foo = bar
