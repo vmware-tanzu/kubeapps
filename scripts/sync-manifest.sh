@@ -20,12 +20,18 @@ export KUBECFG_JPATH
 
 kubecfg show $MANIFEST_REPO/kubeapps.jsonnet > static/kubeapps-objs.yaml
 
+mkpasswd() {
+    echo $(LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' </dev/urandom | head -c 10 | base64)
+}
+
+MONGODB_PW=$(mkpasswd)
+
 cat >> static/kubeapps-objs.yaml <<EOF
 ---
 apiVersion: v1
 data:
-  mongodb-password: MjNneWZ3ZWZoZzkyOA==
-  mongodb-root-password: MjNneWZ3ZWZoZzkyOA==
+  mongodb-password: $MONGODB_PW
+  mongodb-root-password: $MONGODB_PW
 kind: Secret
 metadata:
   annotations: {}
