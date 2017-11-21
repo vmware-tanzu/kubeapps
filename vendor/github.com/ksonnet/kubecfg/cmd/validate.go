@@ -16,75 +16,33 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 
-	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 )
 
 func init() {
 	RootCmd.AddCommand(validateCmd)
-	addEnvCmdFlags(validateCmd)
-	bindJsonnetFlags(validateCmd)
-	bindClientGoFlags(validateCmd)
 }
 
 var validateCmd = &cobra.Command{
-	Use:   "validate [env-name] [-f <file-or-dir>]",
+	Use:   "validate",
 	Short: "Compare generated manifest against server OpenAPI spec",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 1 {
-			return fmt.Errorf("'validate' takes at most a single argument, that is the name of the environment")
-		}
-
 		var err error
 
 		c := kubecfg.ValidateCmd{}
 
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		wd := metadata.AbsPath(cwd)
-
-		envSpec, err := parseEnvCmd(cmd, args)
+		_, c.Discovery, err = restClientPool(cmd)
 		if err != nil {
 			return err
 		}
 
-		_, c.Discovery, err = restClientPool(cmd, nil)
-		if err != nil {
-			return err
-		}
-
-		objs, err := expandEnvCmdObjs(cmd, envSpec, wd)
+		objs, err := readObjs(cmd, args)
 		if err != nil {
 			return err
 		}
 
 		return c.Run(objs, cmd.OutOrStdout())
 	},
-	Long: `Validate that an application or file is compliant with the Kubernetes
-specification.
-
-ksonnet applications are accepted, as well as normal JSON, YAML, and Jsonnet
-files.`,
-	Example: `  # Validate all resources described in a ksonnet application, expanding
-  # ksonnet code with 'dev' environment where necessary (i.e., not YAML, JSON,
-  # or non-ksonnet Jsonnet code).
-  ksonnet validate dev
-
-  # Validate resources described in a YAML file.
-  ksonnet validate -f ./pod.yaml
-
-  # Validate resources described in the JSON file against existing resources
-  # in the cluster the 'dev' environment is pointing at.
-  ksonnet validate dev -f ./pod.yaml
-
-  # Validate resources described in a Jsonnet file. Does not expand using
-  # environment bindings.
-  ksonnet validate -f ./pod.jsonnet`,
 }

@@ -21,23 +21,21 @@ import (
 	goflag "flag"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
-	"path"
 	"path/filepath"
-	"reflect"
 	"strings"
-
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	jsonnet "github.com/strickyak/jsonnet_cgo"
 	"golang.org/x/crypto/ssh/terminal"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/ksonnet/kubecfg/metadata"
-	"github.com/ksonnet/kubecfg/template"
 	"github.com/ksonnet/kubecfg/utils"
 
 	// Register auth plugins
@@ -53,46 +51,30 @@ const (
 	flagTlaVarFile = "tla-str-file"
 	flagResolver   = "resolve-images"
 	flagResolvFail = "resolve-images-error"
-	flagAPISpec    = "api-spec"
-
-	// For use in the commands (e.g., diff, apply, delete) that require either an
-	// environment or the -f flag.
-	flagFile      = "file"
-	flagFileShort = "f"
-
-	componentsExtCodeKey = "__ksonnet/components"
 )
 
 var clientConfig clientcmd.ClientConfig
 var overrides clientcmd.ConfigOverrides
-var loadingRules clientcmd.ClientConfigLoadingRules
 
 func init() {
 	RootCmd.PersistentFlags().CountP(flagVerbose, "v", "Increase verbosity. May be given multiple times.")
+	RootCmd.PersistentFlags().StringP(flagJpath, "J", "", "Additional jsonnet library search path")
+	RootCmd.PersistentFlags().StringSliceP(flagExtVar, "V", nil, "Values of external variables")
+	RootCmd.PersistentFlags().StringSlice(flagExtVarFile, nil, "Read external variable from a file")
+	RootCmd.PersistentFlags().StringSliceP(flagTlaVar, "A", nil, "Values of top level arguments")
+	RootCmd.PersistentFlags().StringSlice(flagTlaVarFile, nil, "Read top level argument from a file")
+	RootCmd.PersistentFlags().String(flagResolver, "noop", "Change implementation of resolveImage native function. One of: noop, registry")
+	RootCmd.PersistentFlags().String(flagResolvFail, "warn", "Action when resolveImage fails. One of ignore,warn,error")
 
 	// The "usual" clientcmd/kubectl flags
-	loadingRules = *clientcmd.NewDefaultClientConfigLoadingRules()
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
-	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(&loadingRules, &overrides, os.Stdin)
+	kflags := clientcmd.RecommendedConfigOverrideFlags("")
+	RootCmd.PersistentFlags().StringVar(&loadingRules.ExplicitPath, "kubeconfig", "", "Path to a kube config. Only required if out-of-cluster")
+	clientcmd.BindOverrideFlags(&overrides, RootCmd.PersistentFlags(), kflags)
+	clientConfig = clientcmd.NewInteractiveDeferredLoadingClientConfig(loadingRules, &overrides, os.Stdin)
 
 	RootCmd.PersistentFlags().Set("logtostderr", "true")
-}
-
-func bindJsonnetFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringSliceP(flagJpath, "J", nil, "Additional jsonnet library search path")
-	cmd.PersistentFlags().StringSliceP(flagExtVar, "V", nil, "Values of external variables")
-	cmd.PersistentFlags().StringSlice(flagExtVarFile, nil, "Read external variable from a file")
-	cmd.PersistentFlags().StringSliceP(flagTlaVar, "A", nil, "Values of top level arguments")
-	cmd.PersistentFlags().StringSlice(flagTlaVarFile, nil, "Read top level argument from a file")
-	cmd.PersistentFlags().String(flagResolver, "noop", "Change implementation of resolveImage native function. One of: noop, registry")
-	cmd.PersistentFlags().String(flagResolvFail, "warn", "Action when resolveImage fails. One of ignore,warn,error")
-}
-
-func bindClientGoFlags(cmd *cobra.Command) {
-	kflags := clientcmd.RecommendedConfigOverrideFlags("")
-	ep := &loadingRules.ExplicitPath
-	cmd.PersistentFlags().StringVar(ep, "kubeconfig", "", "Path to a kube config. Only required if out-of-cluster")
-	clientcmd.BindOverrideFlags(&overrides, cmd.PersistentFlags(), kflags)
 }
 
 // RootCmd is the root of cobra subcommand tree
@@ -122,11 +104,11 @@ var RootCmd = &cobra.Command{
 
 // clientConfig.Namespace() is broken in client-go 3.0:
 // namespace in config erroneously overrides explicit --namespace
-func defaultNamespace() (string, error) {
+func defaultNamespace(c clientcmd.ClientConfig) (string, error) {
 	if overrides.Context.Namespace != "" {
 		return overrides.Context.Namespace, nil
 	}
-	ns, _, err := clientConfig.Namespace()
+	ns, _, err := c.Namespace()
 	return ns, err
 }
 
@@ -181,48 +163,176 @@ func (f *logFormatter) Format(e *log.Entry) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func newExpander(cmd *cobra.Command) (*template.Expander, error) {
+// JsonnetVM constructs a new jsonnet.VM, according to command line
+// flags
+func JsonnetVM(cmd *cobra.Command) (*jsonnet.VM, error) {
+	vm := jsonnet.Make()
 	flags := cmd.Flags()
-	spec := template.Expander{}
-	var err error
 
-	spec.EnvJPath = filepath.SplitList(os.Getenv("KUBECFG_JPATH"))
+	jpath := os.Getenv("KUBECFG_JPATH")
+	for _, p := range filepath.SplitList(jpath) {
+		log.Debugln("Adding jsonnet search path", p)
+		vm.JpathAdd(p)
+	}
 
-	spec.FlagJpath, err = flags.GetStringSlice(flagJpath)
+	jpath, err := flags.GetString(flagJpath)
+	if err != nil {
+		return nil, err
+	}
+	for _, p := range filepath.SplitList(jpath) {
+		log.Debugln("Adding jsonnet search path", p)
+		vm.JpathAdd(p)
+	}
+
+	extvars, err := flags.GetStringSlice(flagExtVar)
+	if err != nil {
+		return nil, err
+	}
+	for _, extvar := range extvars {
+		kv := strings.SplitN(extvar, "=", 2)
+		switch len(kv) {
+		case 1:
+			v, present := os.LookupEnv(kv[0])
+			if present {
+				vm.ExtVar(kv[0], v)
+			} else {
+				return nil, fmt.Errorf("Missing environment variable: %s", kv[0])
+			}
+		case 2:
+			vm.ExtVar(kv[0], kv[1])
+		}
+	}
+
+	extvarfiles, err := flags.GetStringSlice(flagExtVarFile)
+	if err != nil {
+		return nil, err
+	}
+	for _, extvar := range extvarfiles {
+		kv := strings.SplitN(extvar, "=", 2)
+		if len(kv) != 2 {
+			return nil, fmt.Errorf("Failed to parse %s: missing '=' in %s", flagExtVarFile, extvar)
+		}
+		v, err := ioutil.ReadFile(kv[1])
+		if err != nil {
+			return nil, err
+		}
+		vm.ExtVar(kv[0], string(v))
+	}
+
+	tlavars, err := flags.GetStringSlice(flagTlaVar)
+	if err != nil {
+		return nil, err
+	}
+	for _, tlavar := range tlavars {
+		kv := strings.SplitN(tlavar, "=", 2)
+		switch len(kv) {
+		case 1:
+			v, present := os.LookupEnv(kv[0])
+			if present {
+				vm.TlaVar(kv[0], v)
+			} else {
+				return nil, fmt.Errorf("Missing environment variable: %s", kv[0])
+			}
+		case 2:
+			vm.TlaVar(kv[0], kv[1])
+		}
+	}
+
+	tlavarfiles, err := flags.GetStringSlice(flagTlaVarFile)
+	if err != nil {
+		return nil, err
+	}
+	for _, tlavar := range tlavarfiles {
+		kv := strings.SplitN(tlavar, "=", 2)
+		if len(kv) != 2 {
+			return nil, fmt.Errorf("Failed to parse %s: missing '=' in %s", flagTlaVarFile, tlavar)
+		}
+		v, err := ioutil.ReadFile(kv[1])
+		if err != nil {
+			return nil, err
+		}
+		vm.TlaVar(kv[0], string(v))
+	}
+
+	resolver, err := buildResolver(cmd)
+	if err != nil {
+		return nil, err
+	}
+	utils.RegisterNativeFuncs(vm, resolver)
+
+	return vm, nil
+}
+
+func buildResolver(cmd *cobra.Command) (utils.Resolver, error) {
+	flags := cmd.Flags()
+	resolver, err := flags.GetString(flagResolver)
+	if err != nil {
+		return nil, err
+	}
+	failAction, err := flags.GetString(flagResolvFail)
 	if err != nil {
 		return nil, err
 	}
 
-	spec.ExtVars, err = flags.GetStringSlice(flagExtVar)
-	if err != nil {
-		return nil, err
+	ret := resolverErrorWrapper{}
+
+	switch failAction {
+	case "ignore":
+		ret.OnErr = func(error) error { return nil }
+	case "warn":
+		ret.OnErr = func(err error) error {
+			log.Warning(err.Error())
+			return nil
+		}
+	case "error":
+		ret.OnErr = func(err error) error { return err }
+	default:
+		return nil, fmt.Errorf("Bad value for --%s: %s", flagResolvFail, failAction)
 	}
 
-	spec.ExtVarFiles, err = flags.GetStringSlice(flagExtVarFile)
-	if err != nil {
-		return nil, err
+	switch resolver {
+	case "noop":
+		ret.Inner = utils.NewIdentityResolver()
+	case "registry":
+		ret.Inner = utils.NewRegistryResolver(&http.Client{
+			Transport: utils.NewAuthTransport(http.DefaultTransport),
+		})
+	default:
+		return nil, fmt.Errorf("Bad value for --%s: %s", flagResolver, resolver)
 	}
 
-	spec.TlaVars, err = flags.GetStringSlice(flagTlaVar)
-	if err != nil {
-		return nil, err
-	}
+	return &ret, nil
+}
 
-	spec.TlaVarFiles, err = flags.GetStringSlice(flagTlaVarFile)
-	if err != nil {
-		return nil, err
-	}
+type resolverErrorWrapper struct {
+	Inner utils.Resolver
+	OnErr func(error) error
+}
 
-	spec.Resolver, err = flags.GetString(flagResolver)
+func (r *resolverErrorWrapper) Resolve(image *utils.ImageName) error {
+	err := r.Inner.Resolve(image)
 	if err != nil {
-		return nil, err
+		err = r.OnErr(err)
 	}
-	spec.FailAction, err = flags.GetString(flagResolvFail)
-	if err != nil {
-		return nil, err
-	}
+	return err
+}
 
-	return &spec, nil
+func readObjs(cmd *cobra.Command, paths []string) ([]*unstructured.Unstructured, error) {
+	vm, err := JsonnetVM(cmd)
+	if err != nil {
+		return nil, err
+	}
+	defer vm.Destroy()
+
+	res := []*unstructured.Unstructured{}
+	for _, path := range paths {
+		objs, err := utils.Read(vm, path)
+		if err != nil {
+			return nil, fmt.Errorf("Error reading %s: %v", path, err)
+		}
+		res = append(res, utils.FlattenToV1(objs)...)
+	}
+	return res, nil
 }
 
 // For debugging
@@ -236,14 +346,7 @@ func dumpJSON(v interface{}) string {
 	return string(buf.Bytes())
 }
 
-func restClientPool(cmd *cobra.Command, envName *string) (dynamic.ClientPool, discovery.DiscoveryInterface, error) {
-	if envName != nil {
-		err := overrideCluster(*envName)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
-
+func restClientPool(cmd *cobra.Command) (dynamic.ClientPool, discovery.DiscoveryInterface, error) {
 	conf, err := clientConfig.ClientConfig()
 	if err != nil {
 		return nil, nil, err
@@ -260,156 +363,4 @@ func restClientPool(cmd *cobra.Command, envName *string) (dynamic.ClientPool, di
 
 	pool := dynamic.NewClientPool(conf, mapper, pathresolver)
 	return pool, discoCache, nil
-}
-
-type envSpec struct {
-	env   *string
-	files []string
-}
-
-// addEnvCmdFlags adds the flags that are common to the family of commands
-// whose form is `[<env>|-f <file-name>]`, e.g., `apply` and `delete`.
-func addEnvCmdFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringArrayP(flagFile, flagFileShort, nil, "Filename or directory that contains the configuration to apply (accepts YAML, JSON, and Jsonnet)")
-}
-
-// parseEnvCmd parses the family of commands that come in the form `[<env>|-f
-// <file-name>]`, e.g., `apply` and `delete`.
-func parseEnvCmd(cmd *cobra.Command, args []string) (*envSpec, error) {
-	flags := cmd.Flags()
-
-	files, err := flags.GetStringArray(flagFile)
-	if err != nil {
-		return nil, err
-	}
-
-	var env *string
-	if len(args) == 1 {
-		env = &args[0]
-	}
-
-	return &envSpec{env: env, files: files}, nil
-}
-
-// overrideCluster ensures that the cluster URI specified in the environment is
-// associated in the user's kubeconfig file during deployment to a ksonnet
-// environment. We will error out if it is not.
-//
-// If the environment URI the user is attempting to deploy to is not the current
-// kubeconfig context, we must manually override the client-go --cluster flag
-// to ensure we are deploying to the correct cluster.
-func overrideCluster(envName string) error {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	wd := metadata.AbsPath(cwd)
-
-	metadataManager, err := metadata.Find(wd)
-	if err != nil {
-		return err
-	}
-
-	rawConfig, err := clientConfig.RawConfig()
-	if err != nil {
-		return err
-	}
-
-	var clusterURIs = make(map[string]string)
-	for name, cluster := range rawConfig.Clusters {
-		clusterURIs[cluster.Server] = name
-	}
-
-	//
-	// check to ensure that the environment we are trying to deploy to is
-	// created, and that the environment URI is located in kubeconfig.
-	//
-
-	log.Debugf("Validating deployment at '%s' with cluster URIs '%v'", envName, reflect.ValueOf(clusterURIs).MapKeys())
-	env, err := metadataManager.GetEnvironment(envName)
-	if err != nil {
-		return err
-	}
-
-	if _, ok := clusterURIs[env.URI]; ok {
-		clusterName := clusterURIs[env.URI]
-		log.Debugf("Overwriting --cluster flag with '%s'", clusterName)
-		overrides.Context.Cluster = clusterName
-		return nil
-	}
-
-	return fmt.Errorf("Attempting to deploy to environment '%s' at %s, but there are no clusters with that URI", envName, env.URI)
-}
-
-// expandEnvCmdObjs finds and expands templates for the family of commands of
-// the form `[<env>|-f <file-name>]`, e.g., `apply` and `delete`. That is, if
-// the user passes a list of files, we will expand all templates in those files,
-// while if a user passes an environment name, we will expand all component
-// files using that environment.
-func expandEnvCmdObjs(cmd *cobra.Command, envSpec *envSpec, cwd metadata.AbsPath) ([]*unstructured.Unstructured, error) {
-	expander, err := newExpander(cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	//
-	// Get all filenames that contain templates to expand. Importantly, we need to
-	// enforce the form `[<env-name>|-f <file-name>]`; that is, we need to make
-	// sure that the user either passed an environment name or a `-f` flag.
-	//
-
-	envPresent := envSpec.env != nil
-	filesPresent := len(envSpec.files) > 0
-
-	if !envPresent && !filesPresent {
-		return nil, fmt.Errorf("Must specify either an environment or a file list, or both")
-	}
-
-	fileNames := envSpec.files
-	if envPresent {
-		manager, err := metadata.Find(cwd)
-		if err != nil {
-			return nil, err
-		}
-
-		libPath, envLibPath := manager.LibPaths(*envSpec.env)
-		expander.FlagJpath = append([]string{string(libPath), string(envLibPath)}, expander.FlagJpath...)
-
-		if !filesPresent {
-			fileNames, err = manager.ComponentPaths()
-			if err != nil {
-				return nil, err
-			}
-			baseObjExtCode := fmt.Sprintf("%s=%s", componentsExtCodeKey, constructBaseObj(fileNames))
-			expander.ExtCodes = append([]string{baseObjExtCode})
-		}
-	}
-
-	//
-	// Expand templates.
-	//
-
-	return expander.Expand(fileNames)
-}
-
-// constructBaseObj constructs the base Jsonnet object that represents k-v
-// pairs of component name -> component imports. For example,
-//
-//   {
-//      foo: import "components/foo.jsonnet"
-//   }
-func constructBaseObj(paths []string) string {
-	var obj bytes.Buffer
-	obj.WriteString("{\n")
-	for _, p := range paths {
-		ext := path.Ext(p)
-		if path.Ext(p) != ".jsonnet" {
-			continue
-		}
-
-		name := strings.TrimSuffix(path.Base(p), ext)
-		fmt.Fprintf(&obj, "  %s: import \"%s\",\n", name, p)
-	}
-	obj.WriteString("}\n")
-	return obj.String()
 }

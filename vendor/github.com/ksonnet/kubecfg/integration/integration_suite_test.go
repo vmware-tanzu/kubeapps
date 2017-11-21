@@ -112,7 +112,7 @@ func runKubecfgWith(flags []string, input []runtime.Object) error {
 		args = append(args, "--kubeconfig", *kubeconfig)
 	}
 	args = append(args, flags...)
-	args = append(args, "-f", fname)
+	args = append(args, fname)
 
 	fmt.Fprintf(GinkgoWriter, "Running %q %q\n", *kubecfgBin, args)
 	cmd := exec.Command(*kubecfgBin, args...)

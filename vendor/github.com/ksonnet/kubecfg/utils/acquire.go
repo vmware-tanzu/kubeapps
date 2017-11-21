@@ -168,8 +168,8 @@ func FlattenToV1(objs []runtime.Object) []*unstructured.Unstructured {
 	for _, obj := range objs {
 		switch o := obj.(type) {
 		case *unstructured.UnstructuredList:
-			for _, item := range o.Items {
-				ret = append(ret, item)
+			for i := range o.Items {
+				ret = append(ret, &o.Items[i])
 			}
 		case *unstructured.Unstructured:
 			ret = append(ret, o)

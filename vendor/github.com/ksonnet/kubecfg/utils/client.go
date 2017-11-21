@@ -19,7 +19,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/emicklei/go-restful/swagger"
+	"github.com/emicklei/go-restful-swagger12"
+	"github.com/go-openapi/spec"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,6 +38,7 @@ type memcachedDiscoveryClient struct {
 	servergroups    *metav1.APIGroupList
 	serverresources map[string]*metav1.APIResourceList
 	schemas         map[string]*swagger.ApiDeclaration
+	schema          *spec.Swagger
 }
 
 // NewMemcachedDiscoveryClient creates a new DiscoveryClient that
@@ -120,6 +122,23 @@ func (c *memcachedDiscoveryClient) SwaggerSchema(version schema.GroupVersion) (*
 	}
 
 	c.schemas[key] = schema
+	return schema, nil
+}
+
+func (c *memcachedDiscoveryClient) OpenAPISchema() (*spec.Swagger, error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+
+	if c.schema != nil {
+		return c.schema, nil
+	}
+
+	schema, err := c.cl.OpenAPISchema()
+	if err != nil {
+		return nil, err
+	}
+
+	c.schema = schema
 	return schema, nil
 }
 

@@ -12,6 +12,10 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+func cmData(cm *v1.ConfigMap) map[string]string {
+	return cm.Data
+}
+
 var _ = Describe("update", func() {
 	var c corev1.CoreV1Interface
 	var ns string

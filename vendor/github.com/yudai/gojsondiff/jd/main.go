@@ -22,7 +22,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "format, f",
 			Value:  "ascii",
-			Usage:  "Diff Outpu Format (ascii, delta)",
+			Usage:  "Diff Output Format (ascii, delta)",
 			EnvVar: "DIFF_FORMAT",
 		},
 		cli.BoolFlag{

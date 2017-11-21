@@ -16,12 +16,8 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 
-	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 )
 
@@ -31,20 +27,13 @@ const (
 
 func init() {
 	RootCmd.AddCommand(deleteCmd)
-	addEnvCmdFlags(deleteCmd)
-	bindClientGoFlags(deleteCmd)
-	bindJsonnetFlags(deleteCmd)
 	deleteCmd.PersistentFlags().Int64(flagGracePeriod, -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored")
 }
 
 var deleteCmd = &cobra.Command{
-	Use:   "delete [env-name] [-f <file-or-dir>]",
+	Use:   "delete",
 	Short: "Delete Kubernetes resources described in local config",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 1 {
-			return fmt.Errorf("'delete' takes at most a single argument, that is the name of the environment")
-		}
-
 		flags := cmd.Flags()
 		var err error
 
@@ -55,52 +44,21 @@ var deleteCmd = &cobra.Command{
 			return err
 		}
 
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		wd := metadata.AbsPath(cwd)
-
-		envSpec, err := parseEnvCmd(cmd, args)
+		c.ClientPool, c.Discovery, err = restClientPool(cmd)
 		if err != nil {
 			return err
 		}
 
-		c.ClientPool, c.Discovery, err = restClientPool(cmd, envSpec.env)
+		c.DefaultNamespace, err = defaultNamespace(clientConfig)
 		if err != nil {
 			return err
 		}
 
-		c.DefaultNamespace, err = defaultNamespace()
-		if err != nil {
-			return err
-		}
-
-		objs, err := expandEnvCmdObjs(cmd, envSpec, wd)
+		objs, err := readObjs(cmd, args)
 		if err != nil {
 			return err
 		}
 
 		return c.Run(objs)
 	},
-	Long: `Delete Kubernetes resources from a cluster, as described in the local
-configuration.
-
-ksonnet applications are accepted, as well as normal JSON, YAML, and Jsonnet
-files.`,
-	Example: `  # Delete all resources described in a ksonnet application, from the 'dev'
-  # environment. Can be used in any subdirectory of the application.
-  ksonnet delete dev
-
-  # Delete resources described in a YAML file. Automatically picks up the
-  # cluster's location from '$KUBECONFIG'.
-  ksonnet delete -f ./pod.yaml
-
-  # Delete resources described in the JSON file from the 'dev' environment. Can
-  # be used in any subdirectory of the application.
-  ksonnet delete dev -f ./pod.json
-
-  # Delete resources described in a YAML file, and running in the cluster
-  # specified by the current context in specified kubeconfig file.
-  ksonnet delete --kubeconfig=./kubeconfig -f ./pod.yaml`,
 }

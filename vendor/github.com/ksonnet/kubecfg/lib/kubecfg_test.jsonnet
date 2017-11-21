@@ -13,7 +13,7 @@
 //    See the License for the specific language governing permissions and
 //    limitations under the License.
 
-// Run me with `../kubecfg show -f kubecfg_test.jsonnet`
+// Run me with `../kubecfg show kubecfg_test.jsonnet`
 local kubecfg = import "kubecfg.libsonnet";
 
 assert kubecfg.parseJson("[3, 4]") == [3, 4];
