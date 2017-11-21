@@ -19,9 +19,8 @@ package main
 
 import (
 	"os"
-
+	"github.com/kubeapps/kubeapps/cmd"
 	"github.com/sirupsen/logrus"
-	"github.com/kubeapps/installer/cmd"
 )
 
 func main() {

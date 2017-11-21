@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/kubeapps/installer.svg?branch=master)](https://travis-ci.org/kubeapps/installer)
+[![Build Status](https://travis-ci.org/kubeapps/kubeapps.svg?branch=master)](https://travis-ci.org/kubeapps/kubeapps)
 
 # Kubeapps Installer
 
@@ -11,7 +11,7 @@ Kubeapps Installer is a [Bitnami](https://bitnami.com) tool to super-charge your
 
 Installation is made of two steps:
 
-- Download latest Kubeapps Installer binary from the [release page](https://github.com/kubeapps/installer/releases). Currently Kubeapps Installer is distributed in two platforms: linux/amd64 and OSX/amd64
+- Download latest Kubeapps Installer binary from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently Kubeapps Installer is distributed in two platforms: linux/amd64 and OSX/amd64
 - Make the binary executable
 
 ## Build from source
@@ -36,15 +36,15 @@ $ working_dir=$GOPATH/src/github.com/kubeapps/
 $ mkdir -p $working_dir
 ```
 
-### Clone kubeapps/installer repository
+### Clone kubeapps/kubeapps repository
 ```
 $ cd $working_dir
-$ git clone https://github.com/kubeapps/installer
+$ git clone https://github.com/kubeapps/kubeapps
 ```
 
 ### Building local binary
 ```
-$ cd installer
+$ cd kubeapps
 $ make binary
 ```
 
