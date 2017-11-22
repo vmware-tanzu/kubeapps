@@ -17,10 +17,9 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
+	"encoding/base64"
 	"testing"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestParseObjectsSuccess(t *testing.T) {
@@ -62,42 +61,29 @@ metadata:
 	}
 }
 
-func TestPopulateSecretWithPasswords(t *testing.T) {
-	clientset := fake.NewSimpleClientset()
-	ns := "test"
-	id := "mysecret"
-	err := populateSecretWithPasswords(clientset, ns, id, []string{"pass1", "pass2"})
+func TestGenerateRandomString(t *testing.T) {
+	got, err := generateRandomString(10)
 	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
+		t.Error(err)
 	}
-	secret, err := clientset.CoreV1().Secrets(ns).Get(id, metav1.GetOptions{})
+	_, err = base64.StdEncoding.DecodeString(got)
 	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
+		t.Error(err)
 	}
-	if secret.Data["pass1"] == nil || len(secret.Data["pass1"]) != 10 {
-		t.Error("Failed to generate password")
-	}
-	if secret.Data["pass2"] == nil || len(secret.Data["pass2"]) != 10 {
-		t.Error("Failed to generate password")
+}
+
+func TestGenerateRandomBytes(t *testing.T) {
+	got1, err := generateRandomBytes(10)
+	if err != nil {
+		t.Error(err)
 	}
 
-	// It should noop if the secret already exists
-	prevValue := secret.Data["pass1"]
-	err = populateSecretWithPasswords(clientset, ns, id, []string{"pass1"})
+	got2, err := generateRandomBytes(10)
 	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
-	}
-	secret2, err := clientset.CoreV1().Secrets(ns).Get(id, metav1.GetOptions{})
-	if err != nil {
-		t.Errorf("Unexpected error: %s", err)
-	}
-	if string(secret2.Data["pass1"]) != string(prevValue) {
-		t.Error("It should not overwrite the value")
+		t.Error(err)
 	}
 
-	// If the secret already exists it should throw an error
-	err = populateSecretWithPasswords(clientset, ns, id, []string{"pass3"})
-	if err == nil {
-		t.Error("Should throw an error if there is a conflict in the secret")
+	if bytes.Equal(got1, got2) {
+		t.Errorf("expect get two different byte slices, got the same")
 	}
 }

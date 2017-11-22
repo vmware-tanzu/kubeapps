@@ -18,41 +18,32 @@ package cmd
 
 import (
 	"bufio"
+	"crypto/rand"
 	"errors"
-	"fmt"
 	"io"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/ksonnet/kubecfg/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
 	// Adding explicitely the GCP auth plugin
+	"encoding/base64"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 var (
 	// VERSION will be overwritten automatically by the build system
 	VERSION = "devel"
-)
-
-const (
-	letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 )
 
 // RootCmd is the root of cobra subcommand tree
@@ -79,7 +70,6 @@ Find more information at https://github.com/kubeapps/kubeapps.`,
 func init() {
 	RootCmd.PersistentFlags().CountP("verbose", "v", "Increase verbosity.")
 	RootCmd.PersistentFlags().Set("logtostderr", "true")
-	rand.Seed(time.Now().UnixNano())
 }
 
 func logLevel(verbosity int) logrus.Level {
@@ -165,43 +155,27 @@ func getHome() (string, error) {
 	return "", errors.New("Can't get home directory")
 }
 
-func generateRandByteSlice(length int) []byte {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+// GenerateRandomBytes returns securely generated random bytes.
+// It will return an error if the system's secure random
+// number generator fails to function correctly, in which
+// case the caller should not continue.
+func generateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return nil, err
 	}
-	return b
+
+	return b, nil
 }
 
-func populateSecretWithPasswords(cli kubernetes.Interface, ns, secretID string, passwordFields []string) error {
-	prevSecret, err := cli.CoreV1().Secrets(ns).Get(secretID, metav1.GetOptions{})
-	if err != nil {
-		if k8sErrors.IsNotFound(err) {
-			data := make(map[string][]byte)
-			for _, p := range passwordFields {
-				data[p] = generateRandByteSlice(10)
-			}
-			secret := v1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      secretID,
-					Namespace: ns,
-					// TODO: Add labels to be able to clean it up
-				},
-				Data: data,
-			}
-			_, err := cli.CoreV1().Secrets(ns).Create(&secret)
-			if err != nil {
-				return err
-			}
-		} else {
-			return err
-		}
-	} else {
-		for _, p := range passwordFields {
-			if prevSecret.Data[p] == nil {
-				return fmt.Errorf("Secret %s already exists but it doesn't contain the expected key %s", secretID, p)
-			}
-		}
-	}
-	return nil
+// GenerateRandomString returns a standard base64 encoded
+// securely generated random string.
+// It will return an error if the system's secure random
+// number generator fails to function correctly, in which
+// case the caller should not continue.
+func generateRandomString(s int) (string, error) {
+	b, err := generateRandomBytes(s)
+	return base64.StdEncoding.EncodeToString(b), err
 }

@@ -168,3 +168,27 @@ func TestPrintOutput(t *testing.T) {
 		t.Errorf("statefulset %s shouldn't be listed", po2.Name)
 	}
 }
+
+func TestBuildMongoDBSecret(t *testing.T) {
+	pw := map[string]string{
+		"foo": "bar",
+		"bar": "baz",
+	}
+
+	sr := buildMongoDBSecret(pw)
+	if sr.Object["kind"] != "Secret" {
+		t.Errorf("expect kind = secret, got %v", sr.Object["kind"])
+	}
+	if sr.Object["data"] == nil {
+		t.Errorf("data can't be nil")
+	}
+
+	meta := sr.Object["metadata"].(map[string]interface{})
+	if meta["name"].(string) != SecretID || meta["namespace"].(string) != Kubeapps_NS {
+		t.Errorf("wrong metadata")
+	}
+	data := sr.Object["data"].(map[string]string)
+	if data["foo"] != "bar" || data["bar"] != "baz" {
+		t.Errorf("wrong data")
+	}
+}

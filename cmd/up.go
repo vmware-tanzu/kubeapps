@@ -34,9 +34,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -44,6 +45,8 @@ const (
 	KubeappsNS = "kubeapps"
 	KubelessNS = "kubeless"
 	SystemNS   = "kube-system"
+	SecretID    = "mongodb"
+	Kubeapps_NS = "kubeapps"
 )
 
 var upCmd = &cobra.Command{
@@ -131,6 +134,28 @@ List of components that kubeapps up installs:
 			c.SkipGc = false
 		}
 
+		// mongodb secret
+		// FIXME (tuna): if the mongodb secret exists then do nothing,
+		// otherwise, add it (with new generated rand pw) to the objs list then do full update.
+		if prevsecret, ok, err := mongoSecretExists(c); err != nil {
+			return err
+		} else if !ok {
+			pwFields := []string{"mongodb-password", "mongodb-root-password"}
+			pw := make(map[string]string)
+			for _, p := range pwFields {
+				s, err := generateRandomString(10)
+				if err != nil {
+					return fmt.Errorf("secret %s can't be created due to the random generator get failed: %v", SecretID, err)
+				}
+				pw[p] = s
+			}
+			secret := buildMongoDBSecret(pw)
+			objs = append(objs, secret)
+		} else if ok {
+			// add prevsecret to the list so it won't be GC-ed
+			objs = append(objs, prevsecret)
+		}
+
 		err = c.Run(objs, wd)
 		if err != nil {
 			return fmt.Errorf("can't install kubeapps components: %v", err)
@@ -184,7 +209,6 @@ func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 	if err != nil {
 		return err
 	}
-
 	err = printPod(w, c, nss)
 	if err != nil {
 		return err
@@ -193,6 +217,48 @@ func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 	fmt.Printf("Checking `kubectl get all --all-namespaces -l created-by=kubeapps` for details. \n\n")
 
 	return nil
+}
+func mongoSecretExists(c kubecfg.ApplyCmd) (*unstructured.Unstructured, bool, error) {
+	gvk := schema.GroupVersionKind{Version: "v1", Kind: "Secret"}
+	rc, err := clientForGroupVersionKind(c.ClientPool, c.Discovery, gvk, Kubeapps_NS)
+	if err != nil {
+		return nil, false, err
+	}
+	pwFields := []string{"mongodb-password", "mongodb-root-password"}
+	prevSec, err := rc.Get(SecretID)
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return nil, false, nil
+		} else {
+			return nil, true, err
+		}
+	} else {
+		if prevSec.Object["data"] != nil {
+			prevPw := prevSec.Object["data"].(map[string]interface{})
+			for _, p := range pwFields {
+				if prevPw[p] == nil {
+					return nil, true, fmt.Errorf("secret %s already exists but it doesn't contain the expected key %s", SecretID, p)
+				}
+			}
+		} else {
+			return nil, true, fmt.Errorf("secret %s already exists but it doesn't contain any expected key", SecretID)
+		}
+		return prevSec, true, nil
+	}
+}
+
+func buildMongoDBSecret(pw map[string]string) *unstructured.Unstructured{
+	return &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"kind":       "Secret",
+			"apiVersion": "v1",
+			"metadata": map[string]interface{}{
+				"name":      SecretID,
+				"namespace": Kubeapps_NS,
+			},
+			"data": pw,
+		},
+	}
 }
 
 func printPod(w io.Writer, c kubernetes.Interface, nss []string) error {
