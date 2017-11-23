@@ -26,7 +26,7 @@ This command will deploy the Kubeapps components into your cluster. The deployme
 
 You can check the [latest version of the Kubernetes manifest](https://github.com/kubeapps/kubeapps/blob/master/static/kubeapps-objs.yaml) that Kubeapps will deploy for you.
 
-Check the [components documentation page](/components.md) for a brief description of the list of components Kubeapps is deploying into your cluster.
+Check the [components documentation page](components.md) for a brief description of the list of components Kubeapps is deploying into your cluster.
 
 ## Kubeapps Dashboard
 
@@ -37,7 +37,7 @@ To open the Kubeapps Dashboard:
 ```
 kubeapps dashboard
 ```
-Check the [documentation specific to the Dashboard](/dashboard.md)
+Check the [documentation specific to the Dashboard](dashboard.md)
 
 ## Clean the Kubeapps components
 
