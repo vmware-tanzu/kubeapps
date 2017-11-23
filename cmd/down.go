@@ -55,7 +55,7 @@ var downCmd = &cobra.Command{
 		}
 
 		//delete mongodb secret
-		err = deleteMongoDBSecret(c, Kubeapps_NS)
+		err = deleteMongoDBSecret(c, MongoDB_Secret, Kubeapps_NS)
 		if err != nil {
 			return err
 		}
@@ -82,24 +82,24 @@ func init() {
 	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored.")
 }
 
-func deleteMongoDBSecret(c kubecfg.DeleteCmd, ns string) error {
+func deleteMongoDBSecret(c kubecfg.DeleteCmd, name, ns string) error {
 	gvk := schema.GroupVersionKind{Version: "v1", Kind: "Secret"}
 	rc, err := clientForGroupVersionKind(c.ClientPool, c.Discovery, gvk, ns)
 	if err != nil {
-		return fmt.Errorf("can't delete secret object %s due to: %v", SecretID, err)
+		return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
 	}
-	_, err = rc.Get(SecretID)
+	_, err = rc.Get(name)
 	if err == nil {
-		err = rc.Delete(SecretID, &metav1.DeleteOptions{})
+		err = rc.Delete(name, &metav1.DeleteOptions{})
 		if err != nil {
-			return fmt.Errorf("can't delete secret object %s due to: %v", SecretID, err)
+			return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
 		}
 	} else {
 		if k8sErrors.IsNotFound(err) {
 			// if it doesn't exist, just continue
 			return nil
 		} else {
-			return fmt.Errorf("can't delete secret object %s due to: %v", SecretID, err)
+			return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
 		}
 	}
 	return nil

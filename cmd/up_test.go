@@ -174,8 +174,10 @@ func TestBuildMongoDBSecret(t *testing.T) {
 		"foo": "bar",
 		"bar": "baz",
 	}
+	name := "foo"
+	ns := "my-ns"
 
-	sr := buildMongoDBSecret(pw)
+	sr := buildMongoDBSecret(pw, name, ns)
 	if sr.Object["kind"] != "Secret" {
 		t.Errorf("expect kind = secret, got %v", sr.Object["kind"])
 	}
@@ -184,7 +186,7 @@ func TestBuildMongoDBSecret(t *testing.T) {
 	}
 
 	meta := sr.Object["metadata"].(map[string]interface{})
-	if meta["name"].(string) != SecretID || meta["namespace"].(string) != Kubeapps_NS {
+	if meta["name"].(string) != name || meta["namespace"].(string) != ns {
 		t.Errorf("wrong metadata")
 	}
 	data := sr.Object["data"].(map[string]string)
