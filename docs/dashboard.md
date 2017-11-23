@@ -4,13 +4,13 @@ Kubeapps comes with an in-cluster dashboard that offers a web UI to easily manag
 
 ## Start the Dashboard
 
-You can easily safely access the dashboard from your system by running:
+You can securely access the dashboard from your system by running:
 
 ```
 kubeapps dashboard
 ```
 
-This will run a HTTP proxy to access the dashboard safely and will open your default browser to it.
+This will run a HTTP proxy to access the dashboard securely and will open your default browser to it.
 
 ## Managing Charts
 ### Deploying new applications using the Dashboard
@@ -19,7 +19,7 @@ Once you have the Dashboard up and running, you can start deploying applications
 
 ![Dashboard Main Page](../img/dashboard.png)
 
-Select one application for the list of charts in the official Kubernetes chart repository. In this example we will be deploying MariaDB.
+Select one application from the list of charts in the official Kubernetes chart repository. In this example we will be deploying MariaDB.
 
 ![Dashboard MariaDB chart](../img/mariadb.png)
 
@@ -39,7 +39,7 @@ On the "Deployments" menu you can get a list of the deployments in your cluster 
 
 ### Removing existing deployments
 
-You can remove any of the deployments that are managed by Helm, by clicking on the Remove button:
+You can remove any of the deployments that are managed by Helm, by clicking on the "Remove" button:
 
 ![Dashboard Remove Deployment](../img/delete-mariadb.png)
 
@@ -67,15 +67,15 @@ To access the Kubeless UI click on "Functions" in the Dashboard menu.
 
 ### Create a new function
 
-To create a new Kubeless function from the web ui click on "Create Function". On the modal window that opens, select the runtime for your function, the name of the function object and the handler of your function:
+To create a new Kubeless function from the web UI click on "Create Function". On the modal window that opens, select the runtime for your function, the name of the function object and the handler of your function:
 
 ![Kubeless Create Function Modal](../img/kubeless-create.png)
 
-After clicking on create, Kubeless UI will fill for you the basics of your function, so you can easily modify it for your needs:
+After clicking on create, Kubeless UI will load a sample function, so you can easily modify it for your needs:
 
 ![Kubeless Hello World Function](../img/kubeless-hello.png)
 
-Clicking on "Run Function" will run your function using the selected runtime and will display the response of it.
+Clicking on "Run Function" will run your function using the selected runtime and will display the response of it. It may take some time to the function to be running.
 
 ### Beyond Hello World
 
