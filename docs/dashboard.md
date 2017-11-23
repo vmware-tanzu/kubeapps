@@ -45,7 +45,17 @@ You can remove any of the deployments that are managed by Helm, by clicking on t
 
 ### Adding addition charts repositories
 
-TBA
+By default, Kubeapps comes with the official Kubernetes chart repositories enabled. You can see the list of enabled chart repositories in the "Repositories" link:
+
+![Dashboard Repositories List](../img/dashboard-repos.png)
+
+You can add new repositories (i.e. a special repository for your organization) by clicking on "Add repository":
+
+![Dashboard Add Repository](../img/dashboard-add-repo.png)
+
+- For ```Name``` you can add any identifier, as long as it is unique. Right now only alpha characters are accepted.
+- For ```URL``` you should add the URL where the ```index.yaml``` file of your repository is available.
+- For ```Source``` you can add the URL of the source code for your charts. This field is optional.
 
 ## Functions Dashboard
 
