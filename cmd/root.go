@@ -61,7 +61,7 @@ Find more information at https://github.com/kubeapps/kubeapps.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		out := cmd.OutOrStderr()
 		logrus.SetOutput(out)
-		verbosity, err := cmd.Flags().GetCount("verbose")
+		verbosity, err := cmd.Flags().GetString("verbose")
 		if err != nil {
 			return err
 		}
@@ -71,16 +71,24 @@ Find more information at https://github.com/kubeapps/kubeapps.`,
 }
 
 func init() {
-	RootCmd.PersistentFlags().CountP("verbose", "v", "Increase verbosity.")
+	RootCmd.PersistentFlags().StringP("verbose", "v", "warning", "Set log level: debug, info, warning, error, fatal, panic")
 	RootCmd.PersistentFlags().Set("logtostderr", "true")
 }
 
-func logLevel(verbosity int) logrus.Level {
+func logLevel(verbosity string) logrus.Level {
 	switch verbosity {
-	case 0:
+	case "info":
 		return logrus.InfoLevel
-	default:
+	case "debug":
 		return logrus.DebugLevel
+	case "error":
+		return logrus.ErrorLevel
+	case "fatal":
+		return logrus.FatalLevel
+	case "panic":
+		return logrus.PanicLevel
+	default:
+		return logrus.WarnLevel
 	}
 }
 
