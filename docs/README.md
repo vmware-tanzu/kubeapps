@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/kubeapps/kubeapps.svg?branch=master)](https://travis-ci.org/kubeapps/kubeapps)
 
-<img src="https://github.com/kubeapps/kubeapps/raw/master/img/logo.png" width="100">
+<img src="../img/logo.png" width="100">
 
 Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-charge your Kubernetes cluster with:
  * Your own applications [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
