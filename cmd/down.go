@@ -17,7 +17,10 @@ limitations under the License.
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
+	"github.com/ksonnet/kubecfg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -33,24 +36,36 @@ var downCmd = &cobra.Command{
 		var err error
 		c.GracePeriod, err = cmd.Flags().GetInt64("grace-period")
 		if err != nil {
-			return err
+			return fmt.Errorf("can't get --grace-period flag: %v", err)
 		}
 
 		c.ClientPool, c.Discovery, err = restClientPool()
 		if err != nil {
-			return err
+			return fmt.Errorf("can't get Kubernetes client: %v", err)
+		}
+		// validate k8s version
+		version, err := utils.FetchVersion(c.Discovery)
+		if err != nil {
+			return fmt.Errorf("can't verify Kubernetes version: %v", err)
+		}
+		if version.Major <= 1 && version.Minor < 7 {
+			return fmt.Errorf("kubernetes with RBAC enabled (v1.7+) is required to run Kubeapps")
 		}
 
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
 		if err != nil {
-			return err
+			return fmt.Errorf("can't read kubeapps manifest: %v", err)
 		}
 		objs, err := parseObjects(manifest)
 		if err != nil {
-			return err
+			return fmt.Errorf("can't parse kubeapps manifest: %v", err)
+		}
+		if err = c.Run(objs); err != nil {
+			return fmt.Errorf("can't uninstall kubeapps components: %v", err)
 		}
 
-		return c.Run(objs)
+		fmt.Println("successfully uninstalled kubeapps")
+		return nil
 	},
 }
 
