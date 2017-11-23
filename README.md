@@ -15,9 +15,9 @@ These tools are easily deployed into your cluster with just one command: ```kube
 
 ## Getting started
 
-To get started, read our [Getting Started guide](https://github.com/kubeapps/kubeapps/blob/docs/getting-started.md).
+To get started, read our [Getting Started guide](docs/getting-started.md).
 
-You can also browse the [full documentation](https://github.com/kubeapps/kubeapps/blob/docs).
+You can also browse the [full documentation](docs/).
 
 ----
 ## Build the Kubeapps installer from source
