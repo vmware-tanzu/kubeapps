@@ -133,6 +133,7 @@ metadata:
   annotations: {}
   labels:
     name: nginx-ingress
+    created-by: kubeapps
   name: nginx-ingress
   namespace: kube-system
 spec:
@@ -174,6 +175,7 @@ metadata:
   annotations: {}
   labels:
     name: default-http-backend
+    created-by: kubeapps
   name: default-http-backend
   namespace: kube-system
 spec:
@@ -249,6 +251,7 @@ metadata:
   annotations: {}
   labels:
     name: nginx-ingress-controller
+    created-by: kubeapps
   name: nginx-ingress-controller
   namespace: kube-system
 spec:
@@ -332,6 +335,7 @@ metadata:
   annotations: {}
   labels:
     name: default-http-backend
+    created-by: kubeapps
   name: default-http-backend
   namespace: kube-system
 spec:
@@ -389,6 +393,7 @@ metadata:
   annotations: {}
   labels:
     app: kubeapps-dashboard
+    created-by: kubeapps
     name: kubeapps-dashboard-api
   name: kubeapps-dashboard-api
   namespace: kubeapps
@@ -463,6 +468,7 @@ metadata:
   annotations: {}
   labels:
     app: kubeapps-dashboard
+    created-by: kubeapps
     name: kubeapps-dashboard-api
   name: kubeapps-dashboard-api
   namespace: kubeapps
@@ -503,6 +509,7 @@ metadata:
   annotations: {}
   labels:
     app: kubeapps-dashboard
+    created-by: kubeapps
     name: kubeapps-dashboard-ui
   name: kubeapps-dashboard-ui
   namespace: kubeapps
@@ -576,6 +583,7 @@ metadata:
   annotations: {}
   labels:
     app: kubeapps-dashboard
+    created-by: kubeapps
     name: kubeapps-dashboard-ui
   name: kubeapps-dashboard-ui
   namespace: kubeapps
@@ -626,6 +634,7 @@ metadata:
   annotations: {}
   labels:
     name: kubeless
+    created-by: kubeapps
   name: kubeless
 ---
 apiVersion: apps/v1beta1
@@ -633,6 +642,8 @@ kind: StatefulSet
 metadata:
   name: zoo
   namespace: kubeless
+  labels:
+    created-by: kubeapps
 spec:
   serviceName: zoo
   template:
@@ -667,6 +678,7 @@ kind: Deployment
 metadata:
   labels:
     kubeless: controller
+    created-by: kubeapps
   name: kubeless-controller
   namespace: kubeless
 spec:
@@ -709,6 +721,8 @@ kind: Service
 metadata:
   name: kafka
   namespace: kubeless
+  labels:
+    created-by: kubeapps
 spec:
   ports:
   - port: 9092
@@ -720,6 +734,8 @@ kind: Service
 metadata:
   name: zoo
   namespace: kubeless
+  labels:
+      created-by: kubeapps
 spec:
   clusterIP: None
   ports:
@@ -735,6 +751,8 @@ kind: Service
 metadata:
   name: zookeeper
   namespace: kubeless
+  labels:
+      created-by: kubeapps
 spec:
   ports:
   - name: client
@@ -805,6 +823,8 @@ kind: Service
 metadata:
   name: broker
   namespace: kubeless
+  labels:
+    created-by: kubeapps
 spec:
   clusterIP: None
   ports:
@@ -817,6 +837,8 @@ kind: StatefulSet
 metadata:
   name: kafka
   namespace: kubeless
+  labels:
+    created-by: kubeapps
 spec:
   serviceName: broker
   template:
@@ -864,6 +886,7 @@ metadata:
   annotations: {}
   labels:
     name: kubeless-ui
+    created-by: kubeapps
   name: kubeless-ui
   namespace: kubeapps
 spec:
@@ -966,6 +989,7 @@ metadata:
   annotations: {}
   labels:
     name: kubeless-ui
+    created-by: kubeapps
   name: kubeless-ui
   namespace: kubeapps
 spec:
@@ -983,6 +1007,7 @@ metadata:
   labels:
     app: mongodb
     name: mongodb
+    created-by: kubeapps
   name: mongodb
   namespace: kubeapps
 spec:
@@ -1080,6 +1105,7 @@ metadata:
   annotations: {}
   labels:
     name: mongodb
+    created-by: kubeapps
   name: mongodb
   namespace: kubeapps
 spec:
@@ -1097,6 +1123,7 @@ metadata:
   annotations: {}
   labels:
     name: kubeapps
+    created-by: kubeapps
   name: kubeapps
 ---
 apiVersion: v1
@@ -1110,6 +1137,8 @@ kind: Deployment
 metadata:
   name: sealed-secrets-controller
   namespace: kube-system
+  labels:
+    created-by: kubeapps
 spec:
   template:
     metadata:
@@ -1143,6 +1172,8 @@ kind: Service
 metadata:
   name: sealed-secrets-controller
   namespace: kube-system
+  labels:
+      created-by: kubeapps
 spec:
   ports:
   - port: 8080
@@ -1254,6 +1285,7 @@ metadata:
   labels:
     app: helm
     name: tiller
+    created-by: kubeapps
   name: tiller-deploy
   namespace: kube-system
 spec:
@@ -1299,6 +1331,7 @@ metadata:
   labels:
     app: helm
     name: tiller
+    created-by: kubeapps
   name: tiller-deploy
   namespace: kube-system
 spec:
@@ -1322,6 +1355,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
   labels:
     name: kubeapps
+    created-by: kubeapps
   name: kubeapps
   namespace: kubeapps
 spec:
