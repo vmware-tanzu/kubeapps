@@ -9,10 +9,12 @@ These tools are easily deployed into your cluster with just one command: ```kube
 
 ## Installation of the Kubeapps Installer
 
-Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed in your machine and configured to talk to your Kubernetes cluster. Kubeapps has been tested in `minikube` and Google Kubernetes Engine.
+Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed in your machine and configured to talk to your Kubernetes cluster. Kubeapps has been tested in `minikube` and Google Kubernetes Engine*.
 
 - Download latest Kubeapps Installer binary from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently Kubeapps Installer is distributed in two platforms: linux/amd64 and OSX/amd64
 - Make the binary executable
+
+***NOTE**: On Google Kubernetes Engine, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
 ## Deploy the Kubeapps components into your cluster
 
