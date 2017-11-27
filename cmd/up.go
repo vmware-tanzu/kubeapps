@@ -142,9 +142,9 @@ List of components that kubeapps up installs:
 			pwFields := []string{"mongodb-password", "mongodb-root-password"}
 			pw := make(map[string]string)
 			for _, p := range pwFields {
-				s, err := generateRandomString(10)
+				s, err := generateEncodedRandomPassword(12)
 				if err != nil {
-					return fmt.Errorf("secret %s can't be created due to the random generator get failed: %v", MongoDB_Secret, err)
+					return fmt.Errorf("error reading random data for secret %s: %v", MongoDB_Secret, err)
 				}
 				pw[p] = s
 			}
@@ -226,25 +226,28 @@ func mongoSecretExists(c kubecfg.ApplyCmd, name, ns string) (*unstructured.Unstr
 	}
 	pwFields := []string{"mongodb-password", "mongodb-root-password"}
 	prevSec, err := rc.Get(name)
-	if err != nil {
-		if k8sErrors.IsNotFound(err) {
-			return nil, false, nil
-		} else {
-			return nil, true, err
-		}
-	} else {
-		if prevSec.Object["data"] != nil {
-			prevPw := prevSec.Object["data"].(map[string]interface{})
-			for _, p := range pwFields {
-				if prevPw[p] == nil {
-					return nil, true, fmt.Errorf("secret %s already exists but it doesn't contain the expected key %s", name, p)
-				}
-			}
-		} else {
+
+	if k8sErrors.IsNotFound(err) {
+		return nil, false, nil
+	}
+
+	if err == nil {
+		if prevSec.Object["data"] == nil {
 			return nil, true, fmt.Errorf("secret %s already exists but it doesn't contain any expected key", name)
 		}
+
+		prevPw := prevSec.Object["data"].(map[string]interface{})
+		for _, p := range pwFields {
+			if prevPw[p] == nil {
+				return nil, true, fmt.Errorf("secret %s already exists but it doesn't contain the expected key %s", name, p)
+			}
+		}
+
 		return prevSec, true, nil
 	}
+
+	return nil, true, err
+
 }
 
 func buildMongoDBSecret(pw map[string]string, name, ns string) *unstructured.Unstructured {

@@ -155,7 +155,7 @@ func getHome() (string, error) {
 	return "", errors.New("Can't get home directory")
 }
 
-// GenerateRandomBytes returns securely generated random bytes.
+// generateRandomBytes returns securely generated random bytes.
 // It will return an error if the system's secure random
 // number generator fails to function correctly, in which
 // case the caller should not continue.
@@ -170,12 +170,12 @@ func generateRandomBytes(n int) ([]byte, error) {
 	return b, nil
 }
 
-// GenerateRandomString returns a standard base64 encoded
+// generateEncodedRandomPassword returns a standard base64 encoded
 // securely generated random string.
 // It will return an error if the system's secure random
 // number generator fails to function correctly, in which
 // case the caller should not continue.
-func generateRandomString(s int) (string, error) {
+func generateEncodedRandomPassword(s int) (string, error) {
 	b, err := generateRandomBytes(s)
 	return base64.StdEncoding.EncodeToString(b), err
 }

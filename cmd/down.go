@@ -88,19 +88,9 @@ func deleteMongoDBSecret(c kubecfg.DeleteCmd, name, ns string) error {
 	if err != nil {
 		return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
 	}
-	_, err = rc.Get(name)
-	if err == nil {
-		err = rc.Delete(name, &metav1.DeleteOptions{})
-		if err != nil {
-			return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
-		}
-	} else {
-		if k8sErrors.IsNotFound(err) {
-			// if it doesn't exist, just continue
-			return nil
-		} else {
-			return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
-		}
+	err = rc.Delete(name, &metav1.DeleteOptions{})
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
 	}
 	return nil
 }

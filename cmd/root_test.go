@@ -61,8 +61,8 @@ metadata:
 	}
 }
 
-func TestGenerateRandomString(t *testing.T) {
-	got, err := generateRandomString(10)
+func TestGenerateEncodedRandomPassword(t *testing.T) {
+	got, err := generateEncodedRandomPassword(12)
 	if err != nil {
 		t.Error(err)
 	}
@@ -73,12 +73,12 @@ func TestGenerateRandomString(t *testing.T) {
 }
 
 func TestGenerateRandomBytes(t *testing.T) {
-	got1, err := generateRandomBytes(10)
+	got1, err := generateRandomBytes(12)
 	if err != nil {
 		t.Error(err)
 	}
 
-	got2, err := generateRandomBytes(10)
+	got2, err := generateRandomBytes(12)
 	if err != nil {
 		t.Error(err)
 	}
