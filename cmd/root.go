@@ -177,5 +177,9 @@ func generateRandomBytes(n int) ([]byte, error) {
 // case the caller should not continue.
 func generateEncodedRandomPassword(s int) (string, error) {
 	b, err := generateRandomBytes(s)
-	return base64.StdEncoding.EncodeToString(b), err
+	if err != nil {
+		return "", err
+	}
+	pw := base64.StdEncoding.EncodeToString(b)
+	return base64.StdEncoding.EncodeToString([]byte(pw)), nil
 }
