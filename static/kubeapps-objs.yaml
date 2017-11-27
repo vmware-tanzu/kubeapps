@@ -184,6 +184,7 @@ spec:
   selector:
     matchLabels:
       name: default-http-backend
+      created-by: kubeapps
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -194,6 +195,7 @@ spec:
       annotations: {}
       labels:
         name: default-http-backend
+        created-by: kubeapps
     spec:
       containers:
       - args: []
@@ -260,6 +262,7 @@ spec:
   selector:
     matchLabels:
       name: nginx-ingress-controller
+      created-by: kubeapps
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -273,6 +276,7 @@ spec:
         prometheus.io/scrape: "true"
       labels:
         name: nginx-ingress-controller
+        created-by: kubeapps
     spec:
       containers:
       - args:
@@ -404,6 +408,7 @@ spec:
     matchLabels:
       app: kubeapps-dashboard
       name: kubeapps-dashboard-api
+      created-by: kubeapps
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -415,6 +420,7 @@ spec:
       labels:
         app: kubeapps-dashboard
         name: kubeapps-dashboard-api
+        created-by: kubeapps
     spec:
       containers:
       - args: []
@@ -520,6 +526,7 @@ spec:
     matchLabels:
       app: kubeapps-dashboard
       name: kubeapps-dashboard-ui
+      created-by: kubeapps
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -531,6 +538,7 @@ spec:
       labels:
         app: kubeapps-dashboard
         name: kubeapps-dashboard-ui
+        created-by: kubeapps
     spec:
       containers:
       - args: []
@@ -685,10 +693,12 @@ spec:
   selector:
     matchLabels:
       kubeless: controller
+      created-by: kubeapps
   template:
     metadata:
       labels:
         kubeless: controller
+        created-by: kubeapps
     spec:
       containers:
       - image: bitnami/kubeless-controller:v0.2.4
@@ -895,6 +905,7 @@ spec:
   selector:
     matchLabels:
       name: kubeless-ui
+      created-by: kubeapps
   strategy:
     rollingUpdate:
       maxSurge: 25%
@@ -905,6 +916,7 @@ spec:
       annotations: {}
       labels:
         name: kubeless-ui
+        created-by: kubeapps
     spec:
       containers:
       - args: []
@@ -1017,6 +1029,7 @@ spec:
     matchLabels:
       app: mongodb
       name: mongodb
+      created-by: kubeapps
   strategy:
     rollingUpdate:
       maxSurge: 0
@@ -1028,6 +1041,7 @@ spec:
       labels:
         app: mongodb
         name: mongodb
+        created-by: kubeapps
     spec:
       containers:
       - args: []
@@ -1139,11 +1153,13 @@ metadata:
   namespace: kube-system
   labels:
     created-by: kubeapps
+    name: sealed-secrets-controller
 spec:
   template:
     metadata:
       labels:
         name: sealed-secrets-controller
+        created-by: kubeapps
     spec:
       containers:
       - command:
@@ -1296,6 +1312,7 @@ spec:
       labels:
         app: helm
         name: tiller
+        created-by: kubeapps
     spec:
       containers:
       - env:
