@@ -167,16 +167,21 @@ func isGKE(disco discovery.DiscoveryInterface) (bool, error) {
 func printOutput(c *kubernetes.Clientset) error {
 	fmt.Printf("\nKubeapps has been deployed successfully. \n" +
 		"It may takes few minutes for all components to be ready. \n\n")
+	nss := []string{KubeappsNS, KubelessNS, SystemNS}
+	err := printSvc(c, nss)
+	if err != nil {
+		return err
+	}
+	err = printDeployment(c, nss)
+	if err != nil {
+		return err
+	}
+	err = printStS(c, nss)
+	if err != nil {
+		return err
+	}
 
-	err := printSvc(c)
-	if err != nil {
-		return err
-	}
-	err = printDeployment(c)
-	if err != nil {
-		return err
-	}
-	err = printStS(c)
+	err = printPod(c, nss)
 	if err != nil {
 		return err
 	}
@@ -186,13 +191,35 @@ func printOutput(c *kubernetes.Clientset) error {
 	return nil
 }
 
-func printStS(c *kubernetes.Clientset) error {
+func printPod(c *kubernetes.Clientset, nss []string) error {
+	table := uitable.New()
+	table.MaxColWidth = 50
+	table.Wrap = true
+	table.AddRow("NAMESPACE", "NAME", "STATUS")
+	pods := []v1.Pod{}
+	for _, ns := range nss {
+		p, err := c.CoreV1().Pods(ns).List(metav1.ListOptions{
+			LabelSelector: "created-by=kubeapps",
+		})
+		if err != nil {
+			return err
+		}
+		pods = append(pods, p.Items...)
+	}
+	for _, p := range pods {
+		table.AddRow(p.Namespace, fmt.Sprintf("pod/%s", p.Name), p.Status.Phase)
+	}
+	fmt.Println(table)
+	fmt.Println()
+	return nil
+}
+
+func printStS(c *kubernetes.Clientset, nss []string) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
 	table.AddRow("NAMESPACE", "NAME", "DESIRED", "CURRENT")
 	sts := []v1beta1.StatefulSet{}
-	nss := []string{KubeappsNS, KubelessNS, SystemNS}
 	for _, ns := range nss {
 		s, err := c.AppsV1beta1().StatefulSets(ns).List(metav1.ListOptions{
 			LabelSelector: "created-by=kubeapps",
@@ -210,13 +237,12 @@ func printStS(c *kubernetes.Clientset) error {
 	return nil
 }
 
-func printDeployment(c *kubernetes.Clientset) error {
+func printDeployment(c *kubernetes.Clientset, nss []string) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
 	table.AddRow("NAMESPACE", "NAME", "DESIRED", "CURRENT", "UP-TO-DATE", "AVAILABLE")
 	deps := []v1beta1.Deployment{}
-	nss := []string{KubeappsNS, KubelessNS, SystemNS}
 	for _, ns := range nss {
 		dep, err := c.AppsV1beta1().Deployments(ns).List(metav1.ListOptions{
 			LabelSelector: "created-by=kubeapps",
@@ -235,13 +261,12 @@ func printDeployment(c *kubernetes.Clientset) error {
 	return nil
 }
 
-func printSvc(c *kubernetes.Clientset) error {
+func printSvc(c *kubernetes.Clientset, nss []string) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
 	table.AddRow("NAMESPACE", "NAME", "CLUSTER-IP", "EXTERNAL-IP", "PORT(S)")
 	svcs := []v1.Service{}
-	nss := []string{KubeappsNS, KubelessNS, SystemNS}
 	for _, ns := range nss {
 		svc, err := c.CoreV1().Services(ns).List(metav1.ListOptions{
 			LabelSelector: "created-by=kubeapps",
