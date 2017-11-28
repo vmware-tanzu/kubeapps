@@ -63,7 +63,7 @@ var downCmd = &cobra.Command{
 			return fmt.Errorf("can't remove kubeapps components: %v", err)
 		}
 
-		fmt.Printf("\nKubeapps has been removed successfully\n\n")
+		fmt.Printf("\nKubeapps has been removed successfully.\n\n")
 		return nil
 	},
 }

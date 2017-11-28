@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -138,7 +139,7 @@ List of components that kubeapps up installs:
 		}
 		clientset, err := kubernetes.NewForConfig(config)
 
-		err = printOutput(clientset)
+		err = printOutput(cmd.OutOrStdout(), clientset)
 		if err != nil {
 			return err
 		}
@@ -164,34 +165,34 @@ func isGKE(disco discovery.DiscoveryInterface) (bool, error) {
 	return false, nil
 }
 
-func printOutput(c *kubernetes.Clientset) error {
+func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 	fmt.Printf("\nKubeapps has been deployed successfully. \n" +
 		"It may takes few minutes for all components to be ready. \n\n")
 	nss := []string{KubeappsNS, KubelessNS, SystemNS}
-	err := printSvc(c, nss)
+	err := printSvc(w, c, nss)
 	if err != nil {
 		return err
 	}
-	err = printDeployment(c, nss)
+	err = printDeployment(w, c, nss)
 	if err != nil {
 		return err
 	}
-	err = printStS(c, nss)
-	if err != nil {
-		return err
-	}
-
-	err = printPod(c, nss)
+	err = printStS(w, c, nss)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Checking `kubectl get all --all-namespaces -l created-by=kubeapps` for details \n\n")
+	err = printPod(w, c, nss)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Checking `kubectl get all --all-namespaces -l created-by=kubeapps` for details. \n\n")
 
 	return nil
 }
 
-func printPod(c *kubernetes.Clientset, nss []string) error {
+func printPod(w io.Writer, c kubernetes.Interface, nss []string) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
@@ -209,12 +210,12 @@ func printPod(c *kubernetes.Clientset, nss []string) error {
 	for _, p := range pods {
 		table.AddRow(p.Namespace, fmt.Sprintf("pod/%s", p.Name), p.Status.Phase)
 	}
-	fmt.Println(table)
-	fmt.Println()
+	fmt.Fprintln(w, table)
+	fmt.Fprintln(w)
 	return nil
 }
 
-func printStS(c *kubernetes.Clientset, nss []string) error {
+func printStS(w io.Writer, c kubernetes.Interface, nss []string) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
@@ -232,12 +233,12 @@ func printStS(c *kubernetes.Clientset, nss []string) error {
 	for _, s := range sts {
 		table.AddRow(s.Namespace, fmt.Sprintf("statefulsets/%s", s.Name), *s.Spec.Replicas, s.Status.Replicas)
 	}
-	fmt.Println(table)
-	fmt.Println()
+	fmt.Fprintln(w, table)
+	fmt.Fprintln(w)
 	return nil
 }
 
-func printDeployment(c *kubernetes.Clientset, nss []string) error {
+func printDeployment(w io.Writer, c kubernetes.Interface, nss []string) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
@@ -256,12 +257,12 @@ func printDeployment(c *kubernetes.Clientset, nss []string) error {
 	for _, d := range deps {
 		table.AddRow(d.Namespace, fmt.Sprintf("deploy/%s", d.Name), *d.Spec.Replicas, d.Status.Replicas, d.Status.UpdatedReplicas, d.Status.AvailableReplicas)
 	}
-	fmt.Println(table)
-	fmt.Println()
+	fmt.Fprintln(w, table)
+	fmt.Fprintln(w)
 	return nil
 }
 
-func printSvc(c *kubernetes.Clientset, nss []string) error {
+func printSvc(w io.Writer, c kubernetes.Interface, nss []string) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
@@ -292,7 +293,7 @@ func printSvc(c *kubernetes.Clientset, nss []string) error {
 		}
 		table.AddRow(s.Namespace, fmt.Sprintf("svc/%s", s.Name), s.Spec.ClusterIP, eIPs, ports)
 	}
-	fmt.Println(table)
-	fmt.Println()
+	fmt.Fprintln(w, table)
+	fmt.Fprintln(w)
 	return nil
 }
