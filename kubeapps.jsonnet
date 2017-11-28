@@ -18,6 +18,22 @@ local tls = false;
   },
   ssecrets: (import "sealed-secrets.jsonnet"),
   nginx: (import "ingress-nginx.jsonnet") {
+    namespace:: $.namespace,
+    controller+: {
+      spec+: {
+        template+: {
+          spec+: {
+            containers_+: {
+              default+: {
+                args_+: {
+                  "ingress-class": "kubeapps-nginx",
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     service+: {
       spec+: {
         local maybe_https = if tls then [
@@ -80,7 +96,7 @@ local tls = false;
     metadata+: {
       annotations+: {
         "ingress.kubernetes.io/rewrite-target": "/",
-        "kubernetes.io/ingress.class": "nginx",
+        "kubernetes.io/ingress.class": "kubeapps-nginx",
         "ingress.kubernetes.io/ssl-redirect": std.toString(tls),
       },
     },
