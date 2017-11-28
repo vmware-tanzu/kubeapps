@@ -148,7 +148,7 @@ List of components that kubeapps up installs:
 				}
 				pw[p] = s
 			}
-			secret := buildMongoDBSecret(pw, MongoDB_Secret, Kubeapps_NS)
+			secret := buildSecretObject(pw, MongoDB_Secret, Kubeapps_NS)
 			objs = append(objs, secret)
 		} else if exist {
 			// add prevsecret to the list so it won't be GC-ed
@@ -249,7 +249,7 @@ func mongoSecretExists(c kubecfg.ApplyCmd, name, ns string) (*unstructured.Unstr
 	return prevSec, true, nil
 }
 
-func buildMongoDBSecret(pw map[string]string, name, ns string) *unstructured.Unstructured {
+func buildSecretObject(pw map[string]string, name, ns string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"kind":       "Secret",

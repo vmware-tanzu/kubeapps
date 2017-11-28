@@ -56,7 +56,7 @@ var downCmd = &cobra.Command{
 		}
 
 		//delete mongodb secret
-		err = deleteMongoDBSecret(c, MongoDB_Secret, Kubeapps_NS)
+		err = deleteSecretObject(c, MongoDB_Secret, Kubeapps_NS)
 		if err != nil {
 			return err
 		}
@@ -83,7 +83,7 @@ func init() {
 	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored.")
 }
 
-func deleteMongoDBSecret(c kubecfg.DeleteCmd, name, ns string) error {
+func deleteSecretObject(c kubecfg.DeleteCmd, name, ns string) error {
 	gvk := schema.GroupVersionKind{Version: "v1", Kind: "Secret"}
 	rc, err := clientForGroupVersionKind(c.ClientPool, c.Discovery, gvk, ns)
 	if err != nil {

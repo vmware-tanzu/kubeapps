@@ -169,7 +169,7 @@ func TestPrintOutput(t *testing.T) {
 	}
 }
 
-func TestBuildMongoDBSecret(t *testing.T) {
+func TestBuildSecret(t *testing.T) {
 	pw := map[string]string{
 		"foo": "bar",
 		"bar": "baz",
@@ -177,7 +177,7 @@ func TestBuildMongoDBSecret(t *testing.T) {
 	name := "foo"
 	ns := "my-ns"
 
-	sr := buildMongoDBSecret(pw, name, ns)
+	sr := buildSecretObject(pw, name, ns)
 	if sr.Object["kind"] != "Secret" {
 		t.Errorf("expect kind = secret, got %v", sr.Object["kind"])
 	}
