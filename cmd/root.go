@@ -19,6 +19,7 @@ package cmd
 import (
 	"bufio"
 	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"io"
 	"os"
@@ -37,7 +38,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	// Adding explicitely the GCP auth plugin
-	"encoding/base64"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
