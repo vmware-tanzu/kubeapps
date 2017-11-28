@@ -32,7 +32,7 @@ case "$subcommand" in
         kubectl rollout status -n kubeapps deployment/kubeapps-dashboard-ui
         # FIXME: We don't wait for the API to rollout as it times out
         # kubectl rollout status -n kubeapps deployment/kubeapps-dashboard-api
-        kubectl rollout status -n kube-system deployment/nginx-ingress-controller
+        kubectl rollout status -n kubeapps deployment/nginx-ingress-controller
         ;;
     down)
         # This assumes kubeapps.jsonnet is in sync with what's
@@ -46,9 +46,9 @@ case "$subcommand" in
         exec kubecfg show kubeapps.jsonnet "$@"
         ;;
     dashboard)
-        podname=$(kubectl get pods --namespace kube-system -l name=nginx-ingress-controller -o jsonpath="{.items[0].metadata.name}")
+        podname=$(kubectl get pods --namespace kubeapps -l name=nginx-ingress-controller -o jsonpath="{.items[0].metadata.name}")
         echo "Visit http://localhost:8002 in your browser"
-        exec kubectl port-forward --namespace kube-system "$podname" 8002:80
+        exec kubectl port-forward --namespace kubeapps "$podname" 8002:80
         ;;
     *)
         echo "Unknown subcommand: $subcommand" >&2
