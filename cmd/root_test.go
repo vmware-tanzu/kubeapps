@@ -17,6 +17,8 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
+	"encoding/base64"
 	"testing"
 )
 
@@ -56,5 +58,32 @@ metadata:
 	_, err := parseObjects(m2)
 	if err == nil {
 		t.Error("Expected parse fail, got success")
+	}
+}
+
+func TestGenerateEncodedRandomPassword(t *testing.T) {
+	got, err := generateEncodedRandomPassword(12)
+	if err != nil {
+		t.Error(err)
+	}
+	_, err = base64.StdEncoding.DecodeString(got)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestGenerateRandomBytes(t *testing.T) {
+	got1, err := generateRandomBytes(12)
+	if err != nil {
+		t.Error(err)
+	}
+
+	got2, err := generateRandomBytes(12)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if bytes.Equal(got1, got2) {
+		t.Errorf("expect get two different byte slices, got the same")
 	}
 }

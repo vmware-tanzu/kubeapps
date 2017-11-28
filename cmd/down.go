@@ -18,9 +18,13 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/ksonnet/kubecfg/utils"
 	"github.com/spf13/cobra"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var downCmd = &cobra.Command{
@@ -51,6 +55,12 @@ var downCmd = &cobra.Command{
 			return fmt.Errorf("kubernetes with RBAC enabled (v1.7+) is required to run Kubeapps")
 		}
 
+		//delete mongodb secret
+		err = deleteSecretObject(c, MongoDB_Secret, Kubeapps_NS)
+		if err != nil {
+			return err
+		}
+
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
 		if err != nil {
 			return fmt.Errorf("can't read kubeapps manifest: %v", err)
@@ -71,4 +81,17 @@ var downCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(downCmd)
 	downCmd.Flags().Int64("grace-period", -1, "Number of seconds given to resources to terminate gracefully. A negative value is ignored.")
+}
+
+func deleteSecretObject(c kubecfg.DeleteCmd, name, ns string) error {
+	gvk := schema.GroupVersionKind{Version: "v1", Kind: "Secret"}
+	rc, err := clientForGroupVersionKind(c.ClientPool, c.Discovery, gvk, ns)
+	if err != nil {
+		return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
+	}
+	err = rc.Delete(name, &metav1.DeleteOptions{})
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return fmt.Errorf("can't delete secret object %s due to: %v", name, err)
+	}
+	return nil
 }

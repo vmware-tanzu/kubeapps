@@ -1393,14 +1393,3 @@ spec:
           servicePort: 3000
         path: /kubeless
   tls: []
----
-apiVersion: v1
-data:
-  mongodb-password: MjNneWZ3ZWZoZzkyOA==
-  mongodb-root-password: MjNneWZ3ZWZoZzkyOA==
-kind: Secret
-metadata:
-  annotations: {}
-  name: mongodb
-  namespace: kubeapps
-type: Opaque
