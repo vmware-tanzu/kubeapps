@@ -18,7 +18,6 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/ksonnet/kubecfg/utils"
 	"github.com/spf13/cobra"
@@ -61,10 +60,10 @@ var downCmd = &cobra.Command{
 			return fmt.Errorf("can't parse kubeapps manifest: %v", err)
 		}
 		if err = c.Run(objs); err != nil {
-			return fmt.Errorf("can't uninstall kubeapps components: %v", err)
+			return fmt.Errorf("can't remove kubeapps components: %v", err)
 		}
 
-		fmt.Println("successfully uninstalled kubeapps")
+		fmt.Printf("\nKubeapps has been removed successfully.\n\n")
 		return nil
 	},
 }

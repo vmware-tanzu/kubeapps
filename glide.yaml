@@ -25,3 +25,4 @@ import:
   subpackages:
   - unix
 - package: github.com/go-ini/ini
+- package: github.com/gosuri/uitable

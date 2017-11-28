@@ -100,12 +100,12 @@ var versions = map[string]versionData{
 			"io.k8s.kubernetes.pkg.apis.authentication.v1.TokenReview": []CustomConstructorSpec{
 				newConstructor(
 					"new",
-					newParamNestedRef("token", "mixin.spec.token")),
+					newParamNestedRef("token", "mixin.spec.withToken")),
 			},
 			"io.k8s.kubernetes.pkg.apis.authentication.v1beta1.TokenReview": []CustomConstructorSpec{
 				newConstructor(
 					"new",
-					newParamNestedRef("token", "mixin.spec.token")),
+					newParamNestedRef("token", "mixin.spec.withToken")),
 			},
 
 			//
@@ -136,7 +136,7 @@ var versions = map[string]versionData{
 			"io.k8s.kubernetes.pkg.api.v1.ConfigMap": []CustomConstructorSpec{
 				newConstructor(
 					"new",
-					newParamNestedRef("name", "mixin.metadata.name"),
+					newParamNestedRef("name", "mixin.metadata.withName"),
 					newParam("data")),
 			},
 			"io.k8s.kubernetes.pkg.api.v1.ConfigMapList": objectList,
@@ -168,7 +168,7 @@ var versions = map[string]versionData{
 			"io.k8s.kubernetes.pkg.api.v1.Namespace": []CustomConstructorSpec{
 				newConstructor(
 					"new",
-					newParamNestedRef("name", "mixin.metadata.name")),
+					newParamNestedRef("name", "mixin.metadata.withName")),
 			},
 			"io.k8s.kubernetes.pkg.api.v1.NamespaceList":             objectList,
 			"io.k8s.kubernetes.pkg.api.v1.NodeList":                  objectList,
@@ -181,12 +181,12 @@ var versions = map[string]versionData{
 			"io.k8s.kubernetes.pkg.api.v1.Secret": []CustomConstructorSpec{
 				newConstructor(
 					"new",
-					newParamNestedRef("name", "mixin.metadata.name"),
+					newParamNestedRef("name", "mixin.metadata.withName"),
 					newParam("data"),
 					newParamWithDefault("type", "\"Opaque\"")),
 				newConstructor(
 					"fromString",
-					newParamNestedRef("name", "mixin.metadata.name"),
+					newParamNestedRef("name", "mixin.metadata.withName"),
 					newParam("stringData"),
 					newParamWithDefault("type", "\"Opaque\"")),
 			},
@@ -201,7 +201,7 @@ var versions = map[string]versionData{
 			"io.k8s.kubernetes.pkg.api.v1.ServiceAccount": []CustomConstructorSpec{
 				newConstructor(
 					"new",
-					newParamNestedRef("name", "mixin.metadata.name")),
+					newParamNestedRef("name", "mixin.metadata.withName")),
 			},
 			"io.k8s.kubernetes.pkg.api.v1.ServiceAccountList": objectList,
 			"io.k8s.kubernetes.pkg.api.v1.ServiceList":        objectList,
@@ -230,7 +230,7 @@ var versions = map[string]versionData{
 				newConstructor(
 					"fromSecret",
 					newParam("name"),
-					newParamNestedRef("secretName", "mixin.secret.secretName")),
+					newParamNestedRef("secretName", "mixin.secret.withSecretName")),
 			},
 			"io.k8s.kubernetes.pkg.api.v1.VolumeMount": []CustomConstructorSpec{
 				newConstructor("new", newParam("name"), newParam("mountPath"), newParamWithDefault("readOnly", "false")),
@@ -442,12 +442,12 @@ var objectList = []CustomConstructorSpec{
 var v1beta1Deployment = []CustomConstructorSpec{
 	newConstructor(
 		"new",
-		newParamNestedRef("name", "mixin.metadata.name"),
-		newParamNestedRef("replicas", "mixin.spec.replicas"),
-		newParamNestedRef("containers", "mixin.spec.template.spec.containers"),
+		newParamNestedRef("name", "mixin.metadata.withName"),
+		newParamNestedRef("replicas", "mixin.spec.withReplicas"),
+		newParamNestedRef("containers", "mixin.spec.template.spec.withContainers"),
 		newParamNestedRefDefault(
 			"podLabels",
-			"mixin.spec.template.metadata.labels",
+			"mixin.spec.template.metadata.withLabels",
 			"{app: name}")),
 }
 var v1beta1DeploymentRollback = []CustomConstructorSpec{
@@ -458,17 +458,17 @@ var v1beta1DeploymentRollback = []CustomConstructorSpec{
 var v1beta1Scale = []CustomConstructorSpec{
 	newConstructor(
 		"new",
-		newParamNestedRef("replicas", "mixin.spec.replicas")),
+		newParamNestedRef("replicas", "mixin.spec.withReplicas")),
 }
 var v1beta1StatefulSet = []CustomConstructorSpec{
 	newConstructor(
 		"new",
-		newParamNestedRef("name", "mixin.metadata.name"),
-		newParamNestedRef("replicas", "mixin.spec.replicas"),
-		newParamNestedRef("containers", "mixin.spec.template.spec.containers"),
-		newParamNestedRef("volumeClaims", "mixin.spec.volumeClaimTemplates"),
+		newParamNestedRef("name", "mixin.metadata.withName"),
+		newParamNestedRef("replicas", "mixin.spec.withReplicas"),
+		newParamNestedRef("containers", "mixin.spec.template.spec.withContainers"),
+		newParamNestedRef("volumeClaims", "mixin.spec.withVolumeClaimTemplates"),
 		newParamNestedRefDefault(
 			"podLabels",
-			"mixin.spec.template.metadata.labels",
+			"mixin.spec.template.metadata.withLabels",
 			"{app: name}")),
 }
