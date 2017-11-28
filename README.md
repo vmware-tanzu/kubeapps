@@ -5,58 +5,104 @@
 <img src="./img/logo.png" width="100">
 
 Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-charge your Kubernetes cluster with:
- * Your own applications [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
- * [Kubeless](http://kubeless.io/) - a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
- * [SealedSecrets](https://github.com/bitnami/sealed-secrets) - Encrypt your Secret into a SealedSecret, which is safe to store - even to a public repository. 
+ * Your own application [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
+ * [Kubeless](http://kubeless.io/), a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
+ * [SealedSecrets](https://github.com/bitnami/sealed-secrets), a way to encrypt a Secret into a SealedSecret, which is safe to store...even for a public repository. 
 
 These tools are easily deployed into your cluster with just one command: ```kubeapps up``` 
 
 ----
 
-## Getting started
+## Quickstart
 
-To get started, read our [Getting Started guide](docs/getting-started.md).
+Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for both Linux and Darwin, and Kubeapps has been tested with both `minikube` and Google Kubernetes Engine (GKE).
 
-You can also browse the [full documentation](docs/).
+The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). For example, to install the latest binary on Linux, use these commands:
+
+minikube start
+sudo curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep linux | grep browser_download_url | cut -d '"' -f 4 | wget -i -
+sudo mv kubeapps-linux-amd64 /usr/local/bin/kubeapps
+chmod +x /usr/local/bin/kubeapps
+kubeapps up
+kubeapps dashboard
+
+These commands will install Kubeapps for your cluster and launch a browser with the Kubeapps dashboard.
+
+[image]
+
+You can use the Kubeapps Dashboard to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions. Learn more about [using the Kubeapps Dashboard].
+
+For a more detailed introduction to Kubeapps, read our [introductory walkthrough](docs/getting-started.md). You can also read [more detailed installation instructions] or [learn how to build Kubeapps from source].
 
 ----
-## Build the Kubeapps installer from source
 
-The Kubeapps Installer is a CLI tool written in Go that will deploy all the Kubeapps components into your cluster.
-You can build the latest Kubeapps Installer from source. 
+## Installation
 
-### Installing Go
-- Visit https://golang.org/dl/
-- Download the most recent Go version (here we used 1.9) and unpack the file
-- Check the installation process on https://golang.org/doc/install
-- Set the Go environment variables
+Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster.
+
+Kubeapps has been tested with both `minikube` and Google Kubernetes Engine (GKE). 
+
+> On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
+
+### Install pre-built binary
+
+* Download a binary version of the latest Kubeapps Installer for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently, the Kubeapps Installer is distributed in binary form for two platforms: Linux amd64 and OS X amd64.
+* Make the binary executable.
+
+For example, to install 0.0.2 release on Linux, use this command:
 
 ```
-export GOROOT=/GoDir/go
-export GOPATH=/GoDir/go
+sudo curl -L https://github.com/kubeapps/installer/releases/download/v0.0.2/kubeapps-linux-amd64 -o /usr/local/bin/kubeapps && sudo chmod +x /usr/local/bin/kubeapps
+```
+
+### Build binary from source
+
+The Kubeapps Installer is a CLI tool written in Go that will deploy the Kubeapps components into your cluster.
+You can build the latest Kubeapps Installer from source by following the steps below: 
+
+* Visit [the Go website](https://golang.org), download the most recent [binary distribution of Go](https://golang.org/dl/) and install it following the [official instructions](https://golang.org/doc/install). 
+
+  The remainder of this section assumes that Go is installed in `/usr/local/go`. Update the paths in subsequent commands if you used a different location.
+
+* Set the Go environment variables:
+
+```
+export GOROOT=/usr/local/go
+export GOPATH=/usr/local/go
 export PATH=$GOPATH/bin:$PATH
 ```
 
-### Create a working directory for the project
+* Create a working directory for the project:
 
 ```
 working_dir=$GOPATH/src/github.com/kubeapps/
 mkdir -p $working_dir
 ```
 
-### Clone kubeapps/kubeapps repository
+* Clone the Kubeapps source repository:
 
 ```
 cd $working_dir
 git clone https://github.com/kubeapps/kubeapps
 ```
 
-### Building local binary
+* Build the Kubeapps binary and move it to a location in your path:
 
 ```
 cd kubeapps
 make binary
+cp kubeapps /usr/local
 ```
+
+----
+
+## Basic Usage
+
+[todo]
+
+For a more detailed introduction to Kubeapps, read our [introductory walkthrough](docs/getting-started.md). You can also browse the [full documentation](docs/).
+
+----
 
 ## Testing Kubeapps Installer with minikube
 
