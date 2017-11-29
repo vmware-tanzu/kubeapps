@@ -16,12 +16,8 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/spf13/cobra"
 
-	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 )
 
@@ -31,19 +27,13 @@ const (
 
 func init() {
 	RootCmd.AddCommand(showCmd)
-	addEnvCmdFlags(showCmd)
-	bindJsonnetFlags(showCmd)
 	showCmd.PersistentFlags().StringP(flagFormat, "o", "yaml", "Output format.  Supported values are: json, yaml")
 }
 
 var showCmd = &cobra.Command{
-	Use:   "show [<env>|-f <file-or-dir>]",
+	Use:   "show",
 	Short: "Show expanded resource definitions",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(args) > 1 {
-			return fmt.Errorf("'show' takes at most a single argument, that is the name of the environment")
-		}
-
 		flags := cmd.Flags()
 		var err error
 
@@ -54,18 +44,7 @@ var showCmd = &cobra.Command{
 			return err
 		}
 
-		cwd, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-		wd := metadata.AbsPath(cwd)
-
-		envSpec, err := parseEnvCmd(cmd, args)
-		if err != nil {
-			return err
-		}
-
-		objs, err := expandEnvCmdObjs(cmd, envSpec, wd)
+		objs, err := readObjs(cmd, args)
 		if err != nil {
 			return err
 		}

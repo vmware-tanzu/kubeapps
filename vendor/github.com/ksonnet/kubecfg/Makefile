@@ -22,11 +22,9 @@ GOFMT = gofmt
 # GINKGO = "go test" also works if you want to avoid ginkgo tool
 GINKGO = ginkgo
 
-KCFG_TEST_FILE = lib/kubecfg_test.jsonnet
-GUESTBOOK_FILE = examples/guestbook.jsonnet
-JSONNET_FILES = $(KCFG_TEST_FILE) $(GUESTBOOK_FILE)
+JSONNET_FILES = lib/kubecfg_test.jsonnet examples/guestbook.jsonnet
 # TODO: Simplify this once ./... ignores ./vendor
-GO_PACKAGES = ./cmd/... ./utils/... ./pkg/... ./metadata/... ./prototype/...
+GO_PACKAGES = ./cmd/... ./utils/... ./pkg/...
 
 # Default cluster from this config is used for integration tests
 KUBECONFIG = $(HOME)/.kube/config
@@ -43,7 +41,7 @@ gotest:
 
 jsonnettest: kubecfg $(JSONNET_FILES)
 #	TODO: use `kubecfg check` once implemented
-	./kubecfg -J lib show -f $(KCFG_TEST_FILE) -f $(GUESTBOOK_FILE) >/dev/null
+	./kubecfg -J lib show $(JSONNET_FILES) >/dev/null
 
 integrationtest: kubecfg
 	$(GINKGO) -tags 'integration' integration -- -kubeconfig $(KUBECONFIG) -kubecfg-bin $(abspath $<)

@@ -23,7 +23,7 @@
 // Expects to be run with ../lib in the jsonnet search path:
 // ```
 // export KUBECFG_JPATH=$PWD/../lib
-// kubecfg apply guestbook.jsonnet
+// kubecfg update guestbook.jsonnet
 // # poke at $(minikube service --url frontend), etc
 // kubecfg delete guestbook.jsonnet
 // ```

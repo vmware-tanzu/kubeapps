@@ -43,21 +43,21 @@ avoid an immediate `Killed: 9`.
 % export KUBECFG_JPATH=/path/to/kubecfg/lib
 
 # Show generated YAML
-% kubecfg show -o yaml -f examples/guestbook.jsonnet
+% kubecfg show -o yaml examples/guestbook.jsonnet
 
 # Create resources
-% kubecfg apply -f examples/guestbook.jsonnet
+% kubecfg update examples/guestbook.jsonnet
 
 # Modify configuration (downgrade gb-frontend image)
 % sed -i.bak '\,gcr.io/google-samples/gb-frontend,s/:v4/:v3/' examples/guestbook.jsonnet
 # See differences vs server
-% kubecfg diff -f examples/guestbook.jsonnet
+% kubecfg diff examples/guestbook.jsonnet
 
 # Update to new config
-% kubecfg apply -f examples/guestbook.jsonnet
+% kubecfg update examples/guestbook.jsonnet
 
 # Clean up after demo
-% kubecfg delete -f examples/guestbook.jsonnet
+% kubecfg delete examples/guestbook.jsonnet
 ```
 
 ## Features
