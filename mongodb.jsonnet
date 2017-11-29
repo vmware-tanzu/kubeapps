@@ -8,7 +8,6 @@ local labels = {app: "mongodb"};
   secret:: kube.Secret("mongodb") + $.namespace {
     metadata+: {labels+: labels},
     data_+: {
-      "mongodb-password": error "Value provided elsewhere",
       "mongodb-root-password": error "Value provided elsewhere",
     },
   },
@@ -32,9 +31,6 @@ local labels = {app: "mongodb"};
               image: "bitnami/mongodb:3.4.9-r1",
               env_+: {
                 MONGODB_ROOT_PASSWORD: kube.SecretKeyRef($.secret, "mongodb-root-password"),
-                MONGODB_PASSWORD: kube.SecretKeyRef($.secret, "mongodb-password"),
-                MONGODB_USERNAME: "",
-                MONGODB_DATABASE: "",
               },
               ports_+: {
                 mongodb: {containerPort: 27017},

@@ -49,7 +49,8 @@ local tls = false;
 
   dashboard: (import "kubeapps-dashboard.jsonnet") + {
     namespace:: $.namespace,
-    mongodb:: $.mongodb.svc,
+    mongodb_svc:: $.mongodb.svc,
+    mongodb_secret:: $.mongodb.secret,
     ingress:: null,
     values+: {
       api+: {

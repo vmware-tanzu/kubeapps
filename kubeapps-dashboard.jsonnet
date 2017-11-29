@@ -57,11 +57,12 @@ local serviceDeployFromValues(parentName, componentName, values) = {
 
 {
   namespace:: {metadata+: {namespace: "kubeapps"}},
-  mongodb:: error "a mongodb service is required",
+  mongodb_svc:: error "a mongodb service is required",
+  mongodb_secret:: error "a mongodb secret is required",
   values:: valuesDefault,
 
   local name = labels.app,
-  local mongoDbHost = "%s.%s" % [$.mongodb.metadata.name, $.mongodb.metadata.namespace],
+  local mongoDbHost = "%s.%s" % [$.mongodb_svc.metadata.name, $.mongodb_svc.metadata.namespace],
 
   ingress: kube.Ingress(name) + $.namespace {
     metadata+: {
@@ -100,7 +101,6 @@ local serviceDeployFromValues(parentName, componentName, values) = {
       data: {
         monocular_yaml:: $.values.api.config {
           mongodb: {
-            host: "%s:%d" % [mongoDbHost, $.mongodb.spec.ports[0].port],
             database: "monocular",
           },
           tillerHost: "localhost:44134",
@@ -118,8 +118,13 @@ local serviceDeployFromValues(parentName, componentName, values) = {
             serviceAccountName: $.tillerServiceAccount.metadata.name,
             containers_+: {
               default+: {
+                command: ["monocular"],
+                args_: {
+                  "mongo-url": "root:$(MONGODB_ROOT_PASSWORD)@%s" % [mongoDbHost],
+                },
                 env_+: {
                   MONOCULAR_HOME: "/monocular",
+                  MONGODB_ROOT_PASSWORD: kube.SecretKeyRef($.mongodb_secret, "mongodb-root-password"),
                 },
                 livenessProbe: {
                   httpGet: {

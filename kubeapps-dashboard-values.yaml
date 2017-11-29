@@ -7,7 +7,7 @@ api:
   replicaCount: 1
   image:
     repository: bitnami/monocular-api
-    tag: v0.5.4
+    tag: v0.6.1
     pullPolicy: IfNotPresent
   auth:
     signingKey: secret
