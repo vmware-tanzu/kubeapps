@@ -1,6 +1,6 @@
 # Installation
 
-Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster.
+Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster.
 
 Kubeapps has been tested with both `minikube` and Google Kubernetes Engine (GKE).
 
@@ -71,6 +71,12 @@ Use the Kubeapps Installer to deploy Kubeapps and launch a browser with the Kube
 ```
 kubeapps up
 kubeapps dashboard
+```
+
+To remove Kubeapps, use this command:
+
+```
+kubeapps down
 ```
 
 # Useful Resources

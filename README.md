@@ -13,7 +13,9 @@ Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [`kubectl`](
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
-The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). For example, to install the latest binary on Linux, use these commands:
+The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). 
+
+On Linux:
 
 ```
 minikube start
@@ -24,13 +26,30 @@ kubeapps up
 kubeapps dashboard
 ```
 
-These commands will install Kubeapps for your cluster and launch a browser with the Kubeapps dashboard.
+On OS X:
 
-[image]
+```
+minikube start
+sudo curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep darwin | grep browser_download_url | cut -d '"' -f 4 | wget -i -
+sudo mv kubeapps-darwin-amd64 /usr/local/bin/kubeapps
+chmod +x /usr/local/bin/kubeapps
+kubeapps up
+kubeapps dashboard
+```
+
+These commands will deploy Kubeapps in your cluster and launch a browser with the Kubeapps dashboard.
+
+![Dashboard main page](img/dashboard-home.png)
+
+To remove Kubeapps form your cluster, simply run:
+
+```
+kubeapps down
+```
 
 ## Next Steps
 
-Use the Kubeapps Dashboard to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions. Learn more about [using the Kubeapps Dashboard](docs/dashboard.md).
+[Use the Kubeapps Dashboard](docs/dashboard.md) to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions, or [look under the hood to see what's included in Kubeapps](docs/components.md).
 
 In case of difficulties installing Kubeapps, find [more detailed installation instructions](docs/install.md) or [learn how to build Kubeapps from source](docs/install.md).
 
