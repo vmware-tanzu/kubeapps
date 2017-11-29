@@ -422,7 +422,7 @@ func printSvc(w io.Writer, c kubernetes.Interface, nss []string) error {
 	return nil
 }
 
-func allReady(c *kubernetes.Clientset, nss []string) (bool, error) {
+func allReady(c kubernetes.Interface, nss []string) (bool, error) {
 	for _, ns := range nss {
 		pods, err := c.CoreV1().Pods(ns).List(metav1.ListOptions{
 			LabelSelector: "created-by=kubeapps",
@@ -431,7 +431,7 @@ func allReady(c *kubernetes.Clientset, nss []string) (bool, error) {
 			return false, err
 		}
 		for _, p := range pods.Items {
-			if string(p.Status.Phase) != "Running" {
+			if p.Status.Phase != v1.PodRunning {
 				return false, nil
 			}
 		}

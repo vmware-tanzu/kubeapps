@@ -195,7 +195,6 @@ func TestBuildSecret(t *testing.T) {
 		t.Errorf("wrong data")
 	}
 }
-
 func TestDump(t *testing.T) {
 	objs := []*unstructured.Unstructured{}
 	obj := &unstructured.Unstructured{
@@ -218,5 +217,45 @@ func TestDump(t *testing.T) {
 	if !strings.Contains(output, "foo") || !strings.Contains(output, "baz") {
 		t.Errorf("manifest output didn't mention both keys")
 	}
+}
 
+func TestAllReady(t *testing.T) {
+	po1 := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "foo",
+			Namespace: "myns",
+			Labels: map[string]string{
+				"created-by": "kubeapps",
+			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodRunning,
+		},
+	}
+	po2 := &v1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "bar",
+			Namespace: "myns",
+			Labels: map[string]string{
+				"created-by": "kubeapps",
+			},
+		},
+		Status: v1.PodStatus{
+			Phase: v1.PodPending,
+		},
+	}
+	client := fake.NewSimpleClientset(po1, po2)
+	if ok, err := allReady(client, []string{"myns"}); err != nil {
+		t.Error(err)
+	} else if ok {
+		t.Errorf("pod bar is not ready yet")
+	}
+
+	po2.Status.Phase = v1.PodRunning
+	client = fake.NewSimpleClientset(po1, po2)
+	if ok, err := allReady(client, []string{"myns"}); err != nil {
+		t.Error(err)
+	} else if !ok {
+		t.Errorf("expected all pods are ready, got not ready")
+	}
 }
