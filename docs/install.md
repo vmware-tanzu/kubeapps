@@ -81,6 +81,6 @@ kubeapps down
 
 # Useful Resources
 
-* [Walkthrough for new users](get-started.md)
+* [Walkthrough for new users](getting-started.md)
 * [Kubeapps Dashboard documentation](dashboard.md)
 * [Kubeapps components](components.md)
