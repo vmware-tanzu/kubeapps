@@ -57,7 +57,7 @@ For a more detailed and step-by-step introduction to Kubeapps, read our [introdu
 
 ## Useful Resources
 
-* [Walkthrough for new users](docs/get-started.md)
+* [Walkthrough for first-time users](docs/get-started.md)
 * [Detailed installation instructions](docs/install.md)
 * [Kubeapps Dashboard documentation](docs/dashboard.md)
 * [Kubeapps components](docs/components.md)
