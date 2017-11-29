@@ -34,7 +34,7 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
   ![Namespace selection](../img/mariadb-namespace.png)
 
-* Click the "Deploy" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
+* Click the "Deploy" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
 
   ![MariaDB deployment](../img/mariadb-deployment.png)
 
