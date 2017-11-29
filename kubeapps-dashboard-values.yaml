@@ -4,7 +4,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 api:
-  replicaCount: 2
+  replicaCount: 1
   image:
     repository: bitnami/monocular-api
     tag: v0.5.2
@@ -54,7 +54,7 @@ api:
     # Cache refresh interval in sec.
     cacheRefreshInterval: 3600
 ui:
-  replicaCount: 2
+  replicaCount: 1
   image:
     repository: kubeapps/dashboard
     # FIXME: point to a real tag
