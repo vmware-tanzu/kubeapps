@@ -79,6 +79,6 @@ To obtain the WordPress username and password, refer to the "Notes" section of t
 
 Learn more about Kubeapps with the links below:
 
-* [Detailed installation instructions](docs/install.md)
-* [Kubeapps Dashboard documentation](docs/dashboard.md)
-* [Kubeapps components](docs/components.md)
+* [Detailed installation instructions](install.md)
+* [Kubeapps Dashboard documentation](dashboard.md)
+* [Kubeapps components](components.md)
