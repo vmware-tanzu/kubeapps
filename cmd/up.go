@@ -19,32 +19,30 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 
 	"github.com/gosuri/uitable"
-	"github.com/ksonnet/kubecfg/metadata"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/ksonnet/kubecfg/utils"
 	"github.com/kubeapps/kubeapps/pkg/gke"
 	"github.com/spf13/cobra"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 const (
-	GcTag      = "bitnami/kubeapps"
-	KubeappsNS = "kubeapps"
-	KubelessNS = "kubeless"
-	SystemNS   = "kube-system"
-	Kubeapps_NS = "kubeapps"
+	GcTag          = "bitnami/kubeapps"
+	KubeappsNS     = "kubeapps"
+	KubelessNS     = "kubeless"
+	SystemNS       = "kube-system"
+	Kubeapps_NS    = "kubeapps"
 	MongoDB_Secret = "mongodb"
 )
 
@@ -60,7 +58,7 @@ List of components that kubeapps up installs:
 - Helm/Tiller (https://github.com/kubernetes/helm)
 - Kubeapps Dashboard (https://github.com/kubeapps/dashboard)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c := kubecfg.ApplyCmd{
+		c := kubecfg.UpdateCmd{
 			DefaultNamespace: "default",
 		}
 		var err error
@@ -86,12 +84,6 @@ List of components that kubeapps up installs:
 		if version.Major <= 1 && version.Minor < 7 {
 			return fmt.Errorf("kubernetes with RBAC enabled (v1.7+) is required to run Kubeapps")
 		}
-
-		cwd, err := os.Getwd()
-		if err != nil {
-			return fmt.Errorf("can't get current directory: %v", err)
-		}
-		wd := metadata.AbsPath(cwd)
 
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
 		if err != nil {
@@ -126,7 +118,7 @@ List of components that kubeapps up installs:
 			// this clusterrolebinding will be created before others for granting the proper permission.
 			// when the installation finishes, it will be gc'd immediately.
 			c.SkipGc = true
-			err = c.Run(crb, wd)
+			err = c.Run(crb)
 			if err != nil {
 				return fmt.Errorf("can't assign cluster-admin permission to the current user: %v", err)
 			}
@@ -155,7 +147,7 @@ List of components that kubeapps up installs:
 			objs = append(objs, prevsecret)
 		}
 
-		err = c.Run(objs, wd)
+		err = c.Run(objs)
 		if err != nil {
 			return fmt.Errorf("can't install kubeapps components: %v", err)
 		}
@@ -218,14 +210,14 @@ func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 	return nil
 }
 
-func mongoSecretExists(c kubecfg.ApplyCmd, name, ns string) (*unstructured.Unstructured, bool, error) {
+func mongoSecretExists(c kubecfg.UpdateCmd, name, ns string) (*unstructured.Unstructured, bool, error) {
 	gvk := schema.GroupVersionKind{Version: "v1", Kind: "Secret"}
 	rc, err := clientForGroupVersionKind(c.ClientPool, c.Discovery, gvk, ns)
 	if err != nil {
 		return nil, false, err
 	}
 	pwFields := []string{"mongodb-password", "mongodb-root-password"}
-	prevSec, err := rc.Get(name)
+	prevSec, err := rc.Get(name, metav1.GetOptions{})
 
 	if k8sErrors.IsNotFound(err) {
 		return nil, false, nil
