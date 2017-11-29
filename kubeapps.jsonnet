@@ -12,10 +12,6 @@ local tls = false;
   // NB: these are left in their usual namespaces, to avoid forcing
   // non-default command line options onto client tools
   kubeless: (import "kubeless.jsonnet"),
-  tiller: {
-    deployment: (import "tiller-deployment.jsonnet"),
-    service: kubecfg.parseYaml(importstr "tiller-service.yaml"),
-  },
   ssecrets: (import "sealed-secrets.jsonnet"),
   nginx: (import "ingress-nginx.jsonnet") {
     namespace:: $.namespace,
@@ -51,7 +47,7 @@ local tls = false;
     namespace:: $.namespace,
   },
 
-  hub: (import "kubeapps-dashboard.jsonnet") + {
+  dashboard: (import "kubeapps-dashboard.jsonnet") + {
     namespace:: $.namespace,
     mongodb:: $.mongodb.svc,
     ingress:: null,
@@ -104,8 +100,8 @@ local tls = false;
       rules: [{
         http: {
           paths: [
-            {path: "/", backend: $.hub.ui.svc.name_port},
-            {path: "/api/", backend: $.hub.api.svc.name_port},
+            {path: "/", backend: $.dashboard.ui.svc.name_port},
+            {path: "/api/", backend: $.dashboard.api.svc.name_port},
             {path: "/kubeless", backend: $.kubelessui.svc.name_port},
           ],
         },

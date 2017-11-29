@@ -87,6 +87,12 @@ local serviceDeployFromValues(parentName, componentName, values) = {
     },
   },
 
+  tillerServiceAccount: kube.ServiceAccount("tiller") + $.namespace,
+  tillerBinding: kube.ClusterRoleBinding("tiller-cluster-admin") {
+    roleRef_: kube.ClusterRole("cluster-admin"),
+    subjects_: [$.tillerServiceAccount],
+  },
+
   api: serviceDeployFromValues(name, "api", $.values.api) {
     config: HashedConfigMap(name + "-api") + $.namespace {
       metadata+: {labels+: labels},
@@ -97,6 +103,7 @@ local serviceDeployFromValues(parentName, componentName, values) = {
             host: "%s:%d" % [mongoDbHost, $.mongodb.spec.ports[0].port],
             database: "monocular",
           },
+          tillerHost: "localhost:44134",
         },
         "monocular.yaml": kubecfg.manifestJson(self.monocular_yaml),
       },
@@ -108,6 +115,7 @@ local serviceDeployFromValues(parentName, componentName, values) = {
       spec+: {
         template+: {
           spec+: {
+            serviceAccountName: $.tillerServiceAccount.metadata.name,
             containers_+: {
               default+: {
                 env_+: {
@@ -129,6 +137,18 @@ local serviceDeployFromValues(parentName, componentName, values) = {
                   cache: {mountPath: "/monocular"},
                   config: {mountPath: "/monocular/config"},
                 },
+              },
+              local tillerContainer = (import "tiller-deployment.jsonnet").spec.template.spec.containers[0],
+              tiller: tillerContainer {
+                overrideEnvs(overrides):: [
+                  if std.objectHas(overrides, x.name) then { name: x.name, value: overrides[x.name] } else x for x in tillerContainer.env
+                ],
+                env: self.overrideEnvs({
+                  TILLER_NAMESPACE: $.api.deploy.metadata.namespace,
+                }),
+                ports: [],  // Informational only, doesn't actually restrict access to :44134
+                command: ["/tiller"],
+                args+: ["--listen=localhost:44134"],  // remove access to :44134 outside pod
               },
             },
             volumes_+: {

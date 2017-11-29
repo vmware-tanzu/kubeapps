@@ -34,7 +34,7 @@
                                 "value": "0"
                             }
                         ],
-                        "image": "gcr.io/kubernetes-helm/tiller:v2.7.0",
+                        "image": "gcr.io/kubernetes-helm/tiller:v2.7.2",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "httpGet": {
