@@ -131,7 +131,7 @@ List of components that kubeapps up installs:
 		if prevsecret, exist, err := mongoSecretExists(c, MongoDB_Secret, Kubeapps_NS); err != nil {
 			return err
 		} else if !exist {
-			pwFields := []string{"mongodb-password", "mongodb-root-password"}
+			pwFields := []string{"mongodb-root-password"}
 			pw := make(map[string]string)
 			for _, p := range pwFields {
 				s, err := generateEncodedRandomPassword(12)
