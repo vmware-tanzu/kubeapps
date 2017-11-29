@@ -23,6 +23,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"bytes"
 	"github.com/ghodss/yaml"
@@ -171,8 +172,19 @@ List of components that kubeapps up installs:
 			return err
 		}
 		clientset, err := kubernetes.NewForConfig(config)
+		nss := []string{KubeappsNS, KubelessNS, SystemNS}
+		for {
+			if ok, err := allReady(clientset, nss); err != nil {
+				return err
+			} else if ok {
+				break
+			}
+			fmt.Println()
+			fmt.Println("Checking kubeapps readiness...")
+			time.Sleep(5 * time.Second)
+		}
 
-		err = printOutput(cmd.OutOrStdout(), clientset)
+		err = printOutput(cmd.OutOrStdout(), clientset, nss)
 		if err != nil {
 			return err
 		}
@@ -236,10 +248,8 @@ func isGKE(disco discovery.DiscoveryInterface) (bool, error) {
 	return false, nil
 }
 
-func printOutput(w io.Writer, c *kubernetes.Clientset) error {
-	fmt.Printf("\nKubeapps has been deployed successfully. \n" +
-		"It may take a few minutes for all components to be ready. \n\n")
-	nss := []string{KubeappsNS, KubelessNS, SystemNS}
+func printOutput(w io.Writer, c *kubernetes.Clientset, nss []string) error {
+	fmt.Printf("\nKubeapps has been deployed successfully. \n")
 	err := printSvc(w, c, nss)
 	if err != nil {
 		return err
@@ -410,4 +420,21 @@ func printSvc(w io.Writer, c kubernetes.Interface, nss []string) error {
 	fmt.Fprintln(w, table)
 	fmt.Fprintln(w)
 	return nil
+}
+
+func allReady(c *kubernetes.Clientset, nss []string) (bool, error) {
+	for _, ns := range nss {
+		pods, err := c.CoreV1().Pods(ns).List(metav1.ListOptions{
+			LabelSelector: "created-by=kubeapps",
+		})
+		if err != nil {
+			return false, err
+		}
+		for _, p := range pods.Items {
+			if string(p.Status.Phase) != "Running" {
+				return false, nil
+			}
+		}
+	}
+	return true, nil
 }
