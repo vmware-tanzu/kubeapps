@@ -27,7 +27,7 @@ These commands will deploy Kubeapps in your cluster and launch a browser with th
 
 ![Dashboard main page](img/dashboard-home.png)
 
-To remove Kubeapps form your cluster, simply run:
+To remove Kubeapps from your cluster, simply run:
 
 ```
 kubeapps down
