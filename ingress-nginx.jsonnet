@@ -1,4 +1,5 @@
 local kube = import "kube.libsonnet";
+
 {
   namespace:: { metadata+: { namespace: "kube-system" }},
 
