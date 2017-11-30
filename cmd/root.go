@@ -180,6 +180,6 @@ func generateEncodedRandomPassword(s int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	pw := base64.StdEncoding.EncodeToString(b)
-	return base64.StdEncoding.EncodeToString([]byte(pw)), nil
+	pw := base64.URLEncoding.EncodeToString(b)
+	return base64.URLEncoding.EncodeToString([]byte(pw)), nil
 }
