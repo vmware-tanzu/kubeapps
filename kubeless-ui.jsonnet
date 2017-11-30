@@ -21,7 +21,7 @@ local host = "kubeless-ui";
       },
       {
         apiGroups: [""],
-        resources: ["services","services/proxy],
+        resources: ["services","services/proxy"],
         verbs: ["get", "list", "proxy"],
       },
     ],
