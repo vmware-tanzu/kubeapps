@@ -1,50 +1,84 @@
-# Getting Started
+# Get Started with Kubeapps
 
 Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-charge your Kubernetes cluster with:
  * Your own applications [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
  * [Kubeless](http://kubeless.io/) - a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
  * [SealedSecrets](https://github.com/bitnami/sealed-secrets) - a SealedSecret can be decrypted only by the controller running in the cluster and nobody else (not even the original author).
 
-These tools are easily deployed into your cluster with just one command: ```kubeapps up``` 
+This guide will walk you through the process of deploying Kubeapps for your cluster and installing an example application.
 
-## Installation of the Kubeapps Installer
+## Prerequisites
 
-Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [Kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed in your machine and configured to talk to your Kubernetes cluster. Kubeapps has been tested in `minikube` and Google Kubernetes Engine*.
+Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for both Linux and OS X, and Kubeapps has been tested with both `minikube` and Google Kubernetes Engine (GKE).
 
-- Download latest Kubeapps Installer binary from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently Kubeapps Installer is distributed in two platforms: linux/amd64 and OSX/amd64
-- Make the binary executable
+## Step 1: Install Kubeapps
 
-***NOTE**: On Google Kubernetes Engine, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
+To install Kubeapps, download a binary version of the latest Kubeapps Installer for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently, the Kubeapps Installer is distributed in binary form for Linux (64-bit) and OS X (64-bit). Once downloaded, make the binary executable.
 
-## Deploy the Kubeapps components into your cluster
+For example, to install the 0.0.2 binary release of the Kubeapps Installer on Linux, use this command:
+
+```
+sudo curl -L https://github.com/kubeapps/installer/releases/download/v0.0.2/kubeapps-linux-amd64 -o /usr/local/bin/kubeapps && sudo chmod +x /usr/local/bin/kubeapps
+```
+
+> In case the Kubeapps Installer is not available in binary form for your platform, you can also [build it from source](install.md).
+
+Once the Kubeapps Installer is installed, deploy Kubeapps for your cluster with this command:
 
 ```
 kubeapps up
 ```
 
-This command will deploy the Kubeapps components into your cluster. The deployments may take few minutes until they are ready.
+You should see something like this as Kubeapps is deployed:
 
-## What is it that I am actually deploying?
+![Kubeapps deployment](../img/kubeapps-up.png)
 
-You can check the [latest version of the Kubernetes manifest](https://github.com/kubeapps/kubeapps/blob/master/static/kubeapps-objs.yaml) that Kubeapps will deploy for you.
-
-Check the [components documentation page](components.md) for a brief description of the list of components Kubeapps is deploying into your cluster.
-
-## Kubeapps Dashboard
-
-Kubeapps provides an in-cluster toolset for simplified deployment of over 100 Kubernetes ready applications as Helm charts and Kubeless functions.
-
-To open the Kubeapps Dashboard:
-
-```
-kubeapps dashboard
-```
-Check the [documentation specific to the Dashboard](dashboard.md)
-
-## Clean the Kubeapps components
-
-You can easily clean all the Kubeapps deployment with a single command:
+To remove Kubeapps from your cluster, run this command:
 
 ```
 kubeapps down
 ```
+
+## Step 2: Start the Kubeapps Dashboard
+
+Once Kubeapps is installed, securely access the Kubeapps Dashboard from your system by running:
+
+```
+kubeapps dashboard
+```
+
+This will start an HTTP proxy for secure access to the Kubeapps Dashboard and launch your default browser to access it. Here's what you should see:
+
+![Dashboard main page](../img/dashboard-home.png)
+
+## Step 3: Deploy WordPress
+
+Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
+
+* Use the "Charts" menu from the Dashboard welcome page to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy WordPress.
+
+  ![WordPress chart](../img/wordpress-search.png)
+
+* Click the "Install" button. 
+
+  ![WordPress installation](../img/wordpress-install.png)
+
+* You will be prompted for the cluster namespace in which the application should be deployed.
+
+  ![Namespace selection](../img/wordpress-namespace.png)
+
+* Click the "Deploy" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
+
+  ![WordPress deployment](../img/wordpress-deployment.png)
+
+To obtain the WordPress username and password, refer to the "Notes" section of the deployment page, which contains the commands you will need to run to obtain the credentials for the deployment.
+
+  ![WordPress deployment notes](../img/wordpress-notes.png)
+
+## Next Steps
+
+Learn more about Kubeapps with the links below:
+
+* [Detailed installation instructions](install.md)
+* [Kubeapps Dashboard documentation](dashboard.md)
+* [Kubeapps components](components.md)

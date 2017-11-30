@@ -4,79 +4,87 @@ Kubeapps comes with an in-cluster dashboard that offers a web UI to easily manag
 
 ## Start the Dashboard
 
-You can securely access the dashboard from your system by running:
+Securely access the Kubeapps Dashboard from your system by running:
 
 ```
 kubeapps dashboard
 ```
 
-This will run a HTTP proxy to access the dashboard securely and will open your default browser to it.
+This will start an HTTP proxy for secure access to the Kubeapps Dashboard and will launch your default browser to access it. Here's what you should see:
 
-## Managing Charts
-### Deploying new applications using the Dashboard
+![Dashboard main page](../img/dashboard-home.png)
 
-Once you have the Dashboard up and running, you can start deploying applications into your cluster.
+The following sections walk you through some common tasks with the Kubeapps Dashboard.
 
-![Dashboard Main Page](../img/dashboard.png)
+## Work with Charts
 
-Select one application from the list of charts in the official Kubernetes chart repository. In this example we will be deploying MariaDB.
+### Deploy new applications using the Dashboard
 
-![Dashboard MariaDB chart](../img/mariadb.png)
+Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-Once you click on "Install mariadb" you will be able to select which namespace of your cluster you want this to be deployed:
+* Start with the Dashboard welcome page:
 
-![Dashboard Select Namespace](../img/namespace.png)
+  ![Dashboard main page](../img/dashboard-home.png)
 
-Now click on "Deploy" and you will be able to track your new Kubernetes Deployment directly from your browser.
+* Use the "Charts" menu to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy MariaDB.
 
-![Dashboard MariaDB deployment](../img/mariadb-deploy.png)
+  ![MariaDB chart](../img/mariadb-install.png)
 
-### Listing all the deployments managed by Helm
+* Click the "Install" button. You will be prompted for the cluster namespace in which the application should be deployed.
 
-On the "Deployments" menu you can get a list of the deployments in your cluster that are managed by Helm.
+  ![Namespace selection](../img/mariadb-namespace.png)
 
-![Dashboard Deployments list](../img/deployments.png)
+* Click the "Deploy" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
 
-### Removing existing deployments
+  ![MariaDB deployment](../img/mariadb-deployment.png)
 
-You can remove any of the deployments that are managed by Helm, by clicking on the "Remove" button:
+### List all the deployments managed by Helm
 
-![Dashboard Remove Deployment](../img/delete-mariadb.png)
+The "Deployments" menu displays a list of the deployments in the cluster that are managed by Helm.
 
-### Adding addition charts repositories
+![Deployment list](../img/dashboard-deployments.png)
 
-By default, Kubeapps comes with the official Kubernetes chart repositories enabled. You can see the list of enabled chart repositories in the "Repositories" link:
+### Remove existing deployments
 
-![Dashboard Repositories List](../img/dashboard-repos.png)
+You can remove any of the deployments that are managed by Helm by clicking the "Remove" button on a deployment detail page:
 
-You can add new repositories (i.e. a special repository for your organization) by clicking on "Add repository":
+![Deployment removal](../img/dashboard-delete-deployment.png)
 
-![Dashboard Add Repository](../img/dashboard-add-repo.png)
+### Add more chart repositories
 
-- For ```Name``` you can add any identifier, as long as it is unique. Right now only alpha characters are accepted.
-- For ```URL``` you should add the URL where the ```index.yaml``` file of your repository is available.
-- For ```Source``` you can add the URL of the source code for your charts. This field is optional.
+By default, Kubeapps comes with the official Kubernetes chart repositories enabled. You can see the list of enabled chart repositories in the "Repositories" menu:
 
-## Functions Dashboard
+![Repositories List](../img/dashboard-repos.png)
 
-The Kubeapps Dashboard includes a [Kubeless](https://kubeless.io) UI to be able to create, edit and run your Kubeless functions directly from your browser.
+Add new repositories (for example, your organization's chart repository) by clicking the "Add repository" button. Fill the "Add Repository" form using the guidelines below:
 
-To access the Kubeless UI click on "Functions" in the Dashboard menu.
+* Name: Use any unique identifier. Currently, only alphabetic characters are accepted.
+* URL: Add the URL to the ```index.yaml``` file of the repository.
+* Source: Add the URL to the source code for your charts. This field is optional.
 
-![Kubeless UI](../img/kubeless-ui.png)
+![Adding repository](../img/dashboard-add-repo.png)
+
+## Work with Functions
+
+The Kubeapps Dashboard includes a [Kubeless](https://kubeless.io) interface to be able to create, edit and run your Kubeless functions directly from your browser.
 
 ### Create a new function
 
-To create a new Kubeless function from the web UI click on "Create Function". On the modal window that opens, select the runtime for your function, the name of the function object and the handler of your function:
+To create a new Kubeless function from the Dashboard:
 
-![Kubeless Create Function Modal](../img/kubeless-create.png)
+* Start with the "Functions" menu in the Dashboard.
 
-After clicking on create, Kubeless UI will load a sample function, so you can easily modify it for your needs:
+  ![Kubeless interface](../img/dashboard-functions.png)
 
-![Kubeless Hello World Function](../img/kubeless-hello.png)
+* Click the "Create Function" button. 
+* In the resulting modal dialog, select the runtime for the function, the name of the function object and the handler for the function:
 
-Clicking on "Run Function" will run your function using the selected runtime and will display the response of it. It may take some time to the function to be running.
+  ![Kubeless function creation](../img/kubeless-create.png)
 
-### Beyond Hello World
+* Click the "Create" button. The Kubeless interface will load a sample function, so you can easily modify it for your needs. Here's a simple "hello world" function example:
 
-You can find many function examples for the different runtimes in the [examples folder in the Kubeless repository](https://github.com/kubeless/kubeless/tree/master/examples).
+  ![Kubeless Hello World function](../img/kubeless-hello.png)
+
+* Clicking "Run Function" will run the function using the selected runtime and will display the response. It may take some time to the function to complete execution.
+
+For more examples of functions using different runtimes, check out the [examples in the Kubeless repository](https://github.com/kubeless/kubeless/tree/master/examples).
