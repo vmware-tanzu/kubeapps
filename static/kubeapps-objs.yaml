@@ -519,7 +519,7 @@ spec:
         kubeless: controller
     spec:
       containers:
-      - image: bitnami/kubeless-controller@sha:6547d4e088ad5171dff69da4c9e52e77e6d0b00cf25f8b57c3260de816587266
+      - image: bitnami/kubeless-controller@sha256:6547d4e088ad5171dff69da4c9e52e77e6d0b00cf25f8b57c3260de816587266
         imagePullPolicy: IfNotPresent
         name: kubeless-controller
       serviceAccountName: controller-acct
@@ -729,6 +729,14 @@ metadata:
   name: kubeless-editor
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  - pods/log
+  verbs:
+  - get
+  - list
+- apiGroups:
   - k8s.io
   resources:
   - functions
@@ -738,6 +746,16 @@ rules:
   - watch
   - create
   - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - services/proxy
+  verbs:
+  - get
+  - list
+  - proxy
 ---
 apiVersion: v1
 kind: ServiceAccount
