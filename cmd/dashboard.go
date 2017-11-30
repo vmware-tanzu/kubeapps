@@ -34,7 +34,7 @@ import (
 
 const (
 	selector         = "name=nginx-ingress-controller"
-	ingressNamespace = "kube-system"
+	ingressNamespace = "kubeapps"
 )
 
 var dashboardCmd = &cobra.Command{
