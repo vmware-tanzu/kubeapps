@@ -7,7 +7,6 @@ local kubecfg = import "kubecfg.libsonnet";
 
 local labels = {
   app: "kubeapps-dashboard",
-  "created-by": "kubeapps",
 };
 
 local valuesDefault = kubecfg.parseYaml(importstr "kubeapps-dashboard-values.yaml")[0];

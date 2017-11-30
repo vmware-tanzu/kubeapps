@@ -3,17 +3,31 @@ local kubecfg = import "kubecfg.libsonnet";
 
 local host = null;
 local tls = false;
+local kubeless = import "kubeless.jsonnet";
+local ssecrets = import "sealed-secrets.jsonnet";
+
+local labels = {
+  metadata+: {
+    labels+: {
+      "created-by": "kubeapps"
+    }
+  }
+};
+local labelify(src) = if std.objectHas(src, "metadata") then src + labels else src;
+local labelifyEach(src) = {
+  [k]: labelify(src[k]) for k in std.objectFields(src)
+};
 
 {
   namespace:: {metadata+: {namespace: "kubeapps"}},
 
-  ns: kube.Namespace($.namespace.metadata.namespace),
+  ns: kube.Namespace($.namespace.metadata.namespace) + labels,
 
   // NB: these are left in their usual namespaces, to avoid forcing
   // non-default command line options onto client tools
-  kubeless: (import "kubeless.jsonnet"),
-  ssecrets: (import "sealed-secrets.jsonnet"),
-  nginx: (import "ingress-nginx.jsonnet") {
+  kubeless: labelifyEach(kubeless),
+  ssecrets: [s + labels for s in ssecrets],
+  nginx_:: (import "ingress-nginx.jsonnet") {
     namespace:: $.namespace,
     controller+: {
       spec+: {
@@ -42,17 +56,19 @@ local tls = false;
       },
     },
   },
+  nginx: labelifyEach($.nginx_),
 
-  kubelessui: (import "kubeless-ui.jsonnet") {
+  kubelessui_:: (import "kubeless-ui.jsonnet") {
     namespace:: $.namespace,
   },
+  kubelessui: labelifyEach($.kubelessui_),
 
-  dashboard: (import "kubeapps-dashboard.jsonnet") + {
+  dashboard_:: (import "kubeapps-dashboard.jsonnet") {
     namespace:: $.namespace,
-    mongodb_svc:: $.mongodb.svc,
-    mongodb_secret:: $.mongodb.secret,
+    mongodb_svc:: $.mongodb_.svc,
+    mongodb_secret:: $.mongodb_.secret,
     ingress:: null,
-    values+: {
+    values+:: {
       api+: {
         service+: {type: "ClusterIP"},
         // FIXME: api server downloads metadata/icons/etc for *every
@@ -84,20 +100,22 @@ local tls = false;
     ui+: readinessDelay(0),
     api+: readinessDelay(0),
   },
-
-  mongodb: (import "mongodb.jsonnet") {
-    namespace:: $.namespace,
+  dashboard: labelifyEach($.dashboard_) {
+    ui: labelifyEach($.dashboard_.ui),
+    api: labelifyEach($.dashboard_.api),
   },
 
-  ingress: kube.Ingress("kubeapps") + $.namespace {
+  mongodb_:: (import "mongodb.jsonnet") {
+    namespace:: $.namespace,
+  },
+  mongodb: labelifyEach($.mongodb_),
+
+  ingress: kube.Ingress("kubeapps") + $.namespace + labels {
     metadata+: {
       annotations+: {
         "ingress.kubernetes.io/rewrite-target": "/",
         "kubernetes.io/ingress.class": "kubeapps-nginx",
         "ingress.kubernetes.io/ssl-redirect": std.toString(tls),
-      },
-      labels+: {
-        "created-by": "kubeapps",
       },
     },
     spec+: {

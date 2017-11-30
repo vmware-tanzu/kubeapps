@@ -6,8 +6,7 @@
         "creationTimestamp": null,
         "labels": {
             "app": "helm",
-            "name": "tiller",
-            "created-by": "kubeapps"
+            "name": "tiller"
         },
         "name": "tiller-deploy",
         "namespace": "kube-system"
@@ -19,8 +18,7 @@
                 "creationTimestamp": null,
                 "labels": {
                     "app": "helm",
-                    "name": "tiller",
-                    "created-by": "kubeapps"
+                    "name": "tiller"
                 }
             },
             "spec": {

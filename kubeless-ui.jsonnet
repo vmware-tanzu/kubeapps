@@ -1,7 +1,6 @@
 local kube = import "kube.libsonnet";
 
 local host = "kubeless-ui";
-local label = {"created-by": "kubeapps",};
 
 {
   namespace:: {metadata+: {namespace: "kubeless"}},
@@ -24,12 +23,10 @@ local label = {"created-by": "kubeapps",};
   },
 
   svc: kube.Service("kubeless-ui") + $.namespace {
-    metadata+: {labels+: label},
     target_pod: $.deploy.spec.template,
   },
 
   deploy: kube.Deployment("kubeless-ui") + $.namespace {
-    metadata+: {labels+: label},
     spec+: {
       template+: {
         spec+: {
