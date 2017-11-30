@@ -12,7 +12,17 @@ local host = "kubeless-ui";
       {
         apiGroups: ["k8s.io"],
         resources: ["functions"],
-        verbs: ["get", "list", "watch", "create", "patch"],
+        verbs: ["get", "list", "watch", "create", "patch", "delete"],
+      },
+      {
+        apiGroups: [""],
+        resources: ["pods","pods/log"],
+        verbs: ["get", "list"],
+      },
+      {
+        apiGroups: [""],
+        resources: ["services","services/proxy],
+        verbs: ["get", "list", "proxy"],
       },
     ],
   },
