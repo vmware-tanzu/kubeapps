@@ -46,6 +46,8 @@ const (
 	MongoDB_Secret = "mongodb"
 )
 
+var MongoDB_SecretFields = []string{"mongodb-root-password"}
+
 var upCmd = &cobra.Command{
 	Use:   "up FLAG",
 	Short: "Install KubeApps components.",
@@ -131,9 +133,8 @@ List of components that kubeapps up installs:
 		if prevsecret, exist, err := mongoSecretExists(c, MongoDB_Secret, Kubeapps_NS); err != nil {
 			return err
 		} else if !exist {
-			pwFields := []string{"mongodb-root-password"}
 			pw := make(map[string]string)
-			for _, p := range pwFields {
+			for _, p := range MongoDB_SecretFields {
 				s, err := generateEncodedRandomPassword(12)
 				if err != nil {
 					return fmt.Errorf("error reading random data for secret %s: %v", MongoDB_Secret, err)
@@ -216,7 +217,6 @@ func mongoSecretExists(c kubecfg.UpdateCmd, name, ns string) (*unstructured.Unst
 	if err != nil {
 		return nil, false, err
 	}
-	pwFields := []string{"mongodb-password", "mongodb-root-password"}
 	prevSec, err := rc.Get(name, metav1.GetOptions{})
 
 	if k8sErrors.IsNotFound(err) {
@@ -232,7 +232,7 @@ func mongoSecretExists(c kubecfg.UpdateCmd, name, ns string) (*unstructured.Unst
 	}
 
 	prevPw := prevSec.Object["data"].(map[string]interface{})
-	for _, p := range pwFields {
+	for _, p := range MongoDB_SecretFields {
 		if prevPw[p] == nil {
 			return nil, true, fmt.Errorf("secret %s already exists but it doesn't contain the expected key %s", name, p)
 		}
