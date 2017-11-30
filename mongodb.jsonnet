@@ -1,6 +1,6 @@
 local kube = import "kube.libsonnet";
 
-local labels = {app: "mongodb"};
+local labels = {app: "mongodb", "created-by": "kubeapps"};
 
 {
   namespace:: {metadata+: {namespace: "mongodb"}},
@@ -13,6 +13,7 @@ local labels = {app: "mongodb"};
   },
 
   svc: kube.Service("mongodb") + $.namespace {
+    metadata+: {labels+: labels},
     target_pod: $.mongodb.spec.template,
   },
 

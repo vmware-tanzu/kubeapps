@@ -1,5 +1,5 @@
 local kube = import "kube.libsonnet";
-
+local label = {"created-by": "kubeapps",};
 {
   namespace:: { metadata+: { namespace: "kube-system" }},
 
@@ -28,11 +28,13 @@ local kube = import "kube.libsonnet";
   },
 
   defaultSvc: kube.Service("default-http-backend") + $.namespace {
+    metadata+: {labels+: label},
     target_pod: $.defaultBackend.spec.template,
     port: 80,
   },
 
   defaultBackend: kube.Deployment("default-http-backend") + $.namespace {
+    metadata+: {labels+: label},
     spec+: {
       template+: {
         spec+: {
@@ -135,6 +137,7 @@ local kube = import "kube.libsonnet";
   serviceAccount: kube.ServiceAccount("nginx-ingress-controller") + $.namespace,
 
   service: kube.Service("nginx-ingress") + $.namespace {
+    metadata+: {labels+: label},
     local this = self,
     target_pod: $.controller.spec.template,
     spec+: {
@@ -147,6 +150,7 @@ local kube = import "kube.libsonnet";
   },
 
   controller: kube.Deployment("nginx-ingress-controller") + $.namespace {
+    metadata+: {labels+: label},
     spec+: {
       template+: {
         metadata+: {

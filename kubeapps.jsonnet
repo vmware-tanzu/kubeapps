@@ -96,6 +96,9 @@ local tls = false;
         "kubernetes.io/ingress.class": "kubeapps-nginx",
         "ingress.kubernetes.io/ssl-redirect": std.toString(tls),
       },
+      labels+: {
+        "created-by": "kubeapps",
+      },
     },
     spec+: {
       rules: [{
