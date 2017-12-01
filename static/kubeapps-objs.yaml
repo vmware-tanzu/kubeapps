@@ -103,12 +103,9 @@ spec:
           initialDelaySeconds: 0
           timeoutSeconds: 5
         resources:
-          limits:
-            cpu: 100m
-            memory: 128Mi
           requests:
             cpu: 100m
-            memory: 128Mi
+            memory: 512Mi
         stdin: false
         tty: false
         volumeMounts:
