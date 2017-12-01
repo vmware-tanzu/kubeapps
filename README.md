@@ -16,9 +16,9 @@ Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [`kubectl`](
 The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). Assuming you are deploying a binary installer on Linux, here are the commands to run: 
 
 ```
-sudo curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep linux | grep browser_download_url | cut -d '"' -f 4 | wget -i -
+curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep linux | grep browser_download_url | cut -d '"' -f 4 | wget -i -
 sudo mv kubeapps-linux-amd64 /usr/local/bin/kubeapps
-chmod +x /usr/local/bin/kubeapps
+sudo chmod +x /usr/local/bin/kubeapps
 kubeapps up
 kubeapps dashboard
 ```
