@@ -20,12 +20,9 @@ api:
     externalPort: 80
     internalPort: 8081
   resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 512Mi
   livenessProbe:
     initialDelaySeconds: 180
   config:
