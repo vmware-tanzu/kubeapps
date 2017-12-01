@@ -49,7 +49,7 @@ api:
     # Enable Helm deployment integration
     releasesEnabled: true
     # Cache refresh interval in sec.
-    cacheRefreshInterval: 3600
+    cacheRefreshInterval: 900
 ui:
   replicaCount: 1
   image:
