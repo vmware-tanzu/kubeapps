@@ -3,7 +3,7 @@ apiVersion: v1
 data:
   monocular.yaml: |
     {
-        "cacheRefreshInterval": 3600,
+        "cacheRefreshInterval": 900,
         "cors": {
             "allowed_headers": [
                 "content-type",
