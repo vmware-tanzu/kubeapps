@@ -19,17 +19,24 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
+	"os/signal"
 	"runtime"
-	"syscall"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/tools/remotecommand"
 )
 
 const (
@@ -76,19 +83,81 @@ var dashboardCmd = &cobra.Command{
 }
 
 func runPortforward(podName string, localPort int) error {
-	cmd, err := exec.LookPath("kubectl")
+	stopChannel := make(chan struct{}, 1)
+	readyChannel := make(chan struct{})
+
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt)
+	defer signal.Stop(signals)
+
+	go func() {
+		<-signals
+		if stopChannel != nil {
+			close(stopChannel)
+		}
+	}()
+
+	// Open the Dashboard in a browser when the port-forward is established
+	go func() {
+		<-readyChannel
+		openInBrowser(fmt.Sprintf("http://localhost:%d", localPort))
+	}()
+
+	fw, err := newPortforwarder(podName, localPort, stopChannel, readyChannel)
 	if err != nil {
 		return err
 	}
-	args := []string{"kubectl", "--namespace", ingressNamespace, "port-forward", podName, fmt.Sprintf("%d:80", localPort)}
+	return fw.ForwardPorts()
+}
 
-	env := os.Environ()
+func newPortforwarder(podName string, localPort int, stopChannel, readyChannel chan struct{}) (*portforward.PortForwarder, error) {
+	config, err := restClientConfig()
+	if err != nil {
+		return nil, err
+	}
 
-	openInBrowser(fmt.Sprintf("http://localhost:%d", localPort))
-	return syscall.Exec(cmd, args, env)
+	url, err := portforwardReqURL(config, podName)
+	if err != nil {
+		return nil, err
+	}
+
+	dialer, err := remotecommand.NewExecutor(config, "POST", url)
+	if err != nil {
+		return nil, err
+	}
+
+	ports := []string{fmt.Sprintf("%d:80", localPort)}
+
+	return portforward.New(dialer, ports, stopChannel, readyChannel, os.Stdout, os.Stderr)
+}
+
+func restClientConfig() (*rest.Config, error) {
+	config, err := buildOutOfClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+	config.APIPath = "/api"
+	config.GroupVersion = &v1.SchemeGroupVersion
+	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: scheme.Codecs}
+	return config, nil
+}
+
+func portforwardReqURL(config *rest.Config, podName string) (*url.URL, error) {
+	restClient, err := rest.RESTClientFor(config)
+	if err != nil {
+		return nil, err
+	}
+
+	req := restClient.Post().
+		Resource("pods").
+		Namespace(ingressNamespace).
+		Name(podName).
+		SubResource("portforward")
+	return req.URL(), nil
 }
 
 func openInBrowser(url string) error {
+	fmt.Printf("Opening %s in your default browser...\n", url)
 	args := []string{"xdg-open"}
 	switch runtime.GOOS {
 	case "darwin":

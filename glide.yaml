@@ -6,7 +6,10 @@ import:
   - pkg/api
   - dynamic
   - discovery
+  - rest
   - tools/clientcmd
+  - tools/remotecommand
+  - tools/portforward
   - plugin/pkg/client/auth/gcp
 - package: k8s.io/apimachinery
   version: 917740426ad66ff818da4809990480bcc0786a77
@@ -18,6 +21,10 @@ import:
   - pkg/kubecfg
 - package: github.com/emicklei/go-restful
   version: ff4f55a206334ef123e4f79bbf348980da81ca46
+- package: github.com/emicklei/go-restful-swagger12
+  version: dcef7f55730566d41eae5db10e7d6981829720f6
+- package: github.com/go-openapi/spec
+  version: 6aced65f8501fe1217321abf0749d354824ba2ff
 - package: github.com/spf13/cobra
   version: f62e98d28ab7ad31d707ba837a966378465c7b57
 - package: github.com/spf13/pflag
