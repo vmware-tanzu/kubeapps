@@ -21,6 +21,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -29,8 +30,10 @@ import (
 	"github.com/ksonnet/kubecfg/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
@@ -182,4 +185,35 @@ func generateEncodedRandomPassword(s int) (string, error) {
 	}
 	pw := base64.URLEncoding.EncodeToString(b)
 	return base64.URLEncoding.EncodeToString([]byte(pw)), nil
+}
+
+func clientForGroupVersionKind(pool dynamic.ClientPool, disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind, namespace string) (*dynamic.ResourceClient, error) {
+	client, err := pool.ClientForGroupVersionKind(gvk)
+	if err != nil {
+		return nil, err
+	}
+
+	resource, err := serverResourceForGroupVersionKind(disco, gvk)
+	if err != nil {
+		return nil, err
+	}
+
+	rc := client.Resource(resource, namespace)
+	return rc, nil
+}
+
+// taken from https://github.com/ksonnet/kubecfg/blob/897a3db8a83ca195a2825b1fabe59ffca103e700/utils/client.go#L156
+func serverResourceForGroupVersionKind(disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (*metav1.APIResource, error) {
+	resources, err := disco.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
+	if err != nil {
+		return nil, err
+	}
+
+	for _, r := range resources.APIResources {
+		if r.Kind == gvk.Kind {
+			return &r, nil
+		}
+	}
+
+	return nil, fmt.Errorf("Server is unable to handle %s", gvk)
 }
