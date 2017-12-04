@@ -38,15 +38,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/apps/v1beta1"
 )
 
 const (
 	GcTag          = "bitnami/kubeapps"
-	KubeappsNS     = "kubeapps"
-	KubelessNS     = "kubeless"
-	SystemNS       = "kube-system"
 	Kubeapps_NS    = "kubeapps"
 	MongoDB_Secret = "mongodb"
 )
@@ -172,9 +170,8 @@ List of components that kubeapps up installs:
 			return err
 		}
 		clientset, err := kubernetes.NewForConfig(config)
-		nss := []string{KubeappsNS, KubelessNS, SystemNS}
 		for {
-			if ok, err := allReady(clientset, nss); err != nil {
+			if ok, err := allReady(clientset); err != nil {
 				return err
 			} else if ok {
 				break
@@ -184,7 +181,7 @@ List of components that kubeapps up installs:
 			time.Sleep(5 * time.Second)
 		}
 
-		err = printOutput(cmd.OutOrStdout(), clientset, nss)
+		err = printOutput(cmd.OutOrStdout(), clientset)
 		if err != nil {
 			return err
 		}
@@ -248,21 +245,21 @@ func isGKE(disco discovery.DiscoveryInterface) (bool, error) {
 	return false, nil
 }
 
-func printOutput(w io.Writer, c *kubernetes.Clientset, nss []string) error {
+func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 	fmt.Printf("\nKubeapps has been deployed successfully. \n")
-	err := printSvc(w, c, nss)
+	err := printSvc(w, c)
 	if err != nil {
 		return err
 	}
-	err = printDeployment(w, c, nss)
+	err = printDeployment(w, c)
 	if err != nil {
 		return err
 	}
-	err = printStS(w, c, nss)
+	err = printStS(w, c)
 	if err != nil {
 		return err
 	}
-	err = printPod(w, c, nss)
+	err = printPod(w, c)
 	if err != nil {
 		return err
 	}
@@ -316,21 +313,19 @@ func buildSecretObject(pw map[string]string, name, ns string) *unstructured.Unst
 	}
 }
 
-func printPod(w io.Writer, c kubernetes.Interface, nss []string) error {
+func printPod(w io.Writer, c kubernetes.Interface) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
 	table.AddRow("NAMESPACE", "NAME", "STATUS")
 	pods := []v1.Pod{}
-	for _, ns := range nss {
-		p, err := c.CoreV1().Pods(ns).List(metav1.ListOptions{
-			LabelSelector: "created-by=kubeapps",
-		})
-		if err != nil {
-			return err
-		}
-		pods = append(pods, p.Items...)
+	p, err := c.CoreV1().Pods(api.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: "created-by=kubeapps",
+	})
+	if err != nil {
+		return err
 	}
+	pods = append(pods, p.Items...)
 	for _, p := range pods {
 		table.AddRow(p.Namespace, fmt.Sprintf("pod/%s", p.Name), p.Status.Phase)
 	}
@@ -339,21 +334,19 @@ func printPod(w io.Writer, c kubernetes.Interface, nss []string) error {
 	return nil
 }
 
-func printStS(w io.Writer, c kubernetes.Interface, nss []string) error {
+func printStS(w io.Writer, c kubernetes.Interface) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
 	table.AddRow("NAMESPACE", "NAME", "DESIRED", "CURRENT")
 	sts := []v1beta1.StatefulSet{}
-	for _, ns := range nss {
-		s, err := c.AppsV1beta1().StatefulSets(ns).List(metav1.ListOptions{
-			LabelSelector: "created-by=kubeapps",
-		})
-		if err != nil {
-			return err
-		}
-		sts = append(sts, s.Items...)
+	s, err := c.AppsV1beta1().StatefulSets(api.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: "created-by=kubeapps",
+	})
+	if err != nil {
+		return err
 	}
+	sts = append(sts, s.Items...)
 	for _, s := range sts {
 		table.AddRow(s.Namespace, fmt.Sprintf("statefulsets/%s", s.Name), *s.Spec.Replicas, s.Status.Replicas)
 	}
@@ -362,21 +355,19 @@ func printStS(w io.Writer, c kubernetes.Interface, nss []string) error {
 	return nil
 }
 
-func printDeployment(w io.Writer, c kubernetes.Interface, nss []string) error {
+func printDeployment(w io.Writer, c kubernetes.Interface) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
 	table.AddRow("NAMESPACE", "NAME", "DESIRED", "CURRENT", "UP-TO-DATE", "AVAILABLE")
 	deps := []v1beta1.Deployment{}
-	for _, ns := range nss {
-		dep, err := c.AppsV1beta1().Deployments(ns).List(metav1.ListOptions{
-			LabelSelector: "created-by=kubeapps",
-		})
-		if err != nil {
-			return err
-		}
-		deps = append(deps, dep.Items...)
+	dep, err := c.AppsV1beta1().Deployments(api.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: "created-by=kubeapps",
+	})
+	if err != nil {
+		return err
 	}
+	deps = append(deps, dep.Items...)
 
 	for _, d := range deps {
 		table.AddRow(d.Namespace, fmt.Sprintf("deploy/%s", d.Name), *d.Spec.Replicas, d.Status.Replicas, d.Status.UpdatedReplicas, d.Status.AvailableReplicas)
@@ -386,21 +377,19 @@ func printDeployment(w io.Writer, c kubernetes.Interface, nss []string) error {
 	return nil
 }
 
-func printSvc(w io.Writer, c kubernetes.Interface, nss []string) error {
+func printSvc(w io.Writer, c kubernetes.Interface) error {
 	table := uitable.New()
 	table.MaxColWidth = 50
 	table.Wrap = true
 	table.AddRow("NAMESPACE", "NAME", "CLUSTER-IP", "EXTERNAL-IP", "PORT(S)")
 	svcs := []v1.Service{}
-	for _, ns := range nss {
-		svc, err := c.CoreV1().Services(ns).List(metav1.ListOptions{
-			LabelSelector: "created-by=kubeapps",
-		})
-		if err != nil {
-			return err
-		}
-		svcs = append(svcs, svc.Items...)
+	svc, err := c.CoreV1().Services(api.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: "created-by=kubeapps",
+	})
+	if err != nil {
+		return err
 	}
+	svcs = append(svcs, svc.Items...)
 
 	for _, s := range svcs {
 		eIPs := ""
@@ -422,18 +411,16 @@ func printSvc(w io.Writer, c kubernetes.Interface, nss []string) error {
 	return nil
 }
 
-func allReady(c kubernetes.Interface, nss []string) (bool, error) {
-	for _, ns := range nss {
-		pods, err := c.CoreV1().Pods(ns).List(metav1.ListOptions{
-			LabelSelector: "created-by=kubeapps",
-		})
-		if err != nil {
-			return false, err
-		}
-		for _, p := range pods.Items {
-			if p.Status.Phase != v1.PodRunning {
-				return false, nil
-			}
+func allReady(c kubernetes.Interface) (bool, error) {
+	pods, err := c.CoreV1().Pods(api.NamespaceAll).List(metav1.ListOptions{
+		LabelSelector: "created-by=kubeapps",
+	})
+	if err != nil {
+		return false, err
+	}
+	for _, p := range pods.Items {
+		if p.Status.Phase != v1.PodRunning {
+			return false, nil
 		}
 	}
 	return true, nil

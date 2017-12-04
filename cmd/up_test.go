@@ -118,10 +118,9 @@ func TestPrintOutput(t *testing.T) {
 	}
 
 	client := fake.NewSimpleClientset(po1, po2, svc1, svc2, sts1, sts2, dep1, dep2)
-	ns := []string{"myns"}
 	var buf bytes.Buffer
 
-	err := printPod(&buf, client, ns)
+	err := printPod(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -133,7 +132,7 @@ func TestPrintOutput(t *testing.T) {
 		t.Errorf("pod %s shouldn't be listed", po2.Name)
 	}
 
-	err = printSvc(&buf, client, ns)
+	err = printSvc(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -145,7 +144,7 @@ func TestPrintOutput(t *testing.T) {
 		t.Errorf("service %s shouldn't be listed", po2.Name)
 	}
 
-	err = printDeployment(&buf, client, ns)
+	err = printDeployment(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -157,7 +156,7 @@ func TestPrintOutput(t *testing.T) {
 		t.Errorf("deployment %s shouldn't be listed", po2.Name)
 	}
 
-	err = printStS(&buf, client, ns)
+	err = printStS(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -245,7 +244,7 @@ func TestAllReady(t *testing.T) {
 		},
 	}
 	client := fake.NewSimpleClientset(po1, po2)
-	if ok, err := allReady(client, []string{"myns"}); err != nil {
+	if ok, err := allReady(client); err != nil {
 		t.Error(err)
 	} else if ok {
 		t.Errorf("pod bar is not ready yet")
@@ -253,7 +252,7 @@ func TestAllReady(t *testing.T) {
 
 	po2.Status.Phase = v1.PodRunning
 	client = fake.NewSimpleClientset(po1, po2)
-	if ok, err := allReady(client, []string{"myns"}); err != nil {
+	if ok, err := allReady(client); err != nil {
 		t.Error(err)
 	} else if !ok {
 		t.Errorf("expected all pods are ready, got not ready")
