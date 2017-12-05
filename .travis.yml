@@ -2,23 +2,44 @@ language: go
 
 os:
   - linux
-  - osx
 
 go:
   - 1.8.3
 
 go_import_path: github.com/kubeapps/kubeapps
 
+env:
+  global:
+    VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}
+
+matrix:
+  include:
+    - env: TARGET=x86_64-w64-mingw32
+    - env: TARGET=""
+addons:
+  apt:
+    packages:
+      # cross compiling for windows
+      - mingw-w64
+
 before_install:
   - set -e
 
 script:
   - make test
-  - make VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID} binary
+  - |
+    if [ -n "$TARGET" ]; then
+      export CC="$TARGET-gcc"
+      export CXX="$TARGET-g++"
+      export GOOS="windows"
+      export GOARCH="amd64"
+      go env
+    fi
+  - make VERSION="$VERSION" binary
+  - file kubeapps
 
 before_deploy:
-  - echo OS_NAME=$TRAVIS_OS_NAME GO_VERSION=$TRAVIS_GO_VERSION
-  - EXE_NAME=kubeapps-$(go env GOOS)-$(go env GOARCH)
+  - EXE_NAME=kubeapps-$GOOS-$GOARCH
   - cp kubeapps $EXE_NAME
   - strip $EXE_NAME && ./$EXE_NAME version
   - >

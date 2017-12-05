@@ -4,29 +4,31 @@ GOBIN = go
 # i.e. ignore local $GOPATH/src installed sources
 GOPATH_TMP = $(CURDIR)/.GOPATH
 GO = /usr/bin/env GOPATH=$(GOPATH_TMP) $(GOBIN)
-GO_FLAGS =
 GOFMT = gofmt
 VERSION = dev-$(shell date +%FT%T%z)
 
-OS = linux
-ARCH = amd64
+GO_OS = GOOS="${GOOS}"
+GO_ARCH = GOARCH="${GOARCH}"
 BINARY = kubeapps
 GO_PACKAGES = $(IMPORT_PATH)/cmd $(IMPORT_PATH)/pkg/...
 GO_FILES := $(shell find $(shell $(GOBIN) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 GO_FLAGS = -ldflags="-w -X github.com/kubeapps/kubeapps/cmd.VERSION=${VERSION}"
+GO_LDFLAGS =
 EMBEDDED_STATIC = generated/statik/statik.go
+CC_ = CC="${CC}"
+CXX_ = CXX="${CXX}"
 
 default: binary
 
 binary: build-prep $(EMBEDDED_STATIC)
-	$(GO) build -i -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
+	CGO_ENABLED=1 $(CC_) $(CXX_) $(GO_OS) $(GO_ARCH) $(GO) build -i -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
 
 test: build-prep $(EMBEDDED_STATIC)
 	$(GO) test $(GO_FLAGS) $(GO_PACKAGES)
 
 $(EMBEDDED_STATIC): build-prep $(wilcard static/*)
-	$(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
-	$(GO) generate
+	GOOS=linux $(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
+	GOOS=linux $(GO) generate
 
 build-prep:
 	mkdir -p $(dir $(GOPATH_TMP)/src/$(IMPORT_PATH))
