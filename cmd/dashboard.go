@@ -19,10 +19,12 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +75,7 @@ var dashboardCmd = &cobra.Command{
 
 		podName := pods.Items[0].GetName()
 
-		localPort, err := cmd.Flags().GetInt("port")
+		localPort, err := getAvailablePort()
 		if err != nil {
 			return err
 		}
@@ -144,5 +146,22 @@ func openInBrowser(url string) error {
 
 func init() {
 	RootCmd.AddCommand(dashboardCmd)
-	dashboardCmd.Flags().Int("port", 8002, "local port")
+}
+
+func getAvailablePort() (int, error) {
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+
+	_, p, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		return 0, err
+	}
+	port, err := strconv.Atoi(p)
+	if err != nil {
+		return 0, err
+	}
+	return port, err
 }
