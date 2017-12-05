@@ -412,14 +412,14 @@ func printSvc(w io.Writer, c kubernetes.Interface) error {
 }
 
 func allReady(c kubernetes.Interface) (bool, error) {
-	pods, err := c.CoreV1().Pods(api.NamespaceAll).List(metav1.ListOptions{
+	deps, err := c.AppsV1beta1().Deployments(api.NamespaceAll).List(metav1.ListOptions{
 		LabelSelector: "created-by=kubeapps",
 	})
 	if err != nil {
 		return false, err
 	}
-	for _, p := range pods.Items {
-		if p.Status.Phase != v1.PodRunning {
+	for _, d := range deps.Items {
+		if d.Status.AvailableReplicas != *d.Spec.Replicas {
 			return false, nil
 		}
 	}

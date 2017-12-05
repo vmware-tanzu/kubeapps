@@ -219,7 +219,8 @@ func TestDump(t *testing.T) {
 }
 
 func TestAllReady(t *testing.T) {
-	po1 := &v1.Pod{
+	replicas := int32(1)
+	dep := &v1beta1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "foo",
 			Namespace: "myns",
@@ -227,34 +228,25 @@ func TestAllReady(t *testing.T) {
 				"created-by": "kubeapps",
 			},
 		},
-		Status: v1.PodStatus{
-			Phase: v1.PodRunning,
+		Spec: v1beta1.DeploymentSpec{
+			Replicas: &replicas,
+		},
+		Status: v1beta1.DeploymentStatus{
+			AvailableReplicas: 0,
 		},
 	}
-	po2 := &v1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "bar",
-			Namespace: "myns",
-			Labels: map[string]string{
-				"created-by": "kubeapps",
-			},
-		},
-		Status: v1.PodStatus{
-			Phase: v1.PodPending,
-		},
-	}
-	client := fake.NewSimpleClientset(po1, po2)
+	client := fake.NewSimpleClientset(dep)
 	if ok, err := allReady(client); err != nil {
 		t.Error(err)
 	} else if ok {
-		t.Errorf("pod bar is not ready yet")
+		t.Errorf("deployment %s is not ready yet", dep.Name)
 	}
 
-	po2.Status.Phase = v1.PodRunning
-	client = fake.NewSimpleClientset(po1, po2)
+	dep.Status.AvailableReplicas = replicas
+	client = fake.NewSimpleClientset(dep)
 	if ok, err := allReady(client); err != nil {
 		t.Error(err)
 	} else if !ok {
-		t.Errorf("expected all pods are ready, got not ready")
+		t.Errorf("expected all deployments are ready, got %s not ready", dep.Name)
 	}
 }
