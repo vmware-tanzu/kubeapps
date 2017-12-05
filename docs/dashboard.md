@@ -46,7 +46,7 @@ The "Deployments" menu displays a list of the deployments in the cluster that ar
 
 ### Remove existing deployments
 
-You can remove any of the deployments that are managed by Helm by clicking the "Remove" button on a deployment detail page:
+You can remove any of the deployments that are managed by Helm by clicking the "Delete deployment" button on a deployment detail page:
 
 ![Deployment removal](../img/dashboard-delete-deployment.png)
 
