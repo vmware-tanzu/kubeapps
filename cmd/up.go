@@ -206,7 +206,7 @@ func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 		return err
 	}
 
-	fmt.Printf("You can run "kubectl get all --all-namespaces -l created-by=kubeapps" to check the status of the Kubeapps components. \n\n")
+	fmt.Printf("You can run `kubectl get all --all-namespaces -l created-by=kubeapps` to check the status of the Kubeapps components. \n\n")
 
 	return nil
 }
