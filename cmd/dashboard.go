@@ -75,9 +75,15 @@ var dashboardCmd = &cobra.Command{
 
 		podName := pods.Items[0].GetName()
 
-		localPort, err := getAvailablePort()
+		localPort, err := cmd.Flags().GetInt("port")
 		if err != nil {
 			return err
+		}
+		if localPort == 0 {
+			localPort, err = getAvailablePort()
+			if err != nil {
+				return err
+			}
 		}
 
 		opts := dashboardCmdOptions{config: config, client: clientset.CoreV1().RESTClient(), podName: podName, localPort: localPort}
@@ -146,6 +152,7 @@ func openInBrowser(url string) error {
 
 func init() {
 	RootCmd.AddCommand(dashboardCmd)
+	dashboardCmd.Flags().Int("port", 0, "Specify a local port for the dashboard connection.")
 }
 
 func getAvailablePort() (int, error) {
