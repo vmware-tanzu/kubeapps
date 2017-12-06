@@ -187,7 +187,7 @@ func isGKE(disco discovery.DiscoveryInterface) (bool, error) {
 
 func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 	fmt.Printf("\nKubeapps has been deployed successfully. \n" +
-		"It may takes few minutes for all components to be ready. \n\n")
+		"It may take a few minutes for all components to be ready. \n\n")
 	nss := []string{KubeappsNS, KubelessNS, SystemNS}
 	err := printSvc(w, c, nss)
 	if err != nil {
@@ -206,7 +206,7 @@ func printOutput(w io.Writer, c *kubernetes.Clientset) error {
 		return err
 	}
 
-	fmt.Printf("Checking `kubectl get all --all-namespaces -l created-by=kubeapps` for details. \n\n")
+	fmt.Printf("You can run `kubectl get all --all-namespaces -l created-by=kubeapps` to check the status of the Kubeapps components. \n\n")
 
 	return nil
 }
