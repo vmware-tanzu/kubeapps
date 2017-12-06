@@ -176,8 +176,7 @@ List of components that kubeapps up installs:
 			} else if ok {
 				break
 			}
-			fmt.Println()
-			fmt.Println("Checking kubeapps readiness...")
+			fmt.Printf("Kubeapps is starting up...\n")
 			time.Sleep(5 * time.Second)
 		}
 
