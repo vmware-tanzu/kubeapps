@@ -71,7 +71,11 @@ Find more information at https://github.com/kubeapps/kubeapps.`,
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringP("verbose", "v", "warning", "Set log level: debug, info, warning, error, fatal, panic")
+	RootCmd.PersistentFlags().StringP("verbose", "v", "warning", fmt.Sprint("Set log level: debug, info, warning, error.\n"+
+		"debug: Usually only enabled when debugging. Very verbose logging.\n"+
+		"info: General operational entries about what's going on.\n"+
+		"error: Used for errors that should definitely be noted.\n"+
+		"warning: Non-critical entries that deserve eyes."))
 	RootCmd.PersistentFlags().Set("logtostderr", "true")
 }
 
@@ -83,10 +87,6 @@ func logLevel(verbosity string) logrus.Level {
 		return logrus.DebugLevel
 	case "error":
 		return logrus.ErrorLevel
-	case "fatal":
-		return logrus.FatalLevel
-	case "panic":
-		return logrus.PanicLevel
 	default:
 		return logrus.WarnLevel
 	}
