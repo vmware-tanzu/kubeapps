@@ -28,7 +28,7 @@ before_install:
 script:
   - make test
   - |
-    if [ -n "$TARGET" ]; then
+    if [ "$TARGET" == "x86_64-w64-mingw32" ]; then
       export CC="$TARGET-gcc"
       export CXX="$TARGET-g++"
       export GOOS="windows"
@@ -40,6 +40,10 @@ script:
 
 before_deploy:
   - EXE_NAME=kubeapps-$GOOS-$GOARCH
+  - |
+    if [ "$TARGET" == "x86_64-w64-mingw32" ]; then
+          EXE_NAME=kubeapps-$GOOS-$GOARCH.exe
+    fi
   - cp kubeapps $EXE_NAME
   - strip $EXE_NAME && ./$EXE_NAME version
   - >
