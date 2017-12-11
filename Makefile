@@ -12,7 +12,7 @@ GO_ARCH = GOARCH="${GOARCH}"
 BINARY = kubeapps
 GO_PACKAGES = $(IMPORT_PATH)/cmd $(IMPORT_PATH)/pkg/...
 GO_FILES := $(shell find $(shell $(GOBIN) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
-GO_FLAGS = -ldflags="-w -X github.com/kubeapps/kubeapps/cmd.VERSION=${VERSION}"
+GO_FLAGS = -ldflags='-extldflags "-static" -w -X github.com/kubeapps/kubeapps/cmd.VERSION=${VERSION}'
 GO_LDFLAGS =
 EMBEDDED_STATIC = generated/statik/statik.go
 CC_ = CC="${CC}"

@@ -45,7 +45,7 @@ before_deploy:
           EXE_NAME=kubeapps-$GOOS-$GOARCH.exe
     fi
   - cp kubeapps $EXE_NAME
-  - strip $EXE_NAME && ./$EXE_NAME version
+  - strip $EXE_NAME
   - >
     size $EXE_NAME || :
 
