@@ -35,7 +35,7 @@ script:
       export GOARCH="amd64"
       go env
     fi
-  - make VERSION="$VERSION" binary
+  - make VERSION="$VERSION" binary-travis
   - file kubeapps
 
 before_deploy:
