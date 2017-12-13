@@ -11,11 +11,14 @@ go_import_path: github.com/kubeapps/kubeapps
 env:
   global:
     VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}
+    GO_XFLAGS=""
 
 matrix:
   include:
     - env: TARGET=x86_64-w64-mingw32
     - env: TARGET=""
+    - env: TARGET=x86_64-apple-darwin15-clang
+
 addons:
   apt:
     packages:
@@ -33,9 +36,24 @@ script:
       export CXX="$TARGET-g++"
       export GOOS="windows"
       export GOARCH="amd64"
+      GO_XFLAGS="-ldflags='-extldflags \"-static\"'"
       go env
     fi
-  - make VERSION="$VERSION" binary-travis
+  - |
+    if [ "$TARGET" == "x86_64-apple-darwin15-clang" ]; then
+      git clone https://github.com/tpoechtrager/osxcross
+      sudo $PWD/osxcross/tools/get_dependencies.sh
+      wget -O $PWD/osxcross/tarballs/MacOSX10.11.sdk.tar.xz \
+        https://storage.googleapis.com/osx-cross-compiler/MacOSX10.11.sdk.tar.xz
+      UNATTENDED=1 OSX_VERSION_MIN=10.9 $PWD/osxcross/build.sh
+      export PATH=$PATH:$PWD/osxcross/target/bin/
+      export CC="$TARGET"
+      export CXX="$TARGET++"
+      export GOOS="darwin"
+      export GOARCH="amd64"
+      go env
+    fi
+  - make VERSION="$VERSION" GO_XFLAGS="$GO_XFLAGS" binary-travis
   - file kubeapps
 
 before_deploy:
