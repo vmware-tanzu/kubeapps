@@ -54,14 +54,14 @@ var RootCmd = &cobra.Command{
 	Use:   "kubeapps",
 	Short: "kubeapps installs the Kubeapps components into your cluster",
 	Long: `kubeapps installs the Kubeapps components into your cluster.
-  
+
 Find more information at https://github.com/kubeapps/kubeapps.`,
 	SilenceErrors: true,
 	SilenceUsage:  true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		out := cmd.OutOrStderr()
 		logrus.SetOutput(out)
-		verbosity, err := cmd.Flags().GetCount("verbose")
+		verbosity, err := cmd.Flags().GetString("verbose")
 		if err != nil {
 			return err
 		}
@@ -71,16 +71,24 @@ Find more information at https://github.com/kubeapps/kubeapps.`,
 }
 
 func init() {
-	RootCmd.PersistentFlags().CountP("verbose", "v", "Increase verbosity.")
+	RootCmd.PersistentFlags().StringP("verbose", "v", "info", fmt.Sprint("Set log level: debug, info, warning, error.\n"+
+		"debug: Usually only enabled when debugging. Very verbose logging.\n"+
+		"info: General operational entries about what's going on.\n"+
+		"error: Used for errors that should definitely be noted.\n"+
+		"warning: Non-critical entries that deserve eyes."))
 	RootCmd.PersistentFlags().Set("logtostderr", "true")
 }
 
-func logLevel(verbosity int) logrus.Level {
+func logLevel(verbosity string) logrus.Level {
 	switch verbosity {
-	case 0:
+	case "info":
 		return logrus.InfoLevel
-	default:
+	case "debug":
 		return logrus.DebugLevel
+	case "error":
+		return logrus.ErrorLevel
+	default:
+		return logrus.WarnLevel
 	}
 }
 
