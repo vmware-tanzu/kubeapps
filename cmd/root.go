@@ -54,7 +54,7 @@ var RootCmd = &cobra.Command{
 	Use:   "kubeapps",
 	Short: "kubeapps installs the Kubeapps components into your cluster",
 	Long: `kubeapps installs the Kubeapps components into your cluster.
-  
+
 Find more information at https://github.com/kubeapps/kubeapps.`,
 	SilenceErrors: true,
 	SilenceUsage:  true,
@@ -71,7 +71,7 @@ Find more information at https://github.com/kubeapps/kubeapps.`,
 }
 
 func init() {
-	RootCmd.PersistentFlags().StringP("verbose", "v", "warning", fmt.Sprint("Set log level: debug, info, warning, error.\n"+
+	RootCmd.PersistentFlags().StringP("verbose", "v", "info", fmt.Sprint("Set log level: debug, info, warning, error.\n"+
 		"debug: Usually only enabled when debugging. Very verbose logging.\n"+
 		"info: General operational entries about what's going on.\n"+
 		"error: Used for errors that should definitely be noted.\n"+
