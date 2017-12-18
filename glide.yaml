@@ -10,7 +10,7 @@ import:
   - tools/clientcmd
   - tools/remotecommand
   - tools/portforward
-  - plugin/pkg/client/auth/gcp
+  - plugin/pkg/client/auth
 - package: k8s.io/apimachinery
   version: 917740426ad66ff818da4809990480bcc0786a77
 - package: github.com/ksonnet/kubecfg

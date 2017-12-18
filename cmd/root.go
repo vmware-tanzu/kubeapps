@@ -40,8 +40,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	// Adding explicitely the GCP auth plugin
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	// Initialize all known client auth plugins.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 var (
