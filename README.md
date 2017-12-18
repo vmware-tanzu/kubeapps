@@ -13,7 +13,7 @@ Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [`kubectl`](
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
-The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). Assuming you are deploying a binary installer on Linux, here are the commands to run: 
+The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). Assuming you are deploying a binary installer on Linux, here are the commands to run:
 
 ```
 curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep linux | grep browser_download_url | cut -d '"' -f 4 | wget -i -
@@ -31,6 +31,16 @@ To remove Kubeapps from your cluster, simply run:
 
 ```
 kubeapps down
+```
+
+## Installation
+
+Get the latest release of Kubeapps Installer on the [Github releases](https://github.com/kubeapps/kubeapps/releases) page.
+
+Alternatively, when you have configured a proper Go environment (refer to the first two steps of [Build from Source](#build-from-source) section), the latest Kubeapps Installer can be get-able from source:
+
+```
+go get github.com/kubeapps/kubeapps
 ```
 
 ## Build from Source
