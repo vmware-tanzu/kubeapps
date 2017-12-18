@@ -1,5 +1,5 @@
-hash: ce0bc8fe23049bace6e4af0923d98ad414969d65154baf2c86a212b1d02af4f4
-updated: 2017-12-18T10:33:08.468133584Z
+hash: 56f623c22afacb7463c70e735d9431774f01a57c8fe9980628d6cae7b5d70471
+updated: 2017-12-18T17:22:51.363645336+07:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -35,7 +35,7 @@ imports:
 - name: github.com/emicklei/go-restful-swagger12
   version: dcef7f55730566d41eae5db10e7d6981829720f6
 - name: github.com/ghodss/yaml
-  version: 0ca9ea5df5451ffdf184b4428c902747c2c11cd7
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
   version: 32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a
 - name: github.com/go-openapi/analysis
@@ -176,7 +176,7 @@ imports:
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
-  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
+  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 - name: k8s.io/apimachinery
   version: 917740426ad66ff818da4809990480bcc0786a77
   subpackages:
@@ -231,51 +231,29 @@ imports:
   version: d92e8497f71b7b4e0494e5bd204b48d34bd6f254
   subpackages:
   - discovery
-  - discovery/fake
   - dynamic
   - kubernetes
-  - kubernetes/fake
   - kubernetes/scheme
   - kubernetes/typed/admissionregistration/v1alpha1
-  - kubernetes/typed/admissionregistration/v1alpha1/fake
   - kubernetes/typed/apps/v1beta1
-  - kubernetes/typed/apps/v1beta1/fake
   - kubernetes/typed/authentication/v1
-  - kubernetes/typed/authentication/v1/fake
   - kubernetes/typed/authentication/v1beta1
-  - kubernetes/typed/authentication/v1beta1/fake
   - kubernetes/typed/authorization/v1
-  - kubernetes/typed/authorization/v1/fake
   - kubernetes/typed/authorization/v1beta1
-  - kubernetes/typed/authorization/v1beta1/fake
   - kubernetes/typed/autoscaling/v1
-  - kubernetes/typed/autoscaling/v1/fake
   - kubernetes/typed/autoscaling/v2alpha1
-  - kubernetes/typed/autoscaling/v2alpha1/fake
   - kubernetes/typed/batch/v1
-  - kubernetes/typed/batch/v1/fake
   - kubernetes/typed/batch/v2alpha1
-  - kubernetes/typed/batch/v2alpha1/fake
   - kubernetes/typed/certificates/v1beta1
-  - kubernetes/typed/certificates/v1beta1/fake
   - kubernetes/typed/core/v1
-  - kubernetes/typed/core/v1/fake
   - kubernetes/typed/extensions/v1beta1
-  - kubernetes/typed/extensions/v1beta1/fake
   - kubernetes/typed/networking/v1
-  - kubernetes/typed/networking/v1/fake
   - kubernetes/typed/policy/v1beta1
-  - kubernetes/typed/policy/v1beta1/fake
   - kubernetes/typed/rbac/v1alpha1
-  - kubernetes/typed/rbac/v1alpha1/fake
   - kubernetes/typed/rbac/v1beta1
-  - kubernetes/typed/rbac/v1beta1/fake
   - kubernetes/typed/settings/v1alpha1
-  - kubernetes/typed/settings/v1alpha1/fake
   - kubernetes/typed/storage/v1
-  - kubernetes/typed/storage/v1/fake
   - kubernetes/typed/storage/v1beta1
-  - kubernetes/typed/storage/v1beta1/fake
   - pkg/api
   - pkg/api/v1
   - pkg/api/v1/ref
@@ -320,7 +298,6 @@ imports:
   - plugin/pkg/client/auth/oidc
   - rest
   - rest/watch
-  - testing
   - third_party/forked/golang/template
   - tools/auth
   - tools/clientcmd

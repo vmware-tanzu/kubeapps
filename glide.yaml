@@ -37,3 +37,4 @@ import:
   - unix
 - package: github.com/go-ini/ini
 - package: github.com/gosuri/uitable
+- package: github.com/ghodss/yaml
