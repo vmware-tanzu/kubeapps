@@ -157,7 +157,7 @@ List of components that kubeapps up installs:
 		}
 
 		if c.DryRun {
-			return dump(out, objs)
+			return dump(cmd.OutOrStdout(), out, objs)
 		}
 
 		err = c.Run(objs)
@@ -186,7 +186,7 @@ func init() {
 	upCmd.Flags().StringP("out", "o", "yaml", "Provides manifest format: yaml | json")
 }
 
-func dump(out string, objs []*unstructured.Unstructured) error {
+func dump(w io.Writer, out string, objs []*unstructured.Unstructured) error {
 	bObjs := [][]byte{}
 
 	switch out {
@@ -208,7 +208,7 @@ func dump(out string, objs []*unstructured.Unstructured) error {
 		// append ']'
 		b = append(b, ']')
 
-		fmt.Println(string(b[:]))
+		fmt.Fprintln(w, string(b[:]))
 
 	case "yaml":
 		for _, obj := range objs {
@@ -224,7 +224,7 @@ func dump(out string, objs []*unstructured.Unstructured) error {
 		}
 
 		b := bytes.Join(bObjs, []byte(fmt.Sprintf("---\n")))
-		fmt.Println(string(b[:]))
+		fmt.Fprintln(w, string(b[:]))
 	}
 
 	return nil

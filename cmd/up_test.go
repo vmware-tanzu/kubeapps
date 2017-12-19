@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes/fake"
@@ -193,4 +194,29 @@ func TestBuildSecret(t *testing.T) {
 	if data["foo"] != "bar" || data["bar"] != "baz" {
 		t.Errorf("wrong data")
 	}
+}
+
+func TestDump(t *testing.T) {
+	objs := []*unstructured.Unstructured{}
+	obj := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"foo": "bar",
+			"baz": map[string]string{
+				"1": "2",
+			},
+		},
+	}
+	objs = append(objs, obj)
+	var buf bytes.Buffer
+
+	err := dump(&buf, "yaml", objs)
+	if err != nil {
+		t.Error(err)
+	}
+	output := buf.String()
+	t.Log("output is", output)
+	if !strings.Contains(output, "foo") || !strings.Contains(output, "baz") {
+		t.Errorf("manifest output didn't mention both keys")
+	}
+
 }
