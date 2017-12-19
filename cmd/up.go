@@ -430,10 +430,10 @@ func allReady(c kubernetes.Interface) (float32, bool, error) {
 		return 0, false, err
 	}
 	for _, d := range deps.Items {
-		if d.Status.AvailableReplicas != *d.Spec.Replicas {
-			ready = false
-		}
 		if d.Name != Dashboard_API {
+			if d.Status.AvailableReplicas != *d.Spec.Replicas {
+				ready = false
+			}
 			current += d.Status.AvailableReplicas
 			desired += *d.Spec.Replicas
 		}
