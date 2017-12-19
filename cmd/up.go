@@ -176,6 +176,7 @@ List of components that kubeapps up installs:
 		tries := 0
 		writer := uilive.New()
 		writer.Start()
+		defer writer.Stop()
 		for {
 			p, ok, err := allReady(clientset)
 			if err != nil {
@@ -192,7 +193,6 @@ List of components that kubeapps up installs:
 			}
 		}
 		fmt.Fprintln(writer)
-		writer.Stop()
 
 		err = printOutput(cmd.OutOrStdout(), clientset)
 		if err != nil {
