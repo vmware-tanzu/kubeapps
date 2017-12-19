@@ -27,6 +27,7 @@ import (
 
 	"bytes"
 	"github.com/ghodss/yaml"
+	"github.com/gosuri/uilive"
 	"github.com/gosuri/uitable"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/ksonnet/kubecfg/utils"
@@ -48,7 +49,7 @@ const (
 	Kubeapps_NS    = "kubeapps"
 	MongoDB_Secret = "mongodb"
 	Dashboard_API  = "kubeapps-dashboard-api"
-	Max_Tries      = 60
+	Max_Tries      = 600
 )
 
 var MongoDB_SecretFields = []string{"mongodb-root-password"}
@@ -173,6 +174,8 @@ List of components that kubeapps up installs:
 		}
 		clientset, err := kubernetes.NewForConfig(config)
 		tries := 0
+		writer := uilive.New()
+		writer.Start()
 		for {
 			p, ok, err := allReady(clientset)
 			if err != nil {
@@ -181,13 +184,15 @@ List of components that kubeapps up installs:
 			if ok {
 				break
 			}
-			fmt.Printf("Kubeapps is starting up %v percentage...\n", int32(p))
-			time.Sleep(30 * time.Second)
+			fmt.Fprintf(writer, "Kubeapps is starting up... %v (%%)\n", int32(p))
+			time.Sleep(3 * time.Second)
 			tries++
 			if tries > Max_Tries {
 				return fmt.Errorf("Kubeapps is taking too long to start up. There might be a problem with your cluster. Suspending...")
 			}
 		}
+		fmt.Fprintln(writer)
+		writer.Stop()
 
 		err = printOutput(cmd.OutOrStdout(), clientset)
 		if err != nil {
