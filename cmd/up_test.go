@@ -236,7 +236,7 @@ func TestAllReady(t *testing.T) {
 		},
 	}
 	client := fake.NewSimpleClientset(dep)
-	if ok, err := allReady(client); err != nil {
+	if _, ok, err := allReady(client); err != nil {
 		t.Error(err)
 	} else if ok {
 		t.Errorf("deployment %s is not ready yet", dep.Name)
@@ -244,7 +244,7 @@ func TestAllReady(t *testing.T) {
 
 	dep.Status.AvailableReplicas = replicas
 	client = fake.NewSimpleClientset(dep)
-	if ok, err := allReady(client); err != nil {
+	if _, ok, err := allReady(client); err != nil {
 		t.Error(err)
 	} else if !ok {
 		t.Errorf("expected all deployments are ready, got %s not ready", dep.Name)

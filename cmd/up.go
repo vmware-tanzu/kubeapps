@@ -47,6 +47,8 @@ const (
 	GcTag          = "bitnami/kubeapps"
 	Kubeapps_NS    = "kubeapps"
 	MongoDB_Secret = "mongodb"
+	Dashboard_API  = "kubeapps-dashboard-api"
+	Max_Tries      = 60
 )
 
 var MongoDB_SecretFields = []string{"mongodb-root-password"}
@@ -170,14 +172,21 @@ List of components that kubeapps up installs:
 			return err
 		}
 		clientset, err := kubernetes.NewForConfig(config)
+		tries := 0
 		for {
-			if ok, err := allReady(clientset); err != nil {
+			p, ok, err := allReady(clientset)
+			if err != nil {
 				return err
-			} else if ok {
+			}
+			if ok {
 				break
 			}
-			fmt.Printf("Kubeapps is starting up...\n")
-			time.Sleep(5 * time.Second)
+			fmt.Printf("Kubeapps is starting up %v percentage...\n", int32(p))
+			time.Sleep(30 * time.Second)
+			tries++
+			if tries > Max_Tries {
+				return fmt.Errorf("Kubeapps is taking too long to start up. There might be a problem with your cluster. Suspending...")
+			}
 		}
 
 		err = printOutput(cmd.OutOrStdout(), clientset)
@@ -410,17 +419,24 @@ func printSvc(w io.Writer, c kubernetes.Interface) error {
 	return nil
 }
 
-func allReady(c kubernetes.Interface) (bool, error) {
+func allReady(c kubernetes.Interface) (float32, bool, error) {
+	ready := true
+	current := int32(0)
+	desired := int32(0)
 	deps, err := c.AppsV1beta1().Deployments(api.NamespaceAll).List(metav1.ListOptions{
 		LabelSelector: "created-by=kubeapps",
 	})
 	if err != nil {
-		return false, err
+		return 0, false, err
 	}
 	for _, d := range deps.Items {
 		if d.Status.AvailableReplicas != *d.Spec.Replicas {
-			return false, nil
+			ready = false
+		}
+		if d.Name != Dashboard_API {
+			current += d.Status.AvailableReplicas
+			desired += *d.Spec.Replicas
 		}
 	}
-	return true, nil
+	return (float32(current) / float32(desired)) * 100, ready, nil
 }
