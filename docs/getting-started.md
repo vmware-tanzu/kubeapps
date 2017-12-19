@@ -33,6 +33,15 @@ You should see something like this as Kubeapps is deployed:
 
 ![Kubeapps deployment](../img/kubeapps-up.png)
 
+If you would like to see what exactly `kubeapps up` is installing on your system, we provide `--dry-run` option to show you the Kubeapps manifest as below:
+
+```
+kubeapps up --dry-run -o yaml
+
+# prefer json format
+kubeapps up --dry-run -o json
+```
+
 To remove Kubeapps from your cluster, run this command:
 
 ```
