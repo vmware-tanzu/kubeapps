@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -188,6 +189,7 @@ func init() {
 
 func dump(w io.Writer, out string, objs []*unstructured.Unstructured) error {
 	bObjs := [][]byte{}
+	sort.Sort(utils.DependencyOrder(objs))
 
 	switch out {
 	case "json":
@@ -199,15 +201,7 @@ func dump(w io.Writer, out string, objs []*unstructured.Unstructured) error {
 			bObjs = append(bObjs, j)
 		}
 
-		b := bytes.Join(bObjs, []byte(fmt.Sprintf(",\n")))
-		// insert '[' to the front
-		b = append(b, 0)
-		copy(b[1:], b[0:])
-		b[0] = byte('[')
-
-		// append ']'
-		b = append(b, ']')
-
+		b := bytes.Join(bObjs, []byte(fmt.Sprintf("\n")))
 		fmt.Fprintln(w, string(b[:]))
 
 	case "yaml":
