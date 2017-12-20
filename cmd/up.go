@@ -184,7 +184,7 @@ List of components that kubeapps up installs:
 func init() {
 	RootCmd.AddCommand(upCmd)
 	upCmd.Flags().Bool("dry-run", false, "Show manifest to be submitted to the k8s cluster without deploying.")
-	upCmd.Flags().StringP("out", "o", "yaml", "Provides manifest format: yaml | json")
+	upCmd.Flags().StringP("out", "o", "yaml", "Specify manifest format: yaml | json. Note: used only with --dry-run")
 }
 
 func dump(w io.Writer, out string, objs []*unstructured.Unstructured) error {
