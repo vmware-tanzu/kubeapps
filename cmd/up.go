@@ -17,11 +17,15 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 	"strconv"
 	"strings"
 
+	"bytes"
+	"github.com/ghodss/yaml"
 	"github.com/gosuri/uitable"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/ksonnet/kubecfg/utils"
@@ -71,6 +75,11 @@ List of components that kubeapps up installs:
 			return fmt.Errorf("can't get --dry-run flag: %v", err)
 		}
 
+		out, err := cmd.Flags().GetString("out")
+		if err != nil {
+			return fmt.Errorf("can't get --out flag: %v", err)
+		}
+
 		c.GcTag = GcTag
 
 		c.ClientPool, c.Discovery, err = restClientPool()
@@ -100,7 +109,7 @@ List of components that kubeapps up installs:
 		// k8s on GKE
 		if ok, err := isGKE(c.Discovery); err != nil {
 			return err
-		} else if ok {
+		} else if ok && !c.DryRun {
 			gcloudPath, err := gke.SdkConfigPath()
 			if err != nil {
 				return fmt.Errorf("can't get sdk config path: %v", err)
@@ -148,6 +157,10 @@ List of components that kubeapps up installs:
 			objs = append(objs, prevsecret)
 		}
 
+		if c.DryRun {
+			return dump(cmd.OutOrStdout(), out, objs)
+		}
+
 		err = c.Run(objs)
 		if err != nil {
 			return fmt.Errorf("can't install kubeapps components: %v", err)
@@ -170,7 +183,45 @@ List of components that kubeapps up installs:
 
 func init() {
 	RootCmd.AddCommand(upCmd)
-	upCmd.Flags().Bool("dry-run", false, "Provides output to be submitted to the server.")
+	upCmd.Flags().Bool("dry-run", false, "Show manifest to be submitted to the k8s cluster without deploying.")
+	upCmd.Flags().StringP("out", "o", "yaml", "Specify manifest format: yaml | json. Note: used only with --dry-run")
+}
+
+func dump(w io.Writer, out string, objs []*unstructured.Unstructured) error {
+	bObjs := [][]byte{}
+	sort.Sort(utils.DependencyOrder(objs))
+
+	switch out {
+	case "json":
+		for _, obj := range objs {
+			j, err := json.MarshalIndent(obj, "", "    ")
+			if err != nil {
+				return fmt.Errorf("can't dump kubeapps manifest: %v", err)
+			}
+			bObjs = append(bObjs, j)
+		}
+
+		b := bytes.Join(bObjs, []byte(fmt.Sprintf("\n")))
+		fmt.Fprintln(w, string(b[:]))
+
+	case "yaml":
+		for _, obj := range objs {
+			j, err := obj.MarshalJSON()
+			if err != nil {
+				return fmt.Errorf("can't dump kubeapps manifest: %v", err)
+			}
+			y, err := yaml.JSONToYAML(j)
+			if err != nil {
+				return err
+			}
+			bObjs = append(bObjs, y)
+		}
+
+		b := bytes.Join(bObjs, []byte(fmt.Sprintf("---\n")))
+		fmt.Fprintln(w, string(b[:]))
+	}
+
+	return nil
 }
 
 func isGKE(disco discovery.DiscoveryInterface) (bool, error) {
