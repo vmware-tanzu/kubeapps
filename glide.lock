@@ -1,5 +1,5 @@
-hash: 4a7d4ee8f03ce08b87dc0de942e9867f8ed157f6fc16d246ee154f6258d0e835
-updated: 2017-12-19T15:02:52.567185532+07:00
+hash: 1390872b13588af78c3a2dfa3ed9da3dec8c359c397f2eb61112672a1d6bc126
+updated: 2017-12-21T16:12:28.875731849+07:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -63,6 +63,8 @@ imports:
   - proto
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+- name: github.com/gosuri/uilive
+  version: ac356e6e42cd31fcef8e6aec13ae9ed6fe87713e
 - name: github.com/gosuri/uitable
   version: 36ee7e946282a3fb1cfecd476ddc9b35d8847e42
   subpackages:
