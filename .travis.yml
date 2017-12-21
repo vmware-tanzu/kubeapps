@@ -27,7 +27,7 @@ addons:
   artifacts:
     debug: true
     paths:
-      - kubeapps-*
+      - $(ls kubeapps-* | tr "\n" ":")
     s3_region: "ap-southeast-1"
     target_paths: $TRAVIS_BUILD_NUMBER
     bucket: "kubeapps"
