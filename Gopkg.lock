@@ -41,13 +41,7 @@
   branch = "master"
   name = "github.com/kubeapps/common"
   packages = ["datastore","response"]
-  revision = "9d043239232b3e180f282fc5a2e668a1879f26f1"
-
-[[projects]]
-  name = "github.com/kubeapps/ratesvc"
-  packages = ["testutil"]
-  revision = "8f20aca330bc25b1cbd207da950ce1db4a228dab"
-  version = "v0.3.0"
+  revision = "de1ae6adf6ad0edcb581ae430b6a98fa7cca18c9"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -99,7 +93,7 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = ["assert","mock","require"]
+  packages = ["assert","mock"]
   revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
   version = "v1.1.4"
 
@@ -136,6 +130,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a6008071331a13f42f87f0c6469af69e4070bcef6ad5b1561179e750d5e555b8"
+  inputs-digest = "686cd67e790268beb0366f6ff4ee4cc972757c712449fcf986f53a9519908b3a"
   solver-name = "gps-cdcl"
   solver-version = 1
