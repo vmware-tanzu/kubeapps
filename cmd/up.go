@@ -17,6 +17,7 @@ limitations under the License.
 package cmd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,7 +25,6 @@ import (
 	"strconv"
 	"strings"
 
-	"bytes"
 	"github.com/ghodss/yaml"
 	"github.com/gosuri/uitable"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
@@ -54,8 +54,8 @@ var MongoDB_SecretFields = []string{"mongodb-root-password"}
 
 var upCmd = &cobra.Command{
 	Use:   "up FLAG",
-	Short: "Install KubeApps components.",
-	Long: `Install KubeApps components.
+	Short: "Install Kubeapps components.",
+	Long: `Install Kubeapps components.
 
 List of components that kubeapps up installs:
 
