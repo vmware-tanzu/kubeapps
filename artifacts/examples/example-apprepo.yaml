@@ -3,5 +3,5 @@ kind: AppRepository
 metadata:
   name: stable
 spec:
-  url: https://charts.bitnami.com
+  url: https://charts.bitnami.com/incubator
   type: helm

@@ -263,6 +263,12 @@ func (c *Controller) syncHandler(key string) error {
 	if errors.IsNotFound(err) {
 		glog.V(4).Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
 		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Create(newCronJob(apprepo))
+		if err != nil {
+			return err
+		}
+
+		// Trigger a manual Job for the initial sync
+		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
 	} else if shouldUpdate(cronjob, apprepo) {
 		glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
 		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Update(newCronJob(apprepo))
@@ -358,9 +364,6 @@ func shouldUpdate(cronjob *batchv1beta1.CronJob, apprepo *apprepov1alpha1.AppRep
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
 func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
-	labels := map[string]string{
-		"controller": apprepo.Name,
-	}
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cronJobName(apprepo),
@@ -374,33 +377,58 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 			},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			Schedule:          "* * * * *",
+			// TODO: make schedule customisable
+			Schedule:          "0 * * * *",
 			ConcurrencyPolicy: "Forbid",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: batchv1.JobSpec{
-					Template: corev1.PodTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{
-							Labels: labels,
-						},
-						Spec: corev1.PodSpec{
-							// If there's an issue, delay till the next cron
-							RestartPolicy: "Never",
-							Containers: []corev1.Container{
-								{
-									Name:    "sync",
-									Image:   "kubeapps/chart-repo-sync:latest",
-									Command: []string{"/chart-repo-sync"},
-									Args:    apprepoSyncJobArgs(apprepo),
-									Env: []corev1.EnvVar{
-										{
-											Name: "MONGO_URL",
-											ValueFrom: &corev1.EnvVarSource{
-												SecretKeyRef: &corev1.SecretKeySelector{
-													LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"},
-													Key:                  "mongodb-root-password",
-												},
-											},
-										},
+				Spec: jobSpec(apprepo),
+			},
+		},
+	}
+}
+
+// newJob triggers a job for the AppRepository resource. It also sets the
+// appropriate OwnerReferences on the resource
+func newJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: cronJobName(apprepo) + "-",
+			Namespace:    apprepo.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				*metav1.NewControllerRef(apprepo, schema.GroupVersionKind{
+					Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+					Version: apprepov1alpha1.SchemeGroupVersion.Version,
+					Kind:    "AppRepository",
+				}),
+			},
+		},
+		Spec: jobSpec(apprepo),
+	}
+}
+
+// jobSpec returns a batchv1.JobSpec for running the chart-repo-sync job
+func jobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
+	return batchv1.JobSpec{
+		Template: corev1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: jobLabels(apprepo),
+			},
+			Spec: corev1.PodSpec{
+				// If there's an issue, delay till the next cron
+				RestartPolicy: "Never",
+				Containers: []corev1.Container{
+					{
+						Name:    "sync",
+						Image:   "kubeapps/chart-repo-sync:latest",
+						Command: []string{"/chart-repo-sync"},
+						Args:    apprepoSyncJobArgs(apprepo),
+						Env: []corev1.EnvVar{
+							{
+								Name: "MONGO_PASSWORD",
+								ValueFrom: &corev1.EnvVarSource{
+									SecretKeyRef: &corev1.SecretKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"},
+										Key:                  "mongodb-root-password",
 									},
 								},
 							},
@@ -409,6 +437,13 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 				},
 			},
 		},
+	}
+}
+
+// jobLabels returns the labels for the job and cronjob resources
+func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
+	return map[string]string{
+		"apprepositories.kubeapps.com/repo-name": apprepo.Name,
 	}
 }
 
