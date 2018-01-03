@@ -118,10 +118,9 @@ func TestPrintOutput(t *testing.T) {
 	}
 
 	client := fake.NewSimpleClientset(po1, po2, svc1, svc2, sts1, sts2, dep1, dep2)
-	ns := []string{"myns"}
 	var buf bytes.Buffer
 
-	err := printPod(&buf, client, ns)
+	err := printPod(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -133,7 +132,7 @@ func TestPrintOutput(t *testing.T) {
 		t.Errorf("pod %s shouldn't be listed", po2.Name)
 	}
 
-	err = printSvc(&buf, client, ns)
+	err = printSvc(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -145,7 +144,7 @@ func TestPrintOutput(t *testing.T) {
 		t.Errorf("service %s shouldn't be listed", po2.Name)
 	}
 
-	err = printDeployment(&buf, client, ns)
+	err = printDeployment(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -157,7 +156,7 @@ func TestPrintOutput(t *testing.T) {
 		t.Errorf("deployment %s shouldn't be listed", po2.Name)
 	}
 
-	err = printStS(&buf, client, ns)
+	err = printStS(&buf, client)
 	if err != nil {
 		t.Error(err)
 	}
@@ -195,7 +194,6 @@ func TestBuildSecret(t *testing.T) {
 		t.Errorf("wrong data")
 	}
 }
-
 func TestDump(t *testing.T) {
 	objs := []*unstructured.Unstructured{}
 	obj := &unstructured.Unstructured{
@@ -218,5 +216,37 @@ func TestDump(t *testing.T) {
 	if !strings.Contains(output, "foo") || !strings.Contains(output, "baz") {
 		t.Errorf("manifest output didn't mention both keys")
 	}
+}
 
+func TestAllReady(t *testing.T) {
+	replicas := int32(1)
+	dep := &v1beta1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "foo",
+			Namespace: "myns",
+			Labels: map[string]string{
+				"created-by": "kubeapps",
+			},
+		},
+		Spec: v1beta1.DeploymentSpec{
+			Replicas: &replicas,
+		},
+		Status: v1beta1.DeploymentStatus{
+			AvailableReplicas: 0,
+		},
+	}
+	client := fake.NewSimpleClientset(dep)
+	if _, ok, err := allReady(client); err != nil {
+		t.Error(err)
+	} else if ok {
+		t.Errorf("deployment %s is not ready yet", dep.Name)
+	}
+
+	dep.Status.AvailableReplicas = replicas
+	client = fake.NewSimpleClientset(dep)
+	if _, ok, err := allReady(client); err != nil {
+		t.Error(err)
+	} else if !ok {
+		t.Errorf("expected all deployments are ready, got %s not ready", dep.Name)
+	}
 }
