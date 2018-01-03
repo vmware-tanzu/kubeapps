@@ -57,8 +57,8 @@ func main() {
 		glog.Fatalf("Error building apprepo clientset: %s", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, 0)
-	apprepoInformerFactory := informers.NewSharedInformerFactory(apprepoClient, 0)
+	kubeInformerFactory := kubeinformers.NewFilteredSharedInformerFactory(kubeClient, 0, "kubeapps", nil)
+	apprepoInformerFactory := informers.NewFilteredSharedInformerFactory(apprepoClient, 0, "kubeapps", nil)
 
 	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory)
 
