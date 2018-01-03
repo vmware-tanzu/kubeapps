@@ -29,8 +29,8 @@ import (
 
 var downCmd = &cobra.Command{
 	Use:   "down FLAG",
-	Short: "Uninstall KubeApps components.",
-	Long:  `Uninstall KubeApps components.`,
+	Short: "Uninstall Kubeapps components.",
+	Long:  `Uninstall Kubeapps components.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c := kubecfg.DeleteCmd{
 			DefaultNamespace: "default",

@@ -51,8 +51,8 @@ type dashboardCmdOptions struct {
 
 var dashboardCmd = &cobra.Command{
 	Use:   "dashboard FLAG",
-	Short: "Opens the KubeApps Dashboard",
-	Long:  "Opens the KubeApps Dashboard",
+	Short: "Opens the Kubeapps Dashboard",
+	Long:  "Opens the Kubeapps Dashboard",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		config, err := buildOutOfClusterConfig()
 		if err != nil {
