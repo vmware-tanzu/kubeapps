@@ -44,7 +44,12 @@ func (c DeleteCmd) Run(apiObjects []*unstructured.Unstructured) error {
 		return err
 	}
 
-	sort.Sort(sort.Reverse(utils.DependencyOrder(apiObjects)))
+	log.Infof("Fetching schemas for %d resources", len(apiObjects))
+	depOrder, err := utils.DependencyOrder(c.Discovery, apiObjects)
+	if err != nil {
+		return err
+	}
+	sort.Sort(sort.Reverse(depOrder))
 
 	deleteOpts := metav1.DeleteOptions{}
 	if version.Compare(1, 6) < 0 {

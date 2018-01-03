@@ -102,6 +102,28 @@ func (c DiffCmd) Run(apiObjects []*unstructured.Unstructured, out io.Writer) err
 	return nil
 }
 
+// See also feature request for golang reflect pkg at
+func isEmptyValue(i interface{}) bool {
+	switch v := i.(type) {
+	case []interface{}:
+		return len(v) == 0
+	case []string:
+		return len(v) == 0
+	case map[string]interface{}:
+		return len(v) == 0
+	case bool:
+		return !v
+	case float64:
+		return v == 0
+	case string:
+		return v == ""
+	case nil:
+		return true
+	default:
+		panic(fmt.Sprintf("Found unexpected type %T in json unmarshal (value=%v)", i, i))
+	}
+}
+
 func removeFields(config, live interface{}) interface{} {
 	switch c := config.(type) {
 	case map[string]interface{}:
@@ -118,6 +140,11 @@ func removeMapFields(config, live map[string]interface{}) map[string]interface{}
 	for k, v1 := range config {
 		v2, ok := live[k]
 		if !ok {
+			// Copy empty value from config, as API won't return them,
+			// see https://github.com/ksonnet/kubecfg/issues/179
+			if isEmptyValue(v1) {
+				result[k] = v1
+			}
 			continue
 		}
 		result[k] = removeFields(v1, v2)

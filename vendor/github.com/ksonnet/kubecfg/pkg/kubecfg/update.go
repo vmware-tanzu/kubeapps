@@ -56,7 +56,12 @@ func (c UpdateCmd) Run(apiObjects []*unstructured.Unstructured) error {
 		dryRunText = " (dry-run)"
 	}
 
-	sort.Sort(utils.DependencyOrder(apiObjects))
+	log.Infof("Fetching schemas for %d resources", len(apiObjects))
+	depOrder, err := utils.DependencyOrder(c.Discovery, apiObjects)
+	if err != nil {
+		return err
+	}
+	sort.Sort(depOrder)
 
 	seenUids := sets.NewString()
 
