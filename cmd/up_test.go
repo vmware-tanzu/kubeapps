@@ -209,14 +209,9 @@ func TestDump(t *testing.T) {
 	objs = append(objs, obj)
 	var buf bytes.Buffer
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer server.Close()
-	client := discovery.NewDiscoveryClientForConfigOrDie(&restclient.Config{Host: server.URL})
+	client := fake.NewSimpleClientset()
 
-	err := dump(&buf, "yaml", client, objs)
+	err := dump(&buf, "yaml", client.Discovery(), objs)
 	if err != nil {
 		t.Error(err)
 	}
