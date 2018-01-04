@@ -213,6 +213,9 @@ func chartVersionAttributes(cid string, cv models.ChartVersion) models.ChartVers
 func chartAttributes(c models.Chart) models.Chart {
 	if c.RawIcon != nil {
 		c.Icon = "/v1/assets/" + c.ID + "/logo-160x160-fit.png"
+	} else {
+		// If the icon wasn't processed, it is either not set or invalid
+		c.Icon = ""
 	}
 	return c
 }
