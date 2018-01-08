@@ -30,6 +30,7 @@ sources we'll need:
 ```
 go get -d github.com/kubeapps/manifest
 go get -d github.com/kubeapps/kubeapps
+go get -d github.com/kubeapps/dashboard
 ```
 
 Now checkout the changes from the PR above:
@@ -60,6 +61,16 @@ We will use Telepresence to proxy requests to the Kubeapps Dashboard running in
 your cluster to your local development server. Run the following commands:
 
 ```
+cd ../dashboard
+git checkout 2.0
 yarn # install any new packages
 telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-dashboard-ui --expose 3000:8080 --run yarn run start
+```
+
+Now, to access the React app, simply run `kubeapps dashboard` as you usually
+would:
+
+```
+cd ../kubeapps
+./kubeapps dashboard
 ```
