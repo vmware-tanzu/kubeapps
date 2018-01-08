@@ -1,8 +1,0 @@
-<section class="chart-list">
-  <div *ngIf="apiNotReady" class="chart-list__empty">
-    <app-loader [loading]="apiNotReady"></app-loader>
-    <h3>The Dashboard API is still starting up. This may take a few minutes...</h3>
-  </div>
-  <h3 *ngIf="!apiNotReady && (!charts || !charts.length)" class="chart-list__empty">There are no charts</h3>
-  <app-chart-item *ngFor="let chart of charts" [chart]=chart [showDescription]=false></app-chart-item>
-</section>

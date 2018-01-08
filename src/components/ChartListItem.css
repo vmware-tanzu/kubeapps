@@ -1,0 +1,7 @@
+.ChartListItem {
+  width: 250px;
+}
+
+.ChartListItem__icon {
+  max-height: 64px;
+}
