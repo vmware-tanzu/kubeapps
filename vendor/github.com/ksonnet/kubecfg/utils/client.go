@@ -172,15 +172,15 @@ func ClientForResource(pool dynamic.ClientPool, disco discovery.DiscoveryInterfa
 	return rc, nil
 }
 
-func serverResourceForGroupVersionKind(disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind) (*metav1.APIResource, error) {
+func serverResourceForGroupVersionKind(disco discovery.ServerResourcesInterface, gvk schema.GroupVersionKind) (*metav1.APIResource, error) {
 	resources, err := disco.ServerResourcesForGroupVersion(gvk.GroupVersion().String())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to fetch resource description for %s: %v", gvk.GroupVersion(), err)
 	}
 
 	for _, r := range resources.APIResources {
 		if r.Kind == gvk.Kind {
-			log.Debugf("Chose API '%s' for %s", r.Name, gvk)
+			log.Debugf("Using resource '%s' for %s", r.Name, gvk)
 			return &r, nil
 		}
 	}

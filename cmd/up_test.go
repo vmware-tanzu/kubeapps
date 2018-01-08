@@ -209,7 +209,9 @@ func TestDump(t *testing.T) {
 	objs = append(objs, obj)
 	var buf bytes.Buffer
 
-	err := dump(&buf, "yaml", objs)
+	client := fake.NewSimpleClientset()
+
+	err := dump(&buf, "yaml", client.Discovery(), objs)
 	if err != nil {
 		t.Error(err)
 	}

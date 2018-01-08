@@ -14,7 +14,7 @@ import:
 - package: k8s.io/apimachinery
   version: 917740426ad66ff818da4809990480bcc0786a77
 - package: github.com/ksonnet/kubecfg
-  version: 1d656906cf6b19e94a02619f2f7a086ca06ea48e
+  version: 0870136f9a627a7e4609839183a7155ff5ecba5d
   subpackages:
   - utils
   - metadata

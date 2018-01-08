@@ -158,7 +158,7 @@ List of components that kubeapps up installs:
 		}
 
 		if c.DryRun {
-			return dump(cmd.OutOrStdout(), out, objs)
+			return dump(cmd.OutOrStdout(), out, c.Discovery, objs)
 		}
 
 		err = c.Run(objs)
@@ -187,9 +187,13 @@ func init() {
 	upCmd.Flags().StringP("out", "o", "yaml", "Specify manifest format: yaml | json. Note: used only with --dry-run")
 }
 
-func dump(w io.Writer, out string, objs []*unstructured.Unstructured) error {
+func dump(w io.Writer, out string, disco discovery.DiscoveryInterface, objs []*unstructured.Unstructured) error {
 	bObjs := [][]byte{}
-	sort.Sort(utils.DependencyOrder(objs))
+	toSort, err := utils.DependencyOrder(disco, objs)
+	if err != nil {
+		return fmt.Errorf("can't dump kubeapps manifest: %v", err)
+	}
+	sort.Sort(toSort)
 
 	switch out {
 	case "json":

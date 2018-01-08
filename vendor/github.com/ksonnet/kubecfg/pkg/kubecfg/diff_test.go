@@ -76,6 +76,11 @@ func TestRemoveMapFields(t *testing.T) {
 }
 
 func TestRemoveFields(t *testing.T) {
+	emptyVal := map[string]interface{}{
+		"args":    map[string]interface{}{},
+		"volumes": []string{},
+		"stdin":   false,
+	}
 	for _, tc := range []struct {
 		config, live, expected interface{}
 	}{
@@ -98,6 +103,13 @@ func TestRemoveFields(t *testing.T) {
 			config:   "a",
 			live:     "b",
 			expected: "b",
+		},
+		// Check we handle empty configs by copying them as if were live
+		// (API won't return them)
+		{
+			config:   emptyVal,
+			live:     map[string]interface{}{},
+			expected: emptyVal,
 		},
 
 		// Check we can handle combinations.
