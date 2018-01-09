@@ -5,9 +5,18 @@ import * as actions from '../actions';
 import ChartList from '../components/ChartList';
 import { StoreState } from '../store/types';
 
-function mapStateToProps({ charts }: StoreState) {
+interface RouteProps {
+  match: {
+    params: {
+      repo: string;
+    }
+  };
+}
+
+function mapStateToProps({ charts }: StoreState, { match: { params } }: RouteProps) {
   return {
-    charts
+    charts,
+    repo: params.repo
   };
 }
 

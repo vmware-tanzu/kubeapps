@@ -1,18 +1,19 @@
 import * as React from 'react';
-import { Dispatch } from 'redux';
 
 import './ChartList.css';
-import { ChartState, StoreState } from '../store/types';
+import { ChartState, AsyncAction } from '../store/types';
 import ChartListItem from './ChartListItem';
 
 interface Props {
   charts: ChartState;
-  fetchCharts: () => (dispatch: Dispatch<StoreState>) => Promise<{}>;
+  repo: string;
+  fetchCharts: (repo: string) => AsyncAction;
 }
 
 class ChartList extends React.Component<Props> {
   componentDidMount() {
-    this.props.fetchCharts();
+    const { repo, fetchCharts } = this.props;
+    fetchCharts(repo);
   }
 
   render() {

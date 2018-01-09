@@ -10,7 +10,8 @@ import Layout from '../components/Layout';
 import reducer from '../reducers/index';
 import { StoreState } from '../store/types';
 import Dashboard from '../components/Dashboard';
-import Charts from '../containers/ChartsContainer';
+import ChartList from '../containers/ChartListContainer';
+import ChartView from '../containers/ChartViewContainer';
 
 const history = createHistory();
 const store = createStore<StoreState>(
@@ -20,7 +21,6 @@ const store = createStore<StoreState>(
   }),
   applyMiddleware(thunkMiddleware, routerMiddleware(history)));
 
-
 class Root extends React.Component {
   render() {
     return (
@@ -29,7 +29,9 @@ class Root extends React.Component {
           <Layout>
             <section className="routes">
               <Route exact={true} path="/" component={Dashboard} />
-              <Route path="/charts" component={Charts} />
+              <Route exact={true} path="/charts" component={ChartList} />
+              <Route exact={true} path="/charts/:repo" component={ChartList} />
+              <Route exact={true} path="/charts/:repo/:id" component={ChartView} />
             </section>
           </Layout>
         </ConnectedRouter>
