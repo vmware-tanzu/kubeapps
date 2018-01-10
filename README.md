@@ -19,33 +19,24 @@ Guide](docs/react-developer-guide.md) for developer documentation.
 
 ### Setting up Kubeapps with additional services
 
-In order for the new Dashboard to function correctly, we need to install an
-in-development version of Kubeapps with some new services. These are currently
-being developed in a pull request in the [manifests
-repository](https://github.com/kubeapps/manifest/pull/36).
+In order for the new Dashboard to function correctly, we need to install a
+version of Kubeapps with some new services. This is currently being developed
+out of the `0.3.0` branch in the Kubeapps repository.
 
 If you haven't already developed with Kubeapps before, first checkout the
 sources we'll need:
 
 ```
-go get -d github.com/kubeapps/manifest
 go get -d github.com/kubeapps/kubeapps
 go get -d github.com/kubeapps/dashboard
 ```
 
-Now checkout the changes from the PR above:
+Now checkout the `0.3.0` branch of the Kubeapps repository and build the
+`kubeapps` binary:
 
 ```
-cd $GOPATH/src/github.com/kubeapps/manifest
-git checkout -b prydonius-apprepos master
-git pull https://github.com/prydonius/manifest.git apprepos
-```
-
-Now build the `kubeapps` binary with these changes:
-
-```
-cd ../kubeapps
-./scripts/sync-manifests.sh
+cd $GOPATH/src/github.com/kubeapps/kubeapps
+git checkout 0.3.0
 make
 ```
 
