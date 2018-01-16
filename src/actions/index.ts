@@ -35,5 +35,31 @@ export function getChart(id: string) {
   };
 }
 
+export function deployChart(chart: Chart, releaseName: string) {
+  return (dispatch: Dispatch<StoreState>): Promise<{}> => {
+    return fetch(`/api/kube/apis/helm.bitnami.com/v1/namespaces/default/helmreleases`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiVersion: 'helm.bitnami.com/v1',
+        kind: 'HelmRelease',
+        metadata: {
+          name: releaseName,
+        },
+        spec: {
+          repoUrl: chart.attributes.repo.url,
+          chartName: chart.attributes.name,
+          version: chart.relationships.latestChartVersion.data.version,
+        }
+      }),
+    }).then(response => {
+      if (response.status !== 201) {
+        throw new Error('error deploying chart');
+      }
+      return response.json();
+    });
+  };
+}
+
 const allActions = [requestCharts, receiveCharts, selectChart].map(getReturnOfExpression);
 export type RootAction = typeof allActions[number];

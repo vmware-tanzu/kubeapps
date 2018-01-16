@@ -1,9 +1,13 @@
 import * as React from 'react';
-import { AsyncAction, Chart, ChartVersion } from '../store/types';
+import { Chart, ChartVersion } from '../store/types';
+import ChartDeployButton from './ChartDeployButton';
+import { RouterAction } from 'react-router-redux';
 
 interface Props {
   chartID: string;
-  getChart: (id: string) => AsyncAction;
+  getChart: (id: string) => Promise<{}>;
+  deployChart: (chart: Chart, releaseName: string) => Promise<{}>;
+  push: (location: string) => RouterAction;
   isFetching: boolean;
   chart: Chart;
   version: ChartVersion;
@@ -16,11 +20,21 @@ class ChartView extends React.Component<Props> {
   }
 
   render() {
-    const { isFetching, chart } = this.props;
+    const { isFetching, chart, deployChart, push } = this.props;
     if (isFetching || !chart) {
       return <div>Loading</div>;
     }
-    return <div>{chart.id}</div>;
+    return (
+      <section className="ChartListView">
+        <header className="ChartListView__header">
+          <h1>{chart.id}</h1>
+          <hr />
+        </header>
+        <main className="text-c">
+          <ChartDeployButton push={push} chart={chart} deployChart={deployChart} />
+        </main>
+      </section>
+    );
   }
 }
 
