@@ -23,12 +23,25 @@
     "start": "BROWSER=none react-scripts-ts start",
     "build": "react-scripts-ts build",
     "test": "react-scripts-ts test --env=jsdom",
-    "eject": "react-scripts-ts eject"
+    "eject": "react-scripts-ts eject",
+    "tslint-check": "tslint-config-prettier-check ./tslint.json",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": ["tslint --fix", "prettier --write", "git add"],
+    "*.{js,json,css,md}": ["prettier --write", "git add"]
   },
   "devDependencies": {
     "@types/jest": "^22.0.0",
     "@types/node": "^8.5.5",
     "@types/react": "^16.0.34",
-    "@types/react-dom": "^16.0.3"
+    "@types/react-dom": "^16.0.3",
+    "husky": "^0.14.3",
+    "lint-staged": "^6.0.0",
+    "prettier": "^1.10.2",
+    "tslint": "^5.9.1",
+    "tslint-config-prettier": "^1.6.0",
+    "tslint-react": "^3.4.0",
+    "typescript": "^2.6.2"
   }
 }
