@@ -35,9 +35,9 @@ export function getChart(id: string) {
   };
 }
 
-export function deployChart(chart: Chart, releaseName: string) {
+export function deployChart(chart: Chart, releaseName: string, namespace: string) {
   return (dispatch: Dispatch<StoreState>): Promise<{}> => {
-    return fetch(`/api/kube/apis/helm.bitnami.com/v1/namespaces/default/helmreleases`, {
+    return fetch(`/api/kube/apis/helm.bitnami.com/v1/namespaces/${namespace}/helmreleases`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -52,12 +52,13 @@ export function deployChart(chart: Chart, releaseName: string) {
           version: chart.relationships.latestChartVersion.data.version,
         }
       }),
-    }).then(response => {
-      if (response.status !== 201) {
-        throw new Error('error deploying chart');
-      }
-      return response.json();
-    });
+    }).then(response => response.json())
+      .then(json => {
+        if (json.status === 'Failure') {
+          throw new Error(json.message);
+        }
+        return json;
+      });
   };
 }
 

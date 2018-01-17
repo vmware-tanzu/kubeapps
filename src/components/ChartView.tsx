@@ -6,7 +6,7 @@ import { RouterAction } from 'react-router-redux';
 interface Props {
   chartID: string;
   getChart: (id: string) => Promise<{}>;
-  deployChart: (chart: Chart, releaseName: string) => Promise<{}>;
+  deployChart: (chart: Chart, releaseName: string, namespace: string) => Promise<{}>;
   push: (location: string) => RouterAction;
   isFetching: boolean;
   chart: Chart;

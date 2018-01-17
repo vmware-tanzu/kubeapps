@@ -5,7 +5,7 @@ import * as Modal from 'react-modal';
 
 interface Props {
   chart: Chart;
-  deployChart: (chart: Chart, releaseName: string) => Promise<{}>;
+  deployChart: (chart: Chart, releaseName: string, namespace: string) => Promise<{}>;
   push: (location: string) => RouterAction;
 }
 
@@ -15,6 +15,7 @@ interface State {
   // deployment options
   releaseName: string;
   namespace: string;
+  error: string | null;
 }
 
 class ChartDeployButton extends React.Component<Props> {
@@ -22,7 +23,8 @@ class ChartDeployButton extends React.Component<Props> {
     isDeploying: false,
     modalIsOpen: false,
     releaseName: '',
-    namespace: 'default'
+    namespace: 'default',
+    error: null,
   };
 
   render() {
@@ -43,6 +45,10 @@ class ChartDeployButton extends React.Component<Props> {
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
+          {this.state.error && 
+          <div className="container padding-v-bigger bg-action">
+            {this.state.error}
+          </div>}
           <form onSubmit={this.handleDeploy}>
             <div>
               <label htmlFor="releaseName">Name</label>
@@ -86,16 +92,11 @@ class ChartDeployButton extends React.Component<Props> {
   handleDeploy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { chart, deployChart, push } = this.props;
-    this.setState({
-      isDeploying: true,
-    });
-    deployChart(chart, this.state.releaseName)
-      .then(() => push(`/apps/${this.state.releaseName}`))
-      .catch(err => {
-      this.setState({
-        isDeploying: false,
-      });
-    });
+    this.setState({isDeploying: true});
+    const { releaseName, namespace } = this.state;
+    deployChart(chart, releaseName, namespace)
+      .then(() => push(`/apps/${releaseName}`))
+      .catch(err => this.setState({isDeploying: false, error: err.toString()}));
   }
 
   handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {

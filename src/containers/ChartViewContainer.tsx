@@ -27,7 +27,8 @@ function mapStateToProps({ charts }: StoreState, { match: { params } }: RoutePro
 function mapDispatchToProps(dispatch: Dispatch<StoreState>) {
   return {
     getChart: (id: string) => dispatch(actions.getChart(id)),
-    deployChart: (chart: Chart, releaseName: string) => dispatch(actions.deployChart(chart, releaseName)),
+    deployChart: (chart: Chart, releaseName: string, namespace: string) =>
+      dispatch(actions.deployChart(chart, releaseName, namespace)),
     push: (location: string) => dispatch(push(location)),
   };
 }
