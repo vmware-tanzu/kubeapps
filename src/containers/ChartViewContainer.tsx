@@ -1,9 +1,10 @@
 import { connect } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
+import { Dispatch } from 'redux';
 
 import * as actions from '../actions';
 import ChartView from '../components/ChartView';
-import { StoreState } from '../store/types';
+import { Chart, StoreState } from '../store/types';
+import { push } from 'react-router-redux';
 
 interface RouteProps {
   match: {
@@ -24,11 +25,12 @@ function mapStateToProps({ charts }: StoreState, { match: { params } }: RoutePro
 }
 
 function mapDispatchToProps(dispatch: Dispatch<StoreState>) {
-  return bindActionCreators(
-    {
-      getChart: actions.getChart
-    },
-    dispatch);
+  return {
+    getChart: (id: string) => dispatch(actions.getChart(id)),
+    deployChart: (chart: Chart, releaseName: string, namespace: string) =>
+      dispatch(actions.deployChart(chart, releaseName, namespace)),
+    push: (location: string) => dispatch(push(location)),
+  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ChartView);

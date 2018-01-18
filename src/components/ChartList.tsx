@@ -1,13 +1,13 @@
 import * as React from 'react';
 
 import './ChartList.css';
-import { ChartState, AsyncAction } from '../store/types';
+import { ChartState } from '../store/types';
 import ChartListItem from './ChartListItem';
 
 interface Props {
   charts: ChartState;
   repo: string;
-  fetchCharts: (repo: string) => AsyncAction;
+  fetchCharts: (repo: string) => Promise<{}>;
 }
 
 class ChartList extends React.Component<Props> {

@@ -1,5 +1,5 @@
 import { connect } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
+import { Dispatch } from 'redux';
 
 import * as actions from '../actions';
 import ChartList from '../components/ChartList';
@@ -21,11 +21,9 @@ function mapStateToProps({ charts }: StoreState, { match: { params } }: RoutePro
 }
 
 function mapDispatchToProps(dispatch: Dispatch<StoreState>) {
-  return bindActionCreators(
-    {
-      fetchCharts: actions.fetchCharts
-    },
-    dispatch);
+  return {
+    fetchCharts: (repo: string) => dispatch(actions.fetchCharts(repo))
+  };
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ChartList);

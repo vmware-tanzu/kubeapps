@@ -1,8 +1,6 @@
-import { Dispatch } from 'redux';
-
 export interface ChartVersion {
   id: string;
-  attributes: ChartAttributes;
+  attributes: ChartVersionAttributes;
   relationships: {
     chart: {
       data: ChartAttributes;
@@ -32,7 +30,9 @@ export interface ChartAttributes {
   icon: string;
   keywords: string[];
   maintainers: {}[];
-  repo: {};
+  repo: {
+    url: string;
+  };
   sources: string[];
 }
 
@@ -46,5 +46,3 @@ export interface ChartState {
 export interface StoreState {
   charts: ChartState;
 }
-
-export type AsyncAction = (dispatch: Dispatch<StoreState>) => Promise<{}>;

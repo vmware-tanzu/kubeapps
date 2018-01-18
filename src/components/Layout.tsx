@@ -15,7 +15,7 @@ class Layout extends React.Component {
               <div className="col-1">
                 <Sidebar />
               </div>
-              <div className="col-10">
+              <div className="col-11">
                 {this.props.children}
               </div>
             </div>
