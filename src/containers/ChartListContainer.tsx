@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 
-import * as actions from '../actions';
+import actions from '../actions';
 import ChartList from '../components/ChartList';
 import { StoreState } from '../store/types';
 
@@ -22,7 +22,7 @@ function mapStateToProps({ charts }: StoreState, { match: { params } }: RoutePro
 
 function mapDispatchToProps(dispatch: Dispatch<StoreState>) {
   return {
-    fetchCharts: (repo: string) => dispatch(actions.fetchCharts(repo))
+    fetchCharts: (repo: string) => dispatch(actions.charts.fetchCharts(repo))
   };
 }
 
