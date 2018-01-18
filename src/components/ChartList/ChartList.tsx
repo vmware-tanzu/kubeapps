@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import './ChartList.css';
-import { ChartState } from '../store/types';
+import { ChartState } from '../../shared/types';
 import ChartListItem from './ChartListItem';
 
 interface Props {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Chart, ChartVersion } from '../store/types';
+import { Chart, ChartVersion } from '../../shared/types';
 import ChartDeployButton from './ChartDeployButton';
 import { RouterAction } from 'react-router-redux';
 

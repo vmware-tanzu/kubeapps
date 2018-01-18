@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Chart } from '../store/types';
+import { Chart } from '../../shared/types';
 import { RouterAction } from 'react-router-redux';
 import * as Modal from 'react-modal';
 
@@ -45,10 +45,10 @@ class ChartDeployButton extends React.Component<Props> {
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.state.error && 
-          <div className="container padding-v-bigger bg-action">
-            {this.state.error}
-          </div>}
+          {this.state.error &&
+            <div className="container padding-v-bigger bg-action">
+              {this.state.error}
+            </div>}
           <form onSubmit={this.handleDeploy}>
             <div>
               <label htmlFor="releaseName">Name</label>
@@ -92,11 +92,11 @@ class ChartDeployButton extends React.Component<Props> {
   handleDeploy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { chart, deployChart, push } = this.props;
-    this.setState({isDeploying: true});
+    this.setState({ isDeploying: true });
     const { releaseName, namespace } = this.state;
     deployChart(chart, releaseName, namespace)
       .then(() => push(`/apps/${releaseName}`))
-      .catch(err => this.setState({isDeploying: false, error: err.toString()}));
+      .catch(err => this.setState({ isDeploying: false, error: err.toString() }));
   }
 
   handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
