@@ -2,6 +2,7 @@ import { Dispatch } from 'redux';
 import { createAction, getReturnOfExpression } from 'typesafe-actions';
 
 import { StoreState, Chart } from '../store/types';
+import * as url from '../shared/url';
 
 export const requestCharts = createAction('REQUEST_CHARTS');
 export const receiveCharts = createAction('RECEIVE_CHARTS', (charts: Chart[]) => ({
@@ -19,11 +20,7 @@ export type ChartsAction = typeof allActions[number];
 export function fetchCharts(repo: string) {
   return (dispatch: Dispatch<StoreState>): Promise<{}> => {
     dispatch(requestCharts());
-    let url = '/api/chartsvc/v1/charts';
-    if (repo) {
-      url = `${url}/${repo}`;
-    }
-    return fetch(url)
+    return fetch(url.api.charts.list(repo))
       .then(response => response.json())
       .then(json => dispatch(receiveCharts(json.data)));
   };
@@ -32,7 +29,7 @@ export function fetchCharts(repo: string) {
 export function getChart(id: string) {
   return (dispatch: Dispatch<StoreState>): Promise<{}> => {
     dispatch(requestCharts());
-    return fetch(`/api/chartsvc/v1/charts/${id}`)
+    return fetch(url.api.charts.get(id))
       .then(response => response.json())
       .then(json => dispatch(selectChart(json.data)));
   };
@@ -40,7 +37,7 @@ export function getChart(id: string) {
 
 export function deployChart(chart: Chart, releaseName: string, namespace: string) {
   return (dispatch: Dispatch<StoreState>): Promise<{}> => {
-    return fetch(`/api/kube/apis/helm.bitnami.com/v1/namespaces/${namespace}/helmreleases`, {
+    return fetch(url.api.helmreleases.create(namespace), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
