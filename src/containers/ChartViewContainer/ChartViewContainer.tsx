@@ -1,9 +1,9 @@
 import { connect } from 'react-redux';
 import { Dispatch } from 'redux';
 
-import actions from '../actions';
-import ChartView from '../components/ChartView';
-import { Chart, StoreState } from '../shared/types';
+import actions from '../../actions';
+import ChartView from '../../components/ChartView';
+import { Chart, StoreState } from '../../shared/types';
 import { push } from 'react-router-redux';
 
 interface RouteProps {

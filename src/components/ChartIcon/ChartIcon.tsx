@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-const placeholder = require('../placeholder.png');
+const placeholder = require('../../placeholder.png');
 
 interface Props {
   icon: string;

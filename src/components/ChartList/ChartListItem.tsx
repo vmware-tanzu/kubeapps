@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-import { Chart } from '../shared/types';
-import ChartIcon from './ChartIcon';
+import { Chart } from '../../shared/types';
+import ChartIcon from '../ChartIcon';
 import './ChartListItem.css';
 
 interface Props {

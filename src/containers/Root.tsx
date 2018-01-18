@@ -7,8 +7,8 @@ import { ConnectedRouter } from 'react-router-redux';
 import configureStore from '../store';
 import Layout from '../components/Layout';
 import Dashboard from '../components/Dashboard';
-import ChartList from '../containers/ChartListContainer';
-import ChartView from '../containers/ChartViewContainer';
+import ChartList from './ChartListContainer';
+import ChartView from './ChartViewContainer';
 
 const history = createHistory();
 const store = configureStore(history);

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Chart } from '../shared/types';
+import { Chart } from '../../shared/types';
 import { RouterAction } from 'react-router-redux';
 import * as Modal from 'react-modal';
 
