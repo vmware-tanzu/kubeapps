@@ -1,29 +1,12 @@
-import { getType } from 'typesafe-actions';
+import { combineReducers } from 'redux';
+import { routerReducer } from 'react-router-redux';
 
-import actions from '../actions';
-import { ChartsAction } from '../actions/charts';
-import { ChartState } from '../store/types';
+import chartsReducer from './charts';
+import { StoreState } from '../shared/types';
 
-const initialState: ChartState = {
-  isFetching: false,
-  selectedChart: null,
-  selectedVersion: null,
-  items: [],
-};
+const rootReducer = combineReducers<StoreState>({
+  charts: chartsReducer,
+  router: routerReducer,
+});
 
-function charts(state: ChartState = initialState, action: ChartsAction): ChartState {
-  switch (action.type) {
-    case getType(actions.charts.requestCharts):
-      return { ...state, isFetching: true };
-    case getType(actions.charts.receiveCharts):
-      return { ...state, isFetching: false, items: action.charts };
-    case getType(actions.charts.selectChart):
-      return { ...state, isFetching: false, selectedChart: action.chart };
-    default:
-  }
-  return state;
-}
-
-export default {
-  charts
-};
+export default rootReducer;

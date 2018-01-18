@@ -3,7 +3,7 @@ import { Dispatch } from 'redux';
 
 import actions from '../actions';
 import ChartList from '../components/ChartList';
-import { StoreState } from '../store/types';
+import { StoreState } from '../shared/types';
 
 interface RouteProps {
   match: {

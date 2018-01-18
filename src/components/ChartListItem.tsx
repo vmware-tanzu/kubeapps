@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-import { Chart } from '../store/types';
+import { Chart } from '../shared/types';
 import ChartIcon from './ChartIcon';
 import './ChartListItem.css';
 

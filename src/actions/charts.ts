@@ -1,7 +1,7 @@
 import { Dispatch } from 'redux';
 import { createAction, getReturnOfExpression } from 'typesafe-actions';
 
-import { StoreState, Chart } from '../store/types';
+import { StoreState, Chart } from '../shared/types';
 import * as url from '../shared/url';
 
 export const requestCharts = createAction('REQUEST_CHARTS');
