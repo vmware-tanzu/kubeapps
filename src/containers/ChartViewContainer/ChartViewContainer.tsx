@@ -17,10 +17,9 @@ interface IRouteProps {
 
 function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteProps) {
   return {
-    chart: charts.selectedChart,
     chartID: `${params.repo}/${params.id}`,
     isFetching: charts.isFetching,
-    version: charts.selectedVersion,
+    selected: charts.selected,
   };
 }
 

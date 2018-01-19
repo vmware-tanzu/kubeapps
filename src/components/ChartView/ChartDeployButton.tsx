@@ -36,7 +36,7 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
           onClick={this.openModel}
           disabled={this.state.isDeploying}
         >
-          Deploy
+          Deploy using Helm
         </button>
         <Modal
           isOpen={this.state.modalIsOpen}

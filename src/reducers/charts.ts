@@ -7,8 +7,28 @@ import { IChartState } from "../shared/types";
 const initialState: IChartState = {
   isFetching: false,
   items: [],
-  selectedChart: null,
-  selectedVersion: null,
+  selected: {
+    versions: [],
+  },
+};
+
+const chartsSelectedReducer = (
+  state: IChartState["selected"],
+  action: ChartsAction,
+): IChartState["selected"] => {
+  switch (action.type) {
+    case getType(actions.charts.selectChart):
+      return { ...state, chart: action.chart };
+    case getType(actions.charts.receiveChartVersions):
+      return {
+        ...state,
+        versions: action.versions,
+      };
+    case getType(actions.charts.selectReadme):
+      return { ...state, readme: action.readme };
+    default:
+  }
+  return state;
 };
 
 const chartsReducer = (state: IChartState = initialState, action: ChartsAction): IChartState => {
@@ -17,8 +37,19 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
       return { ...state, isFetching: false, items: action.charts };
+    case getType(actions.charts.receiveChartVersions):
+      return {
+        ...state,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
     case getType(actions.charts.selectChart):
-      return { ...state, isFetching: false, selectedChart: action.chart };
+      return {
+        ...state,
+        isFetching: false,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
+    case getType(actions.charts.selectReadme):
+      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     default:
   }
   return state;

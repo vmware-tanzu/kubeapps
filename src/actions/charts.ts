@@ -1,7 +1,7 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
-import { IChart, IStoreState } from "../shared/types";
+import { IChart, IChartVersion, IStoreState } from "../shared/types";
 import * as url from "../shared/url";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
@@ -9,12 +9,29 @@ export const receiveCharts = createAction("RECEIVE_CHARTS", (charts: IChart[]) =
   charts,
   type: "RECEIVE_CHARTS",
 }));
+export const receiveChartVersions = createAction(
+  "RECEIVE_CHART_VERSIONS",
+  (versions: IChartVersion[]) => ({
+    type: "RECEIVE_CHART_VERSIONS",
+    versions,
+  }),
+);
 export const selectChart = createAction("SELECT_CHART", (chart: IChart) => ({
   chart,
   type: "SELECT_CHART",
 }));
+export const selectReadme = createAction("SELECT_README", (readme: string) => ({
+  readme,
+  type: "SELECT_README",
+}));
 
-const allActions = [requestCharts, receiveCharts, selectChart].map(getReturnOfExpression);
+const allActions = [
+  requestCharts,
+  receiveCharts,
+  receiveChartVersions,
+  selectChart,
+  selectReadme,
+].map(getReturnOfExpression);
 export type ChartsAction = typeof allActions[number];
 
 export function fetchCharts(repo: string) {
@@ -31,7 +48,28 @@ export function getChart(id: string) {
     dispatch(requestCharts());
     return fetch(url.api.charts.get(id))
       .then(response => response.json())
-      .then(json => dispatch(selectChart(json.data)));
+      .then(json => {
+        const c: IChart = json.data;
+        dispatch(listChartVersions(c.id));
+        dispatch(getChartReadme(c.id, c.relationships.latestChartVersion.data.version));
+        return dispatch(selectChart(json.data));
+      });
+  };
+}
+
+export function listChartVersions(id: string) {
+  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+    return fetch(url.api.charts.listVersions(id))
+      .then(response => response.json())
+      .then(json => dispatch(receiveChartVersions(json.data)));
+  };
+}
+
+export function getChartReadme(id: string, version: string) {
+  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+    return fetch(url.api.charts.getReadme(id, version))
+      .then(response => response.text())
+      .then(text => dispatch(selectReadme(text)));
   };
 }
 
