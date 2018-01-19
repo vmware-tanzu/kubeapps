@@ -1,5 +1,5 @@
-import * as charts from './charts';
+import * as charts from "./charts";
 
 export default {
-  charts
+  charts,
 };

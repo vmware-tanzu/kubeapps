@@ -1,3 +1,3 @@
-import ChartView from './ChartViewContainer';
+import ChartView from "./ChartViewContainer";
 
 export default ChartView;

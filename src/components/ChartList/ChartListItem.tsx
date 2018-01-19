@@ -1,16 +1,16 @@
-import * as React from 'react';
-import { Link } from 'react-router-dom';
+import * as React from "react";
+import { Link } from "react-router-dom";
 
-import { Chart } from '../../shared/types';
-import ChartIcon from '../ChartIcon';
-import './ChartListItem.css';
+import { IChart } from "../../shared/types";
+import ChartIcon from "../ChartIcon";
+import "./ChartListItem.css";
 
-interface Props {
-  chart: Chart;
+interface IChartListItemProps {
+  chart: IChart;
 }
 
-class ChartListItem extends React.Component<Props> {
-  render() {
+class ChartListItem extends React.Component<IChartListItemProps> {
+  public render() {
     const { chart } = this.props;
     const latestAppVersion = chart.relationships.latestChartVersion.data.app_version;
     return (
@@ -19,9 +19,7 @@ class ChartListItem extends React.Component<Props> {
           <ChartIcon icon={chart.attributes.icon} />
           <div className="ChartListName__details">
             <h6>{chart.id}</h6>
-            {latestAppVersion &&
-              <span>v{latestAppVersion}</span>
-            }
+            {latestAppVersion && <span>v{latestAppVersion}</span>}
           </div>
         </Link>
       </div>

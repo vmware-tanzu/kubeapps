@@ -1,28 +1,28 @@
-import { connect } from 'react-redux';
-import { Dispatch } from 'redux';
+import { connect } from "react-redux";
+import { Dispatch } from "redux";
 
-import actions from '../../actions';
-import ChartList from '../../components/ChartList';
-import { StoreState } from '../../shared/types';
+import actions from "../../actions";
+import ChartList from "../../components/ChartList";
+import { IStoreState } from "../../shared/types";
 
-interface RouteProps {
+interface IRouteProps {
   match: {
     params: {
       repo: string;
-    }
+    };
   };
 }
 
-function mapStateToProps({ charts }: StoreState, { match: { params } }: RouteProps) {
+function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     charts,
-    repo: params.repo
+    repo: params.repo,
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<StoreState>) {
+function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    fetchCharts: (repo: string) => dispatch(actions.charts.fetchCharts(repo))
+    fetchCharts: (repo: string) => dispatch(actions.charts.fetchCharts(repo)),
   };
 }
 

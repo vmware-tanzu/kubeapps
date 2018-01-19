@@ -1,21 +1,14 @@
-import * as React from 'react';
+import * as React from "react";
+import placeholder from "../../placeholder.png";
 
-const placeholder = require('../../placeholder.png');
-
-interface Props {
-  icon: string;
+interface IChartIconProps {
+  icon?: string;
 }
 
-class ChartIcon extends React.Component<Props> {
-  render() {
+class ChartIcon extends React.Component<IChartIconProps> {
+  public render() {
     const { icon } = this.props;
-    let iconSrc;
-
-    if (icon.length > 0) {
-      iconSrc = `/api/chartsvc/${icon}`;
-    } else {
-      iconSrc = placeholder;
-    }
+    const iconSrc = icon ? `/api/chartsvc/${icon}` : placeholder;
 
     return (
       <div className="ChartListItem__icon">

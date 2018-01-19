@@ -1,34 +1,34 @@
-import { connect } from 'react-redux';
-import { Dispatch } from 'redux';
+import { connect } from "react-redux";
+import { Dispatch } from "redux";
 
-import actions from '../../actions';
-import ChartView from '../../components/ChartView';
-import { Chart, StoreState } from '../../shared/types';
-import { push } from 'react-router-redux';
+import { push } from "react-router-redux";
+import actions from "../../actions";
+import ChartView from "../../components/ChartView";
+import { IChart, IStoreState } from "../../shared/types";
 
-interface RouteProps {
+interface IRouteProps {
   match: {
     params: {
       repo: string;
       id: string;
-    }
+    };
   };
 }
 
-function mapStateToProps({ charts }: StoreState, { match: { params } }: RouteProps) {
+function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     chart: charts.selectedChart,
-    version: charts.selectedVersion,
-    isFetching: charts.isFetching,
     chartID: `${params.repo}/${params.id}`,
+    isFetching: charts.isFetching,
+    version: charts.selectedVersion,
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<StoreState>) {
+function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    getChart: (id: string) => dispatch(actions.charts.getChart(id)),
-    deployChart: (chart: Chart, releaseName: string, namespace: string) =>
+    deployChart: (chart: IChart, releaseName: string, namespace: string) =>
       dispatch(actions.charts.deployChart(chart, releaseName, namespace)),
+    getChart: (id: string) => dispatch(actions.charts.getChart(id)),
     push: (location: string) => dispatch(push(location)),
   };
 }

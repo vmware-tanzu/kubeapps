@@ -1,17 +1,17 @@
-import { getType } from 'typesafe-actions';
+import { getType } from "typesafe-actions";
 
-import actions from '../actions';
-import { ChartsAction } from '../actions/charts';
-import { ChartState } from '../shared/types';
+import actions from "../actions";
+import { ChartsAction } from "../actions/charts";
+import { IChartState } from "../shared/types";
 
-const initialState: ChartState = {
+const initialState: IChartState = {
   isFetching: false,
+  items: [],
   selectedChart: null,
   selectedVersion: null,
-  items: [],
 };
 
-const chartsReducer = (state: ChartState = initialState, action: ChartsAction): ChartState => {
+const chartsReducer = (state: IChartState = initialState, action: ChartsAction): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };

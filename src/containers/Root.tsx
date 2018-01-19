@@ -1,20 +1,20 @@
-import * as React from 'react';
-import { Provider } from 'react-redux';
-import { Route } from 'react-router';
-import createHistory from 'history/createBrowserHistory';
-import { ConnectedRouter } from 'react-router-redux';
+import createHistory from "history/createBrowserHistory";
+import * as React from "react";
+import { Provider } from "react-redux";
+import { Route } from "react-router";
+import { ConnectedRouter } from "react-router-redux";
 
-import configureStore from '../store';
-import Layout from '../components/Layout';
-import Dashboard from '../components/Dashboard';
-import ChartList from './ChartListContainer';
-import ChartView from './ChartViewContainer';
+import Dashboard from "../components/Dashboard";
+import Layout from "../components/Layout";
+import configureStore from "../store";
+import ChartList from "./ChartListContainer";
+import ChartView from "./ChartViewContainer";
 
 const history = createHistory();
 const store = configureStore(history);
 
 class Root extends React.Component {
-  render() {
+  public render() {
     return (
       <Provider store={store}>
         <ConnectedRouter history={history}>

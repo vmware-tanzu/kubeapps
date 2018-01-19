@@ -1,9 +1,8 @@
-import * as React from 'react';
-
-const placeholder = require('../../placeholder.png');
+import * as React from "react";
+import placeholder from "../../placeholder.png";
 
 class Sidebar extends React.Component {
-  render() {
+  public render() {
     return (
       <aside className="bg-dark type-color-reverse-anchor-reset">
         <ul className="remove-style margin-reset padding-h-normal text-c">

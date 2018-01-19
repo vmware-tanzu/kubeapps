@@ -20,3 +20,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 telepresence.log
+
+# Use yarn for package management
+package-lock.json
