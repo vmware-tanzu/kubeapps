@@ -1,11 +1,8 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
-import Root from './containers/Root';
-import registerServiceWorker from './registerServiceWorker';
-import './index.css';
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import Root from "./containers/Root";
+import "./index.css";
+import registerServiceWorker from "./registerServiceWorker";
 
-ReactDOM.render(
-  <Root />,
-  document.getElementById('root') as HTMLElement
-);
+ReactDOM.render(<Root />, document.getElementById("root") as HTMLElement);
 registerServiceWorker();

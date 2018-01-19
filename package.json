@@ -26,9 +26,9 @@
     "eject": "react-scripts-ts eject",
     "tslint-check": "tslint-config-prettier-check ./tslint.json",
     "precommit": "lint-staged",
-    "prettier": "prettier --write src/**/*.{ts,tsx,css}",
-    "lint": "tslint src/**/*.{ts,tsx}",
-    "lint-fix": "tslint --fix src/**/*.{ts,tsx}"
+    "prettier": "prettier --write 'src/**/*.{ts,tsx,css}'",
+    "lint": "tslint 'src/**/*.{ts,tsx}'",
+    "lint-fix": "tslint --fix 'src/**/*.{ts,tsx}'"
   },
   "lint-staged": {
     "*.{ts,tsx}": ["tslint --fix", "prettier --write", "git add"],

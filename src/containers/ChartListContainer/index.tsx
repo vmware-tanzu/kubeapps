@@ -1,3 +1,3 @@
-import ChartList from './ChartListContainer';
+import ChartList from "./ChartListContainer";
 
 export default ChartList;

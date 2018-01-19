@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { Link } from 'react-router-dom';
+import * as React from "react";
+import { Link } from "react-router-dom";
 
 class Dashboard extends React.Component {
-  render() {
+  public render() {
     return (
       <section className="Dashboard">
         <header className="Dashboard__header">
@@ -12,7 +12,9 @@ class Dashboard extends React.Component {
         <main className="text-c">
           <div>No Apps installed</div>
           <div className="padding-normal">
-            <Link className="button button-primary" to="/charts">deploy one</Link>
+            <Link className="button button-primary" to="/charts">
+              deploy one
+            </Link>
           </div>
         </main>
       </section>

@@ -1,10 +1,10 @@
-import { combineReducers } from 'redux';
-import { routerReducer } from 'react-router-redux';
+import { routerReducer } from "react-router-redux";
+import { combineReducers } from "redux";
 
-import chartsReducer from './charts';
-import { StoreState } from '../shared/types';
+import { IStoreState } from "../shared/types";
+import chartsReducer from "./charts";
 
-const rootReducer = combineReducers<StoreState>({
+const rootReducer = combineReducers<IStoreState>({
   charts: chartsReducer,
   router: routerReducer,
 });

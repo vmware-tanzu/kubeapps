@@ -1,25 +1,25 @@
-import * as React from 'react';
-import { Chart, ChartVersion } from '../../shared/types';
-import ChartDeployButton from './ChartDeployButton';
-import { RouterAction } from 'react-router-redux';
+import * as React from "react";
+import { RouterAction } from "react-router-redux";
+import { IChart, IChartVersion } from "../../shared/types";
+import ChartDeployButton from "./ChartDeployButton";
 
-interface Props {
+interface IChartViewProps {
   chartID: string;
   getChart: (id: string) => Promise<{}>;
-  deployChart: (chart: Chart, releaseName: string, namespace: string) => Promise<{}>;
+  deployChart: (chart: IChart, releaseName: string, namespace: string) => Promise<{}>;
   push: (location: string) => RouterAction;
   isFetching: boolean;
-  chart: Chart;
-  version: ChartVersion;
+  chart: IChart;
+  version: IChartVersion;
 }
 
-class ChartView extends React.Component<Props> {
-  componentDidMount() {
+class ChartView extends React.Component<IChartViewProps> {
+  public componentDidMount() {
     const { chartID, getChart } = this.props;
     getChart(chartID);
   }
 
-  render() {
+  public render() {
     const { isFetching, chart, deployChart, push } = this.props;
     if (isFetching || !chart) {
       return <div>Loading</div>;

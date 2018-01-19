@@ -1,48 +1,48 @@
-export interface ChartVersion {
+export interface IChartVersion {
   id: string;
-  attributes: ChartVersionAttributes;
+  attributes: IChartVersionAttributes;
   relationships: {
     chart: {
-      data: ChartAttributes;
-    }
+      data: IChartAttributes;
+    };
   };
 }
 
-export interface ChartVersionAttributes {
+export interface IChartVersionAttributes {
   version: string;
   app_version: string;
 }
 
-export interface Chart {
+export interface IChart {
   id: string;
-  attributes: ChartAttributes;
+  attributes: IChartAttributes;
   relationships: {
     latestChartVersion: {
-      data: ChartVersionAttributes;
-    }
+      data: IChartVersionAttributes;
+    };
   };
 }
 
-export interface ChartAttributes {
+export interface IChartAttributes {
   name: string;
   description: string;
   home: string;
   icon: string;
   keywords: string[];
-  maintainers: {}[];
+  maintainers: Array<{}>;
   repo: {
     url: string;
   };
   sources: string[];
 }
 
-export interface ChartState {
+export interface IChartState {
   isFetching: boolean;
-  selectedChart: Chart | null;
-  selectedVersion: ChartVersion | null;
-  items: Chart[];
+  selectedChart: IChart | null;
+  selectedVersion: IChartVersion | null;
+  items: IChart[];
 }
 
-export interface StoreState {
-  charts: ChartState;
+export interface IStoreState {
+  charts: IChartState;
 }

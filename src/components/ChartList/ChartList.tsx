@@ -1,23 +1,23 @@
-import * as React from 'react';
+import * as React from "react";
 
-import './ChartList.css';
-import { ChartState } from '../../shared/types';
-import ChartListItem from './ChartListItem';
+import { IChartState } from "../../shared/types";
+import "./ChartList.css";
+import ChartListItem from "./ChartListItem";
 
-interface Props {
-  charts: ChartState;
+interface IChartListProps {
+  charts: IChartState;
   repo: string;
   fetchCharts: (repo: string) => Promise<{}>;
 }
 
-class ChartList extends React.Component<Props> {
-  componentDidMount() {
+class ChartList extends React.Component<IChartListProps> {
+  public componentDidMount() {
     const { repo, fetchCharts } = this.props;
     fetchCharts(repo);
   }
 
-  render() {
-    let chartItems = this.props.charts.items.map(c => (<ChartListItem key={c.id} chart={c} />));
+  public render() {
+    const chartItems = this.props.charts.items.map(c => <ChartListItem key={c.id} chart={c} />);
     return (
       <section className="ChartList">
         <header className="ChartList__header">
@@ -25,9 +25,7 @@ class ChartList extends React.Component<Props> {
           <hr />
         </header>
         <main className="text-c">
-          <div className="ChartList__items">
-            {chartItems}
-          </div>
+          <div className="ChartList__items">{chartItems}</div>
         </main>
       </section>
     );

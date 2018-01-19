@@ -1,3 +1,3 @@
-import ChartIcon from './ChartIcon';
+import ChartIcon from "./ChartIcon";
 
 export default ChartIcon;

@@ -1,15 +1,15 @@
-import * as React from 'react';
-import { Chart } from '../../shared/types';
-import { RouterAction } from 'react-router-redux';
-import * as Modal from 'react-modal';
+import * as React from "react";
+import * as Modal from "react-modal";
+import { RouterAction } from "react-router-redux";
+import { IChart } from "../../shared/types";
 
-interface Props {
-  chart: Chart;
-  deployChart: (chart: Chart, releaseName: string, namespace: string) => Promise<{}>;
+interface IChartDeployButtonProps {
+  chart: IChart;
+  deployChart: (chart: IChart, releaseName: string, namespace: string) => Promise<{}>;
   push: (location: string) => RouterAction;
 }
 
-interface State {
+interface IChartDeployButtonState {
   isDeploying: boolean;
   modalIsOpen: boolean;
   // deployment options
@@ -18,21 +18,19 @@ interface State {
   error: string | null;
 }
 
-class ChartDeployButton extends React.Component<Props> {
-  state: State = {
+class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartDeployButtonState> {
+  public state: IChartDeployButtonState = {
+    error: null,
     isDeploying: false,
     modalIsOpen: false,
-    releaseName: '',
-    namespace: 'default',
-    error: null,
+    namespace: "default",
+    releaseName: "",
   };
 
-  render() {
+  public render() {
     return (
       <div className="ChartDeployButton">
-        {this.state.isDeploying &&
-          <div>Deploying...</div>
-        }
+        {this.state.isDeploying && <div>Deploying...</div>}
         <button
           className="button button-primary"
           onClick={this.openModel}
@@ -45,10 +43,9 @@ class ChartDeployButton extends React.Component<Props> {
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.state.error &&
-            <div className="container padding-v-bigger bg-action">
-              {this.state.error}
-            </div>}
+          {this.state.error && (
+            <div className="container padding-v-bigger bg-action">{this.state.error}</div>
+          )}
           <form onSubmit={this.handleDeploy}>
             <div>
               <label htmlFor="releaseName">Name</label>
@@ -68,8 +65,12 @@ class ChartDeployButton extends React.Component<Props> {
               />
             </div>
             <div>
-              <button className="button button-primary" type="submit">Submit</button>
-              <button className="button" onClick={this.closeModal}>Cancel</button>
+              <button className="button button-primary" type="submit">
+                Submit
+              </button>
+              <button className="button" onClick={this.closeModal}>
+                Cancel
+              </button>
             </div>
           </form>
         </Modal>
@@ -77,19 +78,19 @@ class ChartDeployButton extends React.Component<Props> {
     );
   }
 
-  openModel = () => {
+  public openModel = () => {
     this.setState({
-      modalIsOpen: true
+      modalIsOpen: true,
     });
-  }
+  };
 
-  closeModal = () => {
+  public closeModal = () => {
     this.setState({
-      modalIsOpen: false
+      modalIsOpen: false,
     });
-  }
+  };
 
-  handleDeploy = (e: React.FormEvent<HTMLFormElement>) => {
+  public handleDeploy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { chart, deployChart, push } = this.props;
     this.setState({ isDeploying: true });
@@ -97,14 +98,14 @@ class ChartDeployButton extends React.Component<Props> {
     deployChart(chart, releaseName, namespace)
       .then(() => push(`/apps/${releaseName}`))
       .catch(err => this.setState({ isDeploying: false, error: err.toString() }));
-  }
+  };
 
-  handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
+  public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ releaseName: e.currentTarget.value });
-  }
-  handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
+  };
+  public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
-  }
+  };
 }
 
 export default ChartDeployButton;
