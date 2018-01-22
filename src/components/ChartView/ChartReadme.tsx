@@ -9,7 +9,10 @@ interface IChartReadmeProps {
 
 class ChartReadme extends React.Component<IChartReadmeProps> {
   public render() {
-    const { markdown } = this.props;
+    let { markdown } = this.props;
+    if (markdown === "") {
+      markdown = "No README for this chart";
+    }
     return (
       <div className="ChartReadme">
         {markdown ? <ReactMarkdown source={markdown} /> : "Loading"}
