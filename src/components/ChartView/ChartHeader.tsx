@@ -6,7 +6,7 @@ import ChartIcon from "../ChartIcon";
 interface IChartHeaderProps {
   appVersion?: string;
   id: string;
-  icon: string;
+  icon?: string;
   repo: string;
   description: string;
 }

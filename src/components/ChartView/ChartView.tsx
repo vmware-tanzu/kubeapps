@@ -4,6 +4,7 @@ import { RouterAction } from "react-router-redux";
 import { IChart, IChartState } from "../../shared/types";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
+import ChartMaintainers from "./ChartMaintainers";
 import ChartReadme from "./ChartReadme";
 import ChartVersionsList from "./ChartVersionsList";
 import "./ChartView.css";
@@ -45,8 +46,8 @@ class ChartView extends React.Component<IChartViewProps> {
                 <ChartReadme markdown={readme} />
               </div>
               {/* TODO: fix when upgrading to bitnami-ui v3 - col-4 does not fit correctly in v2 */}
-              <div className="col-3">
-                <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal">
+              <div className="col-3 ChartView__sidebar-container">
+                <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
                   <div className="ChartViewSidebar__section">
                     <h2>Usage</h2>
                     <ChartDeployButton push={push} chart={chart} deployChart={deployChart} />
@@ -55,28 +56,58 @@ class ChartView extends React.Component<IChartViewProps> {
                     <h2>Chart Versions</h2>
                     <ChartVersionsList versions={versions} />
                   </div>
-                  <div className="ChartViewSidebar__section">
-                    <h2>App Version</h2>
-                    <div>{chart.relationships.latestChartVersion.data.app_version}</div>
-                  </div>
-                  <div className="ChartViewSidebar__section">
-                    <h2>Home</h2>
-                    <div>{chart.attributes.home}</div>
-                  </div>
+                  {chart.relationships.latestChartVersion.data.app_version && (
+                    <div className="ChartViewSidebar__section">
+                      <h2>App Version</h2>
+                      <div>{chart.relationships.latestChartVersion.data.app_version}</div>
+                    </div>
+                  )}
+                  {chart.attributes.home && (
+                    <div className="ChartViewSidebar__section">
+                      <h2>Home</h2>
+                      <div>
+                        <a href={chart.attributes.home} target="_blank">
+                          {chart.attributes.home}
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <div className="ChartViewSidebar__section">
                     <h2>Maintainers</h2>
-                    {chart.attributes.maintainers.map((m, i) => <div key={i}>{m.name}</div>)}
+                    <ChartMaintainers
+                      maintainers={chart.attributes.maintainers}
+                      githubIDAsNames={this.isKubernetesCharts(chart.attributes.repo.url)}
+                    />
                   </div>
-                  <div className="ChartViewSidebar__section">
-                    <h2>Related</h2>
-                    {chart.attributes.sources.map((s, i) => <div key={i}>{s}</div>)}
-                  </div>
+                  {chart.attributes.sources.length > 0 && (
+                    <div className="ChartViewSidebar__section">
+                      <h2>Related</h2>
+                      <div className="ChartSources">
+                        <ul className="remove-style padding-l-reset margin-b-reset">
+                          {chart.attributes.sources.map((s, i) => (
+                            <li key={i}>
+                              <a href={s} target="_blank">
+                                {s}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                 </aside>
               </div>
             </div>
           </div>
         </main>
       </section>
+    );
+  }
+
+  private isKubernetesCharts(repoURL: string) {
+    return (
+      repoURL === "https://kubernetes-charts.storage.googleapis.com" ||
+      repoURL === "https://kubernetes-charts-incubator.storage.googleapis.com"
     );
   }
 }
