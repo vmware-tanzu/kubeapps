@@ -3,8 +3,8 @@
 }
 
 .ChartView__readme-container {
-  /* for col-8 class */
-  max-width: 66.66%;
+  /* for col-9 class */
+  max-width: 75%;
 }
 
 .ChartView__sidebar-container {
