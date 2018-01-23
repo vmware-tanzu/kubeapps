@@ -1,7 +1,11 @@
 export const api = {
   charts: {
-    get: (id: string) => `/api/chartsvc/v1/charts/${id}`,
-    list: (repo?: string) => `/api/chartsvc/v1/charts${repo ? `/${repo}` : ""}`,
+    base: "/api/chartsvc/v1",
+    get: (id: string) => `${api.charts.base}/charts/${id}`,
+    getReadme: (id: string, version: string) =>
+      `${api.charts.base}/assets/${id}/versions/${version}/README.md`,
+    list: (repo?: string) => `${api.charts.base}/charts${repo ? `/${repo}` : ""}`,
+    listVersions: (id: string) => `${api.charts.get(id)}/versions`,
   },
 
   helmreleases: {

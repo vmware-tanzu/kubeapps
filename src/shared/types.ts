@@ -11,6 +11,7 @@ export interface IChartVersion {
 export interface IChartVersionAttributes {
   version: string;
   app_version: string;
+  created: string;
 }
 
 export interface IChart {
@@ -26,11 +27,15 @@ export interface IChart {
 export interface IChartAttributes {
   name: string;
   description: string;
-  home: string;
-  icon: string;
+  home?: string;
+  icon?: string;
   keywords: string[];
-  maintainers: Array<{}>;
+  maintainers: Array<{
+    name: string;
+    email?: string;
+  }>;
   repo: {
+    name: string;
     url: string;
   };
   sources: string[];
@@ -38,8 +43,11 @@ export interface IChartAttributes {
 
 export interface IChartState {
   isFetching: boolean;
-  selectedChart: IChart | null;
-  selectedVersion: IChartVersion | null;
+  selected: {
+    chart?: IChart;
+    versions: IChartVersion[];
+    readme?: string;
+  };
   items: IChart[];
 }
 
