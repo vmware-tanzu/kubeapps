@@ -40,11 +40,12 @@ class ChartView extends React.Component<IChartViewProps> {
           appVersion={chart.relationships.latestChartVersion.data.app_version}
         />
         <main>
-          <div className="container container-fluid margin-h-bigger">
+          <div className="container">
             <div className="row">
-              <div className="col-9 ChartView__readme-container">
+              <div className="col-8 ChartView__readme-container">
                 <ChartReadme markdown={readme} />
               </div>
+              {/* TODO: fix when upgrading to bitnami-ui v3 - col-4 does not fit correctly in v2 */}
               <div className="col-3 ChartView__sidebar-container">
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
                   <div className="ChartViewSidebar__section">
