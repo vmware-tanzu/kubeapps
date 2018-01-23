@@ -2,16 +2,6 @@
   display: flex;
 }
 
-.ChartView__readme-container {
-  /* for col-8 class */
-  max-width: 66.66%;
-}
-
-.ChartView__sidebar-container {
-  /* for col-3 class */
-  max-width: 25%;
-}
-
 .ChartViewSidebar__section {
   /* hack to make h2 margin work... */
   padding-top: 0.1px;
