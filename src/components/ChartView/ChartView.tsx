@@ -31,7 +31,7 @@ class ChartView extends React.Component<IChartViewProps> {
       return <div>Loading</div>;
     }
     return (
-      <section className="ChartView">
+      <section className="ChartView padding-b-big">
         <ChartHeader
           id={chart.id}
           description={chart.attributes.description}
