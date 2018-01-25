@@ -66,7 +66,7 @@ func listCharts(w http.ResponseWriter, req *http.Request) {
 	db, closer := dbSession.DB()
 	defer closer()
 	var charts []*models.Chart
-	if err := db.C(chartCollection).Find(nil).Sort("_id").All(&charts); err != nil {
+	if err := db.C(chartCollection).Find(nil).Sort("name").All(&charts); err != nil {
 		log.WithError(err).Error("could not fetch charts")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
 		return
