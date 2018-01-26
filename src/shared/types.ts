@@ -44,7 +44,7 @@ export interface IChartAttributes {
 export interface IChartState {
   isFetching: boolean;
   selected: {
-    chart?: IChart;
+    version?: IChartVersion;
     versions: IChartVersion[];
     readme?: string;
   };

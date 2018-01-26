@@ -24,6 +24,11 @@ class Root extends React.Component {
               <Route exact={true} path="/charts" component={ChartList} />
               <Route exact={true} path="/charts/:repo" component={ChartList} />
               <Route exact={true} path="/charts/:repo/:id" component={ChartView} />
+              <Route
+                exact={true}
+                path="/charts/:repo/:id/versions/:version"
+                component={ChartView}
+              />
             </section>
           </Layout>
         </ConnectedRouter>

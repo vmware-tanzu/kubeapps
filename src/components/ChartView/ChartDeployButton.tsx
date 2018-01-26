@@ -1,11 +1,11 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 import { RouterAction } from "react-router-redux";
-import { IChart } from "../../shared/types";
+import { IChartVersion } from "../../shared/types";
 
 interface IChartDeployButtonProps {
-  chart: IChart;
-  deployChart: (chart: IChart, releaseName: string, namespace: string) => Promise<{}>;
+  version: IChartVersion;
+  deployChart: (chartVersion: IChartVersion, releaseName: string, namespace: string) => Promise<{}>;
   push: (location: string) => RouterAction;
 }
 
@@ -92,10 +92,10 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
 
   public handleDeploy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { chart, deployChart, push } = this.props;
+    const { version, deployChart, push } = this.props;
     this.setState({ isDeploying: true });
     const { releaseName, namespace } = this.state;
-    deployChart(chart, releaseName, namespace)
+    deployChart(version, releaseName, namespace)
       .then(() => push(`/apps/${releaseName}`))
       .catch(err => this.setState({ isDeploying: false, error: err.toString() }));
   };

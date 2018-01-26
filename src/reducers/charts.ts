@@ -17,8 +17,8 @@ const chartsSelectedReducer = (
   action: ChartsAction,
 ): IChartState["selected"] => {
   switch (action.type) {
-    case getType(actions.charts.selectChart):
-      return { ...state, chart: action.chart };
+    case getType(actions.charts.selectChartVersion):
+      return { ...state, version: action.chartVersion };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
@@ -40,9 +40,10 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
+        isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
-    case getType(actions.charts.selectChart):
+    case getType(actions.charts.selectChartVersion):
       return {
         ...state,
         isFetching: false,

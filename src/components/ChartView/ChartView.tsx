@@ -1,7 +1,7 @@
 import * as React from "react";
 import { RouterAction } from "react-router-redux";
 
-import { IChart, IChartState } from "../../shared/types";
+import { IChartState, IChartVersion } from "../../shared/types";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
@@ -11,33 +11,49 @@ import "./ChartView.css";
 
 interface IChartViewProps {
   chartID: string;
-  getChart: (id: string) => Promise<{}>;
-  deployChart: (chart: IChart, releaseName: string, namespace: string) => Promise<{}>;
+  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => Promise<{}>;
+  deployChart: (version: IChartVersion, releaseName: string, namespace: string) => Promise<{}>;
   push: (location: string) => RouterAction;
   isFetching: boolean;
   selected: IChartState["selected"];
+  selectChartVersionAndGetReadme: (version: IChartVersion) => Promise<{}>;
+  version: string | undefined;
 }
 
 class ChartView extends React.Component<IChartViewProps> {
   public componentDidMount() {
-    const { chartID, getChart } = this.props;
-    getChart(chartID);
+    const { chartID, fetchChartVersionsAndSelectVersion, version } = this.props;
+    fetchChartVersionsAndSelectVersion(chartID, version);
+  }
+
+  public componentWillReceiveProps(nextProps: IChartViewProps) {
+    const { selectChartVersionAndGetReadme, version } = this.props;
+    const { versions } = this.props.selected;
+    if (nextProps.version !== version) {
+      const cv = versions.find(v => v.attributes.version === nextProps.version);
+      if (cv) {
+        selectChartVersionAndGetReadme(cv);
+      } else {
+        throw new Error("could not find chart");
+      }
+    }
   }
 
   public render() {
     const { isFetching, deployChart, push } = this.props;
-    const { chart, readme, versions } = this.props.selected;
-    if (isFetching || !chart) {
+    const { version, readme, versions } = this.props.selected;
+    if (isFetching || !version) {
       return <div>Loading</div>;
     }
+    const chartAttrs = version.relationships.chart.data;
     return (
       <section className="ChartView padding-b-big">
         <ChartHeader
-          id={chart.id}
-          description={chart.attributes.description}
-          icon={chart.attributes.icon}
-          repo={chart.attributes.repo.name}
-          appVersion={chart.relationships.latestChartVersion.data.app_version}
+          id={`${chartAttrs.repo.name}/${chartAttrs.name}`}
+          description={chartAttrs.description}
+          icon={chartAttrs.icon}
+          repo={chartAttrs.repo.name}
+          appVersion={version.attributes.app_version}
         />
         <main>
           <div className="container container-fluid">
@@ -49,24 +65,24 @@ class ChartView extends React.Component<IChartViewProps> {
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
                   <div className="ChartViewSidebar__section">
                     <h2>Usage</h2>
-                    <ChartDeployButton push={push} chart={chart} deployChart={deployChart} />
+                    <ChartDeployButton push={push} version={version} deployChart={deployChart} />
                   </div>
                   <div className="ChartViewSidebar__section">
                     <h2>Chart Versions</h2>
-                    <ChartVersionsList versions={versions} />
+                    <ChartVersionsList selected={version} versions={versions} />
                   </div>
-                  {chart.relationships.latestChartVersion.data.app_version && (
+                  {version.attributes.app_version && (
                     <div className="ChartViewSidebar__section">
                       <h2>App Version</h2>
-                      <div>{chart.relationships.latestChartVersion.data.app_version}</div>
+                      <div>{version.attributes.app_version}</div>
                     </div>
                   )}
-                  {chart.attributes.home && (
+                  {chartAttrs.home && (
                     <div className="ChartViewSidebar__section">
                       <h2>Home</h2>
                       <div>
-                        <a href={chart.attributes.home} target="_blank">
-                          {chart.attributes.home}
+                        <a href={chartAttrs.home} target="_blank">
+                          {chartAttrs.home}
                         </a>
                       </div>
                     </div>
@@ -74,16 +90,16 @@ class ChartView extends React.Component<IChartViewProps> {
                   <div className="ChartViewSidebar__section">
                     <h2>Maintainers</h2>
                     <ChartMaintainers
-                      maintainers={chart.attributes.maintainers}
-                      githubIDAsNames={this.isKubernetesCharts(chart.attributes.repo.url)}
+                      maintainers={chartAttrs.maintainers}
+                      githubIDAsNames={this.isKubernetesCharts(chartAttrs.repo.url)}
                     />
                   </div>
-                  {chart.attributes.sources.length > 0 && (
+                  {chartAttrs.sources.length > 0 && (
                     <div className="ChartViewSidebar__section">
                       <h2>Related</h2>
                       <div className="ChartSources">
                         <ul className="remove-style padding-l-reset margin-b-reset">
-                          {chart.attributes.sources.map((s, i) => (
+                          {chartAttrs.sources.map((s, i) => (
                             <li key={i}>
                               <a href={s} target="_blank">
                                 {s}

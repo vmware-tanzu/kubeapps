@@ -16,10 +16,13 @@ export const receiveChartVersions = createAction(
     versions,
   }),
 );
-export const selectChart = createAction("SELECT_CHART", (chart: IChart) => ({
-  chart,
-  type: "SELECT_CHART",
-}));
+export const selectChartVersion = createAction(
+  "SELECT_CHART_VERSION",
+  (chartVersion: IChartVersion) => ({
+    chartVersion,
+    type: "SELECT_CHART_VERSION",
+  }),
+);
 export const selectReadme = createAction("SELECT_README", (readme: string) => ({
   readme,
   type: "SELECT_README",
@@ -29,7 +32,7 @@ const allActions = [
   requestCharts,
   receiveCharts,
   receiveChartVersions,
-  selectChart,
+  selectChartVersion,
   selectReadme,
 ].map(getReturnOfExpression);
 export type ChartsAction = typeof allActions[number];
@@ -43,25 +46,38 @@ export function fetchCharts(repo: string) {
   };
 }
 
-export function getChart(id: string) {
+export function fetchChartVersions(id: string) {
   return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     dispatch(requestCharts());
-    return fetch(url.api.charts.get(id))
-      .then(response => response.json())
-      .then(json => {
-        const c: IChart = json.data;
-        dispatch(listChartVersions(c.id));
-        dispatch(getChartReadme(c.id, c.relationships.latestChartVersion.data.version));
-        return dispatch(selectChart(json.data));
-      });
-  };
-}
-
-export function listChartVersions(id: string) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     return fetch(url.api.charts.listVersions(id))
       .then(response => response.json())
       .then(json => dispatch(receiveChartVersions(json.data)));
+  };
+}
+
+export function fetchChartVersionsAndSelectVersion(id: string, version?: string) {
+  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+    return dispatch(fetchChartVersions(id)).then((action: any) => {
+      const versions: IChartVersion[] = action.versions;
+      let cv: IChartVersion = versions[0];
+      if (version) {
+        const found = versions.find(v => v.attributes.version === version);
+        if (!found) {
+          throw new Error("could not find chart version");
+        }
+        cv = found;
+      }
+      dispatch(getChartReadme(id, cv.attributes.version));
+      return dispatch(selectChartVersion(cv));
+    });
+  };
+}
+
+export function selectChartVersionAndGetReadme(cv: IChartVersion) {
+  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+    const id = `${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}`;
+    dispatch(selectChartVersion(cv));
+    return dispatch(getChartReadme(id, cv.attributes.version));
   };
 }
 
@@ -73,8 +89,9 @@ export function getChartReadme(id: string, version: string) {
   };
 }
 
-export function deployChart(chart: IChart, releaseName: string, namespace: string) {
+export function deployChart(chartVersion: IChartVersion, releaseName: string, namespace: string) {
   return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+    const chartAttrs = chartVersion.relationships.chart.data;
     return fetch(url.api.helmreleases.create(namespace), {
       headers: { "Content-Type": "application/json" },
       method: "POST",
@@ -86,9 +103,9 @@ export function deployChart(chart: IChart, releaseName: string, namespace: strin
           name: releaseName,
         },
         spec: {
-          chartName: chart.attributes.name,
-          repoUrl: chart.attributes.repo.url,
-          version: chart.relationships.latestChartVersion.data.version,
+          chartName: chartAttrs.name,
+          repoUrl: chartAttrs.repo.url,
+          version: chartVersion.attributes.version,
         },
       }),
     })

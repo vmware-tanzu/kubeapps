@@ -1,3 +1,14 @@
+import { IChartVersion } from "./types";
+
+export const app = {
+  charts: {
+    version: (cv: IChartVersion) =>
+      `/charts/${cv.relationships.chart.data.repo.name}/${
+        cv.relationships.chart.data.name
+      }/versions/${cv.attributes.version}`,
+  },
+};
+
 export const api = {
   charts: {
     base: "/api/chartsvc/v1",
