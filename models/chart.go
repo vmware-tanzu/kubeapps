@@ -37,10 +37,17 @@ type ChartVersion struct {
 	Digest     string    `json:"digest"`
 	URLs       []string  `json:"urls"`
 	Readme     string    `json:"readme" bson:"-"`
+	Values     string    `json:"values" bson:"-"`
 }
 
 // ChartReadme holds the README for a given chart version
 type ChartReadme struct {
 	ID     string `bson:"_id"`
 	Readme string
+}
+
+// ChartValues holds the values.yaml for a given chart version
+type ChartValues struct {
+	ID     string `bson:"_id"`
+	Values string
 }

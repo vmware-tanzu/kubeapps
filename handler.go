@@ -40,6 +40,7 @@ func (h WithParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 const chartCollection = "charts"
 const readmeCollection = "readmes"
+const valuesCollection = "values"
 
 type apiResponse struct {
 	ID            string      `json:"id"`
@@ -180,6 +181,21 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 	w.Write([]byte(readme.Readme))
 }
 
+// getChartVersionValues returns the values.yaml for a given chart
+func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
+	db, closer := dbSession.DB()
+	defer closer()
+	var values *models.ChartValues
+	valuesID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
+	if err := db.C(valuesCollection).FindId(valuesID).One(&values); err != nil {
+		log.WithError(err).Errorf("could not find values.yaml with id %s", valuesID)
+		http.NotFound(w, req)
+		return
+	}
+
+	w.Write([]byte(values.Values))
+}
+
 func newChartResponse(c *models.Chart) *apiResponse {
 	latestCV := c.ChartVersions[0]
 	return &apiResponse{
@@ -207,6 +223,7 @@ func newChartListResponse(charts []*models.Chart) apiListResponse {
 
 func chartVersionAttributes(cid string, cv models.ChartVersion) models.ChartVersion {
 	cv.Readme = "/v1/assets/" + cid + "/versions/" + cv.Version + "/README.md"
+	cv.Values = "/v1/assets/" + cid + "/versions/" + cv.Version + "/values.yaml"
 	return cv
 }
 

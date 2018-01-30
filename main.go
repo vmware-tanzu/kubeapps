@@ -60,6 +60,7 @@ func main() {
 	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}/versions/{version}").Handler(WithParams(getChartVersion))
 	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/logo-160x160-fit.png").Handler(WithParams(getChartIcon))
 	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/versions/{version}/README.md").Handler(WithParams(getChartVersionReadme))
+	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/versions/{version}/values.yaml").Handler(WithParams(getChartVersionValues))
 
 	n := negroni.Classic()
 	n.UseHandler(r)
