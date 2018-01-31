@@ -419,7 +419,7 @@ func jobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 				Containers: []corev1.Container{
 					{
 						Name:    "sync",
-						Image:   "kubeapps/chart-repo-sync:latest",
+						Image:   repoSyncImage,
 						Command: []string{"/chart-repo-sync"},
 						Args:    apprepoSyncJobArgs(apprepo),
 						Env: []corev1.EnvVar{
