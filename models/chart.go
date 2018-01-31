@@ -40,14 +40,9 @@ type ChartVersion struct {
 	Values     string    `json:"values" bson:"-"`
 }
 
-// ChartReadme holds the README for a given chart version
-type ChartReadme struct {
+// ChartFiles holds the README and values for a given chart version
+type ChartFiles struct {
 	ID     string `bson:"_id"`
 	Readme string
-}
-
-// ChartValues holds the values.yaml for a given chart version
-type ChartValues struct {
-	ID     string `bson:"_id"`
 	Values string
 }

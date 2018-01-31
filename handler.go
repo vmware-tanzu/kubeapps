@@ -39,8 +39,7 @@ func (h WithParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 const chartCollection = "charts"
-const readmeCollection = "readmes"
-const valuesCollection = "values"
+const filesCollection = "files"
 
 type apiResponse struct {
 	ID            string      `json:"id"`
@@ -166,34 +165,34 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 	w.Write(chart.RawIcon)
 }
 
-// getChartVersionReadme returns the README for a given chart
+// getChartVersionReadme returns the README and values.yaml for a given chart
 func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var readme *models.ChartReadme
-	readmeID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	if err := db.C(readmeCollection).FindId(readmeID).One(&readme); err != nil {
-		log.WithError(err).Errorf("could not find readme with id %s", readmeID)
+	var files *models.ChartFiles
+	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
+	if err := db.C(filesCollection).FindId(fileID).One(&files); err != nil {
+		log.WithError(err).Errorf("could not find files with id %s", fileID)
 		http.NotFound(w, req)
 		return
 	}
 
-	w.Write([]byte(readme.Readme))
+	w.Write([]byte(files.Readme))
 }
 
 // getChartVersionValues returns the values.yaml for a given chart
 func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var values *models.ChartValues
-	valuesID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	if err := db.C(valuesCollection).FindId(valuesID).One(&values); err != nil {
-		log.WithError(err).Errorf("could not find values.yaml with id %s", valuesID)
+	var files *models.ChartFiles
+	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
+	if err := db.C(filesCollection).FindId(fileID).One(&files); err != nil {
+		log.WithError(err).Errorf("could not find values.yaml with id %s", fileID)
 		http.NotFound(w, req)
 		return
 	}
 
-	w.Write([]byte(values.Values))
+	w.Write([]byte(files.Values))
 }
 
 func newChartResponse(c *models.Chart) *apiResponse {
