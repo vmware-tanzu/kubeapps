@@ -6,7 +6,7 @@ class Dashboard extends React.Component {
     return (
       <section className="Dashboard">
         <header className="Dashboard__header">
-          <h1>Applications</h1>
+          <h1>Apps</h1>
           <hr />
         </header>
         <main className="text-c">
