@@ -15,6 +15,8 @@ export const api = {
     get: (id: string) => `${api.charts.base}/charts/${id}`,
     getReadme: (id: string, version: string) =>
       `${api.charts.base}/assets/${id}/versions/${version}/README.md`,
+    getValues: (id: string, version: string) =>
+      `${api.charts.base}/assets/${id}/versions/${version}/values.yaml`,
     list: (repo?: string) => `${api.charts.base}/charts${repo ? `/${repo}` : ""}`,
     listVersions: (id: string) => `${api.charts.get(id)}/versions`,
   },

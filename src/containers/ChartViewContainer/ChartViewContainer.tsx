@@ -27,13 +27,13 @@ function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteP
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    deployChart: (version: IChartVersion, releaseName: string, namespace: string) =>
-      dispatch(actions.charts.deployChart(version, releaseName, namespace)),
+    deployChart: (version: IChartVersion, releaseName: string, namespace: string, values: string) =>
+      dispatch(actions.charts.deployChart(version, releaseName, namespace, values)),
     fetchChartVersionsAndSelectVersion: (id: string, version?: string) =>
       dispatch(actions.charts.fetchChartVersionsAndSelectVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
-    selectChartVersionAndGetReadme: (version: IChartVersion) =>
-      dispatch(actions.charts.selectChartVersionAndGetReadme(version)),
+    selectChartVersionAndGetFiles: (version: IChartVersion) =>
+      dispatch(actions.charts.selectChartVersionAndGetFiles(version)),
   };
 }
 

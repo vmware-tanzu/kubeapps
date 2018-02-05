@@ -26,6 +26,8 @@ const chartsSelectedReducer = (
       };
     case getType(actions.charts.selectReadme):
       return { ...state, readme: action.readme };
+    case getType(actions.charts.selectValues):
+      return { ...state, values: action.values };
     default:
   }
   return state;
@@ -50,6 +52,8 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.selectReadme):
+      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
+    case getType(actions.charts.selectValues):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     default:
   }

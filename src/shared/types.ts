@@ -47,6 +47,7 @@ export interface IChartState {
     version?: IChartVersion;
     versions: IChartVersion[];
     readme?: string;
+    values?: string;
   };
   items: IChart[];
 }

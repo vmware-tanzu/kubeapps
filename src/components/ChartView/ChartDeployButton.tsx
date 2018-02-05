@@ -1,12 +1,22 @@
 import * as React from "react";
+import AceEditor from "react-ace";
 import * as Modal from "react-modal";
 import { RouterAction } from "react-router-redux";
 import { IChartVersion } from "../../shared/types";
 
+import "brace/mode/yaml";
+import "brace/theme/xcode";
+
 interface IChartDeployButtonProps {
   version: IChartVersion;
-  deployChart: (chartVersion: IChartVersion, releaseName: string, namespace: string) => Promise<{}>;
+  deployChart: (
+    chartVersion: IChartVersion,
+    releaseName: string,
+    namespace: string,
+    values: string,
+  ) => Promise<{}>;
   push: (location: string) => RouterAction;
+  values: string;
 }
 
 interface IChartDeployButtonState {
@@ -15,6 +25,8 @@ interface IChartDeployButtonState {
   // deployment options
   releaseName: string;
   namespace: string;
+  values: string;
+  valuesModified: boolean;
   error: string | null;
 }
 
@@ -25,7 +37,17 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
     modalIsOpen: false,
     namespace: "default",
     releaseName: "",
+    values: "",
+    valuesModified: false,
   };
+
+  public componentWillReceiveProps(nextProps: IChartDeployButtonProps) {
+    if (!this.state.valuesModified) {
+      this.setState({
+        values: nextProps.values,
+      });
+    }
+  }
 
   public render() {
     return (
@@ -64,6 +86,18 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
                 value={this.state.namespace}
               />
             </div>
+            <div style={{ marginBottom: "1em" }}>
+              <label htmlFor="values">Values (YAML)</label>
+              <AceEditor
+                mode="yaml"
+                theme="xcode"
+                name="values"
+                width="100%"
+                onChange={this.handleValuesChange}
+                setOptions={{ showPrintMargin: false }}
+                value={this.state.values}
+              />
+            </div>
             <div>
               <button className="button button-primary" type="submit">
                 Submit
@@ -94,8 +128,8 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
     e.preventDefault();
     const { version, deployChart, push } = this.props;
     this.setState({ isDeploying: true });
-    const { releaseName, namespace } = this.state;
-    deployChart(version, releaseName, namespace)
+    const { releaseName, namespace, values } = this.state;
+    deployChart(version, releaseName, namespace, values)
       .then(() => push(`/apps/${releaseName}`))
       .catch(err => this.setState({ isDeploying: false, error: err.toString() }));
   };
@@ -105,6 +139,9 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
+  };
+  public handleValuesChange = (value: string) => {
+    this.setState({ values: value, valuesModified: true });
   };
 }
 
