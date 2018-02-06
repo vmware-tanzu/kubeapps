@@ -269,9 +269,14 @@ func (c *Controller) syncHandler(key string) error {
 
 		// Trigger a manual Job for the initial sync
 		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
-	} else if shouldUpdate(cronjob, apprepo) {
-		glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Update(newCronJob(apprepo))
+	} else {
+		if shouldUpdate(cronjob, apprepo) {
+			glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
+			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Update(newCronJob(apprepo))
+		}
+
+		// The AppRepository has changed, launch a manual Job
+		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
 	}
 
 	// If an error occurs during Get/Create, we'll requeue the item so we can
@@ -392,7 +397,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 func newJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: cronJobName(apprepo) + "-",
+			GenerateName: cronJobName(apprepo),
 			Namespace:    apprepo.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(apprepo, schema.GroupVersionKind{
@@ -449,7 +454,7 @@ func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
 
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
 func cronJobName(apprepo *apprepov1alpha1.AppRepository) string {
-	return fmt.Sprintf("apprepo-%s", apprepo.GetName())
+	return fmt.Sprintf("apprepo-%s-%s", apprepo.GetName(), apprepo.GetUID())
 }
 
 // apprepoSyncJobArgs returns a list of args for the sync container
