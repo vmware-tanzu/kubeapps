@@ -37,7 +37,7 @@ type AppRepository struct {
 type AppRepositorySpec struct {
 	Type           string `json:"type"`
 	URL            string `json:"url"`
-	ResyncRequests uint   `json:"ResyncRequests"`
+	ResyncRequests uint   `json:"resyncRequests"`
 }
 
 // AppRepositoryStatus is the status for an AppRepository resource

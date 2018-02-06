@@ -124,8 +124,12 @@ func NewController(
 	// Set up an event handler for when AppRepository resources change
 	apprepoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueAppRepo,
-		UpdateFunc: func(old, new interface{}) {
-			controller.enqueueAppRepo(new)
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			oldApp := oldObj.(*apprepov1alpha1.AppRepository)
+			newApp := newObj.(*apprepov1alpha1.AppRepository)
+			if oldApp.Spec.URL != newApp.Spec.URL || oldApp.Spec.ResyncRequests != newApp.Spec.ResyncRequests {
+				controller.enqueueAppRepo(newApp)
+			}
 		},
 	})
 	// Set up an event handler for when CronJob resources get deleted. This
@@ -269,10 +273,12 @@ func (c *Controller) syncHandler(key string) error {
 
 		// Trigger a manual Job for the initial sync
 		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
-	} else {
-		if shouldUpdate(cronjob, apprepo) {
-			glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
-			cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Update(newCronJob(apprepo))
+	} else if err == nil {
+		// If the resource already exists, we'll update it
+		glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
+		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Update(newCronJob(apprepo))
+		if err != nil {
+			return err
 		}
 
 		// The AppRepository has changed, launch a manual Job
@@ -358,13 +364,6 @@ func (c *Controller) handleObject(obj interface{}) {
 	}
 }
 
-// shouldUpdate returns true if the CronJob's configured sync URL does not match
-// the AppRepository defined URL
-func shouldUpdate(cronjob *batchv1beta1.CronJob, apprepo *apprepov1alpha1.AppRepository) bool {
-	args := cronjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args
-	return args[len(args)-1] != apprepo.Spec.URL
-}
-
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
@@ -397,7 +396,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 func newJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: cronJobName(apprepo),
+			GenerateName: cronJobName(apprepo) + "-",
 			Namespace:    apprepo.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(apprepo, schema.GroupVersionKind{
@@ -454,7 +453,7 @@ func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
 
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
 func cronJobName(apprepo *apprepov1alpha1.AppRepository) string {
-	return fmt.Sprintf("apprepo-%s-%s", apprepo.GetName(), apprepo.GetUID())
+	return fmt.Sprintf("apprepo-%s", apprepo.GetName())
 }
 
 // apprepoSyncJobArgs returns a list of args for the sync container
