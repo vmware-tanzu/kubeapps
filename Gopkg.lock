@@ -2,6 +2,24 @@
 
 
 [[projects]]
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
+  version = "v0.3.0"
+
+[[projects]]
+  name = "github.com/Masterminds/semver"
+  packages = ["."]
+  revision = "15d8430ab86497c5c0da827b748823945e1cf1e1"
+  version = "v1.4.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/arschles/assert"
+  packages = ["."]
+  revision = "bb58b908265b5931732079df03f2818bf2167ba0"
+
+[[projects]]
   branch = "master"
   name = "github.com/beorn7/perks"
   packages = ["quantile"]
@@ -14,9 +32,27 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/disintegration/imaging"
+  packages = ["."]
+  revision = "1884593a19ddc6f2ea050403430d02c1d0fc1283"
+  version = "v1.3.0"
+
+[[projects]]
+  name = "github.com/ghodss/yaml"
+  packages = ["."]
+  revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/gobwas/glob"
+  packages = [".","compiler","match","syntax","syntax/ast","syntax/lexer","util/runes","util/strings"]
+  revision = "bea32b9cd2d6f55753d94a28e959b13f0244797a"
+  version = "v0.2.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/golang/protobuf"
-  packages = ["proto"]
+  packages = ["proto","ptypes/any","ptypes/timestamp"]
   revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
 
 [[projects]]
@@ -39,9 +75,15 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/jinzhu/copier"
+  packages = ["."]
+  revision = "db4671f3a9b8df855e993f7c94ec5ef1ffb0a23b"
+
+[[projects]]
+  branch = "master"
   name = "github.com/kubeapps/common"
-  packages = ["datastore","response"]
-  revision = "de1ae6adf6ad0edcb581ae430b6a98fa7cca18c9"
+  packages = ["datastore","datastore/mockstore","response"]
+  revision = "a41be6d45f48577f5a809445a40b8ad22bdd34e2"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -86,6 +128,12 @@
   version = "v1.0.3"
 
 [[projects]]
+  name = "github.com/spf13/pflag"
+  packages = ["."]
+  revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/stretchr/objx"
   packages = ["."]
@@ -112,8 +160,14 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = ["cast5","openpgp","openpgp/armor","openpgp/clearsign","openpgp/elgamal","openpgp/errors","openpgp/packet","openpgp/s2k","ssh/terminal"]
   revision = "b080dc9a8c480b08e698fb1219160d598526310f"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/image"
+  packages = ["bmp","tiff","tiff/lzw"]
+  revision = "12117c17ca67ffa1ce22e9409f3b0b0a93ac08c7"
 
 [[projects]]
   branch = "master"
@@ -127,9 +181,33 @@
   packages = [".","bson","internal/json","internal/sasl","internal/scram"]
   revision = "3f83fa5005286a7fe593b055f0d7771a7dce4655"
 
+[[projects]]
+  branch = "v2"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "d670f9405373e636a5a2765eea47fac0c9bc91a4"
+
+[[projects]]
+  branch = "master"
+  name = "k8s.io/apimachinery"
+  packages = ["pkg/version"]
+  revision = "caa3b27b0fdaa84adc020cd7663afd62777ec9bd"
+
+[[projects]]
+  name = "k8s.io/client-go"
+  packages = ["util/homedir"]
+  revision = "78700dec6369ba22221b72770783300f143df150"
+  version = "v6.0.0"
+
+[[projects]]
+  name = "k8s.io/helm"
+  packages = ["pkg/chartutil","pkg/getter","pkg/helm/environment","pkg/helm/helmpath","pkg/ignore","pkg/plugin","pkg/proto/hapi/chart","pkg/proto/hapi/version","pkg/provenance","pkg/repo","pkg/sympath","pkg/tlsutil","pkg/urlutil","pkg/version"]
+  revision = "14af25f1de6832228539259b821949d20069a222"
+  version = "v2.8.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "686cd67e790268beb0366f6ff4ee4cc972757c712449fcf986f53a9519908b3a"
+  inputs-digest = "b402e494e18b545cdb8b41ea24e0c120dcd17299fe103fd4903bbbf4dea7d998"
   solver-name = "gps-cdcl"
   solver-version = 1
