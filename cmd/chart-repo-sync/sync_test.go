@@ -33,10 +33,10 @@ import (
 	"strings"
 	"testing"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/arschles/assert"
 	"github.com/disintegration/imaging"
 	"github.com/kubeapps/common/datastore/mockstore"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"gopkg.in/mgo.v2/bson"
 )

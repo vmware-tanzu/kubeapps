@@ -14,12 +14,6 @@
   version = "v1.4.0"
 
 [[projects]]
-  name = "github.com/Sirupsen/logrus"
-  packages = ["."]
-  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
-  version = "v1.0.4"
-
-[[projects]]
   branch = "master"
   name = "github.com/arschles/assert"
   packages = ["."]
@@ -72,6 +66,12 @@
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  revision = "d682213848ed68c0a260ca37d6dd5ace8423f5ba"
+  version = "v1.0.4"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -142,6 +142,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7dc7dff3a98c542f15514f127a09cbbcfce1ece502a9fb9ef7c8ee0f247b007e"
+  inputs-digest = "02e37d75aeb781ed9d699ef0af7daff278ea4084c56d1864965de3baf65edfdf"
   solver-name = "gps-cdcl"
   solver-version = 1

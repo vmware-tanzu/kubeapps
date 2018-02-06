@@ -33,11 +33,11 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/common/datastore"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
 	helmrepo "k8s.io/helm/pkg/repo"
 )
