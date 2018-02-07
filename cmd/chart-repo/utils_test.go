@@ -238,6 +238,21 @@ func Test_importCharts(t *testing.T) {
 	}
 }
 
+func Test_DeleteRepo(t *testing.T) {
+	m := &mock.Mock{}
+	m.On("Upsert", mock.Anything)
+	m.On("RemoveAll", mock.Anything)
+	dbSession := mockstore.NewMockSession(m)
+	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
+	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
+	importCharts(dbSession, charts)
+
+	err := deleteRepo(dbSession, "test")
+	if err != nil {
+		t.Errorf("failed to delete chart repo test: %v", err)
+	}
+}
+
 func Test_fetchAndImportIcon(t *testing.T) {
 	t.Run("no icon", func(t *testing.T) {
 		m := mock.Mock{}

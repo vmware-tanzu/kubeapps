@@ -65,7 +65,7 @@
   branch = "master"
   name = "github.com/kubeapps/common"
   packages = ["datastore","datastore/mockstore"]
-  revision = "a41be6d45f48577f5a809445a40b8ad22bdd34e2"
+  revision = "0c427db455f11b225342dd1447267bfa74880081"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -107,7 +107,7 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = ["cast5","openpgp","openpgp/armor","openpgp/clearsign","openpgp/elgamal","openpgp/errors","openpgp/packet","openpgp/s2k","ssh/terminal"]
-  revision = "1875d0a70c90e57f11972aefd42276df65e895b9"
+  revision = "d9133f5469342136e669e85192a26056b587f503"
 
 [[projects]]
   branch = "master"
@@ -137,7 +137,7 @@
   branch = "master"
   name = "k8s.io/apimachinery"
   packages = ["pkg/version"]
-  revision = "caa3b27b0fdaa84adc020cd7663afd62777ec9bd"
+  revision = "204a986b654021625b85be7bcec2d89f90ad2e1f"
 
 [[projects]]
   name = "k8s.io/client-go"

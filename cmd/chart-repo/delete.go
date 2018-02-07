@@ -17,14 +17,51 @@ limitations under the License.
 package main
 
 import (
+	"os"
+
 	"github.com/spf13/cobra"
+	"github.com/sirupsen/logrus"
+	"github.com/kubeapps/common/datastore"
 )
 
 var deleteCmd = &cobra.Command{
 	Use: "delete [REPO NAME]",
 	Short: "delete a chart repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
-		return
+		if len(args) != 1 {
+			logrus.Info("Need exactly one argument: [REPO NAME]")
+			cmd.Help()
+			return
+		}
+		mongoURL, err := cmd.Flags().GetString("mongo-url")
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		mongoDB, err := cmd.Flags().GetString("mongo-database")
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		mongoUser, err := cmd.Flags().GetString("mongo-user")
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		mongoPW := os.Getenv("MONGO_PASSWORD")
+		debug, err := cmd.Flags().GetBool("debug")
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		if debug {
+			logrus.SetLevel(logrus.DebugLevel)
+		}
+		mongoConfig := datastore.Config{URL: mongoURL, Database: mongoDB, Username: mongoUser, Password: mongoPW}
+		dbSession, err := datastore.NewSession(mongoConfig)
+		if err != nil {
+			logrus.Fatalf("Can't connect to mongoDB: %v", err)
+		}
+		if err = deleteRepo(dbSession, args[0]); err != nil {
+			logrus.Fatalf("Can't delete chart repository %s from database: %v", args[0], err)
+		}
+
+		logrus.Infof("Successfully deleted the chart repository %s from database", args[0])
 	},
 }
