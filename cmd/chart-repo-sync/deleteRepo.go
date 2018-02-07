@@ -17,24 +17,13 @@ limitations under the License.
 package main
 
 import (
-	"os"
-
 	"github.com/spf13/cobra"
 )
 
-func newRootCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "chartsvc",
-		Short: "Kubeapps Chart Repository utility",
-	}
-
-	cmd.AddCommand(addRepoCmd, deleteRepoCmd)
-	return cmd
-}
-
-func main() {
-	cmd := newRootCmd()
-	if err := cmd.Execute(); err != nil {
-		os.Exit(1)
-	}
+var deleteRepoCmd = &cobra.Command{
+	Use: "delete SUBCOMMAND",
+	Short: "delete a new chart repository",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Usage()
+	},
 }

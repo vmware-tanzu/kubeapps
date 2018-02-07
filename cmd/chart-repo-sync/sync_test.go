@@ -130,9 +130,11 @@ func Test_syncURLInvalidity(t *testing.T) {
 		{"invalid URL", "not-a-url"},
 		{"invalid URL", "https//google.com"},
 	}
+	m := mock.Mock{}
+	dbSession := mockstore.NewMockSession(&m)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := syncRepo("test", tt.repoURL)
+			err := syncRepo(dbSession, "test", tt.repoURL)
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -219,10 +221,10 @@ func Test_importCharts(t *testing.T) {
 	// Ensure Upsert func is called with some arguments
 	m.On("Upsert", mock.Anything)
 	m.On("RemoveAll", mock.Anything)
-	dbSession = mockstore.NewMockSession(m)
+	dbSession := mockstore.NewMockSession(m)
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
-	importCharts(charts)
+	importCharts(dbSession, charts)
 
 	m.AssertExpectations(t)
 	// The Bulk Upsert method takes an array that consists of a selector followed by an interface to upsert.
@@ -238,8 +240,10 @@ func Test_importCharts(t *testing.T) {
 
 func Test_fetchAndImportIcon(t *testing.T) {
 	t.Run("no icon", func(t *testing.T) {
+		m := mock.Mock{}
+		dbSession := mockstore.NewMockSession(&m)
 		c := chart{ID: "test/acs-engine-autoscaler"}
-		assert.NoErr(t, fetchAndImportIcon(c))
+		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
 	})
 
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
@@ -248,22 +252,26 @@ func Test_fetchAndImportIcon(t *testing.T) {
 	t.Run("failed download", func(t *testing.T) {
 		netClient = &badHTTPClient{}
 		c := charts[0]
-		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fetchAndImportIcon(c))
+		m := mock.Mock{}
+		dbSession := mockstore.NewMockSession(&m)
+		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fetchAndImportIcon(dbSession, c))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
 		netClient = &badIconClient{}
 		c := charts[0]
-		assert.Err(t, image.ErrFormat, fetchAndImportIcon(c))
+		m := mock.Mock{}
+		dbSession := mockstore.NewMockSession(&m)
+		assert.Err(t, image.ErrFormat, fetchAndImportIcon(dbSession, c))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
-		m := mock.Mock{}
-		dbSession = mockstore.NewMockSession(&m)
 		netClient = &goodIconClient{}
 		c := charts[0]
+		m := mock.Mock{}
+		dbSession := mockstore.NewMockSession(&m)
 		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": iconBytes()}}).Return(nil)
-		assert.NoErr(t, fetchAndImportIcon(c))
+		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
 		m.AssertExpectations(t)
 	})
 }
@@ -276,9 +284,9 @@ func Test_fetchAndImportFiles(t *testing.T) {
 	t.Run("http error", func(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if readme already exists to force fetching"))
-		dbSession = mockstore.NewMockSession(&m)
+		dbSession := mockstore.NewMockSession(&m)
 		netClient = &badHTTPClient{}
-		assert.Err(t, io.EOF, fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv))
+		assert.Err(t, io.EOF, fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -286,8 +294,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		m.On("Insert", chartFiles{fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version), "", ""})
-		dbSession = mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		dbSession := mockstore.NewMockSession(&m)
+		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -297,8 +305,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		m.On("Insert", chartFiles{fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version), testChartReadme, testChartValues})
-		dbSession = mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		dbSession := mockstore.NewMockSession(&m)
+		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -307,8 +315,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		// don't return an error when checking if files already exists
 		m.On("One", mock.Anything).Return(nil)
-		dbSession = mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		dbSession := mockstore.NewMockSession(&m)
+		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
 		m.AssertNotCalled(t, "Insert", mock.Anything)
 	})
