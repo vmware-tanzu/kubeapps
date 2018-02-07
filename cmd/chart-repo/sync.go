@@ -25,8 +25,8 @@ import (
 )
 
 var syncCmd = &cobra.Command{
-	Use: "add [REPO NAME] [REPO URL]",
-	Short: "add a new chart repository, and resync the whole data",
+	Use: "sync [REPO NAME] [REPO URL]",
+	Short: "add a new chart repository, and resync its charts periodically",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {
 			logrus.Info("Need exactly two arguments: [REPO NAME] [REPO URL]")
