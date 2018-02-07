@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 Bitnami
+Copyright (c) 2017-2018 Bitnami
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,13 +21,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 	"sync"
@@ -36,10 +34,10 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
-	"github.com/kubeapps/common/datastore"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
 	helmrepo "k8s.io/helm/pkg/repo"
+	"github.com/kubeapps/common/datastore"
 )
 
 const (
@@ -57,44 +55,8 @@ type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-var dbSession datastore.Session
-
 var netClient httpClient = &http.Client{
 	Timeout: time.Second * 10,
-}
-
-func main() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [options] [REPO NAME] [REPO URL]\n", os.Args[0])
-		flag.PrintDefaults()
-	}
-	dbURL := flag.String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
-	dbName := flag.String("mongo-database", "charts", "MongoDB database")
-	dbUsername := flag.String("mongo-user", "", "MongoDB user")
-	dbPassword := os.Getenv("MONGO_PASSWORD")
-	debug := flag.Bool("debug", false, "verbose logging")
-	flag.Parse()
-
-	if *debug {
-		log.SetLevel(log.DebugLevel)
-	}
-
-	if flag.NArg() != 2 {
-		flag.Usage()
-		os.Exit(2)
-	}
-
-	mongoConfig := datastore.Config{URL: *dbURL, Database: *dbName, Username: *dbUsername, Password: dbPassword}
-	var err error
-	dbSession, err = datastore.NewSession(mongoConfig)
-	if err != nil {
-		log.WithFields(log.Fields{"host": *dbURL}).Fatal(err)
-	}
-
-	if err := syncRepo(flag.Arg(0), flag.Arg(1)); err != nil {
-		log.WithError(err).Error("sync failed")
-		os.Exit(1)
-	}
 }
 
 // Syncing is performed in the following steps:
@@ -106,7 +68,7 @@ func main() {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func syncRepo(repoName, repoURL string) error {
+func syncRepo(dbSession datastore.Session, repoName, repoURL string) error {
 	url, err := url.ParseRequestURI(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -119,7 +81,7 @@ func syncRepo(repoName, repoURL string) error {
 	}
 
 	charts := chartsFromIndex(index, repo{Name: repoName, URL: repoURL})
-	err = importCharts(charts)
+	err = importCharts(dbSession, charts)
 	if err != nil {
 		return err
 	}
@@ -133,7 +95,7 @@ func syncRepo(repoName, repoURL string) error {
 	log.Debugf("starting %d workers", numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go importWorker(&wg, iconJobs, chartFilesJobs)
+		go importWorker(dbSession, &wg, iconJobs, chartFilesJobs)
 	}
 
 	// Enqueue jobs to process chart icons
@@ -165,6 +127,15 @@ func syncRepo(repoName, repoURL string) error {
 
 	// Wait for the worker pools to finish processing
 	wg.Wait()
+
+	return nil
+}
+
+func deleteRepo(dbSession datastore.Session, repoName string) error {
+	err := removeCharts(dbSession, repoName)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -231,7 +202,7 @@ func newChart(entry helmrepo.ChartVersions, r repo) chart {
 	return c
 }
 
-func importCharts(charts []chart) error {
+func importCharts(dbSession datastore.Session, charts []chart) error {
 	var pairs []interface{}
 	var chartIDs []string
 	for _, c := range charts {
@@ -259,23 +230,36 @@ func importCharts(charts []chart) error {
 	return err
 }
 
-func importWorker(wg *sync.WaitGroup, icons <-chan chart, chartFiles <-chan importChartFilesJob) {
+func removeCharts(dbSession datastore.Session, repoName string) error {
+	db, closer := dbSession.DB()
+	defer closer()
+	bulk := db.C(chartCollection).Bulk()
+
+	bulk.RemoveAll(bson.M{
+		"repo.name": repoName,
+	})
+
+	_, err := bulk.Run()
+	return err
+}
+
+func importWorker(dbSession datastore.Session, wg *sync.WaitGroup, icons <-chan chart, chartFiles <-chan importChartFilesJob) {
 	defer wg.Done()
 	for c := range icons {
 		log.WithFields(log.Fields{"name": c.Name}).Debug("importing icon")
-		if err := fetchAndImportIcon(c); err != nil {
+		if err := fetchAndImportIcon(dbSession, c); err != nil {
 			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to import icon")
 		}
 	}
 	for j := range chartFiles {
 		log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
-		if err := fetchAndImportFiles(j.Name, j.Repo, j.ChartVersion); err != nil {
+		if err := fetchAndImportFiles(dbSession, j.Name, j.Repo, j.ChartVersion); err != nil {
 			log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
 		}
 	}
 }
 
-func fetchAndImportIcon(c chart) error {
+func fetchAndImportIcon(dbSession datastore.Session, c chart) error {
 	if c.Icon == "" {
 		log.WithFields(log.Fields{"name": c.Name}).Info("icon not found")
 		return nil
@@ -313,7 +297,7 @@ func fetchAndImportIcon(c chart) error {
 	return db.C(chartCollection).UpdateId(c.ID, bson.M{"$set": bson.M{"raw_icon": b.Bytes()}})
 }
 
-func fetchAndImportFiles(name string, r repo, cv chartVersion) error {
+func fetchAndImportFiles(dbSession datastore.Session, name string, r repo, cv chartVersion) error {
 	chartFilesID := fmt.Sprintf("%s/%s-%s", r.Name, name, cv.Version)
 	db, closer := dbSession.DB()
 	defer closer()
