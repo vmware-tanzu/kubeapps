@@ -131,6 +131,15 @@ func syncRepo(dbSession datastore.Session, repoName, repoURL string) error {
 	return nil
 }
 
+func deleteRepo(dbSession datastore.Session, repoName string) error {
+	err := removeCharts(dbSession, repoName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func fetchRepoIndex(repoURL *url.URL) (*helmrepo.IndexFile, error) {
 	// use a copy of the URL struct so we don't modify the original
 	indexURL := *repoURL
@@ -215,6 +224,19 @@ func importCharts(dbSession datastore.Session, charts []chart) error {
 			"$nin": chartIDs,
 		},
 		"repo.name": charts[0].Repo.Name,
+	})
+
+	_, err := bulk.Run()
+	return err
+}
+
+func removeCharts(dbSession datastore.Session, repoName string) error {
+	db, closer := dbSession.DB()
+	defer closer()
+	bulk := db.C(chartCollection).Bulk()
+
+	bulk.RemoveAll(bson.M{
+		"repo.name": repoName,
 	})
 
 	_, err := bulk.Run()

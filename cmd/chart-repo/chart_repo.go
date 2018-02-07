@@ -22,19 +22,29 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newRootCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "chartsvc",
-		Short: "Kubeapps Chart Repository utility",
-	}
-
-	cmd.AddCommand(addRepoCmd, deleteRepoCmd)
-	return cmd
+var RootCmd = &cobra.Command{
+	Use:   "chart-repo",
+	Short: "Kubeapps Chart Repository utility",
+	Run: func(cmd *cobra.Command, args []string) {
+		cmd.Help()
+	},
 }
 
 func main() {
-	cmd := newRootCmd()
+	cmd := RootCmd
 	if err := cmd.Execute(); err != nil {
 		os.Exit(1)
+	}
+}
+
+func init() {
+	cmds := []*cobra.Command{syncCmd, deleteCmd}
+
+	for _, cmd := range cmds {
+		RootCmd.AddCommand(cmd)
+		cmd.Flags().String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
+		cmd.Flags().String("mongo-database", "charts", "MongoDB database")
+		cmd.Flags().String("mongo-user", "", "MongoDB user")
+		cmd.Flags().Bool("debug", false, "verbose logging")
 	}
 }

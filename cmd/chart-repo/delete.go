@@ -20,10 +20,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deleteRepoCmd = &cobra.Command{
-	Use: "delete SUBCOMMAND",
-	Short: "delete a new chart repository",
+var deleteCmd = &cobra.Command{
+	Use: "delete [REPO NAME]",
+	Short: "delete a chart repository",
 	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Usage()
+		cmd.Help()
+		return
 	},
 }

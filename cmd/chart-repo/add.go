@@ -24,13 +24,14 @@ import (
 	"github.com/kubeapps/common/datastore"
 )
 
-var addRepoCmd = &cobra.Command{
-	Use: "add SUBCOMMAND",
-	Short: "add a new chart repository",
+var syncCmd = &cobra.Command{
+	Use: "add [REPO NAME] [REPO URL]",
+	Short: "add a new chart repository, and resync the whole data",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {
 			logrus.Info("Need exactly two arguments: [REPO NAME] [REPO URL]")
-			cmd.Usage()
+			cmd.Help()
+			return
 		}
 
 		mongoURL, err := cmd.Flags().GetString("mongo-url")
@@ -65,11 +66,4 @@ var addRepoCmd = &cobra.Command{
 
 		logrus.Infof("Successfully added the chart repository %s to database", args[0])
 	},
-}
-
-func init() {
-	addRepoCmd.Flags().String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
-	addRepoCmd.Flags().String("mongo-database", "charts", "MongoDB database")
-	addRepoCmd.Flags().String("mongo-user", "", "MongoDB user")
-	addRepoCmd.Flags().Bool("debug", false, "verbose logging")
 }
