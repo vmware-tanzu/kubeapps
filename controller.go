@@ -124,8 +124,12 @@ func NewController(
 	// Set up an event handler for when AppRepository resources change
 	apprepoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueAppRepo,
-		UpdateFunc: func(old, new interface{}) {
-			controller.enqueueAppRepo(new)
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			oldApp := oldObj.(*apprepov1alpha1.AppRepository)
+			newApp := newObj.(*apprepov1alpha1.AppRepository)
+			if oldApp.Spec.URL != newApp.Spec.URL || oldApp.Spec.ResyncRequests != newApp.Spec.ResyncRequests {
+				controller.enqueueAppRepo(newApp)
+			}
 		},
 	})
 	// Set up an event handler for when CronJob resources get deleted. This
@@ -269,9 +273,16 @@ func (c *Controller) syncHandler(key string) error {
 
 		// Trigger a manual Job for the initial sync
 		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
-	} else if shouldUpdate(cronjob, apprepo) {
+	} else if err == nil {
+		// If the resource already exists, we'll update it
 		glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
 		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Update(newCronJob(apprepo))
+		if err != nil {
+			return err
+		}
+
+		// The AppRepository has changed, launch a manual Job
+		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
 	}
 
 	// If an error occurs during Get/Create, we'll requeue the item so we can
@@ -351,13 +362,6 @@ func (c *Controller) handleObject(obj interface{}) {
 		c.enqueueAppRepo(apprepo)
 		return
 	}
-}
-
-// shouldUpdate returns true if the CronJob's configured sync URL does not match
-// the AppRepository defined URL
-func shouldUpdate(cronjob *batchv1beta1.CronJob, apprepo *apprepov1alpha1.AppRepository) bool {
-	args := cronjob.Spec.JobTemplate.Spec.Template.Spec.Containers[0].Args
-	return args[len(args)-1] != apprepo.Spec.URL
 }
 
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
