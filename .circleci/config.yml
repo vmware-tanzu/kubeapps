@@ -14,7 +14,7 @@ jobs:
           version: 17.07.0-ce
 
       - run: go get -u github.com/golang/dep/cmd/dep
-      - run: dep ensure
+      - run: dep ensure -update
 
       - run: go build -v
       - run: go test -v -race ./...
