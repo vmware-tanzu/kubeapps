@@ -27,14 +27,14 @@
     "build": "react-scripts-ts build",
     "test": "react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
-    "tslint-check": "tslint-config-prettier-check ./tslint.json",
+    "tslint-check": "tslint-config-prettier-check ./tslint.ci.json",
     "precommit": "lint-staged",
     "prettier": "prettier --write 'src/**/*.{ts,tsx,css}'",
-    "lint": "tslint 'src/**/*.{ts,tsx}'",
-    "lint-fix": "tslint --fix 'src/**/*.{ts,tsx}'"
+    "lint": "tslint -c ./tslint.ci.json 'src/**/*.{ts,tsx}'",
+    "lint-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["tslint --fix", "prettier --write", "git add"],
+    "*.{ts,tsx}": ["tslint -c ./tslint.ci.json --fix", "prettier --write", "git add"],
     "*.{js,json,css,md}": ["prettier --write", "git add"]
   },
   "devDependencies": {
