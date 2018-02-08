@@ -18,7 +18,7 @@ jobs:
 
       - run: go build -v
       - run: go test -v -race ./...
-    
+
       - run: docker build -t kubeapps/chartsvc:latest .
 
       - deploy:

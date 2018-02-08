@@ -238,6 +238,19 @@ func Test_importCharts(t *testing.T) {
 	}
 }
 
+func Test_DeleteRepo(t *testing.T) {
+	m := &mock.Mock{}
+	m.On("RemoveAll", bson.M{
+		"repo.name": "test",
+	})
+	dbSession := mockstore.NewMockSession(m)
+
+	err := deleteRepo(dbSession, "test")
+	if err != nil {
+		t.Errorf("failed to delete chart repo test: %v", err)
+	}
+}
+
 func Test_fetchAndImportIcon(t *testing.T) {
 	t.Run("no icon", func(t *testing.T) {
 		m := mock.Mock{}
