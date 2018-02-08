@@ -14,11 +14,11 @@ jobs:
           version: 17.07.0-ce
 
       - run: go get -u github.com/golang/dep/cmd/dep
-      - run: dep ensure -update
+      - run: dep ensure
 
       - run: go build -v
       - run: go test -v -race ./...
-    
+
       - run: docker build -t kubeapps/chartsvc:latest .
 
       - deploy:

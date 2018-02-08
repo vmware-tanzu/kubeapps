@@ -137,7 +137,7 @@
   branch = "master"
   name = "k8s.io/apimachinery"
   packages = ["pkg/version"]
-  revision = "204a986b654021625b85be7bcec2d89f90ad2e1f"
+  revision = "6212319467788d635606616d5c6d87ded0321d8c"
 
 [[projects]]
   name = "k8s.io/client-go"
