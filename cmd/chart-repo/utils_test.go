@@ -240,12 +240,10 @@ func Test_importCharts(t *testing.T) {
 
 func Test_DeleteRepo(t *testing.T) {
 	m := &mock.Mock{}
-	m.On("Upsert", mock.Anything)
-	m.On("RemoveAll", mock.Anything)
+	m.On("RemoveAll", bson.M{
+		"repo.name": "test",
+	})
 	dbSession := mockstore.NewMockSession(m)
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
-	importCharts(dbSession, charts)
 
 	err := deleteRepo(dbSession, "test")
 	if err != nil {
