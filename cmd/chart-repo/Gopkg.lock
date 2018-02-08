@@ -65,7 +65,7 @@
   branch = "master"
   name = "github.com/kubeapps/common"
   packages = ["datastore","datastore/mockstore"]
-  revision = "0c427db455f11b225342dd1447267bfa74880081"
+  revision = "707d33bc9333441366785395d93f1d9bcc196d64"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
