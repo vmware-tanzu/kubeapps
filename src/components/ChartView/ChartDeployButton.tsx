@@ -27,12 +27,12 @@ interface IChartDeployButtonState {
   namespace: string;
   values: string;
   valuesModified: boolean;
-  error: string | null;
+  error?: string;
 }
 
 class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartDeployButtonState> {
   public state: IChartDeployButtonState = {
-    error: null,
+    error: undefined,
     isDeploying: false,
     modalIsOpen: false,
     namespace: "default",

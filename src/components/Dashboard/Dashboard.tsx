@@ -13,7 +13,7 @@ class Dashboard extends React.Component {
           <div>No Apps installed</div>
           <div className="padding-normal">
             <Link className="button button-primary" to="/charts">
-              deploy one
+              Deploy Chart
             </Link>
           </div>
         </main>
