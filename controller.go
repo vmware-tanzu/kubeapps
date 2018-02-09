@@ -424,7 +424,7 @@ func jobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 					{
 						Name:    "sync",
 						Image:   repoSyncImage,
-						Command: []string{"/chart-repo-sync"},
+						Command: []string{"/chart-repo"},
 						Args:    apprepoSyncJobArgs(apprepo),
 						Env: []corev1.EnvVar{
 							{
@@ -459,6 +459,7 @@ func cronJobName(apprepo *apprepov1alpha1.AppRepository) string {
 // apprepoSyncJobArgs returns a list of args for the sync container
 func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 	return []string{
+		"sync",
 		"--mongo-url=mongodb.kubeapps",
 		"--mongo-user=root",
 		apprepo.GetName(),
