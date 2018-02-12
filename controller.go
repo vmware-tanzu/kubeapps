@@ -131,7 +131,14 @@ func NewController(
 				controller.enqueueAppRepo(newApp)
 			}
 		},
+		DeleteFunc: func(obj interface{}) {
+			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			if err == nil {
+				controller.workqueue.AddRateLimited(key)
+			}
+		},
 	})
+
 	// Set up an event handler for when CronJob resources get deleted. This
 	// handler will lookup the owner of the given CronJob, and if it is owned by a
 	// AppRepository resource will enqueue that AppRepository resource for
@@ -253,11 +260,12 @@ func (c *Controller) syncHandler(key string) error {
 		// The AppRepository resource may no longer exist, in which case we stop
 		// processing.
 		if errors.IsNotFound(err) {
-			runtime.HandleError(fmt.Errorf("AppRepository '%s' in work queue no longer exists", key))
+			glog.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
+			// Trigger a Job to perfrom the cleanup of the charts in the DB corresponding to deleted AppRepository
+			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(newCleanupJob(name, namespace))
 			return nil
 		}
-
-		return err
+		return fmt.Errorf("Error fetching object with key %s from store: %v", key, err)
 	}
 
 	// Get the cronjob with the same name as AppRepository
@@ -272,7 +280,7 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		// Trigger a manual Job for the initial sync
-		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
+		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newSyncJob(apprepo))
 	} else if err == nil {
 		// If the resource already exists, we'll update it
 		glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
@@ -282,7 +290,7 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		// The AppRepository has changed, launch a manual Job
-		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newJob(apprepo))
+		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newSyncJob(apprepo))
 	}
 
 	// If an error occurs during Get/Create, we'll requeue the item so we can
@@ -385,15 +393,15 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 			Schedule:          "0 * * * *",
 			ConcurrencyPolicy: "Forbid",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: jobSpec(apprepo),
+				Spec: syncJobSpec(apprepo),
 			},
 		},
 	}
 }
 
-// newJob triggers a job for the AppRepository resource. It also sets the
+// newSyncJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
+func newSyncJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: cronJobName(apprepo) + "-",
@@ -406,12 +414,12 @@ func newJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 				}),
 			},
 		},
-		Spec: jobSpec(apprepo),
+		Spec: syncJobSpec(apprepo),
 	}
 }
 
-// jobSpec returns a batchv1.JobSpec for running the chart-repo-sync job
-func jobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
+// jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
+func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -424,8 +432,51 @@ func jobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 					{
 						Name:    "sync",
 						Image:   repoSyncImage,
-						Command: []string{"/chart-repo-sync"},
+						Command: []string{"/chart-repo"},
 						Args:    apprepoSyncJobArgs(apprepo),
+						Env: []corev1.EnvVar{
+							{
+								Name: "MONGO_PASSWORD",
+								ValueFrom: &corev1.EnvVarSource{
+									SecretKeyRef: &corev1.SecretKeySelector{
+										LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"},
+										Key:                  "mongodb-root-password",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+// newCleanupJob triggers a job for the AppRepository resource. It also sets the
+// appropriate OwnerReferences on the resource
+func newCleanupJob(reponame, namespace string) *batchv1.Job {
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: deleteJobName(reponame) + "-",
+			Namespace:    namespace,
+		},
+		Spec: cleanupJobSpec(reponame),
+	}
+}
+
+// cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
+func cleanupJobSpec(repoName string) batchv1.JobSpec {
+	return batchv1.JobSpec{
+		Template: corev1.PodTemplateSpec{
+			Spec: corev1.PodSpec{
+				// If there's an issue, delay till the next cron
+				RestartPolicy: "Never",
+				Containers: []corev1.Container{
+					{
+						Name:    "delete",
+						Image:   repoSyncImage,
+						Command: []string{"/chart-repo"},
+						Args:    apprepoCleanupJobArgs(repoName),
 						Env: []corev1.EnvVar{
 							{
 								Name: "MONGO_PASSWORD",
@@ -453,15 +504,31 @@ func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
 
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
 func cronJobName(apprepo *apprepov1alpha1.AppRepository) string {
-	return fmt.Sprintf("apprepo-%s", apprepo.GetName())
+	return fmt.Sprintf("apprepo-sync-%s", apprepo.GetName())
+}
+
+// deleteJobName returns a unique name for the Job to cleanup AppRepository
+func deleteJobName(reponame string) string {
+	return fmt.Sprintf("apprepo-cleanup-%s", reponame)
 }
 
 // apprepoSyncJobArgs returns a list of args for the sync container
 func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 	return []string{
+		"sync",
 		"--mongo-url=mongodb.kubeapps",
 		"--mongo-user=root",
 		apprepo.GetName(),
 		apprepo.Spec.URL,
+	}
+}
+
+// apprepoCleanupJobArgs returns a list of args for the repo cleanup container
+func apprepoCleanupJobArgs(repoName string) []string {
+	return []string{
+		"delete",
+		repoName,
+		"--mongo-url=mongodb.kubeapps",
+		"--mongo-user=root",
 	}
 }
