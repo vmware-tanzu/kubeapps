@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@types/js-yaml": "^3.10.1",
+    "@types/pako": "^1.0.0",
     "axios": "^0.17.1",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
+    "js-yaml": "^3.10.0",
+    "protobufjs": "^6.8.4",
     "raf": "^3.4.0",
     "react": "^16.2.0",
     "react-ace": "^5.9.0",

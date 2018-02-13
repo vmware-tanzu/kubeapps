@@ -30,7 +30,7 @@ const initialState: IServiceCatalogState = {
   plans: [],
 };
 
-export const catalogReducer = (
+const catalogReducer = (
   state: IServiceCatalogState = initialState,
   action: ServiceCatalogAction,
 ): IServiceCatalogState => {
@@ -61,3 +61,5 @@ export const catalogReducer = (
       return { ...state };
   }
 };
+
+export default catalogReducer;

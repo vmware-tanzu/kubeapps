@@ -4,9 +4,10 @@ import { Provider } from "react-redux";
 import { Route, RouteComponentProps } from "react-router";
 import { ConnectedRouter } from "react-router-redux";
 
-import Dashboard from "../components/Dashboard";
 import Layout from "../components/Layout";
 import configureStore from "../store";
+import AppList from "./AppListContainer";
+import AppView from "./AppViewContainer";
 import ChartList from "./ChartListContainer";
 import ChartView from "./ChartViewContainer";
 
@@ -23,7 +24,8 @@ class Root extends React.Component {
   public static exactRoutes: {
     [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
   } = {
-    "/": Dashboard,
+    "/": AppList,
+    "/apps/:namespace/:releaseName": AppView,
     "/charts": ChartList,
     "/charts/:repo": ChartList,
     "/charts/:repo/:id": ChartView,

@@ -4,7 +4,7 @@ import placeholder from "../../placeholder.png";
 import "./ChartIcon.css";
 
 interface IChartIconProps {
-  icon?: string;
+  icon?: string | null;
 }
 
 class ChartIcon extends React.Component<IChartIconProps> {

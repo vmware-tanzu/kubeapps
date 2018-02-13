@@ -1,5 +1,11 @@
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IAppRepositoryState } from "../reducers/repos";
+import { hapi } from "./hapi/release";
+
+export interface IRepo {
+  name: string;
+  url: string;
+}
 
 export interface IChartVersion {
   id: string;
@@ -37,10 +43,7 @@ export interface IChartAttributes {
     name: string;
     email?: string;
   }>;
-  repo: {
-    name: string;
-    url: string;
-  };
+  repo: IRepo;
   sources: string[];
 }
 
@@ -55,10 +58,60 @@ export interface IChartState {
   items: IChart[];
 }
 
+export interface IDeployment {
+  metadata: {
+    name: string;
+    namespace: string;
+  };
+}
+
+export interface IServiceSpec {
+  ports: IPort[];
+  clusterIP: string;
+  type: string;
+}
+
+export interface IPort {
+  name: string;
+  port: number;
+  protocol: string;
+  targetPort: string;
+  nodePort: string;
+}
+
+export interface IResource {
+  apiVersion: string;
+  kind: string;
+  type: string;
+  spec: any;
+  status: any;
+  metadata: {
+    name: string;
+    namespace: string;
+    annotations: string;
+    creationTimestamp: string;
+  };
+}
+
+export interface IApp {
+  type: string;
+  data: hapi.release.Release;
+  repo?: IRepo;
+}
+
+export interface IAppState {
+  isFetching: boolean;
+  // currently items are always Helm releases
+  items: IApp[];
+  selected?: IApp;
+}
+
 export interface IStoreState {
   catalog: IServiceCatalogState;
+  apps: IAppState;
   charts: IChartState;
   repos: IAppRepositoryState;
+  deployment: IDeployment;
 }
 
 interface IK8sResource {
@@ -227,4 +280,31 @@ interface IStatusCause {
   field: string;
   message: string;
   reason: string;
+}
+
+// Representation of the HelmRelease CRD
+export interface IHelmRelease {
+  metadata: {
+    annotations: {
+      "apprepositories.kubeapps.com/repo-name"?: string;
+    };
+    name: string;
+    namespace: string;
+  };
+  spec: {
+    repoUrl: string;
+  };
+}
+
+// Representation of the ConfigMaps Helm uses to store releases
+export interface IHelmReleaseConfigMap {
+  metadata: {
+    labels: {
+      NAME: string;
+      VERSION: string;
+    };
+  };
+  data: {
+    release: string;
+  };
 }

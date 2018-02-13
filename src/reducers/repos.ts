@@ -31,7 +31,7 @@ const initialState: IAppRepositoryState = {
   repos: [],
 };
 
-export const reposReducer = (
+const reposReducer = (
   state: IAppRepositoryState = initialState,
   action: AppReposAction,
 ): IAppRepositoryState => {
@@ -63,3 +63,5 @@ export const reposReducer = (
       return state;
   }
 };
+
+export default reposReducer;

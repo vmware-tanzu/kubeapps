@@ -11,6 +11,12 @@ export const app = {
 };
 
 export const api = {
+  apprepostories: {
+    base: `/api/kube/apis/kubeapps.com/v1alpha1`,
+    create: (namespace = "default") =>
+      `${api.apprepostories.base}/namespaces/${namespace}/apprepositories`,
+  },
+
   charts: {
     base: "/api/chartsvc/v1",
     get: (id: string) => `${api.charts.base}/charts/${id}`,
@@ -26,14 +32,15 @@ export const api = {
   helmreleases: {
     create: (namespace = "default") =>
       `/api/kube/apis/helm.bitnami.com/v1/namespaces/${namespace}/helmreleases`,
+    list: (namespace?: string) =>
+      `/api/kube/apis/helm.bitnami.com/v1/${
+        namespace ? `namespaces/${namespace}/` : ""
+      }/helmreleases`,
+    listDetails: (releaseNames: string[]) =>
+      `/api/kube/api/v1/namespaces/kubeapps/configmaps?labelSelector=NAME in (${releaseNames.join(
+        ",",
+      )})`,
   },
-
-  apprepostories: {
-    base: `/api/kube/apis/kubeapps.com/v1alpha1`,
-    create: (namespace = "default") =>
-      `${api.apprepostories.base}/namespaces/${namespace}/apprepositories`,
-  },
-
   serviceinstances: {
     base: `/api/kube/apis/servicecatalog.k8s.io/v1beta1`,
     create: (namespace = "default") =>

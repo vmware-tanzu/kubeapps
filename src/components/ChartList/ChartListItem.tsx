@@ -17,7 +17,7 @@ class ChartListItem extends React.Component<IChartListItemProps> {
       <div className="ChartListItem padding-normal margin-big elevation-5">
         <Link to={`/charts/` + chart.id}>
           <ChartIcon icon={chart.attributes.icon} />
-          <div className="ChartListName__details">
+          <div className="ChartListItem__details">
             <h6>{chart.id}</h6>
             {latestAppVersion && <span>v{latestAppVersion}</span>}
           </div>
