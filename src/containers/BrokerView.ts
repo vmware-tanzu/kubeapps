@@ -3,7 +3,7 @@ import { Dispatch } from "redux";
 
 import actions from "../actions";
 import { BrokerView } from "../components/BrokerView";
-import { IServiceBroker } from "../shared/ServiceCatalog";
+import { IServiceBroker, IServiceInstance } from "../shared/ServiceCatalog";
 import { IStoreState } from "../shared/types";
 
 interface IRouteProps {
@@ -43,6 +43,9 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
+    deprovision: async (instance: IServiceInstance) => {
+      await dispatch(actions.catalog.deprovision(instance));
+    },
     getCatalog: async () => {
       dispatch(actions.catalog.getCatalog());
     },

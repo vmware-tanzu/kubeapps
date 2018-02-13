@@ -74,6 +74,12 @@ export function provision(
   };
 }
 
+export function deprovision(instance: IServiceInstance) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    return ServiceCatalog.deprovisionInstance(instance);
+  };
+}
+
 export function sync(broker: IServiceBroker) {
   return async (dispatch: Dispatch<IStoreState>) => {
     return ServiceCatalog.syncBroker(broker);

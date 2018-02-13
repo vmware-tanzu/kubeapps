@@ -9,6 +9,7 @@ import {
   IServicePlan,
 } from "../../shared/ServiceCatalog";
 import { Card, CardContainer } from "../Card";
+import DeprovisionButton from "../DeprovisionButton";
 import SyncButton from "../SyncButton";
 
 export interface IBrokerViewProps {
@@ -19,6 +20,7 @@ export interface IBrokerViewProps {
   instances: IServiceInstance[];
   plans: IServicePlan[];
   sync: (broker: IServiceBroker) => Promise<any>;
+  deprovision: (instance: IServiceInstance) => Promise<any>;
 }
 
 export class BrokerView extends React.PureComponent<IBrokerViewProps> {
@@ -27,7 +29,7 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
   }
 
   public render() {
-    const { bindings, broker, instances } = this.props;
+    const { bindings, broker, instances, deprovision } = this.props;
 
     return (
       <div className="broker">
@@ -75,6 +77,9 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
                       </td>
                       <td key={message}>
                         <code>{message}</code>
+                      </td>
+                      <td>
+                        <DeprovisionButton deprovision={deprovision} instance={instance} />
                       </td>
                     </tr>
                   );

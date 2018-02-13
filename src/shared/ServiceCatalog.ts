@@ -109,6 +109,16 @@ export class ServiceCatalog {
     return data;
   }
 
+  public static async deprovisionInstance(instance: IServiceInstance) {
+    const { data } = await axios.delete("/api/kube" + instance.metadata.selfLink);
+
+    if (data.status === "Failure") {
+      throw new Error(data.message);
+    }
+
+    return data;
+  }
+
   public static async syncBroker(broker: IServiceBroker) {
     const { data } = await axios.patch<IStatus>(
       urls.api.clusterservicebrokers.sync(broker),
