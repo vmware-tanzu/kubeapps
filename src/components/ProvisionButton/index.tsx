@@ -3,15 +3,16 @@ import AceEditor from "react-ace";
 import * as Modal from "react-modal";
 import { RouterAction } from "react-router-redux";
 
-import { IServiceClass, IServicePlan } from "../../shared/ServiceCatalog";
+import { IServicePlan } from "../../shared/ServiceCatalog";
 
 import "brace/mode/json";
 import "brace/theme/xcode";
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 
 interface IProvisionButtonProps {
   plans: IServicePlan[];
-  classes: IServiceClass[];
-  selectedClass?: IServiceClass;
+  classes: IClusterServiceClass[];
+  selectedClass?: IClusterServiceClass;
   selectedPlan?: IServicePlan;
   provision: (
     releaseName: string,
@@ -30,7 +31,7 @@ interface IProvisionButtonState {
   releaseName: string;
   namespace: string;
   selectedPlan: IServicePlan | undefined;
-  selectedClass: IServiceClass | undefined;
+  selectedClass: IClusterServiceClass | undefined;
   parameters: string;
   error?: string;
 }

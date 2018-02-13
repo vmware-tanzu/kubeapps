@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IServiceInstance } from "../../shared/ServiceCatalog";
+import { IServiceInstance } from "../../shared/ServiceInstance";
 
 interface IDeprovisionButtonProps {
   instance: IServiceInstance;
@@ -36,7 +36,7 @@ class DeprovisionButton extends React.Component<IDeprovisionButtonProps, IDeprov
       <div className="DeprovisionButton">
         {this.state.isDeprovisioning && <div>Deprovisioning...</div>}
         <button
-          className="button button-primary"
+          className="button button-primary button-small button-danger"
           disabled={this.state.isDeprovisioning}
           onClick={this.handleDeprovision}
         >

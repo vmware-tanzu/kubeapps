@@ -1,12 +1,13 @@
 import * as React from "react";
 import { RouterAction } from "react-router-redux";
 
-import { IServiceClass, IServicePlan } from "../../shared/ServiceCatalog";
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import { IServicePlan } from "../../shared/ServiceCatalog";
 import { Card, CardContainer } from "../Card";
 import ProvisionButton from "../ProvisionButton";
 
 interface IClassViewProps {
-  classes: IServiceClass[];
+  classes: IClusterServiceClass[];
   classname: string;
   getCatalog: () => Promise<any>;
   plans: IServicePlan[];
@@ -18,7 +19,7 @@ interface IClassViewProps {
     parameters: {},
   ) => Promise<any>;
   push: (location: string) => RouterAction;
-  svcClass: IServiceClass | undefined;
+  svcClass: IClusterServiceClass | undefined;
 }
 
 export class ClassView extends React.Component<IClassViewProps> {

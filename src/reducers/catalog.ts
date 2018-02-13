@@ -2,18 +2,15 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { ServiceCatalogAction } from "../actions/catalog";
-import {
-  IServiceBinding,
-  IServiceBroker,
-  IServiceClass,
-  IServiceInstance,
-  IServicePlan,
-} from "../shared/ServiceCatalog";
+import { IClusterServiceClass } from "../shared/ClusterServiceClass";
+import { IServiceBinding } from "../shared/ServiceBinding";
+import { IServiceBroker, IServicePlan } from "../shared/ServiceCatalog";
+import { IServiceInstance } from "../shared/ServiceInstance";
 
 export interface IServiceCatalogState {
   bindings: IServiceBinding[];
   brokers: IServiceBroker[];
-  classes: IServiceClass[];
+  classes: IClusterServiceClass[];
   instances: IServiceInstance[];
   isChecking: boolean;
   isInstalled: boolean;

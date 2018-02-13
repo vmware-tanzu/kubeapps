@@ -1,9 +1,10 @@
 import * as React from "react";
-import { IServiceBroker, IServiceClass, IServicePlan } from "../../shared/ServiceCatalog";
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 
 interface IServiceListProps {
   brokers: IServiceBroker[];
-  classes: IServiceClass[];
+  classes: IClusterServiceClass[];
   plans: IServicePlan[];
   getCatalog: () => Promise<any>;
 }

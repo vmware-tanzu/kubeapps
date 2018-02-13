@@ -1,21 +1,20 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import {
-  IServiceBinding,
-  IServiceBroker,
-  IServiceClass,
-  IServiceInstance,
-  IServicePlan,
-} from "../../shared/ServiceCatalog";
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import { IServiceBinding, ServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
+import { IServiceInstance } from "../../shared/ServiceInstance";
 import { Card, CardContainer } from "../Card";
 import DeprovisionButton from "../DeprovisionButton";
 import SyncButton from "../SyncButton";
+import { AddBindingButton } from "./AddBindingButton";
+import { RemoveBindingButton } from "./RemoveBindingButton";
 
 export interface IBrokerViewProps {
   bindings: IServiceBinding[];
   broker: IServiceBroker | undefined;
-  classes: IServiceClass[];
+  classes: IClusterServiceClass[];
   getCatalog: () => Promise<any>;
   instances: IServiceInstance[];
   plans: IServicePlan[];
@@ -56,6 +55,7 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
                   <th>Instance</th>
                   <th>Status</th>
                   <th>Message</th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
@@ -79,7 +79,15 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
                         <code>{message}</code>
                       </td>
                       <td>
-                        <DeprovisionButton deprovision={deprovision} instance={instance} />
+                        <div className="button-list" style={{ display: "flex" }}>
+                          <DeprovisionButton deprovision={deprovision} instance={instance} />
+                          <AddBindingButton
+                            bindingName={instance.metadata.name + "-binding"}
+                            instanceRefName={instance.metadata.name}
+                            namespace={instance.metadata.namespace}
+                            addBinding={this.addbinding}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
@@ -109,8 +117,21 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
                     ["Port", secretPort],
                     ["Username", secretUsername],
                   ];
+                  const condition = [...binding.status.conditions].shift();
+                  const currentStatus = condition ? (
+                    <div className="condition">
+                      <div>
+                        <strong>{condition.type}</strong>: <code>{condition.status}</code>
+                      </div>
+                      <code>{condition.message}</code>
+                    </div>
+                  ) : (
+                    undefined
+                  );
+
                   const body = (
                     <div style={{ display: "flex", flexWrap: "wrap", flexDirection: "column" }}>
+                      {currentStatus}
                       {statuses.map(statusPair => {
                         const [key, value] = statusPair;
                         return (
@@ -134,7 +155,12 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
                       key={binding.metadata.name}
                       header={binding.metadata.name}
                       body={body}
-                      button={<span />}
+                      button={
+                        <RemoveBindingButton
+                          binding={binding}
+                          onRemoveComplete={this.props.getCatalog}
+                        />
+                      }
                     />
                   );
                   return card;
@@ -145,4 +171,10 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
       </div>
     );
   }
+
+  private addbinding = async (bindingName: string, instanceName: string, namespace: string) => {
+    const binding = await ServiceBinding.create(bindingName, instanceName, namespace);
+    await this.props.getCatalog();
+    return binding;
+  };
 }

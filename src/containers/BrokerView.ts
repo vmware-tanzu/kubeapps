@@ -3,7 +3,8 @@ import { Dispatch } from "redux";
 
 import actions from "../actions";
 import { BrokerView } from "../components/BrokerView";
-import { IServiceBroker, IServiceInstance } from "../shared/ServiceCatalog";
+import { IServiceBroker } from "../shared/ServiceCatalog";
+import { IServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
 
 interface IRouteProps {

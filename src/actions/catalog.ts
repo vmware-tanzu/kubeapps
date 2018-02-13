@@ -1,14 +1,10 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
-import {
-  IServiceBinding,
-  IServiceBroker,
-  IServiceClass,
-  IServiceInstance,
-  IServicePlan,
-  ServiceCatalog,
-} from "../shared/ServiceCatalog";
+import { IClusterServiceClass } from "../shared/ClusterServiceClass";
+import { IServiceBinding, ServiceBinding } from "../shared/ServiceBinding";
+import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
+import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
 
 export const checkCatalogInstall = createAction("CHECK_INSTALL");
@@ -35,10 +31,13 @@ export const receiveBindings = createAction("RECEIVE_BINDINGS", (bindings: IServ
   type: "RECEIVE_BINDINGS",
 }));
 export const requestClasses = createAction("REQUEST_PLANS");
-export const receiveClasses = createAction("RECEIVE_CLASSES", (classes: IServiceClass[]) => ({
-  classes,
-  type: "RECEIVE_CLASSES",
-}));
+export const receiveClasses = createAction(
+  "RECEIVE_CLASSES",
+  (classes: IClusterServiceClass[]) => ({
+    classes,
+    type: "RECEIVE_CLASSES",
+  }),
+);
 
 const actions = [
   checkCatalogInstall,
@@ -64,13 +63,7 @@ export function provision(
   parameters: {},
 ) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    return ServiceCatalog.provisionInstance(
-      releaseName,
-      namespace,
-      className,
-      planName,
-      parameters,
-    );
+    return ServiceInstance.create(releaseName, namespace, className, planName, parameters);
   };
 }
 
@@ -91,7 +84,7 @@ export type ServiceCatalogAction = typeof actions[number];
 export function getBindings() {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestBindings());
-    const bindings = await ServiceCatalog.getServiceBindings();
+    const bindings = await ServiceBinding.list();
     dispatch(receiveBindings(bindings));
     return bindings;
   };
@@ -118,7 +111,7 @@ export function getClasses() {
 export function getInstances() {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestInstances());
-    const instances = await ServiceCatalog.getServiceInstances();
+    const instances = await ServiceInstance.list();
     dispatch(receiveInstances(instances));
     return instances;
   };

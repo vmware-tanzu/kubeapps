@@ -28,11 +28,12 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
     <div className="app-repo-form">
       <h1>Add an App Repository</h1>
       <label>
-        Name:
+        <span>Name:</span>
         <input type="text" value={name} onChange={handleNameChange} />
       </label>
+      <br />
       <label>
-        URL:
+        <span>URL:</span>
         <input type="text" value={url} onChange={handleURLChange} />
       </label>
       <button className="button button-primary" onClick={handleInstallClick}>

@@ -1,13 +1,14 @@
 import * as React from "react";
 
-import { IServiceBroker, IServiceClass } from "../../shared/ServiceCatalog";
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import { IServiceBroker } from "../../shared/ServiceCatalog";
 import { Card, CardContainer } from "../Card";
 
 export interface IClassListProps {
   broker: IServiceBroker | undefined;
-  classes: IServiceClass[];
+  classes: IClusterServiceClass[];
   getBrokers: () => Promise<IServiceBroker[]>;
-  getClasses: () => Promise<IServiceClass[]>;
+  getClasses: () => Promise<IClusterServiceClass[]>;
 }
 
 export class ClassList extends React.Component<IClassListProps> {
