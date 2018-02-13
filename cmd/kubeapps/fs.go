@@ -14,15 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package cmd
+package kubeapps
 
 import (
 	"bytes"
-	_ "github.com/kubeapps/kubeapps/generated/statik"
-	"github.com/rakyll/statik/fs"
 	"io"
 	"log"
 	"net/http"
+
+	_ "github.com/kubeapps/kubeapps/generated/statik"
+	"github.com/rakyll/statik/fs"
 )
 
 var statikFS http.FileSystem
