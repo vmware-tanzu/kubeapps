@@ -55,7 +55,8 @@ your cluster to your local development server. Run the following commands:
 cd ../dashboard
 git checkout 2.0
 yarn # install any new packages
-telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-dashboard-ui --expose 3000:8080 --run yarn run start
+telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-dashboard-ui --expose 3000:8080 --run-shell
+yarn run start # when telepresence returns a shell
 ```
 
 Now, to access the React app, simply run `kubeapps dashboard` as you usually
@@ -65,3 +66,7 @@ would:
 cd ../kubeapps
 ./kubeapps dashboard
 ```
+
+#### Troubleshooting
+
+In some cases, the react processes keep listening on the 3000 port, even when you disconnect telepresence. If you see that `localhost:3000` is still serving the dashboard, even with your telepresence down, check if there is a react process running (`ps aux | grep react`) and kill it.
