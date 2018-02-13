@@ -57,6 +57,20 @@ export const deleteRepo = (name: string, namespace: string = "kubeapps") => {
   };
 };
 
+export const resyncRepo = (name: string, namespace: string = "kubeapps") => {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    const repo = await AppRepository.get(name, namespace);
+    repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
+    repo.spec.resyncRequests++;
+    await AppRepository.update(name, namespace, repo);
+    // TODO: Do something to show progress
+    dispatch(requestRepos());
+    const repos = await AppRepository.list();
+    dispatch(receiveRepos(repos.items));
+    return repos;
+  };
+};
+
 export const fetchRepos = () => {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestRepos());

@@ -22,6 +22,9 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     install: async (name: string, url: string, namespace: string = "kubeapps") => {
       return dispatch(actions.repos.installRepo(name, url, namespace));
     },
+    resyncRepo: async (name: string, namespace: string = "kubeapps") => {
+      return dispatch(actions.repos.resyncRepo(name, namespace));
+    },
   };
 }
 

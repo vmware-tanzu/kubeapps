@@ -10,6 +10,16 @@ export class AppRepository {
     return data;
   }
 
+  public static async get(name: string, namespace: string = "default") {
+    const { data } = await axios.get(AppRepository.getSelfLink(name, namespace));
+    return data;
+  }
+
+  public static async update(name: string, namespace: string = "default", newApp: IAppRepository) {
+    const { data } = await axios.put(AppRepository.getSelfLink(name, namespace), newApp);
+    return data;
+  }
+
   public static async delete(name: string, namespace: string = "default") {
     const { data } = await axios.delete(AppRepository.getSelfLink(name, namespace));
     return data;

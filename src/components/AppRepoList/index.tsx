@@ -7,6 +7,7 @@ export interface IAppRepoListProps {
   repos: IAppRepository[];
   fetchRepos: () => Promise<any>;
   deleteRepo: (name: string) => Promise<any>;
+  resyncRepo: (name: string) => Promise<any>;
   install: (name: string, url: string) => Promise<any>;
 }
 
@@ -41,6 +42,12 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
                     >
                       Delete
                     </button>
+                    <button
+                      className="button button-secondary"
+                      onClick={this.handleResyncClick(repo.metadata.name)}
+                    >
+                      Refresh
+                    </button>
                   </td>
                 </tr>
               );
@@ -53,4 +60,5 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
   }
 
   private handleDeleteClick = (repoName: string) => () => this.props.deleteRepo(repoName);
+  private handleResyncClick = (repoName: string) => () => this.props.resyncRepo(repoName);
 }
