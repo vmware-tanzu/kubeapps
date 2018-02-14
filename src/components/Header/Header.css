@@ -1,0 +1,8 @@
+/* Temporary. We will fix it in the HEx design system */
+.header__nav__user a {
+  color: #ffffff;
+}
+
+.header__nav__user a:hover {
+  color: #f9b479;
+}

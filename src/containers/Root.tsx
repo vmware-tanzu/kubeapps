@@ -44,7 +44,7 @@ class Root extends React.Component {
           <Layout>
             <section className="routes">
               {Object.keys(Root.exactRoutes).map(route => (
-                <Route exact={true} path={route} component={Root.exactRoutes[route]} />
+                <Route key={route} exact={true} path={route} component={Root.exactRoutes[route]} />
               ))}
             </section>
           </Layout>

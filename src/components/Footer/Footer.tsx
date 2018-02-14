@@ -1,6 +1,9 @@
 import * as React from "react";
 import logo from "../../logo.svg";
 
+// Icons
+import Heart from "!react-svg-loader!open-iconic/svg/heart.svg";
+
 class Footer extends React.Component {
   public render() {
     return (
@@ -12,7 +15,7 @@ class Footer extends React.Component {
                 <img src={logo} alt="Kubeapps logo" className="osFooter__logo" />
               </h4>
               <p className="type-color-white type-small margin-reset">
-                Made with &#10084;&nbsp; by Bitnami and{" "}
+                Made with <Heart className="icon icon-small" /> by Bitnami and{" "}
                 <a href="https://github.com/kubeapps/kubeapps/graphs/contributors" target="_blank">
                   contributors
                 </a>.
