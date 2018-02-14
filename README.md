@@ -11,11 +11,11 @@ Guide](docs/react-developer-guide.md) for developer documentation.
 
 ### Prerequisites
 
-- Node 9.3.0
-- Yarn package manager
-- Go 1.9
-- A Kubernetes cluster with Kubeapps installed
-- [Telepresence](https://telepresence.io)
+* Node 9.3.0
+* Yarn package manager
+* Go 1.9
+* A Kubernetes cluster with Kubeapps installed
+* [Telepresence](https://telepresence.io)
 
 ### Setting up Kubeapps with additional services
 
@@ -53,7 +53,6 @@ your cluster to your local development server. Run the following commands:
 
 ```
 cd ../dashboard
-git checkout 2.0
 yarn # install any new packages
 telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-dashboard-ui --expose 3000:8080 --run-shell
 yarn run start # when telepresence returns a shell
