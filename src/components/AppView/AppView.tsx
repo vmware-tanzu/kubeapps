@@ -44,6 +44,10 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const otherResources = manifest
       .filter(d => watchedKinds.indexOf(d.kind) < 0)
       .reduce((acc, r) => {
+        // TODO: skip list resource for now
+        if (r.kind === "List") {
+          return acc;
+        }
         acc[`${r.kind}/${r.metadata.name}`] = r;
         return acc;
       }, new Map<string, IResource>());

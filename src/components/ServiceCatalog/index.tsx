@@ -27,7 +27,7 @@ export class ServiceCatalogView extends React.Component<
           <div>
             <p>Service Catalog not installed.</p>
             <div className="padding-normal">
-              <Link className="button button-primary" to={`/charts`}>
+              <Link className="button button-primary" to={`/charts/svc-cat/catalog`}>
                 Install Catalog
               </Link>
             </div>
