@@ -1,3 +1,4 @@
-kubeapps
+/kubeapps
 statik
+.GOPATH
 *.*~
