@@ -2,8 +2,8 @@ import { connect } from "react-redux";
 import { Dispatch } from "redux";
 
 import actions from "../actions";
-import { ServiceCatalogView } from "../components/ServiceCatalog";
-import { ServiceCatalog } from "../shared/ServiceCatalog";
+import { ServiceCatalogView } from "../components/Config/ServiceCatalog";
+import { IServiceBroker, ServiceCatalog } from "../shared/ServiceCatalog";
 import { IStoreState } from "../shared/types";
 
 function mapStateToProps({ catalog }: IStoreState) {
@@ -22,6 +22,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
       return isInstalled;
     },
     getCatalog: () => dispatch(actions.catalog.getCatalog()),
+    sync: (broker: IServiceBroker) => dispatch(actions.catalog.sync(broker)),
   };
 }
 

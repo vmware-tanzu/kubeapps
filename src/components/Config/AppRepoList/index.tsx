@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IAppRepository } from "../../shared/types";
+import { IAppRepository } from "../../../shared/types";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoListItem } from "./AppRepoListItem";
 

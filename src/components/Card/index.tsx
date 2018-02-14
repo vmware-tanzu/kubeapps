@@ -10,7 +10,7 @@ export interface ICardProps {
   buttonText?: string | JSX.Element;
   onClick?: () => (...args: any[]) => Promise<any>;
   linkTo?: string;
-  notes?: JSX.Element;
+  notes?: string | JSX.Element;
   icon?: string;
 }
 

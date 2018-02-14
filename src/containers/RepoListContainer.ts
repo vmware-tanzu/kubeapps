@@ -2,7 +2,7 @@ import { connect } from "react-redux";
 import { Dispatch } from "redux";
 
 import actions from "../actions";
-import { AppRepoList } from "../components/AppRepoList";
+import { AppRepoList } from "../components/Config/AppRepoList";
 import { IStoreState } from "../shared/types";
 
 function mapStateToProps({ repos }: IStoreState) {

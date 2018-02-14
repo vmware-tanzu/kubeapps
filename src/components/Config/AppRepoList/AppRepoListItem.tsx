@@ -1,6 +1,6 @@
 import * as React from "react";
 import { IAppRepository } from "shared/types";
-import ConfirmDialog from "../ConfirmDialog";
+import ConfirmDialog from "../../ConfirmDialog";
 
 interface IAppRepoListItemProps {
   repo: IAppRepository;

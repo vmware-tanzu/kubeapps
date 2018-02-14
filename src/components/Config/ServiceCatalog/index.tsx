@@ -1,12 +1,13 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { ServiceBrokerList } from "../../components/ServiceBrokerList";
-import { IServiceCatalogState } from "../../reducers/catalog";
+import { IServiceCatalogState } from "../../../reducers/catalog";
+import { ServiceBrokerList } from "../ServiceBrokerList";
 
 export interface IServiceCatalogDispatch {
   checkCatalogInstalled: () => Promise<boolean>;
   getCatalog: () => Promise<any>;
+  sync: () => Promise<any>;
 }
 
 export class ServiceCatalogView extends React.Component<
@@ -18,11 +19,10 @@ export class ServiceCatalogView extends React.Component<
   }
 
   public render() {
-    const { brokers, isInstalled } = this.props;
+    const { brokers, isInstalled, sync } = this.props;
 
     return (
       <div className="service-list-container">
-        <h1>Service Catalog</h1>
         {!isInstalled ? (
           <div>
             <p>Service Catalog not installed.</p>
@@ -34,7 +34,7 @@ export class ServiceCatalogView extends React.Component<
           </div>
         ) : (
           <div>
-            <ServiceBrokerList brokers={brokers} />
+            <ServiceBrokerList brokers={brokers} sync={sync} />
           </div>
         )}
       </div>

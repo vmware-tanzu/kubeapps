@@ -7,7 +7,6 @@ import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { Card, CardContainer } from "../Card";
 import DeprovisionButton from "../DeprovisionButton";
-import SyncButton from "../SyncButton";
 import { AddBindingButton } from "./AddBindingButton";
 import { RemoveBindingButton } from "./RemoveBindingButton";
 
@@ -18,7 +17,6 @@ export interface IBrokerViewProps {
   getCatalog: () => Promise<any>;
   instances: IServiceInstance[];
   plans: IServicePlan[];
-  sync: (broker: IServiceBroker) => Promise<any>;
   deprovision: (instance: IServiceInstance) => Promise<any>;
 }
 
@@ -45,7 +43,6 @@ export class BrokerView extends React.PureComponent<IBrokerViewProps> {
               <Link to={window.location.pathname + "/classes"}>
                 <button className="button button-primary">Provision New Service</button>
               </Link>
-              <SyncButton sync={this.props.sync} broker={broker} />
             </div>
             <h3>Service Instances</h3>
             <p>Most recent statuses for your brokers:</p>

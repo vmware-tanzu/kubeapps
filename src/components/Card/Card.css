@@ -38,6 +38,7 @@
 
 .Card__notes {
   grid-area: notes;
+  font-size: small;
 }
 
 .Card__button {

@@ -3,7 +3,6 @@ import { Dispatch } from "redux";
 
 import actions from "../actions";
 import { BrokerView } from "../components/BrokerView";
-import { IServiceBroker } from "../shared/ServiceCatalog";
 import { IServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
 
@@ -49,10 +48,6 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     },
     getCatalog: async () => {
       dispatch(actions.catalog.getCatalog());
-    },
-    sync: async (broker: IServiceBroker) => {
-      await dispatch(actions.catalog.sync(broker));
-      await dispatch(actions.catalog.getCatalog());
     },
   };
 }
