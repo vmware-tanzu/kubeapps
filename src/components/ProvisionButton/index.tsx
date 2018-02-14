@@ -42,7 +42,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
     isProvisioning: false,
     modalIsOpen: false,
     namespace: "default",
-    parameters: JSON.stringify({ resourceGroup: "default", location: "eastus" }, undefined, 2),
+    parameters: JSON.stringify({ resourceGroup: "default", location: "eastus", firewallStartIPAddress: "0.0.0.0", firewallEndIPAddress: "255.255.255.255" }, undefined, 2),
     releaseName: "",
     selectedClass: this.props.selectedClass,
     selectedPlan: this.props.selectedPlan,
