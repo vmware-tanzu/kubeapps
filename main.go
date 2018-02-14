@@ -20,12 +20,12 @@ package main
 import (
 	"os"
 
-	"github.com/kubeapps/kubeapps/cmd"
+	"github.com/kubeapps/kubeapps/cmd/kubeapps"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	if err := cmd.RootCmd.Execute(); err != nil {
+	if err := kubeapps.RootCmd.Execute(); err != nil {
 		logrus.Error(err.Error())
 		os.Exit(1)
 	}
