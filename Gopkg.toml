@@ -52,3 +52,7 @@
 [prune]
   go-tests = true
   unused-packages = true
+
+  [[prune.project]]
+    name = "github.com/rakyll/statik"
+    unused-packages = false
