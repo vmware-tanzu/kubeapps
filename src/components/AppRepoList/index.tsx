@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { IAppRepository } from "../../shared/types";
 import { AppRepoAddButton } from "./AppRepoButton";
+import { AppRepoListItem } from "./AppRepoListItem";
 
 export interface IAppRepoListProps {
   repos: IAppRepository[];
@@ -17,7 +18,7 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
   }
 
   public render() {
-    const { repos, install } = this.props;
+    const { repos, install, deleteRepo, resyncRepo } = this.props;
     return (
       <div className="app-repo-list">
         <h1>App Repositories</h1>
@@ -30,35 +31,18 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
             </tr>
           </thead>
           <tbody>
-            {repos.map(repo => {
-              return (
-                <tr key={repo.metadata.name}>
-                  <td>{repo.metadata.name}</td>
-                  <td>{repo.spec && repo.spec.url}</td>
-                  <td>
-                    <button
-                      className="button button-secondary"
-                      onClick={this.handleDeleteClick(repo.metadata.name)}
-                    >
-                      Delete
-                    </button>
-                    <button
-                      className="button button-secondary"
-                      onClick={this.handleResyncClick(repo.metadata.name)}
-                    >
-                      Refresh
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {repos.map(repo => (
+              <AppRepoListItem
+                key={repo.metadata.uid}
+                deleteRepo={deleteRepo}
+                resyncRepo={resyncRepo}
+                repo={repo}
+              />
+            ))}
           </tbody>
         </table>
         <AppRepoAddButton install={install} />
       </div>
     );
   }
-
-  private handleDeleteClick = (repoName: string) => () => this.props.deleteRepo(repoName);
-  private handleResyncClick = (repoName: string) => () => this.props.resyncRepo(repoName);
 }
