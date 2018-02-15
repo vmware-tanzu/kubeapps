@@ -24,7 +24,6 @@ export class ClassList extends React.Component<IClassListProps> {
         <h2>Classes</h2>
         <p>Types of services available from this broker</p>
         <CardContainer>
-          {/* {classes.map(svcClass => { */}
           {classes
             .sort((a, b) => a.spec.externalName.localeCompare(b.spec.externalName))
             .map(svcClass => {

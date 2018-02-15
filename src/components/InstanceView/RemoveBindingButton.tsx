@@ -10,7 +10,10 @@ export class RemoveBindingButton extends React.Component<IRemoveBindingButtonPro
   public render() {
     return (
       <div className="RemoveBindingButton">
-        <button className="button" onClick={this.handleRemoveBindingClick}>
+        <button
+          className="button button-small button-danger"
+          onClick={this.handleRemoveBindingClick}
+        >
           Remove
         </button>
       </div>

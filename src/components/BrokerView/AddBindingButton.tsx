@@ -31,8 +31,8 @@ export class AddBindingButton extends React.Component<
     const { modalIsOpen, bindingName, instanceRefName, namespace } = this.state;
     return (
       <div className="AddBindingButton">
-        <button className="button button-primary button-small" onClick={this.openModal}>
-          Bind
+        <button className="button button-primary" onClick={this.openModal}>
+          Add Binding
         </button>
         <Modal isOpen={modalIsOpen} onRequestClose={this.closeModal}>
           {this.state.error && (
@@ -70,7 +70,7 @@ export class AddBindingButton extends React.Component<
               />
             </label>
             <button className="button button-primary" onClick={this.bind}>
-              Bind
+              Create Binding
             </button>
           </div>
         </Modal>

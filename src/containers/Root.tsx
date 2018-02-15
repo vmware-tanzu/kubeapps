@@ -8,12 +8,12 @@ import Layout from "../components/Layout";
 import configureStore from "../store";
 import AppList from "./AppListContainer";
 import AppView from "./AppViewContainer";
+import BrokerView from "./BrokerView";
 import ChartList from "./ChartListContainer";
 import ChartView from "./ChartViewContainer";
-
-import BrokerView from "./BrokerView";
 import ClassListContainer from "./ClassListContainer";
 import { ClassViewContainer } from "./ClassView";
+import InstanceView from "./InstanceView";
 import RepoListContainer from "./RepoListContainer";
 import ServiceCatalogContainer from "./ServiceCatalogContainer";
 
@@ -34,6 +34,7 @@ class Root extends React.Component {
     "/config/repos": RepoListContainer,
     "/services/brokers/:brokerName/classes": ClassListContainer,
     "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
+    "/services/brokers/:brokerName/instances/:namespace/:instanceName": InstanceView,
     "/services/brokers/:name": BrokerView,
   };
 
