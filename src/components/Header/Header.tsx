@@ -38,6 +38,10 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       external: true,
       to: "/kubeless/",
     },
+    {
+      children: "Service Instances",
+      to: "/services/instances",
+    },
   ];
 
   constructor(props: any) {

@@ -15,19 +15,9 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ catalog }: IStoreState, props: IRouteProps) {
-  const broker =
-    catalog.brokers.find(
-      potental => !!potental.metadata.name.match(new RegExp(props.match.params.brokerName, "i")),
-    ) || undefined;
-  const classes = broker
-    ? catalog.classes.filter(
-        serviceClass =>
-          !!serviceClass.spec.clusterServiceBrokerName.match(new RegExp(broker.metadata.name, "i")),
-      )
-    : [];
+  const classes = catalog.classes;
 
   return {
-    broker,
     classes,
   };
 }

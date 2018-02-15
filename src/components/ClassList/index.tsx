@@ -5,7 +5,6 @@ import { IServiceBroker } from "../../shared/ServiceCatalog";
 import { Card, CardContainer } from "../Card";
 
 export interface IClassListProps {
-  broker: IServiceBroker | undefined;
   classes: IClusterServiceClass[];
   getBrokers: () => Promise<IServiceBroker[]>;
   getClasses: () => Promise<IClusterServiceClass[]>;
@@ -22,7 +21,7 @@ export class ClassList extends React.Component<IClassListProps> {
     return (
       <div>
         <h2>Classes</h2>
-        <p>Types of services available from this broker</p>
+        <p>Types of services available from all brokers</p>
         <CardContainer>
           {classes
             .sort((a, b) => a.spec.externalName.localeCompare(b.spec.externalName))
@@ -45,7 +44,9 @@ export class ClassList extends React.Component<IClassListProps> {
                   icon={imageUrl}
                   body={description}
                   buttonText="View Plans"
-                  linkTo={`${location.pathname}/${svcClass.spec.externalName}`}
+                  linkTo={`/services/brokers/${svcClass.spec.clusterServiceBrokerName}/classes/${
+                    svcClass.spec.externalName
+                  }`}
                   notes={
                     <span style={{ fontSize: "small" }}>
                       <strong>Tags:</strong> {tags}
