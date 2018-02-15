@@ -72,6 +72,9 @@ export class AddBindingButton extends React.Component<
             <button className="button button-primary" onClick={this.bind}>
               Create Binding
             </button>
+            <button className="button" onClick={this.closeModal}>
+              Cancel
+            </button>
           </div>
         </Modal>
       </div>
