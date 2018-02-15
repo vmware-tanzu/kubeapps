@@ -5,9 +5,9 @@ import { IServiceBinding, ServiceBinding } from "../../shared/ServiceBinding";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { BindingList } from "../BindingList/BindingList";
-import { AddBindingButton } from "../BrokerView/AddBindingButton";
 import { Card, CardContainer } from "../Card";
 import DeprovisionButton from "../DeprovisionButton";
+import { AddBindingButton } from "./AddBindingButton";
 
 interface IInstanceViewProps {
   instance: IServiceInstance | undefined;

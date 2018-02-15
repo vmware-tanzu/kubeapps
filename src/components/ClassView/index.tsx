@@ -3,7 +3,6 @@ import { RouterAction } from "react-router-redux";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServicePlan } from "../../shared/ServiceCatalog";
-import { Card, CardContainer } from "../Card";
 import ProvisionButton from "../ProvisionButton";
 
 interface IClassViewProps {
@@ -37,47 +36,54 @@ export class ClassView extends React.Component<IClassViewProps> {
       <div className="class-view">
         <h3>Plans: {classname}</h3>
         <p>Service Plans available for provisioning under {classname}</p>
-        <CardContainer>
-          {svcClass &&
-            classPlans.map(plan => {
-              const serviceClass = classes.find(
-                potential => potential.metadata.name === plan.spec.clusterServiceClassRef.name,
-              );
-              const { spec } = plan;
-              const { externalMetadata } = spec;
-              const name = externalMetadata ? externalMetadata.displayName : spec.externalName;
-              const description =
-                externalMetadata && externalMetadata.bullets
-                  ? externalMetadata.bullets
-                  : [spec.description];
-              const free = plan.spec.free ? <span>Free ✓</span> : undefined;
-              const bullets = (
-                <div>
-                  <ul>{description.map(bullet => <li key={bullet}>{bullet}</li>)}</ul>
-                </div>
-              );
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Specs</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {svcClass &&
+              classPlans.map(plan => {
+                const serviceClass = classes.find(
+                  potential => potential.metadata.name === plan.spec.clusterServiceClassRef.name,
+                );
+                const { spec } = plan;
+                const { externalMetadata } = spec;
+                const name = externalMetadata ? externalMetadata.displayName : spec.externalName;
+                const description =
+                  externalMetadata && externalMetadata.bullets
+                    ? externalMetadata.bullets
+                    : [spec.description];
+                const bullets = (
+                  <div>
+                    <ul className="margin-reset">
+                      {description.map(bullet => <li key={bullet}>{bullet}</li>)}
+                    </ul>
+                  </div>
+                );
 
-              const card = (
-                <Card
-                  key={plan.spec.externalID}
-                  header={name}
-                  body={bullets}
-                  notes={free}
-                  button={
-                    <ProvisionButton
-                      selectedClass={serviceClass}
-                      selectedPlan={plan}
-                      plans={plans}
-                      classes={classes}
-                      provision={provision}
-                      push={push}
-                    />
-                  }
-                />
-              );
-              return card;
-            })}
-        </CardContainer>
+                return (
+                  <tr key={name}>
+                    <td>{name}</td>
+                    <td>{bullets}</td>
+                    <td>
+                      <ProvisionButton
+                        selectedClass={serviceClass}
+                        selectedPlan={plan}
+                        plans={plans}
+                        classes={classes}
+                        provision={provision}
+                        push={push}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+          </tbody>
+        </table>
       </div>
     );
   }

@@ -64,7 +64,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
       <div className="ProvisionButton">
         {this.state.isProvisioning && <div>Provisioning...</div>}
         <button
-          className="button button-primary"
+          className="button button-primary button-small"
           onClick={this.openModel}
           disabled={this.state.isProvisioning}
         >
