@@ -60,6 +60,15 @@ export function fetchChartVersions(id: string) {
   };
 }
 
+export function getChartVersion(id: string, version: string) {
+  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+    dispatch(requestCharts());
+    return fetch(url.api.charts.getVersion(id, version))
+      .then(response => response.json())
+      .then(json => dispatch(selectChartVersion(json.data)));
+  };
+}
+
 export function fetchChartVersionsAndSelectVersion(id: string, version?: string) {
   return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     return dispatch(fetchChartVersions(id)).then((action: any) => {
@@ -108,7 +117,7 @@ export function deployChart(
   chartVersion: IChartVersion,
   releaseName: string,
   namespace: string,
-  values: string,
+  values?: string,
 ) {
   return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     const chartAttrs = chartVersion.relationships.chart.data;
