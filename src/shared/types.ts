@@ -308,3 +308,11 @@ export interface IHelmReleaseConfigMap {
     release: string;
   };
 }
+
+export interface IRouterPathname {
+  router: {
+    location: {
+      pathname: string;
+    };
+  };
+}
