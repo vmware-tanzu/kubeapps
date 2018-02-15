@@ -22,14 +22,20 @@ export class BindingList extends React.Component<IBindingList> {
             </tr>
           </thead>
           <tbody>
-            {bindings.map(binding => [
-              <BindingEntry
-                key={binding.metadata.uid}
-                binding={binding}
-                addBinding={addBinding}
-                getCatalog={getCatalog}
-              />,
-            ])}
+            {bindings.length > 0 ? (
+              bindings.map(binding => [
+                <BindingEntry
+                  key={binding.metadata.uid}
+                  binding={binding}
+                  addBinding={addBinding}
+                  getCatalog={getCatalog}
+                />,
+              ])
+            ) : (
+              <tr>
+                <td colSpan={3}>No bindings found</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

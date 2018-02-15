@@ -44,19 +44,27 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
                 </tr>
               </thead>
               <tbody>
-                {conditions.map(condition => {
-                  return (
-                    <tr key={condition.lastTransitionTime}>
-                      <td>{condition.type}</td>
-                      <td>{condition.status}</td>
-                      <td>{condition.lastTransitionTime}</td>
-                      <td>
-                        <code>{condition.reason}</code>
-                      </td>
-                      <td>{condition.message}</td>
-                    </tr>
-                  );
-                })}
+                {conditions.length > 0 ? (
+                  conditions.map(condition => {
+                    return (
+                      <tr key={condition.lastTransitionTime}>
+                        <td>{condition.type}</td>
+                        <td>{condition.status}</td>
+                        <td>{condition.lastTransitionTime}</td>
+                        <td>
+                          <code>{condition.reason}</code>
+                        </td>
+                        <td>{condition.message}</td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5}>
+                      <p>No statuses</p>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
