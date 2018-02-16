@@ -8,7 +8,7 @@ import { IRouterPathname } from "../../shared/types";
 import HeaderLink, { IHeaderLinkProps } from "./HeaderLink";
 
 // Icons
-import Cog from "!react-svg-loader!open-iconic/svg/cog.svg";
+import Cog from "../../icons/Cog";
 
 import "./Header.css";
 

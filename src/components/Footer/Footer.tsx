@@ -2,7 +2,7 @@ import * as React from "react";
 import logo from "../../logo.svg";
 
 // Icons
-import Heart from "!react-svg-loader!open-iconic/svg/heart.svg";
+import Heart from "../../icons/Heart";
 
 class Footer extends React.Component {
   public render() {
