@@ -48,6 +48,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
         firewallStartIPAddress: "0.0.0.0",
         location: "eastus",
         resourceGroup: "default",
+        sslEnforcement: "disabled",
       },
       undefined,
       2,
