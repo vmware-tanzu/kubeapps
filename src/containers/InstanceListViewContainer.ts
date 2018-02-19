@@ -18,16 +18,21 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
   const plans = catalog.plans;
   const classes = catalog.classes;
   const instances = catalog.instances;
+  const isInstalled = catalog.isInstalled;
   return {
     brokers,
     classes,
     instances,
+    isInstalled,
     plans,
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
+    checkCatalogInstalled: async () => {
+      dispatch(actions.catalog.checkCatalogInstalled());
+    },
     getCatalog: async () => {
       dispatch(actions.catalog.getCatalog());
     },

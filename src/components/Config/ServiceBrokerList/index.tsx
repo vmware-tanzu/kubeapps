@@ -14,22 +14,29 @@ export const ServiceBrokerList = (props: IServiceBrokerListProps) => {
   return (
     <div className="service-broker-list">
       <h3>Brokers</h3>
-      <CardContainer>
-        {brokers.map(broker => {
-          const card = (
-            <div>
-              <Card
-                key={broker.metadata.uid}
-                header={broker.metadata.name}
-                body={broker.spec.url}
-                notes={`Last updated ${broker.status.lastCatalogRetrievalTime}`}
-                button={<SyncButton sync={sync} broker={broker} />}
-              />
-            </div>
-          );
-          return card;
-        })}
-      </CardContainer>
+      {brokers.length > 0 ? (
+        <CardContainer>
+          {brokers.map(broker => {
+            const card = (
+              <div>
+                <Card
+                  key={broker.metadata.uid}
+                  header={broker.metadata.name}
+                  body={broker.spec.url}
+                  notes={`Last updated ${broker.status.lastCatalogRetrievalTime}`}
+                  button={<SyncButton sync={sync} broker={broker} />}
+                />
+              </div>
+            );
+            return card;
+          })}
+        </CardContainer>
+      ) : (
+        <div>
+          No service brokers are installed in your cluster. Please ask an administrator to install
+          it.
+        </div>
+      )}
     </div>
   );
 };

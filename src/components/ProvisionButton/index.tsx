@@ -186,7 +186,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
           selectedPlan.spec.externalName,
           parametersObject,
         );
-        push(`/services`);
+        push(`/services/instances`);
       }
     } catch (err) {
       this.setState({ isProvisioning: false, error: err.toString() });

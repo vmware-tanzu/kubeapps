@@ -135,3 +135,11 @@ export function getCatalog() {
     dispatch(getPlans());
   };
 }
+
+export function checkCatalogInstalled() {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    const isInstalled = await ServiceCatalog.isCatalogInstalled();
+    isInstalled ? dispatch(installed()) : dispatch(notInstalled());
+    return isInstalled;
+  };
+}

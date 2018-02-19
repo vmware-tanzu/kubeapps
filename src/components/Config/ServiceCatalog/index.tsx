@@ -5,7 +5,7 @@ import { IServiceCatalogState } from "../../../reducers/catalog";
 import { ServiceBrokerList } from "../ServiceBrokerList";
 
 export interface IServiceCatalogDispatch {
-  checkCatalogInstalled: () => Promise<boolean>;
+  checkCatalogInstalled: () => Promise<any>;
   getCatalog: () => Promise<any>;
   sync: () => Promise<any>;
 }
