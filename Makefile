@@ -38,7 +38,7 @@ build-prep:
 	ln -snf $(CURDIR) $(GOPATH_TMP)/src/$(IMPORT_PATH)
 
 chart-repo:
-	docker build -t kubeapps/chart-repo -f cmd/chart-ree
+	docker build -t kubeapps/chart-repo -f cmd/chart-repo/Dockerfile .
 
 fmt:
 	$(GOFMT) -s -w $(GO_FILES)
