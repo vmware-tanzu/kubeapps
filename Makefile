@@ -8,7 +8,7 @@ GOFMT = gofmt
 VERSION = dev-$(shell date +%FT%T%z)
 
 BINARY = kubeapps
-GO_PACKAGES = $(IMPORT_PATH)/cmd/kubeapps $(IMPORT_PATH)/pkg/...
+GO_PACKAGES = $(IMPORT_PATH)/cmd/kubeapps $(IMPORT_PATH)/cmd/chart-repo $(IMPORT_PATH)/pkg/...
 GO_FILES := $(shell find $(shell $(GOBIN) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 GO_FLAGS = -ldflags='-w -X github.com/kubeapps/kubeapps/cmd.VERSION=${VERSION}'
 GO_XFLAGS =
@@ -37,6 +37,9 @@ build-prep:
 	mkdir -p $(dir $(GOPATH_TMP)/src/$(IMPORT_PATH))
 	ln -snf $(CURDIR) $(GOPATH_TMP)/src/$(IMPORT_PATH)
 
+chart-repo:
+	docker build -t kubeapps/chart-repo -f cmd/chart-ree
+
 fmt:
 	$(GOFMT) -s -w $(GO_FILES)
 
@@ -44,7 +47,7 @@ vet:
 	$(GO) vet $(GO_FLAGS) $(GO_PACKAGES)
 
 clean:
-	$(RM) ./kubeapps ./statik $(EMBEDDED_STATIC)
+	$(RM) ./kubeapps ./chart-repo ./statik $(EMBEDDED_STATIC)
 	$(RM) -r $(GOPATH_TMP)
 
-.PHONY: default binary test fmt vet clean build-prep
+.PHONY: default binary test fmt vet clean build-prep chart-repo
