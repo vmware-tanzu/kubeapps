@@ -1,0 +1,31 @@
+.AppStatus {
+  height: 2.5em;
+  background-color: #f1f1f1;
+  padding: 0 0.875em;
+  line-height: 2.5em;
+  font-size: 1em;
+  display: inline-block;
+}
+
+.AppStatus--success {
+  background-color: #1598cb;
+  color: #fff;
+}
+
+.AppStatus--pending {
+  background-color: #fdba12;
+}
+
+.AppStatus--pending > .icon {
+  animation: fadeinout 2s linear infinite;
+}
+
+@keyframes fadeinout {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}

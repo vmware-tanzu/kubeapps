@@ -71,6 +71,12 @@ export interface IServiceSpec {
   type: string;
 }
 
+export interface IServiceStatus {
+  loadBalancer: {
+    ingress?: Array<{ ip: string }>;
+  };
+}
+
 export interface IPort {
   name: string;
   port: number;
@@ -93,7 +99,14 @@ export interface IResource {
   };
 }
 
+export interface IDeploymentStatus {
+  replicas: number;
+  updatedReplicas: number;
+  availableReplicas: number;
+}
+
 export interface IApp {
+  chart?: IChart;
   type: string;
   data: hapi.release.Release;
   repo?: IRepo;

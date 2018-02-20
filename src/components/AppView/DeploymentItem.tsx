@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IResource } from "../../shared/types";
+import { IDeploymentStatus, IResource } from "../../shared/types";
 
 interface IDeploymentItemProps {
   deployment: IResource;
@@ -9,12 +9,13 @@ interface IDeploymentItemProps {
 class DeploymentItem extends React.Component<IDeploymentItemProps> {
   public render() {
     const { deployment } = this.props;
+    const status: IDeploymentStatus = deployment.status;
     return (
       <tr>
         <td>{deployment.metadata.name}</td>
-        <td>{deployment.status.replicas}</td>
-        <td>{deployment.status.updatedReplicas}</td>
-        <td>{deployment.status.availableReplicas || 0}</td>
+        <td>{status.replicas}</td>
+        <td>{status.updatedReplicas}</td>
+        <td>{status.availableReplicas || 0}</td>
       </tr>
     );
   }

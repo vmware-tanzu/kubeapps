@@ -2,16 +2,20 @@ import * as yaml from "js-yaml";
 import * as React from "react";
 
 import { IApp, IResource } from "../../shared/types";
-import AppHeader from "./AppHeader";
+import AppControls from "./AppControls";
+import AppDetails from "./AppDetails";
+import AppNotes from "./AppNotes";
+import AppStatus from "./AppStatus";
 import "./AppView.css";
-import DeploymentWatcher from "./DeploymentWatcher";
-import ServiceWatcher from "./ServiceWatcher";
+import ChartInfo from "./ChartInfo";
+import ServiceTable from "./ServiceTable";
 
 interface IAppViewProps {
   namespace: string;
   releaseName: string;
   app: IApp;
-  getApp: (releaseName: string) => Promise<void>;
+  getApp: (releaseName: string, namespace: string) => Promise<void>;
+  deleteApp: (releaseName: string, namespace: string) => Promise<void>;
 }
 
 interface IAppViewState {
@@ -30,8 +34,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   };
 
   public async componentDidMount() {
-    const { releaseName, getApp } = this.props;
-    getApp(releaseName);
+    const { releaseName, getApp, namespace } = this.props;
+    getApp(releaseName, namespace);
   }
 
   public componentWillReceiveProps(nextProps: IAppViewProps) {
@@ -102,39 +106,51 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public render() {
-    const { releaseName } = this.props;
-
     if (!this.state.otherResources) {
+      return <div>Loading</div>;
+    }
+    const { app } = this.props;
+    if (!app) {
       return <div>Loading</div>;
     }
     return (
       <section className="AppView padding-b-big">
-        <AppHeader releasename={releaseName} />
         <main>
-          <div className="container container-fluid">
-            <DeploymentWatcher deployments={this.state.deployments} />
-            <ServiceWatcher services={this.state.services} />
-            <h6>Other Resources</h6>
-            <table>
-              <tbody>
-                {this.state.otherResources &&
-                  Object.keys(this.state.otherResources).map((k: string) => {
-                    const r = this.state.otherResources[k];
-                    return (
-                      <tr key={k}>
-                        <td>{r.kind}</td>
-                        <td>{r.metadata.namespace}</td>
-                        <td>{r.metadata.name}</td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+          <div className="container">
+            <div className="row collapse-b-tablet">
+              <div className="col-3">
+                <ChartInfo app={app} />
+              </div>
+              <div className="col-9">
+                <div className="row padding-t-bigger">
+                  <div className="col-4">
+                    <AppStatus deployments={this.state.deployments} />
+                  </div>
+                  <div className="col-4" />
+                  <div className="col-4">
+                    <AppControls app={app} deleteApp={this.deleteApp} />
+                  </div>
+                </div>
+                <ServiceTable services={this.state.services} extended={false} />
+                <AppNotes
+                  notes={app.data.info && app.data.info.status && app.data.info.status.notes}
+                />
+                <AppDetails
+                  deployments={this.state.deployments}
+                  services={this.state.services}
+                  otherResources={this.state.otherResources}
+                />
+              </div>
+            </div>
           </div>
         </main>
       </section>
     );
   }
+
+  public deleteApp = () => {
+    return this.props.deleteApp(this.props.releaseName, this.props.namespace);
+  };
 }
 
 export default AppView;

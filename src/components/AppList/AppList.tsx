@@ -6,7 +6,7 @@ import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: () => Promise<{}>;
+  fetchApps: () => Promise<void>;
 }
 
 class AppList extends React.Component<IAppListProps> {
