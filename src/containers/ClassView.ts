@@ -17,9 +17,8 @@ interface IRouteProps {
 
 function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRouteProps) {
   const svcClass =
-    catalog.classes.find(
-      potential => !!potential.spec.externalName.match(new RegExp(params.className, "i")),
-    ) || undefined;
+    catalog.classes.find(potential => !!(potential.spec.externalName === params.className)) ||
+    undefined;
   return {
     classes: catalog.classes,
     classname: params.className,
