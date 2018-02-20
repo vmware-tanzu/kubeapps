@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IAppState } from "../../shared/types";
+import { CardGrid } from "../Card";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
@@ -20,17 +21,24 @@ class AppList extends React.Component<IAppListProps> {
     return (
       <section className="AppList">
         <header className="AppList__header">
-          <h1>Applications</h1>
+          <div className="row padding-t-big collapse-b-phone-land">
+            <div className="col-8">
+              <h1 className="margin-v-reset">Applications</h1>
+            </div>
+            <div className="col-4 text-r align-center">
+              <Link to={`/charts`}>
+                <button className="button button-accent">Deploy New App</button>
+              </Link>
+            </div>
+          </div>
           <hr />
         </header>
-        <main className="text-c">
-          {isFetching ? <div>Loading</div> : this.chartListItems(items)}
-        </main>
+        <main>{isFetching ? <div>Loading</div> : this.appListItems(items)}</main>
       </section>
     );
   }
 
-  public chartListItems(items: IAppState["items"]) {
+  public appListItems(items: IAppState["items"]) {
     if (items.length === 0) {
       return (
         <div>
@@ -44,18 +52,11 @@ class AppList extends React.Component<IAppListProps> {
       );
     } else {
       return (
-        <div>
-          <div className="padding-normal">
-            <Link className="button button-primary" to="/charts">
-              deploy another one
-            </Link>
-          </div>
-          <div>
-            {items.map(r => {
-              return <AppListItem key={r.data.name} app={r} />;
-            })}
-          </div>
-        </div>
+        <CardGrid>
+          {items.map(r => {
+            return <AppListItem key={r.data.name} app={r} />;
+          })}
+        </CardGrid>
       );
     }
   }
