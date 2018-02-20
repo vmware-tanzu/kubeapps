@@ -1,8 +1,9 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServiceBroker } from "../../shared/ServiceCatalog";
-import { Card, CardContainer } from "../Card";
+import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 
 export interface IClassListProps {
   classes: IClusterServiceClass[];
@@ -22,13 +23,10 @@ export class ClassList extends React.Component<IClassListProps> {
       <div>
         <h2>Classes</h2>
         <p>Types of services available from all brokers</p>
-        <CardContainer>
+        <CardGrid>
           {classes
             .sort((a, b) => a.spec.externalName.localeCompare(b.spec.externalName))
             .map(svcClass => {
-              const tags = svcClass.spec.tags.reduce<string>((joined, tag) => {
-                return `${joined} ${tag},`;
-              }, "");
               const { spec } = svcClass;
               const { externalMetadata } = spec;
               const name = externalMetadata ? externalMetadata.displayName : spec.externalName;
@@ -36,27 +34,27 @@ export class ClassList extends React.Component<IClassListProps> {
                 ? externalMetadata.longDescription
                 : spec.description;
               const imageUrl = externalMetadata && externalMetadata.imageUrl;
+              const link = `/services/brokers/${svcClass.spec.clusterServiceBrokerName}/classes/${
+                svcClass.spec.externalName
+              }`;
 
               const card = (
-                <Card
-                  key={svcClass.metadata.uid}
-                  header={name}
-                  icon={imageUrl}
-                  body={description}
-                  buttonText="View Plans"
-                  linkTo={`/services/brokers/${svcClass.spec.clusterServiceBrokerName}/classes/${
-                    svcClass.spec.externalName
-                  }`}
-                  notes={
-                    <span style={{ fontSize: "small" }}>
-                      <strong>Tags:</strong> {tags}
-                    </span>
-                  }
-                />
+                <Card key={svcClass.metadata.uid} responsive={true} responsiveColumns={3}>
+                  <CardIcon icon={imageUrl} />
+                  <CardContent>
+                    <h5>{name}</h5>
+                    <p className="margin-b-reset">{description}</p>
+                  </CardContent>
+                  <CardFooter className="text-c">
+                    <Link className="button button-accent" to={link}>
+                      Select a plan
+                    </Link>
+                  </CardFooter>
+                </Card>
               );
               return card;
             })}
-        </CardContainer>
+        </CardGrid>
       </div>
     );
   }

@@ -1,0 +1,10 @@
+.Card__icon {
+  display: flex;
+  height: calc(72px + 2em);
+  align-items: center;
+  justify-content: center;
+}
+
+.Card__icon img {
+  max-height: 72px;
+}

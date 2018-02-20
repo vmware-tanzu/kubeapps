@@ -27,13 +27,13 @@ export class InstanceListView extends React.PureComponent<InstanceListViewProps>
 
     return (
       <div className="InstanceList">
-        <h3>Service Instances</h3>
+        <h1 className="margin-b-reset">Service Instances</h1>
 
         {isInstalled ? (
           <div>
             {brokers.length > 0 ? (
               <div>
-                <div className="row">
+                <div className="row align-center">
                   <div className="col-8">
                     <p>Service instances from your brokers:</p>
                   </div>

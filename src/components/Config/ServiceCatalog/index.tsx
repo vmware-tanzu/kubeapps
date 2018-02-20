@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IServiceCatalogState } from "../../../reducers/catalog";
-import { ServiceBrokerList } from "../ServiceBrokerList";
+import ServiceBrokerList from "../ServiceBrokerList";
 
 export interface IServiceCatalogDispatch {
   checkCatalogInstalled: () => Promise<any>;

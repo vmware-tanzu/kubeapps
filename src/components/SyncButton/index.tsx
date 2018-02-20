@@ -32,16 +32,13 @@ class SyncButton extends React.Component<ISyncButtonProps, ISyncButtonState> {
 
   public render() {
     return (
-      <div className="SyncButton">
-        {this.state.isSyncing && <div>Syncing...</div>}
-        <button
-          className="button button-primary"
-          disabled={this.state.isSyncing}
-          onClick={this.handleSync}
-        >
-          Sync
-        </button>
-      </div>
+      <button
+        className="button button-accent"
+        disabled={this.state.isSyncing}
+        onClick={this.handleSync}
+      >
+        {this.state.isSyncing ? "Syncing..." : "Sync"}
+      </button>
     );
   }
 }

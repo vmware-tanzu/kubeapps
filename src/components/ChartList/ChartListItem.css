@@ -1,3 +1,36 @@
 .ChartListItem {
-  width: 250px;
+  color: #1c2b39;
+}
+
+.ChartListItem__content {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ChartListItem__content__title {
+  /* Avoid 3 line elements */
+  word-break: break-all;
+  flex: 1;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin: 0;
+}
+
+.ChartListItem__content__info {
+  margin: 0.15em 0 0 0.625em;
+}
+
+.ChartListItem__content__repo {
+  background-color: #1c2b39;
+  border-radius: 16px;
+  color: #fff;
+  display: inline-block;
+}
+
+.ChartListItem__content__repo.stable {
+  background-color: #1598cb;
+}
+
+.ChartListItem__content__repo.incubator {
+  background-color: #f58220;
 }

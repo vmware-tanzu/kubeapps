@@ -1,56 +1,52 @@
-/* Margin: 0.5em */
-
-.CardContainer {
-  display: flex;
-  flex-wrap: wrap;
-  margin: -0.5em;
-  padding: 1em 0;
+.Card,
+.Card__inner {
+  height: 100%;
+  width: 100%;
 }
 
 .Card {
-  border-bottom: 1px solid #f2f2f0;
-  border-radius: 2px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
-  display: grid;
-  flex: 0 1 0;
-  grid-template-areas:
-    "title title title icon"
-    "body body body body"
-    "notes button button button";
-  grid-template-columns: 5fr 1fr 2fr 1fr;
-  grid-template-rows: auto auto auto;
-  margin: 0.5em;
-  min-width: 25em;
-  padding: 1em;
+  margin: 0 1% 2%;
 }
 
-.Card__header {
-  grid-area: title;
-  color: #333333;
-  margin: 0;
+.Card__Icon img {
+  max-height: 64px;
 }
 
-.Card__body {
-  grid-area: body;
-  color: #666666;
-  margin: 1em 0;
+/* max 4 items per row (default) */
+@media screen and (min-width: 480px) {
+  .Card.Card-responsive {
+    width: 48%;
+  }
 }
 
-.Card__notes {
-  grid-area: notes;
-  font-size: small;
+@media screen and (min-width: 768px) {
+  .Card.Card-responsive {
+    width: 31%;
+  }
 }
 
-.Card__button {
-  grid-area: button;
-  justify-self: end;
-  align-self: end;
+@media screen and (min-width: 1100px) {
+  .Card.Card-responsive {
+    width: 23%;
+  }
 }
 
-.Card__icon {
-  grid-area: icon;
+/* max 3 items per row */
+@media screen and (min-width: 768px) {
+  .Card.Card-responsive-3 {
+    width: 48%;
+  }
 }
 
-.Card__img {
-  max-width: 100%;
+@media screen and (min-width: 1100px) {
+  .Card.Card-responsive-3 {
+    width: 31%;
+  }
+}
+
+/* max 2 items per row */
+@media screen and (min-width: 768px) {
+  .Card.Card-responsive-2 {
+    width: 48%;
+  }
 }

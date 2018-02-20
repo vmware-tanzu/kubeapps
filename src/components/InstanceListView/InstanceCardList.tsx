@@ -1,8 +1,9 @@
 import * as React from "react";
 
+import { Link } from "react-router-dom";
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServiceInstance } from "../../shared/ServiceInstance";
-import { Card, CardContainer } from "../Card";
+import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 
 export interface InstanceCardListProps {
   classes: IClusterServiceClass[];
@@ -14,7 +15,7 @@ export const InstanceCardList = (props: InstanceCardListProps) => {
   return (
     <div className="InstanceCardList">
       <section>
-        <CardContainer>
+        <CardGrid>
           {instances.length > 0 &&
             instances.map(instance => {
               const conditions = [...instance.status.conditions];
@@ -28,27 +29,32 @@ export const InstanceCardList = (props: InstanceCardListProps) => {
                 svcClass &&
                 svcClass.spec.externalMetadata &&
                 svcClass.spec.externalMetadata.imageUrl;
+              const link = `/services/brokers/${broker}/instances/${instance.metadata.namespace}/${
+                instance.metadata.name
+              }/`;
 
               const card = (
-                <Card
-                  key={instance.metadata.uid}
-                  header={
-                    <span>
+                <Card key={instance.metadata.uid} responsive={true} responsiveColumns={3}>
+                  <CardIcon icon={icon} />
+                  <CardContent>
+                    <h5>
                       {instance.metadata.namespace}/{instance.metadata.name}
-                    </span>
-                  }
-                  icon={icon}
-                  body={message}
-                  buttonText="Details"
-                  linkTo={`/services/brokers/${broker}/instances/${instance.metadata.namespace}/${
-                    instance.metadata.name
-                  }/`}
-                  notes={<span>{instance.spec.clusterServicePlanExternalName}</span>}
-                />
+                    </h5>
+                    <p className="type-small margin-reset margin-b-big type-color-light-blue">
+                      {instance.spec.clusterServicePlanExternalName}
+                    </p>
+                    <p className="margin-b-reset">{message}</p>
+                  </CardContent>
+                  <CardFooter className="text-c">
+                    <Link className="button button-accent" to={link}>
+                      Details
+                    </Link>
+                  </CardFooter>
+                </Card>
               );
               return card;
             })}
-        </CardContainer>
+        </CardGrid>
       </section>
     </div>
   );

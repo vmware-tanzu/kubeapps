@@ -34,9 +34,9 @@ export class ClassView extends React.Component<IClassViewProps> {
 
     return (
       <div className="class-view">
-        <h3>Plans: {classname}</h3>
+        <h1>Plans: {classname}</h1>
         <p>Service Plans available for provisioning under {classname}</p>
-        <table>
+        <table className="striped">
           <thead>
             <tr>
               <th>Name</th>
@@ -66,10 +66,12 @@ export class ClassView extends React.Component<IClassViewProps> {
                 );
 
                 return (
-                  <tr key={name}>
-                    <td>{name}</td>
-                    <td>{bullets}</td>
+                  <tr key={plan.spec.externalID}>
                     <td>
+                      <b>{name}</b>
+                    </td>
+                    <td>{bullets}</td>
+                    <td className="text-r">
                       <ProvisionButton
                         selectedClass={serviceClass}
                         selectedPlan={plan}

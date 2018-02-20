@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { IChartState } from "../../shared/types";
-import "./ChartList.css";
+import { CardGrid } from "../Card";
 import ChartListItem from "./ChartListItem";
 
 interface IChartListProps {
@@ -24,9 +24,7 @@ class ChartList extends React.Component<IChartListProps> {
           <h1>Charts</h1>
           <hr />
         </header>
-        <main className="text-c">
-          <div className="ChartList__items">{chartItems}</div>
-        </main>
+        <CardGrid>{chartItems}</CardGrid>
       </section>
     );
   }

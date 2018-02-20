@@ -5,7 +5,7 @@ import { IServiceBinding, ServiceBinding } from "../../shared/ServiceBinding";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { BindingList } from "../BindingList/BindingList";
-import { Card, CardContainer } from "../Card";
+import Card, { CardContent, CardGrid, CardIcon } from "../Card";
 import DeprovisionButton from "../DeprovisionButton";
 import { AddBindingButton } from "./AddBindingButton";
 
@@ -74,9 +74,6 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
 
     let classCard = <span />;
     if (svcClass) {
-      const tags = svcClass.spec.tags.reduce<string>((joined, tag) => {
-        return `${joined} ${tag},`;
-      }, "");
       const { spec } = svcClass;
       const { externalMetadata } = spec;
       const name = externalMetadata ? externalMetadata.displayName : spec.externalName;
@@ -84,18 +81,13 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
       const imageUrl = externalMetadata && externalMetadata.imageUrl;
 
       classCard = (
-        <Card
-          key={svcClass.metadata.uid}
-          header={name}
-          icon={imageUrl}
-          body={description}
-          button={<span />}
-          notes={
-            <span style={{ fontSize: "small" }}>
-              <strong>Tags:</strong> {tags}
-            </span>
-          }
-        />
+        <Card key={svcClass.metadata.uid} responsive={true} responsiveColumns={2}>
+          <CardIcon icon={imageUrl} />
+          <CardContent>
+            <h5>{name}</h5>
+            <p className="margin-b-reset">{description}</p>
+          </CardContent>
+        </Card>
       );
     }
 
@@ -116,13 +108,13 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
       );
 
       planCard = (
-        <Card
-          key={svcPlan.spec.externalID}
-          header={name}
-          body={bullets}
-          notes={free}
-          button={<span />}
-        />
+        <Card key={svcPlan.spec.externalID} responsive={true} responsiveColumns={2}>
+          <CardContent>
+            <h5>{name}</h5>
+            <p className="type-small margin-reset margin-b-big type-color-light-blue">{free}</p>
+            {bullets}
+          </CardContent>
+        </Card>
       );
     }
 
@@ -137,10 +129,10 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
             <div>{body}</div>
             <DeprovisionButton deprovision={deprovision} instance={instance} />
             <h3>Spec</h3>
-            <CardContainer>
+            <CardGrid>
               {classCard}
               {planCard}
-            </CardContainer>
+            </CardGrid>
             <h2>Bindings</h2>
             <AddBindingButton
               bindingName={instance.metadata.name + "-binding"}

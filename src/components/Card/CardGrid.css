@@ -1,0 +1,12 @@
+.CardGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 0 -1%;
+}
+
+.CardGrid:after {
+  /* Display the last row properly: https://stackoverflow.com/a/34816625 */
+  content: "";
+  flex: auto;
+}
