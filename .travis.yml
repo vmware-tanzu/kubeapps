@@ -68,6 +68,8 @@ script:
     fi
   - make VERSION="$VERSION" GO_XFLAGS="$GO_XFLAGS" binary-travis
   - file kubeapps
+  # build chart-repo image
+  - make chart-repo
 
 after_success:
   - EXE_NAME=kubeapps-$GOOS-$GOARCH
@@ -76,6 +78,7 @@ after_success:
           EXE_NAME=kubeapps-$GOOS-$GOARCH.exe
     fi
   - cp kubeapps $EXE_NAME
+  # TODO: push chart-repo image somewhere if this is a tagged release
 
 deploy:
   - provider: releases
