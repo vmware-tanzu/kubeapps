@@ -92,8 +92,8 @@ List of components that kubeapps up installs:
 		if err != nil {
 			return fmt.Errorf("can't verify Kubernetes version: %v", err)
 		}
-		if version.Major <= 1 && version.Minor < 7 {
-			return fmt.Errorf("kubernetes with RBAC enabled (v1.7+) is required to run Kubeapps")
+		if version.Major <= 1 && version.Minor < 8 {
+			return fmt.Errorf("kubernetes with RBAC enabled (v1.8+) is required to run Kubeapps")
 		}
 
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
