@@ -88,83 +88,7 @@ local serviceDeployFromValues(parentName, componentName, values) = {
     },
   },
 
-  tillerServiceAccount: kube.ServiceAccount("tiller") + $.namespace,
-  tillerBinding: kube.ClusterRoleBinding("tiller-cluster-admin") {
-    roleRef_: kube.ClusterRole("cluster-admin"),
-    subjects_: [$.tillerServiceAccount],
-  },
-
-  api: serviceDeployFromValues(name, "api", $.values.api) {
-    config: HashedConfigMap(name + "-api") + $.namespace {
-      metadata+: {labels+: labels},
-
-      data: {
-        monocular_yaml:: $.values.api.config {
-          mongodb: {
-            database: "monocular",
-          },
-          tillerHost: "localhost:44134",
-        },
-        "monocular.yaml": kubecfg.manifestJson(self.monocular_yaml),
-      },
-    },
-
-    svc+: $.namespace,
-
-    deploy+: $.namespace {
-      spec+: {
-        template+: {
-          spec+: {
-            serviceAccountName: $.tillerServiceAccount.metadata.name,
-            containers_+: {
-              default+: {
-                command: ["monocular"],
-                args_: {
-                  "mongo-url": "root:$(MONGODB_ROOT_PASSWORD)@%s" % [mongoDbHost],
-                },
-                env_+: {
-                  MONOCULAR_HOME: "/monocular",
-                  MONGODB_ROOT_PASSWORD: kube.SecretKeyRef($.mongodb_secret, "mongodb-root-password"),
-                },
-                livenessProbe: {
-                  httpGet: {
-                    path: "/healthz",
-                    port: $.values.api.service.internalPort,
-                  },
-                  initialDelaySeconds: $.values.api.livenessProbe.initialDelaySeconds,
-                  timeoutSeconds: 10,
-                },
-                readinessProbe: self.livenessProbe {
-                  initialDelaySeconds: 30,
-                  timeoutSeconds: 5,
-                },
-                volumeMounts_+: {
-                  cache: {mountPath: "/monocular"},
-                  config: {mountPath: "/monocular/config"},
-                },
-              },
-              local tillerContainer = (import "tiller-deployment.jsonnet").spec.template.spec.containers[0],
-              tiller: tillerContainer {
-                overrideEnvs(overrides):: [
-                  if std.objectHas(overrides, x.name) then { name: x.name, value: overrides[x.name] } else x for x in tillerContainer.env
-                ],
-                env: self.overrideEnvs({
-                  TILLER_NAMESPACE: $.api.deploy.metadata.namespace,
-                }),
-                ports: [],  // Informational only, doesn't actually restrict access to :44134
-                command: ["/tiller"],
-                args+: ["--listen=localhost:44134"],  // remove access to :44134 outside pod
-              },
-            },
-            volumes_+: {
-              config: kube.ConfigMapVolume($.api.config),
-              cache: kube.EmptyDirVolume(),
-            },
-          },
-        },
-      },
-    },
-  },
+  tillerHelmCRD: (import "helm-crd.jsonnet") { namespace: $.namespace },
 
   ui: serviceDeployFromValues(name, "ui", $.values.ui) {
     config: HashedConfigMap(name + "-ui-config") + $.namespace {
@@ -229,4 +153,11 @@ local serviceDeployFromValues(parentName, componentName, values) = {
       },
     },
   },
+
+  apprepository: (import "apprepository.jsonnet"),
+  chartsvc: (import "chartsvc.jsonnet") {
+    mongodb_secret: $.mongodb_secret,
+    mongodb_host: mongoDbHost,
+  },
+  kubeapi: (import "kube-api.jsonnet"),
 }

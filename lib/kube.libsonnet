@@ -15,14 +15,6 @@
   // Replace all occurrences of `_` with `-`.
   hyphenate(s):: std.join("-", std.split(s, "_")),
 
-  // Convert an octal (as a string) to number,
-  parseOctal(s):: (
-    local len = std.length(s);
-    local leading = std.substr(s, 0, len-1);
-    local last = std.substr(s, len-1, 1);
-    std.parseInt(last) + (if len > 1 then 8 * $.parseOctal(leading) else 0)
-  ),
-
   // Convert {foo: {a: b}} to [{name: foo, a: b}]
   mapToNamedList(o):: [{ name: $.hyphenate(n) } + o[n] for n in std.objectFields(o)],
 
@@ -82,10 +74,13 @@
 
     // Helpers that format host:port in various ways
     http_url:: "http://%s.%s:%s/" % [
-      self.metadata.name, self.metadata.namespace, self.spec.ports[0].port,
+      self.metadata.name,
+      self.metadata.namespace,
+      self.spec.ports[0].port,
     ],
     proxy_urlpath:: "/api/v1/proxy/namespaces/%s/services/%s/" % [
-      self.metadata.namespace, self.metadata.name,
+      self.metadata.namespace,
+      self.metadata.name,
     ],
     // Useful in Ingress rules
     name_port:: {
@@ -145,8 +140,9 @@
     image: error "container image value required",
 
     envList(map):: [
-      if std.type(map[x]) == "object" then { name: x, valueFrom: map[x] } else { name: x, value: std.toString(map[x]) }
-      for x in std.objectFields(map)],
+      if std.type(map[x]) == "object" then { name: x, valueFrom: map[x] } else { name: x, value: map[x] }
+      for x in std.objectFields(map)
+    ],
 
     env_:: {},
     env: self.envList(self.env_),
@@ -171,15 +167,10 @@
 
   PodSpec: {
     // The 'first' container is used in various defaults in k8s.
-    local container_names = std.objectFields(self.containers_),
-    default_container:: if std.length(container_names) > 1 then "default" else container_names[0],
+    default_container:: std.objectFields(self.containers_)[0],
     containers_:: {},
 
-    local container_names_ordered = [self.default_container] + [n for n in container_names if n != self.default_container],
-    containers: [{ name: $.hyphenate(name) } + self.containers_[name] for name in container_names_ordered if self.containers_[name] != null],
-
-    initContainers_:: {},
-    initContainers: [{name: $.hyphenate(name) } + self.initContainers_[name] for name in std.objectFields(self.initContainers_) if self.initContainers_[name] != null],
+    containers: [{ name: $.hyphenate(name) } + self.containers_[name] for name in [self.default_container] + [n for n in std.objectFields(self.containers_) if n != self.default_container]],
 
     volumes_:: {},
     volumes: $.mapToNamedList(self.volumes_),
@@ -195,8 +186,8 @@
     emptyDir: {},
   },
 
-  HostPathVolume(path, type=""): {
-    hostPath: { path: path, type: type },
+  HostPathVolume(path): {
+    hostPath: { path: path },
   },
 
   GitRepoVolume(repository, revision): {
@@ -221,8 +212,11 @@
 
     // I keep thinking data values can be any JSON type.  This check
     // will remind me that they must be strings :(
-    local nonstrings = [k for k in std.objectFields(self.data)
-                        if std.type(self.data[k]) != "string"],
+    local nonstrings = [
+      k
+      for k in std.objectFields(self.data)
+      if std.type(self.data[k]) != "string"
+    ],
     assert std.length(nonstrings) == 0 : "data contains non-string values: %s" % [nonstrings],
   },
 
@@ -269,7 +263,7 @@
     },
   },
 
-  Deployment(name): $._Object("apps/v1beta1", "Deployment", name) {
+  Deployment(name): $._Object("extensions/v1beta1", "Deployment", name) {
     local deployment = self,
 
     spec: {
@@ -281,15 +275,14 @@
         },
       },
 
-      selector: {
-        matchLabels: deployment.spec.template.metadata.labels,
-      },
-
       strategy: {
         type: "RollingUpdate",
 
-        local pvcs = [v for v in deployment.spec.template.spec.volumes
-                      if std.objectHas(v, "persistentVolumeClaim")],
+        local pvcs = [
+          v
+          for v in deployment.spec.template.spec.volumes
+          if std.objectHas(v, "persistentVolumeClaim")
+        ],
         local is_stateless = std.length(pvcs) == 0,
 
         // Apps trying to maintain a majority quorum or similar will
@@ -307,6 +300,9 @@
 
       // NB: Upstream default is 0
       minReadySeconds: 30,
+
+      // NB: Regular k8s default is to keep all revisions
+      revisionHistoryLimit: 10,
 
       replicas: 1,
       assert self.replicas >= 1,
@@ -348,10 +344,6 @@
         },
       },
 
-      selector: {
-        matchLabels: sset.spec.template.metadata.labels,
-      },
-
       volumeClaimTemplates_:: {},
       volumeClaimTemplates: [$.PersistentVolumeClaim($.hyphenate(kv[0])) + kv[1] for kv in $.objectItems(self.volumeClaimTemplates_)],
 
@@ -379,7 +371,7 @@
     },
   },
 
-  DaemonSet(name): $._Object("apps/v1beta1", "DaemonSet", name) {
+  DaemonSet(name): $._Object("extensions/v1beta1", "DaemonSet", name) {
     local ds = self,
     spec: {
       template: {
@@ -388,10 +380,6 @@
           annotations: {},
         },
         spec: $.PodSpec,
-      },
-
-      selector: {
-        matchLabels: ds.spec.template.metadata.labels,
       },
     },
   },
@@ -403,6 +391,10 @@
   ThirdPartyResource(name): $._Object("extensions/v1beta1", "ThirdPartyResource", name) {
     versions_:: [],
     versions: [{ name: n } for n in self.versions_],
+  },
+
+  CustomResourceDefinition(name): $._Object("apiextensions.k8s.io/v1beta1", "CustomResourceDefinition", name) {
+    spec: {},
   },
 
   ServiceAccount(name): $._Object("v1", "ServiceAccount", name) {
@@ -418,6 +410,12 @@
 
   Group(name): {
     kind: "Group",
+    name: name,
+    apiGroup: "rbac.authorization.k8s.io",
+  },
+
+  User(name): {
+    kind: "User",
     name: name,
     apiGroup: "rbac.authorization.k8s.io",
   },

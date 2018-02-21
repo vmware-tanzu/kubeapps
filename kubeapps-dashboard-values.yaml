@@ -54,7 +54,7 @@ ui:
   replicaCount: 1
   image:
     repository: kubeapps/dashboard
-    tag: v0.1.0
+    tag: v0.3.0
     pullPolicy: Always
   service:
     name: monocular-ui

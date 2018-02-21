@@ -101,11 +101,15 @@ local labelifyEach(src) = {
       },
     },
     ui+: readinessDelay(0),
-    api+: readinessDelay(0),
   },
   dashboard: labelifyEach($.dashboard_) {
     ui: labelifyEach($.dashboard_.ui),
-    api: labelifyEach($.dashboard_.api),
+    apprepository: labelifyEach($.dashboard_.apprepository) {
+      apprepos: labelifyEach($.dashboard_.apprepository.apprepos),
+    },
+    chartsvc: labelifyEach($.dashboard_.chartsvc),
+    kubeapi: labelifyEach($.dashboard_.kubeapi),
+    tillerHelmCRD: labelifyEach($.dashboard_.tillerHelmCRD),
   },
 
   mongodb_:: (import "mongodb.jsonnet") {
@@ -126,7 +130,8 @@ local labelifyEach(src) = {
         http: {
           paths: [
             {path: "/", backend: $.dashboard.ui.svc.name_port},
-            {path: "/api/", backend: $.dashboard.api.svc.name_port},
+            {path: "/api/chartsvc", backend: $.dashboard.chartsvc.service.name_port},
+            {path: "/api/kube", backend: $.dashboard.kubeapi.service.name_port},
             {path: "/kubeless", backend: $.kubelessui.svc.name_port},
           ],
         },
