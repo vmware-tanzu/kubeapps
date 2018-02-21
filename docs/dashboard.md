@@ -28,39 +28,38 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
 * Use the "Charts" menu to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy MariaDB.
 
-  ![MariaDB chart](../img/mariadb-install.png)
+  ![MariaDB chart](../img/mariadb-chart.png)
 
-* Click the "Install" button. You will be prompted for the cluster namespace in which the application should be deployed.
+* Click the "Deploy using Helm" button. You will be prompted for the release name, cluster namespace and values for your application deployment.
 
-  ![Namespace selection](../img/mariadb-namespace.png)
+  ![MariaDB installation](../img/mariadb-installation.png)
 
-* Click the "Deploy" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
+* Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser. The "Notes" section of the deployment page contains important information to help you use the application.
 
   ![MariaDB deployment](../img/mariadb-deployment.png)
 
-### List all the deployments managed by Helm
+### List all the applications running in your cluster
 
-The "Deployments" menu displays a list of the deployments in the cluster that are managed by Helm.
+The "Applications" page displays a list of the application deployments in your cluster that are managed by Helm.
 
 ![Deployment list](../img/dashboard-deployments.png)
 
-### Remove existing deployments
+### Remove existing application deployments
 
-You can remove any of the deployments that are managed by Helm by clicking the "Delete deployment" button on a deployment detail page:
+You can remove any of the applications from your cluster by clicking the "Delete" button on the application's status page:
 
 ![Deployment removal](../img/dashboard-delete-deployment.png)
 
 ### Add more chart repositories
 
-By default, Kubeapps comes with the official Kubernetes chart repositories enabled. You can see the list of enabled chart repositories in the "Repositories" menu:
+By default, Kubeapps comes with the official Kubernetes chart repositories enabled. You can see the list of enabled chart repositories in the "App Repositories" page under the "Configuration" menu:
 
 ![Repositories List](../img/dashboard-repos.png)
 
-Add new repositories (for example, your organization's chart repository) by clicking the "Add repository" button. Fill the "Add Repository" form using the guidelines below:
+Add new repositories (for example, your organization's chart repository) by clicking the "Add App Repository" button. Fill the "Add Repository" form using the guidelines below:
 
-* Name: Use any unique identifier. Currently, only alphabetic characters are accepted.
-* URL: Add the URL to the ```index.yaml``` file of the repository.
-* Source: Add the URL to the source code for your charts. This field is optional.
+* Name: Use any unique identifier.
+* URL: Add the URL of your chart repository (the same URL used with `helm repo add`)
 
 ![Adding repository](../img/dashboard-add-repo.png)
 
@@ -76,7 +75,7 @@ To create a new Kubeless function from the Dashboard:
 
   ![Kubeless interface](../img/dashboard-functions.png)
 
-* Click the "Create Function" button. 
+* Click the "Create Function" button.
 * In the resulting modal dialog, select the runtime for the function, the name of the function object and the handler for the function:
 
   ![Kubeless function creation](../img/kubeless-create.png)
