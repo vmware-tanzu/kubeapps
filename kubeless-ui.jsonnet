@@ -10,7 +10,7 @@ local host = "kubeless-ui";
   editorRole: kube.ClusterRole("kubeless-editor") {
     rules: [
       {
-        apiGroups: ["k8s.io"],
+        apiGroups: ["kubeless.io"],
         resources: ["functions"],
         verbs: ["get", "list", "watch", "create", "patch", "delete"],
       },
@@ -43,7 +43,7 @@ local host = "kubeless-ui";
           serviceAccountName: $.serviceAccount.metadata.name,
           containers_+: {
             default: kube.Container("ui") {
-              image: "bitnami/kubeless-ui:v0.1.0",
+              image: "bitnami/kubeless-ui@sha256:8784735d3248f9ede6f869c1e0e6b39cb16c9738411fe60e3ce54584f6e51c20",
               ports_: {
                 ui: {containerPort: 3000, protocol: "TCP"},
               },
