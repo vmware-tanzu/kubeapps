@@ -1,8 +1,8 @@
 # Installation
 
-Kubeapps assumes a working Kubernetes (v1.7+) with RBAC enabled and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster.
+Kubeapps assumes a working Kubernetes (v1.8+) with RBAC enabled and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster.
 
-Kubeapps has been tested with both `minikube` and Google Kubernetes Engine (GKE).
+Kubeapps has been tested with both `minikube`, Kubernetes Engine (GKE) and Azure Container Service (AKS).
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
