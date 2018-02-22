@@ -59,19 +59,19 @@ This will start an HTTP proxy for secure access to the Kubeapps Dashboard and la
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-* Use the "Charts" menu from the Dashboard welcome page to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy WordPress.
+* Use the "Charts" page in the Dashboard to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy WordPress.
 
   ![WordPress chart](../img/wordpress-search.png)
 
-* Click the "Install" button.
+* Click the "Deploy using Helm" button.
 
-  ![WordPress installation](../img/wordpress-install.png)
+  ![WordPress chart](../img/wordpress-chart.png)
 
-* You will be prompted for the cluster namespace in which the application should be deployed.
+* You will be prompted for the release name, cluster namespace and values for the application.
 
-  ![Namespace selection](../img/wordpress-namespace.png)
+  ![WordPress installation](../img/wordpress-installation.png)
 
-* Click the "Deploy" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
+* Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
