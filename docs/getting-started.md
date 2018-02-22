@@ -1,9 +1,10 @@
 # Get Started with Kubeapps
 
 Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-charge your Kubernetes cluster with:
- * Your own applications [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
- * [Kubeless](http://kubeless.io/) - a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
- * [SealedSecrets](https://github.com/bitnami/sealed-secrets) - a SealedSecret can be decrypted only by the controller running in the cluster and nobody else (not even the original author).
+
+* Your own applications [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
+* [Kubeless](http://kubeless.io/) - a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
+* [SealedSecrets](https://github.com/bitnami/sealed-secrets) - a SealedSecret can be decrypted only by the controller running in the cluster and nobody else (not even the original author).
 
 This guide will walk you through the process of deploying Kubeapps for your cluster and installing an example application.
 
@@ -64,25 +65,25 @@ This will start an HTTP proxy for secure access to the Kubeapps Dashboard and la
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-* Use the "Charts" menu from the Dashboard welcome page to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy WordPress.
+* Use the "Charts" page in the Dashboard to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy WordPress.
 
   ![WordPress chart](../img/wordpress-search.png)
 
-* Click the "Install" button. 
+* Click the "Deploy using Helm" button.
 
-  ![WordPress installation](../img/wordpress-install.png)
+  ![WordPress chart](../img/wordpress-chart.png)
 
-* You will be prompted for the cluster namespace in which the application should be deployed.
+* You will be prompted for the release name, cluster namespace and values for the application.
 
-  ![Namespace selection](../img/wordpress-namespace.png)
+  ![WordPress installation](../img/wordpress-installation.png)
 
-* Click the "Deploy" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
+* Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
 To obtain the WordPress username and password, refer to the "Notes" section of the deployment page, which contains the commands you will need to run to obtain the credentials for the deployment.
 
-  ![WordPress deployment notes](../img/wordpress-notes.png)
+![WordPress deployment notes](../img/wordpress-notes.png)
 
 ## Next Steps
 
