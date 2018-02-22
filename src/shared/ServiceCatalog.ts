@@ -1,30 +1,11 @@
 import axios from "axios";
 
 import * as urls from "../shared/url";
-import { AppRepository } from "./AppRepository";
 import { IClusterServiceClass } from "./ClusterServiceClass";
 import { IServiceInstance } from "./ServiceInstance";
-import { IAppRepository, IK8sList, IStatus } from "./types";
+import { IK8sList, IStatus } from "./types";
 
 export class ServiceCatalog {
-  public static async getCatalogRepo(): Promise<IAppRepository | undefined> {
-    const repos = await AppRepository.list();
-    const svcRepo = repos.items.find(repo => {
-      return !!(
-        repo.spec &&
-        repo.spec.url &&
-        repo.spec.url === "https://svc-catalog-charts.storage.googleapis.com"
-      );
-    });
-
-    return svcRepo;
-  }
-
-  public static async installCatalog(name: string, namespace: string) {
-    const url = "https://svc-catalog-charts.storage.googleapis.com";
-    await AppRepository.create(name, url, namespace);
-  }
-
   public static async getServiceClasses() {
     return this.getItems<IClusterServiceClass>("clusterserviceclasses");
   }

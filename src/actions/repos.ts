@@ -47,9 +47,9 @@ const allActions = [
 ].map(getReturnOfExpression);
 export type AppReposAction = typeof allActions[number];
 
-export const deleteRepo = (name: string, namespace: string = "kubeapps") => {
+export const deleteRepo = (name: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
-    await AppRepository.delete(name, namespace);
+    await AppRepository.delete(name);
     dispatch(requestRepos());
     const repos = await AppRepository.list();
     dispatch(receiveRepos(repos.items));
@@ -57,12 +57,12 @@ export const deleteRepo = (name: string, namespace: string = "kubeapps") => {
   };
 };
 
-export const resyncRepo = (name: string, namespace: string = "kubeapps") => {
+export const resyncRepo = (name: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
-    const repo = await AppRepository.get(name, namespace);
+    const repo = await AppRepository.get(name);
     repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
     repo.spec.resyncRequests++;
-    await AppRepository.update(name, namespace, repo);
+    await AppRepository.update(name, repo);
     // TODO: Do something to show progress
     dispatch(requestRepos());
     const repos = await AppRepository.list();
@@ -80,10 +80,10 @@ export const fetchRepos = () => {
   };
 };
 
-export const installRepo = (name: string, url: string, namespace: string) => {
+export const installRepo = (name: string, url: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(addRepo());
-    const added = await AppRepository.create(name, url, namespace);
+    const added = await AppRepository.create(name, url);
     dispatch(addedRepo(added));
     return added;
   };
