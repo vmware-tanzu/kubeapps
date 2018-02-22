@@ -8,13 +8,13 @@ Kubeapps has been tested with both `minikube`, Kubernetes Engine (GKE) and Azure
 
 ## Install pre-built binary
 
-* Download a binary version of the latest Kubeapps Installer for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently, the Kubeapps Installer is distributed in binary form for Linux (64-bit) and OS X (64-bit).
+* Download a binary version of the latest Kubeapps Installer for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently, the Kubeapps Installer is distributed in binary form for Linux, OS X and Windows (64-bit).
 * Make the binary executable.
 
-For example, to install the latest binary release on Linux, use this command:
+For example, to install the latest binary release on Linux or OS X, use this command:
 
 ```
-curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep linux | grep browser_download_url | cut -d '"' -f 4 | wget -i -
+curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep -i $(uname -s) | grep browser_download_url | cut -d '"' -f 4 | wget -i -
 sudo mv kubeapps-linux-amd64 /usr/local/bin/kubeapps
 sudo chmod +x /usr/local/bin/kubeapps
 ```
