@@ -71,36 +71,6 @@ local labelifyEach(src) = {
     mongodb_svc:: $.mongodb_.svc,
     mongodb_secret:: $.mongodb_.secret,
     ingress:: null,
-    values+:: {
-      api+: {
-        service+: {type: "ClusterIP"},
-        // FIXME: api server downloads metadata/icons/etc for *every
-        // chart* *before* it starts answering /healthz
-        livenessProbe+: {initialDelaySeconds: 10*60},
-      },
-      ui+: {service+: {type: "ClusterIP"}},
-      prerender+: {service+: {type: "ClusterIP"}},
-    },
-
-    // FIXME(gus): I think these are bugs in the monocular chart
-    local readinessDelay(value) = {
-      deploy+: {
-        spec+: {
-          template+: {
-            spec+: {
-              containers_+: {
-                default+: {
-                  readinessProbe+: {
-                    initialDelaySeconds: value,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    ui+: readinessDelay(0),
   },
   dashboard: labelifyEach($.dashboard_) {
     ui: labelifyEach($.dashboard_.ui),
