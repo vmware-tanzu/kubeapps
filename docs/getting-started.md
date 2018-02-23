@@ -14,17 +14,11 @@ Kubeapps assumes a working Kubernetes (v1.8+) with RBAC enabled and [`kubectl`](
 
 ## Step 1: Install Kubeapps
 
-To install Kubeapps, download a binary version of the latest Kubeapps Installer for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases). Currently, the Kubeapps Installer is distributed in binary form for Linux (64-bit) and OS X (64-bit). Once downloaded, make the binary executable.
+To install Kubeapps, download the latest Kubeapps Installer binary for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases).
 
-For example, to install the 0.2.0 binary release of the Kubeapps Installer on Linux, use this command:
+Review our [installation guide](./install.md) for more detailed instructions.
 
-```
-sudo curl -L https://github.com/kubeapps/installer/releases/download/v0.2.0/kubeapps-linux-amd64 -o /usr/local/bin/kubeapps && sudo chmod +x /usr/local/bin/kubeapps
-```
-
-> In case the Kubeapps Installer is not available in binary form for your platform, you can also [build it from source](install.md).
-
-Once the Kubeapps Installer is installed, deploy Kubeapps for your cluster with this command:
+Once the Kubeapps Installer is installed, deploy Kubeapps in your cluster with this command:
 
 ```
 kubeapps up
