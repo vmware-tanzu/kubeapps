@@ -6,9 +6,10 @@ env:
     - MINIKUBE_HOME=$HOME
     - CHANGE_MINIKUBE_NONE_USER=true
   matrix:
-    - KVERS=v1.7.5 MK_ARGS=""
-    - KVERS=v1.7.5 MK_ARGS="--extra-config apiserver.Authorization.Mode=RBAC"
+    - KVERS=v1.8.0
     - KVERS=v1.8.0 MK_ARGS="--extra-config apiserver.Authorization.Mode=RBAC"
+    # We can't test on v1.9.0 yet because of the version parsing error (see https://github.com/kubeapps/kubeapps/issues/114)
+    # - KVERS=v1.9.0 MK_ARGS="--extra-config apiserver.Authorization.Mode=RBAC"
 
 services:
   - docker
@@ -17,7 +18,7 @@ install:
   - |
     if ! which minikube; then
       wget -O minikube \
-         https://storage.googleapis.com/minikube/releases/v0.23.0/minikube-$(go env GOOS)-$(go env GOARCH)
+         https://storage.googleapis.com/minikube/releases/v0.25.0/minikube-$(go env GOOS)-$(go env GOARCH)
       install -m 755 minikube $GOPATH/bin/minikube
     fi
   - |
@@ -27,7 +28,7 @@ install:
     fi
   - |
     if ! which kubecfg; then
-      wget -O kubecfg https://github.com/ksonnet/kubecfg/releases/download/v0.5.0/kubecfg-$(go env GOOS)-$(go env GOARCH)
+      wget -O kubecfg https://github.com/ksonnet/kubecfg/releases/download/v0.7.2/kubecfg-$(go env GOOS)-$(go env GOARCH)
       install -m 755 kubecfg $GOPATH/bin/kubecfg
     fi
   - mkdir -p $HOME/.kube && touch $HOME/.kube/config
