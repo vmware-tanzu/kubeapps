@@ -1,0 +1,80 @@
+env:
+  global:
+    - PATH=$PATH:$GOPATH/bin
+    - MINIKUBE_WANTUPDATENOTIFICATION=false
+    - MINIKUBE_WANTREPORTERRORPROMPT=false
+    - MINIKUBE_HOME=$HOME
+    - CHANGE_MINIKUBE_NONE_USER=true
+  matrix:
+    - KVERS=v1.8.0
+    - KVERS=v1.8.0 MK_ARGS="--extra-config apiserver.Authorization.Mode=RBAC"
+    # We can't test on v1.9.0 yet because of the version parsing error (see https://github.com/kubeapps/kubeapps/issues/114)
+    # - KVERS=v1.9.0 MK_ARGS="--extra-config apiserver.Authorization.Mode=RBAC"
+
+services:
+  - docker
+
+install:
+  - |
+    if ! which minikube; then
+      wget -O minikube \
+         https://storage.googleapis.com/minikube/releases/v0.25.0/minikube-$(go env GOOS)-$(go env GOARCH)
+      install -m 755 minikube $GOPATH/bin/minikube
+    fi
+  - |
+    if ! which kubectl; then
+      wget https://storage.googleapis.com/kubernetes-release/release/$KVERS/bin/$(go env GOOS)/$(go env GOARCH)/kubectl
+      install -m 755 kubectl $GOPATH/bin/kubectl
+    fi
+  - |
+    if ! which kubecfg; then
+      wget -O kubecfg https://github.com/ksonnet/kubecfg/releases/download/v0.7.2/kubecfg-$(go env GOOS)-$(go env GOARCH)
+      install -m 755 kubecfg $GOPATH/bin/kubecfg
+    fi
+  - mkdir -p $HOME/.kube && touch $HOME/.kube/config
+  - >-
+    sudo -E $GOPATH/bin/minikube start --vm-driver=none
+    --kubernetes-version $KVERS
+    $MK_ARGS
+  - export KUBECFG_JPATH=$PWD/lib:$PWD/vendor/kubecfg/lib:$PWD/vendor/ksonnet-lib
+  - |
+    minikube update-context
+    minikube status
+    while ! kubectl version; do sleep 1; done
+
+script:
+  # FIXME(gus): `validate` fails on CRDs, because the server doesn't
+  # publish a schema :(  The following `kubeapps up` will verify that the
+  # server accepts them.
+  - >-
+    kubecfg validate -v kubeapps.jsonnet || :
+  - ./kubeapps.sh up
+  # We can't port-forward in Travis, so instead we patch the service type to node port
+  - kubectl patch -n kubeapps svc nginx-ingress -p '{"spec":{"type":"NodePort"}}' && sleep 5
+  - ./tests.sh $(minikube service --namespace kubeapps nginx-ingress --url)
+
+after_success:
+  - kubectl get all --all-namespaces
+  - ./kubeapps.sh down
+
+after_failure:
+  - kubectl get all --all-namespaces
+  - |
+    kubectl get pods --all-namespaces -o go-template='{{range .items}}{{.status.phase}} {{.metadata.namespace}} {{.metadata.name}} {{(index .spec.containers 0).name}}!{{end}}' |
+    tr \! '\n' |
+    grep -v '^Running' |
+    while read phase ns name container; do
+      kubectl describe pod -n $ns $name
+      echo Logs from $ns/$name/$container:
+      kubectl logs -n $ns $name -c $container || :
+    done
+
+cache:
+  directories:
+    - $GOPATH/pkg
+    - $GOPATH/bin
+    - $HOME/.minikube/cache
+
+notifications:
+  email:
+    on_success: never
