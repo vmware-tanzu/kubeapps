@@ -31,7 +31,7 @@ jobs:
   - stage: build
     env: PLATFORM=linux-amd64
     script: make VERSION="$VERSION" kubeapps-$PLATFORM
-    deploy: &deploy
+    deploy: &githubRelease
     - provider: releases
       api_key:
         secure: G12zyBAoQbXsQWr86S5GLMdwfoQKk2Cwk+JmQ26jc1jd4UxZXZudLlSBgsiU2r+/+7G2UrpsZqaF7phQCd7K2R9kaCMSm0fzrF2VW6zRwnctxrnAIUOaakHAe8QC7a1ZohJxbreFVRatV0n20op4RcZy7Lgvz7UprJohYVM2/m8jPkn+gDsUw4/Lk2FKCpj2fSIaHk2wr4GImSRDtpuFjts1h3Sbo0FKiLAec/6eMHAWPAabliFtA+M2XTEViFzgad2EJgxk1jjdIsDaK+9tTBGT6P3Y6K4OvlwUTZsX1KqJY6X9Msb1JHzn7fvHYbRfOadlCwV4rw5BeOkIff6kUn1SDOibZIM4lrlmgqhgD8YjPI896QtCAHYYQ4ORXIMjWCX+sEdMxO0auCiBa13d/xLku+O0jGFXQcVmzftA2Y5JiEyNkTH1S6lrRrIEkRvpX+88ApzNCzqMYlIu0V/tJdajsrwSeB5t39YGSo06k76GqytHSmtifjYStrWro0pSn6Pws+6hox5QCjEnnCMuauE8U58dKulfEI5/G9gcU2b1EDOWMNyquIYNRT0TxL9Y8rZJiaumzBcavNszbf2JBlA14XXM//ASN7PgrAZFLZlYZUHrcXpdllnbtxrXRL+hWyMdSeGNSFWfSQxwrFrRsUjmshmRZGUlOuxdbhinJVw=
@@ -40,13 +40,13 @@ jobs:
       overwrite: true
       on:
         tags: true
-        branch: master
-        repo: kubeapps/kubeapps
+        branch: manifest-merge-2
+        repo: prydonius/kubeapps
   - stage: build
     env: PLATFORM=darwin-amd64
     script: make VERSION="$VERSION" osxcross kubeapps-$PLATFORM
-    deploy: *deploy
+    deploy: *githubRelease
   - stage: build
     env: PLATFORM=windows-amd64.exe
     script: make VERSION="$VERSION" GO_XFLAGS="-ldflags='-extldflags \"-static\"'" kubeapps-$PLATFORM
-    deploy: *deploy
+    deploy: *githubRelease
