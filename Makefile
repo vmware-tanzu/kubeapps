@@ -25,7 +25,7 @@ kubeapps: build-prep $(EMBEDDED_STATIC)
 	CGO_ENABLED=1 $(GO) build -i -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
 
 kubeapps-%: build-prep $(EMBEDDED_STATIC)-travis
-	CGO_ENABLED=1 $(GO_BUILD_ENV_$*) $(GO) build -i -o kubeapps-$($*) $(GO_FLAGS) $(GO_XFLAGS) $(IMPORT_PATH)
+	CGO_ENABLED=1 $(GO_BUILD_ENV_$*) $(GO) build -i -o kubeapps-$* $(GO_FLAGS) $(GO_XFLAGS) $(IMPORT_PATH)
 
 osxcross:
 	git clone https://github.com/tpoechtrager/osxcross
