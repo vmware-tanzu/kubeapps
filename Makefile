@@ -14,24 +14,39 @@ GO_FLAGS = -ldflags='-w -X github.com/kubeapps/kubeapps/cmd/kubeapps.VERSION=${V
 GO_XFLAGS =
 EMBEDDED_STATIC = generated/statik/statik.go
 
-default: binary
+# Cross-compilation env
+GO_BUILD_ENV_linux-amd64 = GOOS=linux GOARCH=amd64
+GO_BUILD_ENV_darwin-amd64 = PATH=$(PATH):$(PWD)/osxcross/target/bin/ CC=x86_64-apple-darwin15-clang CXX=x86_64-apple-darwin15-clang++ GOOS=darwin GOARCH=amd64
+GO_BUILD_ENV_windows-amd64.exe = CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ GOOS=windows GOARCH=amd64
 
-binary: build-prep $(EMBEDDED_STATIC)
+default: kubeapps
+
+kubeapps: build-prep $(EMBEDDED_STATIC)
 	CGO_ENABLED=1 $(GO) build -i -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
 
-binary-travis: build-prep  $(EMBEDDED_STATIC)-travis
-	CGO_ENABLED=1 $(GO) build -i -o $(BINARY) $(GO_FLAGS) $(GO_XFLAGS) $(IMPORT_PATH)
+kubeapps-%: build-prep $(EMBEDDED_STATIC)-travis
+	CGO_ENABLED=1 $(GO_BUILD_ENV_$*) $(GO) build -i -o kubeapps-$($*) $(GO_FLAGS) $(GO_XFLAGS) $(IMPORT_PATH)
+
+osxcross:
+	git clone https://github.com/tpoechtrager/osxcross
+	sudo $(PWD)/osxcross/tools/get_dependencies.sh
+	wget -O $(PWD)/osxcross/tarballs/MacOSX10.11.sdk.tar.xz \
+		https://storage.googleapis.com/osx-cross-compiler/MacOSX10.11.sdk.tar.xz
+	UNATTENDED=1 OSX_VERSION_MIN=10.9 $(PWD)/osxcross/build.sh
 
 test: build-prep $(EMBEDDED_STATIC)
 	$(GO) test $(GO_FLAGS) $(GO_PACKAGES)
 
-$(EMBEDDED_STATIC): build-prep $(wilcard static/*)
+$(EMBEDDED_STATIC): build-prep static/kubeapps-objs.yaml
 	$(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
 	$(GO) generate
 
-$(EMBEDDED_STATIC)-travis: build-prep $(wilcard static/*)
+$(EMBEDDED_STATIC)-travis: build-prep static/kubeapps-objs.yaml
 	GOOS=linux $(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
 	GOOS=linux $(GO) generate
+
+static/kubeapps-objs.yaml:
+	KUBECFG_JPATH=./manifests/lib:./manifests/vendor/kubecfg/lib:./manifests/vendor/ksonnet-lib kubecfg show manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
 
 build-prep:
 	mkdir -p $(dir $(GOPATH_TMP)/src/$(IMPORT_PATH))
@@ -50,4 +65,4 @@ clean:
 	$(RM) ./kubeapps ./chart-repo ./statik $(EMBEDDED_STATIC)
 	$(RM) -r $(GOPATH_TMP)
 
-.PHONY: default binary test fmt vet clean build-prep chart-repo
+.PHONY: default test fmt vet clean build-prep chart-repo osxcross
