@@ -1,14 +1,13 @@
 language: go
 go:
-  - 1.9
-go_import_path: github.com/kubeapps/kubeapps
+- 1.9
 sudo: required
 
 addons:
   apt:
     packages:
-      # cross compiling for windows
-      - mingw-w64
+    # cross compiling for windows
+    - mingw-w64
 
 env:
   global:
@@ -50,3 +49,15 @@ jobs:
     env: PLATFORM=windows-amd64.exe
     script: make VERSION="$VERSION" GO_XFLAGS="-ldflags='-extldflags \"-static\"'" kubeapps-$PLATFORM
     deploy: *githubRelease
+  
+  # Image builds
+  - stage: build
+    env: IMAGE=kubeapps/chart-repo
+    install: skip
+    script: make VERSION="$VERSION" chart-repo
+    after_success:
+    - |
+      if [[ -n "$TRAVIS_TAG" ]]; then
+        docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+        docker push $IMAGE:$VERSION
+      fi
