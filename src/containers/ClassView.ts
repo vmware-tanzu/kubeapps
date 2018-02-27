@@ -39,7 +39,10 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
       planName: string,
       parameters: {},
     ) => {
-      dispatch(actions.catalog.provision(instanceName, namespace, className, planName, parameters));
+      await dispatch(
+        actions.catalog.provision(instanceName, namespace, className, planName, parameters),
+      );
+      return dispatch(actions.catalog.getCatalog());
     },
     push: (location: string) => dispatch(push(location)),
   };

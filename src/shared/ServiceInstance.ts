@@ -17,10 +17,10 @@ export interface IServiceInstance {
     clusterServiceClassExternalName: string;
     clusterServicePlanExternalName: string;
     externalID: string;
-    clusterServicePlanRef: {
+    clusterServicePlanRef?: {
       name: string;
     };
-    clusterServiceClassRef: {
+    clusterServiceClassRef?: {
       name: string;
     };
   };

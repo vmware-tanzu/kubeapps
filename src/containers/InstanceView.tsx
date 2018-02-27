@@ -22,10 +22,18 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
     i => i.metadata.name === params.instanceName && i.metadata.namespace === params.namespace,
   );
   const svcClass = instance
-    ? catalog.classes.find(c => c.metadata.name === instance.spec.clusterServiceClassRef.name)
+    ? catalog.classes.find(
+        c =>
+          !!instance.spec.clusterServiceClassRef &&
+          c.metadata.name === instance.spec.clusterServiceClassRef.name,
+      )
     : undefined;
   const svcPlan = instance
-    ? catalog.plans.find(p => p.metadata.name === instance.spec.clusterServicePlanRef.name)
+    ? catalog.plans.find(
+        p =>
+          !!instance.spec.clusterServicePlanRef &&
+          p.metadata.name === instance.spec.clusterServicePlanRef.name,
+      )
     : undefined;
 
   return {

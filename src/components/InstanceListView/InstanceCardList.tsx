@@ -22,7 +22,9 @@ export const InstanceCardList = (props: InstanceCardListProps) => {
               const status = conditions.shift(); // first in list is most recent
               const message = status ? status.message : "";
               const svcClass = classes.find(
-                potential => potential.metadata.name === instance.spec.clusterServiceClassRef.name,
+                potential =>
+                  !!instance.spec.clusterServiceClassRef &&
+                  potential.metadata.name === instance.spec.clusterServiceClassRef.name,
               );
               const broker = svcClass && svcClass.spec.clusterServiceBrokerName;
               const icon =
