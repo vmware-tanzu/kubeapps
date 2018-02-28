@@ -51,13 +51,16 @@ jobs:
     deploy: *githubRelease
   
   # Image builds
-  - stage: build
+  - &imageBuild
+    stage: build
     env: IMAGE=kubeapps/chart-repo
     install: skip
-    script: make VERSION="$VERSION" chart-repo
+    script: make VERSION="$VERSION" $IMAGE
     after_success:
     - |
       if [[ -n "$TRAVIS_TAG" ]]; then
         docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
         docker push $IMAGE:$VERSION
       fi
+  - <<: *imageBuild
+    env: IMAGE=kubeapps/chartsvc
