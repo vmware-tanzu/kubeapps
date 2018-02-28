@@ -1,4 +1,4 @@
-FROM quay.io/deis/go-dev:v1.6.0 as builder
+FROM quay.io/deis/go-dev:v1.8.2 as builder
 COPY . /go/src/github.com/kubeapps/kubeapps
 WORKDIR /go/src/github.com/kubeapps/kubeapps
 RUN dep ensure

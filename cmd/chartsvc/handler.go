@@ -21,8 +21,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/kubeapps/chartsvc/models"
 	"github.com/kubeapps/common/response"
+	"github.com/kubeapps/kubeapps/cmd/chartsvc/models"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
 )
