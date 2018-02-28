@@ -50,6 +50,12 @@
   revision = "bb58b908265b5931732079df03f2818bf2167ba0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/beorn7/perks"
+  packages = ["quantile"]
+  revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
@@ -180,6 +186,18 @@
   revision = "44d81051d367757e1c7c6a5a86423ece9afcf63c"
 
 [[projects]]
+  name = "github.com/gorilla/context"
+  packages = ["."]
+  revision = "1ea25387ff6f684839d82767c1733ff4d4d15d0a"
+  version = "v1.1"
+
+[[projects]]
+  name = "github.com/gorilla/mux"
+  packages = ["."]
+  revision = "53c1911da2b537f792e7cafcb446b05ffe33b996"
+  version = "v1.6.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/gosuri/uitable"
   packages = [
@@ -188,6 +206,12 @@
     "util/wordwrap"
   ]
   revision = "36ee7e946282a3fb1cfecd476ddc9b35d8847e42"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/heptiolabs/healthcheck"
+  packages = ["."]
+  revision = "da5fdee475fb09de87c5d4a50da233b7d28767b1"
 
 [[projects]]
   branch = "master"
@@ -231,7 +255,8 @@
   name = "github.com/kubeapps/common"
   packages = [
     "datastore",
-    "datastore/mockstore"
+    "datastore/mockstore",
+    "response"
   ]
   revision = "707d33bc9333441366785395d93f1d9bcc196d64"
 
@@ -257,10 +282,49 @@
   revision = "97311d9f7767e3d6f422ea06661bc2c7a19e8a5d"
 
 [[projects]]
+  name = "github.com/matttproud/golang_protobuf_extensions"
+  packages = ["pbutil"]
+  revision = "3247c84500bff8d9fb6d579d800f20b3e091582c"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/prometheus/client_golang"
+  packages = ["prometheus"]
+  revision = "c5b7fccd204277076155f10851dad72b76a49317"
+  version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/client_model"
+  packages = ["go"]
+  revision = "99fa1f4be8e564e8a6b613da7fa6f46c9edafc6c"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/common"
+  packages = [
+    "expfmt",
+    "internal/bitbucket.org/ww/goautoneg",
+    "model"
+  ]
+  revision = "6fb6fce6f8b75884b92e1889c150403fc0872c5e"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/prometheus/procfs"
+  packages = [
+    ".",
+    "internal/util",
+    "nfs",
+    "xfs"
+  ]
+  revision = "75f2d6163c7a100bed6e971044ea3de30ee3a678"
 
 [[projects]]
   name = "github.com/rakyll/statik"
@@ -314,6 +378,18 @@
   name = "github.com/ugorji/go"
   packages = ["codec"]
   revision = "ded73eae5db7e7a0ef6f55aace87a2873c5d2b74"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/unrolled/render"
+  packages = ["."]
+  revision = "65450fb6b2d3595beca39f969c411db8f8d5c806"
+
+[[projects]]
+  name = "github.com/urfave/negroni"
+  packages = ["."]
+  revision = "5dbbc83f748fc3ad38585842b0aedab546d0ea1e"
+  version = "v0.3.0"
 
 [[projects]]
   branch = "master"
@@ -633,6 +709,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "333313b27de32138205b1e74a16b00ac228dd091a6c40fcd079c5b438e54314a"
+  inputs-digest = "1e814aa1563d4e53c3eba19936f1cbcac05098c2644b94aeda8d47ffeb0acf29"
   solver-name = "gps-cdcl"
   solver-version = 1
