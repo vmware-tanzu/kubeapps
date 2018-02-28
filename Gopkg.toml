@@ -1,7 +1,0 @@
-[[constraint]]
-  branch = "master"
-  name = "github.com/kubeapps/common"
-
-[[constraint]]
-  name = "github.com/sirupsen/logrus"
-  version = "1.0.3"

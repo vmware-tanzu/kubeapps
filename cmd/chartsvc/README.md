@@ -1,5 +1,3 @@
-[![CircleCI](https://circleci.com/gh/kubeapps/chartsvc.svg?style=svg)](https://circleci.com/gh/kubeapps/chartsvc)
-
 # ChartSvc
 
 ChartSvc is a service for KubeApps that reads chart metadata from the database
