@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -94,6 +95,13 @@ List of components that kubeapps up installs:
 		}
 		if version.Major <= 1 && version.Minor < 8 {
 			return fmt.Errorf("kubernetes with RBAC enabled (v1.8+) is required to run Kubeapps")
+		}
+
+		if ssecrets, _ := ssecretsExists(c); ssecrets {
+			fmt.Printf("sealed-secrets exists and was not installed by Kubeapps, continuing could override and interfere with your existing sealed-secrets controller.\nContinue? (y/n): ")
+			if ok := confirmPrompt(); !ok {
+				return fmt.Errorf("aborted")
+			}
 		}
 
 		manifest, err := fsGetFile("/kubeapps-objs.yaml")
@@ -294,6 +302,28 @@ func mongoSecretExists(c kubecfg.UpdateCmd, name, ns string) (*unstructured.Unst
 	}
 
 	return prevSec, true, nil
+}
+
+// checks if sealed-secrets exists outside of the Kubeapps install
+func ssecretsExists(c kubecfg.UpdateCmd) (bool, error) {
+	gvk := schema.GroupVersionKind{Group: "apps", Version: "v1beta1", Kind: "Deployment"}
+	rc, err := clientForGroupVersionKind(c.ClientPool, c.Discovery, gvk, "kube-system")
+	if err != nil {
+		return false, err
+	}
+	ssc, err := rc.Get("sealed-secrets-controller", metav1.GetOptions{})
+	return ssc.GetLabels()["created-by"] != "kubeapps", nil
+}
+
+func confirmPrompt() bool {
+	var response string
+	_, err := fmt.Scanln(&response)
+	if err != nil {
+		return false
+	}
+
+	r := regexp.MustCompile("(?i)^y(es)?")
+	return r.MatchString(response)
 }
 
 func buildSecretObject(pw map[string]string, name, ns string) *unstructured.Unstructured {
