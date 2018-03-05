@@ -24,7 +24,17 @@ install:
 jobs:
   include:
   - stage: test
+    env: PROJECT=go
     script: make test
+  - stage:
+    env: PROJECT=dashboard
+    language: node_js
+    node_js:
+    - "8"
+    install: yarn --cwd=dashboard
+    script:
+    - yarn --cwd=dashboard run lint
+    - yarn --cwd=dashboard run test
 
   # parallel build stages
   - stage: build
@@ -64,3 +74,6 @@ jobs:
       fi
   - <<: *imageBuild
     env: IMAGE=kubeapps/chartsvc
+  - <<: *imageBuild
+    install: yarn --cwd=dashboard
+    env: IMAGE=kubeapps/dashboard

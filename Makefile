@@ -54,6 +54,8 @@ build-prep:
 
 kubeapps/%:
 	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .
+kubeapps/dashboard:
+	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
 
 fmt:
 	$(GOFMT) -s -w $(GO_FILES)
