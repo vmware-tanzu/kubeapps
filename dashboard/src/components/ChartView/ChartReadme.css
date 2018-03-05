@@ -1,0 +1,29 @@
+.ChartReadme p {
+  margin: 0.625em 0;
+}
+
+.ChartReadme pre {
+  overflow: auto;
+  margin: 0.625em 0;
+  border-radius: 5px;
+}
+
+.ChartReadme blockquote {
+  max-width: 100%;
+  margin: 0;
+  padding: 0.1em 1em;
+  background-color: #f1f1f1;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 1em;
+  text-align: left;
+}
+
+.ChartReadme blockquote:before,
+.ChartReadme blockquote:after {
+  background-image: none;
+}
+
+.ChartReadme tr {
+  border-bottom: 1px solid #eee;
+}

@@ -1,0 +1,13 @@
+.ChartView__heading {
+  display: flex;
+}
+
+.ChartViewSidebar__section {
+  /* hack to make h2 margin work... */
+  padding-top: 0.1px;
+  overflow-wrap: break-word;
+}
+
+.ChartViewSidebar__section > div {
+  margin-left: 1em;
+}
