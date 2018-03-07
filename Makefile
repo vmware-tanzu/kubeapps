@@ -10,8 +10,8 @@ VERSION = dev-$(shell date +%FT%T%z)
 BINARY = kubeapps
 GO_PACKAGES = $(IMPORT_PATH)/cmd/kubeapps $(IMPORT_PATH)/cmd/chart-repo $(IMPORT_PATH)/pkg/...
 GO_FILES := $(shell find $(shell $(GOBIN) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
-GO_FLAGS = -ldflags='-w -X github.com/kubeapps/kubeapps/cmd/kubeapps.VERSION=${VERSION}'
 GO_XFLAGS =
+GO_FLAGS = -ldflags="-s -w -X github.com/kubeapps/kubeapps/cmd.VERSION=${VERSION}"
 EMBEDDED_STATIC = generated/statik/statik.go
 
 # Cross-compilation env
