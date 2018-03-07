@@ -1,4 +1,5 @@
 import { IServiceCatalogState } from "../reducers/catalog";
+import { IFunctionState } from "../reducers/functions";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
 
@@ -105,6 +106,13 @@ export interface IDeploymentStatus {
   availableReplicas: number;
 }
 
+export interface IFunction extends IResource {
+  spec: {
+    runtime: string;
+    type: string;
+  };
+}
+
 export interface IApp {
   chart?: IChart;
   type: string;
@@ -125,6 +133,7 @@ export interface IStoreState {
   charts: IChartState;
   repos: IAppRepositoryState;
   deployment: IDeployment;
+  functions: IFunctionState;
 }
 
 interface IK8sResource {
@@ -182,6 +191,8 @@ export interface IAppRepositoryList
         selfLink: string;
       }
     > {}
+
+export interface IFunctionList extends IK8sList<IFunction, {}> {}
 
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
 export interface IStatus extends IK8sResource {
