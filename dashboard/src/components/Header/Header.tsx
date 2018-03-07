@@ -35,8 +35,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     },
     {
       children: "Functions",
-      external: true,
-      to: "/kubeless/",
+      to: "/functions",
     },
     {
       children: "Service Instances",
