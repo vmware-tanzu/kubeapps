@@ -451,7 +451,7 @@ func (d *Moved) PostApply(object interface{}) interface{} {
 }
 
 func (d *Moved) similarity() (similarity float64) {
-	similarity = 0.6 // as type and contents are same
+	similarity = 0.6 // as type and contens are same
 	ratio := float64(d.PrePosition().(Index)) / float64(d.PostPosition().(Index))
 	if ratio > 1 {
 		ratio = 1 / ratio
