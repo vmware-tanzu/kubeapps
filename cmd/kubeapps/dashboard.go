@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -31,7 +32,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
-	"k8s.io/client-go/tools/remotecommand"
+	"k8s.io/client-go/transport/spdy"
 )
 
 const (
@@ -127,13 +128,13 @@ func (d *dashboardCmdOptions) newPortforwarder(stopChannel, readyChannel chan st
 		SubResource("portforward")
 	url := req.URL()
 
-	dialer, err := remotecommand.NewExecutor(d.config, "POST", url)
+	transport, upgrader, err := spdy.RoundTripperFor(d.config)
 	if err != nil {
 		return nil, err
 	}
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: transport}, "POST", url)
 
 	ports := []string{fmt.Sprintf("%d:%d", d.localPort, ingressPort)}
-
 	return portforward.New(dialer, ports, stopChannel, readyChannel, os.Stdout, os.Stderr)
 }
 
