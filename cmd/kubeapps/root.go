@@ -195,7 +195,7 @@ func generateEncodedRandomPassword(s int) (string, error) {
 	return base64.URLEncoding.EncodeToString([]byte(pw)), nil
 }
 
-func clientForGroupVersionKind(pool dynamic.ClientPool, disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind, namespace string) (*dynamic.ResourceClient, error) {
+func clientForGroupVersionKind(pool dynamic.ClientPool, disco discovery.DiscoveryInterface, gvk schema.GroupVersionKind, namespace string) (dynamic.ResourceInterface, error) {
 	client, err := pool.ClientForGroupVersionKind(gvk)
 	if err != nil {
 		return nil, err

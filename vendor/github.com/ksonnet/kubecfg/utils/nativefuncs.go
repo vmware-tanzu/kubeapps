@@ -24,7 +24,8 @@ import (
 
 	goyaml "github.com/ghodss/yaml"
 
-	jsonnet "github.com/strickyak/jsonnet_cgo"
+	jsonnet "github.com/google/go-jsonnet"
+	jsonnetAst "github.com/google/go-jsonnet/ast"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
 
@@ -48,61 +49,103 @@ func RegisterNativeFuncs(vm *jsonnet.VM, resolver Resolver) {
 	// "*FromJson" functions will be replaced by regular native
 	// version when libjsonnet is able to support this.
 
-	vm.NativeCallback("parseJson", []string{"json"}, func(data []byte) (res interface{}, err error) {
-		err = json.Unmarshal(data, &res)
-		return
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "parseJson",
+		Params: []jsonnetAst.Identifier{"json"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			data := []byte(args[0].(string))
+			err = json.Unmarshal(data, &res)
+			return
+		},
 	})
 
-	vm.NativeCallback("parseYaml", []string{"yaml"}, func(data []byte) ([]interface{}, error) {
-		ret := []interface{}{}
-		d := yaml.NewYAMLToJSONDecoder(bytes.NewReader(data))
-		for {
-			var doc interface{}
-			if err := d.Decode(&doc); err != nil {
-				if err == io.EOF {
-					break
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "parseYaml",
+		Params: []jsonnetAst.Identifier{"yaml"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			ret := []interface{}{}
+			data := []byte(args[0].(string))
+			d := yaml.NewYAMLToJSONDecoder(bytes.NewReader(data))
+			for {
+				var doc interface{}
+				if err := d.Decode(&doc); err != nil {
+					if err == io.EOF {
+						break
+					}
+					return nil, err
 				}
-				return nil, err
+				ret = append(ret, doc)
 			}
-			ret = append(ret, doc)
-		}
-		return ret, nil
+			return ret, nil
+		},
 	})
 
-	vm.NativeCallback("manifestJsonFromJson", []string{"json", "indent"}, func(data []byte, indent int) (string, error) {
-		data = bytes.TrimSpace(data)
-		buf := bytes.Buffer{}
-		if err := json.Indent(&buf, data, "", strings.Repeat(" ", indent)); err != nil {
-			return "", err
-		}
-		buf.WriteString("\n")
-		return buf.String(), nil
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "manifestJsonFromJson",
+		Params: []jsonnetAst.Identifier{"json", "indent"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			data := bytes.TrimSpace([]byte(args[0].(string)))
+			indent := int(args[1].(float64))
+			buf := bytes.Buffer{}
+			if err := json.Indent(&buf, data, "", strings.Repeat(" ", indent)); err != nil {
+				return "", err
+			}
+			buf.WriteString("\n")
+			return buf.String(), nil
+		},
 	})
 
-	vm.NativeCallback("manifestYamlFromJson", []string{"json"}, func(data []byte) (string, error) {
-		var input interface{}
-		if err := json.Unmarshal(data, &input); err != nil {
-			return "", err
-		}
-		output, err := goyaml.Marshal(input)
-		return string(output), err
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "manifestYamlFromJson",
+		Params: []jsonnetAst.Identifier{"json"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			data := []byte(args[0].(string))
+			var input interface{}
+			if err := json.Unmarshal(data, &input); err != nil {
+				return "", err
+			}
+			output, err := goyaml.Marshal(input)
+			return string(output), err
+		},
 	})
 
-	vm.NativeCallback("resolveImage", []string{"image"}, func(image string) (string, error) {
-		return resolveImage(resolver, image)
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "resolveImage",
+		Params: []jsonnetAst.Identifier{"image"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			return resolveImage(resolver, args[0].(string))
+		},
 	})
 
-	vm.NativeCallback("escapeStringRegex", []string{"str"}, func(s string) (string, error) {
-		return regexp.QuoteMeta(s), nil
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "escapeStringRegex",
+		Params: []jsonnetAst.Identifier{"str"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			return regexp.QuoteMeta(args[0].(string)), nil
+		},
 	})
 
-	vm.NativeCallback("regexMatch", []string{"regex", "string"}, regexp.MatchString)
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "regexMatch",
+		Params: []jsonnetAst.Identifier{"regex", "string"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			return regexp.MatchString(args[0].(string), args[1].(string))
+		},
+	})
 
-	vm.NativeCallback("regexSubst", []string{"regex", "src", "repl"}, func(regex, src, repl string) (string, error) {
-		r, err := regexp.Compile(regex)
-		if err != nil {
-			return "", err
-		}
-		return r.ReplaceAllString(src, repl), nil
+	vm.NativeFunction(&jsonnet.NativeFunction{
+		Name:   "regexSubst",
+		Params: []jsonnetAst.Identifier{"regex", "src", "repl"},
+		Func: func(args []interface{}) (res interface{}, err error) {
+			regex := args[0].(string)
+			src := args[1].(string)
+			repl := args[2].(string)
+
+			r, err := regexp.Compile(regex)
+			if err != nil {
+				return "", err
+			}
+			return r.ReplaceAllString(src, repl), nil
+		},
 	})
 }

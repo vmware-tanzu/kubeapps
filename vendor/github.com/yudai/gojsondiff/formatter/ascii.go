@@ -201,16 +201,16 @@ func (f *AsciiFormatter) processItem(value interface{}, deltas []diff.Delta, pos
 	return nil
 }
 
-func (f *AsciiFormatter) searchDeltas(deltas []diff.Delta, position diff.Position) (results []diff.Delta) {
+func (f *AsciiFormatter) searchDeltas(deltas []diff.Delta, postion diff.Position) (results []diff.Delta) {
 	results = make([]diff.Delta, 0)
 	for _, delta := range deltas {
 		switch delta.(type) {
 		case diff.PostDelta:
-			if delta.(diff.PostDelta).PostPosition() == position {
+			if delta.(diff.PostDelta).PostPosition() == postion {
 				results = append(results, delta)
 			}
 		case diff.PreDelta:
-			if delta.(diff.PreDelta).PrePosition() == position {
+			if delta.(diff.PreDelta).PrePosition() == postion {
 				results = append(results, delta)
 			}
 		default:
@@ -362,7 +362,7 @@ func (f *AsciiFormatter) printRecursive(name string, value interface{}, marker s
 
 func sortedKeys(m map[string]interface{}) (keys []string) {
 	keys = make([]string, 0, len(m))
-	for key := range m {
+	for key, _ := range m {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
