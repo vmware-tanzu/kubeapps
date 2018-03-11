@@ -81,6 +81,9 @@ To remove Kubeapps, use this command:
 kubeapps down
 ```
 
+# Exposing Externally
+To be able to expose the dashboard for external access, you need to edit the `kubeapps-kube-api` deployment, adding `--disable-filter=true` to the arguments for the proxy container. This prevents API access errors when used via an ingress.
+
 # Useful Resources
 
 * [Walkthrough for new users](getting-started.md)
