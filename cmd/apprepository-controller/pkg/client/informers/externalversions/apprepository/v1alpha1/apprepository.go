@@ -21,10 +21,10 @@ package v1alpha1
 import (
 	time "time"
 
-	apprepository_v1alpha1 "github.com/kubeapps/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	versioned "github.com/kubeapps/apprepository-controller/pkg/client/clientset/versioned"
-	internalinterfaces "github.com/kubeapps/apprepository-controller/pkg/client/informers/externalversions/internalinterfaces"
-	v1alpha1 "github.com/kubeapps/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	apprepository_v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	versioned "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	internalinterfaces "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	watch "k8s.io/apimachinery/pkg/watch"

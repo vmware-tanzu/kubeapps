@@ -26,14 +26,14 @@ import (
 	// Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
-	clientset "github.com/kubeapps/apprepository-controller/pkg/client/clientset/versioned"
-	informers "github.com/kubeapps/apprepository-controller/pkg/client/informers/externalversions"
-	"github.com/kubeapps/apprepository-controller/pkg/signals"
+	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/signals"
 )
 
 var (
-	masterURL  string
-	kubeconfig string
+	masterURL     string
+	kubeconfig    string
 	repoSyncImage string
 )
 
@@ -58,7 +58,7 @@ func main() {
 		glog.Fatalf("Error building apprepo clientset: %s", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewFilteredSharedInformerFactory(kubeClient, 0, "kubeapps", nil)
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, 0)
 	apprepoInformerFactory := informers.NewFilteredSharedInformerFactory(apprepoClient, 0, "kubeapps", nil)
 
 	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory)

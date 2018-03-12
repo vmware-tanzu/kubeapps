@@ -38,11 +38,11 @@ import (
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
 
-	apprepov1alpha1 "github.com/kubeapps/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	clientset "github.com/kubeapps/apprepository-controller/pkg/client/clientset/versioned"
-	appreposcheme "github.com/kubeapps/apprepository-controller/pkg/client/clientset/versioned/scheme"
-	informers "github.com/kubeapps/apprepository-controller/pkg/client/informers/externalversions"
-	listers "github.com/kubeapps/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
+	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
+	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 )
 
 const controllerAgentName = "apprepository-controller"

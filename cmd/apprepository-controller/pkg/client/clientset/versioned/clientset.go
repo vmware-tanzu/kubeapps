@@ -18,7 +18,7 @@ package versioned
 
 import (
 	glog "github.com/golang/glog"
-	kubeappsv1alpha1 "github.com/kubeapps/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
+	kubeappsv1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
