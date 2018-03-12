@@ -45,9 +45,11 @@ jobs:
         branch: master
         repo: kubeapps/kubeapps
   - <<: *cliBuild
-    env: BINARY=kubeapps-darwin-amd64 GOOS=darwin GOARCH=amd64
+    env: BINARY=kubeapps-darwin-amd64
+    script: GOOS=darwin GOARCH=amd64 make
   - <<: *cliBuild
-    env: BINARY=kubeapps-windows-amd64.exe GOOS=windows GOARCH=amd64
+    env: BINARY=kubeapps-windows-amd64.exe
+    script: GOOS=windows GOARCH=amd64 make
   
   # Image builds
   - &imageBuild
