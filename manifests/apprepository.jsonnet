@@ -22,6 +22,22 @@ local labels = {
 
   serviceaccount: kube.ServiceAccount("apprepository-controller") + $.namespace,
 
+  // Need a cluster role because client-go v5.0.1 does not support namespaced informers
+  // TODO: remove when we update to client-go v6.0.0
+  clusterRole: kube.ClusterRole("apprepository-controller") {
+    rules: [
+      {
+        apiGroups: ["batch"],
+        resources: ["cronjobs"],
+        verbs: ["get", "list", "watch"],
+      },
+    ]
+  },
+  clusterRoleBinding: kube.ClusterRoleBinding("apprepository-controller") {
+    roleRef_: $.clusterRole,
+    subjects_: [$.serviceaccount],
+  },
+
   role: kube.Role("apprepository-controller") + $.namespace {
     rules: [
       {
