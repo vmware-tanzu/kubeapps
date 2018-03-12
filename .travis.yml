@@ -75,5 +75,7 @@ jobs:
   - <<: *imageBuild
     env: IMAGE=kubeapps/chartsvc
   - <<: *imageBuild
+    env: IMAGE=kubeapps/apprepository-controller
+  - <<: *imageBuild
     install: yarn --cwd=dashboard
     env: IMAGE=kubeapps/dashboard
