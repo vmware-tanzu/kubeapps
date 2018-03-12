@@ -1,18 +1,10 @@
 language: go
 go:
 - 1.9
-sudo: required
-
-addons:
-  apt:
-    packages:
-    # cross compiling for windows
-    - mingw-w64
 
 env:
   global:
   - VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}
-  - GO_XFLAGS=""
 
 install:
 - |
@@ -37,28 +29,27 @@ jobs:
     - yarn --cwd=dashboard run test
 
   # parallel build stages
-  - stage: build
-    env: PLATFORM=linux-amd64
-    script: make VERSION="$VERSION" kubeapps-$PLATFORM
-    deploy: &githubRelease
+  - &cliBuild
+    stage: build
+    env: BINARY=kubeapps-linux-amd64
+    script: make
+    deploy:
     - provider: releases
       api_key:
         secure: "G0BmT6tXyXkXlgo9pa4/SNWYZHfwKqxWJ9hVz0LybYnon0IbEjpo5mppsltezEHEQvgdX6H+tujcmOIDAHK2hh3KdeYzZ7GjM1oGRau4x2sN42o6bw7wQ7lC9+ZgPvH9vWiBxf3bZ0TYVjmZ2OcvzBSycg2T5XFKEQKGyJc1cGABFm6At8WXimbaXhWLsrQ0MP9yd5uwvp9PBG+SxJmInDdUIw7sFtEYDL4YDIG6JVgJOV1+3f8oTNiM1wwTPJuaHoybbyeE8xdT9pN6DOk0HZXP+/f6rjx63lMoKCqsqMi6Bz6rDpmI5YfSRh7M2RVebaKnHxYhVKQ20+y0+0UznFmArVSSH4SbFCwz9fYn3NBPLMaSdR91HS4BZe1AeOdXZlfowGOdQuZf3oY/aLtB6cu2jwiUh58CtoTFbg53iZcYwiW69Ap6G40SD2JZNlHPScB5eFJkj1f+3CFHAmB89nLgpZw+S12/HZGQa/OmdB4wd73mqe2XQa7ez60UOjhURwU2LzI02/0NaSswcpu9ygCAYgz1Cy6jAJnmxdvIdcACzYDpgNKNj+yC8GSvAqxEDX+wi6WdUVhy+jwaCzhRgbBZScP8kcFFOKjmdLdeeujRpw3qUzqEh4HW8oNvlg6yXHpoNwjgQJlDIbCHsevPIs/duBCMPy+3st+KaLLwZig="
-      file: kubeapps-$PLATFORM
+      file: $BINARY
       skip_cleanup: true
       overwrite: true
       on:
         tags: true
         branch: master
         repo: kubeapps/kubeapps
-  - stage: build
-    env: PLATFORM=darwin-amd64
-    script: make VERSION="$VERSION" osxcross kubeapps-$PLATFORM
-    deploy: *githubRelease
-  - stage: build
-    env: PLATFORM=windows-amd64.exe
-    script: make VERSION="$VERSION" GO_XFLAGS="-ldflags='-extldflags \"-static\"'" kubeapps-$PLATFORM
-    deploy: *githubRelease
+  - <<: *cliBuild
+    env: BINARY=kubeapps-darwin-amd64
+    script: GOOS=darwin GOARCH=amd64 make
+  - <<: *cliBuild
+    env: BINARY=kubeapps-windows-amd64.exe
+    script: GOOS=windows GOARCH=amd64 make
   
   # Image builds
   - &imageBuild
