@@ -2,6 +2,7 @@ IMPORT_PATH:= github.com/kubeapps/kubeapps
 GO = /usr/bin/env go
 GOFMT = /usr/bin/env gofmt
 VERSION ?= dev-$(shell date +%FT%H-%M-%S-%Z)
+CGO_ENABLED ?= 1
 
 BINARY ?= kubeapps
 GO_PACKAGES = ./...
@@ -12,7 +13,7 @@ EMBEDDED_STATIC = generated/statik/statik.go
 default: kubeapps
 
 kubeapps: $(EMBEDDED_STATIC)
-	CGO_ENABLED=0 $(GO) build -i -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
+	CGO_ENABLED=$(CGO_ENABLED) $(GO) build -i -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
 
 test: $(EMBEDDED_STATIC)
 	$(GO) test $(GO_PACKAGES)
