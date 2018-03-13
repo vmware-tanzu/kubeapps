@@ -5,6 +5,7 @@ go:
 env:
   global:
   - VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}
+  - CGO_ENABLED=0
 
 install:
 - |
