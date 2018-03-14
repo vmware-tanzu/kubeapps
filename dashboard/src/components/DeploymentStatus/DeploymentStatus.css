@@ -1,4 +1,4 @@
-.AppStatus {
+.DeploymentStatus {
   height: 2.5em;
   background-color: #f1f1f1;
   padding: 0 0.875em;
@@ -7,16 +7,16 @@
   display: inline-block;
 }
 
-.AppStatus--success {
+.DeploymentStatus--success {
   background-color: #1598cb;
   color: #fff;
 }
 
-.AppStatus--pending {
+.DeploymentStatus--pending {
   background-color: #fdba12;
 }
 
-.AppStatus--pending > .icon {
+.DeploymentStatus--pending > .icon {
   animation: fadeinout 2s linear infinite;
 }
 

@@ -25,6 +25,9 @@ const functionsReducer = (
       return { ...state, isFetching: false, items: functions };
     case getType(actions.functions.requestFunctions):
       return { ...state, isFetching: true };
+    case getType(actions.functions.selectFunction):
+      const { f } = action;
+      return { ...state, isFetching: false, selected: f };
     default:
       return state;
   }

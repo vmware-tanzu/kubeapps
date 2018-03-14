@@ -11,16 +11,12 @@ body {
   min-width: 0;
 }
 
-/* Iconography */
-svg path {
-  fill: currentColor;
-}
-
 svg.icon {
   height: 1em;
   /* Fix positioning */
   position: relative;
-  top: 0.05em;
+  top: 0.1em;
+  left: 0;
   width: 1em;
 }
 

@@ -3,20 +3,20 @@ import * as React from "react";
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
 import { IDeploymentStatus, IResource } from "../../shared/types";
-import "./AppStatus.css";
+import "./DeploymentStatus.css";
 
-interface IAppStatusProps {
-  deployments: Map<string, IResource>;
+interface IDeploymentStatusProps {
+  deployments: IResource[];
 }
 
-class AppStatus extends React.Component<IAppStatusProps> {
+class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   public render() {
     return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();
   }
 
   private renderSuccessStatus() {
     return (
-      <span className="AppStatus AppStatus--success">
+      <span className="DeploymentStatus DeploymentStatus--success">
         <Check className="icon padding-t-tiny" /> Deployed
       </span>
     );
@@ -24,7 +24,7 @@ class AppStatus extends React.Component<IAppStatusProps> {
 
   private renderPendingStatus() {
     return (
-      <span className="AppStatus AppStatus--pending">
+      <span className="DeploymentStatus DeploymentStatus--pending">
         <Compass className="icon padding-t-tiny" /> Deploying
       </span>
     );
@@ -32,10 +32,10 @@ class AppStatus extends React.Component<IAppStatusProps> {
 
   private isReady() {
     const { deployments } = this.props;
-    if (Object.keys(deployments).length > 0) {
-      return Object.keys(deployments).every(k => {
-        const dStatus: IDeploymentStatus = deployments[k].status;
-        return dStatus.availableReplicas === dStatus.replicas;
+    if (deployments.length > 0) {
+      return deployments.every(d => {
+        const status: IDeploymentStatus = d.status;
+        return status.availableReplicas === status.replicas;
       });
     } else {
       // if there are no deployments, then the app is considered "ready"
@@ -46,4 +46,4 @@ class AppStatus extends React.Component<IAppStatusProps> {
   }
 }
 
-export default AppStatus;
+export default DeploymentStatus;

@@ -14,6 +14,7 @@ import ChartList from "./ChartListContainer";
 import ChartView from "./ChartViewContainer";
 import ClassListContainer from "./ClassListContainer";
 import FunctionListContainer from "./FunctionListContainer";
+import FunctionViewContainer from "./FunctionViewContainer";
 import InstanceListViewContainer from "./InstanceListViewContainer";
 import InstanceView from "./InstanceView";
 
@@ -38,6 +39,7 @@ class Root extends React.Component {
     "/config/repos": RepoListContainer,
     "/functions": FunctionListContainer,
     "/functions/:namespace": FunctionListContainer,
+    "/functions/:namespace/:name": FunctionViewContainer,
     "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
     "/services/brokers/:brokerName/instances/:namespace/:instanceName": InstanceView,
     "/services/classes": ClassListContainer,

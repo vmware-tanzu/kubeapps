@@ -5519,6 +5519,10 @@ react-error-overlay@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/react-error-overlay/-/react-error-overlay-3.0.0.tgz#c2bc8f4d91f1375b3dad6d75265d51cd5eeaf655"
 
+react-feather@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/react-feather/-/react-feather-1.0.8.tgz#69b13d5c729949f194d33201dee91bab67fa31a2"
+
 react-markdown@^3.1.4:
   version "3.1.5"
   resolved "https://registry.yarnpkg.com/react-markdown/-/react-markdown-3.1.5.tgz#b1de8e3d421d31b8e1a679c66380fff20ee9a096"

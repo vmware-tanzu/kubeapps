@@ -9,7 +9,11 @@ export const receiveFunctions = createAction("RECEIVE_FUNCTIONS", (functions: IF
   functions,
   type: "RECEIVE_FUNCTIONS",
 }));
-const allActions = [requestFunctions, receiveFunctions].map(getReturnOfExpression);
+export const selectFunction = createAction("SELECT_FUNCTION", (f: IFunction) => ({
+  f,
+  type: "SELECT_FUNCTION",
+}));
+const allActions = [requestFunctions, receiveFunctions, selectFunction].map(getReturnOfExpression);
 export type FunctionsAction = typeof allActions[number];
 
 export function fetchFunctions(namespace: string) {
@@ -18,5 +22,28 @@ export function fetchFunctions(namespace: string) {
     const functionList = await Function.list();
     dispatch(receiveFunctions(functionList.items));
     return functionList;
+  };
+}
+
+export function getFunction(name: string, namespace: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    dispatch(requestFunctions());
+    const f = await Function.get(name, namespace);
+    dispatch(selectFunction(f));
+    return f;
+  };
+}
+
+export function deleteFunction(name: string, namespace: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    return Function.delete(name, namespace);
+  };
+}
+
+export function updateFunction(name: string, namespace: string, newFn: IFunction) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    const f = await Function.update(name, namespace, newFn);
+    dispatch(selectFunction(f));
+    return f;
   };
 }
