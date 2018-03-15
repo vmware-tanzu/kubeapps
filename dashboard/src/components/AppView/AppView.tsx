@@ -2,10 +2,10 @@ import * as yaml from "js-yaml";
 import * as React from "react";
 
 import { IApp, IResource } from "../../shared/types";
+import DeploymentStatus from "../DeploymentStatus";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
-import AppStatus from "./AppStatus";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
 import ServiceTable from "./ServiceTable";
@@ -124,10 +124,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <AppStatus deployments={this.state.deployments} />
+                    <DeploymentStatus deployments={this.deploymentArray()} />
                   </div>
-                  <div className="col-4" />
-                  <div className="col-4">
+                  <div className="col-8 text-r">
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
@@ -148,7 +147,11 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     );
   }
 
-  public deleteApp = () => {
+  private deploymentArray(): IResource[] {
+    return Object.keys(this.state.deployments).map(k => this.state.deployments[k]);
+  }
+
+  private deleteApp = () => {
     return this.props.deleteApp(this.props.releaseName, this.props.namespace);
   };
 }

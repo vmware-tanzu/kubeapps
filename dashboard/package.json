@@ -15,6 +15,7 @@
     "react": "^16.2.0",
     "react-ace": "^5.9.0",
     "react-dom": "^16.2.0",
+    "react-feather": "^1.0.8",
     "react-markdown": "^3.1.4",
     "react-modal": "^3.1.11",
     "react-redux": "^5.0.6",

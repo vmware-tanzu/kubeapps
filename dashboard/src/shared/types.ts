@@ -110,6 +110,8 @@ export interface IFunction extends IResource {
   spec: {
     runtime: string;
     type: string;
+    handler: string;
+    function: string;
   };
 }
 

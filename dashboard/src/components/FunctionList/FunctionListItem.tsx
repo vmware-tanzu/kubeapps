@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { IFunction } from "../../shared/types";
 import Card, { CardContent } from "../Card";
 import "../ChartList/ChartListItem.css";
-import FunctionIcon from "./FunctionIcon";
+import FunctionIcon from "../FunctionIcon";
 
 interface IFunctionListItemProps {
   function: IFunction;
