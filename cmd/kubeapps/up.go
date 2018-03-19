@@ -98,7 +98,11 @@ List of components that kubeapps up installs:
 		}
 
 		if ssecrets, _ := ssecretsExists(c); ssecrets {
-			fmt.Printf("sealed-secrets exists and was not installed by Kubeapps, continuing could override and interfere with your existing sealed-secrets controller.\nContinue? (y/n): ")
+			fmt.Printf("WARNING: sealed-secrets exists and was not installed by Kubeapps, continuing could override and interfere with your existing sealed-secrets controller.\nContinue? (y/n): ")
+			if ok := confirmPrompt(); !ok {
+				return fmt.Errorf("aborted")
+			}
+			fmt.Printf("Are you really sure? (yes/no): ")
 			if ok := confirmPrompt(); !ok {
 				return fmt.Errorf("aborted")
 			}
