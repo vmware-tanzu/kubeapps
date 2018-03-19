@@ -15,7 +15,7 @@ For example, to install the latest binary release on Linux or OS X, use this com
 
 ```
 curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep -i $(uname -s) | grep browser_download_url | cut -d '"' -f 4 | wget -i -
-sudo mv kubeapps-linux-amd64 /usr/local/bin/kubeapps
+sudo mv kubeapps-$(uname -s| tr '[:upper:]' '[:lower:]')-amd64 /usr/local/bin/kubeapps
 sudo chmod +x /usr/local/bin/kubeapps
 ```
 
