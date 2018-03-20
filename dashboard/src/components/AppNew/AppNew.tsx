@@ -20,6 +20,7 @@ interface IAppNewProps {
   selected: IChartState["selected"];
   chartVersion: string;
   push: (location: string) => RouterAction;
+  fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<{}>;
@@ -29,6 +30,7 @@ interface IAppNewState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
+  chartVersion: string;
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
@@ -39,6 +41,7 @@ interface IAppNewState {
 class AppNew extends React.Component<IAppNewProps, IAppNewState> {
   public state: IAppNewState = {
     appValues: undefined,
+    chartVersion: "",
     error: undefined,
     isDeploying: false,
     namespace: "default",
@@ -46,11 +49,24 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
     selectedBinding: undefined,
     valuesModified: false,
   };
+
+  constructor(props: any) {
+    super(props);
+    this.state.chartVersion = props.chartVersion;
+  }
+
   public componentDidMount() {
-    const { chartID, getBindings, getChartVersion, getChartValues, chartVersion } = this.props;
+    const {
+      chartID,
+      fetchChartVersions,
+      getBindings,
+      getChartVersion,
+      getChartValues,
+    } = this.props;
+    fetchChartVersions(chartID);
     getBindings();
-    getChartVersion(chartID, chartVersion);
-    getChartValues(chartID, chartVersion);
+    getChartVersion(chartID, this.state.chartVersion);
+    getChartValues(chartID, this.state.chartVersion);
   }
 
   public componentWillReceiveProps(nextProps: IAppNewProps) {
@@ -119,6 +135,20 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                   value={this.state.releaseName}
                   required={true}
                 />
+              </div>
+              <div>
+                <label htmlFor="chartVersion">Version</label>
+                <select id="chartVersion" onChange={this.handleChartVersionChange} required={true}>
+                  {this.props.selected.versions.map(v => (
+                    <option
+                      key={v.id}
+                      value={v.attributes.version}
+                      selected={v.attributes.version === this.state.chartVersion}
+                    >
+                      {v.attributes.version}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label htmlFor="namespace">Namespace</label>
@@ -199,6 +229,12 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
 
   public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ releaseName: e.currentTarget.value });
+  };
+  public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
+    const { chartID, getChartVersion, getChartValues } = this.props;
+    getChartVersion(chartID, e.currentTarget.value);
+    getChartValues(chartID, e.currentTarget.value);
+    this.setState({ chartVersion: e.currentTarget.value });
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
