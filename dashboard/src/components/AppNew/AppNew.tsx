@@ -89,6 +89,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
     if (!version || !appValues || !versions.length) {
       return <div>Loading</div>;
     }
+    const chartAttrs = version.relationships.chart.data;
     let bindingDetail = <div />;
     if (selectedBinding) {
       const {
@@ -134,6 +135,11 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
         <form className="container" onSubmit={this.handleDeploy}>
           <div className="row">
             <div className="col-8">
+              <div>
+                <h2>
+                  {chartAttrs.repo.name}/{chartAttrs.name}
+                </h2>
+              </div>
               <div>
                 <label htmlFor="releaseName">Name</label>
                 <input
