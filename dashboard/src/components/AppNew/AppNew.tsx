@@ -24,13 +24,13 @@ interface IAppNewProps {
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<{}>;
+  selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
 }
 
 interface IAppNewState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
-  chartVersion: string;
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
@@ -41,7 +41,6 @@ interface IAppNewState {
 class AppNew extends React.Component<IAppNewProps, IAppNewState> {
   public state: IAppNewState = {
     appValues: undefined,
-    chartVersion: "",
     error: undefined,
     isDeploying: false,
     namespace: "default",
@@ -50,11 +49,6 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
     valuesModified: false,
   };
 
-  constructor(props: any) {
-    super(props);
-    this.state.chartVersion = props.chartVersion;
-  }
-
   public componentDidMount() {
     const {
       chartID,
@@ -62,22 +56,38 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
       getBindings,
       getChartVersion,
       getChartValues,
+      chartVersion,
     } = this.props;
     fetchChartVersions(chartID);
     getBindings();
-    getChartVersion(chartID, this.state.chartVersion);
-    getChartValues(chartID, this.state.chartVersion);
+    getChartVersion(chartID, chartVersion);
+    getChartValues(chartID, chartVersion);
   }
 
   public componentWillReceiveProps(nextProps: IAppNewProps) {
-    const { version, values } = nextProps.selected;
-    if (version && values && !this.state.valuesModified) {
-      this.setState({ appValues: values });
+    const { selectChartVersionAndGetFiles, chartVersion } = this.props;
+    const { versions } = this.props.selected;
+    if (nextProps.chartVersion !== chartVersion) {
+      const cv = versions.find(v => v.attributes.version === nextProps.chartVersion);
+      if (cv) {
+        selectChartVersionAndGetFiles(cv);
+      } else {
+        throw new Error("could not find chart");
+      }
+    } else {
+      const { version, values } = nextProps.selected;
+      if (version && values && !this.state.valuesModified) {
+        this.setState({ appValues: values });
+      }
     }
   }
 
   public render() {
-    if (!this.props.selected.version && !this.state.appValues) {
+    if (
+      !this.props.selected.version &&
+      !this.state.appValues &&
+      !this.props.selected.versions.length
+    ) {
       return <div>Loading</div>;
     }
     const { bindings } = this.props;
@@ -143,7 +153,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                     <option
                       key={v.id}
                       value={v.attributes.version}
-                      selected={v.attributes.version === this.state.chartVersion}
+                      selected={v.attributes.version === this.props.chartVersion}
                     >
                       {v.attributes.version}
                     </option>
@@ -231,10 +241,16 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { chartID, getChartVersion, getChartValues } = this.props;
-    getChartVersion(chartID, e.currentTarget.value);
-    getChartValues(chartID, e.currentTarget.value);
-    this.setState({ chartVersion: e.currentTarget.value });
+    const { versions } = this.props.selected;
+    const cv = versions.find(v => v.attributes.version === e.currentTarget.value);
+    if (cv) {
+      const repoName = cv.relationships.chart.data.repo.name;
+      const chartName = cv.relationships.chart.data.name;
+      const versionStr = cv.attributes.version;
+      this.props.push(`/apps/new/${repoName}/${chartName}/versions/${versionStr}`);
+    } else {
+      throw new Error("could not find chart");
+    }
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
