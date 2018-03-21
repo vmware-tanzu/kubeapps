@@ -84,8 +84,8 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
 
   public render() {
     if (
-      !this.props.selected.version &&
-      !this.state.appValues &&
+      !this.props.selected.version ||
+      !this.state.appValues ||
       !this.props.selected.versions.length
     ) {
       return <div>Loading</div>;
