@@ -16,9 +16,10 @@ interface IRouteProps {
 
 function mapStateToProps({ functions }: IStoreState, { match: { params } }: IRouteProps) {
   return {
-    function: functions.selected,
+    function: functions.selected.function,
     name: params.name,
     namespace: params.namespace,
+    podName: functions.selected.podName,
   };
 }
 
@@ -29,6 +30,7 @@ function mapDispatchToProps(
   return {
     deleteFunction: () => dispatch(actions.functions.deleteFunction(name, namespace)),
     getFunction: () => dispatch(actions.functions.getFunction(name, namespace)),
+    getPodName: (fn: IFunction) => dispatch(actions.functions.getPodName(fn)),
     updateFunction: (fn: IFunction) =>
       dispatch(actions.functions.updateFunction(name, namespace, fn)),
   };

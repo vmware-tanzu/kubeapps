@@ -7,12 +7,16 @@ import { IFunction } from "../shared/types";
 export interface IFunctionState {
   isFetching: boolean;
   items: IFunction[];
-  selected?: IFunction;
+  selected: {
+    function?: IFunction;
+    podName?: string;
+  };
 }
 
 const initialState: IFunctionState = {
   isFetching: false,
   items: [],
+  selected: {},
 };
 
 const functionsReducer = (
@@ -27,7 +31,10 @@ const functionsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.functions.selectFunction):
       const { f } = action;
-      return { ...state, isFetching: false, selected: f };
+      return { ...state, isFetching: false, selected: { ...state.selected, function: f } };
+    case getType(actions.functions.setPodName):
+      const { name } = action;
+      return { ...state, isFetching: false, selected: { ...state.selected, podName: name } };
     default:
       return state;
   }
