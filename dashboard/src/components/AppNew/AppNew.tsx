@@ -83,15 +83,12 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
   }
 
   public render() {
-    if (
-      !this.props.selected.version ||
-      !this.state.appValues ||
-      !this.props.selected.versions.length
-    ) {
+    const { selected, bindings } = this.props;
+    const { version, versions } = selected;
+    const { appValues, selectedBinding } = this.state;
+    if (!version || !appValues || !versions.length) {
       return <div>Loading</div>;
     }
-    const { bindings } = this.props;
-    const { selectedBinding } = this.state;
     let bindingDetail = <div />;
     if (selectedBinding) {
       const {
@@ -149,7 +146,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
               <div>
                 <label htmlFor="chartVersion">Version</label>
                 <select id="chartVersion" onChange={this.handleChartVersionChange} required={true}>
-                  {this.props.selected.versions.map(v => (
+                  {versions.map(v => (
                     <option
                       key={v.id}
                       value={v.attributes.version}
@@ -177,7 +174,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                   width="100%"
                   onChange={this.handleValuesChange}
                   setOptions={{ showPrintMargin: false }}
-                  value={this.state.appValues}
+                  value={appValues}
                 />
               </div>
               <div>
