@@ -5,6 +5,7 @@
   "dependencies": {
     "@types/js-yaml": "^3.10.1",
     "@types/pako": "^1.0.0",
+    "@types/qs": "^6.5.1",
     "axios": "^0.17.1",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",

@@ -5,6 +5,7 @@ import DeploymentStatus from "../DeploymentStatus";
 import FunctionControls from "./FunctionControls";
 import FunctionEditor from "./FunctionEditor";
 import FunctionInfo from "./FunctionInfo";
+import FunctionTester from "./FunctionTester";
 
 interface IFunctionViewProps {
   name: string;
@@ -99,6 +100,11 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
                   value={this.state.functionCode}
                   onChange={this.handleCodeChange}
                 />
+                <div className="row" style={{ margin: "0" }}>
+                  <div className="col-6">
+                    <FunctionTester function={f} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
