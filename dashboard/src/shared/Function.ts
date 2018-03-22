@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { IFunction, IFunctionList, IResource } from "./types";
+import { IFunction, IFunctionList, IResource, IStatus } from "./types";
 
 export default class Function {
   public static async list() {
@@ -26,6 +26,25 @@ export default class Function {
       return pod.metadata.name;
     }
     return;
+  }
+
+  public static async create(name: string, namespace: string, spec: IFunction["spec"]) {
+    try {
+      const { data } = await axios.post<IFunction>(
+        `${Function.APIEndpoint}/namespaces/${namespace}/functions`,
+        {
+          apiVersion: "kubeless.io/v1beta1",
+          kind: "Function",
+          metadata: {
+            name,
+          },
+          spec,
+        },
+      );
+      return data;
+    } catch (err) {
+      throw new Error((err.response.data as IStatus).message);
+    }
   }
 
   public static async update(name: string, namespace: string, newFn: IFunction) {

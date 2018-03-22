@@ -31,7 +31,11 @@ const functionsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.functions.selectFunction):
       const { f } = action;
-      return { ...state, isFetching: false, selected: { ...state.selected, function: f } };
+      return {
+        ...state,
+        isFetching: false,
+        selected: { ...state.selected, function: f, podName: undefined },
+      };
     case getType(actions.functions.setPodName):
       const { name } = action;
       return { ...state, isFetching: false, selected: { ...state.selected, podName: name } };
