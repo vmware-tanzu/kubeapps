@@ -5,6 +5,8 @@ import { RouterAction } from "react-router-redux";
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 
+import "./AppNew.css";
+
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
