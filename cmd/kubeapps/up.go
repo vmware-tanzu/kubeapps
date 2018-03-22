@@ -316,6 +316,9 @@ func ssecretsExists(c kubecfg.UpdateCmd) (bool, error) {
 		return false, err
 	}
 	ssc, err := rc.Get("sealed-secrets-controller", metav1.GetOptions{})
+	if err != nil {
+		return false, err
+	}
 	return ssc.GetLabels()["created-by"] != "kubeapps", nil
 }
 
