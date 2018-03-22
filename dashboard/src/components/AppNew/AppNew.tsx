@@ -150,13 +150,14 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
               </div>
               <div>
                 <label htmlFor="chartVersion">Version</label>
-                <select id="chartVersion" onChange={this.handleChartVersionChange} required={true}>
+                <select
+                  id="chartVersion"
+                  onChange={this.handleChartVersionChange}
+                  required={true}
+                  value={this.props.chartVersion}
+                >
                   {versions.map(v => (
-                    <option
-                      key={v.id}
-                      value={v.attributes.version}
-                      selected={v.attributes.version === this.props.chartVersion}
-                    >
+                    <option key={v.id} value={v.attributes.version}>
                       {v.attributes.version}
                     </option>
                   ))}
