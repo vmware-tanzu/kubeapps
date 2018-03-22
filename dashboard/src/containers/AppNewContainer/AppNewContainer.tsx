@@ -36,12 +36,15 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
       namespace: string,
       values?: string,
     ) => dispatch(actions.charts.deployChart(version, releaseName, namespace, values)),
+    fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
     getBindings: () => dispatch(actions.catalog.getBindings()),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),
     getChartVersion: (id: string, version: string) =>
       dispatch(actions.charts.getChartVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
+    selectChartVersionAndGetFiles: (version: IChartVersion) =>
+      dispatch(actions.charts.selectChartVersionAndGetFiles(version)),
   };
 }
 

@@ -5,6 +5,8 @@ import { RouterAction } from "react-router-redux";
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 
+import "./AppNew.css";
+
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
@@ -20,9 +22,11 @@ interface IAppNewProps {
   selected: IChartState["selected"];
   chartVersion: string;
   push: (location: string) => RouterAction;
+  fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<{}>;
+  selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
 }
 
 interface IAppNewState {
@@ -46,26 +50,46 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
     selectedBinding: undefined,
     valuesModified: false,
   };
+
   public componentDidMount() {
-    const { chartID, getBindings, getChartVersion, getChartValues, chartVersion } = this.props;
+    const {
+      chartID,
+      fetchChartVersions,
+      getBindings,
+      getChartVersion,
+      getChartValues,
+      chartVersion,
+    } = this.props;
+    fetchChartVersions(chartID);
     getBindings();
     getChartVersion(chartID, chartVersion);
     getChartValues(chartID, chartVersion);
   }
 
   public componentWillReceiveProps(nextProps: IAppNewProps) {
+    const { selectChartVersionAndGetFiles, chartVersion } = this.props;
+    const { versions } = this.props.selected;
     const { version, values } = nextProps.selected;
-    if (version && values && !this.state.valuesModified) {
+
+    if (nextProps.chartVersion !== chartVersion) {
+      const cv = versions.find(v => v.attributes.version === nextProps.chartVersion);
+      if (cv) {
+        selectChartVersionAndGetFiles(cv);
+      } else {
+        throw new Error("could not find chart");
+      }
+    } else if (version && values && !this.state.valuesModified) {
       this.setState({ appValues: values });
     }
   }
 
   public render() {
-    if (!this.props.selected.version && !this.state.appValues) {
+    const { selected, bindings } = this.props;
+    const { version, versions } = selected;
+    const { appValues, selectedBinding } = this.state;
+    if (!version || !appValues || !versions.length) {
       return <div>Loading</div>;
     }
-    const { bindings } = this.props;
-    const { selectedBinding } = this.state;
     let bindingDetail = <div />;
     if (selectedBinding) {
       const {
@@ -112,6 +136,9 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
           <div className="row">
             <div className="col-8">
               <div>
+                <h2>{this.props.chartID}</h2>
+              </div>
+              <div>
                 <label htmlFor="releaseName">Name</label>
                 <input
                   id="releaseName"
@@ -119,6 +146,21 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                   value={this.state.releaseName}
                   required={true}
                 />
+              </div>
+              <div>
+                <label htmlFor="chartVersion">Version</label>
+                <select
+                  id="chartVersion"
+                  onChange={this.handleChartVersionChange}
+                  required={true}
+                  value={this.props.chartVersion}
+                >
+                  {versions.map(v => (
+                    <option key={v.id} value={v.attributes.version}>
+                      {v.attributes.version}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label htmlFor="namespace">Namespace</label>
@@ -137,7 +179,8 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                   width="100%"
                   onChange={this.handleValuesChange}
                   setOptions={{ showPrintMargin: false }}
-                  value={this.state.appValues}
+                  editorProps={{ $blockScrolling: Infinity }}
+                  value={appValues}
                 />
               </div>
               <div>
@@ -199,6 +242,9 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
 
   public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ releaseName: e.currentTarget.value });
+  };
+  public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
+    this.props.push(`/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`);
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
