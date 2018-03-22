@@ -243,16 +243,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { versions } = this.props.selected;
-    const cv = versions.find(v => v.attributes.version === e.currentTarget.value);
-    if (cv) {
-      const repoName = cv.relationships.chart.data.repo.name;
-      const chartName = cv.relationships.chart.data.name;
-      const versionStr = cv.attributes.version;
-      this.props.push(`/apps/new/${repoName}/${chartName}/versions/${versionStr}`);
-    } else {
-      throw new Error("could not find chart");
-    }
+    this.props.push(`/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`);
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
