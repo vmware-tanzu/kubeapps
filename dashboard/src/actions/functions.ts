@@ -40,6 +40,12 @@ export function getFunction(name: string, namespace: string) {
   };
 }
 
+export function createFunction(name: string, namespace: string, spec: IFunction["spec"]) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    return Function.create(name, namespace, spec);
+  };
+}
+
 export function deleteFunction(name: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>) => {
     return Function.delete(name, namespace);

@@ -109,10 +109,11 @@ export interface IDeploymentStatus {
 
 export interface IFunction extends IResource {
   spec: {
+    deps: string;
+    function: string;
+    handler: string;
     runtime: string;
     type: string;
-    handler: string;
-    function: string;
   };
 }
 

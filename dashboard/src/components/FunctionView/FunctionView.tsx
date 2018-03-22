@@ -74,7 +74,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
     // refetch pod name when deployment is available, in case in changed
     // TODO: move deployment status into redux store
     const status: IDeploymentStatus = deployment.status;
-    if (status.availableReplicas !== status.replicas) {
+    if (!status.availableReplicas || status.availableReplicas !== status.replicas) {
       this.setState({ deploymentHealthy: false });
     } else {
       if (!this.state.deploymentHealthy && this.props.function) {
