@@ -13,7 +13,13 @@ export const selectFunction = createAction("SELECT_FUNCTION", (f: IFunction) => 
   f,
   type: "SELECT_FUNCTION",
 }));
-const allActions = [requestFunctions, receiveFunctions, selectFunction].map(getReturnOfExpression);
+export const setPodName = createAction("SET_FUNCTION_POD_NAME", (name: string) => ({
+  name,
+  type: "SET_FUNCTION_POD_NAME",
+}));
+const allActions = [requestFunctions, receiveFunctions, selectFunction, setPodName].map(
+  getReturnOfExpression,
+);
 export type FunctionsAction = typeof allActions[number];
 
 export function fetchFunctions(namespace: string) {
@@ -45,5 +51,15 @@ export function updateFunction(name: string, namespace: string, newFn: IFunction
     const f = await Function.update(name, namespace, newFn);
     dispatch(selectFunction(f));
     return f;
+  };
+}
+
+export function getPodName(fn: IFunction) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    const name = await Function.getPodName(fn);
+    if (name) {
+      dispatch(setPodName(name));
+    }
+    return name;
   };
 }

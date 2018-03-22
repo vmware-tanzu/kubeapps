@@ -1,22 +1,27 @@
 import * as React from "react";
 
-import { IFunction, IResource } from "../../shared/types";
+import { IDeploymentStatus, IFunction, IResource } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import FunctionControls from "./FunctionControls";
 import FunctionEditor from "./FunctionEditor";
 import FunctionInfo from "./FunctionInfo";
+import FunctionLogs from "./FunctionLogs";
+import FunctionTester from "./FunctionTester";
 
 interface IFunctionViewProps {
   name: string;
   namespace: string;
   function: IFunction | undefined;
+  podName: string | undefined;
   getFunction: () => Promise<void>;
+  getPodName: (fn: IFunction) => Promise<string>;
   deleteFunction: () => Promise<void>;
   updateFunction: (fn: Partial<IFunction>) => Promise<void>;
 }
 
 interface IFunctionViewState {
   deployment?: IResource;
+  deploymentHealthy: boolean;
   socket?: WebSocket;
   functionCode: string;
   codeModified: boolean;
@@ -25,6 +30,7 @@ interface IFunctionViewState {
 class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewState> {
   public state: IFunctionViewState = {
     codeModified: false,
+    deploymentHealthy: false,
     functionCode: "",
   };
 
@@ -65,10 +71,21 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
     const msg = JSON.parse(e.data);
     const deployment: IResource = msg.object;
     this.setState({ deployment });
+    // refetch pod name when deployment is available, in case in changed
+    // TODO: move deployment status into redux store
+    const status: IDeploymentStatus = deployment.status;
+    if (status.availableReplicas !== status.replicas) {
+      this.setState({ deploymentHealthy: false });
+    } else {
+      if (!this.state.deploymentHealthy && this.props.function) {
+        this.props.getPodName(this.props.function);
+      }
+      this.setState({ deploymentHealthy: true });
+    }
   }
 
   public render() {
-    const { function: f, deleteFunction } = this.props;
+    const { function: f, deleteFunction, podName } = this.props;
     const { deployment } = this.state;
     if (!f || !deployment) {
       return <div>Loading</div>;
@@ -99,6 +116,14 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
                   value={this.state.functionCode}
                   onChange={this.handleCodeChange}
                 />
+                <div className="row" style={{ margin: "0" }}>
+                  <div className="col-6">
+                    <FunctionTester function={f} />
+                  </div>
+                  <div className="col-6">
+                    <FunctionLogs function={f} podName={podName} />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

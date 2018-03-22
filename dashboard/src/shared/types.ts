@@ -97,6 +97,7 @@ export interface IResource {
     namespace: string;
     annotations: string;
     creationTimestamp: string;
+    deletionTimestamp?: string;
   };
 }
 

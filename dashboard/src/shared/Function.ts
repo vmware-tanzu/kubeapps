@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { IFunction, IFunctionList } from "./types";
+import { IFunction, IFunctionList, IResource } from "./types";
 
 export default class Function {
   public static async list() {
@@ -11,6 +11,21 @@ export default class Function {
   public static async get(name: string, namespace: string) {
     const { data } = await axios.get(Function.getSelfLink(name, namespace));
     return data;
+  }
+
+  public static async getPodName(fn: IFunction) {
+    const { data: { items } } = await axios.get<{ items: IResource[] }>(
+      `${Function.APIBase}/api/v1/namespaces/${fn.metadata.namespace}/pods?labelSelector=function=${
+        fn.metadata.name
+      }`,
+    );
+    // find the first pod that isn't terminating
+    // kubectl uses deletionTimestamp to determine Terminating status, pod phase does not report this
+    const pod = items.find(i => !i.metadata.deletionTimestamp);
+    if (pod) {
+      return pod.metadata.name;
+    }
+    return;
   }
 
   public static async update(name: string, namespace: string, newFn: IFunction) {
@@ -26,7 +41,8 @@ export default class Function {
   //   public static async create(name: string, url: string) {
   //   }
 
-  private static APIEndpoint: string = "/api/kube/apis/kubeless.io/v1beta1";
+  private static APIBase: string = "/api/kube";
+  private static APIEndpoint: string = `${Function.APIBase}/apis/kubeless.io/v1beta1`;
   private static getSelfLink(name: string, namespace: string): string {
     return `${Function.APIEndpoint}/namespaces/${namespace}/functions/${name}`;
   }
