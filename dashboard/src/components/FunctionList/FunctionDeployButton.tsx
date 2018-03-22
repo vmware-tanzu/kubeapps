@@ -15,6 +15,7 @@ const Runtimes = {
   "Nodejs (8)": "nodejs8",
   "Python (2.7)": "python2.7",
   "Python (3.4)": "python3.4",
+  "Python (3.6)": "python3.6",
   "Ruby (2.4)": "ruby2.4",
 };
 
