@@ -67,6 +67,8 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
   public componentWillReceiveProps(nextProps: IAppNewProps) {
     const { selectChartVersionAndGetFiles, chartVersion } = this.props;
     const { versions } = this.props.selected;
+    const { version, values } = nextProps.selected;
+
     if (nextProps.chartVersion !== chartVersion) {
       const cv = versions.find(v => v.attributes.version === nextProps.chartVersion);
       if (cv) {
@@ -74,11 +76,8 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
       } else {
         throw new Error("could not find chart");
       }
-    } else {
-      const { version, values } = nextProps.selected;
-      if (version && values && !this.state.valuesModified) {
-        this.setState({ appValues: values });
-      }
+    } else if (version && values && !this.state.valuesModified) {
+      this.setState({ appValues: values });
     }
   }
 
