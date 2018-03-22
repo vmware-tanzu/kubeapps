@@ -179,6 +179,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                   width="100%"
                   onChange={this.handleValuesChange}
                   setOptions={{ showPrintMargin: false }}
+                  editorProps={{ $blockScrolling: Infinity }}
                   value={appValues}
                 />
               </div>
