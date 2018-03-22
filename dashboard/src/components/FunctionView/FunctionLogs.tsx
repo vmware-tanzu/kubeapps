@@ -1,5 +1,5 @@
 import * as React from "react";
-import { LazyStream, LineNumber } from "react-lazylog";
+import { LazyStream, LineNumber } from "react-lazylog/lib/LazyLog.es5";
 
 import { IFunction } from "../../shared/types";
 import "./FunctionLogs.css";
