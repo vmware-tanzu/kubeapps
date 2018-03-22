@@ -61,11 +61,6 @@ local labelifyEach(src) = {
   },
   nginx: labelifyEach($.nginx_),
 
-  kubelessui_:: (import "kubeless-ui.jsonnet") {
-    namespace:: $.namespace,
-  },
-  kubelessui: labelifyEach($.kubelessui_),
-
   dashboard_:: (import "kubeapps-dashboard.jsonnet") {
     namespace:: $.namespace,
     mongodb_svc:: $.mongodb_.svc,
@@ -102,7 +97,6 @@ local labelifyEach(src) = {
             {path: "/", backend: $.dashboard.ui.svc.name_port},
             {path: "/api/chartsvc", backend: $.dashboard.chartsvc.service.name_port},
             {path: "/api/kube", backend: $.dashboard.kubeapi.service.name_port},
-            {path: "/kubeless", backend: $.kubelessui.svc.name_port},
           ],
         },
         host: host,

@@ -36,12 +36,37 @@ local kube = import "kube.libsonnet";
         resources: ["helmreleases"],
         verbs: ["get", "list", "create", "update", "delete"],
       },
+      // Kubeapps creates and manages Kubeless functions via the Function CRD
+      // object.
+      {
+        apiGroups: ["kubeless.io"],
+        resources: ["functions"],
+        verbs: ["get", "list", "create", "update", "delete"],
+      },
       // Kubeapps watches Deployments and Services to monitor updates for apps
       // in the UI.
       {
         apiGroups: ["", "apps"],
         resources: ["services", "deployments"],
         verbs: ["list", "watch"],
+      },
+      // Kubeapps needs to find pods related to Kubeless functions.
+      {
+        apiGroups: [""],
+        resources: ["pods"],
+        verbs: ["list"],
+      },
+      // Kubeapps shows pod logs for Kubeless functions.
+      {
+        apiGroups: [""],
+        resources: ["pods/log"],
+        verbs: ["get"],
+      },
+      // Kubeapps uses the service proxy to test Kubeless functions with HTTP GET and POST requests.
+      {
+        apiGroups: [""],
+        resources: ["services/proxy"],
+        verbs: ["get", "create"],
       },
       // Kubeapps lists available Service Brokers and can request relisting
       // using patch.
