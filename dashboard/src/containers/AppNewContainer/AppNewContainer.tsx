@@ -3,7 +3,7 @@ import { push } from "react-router-redux";
 import { Dispatch } from "redux";
 
 import actions from "../../actions";
-import AppNew from "../../components/AppNew";
+import DeploymentForm from "../../components/DeploymentForm";
 import { IChartVersion, IStoreState } from "../../shared/types";
 
 interface IRouteProps {
@@ -48,4 +48,4 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppNew);
+export default connect(mapStateToProps, mapDispatchToProps)(DeploymentForm);

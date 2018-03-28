@@ -5,6 +5,8 @@ import { RouterAction } from "react-router-redux";
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 
+import "./DeploymentForm.css";
+
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
@@ -20,6 +22,11 @@ interface IDeploymentFormProps {
     values?: string,
   ) => Promise<{}>;
   push: (location: string) => RouterAction;
+  fetchChartVersions: (id: string) => Promise<{}>;
+  getBindings: () => Promise<IServiceBinding[]>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
+  getChartValues: (id: string, chartVersion: string) => Promise<{}>;
+  selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
 }
 
 interface IDeploymentFormState {
@@ -44,9 +51,34 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     valuesModified: false,
   };
 
+  public componentDidMount() {
+    const {
+      chartID,
+      fetchChartVersions,
+      getBindings,
+      getChartVersion,
+      getChartValues,
+      chartVersion,
+    } = this.props;
+    fetchChartVersions(chartID);
+    getBindings();
+    getChartVersion(chartID, chartVersion);
+    getChartValues(chartID, chartVersion);
+  }
+
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
+    const { selectChartVersionAndGetFiles, chartVersion } = this.props;
+    const { versions } = this.props.selected;
     const { version, values } = nextProps.selected;
-    if (version && values && !this.state.valuesModified) {
+
+    if (nextProps.chartVersion !== chartVersion) {
+      const cv = versions.find(v => v.attributes.version === nextProps.chartVersion);
+      if (cv) {
+        selectChartVersionAndGetFiles(cv);
+      } else {
+        throw new Error("could not find chart");
+      }
+    } else if (version && values && !this.state.valuesModified) {
       this.setState({ appValues: values });
     }
   }
@@ -102,10 +134,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         )}
         <form className="container" onSubmit={this.handleDeploy}>
           <div className="row">
-            <div className="col-12">
-              <h2>{this.props.chartID}</h2>
-            </div>
             <div className="col-8">
+              <div>
+                <h2>{this.props.chartID}</h2>
+              </div>
               <div>
                 <label htmlFor="releaseName">Name</label>
                 <input

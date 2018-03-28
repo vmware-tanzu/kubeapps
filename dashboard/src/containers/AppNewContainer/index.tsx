@@ -1,3 +1,3 @@
-import AppNew from "./AppNewContainer";
+import DeploymentForm from "./AppNewContainer";
 
-export default AppNew;
+export default DeploymentForm;
