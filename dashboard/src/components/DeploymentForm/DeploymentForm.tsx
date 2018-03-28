@@ -5,22 +5,22 @@ import { RouterAction } from "react-router-redux";
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 
-import "./AppNew.css";
+import "./DeploymentForm.css";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
-interface IAppNewProps {
+interface IDeploymentFormProps {
   bindings: IServiceBinding[];
   chartID: string;
+  chartVersion: string;
+  selected: IChartState["selected"];
   deployChart: (
     version: IChartVersion,
     releaseName: string,
     namespace: string,
     values?: string,
   ) => Promise<{}>;
-  selected: IChartState["selected"];
-  chartVersion: string;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: () => Promise<IServiceBinding[]>;
@@ -29,7 +29,7 @@ interface IAppNewProps {
   selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
 }
 
-interface IAppNewState {
+interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
@@ -40,8 +40,8 @@ interface IAppNewState {
   selectedBinding: IServiceBinding | undefined;
 }
 
-class AppNew extends React.Component<IAppNewProps, IAppNewState> {
-  public state: IAppNewState = {
+class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
+  public state: IDeploymentFormState = {
     appValues: undefined,
     error: undefined,
     isDeploying: false,
@@ -66,7 +66,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
     getChartValues(chartID, chartVersion);
   }
 
-  public componentWillReceiveProps(nextProps: IAppNewProps) {
+  public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     const { selectChartVersionAndGetFiles, chartVersion } = this.props;
     const { versions } = this.props.selected;
     const { version, values } = nextProps.selected;
@@ -152,8 +152,8 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                 <select
                   id="chartVersion"
                   onChange={this.handleChartVersionChange}
-                  required={true}
                   value={this.props.chartVersion}
+                  required={true}
                 >
                   {versions.map(v => (
                     <option key={v.id} value={v.attributes.version}>
@@ -168,6 +168,7 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
                   name="namespace"
                   onChange={this.handleNamespaceChange}
                   value={this.state.namespace}
+                  required={true}
                 />
               </div>
               <div style={{ marginBottom: "1em" }}>
@@ -254,4 +255,4 @@ class AppNew extends React.Component<IAppNewProps, IAppNewState> {
   };
 }
 
-export default AppNew;
+export default DeploymentForm;
