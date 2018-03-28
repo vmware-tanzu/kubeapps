@@ -44,8 +44,13 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
     namespace: "default",
     parameters: JSON.stringify(
       {
-        firewallEndIPAddress: "255.255.255.255",
-        firewallStartIPAddress: "0.0.0.0",
+        firewallRules: [
+          {
+            endIPAddress: "255.255.255.255",
+            name: "AllowAll",
+            startIPAddress: "0.0.0.0",
+          },
+        ],
         location: "eastus",
         resourceGroup: "default",
         sslEnforcement: "disabled",
