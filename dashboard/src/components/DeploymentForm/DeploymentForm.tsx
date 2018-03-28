@@ -95,10 +95,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       );
     }
 
-    if (!version || !appValues || !versions.length) {
-      return <div>Loading</div>;
-    }
-
     return (
       <div>
         {this.state.error && (
