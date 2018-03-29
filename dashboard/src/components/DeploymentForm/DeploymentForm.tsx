@@ -134,10 +134,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         )}
         <form className="container" onSubmit={this.handleDeploy}>
           <div className="row">
+            <div className="col-12">
+              <h2>{this.props.chartID}</h2>
+            </div>
             <div className="col-8">
-              <div>
-                <h2>{this.props.chartID}</h2>
-              </div>
               <div>
                 <label htmlFor="releaseName">Name</label>
                 <input
