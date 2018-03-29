@@ -36,7 +36,7 @@ export class AddBindingButton extends React.Component<
         </button>
         <Modal isOpen={modalIsOpen} onRequestClose={this.closeModal}>
           {this.state.error && (
-            <div className="container padding-v-bigger bg-action">{this.state.error}</div>
+            <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
           )}
           <div className="bind-form">
             <h1>Add Binding</h1>
@@ -90,11 +90,15 @@ export class AddBindingButton extends React.Component<
   private handleNamespaceChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     this.setState({ namespace: e.target.value });
   private bind = async () => {
-    await this.props.addBinding(
-      this.state.bindingName,
-      this.state.instanceRefName,
-      this.state.namespace,
-    );
-    this.closeModal();
+    try {
+      await this.props.addBinding(
+        this.state.bindingName,
+        this.state.instanceRefName,
+        this.state.namespace,
+      );
+      this.closeModal();
+    } catch (e) {
+      this.setState({ error: e.toString() });
+    }
   };
 }
