@@ -10,7 +10,7 @@ This guide will walk you through the process of deploying Kubeapps for your clus
 
 ## Prerequisites
 
-Kubeapps assumes a working Kubernetes (v1.8+) with RBAC enabled and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for both Linux and OS X, and Kubeapps has been tested with both `minikube`, Google Kubernetes Engine (GKE) and Azure Container Service (AKS).
+Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for Linux, OS X and Windows, and Kubeapps has been tested with `minikube`, Google Kubernetes Engine (GKE) and Azure Container Service (AKS). Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
 
 ## Step 1: Install Kubeapps
 
