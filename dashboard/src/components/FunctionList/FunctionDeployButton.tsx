@@ -77,7 +77,7 @@ class FunctionDeployButton extends React.Component<
           contentLabel="Modal"
         >
           {this.state.error && (
-            <div className="container padding-v-big margin-v-big bg-action">{this.state.error}</div>
+            <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
           )}
           <form onSubmit={this.handleDeploy}>
             <div>
