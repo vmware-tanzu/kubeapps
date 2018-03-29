@@ -141,7 +141,7 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
               addBinding={this.addBinding}
             />
             <br />
-            <BindingList bindings={bindings} addBinding={this.addBinding} getCatalog={getCatalog} />
+            <BindingList bindings={bindings} getCatalog={getCatalog} />
           </div>
         )}
       </div>
