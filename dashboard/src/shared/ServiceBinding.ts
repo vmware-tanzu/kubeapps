@@ -1,5 +1,7 @@
 import axios from "axios";
+
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
+import { IStatus } from "./types";
 
 interface IK8sApiSecretResponse {
   kind: string;
@@ -59,17 +61,21 @@ export class ServiceBinding {
     namespace: string = "default",
   ) {
     const url = ServiceBinding.getLink(namespace);
-    const { data } = await axios.post<IServiceBinding>(url, {
-      metadata: {
-        name: bindingName,
-      },
-      spec: {
-        instanceRef: {
-          name: instanceRefName,
+    try {
+      const { data } = await axios.post<IServiceBinding>(url, {
+        metadata: {
+          name: bindingName,
         },
-      },
-    });
-    return data;
+        spec: {
+          instanceRef: {
+            name: instanceRefName,
+          },
+        },
+      });
+      return data;
+    } catch (e) {
+      throw new Error((e.response.data as IStatus).message);
+    }
   }
 
   public static async delete(name: string, namespace: string = "default") {

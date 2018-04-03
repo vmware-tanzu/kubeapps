@@ -4,7 +4,6 @@ import { RemoveBindingButton } from "../InstanceView/RemoveBindingButton";
 
 interface IBindingEntryProps {
   binding: IServiceBinding;
-  addBinding: (bindingName: string, instanceName: string, namespace: string) => Promise<any>;
   getCatalog: () => Promise<any>;
 }
 

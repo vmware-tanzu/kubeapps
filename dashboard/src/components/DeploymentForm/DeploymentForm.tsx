@@ -128,7 +128,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     return (
       <div>
         {this.state.error && (
-          <div className="container padding-v-bigger bg-action">{this.state.error}</div>
+          <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
         )}
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
