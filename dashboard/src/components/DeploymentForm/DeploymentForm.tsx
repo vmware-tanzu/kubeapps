@@ -5,8 +5,6 @@ import { RouterAction } from "react-router-redux";
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 
-import "./DeploymentForm.css";
-
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
@@ -132,7 +130,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         {this.state.error && (
           <div className="container padding-v-bigger bg-action">{this.state.error}</div>
         )}
-        <form className="container" onSubmit={this.handleDeploy}>
+        <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
             <div className="col-12">
               <h2>{this.props.chartID}</h2>
