@@ -10,7 +10,7 @@ Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-ch
 
 ## Quickstart
 
-Kubeapps assumes a working Kubernetes (v1.8+) with RBAC enabled and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for Linux, OS X and Windows, and Kubeapps has been tested with `minikube`, Google Kubernetes Engine (GKE) and Azure Container Service (AKS).
+Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for Linux, OS X and Windows, and Kubeapps has been tested with `minikube`, Google Kubernetes Engine (GKE) and Azure Container Service (AKS). Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
