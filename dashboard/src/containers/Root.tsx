@@ -32,7 +32,6 @@ class Root extends React.Component {
     "/": AppList,
     "/apps/:namespace/:releaseName": AppView,
     "/apps/edit/:namespace/:releaseName": AppEdit,
-    "/apps/edit/:namespace/:releaseName/:version": AppEdit,
     "/apps/new/:repo/:id/versions/:version": AppNew,
     "/charts": ChartList,
     "/charts/:repo": ChartList,

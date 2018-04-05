@@ -11,7 +11,6 @@ interface IRouteProps {
     params: {
       namespace: string;
       releaseName: string;
-      version?: string;
     };
   };
 }
@@ -26,7 +25,6 @@ function mapStateToProps(
     namespace: params.namespace,
     releaseName: params.releaseName,
     selected: charts.selected,
-    version: params.version,
   };
 }
 
