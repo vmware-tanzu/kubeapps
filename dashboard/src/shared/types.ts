@@ -120,6 +120,7 @@ export interface IFunction extends IResource {
 
 export interface IApp {
   chart?: IChart;
+  hr?: IHelmRelease;
   type: string;
   data: hapi.release.Release;
   repo?: IRepo;
@@ -237,9 +238,13 @@ export interface IHelmRelease {
     };
     name: string;
     namespace: string;
+    resourceVersion: string;
   };
   spec: {
+    chartName: string;
     repoUrl: string;
+    values: string;
+    version: string;
   };
 }
 

@@ -3,12 +3,13 @@ import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
 import { IServiceBinding } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, IHelmRelease } from "../../shared/types";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
 interface IDeploymentFormProps {
+  hr?: IHelmRelease;
   bindings: IServiceBinding[];
   chartID: string;
   chartVersion: string;
@@ -18,6 +19,7 @@ interface IDeploymentFormProps {
     releaseName: string,
     namespace: string,
     values?: string,
+    resourceVersion?: string,
   ) => Promise<{}>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
@@ -51,6 +53,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public componentDidMount() {
     const {
+      hr,
       chartID,
       fetchChartVersions,
       getBindings,
@@ -62,12 +65,19 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     getBindings();
     getChartVersion(chartID, chartVersion);
     getChartValues(chartID, chartVersion);
+
+    if (hr) {
+      this.setState({
+        namespace: hr.metadata.namespace,
+        releaseName: hr.metadata.name,
+      });
+    }
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     const { selectChartVersionAndGetFiles, chartVersion } = this.props;
     const { versions } = this.props.selected;
-    const { version, values } = nextProps.selected;
+    const { values } = nextProps.selected;
 
     if (nextProps.chartVersion !== chartVersion) {
       const cv = versions.find(v => v.attributes.version === nextProps.chartVersion);
@@ -76,13 +86,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       } else {
         throw new Error("could not find chart");
       }
-    } else if (version && values && !this.state.valuesModified) {
+    } else if (values && !this.state.valuesModified) {
       this.setState({ appValues: values });
     }
   }
 
   public render() {
-    const { selected, bindings } = this.props;
+    const { hr, selected, bindings } = this.props;
     const { version, versions } = selected;
     const { appValues, selectedBinding } = this.state;
     if (!version || !versions.length) {
@@ -143,6 +153,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   onChange={this.handleReleaseNameChange}
                   value={this.state.releaseName}
                   required={true}
+                  disabled={hr ? true : false}
                 />
               </div>
               <div>
@@ -150,7 +161,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 <select
                   id="chartVersion"
                   onChange={this.handleChartVersionChange}
-                  value={this.props.chartVersion}
+                  value={version.attributes.version}
                   required={true}
                 >
                   {versions.map(v => (
@@ -167,6 +178,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   onChange={this.handleNamespaceChange}
                   value={this.state.namespace}
                   required={true}
+                  disabled={hr ? true : false}
                 />
               </div>
               <div style={{ marginBottom: "1em" }}>
@@ -229,11 +241,12 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleDeploy = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, deployChart, push } = this.props;
+    const { selected, deployChart, push, hr } = this.props;
+    const resourceVersion = hr ? hr.metadata.resourceVersion : undefined;
     this.setState({ isDeploying: true });
     const { releaseName, namespace, appValues } = this.state;
     if (selected.version) {
-      deployChart(selected.version, releaseName, namespace, appValues)
+      deployChart(selected.version, releaseName, namespace, appValues, resourceVersion)
         .then(() => push(`/apps/${namespace}/${namespace}-${releaseName}`))
         .catch(err => this.setState({ isDeploying: false, error: err.toString() }));
     }
@@ -243,7 +256,14 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    this.props.push(`/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`);
+    const { hr, chartID, getChartVersion, getChartValues } = this.props;
+
+    if (hr) {
+      getChartVersion(chartID, e.currentTarget.value);
+      getChartValues(chartID, e.currentTarget.value);
+    } else {
+      this.props.push(`/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`);
+    }
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });

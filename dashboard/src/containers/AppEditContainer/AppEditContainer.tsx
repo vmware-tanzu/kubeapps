@@ -3,15 +3,14 @@ import { push } from "react-router-redux";
 import { Dispatch } from "redux";
 
 import actions from "../../actions";
-import DeploymentForm from "../../components/DeploymentForm";
+import AppEdit from "../../components/AppEdit";
 import { IChartVersion, IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
     params: {
-      repo: string;
-      id: string;
-      version: string;
+      namespace: string;
+      releaseName: string;
     };
   };
 }
@@ -21,9 +20,10 @@ function mapStateToProps(
   { match: { params } }: IRouteProps,
 ) {
   return {
+    app: apps.selected,
     bindings: catalog.bindings,
-    chartID: `${params.repo}/${params.id}`,
-    chartVersion: params.version,
+    namespace: params.namespace,
+    releaseName: params.releaseName,
     selected: charts.selected,
   };
 }
@@ -41,6 +41,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
         actions.charts.deployChart(version, releaseName, namespace, values, resourceVersion),
       ),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
+    getApp: (r: string, ns: string) => dispatch(actions.apps.getApp(r, ns)),
     getBindings: () => dispatch(actions.catalog.getBindings()),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),
@@ -52,4 +53,4 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(DeploymentForm);
+export default connect(mapStateToProps, mapDispatchToProps)(AppEdit);

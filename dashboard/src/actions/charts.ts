@@ -135,12 +135,17 @@ export function deployChart(
   releaseName: string,
   namespace: string,
   values?: string,
+  resourceVersion?: string,
 ) {
   return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     const chartAttrs = chartVersion.relationships.chart.data;
-    return fetch(url.api.helmreleases.create(namespace), {
+    const method = resourceVersion ? "PUT" : "POST";
+    const endpoint = resourceVersion
+      ? url.api.helmreleases.upgrade(namespace, releaseName)
+      : url.api.helmreleases.create(namespace);
+    return fetch(endpoint, {
       headers: { "Content-Type": "application/json" },
-      method: "POST",
+      method,
 
       body: JSON.stringify({
         apiVersion: "helm.bitnami.com/v1",
@@ -150,6 +155,7 @@ export function deployChart(
             "apprepositories.kubeapps.com/repo-name": chartAttrs.repo.name,
           },
           name: releaseName,
+          resourceVersion,
         },
         spec: {
           chartName: chartAttrs.name,
