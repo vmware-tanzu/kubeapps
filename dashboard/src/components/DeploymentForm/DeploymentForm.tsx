@@ -161,7 +161,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 <select
                   id="chartVersion"
                   onChange={this.handleChartVersionChange}
-                  value={this.props.chartVersion}
+                  value={version.attributes.version}
                   required={true}
                 >
                   {versions.map(v => (
@@ -256,15 +256,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { hr } = this.props;
-    let pushUrl;
-    if (hr) {
-      const { releaseName, namespace } = this.state;
-      pushUrl = `/apps/edit/${namespace}/${namespace}-${releaseName}/${e.currentTarget.value}`;
-    } else {
-      pushUrl = `/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`;
-    }
-    this.props.push(pushUrl);
+    const { chartID, getChartVersion, getChartValues } = this.props;
+
+    getChartVersion(chartID, e.currentTarget.value);
+    getChartValues(chartID, e.currentTarget.value);
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
