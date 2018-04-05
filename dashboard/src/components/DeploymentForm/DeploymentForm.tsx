@@ -77,7 +77,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     const { selectChartVersionAndGetFiles, chartVersion } = this.props;
     const { versions } = this.props.selected;
-    const { version, values } = nextProps.selected;
+    const { values } = nextProps.selected;
 
     if (nextProps.chartVersion !== chartVersion) {
       const cv = versions.find(v => v.attributes.version === nextProps.chartVersion);
@@ -86,7 +86,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       } else {
         throw new Error("could not find chart");
       }
-    } else if (version && values && !this.state.valuesModified) {
+    } else if (values && !this.state.valuesModified) {
       this.setState({ appValues: values });
     }
   }
