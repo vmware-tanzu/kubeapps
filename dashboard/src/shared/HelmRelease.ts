@@ -142,7 +142,7 @@ export class HelmRelease {
   private static parseRelease(hr: IHelmRelease, cm: IHelmReleaseConfigMap): IApp {
     const protoBytes = inflate(atob(cm.data.release));
     const rel = hapi.release.Release.decode(protoBytes);
-    const app: IApp = { data: rel, type: "helm" };
+    const app: IApp = { data: rel, type: "helm", hr };
     const repoName = hr.metadata.annotations["apprepositories.kubeapps.com/repo-name"];
     if (repoName) {
       app.repo = {

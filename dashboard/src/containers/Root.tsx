@@ -7,6 +7,7 @@ import { ClassViewContainer } from "./ClassView";
 
 import Layout from "../components/Layout";
 import configureStore from "../store";
+import AppEdit from "./AppEditContainer";
 import AppList from "./AppListContainer";
 import AppNew from "./AppNewContainer";
 import AppView from "./AppViewContainer";
@@ -30,6 +31,7 @@ class Root extends React.Component {
   } = {
     "/": AppList,
     "/apps/:namespace/:releaseName": AppView,
+    "/apps/edit/:namespace/:releaseName": AppEdit,
     "/apps/new/:repo/:id/versions/:version": AppNew,
     "/charts": ChartList,
     "/charts/:repo": ChartList,

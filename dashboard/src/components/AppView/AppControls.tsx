@@ -12,20 +12,24 @@ interface IAppControlsProps {
 interface IAppControlsState {
   modalIsOpen: boolean;
   redirectToAppList: boolean;
+  upgrade: boolean;
 }
 
 class AppControls extends React.Component<IAppControlsProps, IAppControlsState> {
   public state: IAppControlsState = {
     modalIsOpen: false,
     redirectToAppList: false,
+    upgrade: false,
   };
 
   public render() {
+    const { name, namespace } = this.props.app.data;
     return (
       <div className="AppControls">
-        <button className="button" disabled={true}>
+        <button className="button" onClick={this.handleUpgradeClick}>
           Upgrade
         </button>
+        {this.state.upgrade && <Redirect to={`/apps/edit/${namespace}/${name}`} />}
         <button className="button button-danger" onClick={this.openModel}>
           Delete
         </button>
@@ -38,6 +42,10 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
       </div>
     );
   }
+
+  public handleUpgradeClick = () => {
+    this.setState({ upgrade: true });
+  };
 
   public openModel = () => {
     this.setState({
