@@ -1,6 +1,7 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
+import Chart from "../shared/Chart";
 import { IChart, IChartVersion, IStoreState } from "../shared/types";
 import * as url from "../shared/url";
 
@@ -23,9 +24,16 @@ export const selectChartVersion = createAction(
     type: "SELECT_CHART_VERSION",
   }),
 );
+export const resetChartVersion = createAction("RESET_CHART_VERSION", () => ({
+  type: "RESET_CHART_VERSION",
+}));
 export const selectReadme = createAction("SELECT_README", (readme: string) => ({
   readme,
   type: "SELECT_README",
+}));
+export const errorReadme = createAction("ERROR_README", (message: string) => ({
+  message,
+  type: "ERROR_README",
 }));
 export const selectValues = createAction("SELECT_VALUES", (values: string) => ({
   type: "SELECT_VALUES",
@@ -37,7 +45,9 @@ const allActions = [
   receiveCharts,
   receiveChartVersions,
   selectChartVersion,
+  resetChartVersion,
   selectReadme,
+  errorReadme,
   selectValues,
 ].map(getReturnOfExpression);
 export type ChartsAction = typeof allActions[number];
@@ -81,15 +91,13 @@ export function fetchChartVersionsAndSelectVersion(id: string, version?: string)
         }
         cv = found;
       }
-      dispatch(getChartReadme(id, cv.attributes.version));
-      dispatch(getChartValues(id, cv.attributes.version));
       return dispatch(selectChartVersion(cv));
     });
   };
 }
 
 export function selectChartVersionAndGetFiles(cv: IChartVersion) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+  return (dispatch: Dispatch<IStoreState>): Promise<any> => {
     const id = `${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}`;
     dispatch(selectChartVersion(cv));
     dispatch(getChartValues(id, cv.attributes.version));
@@ -98,18 +106,27 @@ export function selectChartVersionAndGetFiles(cv: IChartVersion) {
 }
 
 export function getChartReadme(id: string, version: string) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
-    return fetch(url.api.charts.getReadme(id, version))
-      .then(response => response.text())
-      .then(text => dispatch(selectReadme(text)));
+  return async (dispatch: Dispatch<IStoreState>) => {
+    try {
+      const readme = await Chart.getReadme(id, version);
+      dispatch(selectReadme(readme));
+      return readme;
+    } catch (e) {
+      return dispatch(errorReadme(e.toString()));
+    }
   };
 }
 
 export function getChartValues(id: string, version: string) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
-    return fetch(url.api.charts.getValues(id, version))
-      .then(response => response.text())
-      .then(text => dispatch(selectValues(text)));
+  return async (dispatch: Dispatch<IStoreState>) => {
+    try {
+      const values = await Chart.getValues(id, version);
+      dispatch(selectValues(values));
+      return values;
+    } catch (e) {
+      dispatch(selectValues(""));
+      return "";
+    }
   };
 }
 

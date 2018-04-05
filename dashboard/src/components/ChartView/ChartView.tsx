@@ -13,7 +13,9 @@ interface IChartViewProps {
   fetchChartVersionsAndSelectVersion: (id: string, version?: string) => Promise<{}>;
   isFetching: boolean;
   selected: IChartState["selected"];
-  selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
+  selectChartVersion: (version: IChartVersion) => any;
+  resetChartVersion: () => any;
+  getChartReadme: (version: string) => any;
   version: string | undefined;
 }
 
@@ -24,21 +26,25 @@ class ChartView extends React.Component<IChartViewProps> {
   }
 
   public componentWillReceiveProps(nextProps: IChartViewProps) {
-    const { selectChartVersionAndGetFiles, version } = this.props;
+    const { selectChartVersion, version } = this.props;
     const { versions } = this.props.selected;
     if (nextProps.version !== version) {
       const cv = versions.find(v => v.attributes.version === nextProps.version);
       if (cv) {
-        selectChartVersionAndGetFiles(cv);
+        selectChartVersion(cv);
       } else {
         throw new Error("could not find chart");
       }
     }
   }
 
+  public componentWillUnmount() {
+    this.props.resetChartVersion();
+  }
+
   public render() {
-    const { isFetching } = this.props;
-    const { version, readme, versions } = this.props.selected;
+    const { isFetching, getChartReadme } = this.props;
+    const { version, readme, readmeError, versions } = this.props.selected;
     if (isFetching || !version) {
       return <div>Loading</div>;
     }
@@ -56,7 +62,12 @@ class ChartView extends React.Component<IChartViewProps> {
           <div className="container container-fluid">
             <div className="row">
               <div className="col-9 ChartView__readme-container">
-                <ChartReadme markdown={readme} />
+                <ChartReadme
+                  getChartReadme={getChartReadme}
+                  readme={readme}
+                  hasError={!!readmeError}
+                  version={version.attributes.version}
+                />
               </div>
               <div className="col-3 ChartView__sidebar-container">
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
