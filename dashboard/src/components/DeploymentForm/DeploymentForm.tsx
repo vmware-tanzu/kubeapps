@@ -256,10 +256,14 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { chartID, getChartVersion, getChartValues } = this.props;
+    const { hr, chartID, getChartVersion, getChartValues } = this.props;
 
-    getChartVersion(chartID, e.currentTarget.value);
-    getChartValues(chartID, e.currentTarget.value);
+    if (hr) {
+      getChartVersion(chartID, e.currentTarget.value);
+      getChartValues(chartID, e.currentTarget.value);
+    } else {
+      this.props.push(`/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`);
+    }
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
