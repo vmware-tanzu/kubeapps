@@ -12,6 +12,7 @@ interface IAppEditProps {
   namespace: string;
   releaseName: string;
   selected: IChartState["selected"];
+  version: string;
   deployChart: (
     version: IChartVersion,
     releaseName: string,
@@ -47,7 +48,7 @@ class AppEdit extends React.Component<IAppEditProps> {
           {...this.props}
           hr={app.hr}
           chartID={app.chart.id}
-          chartVersion={app.hr.spec.version}
+          chartVersion={this.props.version ? this.props.version : app.hr.spec.version}
         />
       </div>
     );

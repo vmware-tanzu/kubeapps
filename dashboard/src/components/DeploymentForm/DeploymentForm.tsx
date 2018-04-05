@@ -68,10 +68,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
     if (hr) {
       this.setState({
-        appValues: hr.spec.values,
         namespace: hr.metadata.namespace,
         releaseName: hr.metadata.name,
-        valuesModified: true,
       });
     }
   }
@@ -165,7 +163,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   onChange={this.handleChartVersionChange}
                   value={this.props.chartVersion}
                   required={true}
-                  disabled={hr ? true : false}
                 >
                   {versions.map(v => (
                     <option key={v.id} value={v.attributes.version}>
@@ -259,7 +256,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    this.props.push(`/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`);
+    const { hr } = this.props;
+    let pushUrl;
+    if (hr) {
+      const { releaseName, namespace } = this.state;
+      pushUrl = `/apps/edit/${namespace}/${namespace}-${releaseName}/${e.currentTarget.value}`;
+    } else {
+      pushUrl = `/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`;
+    }
+    this.props.push(pushUrl);
   };
   public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ namespace: e.currentTarget.value });
