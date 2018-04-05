@@ -18,16 +18,26 @@ const chartsSelectedReducer = (
 ): IChartState["selected"] => {
   switch (action.type) {
     case getType(actions.charts.selectChartVersion):
-      return { ...state, version: action.chartVersion };
+      return {
+        ...state,
+        readme: undefined,
+        readmeError: undefined,
+        values: undefined,
+        version: action.chartVersion,
+      };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
         versions: action.versions,
       };
     case getType(actions.charts.selectReadme):
-      return { ...state, readme: action.readme };
+      return { ...state, readme: action.readme, readmeError: undefined };
+    case getType(actions.charts.errorReadme):
+      return { ...state, readmeError: action.message };
     case getType(actions.charts.selectValues):
       return { ...state, values: action.values };
+    case getType(actions.charts.resetChartVersion):
+      return initialState.selected;
     default:
   }
   return state;
@@ -51,7 +61,11 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
       };
+    case getType(actions.charts.resetChartVersion):
+      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectReadme):
+      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
+    case getType(actions.charts.errorReadme):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectValues):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };

@@ -23,7 +23,7 @@ interface IDeploymentFormProps {
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
-  getChartValues: (id: string, chartVersion: string) => Promise<{}>;
+  getChartValues: (id: string, chartVersion: string) => Promise<any>;
   selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
 }
 
@@ -85,7 +85,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     const { selected, bindings } = this.props;
     const { version, versions } = selected;
     const { appValues, selectedBinding } = this.state;
-    if (!version || !appValues || !versions.length) {
+    if (!version || !versions.length) {
       return <div>Loading</div>;
     }
     let bindingDetail = <div />;
@@ -232,7 +232,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     const { selected, deployChart, push } = this.props;
     this.setState({ isDeploying: true });
     const { releaseName, namespace, appValues } = this.state;
-    if (selected.version && appValues) {
+    if (selected.version) {
       deployChart(selected.version, releaseName, namespace, appValues)
         .then(() => push(`/apps/${namespace}/${namespace}-${releaseName}`))
         .catch(err => this.setState({ isDeploying: false, error: err.toString() }));

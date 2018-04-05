@@ -17,20 +17,27 @@ interface IRouteProps {
 
 function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteProps) {
   return {
-    chartID: `${params.repo}/${params.id}`,
+    chartID: chartID(params),
     isFetching: charts.isFetching,
     selected: charts.selected,
     version: params.version,
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: Dispatch<IStoreState>, { match: { params } }: IRouteProps) {
   return {
     fetchChartVersionsAndSelectVersion: (id: string, version?: string) =>
       dispatch(actions.charts.fetchChartVersionsAndSelectVersion(id, version)),
-    selectChartVersionAndGetFiles: (version: IChartVersion) =>
-      dispatch(actions.charts.selectChartVersionAndGetFiles(version)),
+    getChartReadme: (version: string) =>
+      dispatch(actions.charts.getChartReadme(chartID(params), version)),
+    resetChartVersion: () => dispatch(actions.charts.resetChartVersion()),
+    selectChartVersion: (version: IChartVersion) =>
+      dispatch(actions.charts.selectChartVersion(version)),
   };
+}
+
+function chartID(params: IRouteProps["match"]["params"]) {
+  return `${params.repo}/${params.id}`;
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ChartView);
