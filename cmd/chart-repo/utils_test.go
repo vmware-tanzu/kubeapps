@@ -353,7 +353,7 @@ func Test_chartTarballURL(t *testing.T) {
 	}
 }
 
-func Test_extractFileFromTarball(t *testing.T) {
+func Test_extractFilesFromTarball(t *testing.T) {
 	tests := []struct {
 		name     string
 		files    []tarballFile
@@ -361,7 +361,7 @@ func Test_extractFileFromTarball(t *testing.T) {
 		want     string
 	}{
 		{"file", []tarballFile{{"file.txt", "best file ever"}}, "file.txt", "best file ever"},
-		{"multiple files", []tarballFile{{"file.txt", "best file ever"}, {"file2.txt", "worst file ever"}}, "file2.txt", "worst file ever"},
+		{"multiple file tarball", []tarballFile{{"file.txt", "best file ever"}, {"file2.txt", "worst file ever"}}, "file2.txt", "worst file ever"},
 		{"file in dir", []tarballFile{{"file.txt", "best file ever"}, {"test/file2.txt", "worst file ever"}}, "test/file2.txt", "worst file ever"},
 	}
 
@@ -371,20 +371,35 @@ func Test_extractFileFromTarball(t *testing.T) {
 			createTestTarball(&b, tt.files)
 			r := bytes.NewReader(b.Bytes())
 			tarf := tar.NewReader(r)
-			readme, err := extractFileFromTarball(tt.filename, tarf)
+			files, err := extractFilesFromTarball([]string{tt.filename}, tarf)
 			assert.NoErr(t, err)
-			assert.Equal(t, readme, tt.want, "file body")
+			assert.Equal(t, files[tt.filename], tt.want, "file body")
 		})
 	}
+
+	t.Run("extract multiple files", func(t *testing.T) {
+		var b bytes.Buffer
+		tFiles := []tarballFile{{"file.txt", "best file ever"}, {"file2.txt", "worst file ever"}}
+		createTestTarball(&b, tFiles)
+		r := bytes.NewReader(b.Bytes())
+		tarf := tar.NewReader(r)
+		files, err := extractFilesFromTarball([]string{tFiles[0].Name, tFiles[1].Name}, tarf)
+		assert.NoErr(t, err)
+		assert.Equal(t, len(files), 2, "matches")
+		for _, f := range tFiles {
+			assert.Equal(t, files[f.Name], f.Body, "file body")
+		}
+	})
 
 	t.Run("file not found", func(t *testing.T) {
 		var b bytes.Buffer
 		createTestTarball(&b, []tarballFile{{"file.txt", "best file ever"}})
 		r := bytes.NewReader(b.Bytes())
 		tarf := tar.NewReader(r)
-		readme, err := extractFileFromTarball("file2.txt", tarf)
-		assert.Err(t, errors.New("file2.txt file not found"), err)
-		assert.Equal(t, readme, "", "file body")
+		name := "file2.txt"
+		files, err := extractFilesFromTarball([]string{name}, tarf)
+		assert.NoErr(t, err)
+		assert.Equal(t, files[name], "", "file body")
 	})
 
 	t.Run("not a tarball", func(t *testing.T) {
@@ -392,9 +407,9 @@ func Test_extractFileFromTarball(t *testing.T) {
 		rand.Read(b)
 		r := bytes.NewReader(b)
 		tarf := tar.NewReader(r)
-		readme, err := extractFileFromTarball("file2.txt", tarf)
+		files, err := extractFilesFromTarball([]string{"file2.txt"}, tarf)
 		assert.Err(t, io.ErrUnexpectedEOF, err)
-		assert.Equal(t, readme, "", "file body")
+		assert.Equal(t, len(files), 0, "file body")
 	})
 }
 

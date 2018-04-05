@@ -27,17 +27,16 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/disintegration/imaging"
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
+	"github.com/kubeapps/common/datastore"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/mgo.v2/bson"
 	helmrepo "k8s.io/helm/pkg/repo"
-	"github.com/kubeapps/common/datastore"
 )
 
 const (
@@ -322,34 +321,51 @@ func fetchAndImportFiles(dbSession datastore.Session, name string, r repo, cv ch
 
 	readmeFileName := name + "/README.md"
 	valuesFileName := name + "/values.yaml"
-	fileNames := []string{valuesFileName, readmeFileName}
+	filenames := []string{valuesFileName, readmeFileName}
 
-	files, err := getFiles(cv, name, fileNames, tarf)
-	values := files[0]
-	readme := files[1]
+	files, err := extractFilesFromTarball(filenames, tarf)
+	if err != nil {
+		return err
+	}
 
-	db.C(chartFilesCollection).Insert(chartFiles{chartFilesID, readme, values})
+	chartFiles := chartFiles{ID: chartFilesID}
+	if v, ok := files[readmeFileName]; ok {
+		chartFiles.Readme = v
+	} else {
+		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("README.md not found")
+	}
+	if v, ok := files[valuesFileName]; ok {
+		chartFiles.Values = v
+	} else {
+		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.yaml not found")
+	}
+
+	db.C(chartFilesCollection).Insert(chartFiles)
 
 	return nil
 }
 
-func getFiles(cv chartVersion, name string, filenames []string, tarf *tar.Reader) ([]string, error) {
-	var files []string
-
-	for _, filename := range filenames {
-		file, err := extractFileFromTarball(filename, tarf)
-		if err != nil && !strings.Contains(err.Error(), "file not found") {
-			return nil, err
+func extractFilesFromTarball(filenames []string, tarf *tar.Reader) (map[string]string, error) {
+	ret := make(map[string]string)
+	for {
+		header, err := tarf.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return ret, err
 		}
 
-		if file == "" {
-			log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info(filename + " not found")
+		for _, f := range filenames {
+			if header.Name == f {
+				var b bytes.Buffer
+				io.Copy(&b, tarf)
+				ret[f] = string(b.Bytes())
+				break
+			}
 		}
-
-		files = append(files, file)
 	}
-
-	return files, nil
+	return ret, nil
 }
 
 func chartTarballURL(r repo, cv chartVersion) string {
@@ -363,23 +379,4 @@ func chartTarballURL(r repo, cv chartVersion) string {
 		return u.String()
 	}
 	return source
-}
-
-func extractFileFromTarball(filename string, tarf *tar.Reader) (string, error) {
-	for {
-		header, err := tarf.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return "", err
-		}
-
-		if header.Name == filename {
-			var b bytes.Buffer
-			io.Copy(&b, tarf)
-			return string(b.Bytes()), nil
-		}
-	}
-	return "", fmt.Errorf("%s file not found", filename)
 }
