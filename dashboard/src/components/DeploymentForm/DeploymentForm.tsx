@@ -58,13 +58,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       fetchChartVersions,
       getBindings,
       getChartVersion,
-      getChartValues,
       chartVersion,
     } = this.props;
     fetchChartVersions(chartID);
     getBindings();
     getChartVersion(chartID, chartVersion);
-    getChartValues(chartID, chartVersion);
 
     if (hr) {
       this.setState({
@@ -75,19 +73,27 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
-    const { selectChartVersionAndGetFiles, chartVersion } = this.props;
-    const { versions } = this.props.selected;
-    const { values } = nextProps.selected;
+    const { chartID, chartVersion, getChartValues, getChartVersion, hr, selected } = this.props;
+    const { version } = selected;
 
-    if (nextProps.chartVersion !== chartVersion) {
-      const cv = versions.find(v => v.attributes.version === nextProps.chartVersion);
-      if (cv) {
-        selectChartVersionAndGetFiles(cv);
-      } else {
-        throw new Error("could not find chart");
+    if (chartVersion !== nextProps.chartVersion) {
+      getChartVersion(chartID, nextProps.chartVersion);
+      return;
+    }
+
+    if (nextProps.selected.version && nextProps.selected.version !== this.props.selected.version) {
+      getChartValues(chartID, nextProps.selected.version.attributes.version);
+      return;
+    }
+
+    if (!this.state.valuesModified) {
+      if (version) {
+        if (hr && hr.spec.version === version.attributes.version) {
+          this.setState({ appValues: hr.spec.values });
+        } else if (nextProps.selected.values) {
+          this.setState({ appValues: nextProps.selected.values });
+        }
       }
-    } else if (values && !this.state.valuesModified) {
-      this.setState({ appValues: values });
     }
   }
 
@@ -166,7 +172,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 >
                   {versions.map(v => (
                     <option key={v.id} value={v.attributes.version}>
-                      {v.attributes.version}
+                      {v.attributes.version}{" "}
+                      {hr && v.attributes.version === hr.spec.version ? "(current)" : ""}
                     </option>
                   ))}
                 </select>
@@ -256,11 +263,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { hr, chartID, getChartVersion, getChartValues } = this.props;
+    const { hr, chartID, getChartVersion } = this.props;
 
     if (hr) {
       getChartVersion(chartID, e.currentTarget.value);
-      getChartValues(chartID, e.currentTarget.value);
     } else {
       this.props.push(`/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`);
     }
