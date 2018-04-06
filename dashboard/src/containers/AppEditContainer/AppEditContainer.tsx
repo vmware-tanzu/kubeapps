@@ -48,8 +48,6 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     getChartVersion: (id: string, version: string) =>
       dispatch(actions.charts.getChartVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
-    selectChartVersionAndGetFiles: (version: IChartVersion) =>
-      dispatch(actions.charts.selectChartVersionAndGetFiles(version)),
   };
 }
 
