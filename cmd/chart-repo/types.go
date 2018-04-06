@@ -55,4 +55,5 @@ type chartFiles struct {
 	ID     string `bson:"_id"`
 	Readme string
 	Values string
+	Repo   repo
 }

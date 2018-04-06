@@ -136,7 +136,13 @@ func deleteRepo(dbSession datastore.Session, repoName string) error {
 	_, err := db.C(chartCollection).RemoveAll(bson.M{
 		"repo.name": repoName,
 	})
+	if err != nil {
+		return err
+	}
 
+	_, err = db.C(chartFilesCollection).RemoveAll(bson.M{
+		"repo.name": repoName,
+	})
 	return err
 }
 
@@ -328,7 +334,7 @@ func fetchAndImportFiles(dbSession datastore.Session, name string, r repo, cv ch
 		return err
 	}
 
-	chartFiles := chartFiles{ID: chartFilesID}
+	chartFiles := chartFiles{ID: chartFilesID, Repo: r}
 	if v, ok := files[readmeFileName]; ok {
 		chartFiles.Readme = v
 	} else {
