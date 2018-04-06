@@ -26,7 +26,6 @@ interface IDeploymentFormProps {
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
-  selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
 }
 
 interface IDeploymentFormState {

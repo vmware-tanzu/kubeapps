@@ -25,7 +25,6 @@ interface IAppEditProps {
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   push: (location: string) => RouterAction;
-  selectChartVersionAndGetFiles: (version: IChartVersion) => Promise<{}>;
 }
 
 class AppEdit extends React.Component<IAppEditProps> {
