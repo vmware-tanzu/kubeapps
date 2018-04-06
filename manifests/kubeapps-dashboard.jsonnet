@@ -33,7 +33,7 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
           spec+: {
             containers_+: {
               default: kube.Container("dashboard") {
-                image: "kubeapps/dashboard:v0.5.0",
+                image: "kubeapps/dashboard:" + std.extVar("VERSION"),
                 ports_: {
                   http: {containerPort: 8080, protocol: "TCP"},
                 },

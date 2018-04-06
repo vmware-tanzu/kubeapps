@@ -23,7 +23,7 @@ $(EMBEDDED_STATIC): static/kubeapps-objs.yaml
 	$(GO) generate
 
 static/kubeapps-objs.yaml:
-	KUBECFG_JPATH=./manifests/lib:./manifests/vendor/kubecfg/lib:./manifests/vendor/ksonnet-lib kubecfg show manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
+	KUBECFG_JPATH=./manifests/lib:./manifests/vendor/kubecfg/lib:./manifests/vendor/ksonnet-lib kubecfg show -V VERSION=$(VERSION) manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
 
 kubeapps/%:
 	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .

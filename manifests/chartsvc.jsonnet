@@ -17,7 +17,7 @@ local labels = {
         spec+: {
           containers_+: {
             default: kube.Container("chartsvc") {
-              image: "kubeapps/chartsvc:v0.5.0",
+              image: "kubeapps/chartsvc:" + std.extVar("VERSION"),
               env_+: {
                 MONGO_PASSWORD: kube.SecretKeyRef($.mongodb_secret, "mongodb-root-password"),
               },

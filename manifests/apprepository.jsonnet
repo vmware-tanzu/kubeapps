@@ -76,9 +76,9 @@ local labels = {
           serviceAccountName: $.serviceaccount.metadata.name,
           containers_+: {
             default: kube.Container("controller") {
-              image: "kubeapps/apprepository-controller:v0.5.0",
+              image: "kubeapps/apprepository-controller:" + std.extVar("VERSION"),
               command: ["/apprepository-controller"],
-              args: ["--logtostderr", "--repo-sync-image=kubeapps/chart-repo:v0.5.0"],
+              args: ["--logtostderr", "--repo-sync-image=kubeapps/chart-repo:" + std.extVar("VERSION")],
             },
           },
         },
