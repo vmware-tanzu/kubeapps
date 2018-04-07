@@ -94,7 +94,7 @@ List of components that kubeapps up installs:
 			return fmt.Errorf("can't verify Kubernetes version: %v", err)
 		}
 		if version.Major <= 1 && version.Minor < 8 {
-			return fmt.Errorf("kubernetes with RBAC enabled (v1.8+) is required to run Kubeapps")
+			return fmt.Errorf("kubernetes v1.8+ is required to run Kubeapps")
 		}
 
 		if ssecrets, _ := ssecretsExists(c); ssecrets {
