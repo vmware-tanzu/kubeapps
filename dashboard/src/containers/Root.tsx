@@ -18,7 +18,8 @@ import FunctionListContainer from "./FunctionListContainer";
 import FunctionViewContainer from "./FunctionViewContainer";
 import InstanceListViewContainer from "./InstanceListViewContainer";
 import InstanceView from "./InstanceView";
-
+import LoginFormContainer from "./LoginFormContainer";
+import PrivateRouteContainer from "./PrivateRouteContainer";
 import RepoListContainer from "./RepoListContainer";
 import ServiceCatalogContainer from "./ServiceCatalogContainer";
 
@@ -53,11 +54,15 @@ class Root extends React.Component {
       <Provider store={store}>
         <ConnectedRouter history={history}>
           <Layout>
-            <section className="routes">
-              {Object.keys(Root.exactRoutes).map(route => (
-                <Route key={route} exact={true} path={route} component={Root.exactRoutes[route]} />
-              ))}
-            </section>
+            <Route exact={true} path="/login" component={LoginFormContainer} />
+            {Object.keys(Root.exactRoutes).map(route => (
+              <PrivateRouteContainer
+                key={route}
+                exact={true}
+                path={route}
+                component={Root.exactRoutes[route]}
+              />
+            ))}
           </Layout>
         </ConnectedRouter>
       </Provider>

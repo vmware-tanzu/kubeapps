@@ -1,3 +1,4 @@
+import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IFunctionState } from "../reducers/functions";
 import { IAppRepositoryState } from "../reducers/repos";
@@ -136,6 +137,7 @@ export interface IAppState {
 export interface IStoreState {
   catalog: IServiceCatalogState;
   apps: IAppState;
+  auth: IAuthState;
   charts: IChartState;
   repos: IAppRepositoryState;
   deployment: IDeployment;
