@@ -5,28 +5,13 @@ import actions from "../../actions";
 import LoginForm from "../../components/LoginForm";
 import { IStoreState } from "../../shared/types";
 
-interface IRouteProps {
-  match: {
-    params: {
-      name: string;
-      namespace: string;
-    };
-  };
-}
-
-function mapStateToProps(
-  { auth: { authenticated } }: IStoreState,
-  { match: { params } }: IRouteProps,
-) {
+function mapStateToProps({ auth: { authenticated } }: IStoreState) {
   return {
     authenticated,
   };
 }
 
-function mapDispatchToProps(
-  dispatch: Dispatch<IStoreState>,
-  { match: { params: { name, namespace } } }: IRouteProps,
-) {
+function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
     authenticate: (token: string) => dispatch(actions.auth.authenticate(token)),
   };

@@ -1,15 +1,19 @@
 import * as React from "react";
 
 import Footer from "../Footer";
-import Header from "../Header";
 
 import "./Layout.css";
 
-class Layout extends React.Component {
+interface ILayoutProps {
+  headerComponent: React.ComponentClass<any> | React.StatelessComponent<any>;
+}
+
+class Layout extends React.Component<ILayoutProps> {
   public render() {
+    const HeaderComponent = this.props.headerComponent;
     return (
       <section className="Layout">
-        <Header />
+        <HeaderComponent />
         <main>
           <div className="container">{this.props.children}</div>
         </main>

@@ -12,20 +12,7 @@ body {
 }
 
 svg.icon {
-  height: 1em;
   /* Fix positioning */
   position: relative;
-  top: 0.1em;
-  left: 0;
-  width: 1em;
-}
-
-svg.icon-small {
-  width: 0.75em;
-  height: 0.75em;
-}
-
-svg.icon-big {
-  width: 1.5em;
-  height: 1.5em;
+  bottom: -0.125em;
 }

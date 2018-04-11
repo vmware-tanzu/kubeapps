@@ -14,7 +14,7 @@ const initialState: IAuthState = {
 const authReducer = (state: IAuthState = initialState, action: AuthAction): IAuthState => {
   switch (action.type) {
     case getType(actions.auth.setAuthenticated):
-      return { authenticated: true };
+      return { authenticated: action.authenticated };
     default:
   }
   return state;

@@ -16,6 +16,7 @@ import ChartView from "./ChartViewContainer";
 import ClassListContainer from "./ClassListContainer";
 import FunctionListContainer from "./FunctionListContainer";
 import FunctionViewContainer from "./FunctionViewContainer";
+import HeaderContainer from "./HeaderContainer";
 import InstanceListViewContainer from "./InstanceListViewContainer";
 import InstanceView from "./InstanceView";
 import LoginFormContainer from "./LoginFormContainer";
@@ -53,7 +54,7 @@ class Root extends React.Component {
     return (
       <Provider store={store}>
         <ConnectedRouter history={history}>
-          <Layout>
+          <Layout headerComponent={HeaderContainer}>
             <Route exact={true} path="/login" component={LoginFormContainer} />
             {Object.keys(Root.exactRoutes).map(route => (
               <PrivateRouteContainer
