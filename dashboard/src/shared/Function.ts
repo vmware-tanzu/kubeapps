@@ -1,4 +1,4 @@
-import axios from "axios";
+import { axios } from "./Auth";
 
 import { IFunction, IFunctionList, IResource, IStatus } from "./types";
 

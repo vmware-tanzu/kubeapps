@@ -1,4 +1,4 @@
-import axios from "axios";
+import { axios } from "./Auth";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 import { IStatus } from "./types";
 

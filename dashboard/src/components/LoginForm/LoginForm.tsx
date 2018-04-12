@@ -47,7 +47,9 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
                     />
                   </div>
                   <p>
-                    <a className="button button-accent">Login</a>
+                    <button type="submit" className="button button-accent">
+                      Login
+                    </button>
                   </p>
                 </form>
               </div>
