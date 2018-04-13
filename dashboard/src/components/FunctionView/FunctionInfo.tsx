@@ -23,7 +23,6 @@ class FunctionInfo extends React.Component<IFunctionInfoProps> {
             <ul className="remove-style margin-reset padding-reset type-small">
               <li>handler: {f.spec.handler}</li>
               <li>runtime: {f.spec.runtime}</li>
-              <li>type: {f.spec.type}</li>
             </ul>
           </CardFooter>
         </Card>

@@ -36,6 +36,9 @@ class FunctionEditor extends React.Component<IFunctionEditorProps> {
       return "javascript";
     } else if (runtime.match(/ruby/)) {
       return "ruby";
+    } else if (runtime.match(/php/)) {
+      // Doesn't work: Uncaught SyntaxError: Unexpected token <
+      return "php";
     } else if (runtime.match(/python/)) {
       return "python";
     }

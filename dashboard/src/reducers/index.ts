@@ -7,6 +7,7 @@ import catalogReducer from "./catalog";
 import chartsReducer from "./charts";
 import functionsReducer from "./functions";
 import reposReducer from "./repos";
+import runtimesReducer from "./runtimes";
 
 const rootReducer = combineReducers<IStoreState>({
   apps: appsReducer,
@@ -15,6 +16,7 @@ const rootReducer = combineReducers<IStoreState>({
   functions: functionsReducer,
   repos: reposReducer,
   router: routerReducer,
+  runtimes: runtimesReducer,
 });
 
 export default rootReducer;

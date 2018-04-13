@@ -1,6 +1,7 @@
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IFunctionState } from "../reducers/functions";
 import { IAppRepositoryState } from "../reducers/repos";
+import { IRuntimeState } from "../reducers/runtimes";
 import { hapi } from "./hapi/release";
 
 export interface IRepo {
@@ -114,7 +115,6 @@ export interface IFunction extends IResource {
     function: string;
     handler: string;
     runtime: string;
-    type: string;
   };
 }
 
@@ -140,6 +140,7 @@ export interface IStoreState {
   repos: IAppRepositoryState;
   deployment: IDeployment;
   functions: IFunctionState;
+  runtimes: IRuntimeState;
 }
 
 interface IK8sResource {
@@ -267,4 +268,27 @@ export interface IRouterPathname {
       pathname: string;
     };
   };
+}
+
+export interface IKubelessConfigMap {
+  metadata: {
+    name: string;
+  };
+  data: {
+    "runtime-images": string;
+  };
+}
+
+export interface IRuntimeVersion {
+  name: string;
+  version: string;
+  runtimeImage: string;
+  initImage: string;
+}
+
+export interface IRuntime {
+  ID: string;
+  versions: IRuntimeVersion[];
+  depName: string;
+  fileNameSuffix: string;
 }
