@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { Auth } from "../../shared/Auth";
 import { IDeploymentStatus, IFunction, IResource } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import FunctionControls from "./FunctionControls";
@@ -52,6 +53,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
       `${apiBase}/apis/apps/v1beta1/namespaces/${
         f.metadata.namespace
       }/deployments?watch=true&labelSelector=function=${f.metadata.name}`,
+      Auth.wsProtocols(),
     );
     socket.addEventListener("message", e => this.handleEvent(e));
     this.setState({
@@ -108,6 +110,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
                       enableSaveButton={this.state.codeModified}
                       updateFunction={this.handleFunctionUpdate}
                       deleteFunction={deleteFunction}
+                      namespace={f.metadata.namespace}
                     />
                   </div>
                 </div>

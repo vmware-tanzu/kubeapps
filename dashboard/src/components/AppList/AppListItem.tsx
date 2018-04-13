@@ -20,7 +20,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
 
     return (
       <Card key={release.name} responsive={true} className="AppListItem">
-        <Link to={`/apps/${release.namespace}/${release.name}`}>
+        <Link to={`/apps/ns/${release.namespace}/${release.name}`}>
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">

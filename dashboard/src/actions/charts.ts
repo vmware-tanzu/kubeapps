@@ -1,6 +1,7 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
+import { HelmRelease } from "shared/HelmRelease";
 import Chart from "../shared/Chart";
 import { IChart, IChartVersion, IStoreState } from "../shared/types";
 import * as url from "../shared/url";
@@ -137,40 +138,11 @@ export function deployChart(
   values?: string,
   resourceVersion?: string,
 ) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
-    const chartAttrs = chartVersion.relationships.chart.data;
-    const method = resourceVersion ? "PUT" : "POST";
-    const endpoint = resourceVersion
-      ? url.api.helmreleases.upgrade(namespace, releaseName)
-      : url.api.helmreleases.create(namespace);
-    return fetch(endpoint, {
-      headers: { "Content-Type": "application/json" },
-      method,
-
-      body: JSON.stringify({
-        apiVersion: "helm.bitnami.com/v1",
-        kind: "HelmRelease",
-        metadata: {
-          annotations: {
-            "apprepositories.kubeapps.com/repo-name": chartAttrs.repo.name,
-          },
-          name: releaseName,
-          resourceVersion,
-        },
-        spec: {
-          chartName: chartAttrs.name,
-          repoUrl: chartAttrs.repo.url,
-          values,
-          version: chartVersion.attributes.version,
-        },
-      }),
-    })
-      .then(response => response.json())
-      .then(json => {
-        if (json.status === "Failure") {
-          throw new Error(json.message);
-        }
-        return json;
-      });
+  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+    if (resourceVersion) {
+      return await HelmRelease.upgrade(releaseName, namespace, chartVersion, values);
+    } else {
+      return await HelmRelease.create(releaseName, namespace, chartVersion, values);
+    }
   };
 }

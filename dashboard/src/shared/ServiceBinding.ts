@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import { axios } from "./Auth";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 import { IStatus } from "./types";
 
@@ -55,11 +54,7 @@ export interface IServiceBinding {
 }
 
 export class ServiceBinding {
-  public static async create(
-    bindingName: string,
-    instanceRefName: string,
-    namespace: string = "default",
-  ) {
+  public static async create(bindingName: string, instanceRefName: string, namespace: string) {
     const url = ServiceBinding.getLink(namespace);
     try {
       const { data } = await axios.post<IServiceBinding>(url, {
@@ -78,19 +73,19 @@ export class ServiceBinding {
     }
   }
 
-  public static async delete(name: string, namespace: string = "default") {
+  public static async delete(name: string, namespace: string) {
     const url = this.getLink(namespace, name);
     return axios.delete(url);
   }
 
-  public static async get(namespace: string = "default", name: string) {
+  public static async get(namespace: string, name: string) {
     const url = this.getLink(namespace, name);
     const { data } = await axios.get<IServiceBinding>(url);
     return data;
   }
 
-  public static async list(namespace: string = "default") {
-    const bindings = await ServiceCatalog.getItems<IServiceBinding>("/servicebindings");
+  public static async list(namespace?: string) {
+    const bindings = await ServiceCatalog.getItems<IServiceBinding>("servicebindings", namespace);
 
     // initiate with undefined secrets
     for (const binding of bindings) {

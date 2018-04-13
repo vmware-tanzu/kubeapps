@@ -1,4 +1,4 @@
-import axios from "axios";
+import { axios } from "./Auth";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 import { IStatus } from "./types";
 
@@ -68,7 +68,10 @@ export class ServiceInstance {
   }
 
   public static async list(namespace?: string): Promise<IServiceInstance[]> {
-    const instances = await ServiceCatalog.getItems<IServiceInstance>("/serviceinstances");
+    const instances = await ServiceCatalog.getItems<IServiceInstance>(
+      "serviceinstances",
+      namespace,
+    );
     return instances;
   }
 

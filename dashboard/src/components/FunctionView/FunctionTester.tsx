@@ -1,7 +1,9 @@
-import axios, { AxiosRequestConfig } from "axios";
+import { AxiosRequestConfig } from "axios";
 import * as qs from "qs";
 import * as React from "react";
 import AceEditor from "react-ace";
+
+import { axios } from "../../shared/Auth";
 
 import "brace/mode/json";
 import "brace/mode/plain_text";
@@ -139,12 +141,13 @@ class FunctionTester extends React.Component<IFunctionTesterProps, IFunctionTest
       method: method.toLowerCase(),
       // disable axios JSON parsing, always get a raw string back
       transformResponse: r => r,
+      url,
     };
     if (method === Method.GET) {
       // Params has to be an object, so for the Text format we parse it
       config.params = format === Format.Text ? qs.parse(reqBody) : reqBody;
     }
-    const res = await axios(url, config);
+    const res = await axios.request(config);
     this.setState({
       response: res.data,
     });

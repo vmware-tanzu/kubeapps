@@ -82,9 +82,10 @@ export function sync(broker: IServiceBroker) {
 export type ServiceCatalogAction = typeof actions[number];
 
 export function getBindings() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+    const { namespace } = getState();
     dispatch(requestBindings());
-    const bindings = await ServiceBinding.list();
+    const bindings = await ServiceBinding.list(namespace);
     dispatch(receiveBindings(bindings));
     return bindings;
   };
@@ -109,9 +110,10 @@ export function getClasses() {
 }
 
 export function getInstances() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+    const { namespace } = getState();
     dispatch(requestInstances());
-    const instances = await ServiceInstance.list();
+    const instances = await ServiceInstance.list(namespace);
     dispatch(receiveInstances(instances));
     return instances;
   };
