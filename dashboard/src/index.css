@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css?family=Hind");
+@import url("https://fonts.googleapis.com/css?family=Fira+Sans:300,400,700|Hind:300,400,700");
 @import url("https://d1d5nb8vlsbujg.cloudfront.net/bitnami-ui/3.0.0-alpha-20/bitnami.ui.min.css");
 @import url("https://d1d5nb8vlsbujg.cloudfront.net/bitnami-ui/3.0.0-alpha-20/bitnami.ui.components.min.css");
 
@@ -12,20 +12,7 @@ body {
 }
 
 svg.icon {
-  height: 1em;
   /* Fix positioning */
   position: relative;
-  top: 0.1em;
-  left: 0;
-  width: 1em;
-}
-
-svg.icon-small {
-  width: 0.75em;
-  height: 0.75em;
-}
-
-svg.icon-big {
-  width: 1.5em;
-  height: 1.5em;
+  bottom: -0.125em;
 }

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { axios } from "./Auth";
 import { ServiceCatalog } from "./ServiceCatalog";
 
 export interface IClusterServiceClass {
@@ -39,7 +39,7 @@ export class ClusterServiceClass {
   }
 
   public static async list(namespace?: string): Promise<IClusterServiceClass[]> {
-    const instances = await ServiceCatalog.getItems<IClusterServiceClass>("/serviceinstances");
+    const instances = await ServiceCatalog.getItems<IClusterServiceClass>("serviceinstances");
     return instances;
   }
 

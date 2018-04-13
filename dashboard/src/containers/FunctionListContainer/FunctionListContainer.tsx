@@ -6,18 +6,9 @@ import actions from "../../actions";
 import FunctionList from "../../components/FunctionList";
 import { IFunction, IStoreState } from "../../shared/types";
 
-interface IRouteProps {
-  match: {
-    params: {
-      namespace: string;
-    };
-  };
-}
-
-function mapStateToProps({ functions }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ functions }: IStoreState) {
   return {
     functions: functions.items,
-    namespace: params.namespace,
     runtimes: functions.runtimes,
   };
 }
@@ -26,10 +17,10 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
     deployFunction: (name: string, namespace: string, spec: IFunction["spec"]) =>
       dispatch(actions.functions.createFunction(name, namespace, spec)),
-    fetchFunctions: (namespace: string) => dispatch(actions.functions.fetchFunctions(namespace)),
-    fetchRuntimes: (namespace: string) => dispatch(actions.functions.fetchRuntimes()),
+    fetchFunctions: () => dispatch(actions.functions.fetchFunctions()),
+    fetchRuntimes: () => dispatch(actions.functions.fetchRuntimes()),
     navigateToFunction: (name: string, namespace: string) =>
-      dispatch(push(`/functions/${namespace}/${name}`)),
+      dispatch(push(`/functions/ns/${namespace}/${name}`)),
   };
 }
 

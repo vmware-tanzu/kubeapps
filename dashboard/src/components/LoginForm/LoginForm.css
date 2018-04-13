@@ -1,0 +1,8 @@
+.LoginForm__container {
+  width: 500px;
+  margin: 5em auto;
+}
+
+.LoginForm > .bg-skew .bg-skew__content {
+  max-width: 75%;
+}

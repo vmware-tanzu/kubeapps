@@ -2,3 +2,4 @@
 /statik
 .GOPATH
 *.*~
+telepresence.log

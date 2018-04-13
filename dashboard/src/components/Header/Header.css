@@ -1,3 +1,4 @@
 .header .header__nav-config {
   justify-content: flex-end;
+  flex: inherit;
 }

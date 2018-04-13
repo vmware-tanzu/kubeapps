@@ -16,6 +16,7 @@ interface IChartViewProps {
   selectChartVersion: (version: IChartVersion) => any;
   resetChartVersion: () => any;
   getChartReadme: (version: string) => any;
+  namespace: string;
   version: string | undefined;
 }
 
@@ -43,7 +44,7 @@ class ChartView extends React.Component<IChartViewProps> {
   }
 
   public render() {
-    const { isFetching, getChartReadme } = this.props;
+    const { isFetching, getChartReadme, namespace } = this.props;
     const { version, readme, readmeError, versions } = this.props.selected;
     if (isFetching || !version) {
       return <div>Loading</div>;
@@ -73,7 +74,7 @@ class ChartView extends React.Component<IChartViewProps> {
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
                   <div className="ChartViewSidebar__section">
                     <h2>Usage</h2>
-                    <ChartDeployButton version={version} />
+                    <ChartDeployButton version={version} namespace={namespace} />
                   </div>
                   <div className="ChartViewSidebar__section">
                     <h2>Chart Versions</h2>
