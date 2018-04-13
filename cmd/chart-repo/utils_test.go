@@ -29,7 +29,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -155,7 +154,7 @@ func Test_fetchRepoIndex(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			netClient = &goodHTTPClient{}
-			url, _ := url.ParseRequestURI(strings.TrimSpace(tt.repoURL))
+			url, _ := parseRepoUrl(tt.repoURL)
 			_, err := fetchRepoIndex(url)
 			assert.NoErr(t, err)
 		})
@@ -163,7 +162,7 @@ func Test_fetchRepoIndex(t *testing.T) {
 
 	t.Run("failed request", func(t *testing.T) {
 		netClient = &badHTTPClient{}
-		url, _ := url.ParseRequestURI("https://my.examplerepo.com")
+		url, _ := parseRepoUrl("https://my.examplerepo.com")
 		_, err := fetchRepoIndex(url)
 		assert.ExistsErr(t, err, "failed request")
 	})

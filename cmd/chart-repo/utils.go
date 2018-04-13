@@ -59,6 +59,11 @@ var netClient httpClient = &http.Client{
 	Timeout: time.Second * 10,
 }
 
+func parseRepoUrl(repoURL string) (*url.URL, error) {
+	repoURL = strings.TrimSpace(repoURL)
+	return url.ParseRequestURI(repoURL)
+}
+
 // Syncing is performed in the following steps:
 // 1. Update database to match chart metadata from index
 // 2. Concurrently process icons for charts (concurrently)
@@ -69,19 +74,17 @@ var netClient httpClient = &http.Client{
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
 func syncRepo(dbSession datastore.Session, repoName, repoURL string) error {
-	repoURL = strings.TrimSpace(repoURL)
-	url, err := url.ParseRequestURI(repoURL)
+	url, err := parseRepoUrl(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
 		return err
 	}
-
 	index, err := fetchRepoIndex(url)
 	if err != nil {
 		return err
 	}
 
-	charts := chartsFromIndex(index, repo{Name: repoName, URL: repoURL})
+	charts := chartsFromIndex(index, repo{Name: repoName, URL: strings.TrimSpace(repoURL)})
 	err = importCharts(dbSession, charts)
 	if err != nil {
 		return err
@@ -378,7 +381,7 @@ func extractFilesFromTarball(filenames []string, tarf *tar.Reader) (map[string]s
 
 func chartTarballURL(r repo, cv chartVersion) string {
 	source := cv.URLs[0]
-	if _, err := url.ParseRequestURI(source); err != nil {
+	if _, err := parseRepoUrl(source); err != nil {
 		// If the chart URL is not absolute, join with repo URL. It's fine if the
 		// URL we build here is invalid as we can catch this error when actually
 		// making the request
