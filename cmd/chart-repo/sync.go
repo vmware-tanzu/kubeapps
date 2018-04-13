@@ -18,7 +18,6 @@ package main
 
 import (
 	"os"
-	"strings"
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/sirupsen/logrus"
@@ -61,7 +60,7 @@ var syncCmd = &cobra.Command{
 			logrus.Fatalf("Can't connect to mongoDB: %v", err)
 		}
 
-		if err = syncRepo(dbSession, args[0], strings.TrimSpace(args[1])); err != nil {
+		if err = syncRepo(dbSession, args[0], args[1]); err != nil {
 			logrus.Fatalf("Can't add chart repository to database: %v", err)
 		}
 

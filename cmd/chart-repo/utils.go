@@ -27,6 +27,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -68,6 +69,7 @@ var netClient httpClient = &http.Client{
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
 func syncRepo(dbSession datastore.Session, repoName, repoURL string) error {
+	repoURL = strings.TrimSpace(repoURL)
 	url, err := url.ParseRequestURI(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
