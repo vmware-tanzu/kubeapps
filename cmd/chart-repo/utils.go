@@ -84,7 +84,7 @@ func syncRepo(dbSession datastore.Session, repoName, repoURL string) error {
 		return err
 	}
 
-	charts := chartsFromIndex(index, repo{Name: repoName, URL: strings.TrimSpace(repoURL)})
+	charts := chartsFromIndex(index, repo{Name: repoName, URL: url.String()})
 	err = importCharts(dbSession, charts)
 	if err != nil {
 		return err
