@@ -19,13 +19,13 @@ package main
 import (
 	"os"
 
-	"github.com/spf13/cobra"
-	"github.com/sirupsen/logrus"
 	"github.com/kubeapps/common/datastore"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var syncCmd = &cobra.Command{
-	Use: "sync [REPO NAME] [REPO URL]",
+	Use:   "sync [REPO NAME] [REPO URL]",
 	Short: "add a new chart repository, and resync its charts periodically",
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 2 {

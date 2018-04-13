@@ -29,7 +29,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -149,11 +148,13 @@ func Test_fetchRepoIndex(t *testing.T) {
 		{"valid HTTPS URL", "https://my.examplerepo.com"},
 		{"valid trailing URL", "https://my.examplerepo.com/"},
 		{"valid subpath URL", "https://subpath.test/subpath/"},
+		{"valid URL with trailing spaces", "https://subpath.test/subpath/  "},
+		{"valid URL with leading spaces", "  https://subpath.test/subpath/"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			netClient = &goodHTTPClient{}
-			url, _ := url.ParseRequestURI(tt.repoURL)
+			url, _ := parseRepoUrl(tt.repoURL)
 			_, err := fetchRepoIndex(url)
 			assert.NoErr(t, err)
 		})
@@ -161,7 +162,7 @@ func Test_fetchRepoIndex(t *testing.T) {
 
 	t.Run("failed request", func(t *testing.T) {
 		netClient = &badHTTPClient{}
-		url, _ := url.ParseRequestURI("https://my.examplerepo.com")
+		url, _ := parseRepoUrl("https://my.examplerepo.com")
 		_, err := fetchRepoIndex(url)
 		assert.ExistsErr(t, err, "failed request")
 	})
