@@ -17,13 +17,14 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { apps, catalog, charts }: IStoreState,
+  { apps, catalog, charts, namespace }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
     bindings: catalog.bindings,
     chartID: `${params.repo}/${params.id}`,
     chartVersion: params.version,
+    namespace,
     selected: charts.selected,
   };
 }

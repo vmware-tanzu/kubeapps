@@ -1,7 +1,7 @@
 import createHistory from "history/createBrowserHistory";
 import * as React from "react";
 import { Provider } from "react-redux";
-import { Route, RouteComponentProps } from "react-router";
+import { Redirect, Route, RouteComponentProps } from "react-router";
 import { ConnectedRouter } from "react-router-redux";
 import { ClassViewContainer } from "./ClassView";
 
@@ -31,10 +31,11 @@ class Root extends React.Component {
   public static exactRoutes: {
     [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
   } = {
-    "/": AppList,
-    "/apps/:namespace/:releaseName": AppView,
-    "/apps/edit/:namespace/:releaseName": AppEdit,
-    "/apps/new/:repo/:id/versions/:version": AppNew,
+    "/apps": AppList,
+    "/apps/ns/:namespace": AppList,
+    "/apps/ns/:namespace/:releaseName": AppView,
+    "/apps/ns/:namespace/edit/:releaseName": AppEdit,
+    "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNew,
     "/charts": ChartList,
     "/charts/:repo": ChartList,
     "/charts/:repo/:id": ChartView,
@@ -42,12 +43,13 @@ class Root extends React.Component {
     "/config/brokers": ServiceCatalogContainer,
     "/config/repos": RepoListContainer,
     "/functions": FunctionListContainer,
-    "/functions/:namespace": FunctionListContainer,
-    "/functions/:namespace/:name": FunctionViewContainer,
+    "/functions/ns/:namespace": FunctionListContainer,
+    "/functions/ns/:namespace/:name": FunctionViewContainer,
     "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
-    "/services/brokers/:brokerName/instances/:namespace/:instanceName": InstanceView,
+    "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": InstanceView,
     "/services/classes": ClassListContainer,
     "/services/instances": InstanceListViewContainer,
+    "/services/instances/ns/:namespace": InstanceListViewContainer,
   };
 
   public render() {
@@ -55,6 +57,7 @@ class Root extends React.Component {
       <Provider store={store}>
         <ConnectedRouter history={history}>
           <Layout headerComponent={HeaderContainer}>
+            <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
             <Route exact={true} path="/login" component={LoginFormContainer} />
             {Object.keys(Root.exactRoutes).map(route => (
               <PrivateRouteContainer
@@ -69,6 +72,11 @@ class Root extends React.Component {
       </Provider>
     );
   }
+
+  public rootNamespacedRedirect = (props: any) => {
+    const { namespace } = store.getState();
+    return <Redirect to={`/apps/ns/${namespace}`} />;
+  };
 }
 
 export default Root;

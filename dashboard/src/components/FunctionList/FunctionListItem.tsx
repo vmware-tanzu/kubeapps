@@ -16,7 +16,7 @@ class FunctionListItem extends React.Component<IFunctionListItemProps> {
 
     return (
       <Card responsive={true} className="FunctionListItem">
-        <Link to={`/functions/${f.metadata.namespace}/${f.metadata.name}`}>
+        <Link to={`/functions/ns/${f.metadata.namespace}/${f.metadata.name}`}>
           <FunctionIcon runtime={f.spec.runtime} />
           <CardContent>
             <div className="ChartListItem__content">

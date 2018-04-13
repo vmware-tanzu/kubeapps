@@ -10,9 +10,14 @@ interface IState extends IStoreState {
   router: RouteComponentProps<{}>;
 }
 
-function mapStateToProps({ auth: { authenticated }, router: { location: { pathname } } }: IState) {
+function mapStateToProps({
+  auth: { authenticated },
+  namespace,
+  router: { location: { pathname } },
+}: IState) {
   return {
     authenticated,
+    namespace,
     pathname,
   };
 }

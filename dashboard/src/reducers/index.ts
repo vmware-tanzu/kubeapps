@@ -7,6 +7,7 @@ import authReducer from "./auth";
 import catalogReducer from "./catalog";
 import chartsReducer from "./charts";
 import functionsReducer from "./functions";
+import namespaceReducer from "./namespace";
 import reposReducer from "./repos";
 
 const rootReducer = combineReducers<IStoreState>({
@@ -15,6 +16,7 @@ const rootReducer = combineReducers<IStoreState>({
   catalog: catalogReducer,
   charts: chartsReducer,
   functions: functionsReducer,
+  namespace: namespaceReducer,
   repos: reposReducer,
   router: routerReducer,
 });

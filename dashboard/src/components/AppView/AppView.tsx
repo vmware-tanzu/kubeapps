@@ -39,7 +39,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     getApp(releaseName, namespace);
   }
 
-  public componentWillReceiveProps(nextProps: IAppViewProps) {
+  public async componentWillReceiveProps(nextProps: IAppViewProps) {
     const newApp = nextProps.app;
     if (!newApp) {
       return;

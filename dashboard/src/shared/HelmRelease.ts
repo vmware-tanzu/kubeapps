@@ -71,9 +71,9 @@ export class HelmRelease {
     return data;
   }
 
-  public static async getAllWithDetails() {
+  public static async getAllWithDetails(namespace?: string) {
     const { data: { items: helmReleaseList } } = await axios.get<{ items: IHelmRelease[] }>(
-      this.getResourceLink(),
+      this.getResourceLink(namespace),
     );
     // Convert list of HelmReleases to release name -> HelmRelease pair
     const helmReleaseMap = helmReleaseList.reduce((acc, hr) => {

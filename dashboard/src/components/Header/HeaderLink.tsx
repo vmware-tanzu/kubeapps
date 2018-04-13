@@ -7,6 +7,8 @@ export interface IHeaderLinkProps {
   exact?: boolean;
   external?: boolean;
   children?: React.ReactChildren | React.ReactNode | string;
+  currentNamespace?: string;
+  namespaced?: boolean;
 }
 
 class HeaderLink extends React.Component<IHeaderLinkProps> {
@@ -16,9 +18,11 @@ class HeaderLink extends React.Component<IHeaderLinkProps> {
   };
 
   public renderInternalLink() {
+    const { currentNamespace, namespaced, to } = this.props;
+    const link = currentNamespace && namespaced ? `${to}/ns/${currentNamespace}` : to;
     return (
       <NavLink
-        to={this.props.to}
+        to={link}
         activeClassName="header__nav__menu__item-active"
         className="header__nav__menu__item"
         exact={this.props.exact}

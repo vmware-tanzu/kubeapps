@@ -12,6 +12,7 @@ import "./Header.css";
 interface IHeaderProps {
   authenticated: boolean;
   logout: () => void;
+  namespace: string;
   pathname: string;
 }
 
@@ -26,7 +27,8 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     {
       children: "Applications",
       exact: true,
-      to: "/",
+      namespaced: true,
+      to: "/apps",
     },
     {
       children: "Charts",
@@ -34,10 +36,12 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     },
     {
       children: "Functions",
+      namespaced: true,
       to: "/functions",
     },
     {
       children: "Service Instances",
+      namespaced: true,
       to: "/services/instances",
     },
   ];
@@ -58,7 +62,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   }
 
   public render() {
-    const showNav = this.props.authenticated;
+    const { namespace, authenticated: showNav } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -89,7 +93,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 <ul className="header__nav__menu" role="menubar">
                   {this.links.map(link => (
                     <li key={link.to}>
-                      <HeaderLink {...link} />
+                      <HeaderLink {...link} currentNamespace={namespace} />
                     </li>
                   ))}
                 </ul>

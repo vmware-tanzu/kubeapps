@@ -110,6 +110,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
                       enableSaveButton={this.state.codeModified}
                       updateFunction={this.handleFunctionUpdate}
                       deleteFunction={deleteFunction}
+                      namespace={f.metadata.namespace}
                     />
                   </div>
                 </div>

@@ -142,6 +142,7 @@ export interface IStoreState {
   repos: IAppRepositoryState;
   deployment: IDeployment;
   functions: IFunctionState;
+  namespace: string;
 }
 
 interface IK8sResource {

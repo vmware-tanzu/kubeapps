@@ -35,9 +35,10 @@ export function deleteApp(releaseName: string, namespace: string) {
 }
 
 export function fetchApps() {
-  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<void> => {
+    const { namespace } = getState();
     dispatch(requestApps());
-    const apps = await HelmRelease.getAllWithDetails();
+    const apps = await HelmRelease.getAllWithDetails(namespace);
     dispatch(receiveApps(apps));
   };
 }

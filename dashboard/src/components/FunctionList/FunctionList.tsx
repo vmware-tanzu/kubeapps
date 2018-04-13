@@ -7,16 +7,15 @@ import FunctionListItem from "./FunctionListItem";
 
 interface IFunctionListProps {
   functions: IFunction[];
-  namespace: string;
-  fetchFunctions: (namespace: string) => Promise<any>;
+  fetchFunctions: () => Promise<any>;
   deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<any>;
   navigateToFunction: (n: string, ns: string) => any;
 }
 
 class FunctionList extends React.Component<IFunctionListProps> {
   public componentDidMount() {
-    const { namespace, fetchFunctions } = this.props;
-    fetchFunctions(namespace);
+    const { fetchFunctions } = this.props;
+    fetchFunctions();
   }
 
   public render() {

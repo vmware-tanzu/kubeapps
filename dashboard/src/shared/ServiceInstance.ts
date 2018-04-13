@@ -68,7 +68,10 @@ export class ServiceInstance {
   }
 
   public static async list(namespace?: string): Promise<IServiceInstance[]> {
-    const instances = await ServiceCatalog.getItems<IServiceInstance>("/serviceinstances");
+    const instances = await ServiceCatalog.getItems<IServiceInstance>(
+      "serviceinstances",
+      namespace,
+    );
     return instances;
   }
 
