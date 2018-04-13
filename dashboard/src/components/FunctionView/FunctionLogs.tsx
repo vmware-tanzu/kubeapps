@@ -1,6 +1,7 @@
 import * as React from "react";
 import { LazyStream, LineNumber } from "react-lazylog/lib/LazyLog.es5";
 
+import { Auth } from "../../shared/Auth";
 import { IFunction } from "../../shared/types";
 import "./FunctionLogs.css";
 
@@ -23,7 +24,11 @@ class FunctionLogs extends React.Component<IFunctionLogsProps> {
       <div className="FunctionLogs">
         <h6>Logs</h6>
         <hr />
-        {url ? <LazyStream follow={true} url={url} /> : <div>Loading</div>}
+        {url ? (
+          <LazyStream follow={true} url={url} fetchOptions={Auth.fetchOptions()} />
+        ) : (
+          <div>Loading</div>
+        )}
       </div>
     );
   }

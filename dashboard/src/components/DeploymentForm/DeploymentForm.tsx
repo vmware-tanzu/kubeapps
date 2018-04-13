@@ -26,6 +26,7 @@ interface IDeploymentFormProps {
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
+  namespace: string;
 }
 
 interface IDeploymentFormState {
@@ -58,6 +59,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       getBindings,
       getChartVersion,
       chartVersion,
+      namespace,
     } = this.props;
     fetchChartVersions(chartID);
     getBindings();
@@ -67,6 +69,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       this.setState({
         namespace: hr.metadata.namespace,
         releaseName: hr.metadata.name,
+      });
+    } else {
+      this.setState({
+        namespace,
       });
     }
   }
@@ -184,7 +190,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   onChange={this.handleNamespaceChange}
                   value={this.state.namespace}
                   required={true}
-                  disabled={hr ? true : false}
+                  // this is now fixed due to state & URL
+                  disabled={true}
                 />
               </div>
               <div style={{ marginBottom: "1em" }}>
@@ -253,7 +260,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     const { releaseName, namespace, appValues } = this.state;
     if (selected.version) {
       deployChart(selected.version, releaseName, namespace, appValues, resourceVersion)
-        .then(() => push(`/apps/${namespace}/${namespace}-${releaseName}`))
+        .then(() => push(`/apps/ns/${namespace}/${namespace}-${releaseName}`))
         .catch(err => this.setState({ isDeploying: false, error: err.toString() }));
     }
   };

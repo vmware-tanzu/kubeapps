@@ -29,7 +29,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
         <button className="button" onClick={this.handleUpgradeClick}>
           Upgrade
         </button>
-        {this.state.upgrade && <Redirect to={`/apps/edit/${namespace}/${name}`} />}
+        {this.state.upgrade && <Redirect push={true} to={`/apps/ns/${namespace}/edit/${name}`} />}
         <button className="button button-danger" onClick={this.openModel}>
           Delete
         </button>
@@ -38,7 +38,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
           modalIsOpen={this.state.modalIsOpen}
           closeModal={this.closeModal}
         />
-        {this.state.redirectToAppList && <Redirect to="/" />}
+        {this.state.redirectToAppList && <Redirect to={`/apps/ns/${namespace}`} />}
       </div>
     );
   }

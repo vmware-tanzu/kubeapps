@@ -1,6 +1,7 @@
 import * as yaml from "js-yaml";
 import * as React from "react";
 
+import { Auth } from "../../shared/Auth";
 import { IApp, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
@@ -39,7 +40,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     getApp(releaseName, namespace);
   }
 
-  public componentWillReceiveProps(nextProps: IAppViewProps) {
+  public async componentWillReceiveProps(nextProps: IAppViewProps) {
     const newApp = nextProps.app;
     if (!newApp) {
       return;
@@ -67,6 +68,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         `${apiBase}/apis/apps/v1beta1/namespaces/${
           newApp.data.namespace
         }/deployments?watch=true&fieldSelector=metadata.name%3D${d.metadata.name}`,
+        Auth.wsProtocols(),
       );
       s.addEventListener("message", e => this.handleEvent(e));
       sockets.push(s);
@@ -76,6 +78,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         `${apiBase}/api/v1/namespaces/${
           newApp.data.namespace
         }/services?watch=true&fieldSelector=metadata.name%3D${svc.metadata.name}`,
+        Auth.wsProtocols(),
       );
       s.addEventListener("message", e => this.handleEvent(e));
       sockets.push(s);

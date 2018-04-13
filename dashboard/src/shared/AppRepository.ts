@@ -1,5 +1,4 @@
-import axios from "axios";
-
+import { axios } from "./Auth";
 import { IAppRepository, IAppRepositoryList } from "./types";
 
 export class AppRepository {

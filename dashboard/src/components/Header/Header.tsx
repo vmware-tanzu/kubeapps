@@ -1,18 +1,18 @@
 import * as React from "react";
-import { connect } from "react-redux";
 import { NavLink } from "react-router-dom";
 import logo from "../../logo.svg";
-
-import { IRouterPathname } from "../../shared/types";
 
 import HeaderLink, { IHeaderLinkProps } from "./HeaderLink";
 
 // Icons
-import Cog from "../../icons/Cog";
+import { LogOut, Settings } from "react-feather";
 
 import "./Header.css";
 
 interface IHeaderProps {
+  authenticated: boolean;
+  logout: () => void;
+  namespace: string;
   pathname: string;
 }
 
@@ -27,7 +27,8 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     {
       children: "Applications",
       exact: true,
-      to: "/",
+      namespaced: true,
+      to: "/apps",
     },
     {
       children: "Charts",
@@ -35,10 +36,12 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     },
     {
       children: "Functions",
+      namespaced: true,
       to: "/functions",
     },
     {
       children: "Service Instances",
+      namespaced: true,
       to: "/services/instances",
     },
   ];
@@ -59,6 +62,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   }
 
   public render() {
+    const { namespace, authenticated: showNav } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -73,47 +77,56 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 <img src={logo} alt="Kubeapps logo" />
               </NavLink>
             </div>
-            <nav className="header__nav">
-              <button
-                className="header__nav__hamburguer"
-                aria-label="Menu"
-                aria-haspopup="true"
-                aria-expanded="false"
-                onClick={this.toggleMobile}
-              >
-                <div />
-                <div />
-                <div />
-              </button>
-              <ul className="header__nav__menu" role="menubar">
-                {this.links.map(link => (
-                  <li key={link.to}>
-                    <HeaderLink {...link} />
-                  </li>
-                ))}
-              </ul>
-            </nav>
-            <div className="header__nav header__nav-config">
-              <ul className="header__nav__menu" role="menubar">
-                <li
-                  onMouseEnter={this.openSubmenu}
-                  onMouseLeave={this.closeSubmenu}
-                  onClick={this.toggleSubmenu}
+            {showNav && (
+              <nav className="header__nav">
+                <button
+                  className="header__nav__hamburguer"
+                  aria-label="Menu"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  onClick={this.toggleMobile}
                 >
-                  <a>
-                    <Cog className="icon icon-small margin-r-tiny" /> Configuration
-                  </a>
-                  <ul role="menu" aria-label="Products" className={submenu}>
-                    <li role="none">
-                      <NavLink to="/config/repos">App Repositories</NavLink>
+                  <div />
+                  <div />
+                  <div />
+                </button>
+                <ul className="header__nav__menu" role="menubar">
+                  {this.links.map(link => (
+                    <li key={link.to}>
+                      <HeaderLink {...link} currentNamespace={namespace} />
                     </li>
-                    <li role="none">
-                      <NavLink to="/config/brokers">Service Brokers</NavLink>
-                    </li>
-                  </ul>
-                </li>
-              </ul>
-            </div>
+                  ))}
+                </ul>
+              </nav>
+            )}
+            {showNav && (
+              <div className="header__nav header__nav-config">
+                <ul className="header__nav__menu" role="menubar">
+                  <li
+                    onMouseEnter={this.openSubmenu}
+                    onMouseLeave={this.closeSubmenu}
+                    onClick={this.toggleSubmenu}
+                  >
+                    <a>
+                      <Settings size={16} className="icon margin-r-tiny" /> Configuration
+                    </a>
+                    <ul role="menu" aria-label="Products" className={submenu}>
+                      <li role="none">
+                        <NavLink to="/config/repos">App Repositories</NavLink>
+                      </li>
+                      <li role="none">
+                        <NavLink to="/config/brokers">Service Brokers</NavLink>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <NavLink to="#" onClick={this.handleLogout}>
+                      <LogOut size={16} className="icon margin-r-tiny" /> Logout
+                    </NavLink>
+                  </li>
+                </ul>
+              </div>
+            )}
           </header>
         </div>
       </section>
@@ -143,10 +156,11 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   private toggleSubmenu = () => {
     this.setState({ configOpen: !this.state.configOpen });
   };
+
+  private handleLogout = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    this.props.logout();
+  };
 }
 
-const mapStateToProps = ({ router: { location: { pathname } } }: IRouterPathname): IHeaderProps => {
-  return { pathname };
-};
-
-export default connect(mapStateToProps)(Header);
+export default Header;

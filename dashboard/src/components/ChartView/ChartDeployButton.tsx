@@ -4,6 +4,7 @@ import { IChartVersion } from "../../shared/types";
 
 interface IChartDeployButtonProps {
   version: IChartVersion;
+  namespace: string;
 }
 
 interface IChartDeployButtonState {
@@ -16,7 +17,7 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
   };
 
   public render() {
-    const { version } = this.props;
+    const { namespace, version } = this.props;
     const repoName = version.relationships.chart.data.repo.name;
     const chartName = version.relationships.chart.data.name;
     const versionStr = version.attributes.version;
@@ -27,7 +28,10 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
           Deploy using Helm
         </button>
         {this.state.clicked && (
-          <Redirect to={`/apps/new/${repoName}/${chartName}/versions/${versionStr}`} />
+          <Redirect
+            push={true}
+            to={`/apps/ns/${namespace}/new/${repoName}/${chartName}/versions/${versionStr}`}
+          />
         )}
       </div>
     );

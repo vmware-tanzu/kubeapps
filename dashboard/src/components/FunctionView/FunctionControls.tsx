@@ -8,6 +8,7 @@ interface IFunctionControlsProps {
   enableSaveButton: boolean;
   deleteFunction: () => Promise<void>;
   updateFunction: () => void;
+  namespace: string;
 }
 
 interface IFunctionControlsState {
@@ -22,6 +23,7 @@ class FunctionControls extends React.Component<IFunctionControlsProps, IFunction
   };
 
   public render() {
+    const { namespace } = this.props;
     return (
       <div className="FunctionControls">
         <button
@@ -39,7 +41,7 @@ class FunctionControls extends React.Component<IFunctionControlsProps, IFunction
           modalIsOpen={this.state.modalIsOpen}
           closeModal={this.closeModal}
         />
-        {this.state.redirectToFunctionsList && <Redirect to="/functions" />}
+        {this.state.redirectToFunctionsList && <Redirect to={`/functions/ns/${namespace}`} />}
       </div>
     );
   }

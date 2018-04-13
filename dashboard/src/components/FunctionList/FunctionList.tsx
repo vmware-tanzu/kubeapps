@@ -9,16 +9,16 @@ interface IFunctionListProps {
   functions: IFunction[];
   runtimes: IRuntime[];
   namespace: string;
-  fetchFunctions: (namespace: string) => Promise<any>;
   fetchRuntimes: () => Promise<any>;
+  fetchFunctions: () => Promise<any>;
   deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<any>;
   navigateToFunction: (n: string, ns: string) => any;
 }
 
 class FunctionList extends React.Component<IFunctionListProps> {
   public componentDidMount() {
-    const { namespace, fetchFunctions, fetchRuntimes } = this.props;
-    fetchFunctions(namespace);
+    const { fetchFunctions, fetchRuntimes } = this.props;
+    fetchFunctions();
     fetchRuntimes();
   }
 

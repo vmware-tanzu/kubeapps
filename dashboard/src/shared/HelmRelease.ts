@@ -1,28 +1,73 @@
-import axios from "axios";
 import { inflate } from "pako";
 import { clearInterval, setInterval } from "timers";
 
-import { hapi } from "../shared/hapi/release";
-import { IApp, IChart, IHelmRelease, IHelmReleaseConfigMap } from "./types";
+import { AppRepository } from "./AppRepository";
+import { axios } from "./Auth";
+import { hapi } from "./hapi/release";
+import { IApp, IChart, IChartVersion, IHelmRelease, IHelmReleaseConfigMap } from "./types";
 import * as url from "./url";
 
 export class HelmRelease {
-  public static async create(chart: IChart, releaseName: string, namespace: string) {
+  public static async create(
+    releaseName: string,
+    namespace: string,
+    chartVersion: IChartVersion,
+    values?: string,
+  ) {
+    const chartAttrs = chartVersion.relationships.chart.data;
+    const repo = await AppRepository.get(chartAttrs.repo.name);
+    const auth = repo.spec.auth;
     const endpoint = HelmRelease.getResourceLink(namespace);
     const { data } = await axios.post(endpoint, {
-      data: {
+      apiVersion: "helm.bitnami.com/v1",
+      kind: "HelmRelease",
+      metadata: {
+        annotations: {
+          "apprepositories.kubeapps.com/repo-name": chartAttrs.repo.name,
+        },
+        name: releaseName,
+      },
+      spec: {
+        auth,
+        chartName: chartAttrs.name,
+        repoUrl: chartAttrs.repo.url,
+        values,
+        version: chartVersion.attributes.version,
+      },
+    });
+    return data;
+  }
+
+  public static async upgrade(
+    releaseName: string,
+    namespace: string,
+    chartVersion: IChartVersion,
+    values?: string,
+  ) {
+    const chartAttrs = chartVersion.relationships.chart.data;
+    const repo = await AppRepository.get(chartAttrs.repo.name);
+    const auth = repo.spec.auth;
+    const endpoint = HelmRelease.getSelfLink(releaseName, namespace);
+    const { data } = await axios.patch(
+      endpoint,
+      {
         apiVersion: "helm.bitnami.com/v1",
         kind: "HelmRelease",
         metadata: {
-          releaseName,
+          name: releaseName,
         },
         spec: {
-          chartName: chart.attributes.name,
-          repoUrl: chart.attributes.repo.url,
-          version: chart.relationships.latestChartVersion.data.version,
+          auth,
+          chartName: chartAttrs.name,
+          repoUrl: chartAttrs.repo.url,
+          values,
+          version: chartVersion.attributes.version,
         },
       },
-    });
+      {
+        headers: { "Content-Type": "application/merge-patch+json" },
+      },
+    );
     return data;
   }
 
@@ -33,9 +78,9 @@ export class HelmRelease {
     return data;
   }
 
-  public static async getAllWithDetails() {
+  public static async getAllWithDetails(namespace?: string) {
     const { data: { items: helmReleaseList } } = await axios.get<{ items: IHelmRelease[] }>(
-      this.getResourceLink(),
+      this.getResourceLink(namespace),
     );
     // Convert list of HelmReleases to release name -> HelmRelease pair
     const helmReleaseMap = helmReleaseList.reduce((acc, hr) => {

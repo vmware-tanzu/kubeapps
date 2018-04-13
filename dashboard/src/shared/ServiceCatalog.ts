@@ -1,6 +1,5 @@
-import axios from "axios";
-
 import * as urls from "../shared/url";
+import { axios } from "./Auth";
 import { IClusterServiceClass } from "./ClusterServiceClass";
 import { IServiceInstance } from "./ServiceInstance";
 import { IK8sList, IStatus } from "./types";

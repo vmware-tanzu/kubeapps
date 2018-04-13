@@ -1,10 +1,10 @@
-import axios from "axios";
+import { axios } from "./Auth";
 
 import { IFunction, IFunctionList, IResource, IStatus } from "./types";
 
 export default class Function {
-  public static async list() {
-    const { data } = await axios.get<IFunctionList>(`${Function.APIEndpoint}/functions`);
+  public static async list(namespace?: string) {
+    const { data } = await axios.get<IFunctionList>(`${Function.getResourceLink(namespace)}`);
     return data;
   }
 
@@ -62,6 +62,9 @@ export default class Function {
 
   private static APIBase: string = "/api/kube";
   private static APIEndpoint: string = `${Function.APIBase}/apis/kubeless.io/v1beta1`;
+  private static getResourceLink(namespace?: string): string {
+    return `${Function.APIEndpoint}/${namespace ? `namespaces/${namespace}/` : ""}functions`;
+  }
   private static getSelfLink(name: string, namespace: string): string {
     return `${Function.APIEndpoint}/namespaces/${namespace}/functions/${name}`;
   }

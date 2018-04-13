@@ -33,10 +33,11 @@ const allActions = [
 ].map(getReturnOfExpression);
 export type FunctionsAction = typeof allActions[number];
 
-export function fetchFunctions(namespace: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function fetchFunctions() {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+    const { namespace } = getState();
     dispatch(requestFunctions());
-    const functionList = await Function.list();
+    const functionList = await Function.list(namespace);
     dispatch(receiveFunctions(functionList.items));
     return functionList;
   };

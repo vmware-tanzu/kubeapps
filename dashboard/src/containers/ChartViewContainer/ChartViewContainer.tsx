@@ -15,10 +15,11 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ charts, namespace }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     chartID: chartID(params),
     isFetching: charts.isFetching,
+    namespace,
     selected: charts.selected,
     version: params.version,
   };

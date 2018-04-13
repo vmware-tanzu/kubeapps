@@ -1,7 +1,7 @@
 import createHistory from "history/createBrowserHistory";
 import * as React from "react";
 import { Provider } from "react-redux";
-import { Route, RouteComponentProps } from "react-router";
+import { Redirect, Route, RouteComponentProps } from "react-router";
 import { ConnectedRouter } from "react-router-redux";
 import { ClassViewContainer } from "./ClassView";
 
@@ -16,9 +16,11 @@ import ChartView from "./ChartViewContainer";
 import ClassListContainer from "./ClassListContainer";
 import FunctionListContainer from "./FunctionListContainer";
 import FunctionViewContainer from "./FunctionViewContainer";
+import HeaderContainer from "./HeaderContainer";
 import InstanceListViewContainer from "./InstanceListViewContainer";
 import InstanceView from "./InstanceView";
-
+import LoginFormContainer from "./LoginFormContainer";
+import PrivateRouteContainer from "./PrivateRouteContainer";
 import RepoListContainer from "./RepoListContainer";
 import ServiceCatalogContainer from "./ServiceCatalogContainer";
 
@@ -29,10 +31,11 @@ class Root extends React.Component {
   public static exactRoutes: {
     [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
   } = {
-    "/": AppList,
-    "/apps/:namespace/:releaseName": AppView,
-    "/apps/edit/:namespace/:releaseName": AppEdit,
-    "/apps/new/:repo/:id/versions/:version": AppNew,
+    "/apps": AppList,
+    "/apps/ns/:namespace": AppList,
+    "/apps/ns/:namespace/:releaseName": AppView,
+    "/apps/ns/:namespace/edit/:releaseName": AppEdit,
+    "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNew,
     "/charts": ChartList,
     "/charts/:repo": ChartList,
     "/charts/:repo/:id": ChartView,
@@ -40,29 +43,40 @@ class Root extends React.Component {
     "/config/brokers": ServiceCatalogContainer,
     "/config/repos": RepoListContainer,
     "/functions": FunctionListContainer,
-    "/functions/:namespace": FunctionListContainer,
-    "/functions/:namespace/:name": FunctionViewContainer,
+    "/functions/ns/:namespace": FunctionListContainer,
+    "/functions/ns/:namespace/:name": FunctionViewContainer,
     "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
-    "/services/brokers/:brokerName/instances/:namespace/:instanceName": InstanceView,
+    "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": InstanceView,
     "/services/classes": ClassListContainer,
     "/services/instances": InstanceListViewContainer,
+    "/services/instances/ns/:namespace": InstanceListViewContainer,
   };
 
   public render() {
     return (
       <Provider store={store}>
         <ConnectedRouter history={history}>
-          <Layout>
-            <section className="routes">
-              {Object.keys(Root.exactRoutes).map(route => (
-                <Route key={route} exact={true} path={route} component={Root.exactRoutes[route]} />
-              ))}
-            </section>
+          <Layout headerComponent={HeaderContainer}>
+            <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
+            <Route exact={true} path="/login" component={LoginFormContainer} />
+            {Object.keys(Root.exactRoutes).map(route => (
+              <PrivateRouteContainer
+                key={route}
+                exact={true}
+                path={route}
+                component={Root.exactRoutes[route]}
+              />
+            ))}
           </Layout>
         </ConnectedRouter>
       </Provider>
     );
   }
+
+  public rootNamespacedRedirect = (props: any) => {
+    const { namespace } = store.getState();
+    return <Redirect to={`/apps/ns/${namespace}`} />;
+  };
 }
 
 export default Root;
