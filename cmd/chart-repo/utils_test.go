@@ -133,7 +133,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	dbSession := mockstore.NewMockSession(&m)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := syncRepo(dbSession, "test", tt.repoURL)
+			err := syncRepo(dbSession, "test", tt.repoURL, "")
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -141,29 +141,27 @@ func Test_syncURLInvalidity(t *testing.T) {
 
 func Test_fetchRepoIndex(t *testing.T) {
 	tests := []struct {
-		name    string
-		repoURL string
+		name string
+		r    repo
 	}{
-		{"valid HTTP URL", "http://my.examplerepo.com"},
-		{"valid HTTPS URL", "https://my.examplerepo.com"},
-		{"valid trailing URL", "https://my.examplerepo.com/"},
-		{"valid subpath URL", "https://subpath.test/subpath/"},
-		{"valid URL with trailing spaces", "https://subpath.test/subpath/  "},
-		{"valid URL with leading spaces", "  https://subpath.test/subpath/"},
+		{"valid HTTP URL", repo{URL: "http://my.examplerepo.com"}},
+		{"valid HTTPS URL", repo{URL: "https://my.examplerepo.com"}},
+		{"valid trailing URL", repo{URL: "https://my.examplerepo.com/"}},
+		{"valid subpath URL", repo{URL: "https://subpath.test/subpath/"}},
+		{"valid URL with trailing spaces", repo{URL: "https://subpath.test/subpath/  "}},
+		{"valid URL with leading spaces", repo{URL: "  https://subpath.test/subpath/"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			netClient = &goodHTTPClient{}
-			url, _ := parseRepoUrl(tt.repoURL)
-			_, err := fetchRepoIndex(url)
+			_, err := fetchRepoIndex(tt.r)
 			assert.NoErr(t, err)
 		})
 	}
 
 	t.Run("failed request", func(t *testing.T) {
 		netClient = &badHTTPClient{}
-		url, _ := parseRepoUrl("https://my.examplerepo.com")
-		_, err := fetchRepoIndex(url)
+		_, err := fetchRepoIndex(repo{URL: "https://my.examplerepo.com"})
 		assert.ExistsErr(t, err, "failed request")
 	})
 }

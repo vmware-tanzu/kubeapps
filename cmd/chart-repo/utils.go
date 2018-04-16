@@ -73,18 +73,20 @@ func parseRepoUrl(repoURL string) (*url.URL, error) {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func syncRepo(dbSession datastore.Session, repoName, repoURL string) error {
+func syncRepo(dbSession datastore.Session, repoName, repoURL string, accessToken string) error {
 	url, err := parseRepoUrl(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
 		return err
 	}
-	index, err := fetchRepoIndex(url)
+
+	r := repo{Name: repoName, URL: url.String(), AccessToken: accessToken}
+	index, err := fetchRepoIndex(r)
 	if err != nil {
 		return err
 	}
 
-	charts := chartsFromIndex(index, repo{Name: repoName, URL: url.String()})
+	charts := chartsFromIndex(index, r)
 	err = importCharts(dbSession, charts)
 	if err != nil {
 		return err
@@ -151,15 +153,21 @@ func deleteRepo(dbSession datastore.Session, repoName string) error {
 	return err
 }
 
-func fetchRepoIndex(repoURL *url.URL) (*helmrepo.IndexFile, error) {
-	// use a copy of the URL struct so we don't modify the original
-	indexURL := *repoURL
+func fetchRepoIndex(r repo) (*helmrepo.IndexFile, error) {
+	indexURL, err := parseRepoUrl(r.URL)
+	if err != nil {
+		log.WithFields(log.Fields{"url": r.URL}).WithError(err).Error("failed to parse URL")
+		return nil, err
+	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
 	req, err := http.NewRequest("GET", indexURL.String(), nil)
-	req.Header.Set("User-Agent", userAgent)
 	if err != nil {
 		log.WithFields(log.Fields{"url": req.URL.String()}).WithError(err).Error("could not build repo index request")
 		return nil, err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	if len(r.AccessToken) > 0 {
+		req.Header.Set("Authorization", "Bearer "+r.AccessToken)
 	}
 	res, err := netClient.Do(req)
 	if err != nil {
@@ -264,9 +272,12 @@ func fetchAndImportIcon(dbSession datastore.Session, c chart) error {
 	}
 
 	req, err := http.NewRequest("GET", c.Icon, nil)
-	req.Header.Set("User-Agent", userAgent)
 	if err != nil {
 		return err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	if len(c.Repo.AccessToken) > 0 {
+		req.Header.Set("Authorization", "Bearer "+c.Repo.AccessToken)
 	}
 
 	res, err := netClient.Do(req)
@@ -307,10 +318,12 @@ func fetchAndImportFiles(dbSession datastore.Session, name string, r repo, cv ch
 
 	url := chartTarballURL(r, cv)
 	req, err := http.NewRequest("GET", url, nil)
-
-	req.Header.Set("User-Agent", userAgent)
 	if err != nil {
 		return err
+	}
+	req.Header.Set("User-Agent", userAgent)
+	if len(r.AccessToken) > 0 {
+		req.Header.Set("Authorization", "Bearer "+r.AccessToken)
 	}
 
 	res, err := netClient.Do(req)

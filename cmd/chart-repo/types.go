@@ -21,8 +21,9 @@ import (
 )
 
 type repo struct {
-	Name string
-	URL  string
+	Name        string
+	URL         string
+	AccessToken string `bson:"-"`
 }
 
 type maintainer struct {
