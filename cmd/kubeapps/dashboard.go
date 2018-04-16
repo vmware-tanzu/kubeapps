@@ -36,11 +36,11 @@ import (
 )
 
 const (
-	selector = "name=nginx-ingress-controller"
+	selector = "app=kubeapps"
 	// Known namespace for Kubeapps' Ingress
 	ingressNamespace = "kubeapps"
 	// Known port for Kubeapps' Ingress HTTP server
-	ingressPort = 80
+	ingressPort = 8080
 )
 
 type dashboardCmdOptions struct {
