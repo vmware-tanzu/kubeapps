@@ -16,7 +16,6 @@ local labels = {
 // Some manifests are nested deeper than the root (e.g. dashboard.api.deploy)
 // so we need to make sure we're only applying the labels to objects that have
 // the manifest key
-// if std.assertEqual(std.type(src), "array") then
 local labelify(src) = if std.objectHas(src, "metadata") then src + labels else src;
 local labelifyEach(src) = {
   [k]: if std.isArray(src[k]) then

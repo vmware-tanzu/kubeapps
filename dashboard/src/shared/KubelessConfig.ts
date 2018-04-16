@@ -2,9 +2,9 @@ import axios from "axios";
 
 import { IKubelessConfigMap } from "./types";
 
-export default class Function {
+export default class Config {
   public static async get() {
-    const config = await axios.get<IKubelessConfigMap>(Function.SelfLink);
+    const config = await axios.get<IKubelessConfigMap>(Config.SelfLink);
     return config;
   }
 
@@ -16,8 +16,8 @@ export default class Function {
   private static Name: string = "kubeless-config";
   private static Namespace: string = "kubeless";
   private static APIBase: string = "/api/kube";
-  private static APIEndpoint: string = `${Function.APIBase}/api/v1`;
-  private static SelfLink: string = `${Function.APIEndpoint}/namespaces/${
-    Function.Namespace
-  }/configmaps/${Function.Name}`;
+  private static APIEndpoint: string = `${Config.APIBase}/api/v1`;
+  private static SelfLink: string = `${Config.APIEndpoint}/namespaces/${
+    Config.Namespace
+  }/configmaps/${Config.Name}`;
 }
