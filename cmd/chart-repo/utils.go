@@ -167,7 +167,7 @@ func fetchRepoIndex(r repo) (*helmrepo.IndexFile, error) {
 	}
 	req.Header.Set("User-Agent", userAgent)
 	if len(r.AccessToken) > 0 {
-		req.Header.Set("Authorization", "Bearer "+r.AccessToken)
+		req.Header.Set("Authorization", r.AccessToken)
 	}
 	res, err := netClient.Do(req)
 	if err != nil {
@@ -277,7 +277,7 @@ func fetchAndImportIcon(dbSession datastore.Session, c chart) error {
 	}
 	req.Header.Set("User-Agent", userAgent)
 	if len(c.Repo.AccessToken) > 0 {
-		req.Header.Set("Authorization", "Bearer "+c.Repo.AccessToken)
+		req.Header.Set("Authorization", c.Repo.AccessToken)
 	}
 
 	res, err := netClient.Do(req)
@@ -323,7 +323,7 @@ func fetchAndImportFiles(dbSession datastore.Session, name string, r repo, cv ch
 	}
 	req.Header.Set("User-Agent", userAgent)
 	if len(r.AccessToken) > 0 {
-		req.Header.Set("Authorization", "Bearer "+r.AccessToken)
+		req.Header.Set("Authorization", r.AccessToken)
 	}
 
 	res, err := netClient.Do(req)
