@@ -347,6 +347,14 @@ create</td>
     <td>delete</td>
     <td></td>
   </tr>
+  <tr>
+    <td>Read ConfigMap</td>
+    <td></td>
+    <td>kubeless</td>
+    <td>configmaps</td>
+    <td>get</td>
+    <td>Read Kubeless Configmap to retrieve information about the available runtimes</td>
+  </tr>
 </table>
 
 ##### App Repositories

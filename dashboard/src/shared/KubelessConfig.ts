@@ -4,13 +4,13 @@ import { IKubelessConfigMap } from "./types";
 
 export default class Config {
   public static async get() {
-    const config = await axios.get<IKubelessConfigMap>(Config.SelfLink);
+    const { data: config } = await axios.get<IKubelessConfigMap>(Config.SelfLink);
     return config;
   }
 
   public static async getRuntimes() {
     const config = await this.get();
-    return JSON.parse(config.data.data["runtime-images"]);
+    return JSON.parse(config.data["runtime-images"]);
   }
 
   private static Name: string = "kubeless-config";

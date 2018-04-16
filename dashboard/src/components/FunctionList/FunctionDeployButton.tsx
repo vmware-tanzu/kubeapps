@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 import AceEditor from "react-ace";
@@ -29,6 +30,7 @@ class FunctionDeployButton extends React.Component<
 > {
   public state: IFunctionDeployButtonState = {
     functionSpec: {
+      checksum: "",
       deps: "",
       function: "",
       handler: "hello.handler",
@@ -176,6 +178,12 @@ class FunctionDeployButton extends React.Component<
     e.preventDefault();
     const { deployFunction, navigateToFunction } = this.props;
     const { functionSpec, name, namespace } = this.state;
+    const functionSha256 = crypto
+      .createHash("sha256")
+      .update(functionSpec.function, "utf8")
+      .digest()
+      .toString("hex");
+    functionSpec.checksum = `sha256:${functionSha256}`;
     try {
       await deployFunction(name, namespace, functionSpec);
       navigateToFunction(name, namespace);

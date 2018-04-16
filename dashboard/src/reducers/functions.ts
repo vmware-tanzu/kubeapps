@@ -2,11 +2,12 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { FunctionsAction } from "../actions/functions";
-import { IFunction } from "../shared/types";
+import { IFunction, IRuntime } from "../shared/types";
 
 export interface IFunctionState {
   isFetching: boolean;
   items: IFunction[];
+  runtimes: IRuntime[];
   selected: {
     function?: IFunction;
     podName?: string;
@@ -16,6 +17,7 @@ export interface IFunctionState {
 const initialState: IFunctionState = {
   isFetching: false,
   items: [],
+  runtimes: [],
   selected: {},
 };
 
@@ -39,6 +41,11 @@ const functionsReducer = (
     case getType(actions.functions.setPodName):
       const { name } = action;
       return { ...state, isFetching: false, selected: { ...state.selected, podName: name } };
+    case getType(actions.functions.receiveRuntimes):
+      const { runtimes } = action;
+      return { ...state, isFetching: false, runtimes };
+    case getType(actions.functions.requestRuntimes):
+      return { ...state, isFetching: true };
     default:
       return state;
   }

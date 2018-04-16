@@ -1,7 +1,6 @@
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IFunctionState } from "../reducers/functions";
 import { IAppRepositoryState } from "../reducers/repos";
-import { IRuntimeState } from "../reducers/runtimes";
 import { hapi } from "./hapi/release";
 
 export interface IRepo {
@@ -115,6 +114,7 @@ export interface IFunction extends IResource {
     function: string;
     handler: string;
     runtime: string;
+    checksum: string;
   };
 }
 
@@ -140,7 +140,6 @@ export interface IStoreState {
   repos: IAppRepositoryState;
   deployment: IDeployment;
   functions: IFunctionState;
-  runtimes: IRuntimeState;
 }
 
 interface IK8sResource {

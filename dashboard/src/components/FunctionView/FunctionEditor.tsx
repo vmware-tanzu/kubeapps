@@ -2,6 +2,7 @@ import * as React from "react";
 import AceEditor from "react-ace";
 
 import "brace/mode/javascript";
+import "brace/mode/php";
 import "brace/mode/python";
 import "brace/mode/ruby";
 import "brace/theme/xcode";
@@ -37,7 +38,6 @@ class FunctionEditor extends React.Component<IFunctionEditorProps> {
     } else if (runtime.match(/ruby/)) {
       return "ruby";
     } else if (runtime.match(/php/)) {
-      // Doesn't work: Uncaught SyntaxError: Unexpected token <
       return "php";
     } else if (runtime.match(/python/)) {
       return "python";
