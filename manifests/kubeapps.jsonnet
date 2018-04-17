@@ -30,40 +30,14 @@ local labelifyEach(src) = {
 
   ns: kube.Namespace($.namespace.metadata.namespace) + labels,
 
+  // This is the main gateway for Kubeapps and acts as a reverse-proxy to the
+  // frontend and other services.
+  nginx: labelifyEach((import "nginx.jsonnet")),
+
   // NB: these are left in their usual namespaces, to avoid forcing
   // non-default command line options onto client tools
   kubeless: labelifyEach(kubeless),
   ssecrets: [s + labels for s in ssecrets],
-  nginx_:: (import "ingress-nginx.jsonnet") {
-    namespace:: $.namespace,
-    controller+: {
-      spec+: {
-        template+: {
-          spec+: {
-            containers_+: {
-              default+: {
-                args_+: {
-                  "ingress-class": "kubeapps-nginx",
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    service+: {
-      spec+: {
-        local maybe_https = if tls then [
-          {name: "https", port: 443, protocol: "TCP"},
-        ] else [],
-
-        ports: [
-          {name: "http", port: 80, protocol: "TCP"},
-        ] + maybe_https,
-      },
-    },
-  },
-  nginx: labelifyEach($.nginx_),
 
   dashboard_:: (import "kubeapps-dashboard.jsonnet") {
     namespace:: $.namespace,
@@ -77,7 +51,6 @@ local labelifyEach(src) = {
       apprepos: labelifyEach($.dashboard_.apprepository.apprepos),
     },
     chartsvc: labelifyEach($.dashboard_.chartsvc),
-    kubeapi: labelifyEach($.dashboard_.kubeapi),
     tillerHelmCRD: labelifyEach($.dashboard_.tillerHelmCRD),
   },
 
@@ -85,31 +58,4 @@ local labelifyEach(src) = {
     namespace:: $.namespace,
   },
   mongodb: labelifyEach($.mongodb_),
-
-  ingress: kube.Ingress("kubeapps") + $.namespace + labels {
-    metadata+: {
-      annotations+: {
-        "ingress.kubernetes.io/rewrite-target": "/",
-        "kubernetes.io/ingress.class": "kubeapps-nginx",
-        "ingress.kubernetes.io/ssl-redirect": std.toString(tls),
-      },
-    },
-    spec+: {
-      rules: [{
-        http: {
-          paths: [
-            {path: "/", backend: $.dashboard.ui.svc.name_port},
-            {path: "/api/chartsvc", backend: $.dashboard.chartsvc.service.name_port},
-            {path: "/api/kube", backend: $.dashboard.kubeapi.service.name_port},
-          ],
-        },
-        host: host,
-      }],
-
-      tls: if tls then [{
-        secretName: $.ingressTls.metadata.name,
-        hosts: host,
-      }] else [],
-    },
-  },
 }

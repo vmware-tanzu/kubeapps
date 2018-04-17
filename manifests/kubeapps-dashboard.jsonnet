@@ -78,5 +78,4 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
     mongodb_secret: $.mongodb_secret,
     mongodb_host: mongoDbHost,
   },
-  kubeapi: (import "kube-api.jsonnet"),
 }
