@@ -14,13 +14,11 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps(
-  { functions: { items } }: IStoreState,
-  { match: { params } }: IRouteProps,
-) {
+function mapStateToProps({ functions }: IStoreState, { match: { params } }: IRouteProps) {
   return {
-    functions: items,
+    functions: functions.items,
     namespace: params.namespace,
+    runtimes: functions.runtimes,
   };
 }
 
@@ -29,6 +27,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     deployFunction: (name: string, namespace: string, spec: IFunction["spec"]) =>
       dispatch(actions.functions.createFunction(name, namespace, spec)),
     fetchFunctions: (namespace: string) => dispatch(actions.functions.fetchFunctions(namespace)),
+    fetchRuntimes: (namespace: string) => dispatch(actions.functions.fetchRuntimes()),
     navigateToFunction: (name: string, namespace: string) =>
       dispatch(push(`/functions/${namespace}/${name}`)),
   };

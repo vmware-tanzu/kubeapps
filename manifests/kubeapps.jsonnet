@@ -18,7 +18,11 @@ local labels = {
 // the manifest key
 local labelify(src) = if std.objectHas(src, "metadata") then src + labels else src;
 local labelifyEach(src) = {
-  [k]: labelify(src[k]) for k in std.objectFields(src)
+  [k]: if std.isArray(src[k]) then
+    std.map(labelify, src[k])
+    else 
+    labelify(src[k])
+  for k in std.objectFields(src)
 };
 
 {

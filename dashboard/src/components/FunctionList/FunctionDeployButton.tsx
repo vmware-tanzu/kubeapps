@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 import AceEditor from "react-ace";
@@ -7,21 +8,12 @@ import "brace/mode/json";
 import "brace/mode/ruby";
 import "brace/mode/text";
 
-import { IFunction } from "../../shared/types";
-
-// TODO: fetch this from the API/ConfigMap
-const Runtimes = {
-  "Nodejs (6)": "nodejs6",
-  "Nodejs (8)": "nodejs8",
-  "Python (2.7)": "python2.7",
-  "Python (3.4)": "python3.4",
-  "Python (3.6)": "python3.6",
-  "Ruby (2.4)": "ruby2.4",
-};
+import { IFunction, IRuntime } from "../../shared/types";
 
 interface IFunctionDeployButtonProps {
   deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<any>;
   navigateToFunction: (n: string, ns: string) => Promise<any>;
+  runtimes: IRuntime[];
 }
 
 interface IFunctionDeployButtonState {
@@ -38,11 +30,11 @@ class FunctionDeployButton extends React.Component<
 > {
   public state: IFunctionDeployButtonState = {
     functionSpec: {
+      checksum: "",
       deps: "",
       function: "",
       handler: "hello.handler",
       runtime: "nodejs6",
-      type: "HTTP",
     },
     modalIsOpen: false,
     name: "",
@@ -66,6 +58,13 @@ class FunctionDeployButton extends React.Component<
 
   public render() {
     const { functionSpec: f, name, namespace } = this.state;
+    const runtimes = {};
+    this.props.runtimes.forEach(r => {
+      r.versions.forEach(version => {
+        const target = r.ID + version.version;
+        runtimes[`${r.ID} (${version.version})`] = target;
+      });
+    });
     return (
       <div className="FunctionDeployButton">
         <button className="button button-accent" onClick={this.openModal}>
@@ -105,8 +104,8 @@ class FunctionDeployButton extends React.Component<
             <div>
               <label htmlFor="runtimes">Runtimes</label>
               <select onChange={this.handleRuntimeChange} value={f.runtime}>
-                {Object.keys(Runtimes).map(r => (
-                  <option key={Runtimes[r]} value={Runtimes[r]}>
+                {Object.keys(runtimes).map(r => (
+                  <option key={runtimes[r]} value={runtimes[r]}>
                     {r}
                   </option>
                 ))}
@@ -142,7 +141,7 @@ class FunctionDeployButton extends React.Component<
 
   private runtimeToDepsMode() {
     const { functionSpec: { runtime } } = this.state;
-    if (runtime.match(/node/)) {
+    if (runtime.match(/node|php/)) {
       return "json";
     } else if (runtime.match(/ruby/)) {
       return "ruby";
@@ -154,14 +153,13 @@ class FunctionDeployButton extends React.Component<
 
   private runtimeToDepsDescription() {
     const { functionSpec: { runtime } } = this.state;
-    if (runtime.match(/node/)) {
-      return "package.json";
-    } else if (runtime.match(/ruby/)) {
-      return "Gemfile";
-    } else if (runtime.match(/python/)) {
-      return "requirements.txt";
-    }
-    return "";
+    let deps = "";
+    this.props.runtimes.forEach(r => {
+      if (runtime.match(r.ID)) {
+        deps = r.depName;
+      }
+    });
+    return deps;
   }
 
   private openModal = () => {
@@ -180,6 +178,12 @@ class FunctionDeployButton extends React.Component<
     e.preventDefault();
     const { deployFunction, navigateToFunction } = this.props;
     const { functionSpec, name, namespace } = this.state;
+    const functionSha256 = crypto
+      .createHash("sha256")
+      .update(functionSpec.function, "utf8")
+      .digest()
+      .toString("hex");
+    functionSpec.checksum = `sha256:${functionSha256}`;
     try {
       await deployFunction(name, namespace, functionSpec);
       navigateToFunction(name, namespace);
@@ -220,18 +224,24 @@ class FunctionDeployButton extends React.Component<
     const fnName = handler.split(".").pop();
     if (runtime.match(/node/)) {
       return `module.exports = {
-  ${fnName}: function(req, res) {
-    res.end("Hello World");
+  ${fnName}: function(event, context) {
+    return "Hello World";
   }
 };
 `;
     } else if (runtime.match(/ruby/)) {
-      return `def ${fnName}(request)
+      return `def ${fnName}(event, context)
   "Hello World"
 end
 `;
+    } else if (runtime.match(/php/)) {
+      return `<?php
+function ${fnName}($event, $context) {
+  return "hello world";
+}
+`;
     } else if (runtime.match(/python/)) {
-      return `def ${fnName}():
+      return `def ${fnName}(event, context):
   return "Hello World"
 `;
     }

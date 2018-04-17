@@ -1,22 +1,25 @@
 import * as React from "react";
 
-import { IFunction } from "../../shared/types";
+import { IFunction, IRuntime } from "../../shared/types";
 import { CardGrid } from "../Card";
 import FunctionDeployButton from "./FunctionDeployButton";
 import FunctionListItem from "./FunctionListItem";
 
 interface IFunctionListProps {
   functions: IFunction[];
+  runtimes: IRuntime[];
   namespace: string;
   fetchFunctions: (namespace: string) => Promise<any>;
+  fetchRuntimes: () => Promise<any>;
   deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<any>;
   navigateToFunction: (n: string, ns: string) => any;
 }
 
 class FunctionList extends React.Component<IFunctionListProps> {
   public componentDidMount() {
-    const { namespace, fetchFunctions } = this.props;
+    const { namespace, fetchFunctions, fetchRuntimes } = this.props;
     fetchFunctions(namespace);
+    fetchRuntimes();
   }
 
   public render() {
@@ -34,6 +37,7 @@ class FunctionList extends React.Component<IFunctionListProps> {
               <FunctionDeployButton
                 deployFunction={this.props.deployFunction}
                 navigateToFunction={this.props.navigateToFunction}
+                runtimes={this.props.runtimes}
               />
             </div>
           </div>

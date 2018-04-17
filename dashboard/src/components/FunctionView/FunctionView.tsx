@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import * as React from "react";
 
 import { IDeploymentStatus, IFunction, IResource } from "../../shared/types";
@@ -143,6 +144,11 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
         ...f,
         spec: {
           ...f.spec,
+          checksum: `sha256:${crypto
+            .createHash("sha256")
+            .update(this.state.functionCode, "utf8")
+            .digest()
+            .toString("hex")}`,
           function: this.state.functionCode,
         },
       });

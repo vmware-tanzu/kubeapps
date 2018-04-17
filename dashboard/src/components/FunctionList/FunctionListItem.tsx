@@ -22,7 +22,6 @@ class FunctionListItem extends React.Component<IFunctionListItemProps> {
             <div className="ChartListItem__content">
               <h3 className="ChartListItem__content__title">{f.metadata.name}</h3>
               <div className="ChartListItem__content__info text-r">
-                <p className="margin-reset type-color-light-blue">type: {f.spec.type}</p>
                 <span
                   className={`ChartListItem__content__repo padding-tiny
                   padding-h-normal type-small margin-t-small`}

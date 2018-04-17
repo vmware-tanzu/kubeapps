@@ -114,7 +114,7 @@ export interface IFunction extends IResource {
     function: string;
     handler: string;
     runtime: string;
-    type: string;
+    checksum: string;
   };
 }
 
@@ -267,4 +267,27 @@ export interface IRouterPathname {
       pathname: string;
     };
   };
+}
+
+export interface IKubelessConfigMap {
+  metadata: {
+    name: string;
+  };
+  data: {
+    "runtime-images": string;
+  };
+}
+
+export interface IRuntimeVersion {
+  name: string;
+  version: string;
+  runtimeImage: string;
+  initImage: string;
+}
+
+export interface IRuntime {
+  ID: string;
+  versions: IRuntimeVersion[];
+  depName: string;
+  fileNameSuffix: string;
 }

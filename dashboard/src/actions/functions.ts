@@ -2,7 +2,8 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import Function from "../shared/Function";
-import { IFunction, IStoreState } from "../shared/types";
+import KubelessConfig from "../shared/KubelessConfig";
+import { IFunction, IRuntime, IStoreState } from "../shared/types";
 
 export const requestFunctions = createAction("REQUEST_FUNCTIONS");
 export const receiveFunctions = createAction("RECEIVE_FUNCTIONS", (functions: IFunction[]) => ({
@@ -17,9 +18,19 @@ export const setPodName = createAction("SET_FUNCTION_POD_NAME", (name: string) =
   name,
   type: "SET_FUNCTION_POD_NAME",
 }));
-const allActions = [requestFunctions, receiveFunctions, selectFunction, setPodName].map(
-  getReturnOfExpression,
-);
+export const requestRuntimes = createAction("REQUEST_RUNTIMES");
+export const receiveRuntimes = createAction("RECEIVE_RUNTIMES", (runtimes: IRuntime[]) => ({
+  runtimes,
+  type: "RECEIVE_RUNTIMES",
+}));
+const allActions = [
+  requestFunctions,
+  receiveFunctions,
+  selectFunction,
+  setPodName,
+  requestRuntimes,
+  receiveRuntimes,
+].map(getReturnOfExpression);
 export type FunctionsAction = typeof allActions[number];
 
 export function fetchFunctions(namespace: string) {
@@ -67,5 +78,14 @@ export function getPodName(fn: IFunction) {
       dispatch(setPodName(name));
     }
     return name;
+  };
+}
+
+export function fetchRuntimes() {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    dispatch(requestRuntimes());
+    const runtimeList = await KubelessConfig.getRuntimes();
+    dispatch(receiveRuntimes(runtimeList));
+    return runtimeList;
   };
 }
