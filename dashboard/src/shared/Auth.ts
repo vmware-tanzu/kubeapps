@@ -1,4 +1,4 @@
-import Axios, { AxiosRequestConfig } from "axios";
+import Axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 
 const AuthTokenKey = "kubeapps_auth_token";
 
@@ -11,6 +11,10 @@ export class Auth {
     return localStorage.setItem(AuthTokenKey, token);
   }
 
+  public static unsetAuthToken() {
+    return localStorage.removeItem(AuthTokenKey);
+  }
+
   public static wsProtocols() {
     const token = this.getAuthToken();
     if (!token) {
@@ -21,6 +25,18 @@ export class Auth {
 
   public static fetchOptions() {
     return { headers: { Authorization: `Bearer ${this.getAuthToken()}` } };
+  }
+
+  // Throws an error if the token is invalid
+  public static async validateToken(token: string) {
+    try {
+      await Axios.get("/api/kube/", { headers: { Authorization: `Bearer ${token}` } });
+    } catch (e) {
+      const res = e.response as AxiosResponse;
+      if (res.status === 401) {
+        throw new Error("invalid token");
+      }
+    }
   }
 }
 
