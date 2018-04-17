@@ -25,22 +25,45 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     update({ url: e.target.value });
   return (
-    <div className="app-repo-form">
-      <h1>Add an App Repository</h1>
-      <label>
-        <span>Name:</span>
-        <input type="text" value={name} onChange={handleNameChange} />
-      </label>
-      <br />
-      <label>
-        <span>URL:</span>
-        <input type="text" value={url} onChange={handleURLChange} />
-      </label>
-      <button className="button button-primary" onClick={handleInstallClick}>
-        Install Repo
-      </button>
-      {props.redirectTo && <Redirect to={props.redirectTo} />}
-    </div>
+    <form className="container padding-b-bigger" onSubmit={handleInstallClick}>
+      <div className="row">
+        <div className="col-12">
+          <div>
+            <h2>Add an App Repository</h2>
+          </div>
+          <div>
+            <label>
+              <span>Name:</span>
+              <input
+                type="text"
+                placeholder="example"
+                value={name}
+                onChange={handleNameChange}
+                required={true}
+              />
+            </label>
+          </div>
+          <div>
+            <label>
+              <span>URL:</span>
+              <input
+                type="url"
+                placeholder="https://charts.example.com/stable"
+                value={url}
+                onChange={handleURLChange}
+                required={true}
+              />
+            </label>
+          </div>
+          <div>
+            <button className="button button-primary" type="submit">
+              Install Repo
+            </button>
+          </div>
+          {props.redirectTo && <Redirect to={props.redirectTo} />}
+        </div>
+      </div>
+    </form>
   );
 };
 
