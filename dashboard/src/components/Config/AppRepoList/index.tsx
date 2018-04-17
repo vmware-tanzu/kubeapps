@@ -9,7 +9,7 @@ export interface IAppRepoListProps {
   fetchRepos: () => Promise<any>;
   deleteRepo: (name: string) => Promise<any>;
   resyncRepo: (name: string) => Promise<any>;
-  install: (name: string, url: string) => Promise<any>;
+  install: (name: string, url: string, authHeader: string) => Promise<any>;
 }
 
 export class AppRepoList extends React.Component<IAppRepoListProps> {

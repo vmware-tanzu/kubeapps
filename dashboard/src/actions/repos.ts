@@ -2,6 +2,8 @@ import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { Dispatch } from "react-redux";
 import { AppRepository } from "../shared/AppRepository";
+import Secret from "../shared/Secret";
+
 import { IAppRepository, IStoreState } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
@@ -49,10 +51,14 @@ export type AppReposAction = typeof allActions[number];
 
 export const deleteRepo = (name: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
+    const repo = await AppRepository.get(name);
     await AppRepository.delete(name);
     dispatch(requestRepos());
     const repos = await AppRepository.list();
     dispatch(receiveRepos(repos.items));
+    if (repo.spec.auth && repo.spec.auth.secretKeyRef.name) {
+      Secret.delete(repo.spec.auth.secretKeyRef.name);
+    }
     return repos;
   };
 };
@@ -80,10 +86,21 @@ export const fetchRepos = () => {
   };
 };
 
-export const installRepo = (name: string, url: string) => {
+export const installRepo = (name: string, url: string, authHeader: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
+    let auth;
+    if (authHeader.length) {
+      const secretName = `apprepo-${name}-secrets`;
+      await Secret.create(secretName, { authorizationHeader: btoa(authHeader) });
+      auth = {
+        secretKeyRef: {
+          key: "authorizationHeader",
+          name: secretName,
+        },
+      };
+    }
     dispatch(addRepo());
-    const added = await AppRepository.create(name, url);
+    const added = await AppRepository.create(name, url, auth);
     dispatch(addedRepo(added));
     return added;
   };

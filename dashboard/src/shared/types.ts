@@ -98,8 +98,14 @@ export interface IResource {
     namespace: string;
     annotations: string;
     creationTimestamp: string;
+    selfLink: string;
+    resourceVersion: string;
     deletionTimestamp?: string;
   };
+}
+
+export interface ISecret extends IResource {
+  data: any;
 }
 
 export interface IDeploymentStatus {
@@ -184,7 +190,7 @@ export interface IAppRepository
         resourceVersion: string;
         selfLink: string;
       },
-      { type: string; url: string },
+      { type: string; url: string; auth: any },
       undefined
     > {}
 
