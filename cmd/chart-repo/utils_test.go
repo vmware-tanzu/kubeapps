@@ -74,6 +74,19 @@ func (h *goodHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return w.Result(), nil
 }
 
+type authenticatedHTTPClient struct{}
+
+func (h *authenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	w := httptest.NewRecorder()
+
+	// Ensure we're sending the right User-Agent
+	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
+		w.WriteHeader(500)
+	}
+	w.Write([]byte(validRepoIndexYAML))
+	return w.Result(), nil
+}
+
 type badIconClient struct{}
 
 func (h *badIconClient) Do(req *http.Request) (*http.Response, error) {
@@ -108,6 +121,10 @@ var testChartValues = "image: test"
 
 func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
+	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
+		w.WriteHeader(500)
+		return w.Result(), nil
+	}
 	gzw := gzip.NewWriter(w)
 	files := []tarballFile{{h.c.Name + "/Chart.yaml", "should be a Chart.yaml here..."}}
 	if !h.skipValues {
@@ -158,6 +175,12 @@ func Test_fetchRepoIndex(t *testing.T) {
 			assert.NoErr(t, err)
 		})
 	}
+
+	t.Run("authenticated request", func(t *testing.T) {
+		netClient = &authenticatedHTTPClient{}
+		_, err := fetchRepoIndex(repo{URL: "https://my.examplerepo.com", AccessToken: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
+		assert.NoErr(t, err)
+	})
 
 	t.Run("failed request", func(t *testing.T) {
 		netClient = &badHTTPClient{}
@@ -291,7 +314,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
+	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com", AccessToken: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
 	cv := charts[0].ChartVersions[0]
 
 	t.Run("http error", func(t *testing.T) {
