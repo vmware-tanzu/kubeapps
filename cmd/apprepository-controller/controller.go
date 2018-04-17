@@ -434,17 +434,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 						Image:   repoSyncImage,
 						Command: []string{"/chart-repo"},
 						Args:    apprepoSyncJobArgs(apprepo),
-						Env: []corev1.EnvVar{
-							{
-								Name: "MONGO_PASSWORD",
-								ValueFrom: &corev1.EnvVarSource{
-									SecretKeyRef: &corev1.SecretKeySelector{
-										LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"},
-										Key:                  "mongodb-root-password",
-									},
-								},
-							},
-						},
+						Env:     apprepoSyncJobEnvVars(apprepo),
 					},
 				},
 			},
@@ -521,6 +511,27 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 		apprepo.GetName(),
 		apprepo.Spec.URL,
 	}
+}
+
+// apprepoSyncJobEnvVars returns a list of env variables for the sync container
+func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvVar {
+	var envVars []corev1.EnvVar
+	envVars = append(envVars, corev1.EnvVar{
+		Name: "MONGO_PASSWORD",
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"},
+				Key:                  "mongodb-root-password",
+			},
+		},
+	})
+	if apprepo.Spec.Auth != nil {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:      "AUTHORIZATION_HEADER",
+			ValueFrom: apprepo.Spec.Auth,
+		})
+	}
+	return envVars
 }
 
 // apprepoCleanupJobArgs returns a list of args for the repo cleanup container
