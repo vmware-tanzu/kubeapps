@@ -16,11 +16,18 @@ export class Auth {
     if (!token) {
       return [];
     }
-    return ["base64url.bearer.authorization.k8s.io." + btoa(token).replace(/=*$/g, "")];
+    return [
+      "base64url.bearer.authorization.k8s.io." + btoa(token).replace(/=*$/g, ""),
+      "binary.k8s.io",
+    ];
   }
 
-  public static fetchOptions() {
-    return { headers: { Authorization: `Bearer ${this.getAuthToken()}` } };
+  public static fetchOptions(): RequestInit {
+    const headers = new Headers();
+    headers.append("Authorization", `Bearer ${this.getAuthToken()}`);
+    return {
+      headers,
+    };
   }
 }
 
