@@ -178,7 +178,7 @@ func Test_fetchRepoIndex(t *testing.T) {
 
 	t.Run("authenticated request", func(t *testing.T) {
 		netClient = &authenticatedHTTPClient{}
-		_, err := fetchRepoIndex(repo{URL: "https://my.examplerepo.com", AccessToken: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
+		_, err := fetchRepoIndex(repo{URL: "https://my.examplerepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
 		assert.NoErr(t, err)
 	})
 
@@ -314,7 +314,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com", AccessToken: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
+	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
 	cv := charts[0].ChartVersions[0]
 
 	t.Run("http error", func(t *testing.T) {
