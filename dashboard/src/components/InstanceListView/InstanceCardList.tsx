@@ -31,9 +31,9 @@ export const InstanceCardList = (props: InstanceCardListProps) => {
                 svcClass &&
                 svcClass.spec.externalMetadata &&
                 svcClass.spec.externalMetadata.imageUrl;
-              const link = `/services/brokers/${broker}/instances/${instance.metadata.namespace}/${
-                instance.metadata.name
-              }/`;
+              const link = `/services/brokers/${broker}/instances/ns/${
+                instance.metadata.namespace
+              }/${instance.metadata.name}/`;
 
               const card = (
                 <Card key={instance.metadata.uid} responsive={true} responsiveColumns={3}>
