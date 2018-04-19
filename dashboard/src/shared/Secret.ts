@@ -3,14 +3,22 @@ import axios from "axios";
 import { ISecret, IStatus } from "./types";
 
 export default class Secret {
-  public static async create(name: string, secrets: any, namespace: string = "default") {
+  public static async create(
+    name: string,
+    secrets: any,
+    owner: any | undefined,
+    namespace: string = "default",
+  ) {
     const url = Secret.getLink(namespace);
     try {
       const { data } = await axios.post<ISecret>(url, {
         apiVersion: "v1",
         data: secrets,
         kind: "Secret",
-        metadata: { name },
+        metadata: {
+          name,
+          ownerReferences: [Secret.getOwnerReference(owner)],
+        },
         type: "Opaque",
       });
       return data;
@@ -34,6 +42,18 @@ export default class Secret {
     const url = Secret.getLink(namespace);
     const { data } = await axios.get<ISecret>(url);
     return data;
+  }
+
+  private static getOwnerReference(owner: any) {
+    return owner
+      ? {
+          apiVersion: owner.apiVersion,
+          blockOwnerDeletion: true,
+          kind: owner.kind,
+          name: owner.metadata.name,
+          uid: owner.metadata.uid,
+        }
+      : undefined;
   }
 
   private static getLink(namespace: string, name?: string): string {

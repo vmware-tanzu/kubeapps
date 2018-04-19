@@ -51,14 +51,10 @@ export type AppReposAction = typeof allActions[number];
 
 export const deleteRepo = (name: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
-    const repo = await AppRepository.get(name);
     await AppRepository.delete(name);
     dispatch(requestRepos());
     const repos = await AppRepository.list();
     dispatch(receiveRepos(repos.items));
-    if (repo.spec.auth && repo.spec.auth.secretKeyRef.name) {
-      Secret.delete(repo.spec.auth.secretKeyRef.name, "kubeapps");
-    }
     return repos;
   };
 };
@@ -89,9 +85,8 @@ export const fetchRepos = () => {
 export const installRepo = (name: string, url: string, authHeader: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
     let auth;
+    const secretName = `apprepo-${name}-secrets`;
     if (authHeader.length) {
-      const secretName = `apprepo-${name}-secrets`;
-      await Secret.create(secretName, { authorizationHeader: btoa(authHeader) }, "kubeapps");
       auth = {
         secretKeyRef: {
           key: "authorizationHeader",
@@ -102,6 +97,9 @@ export const installRepo = (name: string, url: string, authHeader: string) => {
     dispatch(addRepo());
     const added = await AppRepository.create(name, url, auth);
     dispatch(addedRepo(added));
+    if (authHeader.length) {
+      await Secret.create(secretName, { authorizationHeader: btoa(authHeader) }, added, "kubeapps");
+    }
     return added;
   };
 };
