@@ -3,8 +3,8 @@ import axios from "axios";
 import { ISecret, IStatus } from "./types";
 
 export default class Secret {
-  public static async create(name: string, secrets: any) {
-    const url = Secret.getLink();
+  public static async create(name: string, secrets: any, namespace: string = "default") {
+    const url = Secret.getLink(namespace);
     try {
       const { data } = await axios.post<ISecret>(url, {
         apiVersion: "v1",
@@ -19,24 +19,24 @@ export default class Secret {
     }
   }
 
-  public static async delete(name: string) {
-    const url = this.getLink(name);
+  public static async delete(name: string, namespace: string = "default") {
+    const url = this.getLink(namespace, name);
     return axios.delete(url);
   }
 
-  public static async get(name: string) {
-    const url = this.getLink(name);
+  public static async get(name: string, namespace: string = "default") {
+    const url = this.getLink(namespace, name);
     const { data } = await axios.get<ISecret>(url);
     return data;
   }
 
-  public static async list() {
-    const url = Secret.getLink();
+  public static async list(namespace: string = "default") {
+    const url = Secret.getLink(namespace);
     const { data } = await axios.get<ISecret>(url);
     return data;
   }
 
-  private static getLink(name?: string): string {
-    return `/api/kube/api/v1/namespaces/kubeapps/secrets${name ? `/${name}` : ""}`;
+  private static getLink(namespace: string, name?: string): string {
+    return `/api/kube/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
   }
 }

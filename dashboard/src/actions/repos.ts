@@ -57,7 +57,7 @@ export const deleteRepo = (name: string) => {
     const repos = await AppRepository.list();
     dispatch(receiveRepos(repos.items));
     if (repo.spec.auth && repo.spec.auth.secretKeyRef.name) {
-      Secret.delete(repo.spec.auth.secretKeyRef.name);
+      Secret.delete(repo.spec.auth.secretKeyRef.name, "kubeapps");
     }
     return repos;
   };
@@ -91,7 +91,7 @@ export const installRepo = (name: string, url: string, authHeader: string) => {
     let auth;
     if (authHeader.length) {
       const secretName = `apprepo-${name}-secrets`;
-      await Secret.create(secretName, { authorizationHeader: btoa(authHeader) });
+      await Secret.create(secretName, { authorizationHeader: btoa(authHeader) }, "kubeapps");
       auth = {
         secretKeyRef: {
           key: "authorizationHeader",
