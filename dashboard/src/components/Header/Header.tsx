@@ -14,7 +14,7 @@ import "./Header.css";
 
 interface IHeaderProps {
   authenticated: boolean;
-  getNamespaces: () => Promise<void>;
+  fetchNamespaces: () => Promise<void>;
   logout: () => void;
   namespace: INamespaceState;
   pathname: string;
@@ -68,7 +68,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   }
 
   public render() {
-    const { getNamespaces, namespace, authenticated: showNav } = this.props;
+    const { fetchNamespaces, namespace, authenticated: showNav } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -110,7 +110,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 <NamespaceSelector
                   namespace={namespace}
                   onChange={this.handleNamespaceChange}
-                  getNamespaces={getNamespaces}
+                  fetchNamespaces={fetchNamespaces}
                 />
                 <ul className="header__nav__menu" role="menubar">
                   <li

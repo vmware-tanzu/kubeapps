@@ -21,7 +21,7 @@ export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", (namespaces:
 const allActions = [setNamespace, receiveNamespaces].map(getReturnOfExpression);
 export type NamespaceAction = typeof allActions[number];
 
-export function getNamespaces() {
+export function fetchNamespaces() {
   return async (dispatch: Dispatch<IStoreState>) => {
     const namespaces = await Namespace.list();
     const namespaceStrings = namespaces.items.map((n: IResource) => n.metadata.name);

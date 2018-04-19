@@ -8,12 +8,12 @@ import "./NamespaceSelector.css";
 interface INamespaceSelectorProps {
   namespace: INamespaceState;
   onChange: (ns: string) => any;
-  getNamespaces: () => Promise<void>;
+  fetchNamespaces: () => Promise<void>;
 }
 
 class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
   public componentDidMount() {
-    this.props.getNamespaces();
+    this.props.fetchNamespaces();
   }
 
   public render() {

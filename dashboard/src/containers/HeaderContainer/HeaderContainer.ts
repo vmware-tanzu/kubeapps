@@ -25,7 +25,7 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    getNamespaces: () => dispatch(actions.namespace.getNamespaces()),
+    fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
     logout: (token: string) => dispatch(actions.auth.logout()),
     push: (path: string) => dispatch(push(path)),
     setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),
