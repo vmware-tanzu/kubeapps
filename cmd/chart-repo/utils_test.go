@@ -79,7 +79,7 @@ type authenticatedHTTPClient struct{}
 func (h *authenticatedHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
 
-	// Ensure we're sending the right User-Agent
+	// Ensure we're sending the right Authorization header
 	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
 		w.WriteHeader(500)
 	}
@@ -121,10 +121,6 @@ var testChartValues = "image: test"
 
 func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
 	w := httptest.NewRecorder()
-	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
-		w.WriteHeader(500)
-		return w.Result(), nil
-	}
 	gzw := gzip.NewWriter(w)
 	files := []tarballFile{{h.c.Name + "/Chart.yaml", "should be a Chart.yaml here..."}}
 	if !h.skipValues {
@@ -135,6 +131,27 @@ func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
 	}
 	createTestTarball(gzw, files)
 	gzw.Flush()
+	return w.Result(), nil
+}
+
+type authenticatedTarballClient struct {
+	c chart
+}
+
+func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, error) {
+	w := httptest.NewRecorder()
+
+	// Ensure we're sending the right Authorization header
+	if !strings.Contains(req.Header.Get("Authorization"), "Bearer ThisSecretAccessTokenAuthenticatesTheClient") {
+		w.WriteHeader(500)
+	} else {
+		gzw := gzip.NewWriter(w)
+		files := []tarballFile{{h.c.Name + "/Chart.yaml", "should be a Chart.yaml here..."}}
+		files = append(files, tarballFile{h.c.Name + "/values.yaml", testChartValues})
+		files = append(files, tarballFile{h.c.Name + "/README.md", testChartReadme})
+		createTestTarball(gzw, files)
+		gzw.Flush()
+	}
 	return w.Result(), nil
 }
 
@@ -314,7 +331,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
+	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient1s"})
 	cv := charts[0].ChartVersions[0]
 
 	t.Run("http error", func(t *testing.T) {
@@ -330,6 +347,17 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		m.On("Insert", chartFiles{fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version), "", "", charts[0].Repo})
+		dbSession := mockstore.NewMockSession(&m)
+		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
+		assert.NoErr(t, err)
+		m.AssertExpectations(t)
+	})
+
+	t.Run("authenticated request", func(t *testing.T) {
+		netClient = &authenticatedTarballClient{c: charts[0]}
+		m := mock.Mock{}
+		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
+		m.On("Insert", chartFiles{fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version), testChartReadme, testChartValues, charts[0].Repo})
 		dbSession := mockstore.NewMockSession(&m)
 		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
