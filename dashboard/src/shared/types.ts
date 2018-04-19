@@ -190,7 +190,16 @@ export interface IAppRepository
         resourceVersion: string;
         selfLink: string;
       },
-      { type: string; url: string; auth: any },
+      {
+        type: string;
+        url: string;
+        auth: {
+          secretKeyRef: {
+            name: string;
+            key: string;
+          };
+        };
+      },
       undefined
     > {}
 
