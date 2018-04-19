@@ -31,7 +31,6 @@ class Root extends React.Component {
   public static exactRoutes: {
     [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
   } = {
-    "/apps": AppList,
     "/apps/ns/:namespace": AppList,
     "/apps/ns/:namespace/:releaseName": AppView,
     "/apps/ns/:namespace/edit/:releaseName": AppEdit,
@@ -42,13 +41,11 @@ class Root extends React.Component {
     "/charts/:repo/:id/versions/:version": ChartView,
     "/config/brokers": ServiceCatalogContainer,
     "/config/repos": RepoListContainer,
-    "/functions": FunctionListContainer,
     "/functions/ns/:namespace": FunctionListContainer,
     "/functions/ns/:namespace/:name": FunctionViewContainer,
     "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
     "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": InstanceView,
     "/services/classes": ClassListContainer,
-    "/services/instances": InstanceListViewContainer,
     "/services/instances/ns/:namespace": InstanceListViewContainer,
   };
 
