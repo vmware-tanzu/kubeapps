@@ -8,7 +8,8 @@ import { IStoreState } from "../shared/types";
 
 function mapStateToProps({ catalog }: IStoreState) {
   return {
-    ...catalog,
+    brokers: catalog.brokers,
+    isInstalled: catalog.isInstalled,
   };
 }
 
@@ -17,7 +18,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());
     },
-    getCatalog: () => dispatch(actions.catalog.getCatalog()),
+    getBrokers: () => dispatch(actions.catalog.getBrokers()),
     sync: (broker: IServiceBroker) => dispatch(actions.catalog.sync(broker)),
   };
 }

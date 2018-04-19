@@ -1,5 +1,6 @@
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
+import { push } from "react-router-redux";
 import { Dispatch } from "redux";
 
 import actions from "../../actions";
@@ -24,7 +25,10 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
+    getNamespaces: () => dispatch(actions.namespace.getNamespaces()),
     logout: (token: string) => dispatch(actions.auth.logout()),
+    push: (path: string) => dispatch(push(path)),
+    setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),
   };
 }
 

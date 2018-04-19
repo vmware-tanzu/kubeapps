@@ -29,8 +29,11 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    getCatalog: async () => {
-      dispatch(actions.catalog.getCatalog());
+    getClasses: async () => {
+      dispatch(actions.catalog.getClasses());
+    },
+    getPlans: async () => {
+      dispatch(actions.catalog.getPlans());
     },
     provision: async (
       instanceName: string,
@@ -42,7 +45,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
       await dispatch(
         actions.catalog.provision(instanceName, namespace, className, planName, parameters),
       );
-      return dispatch(actions.catalog.getCatalog());
+      return dispatch(actions.catalog.getCatalog(namespace));
     },
     push: (location: string) => dispatch(push(location)),
   };

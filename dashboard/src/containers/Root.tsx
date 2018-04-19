@@ -75,7 +75,7 @@ class Root extends React.Component {
 
   public rootNamespacedRedirect = (props: any) => {
     const { namespace } = store.getState();
-    return <Redirect to={`/apps/ns/${namespace}`} />;
+    return <Redirect to={`/apps/ns/${namespace.current}`} />;
   };
 }
 

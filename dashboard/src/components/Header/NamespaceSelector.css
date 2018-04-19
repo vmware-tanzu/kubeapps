@@ -1,0 +1,20 @@
+.NamespaceSelector {
+  width: 150px;
+  margin-top: -25px;
+}
+
+.NamespaceSelector label {
+  position: relative;
+  top: 3px;
+}
+
+.NamespaceSelector .Select-input input {
+  height: 17px;
+}
+.NamespaceSelector .Select-input input:focus {
+  box-shadow: none;
+  border-color: none;
+}
+.NamespaceSelector .Select-clear {
+  line-height: inherit;
+}

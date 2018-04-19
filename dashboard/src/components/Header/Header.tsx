@@ -2,18 +2,24 @@ import * as React from "react";
 import { NavLink } from "react-router-dom";
 import logo from "../../logo.svg";
 
+import { INamespaceState } from "../../reducers/namespace";
 import HeaderLink, { IHeaderLinkProps } from "./HeaderLink";
+import NamespaceSelector from "./NamespaceSelector";
 
 // Icons
 import { LogOut, Settings } from "react-feather";
 
+import "react-select/dist/react-select.css";
 import "./Header.css";
 
 interface IHeaderProps {
   authenticated: boolean;
+  getNamespaces: () => Promise<void>;
   logout: () => void;
-  namespace: string;
+  namespace: INamespaceState;
   pathname: string;
+  push: (path: string) => void;
+  setNamespace: (ns: string) => void;
 }
 
 interface IHeaderState {
@@ -62,7 +68,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   }
 
   public render() {
-    const { namespace, authenticated: showNav } = this.props;
+    const { getNamespaces, namespace, authenticated: showNav } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -93,7 +99,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 <ul className="header__nav__menu" role="menubar">
                   {this.links.map(link => (
                     <li key={link.to}>
-                      <HeaderLink {...link} currentNamespace={namespace} />
+                      <HeaderLink {...link} currentNamespace={namespace.current} />
                     </li>
                   ))}
                 </ul>
@@ -101,6 +107,11 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
             )}
             {showNav && (
               <div className="header__nav header__nav-config">
+                <NamespaceSelector
+                  namespace={namespace}
+                  onChange={this.handleNamespaceChange}
+                  getNamespaces={getNamespaces}
+                />
                 <ul className="header__nav__menu" role="menubar">
                   <li
                     onMouseEnter={this.openSubmenu}
@@ -160,6 +171,16 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   private handleLogout = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     this.props.logout();
+  };
+
+  private handleNamespaceChange = (ns: string) => {
+    const { pathname, push, setNamespace } = this.props;
+    const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
+    if (to === pathname) {
+      setNamespace(ns);
+    } else {
+      push(to);
+    }
   };
 }
 

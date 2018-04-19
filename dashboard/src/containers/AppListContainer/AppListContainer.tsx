@@ -5,15 +5,16 @@ import actions from "../../actions";
 import AppList from "../../components/AppList";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ apps }: IStoreState) {
+function mapStateToProps({ apps, namespace }: IStoreState) {
   return {
     apps,
+    namespace: namespace.current,
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    fetchApps: () => dispatch(actions.apps.fetchApps()),
+    fetchApps: (ns: string) => dispatch(actions.apps.fetchApps(ns)),
   };
 }
 

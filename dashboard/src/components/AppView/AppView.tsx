@@ -40,6 +40,11 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public async componentWillReceiveProps(nextProps: IAppViewProps) {
+    const { releaseName, getApp, namespace } = this.props;
+    if (nextProps.namespace !== namespace) {
+      getApp(releaseName, nextProps.namespace);
+      return;
+    }
     const newApp = nextProps.app;
     if (!newApp) {
       return;
@@ -61,7 +66,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const deployments = manifest.filter(d => d.kind === "Deployment");
     const services = manifest.filter(d => d.kind === "Service");
     const apiBase = `ws://${window.location.host}/api/kube`;
-    const sockets: WebSocket[] = [];
+    const sockets = this.state.sockets;
     for (const d of deployments) {
       const s = new WebSocket(
         `${apiBase}/apis/apps/v1beta1/namespaces/${

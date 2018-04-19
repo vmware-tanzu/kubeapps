@@ -23,16 +23,13 @@ function mapStateToProps({ functions }: IStoreState, { match: { params } }: IRou
   };
 }
 
-function mapDispatchToProps(
-  dispatch: Dispatch<IStoreState>,
-  { match: { params: { name, namespace } } }: IRouteProps,
-) {
+function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    deleteFunction: () => dispatch(actions.functions.deleteFunction(name, namespace)),
-    getFunction: () => dispatch(actions.functions.getFunction(name, namespace)),
+    deleteFunction: (n: string, ns: string) => dispatch(actions.functions.deleteFunction(n, ns)),
+    getFunction: (n: string, ns: string) => dispatch(actions.functions.getFunction(n, ns)),
     getPodName: (fn: IFunction) => dispatch(actions.functions.getPodName(fn)),
     updateFunction: (fn: IFunction) =>
-      dispatch(actions.functions.updateFunction(name, namespace, fn)),
+      dispatch(actions.functions.updateFunction(fn.metadata.name, fn.metadata.namespace, fn)),
   };
 }
 

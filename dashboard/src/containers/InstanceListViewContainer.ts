@@ -13,7 +13,7 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params } }: IRouteProps) {
   const brokers = catalog.brokers;
   const plans = catalog.plans;
   const classes = catalog.classes;
@@ -24,6 +24,7 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
     classes,
     instances,
     isInstalled,
+    namespace: namespace.current,
     plans,
   };
 }
@@ -33,8 +34,8 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());
     },
-    getCatalog: async () => {
-      dispatch(actions.catalog.getCatalog());
+    getCatalog: async (ns: string) => {
+      dispatch(actions.catalog.getCatalog(ns));
     },
   };
 }
