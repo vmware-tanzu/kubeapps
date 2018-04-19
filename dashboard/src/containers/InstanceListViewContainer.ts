@@ -22,6 +22,7 @@ function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params 
   return {
     brokers,
     classes,
+    error: catalog.errors.fetch,
     instances,
     isInstalled,
     namespace: namespace.current,

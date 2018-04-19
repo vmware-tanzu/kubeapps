@@ -82,9 +82,9 @@ export class HelmRelease {
     }, new Map<string, IHelmRelease>());
 
     // Get the HelmReleaseConfigMaps for all HelmReleases
-    const { data: { items: allConfigMaps } } = await axios.get<{ items: IHelmReleaseConfigMap[] }>(
-      this.getConfigMapsLink(Object.keys(helmReleaseMap)),
-    );
+    const { data: { items: allConfigMaps } } = await axios.get<{
+      items: IHelmReleaseConfigMap[];
+    }>(this.getConfigMapsLink(Object.keys(helmReleaseMap)));
 
     // Convert list of HelmReleaseConfigMaps to release name -> latest
     // HelmReleaseConfigMap pair

@@ -9,6 +9,14 @@ export const receiveFunctions = createAction("RECEIVE_FUNCTIONS", (functions: IF
   functions,
   type: "RECEIVE_FUNCTIONS",
 }));
+export const errorFunctions = createAction(
+  "ERROR_FUNCTIONS",
+  (err: Error, op: "create" | "update" | "fetch" | "delete") => ({
+    err,
+    op,
+    type: "ERROR_FUNCTIONS",
+  }),
+);
 export const selectFunction = createAction("SELECT_FUNCTION", (f: IFunction) => ({
   f,
   type: "SELECT_FUNCTION",
@@ -17,9 +25,13 @@ export const setPodName = createAction("SET_FUNCTION_POD_NAME", (name: string) =
   name,
   type: "SET_FUNCTION_POD_NAME",
 }));
-const allActions = [requestFunctions, receiveFunctions, selectFunction, setPodName].map(
-  getReturnOfExpression,
-);
+const allActions = [
+  requestFunctions,
+  receiveFunctions,
+  errorFunctions,
+  selectFunction,
+  setPodName,
+].map(getReturnOfExpression);
 export type FunctionsAction = typeof allActions[number];
 
 export function fetchFunctions(ns?: string) {
@@ -28,47 +40,71 @@ export function fetchFunctions(ns?: string) {
       ns = undefined;
     }
     dispatch(requestFunctions());
-    const functionList = await Function.list(ns);
-    dispatch(receiveFunctions(functionList.items));
-    return functionList;
+    try {
+      const functionList = await Function.list(ns);
+      dispatch(receiveFunctions(functionList.items));
+    } catch (e) {
+      dispatch(errorFunctions(e, "fetch"));
+    }
   };
 }
 
 export function getFunction(name: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestFunctions());
-    const f = await Function.get(name, namespace);
-    dispatch(selectFunction(f));
-    return f;
+    try {
+      const f = await Function.get(name, namespace);
+      dispatch(selectFunction(f));
+    } catch (e) {
+      dispatch(errorFunctions(e, "fetch"));
+    }
   };
 }
 
 export function createFunction(name: string, namespace: string, spec: IFunction["spec"]) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    return Function.create(name, namespace, spec);
+    try {
+      await Function.create(name, namespace, spec);
+      return true;
+    } catch (e) {
+      dispatch(errorFunctions(e, "create"));
+      return false;
+    }
   };
 }
 
 export function deleteFunction(name: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    return Function.delete(name, namespace);
+    try {
+      await Function.delete(name, namespace);
+      return true;
+    } catch (e) {
+      dispatch(errorFunctions(e, "delete"));
+      return false;
+    }
   };
 }
 
 export function updateFunction(name: string, namespace: string, newFn: IFunction) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    const f = await Function.update(name, namespace, newFn);
-    dispatch(selectFunction(f));
-    return f;
+    try {
+      const f = await Function.update(name, namespace, newFn);
+      dispatch(selectFunction(f));
+    } catch (e) {
+      dispatch(errorFunctions(e, "update"));
+    }
   };
 }
 
 export function getPodName(fn: IFunction) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    const name = await Function.getPodName(fn);
-    if (name) {
-      dispatch(setPodName(name));
+    try {
+      const name = await Function.getPodName(fn);
+      if (name) {
+        dispatch(setPodName(name));
+      }
+    } catch (e) {
+      dispatch(errorFunctions(e, "fetch"));
     }
-    return name;
   };
 }

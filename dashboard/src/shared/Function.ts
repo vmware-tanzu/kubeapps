@@ -1,6 +1,6 @@
 import { axios } from "./Auth";
 
-import { IFunction, IFunctionList, IResource, IStatus } from "./types";
+import { IFunction, IFunctionList, IResource } from "./types";
 
 export default class Function {
   public static async list(namespace?: string) {
@@ -29,22 +29,18 @@ export default class Function {
   }
 
   public static async create(name: string, namespace: string, spec: IFunction["spec"]) {
-    try {
-      const { data } = await axios.post<IFunction>(
-        `${Function.APIEndpoint}/namespaces/${namespace}/functions`,
-        {
-          apiVersion: "kubeless.io/v1beta1",
-          kind: "Function",
-          metadata: {
-            name,
-          },
-          spec,
+    const { data } = await axios.post<IFunction>(
+      `${Function.APIEndpoint}/namespaces/${namespace}/functions`,
+      {
+        apiVersion: "kubeless.io/v1beta1",
+        kind: "Function",
+        metadata: {
+          name,
         },
-      );
-      return data;
-    } catch (err) {
-      throw new Error((err.response.data as IStatus).message);
-    }
+        spec,
+      },
+    );
+    return data;
   }
 
   public static async update(name: string, namespace: string, newFn: IFunction) {
@@ -56,9 +52,6 @@ export default class Function {
     const { data } = await axios.delete(Function.getSelfLink(name, namespace));
     return data;
   }
-
-  //   public static async create(name: string, url: string) {
-  //   }
 
   private static APIBase: string = "/api/kube";
   private static APIEndpoint: string = `${Function.APIBase}/apis/kubeless.io/v1beta1`;

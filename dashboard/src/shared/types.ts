@@ -5,6 +5,22 @@ import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
 
+// Allow defining multiple error classes
+// tslint:disable:max-classes-per-file
+export class ForbiddenError extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export class NotFoundError extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export interface IRepo {
   name: string;
   url: string;
@@ -130,6 +146,8 @@ export interface IApp {
 
 export interface IAppState {
   isFetching: boolean;
+  error?: Error;
+  deleteError?: Error;
   // currently items are always Helm releases
   items: IApp[];
   selected?: IApp;
@@ -271,4 +289,12 @@ export interface IRouterPathname {
       pathname: string;
     };
   };
+}
+
+export interface IRBACRole {
+  apiGroup: string;
+  namespace?: string;
+  clusterWide?: boolean;
+  resource: string;
+  verbs: string[];
 }

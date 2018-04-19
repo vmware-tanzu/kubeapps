@@ -38,6 +38,14 @@ export const receiveClasses = createAction(
     type: "RECEIVE_CLASSES",
   }),
 );
+export const errorCatalog = createAction(
+  "ERROR_CATALOG",
+  (err: Error, op: "fetch" | "create" | "delete" | "deprovision") => ({
+    err,
+    op,
+    type: "ERROR_CATALOG",
+  }),
+);
 
 const actions = [
   checkCatalogInstall,
@@ -53,6 +61,7 @@ const actions = [
   receiveBindings,
   requestClasses,
   receiveClasses,
+  errorCatalog,
 ].map(getReturnOfExpression);
 
 export function provision(
@@ -63,13 +72,49 @@ export function provision(
   parameters: {},
 ) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    return ServiceInstance.create(releaseName, namespace, className, planName, parameters);
+    try {
+      await ServiceInstance.create(releaseName, namespace, className, planName, parameters);
+      return true;
+    } catch (e) {
+      dispatch(errorCatalog(e, "create"));
+      return false;
+    }
+  };
+}
+
+export function addBinding(bindingName: string, instanceName: string, namespace: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    try {
+      await ServiceBinding.create(bindingName, instanceName, namespace);
+      return true;
+    } catch (e) {
+      dispatch(errorCatalog(e, "create"));
+      return false;
+    }
+  };
+}
+
+export function removeBinding(name: string, namespace: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    try {
+      await ServiceBinding.delete(name, namespace);
+      return true;
+    } catch (e) {
+      dispatch(errorCatalog(e, "delete"));
+      return false;
+    }
   };
 }
 
 export function deprovision(instance: IServiceInstance) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    return ServiceCatalog.deprovisionInstance(instance);
+    try {
+      await ServiceCatalog.deprovisionInstance(instance);
+      return true;
+    } catch (e) {
+      dispatch(errorCatalog(e, "deprovision"));
+      return false;
+    }
   };
 }
 
@@ -87,27 +132,39 @@ export function getBindings(ns?: string) {
       ns = undefined;
     }
     dispatch(requestBindings());
-    const bindings = await ServiceBinding.list(ns);
-    dispatch(receiveBindings(bindings));
-    return bindings;
+    try {
+      const bindings = await ServiceBinding.list(ns);
+      dispatch(receiveBindings(bindings));
+      return bindings;
+    } catch (e) {
+      return dispatch(errorCatalog(e, "fetch"));
+    }
   };
 }
 
 export function getBrokers() {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestBrokers());
-    const brokers = await ServiceCatalog.getServiceBrokers();
-    dispatch(receiveBrokers(brokers));
-    return brokers;
+    try {
+      const brokers = await ServiceCatalog.getServiceBrokers();
+      dispatch(receiveBrokers(brokers));
+      return brokers;
+    } catch (e) {
+      return dispatch(errorCatalog(e, "fetch"));
+    }
   };
 }
 
 export function getClasses() {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestClasses());
-    const classes = await ServiceCatalog.getServiceClasses();
-    dispatch(receiveClasses(classes));
-    return classes;
+    try {
+      const classes = await ServiceCatalog.getServiceClasses();
+      dispatch(receiveClasses(classes));
+      return classes;
+    } catch (e) {
+      return dispatch(errorCatalog(e, "fetch"));
+    }
   };
 }
 
@@ -117,18 +174,26 @@ export function getInstances(ns?: string) {
       ns = undefined;
     }
     dispatch(requestInstances());
-    const instances = await ServiceInstance.list(ns);
-    dispatch(receiveInstances(instances));
-    return instances;
+    try {
+      const instances = await ServiceInstance.list(ns);
+      dispatch(receiveInstances(instances));
+      return instances;
+    } catch (e) {
+      return dispatch(errorCatalog(e, "fetch"));
+    }
   };
 }
 
 export function getPlans() {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestPlans());
-    const plans = await ServiceCatalog.getServicePlans();
-    dispatch(receivePlans(plans));
-    return plans;
+    try {
+      const plans = await ServiceCatalog.getServicePlans();
+      dispatch(receivePlans(plans));
+      return plans;
+    } catch (e) {
+      return dispatch(errorCatalog(e, "fetch"));
+    }
   };
 }
 

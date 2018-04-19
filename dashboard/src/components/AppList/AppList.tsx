@@ -1,8 +1,9 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IAppState } from "../../shared/types";
+import { ForbiddenError, IAppState, IRBACRole } from "../../shared/types";
 import { CardGrid } from "../Card";
+import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
@@ -11,21 +12,37 @@ interface IAppListProps {
   namespace: string;
 }
 
-class AppList extends React.Component<IAppListProps> {
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "helm.bitnami.com",
+    resource: "helmreleases",
+    verbs: ["list"],
+  },
+  {
+    apiGroup: "",
+    namespace: "kubeapps",
+    resource: "configmaps",
+    verbs: ["list"],
+  },
+];
+
+class AppList extends React.Component<IAppListProps, { error?: boolean }> {
+  public state: { error?: boolean } = {};
   public componentDidMount() {
     const { fetchApps, namespace } = this.props;
     fetchApps(namespace);
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
-    const { fetchApps, namespace } = this.props;
-    if (nextProps.namespace !== namespace) {
+    const { apps: { error }, fetchApps, namespace } = this.props;
+    // refetch if new namespace or error removed due to location change
+    if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
       fetchApps(nextProps.namespace);
     }
   }
 
   public render() {
-    const { isFetching, items } = this.props.apps;
+    const { error, isFetching, items } = this.props.apps;
 
     return (
       <section className="AppList">
@@ -42,7 +59,15 @@ class AppList extends React.Component<IAppListProps> {
           </div>
           <hr />
         </header>
-        <main>{isFetching ? <div>Loading</div> : this.appListItems(items)}</main>
+        <main>
+          {isFetching ? (
+            <div>Loading</div>
+          ) : error ? (
+            this.renderError(error)
+          ) : (
+            this.appListItems(items)
+          )}
+        </main>
       </section>
     );
   }
@@ -68,6 +93,19 @@ class AppList extends React.Component<IAppListProps> {
         </CardGrid>
       );
     }
+  }
+
+  private renderError(error: Error) {
+    const { namespace } = this.props;
+    return error instanceof ForbiddenError ? (
+      <PermissionsErrorAlert
+        action="list Applications"
+        namespace={namespace}
+        roles={RequiredRBACRoles}
+      />
+    ) : (
+      <UnexpectedErrorAlert />
+    );
   }
 }
 

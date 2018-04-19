@@ -2,7 +2,7 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { HelmRelease } from "../shared/HelmRelease";
-import { IApp, IStoreState } from "../shared/types";
+import { IApp, IChartVersion, IStoreState } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 export const receiveApps = createAction("RECEIVE_APPS", (apps: IApp[]) => {
@@ -11,6 +11,14 @@ export const receiveApps = createAction("RECEIVE_APPS", (apps: IApp[]) => {
     type: "RECEIVE_APPS",
   };
 });
+export const errorApps = createAction("ERROR_APPS", (err: Error) => ({
+  err,
+  type: "ERROR_APPS",
+}));
+export const errorDeleteApp = createAction("ERROR_DELETE_APP", (err: Error) => ({
+  err,
+  type: "ERROR_DELETE_APP",
+}));
 export const selectApp = createAction("SELECT_APP", (app: IApp) => {
   return {
     app,
@@ -18,19 +26,32 @@ export const selectApp = createAction("SELECT_APP", (app: IApp) => {
   };
 });
 
-const allActions = [requestApps, receiveApps, selectApp].map(getReturnOfExpression);
+const allActions = [requestApps, receiveApps, errorApps, errorDeleteApp, selectApp].map(
+  getReturnOfExpression,
+);
 export type AppsAction = typeof allActions[number];
 
 export function getApp(releaseName: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
-    const app = await HelmRelease.getDetails(releaseName, namespace);
-    dispatch(selectApp(app));
+    dispatch(requestApps());
+    try {
+      const app = await HelmRelease.getDetails(releaseName, namespace);
+      dispatch(selectApp(app));
+    } catch (e) {
+      dispatch(errorApps(e));
+    }
   };
 }
 
 export function deleteApp(releaseName: string, namespace: string) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
-    return await HelmRelease.delete(releaseName, namespace);
+  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+    try {
+      await HelmRelease.delete(releaseName, namespace);
+      return true;
+    } catch (e) {
+      dispatch(errorDeleteApp(e));
+      return false;
+    }
   };
 }
 
@@ -40,7 +61,33 @@ export function fetchApps(ns?: string) {
       ns = undefined;
     }
     dispatch(requestApps());
-    const apps = await HelmRelease.getAllWithDetails(ns);
-    dispatch(receiveApps(apps));
+    try {
+      const apps = await HelmRelease.getAllWithDetails(ns);
+      dispatch(receiveApps(apps));
+    } catch (e) {
+      dispatch(errorApps(e));
+    }
+  };
+}
+
+export function deployChart(
+  chartVersion: IChartVersion,
+  releaseName: string,
+  namespace: string,
+  values?: string,
+  resourceVersion?: string,
+) {
+  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+    try {
+      if (resourceVersion) {
+        await HelmRelease.upgrade(releaseName, namespace, chartVersion, values);
+      } else {
+        await HelmRelease.create(releaseName, namespace, chartVersion, values);
+      }
+      return true;
+    } catch (e) {
+      dispatch(errorApps(e));
+      return false;
+    }
   };
 }

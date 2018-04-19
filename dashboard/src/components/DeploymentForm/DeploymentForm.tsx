@@ -3,16 +3,33 @@ import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
 import { IServiceBinding } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion, IHelmRelease } from "../../shared/types";
+import {
+  ForbiddenError,
+  IChartState,
+  IChartVersion,
+  IHelmRelease,
+  IRBACRole,
+  NotFoundError,
+} from "../../shared/types";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
+
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "helm.bitnami.com",
+    resource: "helmreleases",
+    verbs: ["create", "patch"],
+  },
+];
 
 interface IDeploymentFormProps {
   hr?: IHelmRelease;
   bindings: IServiceBinding[];
   chartID: string;
   chartVersion: string;
+  error: Error | undefined;
   selected: IChartState["selected"];
   deployChart: (
     version: IChartVersion,
@@ -20,7 +37,7 @@ interface IDeploymentFormProps {
     namespace: string,
     values?: string,
     resourceVersion?: string,
-  ) => Promise<{}>;
+  ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: (ns: string) => Promise<IServiceBinding[]>;
@@ -36,14 +53,12 @@ interface IDeploymentFormState {
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
-  error?: string;
   selectedBinding: IServiceBinding | undefined;
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
     appValues: undefined,
-    error: undefined,
     isDeploying: false,
     namespace: this.props.namespace,
     releaseName: "",
@@ -164,11 +179,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
     return (
       <div>
-        {this.state.error && (
-          <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
-        )}
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
+            <div className="col-8">{this.props.error && this.renderError()}</div>
             <div className="col-12">
               <h2>{this.props.chartID}</h2>
             </div>
@@ -257,16 +270,25 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     });
   };
 
-  public handleDeploy = (e: React.FormEvent<HTMLFormElement>) => {
+  public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { selected, deployChart, push, hr } = this.props;
     const resourceVersion = hr ? hr.metadata.resourceVersion : undefined;
     this.setState({ isDeploying: true });
     const { releaseName, namespace, appValues } = this.state;
     if (selected.version) {
-      deployChart(selected.version, releaseName, namespace, appValues, resourceVersion)
-        .then(() => push(`/apps/ns/${namespace}/${namespace}-${releaseName}`))
-        .catch(err => this.setState({ isDeploying: false, error: err.toString() }));
+      const deployed = await deployChart(
+        selected.version,
+        releaseName,
+        namespace,
+        appValues,
+        resourceVersion,
+      );
+      if (deployed) {
+        push(`/apps/ns/${namespace}/${namespace}-${releaseName}`);
+      } else {
+        this.setState({ isDeploying: false });
+      }
     }
   };
 
@@ -287,6 +309,33 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
+
+  private renderError() {
+    const { error, hr, namespace } = this.props;
+    const { releaseName } = this.state;
+    const roles = RequiredRBACRoles;
+    if (hr) {
+      roles[0].verbs = ["patch"];
+    } else {
+      roles[0].verbs = ["create"];
+    }
+    switch (error && error.constructor) {
+      case ForbiddenError:
+        return (
+          <PermissionsErrorAlert
+            namespace={namespace}
+            roles={roles}
+            action={`${hr ? "upgrade" : "create"} Application "${releaseName}"`}
+          />
+        );
+      case NotFoundError:
+        return (
+          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
+        );
+      default:
+        return <UnexpectedErrorAlert />;
+    }
+  }
 }
 
 export default DeploymentForm;

@@ -1,7 +1,6 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
-import { HelmRelease } from "shared/HelmRelease";
 import Chart from "../shared/Chart";
 import { IChart, IChartVersion, IStoreState } from "../shared/types";
 import * as url from "../shared/url";
@@ -127,22 +126,6 @@ export function getChartValues(id: string, version: string) {
     } catch (e) {
       dispatch(selectValues(""));
       return "";
-    }
-  };
-}
-
-export function deployChart(
-  chartVersion: IChartVersion,
-  releaseName: string,
-  namespace: string,
-  values?: string,
-  resourceVersion?: string,
-) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
-    if (resourceVersion) {
-      return await HelmRelease.upgrade(releaseName, namespace, chartVersion, values);
-    } else {
-      return await HelmRelease.create(releaseName, namespace, chartVersion, values);
     }
   };
 }

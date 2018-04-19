@@ -1,3 +1,4 @@
+import { LOCATION_CHANGE, LocationChangeAction } from "react-router-redux";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -7,6 +8,12 @@ import { IFunction } from "../shared/types";
 export interface IFunctionState {
   isFetching: boolean;
   items: IFunction[];
+  errors: {
+    create?: Error;
+    delete?: Error;
+    fetch?: Error;
+    update?: Error;
+  };
   selected: {
     function?: IFunction;
     podName?: string;
@@ -14,6 +21,7 @@ export interface IFunctionState {
 }
 
 const initialState: IFunctionState = {
+  errors: {},
   isFetching: false,
   items: [],
   selected: {},
@@ -21,7 +29,7 @@ const initialState: IFunctionState = {
 
 const functionsReducer = (
   state: IFunctionState = initialState,
-  action: FunctionsAction,
+  action: FunctionsAction | LocationChangeAction,
 ): IFunctionState => {
   switch (action.type) {
     case getType(actions.functions.receiveFunctions):
@@ -29,6 +37,13 @@ const functionsReducer = (
       return { ...state, isFetching: false, items: functions };
     case getType(actions.functions.requestFunctions):
       return { ...state, isFetching: true };
+    case getType(actions.functions.errorFunctions):
+      return {
+        ...state,
+        // don't reset the fetch error
+        errors: { fetch: state.errors.fetch, [action.op]: action.err },
+        isFetching: false,
+      };
     case getType(actions.functions.selectFunction):
       const { f } = action;
       return {
@@ -39,6 +54,13 @@ const functionsReducer = (
     case getType(actions.functions.setPodName):
       const { name } = action;
       return { ...state, isFetching: false, selected: { ...state.selected, podName: name } };
+    case LOCATION_CHANGE:
+      return {
+        ...state,
+        errors: {},
+        isFetching: false,
+        selected: {},
+      };
     default:
       return state;
   }

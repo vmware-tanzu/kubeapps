@@ -1,6 +1,5 @@
 import { axios } from "./Auth";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
-import { IStatus } from "./types";
 
 interface IK8sApiSecretResponse {
   kind: string;
@@ -56,21 +55,17 @@ export interface IServiceBinding {
 export class ServiceBinding {
   public static async create(bindingName: string, instanceRefName: string, namespace: string) {
     const url = ServiceBinding.getLink(namespace);
-    try {
-      const { data } = await axios.post<IServiceBinding>(url, {
-        metadata: {
-          name: bindingName,
+    const { data } = await axios.post<IServiceBinding>(url, {
+      metadata: {
+        name: bindingName,
+      },
+      spec: {
+        instanceRef: {
+          name: instanceRefName,
         },
-        spec: {
-          instanceRef: {
-            name: instanceRefName,
-          },
-        },
-      });
-      return data;
-    } catch (e) {
-      throw new Error((e.response.data as IStatus).message);
-    }
+      },
+    });
+    return data;
   }
 
   public static async delete(name: string, namespace: string) {

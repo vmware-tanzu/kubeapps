@@ -16,6 +16,7 @@ interface IRouteProps {
 
 function mapStateToProps({ functions }: IStoreState, { match: { params } }: IRouteProps) {
   return {
+    errors: functions.errors,
     function: functions.selected.function,
     name: params.name,
     namespace: params.namespace,

@@ -7,7 +7,16 @@ import "brace/mode/json";
 import "brace/mode/ruby";
 import "brace/mode/text";
 
-import { IFunction } from "../../shared/types";
+import { ForbiddenError, IFunction, IRBACRole, NotFoundError } from "../../shared/types";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "kubeless.io",
+    resource: "functions",
+    verbs: ["create"],
+  },
+];
 
 // TODO: fetch this from the API/ConfigMap
 const Runtimes = {
@@ -20,7 +29,8 @@ const Runtimes = {
 };
 
 interface IFunctionDeployButtonProps {
-  deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<any>;
+  error?: Error;
+  deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<boolean>;
   namespace: string;
   navigateToFunction: (n: string, ns: string) => Promise<any>;
 }
@@ -75,9 +85,7 @@ class FunctionDeployButton extends React.Component<
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.state.error && (
-            <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
-          )}
+          {this.props.error && <div className="margin-b-bigger">{this.renderError()}</div>}
           <form onSubmit={this.handleDeploy}>
             <div>
               <label htmlFor="name">Name</label>
@@ -130,6 +138,25 @@ class FunctionDeployButton extends React.Component<
     );
   }
 
+  private renderError() {
+    const { error, namespace } = this.props;
+    const { name } = this.state;
+    switch (error && error.constructor) {
+      case ForbiddenError:
+        return (
+          <PermissionsErrorAlert
+            namespace={namespace}
+            roles={RequiredRBACRoles}
+            action={`create Function "${name}"`}
+          />
+        );
+      case NotFoundError:
+        return <NotFoundErrorAlert resource={`Namespace "${namespace}"`} />;
+      default:
+        return <UnexpectedErrorAlert />;
+    }
+  }
+
   private runtimeToDepsMode() {
     const { functionSpec: { runtime } } = this.state;
     if (runtime.match(/node/)) {
@@ -170,11 +197,9 @@ class FunctionDeployButton extends React.Component<
     e.preventDefault();
     const { deployFunction, namespace, navigateToFunction } = this.props;
     const { functionSpec, name } = this.state;
-    try {
-      await deployFunction(name, namespace, functionSpec);
+    const created = await deployFunction(name, namespace, functionSpec);
+    if (created) {
       navigateToFunction(name, namespace);
-    } catch (err) {
-      this.setState({ error: err.toString() });
     }
   };
 
