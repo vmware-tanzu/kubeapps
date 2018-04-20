@@ -2,7 +2,9 @@ import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { Dispatch } from "react-redux";
 import { AppRepository } from "../shared/AppRepository";
-import { IAppRepository, IStoreState } from "../shared/types";
+import Secret from "../shared/Secret";
+
+import { IAppRepository, IOwnerReference, IStoreState } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", (added: IAppRepository) => ({
@@ -80,11 +82,38 @@ export const fetchRepos = () => {
   };
 };
 
-export const installRepo = (name: string, url: string) => {
+export const installRepo = (name: string, url: string, authHeader: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
+    let auth;
+    const secretName = `apprepo-${name}-secrets`;
+    if (authHeader.length) {
+      auth = {
+        header: {
+          secretKeyRef: {
+            key: "authorizationHeader",
+            name: secretName,
+          },
+        },
+      };
+    }
     dispatch(addRepo());
-    const added = await AppRepository.create(name, url);
-    dispatch(addedRepo(added));
-    return added;
+    const apprepo = await AppRepository.create(name, url, auth);
+    dispatch(addedRepo(apprepo));
+
+    if (authHeader.length) {
+      await Secret.create(
+        secretName,
+        { authorizationHeader: btoa(authHeader) },
+        {
+          apiVersion: apprepo.apiVersion,
+          blockOwnerDeletion: true,
+          kind: apprepo.kind,
+          name: apprepo.metadata.name,
+          uid: apprepo.metadata.uid,
+        } as IOwnerReference,
+        "kubeapps",
+      );
+    }
+    return apprepo;
   };
 };

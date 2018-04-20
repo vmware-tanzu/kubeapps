@@ -5,17 +5,18 @@ import { Redirect } from "react-router";
 interface IAppRepoFormProps {
   name: string;
   url: string;
+  authHeader: string;
   message?: string;
   redirectTo?: string;
-  install: (name: string, url: string) => Promise<any>;
-  update: (values: { name?: string; url?: string }) => void;
+  install: (name: string, url: string, authHeader: string) => Promise<any>;
+  update: (values: { name?: string; url?: string; authHeader?: string }) => void;
   onAfterInstall?: () => Promise<any>;
 }
 
 export const AppRepoForm = (props: IAppRepoFormProps) => {
-  const { name, url, update, install, onAfterInstall } = props;
+  const { name, url, authHeader, update, install, onAfterInstall } = props;
   const handleInstallClick = async () => {
-    await install(name, url);
+    await install(name, url, authHeader);
     if (onAfterInstall) {
       await onAfterInstall();
     }
@@ -24,31 +25,68 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
     update({ name: e.target.value });
   const handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     update({ url: e.target.value });
+  const handleAuthHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    update({ authHeader: e.target.value });
   return (
-    <div className="app-repo-form">
-      <h1>Add an App Repository</h1>
-      <label>
-        <span>Name:</span>
-        <input type="text" value={name} onChange={handleNameChange} />
-      </label>
-      <br />
-      <label>
-        <span>URL:</span>
-        <input type="text" value={url} onChange={handleURLChange} />
-      </label>
-      <button className="button button-primary" onClick={handleInstallClick}>
-        Install Repo
-      </button>
-      {props.redirectTo && <Redirect to={props.redirectTo} />}
-    </div>
+    <form className="container padding-b-bigger" onSubmit={handleInstallClick}>
+      <div className="row">
+        <div className="col-12">
+          <div>
+            <h2>Add an App Repository</h2>
+          </div>
+          <div>
+            <label>
+              <span>Name:</span>
+              <input
+                type="text"
+                placeholder="example"
+                value={name}
+                onChange={handleNameChange}
+                required={true}
+              />
+            </label>
+          </div>
+          <div>
+            <label>
+              <span>URL:</span>
+              <input
+                type="url"
+                placeholder="https://charts.example.com/stable"
+                value={url}
+                onChange={handleURLChange}
+                required={true}
+              />
+            </label>
+          </div>
+          <div>
+            <label>
+              <span>Authorization Header (optional):</span>
+              <input
+                type="text"
+                placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                value={authHeader}
+                onChange={handleAuthHeaderChange}
+              />
+            </label>
+          </div>
+          <div>
+            <button className="button button-primary" type="submit">
+              Install Repo
+            </button>
+          </div>
+          {props.redirectTo && <Redirect to={props.redirectTo} />}
+        </div>
+      </div>
+    </form>
   );
 };
 
 interface IAppRepoAddButtonProps {
-  install: (name: string, url: string) => Promise<any>;
+  install: (name: string, url: string, authHeader: string) => Promise<any>;
   redirectTo?: string;
 }
 interface IAppRepoAddButtonState {
+  authHeader: string;
   error?: string;
   modalIsOpen: boolean;
   name: string;
@@ -60,6 +98,7 @@ export class AppRepoAddButton extends React.Component<
   IAppRepoAddButtonState
 > {
   public state = {
+    authHeader: "",
     error: undefined,
     modalIsOpen: false,
     name: "",
@@ -68,7 +107,7 @@ export class AppRepoAddButton extends React.Component<
 
   public render() {
     const { redirectTo, install } = this.props;
-    const { name, url } = this.state;
+    const { name, url, authHeader } = this.state;
     return (
       <div className="AppRepoAddButton">
         <button className="button button-primary" onClick={this.openModal}>
@@ -85,6 +124,7 @@ export class AppRepoAddButton extends React.Component<
           <AppRepoForm
             name={name}
             url={url}
+            authHeader={authHeader}
             update={this.updateValues}
             install={install}
             onAfterInstall={this.closeModal}
@@ -97,6 +137,6 @@ export class AppRepoAddButton extends React.Component<
 
   private closeModal = async () => this.setState({ modalIsOpen: false });
   private openModal = async () => this.setState({ modalIsOpen: true });
-  private updateValues = async (values: { name: string; url: string }) =>
+  private updateValues = async (values: { name: string; url: string; authHeader: string }) =>
     this.setState({ ...values });
 }

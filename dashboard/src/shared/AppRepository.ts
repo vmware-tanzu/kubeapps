@@ -23,14 +23,14 @@ export class AppRepository {
     return data;
   }
 
-  public static async create(name: string, url: string) {
+  public static async create(name: string, url: string, auth: any) {
     const { data } = await axios.post<IAppRepository>(AppRepository.APIEndpoint, {
       apiVersion: "kubeapps.com/v1alpha1",
       kind: "AppRepository",
       metadata: {
         name,
       },
-      spec: { type: "helm", url },
+      spec: { auth, type: "helm", url },
     });
     return data;
   }

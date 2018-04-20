@@ -24,6 +24,7 @@ local controllerOverlay = {
               host: "localhost:44134",
             },
             env_: {
+              POD_NAMESPACE: $.metadata.namespace,
               TMPDIR: "/helm",
             },
             volumeMounts_: {

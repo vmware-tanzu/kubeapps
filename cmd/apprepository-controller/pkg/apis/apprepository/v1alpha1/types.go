@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -35,9 +36,15 @@ type AppRepository struct {
 
 // AppRepositorySpec is the spec for an AppRepository resource
 type AppRepositorySpec struct {
-	Type           string `json:"type"`
-	URL            string `json:"url"`
-	ResyncRequests uint   `json:"resyncRequests"`
+	Type           string            `json:"type"`
+	URL            string            `json:"url"`
+	Auth           AppRepositoryAuth `json:"auth,omitempty"`
+	ResyncRequests uint              `json:"resyncRequests"`
+}
+
+// AppRepositoryAuth is the auth for an AppRepository resource
+type AppRepositoryAuth struct {
+	Header *corev1.EnvVarSource `json:"header,omitempty"`
 }
 
 // AppRepositoryStatus is the status for an AppRepository resource

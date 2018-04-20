@@ -98,8 +98,23 @@ export interface IResource {
     namespace: string;
     annotations: string;
     creationTimestamp: string;
+    selfLink: string;
+    resourceVersion: string;
     deletionTimestamp?: string;
+    uid: string;
   };
+}
+
+export interface IOwnerReference {
+  apiVersion: string;
+  blockOwnerDeletion: boolean;
+  kind: string;
+  name: string;
+  uid: string;
+}
+
+export interface ISecret extends IResource {
+  data: { [s: string]: string };
 }
 
 export interface IDeploymentStatus {
@@ -184,7 +199,18 @@ export interface IAppRepository
         resourceVersion: string;
         selfLink: string;
       },
-      { type: string; url: string },
+      {
+        type: string;
+        url: string;
+        auth: {
+          header: {
+            secretKeyRef: {
+              name: string;
+              key: string;
+            };
+          };
+        };
+      },
       undefined
     > {}
 

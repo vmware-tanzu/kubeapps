@@ -60,7 +60,8 @@ var syncCmd = &cobra.Command{
 			logrus.Fatalf("Can't connect to mongoDB: %v", err)
 		}
 
-		if err = syncRepo(dbSession, args[0], args[1]); err != nil {
+		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
+		if err = syncRepo(dbSession, args[0], args[1], authorizationHeader); err != nil {
 			logrus.Fatalf("Can't add chart repository to database: %v", err)
 		}
 

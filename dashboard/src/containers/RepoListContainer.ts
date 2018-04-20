@@ -19,8 +19,8 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     fetchRepos: async () => {
       return dispatch(actions.repos.fetchRepos());
     },
-    install: async (name: string, url: string) => {
-      return dispatch(actions.repos.installRepo(name, url));
+    install: async (name: string, url: string, authHeader: string) => {
+      return dispatch(actions.repos.installRepo(name, url, authHeader));
     },
     resyncRepo: async (name: string) => {
       return dispatch(actions.repos.resyncRepo(name));
