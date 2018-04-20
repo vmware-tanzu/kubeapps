@@ -117,7 +117,8 @@ func (c UpdateCmd) Run(apiObjects []*unstructured.Unstructured) error {
 	if c.GcTag != "" && !c.SkipGc {
 		version, err := utils.FetchVersion(c.Discovery)
 		if err != nil {
-			return err
+			version = utils.GetDefaultVersion()
+			log.Warnf("Unable to parse server version. Received %v. Using default %s", err, version.String())
 		}
 
 		err = walkObjects(c.ClientPool, c.Discovery, metav1.ListOptions{}, func(o runtime.Object) error {

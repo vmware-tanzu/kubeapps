@@ -115,6 +115,8 @@ func isEmptyValue(i interface{}) bool {
 		return !v
 	case float64:
 		return v == 0
+	case int64:
+		return v == 0
 	case string:
 		return v == ""
 	case nil:
