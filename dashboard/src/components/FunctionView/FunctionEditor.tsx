@@ -1,6 +1,7 @@
 import * as React from "react";
 import AceEditor from "react-ace";
 
+import "brace/mode/golang";
 import "brace/mode/javascript";
 import "brace/mode/php";
 import "brace/mode/python";
@@ -33,7 +34,9 @@ class FunctionEditor extends React.Component<IFunctionEditorProps> {
 
   private runtimeToMode() {
     const { runtime } = this.props;
-    if (runtime.match(/node/)) {
+    if (runtime.match(/go/)) {
+      return "golang";
+    } else if (runtime.match(/node/)) {
       return "javascript";
     } else if (runtime.match(/ruby/)) {
       return "ruby";

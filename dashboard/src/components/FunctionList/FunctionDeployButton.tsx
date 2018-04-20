@@ -7,6 +7,7 @@ import * as Modal from "react-modal";
 import "brace/mode/json";
 import "brace/mode/ruby";
 import "brace/mode/text";
+import "brace/mode/toml";
 
 import { IFunction, IRuntime } from "../../shared/types";
 
@@ -50,7 +51,7 @@ class FunctionDeployButton extends React.Component<
           this.state.functionSpec.runtime,
           this.state.functionSpec.handler,
         ),
-        handler: `${generatedName}.handler`,
+        handler: this.generateHandler(generatedName, this.state.functionSpec.runtime),
       },
       name: generatedName,
     });
@@ -141,7 +142,9 @@ class FunctionDeployButton extends React.Component<
 
   private runtimeToDepsMode() {
     const { functionSpec: { runtime } } = this.state;
-    if (runtime.match(/node|php/)) {
+    if (runtime.match(/go/)) {
+      return "toml";
+    } else if (runtime.match(/node|php/)) {
       return "json";
     } else if (runtime.match(/ruby/)) {
       return "ruby";
@@ -208,10 +211,12 @@ class FunctionDeployButton extends React.Component<
     });
   };
   private handleRuntimeChange = (e: React.FormEvent<HTMLSelectElement>) => {
+    const handler = this.generateHandler(this.state.name, e.currentTarget.value);
     this.setState({
       functionSpec: {
         ...this.state.functionSpec,
-        function: this.generateFunction(e.currentTarget.value, this.state.functionSpec.handler),
+        function: this.generateFunction(e.currentTarget.value, handler),
+        handler,
         runtime: e.currentTarget.value,
       },
     });
@@ -220,9 +225,26 @@ class FunctionDeployButton extends React.Component<
     this.setState({ functionSpec: { ...this.state.functionSpec, deps: value } });
   };
 
+  private generateHandler = (name: string, runtime: string) => {
+    let handler = `${name}.handler`;
+    if (runtime.match(/go/)) {
+      handler = `${name}.Handler`;
+    }
+    return handler;
+  };
+
   private generateFunction = (runtime: string, handler: string) => {
     const fnName = handler.split(".").pop();
-    if (runtime.match(/node/)) {
+    if (runtime.match(/go/)) {
+      return `package kubeless
+import "github.com/kubeless/kubeless/pkg/functions"
+
+func ${fnName}(event functions.Event, context functions.Context) (string, error) {
+        return "Hello world!", nil
+}
+
+`;
+    } else if (runtime.match(/node/)) {
       return `module.exports = {
   ${fnName}: function(event, context) {
     return "Hello World";
