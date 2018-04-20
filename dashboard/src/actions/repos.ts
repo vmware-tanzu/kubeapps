@@ -4,7 +4,7 @@ import { Dispatch } from "react-redux";
 import { AppRepository } from "../shared/AppRepository";
 import Secret from "../shared/Secret";
 
-import { IAppRepository, IStoreState } from "../shared/types";
+import { IAppRepository, IOwnerReference, IStoreState } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", (added: IAppRepository) => ({
@@ -97,11 +97,23 @@ export const installRepo = (name: string, url: string, authHeader: string) => {
       };
     }
     dispatch(addRepo());
-    const added = await AppRepository.create(name, url, auth);
-    dispatch(addedRepo(added));
+    const apprepo = await AppRepository.create(name, url, auth);
+    dispatch(addedRepo(apprepo));
+
     if (authHeader.length) {
-      await Secret.create(secretName, { authorizationHeader: btoa(authHeader) }, added, "kubeapps");
+      await Secret.create(
+        secretName,
+        { authorizationHeader: btoa(authHeader) },
+        {
+          apiVersion: apprepo.apiVersion,
+          blockOwnerDeletion: true,
+          kind: apprepo.kind,
+          name: apprepo.metadata.name,
+          uid: apprepo.metadata.uid,
+        } as IOwnerReference,
+        "kubeapps",
+      );
     }
-    return added;
+    return apprepo;
   };
 };
