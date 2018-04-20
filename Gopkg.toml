@@ -23,7 +23,7 @@
 
 [[constraint]]
   name = "github.com/ksonnet/kubecfg"
-  revision = "872948b143038a6ce4acccb17ecb37f48013c537"
+  revision = "8634737e0b22b01bb93ffeb09a195d0a6d71a6e5"
 
 [[constraint]]
   name = "k8s.io/client-go"

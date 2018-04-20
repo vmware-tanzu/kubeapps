@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -12,27 +13,51 @@ import (
 	"k8s.io/client-go/discovery"
 )
 
+// Format v0.0.0(-master+$Format:%h$)
+var gitVersionRe = regexp.MustCompile("v([0-9])+.([0-9])+.[0-9]+.*")
+
 // ServerVersion captures k8s major.minor version in a parsed form
 type ServerVersion struct {
 	Major int
 	Minor int
 }
 
+func parseGitVersion(gitVersion string) (ServerVersion, error) {
+	parsedVersion := gitVersionRe.FindStringSubmatch(gitVersion)
+	if len(parsedVersion) != 3 {
+		return ServerVersion{}, fmt.Errorf("Unable to parse git version %s", gitVersion)
+	}
+	var ret ServerVersion
+	var err error
+	ret.Major, err = strconv.Atoi(parsedVersion[1])
+	if err != nil {
+		return ServerVersion{}, err
+	}
+	ret.Minor, err = strconv.Atoi(parsedVersion[2])
+	if err != nil {
+		return ServerVersion{}, err
+	}
+	return ret, nil
+}
+
 // ParseVersion parses version.Info into a ServerVersion struct
-func ParseVersion(v *version.Info) (ret ServerVersion, err error) {
+func ParseVersion(v *version.Info) (ServerVersion, error) {
+	var ret ServerVersion
+	var err error
 	ret.Major, err = strconv.Atoi(v.Major)
 	if err != nil {
-		return
+		// Try to parse using GitVersion
+		return parseGitVersion(v.GitVersion)
 	}
 
 	// trim "+" in minor version (happened on GKE)
 	v.Minor = strings.TrimSuffix(v.Minor, "+")
-
 	ret.Minor, err = strconv.Atoi(v.Minor)
 	if err != nil {
-		return
+		// Try to parse using GitVersion
+		return parseGitVersion(v.GitVersion)
 	}
-	return
+	return ret, err
 }
 
 // FetchVersion fetches version information from discovery client, and parses
@@ -42,6 +67,13 @@ func FetchVersion(v discovery.ServerVersionInterface) (ret ServerVersion, err er
 		return ServerVersion{}, err
 	}
 	return ParseVersion(version)
+}
+
+// GetDefaultVersion returns a default server version. This value will be updated
+// periodically to match a current/popular version corresponding to the age of this code
+// Current default version: 1.8
+func GetDefaultVersion() ServerVersion {
+	return ServerVersion{Major: 1, Minor: 8}
 }
 
 // Compare returns -1/0/+1 iff v is less than / equal / greater than major.minor

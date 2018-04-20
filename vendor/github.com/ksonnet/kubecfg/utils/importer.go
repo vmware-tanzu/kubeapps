@@ -4,15 +4,43 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+	"time"
 
+	"github.com/elazarl/go-bindata-assetfs"
 	jsonnet "github.com/google/go-jsonnet"
 	log "github.com/sirupsen/logrus"
 )
 
 var errNotFound = errors.New("Not found")
+
+//go:generate go-bindata -nometadata -ignore .*_test\.|~$DOLLAR -pkg $GOPACKAGE -o bindata.go -prefix ../ ../lib/...
+func newInternalFS(prefix string) http.FileSystem {
+	// Asset/AssetDir returns `fmt.Errorf("Asset %s not found")`,
+	// which does _not_ get mapped to 404 by `http.FileSystem`.
+	// Need to convert to `os.ErrNotExist` explicitly ourselves.
+	mapNotFound := func(err error) error {
+		if err != nil && strings.Contains(err.Error(), "not found") {
+			err = os.ErrNotExist
+		}
+		return err
+	}
+	return &assetfs.AssetFS{
+		Asset: func(path string) ([]byte, error) {
+			ret, err := Asset(path)
+			return ret, mapNotFound(err)
+		},
+		AssetDir: func(path string) ([]string, error) {
+			ret, err := AssetDir(path)
+			return ret, mapNotFound(err)
+		},
+		Prefix: prefix,
+	}
+}
 
 /*
 MakeUniversalImporter creates an importer that handles resolving imports from the filesystem and http/s.
@@ -32,8 +60,23 @@ A real-world example:
 	and downloaded from that location
 */
 func MakeUniversalImporter(searchUrls []*url.URL) jsonnet.Importer {
-	t := &http.Transport{}
+	// Reconstructed copy of http.DefaultTransport (to avoid
+	// modifying the default)
+	t := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
 	t.RegisterProtocol("file", http.NewFileTransport(http.Dir("/")))
+	t.RegisterProtocol("internal", http.NewFileTransport(newInternalFS("lib")))
 
 	return &universalImporter{
 		BaseSearchURLs: searchUrls,
