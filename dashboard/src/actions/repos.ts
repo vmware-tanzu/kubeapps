@@ -88,9 +88,11 @@ export const installRepo = (name: string, url: string, authHeader: string) => {
     const secretName = `apprepo-${name}-secrets`;
     if (authHeader.length) {
       auth = {
-        secretKeyRef: {
-          key: "authorizationHeader",
-          name: secretName,
+        header: {
+          secretKeyRef: {
+            key: "authorizationHeader",
+            name: secretName,
+          },
         },
       };
     }

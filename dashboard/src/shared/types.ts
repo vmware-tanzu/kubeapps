@@ -194,9 +194,11 @@ export interface IAppRepository
         type: string;
         url: string;
         auth: {
-          secretKeyRef: {
-            name: string;
-            key: string;
+          header: {
+            secretKeyRef: {
+              name: string;
+              key: string;
+            };
           };
         };
       },
