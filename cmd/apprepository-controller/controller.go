@@ -525,13 +525,11 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvV
 			},
 		},
 	})
-	if apprepo.Spec.Auth != nil {
-		if apprepo.Spec.Auth.Header != nil {
-			envVars = append(envVars, corev1.EnvVar{
-				Name:      "AUTHORIZATION_HEADER",
-				ValueFrom: apprepo.Spec.Auth.Header,
-			})
-		}
+	if apprepo.Spec.Auth.Header != nil {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:      "AUTHORIZATION_HEADER",
+			ValueFrom: apprepo.Spec.Auth.Header,
+		})
 	}
 	return envVars
 }
