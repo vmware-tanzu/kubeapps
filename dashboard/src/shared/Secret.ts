@@ -1,11 +1,11 @@
 import axios from "axios";
 
-import { ISecret, IStatus } from "./types";
+import { IOwnerReference, IResource, ISecret, IStatus } from "./types";
 
 export default class Secret {
   public static async create(
     name: string,
-    secrets: any,
+    secrets: { [s: string]: string },
     owner: any | undefined,
     namespace: string = "default",
   ) {
@@ -44,15 +44,15 @@ export default class Secret {
     return data;
   }
 
-  private static getOwnerReference(owner: any) {
+  private static getOwnerReference(owner: IResource) {
     return owner
-      ? {
+      ? ({
           apiVersion: owner.apiVersion,
           blockOwnerDeletion: true,
           kind: owner.kind,
           name: owner.metadata.name,
           uid: owner.metadata.uid,
-        }
+        } as IOwnerReference)
       : undefined;
   }
 

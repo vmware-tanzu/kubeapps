@@ -101,11 +101,20 @@ export interface IResource {
     selfLink: string;
     resourceVersion: string;
     deletionTimestamp?: string;
+    uid: string;
   };
 }
 
+export interface IOwnerReference {
+  apiVersion: string;
+  blockOwnerDeletion: boolean;
+  kind: string;
+  name: string;
+  uid: string;
+}
+
 export interface ISecret extends IResource {
-  data: any;
+  data: { [s: string]: string };
 }
 
 export interface IDeploymentStatus {
