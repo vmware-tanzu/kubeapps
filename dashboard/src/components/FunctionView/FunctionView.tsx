@@ -16,9 +16,9 @@ interface IFunctionViewProps {
   namespace: string;
   function: IFunction | undefined;
   podName: string | undefined;
-  getFunction: () => Promise<void>;
+  getFunction: (n: string, ns: string) => Promise<void>;
   getPodName: (fn: IFunction) => Promise<string>;
-  deleteFunction: () => Promise<void>;
+  deleteFunction: (n: string, ns: string) => Promise<void>;
   updateFunction: (fn: Partial<IFunction>) => Promise<void>;
 }
 
@@ -37,12 +37,18 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
     functionCode: "",
   };
 
-  public async componentDidMount() {
-    const { getFunction } = this.props;
-    getFunction();
+  public componentDidMount() {
+    const { getFunction, name, namespace } = this.props;
+    getFunction(name, namespace);
   }
 
   public componentWillReceiveProps(nextProps: IFunctionViewProps) {
+    const { getFunction, name, namespace } = this.props;
+    if (nextProps.namespace !== namespace) {
+      getFunction(name, nextProps.namespace);
+      return;
+    }
+
     if (this.state.deployment || !nextProps.function) {
       // receiving updated function after saving
       this.setState({ codeModified: false });
@@ -89,7 +95,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
   }
 
   public render() {
-    const { function: f, deleteFunction, podName } = this.props;
+    const { function: f, podName } = this.props;
     const { deployment } = this.state;
     if (!f || !deployment) {
       return <div>Loading</div>;
@@ -111,7 +117,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
                     <FunctionControls
                       enableSaveButton={this.state.codeModified}
                       updateFunction={this.handleFunctionUpdate}
-                      deleteFunction={deleteFunction}
+                      deleteFunction={this.handleFunctionDelete}
                       namespace={f.metadata.namespace}
                     />
                   </div>
@@ -157,6 +163,11 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
         },
       });
     }
+  };
+
+  private handleFunctionDelete = async () => {
+    const { deleteFunction, name, namespace } = this.props;
+    await deleteFunction(name, namespace);
   };
 }
 

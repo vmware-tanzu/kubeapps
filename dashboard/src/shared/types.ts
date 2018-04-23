@@ -1,6 +1,7 @@
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IFunctionState } from "../reducers/functions";
+import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
 
@@ -157,7 +158,7 @@ export interface IStoreState {
   repos: IAppRepositoryState;
   deployment: IDeployment;
   functions: IFunctionState;
-  namespace: string;
+  namespace: INamespaceState;
 }
 
 interface IK8sResource {

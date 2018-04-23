@@ -13,6 +13,7 @@ import { IFunction, IRuntime } from "../../shared/types";
 
 interface IFunctionDeployButtonProps {
   deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<any>;
+  namespace: string;
   navigateToFunction: (n: string, ns: string) => Promise<any>;
   runtimes: IRuntime[];
 }
@@ -21,7 +22,6 @@ interface IFunctionDeployButtonState {
   functionSpec: IFunction["spec"];
   modalIsOpen: boolean;
   name: string;
-  namespace: string;
   error?: string;
 }
 
@@ -39,7 +39,6 @@ class FunctionDeployButton extends React.Component<
     },
     modalIsOpen: false,
     name: "",
-    namespace: "default",
   };
 
   public componentDidMount() {
@@ -58,7 +57,7 @@ class FunctionDeployButton extends React.Component<
   }
 
   public render() {
-    const { functionSpec: f, name, namespace } = this.state;
+    const { functionSpec: f, name } = this.state;
     const runtimes = {};
     this.props.runtimes.forEach(r => {
       r.versions.forEach(version => {
@@ -83,15 +82,6 @@ class FunctionDeployButton extends React.Component<
             <div>
               <label htmlFor="name">Name</label>
               <input id="name" onChange={this.handleNameChange} value={name} required={true} />
-            </div>
-            <div>
-              <label htmlFor="namespace">Namespace</label>
-              <input
-                name="namespace"
-                onChange={this.handleNamespaceChange}
-                value={namespace}
-                required={true}
-              />
             </div>
             <div>
               <label htmlFor="handler">Handler</label>
@@ -179,8 +169,8 @@ class FunctionDeployButton extends React.Component<
 
   private handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { deployFunction, navigateToFunction } = this.props;
-    const { functionSpec, name, namespace } = this.state;
+    const { deployFunction, namespace, navigateToFunction } = this.props;
+    const { functionSpec, name } = this.state;
     const functionSha256 = crypto
       .createHash("sha256")
       .update(functionSpec.function, "utf8")
@@ -197,9 +187,6 @@ class FunctionDeployButton extends React.Component<
 
   private handleNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ name: e.currentTarget.value });
-  };
-  private handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
-    this.setState({ namespace: e.currentTarget.value });
   };
   private handleHandlerChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({
