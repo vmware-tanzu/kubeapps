@@ -14,17 +14,23 @@ interface IInstanceViewProps {
   bindings: IServiceBinding[];
   svcClass: IClusterServiceClass | undefined;
   svcPlan: IServicePlan | undefined;
-  getCatalog: () => Promise<any>;
+  getCatalog: (ns: string) => Promise<any>;
   deprovision: (instance: IServiceInstance) => Promise<any>;
+  namespace: string;
 }
 
 export class InstanceView extends React.Component<IInstanceViewProps> {
-  public async componentDidMount() {
-    await this.props.getCatalog();
+  public componentDidMount() {
+    this.props.getCatalog(this.props.namespace);
+  }
+
+  public componentWillReceiveProps(nextProps: IInstanceViewProps) {
+    const { getCatalog, namespace } = this.props;
+    getCatalog(namespace);
   }
 
   public render() {
-    const { instance, bindings, svcClass, svcPlan, getCatalog, deprovision } = this.props;
+    const { instance, bindings, svcClass, svcPlan, deprovision } = this.props;
 
     let body = <span />;
     if (instance) {
@@ -141,7 +147,7 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
               addBinding={this.addBinding}
             />
             <br />
-            <BindingList bindings={bindings} getCatalog={getCatalog} />
+            <BindingList bindings={bindings} />
           </div>
         )}
       </div>
@@ -150,7 +156,7 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
 
   private addBinding = async (bindingName: string, instanceName: string, namespace: string) => {
     const binding = await ServiceBinding.create(bindingName, instanceName, namespace);
-    await this.props.getCatalog();
+    await this.props.getCatalog(namespace);
     return binding;
   };
 }

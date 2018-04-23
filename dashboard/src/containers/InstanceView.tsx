@@ -52,8 +52,8 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     deprovision: async (instance: IServiceInstance) => {
       await dispatch(actions.catalog.deprovision(instance));
     },
-    getCatalog: async () => {
-      dispatch(actions.catalog.getCatalog());
+    getCatalog: (ns: string) => {
+      dispatch(actions.catalog.getCatalog(ns));
     },
   };
 }

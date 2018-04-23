@@ -34,11 +34,13 @@ export function deleteApp(releaseName: string, namespace: string) {
   };
 }
 
-export function fetchApps() {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<void> => {
-    const { namespace } = getState();
+export function fetchApps(ns?: string) {
+  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
+    if (ns && ns === "_all") {
+      ns = undefined;
+    }
     dispatch(requestApps());
-    const apps = await HelmRelease.getAllWithDetails(namespace);
+    const apps = await HelmRelease.getAllWithDetails(ns);
     dispatch(receiveApps(apps));
   };
 }

@@ -7,7 +7,7 @@ export interface IHeaderLinkProps {
   exact?: boolean;
   external?: boolean;
   children?: React.ReactChildren | React.ReactNode | string;
-  currentNamespace?: string;
+  currentNamespace?: string | null;
   namespaced?: boolean;
 }
 

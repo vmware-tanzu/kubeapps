@@ -33,11 +33,13 @@ const allActions = [
 ].map(getReturnOfExpression);
 export type FunctionsAction = typeof allActions[number];
 
-export function fetchFunctions() {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
-    const { namespace } = getState();
+export function fetchFunctions(ns?: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    if (ns && ns === "_all") {
+      ns = undefined;
+    }
     dispatch(requestFunctions());
-    const functionList = await Function.list(namespace);
+    const functionList = await Function.list(ns);
     dispatch(receiveFunctions(functionList.items));
     return functionList;
   };

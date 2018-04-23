@@ -8,7 +8,8 @@ import ProvisionButton from "../ProvisionButton";
 interface IClassViewProps {
   classes: IClusterServiceClass[];
   classname: string;
-  getCatalog: () => Promise<any>;
+  getClasses: () => Promise<any>;
+  getPlans: () => Promise<any>;
   plans: IServicePlan[];
   provision: (
     instanceName: string,
@@ -23,7 +24,8 @@ interface IClassViewProps {
 
 export class ClassView extends React.Component<IClassViewProps> {
   public componentDidMount() {
-    this.props.getCatalog();
+    this.props.getClasses();
+    this.props.getPlans();
   }
 
   public render() {

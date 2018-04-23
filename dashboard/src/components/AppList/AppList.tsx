@@ -7,17 +7,26 @@ import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: () => Promise<void>;
+  fetchApps: (ns: string) => Promise<void>;
+  namespace: string;
 }
 
 class AppList extends React.Component<IAppListProps> {
   public componentDidMount() {
-    const { fetchApps } = this.props;
-    fetchApps();
+    const { fetchApps, namespace } = this.props;
+    fetchApps(namespace);
+  }
+
+  public componentWillReceiveProps(nextProps: IAppListProps) {
+    const { fetchApps, namespace } = this.props;
+    if (nextProps.namespace !== namespace) {
+      fetchApps(nextProps.namespace);
+    }
   }
 
   public render() {
     const { isFetching, items } = this.props.apps;
+
     return (
       <section className="AppList">
         <header className="AppList__header">
