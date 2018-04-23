@@ -26,6 +26,19 @@ interface IAppViewState {
 }
 
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
+
+  private static apiBase(): string {
+    let apiBase: string;
+
+    // Use WebSockets Secure if using HTTPS and WebSockets if not
+    if(location.protocol === 'https:') {
+      apiBase = `wss://${window.location.host}/api/kube`;
+  } else {
+      apiBase = `ws://${window.location.host}/api/kube`;
+  }
+    return apiBase;
+  }
+
   public state: IAppViewState = {
     deployments: new Map<string, IResource>(),
     otherResources: new Map<string, IResource>(),
@@ -59,7 +72,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     const deployments = manifest.filter(d => d.kind === "Deployment");
     const services = manifest.filter(d => d.kind === "Service");
-    const apiBase = `ws://${window.location.host}/api/kube`;
+    const apiBase = AppView.apiBase();
     const sockets: WebSocket[] = [];
     for (const d of deployments) {
       const s = new WebSocket(
