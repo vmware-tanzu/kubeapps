@@ -33,6 +33,13 @@ class AppEdit extends React.Component<IAppEditProps> {
     getApp(releaseName, namespace);
   }
 
+  public componentWillReceiveProps(nextProps: IAppEditProps) {
+    const { releaseName, getApp, namespace } = this.props;
+    if (nextProps.namespace !== namespace) {
+      getApp(releaseName, nextProps.namespace);
+    }
+  }
+
   public render() {
     const { app } = this.props;
 

@@ -4,12 +4,11 @@ import { BindingEntry } from "./BindingListEntry";
 
 interface IBindingList {
   bindings: IServiceBinding[];
-  getCatalog: () => Promise<any>;
 }
 
 export class BindingList extends React.Component<IBindingList> {
   public render() {
-    const { bindings, getCatalog } = this.props;
+    const { bindings } = this.props;
     return (
       <div className="BindingEntryList">
         <table>
@@ -23,11 +22,7 @@ export class BindingList extends React.Component<IBindingList> {
           <tbody>
             {bindings.length > 0 ? (
               bindings.map(binding => [
-                <BindingEntry
-                  key={binding.metadata.uid}
-                  binding={binding}
-                  getCatalog={getCatalog}
-                />,
+                <BindingEntry key={binding.metadata.uid} binding={binding} />,
               ])
             ) : (
               <tr>

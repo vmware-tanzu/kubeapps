@@ -23,7 +23,7 @@ interface IDeploymentFormProps {
   ) => Promise<{}>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
-  getBindings: () => Promise<IServiceBinding[]>;
+  getBindings: (ns: string) => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   namespace: string;
@@ -45,7 +45,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     appValues: undefined,
     error: undefined,
     isDeploying: false,
-    namespace: "default",
+    namespace: this.props.namespace,
     releaseName: "",
     selectedBinding: undefined,
     valuesModified: false,
@@ -59,15 +59,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       getBindings,
       getChartVersion,
       chartVersion,
-      namespace,
     } = this.props;
     fetchChartVersions(chartID);
-    getBindings();
     getChartVersion(chartID, chartVersion);
 
+    let namespace = this.props.namespace;
     if (hr) {
+      namespace = hr.metadata.namespace;
       this.setState({
-        namespace: hr.metadata.namespace,
+        namespace,
         releaseName: hr.metadata.name,
       });
     } else {
@@ -75,11 +75,27 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         namespace,
       });
     }
+    getBindings(namespace);
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
-    const { chartID, chartVersion, getChartValues, getChartVersion, hr, selected } = this.props;
+    const {
+      chartID,
+      chartVersion,
+      getBindings,
+      getChartValues,
+      getChartVersion,
+      hr,
+      selected,
+      namespace,
+    } = this.props;
     const { version } = selected;
+
+    if (nextProps.namespace !== namespace && !hr) {
+      this.setState({ namespace: nextProps.namespace });
+      getBindings(nextProps.namespace);
+      return;
+    }
 
     if (chartVersion !== nextProps.chartVersion) {
       getChartVersion(chartID, nextProps.chartVersion);
@@ -183,17 +199,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              <div>
-                <label htmlFor="namespace">Namespace</label>
-                <input
-                  name="namespace"
-                  onChange={this.handleNamespaceChange}
-                  value={this.state.namespace}
-                  required={true}
-                  // this is now fixed due to state & URL
-                  disabled={true}
-                />
-              </div>
               <div style={{ marginBottom: "1em" }}>
                 <label htmlFor="values">Values (YAML)</label>
                 <AceEditor
@@ -278,9 +283,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         `/apps/ns/${namespace}/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
       );
     }
-  };
-  public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
-    this.setState({ namespace: e.currentTarget.value });
   };
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });

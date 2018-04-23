@@ -1,21 +1,21 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IServiceCatalogState } from "../../../reducers/catalog";
+import { IServiceBroker } from "../../../shared/ServiceCatalog";
 import ServiceBrokerList from "../ServiceBrokerList";
 
-export interface IServiceCatalogDispatch {
+export interface IServiceCatalogProps {
+  brokers: IServiceBroker[];
   checkCatalogInstalled: () => Promise<any>;
-  getCatalog: () => Promise<any>;
-  sync: () => Promise<any>;
+  isInstalled: boolean;
+  getBrokers: () => Promise<any>;
+  sync: (broker: IServiceBroker) => Promise<any>;
 }
 
-export class ServiceCatalogView extends React.Component<
-  IServiceCatalogDispatch & IServiceCatalogState
-> {
+export class ServiceCatalogView extends React.Component<IServiceCatalogProps> {
   public async componentDidMount() {
     this.props.checkCatalogInstalled();
-    this.props.getCatalog();
+    this.props.getBrokers();
   }
 
   public render() {

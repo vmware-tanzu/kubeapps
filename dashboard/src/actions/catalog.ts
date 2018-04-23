@@ -81,11 +81,13 @@ export function sync(broker: IServiceBroker) {
 
 export type ServiceCatalogAction = typeof actions[number];
 
-export function getBindings() {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
-    const { namespace } = getState();
+export function getBindings(ns?: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    if (ns && ns === "_all") {
+      ns = undefined;
+    }
     dispatch(requestBindings());
-    const bindings = await ServiceBinding.list(namespace);
+    const bindings = await ServiceBinding.list(ns);
     dispatch(receiveBindings(bindings));
     return bindings;
   };
@@ -109,11 +111,13 @@ export function getClasses() {
   };
 }
 
-export function getInstances() {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
-    const { namespace } = getState();
+export function getInstances(ns?: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    if (ns && ns === "_all") {
+      ns = undefined;
+    }
     dispatch(requestInstances());
-    const instances = await ServiceInstance.list(namespace);
+    const instances = await ServiceInstance.list(ns);
     dispatch(receiveInstances(instances));
     return instances;
   };
@@ -128,12 +132,12 @@ export function getPlans() {
   };
 }
 
-export function getCatalog() {
+export function getCatalog(ns?: string) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    dispatch(getBindings());
+    dispatch(getBindings(ns));
     dispatch(getBrokers());
     dispatch(getClasses());
-    dispatch(getInstances());
+    dispatch(getInstances(ns));
     dispatch(getPlans());
   };
 }

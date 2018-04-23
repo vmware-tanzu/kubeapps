@@ -9,17 +9,25 @@ import { InstanceCardList } from "./InstanceCardList";
 export interface InstanceListViewProps {
   brokers: IServiceBroker[];
   classes: IClusterServiceClass[];
-  getCatalog: () => Promise<any>;
+  getCatalog: (ns: string) => Promise<any>;
   checkCatalogInstalled: () => Promise<any>;
   instances: IServiceInstance[];
   plans: IServicePlan[];
   isInstalled: boolean;
+  namespace: string;
 }
 
 export class InstanceListView extends React.PureComponent<InstanceListViewProps> {
   public async componentDidMount() {
     this.props.checkCatalogInstalled();
-    this.props.getCatalog();
+    this.props.getCatalog(this.props.namespace);
+  }
+
+  public componentWillReceiveProps(nextProps: InstanceListViewProps) {
+    const { getCatalog, isInstalled, namespace } = this.props;
+    if (isInstalled && nextProps.namespace !== namespace) {
+      getCatalog(nextProps.namespace);
+    }
   }
 
   public render() {
