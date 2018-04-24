@@ -41,8 +41,9 @@ import (
 )
 
 const (
-	chartCollection      = "charts"
-	chartFilesCollection = "files"
+	chartCollection       = "charts"
+	chartFilesCollection  = "files"
+	defaultTimeoutSeconds = 180
 )
 
 type importChartFilesJob struct {
@@ -56,7 +57,7 @@ type httpClient interface {
 }
 
 var netClient httpClient = &http.Client{
-	Timeout: time.Second * 10,
+	Timeout: time.Second * defaultTimeoutSeconds,
 }
 
 func parseRepoUrl(repoURL string) (*url.URL, error) {
@@ -170,6 +171,9 @@ func fetchRepoIndex(r repo) (*helmrepo.IndexFile, error) {
 		req.Header.Set("Authorization", r.AuthorizationHeader)
 	}
 	res, err := netClient.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"url": req.URL.String()}).WithError(err).Error("error requesting repo index")
 		return nil, err
@@ -180,7 +184,6 @@ func fetchRepoIndex(r repo) (*helmrepo.IndexFile, error) {
 		return nil, errors.New("repo index request failed")
 	}
 
-	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
@@ -281,10 +284,12 @@ func fetchAndImportIcon(dbSession datastore.Session, c chart) error {
 	}
 
 	res, err := netClient.Do(req)
+	if res != nil {
+		defer res.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
-	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		return fmt.Errorf("%d %s", res.StatusCode, c.Icon)
