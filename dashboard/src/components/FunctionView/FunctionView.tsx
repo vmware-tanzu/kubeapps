@@ -2,6 +2,7 @@ import * as crypto from "crypto";
 import * as React from "react";
 
 import { IDeploymentStatus, IFunction, IResource } from "../../shared/types";
+import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import FunctionControls from "./FunctionControls";
 import FunctionEditor from "./FunctionEditor";
@@ -29,19 +30,6 @@ interface IFunctionViewState {
 }
 
 class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewState> {
-  
-  private static apiBase(): string {
-    let apiBase: string;
-
-    // Use WebSockets Secure if using HTTPS and WebSockets if not
-    if(location.protocol === 'https:') {
-      apiBase = `wss://${window.location.host}/api/kube`;
-  } else {
-      apiBase = `ws://${window.location.host}/api/kube`;
-  }
-    return apiBase;
-  }
-  
   public state: IFunctionViewState = {
     codeModified: false,
     deploymentHealthy: false,
@@ -61,7 +49,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
     }
 
     const f = nextProps.function;
-    const apiBase = FunctionView.apiBase();
+    const apiBase = WebSocketHelper.apiBase();
     const socket = new WebSocket(
       `${apiBase}/apis/apps/v1beta1/namespaces/${
         f.metadata.namespace
