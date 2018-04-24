@@ -1,11 +1,16 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 
+import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+
 interface IAddBindingButtonProps {
+  error?: Error;
   bindingName: string;
   instanceRefName: string;
   namespace: string;
-  addBinding: (bindingName: string, instanceName: string, namespace: string) => Promise<any>;
+  addBinding: (bindingName: string, instanceName: string, namespace: string) => Promise<boolean>;
+  onAddBinding: () => void;
 }
 
 interface IAddBindingButtonState {
@@ -13,9 +18,15 @@ interface IAddBindingButtonState {
   // deployment options
   bindingName: string;
   instanceRefName: string;
-  namespace: string;
-  error?: string;
 }
+
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "servicecatalog.k8s.io",
+    resource: "servicebindings",
+    verbs: ["create"],
+  },
+];
 
 export class AddBindingButton extends React.Component<
   IAddBindingButtonProps,
@@ -28,16 +39,14 @@ export class AddBindingButton extends React.Component<
   };
 
   public render() {
-    const { modalIsOpen, bindingName, instanceRefName, namespace } = this.state;
+    const { modalIsOpen, bindingName, instanceRefName } = this.state;
     return (
       <div className="AddBindingButton">
         <button className="button button-primary" onClick={this.openModal}>
           Add Binding
         </button>
         <Modal isOpen={modalIsOpen} onRequestClose={this.closeModal}>
-          {this.state.error && (
-            <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
-          )}
+          {this.props.error && <div className="margin-b-big">{this.renderError()}</div>}
           <div className="bind-form">
             <h1>Add Binding</h1>
             <label htmlFor="binding-name">
@@ -59,16 +68,6 @@ export class AddBindingButton extends React.Component<
                 onChange={this.handleInstanceNameChange}
               />
             </label>
-            <br />
-            <label htmlFor="namespace">
-              <span>Namespace:</span>
-              <input
-                type="text"
-                id="namespace"
-                value={namespace}
-                onChange={this.handleNamespaceChange}
-              />
-            </label>
             <button className="button button-primary" onClick={this.bind}>
               Create Binding
             </button>
@@ -87,18 +86,34 @@ export class AddBindingButton extends React.Component<
     this.setState({ bindingName: e.target.value });
   private handleInstanceNameChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     this.setState({ instanceRefName: e.target.value });
-  private handleNamespaceChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ namespace: e.target.value });
   private bind = async () => {
-    try {
-      await this.props.addBinding(
-        this.state.bindingName,
-        this.state.instanceRefName,
-        this.state.namespace,
-      );
+    const added = await this.props.addBinding(
+      this.state.bindingName,
+      this.state.instanceRefName,
+      this.props.namespace,
+    );
+    if (added) {
       this.closeModal();
-    } catch (e) {
-      this.setState({ error: e.toString() });
+      this.props.onAddBinding();
     }
   };
+
+  private renderError() {
+    const { error, namespace } = this.props;
+    const { bindingName } = this.state;
+    switch (error && error.constructor) {
+      case ForbiddenError:
+        return (
+          <PermissionsErrorAlert
+            namespace={namespace}
+            roles={RequiredRBACRoles}
+            action={`create Service Binding "${bindingName}"`}
+          />
+        );
+      case NotFoundError:
+        return <NotFoundErrorAlert resource={`Namespace "${namespace}"`} />;
+      default:
+        return <UnexpectedErrorAlert />;
+    }
+  }
 }

@@ -1,9 +1,9 @@
 import * as React from "react";
-import { IServiceBinding, ServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBinding } from "../../shared/ServiceBinding";
 
 interface IRemoveBindingButtonProps {
   binding: IServiceBinding;
-  onRemoveComplete?: () => Promise<any>;
+  removeBinding: (name: string, ns: string) => Promise<boolean>;
 }
 
 export class RemoveBindingButton extends React.Component<IRemoveBindingButtonProps> {
@@ -21,11 +21,8 @@ export class RemoveBindingButton extends React.Component<IRemoveBindingButtonPro
   }
 
   private handleRemoveBindingClick = async () => {
-    const { binding, onRemoveComplete } = this.props;
+    const { removeBinding, binding } = this.props;
     const { name, namespace } = binding.metadata;
-    await ServiceBinding.delete(name, namespace);
-    if (onRemoveComplete) {
-      await onRemoveComplete();
-    }
+    removeBinding(name, namespace);
   };
 }

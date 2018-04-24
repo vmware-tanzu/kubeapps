@@ -9,6 +9,7 @@ import DeploymentForm from "../../components/DeploymentForm";
 interface IAppEditProps {
   app: IApp;
   bindings: IServiceBinding[];
+  error: Error | undefined;
   namespace: string;
   releaseName: string;
   selected: IChartState["selected"];
@@ -18,7 +19,7 @@ interface IAppEditProps {
     namespace: string,
     values?: string,
     resourceVersion?: string,
-  ) => Promise<{}>;
+  ) => Promise<boolean>;
   fetchChartVersions: (id: string) => Promise<{}>;
   getApp: (releaseName: string, namespace: string) => Promise<void>;
   getBindings: () => Promise<IServiceBinding[]>;

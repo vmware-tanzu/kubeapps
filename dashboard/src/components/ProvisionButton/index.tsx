@@ -3,13 +3,17 @@ import AceEditor from "react-ace";
 import * as Modal from "react-modal";
 import { RouterAction } from "react-router-redux";
 
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServicePlan } from "../../shared/ServiceCatalog";
+import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
 import "brace/mode/json";
 import "brace/theme/xcode";
-import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 
 interface IProvisionButtonProps {
+  namespace: string;
+  error: Error;
   plans: IServicePlan[];
   classes: IClusterServiceClass[];
   selectedClass?: IClusterServiceClass;
@@ -20,7 +24,7 @@ interface IProvisionButtonProps {
     className: string,
     planName: string,
     parameters: {},
-  ) => Promise<{}>;
+  ) => Promise<boolean>;
   push: (location: string) => RouterAction;
 }
 
@@ -29,19 +33,23 @@ interface IProvisionButtonState {
   modalIsOpen: boolean;
   // deployment options
   releaseName: string;
-  namespace: string;
   selectedPlan: IServicePlan | undefined;
   selectedClass: IClusterServiceClass | undefined;
   parameters: string;
-  error?: string;
 }
+
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "servicecatalog.k8s.io",
+    resource: "serviceinstances",
+    verbs: ["create"],
+  },
+];
 
 class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionButtonState> {
   public state: IProvisionButtonState = {
-    error: undefined,
     isProvisioning: false,
     modalIsOpen: false,
-    namespace: "default",
     parameters: JSON.stringify(
       {
         firewallRules: [
@@ -81,9 +89,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.state.error && (
-            <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
-          )}
+          {this.props.error && <div className="margin-b-big">{this.renderError()}</div>}
           <form onSubmit={this.handleProvision}>
             <div>
               <label htmlFor="releaseName">Name</label>
@@ -92,14 +98,6 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
                 onChange={this.handleReleaseNameChange}
                 value={this.state.releaseName}
                 required={true}
-              />
-            </div>
-            <div>
-              <label htmlFor="namespace">Namespace</label>
-              <input
-                name="namespace"
-                onChange={this.handleNamespaceChange}
-                value={this.state.namespace}
               />
             </div>
             <div>
@@ -177,32 +175,29 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
 
   public handleProvision = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { provision, push } = this.props;
+    const { namespace, provision, push } = this.props;
     this.setState({ isProvisioning: true });
-    const { releaseName, namespace, selectedClass, selectedPlan, parameters } = this.state;
+    const { releaseName, selectedClass, selectedPlan, parameters } = this.state;
 
-    try {
-      const parametersObject = JSON.parse(parameters);
-      if (selectedClass && selectedPlan) {
-        await provision(
-          releaseName,
-          namespace,
-          selectedClass.spec.externalName,
-          selectedPlan.spec.externalName,
-          parametersObject,
-        );
-        push(`/services/instances`);
+    const parametersObject = JSON.parse(parameters);
+    if (selectedClass && selectedPlan) {
+      const provisioned = await provision(
+        releaseName,
+        namespace,
+        selectedClass.spec.externalName,
+        selectedPlan.spec.externalName,
+        parametersObject,
+      );
+      if (provisioned) {
+        push(`/services/instances/ns/${namespace}/${releaseName}`);
+      } else {
+        this.setState({ isProvisioning: false });
       }
-    } catch (err) {
-      this.setState({ isProvisioning: false, error: err.toString() });
     }
   };
 
   public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ releaseName: e.currentTarget.value });
-  };
-  public handleNamespaceChange = (e: React.FormEvent<HTMLInputElement>) => {
-    this.setState({ namespace: e.currentTarget.value });
   };
   public handleParametersChange = (parameter: string) => {
     this.setState({ parameters: parameter });
@@ -219,6 +214,25 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
       selectedPlan:
         this.props.plans.find(plan => plan.spec.externalName === e.target.value) || undefined,
     });
+
+  private renderError() {
+    const { error, namespace } = this.props;
+    const { releaseName } = this.state;
+    switch (error && error.constructor) {
+      case ForbiddenError:
+        return (
+          <PermissionsErrorAlert
+            namespace={namespace}
+            roles={RequiredRBACRoles}
+            action={`provision Service Instance "${releaseName}"`}
+          />
+        );
+      case NotFoundError:
+        return <NotFoundErrorAlert resource={`Namespace "${namespace}"`} />;
+      default:
+        return <UnexpectedErrorAlert />;
+    }
+  }
 }
 
 export default ProvisionButton;

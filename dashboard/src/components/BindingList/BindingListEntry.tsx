@@ -4,6 +4,7 @@ import { RemoveBindingButton } from "../InstanceView/RemoveBindingButton";
 
 interface IBindingEntryProps {
   binding: IServiceBinding;
+  removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
 interface IBindingEntryState {
@@ -16,7 +17,7 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
   };
 
   public render() {
-    const { binding } = this.props;
+    const { binding, removeBinding } = this.props;
     const { name, namespace } = binding.metadata;
 
     const {
@@ -58,7 +59,7 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
           <button className={"button button-primary button-small"} onClick={this.toggleExpand}>
             Expand/Collapse
           </button>
-          <RemoveBindingButton binding={binding} />
+          <RemoveBindingButton binding={binding} removeBinding={removeBinding} />
         </td>
       </tr>,
     ];

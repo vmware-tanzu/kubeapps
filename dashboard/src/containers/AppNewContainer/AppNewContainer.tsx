@@ -24,6 +24,7 @@ function mapStateToProps(
     bindings: catalog.bindings,
     chartID: `${params.repo}/${params.id}`,
     chartVersion: params.version,
+    error: apps.error,
     namespace: namespace.current,
     selected: charts.selected,
   };
@@ -38,9 +39,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
       values?: string,
       resourceVersion?: string,
     ) =>
-      dispatch(
-        actions.charts.deployChart(version, releaseName, namespace, values, resourceVersion),
-      ),
+      dispatch(actions.apps.deployChart(version, releaseName, namespace, values, resourceVersion)),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
     getBindings: (ns: string) => dispatch(actions.catalog.getBindings(ns)),
     getChartValues: (id: string, version: string) =>

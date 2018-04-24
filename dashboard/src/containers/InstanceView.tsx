@@ -41,7 +41,10 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
       binding =>
         binding.spec.instanceRef.name === instanceName && binding.metadata.namespace === namespace,
     ),
+    errors: catalog.errors,
     instance,
+    name: instanceName,
+    namespace,
     svcClass,
     svcPlan,
   };
@@ -49,12 +52,13 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    deprovision: async (instance: IServiceInstance) => {
-      await dispatch(actions.catalog.deprovision(instance));
-    },
+    addBinding: (bindingName: string, instanceName: string, namespace: string) =>
+      dispatch(actions.catalog.addBinding(bindingName, instanceName, namespace)),
+    deprovision: (instance: IServiceInstance) => dispatch(actions.catalog.deprovision(instance)),
     getCatalog: (ns: string) => {
       dispatch(actions.catalog.getCatalog(ns));
     },
+    removeBinding: (name: string, ns: string) => dispatch(actions.catalog.removeBinding(name, ns)),
   };
 }
 

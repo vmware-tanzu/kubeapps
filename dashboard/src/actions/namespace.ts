@@ -23,8 +23,13 @@ export type NamespaceAction = typeof allActions[number];
 
 export function fetchNamespaces() {
   return async (dispatch: Dispatch<IStoreState>) => {
-    const namespaces = await Namespace.list();
-    const namespaceStrings = namespaces.items.map((n: IResource) => n.metadata.name);
-    return dispatch(receiveNamespaces(namespaceStrings));
+    try {
+      const namespaces = await Namespace.list();
+      const namespaceStrings = namespaces.items.map((n: IResource) => n.metadata.name);
+      return dispatch(receiveNamespaces(namespaceStrings));
+    } catch (e) {
+      // TODO: handle namespace call error
+      return;
+    }
   };
 }

@@ -19,11 +19,6 @@ export class ServiceCatalog {
 
   public static async deprovisionInstance(instance: IServiceInstance) {
     const { data } = await axios.delete("/api/kube" + instance.metadata.selfLink);
-
-    if (data.status === "Failure") {
-      throw new Error(data.message);
-    }
-
     return data;
   }
 

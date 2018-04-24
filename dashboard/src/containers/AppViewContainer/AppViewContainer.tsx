@@ -17,6 +17,8 @@ interface IRouteProps {
 function mapStateToProps({ apps }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     app: apps.selected,
+    deleteError: apps.deleteError,
+    error: apps.error,
     namespace: params.namespace,
     releaseName: params.releaseName,
   };

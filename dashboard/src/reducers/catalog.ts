@@ -1,7 +1,9 @@
+import { LOCATION_CHANGE, LocationChangeAction } from "react-router-redux";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { ServiceCatalogAction } from "../actions/catalog";
+import { NamespaceAction } from "../actions/namespace";
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
 import { IServiceBinding } from "../shared/ServiceBinding";
 import { IServiceBroker, IServicePlan } from "../shared/ServiceCatalog";
@@ -11,6 +13,12 @@ export interface IServiceCatalogState {
   bindings: IServiceBinding[];
   brokers: IServiceBroker[];
   classes: IClusterServiceClass[];
+  errors: {
+    create?: Error;
+    fetch?: Error;
+    delete?: Error;
+    deprovision?: Error;
+  };
   instances: IServiceInstance[];
   isChecking: boolean;
   isInstalled: boolean;
@@ -21,6 +29,7 @@ const initialState: IServiceCatalogState = {
   bindings: [],
   brokers: [],
   classes: [],
+  errors: {},
   instances: [],
   isChecking: true,
   isInstalled: false,
@@ -29,7 +38,7 @@ const initialState: IServiceCatalogState = {
 
 const catalogReducer = (
   state: IServiceCatalogState = initialState,
-  action: ServiceCatalogAction,
+  action: ServiceCatalogAction | LocationChangeAction | NamespaceAction,
 ): IServiceCatalogState => {
   const { catalog } = actions;
   switch (action.type) {
@@ -54,6 +63,12 @@ const catalogReducer = (
     case getType(catalog.receivePlans):
       const { plans } = action;
       return { ...state, plans };
+    case getType(catalog.errorCatalog):
+      return { ...state, errors: { [action.op]: action.err } };
+    case LOCATION_CHANGE:
+      return { ...state, errors: {} };
+    case getType(actions.namespace.setNamespace):
+      return { ...state, errors: {} };
     default:
       return { ...state };
   }

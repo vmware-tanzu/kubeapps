@@ -6,7 +6,7 @@ import ConfirmDialog from "../ConfirmDialog";
 
 interface IAppControlsProps {
   app: IApp;
-  deleteApp: () => Promise<void>;
+  deleteApp: () => Promise<boolean>;
 }
 
 interface IAppControlsState {
@@ -60,11 +60,12 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   public handleDeleteClick = async () => {
-    await this.props.deleteApp();
-    this.setState({
-      modalIsOpen: false,
-      redirectToAppList: true,
-    });
+    const deleted = await this.props.deleteApp();
+    const s: Partial<IAppControlsState> = { modalIsOpen: false };
+    if (deleted) {
+      s.redirectToAppList = true;
+    }
+    this.setState(s as IAppControlsState);
   };
 }
 

@@ -35,29 +35,18 @@ export class ServiceInstance {
     planName: string,
     parameters: {},
   ) {
-    const { data } = await axios.post<IStatus>(
-      this.getLink(namespace),
-      {
-        apiVersion: "servicecatalog.k8s.io/v1beta1",
-        kind: "ServiceInstance",
-        metadata: {
-          name: releaseName,
-        },
-        spec: {
-          clusterServiceClassExternalName: className,
-          clusterServicePlanExternalName: planName,
-          parameters,
-        },
+    const { data } = await axios.post<IStatus>(this.getLink(namespace), {
+      apiVersion: "servicecatalog.k8s.io/v1beta1",
+      kind: "ServiceInstance",
+      metadata: {
+        name: releaseName,
       },
-      {
-        validateStatus: statusCode => true,
+      spec: {
+        clusterServiceClassExternalName: className,
+        clusterServicePlanExternalName: planName,
+        parameters,
       },
-    );
-
-    if (data.status === "Failure") {
-      throw new Error(data.message);
-    }
-
+    });
     return data;
   }
 
