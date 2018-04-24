@@ -17,7 +17,7 @@ local kube = import "kube.libsonnet";
       {
         apiGroups: [""],
         resources: ["secrets"],
-        verbs: ["get", "list", "create", "delete"],
+        verbs: ["create"],
       },
       // Kubeapps creates and manages AppRepository CRD objects that define
       // which application (e.g. chart) repositories will be indexed.

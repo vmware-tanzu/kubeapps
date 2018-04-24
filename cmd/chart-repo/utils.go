@@ -43,7 +43,7 @@ import (
 const (
 	chartCollection       = "charts"
 	chartFilesCollection  = "files"
-	defaultTimeoutSeconds = 180
+	defaultTimeoutSeconds = 10
 )
 
 type importChartFilesJob struct {
