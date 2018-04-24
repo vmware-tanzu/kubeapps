@@ -2,6 +2,7 @@ import * as yaml from "js-yaml";
 import * as React from "react";
 
 import { IApp, IResource } from "../../shared/types";
+import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
@@ -59,7 +60,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     const deployments = manifest.filter(d => d.kind === "Deployment");
     const services = manifest.filter(d => d.kind === "Service");
-    const apiBase = `ws://${window.location.host}/api/kube`;
+    const apiBase = WebSocketHelper.apiBase();
     const sockets: WebSocket[] = [];
     for (const d of deployments) {
       const s = new WebSocket(

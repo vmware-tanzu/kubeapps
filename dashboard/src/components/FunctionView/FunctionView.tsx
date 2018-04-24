@@ -2,6 +2,7 @@ import * as crypto from "crypto";
 import * as React from "react";
 
 import { IDeploymentStatus, IFunction, IResource } from "../../shared/types";
+import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import FunctionControls from "./FunctionControls";
 import FunctionEditor from "./FunctionEditor";
@@ -48,7 +49,7 @@ class FunctionView extends React.Component<IFunctionViewProps, IFunctionViewStat
     }
 
     const f = nextProps.function;
-    const apiBase = `ws://${window.location.host}/api/kube`;
+    const apiBase = WebSocketHelper.apiBase();
     const socket = new WebSocket(
       `${apiBase}/apis/apps/v1beta1/namespaces/${
         f.metadata.namespace
