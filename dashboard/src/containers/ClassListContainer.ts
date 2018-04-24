@@ -15,19 +15,16 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ catalog }: IStoreState, props: IRouteProps) {
-  const classes = catalog.classes;
+  const { classes, errors } = catalog;
 
   return {
     classes,
+    error: errors.fetch,
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    getBrokers: async () => {
-      const brokers = await dispatch(actions.catalog.getBrokers());
-      return brokers;
-    },
     getClasses: async () => {
       const classes = await dispatch(actions.catalog.getClasses());
       return classes;

@@ -4,11 +4,10 @@ import ConfirmDialog from "../ConfirmDialog";
 
 interface IDeprovisionButtonProps {
   instance: IServiceInstance;
-  deprovision: (instance: IServiceInstance) => Promise<{}>;
+  deprovision: (instance: IServiceInstance) => Promise<boolean>;
 }
 
 interface IDeprovisionButtonState {
-  error: string | undefined;
   instance: IServiceInstance | undefined;
   isDeprovisioning: boolean;
   modalIsOpen: boolean;
@@ -16,7 +15,6 @@ interface IDeprovisionButtonState {
 
 class DeprovisionButton extends React.Component<IDeprovisionButtonProps, IDeprovisionButtonState> {
   public state: IDeprovisionButtonState = {
-    error: undefined,
     instance: this.props.instance,
     isDeprovisioning: false,
     modalIsOpen: false,
@@ -26,12 +24,8 @@ class DeprovisionButton extends React.Component<IDeprovisionButtonProps, IDeprov
     const { deprovision, instance } = this.props;
     this.setState({ isDeprovisioning: true, modalIsOpen: false });
 
-    try {
-      await deprovision(instance);
-      this.setState({ isDeprovisioning: false });
-    } catch (err) {
-      this.setState({ isDeprovisioning: false, error: err.toString() });
-    }
+    await deprovision(instance);
+    this.setState({ isDeprovisioning: false });
   };
 
   public render() {

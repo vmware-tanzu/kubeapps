@@ -2,27 +2,36 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
-import { IServiceBroker } from "../../shared/ServiceCatalog";
+import { ForbiddenError, IRBACRole } from "../../shared/types";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
+import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
 export interface IClassListProps {
+  error: Error;
   classes: IClusterServiceClass[];
-  getBrokers: () => Promise<IServiceBroker[]>;
   getClasses: () => Promise<IClusterServiceClass[]>;
 }
 
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "servicecatalog.k8s.io",
+    clusterWide: true,
+    resource: "clusterserviceclasses",
+    verbs: ["list"],
+  },
+];
+
 export class ClassList extends React.Component<IClassListProps> {
   public componentDidMount() {
-    this.props.getBrokers();
     this.props.getClasses();
   }
 
   public render() {
-    const { classes } = this.props;
+    const { error, classes } = this.props;
     return (
       <div>
         <h2>Classes</h2>
-        <p>Types of services available from all brokers</p>
+        {error ? this.renderError() : <p>Types of services available from all brokers</p>}
         <CardGrid>
           {classes
             .sort((a, b) => a.spec.externalName.localeCompare(b.spec.externalName))
@@ -56,6 +65,19 @@ export class ClassList extends React.Component<IClassListProps> {
             })}
         </CardGrid>
       </div>
+    );
+  }
+
+  private renderError() {
+    const { error } = this.props;
+    return error instanceof ForbiddenError ? (
+      <PermissionsErrorAlert
+        action="list Service Classes"
+        roles={RequiredRBACRoles}
+        namespace="_all"
+      />
+    ) : (
+      <UnexpectedErrorAlert />
     );
   }
 }

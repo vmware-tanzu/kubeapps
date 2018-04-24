@@ -1,7 +1,8 @@
 import * as React from "react";
 
-import { IFunction, IRuntime } from "../../shared/types";
+import { ForbiddenError, IFunction, IRBACRole, IRuntime } from "../../shared/types";
 import { CardGrid } from "../Card";
+import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import FunctionDeployButton from "./FunctionDeployButton";
 import FunctionListItem from "./FunctionListItem";
 
@@ -9,11 +10,21 @@ interface IFunctionListProps {
   functions: IFunction[];
   runtimes: IRuntime[];
   fetchRuntimes: () => Promise<any>;
+  createError: Error;
+  error: Error;
   fetchFunctions: (namespace: string) => Promise<any>;
-  deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<any>;
+  deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<boolean>;
   namespace: string;
   navigateToFunction: (n: string, ns: string) => any;
 }
+
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "kubeless.io",
+    resource: "functions",
+    verbs: ["list"],
+  },
+];
 
 class FunctionList extends React.Component<IFunctionListProps> {
   public componentDidMount() {
@@ -23,8 +34,9 @@ class FunctionList extends React.Component<IFunctionListProps> {
   }
 
   public componentWillReceiveProps(nextProps: IFunctionListProps) {
-    const { fetchFunctions, namespace } = this.props;
-    if (nextProps.namespace !== namespace) {
+    const { error, fetchFunctions, namespace } = this.props;
+    // refetch if new namespace or error removed due to location change
+    if (nextProps.namespace !== namespace || (error && !nextProps.error)) {
       fetchFunctions(nextProps.namespace);
     }
   }
@@ -42,6 +54,7 @@ class FunctionList extends React.Component<IFunctionListProps> {
             </div>
             <div className="col-4 text-r align-center">
               <FunctionDeployButton
+                error={this.props.createError}
                 deployFunction={this.props.deployFunction}
                 navigateToFunction={this.props.navigateToFunction}
                 runtimes={this.props.runtimes}
@@ -51,8 +64,21 @@ class FunctionList extends React.Component<IFunctionListProps> {
           </div>
           <hr />
         </header>
-        <CardGrid>{chartItems}</CardGrid>
+        {this.props.error ? this.renderError() : <CardGrid>{chartItems}</CardGrid>}
       </section>
+    );
+  }
+
+  private renderError() {
+    const { error, namespace } = this.props;
+    return error instanceof ForbiddenError ? (
+      <PermissionsErrorAlert
+        action="list Functions"
+        namespace={namespace}
+        roles={RequiredRBACRoles}
+      />
+    ) : (
+      <UnexpectedErrorAlert />
     );
   }
 }

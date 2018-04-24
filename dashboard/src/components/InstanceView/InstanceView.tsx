@@ -1,23 +1,82 @@
 import * as React from "react";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
-import { IServiceBinding, ServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
+import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
 import { BindingList } from "../BindingList/BindingList";
 import Card, { CardContent, CardGrid, CardIcon } from "../Card";
 import DeprovisionButton from "../DeprovisionButton";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import { AddBindingButton } from "./AddBindingButton";
 
 interface IInstanceViewProps {
+  errors: {
+    fetch?: Error;
+    create?: Error;
+    delete?: Error;
+    deprovision?: Error;
+  };
   instance: IServiceInstance | undefined;
   bindings: IServiceBinding[];
+  name: string;
+  namespace: string;
   svcClass: IClusterServiceClass | undefined;
   svcPlan: IServicePlan | undefined;
   getCatalog: (ns: string) => Promise<any>;
-  deprovision: (instance: IServiceInstance) => Promise<any>;
-  namespace: string;
+  deprovision: (instance: IServiceInstance) => Promise<boolean>;
+  addBinding: (bindingName: string, instanceName: string, namespace: string) => Promise<boolean>;
+  removeBinding: (name: string, ns: string) => Promise<boolean>;
 }
+
+const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
+  delete: [
+    {
+      apiGroup: "servicecatalog.k8s.io",
+      resource: "servicebindings",
+      verbs: ["delete"],
+    },
+  ],
+  deprovision: [
+    {
+      apiGroup: "servicecatalog.k8s.io",
+      resource: "serviceinstances",
+      verbs: ["delete"],
+    },
+  ],
+  view: [
+    // TODO: cleanup non-required roles
+    {
+      apiGroup: "servicecatalog.k8s.io",
+      clusterWide: true,
+      resource: "clusterservicebrokers",
+      verbs: ["list"],
+    },
+    {
+      apiGroup: "servicecatalog.k8s.io",
+      clusterWide: true,
+      resource: "clusterserviceclasses",
+      verbs: ["list"],
+    },
+    {
+      apiGroup: "servicecatalog.k8s.io",
+      resource: "serviceinstances",
+      verbs: ["list"],
+    },
+    {
+      apiGroup: "servicecatalog.k8s.io",
+      resource: "servicebindings",
+      verbs: ["list"],
+    },
+    {
+      apiGroup: "servicecatalog.k8s.io",
+      clusterWide: true,
+      resource: "clusterserviceplans",
+      verbs: ["list"],
+    },
+  ],
+};
 
 export class InstanceView extends React.Component<IInstanceViewProps> {
   public componentDidMount() {
@@ -26,7 +85,9 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
 
   public componentWillReceiveProps(nextProps: IInstanceViewProps) {
     const { getCatalog, namespace } = this.props;
-    getCatalog(namespace);
+    if (nextProps.namespace !== namespace) {
+      getCatalog(nextProps.namespace);
+    }
   }
 
   public render() {
@@ -126,6 +187,9 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
 
     return (
       <div className="InstanceView container">
+        {this.props.errors.fetch && this.renderError(this.props.errors.fetch)}
+        {this.props.errors.deprovision &&
+          this.renderError(this.props.errors.deprovision, "deprovision")}
         {instance && (
           <div className="found">
             <h1>
@@ -144,19 +208,42 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
               bindingName={instance.metadata.name + "-binding"}
               instanceRefName={instance.metadata.name}
               namespace={instance.metadata.namespace}
-              addBinding={this.addBinding}
+              addBinding={this.props.addBinding}
+              onAddBinding={this.onAddBinding}
+              error={this.props.errors.create}
             />
             <br />
-            <BindingList bindings={bindings} />
+            {this.props.errors.delete &&
+              this.renderError(this.props.errors.delete, "delete", "Binding")}
+            <BindingList bindings={bindings} removeBinding={this.props.removeBinding} />
           </div>
         )}
       </div>
     );
   }
 
-  private addBinding = async (bindingName: string, instanceName: string, namespace: string) => {
-    const binding = await ServiceBinding.create(bindingName, instanceName, namespace);
-    await this.props.getCatalog(namespace);
-    return binding;
+  private renderError(error: Error, action: string = "view", resource: string = "Instance") {
+    const { namespace, name } = this.props;
+    switch (error.constructor) {
+      case ForbiddenError:
+        return (
+          <PermissionsErrorAlert
+            namespace={namespace}
+            roles={RequiredRBACRoles[action]}
+            action={`${action} Service ${resource} "${name}"`}
+          />
+        );
+      case NotFoundError:
+        return (
+          <NotFoundErrorAlert resource={`Service ${resource} "${name}"`} namespace={namespace} />
+        );
+      default:
+        return <UnexpectedErrorAlert />;
+    }
+  }
+
+  private onAddBinding = () => {
+    const { namespace, getCatalog } = this.props;
+    getCatalog(namespace);
   };
 }

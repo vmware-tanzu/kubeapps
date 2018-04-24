@@ -1,4 +1,5 @@
-import Axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import Axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
+import { ForbiddenError, NotFoundError } from "./types";
 
 const AuthTokenKey = "kubeapps_auth_token";
 
@@ -48,7 +49,7 @@ export class Auth {
 }
 
 // authenticatedAxiosInstance returns an axios instance with an interceptor
-// configured to set the current auth token
+// configured to set the current auth token and handle errors.
 function authenticatedAxiosInstance() {
   const a = Axios.create();
   a.interceptors.request.use((config: AxiosRequestConfig) => {
@@ -58,6 +59,20 @@ function authenticatedAxiosInstance() {
     }
     return config;
   });
+  a.interceptors.response.use(
+    response => response,
+    e => {
+      const err: AxiosError = e;
+      switch (err.response && err.response.status) {
+        case 403:
+          return Promise.reject(new ForbiddenError());
+        case 404:
+          return Promise.reject(new NotFoundError());
+        default:
+          return Promise.reject(e);
+      }
+    },
+  );
   return a;
 }
 

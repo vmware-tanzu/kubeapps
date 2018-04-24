@@ -6,7 +6,7 @@ import ConfirmDialog from "../ConfirmDialog";
 
 interface IFunctionControlsProps {
   enableSaveButton: boolean;
-  deleteFunction: () => Promise<void>;
+  deleteFunction: () => Promise<boolean>;
   updateFunction: () => void;
   namespace: string;
 }
@@ -59,11 +59,12 @@ class FunctionControls extends React.Component<IFunctionControlsProps, IFunction
   };
 
   public handleDeleteClick = async () => {
-    await this.props.deleteFunction();
-    this.setState({
-      modalIsOpen: false,
-      redirectToFunctionsList: true,
-    });
+    const deleted = await this.props.deleteFunction();
+    const s: Partial<IFunctionControlsState> = { modalIsOpen: false };
+    if (deleted) {
+      s.redirectToFunctionsList = true;
+    }
+    this.setState(s as IFunctionControlsState);
   };
 }
 

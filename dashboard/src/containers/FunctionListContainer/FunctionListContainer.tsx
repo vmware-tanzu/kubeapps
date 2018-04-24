@@ -6,11 +6,13 @@ import actions from "../../actions";
 import FunctionList from "../../components/FunctionList";
 import { IFunction, IStoreState } from "../../shared/types";
 
-function mapStateToProps({ functions, namespace }: IStoreState) {
+function mapStateToProps({ functions: { errors, items, runtimes }, namespace }: IStoreState) {
   return {
-    functions: functions.items,
+    createError: errors.create,
+    error: errors.fetch,
+    functions: items,
     namespace: namespace.current,
-    runtimes: functions.runtimes,
+    runtimes,
   };
 }
 

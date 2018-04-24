@@ -15,13 +15,16 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params } }: IRouteProps) {
   const svcClass =
     catalog.classes.find(potential => !!(potential.spec.externalName === params.className)) ||
     undefined;
   return {
     classes: catalog.classes,
     classname: params.className,
+    createError: catalog.errors.create,
+    error: catalog.errors.fetch,
+    namespace: namespace.current,
     plans: catalog.plans,
     svcClass,
   };
@@ -35,17 +38,16 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     getPlans: async () => {
       dispatch(actions.catalog.getPlans());
     },
-    provision: async (
+    provision: (
       instanceName: string,
       namespace: string,
       className: string,
       planName: string,
       parameters: {},
     ) => {
-      await dispatch(
+      return dispatch(
         actions.catalog.provision(instanceName, namespace, className, planName, parameters),
       );
-      return dispatch(actions.catalog.getCatalog(namespace));
     },
     push: (location: string) => dispatch(push(location)),
   };
