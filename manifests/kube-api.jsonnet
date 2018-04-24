@@ -13,6 +13,12 @@ local kube = import "kube.libsonnet";
         resources: ["configmaps"],
         verbs: ["get", "list"],
       },
+      // Kubeapps creates Secrets with authorization token data for private chart repos
+      {
+        apiGroups: [""],
+        resources: ["secrets"],
+        verbs: ["get", "list", "create", "delete"],
+      },
       // Kubeapps creates and manages AppRepository CRD objects that define
       // which application (e.g. chart) repositories will be indexed.
       {
