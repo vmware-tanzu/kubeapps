@@ -2,12 +2,8 @@ import * as yaml from "js-yaml";
 import * as React from "react";
 
 import { Auth } from "../../shared/Auth";
-<<<<<<< HEAD
-import { IApp, IResource } from "../../shared/types";
-import WebSocketHelper from "../../shared/WebSocketHelper";
-=======
 import { ForbiddenError, IApp, IRBACRole, IResource, NotFoundError } from "../../shared/types";
->>>>>>> add error handling (#264)
+import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import AppControls from "./AppControls";
