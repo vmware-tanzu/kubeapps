@@ -15,7 +15,8 @@ interface IAppRepoFormProps {
 
 export const AppRepoForm = (props: IAppRepoFormProps) => {
   const { name, url, authHeader, update, install, onAfterInstall } = props;
-  const handleInstallClick = async () => {
+  const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     await install(name, url, authHeader);
     if (onAfterInstall) {
       await onAfterInstall();
