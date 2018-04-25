@@ -1,4 +1,39 @@
 ---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: apprepository-controller
+  name: apprepository-controller
+rules:
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  verbs:
+  - get
+  - list
+  - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: apprepository-controller
+  name: apprepository-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: apprepository-controller
+subjects:
+- kind: ServiceAccount
+  name: apprepository-controller
+  namespace: kubeapps
+---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -46,11 +81,11 @@ spec:
       containers:
       - args:
         - --logtostderr
-        - --repo-sync-image=kubeapps/chart-repo:v0.6.0
+        - --repo-sync-image=kubeapps/chart-repo:v0.7.0
         command:
         - /apprepository-controller
         env: []
-        image: kubeapps/apprepository-controller:v0.6.0
+        image: kubeapps/apprepository-controller:v0.7.0
         name: controller
         ports: []
         stdin: false
@@ -137,6 +172,19 @@ metadata:
   annotations: {}
   labels:
     created-by: kubeapps
+    name: svc-cat
+  name: svc-cat
+  namespace: kubeapps
+spec:
+  type: helm
+  url: https://svc-catalog-charts.storage.googleapis.com
+---
+apiVersion: kubeapps.com/v1alpha1
+kind: AppRepository
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
     name: incubator
   name: incubator
   namespace: kubeapps
@@ -156,54 +204,6 @@ metadata:
 spec:
   type: helm
   url: https://kubernetes-charts.storage.googleapis.com
----
-apiVersion: kubeapps.com/v1alpha1
-kind: AppRepository
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: svc-cat
-  name: svc-cat
-  namespace: kubeapps
-spec:
-  type: helm
-  url: https://svc-catalog-charts.storage.googleapis.com
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: apprepository-controller
-  name: apprepository-controller
-rules:
-- apiGroups:
-  - batch
-  resources:
-  - cronjobs
-  verbs:
-  - get
-  - list
-  - watch
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRoleBinding
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: apprepository-controller
-  name: apprepository-controller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: apprepository-controller
-subjects:
-- kind: ServiceAccount
-  name: apprepository-controller
-  namespace: kubeapps
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -244,7 +244,7 @@ spec:
             secretKeyRef:
               key: mongodb-root-password
               name: mongodb
-        image: kubeapps/chartsvc:v0.6.0
+        image: kubeapps/chartsvc:v0.7.0
         name: chartsvc
         ports:
         - containerPort: 8080
@@ -273,114 +273,6 @@ spec:
     app: chartsvc
     name: chartsvc
   type: ClusterIP
----
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: kubeapps-kube-api
-  name: kubeapps-kube-api
-  namespace: kubeapps
-spec:
-  minReadySeconds: 30
-  replicas: 1
-  revisionHistoryLimit: 10
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
-  template:
-    metadata:
-      annotations: {}
-      labels:
-        created-by: kubeapps
-        name: kubeapps-kube-api
-    spec:
-      containers:
-      - args:
-        - proxy
-        - --address=0.0.0.0
-        - --port=8080
-        env: []
-        image: lachlanevenson/k8s-kubectl:v1.8.6
-        name: proxy
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-        stdin: false
-        tty: false
-        volumeMounts: []
-      imagePullSecrets: []
-      serviceAccountName: kubeapps-kube-api
-      terminationGracePeriodSeconds: 30
-      volumes: []
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: RoleBinding
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: kubeapps-kube-api-kubeless-config
-  name: kubeapps-kube-api-kubeless-config
-  namespace: kubeless
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: kubeapps-kube-api-kubeless-config
-subjects:
-- kind: ServiceAccount
-  name: kubeapps-kube-api
-  namespace: kubeapps
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: RoleBinding
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: kubeapps-kube-api
-  name: kubeapps-kube-api
-  namespace: kubeapps
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: kubeapps-kube-api
-subjects:
-- kind: ServiceAccount
-  name: kubeapps-kube-api
-  namespace: kubeapps
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: kubeapps-kube-api
-  name: kubeapps-kube-api
-  namespace: kubeapps
-spec:
-  ports:
-  - port: 8080
-    targetPort: http
-  selector:
-    name: kubeapps-kube-api
-  type: ClusterIP
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: kubeapps-kube-api
-  name: kubeapps-kube-api
-  namespace: kubeapps
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
@@ -470,6 +362,130 @@ rules:
   verbs:
   - get
 ---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: kubeapps-kube-api
+  name: kubeapps-kube-api
+  namespace: kubeapps
+spec:
+  minReadySeconds: 30
+  replicas: 1
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        created-by: kubeapps
+        name: kubeapps-kube-api
+    spec:
+      containers:
+      - args:
+        - proxy
+        - --address=0.0.0.0
+        - --port=8080
+        env: []
+        image: lachlanevenson/k8s-kubectl:v1.8.6
+        name: proxy
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        stdin: false
+        tty: false
+        volumeMounts: []
+      imagePullSecrets: []
+      serviceAccountName: kubeapps-kube-api
+      terminationGracePeriodSeconds: 30
+      volumes: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: kubeapps-kube-api
+  name: kubeapps-kube-api
+  namespace: kubeapps
+spec:
+  ports:
+  - port: 8080
+    targetPort: http
+  selector:
+    name: kubeapps-kube-api
+  type: ClusterIP
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: kubeapps-kube-api
+  name: kubeapps-kube-api
+  namespace: kubeapps
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+- apiGroups:
+  - kubeapps.com
+  resources:
+  - apprepositories
+  verbs:
+  - get
+  - list
+  - create
+  - update
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: kubeapps-kube-api
+  name: kubeapps-kube-api
+  namespace: kubeapps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubeapps-kube-api
+subjects:
+- kind: ServiceAccount
+  name: kubeapps-kube-api
+  namespace: kubeapps
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: kubeapps-kube-api
+  name: kubeapps-kube-api
+  namespace: kubeapps
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
@@ -507,32 +523,32 @@ rules:
   - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: Role
+kind: RoleBinding
 metadata:
   annotations: {}
   labels:
     created-by: kubeapps
-    name: kubeapps-kube-api
+    name: kubeapps-kube-api-kubeless-config
+  name: kubeapps-kube-api-kubeless-config
+  namespace: kubeless
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kubeapps-kube-api-kubeless-config
+subjects:
+- kind: ServiceAccount
   name: kubeapps-kube-api
   namespace: kubeapps
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - kubeapps.com
-  resources:
-  - apprepositories
-  verbs:
-  - get
-  - list
-  - create
-  - update
-  - delete
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: tiller
+  name: tiller
+  namespace: kubeapps
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -626,7 +642,7 @@ spec:
           value: kubeapps
         - name: TMPDIR
           value: /helm
-        image: bitnami/helm-crd-controller:v0.2.1
+        image: bitnami/helm-crd-controller:v0.3.0
         name: controller
         ports: []
         securityContext:
@@ -641,16 +657,6 @@ spec:
       - emptyDir: {}
         name: home
 status: {}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: tiller
-  name: tiller
-  namespace: kubeapps
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -680,7 +686,7 @@ spec:
       containers:
       - args: []
         env: []
-        image: kubeapps/dashboard:v0.6.0
+        image: kubeapps/dashboard:v0.7.0
         livenessProbe:
           httpGet:
             path: /
@@ -789,160 +795,6 @@ spec:
           servicePort: 8080
         path: /api/kube
   tls: []
----
-apiVersion: v1
-data:
-  builder-image: kubeless/function-image-builder:v0.6.0
-  deployment: '{}'
-  enable-build-step: "false"
-  function-registry-tls-verify: "true"
-  ingress-enabled: "false"
-  runtime-images: |-
-    [
-      {
-        "ID": "python",
-        "compiled": false,
-        "versions": [
-          {
-            "name": "python27",
-            "version": "2.7",
-            "runtimeImage": "kubeless/python@sha256:07cfb0f3d8b6db045dc317d35d15634d7be5e436944c276bf37b1c630b03add8",
-            "initImage": "python:2.7"
-          },
-          {
-            "name": "python34",
-            "version": "3.4",
-            "runtimeImage": "kubeless/python@sha256:f19640c547a3f91dbbfb18c15b5e624029b4065c1baf2892144e07c36f0a7c8f",
-            "initImage": "python:3.4"
-          },
-          {
-            "name": "python36",
-            "version": "3.6",
-            "runtimeImage": "kubeless/python@sha256:0c9f8f727d42625a4e25230cfe612df7488b65f283e7972f84108d87e7443d72",
-            "initImage": "python:3.6"
-          }
-        ],
-        "depName": "requirements.txt",
-        "fileNameSuffix": ".py"
-      },
-      {
-        "ID": "nodejs",
-        "compiled": false,
-        "versions": [
-          {
-            "name": "node6",
-            "version": "6",
-            "runtimeImage": "kubeless/nodejs@sha256:61c5a10aacb709c4575a09a4aa28f822b2d008c0dbf4aa0b124705ee9ca143f9",
-            "initImage": "node:6.10"
-          },
-          {
-            "name": "node8",
-            "version": "8",
-            "runtimeImage": "kubeless/nodejs@sha256:fc1aa96e55116400ee13d664a655dfb2025ded91858ebfd5fc0c8f0d6b923eba",
-            "initImage": "node:8"
-          }
-        ],
-        "depName": "package.json",
-        "fileNameSuffix": ".js"
-      },
-      {
-        "ID": "ruby",
-        "compiled": false,
-        "versions": [
-          {
-            "name": "ruby24",
-            "version": "2.4",
-            "runtimeImage": "kubeless/ruby@sha256:0dce29c0eb2a246f7d825b6644eeae7957b26f2bfad2b7987f2134cc7b350f2f",
-            "initImage": "bitnami/ruby:2.4"
-          }
-        ],
-        "depName": "Gemfile",
-        "fileNameSuffix": ".rb"
-      },
-      {
-        "ID": "php",
-        "compiled": false,
-        "versions": [
-          {
-            "name": "php72",
-            "version": "7.2",
-            "runtimeImage": "kubeless/php@sha256:82b94c691302bc82f3900444255cabb8f230487764eafeba7866ac49d90ddc3b",
-            "initImage": "composer:1.6"
-          }
-        ],
-        "depName": "composer.json",
-        "fileNameSuffix": ".php"
-      },
-      {
-        "ID": "go",
-        "compiled": true,
-        "versions": [
-          {
-            "name": "go1.10",
-            "version": "1.10",
-            "runtimeImage": "kubeless/go@sha256:bf72622344a54e4360f31d3fea5eb9dca2c96fbedc6f0ad7c54f3eb8fb7bd353",
-            "initImage": "kubeless/go-init@sha256:ce6ef4fafe518ed78b3a68b03947c064fec1cf8c667cd109e9331f227877b3a9"
-          }
-        ],
-        "depName": "Gopkg.toml",
-        "fileNameSuffix": ".go"
-      }
-    ]
-  service-type: ClusterIP
-kind: ConfigMap
-metadata:
-  labels:
-    created-by: kubeapps
-  name: kubeless-config
-  namespace: kubeless
----
-apiVersion: apps/v1beta1
-kind: Deployment
-metadata:
-  labels:
-    created-by: kubeapps
-    kubeless: controller
-  name: kubeless-controller-manager
-  namespace: kubeless
-spec:
-  selector:
-    matchLabels:
-      kubeless: controller
-  template:
-    metadata:
-      labels:
-        kubeless: controller
-    spec:
-      containers:
-      - env:
-        - name: KUBELESS_INGRESS_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: ingress-enabled
-              name: kubeless-config
-        - name: KUBELESS_SERVICE_TYPE
-          valueFrom:
-            configMapKeyRef:
-              key: service-type
-              name: kubeless-config
-        - name: KUBELESS_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: KUBELESS_CONFIG
-          value: kubeless-config
-        image: bitnami/kubeless-controller-manager:v0.6.0
-        imagePullPolicy: IfNotPresent
-        name: kubeless-controller-manager
-      serviceAccountName: controller-acct
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    created-by: kubeapps
-  name: controller-acct
-  namespace: kubeless
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRole
@@ -1124,6 +976,160 @@ metadata:
     name: kubeless
   name: kubeless
 ---
+apiVersion: v1
+data:
+  builder-image: kubeless/function-image-builder:v0.6.0
+  deployment: '{}'
+  enable-build-step: "false"
+  function-registry-tls-verify: "true"
+  ingress-enabled: "false"
+  runtime-images: |-
+    [
+      {
+        "ID": "python",
+        "compiled": false,
+        "versions": [
+          {
+            "name": "python27",
+            "version": "2.7",
+            "runtimeImage": "kubeless/python@sha256:07cfb0f3d8b6db045dc317d35d15634d7be5e436944c276bf37b1c630b03add8",
+            "initImage": "python:2.7"
+          },
+          {
+            "name": "python34",
+            "version": "3.4",
+            "runtimeImage": "kubeless/python@sha256:f19640c547a3f91dbbfb18c15b5e624029b4065c1baf2892144e07c36f0a7c8f",
+            "initImage": "python:3.4"
+          },
+          {
+            "name": "python36",
+            "version": "3.6",
+            "runtimeImage": "kubeless/python@sha256:0c9f8f727d42625a4e25230cfe612df7488b65f283e7972f84108d87e7443d72",
+            "initImage": "python:3.6"
+          }
+        ],
+        "depName": "requirements.txt",
+        "fileNameSuffix": ".py"
+      },
+      {
+        "ID": "nodejs",
+        "compiled": false,
+        "versions": [
+          {
+            "name": "node6",
+            "version": "6",
+            "runtimeImage": "kubeless/nodejs@sha256:61c5a10aacb709c4575a09a4aa28f822b2d008c0dbf4aa0b124705ee9ca143f9",
+            "initImage": "node:6.10"
+          },
+          {
+            "name": "node8",
+            "version": "8",
+            "runtimeImage": "kubeless/nodejs@sha256:fc1aa96e55116400ee13d664a655dfb2025ded91858ebfd5fc0c8f0d6b923eba",
+            "initImage": "node:8"
+          }
+        ],
+        "depName": "package.json",
+        "fileNameSuffix": ".js"
+      },
+      {
+        "ID": "ruby",
+        "compiled": false,
+        "versions": [
+          {
+            "name": "ruby24",
+            "version": "2.4",
+            "runtimeImage": "kubeless/ruby@sha256:0dce29c0eb2a246f7d825b6644eeae7957b26f2bfad2b7987f2134cc7b350f2f",
+            "initImage": "bitnami/ruby:2.4"
+          }
+        ],
+        "depName": "Gemfile",
+        "fileNameSuffix": ".rb"
+      },
+      {
+        "ID": "php",
+        "compiled": false,
+        "versions": [
+          {
+            "name": "php72",
+            "version": "7.2",
+            "runtimeImage": "kubeless/php@sha256:82b94c691302bc82f3900444255cabb8f230487764eafeba7866ac49d90ddc3b",
+            "initImage": "composer:1.6"
+          }
+        ],
+        "depName": "composer.json",
+        "fileNameSuffix": ".php"
+      },
+      {
+        "ID": "go",
+        "compiled": true,
+        "versions": [
+          {
+            "name": "go1.10",
+            "version": "1.10",
+            "runtimeImage": "kubeless/go@sha256:bf72622344a54e4360f31d3fea5eb9dca2c96fbedc6f0ad7c54f3eb8fb7bd353",
+            "initImage": "kubeless/go-init@sha256:ce6ef4fafe518ed78b3a68b03947c064fec1cf8c667cd109e9331f227877b3a9"
+          }
+        ],
+        "depName": "Gopkg.toml",
+        "fileNameSuffix": ".go"
+      }
+    ]
+  service-type: ClusterIP
+kind: ConfigMap
+metadata:
+  labels:
+    created-by: kubeapps
+  name: kubeless-config
+  namespace: kubeless
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    created-by: kubeapps
+    kubeless: controller
+  name: kubeless-controller-manager
+  namespace: kubeless
+spec:
+  selector:
+    matchLabels:
+      kubeless: controller
+  template:
+    metadata:
+      labels:
+        kubeless: controller
+    spec:
+      containers:
+      - env:
+        - name: KUBELESS_INGRESS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ingress-enabled
+              name: kubeless-config
+        - name: KUBELESS_SERVICE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              key: service-type
+              name: kubeless-config
+        - name: KUBELESS_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBELESS_CONFIG
+          value: kubeless-config
+        image: bitnami/kubeless-controller-manager:v0.6.0
+        imagePullPolicy: IfNotPresent
+        name: kubeless-controller-manager
+      serviceAccountName: controller-acct
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    created-by: kubeapps
+  name: controller-acct
+  namespace: kubeless
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -1246,60 +1252,6 @@ metadata:
   name: nginx-ingress
   namespace: kubeapps
 ---
-apiVersion: extensions/v1beta1
-kind: Deployment
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: default-http-backend
-  name: default-http-backend
-  namespace: kubeapps
-spec:
-  minReadySeconds: 30
-  replicas: 1
-  revisionHistoryLimit: 10
-  strategy:
-    rollingUpdate:
-      maxSurge: 25%
-      maxUnavailable: 25%
-    type: RollingUpdate
-  template:
-    metadata:
-      annotations: {}
-      labels:
-        created-by: kubeapps
-        name: default-http-backend
-    spec:
-      containers:
-      - args: []
-        env: []
-        image: gcr.io/google_containers/defaultbackend:1.4
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8080
-            scheme: HTTP
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-        name: default-http-backend
-        ports:
-        - containerPort: 8080
-          name: default
-        resources:
-          limits:
-            cpu: 10m
-            memory: 20Mi
-          requests:
-            cpu: 10m
-            memory: 20Mi
-        stdin: false
-        tty: false
-        volumeMounts: []
-      imagePullSecrets: []
-      terminationGracePeriodSeconds: 60
-      volumes: []
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -1318,60 +1270,21 @@ spec:
   type: ClusterIP
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
+kind: ClusterRoleBinding
 metadata:
   annotations: {}
   labels:
     created-by: kubeapps
     name: nginx-ingress-controller
   name: nginx-ingress-controller
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - configmaps
-  - endpoints
-  - nodes
-  - pods
-  - secrets
-  verbs:
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - services
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses/status
-  verbs:
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nginx-ingress-controller
+subjects:
+- kind: ServiceAccount
+  name: nginx-ingress-controller
+  namespace: kubeapps
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
@@ -1392,13 +1305,25 @@ subjects:
   namespace: kubeapps
 ---
 apiVersion: v1
-kind: ServiceAccount
+data: {}
+kind: ConfigMap
 metadata:
   annotations: {}
   labels:
     created-by: kubeapps
-    name: nginx-ingress-controller
-  name: nginx-ingress-controller
+    name: tcp-services
+  name: tcp-services
+  namespace: kubeapps
+---
+apiVersion: v1
+data: {}
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: udp-services
+  name: udp-services
   namespace: kubeapps
 ---
 apiVersion: extensions/v1beta1
@@ -1484,22 +1409,115 @@ spec:
       terminationGracePeriodSeconds: 60
       volumes: []
 ---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: default-http-backend
+  name: default-http-backend
+  namespace: kubeapps
+spec:
+  minReadySeconds: 30
+  replicas: 1
+  revisionHistoryLimit: 10
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations: {}
+      labels:
+        created-by: kubeapps
+        name: default-http-backend
+    spec:
+      containers:
+      - args: []
+        env: []
+        image: gcr.io/google_containers/defaultbackend:1.4
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        name: default-http-backend
+        ports:
+        - containerPort: 8080
+          name: default
+        resources:
+          limits:
+            cpu: 10m
+            memory: 20Mi
+          requests:
+            cpu: 10m
+            memory: 20Mi
+        stdin: false
+        tty: false
+        volumeMounts: []
+      imagePullSecrets: []
+      terminationGracePeriodSeconds: 60
+      volumes: []
+---
 apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRoleBinding
+kind: ClusterRole
 metadata:
   annotations: {}
   labels:
     created-by: kubeapps
     name: nginx-ingress-controller
   name: nginx-ingress-controller
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: nginx-ingress-controller
-subjects:
-- kind: ServiceAccount
-  name: nginx-ingress-controller
-  namespace: kubeapps
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - nodes
+  - pods
+  - secrets
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses/status
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
@@ -1561,25 +1579,13 @@ spec:
   type: ClusterIP
 ---
 apiVersion: v1
-data: {}
-kind: ConfigMap
+kind: ServiceAccount
 metadata:
   annotations: {}
   labels:
     created-by: kubeapps
-    name: tcp-services
-  name: tcp-services
-  namespace: kubeapps
----
-apiVersion: v1
-data: {}
-kind: ConfigMap
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: udp-services
-  name: udp-services
+    name: nginx-ingress-controller
+  name: nginx-ingress-controller
   namespace: kubeapps
 ---
 apiVersion: v1
