@@ -1,4 +1,32 @@
 ---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: apprepository-controller
+  name: apprepository-controller
+  namespace: kubeapps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: apprepository-controller
+subjects:
+- kind: ServiceAccount
+  name: apprepository-controller
+  namespace: kubeapps
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations: {}
+  labels:
+    created-by: kubeapps
+    name: apprepository-controller
+  name: apprepository-controller
+  namespace: kubeapps
+---
 apiVersion: kubeapps.com/v1alpha1
 kind: AppRepository
 metadata:
@@ -177,33 +205,23 @@ rules:
   - update
   - watch
 ---
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: RoleBinding
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: apprepository-controller
-  name: apprepository-controller
-  namespace: kubeapps
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: apprepository-controller
-subjects:
-- kind: ServiceAccount
-  name: apprepository-controller
-  namespace: kubeapps
----
 apiVersion: v1
-kind: ServiceAccount
+kind: Service
 metadata:
   annotations: {}
   labels:
     created-by: kubeapps
-    name: apprepository-controller
-  name: apprepository-controller
+    name: chartsvc
+  name: chartsvc
   namespace: kubeapps
+spec:
+  ports:
+  - port: 8080
+    targetPort: http
+  selector:
+    app: chartsvc
+    name: chartsvc
+  type: ClusterIP
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -255,24 +273,6 @@ spec:
       imagePullSecrets: []
       terminationGracePeriodSeconds: 30
       volumes: []
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations: {}
-  labels:
-    created-by: kubeapps
-    name: chartsvc
-  name: chartsvc
-  namespace: kubeapps
-spec:
-  ports:
-  - port: 8080
-    targetPort: http
-  selector:
-    app: chartsvc
-    name: chartsvc
-  type: ClusterIP
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -392,6 +392,37 @@ metadata:
   name: tiller
   namespace: kubeapps
 ---
+apiVersion: v1
+data:
+  vhost.conf: |
+    server {
+      listen 8080;
+
+      gzip on;
+      # Angular CLI already has gzipped the assets (ng build --prod --aot)
+      gzip_static  on;
+
+      location / {
+        try_files $uri /index.html;
+      }
+    }
+
+    # Redirect www to non-www
+    # Taken from https://easyengine.io/tutorials/nginx/www-non-www-redirection/
+    server {
+      server_name "~^www\.(.*)$" ;
+      return 301 $scheme://$1$request_uri ;
+    }
+kind: ConfigMap
+metadata:
+  annotations: {}
+  labels:
+    app: kubeapps-dashboard
+    created-by: kubeapps
+    name: kubeapps-dashboard-ui-vhost
+  name: kubeapps-dashboard-ui-vhost-425de41
+  namespace: kubeapps
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -467,193 +498,6 @@ spec:
   selector:
     name: kubeapps-dashboard-ui
   type: ClusterIP
----
-apiVersion: v1
-data:
-  vhost.conf: |
-    server {
-      listen 8080;
-
-      gzip on;
-      # Angular CLI already has gzipped the assets (ng build --prod --aot)
-      gzip_static  on;
-
-      location / {
-        try_files $uri /index.html;
-      }
-    }
-
-    # Redirect www to non-www
-    # Taken from https://easyengine.io/tutorials/nginx/www-non-www-redirection/
-    server {
-      server_name "~^www\.(.*)$" ;
-      return 301 $scheme://$1$request_uri ;
-    }
-kind: ConfigMap
-metadata:
-  annotations: {}
-  labels:
-    app: kubeapps-dashboard
-    created-by: kubeapps
-    name: kubeapps-dashboard-ui-vhost
-  name: kubeapps-dashboard-ui-vhost-425de41
-  namespace: kubeapps
----
-apiVersion: apps/v1beta1
-kind: Deployment
-metadata:
-  labels:
-    created-by: kubeapps
-    kubeless: controller
-  name: kubeless-controller-manager
-  namespace: kubeless
-spec:
-  selector:
-    matchLabels:
-      kubeless: controller
-  template:
-    metadata:
-      labels:
-        kubeless: controller
-    spec:
-      containers:
-      - env:
-        - name: KUBELESS_INGRESS_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              key: ingress-enabled
-              name: kubeless-config
-        - name: KUBELESS_SERVICE_TYPE
-          valueFrom:
-            configMapKeyRef:
-              key: service-type
-              name: kubeless-config
-        - name: KUBELESS_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        - name: KUBELESS_CONFIG
-          value: kubeless-config
-        image: bitnami/kubeless-controller-manager:v0.6.0
-        imagePullPolicy: IfNotPresent
-        name: kubeless-controller-manager
-      serviceAccountName: controller-acct
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  labels:
-    created-by: kubeapps
-  name: controller-acct
-  namespace: kubeless
----
-apiVersion: rbac.authorization.k8s.io/v1beta1
-kind: ClusterRole
-metadata:
-  labels:
-    created-by: kubeapps
-  name: kubeless-controller-deployer
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - services
-  - configmaps
-  verbs:
-  - create
-  - get
-  - delete
-  - list
-  - update
-  - patch
-- apiGroups:
-  - apps
-  - extensions
-  resources:
-  - deployments
-  verbs:
-  - create
-  - get
-  - delete
-  - list
-  - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - list
-  - delete
-- apiGroups:
-  - ""
-  resourceNames:
-  - kubeless-registry-credentials
-  resources:
-  - secrets
-  verbs:
-  - get
-- apiGroups:
-  - kubeless.io
-  resources:
-  - functions
-  - httptriggers
-  - cronjobtriggers
-  verbs:
-  - get
-  - list
-  - watch
-  - update
-  - delete
-- apiGroups:
-  - batch
-  resources:
-  - cronjobs
-  - jobs
-  verbs:
-  - create
-  - get
-  - delete
-  - deletecollection
-  - list
-  - update
-  - patch
-- apiGroups:
-  - autoscaling
-  resources:
-  - horizontalpodautoscalers
-  verbs:
-  - create
-  - get
-  - delete
-  - list
-  - update
-  - patch
-- apiGroups:
-  - apiextensions.k8s.io
-  resources:
-  - customresourcedefinitions
-  verbs:
-  - get
-  - list
-- apiGroups:
-  - monitoring.coreos.com
-  resources:
-  - alertmanagers
-  - prometheuses
-  - servicemonitors
-  verbs:
-  - '*'
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs:
-  - create
-  - get
-  - list
-  - update
-  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
@@ -833,6 +677,162 @@ metadata:
   name: kubeless-config
   namespace: kubeless
 ---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    created-by: kubeapps
+    kubeless: controller
+  name: kubeless-controller-manager
+  namespace: kubeless
+spec:
+  selector:
+    matchLabels:
+      kubeless: controller
+  template:
+    metadata:
+      labels:
+        kubeless: controller
+    spec:
+      containers:
+      - env:
+        - name: KUBELESS_INGRESS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              key: ingress-enabled
+              name: kubeless-config
+        - name: KUBELESS_SERVICE_TYPE
+          valueFrom:
+            configMapKeyRef:
+              key: service-type
+              name: kubeless-config
+        - name: KUBELESS_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBELESS_CONFIG
+          value: kubeless-config
+        image: bitnami/kubeless-controller-manager:v0.6.0
+        imagePullPolicy: IfNotPresent
+        name: kubeless-controller-manager
+      serviceAccountName: controller-acct
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    created-by: kubeapps
+  name: controller-acct
+  namespace: kubeless
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    created-by: kubeapps
+  name: kubeless-controller-deployer
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - configmaps
+  verbs:
+  - create
+  - get
+  - delete
+  - list
+  - update
+  - patch
+- apiGroups:
+  - apps
+  - extensions
+  resources:
+  - deployments
+  verbs:
+  - create
+  - get
+  - delete
+  - list
+  - update
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - list
+  - delete
+- apiGroups:
+  - ""
+  resourceNames:
+  - kubeless-registry-credentials
+  resources:
+  - secrets
+  verbs:
+  - get
+- apiGroups:
+  - kubeless.io
+  resources:
+  - functions
+  - httptriggers
+  - cronjobtriggers
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - delete
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - create
+  - get
+  - delete
+  - deletecollection
+  - list
+  - update
+  - patch
+- apiGroups:
+  - autoscaling
+  resources:
+  - horizontalpodautoscalers
+  verbs:
+  - create
+  - get
+  - delete
+  - list
+  - update
+  - patch
+- apiGroups:
+  - apiextensions.k8s.io
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - get
+  - list
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - alertmanagers
+  - prometheuses
+  - servicemonitors
+  verbs:
+  - '*'
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs:
+  - create
+  - get
+  - list
+  - update
+  - delete
+---
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -996,7 +996,7 @@ spec:
       terminationGracePeriodSeconds: 30
       volumes:
       - configMap:
-          name: kubeapps-vhost-dec498e
+          name: kubeapps-vhost-5811f90
         name: vhost
 ---
 apiVersion: v1
@@ -1040,6 +1040,9 @@ data:
         proxy_pass https://kubernetes.default;
         # Disable buffering for log streaming
         proxy_buffering off;
+        # Hide Www-Authenticate to prevent it triggering a basic auth prompt in
+        # the browser with some clusters
+        proxy_hide_header Www-Authenticate;
       }
 
       location /api/chartsvc {
@@ -1059,7 +1062,7 @@ metadata:
     app: kubeapps
     created-by: kubeapps
     name: kubeapps-vhost
-  name: kubeapps-vhost-dec498e
+  name: kubeapps-vhost-5811f90
   namespace: kubeapps
 ---
 apiVersion: v1
