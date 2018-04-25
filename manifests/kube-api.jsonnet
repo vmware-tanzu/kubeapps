@@ -2,8 +2,25 @@ local kube = import "kube.libsonnet";
 
 {
   namespace:: {metadata+: {namespace: "kubeapps"}},
+  kubelessNamespace:: {metadata+: {namespace: "kubeless"}},
 
   serviceAccount: kube.ServiceAccount("kubeapps-kube-api") + $.namespace,
+
+  kubelessRole: kube.Role("kubeapps-kube-api-kubeless-config") + $.kubelessNamespace {
+    rules: [
+      // Kubeapps reads Kubeless runtime information from the kubeless-config configmap
+      {
+        apiGroups: [""],
+        resources: ["configmaps"],
+        resourceNames: ["kubeless-config"],
+        verbs: ["get"],
+      },
+    ],
+  },
+  kubelessRoleBinding: kube.RoleBinding("kubeapps-kube-api-kubeless-config") + $.kubelessNamespace {
+    roleRef_: $.kubelessRole,
+    subjects_: [$.serviceAccount],
+  },
 
   role: kube.Role("kubeapps-kube-api") + $.namespace {
     rules: [
