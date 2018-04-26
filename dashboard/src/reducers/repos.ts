@@ -1,3 +1,4 @@
+import { LOCATION_CHANGE, LocationChangeAction } from "react-router-redux";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -6,10 +7,15 @@ import { IAppRepository } from "../shared/types";
 
 export interface IAppRepositoryState {
   addingRepo: boolean;
+  errors: {
+    create?: Error;
+    delete?: Error;
+    fetch?: Error;
+    update?: Error;
+  };
   lastAdded?: IAppRepository;
   isFetching: boolean;
   repos: IAppRepository[];
-  selected?: IAppRepository;
   form: {
     name: string;
     namespace: string;
@@ -21,6 +27,7 @@ export interface IAppRepositoryState {
 
 const initialState: IAppRepositoryState = {
   addingRepo: false,
+  errors: {},
   form: {
     name: "",
     namespace: "",
@@ -33,7 +40,7 @@ const initialState: IAppRepositoryState = {
 
 const reposReducer = (
   state: IAppRepositoryState = initialState,
-  action: AppReposAction,
+  action: AppReposAction | LocationChangeAction,
 ): IAppRepositoryState => {
   switch (action.type) {
     case getType(actions.repos.receiveRepos):
@@ -59,6 +66,19 @@ const reposReducer = (
       return { ...state, redirectTo: action.path };
     case getType(actions.repos.redirected):
       return { ...state, redirectTo: undefined };
+    case getType(actions.repos.errorRepos):
+      return {
+        ...state,
+        // don't reset the fetch error
+        errors: { fetch: state.errors.fetch, [action.op]: action.err },
+        isFetching: false,
+      };
+    case LOCATION_CHANGE:
+      return {
+        ...state,
+        errors: {},
+        isFetching: false,
+      };
     default:
       return state;
   }

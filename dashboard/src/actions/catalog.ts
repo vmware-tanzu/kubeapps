@@ -40,7 +40,7 @@ export const receiveClasses = createAction(
 );
 export const errorCatalog = createAction(
   "ERROR_CATALOG",
-  (err: Error, op: "fetch" | "create" | "delete" | "deprovision") => ({
+  (err: Error, op: "fetch" | "create" | "delete" | "deprovision" | "update") => ({
     err,
     op,
     type: "ERROR_CATALOG",
@@ -120,7 +120,11 @@ export function deprovision(instance: IServiceInstance) {
 
 export function sync(broker: IServiceBroker) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    return ServiceCatalog.syncBroker(broker);
+    try {
+      await ServiceCatalog.syncBroker(broker);
+    } catch (e) {
+      dispatch(errorCatalog(e, "update"));
+    }
   };
 }
 

@@ -33,10 +33,19 @@ export const updateForm = createAction(
 );
 export const redirect = createAction("REDIRECT", (path: string) => ({ type: "REDIRECT", path }));
 export const redirected = createAction("REDIRECTED");
+export const errorRepos = createAction(
+  "ERROR_REPOS",
+  (err: Error, op: "create" | "update" | "fetch" | "delete") => ({
+    err,
+    op,
+    type: "ERROR_REPOS",
+  }),
+);
 
 const allActions = [
   addRepo,
   addedRepo,
+  errorRepos,
   requestRepos,
   receiveRepos,
   resetForm,
@@ -51,69 +60,84 @@ export type AppReposAction = typeof allActions[number];
 
 export const deleteRepo = (name: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
-    await AppRepository.delete(name);
-    dispatch(requestRepos());
-    const repos = await AppRepository.list();
-    dispatch(receiveRepos(repos.items));
-    return repos;
+    try {
+      await AppRepository.delete(name);
+      dispatch(fetchRepos());
+      return true;
+    } catch (e) {
+      dispatch(errorRepos(e, "delete"));
+      return false;
+    }
   };
 };
 
 export const resyncRepo = (name: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
-    const repo = await AppRepository.get(name);
-    repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
-    repo.spec.resyncRequests++;
-    await AppRepository.update(name, repo);
-    // TODO: Do something to show progress
-    dispatch(requestRepos());
-    const repos = await AppRepository.list();
-    dispatch(receiveRepos(repos.items));
-    return repos;
+    try {
+      const repo = await AppRepository.get(name);
+      repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
+      repo.spec.resyncRequests++;
+      await AppRepository.update(name, repo);
+      // TODO: Do something to show progress
+      dispatch(requestRepos());
+      const repos = await AppRepository.list();
+      dispatch(receiveRepos(repos.items));
+    } catch (e) {
+      dispatch(errorRepos(e, "update"));
+    }
   };
 };
 
 export const fetchRepos = () => {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestRepos());
-    const repos = await AppRepository.list();
-    dispatch(receiveRepos(repos.items));
-    return repos;
+    try {
+      const repos = await AppRepository.list();
+      dispatch(receiveRepos(repos.items));
+    } catch (e) {
+      dispatch(errorRepos(e, "fetch"));
+    }
   };
 };
 
 export const installRepo = (name: string, url: string, authHeader: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
-    let auth;
-    const secretName = `apprepo-${name}-secrets`;
-    if (authHeader.length) {
-      auth = {
-        header: {
-          secretKeyRef: {
-            key: "authorizationHeader",
-            name: secretName,
+    try {
+      let auth;
+      const secretName = `apprepo-${name}-secrets`;
+      if (authHeader.length) {
+        // ensure we can create secrets in the kubeapps namespace
+        auth = {
+          header: {
+            secretKeyRef: {
+              key: "authorizationHeader",
+              name: secretName,
+            },
           },
-        },
-      };
-    }
-    dispatch(addRepo());
-    const apprepo = await AppRepository.create(name, url, auth);
-    dispatch(addedRepo(apprepo));
+        };
+      }
+      dispatch(addRepo());
+      const apprepo = await AppRepository.create(name, url, auth);
+      dispatch(addedRepo(apprepo));
 
-    if (authHeader.length) {
-      await Secret.create(
-        secretName,
-        { authorizationHeader: btoa(authHeader) },
-        {
-          apiVersion: apprepo.apiVersion,
-          blockOwnerDeletion: true,
-          kind: apprepo.kind,
-          name: apprepo.metadata.name,
-          uid: apprepo.metadata.uid,
-        } as IOwnerReference,
-        "kubeapps",
-      );
+      if (authHeader.length) {
+        await Secret.create(
+          secretName,
+          { authorizationHeader: btoa(authHeader) },
+          {
+            apiVersion: apprepo.apiVersion,
+            blockOwnerDeletion: true,
+            kind: apprepo.kind,
+            name: apprepo.metadata.name,
+            uid: apprepo.metadata.uid,
+          } as IOwnerReference,
+          "kubeapps",
+        );
+      }
+      return true;
+    } catch (e) {
+      dispatch(errorRepos(e, "create"));
+      return false;
     }
-    return apprepo;
   };
 };

@@ -2,23 +2,41 @@ import * as React from "react";
 import * as Modal from "react-modal";
 import { Redirect } from "react-router";
 
+import { ForbiddenError, IRBACRole } from "../../../shared/types";
+import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../../ErrorAlert";
+
 interface IAppRepoFormProps {
   name: string;
   url: string;
   authHeader: string;
   message?: string;
   redirectTo?: string;
-  install: (name: string, url: string, authHeader: string) => Promise<any>;
+  install: (name: string, url: string, authHeader: string) => Promise<boolean>;
   update: (values: { name?: string; url?: string; authHeader?: string }) => void;
   onAfterInstall?: () => Promise<any>;
 }
+
+const RequiredRBACRoles: IRBACRole[] = [
+  {
+    apiGroup: "kubeapps.com",
+    namespace: "kubeapps",
+    resource: "apprepositories",
+    verbs: ["create"],
+  },
+  {
+    apiGroup: "",
+    namespace: "kubeapps",
+    resource: "secrets",
+    verbs: ["create"],
+  },
+];
 
 export const AppRepoForm = (props: IAppRepoFormProps) => {
   const { name, url, authHeader, update, install, onAfterInstall } = props;
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    await install(name, url, authHeader);
-    if (onAfterInstall) {
+    const installed = await install(name, url, authHeader);
+    if (installed && onAfterInstall) {
       await onAfterInstall();
     }
   };
@@ -83,12 +101,12 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
 };
 
 interface IAppRepoAddButtonProps {
-  install: (name: string, url: string, authHeader: string) => Promise<any>;
+  error?: Error;
+  install: (name: string, url: string, authHeader: string) => Promise<boolean>;
   redirectTo?: string;
 }
 interface IAppRepoAddButtonState {
   authHeader: string;
-  error?: string;
   modalIsOpen: boolean;
   name: string;
   url: string;
@@ -119,9 +137,7 @@ export class AppRepoAddButton extends React.Component<
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.state.error && (
-            <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
-          )}
+          {this.props.error && this.renderError()}
           <AppRepoForm
             name={name}
             url={url}
@@ -134,6 +150,23 @@ export class AppRepoAddButton extends React.Component<
         {redirectTo && <Redirect to={redirectTo} />}
       </div>
     );
+  }
+
+  private renderError() {
+    const { error } = this.props;
+    const { name } = this.state;
+    switch (error && error.constructor) {
+      case ForbiddenError:
+        return (
+          <PermissionsErrorAlert
+            namespace="kubeapps"
+            roles={RequiredRBACRoles}
+            action={`create AppRepository "${name}"`}
+          />
+        );
+      default:
+        return <UnexpectedErrorAlert />;
+    }
   }
 
   private closeModal = async () => this.setState({ modalIsOpen: false });

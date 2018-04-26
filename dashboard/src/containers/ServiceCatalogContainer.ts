@@ -9,6 +9,7 @@ import { IStoreState } from "../shared/types";
 function mapStateToProps({ catalog }: IStoreState) {
   return {
     brokers: catalog.brokers,
+    errors: catalog.errors,
     isInstalled: catalog.isInstalled,
   };
 }

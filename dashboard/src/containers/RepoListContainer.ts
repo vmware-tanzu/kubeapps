@@ -7,6 +7,7 @@ import { IStoreState } from "../shared/types";
 
 function mapStateToProps({ repos }: IStoreState) {
   return {
+    errors: repos.errors,
     repos: repos.repos,
   };
 }

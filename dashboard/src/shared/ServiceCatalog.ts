@@ -35,11 +35,6 @@ export class ServiceCatalog {
         validateStatus: statusCode => true,
       },
     );
-
-    if (data.status === "Failure") {
-      throw new Error(data.message);
-    }
-
     return data;
   }
 
