@@ -1,4 +1,6 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
+
 import { IAppRepository } from "shared/types";
 import ConfirmDialog from "../../ConfirmDialog";
 
@@ -21,7 +23,9 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
     const { repo } = this.props;
     return (
       <tr key={repo.metadata.name}>
-        <td>{repo.metadata.name}</td>
+        <td>
+          <Link to={`/charts/${repo.metadata.name}`}>{repo.metadata.name}</Link>
+        </td>
         <td>{repo.spec && repo.spec.url}</td>
         <td>
           <ConfirmDialog
