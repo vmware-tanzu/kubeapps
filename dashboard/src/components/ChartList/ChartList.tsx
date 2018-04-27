@@ -20,7 +20,8 @@ class ChartList extends React.Component<IChartListProps> {
   }
 
   public render() {
-    if (!this.props.charts.items) {
+    const { isFetching, items } = this.props.charts;
+    if (!isFetching && !items) {
       return (
         <NotFoundErrorAlert
           resource={"Charts"}
@@ -33,15 +34,14 @@ class ChartList extends React.Component<IChartListProps> {
         />
       );
     }
-
-    const chartItems = this.props.charts.items.map(c => <ChartListItem key={c.id} chart={c} />);
+    const chartItems = items.map(c => <ChartListItem key={c.id} chart={c} />);
     return (
       <section className="ChartList">
         <header className="ChartList__header">
           <h1>Charts</h1>
           <hr />
         </header>
-        <CardGrid>{chartItems}</CardGrid>
+        {isFetching ? <div>Loading...</div> : <CardGrid>{chartItems}</CardGrid>}
       </section>
     );
   }
