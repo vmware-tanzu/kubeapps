@@ -1,6 +1,5 @@
-import axios from "axios";
-
-import { IOwnerReference, ISecret, IStatus } from "./types";
+import { axios } from "./Auth";
+import { IOwnerReference, ISecret } from "./types";
 
 export default class Secret {
   public static async create(
@@ -10,21 +9,17 @@ export default class Secret {
     namespace: string = "default",
   ) {
     const url = Secret.getLink(namespace);
-    try {
-      const { data } = await axios.post<ISecret>(url, {
-        apiVersion: "v1",
-        data: secrets,
-        kind: "Secret",
-        metadata: {
-          name,
-          ownerReferences: [owner],
-        },
-        type: "Opaque",
-      });
-      return data;
-    } catch (e) {
-      throw new Error((e.response.data as IStatus).message);
-    }
+    const { data } = await axios.post<ISecret>(url, {
+      apiVersion: "v1",
+      data: secrets,
+      kind: "Secret",
+      metadata: {
+        name,
+        ownerReferences: [owner],
+      },
+      type: "Opaque",
+    });
+    return data;
   }
 
   public static async delete(name: string, namespace: string = "default") {

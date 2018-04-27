@@ -5,7 +5,12 @@ import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import {
+  PermissionsErrorAlert,
+  ServiceBrokersNotFoundAlert,
+  ServiceCatalogNotInstalledAlert,
+  UnexpectedErrorAlert,
+} from "../ErrorAlert";
 import { InstanceCardList } from "./InstanceCardList";
 
 export interface InstanceListViewProps {
@@ -96,32 +101,11 @@ export class InstanceListView extends React.PureComponent<InstanceListViewProps>
                 )}
               </div>
             ) : (
-              <NotFoundErrorAlert header="No Service Brokers installed.">
-                <p>
-                  Ask an administrator to install a compatible{" "}
-                  <a href="https://github.com/osbkit/brokerlist" target="_blank">
-                    Service Broker
-                  </a>{" "}
-                  to browse, provision and manage external services within Kubeapps.
-                </p>
-              </NotFoundErrorAlert>
+              <ServiceBrokersNotFoundAlert />
             )}
           </div>
         ) : (
-          <NotFoundErrorAlert header="Service Catalog not installed.">
-            <div>
-              <p>
-                Ask an administrator to install the{" "}
-                <a href="https://github.com/kubernetes-incubator/service-catalog" target="_blank">
-                  Kubernetes Service Catalog
-                </a>{" "}
-                to browse, provision and manage external services within Kubeapps.
-              </p>
-              <Link className="button button-primary button-small" to={`/charts/svc-cat/catalog`}>
-                Install Catalog
-              </Link>
-            </div>
-          </NotFoundErrorAlert>
+          <ServiceCatalogNotInstalledAlert />
         )}
       </div>
     );

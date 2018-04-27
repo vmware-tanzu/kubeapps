@@ -18,6 +18,7 @@ export interface IServiceCatalogState {
     fetch?: Error;
     delete?: Error;
     deprovision?: Error;
+    update?: Error;
   };
   instances: IServiceInstance[];
   isChecking: boolean;
