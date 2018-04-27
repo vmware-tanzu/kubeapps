@@ -23,7 +23,7 @@ $(EMBEDDED_STATIC): static/kubeapps-objs.yaml
 	$(GO) generate
 
 static/kubeapps-objs.yaml:
-	KUBEAPPS_VERSION=$$(git describe --tags --abbrev=0) ;\
+	KUBEAPPS_VERSION=$${VERSION:-latest} ;\
 	pushd manifests/vendor/kubeless ;\
 	KUBELESS_VERSION=$$(git describe --tags --abbrev=0) ;\
 	popd ;\
@@ -44,4 +44,4 @@ vet:
 clean:
 	$(RM) ./kubeapps ./chart-repo ./statik $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
 
-.PHONY: default test fmt vet clean build-prep chart-repo kubeapps
+.PHONY: default test fmt vet clean build-prep chart-repo kubeapps $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
