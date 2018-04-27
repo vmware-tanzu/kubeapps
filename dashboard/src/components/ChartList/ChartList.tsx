@@ -1,6 +1,9 @@
 import * as React from "react";
 
+import { Link } from "react-router-dom";
 import { IChartState } from "../../shared/types";
+import { NotFoundErrorAlert } from "../ErrorAlert";
+
 import { CardGrid } from "../Card";
 import ChartListItem from "./ChartListItem";
 
@@ -17,14 +20,28 @@ class ChartList extends React.Component<IChartListProps> {
   }
 
   public render() {
-    const chartItems = this.props.charts.items.map(c => <ChartListItem key={c.id} chart={c} />);
+    const { isFetching, items } = this.props.charts;
+    if (!isFetching && !items) {
+      return (
+        <NotFoundErrorAlert
+          resource={"Charts"}
+          children={
+            <div>
+              Manage your Helm chart repositories in Kubeapps by visiting the{" "}
+              <Link to={`/config/repos`}>App repositories configuration</Link> page.
+            </div>
+          }
+        />
+      );
+    }
+    const chartItems = items.map(c => <ChartListItem key={c.id} chart={c} />);
     return (
       <section className="ChartList">
         <header className="ChartList__header">
           <h1>Charts</h1>
           <hr />
         </header>
-        <CardGrid>{chartItems}</CardGrid>
+        {isFetching ? <div>Loading...</div> : <CardGrid>{chartItems}</CardGrid>}
       </section>
     );
   }
