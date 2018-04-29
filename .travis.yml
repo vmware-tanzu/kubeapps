@@ -60,13 +60,15 @@ jobs:
     script: make VERSION="$VERSION" $IMAGE
     after_success:
     - |
-      if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_BRANCH" == "master" ]]; then
+      if [[ "$TRAVIS_PULL_REQUEST" == "false" ]]; then
         docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
         if [[ -n "$TRAVIS_TAG" ]]; then
           docker push $IMAGE:$VERSION
         fi
-        docker tag $IMAGE:$VERSION $IMAGE:latest
-        docker push $IMAGE:latest
+        if [[ "$TRAVIS_BRANCH" == "master"  ]]; then
+          docker tag $IMAGE:$VERSION $IMAGE:latest
+          docker push $IMAGE:latest
+        fi
       fi
   - <<: *imageBuild
     env: IMAGE=kubeapps/chartsvc
