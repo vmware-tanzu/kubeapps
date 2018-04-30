@@ -24,17 +24,18 @@ class AppListItem extends React.Component<IAppListItemProps> {
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">
-              <h3 className="ChartListItem__content__title">{release.name}</h3>
-              <div className="ChartListItem__content__info text-r">
-                <p className="margin-reset type-color-light-blue">
+              <div className="ChartListItem__content__title type-big">{release.name}</div>
+              <div className="ChartListItem__content__info">
+                <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
                   {(metadata && metadata.appVersion) || "-"}
-                </p>
-                <span
-                  className={`ChartListItem__content__repo padding-tiny
-                  padding-h-normal type-small margin-t-small`}
+                </div>
+                <div
+                  className={`ChartListItem__content__info_repo ${
+                    release.namespace
+                  } type-small type-color-white padding-t-tiny padding-h-normal`}
                 >
                   {release.namespace}
-                </span>
+                </div>
               </div>
             </div>
           </CardContent>

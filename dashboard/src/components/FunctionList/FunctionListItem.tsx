@@ -20,14 +20,18 @@ class FunctionListItem extends React.Component<IFunctionListItemProps> {
           <FunctionIcon runtime={f.spec.runtime} />
           <CardContent>
             <div className="ChartListItem__content">
-              <h3 className="ChartListItem__content__title">{f.metadata.name}</h3>
-              <div className="ChartListItem__content__info text-r">
-                <span
-                  className={`ChartListItem__content__repo padding-tiny
-                  padding-h-normal type-small margin-t-small`}
+              <div className="ChartListItem__content__title type-big">{f.metadata.name}</div>
+              <div className="ChartListItem__content__info">
+                <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
+                  {" "}
+                </div>
+                <div
+                  className={`ChartListItem__content__info_repo ${
+                    f.metadata.namespace
+                  } type-small padding-t-tiny padding-h-normal`}
                 >
                   {f.metadata.namespace}
-                </span>
+                </div>
               </div>
             </div>
           </CardContent>

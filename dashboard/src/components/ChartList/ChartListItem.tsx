@@ -24,15 +24,18 @@ class ChartListItem extends React.Component<IChartListItemProps> {
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">
-              <h3 className="ChartListItem__content__title">{name}</h3>
-              <div className="ChartListItem__content__info text-r">
-                <p className="margin-reset type-color-light-blue">{latestAppVersion || "-"}</p>
-                <span
-                  className={`ChartListItem__content__repo ${repo.name} padding-tiny
-                  padding-h-normal type-small margin-t-small`}
+              <div className="ChartListItem__content__title type-big">{name}</div>
+              <div className="ChartListItem__content__info">
+                <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
+                  {latestAppVersion || "-"}
+                </div>
+                <div
+                  className={`ChartListItem__content__info_repo ${
+                    repo.name
+                  } type-small padding-t-tiny padding-h-normal`}
                 >
                   {repo.name}
-                </span>
+                </div>
               </div>
             </div>
           </CardContent>
