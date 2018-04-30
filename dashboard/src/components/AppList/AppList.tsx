@@ -54,7 +54,7 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
             {items.length > 0 && (
               <div className="col-4 text-r align-center">
                 <Link to={`/charts`}>
-                  <button className="button button-accent">Deploy New App</button>
+                  <button className="button button-accent">Deploy App</button>
                 </Link>
               </div>
             )}
