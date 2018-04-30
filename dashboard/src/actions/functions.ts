@@ -120,8 +120,12 @@ export function getPodName(fn: IFunction) {
 export function fetchRuntimes() {
   return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestRuntimes());
-    const runtimeList = await KubelessConfig.getRuntimes();
-    dispatch(receiveRuntimes(runtimeList));
-    return runtimeList;
+    try {
+      const runtimeList = await KubelessConfig.getRuntimes();
+      dispatch(receiveRuntimes(runtimeList));
+      return runtimeList;
+    } catch (e) {
+      dispatch(errorFunctions(e, "fetch"));
+    }
   };
 }

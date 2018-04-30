@@ -1,4 +1,4 @@
-import axios from "axios";
+import { axios } from "./Auth";
 
 import { IKubelessConfigMap } from "./types";
 
