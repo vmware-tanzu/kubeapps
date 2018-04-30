@@ -13,7 +13,7 @@ class MessageAlertPage extends React.Component<IMessageAlertPageProps> {
     return (
       <div className="alert margin-c">
         <MessageAlertHeader>{header}</MessageAlertHeader>
-        {children && <div className="message__content">{children}</div>}
+        {children && <div className="message__content margin-l-enormous">{children}</div>}
       </div>
     );
   }
