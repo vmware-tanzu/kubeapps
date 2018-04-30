@@ -24,6 +24,12 @@ const RequiredRBACRoles: IRBACRole[] = [
     resource: "functions",
     verbs: ["list"],
   },
+  {
+    apiGroup: "",
+    namespace: "kubeless",
+    resource: "configmaps/kubeless-config",
+    verbs: ["get"],
+  },
 ];
 
 class FunctionList extends React.Component<IFunctionListProps> {
