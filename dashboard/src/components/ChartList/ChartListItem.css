@@ -6,7 +6,7 @@
 }
 
 .ChartListItem__content__title {
-  color: black;
+  color: #1C2B39;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
