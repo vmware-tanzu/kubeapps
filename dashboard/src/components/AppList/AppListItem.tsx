@@ -20,18 +20,19 @@ class AppListItem extends React.Component<IAppListItemProps> {
 
     return (
       <Card key={release.name} responsive={true} className="AppListItem">
-        <Link to={`/apps/ns/${release.namespace}/${release.name}`}>
+        <Link to={`/apps/ns/${release.namespace}/${release.name}`} title={release.name}>
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">
-              <h3 className="ChartListItem__content__title">{release.name}</h3>
-              <div className="ChartListItem__content__info text-r">
-                <p className="margin-reset type-color-light-blue">
+              <h3 className="ChartListItem__content__title type-big">{release.name}</h3>
+              <div className="ChartListItem__content__info">
+                <p className="ChartListItem__content__info_version margin-reset type-small padding-t-tiny type-color-light-blue">
                   {(metadata && metadata.appVersion) || "-"}
                 </p>
                 <span
-                  className={`ChartListItem__content__repo padding-tiny
-                  padding-h-normal type-small margin-t-small`}
+                  className={`ChartListItem__content__info_repo ${
+                    release.namespace
+                  } type-small type-color-white padding-t-tiny padding-h-normal`}
                 >
                   {release.namespace}
                 </span>

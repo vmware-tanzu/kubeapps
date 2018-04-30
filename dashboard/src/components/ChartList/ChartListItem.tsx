@@ -20,16 +20,19 @@ class ChartListItem extends React.Component<IChartListItemProps> {
     const latestAppVersion = chart.relationships.latestChartVersion.data.app_version;
     return (
       <Card key={`${repo}/${name}`} responsive={true} className="ChartListItem">
-        <Link to={`/charts/` + chart.id}>
+        <Link to={`/charts/` + chart.id} title={name}>
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">
-              <h3 className="ChartListItem__content__title">{name}</h3>
-              <div className="ChartListItem__content__info text-r">
-                <p className="margin-reset type-color-light-blue">{latestAppVersion || "-"}</p>
+              <h3 className="ChartListItem__content__title type-big">{name}</h3>
+              <div className="ChartListItem__content__info">
+                <p className="ChartListItem__content__info_version margin-reset type-small padding-t-tiny type-color-light-blue">
+                  {latestAppVersion || "-"}
+                </p>
                 <span
-                  className={`ChartListItem__content__repo ${repo.name} padding-tiny
-                  padding-h-normal type-small margin-t-small`}
+                  className={`ChartListItem__content__info_repo ${
+                    repo.name
+                  } type-small padding-t-tiny padding-h-normal`}
                 >
                   {repo.name}
                 </span>

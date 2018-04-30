@@ -16,15 +16,22 @@ class FunctionListItem extends React.Component<IFunctionListItemProps> {
 
     return (
       <Card responsive={true} className="FunctionListItem">
-        <Link to={`/functions/ns/${f.metadata.namespace}/${f.metadata.name}`}>
+        <Link
+          to={`/functions/ns/${f.metadata.namespace}/${f.metadata.name}`}
+          title={f.metadata.name}
+        >
           <FunctionIcon runtime={f.spec.runtime} />
           <CardContent>
             <div className="ChartListItem__content">
-              <h3 className="ChartListItem__content__title">{f.metadata.name}</h3>
-              <div className="ChartListItem__content__info text-r">
+              <h3 className="ChartListItem__content__title type-big">{f.metadata.name}</h3>
+              <div className="ChartListItem__content__info">
+                <p className="ChartListItem__content__info_version margin-reset type-small padding-t-tiny type-color-light-blue">
+                  {" "}
+                </p>
                 <span
-                  className={`ChartListItem__content__repo padding-tiny
-                  padding-h-normal type-small margin-t-small`}
+                  className={`ChartListItem__content__info_repo ${
+                    f.metadata.namespace
+                  } type-small padding-t-tiny padding-h-normal`}
                 >
                   {f.metadata.namespace}
                 </span>
