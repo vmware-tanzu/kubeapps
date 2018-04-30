@@ -26,7 +26,7 @@ static/kubeapps-objs.yaml:
 	KUBEAPPS_VERSION=$${VERSION:-latest} ;\
 	cd manifests/vendor/kubeless ;\
 	KUBELESS_VERSION=$$(git describe --tags --abbrev=0) ;\
-	cd ../../../ ;\
+	cd - ;\
 	KUBECFG_JPATH=./manifests/lib:./manifests/vendor/kubecfg/lib:./manifests/vendor/ksonnet-lib \
 		kubecfg show -V VERSION=$$KUBEAPPS_VERSION -V KUBELESS_VERSION=$$KUBELESS_VERSION manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
 
