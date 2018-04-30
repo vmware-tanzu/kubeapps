@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { ForbiddenError, IFunction, IRBACRole, IRuntime } from "../../shared/types";
 import { CardGrid } from "../Card";
-import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { MessageAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import FunctionDeployButton from "./FunctionDeployButton";
 import FunctionListItem from "./FunctionListItem";
 
@@ -52,19 +52,47 @@ class FunctionList extends React.Component<IFunctionListProps> {
             <div className="col-8">
               <h1 className="margin-v-reset">Functions</h1>
             </div>
-            <div className="col-4 text-r align-center">
-              <FunctionDeployButton
-                error={this.props.createError}
-                deployFunction={this.props.deployFunction}
-                navigateToFunction={this.props.navigateToFunction}
-                runtimes={this.props.runtimes}
-                namespace={this.props.namespace}
-              />
-            </div>
+            {this.props.functions.length > 0 && (
+              <div className="col-4 text-r align-center">
+                <FunctionDeployButton
+                  error={this.props.createError}
+                  deployFunction={this.props.deployFunction}
+                  navigateToFunction={this.props.navigateToFunction}
+                  runtimes={this.props.runtimes}
+                  namespace={this.props.namespace}
+                />
+              </div>
+            )}
           </div>
           <hr />
         </header>
-        {this.props.error ? this.renderError() : <CardGrid>{chartItems}</CardGrid>}
+        {this.props.error ? (
+          this.renderError()
+        ) : this.props.functions.length === 0 ? (
+          <MessageAlert
+            header={"Unleash the power of Kubeless"}
+            children={
+              <div>
+                <p className="margin-v-normal">
+                  Kubeless is a Kubernetes-native serverless framework that lets you deploy small
+                  bits of code (functions) without having to worry about the underlying
+                  infrastructure.
+                </p>
+                <div className="padding-t-normal padding-b-normal">
+                  <FunctionDeployButton
+                    error={this.props.createError}
+                    deployFunction={this.props.deployFunction}
+                    navigateToFunction={this.props.navigateToFunction}
+                    runtimes={this.props.runtimes}
+                    namespace={this.props.namespace}
+                  />
+                </div>
+              </div>
+            }
+          />
+        ) : (
+          <CardGrid>{chartItems}</CardGrid>
+        )}
       </section>
     );
   }
