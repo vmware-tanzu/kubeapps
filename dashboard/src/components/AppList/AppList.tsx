@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { ForbiddenError, IAppState, IRBACRole } from "../../shared/types";
 import { CardGrid } from "../Card";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { MessageAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
@@ -77,15 +77,14 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
   public appListItems(items: IAppState["items"]) {
     if (items.length === 0) {
       return (
-        <NotFoundErrorAlert
-          resource={"Applications"}
+        <MessageAlert
+          header={"Supercharge your Kubernetes cluster"}
           children={
             <div>
               <p className="margin-v-normal">
-                Supercharge your Kubernetes cluster with simple browse and click deployment of
-                applications.
+                Deploy applications on your Kubernetes cluster with a single click.
               </p>
-              <div className="padding-t-normal padding-b-normal">
+              <div className="padding-b-normal">
                 <Link className="button button-accent" to="/charts">
                   Deploy App
                 </Link>

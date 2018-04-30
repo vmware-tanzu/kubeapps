@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { ForbiddenError, IFunction, IRBACRole, IRuntime } from "../../shared/types";
 import { CardGrid } from "../Card";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { MessageAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import FunctionDeployButton from "./FunctionDeployButton";
 import FunctionListItem from "./FunctionListItem";
 
@@ -69,11 +69,10 @@ class FunctionList extends React.Component<IFunctionListProps> {
         {this.props.error ? (
           this.renderError()
         ) : this.props.functions.length === 0 ? (
-          <NotFoundErrorAlert
-            resource={"Functions"}
+          <MessageAlert
+            header={"Unleash the power of Kubeless"}
             children={
               <div>
-                <p className="margin-v-normal">Unleash the power of Kubeless...</p>
                 <p className="margin-v-normal">
                   Kubeless is a Kubernetes-native serverless framework that lets you deploy small
                   bits of code (functions) without having to worry about the underlying
