@@ -20,7 +20,7 @@ class ChartListItem extends React.Component<IChartListItemProps> {
     const latestAppVersion = chart.relationships.latestChartVersion.data.app_version;
     return (
       <Card key={`${repo}/${name}`} responsive={true} className="ChartListItem">
-        <Link to={`/charts/` + chart.id}>
+        <Link to={`/charts/` + chart.id} title={name}>
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">
