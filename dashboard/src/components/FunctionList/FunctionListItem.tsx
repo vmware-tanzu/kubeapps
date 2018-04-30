@@ -23,7 +23,7 @@ class FunctionListItem extends React.Component<IFunctionListItemProps> {
           <FunctionIcon runtime={f.spec.runtime} />
           <CardContent>
             <div className="ChartListItem__content">
-              <div className="ChartListItem__content__title type-big">{f.metadata.name}</div>
+              <h3 className="ChartListItem__content__title type-big">{f.metadata.name}</h3>
               <div className="ChartListItem__content__info">
                 <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
                   {" "}

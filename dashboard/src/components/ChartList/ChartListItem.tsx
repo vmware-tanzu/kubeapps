@@ -24,7 +24,7 @@ class ChartListItem extends React.Component<IChartListItemProps> {
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">
-              <div className="ChartListItem__content__title type-big">{name}</div>
+              <h3 className="ChartListItem__content__title type-big">{name}</h3>
               <div className="ChartListItem__content__info">
                 <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
                   {latestAppVersion || "-"}

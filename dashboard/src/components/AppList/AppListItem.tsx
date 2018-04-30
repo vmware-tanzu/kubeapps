@@ -24,7 +24,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
           <CardIcon icon={iconSrc} />
           <CardContent>
             <div className="ChartListItem__content">
-              <div className="ChartListItem__content__title type-big">{release.name}</div>
+              <h3 className="ChartListItem__content__title type-big">{release.name}</h3>
               <div className="ChartListItem__content__info">
                 <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
                   {(metadata && metadata.appVersion) || "-"}
