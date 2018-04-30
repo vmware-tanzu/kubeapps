@@ -26,16 +26,16 @@ class AppListItem extends React.Component<IAppListItemProps> {
             <div className="ChartListItem__content">
               <h3 className="ChartListItem__content__title type-big">{release.name}</h3>
               <div className="ChartListItem__content__info">
-                <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
+                <p className="ChartListItem__content__info_version margin-reset type-small padding-t-tiny type-color-light-blue">
                   {(metadata && metadata.appVersion) || "-"}
-                </div>
-                <div
+                </p>
+                <span
                   className={`ChartListItem__content__info_repo ${
                     release.namespace
                   } type-small type-color-white padding-t-tiny padding-h-normal`}
                 >
                   {release.namespace}
-                </div>
+                </span>
               </div>
             </div>
           </CardContent>

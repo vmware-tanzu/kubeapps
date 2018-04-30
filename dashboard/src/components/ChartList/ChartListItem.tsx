@@ -26,16 +26,16 @@ class ChartListItem extends React.Component<IChartListItemProps> {
             <div className="ChartListItem__content">
               <h3 className="ChartListItem__content__title type-big">{name}</h3>
               <div className="ChartListItem__content__info">
-                <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
+                <p className="ChartListItem__content__info_version margin-reset type-small padding-t-tiny type-color-light-blue">
                   {latestAppVersion || "-"}
-                </div>
-                <div
+                </p>
+                <span
                   className={`ChartListItem__content__info_repo ${
                     repo.name
                   } type-small padding-t-tiny padding-h-normal`}
                 >
                   {repo.name}
-                </div>
+                </span>
               </div>
             </div>
           </CardContent>

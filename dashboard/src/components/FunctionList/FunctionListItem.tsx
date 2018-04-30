@@ -25,16 +25,16 @@ class FunctionListItem extends React.Component<IFunctionListItemProps> {
             <div className="ChartListItem__content">
               <h3 className="ChartListItem__content__title type-big">{f.metadata.name}</h3>
               <div className="ChartListItem__content__info">
-                <div className="ChartListItem__content__info_version type-small padding-t-tiny type-color-light-blue">
+                <p className="ChartListItem__content__info_version margin-reset type-small padding-t-tiny type-color-light-blue">
                   {" "}
-                </div>
-                <div
+                </p>
+                <span
                   className={`ChartListItem__content__info_repo ${
                     f.metadata.namespace
                   } type-small padding-t-tiny padding-h-normal`}
                 >
                   {f.metadata.namespace}
-                </div>
+                </span>
               </div>
             </div>
           </CardContent>
