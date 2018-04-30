@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 import { ForbiddenError, IAppState, IRBACRole } from "../../shared/types";
 import { CardGrid } from "../Card";
-import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
@@ -51,11 +51,13 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
             <div className="col-8">
               <h1 className="margin-v-reset">Applications</h1>
             </div>
-            <div className="col-4 text-r align-center">
-              <Link to={`/charts`}>
-                <button className="button button-accent">Deploy New App</button>
-              </Link>
-            </div>
+            {items.length > 0 && (
+              <div className="col-4 text-r align-center">
+                <Link to={`/charts`}>
+                  <button className="button button-accent">Deploy New App</button>
+                </Link>
+              </div>
+            )}
           </div>
           <hr />
         </header>
@@ -75,14 +77,22 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
   public appListItems(items: IAppState["items"]) {
     if (items.length === 0) {
       return (
-        <div>
-          <div>No Apps installed</div>
-          <div className="padding-normal">
-            <Link className="button button-primary" to="/charts">
-              deploy one
-            </Link>
-          </div>
-        </div>
+        <NotFoundErrorAlert
+          resource={"Applications"}
+          children={
+            <div>
+              <p className="margin-v-normal">
+                Supercharge your Kubernetes cluster with simple browse and click deployment of
+                applications.
+              </p>
+              <div className="padding-t-normal padding-b-normal">
+                <Link className="button button-accent" to="/charts">
+                  Deploy App
+                </Link>
+              </div>
+            </div>
+          }
+        />
       );
     } else {
       return (
