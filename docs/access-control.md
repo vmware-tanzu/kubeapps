@@ -1,4 +1,4 @@
-# Authentication and Authorization in Kubeapps
+# Access Control in Kubeapps
 
 Kubeapps requires users to login with a Kubernetes API token in order to make
 requests to the Kubernetes API server as the user. This ensures that a certain
@@ -161,7 +161,7 @@ kubectl create clusterrolebinding example-kubeapps-applications-write --clusterr
 
 ## RBAC rules required by Kubeapps
 
-An up-to-date list of RBAC rules Kubeapps requires can be found <here>.
+An up-to-date list of RBAC rules Kubeapps requires can be found [here](/manifests/user-roles.jsonnet).
 
 ## Using a cluster-admin user (not recommended)
 

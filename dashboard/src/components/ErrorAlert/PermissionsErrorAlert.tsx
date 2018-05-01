@@ -25,7 +25,15 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
           <ul className="error__permisions-list">
             {roles.map((r, i) => <PermissionsListItem key={i} namespace={namespace} role={r} />)}
           </ul>
-          <p>See the documentation for more info on access control in Kubeapps.</p>
+          <p>
+            See the documentation for more info on{" "}
+            <a
+              href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+              target="_blank"
+            >
+              access control in Kubeapps
+            </a>.
+          </p>
         </div>
       </div>
     );
