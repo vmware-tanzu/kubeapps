@@ -78,7 +78,7 @@ class FunctionDeployButton extends React.Component<
     return (
       <div className="FunctionDeployButton">
         <button className="button button-accent" onClick={this.openModal}>
-          Deploy New Function
+          Deploy Function
         </button>
         <Modal
           isOpen={this.state.modalIsOpen}
