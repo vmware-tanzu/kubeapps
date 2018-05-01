@@ -3,7 +3,9 @@
 Kubeapps requires users to login with a Kubernetes API token in order to make
 requests to the Kubernetes API server as the user. This ensures that a certain
 user of Kubeapps is only permitted to view and manage applications that they
-have access to (for example, within a specific namespace).
+have access to (for example, within a specific namespace). If a user does not
+have access to a particular resource, Kubeapps will display an error describing
+the required roles to access the resource.
 
 If your cluster supports [Token
 Authentication](https://kubernetes.io/docs/admin/authentication/) you may login

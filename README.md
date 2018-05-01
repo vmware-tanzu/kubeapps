@@ -28,7 +28,7 @@ These commands will deploy Kubeapps in your cluster and launch a browser with th
 
 ![Dashboard main page](img/dashboard-login.png)
 
-Access to the dashboard requires authorization which is handled by Kubernetes API server. The dashboard only acts as a proxy and passes all auth information to it. In case of forbidden access corresponding warnings will be displayed in Dashboard.
+Access to the dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server. Read the [Access Control](docs/access-control.md) documentation for more information on configuring users for Kubeapps.
 
 The following commands create a ServiceAccount and ClusterRoleBinding named `kubeapps-operator` which will enable the dashboard to authenticate and manage resources on the Kubernetes cluster:
 
@@ -42,6 +42,8 @@ Use the following command to reveal the authorization token that should be used 
 ```bash
 kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
 ```
+
+**NOTE**: It's not recommended to create cluster-admin users for Kubeapps. Please refer to the [Access Control](docs/access-control.md) documentation to configure more fine-grained access.
 
 ![Dashboard main page](img/dashboard-home.png)
 
