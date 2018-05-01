@@ -1,6 +1,7 @@
 import * as React from "react";
+import { Info } from "react-feather";
 
-import MessageAlertHeader from "./MessageAlertHeader";
+import ErrorPageHeader from "./ErrorAlertHeader";
 
 interface IMessageAlertPageProps {
   header: string;
@@ -12,7 +13,7 @@ class MessageAlertPage extends React.Component<IMessageAlertPageProps> {
     const { children, header } = this.props;
     return (
       <div className="alert margin-c">
-        <MessageAlertHeader>{header}</MessageAlertHeader>
+        <ErrorPageHeader icon={Info}>{header}</ErrorPageHeader>
         {children && <div className="message__content margin-l-enormous">{children}</div>}
       </div>
     );
