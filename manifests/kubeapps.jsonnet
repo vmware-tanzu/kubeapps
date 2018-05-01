@@ -58,4 +58,14 @@ local labelifyEach(src) = {
     namespace:: $.namespace,
   },
   mongodb: labelifyEach($.mongodb_),
+
+  userRoles_:: (import "user-roles.jsonnet") {
+    namespace:: $.namespace,
+  },
+  userRoles: $.userRoles_ {
+    applications: labelifyEach($.userRoles_.applications),
+    functions: labelifyEach($.userRoles_.functions),
+    serviceCatalog: labelifyEach($.userRoles_.serviceCatalog),
+    repositories: labelifyEach($.userRoles_.repositories),
+  },
 }
