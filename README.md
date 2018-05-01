@@ -16,7 +16,7 @@ Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://ku
 
 The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). Assuming you are using Linux or OS X, run the following commands to download and install the Kubeapps Installer binary:
 
-```
+```bash
 curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep -i $(uname -s) | grep browser_download_url | cut -d '"' -f 4 | wget -i -
 sudo mv kubeapps-$(uname -s| tr '[:upper:]' '[:lower:]')-amd64 /usr/local/bin/kubeapps
 sudo chmod +x /usr/local/bin/kubeapps
@@ -26,12 +26,36 @@ kubeapps dashboard
 
 These commands will deploy Kubeapps in your cluster and launch a browser with the Kubeapps dashboard.
 
+![Dashboard main page](img/dashboard-login.png)
+
+Access to the dashboard requires authorization which is handled by Kubernetes API server. The dashboard only acts as a proxy and passes all auth information to it. In case of forbidden access corresponding warnings will be displayed in Dashboard.
+
+The following commands create a ServiceAccount and ClusterRoleBinding named `kubeapps-operator` which will enable the dashboard to authenticate and manage resources on the Kubernetes cluster:
+
+```bash
+kubectl create serviceaccount kubeapps-operator
+kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
+```
+
+Use the following command to reveal the authorization token that should be used to authenticate the Kubeapps dashboard with the Kubernetes API:
+
+```bash
+kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
+```
+
 ![Dashboard main page](img/dashboard-home.png)
 
 To remove Kubeapps from your cluster, simply run:
 
-```
+```bash
 kubeapps down
+```
+
+To delete the `kubeapps-operator` ServiceAccount and ClusterRoleBinding,
+
+```bash
+kubectl delete clusterrolebinding kubeapps-operator
+kubectl delete serviceaccount kubeapps-operator
 ```
 
 ## Installation
@@ -40,7 +64,7 @@ Get the latest release of Kubeapps Installer on the [Github releases](https://gi
 
 Alternatively, when you have configured a proper Go environment (refer to the first two steps of [Build from Source](#build-from-source) section), the latest Kubeapps Installer can be get-able from source:
 
-```
+```bash
 go get github.com/kubeapps/kubeapps
 ```
 
@@ -55,7 +79,7 @@ You can build the latest Kubeapps Installer from source by following the steps b
 
 * Set the Go environment variables:
 
-  ```
+  ```bash
   export GOROOT=/usr/local/go
   export GOPATH=/usr/local/go
   export PATH=$GOPATH/bin:$PATH
@@ -63,21 +87,21 @@ You can build the latest Kubeapps Installer from source by following the steps b
 
 * Create a working directory for the project:
 
-  ```
+  ```bash
   working_dir=$GOPATH/src/github.com/kubeapps/
   mkdir -p $working_dir
   ```
 
 * Clone the Kubeapps source repository:
 
-  ```
+  ```bash
   cd $working_dir
   git clone https://github.com/kubeapps/kubeapps
   ```
 
 * Build the Kubeapps binary and move it to a location in your path:
 
-  ```
+  ```bash
   cd kubeapps
   make binary
   cp kubeapps /usr/local
