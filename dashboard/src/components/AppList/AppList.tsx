@@ -53,7 +53,7 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
             </div>
             {items.length > 0 && (
               <div className="col-4 text-r align-center">
-                <Link to={`/charts`}>
+                <Link to="/charts">
                   <button className="button button-accent">Deploy App</button>
                 </Link>
               </div>
@@ -77,21 +77,18 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
   public appListItems(items: IAppState["items"]) {
     if (items.length === 0) {
       return (
-        <MessageAlert
-          header={"Supercharge your Kubernetes cluster"}
-          children={
-            <div>
-              <p className="margin-v-normal">
-                Deploy applications on your Kubernetes cluster with a single click.
-              </p>
-              <div className="padding-b-normal">
-                <Link className="button button-accent" to="/charts">
-                  Deploy App
-                </Link>
-              </div>
+        <MessageAlert header="Supercharge your Kubernetes cluster">
+          <div>
+            <p className="margin-v-normal">
+              Deploy applications on your Kubernetes cluster with a single click.
+            </p>
+            <div className="padding-b-normal">
+              <Link className="button button-accent" to="/charts">
+                Deploy App
+              </Link>
             </div>
-          }
-        />
+          </div>
+        </MessageAlert>
       );
     } else {
       return (

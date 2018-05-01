@@ -75,27 +75,23 @@ class FunctionList extends React.Component<IFunctionListProps> {
         {this.props.error ? (
           this.renderError()
         ) : this.props.functions.length === 0 ? (
-          <MessageAlert
-            header={"Unleash the power of Kubeless"}
-            children={
-              <div>
-                <p className="margin-v-normal">
-                  Kubeless is a Kubernetes-native serverless framework that lets you deploy small
-                  bits of code (functions) without having to worry about the underlying
-                  infrastructure.
-                </p>
-                <div className="padding-t-normal padding-b-normal">
-                  <FunctionDeployButton
-                    error={this.props.createError}
-                    deployFunction={this.props.deployFunction}
-                    navigateToFunction={this.props.navigateToFunction}
-                    runtimes={this.props.runtimes}
-                    namespace={this.props.namespace}
-                  />
-                </div>
+          <MessageAlert header="Unleash the power of Kubeless">
+            <div>
+              <p className="margin-v-normal">
+                Kubeless is a Kubernetes-native serverless framework that lets you deploy small bits
+                of code (functions) without having to worry about the underlying infrastructure.
+              </p>
+              <div className="padding-t-normal padding-b-normal">
+                <FunctionDeployButton
+                  error={this.props.createError}
+                  deployFunction={this.props.deployFunction}
+                  navigateToFunction={this.props.navigateToFunction}
+                  runtimes={this.props.runtimes}
+                  namespace={this.props.namespace}
+                />
               </div>
-            }
-          />
+            </div>
+          </MessageAlert>
         ) : (
           <CardGrid>{chartItems}</CardGrid>
         )}

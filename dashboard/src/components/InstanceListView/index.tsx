@@ -84,7 +84,7 @@ export class InstanceListView extends React.PureComponent<InstanceListViewProps>
             </div>
             {instances.length > 0 && (
               <div className="col-4 text-r align-center">
-                <Link to={`/services/classes`}>
+                <Link to="/services/classes">
                   <button className="button button-accent">Deploy Service Instance</button>
                 </Link>
               </div>
@@ -102,24 +102,21 @@ export class InstanceListView extends React.PureComponent<InstanceListViewProps>
                   {instances.length > 0 ? (
                     <InstanceCardList instances={instances} classes={classes} />
                   ) : (
-                    <MessageAlert
-                      header={"Provision External Services from the Kubernetes Service Catalog"}
-                      children={
-                        <div>
-                          <p className="margin-v-normal">
-                            Kubeapps lets you browse, provision and manage external services
-                            provided by the Service Brokers configured in your cluster.
-                          </p>
-                          <div className="padding-t-normal padding-b-normal">
-                            <Link to={`/services/classes`}>
-                              <button className="button button-accent">
-                                Deploy Service Instance
-                              </button>
-                            </Link>
-                          </div>
+                    <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
+                      <div>
+                        <p className="margin-v-normal">
+                          Kubeapps lets you browse, provision and manage external services provided
+                          by the Service Brokers configured in your cluster.
+                        </p>
+                        <div className="padding-t-normal padding-b-normal">
+                          <Link to="/services/classes">
+                            <button className="button button-accent">
+                              Deploy Service Instance
+                            </button>
+                          </Link>
                         </div>
-                      }
-                    />
+                      </div>
+                    </MessageAlert>
                   )}
                 </div>
               ) : (
