@@ -6,6 +6,7 @@ import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import {
+  MessageAlert,
   PermissionsErrorAlert,
   ServiceBrokersNotFoundAlert,
   ServiceCatalogNotInstalledAlert,
@@ -75,39 +76,58 @@ export class InstanceListView extends React.PureComponent<InstanceListViewProps>
     const { error, isInstalled, brokers, instances, classes } = this.props;
 
     return (
-      <div className="InstanceList">
-        <h1 className="margin-b-reset">Service Instances</h1>
-        <hr />
-        {isInstalled ? (
-          <div>
-            {error ? (
-              this.renderError()
-            ) : brokers.length > 0 ? (
-              <div>
-                <div className="row align-center">
-                  <div className="col-8">
-                    <p>Service instances from your brokers:</p>
-                  </div>
-                  <div className="col-4 text-r">
-                    <Link to={`/services/classes`}>
-                      <button className="button button-accent">Provision New Service</button>
-                    </Link>
-                  </div>
-                </div>
-                {instances.length > 0 ? (
-                  <InstanceCardList instances={instances} classes={classes} />
-                ) : (
-                  <div>No service instances are found.</div>
-                )}
+      <section className="InstanceList">
+        <header className="InstanceList__header">
+          <div className="row padding-t-big collapse-b-phone-land">
+            <div className="col-8">
+              <h1 className="margin-v-reset">Service Instances</h1>
+            </div>
+            {instances.length > 0 && (
+              <div className="col-4 text-r align-center">
+                <Link to="/services/classes">
+                  <button className="button button-accent">Deploy Service Instance</button>
+                </Link>
               </div>
-            ) : (
-              <ServiceBrokersNotFoundAlert />
             )}
           </div>
-        ) : (
-          <ServiceCatalogNotInstalledAlert />
-        )}
-      </div>
+          <hr />
+        </header>
+        <main>
+          {isInstalled ? (
+            <div>
+              {error ? (
+                this.renderError()
+              ) : brokers.length > 0 ? (
+                <div>
+                  {instances.length > 0 ? (
+                    <InstanceCardList instances={instances} classes={classes} />
+                  ) : (
+                    <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
+                      <div>
+                        <p className="margin-v-normal">
+                          Kubeapps lets you browse, provision and manage external services provided
+                          by the Service Brokers configured in your cluster.
+                        </p>
+                        <div className="padding-t-normal padding-b-normal">
+                          <Link to="/services/classes">
+                            <button className="button button-accent">
+                              Deploy Service Instance
+                            </button>
+                          </Link>
+                        </div>
+                      </div>
+                    </MessageAlert>
+                  )}
+                </div>
+              ) : (
+                <ServiceBrokersNotFoundAlert />
+              )}
+            </div>
+          ) : (
+            <ServiceCatalogNotInstalledAlert />
+          )}
+        </main>
+      </section>
     );
   }
 
