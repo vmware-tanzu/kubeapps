@@ -26,7 +26,7 @@ kubeapps dashboard
 
 These commands will deploy Kubeapps in your cluster and launch a browser with the Kubeapps dashboard.
 
-![Dashboard main page](img/dashboard-login.png)
+![Dashboard login page](img/dashboard-login.png)
 
 Access to the dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server. Read the [Access Control](docs/access-control.md) documentation for more information on configuring users for Kubeapps.
 
