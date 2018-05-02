@@ -45,7 +45,13 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
               </h2>
               <p>
                 Your cluster operator should provide you with a Kubernetes API token.{" "}
-                <a href="#">Click here</a> for more info on how to create and use Bearer Tokens.
+                <a
+                  href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                  target="_blank"
+                >
+                  Click here
+                </a>{" "}
+                for more info on how to create and use Bearer Tokens.
               </p>
               <div className="bg-skew__content">
                 <form onSubmit={this.handleSubmit}>

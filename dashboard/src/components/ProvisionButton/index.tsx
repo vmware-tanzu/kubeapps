@@ -189,7 +189,11 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
         parametersObject,
       );
       if (provisioned) {
-        push(`/services/instances/ns/${namespace}/${releaseName}`);
+        push(
+          `/services/brokers/${
+            selectedClass.spec.clusterServiceBrokerName
+          }/instances/ns/${namespace}/${releaseName}`,
+        );
       } else {
         this.setState({ isProvisioning: false });
       }

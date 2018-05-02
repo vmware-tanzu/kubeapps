@@ -22,6 +22,12 @@ const RequiredRBACRoles: IRBACRole[] = [
     resource: "helmreleases",
     verbs: ["create", "patch"],
   },
+  {
+    apiGroup: "kubeapps.com",
+    namespace: "kubeapps",
+    resource: "apprepositories",
+    verbs: ["get"],
+  },
 ];
 
 interface IDeploymentFormProps {

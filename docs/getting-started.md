@@ -43,7 +43,19 @@ To remove Kubeapps from your cluster, run this command:
 kubeapps down
 ```
 
-## Step 2: Start the Kubeapps Dashboard
+## Step 2: Create a Kubernetes API token
+
+Access to the dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server.
+
+```
+kubectl create serviceaccount kubeapps-operator
+kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
+kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
+```
+
+NOTE: It's not recommended to create `cluster-admin` users for Kubeapps. Please refer to the [Access Control](docs/access-control.md) documentation to configure fine-grained access control for users.
+
+## Step 3: Start the Kubeapps Dashboard
 
 Once Kubeapps is installed, securely access the Kubeapps Dashboard from your system by running:
 
@@ -53,9 +65,13 @@ kubeapps dashboard
 
 This will start an HTTP proxy for secure access to the Kubeapps Dashboard and launch your default browser to access it. Here's what you should see:
 
+![Dashboard login page](../img/dashboard-login.png)
+
+Paste the token generated in the previous step to authenticate and access the Kubeapps dashboard for Kubernetes.
+
 ![Dashboard main page](../img/dashboard-home.png)
 
-## Step 3: Deploy WordPress
+## Step 4: Deploy WordPress
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
