@@ -81,7 +81,9 @@ kubeapps down
 
 # Exposing Externally
 
-To be able to expose the dashboard for external access, you need to edit the `kubeapps-kube-api` deployment, adding `--disable-filter=true` to the arguments for the proxy container. This prevents API access errors when used via an ingress.
+The main Kubernetes Service used to access Kubeapps is the `kubeapps` Service in the `kubeapps` namespace. To expose the dashboard for external access, you should setup an Ingress resource to point to the `kubeapps` Service and use an [Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-controllers) to expose it.
+
+An alternative way is to edit the `kubeapps` Service and change it's type from `ClusterIP` to `LoadBalancer`, if your cloud platform supports provisioning LoadBalancer IPs or Hostnames for Services. This solution is not recommended as updates to Kubeapps will likely revert the Service back to a `ClusterIP` type.
 
 # Useful Resources
 
