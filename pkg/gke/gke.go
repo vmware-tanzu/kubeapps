@@ -62,7 +62,7 @@ func GetActiveUser(gcloudPath string) (string, error) {
 	activeConfigPath := filepath.Join(gcloudPath, "active_config")
 	activeConfig, err := ioutil.ReadFile(activeConfigPath)
 	if err != nil {
-		return "", fmt.Errorf("can't read file active_config: %v", err)
+		return "", fmt.Errorf("can't read file active_config, please ensure your gcloud configuration is at %s or set CLOUDSDK_CONFIG to the correct location", gcloudPath)
 	}
 
 	configPath := filepath.Join(gcloudPath, "configurations")
@@ -89,6 +89,9 @@ func GetActiveUser(gcloudPath string) (string, error) {
 
 // SdkConfigPath returns path to gcloud sdk config
 var SdkConfigPath = func() (string, error) {
+	if path, ok := os.LookupEnv("CLOUDSDK_CONFIG"); ok {
+		return path, nil
+	}
 	if runtime.GOOS == "windows" {
 		return filepath.Join(os.Getenv("APPDATA"), "gcloud"), nil
 	}
