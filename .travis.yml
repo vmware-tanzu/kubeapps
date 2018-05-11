@@ -6,6 +6,8 @@ env:
   global:
   - VERSION=${TRAVIS_TAG:-build-$TRAVIS_BUILD_ID}
   - CGO_ENABLED=0
+  - CLOUDSDK_CORE_DISABLE_PROMPTS=1
+  - PATH=$PATH:${HOME}/google-cloud-sdk/bin
 
 install:
 - |
@@ -18,6 +20,14 @@ jobs:
   include:
   - stage: test
     env: PROJECT=go
+    cache:
+      directories:
+      - "$HOME/google-cloud-sdk/"
+    before_install:
+    - if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
+        rm -rf $HOME/google-cloud-sdk;
+        curl https://sdk.cloud.google.com | bash;
+      fi
     script: make test
   - stage:
     env: PROJECT=dashboard

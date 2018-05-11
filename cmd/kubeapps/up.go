@@ -122,14 +122,9 @@ List of components that kubeapps up installs:
 		if ok, err := isGKE(c.Discovery); err != nil {
 			return err
 		} else if ok && !c.DryRun {
-			gcloudPath, err := gke.SdkConfigPath()
+			user, err := gke.GetActiveUser()
 			if err != nil {
-				return fmt.Errorf("can't get sdk config path: %v", err)
-			}
-
-			user, err := gke.GetActiveUser(gcloudPath)
-			if err != nil {
-				return fmt.Errorf("can't get active gke user: %v", err)
+				return err
 			}
 
 			crb, err := gke.BuildCrbObject(user)

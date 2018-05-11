@@ -17,32 +17,37 @@ limitations under the License.
 package gke
 
 import (
+	"os"
 	"testing"
 )
 
 const (
-	SUCCESS_PATH = "testsdkconfig/success"
-	FAILURE_PATH = "testsdkconfig/failure"
+	SuccessPath = "testsdkconfig/success"
+	FailurePath = "testsdkconfig/failure"
 )
 
 func TestGetActiveUserSuccess(t *testing.T) {
-	email, err := GetActiveUser(SUCCESS_PATH)
+	os.Setenv("CLOUDSDK_CONFIG", SuccessPath)
+	email, err := GetActiveUser()
 	if err != nil {
 		t.Error()
 	}
 	if email != "foo@example.com" {
-		t.Errorf("expected email = foo@example.com, got email = %s", email)
+		t.Errorf("expected email = foo@example.com, got email = '%s'", email)
 	}
+	os.Unsetenv("CLOUDSDK_CONFIG")
 }
 
 func TestGetActiveUserFailure(t *testing.T) {
-	email, err := GetActiveUser(FAILURE_PATH)
+	os.Setenv("CLOUDSDK_CONFIG", FailurePath)
+	email, err := GetActiveUser()
 	if err == nil {
 		t.Error()
 	}
 	if email != "" {
 		t.Errorf("expected email not found, got email = %s", email)
 	}
+	os.Unsetenv("CLOUDSDK_CONFIG")
 }
 
 func TestBuildCrbObject(t *testing.T) {
