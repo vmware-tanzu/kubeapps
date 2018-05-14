@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { ForbiddenError, IAppState, IRBACRole } from "../../shared/types";
 import { CardGrid } from "../Card";
 import { MessageAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import PageHeader from "../PageHeader";
+// import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
@@ -46,21 +48,21 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
 
     return (
       <section className="AppList">
-        <header className="AppList__header">
-          <div className="row padding-t-big collapse-b-phone-land">
-            <div className="col-8">
-              <h1 className="margin-v-reset">Applications</h1>
+        <PageHeader>
+          <div className="col-8">
+            <div className="row">
+              <h1>Applications</h1>
+              {/* <SearchFilter className="margin-l-big" placeholder="search apps..." /> */}
             </div>
-            {items.length > 0 && (
-              <div className="col-4 text-r align-center">
-                <Link to="/charts">
-                  <button className="button button-accent">Deploy App</button>
-                </Link>
-              </div>
-            )}
           </div>
-          <hr />
-        </header>
+          {items.length > 0 && (
+            <div className="col-4 text-r align-center">
+              <Link to="/charts">
+                <button className="button button-accent">Deploy App</button>
+              </Link>
+            </div>
+          )}
+        </PageHeader>
         <main>
           {isFetching ? (
             <div>Loading</div>
@@ -92,11 +94,13 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
       );
     } else {
       return (
-        <CardGrid>
-          {items.map(r => {
-            return <AppListItem key={r.data.name} app={r} />;
-          })}
-        </CardGrid>
+        <div>
+          <CardGrid>
+            {items.map(r => {
+              return <AppListItem key={r.data.name} app={r} />;
+            })}
+          </CardGrid>
+        </div>
       );
     }
   }

@@ -1,26 +1,45 @@
 import * as React from "react";
-
 import { Link } from "react-router-dom";
-import { IChartState } from "../../shared/types";
-import { NotFoundErrorAlert } from "../ErrorAlert";
 
+import { IChart, IChartState } from "../../shared/types";
 import { CardGrid } from "../Card";
+import { NotFoundErrorAlert } from "../ErrorAlert";
+import PageHeader from "../PageHeader";
+import SearchFilter from "../SearchFilter";
 import ChartListItem from "./ChartListItem";
 
 interface IChartListProps {
   charts: IChartState;
   repo: string;
+  filter: string;
   fetchCharts: (repo: string) => Promise<{}>;
+  pushSearchFilter: (filter: string) => any;
 }
 
-class ChartList extends React.Component<IChartListProps> {
+interface IChartListState {
+  filter: string;
+}
+
+class ChartList extends React.Component<IChartListProps, IChartListState> {
+  public state: IChartListState = {
+    filter: "",
+  };
+
   public componentDidMount() {
-    const { repo, fetchCharts } = this.props;
+    const { repo, fetchCharts, filter } = this.props;
+    this.setState({ filter });
     fetchCharts(repo);
   }
 
+  public componentWillReceiveProps(nextProps: IChartListProps) {
+    if (nextProps.filter !== this.state.filter) {
+      this.setState({ filter: nextProps.filter });
+    }
+  }
+
   public render() {
-    const { isFetching, items } = this.props.charts;
+    const { charts: { isFetching }, pushSearchFilter } = this.props;
+    const items = this.filteredCharts(this.props.charts.items, this.state.filter);
     if (!isFetching && !items) {
       return (
         <NotFoundErrorAlert
@@ -37,14 +56,30 @@ class ChartList extends React.Component<IChartListProps> {
     const chartItems = items.map(c => <ChartListItem key={c.id} chart={c} />);
     return (
       <section className="ChartList">
-        <header className="ChartList__header">
+        <PageHeader>
           <h1>Charts</h1>
-          <hr />
-        </header>
+          <SearchFilter
+            className="margin-l-big"
+            placeholder="search charts..."
+            onChange={this.handleFilterQueryChange}
+            value={this.state.filter}
+            onSubmit={pushSearchFilter}
+          />
+        </PageHeader>
         {isFetching ? <div>Loading...</div> : <CardGrid>{chartItems}</CardGrid>}
       </section>
     );
   }
+
+  private filteredCharts(charts: IChart[], filter: string) {
+    return charts.filter(c => new RegExp(filter, "i").test(c.id));
+  }
+
+  private handleFilterQueryChange = (filter: string) => {
+    this.setState({
+      filter,
+    });
+  };
 }
 
 export default ChartList;

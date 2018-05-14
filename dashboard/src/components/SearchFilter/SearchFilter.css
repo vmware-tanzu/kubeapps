@@ -1,0 +1,10 @@
+.SearchFilter {
+  position: relative;
+  align-self: flex-end;
+}
+
+.SearchFilter > svg {
+  position: absolute;
+  top: 30%;
+  left: 0.5em;
+}
