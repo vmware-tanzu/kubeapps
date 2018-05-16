@@ -37,7 +37,7 @@ jobs:
     install: yarn --cwd=dashboard
     script:
     - yarn --cwd=dashboard run lint
-    - yarn --cwd=dashboard run test
+    - yarn --cwd=dashboard run test --maxWorkers=4
 
   # parallel build stages
   - &cliBuild
