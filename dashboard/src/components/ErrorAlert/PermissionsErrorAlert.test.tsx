@@ -14,6 +14,7 @@ it("renders an error message for the action", () => {
     (wrapper.find(ErrorAlertHeader).props().children as Array<string | JSX.Element>).join(""),
   ).toContain(`You don't have sufficient permissions to ${action}`);
   expect(wrapper.text()).toContain("Ask your administrator for the following RBAC roles:");
+  expect(wrapper).toMatchSnapshot();
 });
 
 it("renders PermissionsListItem for each RBAC role", () => {
