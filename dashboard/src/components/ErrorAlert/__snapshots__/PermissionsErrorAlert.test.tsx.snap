@@ -1,0 +1,443 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders an error message for the action 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <PermissionsErrorPage
+    action="unit-test"
+    namespace="test"
+    roles={Array []}
+/>,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <ErrorPageHeader
+          icon={[Function]}
+>
+          You don't have sufficient permissions to 
+          unit-test
+           in 
+          <span>
+                    the 
+                    <code>
+                              test
+                    </code>
+                     namespace
+          </span>
+          .
+</ErrorPageHeader>,
+        <div
+          className="error__content margin-l-enormous"
+>
+          <p>
+                    Ask your administrator for the following RBAC roles:
+          </p>
+          <ul
+                    className="error__permisions-list"
+          >
+                    
+          </ul>
+          <p>
+                    See the documentation for more info on
+                     
+                    <a
+                              href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                              target="_blank"
+                    >
+                              access control in Kubeapps
+                    </a>
+                    .
+          </p>
+</div>,
+      ],
+      "className": "alert alert-error margin-t-bigger",
+      "role": "alert",
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "class",
+        "props": Object {
+          "children": Array [
+            "You don't have sufficient permissions to ",
+            "unit-test",
+            " in ",
+            <span>
+              the 
+              <code>
+                            test
+              </code>
+               namespace
+</span>,
+            ".",
+          ],
+          "icon": [Function],
+        },
+        "ref": null,
+        "rendered": Array [
+          "You don't have sufficient permissions to ",
+          "unit-test",
+          " in ",
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                "the ",
+                <code>
+                  test
+</code>,
+                " namespace",
+              ],
+            },
+            "ref": null,
+            "rendered": Array [
+              "the ",
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": "test",
+                },
+                "ref": null,
+                "rendered": "test",
+                "type": "code",
+              },
+              " namespace",
+            ],
+            "type": "span",
+          },
+          ".",
+        ],
+        "type": [Function],
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <p>
+              Ask your administrator for the following RBAC roles:
+</p>,
+            <ul
+              className="error__permisions-list"
+>
+              
+</ul>,
+            <p>
+              See the documentation for more info on
+               
+              <a
+                            href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                            target="_blank"
+              >
+                            access control in Kubeapps
+              </a>
+              .
+</p>,
+          ],
+          "className": "error__content margin-l-enormous",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": "Ask your administrator for the following RBAC roles:",
+            },
+            "ref": null,
+            "rendered": "Ask your administrator for the following RBAC roles:",
+            "type": "p",
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [],
+              "className": "error__permisions-list",
+            },
+            "ref": null,
+            "rendered": Array [],
+            "type": "ul",
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                "See the documentation for more info on",
+                " ",
+                <a
+                  href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                  target="_blank"
+>
+                  access control in Kubeapps
+</a>,
+                ".",
+              ],
+            },
+            "ref": null,
+            "rendered": Array [
+              "See the documentation for more info on",
+              " ",
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": "access control in Kubeapps",
+                  "href": "https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md",
+                  "target": "_blank",
+                },
+                "ref": null,
+                "rendered": "access control in Kubeapps",
+                "type": "a",
+              },
+              ".",
+            ],
+            "type": "p",
+          },
+        ],
+        "type": "div",
+      },
+    ],
+    "type": "div",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <ErrorPageHeader
+            icon={[Function]}
+>
+            You don't have sufficient permissions to 
+            unit-test
+             in 
+            <span>
+                        the 
+                        <code>
+                                    test
+                        </code>
+                         namespace
+            </span>
+            .
+</ErrorPageHeader>,
+          <div
+            className="error__content margin-l-enormous"
+>
+            <p>
+                        Ask your administrator for the following RBAC roles:
+            </p>
+            <ul
+                        className="error__permisions-list"
+            >
+                        
+            </ul>
+            <p>
+                        See the documentation for more info on
+                         
+                        <a
+                                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                                    target="_blank"
+                        >
+                                    access control in Kubeapps
+                        </a>
+                        .
+            </p>
+</div>,
+        ],
+        "className": "alert alert-error margin-t-bigger",
+        "role": "alert",
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "class",
+          "props": Object {
+            "children": Array [
+              "You don't have sufficient permissions to ",
+              "unit-test",
+              " in ",
+              <span>
+                the 
+                <code>
+                                test
+                </code>
+                 namespace
+</span>,
+              ".",
+            ],
+            "icon": [Function],
+          },
+          "ref": null,
+          "rendered": Array [
+            "You don't have sufficient permissions to ",
+            "unit-test",
+            " in ",
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [
+                  "the ",
+                  <code>
+                    test
+</code>,
+                  " namespace",
+                ],
+              },
+              "ref": null,
+              "rendered": Array [
+                "the ",
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "test",
+                  },
+                  "ref": null,
+                  "rendered": "test",
+                  "type": "code",
+                },
+                " namespace",
+              ],
+              "type": "span",
+            },
+            ".",
+          ],
+          "type": [Function],
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <p>
+                Ask your administrator for the following RBAC roles:
+</p>,
+              <ul
+                className="error__permisions-list"
+>
+                
+</ul>,
+              <p>
+                See the documentation for more info on
+                 
+                <a
+                                href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                                target="_blank"
+                >
+                                access control in Kubeapps
+                </a>
+                .
+</p>,
+            ],
+            "className": "error__content margin-l-enormous",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": "Ask your administrator for the following RBAC roles:",
+              },
+              "ref": null,
+              "rendered": "Ask your administrator for the following RBAC roles:",
+              "type": "p",
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [],
+                "className": "error__permisions-list",
+              },
+              "ref": null,
+              "rendered": Array [],
+              "type": "ul",
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [
+                  "See the documentation for more info on",
+                  " ",
+                  <a
+                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                    target="_blank"
+>
+                    access control in Kubeapps
+</a>,
+                  ".",
+                ],
+              },
+              "ref": null,
+              "rendered": Array [
+                "See the documentation for more info on",
+                " ",
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "access control in Kubeapps",
+                    "href": "https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md",
+                    "target": "_blank",
+                  },
+                  "ref": null,
+                  "rendered": "access control in Kubeapps",
+                  "type": "a",
+                },
+                ".",
+              ],
+              "type": "p",
+            },
+          ],
+          "type": "div",
+        },
+      ],
+      "type": "div",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;

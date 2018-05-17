@@ -7,6 +7,7 @@ import ErrorAlertHeader from "./ErrorAlertHeader";
 it("renders the heading passed to it", () => {
   const wrapper = shallow(<ErrorAlertHeader>test</ErrorAlertHeader>);
   expect(wrapper.text()).toContain("test");
+  expect(wrapper).toMatchSnapshot();
 });
 
 it("renders the AlertTriangle icon by default", () => {
