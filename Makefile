@@ -30,6 +30,9 @@ static/kubeapps-objs.yaml:
 	KUBECFG_JPATH=./manifests/lib:./manifests/vendor/kubecfg/lib:./manifests/vendor/ksonnet-lib \
 		kubecfg show -V VERSION=$$KUBEAPPS_VERSION -V KUBELESS_VERSION=$$KUBELESS_VERSION manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
 
+test-dashboard:
+	yarn --cwd dashboard/ run test
+
 kubeapps/%:
 	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .
 kubeapps/dashboard:
@@ -44,4 +47,4 @@ vet:
 clean:
 	$(RM) ./kubeapps ./chart-repo ./statik $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
 
-.PHONY: default test fmt vet clean build-prep chart-repo kubeapps $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
+.PHONY: default test test-dashboard fmt vet clean build-prep chart-repo kubeapps $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
