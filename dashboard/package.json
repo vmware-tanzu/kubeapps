@@ -69,5 +69,8 @@
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
     "typescript": "^2.6.2"
+  },
+  "jest": {
+    "collectCoverageFrom": ["src/**/*", "!src/**/*.d.ts"]
   }
 }
