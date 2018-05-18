@@ -109,6 +109,14 @@ You can build the latest Kubeapps Installer from source by following the steps b
   cp kubeapps /usr/local
   ```
 
+## Running tests
+
+Run Go tests using `make test`. See [dashboard documentation](dashboard/README.md) for information on running dashboard tests.
+
+```bash
+make test
+```
+
 ## Next Steps
 
 [Use the Kubeapps Dashboard](docs/dashboard.md) to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions, or [look under the hood to see what's included in Kubeapps](docs/components.md).
