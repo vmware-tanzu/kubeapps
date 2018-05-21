@@ -92,7 +92,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
     try {
       return token && (await this.props.authenticate(token));
     } catch (e) {
-      this.setState({ error: e.toString(), token: "", authenticating: false });
+      return this.setState({ error: e.toString(), token: "", authenticating: false });
     }
   };
 
