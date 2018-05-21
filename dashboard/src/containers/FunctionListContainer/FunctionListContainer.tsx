@@ -1,4 +1,6 @@
+import * as qs from "qs";
 import { connect } from "react-redux";
+import { RouteComponentProps } from "react-router";
 import { push } from "react-router-redux";
 import { Dispatch } from "redux";
 
@@ -6,10 +8,14 @@ import actions from "../../actions";
 import FunctionList from "../../components/FunctionList";
 import { IFunction, IStoreState } from "../../shared/types";
 
-function mapStateToProps({ functions: { errors, items, runtimes }, namespace }: IStoreState) {
+function mapStateToProps(
+  { functions: { errors, items, runtimes }, namespace }: IStoreState,
+  { location }: RouteComponentProps<{}>,
+) {
   return {
     createError: errors.create,
     error: errors.fetch,
+    filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     functions: items,
     namespace: namespace.current,
     runtimes,
@@ -24,6 +30,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     fetchRuntimes: () => dispatch(actions.functions.fetchRuntimes()),
     navigateToFunction: (name: string, namespace: string) =>
       dispatch(push(`/functions/ns/${namespace}/${name}`)),
+    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }
 

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 
 import placeholder from "../../placeholder.png";
 import { IChart } from "../../shared/types";
-
 import Card, { CardContent, CardIcon } from "../Card";
 
 import "./ChartListItem.css";

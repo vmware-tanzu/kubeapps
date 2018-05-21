@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IChart, IChartState } from "../../shared/types";
+import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { NotFoundErrorAlert } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
@@ -72,7 +73,7 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
   }
 
   private filteredCharts(charts: IChart[], filter: string) {
-    return charts.filter(c => new RegExp(filter, "i").test(c.id));
+    return charts.filter(c => new RegExp(escapeRegExp(filter), "i").test(c.id));
   }
 
   private handleFilterQueryChange = (filter: string) => {

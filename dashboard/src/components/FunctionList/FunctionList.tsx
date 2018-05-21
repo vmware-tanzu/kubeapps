@@ -1,12 +1,16 @@
 import * as React from "react";
 
 import { ForbiddenError, IFunction, IRBACRole, IRuntime } from "../../shared/types";
+import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { MessageAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import PageHeader from "../PageHeader";
+import SearchFilter from "../SearchFilter";
 import FunctionDeployButton from "./FunctionDeployButton";
 import FunctionListItem from "./FunctionListItem";
 
 interface IFunctionListProps {
+  filter: string;
   functions: IFunction[];
   runtimes: IRuntime[];
   fetchRuntimes: () => Promise<any>;
@@ -16,6 +20,11 @@ interface IFunctionListProps {
   deployFunction: (n: string, ns: string, spec: IFunction["spec"]) => Promise<boolean>;
   namespace: string;
   navigateToFunction: (n: string, ns: string) => any;
+  pushSearchFilter: (filter: string) => any;
+}
+
+interface IFunctionListState {
+  filter: string;
 }
 
 const RequiredRBACRoles: IRBACRole[] = [
@@ -32,46 +41,58 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-class FunctionList extends React.Component<IFunctionListProps> {
+class FunctionList extends React.Component<IFunctionListProps, IFunctionListState> {
+  public state: IFunctionListState = { filter: "" };
   public componentDidMount() {
-    const { fetchFunctions, fetchRuntimes, namespace } = this.props;
+    const { filter, fetchFunctions, fetchRuntimes, namespace } = this.props;
     fetchFunctions(namespace);
     fetchRuntimes();
+    this.setState({ filter });
   }
 
   public componentWillReceiveProps(nextProps: IFunctionListProps) {
-    const { error, fetchFunctions, namespace } = this.props;
+    const { error, filter, fetchFunctions, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.error)) {
       fetchFunctions(nextProps.namespace);
     }
+    if (nextProps.filter !== filter) {
+      this.setState({ filter: nextProps.filter });
+    }
   }
 
   public render() {
-    const chartItems = this.props.functions.map(f => (
+    const { functions, pushSearchFilter } = this.props;
+    const functionItems = this.filteredFunctions(functions, this.state.filter).map(f => (
       <FunctionListItem key={`${f.metadata.namespace}/${f.metadata.name}`} function={f} />
     ));
     return (
       <section className="FunctionList">
-        <header className="FunctionList__header">
-          <div className="row padding-t-big collapse-b-phone-land">
-            <div className="col-8">
-              <h1 className="margin-v-reset">Functions</h1>
+        <PageHeader>
+          <div className="col-8">
+            <div className="row collapse-b-phone-land">
+              <h1>Functions</h1>
+              <SearchFilter
+                className="margin-l-big "
+                placeholder="search functions..."
+                onChange={this.handleFilterQueryChange}
+                value={this.state.filter}
+                onSubmit={pushSearchFilter}
+              />
             </div>
-            {this.props.functions.length > 0 && (
-              <div className="col-4 text-r align-center">
-                <FunctionDeployButton
-                  error={this.props.createError}
-                  deployFunction={this.props.deployFunction}
-                  navigateToFunction={this.props.navigateToFunction}
-                  runtimes={this.props.runtimes}
-                  namespace={this.props.namespace}
-                />
-              </div>
-            )}
           </div>
-          <hr />
-        </header>
+          {this.props.functions.length > 0 && (
+            <div className="col-4 text-r align-center">
+              <FunctionDeployButton
+                error={this.props.createError}
+                deployFunction={this.props.deployFunction}
+                navigateToFunction={this.props.navigateToFunction}
+                runtimes={this.props.runtimes}
+                namespace={this.props.namespace}
+              />
+            </div>
+          )}
+        </PageHeader>
         {this.props.error ? (
           this.renderError()
         ) : this.props.functions.length === 0 ? (
@@ -93,7 +114,7 @@ class FunctionList extends React.Component<IFunctionListProps> {
             </div>
           </MessageAlert>
         ) : (
-          <CardGrid>{chartItems}</CardGrid>
+          <CardGrid>{functionItems}</CardGrid>
         )}
       </section>
     );
@@ -111,6 +132,16 @@ class FunctionList extends React.Component<IFunctionListProps> {
       <UnexpectedErrorAlert />
     );
   }
+
+  private filteredFunctions(functions: IFunction[], filter: string) {
+    return functions.filter(f => new RegExp(escapeRegExp(filter), "i").test(f.metadata.name));
+  }
+
+  private handleFilterQueryChange = (filter: string) => {
+    this.setState({
+      filter,
+    });
+  };
 }
 
 export default FunctionList;

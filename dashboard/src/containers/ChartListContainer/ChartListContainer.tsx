@@ -1,7 +1,6 @@
 import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
-import { push } from "react-router-redux";
 import { Dispatch } from "redux";
 
 import actions from "../../actions";
@@ -22,7 +21,7 @@ function mapStateToProps(
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
     fetchCharts: (repo: string) => dispatch(actions.charts.fetchCharts(repo)),
-    pushSearchFilter: (filter: string) => dispatch(push(`?q=${filter}`)),
+    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }
 
