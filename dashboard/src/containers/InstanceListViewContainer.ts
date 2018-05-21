@@ -1,19 +1,16 @@
+import * as qs from "qs";
 import { connect } from "react-redux";
+import { RouteComponentProps } from "react-router";
 import { Dispatch } from "redux";
 
 import actions from "../actions";
 import { InstanceListView } from "../components/InstanceListView";
 import { IStoreState } from "../shared/types";
 
-interface IRouteProps {
-  match: {
-    params: {
-      brokerName: string;
-    };
-  };
-}
-
-function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps(
+  { catalog, namespace }: IStoreState,
+  { location }: RouteComponentProps<{ brokerName: string }>,
+) {
   const brokers = catalog.brokers;
   const plans = catalog.plans;
   const classes = catalog.classes;
@@ -23,6 +20,7 @@ function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params 
     brokers,
     classes,
     error: catalog.errors.fetch,
+    filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     instances,
     isInstalled,
     namespace: namespace.current,
@@ -38,6 +36,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     getCatalog: async (ns: string) => {
       dispatch(actions.catalog.getCatalog(ns));
     },
+    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }
 

@@ -72,16 +72,18 @@ class FunctionList extends React.Component<IFunctionListProps, IFunctionListStat
           <div className="col-8">
             <div className="row collapse-b-phone-land">
               <h1>Functions</h1>
-              <SearchFilter
-                className="margin-l-big "
-                placeholder="search functions..."
-                onChange={this.handleFilterQueryChange}
-                value={this.state.filter}
-                onSubmit={pushSearchFilter}
-              />
+              {functions.length > 0 && (
+                <SearchFilter
+                  className="margin-l-big "
+                  placeholder="search functions..."
+                  onChange={this.handleFilterQueryChange}
+                  value={this.state.filter}
+                  onSubmit={pushSearchFilter}
+                />
+              )}
             </div>
           </div>
-          {this.props.functions.length > 0 && (
+          {functions.length > 0 && (
             <div className="col-4 text-r align-center">
               <FunctionDeployButton
                 error={this.props.createError}
@@ -95,7 +97,7 @@ class FunctionList extends React.Component<IFunctionListProps, IFunctionListStat
         </PageHeader>
         {this.props.error ? (
           this.renderError()
-        ) : this.props.functions.length === 0 ? (
+        ) : functions.length === 0 ? (
           <MessageAlert header="Unleash the power of Kubeless">
             <div>
               <p className="margin-v-normal">

@@ -63,13 +63,15 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           <div className="col-8">
             <div className="row">
               <h1>Applications</h1>
-              <SearchFilter
-                className="margin-l-big"
-                placeholder="search apps..."
-                onChange={this.handleFilterQueryChange}
-                value={this.state.filter}
-                onSubmit={pushSearchFilter}
-              />
+              {items.length > 0 && (
+                <SearchFilter
+                  className="margin-l-big"
+                  placeholder="search apps..."
+                  onChange={this.handleFilterQueryChange}
+                  value={this.state.filter}
+                  onSubmit={pushSearchFilter}
+                />
+              )}
             </div>
           </div>
           {items.length > 0 && (
