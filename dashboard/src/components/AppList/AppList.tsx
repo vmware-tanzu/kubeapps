@@ -1,15 +1,24 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { ForbiddenError, IAppState, IRBACRole } from "../../shared/types";
+import { ForbiddenError, IApp, IAppState, IRBACRole } from "../../shared/types";
+import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { MessageAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import PageHeader from "../PageHeader";
+import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
   fetchApps: (ns: string) => Promise<void>;
   namespace: string;
+  pushSearchFilter: (filter: string) => any;
+  filter: string;
+}
+
+interface IAppListState {
+  filter: string;
 }
 
 const RequiredRBACRoles: IRBACRole[] = [
@@ -26,41 +35,53 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-class AppList extends React.Component<IAppListProps, { error?: boolean }> {
-  public state: { error?: boolean } = {};
+class AppList extends React.Component<IAppListProps, IAppListState> {
+  public state: IAppListState = { filter: "" };
   public componentDidMount() {
-    const { fetchApps, namespace } = this.props;
+    const { fetchApps, filter, namespace } = this.props;
     fetchApps(namespace);
+    this.setState({ filter });
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
-    const { apps: { error }, fetchApps, namespace } = this.props;
+    const { apps: { error }, fetchApps, filter, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
       fetchApps(nextProps.namespace);
     }
+    if (nextProps.filter !== filter) {
+      this.setState({ filter: nextProps.filter });
+    }
   }
 
   public render() {
-    const { error, isFetching, items } = this.props.apps;
+    const { pushSearchFilter, apps: { error, isFetching, items } } = this.props;
 
     return (
       <section className="AppList">
-        <header className="AppList__header">
-          <div className="row padding-t-big collapse-b-phone-land">
-            <div className="col-8">
-              <h1 className="margin-v-reset">Applications</h1>
+        <PageHeader>
+          <div className="col-8">
+            <div className="row">
+              <h1>Applications</h1>
+              {items.length > 0 && (
+                <SearchFilter
+                  className="margin-l-big"
+                  placeholder="search apps..."
+                  onChange={this.handleFilterQueryChange}
+                  value={this.state.filter}
+                  onSubmit={pushSearchFilter}
+                />
+              )}
             </div>
-            {items.length > 0 && (
-              <div className="col-4 text-r align-center">
-                <Link to="/charts">
-                  <button className="button button-accent">Deploy App</button>
-                </Link>
-              </div>
-            )}
           </div>
-          <hr />
-        </header>
+          {items.length > 0 && (
+            <div className="col-4 text-r align-center">
+              <Link to="/charts">
+                <button className="button button-accent">Deploy App</button>
+              </Link>
+            </div>
+          )}
+        </PageHeader>
         <main>
           {isFetching ? (
             <div>Loading</div>
@@ -92,11 +113,13 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
       );
     } else {
       return (
-        <CardGrid>
-          {items.map(r => {
-            return <AppListItem key={r.data.name} app={r} />;
-          })}
-        </CardGrid>
+        <div>
+          <CardGrid>
+            {this.filteredApps(items, this.state.filter).map(r => {
+              return <AppListItem key={r.data.name} app={r} />;
+            })}
+          </CardGrid>
+        </div>
       );
     }
   }
@@ -113,6 +136,16 @@ class AppList extends React.Component<IAppListProps, { error?: boolean }> {
       <UnexpectedErrorAlert />
     );
   }
+
+  private filteredApps(apps: IApp[], filter: string) {
+    return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.data.name));
+  }
+
+  private handleFilterQueryChange = (filter: string) => {
+    this.setState({
+      filter,
+    });
+  };
 }
 
 export default AppList;

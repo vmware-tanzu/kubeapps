@@ -1,21 +1,19 @@
+import * as qs from "qs";
 import { connect } from "react-redux";
+import { RouteComponentProps } from "react-router";
 import { Dispatch } from "redux";
 
 import actions from "../../actions";
 import ChartList from "../../components/ChartList";
 import { IStoreState } from "../../shared/types";
 
-interface IRouteProps {
-  match: {
-    params: {
-      repo: string;
-    };
-  };
-}
-
-function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps(
+  { charts }: IStoreState,
+  { match: { params }, location }: RouteComponentProps<{ repo: string }>,
+) {
   return {
     charts,
+    filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     repo: params.repo,
   };
 }
@@ -23,6 +21,7 @@ function mapStateToProps({ charts }: IStoreState, { match: { params } }: IRouteP
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
     fetchCharts: (repo: string) => dispatch(actions.charts.fetchCharts(repo)),
+    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }
 

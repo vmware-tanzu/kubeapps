@@ -1,3 +1,5 @@
+import { push } from "react-router-redux";
+
 import * as apps from "./apps";
 import * as auth from "./auth";
 import * as catalog from "./catalog";
@@ -14,4 +16,7 @@ export default {
   functions,
   namespace,
   repos,
+  shared: {
+    pushSearchFilter: (f: string) => push(`?q=${f}`),
+  },
 };

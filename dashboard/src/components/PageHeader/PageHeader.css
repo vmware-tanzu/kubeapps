@@ -1,0 +1,7 @@
+.PageHeader > .row {
+  border-bottom: 2px solid #f1f1f1;
+}
+
+.PageHeader h1 {
+  margin: 0;
+}

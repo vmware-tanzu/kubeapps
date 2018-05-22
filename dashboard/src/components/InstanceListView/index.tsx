@@ -5,6 +5,7 @@ import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
+import { escapeRegExp } from "../../shared/utils";
 import {
   MessageAlert,
   PermissionsErrorAlert,
@@ -12,18 +13,26 @@ import {
   ServiceCatalogNotInstalledAlert,
   UnexpectedErrorAlert,
 } from "../ErrorAlert";
+import PageHeader from "../PageHeader";
+import SearchFilter from "../SearchFilter";
 import { InstanceCardList } from "./InstanceCardList";
 
 export interface InstanceListViewProps {
   brokers: IServiceBroker[];
   classes: IClusterServiceClass[];
   error: Error;
+  filter: string;
   getCatalog: (ns: string) => Promise<any>;
   checkCatalogInstalled: () => Promise<any>;
   instances: IServiceInstance[];
   plans: IServicePlan[];
+  pushSearchFilter: (filter: string) => any;
   isInstalled: boolean;
   namespace: string;
+}
+
+export interface InstanceListViewState {
+  filter: string;
 }
 
 const RequiredRBACRoles: IRBACRole[] = [
@@ -58,40 +67,56 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-export class InstanceListView extends React.PureComponent<InstanceListViewProps> {
+export class InstanceListView extends React.PureComponent<
+  InstanceListViewProps,
+  InstanceListViewState
+> {
+  public state: InstanceListViewState = { filter: "" };
   public async componentDidMount() {
     this.props.checkCatalogInstalled();
     this.props.getCatalog(this.props.namespace);
+    this.setState({ filter: this.props.filter });
   }
 
   public componentWillReceiveProps(nextProps: InstanceListViewProps) {
-    const { error, getCatalog, isInstalled, namespace } = this.props;
+    const { error, filter, getCatalog, isInstalled, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
     if (isInstalled && (nextProps.namespace !== namespace || (error && !nextProps.error))) {
       getCatalog(nextProps.namespace);
     }
+    if (nextProps.filter !== filter) {
+      this.setState({ filter: nextProps.filter });
+    }
   }
 
   public render() {
-    const { error, isInstalled, brokers, instances, classes } = this.props;
+    const { error, isInstalled, brokers, instances, classes, pushSearchFilter } = this.props;
 
     return (
       <section className="InstanceList">
-        <header className="InstanceList__header">
-          <div className="row padding-t-big collapse-b-phone-land">
-            <div className="col-8">
-              <h1 className="margin-v-reset">Service Instances</h1>
+        <PageHeader>
+          <div className="col-8">
+            <div className="row collapse-b-phone-land">
+              <h1>Service Instances</h1>
+              {instances.length > 0 && (
+                <SearchFilter
+                  className="margin-l-big "
+                  placeholder="search instances..."
+                  onChange={this.handleFilterQueryChange}
+                  value={this.state.filter}
+                  onSubmit={pushSearchFilter}
+                />
+              )}
             </div>
-            {instances.length > 0 && (
-              <div className="col-4 text-r align-center">
-                <Link to="/services/classes">
-                  <button className="button button-accent">Deploy Service Instance</button>
-                </Link>
-              </div>
-            )}
           </div>
-          <hr />
-        </header>
+          {instances.length > 0 && (
+            <div className="col-4 text-r align-center">
+              <Link to="/services/classes">
+                <button className="button button-accent">Deploy Service Instance</button>
+              </Link>
+            </div>
+          )}
+        </PageHeader>
         <main>
           {isInstalled ? (
             <div>
@@ -100,7 +125,10 @@ export class InstanceListView extends React.PureComponent<InstanceListViewProps>
               ) : brokers.length > 0 ? (
                 <div>
                   {instances.length > 0 ? (
-                    <InstanceCardList instances={instances} classes={classes} />
+                    <InstanceCardList
+                      instances={this.filteredServiceInstances(instances, this.state.filter)}
+                      classes={classes}
+                    />
                   ) : (
                     <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
                       <div>
@@ -143,4 +171,14 @@ export class InstanceListView extends React.PureComponent<InstanceListViewProps>
       <UnexpectedErrorAlert />
     );
   }
+
+  private filteredServiceInstances(instances: IServiceInstance[], filter: string) {
+    return instances.filter(i => new RegExp(escapeRegExp(filter), "i").test(i.metadata.name));
+  }
+
+  private handleFilterQueryChange = (filter: string) => {
+    this.setState({
+      filter,
+    });
+  };
 }
