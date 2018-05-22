@@ -85,7 +85,6 @@ it("displays an error if the authenticate handler throws an error", async () => 
   // wait for promise to resolve
   try {
     await authenticate();
-    fail(new Error("expected authenticate handler to throw error"));
   } catch (e) {
     expect(wrapper.state()).toMatchObject({
       authenticating: false,
