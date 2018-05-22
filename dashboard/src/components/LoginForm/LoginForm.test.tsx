@@ -16,8 +16,8 @@ it("renders a token login form", () => {
   const wrapper = shallow(
     <LoginForm authenticated={false} authenticate={jest.fn()} location={emptyLocation} />,
   );
-  expect(wrapper.find("input#token")).toHaveLength(1);
-  expect(wrapper.find(Redirect)).toHaveLength(0);
+  expect(wrapper.find("input#token").exists()).toBe(true);
+  expect(wrapper.find(Redirect).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -45,7 +45,7 @@ describe("redirect if authenticated", () => {
       <LoginForm authenticated={true} authenticate={jest.fn()} location={emptyLocation} />,
     );
     const redirect = wrapper.find(Redirect);
-    expect(redirect).toHaveLength(1);
+    expect(redirect.exists()).toBe(true);
     expect(redirect.props()).toEqual({ push: false, to: { pathname: "/" } });
   });
 
@@ -56,7 +56,7 @@ describe("redirect if authenticated", () => {
       <LoginForm authenticated={true} authenticate={jest.fn()} location={location} />,
     );
     const redirect = wrapper.find(Redirect);
-    expect(redirect).toHaveLength(1);
+    expect(redirect.exists()).toBe(true);
     expect(redirect.props()).toEqual({ push: false, to: "/test" });
   });
 });
