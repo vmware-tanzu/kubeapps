@@ -290,6 +290,7 @@ export interface IHelmRelease {
   };
   spec: {
     chartName: string;
+    releaseName: string;
     repoUrl: string;
     values: string;
     version: string;

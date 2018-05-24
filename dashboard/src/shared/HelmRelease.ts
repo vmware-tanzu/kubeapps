@@ -9,6 +9,7 @@ import * as url from "./url";
 
 export class HelmRelease {
   public static async create(
+    hrName: string,
     releaseName: string,
     namespace: string,
     chartVersion: IChartVersion,
@@ -25,11 +26,12 @@ export class HelmRelease {
         annotations: {
           "apprepositories.kubeapps.com/repo-name": chartAttrs.repo.name,
         },
-        name: releaseName,
+        name: hrName,
       },
       spec: {
         auth,
         chartName: chartAttrs.name,
+        releaseName,
         repoUrl: chartAttrs.repo.url,
         values,
         version: chartVersion.attributes.version,
@@ -39,6 +41,7 @@ export class HelmRelease {
   }
 
   public static async upgrade(
+    hrName: string,
     releaseName: string,
     namespace: string,
     chartVersion: IChartVersion,
@@ -47,18 +50,19 @@ export class HelmRelease {
     const chartAttrs = chartVersion.relationships.chart.data;
     const repo = await AppRepository.get(chartAttrs.repo.name);
     const auth = repo.spec.auth;
-    const endpoint = HelmRelease.getSelfLink(releaseName, namespace);
+    const endpoint = HelmRelease.getSelfLink(hrName, namespace);
     const { data } = await axios.patch(
       endpoint,
       {
         apiVersion: "helm.bitnami.com/v1",
         kind: "HelmRelease",
         metadata: {
-          name: releaseName,
+          name: hrName,
         },
         spec: {
           auth,
           chartName: chartAttrs.name,
+          releaseName,
           repoUrl: chartAttrs.repo.url,
           values,
           version: chartVersion.attributes.version,
@@ -71,20 +75,39 @@ export class HelmRelease {
     return data;
   }
 
-  public static async delete(releaseName: string, namespace: string) {
+  public static async delete(hrName: string, namespace: string) {
     // strip namespace from release name
-    const hrName = releaseName.replace(new RegExp(`^${namespace}-`), "");
     const { data } = await axios.delete(this.getSelfLink(hrName, namespace));
     return data;
   }
 
-  public static async getAllWithDetails(namespace?: string) {
+  public static async getAllHelmReleases(namespace?: string) {
     const { data: { items: helmReleaseList } } = await axios.get<{ items: IHelmRelease[] }>(
       this.getResourceLink(namespace),
     );
+    return helmReleaseList;
+  }
+
+  public static async getHelmRelease(releaseName: string, namespace: string) {
+    const helmReleaseList = await this.getAllHelmReleases(namespace);
+    let helmRelease = "";
+    helmReleaseList.forEach(r => {
+      if (r.spec.releaseName === releaseName) {
+        helmRelease = r.metadata.name;
+      }
+    });
+    return helmRelease;
+  }
+
+  public static async getAllWithDetails(namespace?: string) {
+    const helmReleaseList = await this.getAllHelmReleases(namespace);
     // Convert list of HelmReleases to release name -> HelmRelease pair
     const helmReleaseMap = helmReleaseList.reduce((acc, hr) => {
-      acc[`${hr.metadata.namespace}-${hr.metadata.name}`] = hr;
+      const releaseName =
+        !hr.spec.releaseName || hr.spec.releaseName === ""
+          ? `${hr.metadata.name}-${hr.metadata.namespace}`
+          : hr.spec.releaseName;
+      acc[releaseName] = hr;
       return acc;
     }, new Map<string, IHelmRelease>());
 
@@ -114,9 +137,7 @@ export class HelmRelease {
     return Promise.all<IApp>(apps.map(async app => this.getChart(app)));
   }
 
-  public static async getDetails(releaseName: string, namespace: string) {
-    // strip namespace from release name
-    const hrName = releaseName.replace(new RegExp(`^${namespace}-`), "");
+  public static async getDetails(hrName: string, releaseName: string, namespace: string) {
     const { data: hr } = await axios.get<IHelmRelease>(this.getSelfLink(hrName, namespace));
     const items = await this.getDetailsWithRetry(releaseName);
     // Helm/Tiller will store details in a ConfigMap for each revision,

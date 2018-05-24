@@ -15,12 +15,13 @@ import ServiceTable from "./ServiceTable";
 
 interface IAppViewProps {
   namespace: string;
+  hrName: string;
   releaseName: string;
   app: IApp;
   error: Error;
   deleteError: Error;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
-  deleteApp: (releaseName: string, namespace: string) => Promise<boolean>;
+  getApp: (hrName: string, releaseName: string, namespace: string) => Promise<void>;
+  deleteApp: (hrName: string, namespace: string) => Promise<boolean>;
 }
 
 interface IAppViewState {
@@ -72,14 +73,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   };
 
   public async componentDidMount() {
-    const { releaseName, getApp, namespace } = this.props;
-    getApp(releaseName, namespace);
+    const { hrName, releaseName, getApp, namespace } = this.props;
+    getApp(hrName, releaseName, namespace);
   }
 
   public async componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { releaseName, getApp, namespace } = this.props;
+    const { hrName, releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(releaseName, nextProps.namespace);
+      getApp(hrName, releaseName, nextProps.namespace);
       return;
     }
     if (nextProps.error) {
