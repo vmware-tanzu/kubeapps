@@ -38,6 +38,7 @@ interface IDeploymentFormProps {
   error: Error | undefined;
   selected: IChartState["selected"];
   deployChart: (
+    hrName: string,
     version: IChartVersion,
     releaseName: string,
     namespace: string,
@@ -56,6 +57,7 @@ interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
+  hrName: string;
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
@@ -65,6 +67,7 @@ interface IDeploymentFormState {
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
     appValues: undefined,
+    hrName: "",
     isDeploying: false,
     namespace: this.props.namespace,
     releaseName: "",
@@ -88,8 +91,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     if (hr) {
       namespace = hr.metadata.namespace;
       this.setState({
+        hrName: hr.metadata.name,
         namespace,
-        releaseName: hr.metadata.name,
+        releaseName: `${hr.metadata.namespace}-${hr.metadata.name}`,
       });
     } else {
       this.setState({
@@ -193,7 +197,17 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             </div>
             <div className="col-8">
               <div>
-                <label htmlFor="releaseName">Name</label>
+                <label htmlFor="hrName">Name</label>
+                <input
+                  id="hrName"
+                  onChange={this.handleHelmReleaseNameChange}
+                  value={this.state.hrName}
+                  required={true}
+                  disabled={hr ? true : false}
+                />
+              </div>
+              <div>
+                <label htmlFor="releaseName">Release Name (Global)</label>
                 <input
                   id="releaseName"
                   onChange={this.handleReleaseNameChange}
@@ -281,9 +295,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     const { selected, deployChart, push, hr } = this.props;
     const resourceVersion = hr ? hr.metadata.resourceVersion : undefined;
     this.setState({ isDeploying: true });
-    const { releaseName, namespace, appValues } = this.state;
+    const { hrName, releaseName, namespace, appValues } = this.state;
     if (selected.version) {
       const deployed = await deployChart(
+        hrName,
         selected.version,
         releaseName,
         namespace,
@@ -291,13 +306,19 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         resourceVersion,
       );
       if (deployed) {
-        push(`/apps/ns/${namespace}/${namespace}-${releaseName}`);
+        push(`/apps/ns/${namespace}/${releaseName}`);
       } else {
         this.setState({ isDeploying: false });
       }
     }
   };
 
+  public handleHelmReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
+    this.setState({
+      hrName: e.currentTarget.value,
+      releaseName: `${this.props.namespace}-${e.currentTarget.value}`,
+    });
+  };
   public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ releaseName: e.currentTarget.value });
   };

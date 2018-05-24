@@ -10,10 +10,12 @@ interface IAppEditProps {
   app: IApp;
   bindings: IServiceBinding[];
   error: Error | undefined;
+  hrName: string;
   namespace: string;
   releaseName: string;
   selected: IChartState["selected"];
   deployChart: (
+    hrName: string,
     version: IChartVersion,
     releaseName: string,
     namespace: string,
@@ -21,7 +23,7 @@ interface IAppEditProps {
     resourceVersion?: string,
   ) => Promise<boolean>;
   fetchChartVersions: (id: string) => Promise<{}>;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
+  getApp: (hrName: string, releaseName: string, namespace: string) => Promise<void>;
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
@@ -30,14 +32,14 @@ interface IAppEditProps {
 
 class AppEdit extends React.Component<IAppEditProps> {
   public componentDidMount() {
-    const { releaseName, getApp, namespace } = this.props;
-    getApp(releaseName, namespace);
+    const { hrName, releaseName, getApp, namespace } = this.props;
+    getApp(hrName, releaseName, namespace);
   }
 
   public componentWillReceiveProps(nextProps: IAppEditProps) {
-    const { releaseName, getApp, namespace } = this.props;
+    const { hrName, releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(releaseName, nextProps.namespace);
+      getApp(hrName, releaseName, nextProps.namespace);
     }
   }
 
