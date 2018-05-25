@@ -93,7 +93,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       this.setState({
         hrName: hr.metadata.name,
         namespace,
-        releaseName: `${hr.metadata.namespace}-${hr.metadata.name}`,
+        releaseName: hr.spec.releaseName,
       });
     } else {
       this.setState({
