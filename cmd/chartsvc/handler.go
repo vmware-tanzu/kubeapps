@@ -95,7 +95,7 @@ func listRepoCharts(w http.ResponseWriter, req *http.Request, params Params) {
 func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var chart *models.Chart
+	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
 	if err := db.C(chartCollection).FindId(chartID).One(&chart); err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
@@ -103,7 +103,7 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 
-	cr := newChartResponse(chart)
+	cr := newChartResponse(&chart)
 	response.NewDataResponse(cr).Write(w)
 }
 
@@ -111,7 +111,7 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var chart *models.Chart
+	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
 	if err := db.C(chartCollection).FindId(chartID).One(&chart); err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
@@ -119,7 +119,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 		return
 	}
 
-	cvl := newChartVersionListResponse(chart)
+	cvl := newChartVersionListResponse(&chart)
 	response.NewDataResponse(cvl).Write(w)
 }
 
@@ -127,7 +127,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var chart *models.Chart
+	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
 	if err := db.C(chartCollection).Find(bson.M{
 		"_id":           chartID,
@@ -141,7 +141,7 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 
-	cvr := newChartVersionResponse(chart, chart.ChartVersions[0])
+	cvr := newChartVersionResponse(&chart, chart.ChartVersions[0])
 	response.NewDataResponse(cvr).Write(w)
 }
 
@@ -149,7 +149,7 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var chart *models.Chart
+	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
 	if err := db.C(chartCollection).FindId(chartID).One(&chart); err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
@@ -165,11 +165,11 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 	w.Write(chart.RawIcon)
 }
 
-// getChartVersionReadme returns the README and values.yaml for a given chart
+// getChartVersionReadme returns the README for a given chart
 func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var files *models.ChartFiles
+	var files models.ChartFiles
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
 	if err := db.C(filesCollection).FindId(fileID).One(&files); err != nil {
 		log.WithError(err).Errorf("could not find files with id %s", fileID)
@@ -184,7 +184,7 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
 	db, closer := dbSession.DB()
 	defer closer()
-	var files *models.ChartFiles
+	var files models.ChartFiles
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
 	if err := db.C(filesCollection).FindId(fileID).One(&files); err != nil {
 		log.WithError(err).Errorf("could not find values.yaml with id %s", fileID)
