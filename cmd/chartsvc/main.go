@@ -30,20 +30,7 @@ import (
 
 var dbSession datastore.Session
 
-func main() {
-	dbURL := flag.String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
-	dbName := flag.String("mongo-database", "charts", "MongoDB database")
-	dbUsername := flag.String("mongo-user", "", "MongoDB user")
-	dbPassword := os.Getenv("MONGO_PASSWORD")
-	flag.Parse()
-
-	mongoConfig := datastore.Config{URL: *dbURL, Database: *dbName, Username: *dbUsername, Password: dbPassword}
-	var err error
-	dbSession, err = datastore.NewSession(mongoConfig)
-	if err != nil {
-		log.WithFields(log.Fields{"host": *dbURL}).Fatal(err)
-	}
-
+func setupRoutes() http.Handler {
 	r := mux.NewRouter()
 
 	// Healthcheck
@@ -64,6 +51,24 @@ func main() {
 
 	n := negroni.Classic()
 	n.UseHandler(r)
+	return n
+}
+
+func main() {
+	dbURL := flag.String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
+	dbName := flag.String("mongo-database", "charts", "MongoDB database")
+	dbUsername := flag.String("mongo-user", "", "MongoDB user")
+	dbPassword := os.Getenv("MONGO_PASSWORD")
+	flag.Parse()
+
+	mongoConfig := datastore.Config{URL: *dbURL, Database: *dbName, Username: *dbUsername, Password: dbPassword}
+	var err error
+	dbSession, err = datastore.NewSession(mongoConfig)
+	if err != nil {
+		log.WithFields(log.Fields{"host": *dbURL}).Fatal(err)
+	}
+
+	n := setupRoutes()
 
 	port := os.Getenv("PORT")
 	if port == "" {
