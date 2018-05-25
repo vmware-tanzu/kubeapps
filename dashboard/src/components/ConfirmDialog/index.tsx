@@ -3,6 +3,7 @@ import * as Modal from "react-modal";
 
 interface IConfirmDialogProps {
   modalIsOpen: boolean;
+  loading: boolean;
   onConfirm: () => Promise<any>;
   closeModal: () => Promise<any>;
 }
@@ -39,19 +40,23 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
           {this.state.error && (
             <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
           )}
-          <div>Are you sure you want to delete this?</div>
-          <div>
-            <button className="button" onClick={this.props.closeModal}>
-              Cancel
-            </button>
-            <button
-              className="button button-primary button-danger"
-              type="submit"
-              onClick={this.props.onConfirm}
-            >
-              Delete
-            </button>
-          </div>
+          {this.props.loading === true ? (
+            <div> Loading ... </div>
+          ) : (
+            <div>
+              <div> Are you sure you want to delete this? </div>
+              <button className="button" onClick={this.props.closeModal}>
+                Cancel
+              </button>
+              <button
+                className="button button-primary button-danger"
+                type="submit"
+                onClick={this.props.onConfirm}
+              >
+                Delete
+              </button>
+            </div>
+          )}
         </Modal>
       </div>
     );

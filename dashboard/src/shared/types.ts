@@ -298,7 +298,7 @@ export interface IHelmRelease {
 }
 
 // Representation of the ConfigMaps Helm uses to store releases
-export interface IHelmReleaseConfigMap {
+export interface IAppConfigMap {
   metadata: {
     labels: {
       NAME: string;

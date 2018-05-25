@@ -1,6 +1,7 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
+import { App } from "../shared/App";
 import { HelmRelease } from "../shared/HelmRelease";
 import { IApp, IChartVersion, IStoreState } from "../shared/types";
 
@@ -51,6 +52,7 @@ export function deleteApp(releaseName: string, namespace: string) {
     try {
       const hrName = await HelmRelease.getHelmRelease(releaseName, namespace);
       await HelmRelease.delete(hrName, namespace);
+      await App.waitForDeletion(releaseName);
       return true;
     } catch (e) {
       dispatch(errorDeleteApp(e));

@@ -38,6 +38,7 @@ class FunctionControls extends React.Component<IFunctionControlsProps, IFunction
         </button>
         <ConfirmDialog
           onConfirm={this.handleDeleteClick}
+          loading={false}
           modalIsOpen={this.state.modalIsOpen}
           closeModal={this.closeModal}
         />

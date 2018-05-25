@@ -35,6 +35,7 @@ class DeprovisionButton extends React.Component<IDeprovisionButtonProps, IDeprov
         <ConfirmDialog
           onConfirm={this.handleDeprovision}
           modalIsOpen={this.state.modalIsOpen}
+          loading={false}
           closeModal={this.closeModal}
         />
 

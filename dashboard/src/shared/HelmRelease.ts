@@ -1,10 +1,11 @@
 import { inflate } from "pako";
 import { clearInterval, setInterval } from "timers";
 
+import { App } from "./App";
 import { AppRepository } from "./AppRepository";
 import { axios } from "./Auth";
 import { hapi } from "./hapi/release";
-import { IApp, IChart, IChartVersion, IHelmRelease, IHelmReleaseConfigMap } from "./types";
+import { IApp, IAppConfigMap, IChart, IChartVersion, IHelmRelease } from "./types";
 import * as url from "./url";
 
 export class HelmRelease {
@@ -113,8 +114,8 @@ export class HelmRelease {
 
     // Get the HelmReleaseConfigMaps for all HelmReleases
     const { data: { items: allConfigMaps } } = await axios.get<{
-      items: IHelmReleaseConfigMap[];
-    }>(this.getConfigMapsLink(Object.keys(helmReleaseMap)));
+      items: IAppConfigMap[];
+    }>(App.getConfigMapsLink());
 
     // Convert list of HelmReleaseConfigMaps to release name -> latest
     // HelmReleaseConfigMap pair
@@ -128,33 +129,37 @@ export class HelmRelease {
         acc[releaseName] = cm;
       }
       return acc;
-    }, new Map<string, IHelmReleaseConfigMap>());
+    }, new Map<string, IAppConfigMap>());
 
     // Go through all HelmReleaseConfigMaps and parse as IApp objects
-    const apps = Object.keys(cms).map(key => this.parseRelease(helmReleaseMap[key], cms[key]));
+    const apps = Object.keys(cms).map(key => this.parseRelease(cms[key], helmReleaseMap[key]));
 
     // Fetch charts for each app
     return Promise.all<IApp>(apps.map(async app => this.getChart(app)));
   }
 
   public static async getDetails(hrName: string, releaseName: string, namespace: string) {
-    const { data: hr } = await axios.get<IHelmRelease>(this.getSelfLink(hrName, namespace));
+    let hr;
+    if (hrName !== "") {
+      const i = await axios.get<IHelmRelease>(this.getSelfLink(hrName, namespace));
+      hr = i.data;
+    }
     const items = await this.getDetailsWithRetry(releaseName);
     // Helm/Tiller will store details in a ConfigMap for each revision,
     // so we need to filter these out to pick the latest version
-    const helmConfigMap: IHelmReleaseConfigMap = items.reduce((ret, cm) => {
+    const helmConfigMap: IAppConfigMap = items.reduce((ret, cm) => {
       return this.getNewest(ret, cm);
     }, items[0]);
 
-    const app = this.parseRelease(hr, helmConfigMap);
+    const app = this.parseRelease(helmConfigMap, hr);
     return await this.getChart(app);
   }
 
   private static getDetailsWithRetry(releaseName: string) {
     const getConfigMaps = () => {
-      return axios.get<{ items: IHelmReleaseConfigMap[] }>(this.getConfigMapsLink([releaseName]));
+      return axios.get<{ items: IAppConfigMap[] }>(App.getConfigMapsLink([releaseName]));
     };
-    return new Promise<IHelmReleaseConfigMap[]>(async (resolve, reject) => {
+    return new Promise<IAppConfigMap[]>(async (resolve, reject) => {
       let req = await getConfigMaps();
       if (req.data.items.length > 0) {
         resolve(req.data.items);
@@ -189,32 +194,26 @@ export class HelmRelease {
     }
   }
 
-  // getConfigMapsLink returns the URL for listing Helm ConfigMaps for the given
-  // set of release names.
-  private static getConfigMapsLink(releaseNames: string[]) {
-    return `/api/kube/api/v1/namespaces/kubeapps/configmaps?labelSelector=NAME in (${releaseNames.join(
-      ",",
-    )})`;
-  }
-
-  // Takes two IHelmReleaseConfigMaps and returns the highest version
-  private static getNewest(cm1: IHelmReleaseConfigMap, cm2: IHelmReleaseConfigMap) {
+  // Takes two IAppConfigMaps and returns the highest version
+  private static getNewest(cm1: IAppConfigMap, cm2: IAppConfigMap) {
     const cm1Version = parseInt(cm1.metadata.labels.VERSION, 10);
     const cm2Version = parseInt(cm2.metadata.labels.VERSION, 10);
     return cm1Version > cm2Version ? cm1 : cm2;
   }
 
   // decode base64, ungzip (inflate) and parse as a protobuf message
-  private static parseRelease(hr: IHelmRelease, cm: IHelmReleaseConfigMap): IApp {
+  private static parseRelease(cm: IAppConfigMap, hr?: IHelmRelease): IApp {
     const protoBytes = inflate(atob(cm.data.release));
     const rel = hapi.release.Release.decode(protoBytes);
     const app: IApp = { data: rel, type: "helm", hr };
-    const repoName = hr.metadata.annotations["apprepositories.kubeapps.com/repo-name"];
-    if (repoName) {
-      app.repo = {
-        name: repoName,
-        url: hr.spec.repoUrl,
-      };
+    if (hr && hr.metadata) {
+      const repoName = hr.metadata.annotations["apprepositories.kubeapps.com/repo-name"];
+      if (repoName) {
+        app.repo = {
+          name: repoName,
+          url: hr.spec.repoUrl,
+        };
+      }
     }
     return app;
   }
