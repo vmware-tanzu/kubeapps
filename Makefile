@@ -12,7 +12,7 @@ EMBEDDED_STATIC = generated/statik/statik.go
 default: kubeapps
 
 kubeapps: $(EMBEDDED_STATIC)
-	$(GO) build -i -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
+	$(GO) build -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
 
 test: $(EMBEDDED_STATIC)
 	$(GO) test $(GO_PACKAGES)
