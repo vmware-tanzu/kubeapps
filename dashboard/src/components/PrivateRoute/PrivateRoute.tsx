@@ -1,7 +1,9 @@
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
 
-interface IPrivateRouteProps extends RouteProps {
+type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
+
+interface IPrivateRouteProps extends IRouteComponentPropsAndRouteProps {
   authenticated: boolean;
 }
 

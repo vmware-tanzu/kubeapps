@@ -24,7 +24,14 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
 class MockComponent extends React.Component {}
 
 it("redirects to the /login route if not authenticated", () => {
-  const wrapper = shallow(<PrivateRoute authenticated={false} path="/test" />);
+  const wrapper = shallow(
+    <PrivateRoute
+      authenticated={false}
+      path="/test"
+      component={MockComponent}
+      {...emptyRouteComponentProps}
+    />,
+  );
   const RenderMethod = (wrapper.instance() as PrivateRoute).renderRouteIfAuthenticated;
   const wrapper2 = shallow(<RenderMethod {...emptyRouteComponentProps} />);
   expect(wrapper2.find(Redirect).exists()).toBe(true);
@@ -36,7 +43,12 @@ it("redirects to the /login route if not authenticated", () => {
 
 it("renders the given component when authenticated", () => {
   const wrapper = shallow(
-    <PrivateRoute authenticated={true} path="/test" component={MockComponent} />,
+    <PrivateRoute
+      authenticated={true}
+      path="/test"
+      component={MockComponent}
+      {...emptyRouteComponentProps}
+    />,
   );
   const RenderMethod = (wrapper.instance() as PrivateRoute).renderRouteIfAuthenticated;
   const wrapper2 = shallow(<RenderMethod {...emptyRouteComponentProps} />);
