@@ -82,9 +82,14 @@ You can build the latest Kubeapps Installer from source by following the steps b
 * Set the Go environment variables:
 
   ```bash
-  export GOROOT=/usr/local/go
-  export GOPATH=/usr/local/go
+  export GOPATH=$HOME/gopath
   export PATH=$GOPATH/bin:$PATH
+  ```
+
+* Install kubeapps build dependencies:
+
+  ```bash
+  go get github.com/ksonnet/kubecfg
   ```
 
 * Create a working directory for the project:
@@ -98,15 +103,14 @@ You can build the latest Kubeapps Installer from source by following the steps b
 
   ```bash
   cd $working_dir
-  git clone https://github.com/kubeapps/kubeapps
+  git clone --recurse-submodules https://github.com/kubeapps/kubeapps
   ```
 
 * Build the Kubeapps binary and move it to a location in your path:
 
   ```bash
   cd kubeapps
-  make binary
-  cp kubeapps /usr/local
+  make kubeapps
   ```
 
 ## Running tests
