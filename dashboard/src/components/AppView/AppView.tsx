@@ -15,13 +15,17 @@ import ServiceTable from "./ServiceTable";
 
 interface IAppViewProps {
   namespace: string;
-  hrName: string;
-  releaseName: string;
+  helmCRDReleaseName: string;
+  tillerReleaseName: string;
   app: IApp;
   error: Error;
   deleteError: Error;
-  getApp: (hrName: string, releaseName: string, namespace: string) => Promise<void>;
-  deleteApp: (hrName: string, namespace: string) => Promise<boolean>;
+  getApp: (
+    helmCRDReleaseName: string,
+    tillerReleaseName: string,
+    namespace: string,
+  ) => Promise<void>;
+  deleteApp: (helmCRDReleaseName: string, namespace: string) => Promise<boolean>;
 }
 
 interface IAppViewState {
@@ -73,14 +77,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   };
 
   public async componentDidMount() {
-    const { hrName, releaseName, getApp, namespace } = this.props;
-    getApp(hrName, releaseName, namespace);
+    const { helmCRDReleaseName, tillerReleaseName, getApp, namespace } = this.props;
+    getApp(helmCRDReleaseName, tillerReleaseName, namespace);
   }
 
   public async componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { hrName, releaseName, getApp, namespace } = this.props;
+    const { helmCRDReleaseName, tillerReleaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(hrName, releaseName, nextProps.namespace);
+      getApp(helmCRDReleaseName, tillerReleaseName, nextProps.namespace);
       return;
     }
     if (nextProps.error) {
@@ -200,19 +204,22 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   private renderError(error: Error, action: string = "view") {
-    const { namespace, releaseName } = this.props;
+    const { namespace, tillerReleaseName } = this.props;
     switch (error.constructor) {
       case ForbiddenError:
         return (
           <PermissionsErrorAlert
             namespace={namespace}
             roles={RequiredRBACRoles[action]}
-            action={`${action} Application "${releaseName}"`}
+            action={`${action} Application "${tillerReleaseName}"`}
           />
         );
       case NotFoundError:
         return (
-          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
+          <NotFoundErrorAlert
+            resource={`Application "${tillerReleaseName}"`}
+            namespace={namespace}
+          />
         );
       default:
         return <UnexpectedErrorAlert />;
@@ -231,7 +238,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   private deleteApp = () => {
-    return this.props.deleteApp(this.props.releaseName, this.props.namespace);
+    return this.props.deleteApp(this.props.tillerReleaseName, this.props.namespace);
   };
 }
 

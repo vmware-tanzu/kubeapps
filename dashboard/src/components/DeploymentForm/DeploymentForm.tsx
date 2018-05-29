@@ -38,9 +38,9 @@ interface IDeploymentFormProps {
   error: Error | undefined;
   selected: IChartState["selected"];
   deployChart: (
-    hrName: string,
+    helmCRDReleaseName: string,
     version: IChartVersion,
-    releaseName: string,
+    tillerReleaseName: string,
     namespace: string,
     values?: string,
     resourceVersion?: string,
@@ -56,8 +56,8 @@ interface IDeploymentFormProps {
 interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
-  releaseName: string;
-  hrName: string;
+  tillerReleaseName: string;
+  helmCRDReleaseName: string;
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
@@ -67,11 +67,11 @@ interface IDeploymentFormState {
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
     appValues: undefined,
-    hrName: "",
+    helmCRDReleaseName: "",
     isDeploying: false,
     namespace: this.props.namespace,
-    releaseName: "",
     selectedBinding: undefined,
+    tillerReleaseName: "",
     valuesModified: false,
   };
 
@@ -91,9 +91,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     if (hr) {
       namespace = hr.metadata.namespace;
       this.setState({
-        hrName: hr.metadata.name,
+        helmCRDReleaseName: hr.metadata.name,
         namespace,
-        releaseName: hr.spec.releaseName,
+        tillerReleaseName: hr.spec.releaseName,
       });
     } else {
       this.setState({
@@ -197,21 +197,21 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             </div>
             <div className="col-8">
               <div>
-                <label htmlFor="hrName">Name</label>
+                <label htmlFor="helmCRDReleaseName">Name</label>
                 <input
-                  id="hrName"
+                  id="helmCRDReleaseName"
                   onChange={this.handleHelmReleaseNameChange}
-                  value={this.state.hrName}
+                  value={this.state.helmCRDReleaseName}
                   required={true}
                   disabled={hr ? true : false}
                 />
               </div>
               <div>
-                <label htmlFor="releaseName">Release Name (Global)</label>
+                <label htmlFor="tillerReleaseName">Release Name (Global)</label>
                 <input
-                  id="releaseName"
+                  id="tillerReleaseName"
                   onChange={this.handleReleaseNameChange}
-                  value={this.state.releaseName}
+                  value={this.state.tillerReleaseName}
                   required={true}
                   disabled={hr ? true : false}
                 />
@@ -295,18 +295,18 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     const { selected, deployChart, push, hr } = this.props;
     const resourceVersion = hr ? hr.metadata.resourceVersion : undefined;
     this.setState({ isDeploying: true });
-    const { hrName, releaseName, namespace, appValues } = this.state;
+    const { helmCRDReleaseName, tillerReleaseName, namespace, appValues } = this.state;
     if (selected.version) {
       const deployed = await deployChart(
-        hrName,
+        helmCRDReleaseName,
         selected.version,
-        releaseName,
+        tillerReleaseName,
         namespace,
         appValues,
         resourceVersion,
       );
       if (deployed) {
-        push(`/apps/ns/${namespace}/${releaseName}`);
+        push(`/apps/ns/${namespace}/${tillerReleaseName}`);
       } else {
         this.setState({ isDeploying: false });
       }
@@ -315,12 +315,12 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleHelmReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({
-      hrName: e.currentTarget.value,
-      releaseName: `${this.props.namespace}-${e.currentTarget.value}`,
+      helmCRDReleaseName: e.currentTarget.value,
+      tillerReleaseName: `${this.props.namespace}-${e.currentTarget.value}`,
     });
   };
   public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
-    this.setState({ releaseName: e.currentTarget.value });
+    this.setState({ tillerReleaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
     const { hr, chartID, getChartVersion, namespace } = this.props;
@@ -339,7 +339,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   private renderError() {
     const { error, hr, namespace } = this.props;
-    const { releaseName } = this.state;
+    const { tillerReleaseName } = this.state;
     const roles = RequiredRBACRoles;
     if (hr) {
       roles[0].verbs = ["patch"];
@@ -352,12 +352,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
           <PermissionsErrorAlert
             namespace={namespace}
             roles={roles}
-            action={`${hr ? "upgrade" : "create"} Application "${releaseName}"`}
+            action={`${hr ? "upgrade" : "create"} Application "${tillerReleaseName}"`}
           />
         );
       case NotFoundError:
         return (
-          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
+          <NotFoundErrorAlert
+            resource={`Application "${tillerReleaseName}"`}
+            namespace={namespace}
+          />
         );
       default:
         return <UnexpectedErrorAlert />;

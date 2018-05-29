@@ -33,15 +33,22 @@ function mapStateToProps(
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
     deployChart: (
-      hrName: string,
+      helmCRDReleaseName: string,
       version: IChartVersion,
-      releaseName: string,
+      tillerReleaseName: string,
       namespace: string,
       values?: string,
       resourceVersion?: string,
     ) =>
       dispatch(
-        actions.apps.deployChart(hrName, version, releaseName, namespace, values, resourceVersion),
+        actions.apps.deployChart(
+          helmCRDReleaseName,
+          version,
+          tillerReleaseName,
+          namespace,
+          values,
+          resourceVersion,
+        ),
       ),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
     getBindings: (ns: string) => dispatch(actions.catalog.getBindings(ns)),

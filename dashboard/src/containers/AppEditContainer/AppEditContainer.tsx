@@ -10,7 +10,7 @@ interface IRouteProps {
   match: {
     params: {
       namespace: string;
-      releaseName: string;
+      tillerReleaseName: string;
     };
   };
 }
@@ -24,27 +24,34 @@ function mapStateToProps(
     bindings: catalog.bindings,
     error: apps.error,
     namespace: params.namespace,
-    releaseName: params.releaseName,
     selected: charts.selected,
+    tillerReleaseName: params.tillerReleaseName,
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
     deployChart: (
-      hrName: string,
+      helmCRDReleaseName: string,
       version: IChartVersion,
-      releaseName: string,
+      tillerReleaseName: string,
       namespace: string,
       values?: string,
       resourceVersion?: string,
     ) =>
       dispatch(
-        actions.apps.deployChart(hrName, version, releaseName, namespace, values, resourceVersion),
+        actions.apps.deployChart(
+          helmCRDReleaseName,
+          version,
+          tillerReleaseName,
+          namespace,
+          values,
+          resourceVersion,
+        ),
       ),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
-    getApp: (hrName: string, releaseName: string, ns: string) =>
-      dispatch(actions.apps.getApp(hrName, releaseName, ns)),
+    getApp: (helmCRDReleaseName: string, tillerReleaseName: string, ns: string) =>
+      dispatch(actions.apps.getApp(helmCRDReleaseName, tillerReleaseName, ns)),
     getBindings: (ns: string) => dispatch(actions.catalog.getBindings(ns)),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),

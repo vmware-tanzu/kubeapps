@@ -35,16 +35,16 @@ interface IMigrationFormProps {
   chartVersion: string;
   error: Error | undefined;
   deployChart: (
-    hrName: string,
+    helmCRDReleaseName: string,
     version: IChartVersion,
-    releaseName: string,
+    tillerReleaseName: string,
     namespace: string,
     values?: string,
     resourceVersion?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   namespace: string;
-  releaseName: string;
+  tillerReleaseName: string;
   chartValues: string | null | undefined;
   chartName: string;
   chartRepoAuth: {};
@@ -55,7 +55,7 @@ interface IMigrationFormProps {
 
 interface IMigrationtFormState {
   isDeploying: boolean;
-  releaseName: string;
+  tillerReleaseName: string;
   chartValues: string;
   chartVersion: string;
   namespace: string;
@@ -76,8 +76,8 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
     chartVersion: this.props.chartVersion,
     isDeploying: false,
     namespace: this.props.namespace,
-    releaseName: this.props.releaseName,
     repos: this.props.repos,
+    tillerReleaseName: this.props.tillerReleaseName,
   };
 
   public render() {
@@ -91,8 +91,8 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
             </div>
             <div className="col-12">
               <p>
-                In order to be able to manage {this.state.releaseName} select the repository it can
-                be retrieved from.
+                In order to be able to manage {this.state.tillerReleaseName} select the repository
+                it can be retrieved from.
               </p>
             </div>
             <div className="col-8">
@@ -133,10 +133,10 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
                 </p>
               </div>
               <div>
-                <label htmlFor="releaseName">Release Name</label>
+                <label htmlFor="tillerReleaseName">Release Name</label>
                 <input
-                  id="releaseName"
-                  value={this.state.releaseName}
+                  id="tillerReleaseName"
+                  value={this.state.tillerReleaseName}
                   required={true}
                   disabled={true}
                 />
@@ -206,17 +206,17 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
         },
       },
     } as IChartVersion;
-    const { releaseName, namespace } = this.props;
+    const { tillerReleaseName, namespace } = this.props;
     const deployed = await this.props.deployChart(
       // Tiller release already exists so we will use its name as HelmRelease since no conflict is assured
-      releaseName,
+      tillerReleaseName,
       version,
-      releaseName,
+      tillerReleaseName,
       namespace,
       this.props.chartValues || "",
     );
     if (deployed) {
-      this.props.push(`/apps/ns/${namespace}/${releaseName}`);
+      this.props.push(`/apps/ns/${namespace}/${tillerReleaseName}`);
     } else {
       this.setState({ isDeploying: false });
     }
@@ -246,7 +246,7 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
 
   private renderError() {
     const { error, namespace } = this.props;
-    const { releaseName } = this.state;
+    const { tillerReleaseName } = this.state;
     const roles = RequiredRBACRoles;
     roles[0].verbs = ["create"];
     switch (error && error.constructor) {
@@ -255,12 +255,15 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
           <PermissionsErrorAlert
             namespace={namespace}
             roles={roles}
-            action={`Create Application "${releaseName}"`}
+            action={`Create Application "${tillerReleaseName}"`}
           />
         );
       case NotFoundError:
         return (
-          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
+          <NotFoundErrorAlert
+            resource={`Application "${tillerReleaseName}"`}
+            namespace={namespace}
+          />
         );
       default:
         return <UnexpectedErrorAlert />;

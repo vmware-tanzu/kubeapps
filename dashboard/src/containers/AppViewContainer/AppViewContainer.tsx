@@ -9,7 +9,7 @@ interface IRouteProps {
   match: {
     params: {
       namespace: string;
-      releaseName: string;
+      tillerReleaseName: string;
     };
   };
 }
@@ -20,16 +20,16 @@ function mapStateToProps({ apps }: IStoreState, { match: { params } }: IRoutePro
     deleteError: apps.deleteError,
     error: apps.error,
     namespace: params.namespace,
-    releaseName: params.releaseName,
+    tillerReleaseName: params.tillerReleaseName,
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    deleteApp: (releaseName: string, ns: string) =>
-      dispatch(actions.apps.deleteApp(releaseName, ns)),
-    getApp: (hrName: string, releaseName: string, ns: string) =>
-      dispatch(actions.apps.getApp(hrName, releaseName, ns)),
+    deleteApp: (tillerReleaseName: string, ns: string) =>
+      dispatch(actions.apps.deleteApp(tillerReleaseName, ns)),
+    getApp: (helmCRDReleaseName: string, tillerReleaseName: string, ns: string) =>
+      dispatch(actions.apps.getApp(helmCRDReleaseName, tillerReleaseName, ns)),
   };
 }
 

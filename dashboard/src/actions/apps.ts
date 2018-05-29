@@ -32,14 +32,14 @@ const allActions = [requestApps, receiveApps, errorApps, errorDeleteApp, selectA
 );
 export type AppsAction = typeof allActions[number];
 
-export function getApp(hrName: string, releaseName: string, namespace: string) {
+export function getApp(helmCRDReleaseName: string, tillerReleaseName: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
     dispatch(requestApps());
     try {
-      if (!hrName) {
-        hrName = await HelmRelease.getHelmRelease(releaseName, namespace);
+      if (!helmCRDReleaseName) {
+        helmCRDReleaseName = await HelmRelease.getHelmRelease(tillerReleaseName, namespace);
       }
-      const app = await HelmRelease.getDetails(hrName, releaseName, namespace);
+      const app = await HelmRelease.getDetails(helmCRDReleaseName, tillerReleaseName, namespace);
       dispatch(selectApp(app));
     } catch (e) {
       dispatch(errorApps(e));
@@ -47,12 +47,12 @@ export function getApp(hrName: string, releaseName: string, namespace: string) {
   };
 }
 
-export function deleteApp(releaseName: string, namespace: string) {
+export function deleteApp(tillerReleaseName: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
-      const hrName = await HelmRelease.getHelmRelease(releaseName, namespace);
-      await HelmRelease.delete(hrName, namespace);
-      await App.waitForDeletion(releaseName);
+      const helmCRDReleaseName = await HelmRelease.getHelmRelease(tillerReleaseName, namespace);
+      await HelmRelease.delete(helmCRDReleaseName, namespace);
+      await App.waitForDeletion(tillerReleaseName);
       return true;
     } catch (e) {
       dispatch(errorDeleteApp(e));
@@ -79,7 +79,7 @@ export function fetchApps(ns?: string) {
 export function deployChart(
   name: string,
   chartVersion: IChartVersion,
-  releaseName: string,
+  tillerReleaseName: string,
   namespace: string,
   values?: string,
   resourceVersion?: string,
@@ -87,9 +87,9 @@ export function deployChart(
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
       if (resourceVersion) {
-        await HelmRelease.upgrade(name, releaseName, namespace, chartVersion, values);
+        await HelmRelease.upgrade(name, tillerReleaseName, namespace, chartVersion, values);
       } else {
-        await HelmRelease.create(name, releaseName, namespace, chartVersion, values);
+        await HelmRelease.create(name, tillerReleaseName, namespace, chartVersion, values);
       }
       return true;
     } catch (e) {

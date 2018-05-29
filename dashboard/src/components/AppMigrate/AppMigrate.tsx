@@ -10,34 +10,34 @@ interface IAppMigrateProps {
   app: IApp;
   error: Error | undefined;
   namespace: string;
-  hrName: string;
-  releaseName: string;
+  helmCRDReleaseName: string;
+  tillerReleaseName: string;
   repos: IAppRepository[];
   selected: IChartState["selected"];
   deployChart: (
-    hrName: string,
+    helmCRDReleaseName: string,
     version: IChartVersion,
-    releaseName: string,
+    tillerReleaseName: string,
     namespace: string,
     values?: string,
     resourceVersion?: string,
   ) => Promise<boolean>;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
+  getApp: (tillerReleaseName: string, namespace: string) => Promise<void>;
   push: (location: string) => RouterAction;
   fetchRepositories: () => Promise<void>;
 }
 
 class AppMigrate extends React.Component<IAppMigrateProps> {
   public componentDidMount() {
-    const { fetchRepositories, releaseName, getApp, namespace } = this.props;
-    getApp(releaseName, namespace);
+    const { fetchRepositories, tillerReleaseName, getApp, namespace } = this.props;
+    getApp(tillerReleaseName, namespace);
     fetchRepositories();
   }
 
   public componentWillReceiveProps(nextProps: IAppMigrateProps) {
-    const { releaseName, getApp, namespace } = this.props;
+    const { tillerReleaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(releaseName, nextProps.namespace);
+      getApp(tillerReleaseName, nextProps.namespace);
     }
   }
 

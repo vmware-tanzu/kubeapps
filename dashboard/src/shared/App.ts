@@ -23,10 +23,10 @@ export class App {
 
   // getConfigMapsLink returns the URL for listing Helm ConfigMaps for the given
   // set of release names.
-  public static getConfigMapsLink(releaseNames?: string[]) {
+  public static getConfigMapsLink(tillerReleaseNames?: string[]) {
     let query = "";
-    if (releaseNames) {
-      query = `,NAME in (${releaseNames.join(",")})`;
+    if (tillerReleaseNames) {
+      query = `,NAME in (${tillerReleaseNames.join(",")})`;
     }
     return `/api/kube/api/v1/namespaces/kubeapps/configmaps?labelSelector=OWNER=TILLER${query}`;
   }

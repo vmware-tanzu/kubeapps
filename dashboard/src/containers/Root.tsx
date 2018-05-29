@@ -33,9 +33,9 @@ class Root extends React.Component {
     [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
   } = {
     "/apps/ns/:namespace": AppList,
-    "/apps/ns/:namespace/:releaseName": AppView,
-    "/apps/ns/:namespace/edit/:releaseName": AppEdit,
-    "/apps/ns/:namespace/migrate/:releaseName": AppMigrate,
+    "/apps/ns/:namespace/:tillerReleaseName": AppView,
+    "/apps/ns/:namespace/edit/:tillerReleaseName": AppEdit,
+    "/apps/ns/:namespace/migrate/:tillerReleaseName": AppMigrate,
     "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNew,
     "/charts": ChartList,
     "/charts/:repo": ChartList,
