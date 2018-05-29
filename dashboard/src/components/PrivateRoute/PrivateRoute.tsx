@@ -2,6 +2,7 @@ import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
+
 interface IPrivateRouteProps extends IRouteComponentPropsAndRouteProps {
   authenticated: boolean;
 }
@@ -12,7 +13,7 @@ class PrivateRoute extends React.Component<IPrivateRouteProps> {
     return <Route {...rest} render={this.renderRouteIfAuthenticated} />;
   }
 
-  private renderRouteIfAuthenticated = (props: RouteComponentProps<any>) => {
+  public renderRouteIfAuthenticated = (props: RouteComponentProps<any>) => {
     const { authenticated, component: Component } = this.props;
     return authenticated && Component ? (
       <Component {...props} />
