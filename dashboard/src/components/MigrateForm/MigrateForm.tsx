@@ -9,6 +9,7 @@ import {
   IChartVersion,
   IRBACRole,
   IRepo,
+  MissingChart,
   NotFoundError,
 } from "../../shared/types";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
@@ -250,6 +251,14 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
     const roles = RequiredRBACRoles;
     roles[0].verbs = ["create"];
     switch (error && error.constructor) {
+      case MissingChart:
+        return (
+          <NotFoundErrorAlert
+            header={`Chart ${this.state.chartName} not found in ${
+              this.state.chartRepoName
+            } repository`}
+          />
+        );
       case ForbiddenError:
         return (
           <PermissionsErrorAlert

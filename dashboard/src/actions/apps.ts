@@ -2,8 +2,9 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { App } from "../shared/App";
+import Chart from "../shared/Chart";
 import { HelmRelease } from "../shared/HelmRelease";
-import { IApp, IChartVersion, IStoreState } from "../shared/types";
+import { IApp, IChartVersion, IStoreState, MissingChart } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 export const receiveApps = createAction("RECEIVE_APPS", (apps: IApp[]) => {
@@ -86,6 +87,15 @@ export function deployChart(
 ) {
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
+      const chartExists = await Chart.exists(
+        chartVersion.relationships.chart.data.name,
+        chartVersion.attributes.version,
+        chartVersion.relationships.chart.data.repo.name,
+      );
+      if (!chartExists) {
+        dispatch(errorApps(new MissingChart("Not found")));
+        return false;
+      }
       if (resourceVersion) {
         await HelmRelease.upgrade(name, tillerReleaseName, namespace, chartVersion, values);
       } else {

@@ -21,6 +21,13 @@ export class NotFoundError extends Error {
   }
 }
 
+export class MissingChart extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export interface IRepo {
   name: string;
   url: string;

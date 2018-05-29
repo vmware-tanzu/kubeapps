@@ -3,7 +3,7 @@ import { IAppConfigMap } from "./types";
 
 export class App {
   public static async waitForDeletion(name: string) {
-    const timeout = 10000; // 10s
+    const timeout = 30000; // 30s
     return new Promise((resolve, reject) => {
       const interval = setInterval(async () => {
         const { data: { items: allConfigMaps } } = await axios.get<{
@@ -16,7 +16,7 @@ export class App {
       }, 500);
       setTimeout(() => {
         clearInterval(interval);
-        reject("Timeout after 10 seconds");
+        reject(`Timeout after ${timeout / 1000} seconds`);
       }, timeout);
     });
   }
