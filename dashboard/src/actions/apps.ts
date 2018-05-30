@@ -85,7 +85,7 @@ export function deployChart(
       if (resourceVersion) {
         await HelmRelease.upgrade(releaseName, namespace, chartVersion, values);
       } else {
-        const releaseExists = await App.appExists(releaseName);
+        const releaseExists = await App.exists(releaseName);
         if (releaseExists) {
           dispatch(errorApps(new AppConflict("Already exists")));
           return false;

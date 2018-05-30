@@ -53,7 +53,6 @@ interface IMigrationFormProps {
 }
 
 interface IMigrationtFormState {
-  isDeploying: boolean;
   releaseName: string;
   chartValues: string;
   chartVersion: string;
@@ -73,7 +72,6 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
     chartRepoURL: "",
     chartValues: this.props.chartValues || "",
     chartVersion: this.props.chartVersion,
-    isDeploying: false,
     namespace: this.props.namespace,
     releaseName: this.props.releaseName,
     repos: this.props.repos,
@@ -128,7 +126,7 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
                 <p>
                   {" "}
                   * If the repository containing this chart is not in the list add it{" "}
-                  <a href="/config/repos"> here </a>{" "}
+                  <a href="/config/repos"> here </a>.{" "}
                 </p>
               </div>
               <div>
@@ -214,8 +212,6 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
     );
     if (deployed) {
       this.props.push(`/apps/ns/${namespace}/${releaseName}`);
-    } else {
-      this.setState({ isDeploying: false });
     }
   };
 

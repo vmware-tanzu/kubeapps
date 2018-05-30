@@ -21,7 +21,7 @@ export class App {
     });
   }
 
-  public static async appExists(releaseName: string) {
+  public static async exists(releaseName: string) {
     const { data: { items: allConfigMaps } } = await axios.get<{
       items: IAppConfigMap[];
     }>(this.getConfigMapsLink([releaseName]));
