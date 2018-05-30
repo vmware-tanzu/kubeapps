@@ -34,7 +34,7 @@ jobs:
     language: node_js
     node_js:
     - "8"
-    install: yarn --cwd=dashboard
+    install: yarn install --cwd=dashboard --frozen-lockfile
     script:
     - yarn --cwd=dashboard run lint
     - yarn --cwd=dashboard run test --maxWorkers=4 --coverage
@@ -61,7 +61,7 @@ jobs:
   - <<: *cliBuild
     env: BINARY=kubeapps-windows-amd64.exe
     script: GOOS=windows GOARCH=amd64 make
-  
+
   # Image builds
   - &imageBuild
     stage: build
@@ -85,5 +85,4 @@ jobs:
   - <<: *imageBuild
     env: IMAGE=kubeapps/apprepository-controller
   - <<: *imageBuild
-    install: yarn --cwd=dashboard
     env: IMAGE=kubeapps/dashboard
