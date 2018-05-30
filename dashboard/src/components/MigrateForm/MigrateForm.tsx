@@ -35,17 +35,15 @@ interface IMigrationFormProps {
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
-  deployChart: (
-    helmCRDReleaseName: string,
+  migrateApp: (
     version: IChartVersion,
-    tillerReleaseName: string,
+    releaseName: string,
     namespace: string,
     values?: string,
-    resourceVersion?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   namespace: string;
-  tillerReleaseName: string;
+  releaseName: string;
   chartValues: string | null | undefined;
   chartName: string;
   chartRepoAuth: {};
@@ -56,7 +54,7 @@ interface IMigrationFormProps {
 
 interface IMigrationtFormState {
   isDeploying: boolean;
-  tillerReleaseName: string;
+  releaseName: string;
   chartValues: string;
   chartVersion: string;
   namespace: string;
@@ -77,8 +75,8 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
     chartVersion: this.props.chartVersion,
     isDeploying: false,
     namespace: this.props.namespace,
+    releaseName: this.props.releaseName,
     repos: this.props.repos,
-    tillerReleaseName: this.props.tillerReleaseName,
   };
 
   public render() {
@@ -92,8 +90,8 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
             </div>
             <div className="col-12">
               <p>
-                In order to be able to manage {this.state.tillerReleaseName} select the repository
-                it can be retrieved from.
+                In order to be able to manage {this.state.releaseName} select the repository it can
+                be retrieved from.
               </p>
             </div>
             <div className="col-8">
@@ -134,10 +132,10 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
                 </p>
               </div>
               <div>
-                <label htmlFor="tillerReleaseName">Release Name</label>
+                <label htmlFor="releaseName">Release Name</label>
                 <input
-                  id="tillerReleaseName"
-                  value={this.state.tillerReleaseName}
+                  id="releaseName"
+                  value={this.state.releaseName}
                   required={true}
                   disabled={true}
                 />
@@ -207,17 +205,15 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
         },
       },
     } as IChartVersion;
-    const { tillerReleaseName, namespace } = this.props;
-    const deployed = await this.props.deployChart(
-      // Tiller release already exists so we will use its name as HelmRelease since no conflict is assured
-      tillerReleaseName,
+    const { releaseName, namespace } = this.props;
+    const deployed = await this.props.migrateApp(
       version,
-      tillerReleaseName,
+      releaseName,
       namespace,
       this.props.chartValues || "",
     );
     if (deployed) {
-      this.props.push(`/apps/ns/${namespace}/${tillerReleaseName}`);
+      this.props.push(`/apps/ns/${namespace}/${releaseName}`);
     } else {
       this.setState({ isDeploying: false });
     }
@@ -247,16 +243,14 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
 
   private renderError() {
     const { error, namespace } = this.props;
-    const { tillerReleaseName } = this.state;
+    const { releaseName } = this.state;
     const roles = RequiredRBACRoles;
     roles[0].verbs = ["create"];
     switch (error && error.constructor) {
       case MissingChart:
         return (
           <NotFoundErrorAlert
-            header={`Chart ${this.state.chartName} not found in ${
-              this.state.chartRepoName
-            } repository`}
+            header={`Chart not found in the given repository. Please choose the repository that contains the chart.`}
           />
         );
       case ForbiddenError:
@@ -264,15 +258,12 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
           <PermissionsErrorAlert
             namespace={namespace}
             roles={roles}
-            action={`Create Application "${tillerReleaseName}"`}
+            action={`Create Application "${releaseName}"`}
           />
         );
       case NotFoundError:
         return (
-          <NotFoundErrorAlert
-            resource={`Application "${tillerReleaseName}"`}
-            namespace={namespace}
-          />
+          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
         );
       default:
         return <UnexpectedErrorAlert />;

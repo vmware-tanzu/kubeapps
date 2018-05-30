@@ -4,7 +4,7 @@ import { createAction, getReturnOfExpression } from "typesafe-actions";
 import { App } from "../shared/App";
 import Chart from "../shared/Chart";
 import { HelmRelease } from "../shared/HelmRelease";
-import { IApp, IChartVersion, IStoreState, MissingChart } from "../shared/types";
+import { AppConflict, IApp, IChartVersion, IStoreState, MissingChart } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 export const receiveApps = createAction("RECEIVE_APPS", (apps: IApp[]) => {
@@ -33,14 +33,11 @@ const allActions = [requestApps, receiveApps, errorApps, errorDeleteApp, selectA
 );
 export type AppsAction = typeof allActions[number];
 
-export function getApp(helmCRDReleaseName: string, tillerReleaseName: string, namespace: string) {
+export function getApp(releaseName: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
     dispatch(requestApps());
     try {
-      if (!helmCRDReleaseName) {
-        helmCRDReleaseName = await HelmRelease.getHelmRelease(tillerReleaseName, namespace);
-      }
-      const app = await HelmRelease.getDetails(helmCRDReleaseName, tillerReleaseName, namespace);
+      const app = await HelmRelease.getDetails(releaseName, namespace);
       dispatch(selectApp(app));
     } catch (e) {
       dispatch(errorApps(e));
@@ -48,12 +45,11 @@ export function getApp(helmCRDReleaseName: string, tillerReleaseName: string, na
   };
 }
 
-export function deleteApp(tillerReleaseName: string, namespace: string) {
+export function deleteApp(releaseName: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
-      const helmCRDReleaseName = await HelmRelease.getHelmRelease(tillerReleaseName, namespace);
-      await HelmRelease.delete(helmCRDReleaseName, namespace);
-      await App.waitForDeletion(tillerReleaseName);
+      await HelmRelease.delete(releaseName, namespace);
+      await App.waitForDeletion(releaseName);
       return true;
     } catch (e) {
       dispatch(errorDeleteApp(e));
@@ -78,12 +74,37 @@ export function fetchApps(ns?: string) {
 }
 
 export function deployChart(
-  name: string,
   chartVersion: IChartVersion,
-  tillerReleaseName: string,
+  releaseName: string,
   namespace: string,
   values?: string,
   resourceVersion?: string,
+) {
+  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+    try {
+      if (resourceVersion) {
+        await HelmRelease.upgrade(releaseName, namespace, chartVersion, values);
+      } else {
+        const releaseExists = await App.appExists(releaseName);
+        if (releaseExists) {
+          dispatch(errorApps(new AppConflict("Already exists")));
+          return false;
+        }
+        await HelmRelease.create(releaseName, namespace, chartVersion, values);
+      }
+      return true;
+    } catch (e) {
+      dispatch(errorApps(e));
+      return false;
+    }
+  };
+}
+
+export function migrateApp(
+  chartVersion: IChartVersion,
+  releaseName: string,
+  namespace: string,
+  values?: string,
 ) {
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
@@ -96,11 +117,7 @@ export function deployChart(
         dispatch(errorApps(new MissingChart("Not found")));
         return false;
       }
-      if (resourceVersion) {
-        await HelmRelease.upgrade(name, tillerReleaseName, namespace, chartVersion, values);
-      } else {
-        await HelmRelease.create(name, tillerReleaseName, namespace, chartVersion, values);
-      }
+      await HelmRelease.create(releaseName, namespace, chartVersion, values);
       return true;
     } catch (e) {
       dispatch(errorApps(e));

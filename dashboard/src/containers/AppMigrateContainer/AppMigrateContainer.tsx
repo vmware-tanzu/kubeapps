@@ -10,7 +10,7 @@ interface IRouteProps {
   match: {
     params: {
       namespace: string;
-      tillerReleaseName: string;
+      releaseName: string;
     };
   };
 }
@@ -23,34 +23,22 @@ function mapStateToProps(
     app: apps.selected,
     error: apps.error,
     namespace: params.namespace,
+    releaseName: params.releaseName,
     repos: repos.repos,
-    tillerReleaseName: params.tillerReleaseName,
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    deployChart: (
-      helmCRDReleaseName: string,
+    fetchRepositories: () => dispatch(actions.repos.fetchRepos()),
+    getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
+    migrateApp: (
       version: IChartVersion,
-      tillerReleaseName: string,
+      releaseName: string,
       namespace: string,
       values?: string,
       resourceVersion?: string,
-    ) =>
-      dispatch(
-        actions.apps.deployChart(
-          helmCRDReleaseName,
-          version,
-          tillerReleaseName,
-          namespace,
-          values,
-          resourceVersion,
-        ),
-      ),
-    fetchRepositories: () => dispatch(actions.repos.fetchRepos()),
-    getApp: (tillerReleaseName: string, ns: string) =>
-      dispatch(actions.apps.getApp("", tillerReleaseName, ns)),
+    ) => dispatch(actions.apps.migrateApp(version, releaseName, namespace, values)),
     push: (location: string) => dispatch(push(location)),
   };
 }

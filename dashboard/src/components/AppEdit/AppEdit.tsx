@@ -10,24 +10,18 @@ interface IAppEditProps {
   app: IApp;
   bindings: IServiceBinding[];
   error: Error | undefined;
-  helmCRDReleaseName: string;
   namespace: string;
-  tillerReleaseName: string;
+  releaseName: string;
   selected: IChartState["selected"];
   deployChart: (
-    helmCRDReleaseName: string,
     version: IChartVersion,
-    tillerReleaseName: string,
+    releaseName: string,
     namespace: string,
     values?: string,
     resourceVersion?: string,
   ) => Promise<boolean>;
   fetchChartVersions: (id: string) => Promise<{}>;
-  getApp: (
-    helmCRDReleaseName: string,
-    tillerReleaseName: string,
-    namespace: string,
-  ) => Promise<void>;
+  getApp: (releaseName: string, namespace: string) => Promise<void>;
   getBindings: () => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
@@ -36,14 +30,14 @@ interface IAppEditProps {
 
 class AppEdit extends React.Component<IAppEditProps> {
   public componentDidMount() {
-    const { helmCRDReleaseName, tillerReleaseName, getApp, namespace } = this.props;
-    getApp(helmCRDReleaseName, tillerReleaseName, namespace);
+    const { releaseName, getApp, namespace } = this.props;
+    getApp(releaseName, namespace);
   }
 
   public componentWillReceiveProps(nextProps: IAppEditProps) {
-    const { helmCRDReleaseName, tillerReleaseName, getApp, namespace } = this.props;
+    const { releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(helmCRDReleaseName, tillerReleaseName, nextProps.namespace);
+      getApp(releaseName, nextProps.namespace);
     }
   }
 

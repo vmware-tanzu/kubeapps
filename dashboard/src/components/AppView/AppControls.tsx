@@ -51,7 +51,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
     return (
       <div className="AppControls">
         <button className="button" onClick={this.handleMigrateClick}>
-          Import App
+          Migrate
         </button>
         {this.state.migrate && (
           <Redirect push={true} to={`/apps/ns/${namespace}/migrate/${name}`} />

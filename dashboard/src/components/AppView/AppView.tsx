@@ -15,17 +15,12 @@ import ServiceTable from "./ServiceTable";
 
 interface IAppViewProps {
   namespace: string;
-  helmCRDReleaseName: string;
-  tillerReleaseName: string;
+  releaseName: string;
   app: IApp;
   error: Error;
   deleteError: Error;
-  getApp: (
-    helmCRDReleaseName: string,
-    tillerReleaseName: string,
-    namespace: string,
-  ) => Promise<void>;
-  deleteApp: (helmCRDReleaseName: string, namespace: string) => Promise<boolean>;
+  getApp: (releaseName: string, namespace: string) => Promise<void>;
+  deleteApp: (releaseName: string, namespace: string) => Promise<boolean>;
 }
 
 interface IAppViewState {
@@ -77,14 +72,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   };
 
   public async componentDidMount() {
-    const { helmCRDReleaseName, tillerReleaseName, getApp, namespace } = this.props;
-    getApp(helmCRDReleaseName, tillerReleaseName, namespace);
+    const { releaseName, getApp, namespace } = this.props;
+    getApp(releaseName, namespace);
   }
 
   public async componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { helmCRDReleaseName, tillerReleaseName, getApp, namespace } = this.props;
+    const { releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(helmCRDReleaseName, tillerReleaseName, nextProps.namespace);
+      getApp(releaseName, nextProps.namespace);
       return;
     }
     if (nextProps.error) {
@@ -173,6 +168,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         <main>
           <div className="container">
             {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
+            {!this.props.app.hr && this.renderMigrationNeeded()}
             <div className="row collapse-b-tablet">
               <div className="col-3">
                 <ChartInfo app={app} />
@@ -203,23 +199,33 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     );
   }
 
+  private renderMigrationNeeded() {
+    return (
+      <div className="banner">
+        <div className="container container-small text-c">
+          <p className="margin-t-small">
+            This release is not being managed by Kubeapps. To be able to upgrade or delete this
+            release <b> click in the button "Migrate" below </b>.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   private renderError(error: Error, action: string = "view") {
-    const { namespace, tillerReleaseName } = this.props;
+    const { namespace, releaseName } = this.props;
     switch (error.constructor) {
       case ForbiddenError:
         return (
           <PermissionsErrorAlert
             namespace={namespace}
             roles={RequiredRBACRoles[action]}
-            action={`${action} Application "${tillerReleaseName}"`}
+            action={`${action} Application "${releaseName}"`}
           />
         );
       case NotFoundError:
         return (
-          <NotFoundErrorAlert
-            resource={`Application "${tillerReleaseName}"`}
-            namespace={namespace}
-          />
+          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
         );
       default:
         return <UnexpectedErrorAlert />;
@@ -238,7 +244,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   private deleteApp = () => {
-    return this.props.deleteApp(this.props.tillerReleaseName, this.props.namespace);
+    return this.props.deleteApp(this.props.releaseName, this.props.namespace);
   };
 }
 

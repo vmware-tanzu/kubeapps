@@ -10,8 +10,7 @@ import * as url from "./url";
 
 export class HelmRelease {
   public static async create(
-    helmCRDReleaseName: string,
-    tillerReleaseName: string,
+    releaseName: string,
     namespace: string,
     chartVersion: IChartVersion,
     values?: string,
@@ -27,12 +26,12 @@ export class HelmRelease {
         annotations: {
           "apprepositories.kubeapps.com/repo-name": chartAttrs.repo.name,
         },
-        name: helmCRDReleaseName,
+        name: releaseName,
       },
       spec: {
         auth,
         chartName: chartAttrs.name,
-        releaseName: tillerReleaseName,
+        releaseName,
         repoUrl: chartAttrs.repo.url,
         values,
         version: chartVersion.attributes.version,
@@ -42,8 +41,7 @@ export class HelmRelease {
   }
 
   public static async upgrade(
-    helmCRDReleaseName: string,
-    tillerReleaseName: string,
+    releaseName: string,
     namespace: string,
     chartVersion: IChartVersion,
     values?: string,
@@ -51,19 +49,19 @@ export class HelmRelease {
     const chartAttrs = chartVersion.relationships.chart.data;
     const repo = await AppRepository.get(chartAttrs.repo.name);
     const auth = repo.spec.auth;
-    const endpoint = HelmRelease.getSelfLink(helmCRDReleaseName, namespace);
+    const endpoint = HelmRelease.getSelfLink(releaseName, namespace);
     const { data } = await axios.patch(
       endpoint,
       {
         apiVersion: "helm.bitnami.com/v1",
         kind: "HelmRelease",
         metadata: {
-          name: helmCRDReleaseName,
+          name: releaseName,
         },
         spec: {
           auth,
           chartName: chartAttrs.name,
-          releaseName: tillerReleaseName,
+          releaseName,
           repoUrl: chartAttrs.repo.url,
           values,
           version: chartVersion.attributes.version,
@@ -76,9 +74,9 @@ export class HelmRelease {
     return data;
   }
 
-  public static async delete(helmCRDReleaseName: string, namespace: string) {
+  public static async delete(releaseName: string, namespace: string) {
     // strip namespace from release name
-    const { data } = await axios.delete(this.getSelfLink(helmCRDReleaseName, namespace));
+    const { data } = await axios.delete(this.getSelfLink(releaseName, namespace));
     return data;
   }
 
@@ -89,11 +87,11 @@ export class HelmRelease {
     return helmReleaseList;
   }
 
-  public static async getHelmRelease(tillerReleaseName: string, namespace: string) {
+  public static async getHelmRelease(releaseName: string, namespace: string) {
     const helmReleaseList = await this.getAllHelmReleases(namespace);
     let helmRelease = "";
     helmReleaseList.forEach(r => {
-      if (r.spec.releaseName === tillerReleaseName) {
+      if (r.spec.releaseName === releaseName) {
         helmRelease = r.metadata.name;
       }
     });
@@ -104,11 +102,11 @@ export class HelmRelease {
     const helmReleaseList = await this.getAllHelmReleases(namespace);
     // Convert list of HelmReleases to release name -> HelmRelease pair
     const helmReleaseMap = helmReleaseList.reduce((acc, hr) => {
-      const tillerReleaseName =
+      const releaseName =
         !hr.spec.releaseName || hr.spec.releaseName === ""
           ? `${hr.metadata.name}-${hr.metadata.namespace}`
           : hr.spec.releaseName;
-      acc[tillerReleaseName] = hr;
+      acc[releaseName] = hr;
       return acc;
     }, new Map<string, IHelmRelease>());
 
@@ -138,17 +136,15 @@ export class HelmRelease {
     return Promise.all<IApp>(apps.map(async app => this.getChart(app)));
   }
 
-  public static async getDetails(
-    helmCRDReleaseName: string,
-    tillerReleaseName: string,
-    namespace: string,
-  ) {
+  public static async getDetails(releaseName: string, namespace: string) {
     let hr;
-    if (helmCRDReleaseName !== "") {
-      const i = await axios.get<IHelmRelease>(this.getSelfLink(helmCRDReleaseName, namespace));
+    try {
+      const i = await axios.get<IHelmRelease>(this.getSelfLink(releaseName, namespace));
       hr = i.data;
+    } catch (e) {
+      // HelmRelease not available
     }
-    const items = await this.getDetailsWithRetry(tillerReleaseName);
+    const items = await this.getDetailsWithRetry(releaseName);
     // Helm/Tiller will store details in a ConfigMap for each revision,
     // so we need to filter these out to pick the latest version
     const helmConfigMap: IAppConfigMap = items.reduce((ret, cm) => {
@@ -159,9 +155,9 @@ export class HelmRelease {
     return await this.getChart(app);
   }
 
-  private static getDetailsWithRetry(tillerReleaseName: string) {
+  private static getDetailsWithRetry(releaseName: string) {
     const getConfigMaps = () => {
-      return axios.get<{ items: IAppConfigMap[] }>(App.getConfigMapsLink([tillerReleaseName]));
+      return axios.get<{ items: IAppConfigMap[] }>(App.getConfigMapsLink([releaseName]));
     };
     return new Promise<IAppConfigMap[]>(async (resolve, reject) => {
       let req = await getConfigMaps();

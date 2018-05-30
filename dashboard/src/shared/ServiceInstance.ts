@@ -29,7 +29,7 @@ export interface IServiceInstance {
 
 export class ServiceInstance {
   public static async create(
-    tillerReleaseName: string,
+    releaseName: string,
     namespace: string,
     className: string,
     planName: string,
@@ -39,7 +39,7 @@ export class ServiceInstance {
       apiVersion: "servicecatalog.k8s.io/v1beta1",
       kind: "ServiceInstance",
       metadata: {
-        name: tillerReleaseName,
+        name: releaseName,
       },
       spec: {
         clusterServiceClassExternalName: className,

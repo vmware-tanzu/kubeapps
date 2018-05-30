@@ -21,12 +21,22 @@ export class App {
     });
   }
 
+  public static async appExists(releaseName: string) {
+    const { data: { items: allConfigMaps } } = await axios.get<{
+      items: IAppConfigMap[];
+    }>(this.getConfigMapsLink([releaseName]));
+    if (allConfigMaps.length === 0) {
+      return false;
+    }
+    return true;
+  }
+
   // getConfigMapsLink returns the URL for listing Helm ConfigMaps for the given
   // set of release names.
-  public static getConfigMapsLink(tillerReleaseNames?: string[]) {
+  public static getConfigMapsLink(releaseNames?: string[]) {
     let query = "";
-    if (tillerReleaseNames) {
-      query = `,NAME in (${tillerReleaseNames.join(",")})`;
+    if (releaseNames) {
+      query = `,NAME in (${releaseNames.join(",")})`;
     }
     return `/api/kube/api/v1/namespaces/kubeapps/configmaps?labelSelector=OWNER=TILLER${query}`;
   }

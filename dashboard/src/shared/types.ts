@@ -28,6 +28,13 @@ export class MissingChart extends Error {
   }
 }
 
+export class AppConflict extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export interface IRepo {
   name: string;
   url: string;
