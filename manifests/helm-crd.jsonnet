@@ -14,7 +14,7 @@ local controllerOverlay = {
         containers+: [
           kube.Container("controller") {
             name: "controller",
-            image: "bitnami/helm-crd-controller:v0.3.0",
+            image: "bitnami/helm-crd-controller:v0.4.0",
             securityContext: {
               readOnlyRootFilesystem: true,
             },
