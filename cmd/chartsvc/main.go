@@ -28,7 +28,33 @@ import (
 	"github.com/urfave/negroni"
 )
 
+const pathPrefix = "/v1"
+
 var dbSession datastore.Session
+
+func setupRoutes() http.Handler {
+	r := mux.NewRouter()
+
+	// Healthcheck
+	health := healthcheck.NewHandler()
+	r.Handle("/live", health)
+	r.Handle("/ready", health)
+
+	// Routes
+	apiv1 := r.PathPrefix(pathPrefix).Subrouter()
+	apiv1.Methods("GET").Path("/charts").HandlerFunc(listCharts)
+	apiv1.Methods("GET").Path("/charts/{repo}").Handler(WithParams(listRepoCharts))
+	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}").Handler(WithParams(getChart))
+	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}/versions").Handler(WithParams(listChartVersions))
+	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}/versions/{version}").Handler(WithParams(getChartVersion))
+	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/logo-160x160-fit.png").Handler(WithParams(getChartIcon))
+	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/versions/{version}/README.md").Handler(WithParams(getChartVersionReadme))
+	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/versions/{version}/values.yaml").Handler(WithParams(getChartVersionValues))
+
+	n := negroni.Classic()
+	n.UseHandler(r)
+	return n
+}
 
 func main() {
 	dbURL := flag.String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
@@ -44,26 +70,7 @@ func main() {
 		log.WithFields(log.Fields{"host": *dbURL}).Fatal(err)
 	}
 
-	r := mux.NewRouter()
-
-	// Healthcheck
-	health := healthcheck.NewHandler()
-	r.Handle("/live", health)
-	r.Handle("/ready", health)
-
-	// Routes
-	apiv1 := r.PathPrefix("/v1").Subrouter()
-	apiv1.Methods("GET").Path("/charts").HandlerFunc(listCharts)
-	apiv1.Methods("GET").Path("/charts/{repo}").Handler(WithParams(listRepoCharts))
-	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}").Handler(WithParams(getChart))
-	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}/versions").Handler(WithParams(listChartVersions))
-	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}/versions/{version}").Handler(WithParams(getChartVersion))
-	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/logo-160x160-fit.png").Handler(WithParams(getChartIcon))
-	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/versions/{version}/README.md").Handler(WithParams(getChartVersionReadme))
-	apiv1.Methods("GET").Path("/assets/{repo}/{chartName}/versions/{version}/values.yaml").Handler(WithParams(getChartVersionValues))
-
-	n := negroni.Classic()
-	n.UseHandler(r)
+	n := setupRoutes()
 
 	port := os.Getenv("PORT")
 	if port == "" {
