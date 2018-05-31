@@ -74,7 +74,7 @@ func Test_chartAttributes(t *testing.T) {
 			if len(tt.chart.RawIcon) == 0 {
 				assert.Equal(t, len(c.Icon), 0, "icon url should be undefined")
 			} else {
-				assert.Equal(t, c.Icon, "/v1/assets/"+tt.chart.ID+"/logo-160x160-fit.png", "the icon url should be the same")
+				assert.Equal(t, c.Icon, pathPrefix+"/assets/"+tt.chart.ID+"/logo-160x160-fit.png", "the icon url should be the same")
 			}
 		})
 	}
@@ -93,8 +93,8 @@ func Test_chartVersionAttributes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cv := chartVersionAttributes(tt.chart.ID, tt.chart.ChartVersions[0])
 			assert.Equal(t, cv.Version, tt.chart.ChartVersions[0].Version, "version string should be the same")
-			assert.Equal(t, cv.Readme, "/v1/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/README.md", "README.md resource path should be the same")
-			assert.Equal(t, cv.Values, "/v1/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/values.yaml", "values.yaml resource path should be the same")
+			assert.Equal(t, cv.Readme, pathPrefix+"/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/README.md", "README.md resource path should be the same")
+			assert.Equal(t, cv.Values, pathPrefix+"/assets/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[0].Version+"/values.yaml", "values.yaml resource path should be the same")
 		})
 	}
 }

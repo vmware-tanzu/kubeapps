@@ -201,11 +201,11 @@ func newChartResponse(c *models.Chart) *apiResponse {
 		Type:       "chart",
 		ID:         c.ID,
 		Attributes: chartAttributes(*c),
-		Links:      selfLink{"/v1/charts/" + c.ID},
+		Links:      selfLink{pathPrefix + "/charts/" + c.ID},
 		Relationships: relMap{
 			"latestChartVersion": rel{
 				Data:  chartVersionAttributes(c.ID, latestCV),
-				Links: selfLink{"/v1/charts/" + c.ID + "/versions/" + latestCV.Version},
+				Links: selfLink{pathPrefix + "/charts/" + c.ID + "/versions/" + latestCV.Version},
 			},
 		},
 	}
@@ -221,14 +221,14 @@ func newChartListResponse(charts []*models.Chart) apiListResponse {
 }
 
 func chartVersionAttributes(cid string, cv models.ChartVersion) models.ChartVersion {
-	cv.Readme = "/v1/assets/" + cid + "/versions/" + cv.Version + "/README.md"
-	cv.Values = "/v1/assets/" + cid + "/versions/" + cv.Version + "/values.yaml"
+	cv.Readme = pathPrefix + "/assets/" + cid + "/versions/" + cv.Version + "/README.md"
+	cv.Values = pathPrefix + "/assets/" + cid + "/versions/" + cv.Version + "/values.yaml"
 	return cv
 }
 
 func chartAttributes(c models.Chart) models.Chart {
 	if c.RawIcon != nil {
-		c.Icon = "/v1/assets/" + c.ID + "/logo-160x160-fit.png"
+		c.Icon = pathPrefix + "/assets/" + c.ID + "/logo-160x160-fit.png"
 	} else {
 		// If the icon wasn't processed, it is either not set or invalid
 		c.Icon = ""
@@ -241,11 +241,11 @@ func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiRespon
 		Type:       "chartVersion",
 		ID:         fmt.Sprintf("%s-%s", c.ID, cv.Version),
 		Attributes: chartVersionAttributes(c.ID, cv),
-		Links:      selfLink{"/v1/charts/" + c.ID + "/versions/" + cv.Version},
+		Links:      selfLink{pathPrefix + "/charts/" + c.ID + "/versions/" + cv.Version},
 		Relationships: relMap{
 			"chart": rel{
 				Data:  chartAttributes(*c),
-				Links: selfLink{"/v1/charts/" + c.ID},
+				Links: selfLink{pathPrefix + "/charts/" + c.ID},
 			},
 		},
 	}

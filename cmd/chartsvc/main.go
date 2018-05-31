@@ -28,6 +28,8 @@ import (
 	"github.com/urfave/negroni"
 )
 
+const pathPrefix = "/v1"
+
 var dbSession datastore.Session
 
 func setupRoutes() http.Handler {
@@ -39,7 +41,7 @@ func setupRoutes() http.Handler {
 	r.Handle("/ready", health)
 
 	// Routes
-	apiv1 := r.PathPrefix("/v1").Subrouter()
+	apiv1 := r.PathPrefix(pathPrefix).Subrouter()
 	apiv1.Methods("GET").Path("/charts").HandlerFunc(listCharts)
 	apiv1.Methods("GET").Path("/charts/{repo}").Handler(WithParams(listRepoCharts))
 	apiv1.Methods("GET").Path("/charts/{repo}/{chartName}").Handler(WithParams(getChart))
