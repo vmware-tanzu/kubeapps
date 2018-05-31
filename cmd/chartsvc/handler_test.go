@@ -182,7 +182,13 @@ func Test_newChartVersionListResponse(t *testing.T) {
 		name  string
 		chart models.Chart
 	}{
-		{"my-chart", models.Chart{
+		{"chart has no versions", models.Chart{
+			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{},
+		}},
+		{"chart has one version", models.Chart{
+			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}},
+		}},
+		{"chart has many versions", models.Chart{
 			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}, {Version: "0.0.2"}},
 		}},
 	}
