@@ -171,6 +171,7 @@ func Test_newChartVersionResponse(t *testing.T) {
 				assert.Equal(t, cvResponse.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "reponse id should have chart version suffix")
 				assert.Equal(t, cvResponse.Links.(interface{}).(selfLink).Self, pathPrefix+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, "self link should be the same")
 				assert.Equal(t, cvResponse.Attributes.(models.ChartVersion).Version, tt.chart.ChartVersions[i].Version, "chart version in the response should be the same")
+				assert.Equal(t, cvResponse.Relationships["chart"].Data.(interface{}).(models.Chart), tt.chart, "chart in relatioship matches")
 			}
 		})
 	}
