@@ -116,8 +116,9 @@ func Test_newChartResponse(t *testing.T) {
 			cResponse := newChartResponse(&tt.chart)
 			assert.Equal(t, cResponse.Type, "chart", "response type is chart")
 			assert.Equal(t, cResponse.ID, tt.chart.ID, "chart ID should be the same")
+			assert.Equal(t, cResponse.Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			assert.Equal(t, cResponse.Links.(selfLink).Self, pathPrefix+"/charts/"+tt.chart.ID, "self link should be the same")
-			assert.Equal(t, cResponse.Attributes.(models.Chart).ChartVersions, tt.chart.ChartVersions, "chart version in the response should be the same")
+			assert.Equal(t, len(cResponse.Attributes.(models.Chart).ChartVersions), len(tt.chart.ChartVersions), "number of chart versions in the response should be the same")
 		})
 	}
 }
@@ -144,8 +145,9 @@ func Test_newChartListResponse(t *testing.T) {
 			for i := range tt.charts {
 				assert.Equal(t, clResponse[i].Type, "chart", "response type is chart")
 				assert.Equal(t, clResponse[i].ID, tt.charts[i].ID, "chart ID should be the same")
+				assert.Equal(t, clResponse[i].Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 				assert.Equal(t, clResponse[i].Links.(selfLink).Self, pathPrefix+"/charts/"+tt.charts[i].ID, "self link should be the same")
-				assert.Equal(t, clResponse[i].Attributes.(models.Chart).ChartVersions, tt.charts[i].ChartVersions, "chart version in the response should be the same")
+				assert.Equal(t, len(clResponse[i].Attributes.(models.Chart).ChartVersions), len(tt.charts[i].ChartVersions), "number of chart versions in the response should be the same")
 			}
 		})
 	}
@@ -236,7 +238,7 @@ func Test_listCharts(t *testing.T) {
 				assert.Equal(t, b.Data[i].ID, tt.charts[i].ID, "chart id in the response should be the same")
 				assert.Equal(t, b.Data[i].Type, "chart", "response type is chart")
 				assert.Equal(t, b.Data[i].Links.(map[string]interface{})["self"], pathPrefix+"/charts/"+tt.charts[i].ID, "self link should be the same")
-				assert.Equal(t, b.Data[i].Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "version should match latest chart version")
+				assert.Equal(t, b.Data[i].Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			}
 		})
 	}
@@ -284,7 +286,7 @@ func Test_listRepoCharts(t *testing.T) {
 			for i := range b.Data {
 				assert.Equal(t, b.Data[i].ID, tt.charts[i].ID, "chart id in the response should be the same")
 				assert.Equal(t, b.Data[i].Type, "chart", "response type is chart")
-				assert.Equal(t, b.Data[i].Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "version should match latest chart version")
+				assert.Equal(t, b.Data[i].Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			}
 		})
 	}
@@ -348,7 +350,7 @@ func Test_getChart(t *testing.T) {
 				assert.Equal(t, b.Data.ID, tt.chart.ID, "chart id in the response should be the same")
 				assert.Equal(t, b.Data.Type, "chart", "response type is chart")
 				assert.Equal(t, b.Data.Links.(map[string]interface{})["self"], pathPrefix+"/charts/"+tt.chart.ID, "self link should be the same")
-				assert.Equal(t, b.Data.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.chart.ChartVersions[0].Version, "version should match latest chart version")
+				assert.Equal(t, b.Data.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			}
 		})
 	}
