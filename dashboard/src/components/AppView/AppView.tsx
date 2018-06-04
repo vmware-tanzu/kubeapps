@@ -205,7 +205,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         <div className="container container-small text-c">
           <p className="margin-t-small">
             This release is not being managed by Kubeapps. To be able to upgrade or delete this
-            release <b> click in the button "Migrate" below </b>.
+            release <strong>click on the "Migrate" button below</strong>.
           </p>
         </div>
       </div>

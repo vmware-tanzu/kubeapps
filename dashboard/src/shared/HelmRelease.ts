@@ -130,10 +130,22 @@ export class HelmRelease {
     }, new Map<string, IAppConfigMap>());
 
     // Go through all HelmReleaseConfigMaps and parse as IApp objects
-    const apps = Object.keys(cms).map(key => this.parseRelease(cms[key], helmReleaseMap[key]));
+    const releases = Object.keys(cms).map(key => this.parseRelease(cms[key], helmReleaseMap[key]));
 
     // Fetch charts for each app
-    return Promise.all<IApp>(apps.map(async app => this.getChart(app)));
+    const apps = await Promise.all<IApp>(releases.map(rel => this.getChart(rel)));
+
+    if (namespace) {
+      // Exclude releases that are not of this namespace
+      const nsApps = [] as IApp[];
+      apps.forEach(app => {
+        if (app.data.namespace === namespace) {
+          nsApps.push(app);
+        }
+      });
+      return nsApps;
+    }
+    return apps;
   }
 
   public static async getDetails(releaseName: string, namespace: string) {

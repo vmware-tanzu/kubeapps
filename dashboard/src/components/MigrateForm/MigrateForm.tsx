@@ -1,5 +1,4 @@
 import * as React from "react";
-import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 import { IAppRepository } from "../../shared/types";
 
@@ -53,28 +52,16 @@ interface IMigrationFormProps {
 }
 
 interface IMigrationtFormState {
-  releaseName: string;
-  chartValues: string;
-  chartVersion: string;
-  namespace: string;
-  chartName: string;
   chartRepoName: string;
   chartRepoURL: string;
   chartRepoAuth: {};
-  repos: IAppRepository[];
 }
 
 class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormState> {
   public state: IMigrationtFormState = {
-    chartName: this.props.chartName,
     chartRepoAuth: {},
     chartRepoName: this.props.chartRepoName,
     chartRepoURL: "",
-    chartValues: this.props.chartValues || "",
-    chartVersion: this.props.chartVersion,
-    namespace: this.props.namespace,
-    releaseName: this.props.releaseName,
-    repos: this.props.repos,
   };
 
   public render() {
@@ -88,7 +75,7 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
             </div>
             <div className="col-12">
               <p>
-                In order to be able to manage {this.state.releaseName} select the repository it can
+                In order to be able to manage {this.props.releaseName} select the repository it can
                 be retrieved from.
               </p>
             </div>
@@ -125,49 +112,9 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
               <div>
                 <p>
                   {" "}
-                  * If the repository containing this chart is not in the list add it{" "}
+                  * If the repository containing {this.props.chartName} is not in the list add it{" "}
                   <a href="/config/repos"> here </a>.{" "}
                 </p>
-              </div>
-              <div>
-                <label htmlFor="releaseName">Release Name</label>
-                <input
-                  id="releaseName"
-                  value={this.state.releaseName}
-                  required={true}
-                  disabled={true}
-                />
-              </div>
-              <div>
-                <label htmlFor="chartName">Chart Name</label>
-                <input
-                  id="chartName"
-                  value={this.state.chartName}
-                  required={true}
-                  disabled={true}
-                />
-                <div>
-                  <label htmlFor="chartVersion">Chart Version</label>
-                  <input
-                    id="chartVersion"
-                    value={this.state.chartVersion}
-                    required={true}
-                    disabled={true}
-                  />
-                </div>
-              </div>
-              <div style={{ marginBottom: "1em" }}>
-                <label htmlFor="values">Values (YAML)</label>
-                <AceEditor
-                  mode="yaml"
-                  theme="xcode"
-                  name="values"
-                  width="100%"
-                  onChange={this.handleValuesChange}
-                  setOptions={{ showPrintMargin: false }}
-                  editorProps={{ $blockScrolling: Infinity }}
-                  value={this.state.chartValues}
-                />
               </div>
               <div>
                 <button className="button button-primary" type="submit">
@@ -218,7 +165,7 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
   public handleChartRepoNameChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     let repoURL = "";
     let auth = {};
-    this.state.repos.forEach(r => {
+    this.props.repos.forEach(r => {
       if (r.metadata.name === e.currentTarget.value && r.spec) {
         repoURL = r.spec.url;
         auth = r.spec.auth;
@@ -233,13 +180,9 @@ class MigrateForm extends React.Component<IMigrationFormProps, IMigrationtFormSt
   public handleChartRepoURLChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ chartRepoURL: e.currentTarget.value });
   };
-  public handleValuesChange = (value: string) => {
-    this.setState({ chartValues: value });
-  };
 
   private renderError() {
-    const { error, namespace } = this.props;
-    const { releaseName } = this.state;
+    const { error, namespace, releaseName } = this.props;
     const roles = RequiredRBACRoles;
     roles[0].verbs = ["create"];
     switch (error && error.constructor) {
