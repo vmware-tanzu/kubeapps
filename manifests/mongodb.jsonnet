@@ -16,10 +16,6 @@ local labels = {app: "mongodb"};
     target_pod: $.mongodb.spec.template,
   },
 
-  pvc: kube.PersistentVolumeClaim("mongodb-data") + $.namespace {
-    storage: "8Gi",
-  },
-
   mongodb: kube.Deployment("mongodb") + $.namespace {
     metadata+: {labels+: labels},
 
@@ -55,7 +51,7 @@ local labels = {app: "mongodb"};
             },
           },
           volumes_+: {
-            data: kube.PersistentVolumeClaimVolume($.pvc),
+            data: kube.EmptyDirVolume(),
           },
         },
       },
