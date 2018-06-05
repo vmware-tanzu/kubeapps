@@ -5,7 +5,7 @@ import { App } from "./App";
 import { AppRepository } from "./AppRepository";
 import { axios } from "./Auth";
 import { hapi } from "./hapi/release";
-import { IApp, IAppConfigMap, IChart, IChartVersion, IHelmRelease } from "./types";
+import { IApp, IAppConfigMap, IChart, IChartVersion, IHelmRelease, NotFoundError } from "./types";
 import * as url from "./url";
 
 export class HelmRelease {
@@ -155,6 +155,9 @@ export class HelmRelease {
     }, items[0]);
 
     const app = this.parseRelease(helmConfigMap, hr);
+    if (app.data.namespace !== namespace) {
+      throw new NotFoundError(`${releaseName} not found in ${namespace} namespace`);
+    }
     return await this.getChart(app);
   }
 
