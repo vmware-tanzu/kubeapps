@@ -4,6 +4,7 @@ import { RouterAction } from "react-router-redux";
 
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import {
+  AppConflict,
   ForbiddenError,
   IChartState,
   IChartVersion,
@@ -89,7 +90,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       namespace = hr.metadata.namespace;
       this.setState({
         namespace,
-        releaseName: hr.metadata.name,
+        releaseName: hr.spec.releaseName,
       });
     } else {
       this.setState({
@@ -291,7 +292,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         resourceVersion,
       );
       if (deployed) {
-        push(`/apps/ns/${namespace}/${namespace}-${releaseName}`);
+        push(`/apps/ns/${namespace}/${releaseName}`);
       } else {
         this.setState({ isDeploying: false });
       }
@@ -326,6 +327,12 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       roles[0].verbs = ["create"];
     }
     switch (error && error.constructor) {
+      case AppConflict:
+        return (
+          <NotFoundErrorAlert
+            header={`The given release name already exists in the cluster. Choose a different one`}
+          />
+        );
       case ForbiddenError:
         return (
           <PermissionsErrorAlert

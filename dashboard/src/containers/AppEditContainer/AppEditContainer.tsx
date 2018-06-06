@@ -40,7 +40,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     ) =>
       dispatch(actions.apps.deployChart(version, releaseName, namespace, values, resourceVersion)),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
-    getApp: (r: string, ns: string) => dispatch(actions.apps.getApp(r, ns)),
+    getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
     getBindings: (ns: string) => dispatch(actions.catalog.getBindings(ns)),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),

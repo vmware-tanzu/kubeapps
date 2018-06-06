@@ -21,6 +21,20 @@ export class NotFoundError extends Error {
   }
 }
 
+export class MissingChart extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export class AppConflict extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export interface IRepo {
   name: string;
   url: string;
@@ -290,6 +304,7 @@ export interface IHelmRelease {
   };
   spec: {
     chartName: string;
+    releaseName: string;
     repoUrl: string;
     values: string;
     version: string;
@@ -297,7 +312,7 @@ export interface IHelmRelease {
 }
 
 // Representation of the ConfigMaps Helm uses to store releases
-export interface IHelmReleaseConfigMap {
+export interface IAppConfigMap {
   metadata: {
     labels: {
       NAME: string;

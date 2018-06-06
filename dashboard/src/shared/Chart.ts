@@ -15,5 +15,15 @@ export default class Chart {
     return data;
   }
 
+  public static async exists(id: string, version: string, repo: string) {
+    const url = `${Chart.APIEndpoint}/charts/${repo}/${id}/versions/${version}`;
+    try {
+      await axios.get<string>(url);
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
   private static APIEndpoint: string = "/api/chartsvc/v1";
 }

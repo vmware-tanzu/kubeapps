@@ -1,8 +1,10 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
+import { App } from "../shared/App";
+import Chart from "../shared/Chart";
 import { HelmRelease } from "../shared/HelmRelease";
-import { IApp, IChartVersion, IStoreState } from "../shared/types";
+import { AppConflict, IApp, IChartVersion, IStoreState, MissingChart } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 export const receiveApps = createAction("RECEIVE_APPS", (apps: IApp[]) => {
@@ -47,6 +49,7 @@ export function deleteApp(releaseName: string, namespace: string) {
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
       await HelmRelease.delete(releaseName, namespace);
+      await App.waitForDeletion(releaseName);
       return true;
     } catch (e) {
       dispatch(errorDeleteApp(e));
@@ -82,8 +85,39 @@ export function deployChart(
       if (resourceVersion) {
         await HelmRelease.upgrade(releaseName, namespace, chartVersion, values);
       } else {
+        const releaseExists = await App.exists(releaseName);
+        if (releaseExists) {
+          dispatch(errorApps(new AppConflict("Already exists")));
+          return false;
+        }
         await HelmRelease.create(releaseName, namespace, chartVersion, values);
       }
+      return true;
+    } catch (e) {
+      dispatch(errorApps(e));
+      return false;
+    }
+  };
+}
+
+export function migrateApp(
+  chartVersion: IChartVersion,
+  releaseName: string,
+  namespace: string,
+  values?: string,
+) {
+  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+    try {
+      const chartExists = await Chart.exists(
+        chartVersion.relationships.chart.data.name,
+        chartVersion.attributes.version,
+        chartVersion.relationships.chart.data.repo.name,
+      );
+      if (!chartExists) {
+        dispatch(errorApps(new MissingChart("Not found")));
+        return false;
+      }
+      await HelmRelease.create(releaseName, namespace, chartVersion, values);
       return true;
     } catch (e) {
       dispatch(errorApps(e));

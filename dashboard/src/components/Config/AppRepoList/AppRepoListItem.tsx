@@ -31,6 +31,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
           <ConfirmDialog
             onConfirm={this.handleDeleteClick(repo.metadata.name)}
             modalIsOpen={this.state.modalIsOpen}
+            loading={false}
             closeModal={this.closeModal}
           />
 

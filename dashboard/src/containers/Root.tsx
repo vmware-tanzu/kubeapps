@@ -9,6 +9,7 @@ import Layout from "../components/Layout";
 import configureStore from "../store";
 import AppEdit from "./AppEditContainer";
 import AppList from "./AppListContainer";
+import AppMigrate from "./AppMigrateContainer";
 import AppNew from "./AppNewContainer";
 import AppView from "./AppViewContainer";
 import ChartList from "./ChartListContainer";
@@ -34,6 +35,7 @@ class Root extends React.Component {
     "/apps/ns/:namespace": AppList,
     "/apps/ns/:namespace/:releaseName": AppView,
     "/apps/ns/:namespace/edit/:releaseName": AppEdit,
+    "/apps/ns/:namespace/migrate/:releaseName": AppMigrate,
     "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNew,
     "/charts": ChartList,
     "/charts/:repo": ChartList,

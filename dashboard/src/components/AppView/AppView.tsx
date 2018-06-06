@@ -168,6 +168,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         <main>
           <div className="container">
             {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
+            {!this.props.app.hr && this.renderMigrationNeeded()}
             <div className="row collapse-b-tablet">
               <div className="col-3">
                 <ChartInfo app={app} />
@@ -195,6 +196,19 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           </div>
         </main>
       </section>
+    );
+  }
+
+  private renderMigrationNeeded() {
+    return (
+      <div className="banner">
+        <div className="container container-small text-c">
+          <p className="margin-t-small">
+            This release is not being managed by Kubeapps. To be able to upgrade or delete this
+            release <strong>click on the "Migrate" button below</strong>.
+          </p>
+        </div>
+      </div>
     );
   }
 
