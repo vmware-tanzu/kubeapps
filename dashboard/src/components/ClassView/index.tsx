@@ -114,8 +114,6 @@ export class ClassView extends React.Component<IClassViewProps> {
                           <ProvisionButton
                             selectedClass={serviceClass}
                             selectedPlan={plan}
-                            plans={plans}
-                            classes={classes}
                             provision={provision}
                             push={push}
                             namespace={namespace}
