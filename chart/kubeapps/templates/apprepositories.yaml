@@ -1,0 +1,17 @@
+{{- if not .Release.IsInstall -}}
+{{- range .Values.apprepository.repos -}}
+apiVersion: kubeapps.com/v1alpha1
+kind: AppRepository
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ template "kubeapps.apprepository.fullname" $ }}
+    chart: {{ template "kubeapps.chart" $ }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  type: helm
+  url: {{ .url }}
+---
+{{ end -}}
+{{- end -}}

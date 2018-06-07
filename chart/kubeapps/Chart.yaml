@@ -1,0 +1,5 @@
+apiVersion: v1
+appVersion: 1.0.0.alpha.3
+description: Super-charge your Kubernetes cluster with a web UI for Helm Charts, Kubeless functions and the Kubernetes Service Catalog
+name: kubeapps
+version: 0.1.0
