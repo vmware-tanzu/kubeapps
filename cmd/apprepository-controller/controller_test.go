@@ -13,6 +13,8 @@ import (
 )
 
 func Test_newCronJob(t *testing.T) {
+	mongoURL = "mongodb.kubeapps"
+	mongoSecretName = "mongodb"
 	tests := []struct {
 		name     string
 		apprepo  *apprepov1alpha1.AppRepository
@@ -186,6 +188,8 @@ func Test_newCronJob(t *testing.T) {
 }
 
 func Test_newSyncJob(t *testing.T) {
+	mongoURL = "mongodb.kubeapps"
+	mongoSecretName = "mongodb"
 	tests := []struct {
 		name     string
 		apprepo  *apprepov1alpha1.AppRepository
@@ -349,6 +353,8 @@ func Test_newSyncJob(t *testing.T) {
 }
 
 func Test_newCleanupJob(t *testing.T) {
+	mongoURL = "mongodb.kubeapps"
+	mongoSecretName = "mongodb"
 	tests := []struct {
 		name      string
 		repoName  string

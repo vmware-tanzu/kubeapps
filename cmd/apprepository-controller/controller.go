@@ -472,7 +472,7 @@ func cleanupJobSpec(repoName string) batchv1.JobSpec {
 								Name: "MONGO_PASSWORD",
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
-										LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"},
+										LocalObjectReference: corev1.LocalObjectReference{Name: mongoSecretName},
 										Key:                  "mongodb-root-password",
 									},
 								},
@@ -506,7 +506,7 @@ func deleteJobName(reponame string) string {
 func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 	return []string{
 		"sync",
-		"--mongo-url=mongodb.kubeapps",
+		"--mongo-url=" + mongoURL,
 		"--mongo-user=root",
 		apprepo.GetName(),
 		apprepo.Spec.URL,
@@ -520,7 +520,7 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvV
 		Name: "MONGO_PASSWORD",
 		ValueFrom: &corev1.EnvVarSource{
 			SecretKeyRef: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"},
+				LocalObjectReference: corev1.LocalObjectReference{Name: mongoSecretName},
 				Key:                  "mongodb-root-password",
 			},
 		},
@@ -541,7 +541,7 @@ func apprepoCleanupJobArgs(repoName string) []string {
 	return []string{
 		"delete",
 		repoName,
-		"--mongo-url=mongodb.kubeapps",
+		"--mongo-url=" + mongoURL,
 		"--mongo-user=root",
 	}
 }

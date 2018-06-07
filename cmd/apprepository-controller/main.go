@@ -32,9 +32,12 @@ import (
 )
 
 var (
-	masterURL     string
-	kubeconfig    string
-	repoSyncImage string
+	masterURL       string
+	kubeconfig      string
+	repoSyncImage   string
+	namespace       string
+	mongoURL        string
+	mongoSecretName string
 )
 
 func main() {
@@ -59,7 +62,7 @@ func main() {
 	}
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, 0)
-	apprepoInformerFactory := informers.NewFilteredSharedInformerFactory(apprepoClient, 0, "kubeapps", nil)
+	apprepoInformerFactory := informers.NewFilteredSharedInformerFactory(apprepoClient, 0, namespace, nil)
 
 	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory)
 
@@ -75,4 +78,7 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&repoSyncImage, "repo-sync-image", "kubeapps/chart-repo:latest", "container repo/image to use in CronJobs")
+	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
+	flag.StringVar(&mongoURL, "mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
+	flag.StringVar(&mongoSecretName, "mongo-secret-name", "mongodb", "Kubernetes secret name for MongoDB credentials")
 }
