@@ -64,10 +64,10 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
       // parameters JSON object
       schema = {
         properties: {
-          name: NameProperty,
-          parameters: {
+          kubeappsRawParameters: {
             type: "object",
           },
+          name: NameProperty,
         },
         type: "object",
       };
@@ -116,18 +116,20 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
     });
   };
 
-  public handleProvision = async ({ formData }: ISubmitEvent<any>) => {
+  public handleProvision = async ({
+    formData,
+  }: ISubmitEvent<{ name: string; kubeappsRawParameters: {} }>) => {
     const { namespace, provision, push, selectedClass, selectedPlan } = this.props;
     this.setState({ isProvisioning: true });
 
-    const { name, parameters, ...rest } = formData;
+    const { name, kubeappsRawParameters, ...rest } = formData;
     if (selectedClass && selectedPlan) {
       const provisioned = await provision(
         name,
         namespace,
         selectedClass.spec.externalName,
         selectedPlan.spec.externalName,
-        parameters || rest,
+        kubeappsRawParameters || rest,
       );
       if (provisioned) {
         push(
