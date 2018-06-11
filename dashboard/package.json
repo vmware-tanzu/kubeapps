@@ -4,8 +4,10 @@
   "private": true,
   "dependencies": {
     "@types/js-yaml": "^3.10.1",
+    "@types/json-schema": "^6.0.1",
     "@types/pako": "^1.0.0",
     "@types/qs": "^6.5.1",
+    "@types/react-jsonschema-form": "^1.0.4",
     "@types/react-select": "^1.2.6",
     "axios": "^0.17.1",
     "enzyme": "^3.3.0",
@@ -20,6 +22,7 @@
     "react-ace": "^5.9.0",
     "react-dom": "^16.2.0",
     "react-feather": "^1.0.8",
+    "react-jsonschema-form": "^1.0.3",
     "react-lazylog": "^2.1.0",
     "react-markdown": "^3.1.4",
     "react-modal": "^3.1.11",

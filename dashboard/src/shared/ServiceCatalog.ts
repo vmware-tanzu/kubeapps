@@ -1,3 +1,4 @@
+import { JSONSchema6 } from "json-schema";
 import * as urls from "../shared/url";
 import { axios } from "./Auth";
 import { IClusterServiceClass } from "./ClusterServiceClass";
@@ -116,6 +117,7 @@ export interface IServicePlan {
       displayName: string;
       bullets: string[];
     };
+    instanceCreateParameterSchema?: JSONSchema6;
     free: boolean;
     clusterServiceClassRef: {
       name: string;
