@@ -1,6 +1,7 @@
 package imaging
 
 import (
+	"bytes"
 	"errors"
 	"image"
 	"image/color"
@@ -46,6 +47,26 @@ func (f Format) String() string {
 	}
 }
 
+var formatFromExt = map[string]Format{
+	".jpg":  JPEG,
+	".jpeg": JPEG,
+	".png":  PNG,
+	".tif":  TIFF,
+	".tiff": TIFF,
+	".bmp":  BMP,
+	".gif":  GIF,
+}
+
+// FormatFromFilename parses image format from filename extension:
+// "jpg" (or "jpeg"), "png", "gif", "tif" (or "tiff") and "bmp" are supported.
+func FormatFromFilename(filename string) (Format, error) {
+	ext := strings.ToLower(filepath.Ext(filename))
+	if f, ok := formatFromExt[ext]; ok {
+		return f, nil
+	}
+	return -1, ErrUnsupportedFormat
+}
+
 var (
 	// ErrUnsupportedFormat means the given image format (or file extension) is unsupported.
 	ErrUnsupportedFormat = errors.New("imaging: unsupported image format")
@@ -80,17 +101,19 @@ func Open(filename string) (image.Image, error) {
 }
 
 type encodeConfig struct {
-	jpegQuality  int
-	gifNumColors int
-	gifQuantizer draw.Quantizer
-	gifDrawer    draw.Drawer
+	jpegQuality         int
+	gifNumColors        int
+	gifQuantizer        draw.Quantizer
+	gifDrawer           draw.Drawer
+	pngCompressionLevel png.CompressionLevel
 }
 
 var defaultEncodeConfig = encodeConfig{
-	jpegQuality:  95,
-	gifNumColors: 256,
-	gifQuantizer: nil,
-	gifDrawer:    nil,
+	jpegQuality:         95,
+	gifNumColors:        256,
+	gifQuantizer:        nil,
+	gifDrawer:           nil,
+	pngCompressionLevel: png.DefaultCompression,
 }
 
 // EncodeOption sets an optional parameter for the Encode and Save functions.
@@ -128,6 +151,14 @@ func GIFDrawer(drawer draw.Drawer) EncodeOption {
 	}
 }
 
+// PNGCompressionLevel returns an EncodeOption that sets the compression level
+// of the PNG-encoded image. Default is png.DefaultCompression.
+func PNGCompressionLevel(level png.CompressionLevel) EncodeOption {
+	return func(c *encodeConfig) {
+		c.pngCompressionLevel = level
+	}
+}
+
 // Encode writes the image img to w in the specified format (JPEG, PNG, GIF, TIFF or BMP).
 func Encode(w io.Writer, img image.Image, format Format, opts ...EncodeOption) error {
 	cfg := defaultEncodeConfig
@@ -155,17 +186,22 @@ func Encode(w io.Writer, img image.Image, format Format, opts ...EncodeOption) e
 		}
 
 	case PNG:
-		err = png.Encode(w, img)
+		enc := png.Encoder{CompressionLevel: cfg.pngCompressionLevel}
+		err = enc.Encode(w, img)
+
 	case GIF:
 		err = gif.Encode(w, img, &gif.Options{
 			NumColors: cfg.gifNumColors,
 			Quantizer: cfg.gifQuantizer,
 			Drawer:    cfg.gifDrawer,
 		})
+
 	case TIFF:
 		err = tiff.Encode(w, img, &tiff.Options{Compression: tiff.Deflate, Predictor: true})
+
 	case BMP:
 		err = bmp.Encode(w, img)
+
 	default:
 		err = ErrUnsupportedFormat
 	}
@@ -184,22 +220,10 @@ func Encode(w io.Writer, img image.Image, format Format, opts ...EncodeOption) e
 //	err := imaging.Save(img, "out.jpg", imaging.JPEGQuality(80))
 //
 func Save(img image.Image, filename string, opts ...EncodeOption) (err error) {
-	formats := map[string]Format{
-		".jpg":  JPEG,
-		".jpeg": JPEG,
-		".png":  PNG,
-		".tif":  TIFF,
-		".tiff": TIFF,
-		".bmp":  BMP,
-		".gif":  GIF,
+	f, err := FormatFromFilename(filename)
+	if err != nil {
+		return err
 	}
-
-	ext := strings.ToLower(filepath.Ext(filename))
-	f, ok := formats[ext]
-	if !ok {
-		return ErrUnsupportedFormat
-	}
-
 	file, err := fs.Create(filename)
 	if err != nil {
 		return err
@@ -221,33 +245,16 @@ func New(width, height int, fillColor color.Color) *image.NRGBA {
 		return &image.NRGBA{}
 	}
 
-	dst := image.NewNRGBA(image.Rect(0, 0, width, height))
 	c := color.NRGBAModel.Convert(fillColor).(color.NRGBA)
-
-	if c.R == 0 && c.G == 0 && c.B == 0 && c.A == 0 {
-		return dst
+	if (c == color.NRGBA{0, 0, 0, 0}) {
+		return image.NewNRGBA(image.Rect(0, 0, width, height))
 	}
 
-	// Fill the first row.
-	i := 0
-	for x := 0; x < width; x++ {
-		dst.Pix[i+0] = c.R
-		dst.Pix[i+1] = c.G
-		dst.Pix[i+2] = c.B
-		dst.Pix[i+3] = c.A
-		i += 4
+	return &image.NRGBA{
+		Pix:    bytes.Repeat([]byte{c.R, c.G, c.B, c.A}, width*height),
+		Stride: 4 * width,
+		Rect:   image.Rect(0, 0, width, height),
 	}
-
-	// Copy the first row to other rows.
-	size := width * 4
-	parallel(1, height, func(ys <-chan int) {
-		for y := range ys {
-			i = y * dst.Stride
-			copy(dst.Pix[i:i+size], dst.Pix[0:size])
-		}
-	})
-
-	return dst
 }
 
 // Clone returns a copy of the given image.
