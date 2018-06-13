@@ -32,7 +32,7 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/proto/hapi/release"
 
-	chartUtils "github.com/kubeapps/kubeapps/cmd/tiller-proxy/chart"
+	chartUtils "github.com/kubeapps/kubeapps/pkg/utils/chart"
 )
 
 const (

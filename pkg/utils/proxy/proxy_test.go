@@ -71,7 +71,7 @@ func fakeLoadChart(in io.Reader) (*chart.Chart, error) {
 	return &chart.Chart{}, nil
 }
 
-func prepareTestProxy(hrs []helmRelease, existingTillerReleases []AppOverview) *Proxy {
+func newFakeProxy(hrs []helmRelease, existingTillerReleases []AppOverview) *Proxy {
 	var repoURLs []string
 	var chartURLs []string
 	entries := map[string]repo.ChartVersions{}
@@ -107,7 +107,7 @@ func prepareTestProxy(hrs []helmRelease, existingTillerReleases []AppOverview) *
 func TestListAllReleases(t *testing.T) {
 	app1 := AppOverview{"foo", "1.0.0", "my_ns"}
 	app2 := AppOverview{"bar", "1.0.0", "other_ns"}
-	proxy := prepareTestProxy([]helmRelease{}, []AppOverview{app1, app2})
+	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
 	releases, err := proxy.ListReleases("")
@@ -125,7 +125,7 @@ func TestListAllReleases(t *testing.T) {
 func TestListNamespacedRelease(t *testing.T) {
 	app1 := AppOverview{"foo", "1.0.0", "my_ns"}
 	app2 := AppOverview{"bar", "1.0.0", "other_ns"}
-	proxy := prepareTestProxy([]helmRelease{}, []AppOverview{app1, app2})
+	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
 	releases, err := proxy.ListReleases(app1.Namespace)
@@ -149,7 +149,7 @@ func TestCreateHelmRelease(t *testing.T) {
 		Version:     "v1.0.0",
 	}
 	rawRelease, _ := json.Marshal(h)
-	proxy := prepareTestProxy([]helmRelease{h}, []AppOverview{})
+	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{})
 
 	result, err := proxy.CreateRelease(ns, rawRelease)
 	if err != nil {
@@ -176,7 +176,7 @@ func TestCreateConflictingHelmRelease(t *testing.T) {
 	ns2 := "other_ns"
 	app := AppOverview{h.ReleaseName, h.Version, ns2}
 	rawRelease, _ := json.Marshal(h)
-	proxy := prepareTestProxy([]helmRelease{h}, []AppOverview{app})
+	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{app})
 
 	_, err := proxy.CreateRelease(ns1, rawRelease)
 	if err == nil {
@@ -197,7 +197,7 @@ func TestHelmReleaseUpdated(t *testing.T) {
 	}
 	rawRelease, _ := json.Marshal(h)
 	app := AppOverview{h.ReleaseName, h.Version, ns}
-	proxy := prepareTestProxy([]helmRelease{h}, []AppOverview{app})
+	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{app})
 
 	result, err := proxy.UpdateRelease(h.ReleaseName, ns, rawRelease)
 	if err != nil {
@@ -232,7 +232,7 @@ func TestUpdateMissingHelmRelease(t *testing.T) {
 	// Simulate the same app but in a different namespace
 	ns2 := "other_ns"
 	app := AppOverview{h.ReleaseName, h.Version, ns2}
-	proxy := prepareTestProxy([]helmRelease{h}, []AppOverview{app})
+	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{app})
 
 	_, err := proxy.UpdateRelease(h.ReleaseName, ns, rawRelease)
 	if err == nil {
@@ -260,7 +260,7 @@ func TestGetHelmRelease(t *testing.T) {
 		{[]AppOverview{app1, app2}, false, "foo", "", "foo"},
 	}
 	for _, test := range tests {
-		proxy := prepareTestProxy([]helmRelease{}, test.existingApps)
+		proxy := newFakeProxy([]helmRelease{}, test.existingApps)
 		res, err := proxy.GetRelease(test.targetApp, test.tartegNamespace)
 		if test.shouldFail && err == nil {
 			t.Errorf("Get %s/%s should fail", test.tartegNamespace, test.targetApp)
@@ -278,7 +278,7 @@ func TestGetHelmRelease(t *testing.T) {
 
 func TestHelmReleaseDeleted(t *testing.T) {
 	app := AppOverview{"foo", "1.0.0", "my_ns"}
-	proxy := prepareTestProxy([]helmRelease{}, []AppOverview{app})
+	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app})
 
 	err := proxy.DeleteRelease(app.ReleaseName, app.Namespace)
 	if err != nil {
@@ -295,7 +295,7 @@ func TestHelmReleaseDeleted(t *testing.T) {
 
 func TestDeleteMissingHelmRelease(t *testing.T) {
 	app := AppOverview{"foo", "1.0.0", "my_ns"}
-	proxy := prepareTestProxy([]helmRelease{}, []AppOverview{app})
+	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app})
 
 	err := proxy.DeleteRelease(app.ReleaseName, "other_ns")
 	if err == nil {
@@ -319,7 +319,7 @@ func TestEnsureThreadSafety(t *testing.T) {
 		Version:     "v1.0.0",
 	}
 	rawRelease, _ := json.Marshal(h)
-	proxy := prepareTestProxy([]helmRelease{h}, []AppOverview{})
+	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{})
 	finish := make(chan struct{})
 	type test func()
 	phases := []test{

@@ -56,9 +56,9 @@ func deployRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	}
 	var rel *release.Release
 	if req.Method == "POST" && params["releaseName"] == "" {
-		rel, err = p.CreateRelease(params["namespace"], body)
+		rel, err = proxy.CreateRelease(params["namespace"], body)
 	} else {
-		rel, err = p.UpdateRelease(params["releaseName"], params["namespace"], body)
+		rel, err = proxy.UpdateRelease(params["releaseName"], params["namespace"], body)
 	}
 	if err != nil {
 		errCode := http.StatusInternalServerError
@@ -71,13 +71,13 @@ func deployRelease(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 	log.Printf("Installed/updated release %s", rel.Name)
-	p.LogReleaseStatus(rel.Name)
+	proxy.LogReleaseStatus(rel.Name)
 	response.NewDataResponse(*rel).Write(w)
 }
 
 func listAllReleases(w http.ResponseWriter, req *http.Request) {
 	log.Printf("Listing All Helm Releases")
-	apps, err := p.ListReleases("")
+	apps, err := proxy.ListReleases("")
 	if err != nil {
 		response.NewErrorResponse(http.StatusInternalServerError, err.Error()).Write(w)
 		return
@@ -87,7 +87,7 @@ func listAllReleases(w http.ResponseWriter, req *http.Request) {
 
 func listReleases(w http.ResponseWriter, req *http.Request, params Params) {
 	log.Printf("Listing Helm Releases of the namespace %s", params["namespace"])
-	apps, err := p.ListReleases(params["namespace"])
+	apps, err := proxy.ListReleases(params["namespace"])
 	if err != nil {
 		response.NewErrorResponse(http.StatusInternalServerError, err.Error()).Write(w)
 		return
@@ -97,7 +97,7 @@ func listReleases(w http.ResponseWriter, req *http.Request, params Params) {
 
 func getRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	log.Printf("Getting Helm Release %s", params["releaseName"])
-	rel, err := p.GetRelease(params["releaseName"], params["namespace"])
+	rel, err := proxy.GetRelease(params["releaseName"], params["namespace"])
 	if err != nil {
 		errCode := http.StatusInternalServerError
 		if isNotFound(err) {
@@ -111,7 +111,7 @@ func getRelease(w http.ResponseWriter, req *http.Request, params Params) {
 
 func deleteRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	log.Printf("Deleting Helm Release %s", params["releaseName"])
-	err := p.DeleteRelease(params["releaseName"], params["namespace"])
+	err := proxy.DeleteRelease(params["releaseName"], params["namespace"])
 	if err != nil {
 		errCode := http.StatusInternalServerError
 		if isNotFound(err) {

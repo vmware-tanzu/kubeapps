@@ -38,9 +38,6 @@ kubeapps/%:
 kubeapps/dashboard:
 	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
 
-tiller-proxy-dev:
-	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o ./cmd/tiller-proxy/proxy-static ./cmd/tiller-proxy
-	docker build -t kubeapps/tiller-proxy -f ./cmd/tiller-proxy/Dockerfile.dev .
 tiller-proxy:
 	docker build -t kubeapps/tiller-proxy -f ./cmd/tiller-proxy/Dockerfile .
 
