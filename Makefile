@@ -11,16 +11,7 @@ EMBEDDED_STATIC = generated/statik/statik.go
 
 default: kubeapps
 
-kubeapps: $(EMBEDDED_STATIC)
-	$(GO) build -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
-
-test: $(EMBEDDED_STATIC)
-	$(GO) test $(GO_PACKAGES)
-
-$(EMBEDDED_STATIC): static/kubeapps-objs.yaml
-	# force compilation on current OS
-	GOOS= $(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
-	$(GO) generate
+all: kubeapps kubeapps/dashboard kubeapps/chartsvc kubeapps/chart-repo kubeapps/apprepository-controller
 
 static/kubeapps-objs.yaml:
 	KUBEAPPS_VERSION=$${VERSION:-latest} ;\
@@ -30,13 +21,35 @@ static/kubeapps-objs.yaml:
 	KUBECFG_JPATH=./manifests/lib:./manifests/vendor/kubecfg/lib:./manifests/vendor/ksonnet-lib \
 		kubecfg show -V VERSION=$$KUBEAPPS_VERSION -V KUBELESS_VERSION=$$KUBELESS_VERSION manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
 
-test-dashboard:
-	yarn --cwd dashboard/ run test
+$(EMBEDDED_STATIC): static/kubeapps-objs.yaml
+	# force compilation on current OS
+	GOOS= $(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
+	$(GO) generate
+
+kubeapps: $(EMBEDDED_STATIC)
+	$(GO) build -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
 
 kubeapps/%:
 	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .
+
 kubeapps/dashboard:
 	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
+
+test:
+	$(GO) test $(GO_PACKAGES)
+
+test-all: test-kubeapps test-chartsvc test-chart-repo test-apprepository-controller test-dashboard
+
+test-kubeapps:
+	$(GO) test -v $(IMPORT_PATH)
+
+test-dashboard:
+	yarn --cwd dashboard/ install --frozen-lockfile
+	yarn --cwd=dashboard run lint
+	CI=true yarn --cwd dashboard/ run test
+
+test-%:
+	$(GO) test -v $(IMPORT_PATH)/cmd/$*
 
 fmt:
 	$(GOFMT) -s -w $(GO_FILES)
@@ -45,6 +58,6 @@ vet:
 	$(GO) vet $(GO_PACKAGES)
 
 clean:
-	$(RM) ./kubeapps ./chart-repo ./statik $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
+	$(RM) ./kubeapps ./statik $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
 
-.PHONY: default test test-dashboard fmt vet clean build-prep chart-repo kubeapps $(EMBEDDED_STATIC) static/kubeapps-objs.yaml
+.PHONY: default all test-all test test-dashboard fmt vet clean build-prep chart-repo kubeapps $(EMBEDDED_STATIC) static/kubeapps-objs.yaml

@@ -28,7 +28,7 @@ These commands will deploy Kubeapps in your cluster and launch a browser with th
 
 ![Dashboard login page](img/dashboard-login.png)
 
-Access to the dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server. Read the [Access Control](docs/access-control.md) documentation for more information on configuring users for Kubeapps.
+Access to the dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server. Read the [Access Control](docs/user/access-control.md) documentation for more information on configuring users for Kubeapps.
 
 The following commands create a ServiceAccount and ClusterRoleBinding named `kubeapps-operator` which will enable the dashboard to authenticate and manage resources on the Kubernetes cluster:
 
@@ -43,7 +43,7 @@ Use the following command to reveal the authorization token that should be used 
 kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
 ```
 
-**NOTE**: It's not recommended to create cluster-admin users for Kubeapps. Please refer to the [Access Control](docs/access-control.md) documentation to configure more fine-grained access.
+**NOTE**: It's not recommended to create cluster-admin users for Kubeapps. Please refer to the [Access Control](docs/user/access-control.md) documentation to configure more fine-grained access.
 
 ![Dashboard main page](img/dashboard-home.png)
 
@@ -62,76 +62,23 @@ kubectl delete serviceaccount kubeapps-operator
 
 ## Installation
 
-Get the latest release of Kubeapps Installer on the [Github releases](https://github.com/kubeapps/kubeapps/releases) page.
-
-Alternatively, when you have configured a proper Go environment (refer to the first two steps of [Build from Source](#build-from-source) section), the latest Kubeapps Installer can be get-able from source:
-
-```bash
-go get github.com/kubeapps/kubeapps
-```
+Get the latest release of the Kubeapps installer for for platform from the [releases](https://github.com/kubeapps/kubeapps/releases) page, add it to your `PATH` and you're ready to go.
 
 ## Build from Source
 
-The Kubeapps Installer is a CLI tool written in Go that will deploy the Kubeapps components into your cluster.
-You can build the latest Kubeapps Installer from source by following the steps below:
-
-* Visit [the Go website](https://golang.org), download the most recent [binary distribution of Go](https://golang.org/dl/) and install it following the [official instructions](https://golang.org/doc/install).
-
-  > The remainder of this section assumes that Go is installed in `/usr/local/go`. Update the paths in subsequent commands if you used a different location.
-
-* Set the Go environment variables:
-
-  ```bash
-  export GOPATH=$HOME/gopath
-  export PATH=$GOPATH/bin:$PATH
-  ```
-
-* Install kubeapps build dependencies:
-
-  ```bash
-  go get github.com/ksonnet/kubecfg
-  ```
-
-* Create a working directory for the project:
-
-  ```bash
-  working_dir=$GOPATH/src/github.com/kubeapps/
-  mkdir -p $working_dir
-  ```
-
-* Clone the Kubeapps source repository:
-
-  ```bash
-  cd $working_dir
-  git clone --recurse-submodules https://github.com/kubeapps/kubeapps
-  ```
-
-* Build the Kubeapps binary and move it to a location in your path:
-
-  ```bash
-  cd kubeapps
-  make kubeapps
-  ```
-
-## Running tests
-
-Run Go tests using `make test`. See [dashboard documentation](dashboard/README.md) for information on running dashboard tests.
-
-```bash
-make test
-```
+Please refer to the [Kubeapps Build Guide](docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
 
 ## Next Steps
 
-[Use the Kubeapps Dashboard](docs/dashboard.md) to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions, or [look under the hood to see what's included in Kubeapps](docs/components.md).
+[Use the Kubeapps Dashboard](docs/user/dashboard.md) to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
 
-In case of difficulties installing Kubeapps, find [more detailed installation instructions](docs/install.md).
+In case of difficulties installing Kubeapps, find [more detailed installation instructions](docs/user/install.md).
 
-For a more detailed and step-by-step introduction to Kubeapps, read our [introductory walkthrough](docs/getting-started.md).
+For a more detailed and step-by-step introduction to Kubeapps, read our [introductory walkthrough](docs/user/getting-started.md).
 
 ## Useful Resources
 
-* [Walkthrough for first-time users](docs/getting-started.md)
-* [Detailed installation instructions](docs/install.md)
-* [Kubeapps Dashboard documentation](docs/dashboard.md)
-* [Kubeapps components](docs/components.md)
+* [Walkthrough for first-time users](docs/user/getting-started.md)
+* [Detailed installation instructions](docs/user/install.md)
+* [Kubeapps Dashboard documentation](docs/user/dashboard.md)
+* [Kubeapps components](docs/architecture/overview.md)
