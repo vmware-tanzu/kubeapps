@@ -5,38 +5,44 @@ The `apprepository-controller` is a Kubernetes controller for managing Helm char
 ## Prerequisites
 
 - [Git](https://git-scm.com/)
+- [Make](https://www.gnu.org/software/make/)
+- [Go programming language](https://golang.org/dl/)
 - [Docker CE](https://www.docker.com/community-edition)
-- [Kubernetes cluster](https://kubernetes.io/docs/setup/pick-right-solution/)
+- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
-## Environment setup
+## Environment
 
 ```bash
 export GOPATH=~/gopath/
 export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```
-## Download kubeapps source code
 
-The `apprepository-controller` code is located under the `cmd/apprepository-controller/` directory of the Kubeapps project repository.
+## Download the kubeapps source code
 
 ```bash
 git clone --recurse-submodules https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
+```
+
+The `apprepository-controller` sources are located under the `cmd/apprepository-controller/` directory of the repository.
+
+```bash
 cd $KUBEAPPS_DIR/cmd/apprepository-controller
 ```
 
 ### Install Kubeapps in your cluster
 
-Kubeapps is a Kubernetes-native application and to develop Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](../user/install.md) to install Kubeapps in your cluster.
+Kubeapps is a Kubernetes-native application. To develop and test Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](../user/install.md) to install Kubeapps in your cluster.
 
-### Building apprepository-controller binary
+### Building `apprepository-controller` binary
 
 ```bash
 go build
 ```
 
-The above command builds the `apprepository-controller` binary in the working directory.
+This builds the `apprepository-controller` binary in the working directory.
 
 ### Running in development
 

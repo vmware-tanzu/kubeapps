@@ -37,9 +37,3 @@ The controller is developed independently of Kubeapps at [bitnami-labs/helm-crd]
 [Kubeless](http://kubeless.io/) is a Kubernetes-native serverless framework that lets you deploy small bits of code (functions) without having to worry about the underlying infrastructure. It leverages Kubernetes resources to provide auto-scaling, API routing, monitoring, troubleshooting and more.
 
 Kubeless is also written in the Go programming language and is also developed independently of Kubeapps at [kubeless/kubeless](https://github.com/kubeless/kubeless).
-
-### Sealed Secrets
-
-[Sealed Secrets](https://github.com/bitnami/sealed-secrets) is a Kubernetes controller and tool for "one-way" encrypted secrets that can only be decrypted by the target cluster. A `SealedSecret` is safe to be disclosed publicly, committed to version control, etc. because only the target cluster can decrypt and recover the original secret.
-
-Written in the Go programming language, the controller is developed independently of the Kubeapps project at [bitnami-labs/sealed-secrets](https://github.com/bitnami-labs/sealed-secrets).

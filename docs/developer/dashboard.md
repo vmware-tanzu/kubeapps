@@ -2,40 +2,42 @@
 
 The dashboard is the main UI component of the Kubeapps project. Written in Javascript, the dashboard uses the React Javascript library for the frontend.
 
-Written in Javascript using the React javascript library, the dashboard is the main UI for the Kubeapps project.
-
 ## Prerequisites
 
 - [Git](https://git-scm.com/)
 - [Node 8.x](https://nodejs.org/)
 - [Yarn](https://yarnpkg.com)
-- [Docker CE](https://www.docker.com/community-edition)
-- [Kubernetes cluster](https://kubernetes.io/docs/setup/pick-right-solution/)
+- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+- [Docker CE](https://www.docker.com/community-edition)
 - [Telepresence](https://telepresence.io)
 
-## Environment setup
+## Environment
 
 ```bash
 export GOPATH=~/gopath/
 export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```
-## Download kubeapps source code
-
-The dashboard application code is located under the `dashboard/` directory of the Kubeapps project repository.
+## Download the kubeapps source code
 
 ```bash
 git clone --recurse-submodules https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
 ```
 
+The dashboard application source is located under the `dashboard/` directory of the repository.
+
+```bash
+cd $KUBEAPPS_DIR/dashboard
+```
+
 ### Install Kubeapps in your cluster
 
-Kubeapps is a Kubernetes-native application and to develop Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](../user/install.md) to install Kubeapps in your cluster.
+Kubeapps is a Kubernetes-native application. To develop and test Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](../user/install.md) to install Kubeapps in your cluster.
 
-### Running in development
+### Running the dashboard in development
 
-[Telepresence](https://www.telepresence.io/) is a local development tool for Kubernetes microservices. As the dashboard is a service running in the Kubernetes cluster we use telepresence to proxy requests to the Kubeapps Dashboard running in your cluster to your local development server.
+[Telepresence](https://www.telepresence.io/) is a local development tool for Kubernetes microservices. As the dashboard is a service running in the Kubernetes cluster we use telepresence to proxy requests to the dashboard running in your cluster to your local development host.
 
 First install the dashboard dependency packages:
 
@@ -49,9 +51,9 @@ Next, create a `telepresence` shell to swap the `kubeapps-dashboard-ui` deployme
 telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-dashboard-ui --expose 3000:8080 --run-shell
 ```
 
-> **NOTE**: If you are having issues getting this setup working correctly, please try switching the telepresence proxying method in the above command to `vpn-tcp`. Refer to [the telepresence docs](https://www.telepresence.io/reference/methods) to learn more about the available proxying methods and their limitations.
+> **NOTE**: If you encounter issues getting this setup working correctly, please try switching the telepresence proxying method in the above command to `vpn-tcp`. Refer to [the telepresence docs](https://www.telepresence.io/reference/methods) to learn more about the available proxying methods and their limitations.
 
-Next, launch the dashboard within the telepresence shell
+Finally, launch the dashboard within the telepresence shell
 
 ```bash
 yarn run start
