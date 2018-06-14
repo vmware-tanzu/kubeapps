@@ -12,6 +12,8 @@ The `apprepository-controller` is a Kubernetes controller for managing Helm char
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
+*Telepresence is not a hard requirement, but is recommended for a better developer experience*
+
 ## Environment
 
 ```bash

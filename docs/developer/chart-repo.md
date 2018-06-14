@@ -12,6 +12,8 @@ The `chart-repo` component is tool that scans a Helm chart repository and popula
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
+*Telepresence is not a hard requirement, but is recommended for a better developer experience*
+
 ## Environment
 
 ```bash

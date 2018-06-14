@@ -12,6 +12,8 @@ The dashboard is the main UI component of the Kubeapps project. Written in Javas
 - [Docker CE](https://www.docker.com/community-edition)
 - [Telepresence](https://telepresence.io)
 
+*Telepresence is not a hard requirement, but is recommended for a better developer experience*
+
 ## Environment
 
 ```bash

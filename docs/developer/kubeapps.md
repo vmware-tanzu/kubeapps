@@ -11,6 +11,8 @@ The Kubeapps installer is a command-line tool for installing, upgrading and unin
 - [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 
+*Telepresence is not a hard requirement, but is recommended for a better developer experience*
+
 ## Environment
 
 ```bash

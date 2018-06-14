@@ -12,6 +12,8 @@ The `chartsvc` component is a micro-service that creates a API endpoint for acce
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
 
+*Telepresence is not a hard requirement, but is recommended for a better developer experience*
+
 ## Environment
 
 ```bash
