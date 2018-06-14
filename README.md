@@ -70,7 +70,7 @@ Please refer to the [Kubeapps Build Guide](docs/developer/build.md) for instruct
 
 ## Developer Documentation
 
-Please refer to the [Kubeapps Developer Documentation](docs/developer/overview.md) for instructions on setting up the developer environment for developing Kubeapps components.
+Please refer to the [Kubeapps Developer Documentation](docs/developer/README.md) for instructions on setting up the developer environment for developing Kubeapps components.
 
 ## Next Steps
 
