@@ -68,6 +68,10 @@ Get the latest release of the Kubeapps installer for for platform from the [rele
 
 Please refer to the [Kubeapps Build Guide](docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
 
+## Developer Documentation
+
+Please refer to the [Kubeapps Developer Documentation](docs/developer/overview.md) for instructions on setting up the developer environment for developing Kubeapps components.
+
 ## Next Steps
 
 [Use the Kubeapps Dashboard](docs/user/dashboard.md) to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
