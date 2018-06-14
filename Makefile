@@ -35,7 +35,7 @@ kubeapps/%:
 kubeapps/dashboard:
 	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
 
-test:
+test: $(EMBEDDED_STATIC)
 	$(GO) test $(GO_PACKAGES)
 
 test-all: test-kubeapps test-chartsvc test-chart-repo test-apprepository-controller test-dashboard
