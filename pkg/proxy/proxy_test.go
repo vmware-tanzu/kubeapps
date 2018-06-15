@@ -17,12 +17,6 @@ limitations under the License.
 package proxy
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
 	"reflect"
 	"strings"
 	"testing"
@@ -32,61 +26,9 @@ import (
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/proto/hapi/release"
-	"k8s.io/helm/pkg/repo"
 )
 
-// Fake server for repositories and charts
-type fakeHTTPClient struct {
-	repoURLs  []string
-	chartURLs []string
-	index     *repo.IndexFile
-}
-
-func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
-	for _, repoURL := range f.repoURLs {
-		if h.URL.String() == fmt.Sprintf("%sindex.yaml", repoURL) {
-			// Return fake chart index (not customizable per repo)
-			body, err := json.Marshal(*f.index)
-			if err != nil {
-				fmt.Printf("Error! %v", err)
-			}
-			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
-		}
-	}
-	for _, chartURL := range f.chartURLs {
-		if h.URL.String() == chartURL {
-			// Simulate download time
-			time.Sleep(100 * time.Millisecond)
-			// Fake chart response
-			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte{}))}, nil
-		}
-	}
-	// Unexpected path
-	return &http.Response{StatusCode: 404}, fmt.Errorf("Unexpected path")
-}
-
-func fakeLoadChart(in io.Reader) (*chart.Chart, error) {
-	// Fake I/O time
-	time.Sleep(100 * time.Millisecond)
-	return &chart.Chart{}, nil
-}
-
-func newFakeProxy(hrs []helmRelease, existingTillerReleases []AppOverview) *Proxy {
-	var repoURLs []string
-	var chartURLs []string
-	entries := map[string]repo.ChartVersions{}
-	// Populate Chart registry with content of the given helmReleases
-	for _, hr := range hrs {
-		repoURLs = append(repoURLs, hr.RepoURL)
-		chartMeta := chart.Metadata{Name: hr.ChartName, Version: hr.Version}
-		chartURL := fmt.Sprintf("%s%s-%s.tgz", hr.RepoURL, hr.ChartName, hr.Version)
-		chartURLs = append(chartURLs, chartURL)
-		chartVersion := repo.ChartVersion{Metadata: &chartMeta, URLs: []string{chartURL}}
-		chartVersions := []*repo.ChartVersion{&chartVersion}
-		entries[hr.ChartName] = chartVersions
-	}
-	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
-	netClient := fakeHTTPClient{repoURLs, chartURLs, index}
+func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 	helmClient := helm.FakeClient{}
 	// Populate Fake helm client with releases
 	for _, r := range existingTillerReleases {
@@ -101,13 +43,13 @@ func newFakeProxy(hrs []helmRelease, existingTillerReleases []AppOverview) *Prox
 		})
 	}
 	kubeClient := fake.NewSimpleClientset()
-	return NewProxy(kubeClient, &helmClient, &netClient, fakeLoadChart)
+	return NewProxy(kubeClient, &helmClient)
 }
 
 func TestListAllReleases(t *testing.T) {
 	app1 := AppOverview{"foo", "1.0.0", "my_ns"}
 	app2 := AppOverview{"bar", "1.0.0", "other_ns"}
-	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app1, app2})
+	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
 	releases, err := proxy.ListReleases("")
@@ -125,7 +67,7 @@ func TestListAllReleases(t *testing.T) {
 func TestListNamespacedRelease(t *testing.T) {
 	app1 := AppOverview{"foo", "1.0.0", "my_ns"}
 	app2 := AppOverview{"bar", "1.0.0", "other_ns"}
-	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app1, app2})
+	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
 	releases, err := proxy.ListReleases(app1.Namespace)
@@ -140,23 +82,43 @@ func TestListNamespacedRelease(t *testing.T) {
 	}
 }
 
+func TestResolveManifest(t *testing.T) {
+	ns := "myns"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
+	}
+	proxy := newFakeProxy([]AppOverview{})
+
+	manifest, err := proxy.ResolveManifest(ns, "", ch)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	if !strings.Contains(manifest, "apiVersion") || !strings.Contains(manifest, "kind") {
+		t.Errorf("%s doesn't contain a manifest", manifest)
+	}
+	if strings.HasPrefix(manifest, "\n") {
+		t.Error("The manifest should not contain new lines at the beginning")
+	}
+}
+
 func TestCreateHelmRelease(t *testing.T) {
 	ns := "myns"
-	h := helmRelease{
-		ReleaseName: "not-foo",
-		RepoURL:     "http://charts.example.com/repo/",
-		ChartName:   "foo",
-		Version:     "v1.0.0",
+	rs := "foo"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	rawRelease, _ := json.Marshal(h)
-	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{})
+	proxy := newFakeProxy([]AppOverview{})
 
-	result, err := proxy.CreateRelease(ns, rawRelease)
+	result, err := proxy.CreateRelease(rs, ns, "", ch)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	if result.Name != h.ReleaseName {
-		t.Errorf("Expected release named %s received %s", h.ReleaseName, result.Name)
+	if result.Name != rs {
+		t.Errorf("Expected release named %s received %s", rs, result.Name)
 	}
 	if result.Namespace != ns {
 		t.Errorf("Expected release in namespace %s received %s", ns, result.Namespace)
@@ -166,19 +128,18 @@ func TestCreateHelmRelease(t *testing.T) {
 }
 
 func TestCreateConflictingHelmRelease(t *testing.T) {
-	ns1 := "myns"
-	h := helmRelease{
-		ReleaseName: "not-foo",
-		RepoURL:     "http://charts.example.com/repo/",
-		ChartName:   "foo",
-		Version:     "v1.0.0",
+	ns := "myns"
+	rs := "foo"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
 	ns2 := "other_ns"
-	app := AppOverview{h.ReleaseName, h.Version, ns2}
-	rawRelease, _ := json.Marshal(h)
-	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{app})
+	app := AppOverview{rs, version, ns2}
+	proxy := newFakeProxy([]AppOverview{app})
 
-	_, err := proxy.CreateRelease(ns1, rawRelease)
+	_, err := proxy.CreateRelease(rs, ns, "", ch)
 	if err == nil {
 		t.Error("Release should fail, an existing release in a different namespace already exists")
 	}
@@ -189,22 +150,21 @@ func TestCreateConflictingHelmRelease(t *testing.T) {
 
 func TestHelmReleaseUpdated(t *testing.T) {
 	ns := "myns"
-	h := helmRelease{
-		ReleaseName: "not-foo",
-		RepoURL:     "http://charts.example.com/repo/",
-		ChartName:   "foo",
-		Version:     "v1.0.0",
+	rs := "foo"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	rawRelease, _ := json.Marshal(h)
-	app := AppOverview{h.ReleaseName, h.Version, ns}
-	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{app})
+	app := AppOverview{rs, version, ns}
+	proxy := newFakeProxy([]AppOverview{app})
 
-	result, err := proxy.UpdateRelease(h.ReleaseName, ns, rawRelease)
+	result, err := proxy.UpdateRelease(rs, ns, "", ch)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	if result.Name != h.ReleaseName {
-		t.Errorf("Expected release named %s received %s", h.ReleaseName, result.Name)
+	if result.Name != rs {
+		t.Errorf("Expected release named %s received %s", rs, result.Name)
 	}
 	if result.Namespace != ns {
 		t.Errorf("Expected release in namespace %s received %s", ns, result.Namespace)
@@ -222,19 +182,18 @@ func TestHelmReleaseUpdated(t *testing.T) {
 
 func TestUpdateMissingHelmRelease(t *testing.T) {
 	ns := "myns"
-	h := helmRelease{
-		ReleaseName: "not-foo",
-		RepoURL:     "http://charts.example.com/repo/",
-		ChartName:   "foo",
-		Version:     "v1.0.0",
+	rs := "foo"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	rawRelease, _ := json.Marshal(h)
 	// Simulate the same app but in a different namespace
 	ns2 := "other_ns"
-	app := AppOverview{h.ReleaseName, h.Version, ns2}
-	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{app})
+	app := AppOverview{rs, version, ns2}
+	proxy := newFakeProxy([]AppOverview{app})
 
-	_, err := proxy.UpdateRelease(h.ReleaseName, ns, rawRelease)
+	_, err := proxy.UpdateRelease(rs, ns, "", ch)
 	if err == nil {
 		t.Error("Update should fail, there is not a release in the namespace specified")
 	}
@@ -260,7 +219,7 @@ func TestGetHelmRelease(t *testing.T) {
 		{[]AppOverview{app1, app2}, false, "foo", "", "foo"},
 	}
 	for _, test := range tests {
-		proxy := newFakeProxy([]helmRelease{}, test.existingApps)
+		proxy := newFakeProxy(test.existingApps)
 		res, err := proxy.GetRelease(test.targetApp, test.tartegNamespace)
 		if test.shouldFail && err == nil {
 			t.Errorf("Get %s/%s should fail", test.tartegNamespace, test.targetApp)
@@ -278,7 +237,7 @@ func TestGetHelmRelease(t *testing.T) {
 
 func TestHelmReleaseDeleted(t *testing.T) {
 	app := AppOverview{"foo", "1.0.0", "my_ns"}
-	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app})
+	proxy := newFakeProxy([]AppOverview{app})
 
 	err := proxy.DeleteRelease(app.ReleaseName, app.Namespace)
 	if err != nil {
@@ -295,7 +254,7 @@ func TestHelmReleaseDeleted(t *testing.T) {
 
 func TestDeleteMissingHelmRelease(t *testing.T) {
 	app := AppOverview{"foo", "1.0.0", "my_ns"}
-	proxy := newFakeProxy([]helmRelease{}, []AppOverview{app})
+	proxy := newFakeProxy([]AppOverview{app})
 
 	err := proxy.DeleteRelease(app.ReleaseName, "other_ns")
 	if err == nil {
@@ -312,42 +271,41 @@ func TestDeleteMissingHelmRelease(t *testing.T) {
 
 func TestEnsureThreadSafety(t *testing.T) {
 	ns := "myns"
-	h := helmRelease{
-		ReleaseName: "not-foo",
-		RepoURL:     "http://charts.example.com/repo/",
-		ChartName:   "foo",
-		Version:     "v1.0.0",
+	rs := "foo"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	rawRelease, _ := json.Marshal(h)
-	proxy := newFakeProxy([]helmRelease{h}, []AppOverview{})
+	proxy := newFakeProxy([]AppOverview{})
 	finish := make(chan struct{})
 	type test func()
 	phases := []test{
 		func() {
 			// Create first element
-			result, err := proxy.CreateRelease(ns, rawRelease)
+			result, err := proxy.CreateRelease(rs, ns, "", ch)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
-			if result.Name != h.ReleaseName {
-				t.Errorf("Expected release named %s received %s", h.ReleaseName, result.Name)
+			if result.Name != rs {
+				t.Errorf("Expected release named %s received %s", rs, result.Name)
 			}
 		},
 		func() {
 			// Try to create it again
-			_, err := proxy.CreateRelease(ns, rawRelease)
+			_, err := proxy.CreateRelease(rs, ns, "", ch)
 			if err == nil {
 				t.Errorf("Should fail with 'already exists'")
 			}
 		},
 		func() {
-			_, err := proxy.UpdateRelease(h.ReleaseName, ns, rawRelease)
+			_, err := proxy.UpdateRelease(rs, ns, "", ch)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
 		},
 		func() {
-			err := proxy.DeleteRelease(h.ReleaseName, ns)
+			err := proxy.DeleteRelease(rs, ns)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
