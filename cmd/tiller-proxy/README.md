@@ -6,12 +6,6 @@ Part of the logic of this tool has been extracted from [helm-CRD](https://github
 
 The client should provide the header `Authorization: Bearer TOKEN` being TOKEN the Kubernetes API Token in order to perform any action.
 
-The client should have permissions to:
-
- - "List" access to all the resources and all the groups for listing releases in a namespace.
- - "Read" access to all the release resources in a release when doing a HTTP GET over a specific release.
- - "Create" and "update" permissions to all the release resources when doing an HTTP POST or PUT to install or update a release.
-
 # Configuration
 
 It is possible to configure this proxy with the following flags:
@@ -35,3 +29,14 @@ This proxy provides 6 different routes:
  - `GET` `/namespaces/{namespace}/releases/{release}`: Get release info
  - `PUT` `/namespaces/{namespace}/releases/{release}`: Update release info
  - `DELETE` `/namespaces/{namespace}/releases/{release}`: Delete a release
+
+# Enabling authorization
+
+It is possible to enable authorization for helm releases setting the env var `ENABLE_AUTH`. If enabled, the client should have permissions to:
+
+ - "Read" access to all the release resources in a release when doing a HTTP GET over a specific release.
+ - "Create" access to all the release resources in a release when doing a when doing an HTTP POST.
+ - "Create", "Update" and "Delete" permissions to all the release resources when doing an HTTP PUT to upgrade a release.
+ - "Delete" permissions to all the release resources when doing an HTTP PUT.
+
+Note that the user only needs a valid token in order to list releases.
