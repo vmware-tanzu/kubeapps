@@ -25,6 +25,8 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 )
 
 var downCmd = &cobra.Command{
@@ -65,7 +67,7 @@ var downCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("can't read kubeapps manifest: %v", err)
 		}
-		objs, err := parseObjects(manifest)
+		objs, err := yamlUtils.ParseObjects(manifest)
 		if err != nil {
 			return fmt.Errorf("can't parse kubeapps manifest: %v", err)
 		}

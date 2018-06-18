@@ -17,24 +17,18 @@ limitations under the License.
 package kubeapps
 
 import (
-	"bufio"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/ksonnet/kubecfg/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -90,34 +84,6 @@ func logLevel(verbosity string) logrus.Level {
 	default:
 		return logrus.WarnLevel
 	}
-}
-
-func parseObjects(manifest string) ([]*unstructured.Unstructured, error) {
-	r := strings.NewReader(manifest)
-	decoder := yaml.NewYAMLReader(bufio.NewReader(r))
-	ret := []runtime.Object{}
-	for {
-		bytes, err := decoder.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, err
-		}
-		if len(bytes) == 0 {
-			continue
-		}
-		jsondata, err := yaml.ToJSON(bytes)
-		if err != nil {
-			return nil, err
-		}
-		obj, _, err := unstructured.UnstructuredJSONScheme.Decode(jsondata, nil, nil)
-		if err != nil {
-			return nil, err
-		}
-		ret = append(ret, obj)
-	}
-
-	return utils.FlattenToV1(ret), nil
 }
 
 func restClientPool() (dynamic.ClientPool, discovery.DiscoveryInterface, error) {
