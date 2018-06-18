@@ -1,6 +1,6 @@
 # Installation
 
-Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for Linux, OS X and Windows, and Kubeapps has been tested with `minikube`, Google Kubernetes Engine (GKE) and Azure Container Service (AKS). Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for Linux, OS X and Windows, and Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
@@ -19,42 +19,7 @@ sudo chmod +x /usr/local/bin/kubeapps
 
 ## Build binary from source
 
-The Kubeapps Installer is a CLI tool written in Go that will deploy the Kubeapps components into your cluster.
-You can build the latest Kubeapps Installer from source by following the steps below:
-
-* Visit [the Go website](https://golang.org), download the most recent [binary distribution of Go](https://golang.org/dl/) and install it following the [official instructions](https://golang.org/doc/install).
-
-  > The remainder of this section assumes that Go is installed in `/usr/local/go`. Update the paths in subsequent commands if you used a different location.
-
-* Set the Go environment variables:
-
-  ```
-  export GOROOT=/usr/local/go
-  export GOPATH=/usr/local/go
-  export PATH=$GOPATH/bin:$PATH
-  ```
-
-* Create a working directory for the project:
-
-  ```
-  working_dir=$GOPATH/src/github.com/kubeapps/
-  mkdir -p $working_dir
-  ```
-
-* Clone the Kubeapps source repository:
-
-  ```
-  cd $working_dir
-  git clone https://github.com/kubeapps/kubeapps
-  ```
-
-* Build the Kubeapps binary and move it to a location in your path:
-
-  ```
-  cd kubeapps
-  make binary
-  cp kubeapps /usr/local
-  ```
+Please refer to the [Kubeapps Build Guide](../developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
 
 # Next Steps
 

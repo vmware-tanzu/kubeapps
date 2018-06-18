@@ -37,7 +37,7 @@ jobs:
     install: yarn install --cwd=dashboard --frozen-lockfile
     script:
     - yarn --cwd=dashboard run lint
-    - yarn --cwd=dashboard run test --maxWorkers=4 --coverage
+    - CI=true yarn --cwd=dashboard run test --maxWorkers=4
 
   # parallel build stages
   - &cliBuild
