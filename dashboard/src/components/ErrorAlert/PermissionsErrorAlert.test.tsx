@@ -42,7 +42,7 @@ it("renders a link to access control documentation", () => {
     "See the documentation for more info on access control in Kubeapps.",
   );
   expect(wrapper.find("a").props()).toMatchObject({
-    href: "https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md",
+    href: "https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md",
     target: "_blank",
   });
 });

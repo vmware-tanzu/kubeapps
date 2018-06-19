@@ -26,7 +26,7 @@ it("renders a link to the access control documentation", () => {
     <LoginForm authenticated={false} authenticate={jest.fn()} location={emptyLocation} />,
   );
   expect(wrapper.find("a").props()).toMatchObject({
-    href: "https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md",
+    href: "https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md",
     target: "_blank",
   });
 });
