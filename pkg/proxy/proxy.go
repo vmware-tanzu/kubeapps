@@ -134,9 +134,11 @@ func (p *Proxy) ListReleases(namespace string) ([]AppOverview, error) {
 		return []AppOverview{}, fmt.Errorf("Unable to list helm releases: %v", err)
 	}
 	appList := []AppOverview{}
-	for _, r := range list.Releases {
-		if namespace == "" || namespace == r.Namespace {
-			appList = append(appList, AppOverview{r.Name, r.Chart.Metadata.Version, r.Namespace})
+	if list != nil {
+		for _, r := range list.Releases {
+			if namespace == "" || namespace == r.Namespace {
+				appList = append(appList, AppOverview{r.Name, r.Chart.Metadata.Version, r.Namespace})
+			}
 		}
 	}
 	return appList, nil

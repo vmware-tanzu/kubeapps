@@ -40,26 +40,29 @@ type resource struct {
 	Namespace  string
 }
 
-// NewAuth creates a auth agent
+// NewAuth creates an auth agent
 func NewAuth(token string) (*UserAuth, error) {
 	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
 	// Overwrite default token
 	config.BearerToken = token
 	kubeClient, err := kubernetes.NewForConfig(config)
 	authCli := kubeClient.AuthorizationV1()
 	discoveryCli := kubeClient.Discovery()
 
-	// Check if the given token is a valid
-	_, err = kubeClient.AuthorizationV1().SelfSubjectRulesReviews().Create(&authorizationapi.SelfSubjectRulesReview{
+	return &UserAuth{authCli, discoveryCli}, nil
+}
+
+// Validate checks if the given token is valid
+func (u *UserAuth) Validate() error {
+	_, err := u.authCli.SelfSubjectRulesReviews().Create(&authorizationapi.SelfSubjectRulesReview{
 		Spec: authorizationapi.SelfSubjectRulesReviewSpec{
 			Namespace: "default",
 		},
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &UserAuth{authCli, discoveryCli}, nil
+	return err
 }
 
 func resolve(discoveryCli discovery.DiscoveryInterface, groupVersion, kind string) (string, error) {
@@ -141,11 +144,6 @@ func (u *UserAuth) CanI(namespace, action, manifest string) error {
 		return err
 	}
 	switch action {
-	case "create":
-		err := u.isAllowed("create", resources)
-		if err != nil {
-			return err
-		}
 	case "upgrade":
 		// For upgrading a chart the user should be able to create, update and delete resources
 		for _, v := range []string{"create", "update", "delete"} {
@@ -154,18 +152,11 @@ func (u *UserAuth) CanI(namespace, action, manifest string) error {
 				return err
 			}
 		}
-	case "get":
-		err := u.isAllowed("get", resources)
-		if err != nil {
-			return err
-		}
-	case "delete":
-		err := u.isAllowed("delete", resources)
-		if err != nil {
-			return err
-		}
 	default:
-		return fmt.Errorf("Unexpected action to check %s", action)
+		err := u.isAllowed(action, resources)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

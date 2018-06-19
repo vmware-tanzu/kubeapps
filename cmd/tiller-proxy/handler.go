@@ -17,18 +17,18 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"io/ioutil"
-	"k8s.io/helm/pkg/proto/hapi/release"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
 	log "github.com/sirupsen/logrus"
+	"github.com/urfave/negroni"
 	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
@@ -39,36 +39,53 @@ const (
 )
 
 var (
-	netClient  *http.Client
-	enableAuth bool
+	netClient *http.Client
 )
 
 func init() {
 	netClient = &http.Client{
 		Timeout: time.Second * defaultTimeoutSeconds,
 	}
-	enableAuth, _ = strconv.ParseBool(os.Getenv("ENABLE_AUTH"))
+}
+
+// Context key type for request contexts
+type contextKey int
+
+// userKey is the context key for the User data in the request context
+const userKey contextKey = 0
+
+// authGate implements middleware to check if the user is logged in before continuing
+func authGate() negroni.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
+		authHeader := strings.Split(req.Header.Get("Authorization"), "Bearer ")
+		if len(authHeader) != 2 {
+			response.NewErrorResponse(http.StatusUnauthorized, "Unauthorized").Write(w)
+			return
+		}
+		userAuth, err := auth.NewAuth(authHeader[1])
+		if err != nil {
+			response.NewErrorResponse(http.StatusInternalServerError, err.Error()).Write(w)
+			return
+		}
+		err = userAuth.Validate()
+		if err != nil {
+			response.NewErrorResponse(http.StatusUnauthorized, err.Error()).Write(w)
+			return
+		}
+		ctx := context.WithValue(req.Context(), userKey, *userAuth)
+		next(w, req.WithContext(ctx))
+	}
 }
 
 // Params a key-value map of path params
 type Params map[string]string
 
-// WithAuth can be used to wrap handlers to take an extra arg for path params
-type WithAuth func(http.ResponseWriter, *http.Request, Params, *auth.UserAuth)
+// WithParams can be used to wrap handlers to take an extra arg for path params
+type WithParams func(http.ResponseWriter, *http.Request, Params)
 
-func (h WithAuth) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (h WithParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	authHeader := strings.Split(req.Header.Get("Authorization"), "Bearer ")
-	if len(authHeader) != 2 {
-		response.NewErrorResponse(http.StatusUnauthorized, "Unauthorized").Write(w)
-		return
-	}
-	userAuth, err := auth.NewAuth(authHeader[1])
-	if err != nil {
-		response.NewErrorResponse(http.StatusUnauthorized, err.Error()).Write(w)
-		return
-	}
-	h(w, req, vars, userAuth)
+	h(w, req, vars)
 }
 
 func isNotFound(err error) bool {
@@ -95,71 +112,93 @@ func errorCode(err error) int {
 	return errCode
 }
 
-func deployRelease(w http.ResponseWriter, req *http.Request, params Params, user *auth.UserAuth) {
-	log.Printf("Creating/updating Helm Release")
+func getChart(req *http.Request) (*chartUtils.Details, *chart.Chart, error) {
 	defer req.Body.Close()
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
-		return
+		return nil, nil, err
 	}
 	chartDetails, err := chartUtils.ParseDetails(body)
 	if err != nil {
-		response.NewErrorResponse(http.StatusUnprocessableEntity, err.Error()).Write(w)
-		return
+		return nil, nil, err
 	}
 	ch, err := chartUtils.GetChart(chartDetails, kubeClient, netClient, chartutil.LoadArchive)
+	if err != nil {
+		return nil, nil, err
+	}
+	return chartDetails, ch, nil
+}
+
+func logStatus(name string) {
+	status, err := proxy.GetReleaseStatus(name)
+	if err != nil {
+		log.Printf("Unable to fecth release status of %s: %v", name, err)
+	} else {
+		log.Printf("Release status: %s", status)
+	}
+}
+
+func createRelease(w http.ResponseWriter, req *http.Request, params Params) {
+	log.Printf("Creating Helm Release")
+	chartDetails, ch, err := getChart(req)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
 	}
-	action := "create"
-	if req.Method == "PUT" && params["releaseName"] != "" {
-		action = "upgrade"
-	}
-	if enableAuth {
+	if !disableAuth {
 		manifest, err := proxy.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
-		err = user.CanI(params["namespace"], action, manifest)
+		userAuth := req.Context().Value(userKey).(auth.UserAuth)
+		err = userAuth.CanI(params["namespace"], "create", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
 	}
-	var rel *release.Release
-	if action == "create" {
-		rel, err = proxy.CreateRelease(
-			chartDetails.ReleaseName,
-			params["namespace"],
-			chartDetails.Values,
-			ch,
-		)
-	} else {
-		rel, err = proxy.UpdateRelease(
-			params["releaseName"],
-			params["namespace"],
-			chartDetails.Values,
-			ch,
-		)
-	}
+	rel, err := proxy.CreateRelease(chartDetails.ReleaseName, params["namespace"], chartDetails.Values, ch)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
 	}
-	log.Printf("Installed/updated release %s", rel.Name)
-	status, err := proxy.GetReleaseStatus(rel.Name)
-	if err != nil {
-		log.Printf("Unable to fecth release status of %s: %v", rel.Name, err)
-	} else {
-		log.Printf("Release status: %s", status)
-	}
+	log.Printf("Installed release %s", rel.Name)
+	logStatus(rel.Name)
 	response.NewDataResponse(*rel).Write(w)
 }
 
-func listAllReleases(w http.ResponseWriter, req *http.Request, params Params, user *auth.UserAuth) {
+func upgradeRelease(w http.ResponseWriter, req *http.Request, params Params) {
+	log.Printf("Upgrading Helm Release")
+	chartDetails, ch, err := getChart(req)
+	if err != nil {
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		return
+	}
+	if !disableAuth {
+		manifest, err := proxy.ResolveManifest(params["namespace"], chartDetails.Values, ch)
+		if err != nil {
+			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			return
+		}
+		userAuth := req.Context().Value(userKey).(auth.UserAuth)
+		err = userAuth.CanI(params["namespace"], "create", manifest)
+		if err != nil {
+			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			return
+		}
+	}
+	rel, err := proxy.UpdateRelease(params["releaseName"], params["namespace"], chartDetails.Values, ch)
+	if err != nil {
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		return
+	}
+	log.Printf("Upgraded release %s", rel.Name)
+	logStatus(rel.Name)
+	response.NewDataResponse(*rel).Write(w)
+}
+
+func listAllReleases(w http.ResponseWriter, req *http.Request) {
 	apps, err := proxy.ListReleases("")
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -168,7 +207,7 @@ func listAllReleases(w http.ResponseWriter, req *http.Request, params Params, us
 	response.NewDataResponse(apps).Write(w)
 }
 
-func listReleases(w http.ResponseWriter, req *http.Request, params Params, user *auth.UserAuth) {
+func listReleases(w http.ResponseWriter, req *http.Request, params Params) {
 	apps, err := proxy.ListReleases(params["namespace"])
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -177,25 +216,26 @@ func listReleases(w http.ResponseWriter, req *http.Request, params Params, user 
 	response.NewDataResponse(apps).Write(w)
 }
 
-func getRelease(w http.ResponseWriter, req *http.Request, params Params, user *auth.UserAuth) {
+func getRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	rel, err := proxy.GetRelease(params["releaseName"], params["namespace"])
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
 	}
-	if enableAuth {
+	if !disableAuth {
 		manifest, err := proxy.ResolveManifest(params["namespace"], rel.Config.Raw, rel.Chart)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
-		err = user.CanI(params["namespace"], "get", manifest)
+		userAuth := req.Context().Value(userKey).(auth.UserAuth)
+		err = userAuth.CanI(params["namespace"], "get", manifest)
 	}
 	response.NewDataResponse(*rel).Write(w)
 }
 
-func deleteRelease(w http.ResponseWriter, req *http.Request, params Params, user *auth.UserAuth) {
-	if enableAuth {
+func deleteRelease(w http.ResponseWriter, req *http.Request, params Params) {
+	if !disableAuth {
 		rel, err := proxy.GetRelease(params["releaseName"], params["namespace"])
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -206,7 +246,8 @@ func deleteRelease(w http.ResponseWriter, req *http.Request, params Params, user
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
-		err = user.CanI(params["namespace"], "delete", manifest)
+		userAuth := req.Context().Value(userKey).(auth.UserAuth)
+		err = userAuth.CanI(params["namespace"], "delete", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return

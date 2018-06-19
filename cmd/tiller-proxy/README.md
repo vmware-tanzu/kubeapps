@@ -32,7 +32,7 @@ This proxy provides 6 different routes:
 
 # Enabling authorization
 
-It is possible to enable authorization for helm releases setting the env var `ENABLE_AUTH`. If enabled, the client should have permissions to:
+By default, authorization for any request is enabled (it can be disabled using the flag --disable-auth). If enabled, the client should have permissions to:
 
  - "Read" access to all the release resources in a release when doing a HTTP GET over a specific release.
  - "Create" access to all the release resources in a release when doing a when doing an HTTP POST.
@@ -40,3 +40,5 @@ It is possible to enable authorization for helm releases setting the env var `EN
  - "Delete" permissions to all the release resources when doing an HTTP PUT.
 
 Note that the user only needs a valid token in order to list releases.
+
+Right now, the only supported method for authentication is using a bearer token.

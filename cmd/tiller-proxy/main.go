@@ -34,13 +34,15 @@ import (
 )
 
 var (
-	settings   environment.EnvSettings
-	proxy      *tillerProxy.Proxy
-	kubeClient kubernetes.Interface
+	settings    environment.EnvSettings
+	proxy       *tillerProxy.Proxy
+	kubeClient  kubernetes.Interface
+	disableAuth bool
 )
 
 func init() {
 	settings.AddFlags(pflag.CommandLine)
+	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 }
 
 func main() {
@@ -75,14 +77,28 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
+	authGate := authGate()
+
 	// Routes
 	apiv1 := r.PathPrefix("/v1").Subrouter()
-	apiv1.Methods("GET").Path("/releases").Handler(WithAuth(listAllReleases))
-	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(WithAuth(listReleases))
-	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(WithAuth(deployRelease))
-	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(WithAuth(getRelease))
-	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(WithAuth(deployRelease))
-	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(WithAuth(deleteRelease))
+	apiv1.Methods("GET").Path("/releases").HandlerFunc(listAllReleases)
+	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(WithParams(listReleases))
+	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(WithParams(createRelease)),
+	))
+	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(WithParams(getRelease)),
+	))
+	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(WithParams(upgradeRelease)),
+	))
+	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(WithParams(deleteRelease)),
+	))
 
 	n := negroni.Classic()
 	n.UseHandler(r)
