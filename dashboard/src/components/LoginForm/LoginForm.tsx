@@ -46,7 +46,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
               <p>
                 Your cluster operator should provide you with a Kubernetes API token.{" "}
                 <a
-                  href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                  href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
                   target="_blank"
                 >
                   Click here

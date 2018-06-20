@@ -52,7 +52,7 @@ ShallowWrapper {
                     See the documentation for more info on
                      
                     <a
-                              href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                              href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
                               target="_blank"
                     >
                               access control in Kubeapps
@@ -144,7 +144,7 @@ ShallowWrapper {
               See the documentation for more info on
                
               <a
-                            href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
                             target="_blank"
               >
                             access control in Kubeapps
@@ -188,7 +188,7 @@ ShallowWrapper {
                 "See the documentation for more info on",
                 " ",
                 <a
-                  href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                  href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
                   target="_blank"
 >
                   access control in Kubeapps
@@ -206,7 +206,7 @@ ShallowWrapper {
                 "nodeType": "host",
                 "props": Object {
                   "children": "access control in Kubeapps",
-                  "href": "https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md",
+                  "href": "https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md",
                   "target": "_blank",
                 },
                 "ref": null,
@@ -260,7 +260,7 @@ ShallowWrapper {
                         See the documentation for more info on
                          
                         <a
-                                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
                                     target="_blank"
                         >
                                     access control in Kubeapps
@@ -352,7 +352,7 @@ ShallowWrapper {
                 See the documentation for more info on
                  
                 <a
-                                href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                                href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
                                 target="_blank"
                 >
                                 access control in Kubeapps
@@ -396,7 +396,7 @@ ShallowWrapper {
                   "See the documentation for more info on",
                   " ",
                   <a
-                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
                     target="_blank"
 >
                     access control in Kubeapps
@@ -414,7 +414,7 @@ ShallowWrapper {
                   "nodeType": "host",
                   "props": Object {
                     "children": "access control in Kubeapps",
-                    "href": "https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md",
+                    "href": "https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md",
                     "target": "_blank",
                   },
                   "ref": null,

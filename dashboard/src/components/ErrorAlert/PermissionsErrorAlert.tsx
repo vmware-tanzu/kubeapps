@@ -28,7 +28,7 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
           <p>
             See the documentation for more info on{" "}
             <a
-              href="https://github.com/kubeapps/kubeapps/blob/master/docs/access-control.md"
+              href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
               target="_blank"
             >
               access control in Kubeapps
