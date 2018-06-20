@@ -1,4 +1,4 @@
-# <img src="./img/logo.png" width="40" align="left"> Kubeapps
+# <img src="./docs/img/logo.png" width="40" align="left"> Kubeapps
 
 [![Build Status](https://travis-ci.org/kubeapps/kubeapps.svg?branch=master)](https://travis-ci.org/kubeapps/kubeapps)
 
@@ -26,7 +26,7 @@ kubeapps dashboard
 
 These commands will deploy Kubeapps in your cluster and launch a browser with the Kubeapps dashboard.
 
-![Dashboard login page](img/dashboard-login.png)
+![Dashboard login page](docs/img/dashboard-login.png)
 
 Access to the dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server. Read the [Access Control](docs/user/access-control.md) documentation for more information on configuring users for Kubeapps.
 
@@ -45,7 +45,7 @@ kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{
 
 **NOTE**: It's not recommended to create cluster-admin users for Kubeapps. Please refer to the [Access Control](docs/user/access-control.md) documentation to configure more fine-grained access.
 
-![Dashboard main page](img/dashboard-home.png)
+![Dashboard main page](docs/img/dashboard-home.png)
 
 To remove Kubeapps from your cluster, simply run:
 
