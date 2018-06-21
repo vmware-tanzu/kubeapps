@@ -132,7 +132,7 @@ func getChart(req *http.Request) (*chartUtils.Details, *chart.Chart, error) {
 func logStatus(name string) {
 	status, err := proxy.GetReleaseStatus(name)
 	if err != nil {
-		log.Printf("Unable to fecth release status of %s: %v", name, err)
+		log.Printf("Unable to fetch release status of %s: %v", name, err)
 	} else {
 		log.Printf("Release status: %s", status)
 	}
