@@ -35,6 +35,9 @@ kubeapps/%:
 kubeapps/dashboard:
 	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
 
+tiller-proxy:
+	docker build -t kubeapps/tiller-proxy -f ./cmd/tiller-proxy/Dockerfile .
+
 test: $(EMBEDDED_STATIC)
 	$(GO) test $(GO_PACKAGES)
 

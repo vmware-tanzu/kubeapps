@@ -30,7 +30,6 @@ import (
 	"github.com/gosuri/uitable"
 	"github.com/ksonnet/kubecfg/pkg/kubecfg"
 	"github.com/ksonnet/kubecfg/utils"
-	"github.com/kubeapps/kubeapps/pkg/gke"
 	"github.com/spf13/cobra"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
@@ -40,6 +39,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/kubeapps/kubeapps/pkg/gke"
+	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 )
 
 const (
@@ -113,7 +115,7 @@ List of components that kubeapps up installs:
 			return fmt.Errorf("can't read kubeapps manifest: %v", err)
 		}
 
-		objs, err := parseObjects(manifest)
+		objs, err := yamlUtils.ParseObjects(manifest)
 		if err != nil {
 			return fmt.Errorf("can't parse kubeapps manifest: %v", err)
 		}

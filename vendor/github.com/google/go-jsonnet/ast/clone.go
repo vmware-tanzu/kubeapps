@@ -25,9 +25,11 @@ import (
 func cloneForSpec(specPtr *ForSpec) {
 	clone(&specPtr.Expr)
 	oldOuter := specPtr.Outer
-	specPtr.Outer = new(ForSpec)
-	*specPtr.Outer = *oldOuter
-	cloneForSpec(specPtr.Outer)
+	if oldOuter != nil {
+		specPtr.Outer = new(ForSpec)
+		*specPtr.Outer = *oldOuter
+		cloneForSpec(specPtr.Outer)
+	}
 	for i := range specPtr.Conditions {
 		clone(&specPtr.Conditions[i].Expr)
 	}
