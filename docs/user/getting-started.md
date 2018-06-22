@@ -28,21 +28,6 @@ You should see something like this as Kubeapps is deployed:
 
 ![Kubeapps deployment](../img/kubeapps-up.png)
 
-**NOTE:** On Azure Kubernetes Service, follow the instructions below to patch your installation due to an [issue in AKS](https://github.com/Azure/AKS/issues/408#issuecomment-395928798):
-
-1. Ensure that your cluster is using azureproxy, if it isn't you don't need this fix:
-    ```
-    kubectl get deploy -n kube-system azureproxy
-    ```
-1. If the above command returned a result, execute the following patch:
-    ```
-    MASTER_HOST=$(kubectl get cm -n kube-system -o yaml azureproxy-config | grep 'server .*;$' | sed 's/\ *server \(.*\):443;/\1/') && kubectl get cm -n kubeapps -l=app=kubeapps -o yaml | sed "s/kubernetes.default/$MASTER_HOST/" | kubectl apply -f - && kubectl delete po -n kubeapps -l app=kubeapps
-    ```
-1. Wait for the `kubeapps` frontend to be ready:
-    ```
-    kubectl get po -n kubeapps -l app=kubeapps -w
-    ```
-
 If you would like to see what exactly `kubeapps up` is installing on your system, we provide `--dry-run` option to show you the Kubeapps manifest as below:
 
 ```
