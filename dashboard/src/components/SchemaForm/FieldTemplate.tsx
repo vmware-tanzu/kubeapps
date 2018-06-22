@@ -9,7 +9,7 @@ const FieldTemplate: React.SFC<FieldTemplateProps> = props => {
       {displayLabel && (
         <label htmlFor={id}>
           {label}
-          {required && " *"}
+          {required && " (required)"}
         </label>
       )}
       {children}

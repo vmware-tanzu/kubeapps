@@ -122,7 +122,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
 
   public handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    this.setState({ ...this.state, displayNameForm: true });
+    this.setState({ displayNameForm: true });
   };
 
   public handleNameChange = ({ formData }: ISubmitEvent<{ Name: string }>) => {
