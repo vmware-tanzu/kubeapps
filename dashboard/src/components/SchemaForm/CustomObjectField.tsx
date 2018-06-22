@@ -29,9 +29,10 @@ class CustomObjectField extends React.Component<FieldProps, ICustomObjectFieldSt
     if (schema.properties) {
       return <ObjectField {...this.props} />;
     }
+    const label = schema.title || name;
     return (
       <div>
-        <label htmlFor={name}>{name} (JSON)</label>
+        <label htmlFor={label}>{label} (JSON)</label>
         <AceEditor
           className="margin-b-big"
           mode="json"
