@@ -1,0 +1,427 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a header for the chart 1`] = `
+ShallowWrapper {
+  "length": 1,
+  Symbol(enzyme.__root__): [Circular],
+  Symbol(enzyme.__unrendered__): <ChartHeader
+    description="A Test Chart"
+    id="testrepo/test"
+    repo="testrepo"
+/>,
+  Symbol(enzyme.__renderer__): Object {
+    "batchedUpdates": [Function],
+    "getNode": [Function],
+    "render": [Function],
+    "simulateEvent": [Function],
+    "unmount": [Function],
+  },
+  Symbol(enzyme.__node__): Object {
+    "instance": null,
+    "key": undefined,
+    "nodeType": "host",
+    "props": Object {
+      "children": Array [
+        <div
+          className="ChartView__heading margin-normal"
+>
+          <ChartIcon
+                    icon={undefined}
+          />
+          <div
+                    className="title margin-l-small"
+          >
+                    <h1
+                              className="margin-t-reset"
+                    >
+                              testrepo/test
+                    </h1>
+                    <h5
+                              className="subtitle margin-b-normal"
+                    >
+                              <Link
+                                        replace={false}
+                                        to="/charts/testrepo"
+                              >
+                                        testrepo
+                              </Link>
+                    </h5>
+                    <h5
+                              className="subtitle margin-b-reset"
+                    >
+                              A Test Chart
+                    </h5>
+          </div>
+</div>,
+        <hr />,
+      ],
+    },
+    "ref": null,
+    "rendered": Array [
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {
+          "children": Array [
+            <ChartIcon
+              icon={undefined}
+/>,
+            <div
+              className="title margin-l-small"
+>
+              <h1
+                            className="margin-t-reset"
+              >
+                            testrepo/test
+              </h1>
+              <h5
+                            className="subtitle margin-b-normal"
+              >
+                            <Link
+                                          replace={false}
+                                          to="/charts/testrepo"
+                            >
+                                          testrepo
+                            </Link>
+              </h5>
+              <h5
+                            className="subtitle margin-b-reset"
+              >
+                            A Test Chart
+              </h5>
+</div>,
+          ],
+          "className": "ChartView__heading margin-normal",
+        },
+        "ref": null,
+        "rendered": Array [
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "class",
+            "props": Object {
+              "icon": undefined,
+            },
+            "ref": null,
+            "rendered": null,
+            "type": [Function],
+          },
+          Object {
+            "instance": null,
+            "key": undefined,
+            "nodeType": "host",
+            "props": Object {
+              "children": Array [
+                <h1
+                  className="margin-t-reset"
+>
+                  testrepo/test
+</h1>,
+                <h5
+                  className="subtitle margin-b-normal"
+>
+                  <Link
+                                    replace={false}
+                                    to="/charts/testrepo"
+                  >
+                                    testrepo
+                  </Link>
+</h5>,
+                <h5
+                  className="subtitle margin-b-reset"
+>
+                  A Test Chart
+</h5>,
+              ],
+              "className": "title margin-l-small",
+            },
+            "ref": null,
+            "rendered": Array [
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": "testrepo/test",
+                  "className": "margin-t-reset",
+                },
+                "ref": null,
+                "rendered": "testrepo/test",
+                "type": "h1",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": Array [
+                    undefined,
+                    <Link
+                      replace={false}
+                      to="/charts/testrepo"
+>
+                      testrepo
+</Link>,
+                  ],
+                  "className": "subtitle margin-b-normal",
+                },
+                "ref": null,
+                "rendered": Array [
+                  undefined,
+                  Object {
+                    "instance": null,
+                    "key": undefined,
+                    "nodeType": "class",
+                    "props": Object {
+                      "children": "testrepo",
+                      "replace": false,
+                      "to": "/charts/testrepo",
+                    },
+                    "ref": null,
+                    "rendered": "testrepo",
+                    "type": [Function],
+                  },
+                ],
+                "type": "h5",
+              },
+              Object {
+                "instance": null,
+                "key": undefined,
+                "nodeType": "host",
+                "props": Object {
+                  "children": "A Test Chart",
+                  "className": "subtitle margin-b-reset",
+                },
+                "ref": null,
+                "rendered": "A Test Chart",
+                "type": "h5",
+              },
+            ],
+            "type": "div",
+          },
+        ],
+        "type": "div",
+      },
+      Object {
+        "instance": null,
+        "key": undefined,
+        "nodeType": "host",
+        "props": Object {},
+        "ref": null,
+        "rendered": null,
+        "type": "hr",
+      },
+    ],
+    "type": "header",
+  },
+  Symbol(enzyme.__nodes__): Array [
+    Object {
+      "instance": null,
+      "key": undefined,
+      "nodeType": "host",
+      "props": Object {
+        "children": Array [
+          <div
+            className="ChartView__heading margin-normal"
+>
+            <ChartIcon
+                        icon={undefined}
+            />
+            <div
+                        className="title margin-l-small"
+            >
+                        <h1
+                                    className="margin-t-reset"
+                        >
+                                    testrepo/test
+                        </h1>
+                        <h5
+                                    className="subtitle margin-b-normal"
+                        >
+                                    <Link
+                                                replace={false}
+                                                to="/charts/testrepo"
+                                    >
+                                                testrepo
+                                    </Link>
+                        </h5>
+                        <h5
+                                    className="subtitle margin-b-reset"
+                        >
+                                    A Test Chart
+                        </h5>
+            </div>
+</div>,
+          <hr />,
+        ],
+      },
+      "ref": null,
+      "rendered": Array [
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {
+            "children": Array [
+              <ChartIcon
+                icon={undefined}
+/>,
+              <div
+                className="title margin-l-small"
+>
+                <h1
+                                className="margin-t-reset"
+                >
+                                testrepo/test
+                </h1>
+                <h5
+                                className="subtitle margin-b-normal"
+                >
+                                <Link
+                                                replace={false}
+                                                to="/charts/testrepo"
+                                >
+                                                testrepo
+                                </Link>
+                </h5>
+                <h5
+                                className="subtitle margin-b-reset"
+                >
+                                A Test Chart
+                </h5>
+</div>,
+            ],
+            "className": "ChartView__heading margin-normal",
+          },
+          "ref": null,
+          "rendered": Array [
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "class",
+              "props": Object {
+                "icon": undefined,
+              },
+              "ref": null,
+              "rendered": null,
+              "type": [Function],
+            },
+            Object {
+              "instance": null,
+              "key": undefined,
+              "nodeType": "host",
+              "props": Object {
+                "children": Array [
+                  <h1
+                    className="margin-t-reset"
+>
+                    testrepo/test
+</h1>,
+                  <h5
+                    className="subtitle margin-b-normal"
+>
+                    <Link
+                                        replace={false}
+                                        to="/charts/testrepo"
+                    >
+                                        testrepo
+                    </Link>
+</h5>,
+                  <h5
+                    className="subtitle margin-b-reset"
+>
+                    A Test Chart
+</h5>,
+                ],
+                "className": "title margin-l-small",
+              },
+              "ref": null,
+              "rendered": Array [
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "testrepo/test",
+                    "className": "margin-t-reset",
+                  },
+                  "ref": null,
+                  "rendered": "testrepo/test",
+                  "type": "h1",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": Array [
+                      undefined,
+                      <Link
+                        replace={false}
+                        to="/charts/testrepo"
+>
+                        testrepo
+</Link>,
+                    ],
+                    "className": "subtitle margin-b-normal",
+                  },
+                  "ref": null,
+                  "rendered": Array [
+                    undefined,
+                    Object {
+                      "instance": null,
+                      "key": undefined,
+                      "nodeType": "class",
+                      "props": Object {
+                        "children": "testrepo",
+                        "replace": false,
+                        "to": "/charts/testrepo",
+                      },
+                      "ref": null,
+                      "rendered": "testrepo",
+                      "type": [Function],
+                    },
+                  ],
+                  "type": "h5",
+                },
+                Object {
+                  "instance": null,
+                  "key": undefined,
+                  "nodeType": "host",
+                  "props": Object {
+                    "children": "A Test Chart",
+                    "className": "subtitle margin-b-reset",
+                  },
+                  "ref": null,
+                  "rendered": "A Test Chart",
+                  "type": "h5",
+                },
+              ],
+              "type": "div",
+            },
+          ],
+          "type": "div",
+        },
+        Object {
+          "instance": null,
+          "key": undefined,
+          "nodeType": "host",
+          "props": Object {},
+          "ref": null,
+          "rendered": null,
+          "type": "hr",
+        },
+      ],
+      "type": "header",
+    },
+  ],
+  Symbol(enzyme.__options__): Object {
+    "adapter": ReactSixteenAdapter {
+      "options": Object {
+        "enableComponentDidUpdateOnSetState": true,
+      },
+    },
+  },
+}
+`;
