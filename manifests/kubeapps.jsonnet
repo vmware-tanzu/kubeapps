@@ -4,7 +4,6 @@ local kubecfg = import "kubecfg.libsonnet";
 local host = null;
 local tls = false;
 local kubeless = import "kubeless.jsonnet";
-local ssecrets = import "sealed-secrets.jsonnet";
 
 local labels = {
   metadata+: {
@@ -37,7 +36,6 @@ local labelifyEach(src) = {
   // NB: these are left in their usual namespaces, to avoid forcing
   // non-default command line options onto client tools
   kubeless: labelifyEach(kubeless),
-  ssecrets: [s + labels for s in ssecrets],
 
   dashboard_:: (import "kubeapps-dashboard.jsonnet") {
     namespace:: $.namespace,
