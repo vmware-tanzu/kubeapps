@@ -24,7 +24,7 @@ local labels = {app: "mongodb"};
         spec+: {
           containers_+: {
             default: kube.Container("mongodb") {
-              image: "bitnami/mongodb:3.4.9-r1",
+              image: "bitnami/mongodb:3.6.5-r31",
               env_+: {
                 MONGODB_ROOT_PASSWORD: kube.SecretKeyRef($.secret, "mongodb-root-password"),
               },
