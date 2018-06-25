@@ -29,6 +29,8 @@ interface IProvisionButtonProps {
 interface IProvisionButtonState {
   isProvisioning: boolean;
   modalIsOpen: boolean;
+  name: string;
+  displayNameForm: boolean;
 }
 
 const RequiredRBACRoles: IRBACRole[] = [
@@ -39,35 +41,35 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-const NameProperty: JSONSchema6 = {
-  description: "Name for ServiceInstance",
-  type: "string",
+const smallModalStyle = {
+  content: {
+    bottom: "auto",
+    left: "50%",
+    marginRight: "-50%",
+    right: "auto",
+    top: "50%",
+    transform: "translate(-50%, -50%)",
+  },
 };
 
 class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionButtonState> {
   public state: IProvisionButtonState = {
+    displayNameForm: true,
     isProvisioning: false,
     modalIsOpen: false,
+    name: "",
   };
 
   public render() {
     const { selectedPlan } = this.props;
     let schema = selectedPlan.spec.instanceCreateParameterSchema;
-    if (schema) {
-      schema.properties = {
-        name: NameProperty,
-        ...(schema.properties || {}),
-      };
-      schema.required = [...(schema.required || []), "name"];
-    } else {
-      // If the Service Broker does not define a schema, default to a raw
-      // parameters JSON object
+    if (!schema) {
       schema = {
         properties: {
           kubeappsRawParameters: {
+            title: "Parameters",
             type: "object",
           },
-          name: NameProperty,
         },
         type: "object",
       };
@@ -87,18 +89,32 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
           isOpen={this.state.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"
+          style={this.state.displayNameForm ? smallModalStyle : {}}
         >
           {this.props.error && <div className="margin-b-big">{this.renderError()}</div>}
-          <SchemaForm schema={schema} onSubmit={this.handleProvision}>
-            <div>
-              <button className="button button-primary" type="submit">
-                Submit
-              </button>
-              <button className="button" onClick={this.closeModal}>
-                Cancel
-              </button>
-            </div>
-          </SchemaForm>
+          {this.state.displayNameForm ? (
+            <SchemaForm schema={this.nameSchema()} onSubmit={this.handleNameChange}>
+              <div>
+                <button className="button button-primary" type="submit">
+                  Continue
+                </button>
+                <button className="button" onClick={this.closeModal}>
+                  Cancel
+                </button>
+              </div>
+            </SchemaForm>
+          ) : (
+            <SchemaForm schema={schema} onSubmit={this.handleProvision}>
+              <div>
+                <button className="button button-primary" type="submit">
+                  Submit
+                </button>
+                <button className="button" onClick={this.handleBackButton}>
+                  Back
+                </button>
+              </div>
+            </SchemaForm>
+          )}
         </Modal>
       </div>
     );
@@ -116,13 +132,23 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
     });
   };
 
+  public handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    this.setState({ displayNameForm: true });
+  };
+
+  public handleNameChange = ({ formData }: ISubmitEvent<{ Name: string }>) => {
+    this.setState({ name: formData.Name, displayNameForm: false });
+  };
+
   public handleProvision = async ({
     formData,
   }: ISubmitEvent<{ name: string; kubeappsRawParameters: {} }>) => {
     const { namespace, provision, push, selectedClass, selectedPlan } = this.props;
+    const { name } = this.state;
     this.setState({ isProvisioning: true });
 
-    const { name, kubeappsRawParameters, ...rest } = formData;
+    const { kubeappsRawParameters, ...rest } = formData;
     if (selectedClass && selectedPlan) {
       const provisioned = await provision(
         name,
@@ -142,6 +168,20 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
       }
     }
   };
+
+  private nameSchema(): JSONSchema6 {
+    return {
+      properties: {
+        Name: {
+          default: this.state.name,
+          description: "Name for ServiceInstance",
+          type: "string",
+        },
+      },
+      required: ["Name"],
+      type: "object",
+    };
+  }
 
   private renderError() {
     const { error, namespace } = this.props;
