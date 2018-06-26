@@ -19,7 +19,7 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
   local name = labels.app,
   local mongoDbHost = "%s.%s" % [$.mongodb_svc.metadata.name, $.mongodb_svc.metadata.namespace],
 
-  tillerHelmCRD: (import "helm-crd.jsonnet") { namespace: $.namespace },
+  tillerProxy: (import "tiller-proxy.jsonnet") { namespace: $.namespace }, 
 
   ui: {
     svc: kube.Service(name + "-ui") + $.namespace {

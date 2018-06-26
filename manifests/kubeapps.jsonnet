@@ -49,7 +49,7 @@ local labelifyEach(src) = {
       apprepos: labelifyEach($.dashboard_.apprepository.apprepos),
     },
     chartsvc: labelifyEach($.dashboard_.chartsvc),
-    tillerHelmCRD: labelifyEach($.dashboard_.tillerHelmCRD),
+    tillerProxy: labelifyEach($.dashboard_.tillerProxy),
   },
 
   mongodb_:: (import "mongodb.jsonnet") {

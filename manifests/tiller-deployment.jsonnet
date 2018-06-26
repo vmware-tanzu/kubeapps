@@ -1,4 +1,4 @@
-// This is literally `helm init -o json` from helm version v2.7.0
+// This is literally `helm init -o json` from helm version v2.9.1
 {
     "apiVersion": "extensions/v1beta1",
     "kind": "Deployment",
@@ -12,6 +12,7 @@
         "namespace": "kube-system"
     },
     "spec": {
+        "replicas": 1,
         "strategy": {},
         "template": {
             "metadata": {
@@ -34,7 +35,7 @@
                                 "value": "0"
                             }
                         ],
-                        "image": "gcr.io/kubernetes-helm/tiller:v2.8.0",
+                        "image": "gcr.io/kubernetes-helm/tiller:v2.9.1",
                         "imagePullPolicy": "IfNotPresent",
                         "livenessProbe": {
                             "httpGet": {
@@ -49,6 +50,10 @@
                             {
                                 "containerPort": 44134,
                                 "name": "tiller"
+                            },
+                            {
+                                "containerPort": 44135,
+                                "name": "http"
                             }
                         ],
                         "readinessProbe": {
