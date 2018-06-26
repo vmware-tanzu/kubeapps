@@ -2,7 +2,8 @@ import * as yaml from "js-yaml";
 import * as React from "react";
 
 import { Auth } from "../../shared/Auth";
-import { ForbiddenError, IApp, IRBACRole, IResource, NotFoundError } from "../../shared/types";
+import { hapi } from "../../shared/hapi/release";
+import { ForbiddenError, IRBACRole, IResource, NotFoundError } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
@@ -16,7 +17,7 @@ import ServiceTable from "./ServiceTable";
 interface IAppViewProps {
   namespace: string;
   releaseName: string;
-  app: IApp;
+  app: hapi.release.Release;
   error: Error;
   deleteError: Error;
   getApp: (releaseName: string, namespace: string) => Promise<void>;
@@ -31,19 +32,7 @@ interface IAppViewState {
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
-  delete: [
-    {
-      apiGroup: "helm.bitnami.com",
-      resource: "helmreleases",
-      verbs: ["delete"],
-    },
-  ],
   view: [
-    {
-      apiGroup: "helm.bitnami.com",
-      resource: "helmreleases",
-      verbs: ["get"],
-    },
     {
       apiGroup: "apps",
       resource: "deployments",
@@ -53,12 +42,6 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
       apiGroup: "apps",
       resource: "services",
       verbs: ["list", "watch"],
-    },
-    {
-      apiGroup: "",
-      namespace: "kubeapps",
-      resource: "configmaps",
-      verbs: ["get"],
     },
   ],
 };
@@ -91,7 +74,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     if (!newApp) {
       return;
     }
-    const manifest: IResource[] = yaml.safeLoadAll(newApp.data.manifest);
+    const manifest: IResource[] = yaml.safeLoadAll(newApp.manifest);
     const watchedKinds = ["Deployment", "Service"];
     const otherResources = manifest
       .filter(d => watchedKinds.indexOf(d.kind) < 0)
@@ -112,7 +95,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     for (const d of deployments) {
       const s = new WebSocket(
         `${apiBase}/apis/apps/v1beta1/namespaces/${
-          newApp.data.namespace
+          newApp.namespace
         }/deployments?watch=true&fieldSelector=metadata.name%3D${d.metadata.name}`,
         Auth.wsProtocols(),
       );
@@ -122,7 +105,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     for (const svc of services) {
       const s = new WebSocket(
         `${apiBase}/api/v1/namespaces/${
-          newApp.data.namespace
+          newApp.namespace
         }/services?watch=true&fieldSelector=metadata.name%3D${svc.metadata.name}`,
         Auth.wsProtocols(),
       );
@@ -168,7 +151,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         <main>
           <div className="container">
             {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
-            {!this.props.app.hr && this.renderMigrationNeeded()}
             <div className="row collapse-b-tablet">
               <div className="col-3">
                 <ChartInfo app={app} />
@@ -183,9 +165,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                   </div>
                 </div>
                 <ServiceTable services={this.state.services} extended={false} />
-                <AppNotes
-                  notes={app.data.info && app.data.info.status && app.data.info.status.notes}
-                />
+                <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <AppDetails
                   deployments={this.state.deployments}
                   services={this.state.services}
@@ -199,27 +179,23 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     );
   }
 
-  private renderMigrationNeeded() {
-    return (
-      <div className="banner">
-        <div className="container container-small text-c">
-          <p className="margin-t-small">
-            This release is not being managed by Kubeapps. To be able to upgrade or delete this
-            release <strong>click on the "Migrate" button below</strong>.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   private renderError(error: Error, action: string = "view") {
     const { namespace, releaseName } = this.props;
     switch (error.constructor) {
       case ForbiddenError:
+        const message = error ? error.message : "";
+        let roles: IRBACRole[] = [];
+        try {
+          roles = JSON.parse(message);
+        } catch (e) {
+          // Cannot parse the error as a role array
+          // return the default roles
+          roles = RequiredRBACRoles[action];
+        }
         return (
           <PermissionsErrorAlert
             namespace={namespace}
-            roles={RequiredRBACRoles[action]}
+            roles={roles}
             action={`${action} Application "${releaseName}"`}
           />
         );

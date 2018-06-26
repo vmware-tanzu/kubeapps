@@ -1,10 +1,11 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { ForbiddenError, IApp, IAppState, IRBACRole } from "../../shared/types";
+import { hapi } from "../../shared/hapi/release";
+import { IAppState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
-import { MessageAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { MessageAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
@@ -20,20 +21,6 @@ interface IAppListProps {
 interface IAppListState {
   filter: string;
 }
-
-const RequiredRBACRoles: IRBACRole[] = [
-  {
-    apiGroup: "helm.bitnami.com",
-    resource: "helmreleases",
-    verbs: ["list"],
-  },
-  {
-    apiGroup: "",
-    namespace: "kubeapps",
-    resource: "configmaps",
-    verbs: ["list"],
-  },
-];
 
 class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
@@ -116,7 +103,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
         <div>
           <CardGrid>
             {this.filteredApps(items, this.state.filter).map(r => {
-              return <AppListItem key={r.data.name} app={r} />;
+              return <AppListItem key={r.name} app={r} />;
             })}
           </CardGrid>
         </div>
@@ -125,20 +112,11 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   private renderError(error: Error) {
-    const { namespace } = this.props;
-    return error instanceof ForbiddenError ? (
-      <PermissionsErrorAlert
-        action="list Applications"
-        namespace={namespace}
-        roles={RequiredRBACRoles}
-      />
-    ) : (
-      <UnexpectedErrorAlert />
-    );
+    return <UnexpectedErrorAlert />;
   }
 
-  private filteredApps(apps: IApp[], filter: string) {
-    return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.data.name));
+  private filteredApps(apps: hapi.release.Release[], filter: string) {
+    return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.name));
   }
 
   private handleFilterQueryChange = (filter: string) => {

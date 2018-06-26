@@ -1,32 +1,22 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
 
-import { IApp } from "shared/types";
+import { hapi } from "shared/hapi/release";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 
 import placeholder from "../../placeholder.png";
 import "./ChartInfo.css";
 
 interface IChartInfoProps {
-  app: IApp;
+  app: hapi.release.Release;
 }
 
 class ChartInfo extends React.Component<IChartInfoProps> {
   public render() {
     const { app } = this.props;
-    const name = app.data.name;
-    let iconSrc = placeholder;
-    if (app.chart && app.chart.attributes.icon) {
-      iconSrc = `/api/chartsvc/${app.chart && app.chart.attributes.icon}`;
-    }
-    let chartID = "";
-    const metadata = app.data.chart && app.data.chart.metadata;
-    if (app.repo && app.repo.name && app.chart) {
-      chartID = `${app.repo.name}/${app.chart.attributes.name}`;
-      if (metadata) {
-        chartID = `${chartID}/versions/${metadata.version}`;
-      }
-    }
+    const name = app.name;
+    const metadata = app.chart && app.chart.metadata;
+    const icon = metadata && metadata.icon;
+    const iconSrc = icon ? icon : placeholder;
     let notes = <span />;
     if (metadata) {
       notes = (
@@ -38,18 +28,16 @@ class ChartInfo extends React.Component<IChartInfoProps> {
     }
     return (
       <CardGrid className="ChartInfo">
-        <Link to={`/charts/${chartID}`}>
-          <Card>
-            <CardIcon icon={iconSrc} />
-            <CardContent>
-              <h5>{name}</h5>
-              <p className="margin-b-reset">{app.chart && app.chart.attributes.description}</p>
-            </CardContent>
-            <CardFooter>
-              <small>{notes}</small>
-            </CardFooter>
-          </Card>
-        </Link>
+        <Card>
+          <CardIcon icon={iconSrc} />
+          <CardContent>
+            <h5>{name}</h5>
+            <p className="margin-b-reset">{metadata && metadata.description}</p>
+          </CardContent>
+          <CardFooter>
+            <small>{notes}</small>
+          </CardFooter>
+        </Card>
       </CardGrid>
     );
   }

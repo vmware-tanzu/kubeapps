@@ -165,21 +165,13 @@ export interface IFunction extends IResource {
   };
 }
 
-export interface IApp {
-  chart?: IChart;
-  hr?: IHelmRelease;
-  type: string;
-  data: hapi.release.Release;
-  repo?: IRepo;
-}
-
 export interface IAppState {
   isFetching: boolean;
   error?: Error;
   deleteError?: Error;
   // currently items are always Helm releases
-  items: IApp[];
-  selected?: IApp;
+  items: hapi.release.Release[];
+  selected?: hapi.release.Release;
 }
 
 export interface IStoreState {
@@ -290,38 +282,6 @@ interface IStatusCause {
   field: string;
   message: string;
   reason: string;
-}
-
-// Representation of the HelmRelease CRD
-export interface IHelmRelease {
-  metadata: {
-    annotations: {
-      "apprepositories.kubeapps.com/repo-name"?: string;
-    };
-    name: string;
-    namespace: string;
-    resourceVersion: string;
-  };
-  spec: {
-    chartName: string;
-    releaseName: string;
-    repoUrl: string;
-    values: string;
-    version: string;
-  };
-}
-
-// Representation of the ConfigMaps Helm uses to store releases
-export interface IAppConfigMap {
-  metadata: {
-    labels: {
-      NAME: string;
-      VERSION: string;
-    };
-  };
-  data: {
-    release: string;
-  };
 }
 
 export interface IRouterPathname {

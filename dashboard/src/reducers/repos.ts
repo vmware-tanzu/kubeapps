@@ -15,6 +15,7 @@ export interface IAppRepositoryState {
   };
   lastAdded?: IAppRepository;
   isFetching: boolean;
+  repo: IAppRepository;
   repos: IAppRepository[];
   form: {
     name: string;
@@ -35,6 +36,7 @@ const initialState: IAppRepositoryState = {
     url: "",
   },
   isFetching: false,
+  repo: {} as IAppRepository,
   repos: [],
 };
 
@@ -46,6 +48,9 @@ const reposReducer = (
     case getType(actions.repos.receiveRepos):
       const { repos } = action;
       return { ...state, isFetching: false, repos };
+    case getType(actions.repos.receiveRepo):
+      const { repo } = action;
+      return { ...state, isFetching: false, repo };
     case getType(actions.repos.requestRepos):
       return { ...state, isFetching: true };
     case getType(actions.repos.addRepo):
@@ -66,6 +71,11 @@ const reposReducer = (
       return { ...state, redirectTo: action.path };
     case getType(actions.repos.redirected):
       return { ...state, redirectTo: undefined };
+    case getType(actions.repos.errorChart):
+      return {
+        ...state,
+        errors: { fetch: action.err },
+      };
     case getType(actions.repos.errorRepos):
       return {
         ...state,

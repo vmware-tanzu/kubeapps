@@ -1,43 +1,89 @@
+import { AppRepository } from "./AppRepository";
 import { axios } from "./Auth";
-import { IAppConfigMap } from "./types";
+import { hapi } from "./hapi/release";
+import { IChartVersion } from "./types";
 
 export class App {
-  public static async waitForDeletion(name: string) {
-    const timeout = 30000; // 30s
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(async () => {
-        const { data: { items: allConfigMaps } } = await axios.get<{
-          items: IAppConfigMap[];
-        }>(this.getConfigMapsLink([name]));
-        if (allConfigMaps.length === 0) {
-          clearInterval(interval);
-          resolve();
-        }
-      }, 500);
-      setTimeout(() => {
-        clearInterval(interval);
-        reject(`Timeout after ${timeout / 1000} seconds`);
-      }, timeout);
+  public static getResourceURL(namespace?: string, name?: string) {
+    let url = "/api/tiller-deploy/v1";
+    if (namespace) {
+      url += `/namespaces/${namespace}`;
+    }
+    url += "/releases";
+    if (name) {
+      url += `/${name}`;
+    }
+    return url;
+  }
+
+  public static async create(
+    releaseName: string,
+    namespace: string,
+    chartVersion: IChartVersion,
+    values?: string,
+  ) {
+    const chartAttrs = chartVersion.relationships.chart.data;
+    const repo = await AppRepository.get(chartAttrs.repo.name);
+    const auth = repo.spec.auth;
+    const endpoint = App.getResourceURL(namespace);
+    const { data } = await axios.post(endpoint, {
+      auth,
+      chartName: chartAttrs.name,
+      releaseName,
+      repoUrl: chartAttrs.repo.url,
+      values,
+      version: chartVersion.attributes.version,
     });
+    return data;
   }
 
-  public static async exists(releaseName: string) {
-    const { data: { items: allConfigMaps } } = await axios.get<{
-      items: IAppConfigMap[];
-    }>(this.getConfigMapsLink([releaseName]));
-    if (allConfigMaps.length === 0) {
-      return false;
-    }
-    return true;
+  public static async upgrade(
+    releaseName: string,
+    namespace: string,
+    chartVersion: IChartVersion,
+    values?: string,
+  ) {
+    const chartAttrs = chartVersion.relationships.chart.data;
+    const repo = await AppRepository.get(chartAttrs.repo.name);
+    const auth = repo.spec.auth;
+    const endpoint = App.getResourceURL(namespace, releaseName);
+    const { data } = await axios.put(endpoint, {
+      auth,
+      chartName: chartAttrs.name,
+      releaseName,
+      repoUrl: chartAttrs.repo.url,
+      values,
+      version: chartVersion.attributes.version,
+    });
+    return data;
   }
 
-  // getConfigMapsLink returns the URL for listing Helm ConfigMaps for the given
-  // set of release names.
-  public static getConfigMapsLink(releaseNames?: string[]) {
-    let query = "";
-    if (releaseNames) {
-      query = `,NAME in (${releaseNames.join(",")})`;
-    }
-    return `/api/kube/api/v1/namespaces/kubeapps/configmaps?labelSelector=OWNER=TILLER${query}`;
+  public static async delete(releaseName: string, namespace: string) {
+    const { data } = await axios.delete(App.getResourceURL(namespace, releaseName));
+    return data;
+  }
+
+  public static async listApps(namespace?: string) {
+    const { data } = await axios.get<{ data: Array<{ namespace: string; releaseName: string }> }>(
+      App.getResourceURL(namespace),
+    );
+    return data.data;
+  }
+
+  public static async getAllWithDetails(namespace?: string) {
+    const appList = await this.listApps(namespace);
+    const releases = await Promise.all<hapi.release.Release>(
+      appList.map(async hr => {
+        return await App.getRelease(hr.namespace, hr.releaseName);
+      }),
+    );
+    return releases;
+  }
+
+  public static async getRelease(namespace: string, name: string) {
+    const { data } = await axios.get<{ data: hapi.release.Release }>(
+      this.getResourceURL(namespace, name),
+    );
+    return data.data;
   }
 }

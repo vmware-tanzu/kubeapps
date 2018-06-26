@@ -1,11 +1,11 @@
 import * as React from "react";
 import { Redirect } from "react-router";
 
-import { IApp } from "../../shared/types";
+import { hapi } from "../../shared/hapi/release";
 import ConfirmDialog from "../ConfirmDialog";
 
 interface IAppControlsProps {
-  app: IApp;
+  app: hapi.release.Release;
   deleteApp: () => Promise<boolean>;
 }
 
@@ -27,45 +27,34 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   public render() {
-    const { name, namespace } = this.props.app.data;
-    if (this.props.app.hr && this.props.app.hr.metadata) {
-      return (
-        <div className="AppControls">
-          <button className="button" onClick={this.handleUpgradeClick}>
-            Upgrade
-          </button>
-          {this.state.upgrade && <Redirect push={true} to={`/apps/ns/${namespace}/edit/${name}`} />}
-          <button className="button button-danger" onClick={this.openModel}>
-            Delete
-          </button>
-          <ConfirmDialog
-            onConfirm={this.handleDeleteClick}
-            modalIsOpen={this.state.modalIsOpen}
-            loading={this.state.deleting}
-            closeModal={this.closeModal}
-          />
-          {this.state.redirectToAppList && <Redirect to={`/apps/ns/${namespace}`} />}
-        </div>
-      );
+    const { name, namespace } = this.props.app;
+    if (!name || !namespace) {
+      return <div> Loading </div>;
     }
     return (
       <div className="AppControls">
-        <button className="button" onClick={this.handleMigrateClick}>
-          Migrate
+        <button className="button" onClick={this.handleUpgradeClick}>
+          Upgrade
         </button>
-        {this.state.migrate && (
-          <Redirect push={true} to={`/apps/ns/${namespace}/migrate/${name}`} />
+        {this.state.upgrade && (
+          <Redirect push={true} to={`/apps/ns/${namespace}/upgrade/${name}`} />
         )}
+        <button className="button button-danger" onClick={this.openModel}>
+          Delete
+        </button>
+        <ConfirmDialog
+          onConfirm={this.handleDeleteClick}
+          modalIsOpen={this.state.modalIsOpen}
+          loading={this.state.deleting}
+          closeModal={this.closeModal}
+        />
+        {this.state.redirectToAppList && <Redirect to={`/apps/ns/${namespace}`} />}
       </div>
     );
   }
 
   public handleUpgradeClick = () => {
     this.setState({ upgrade: true });
-  };
-
-  public handleMigrateClick = () => {
-    this.setState({ migrate: true });
   };
 
   public openModel = () => {

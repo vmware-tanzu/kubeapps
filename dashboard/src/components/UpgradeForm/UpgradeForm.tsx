@@ -4,19 +4,22 @@ import { RouterAction } from "react-router-redux";
 
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
-import * as bindingFuncs from "./bindings";
-import * as errors from "./errors";
+import * as bindingFuncs from "../DeploymentForm/bindings";
+import * as errors from "../DeploymentForm/errors";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
 interface IDeploymentFormProps {
+  appCurrentVersion: string;
   bindings: IServiceBinding[];
-  chartID: string;
-  chartVersion: string;
+  chartName: string;
+  namespace: string;
+  releaseName: string;
+  repo: string;
   error: Error | undefined;
   selected: IChartState["selected"];
-  deployChart: (
+  upgradeApp: (
     version: IChartVersion,
     releaseName: string,
     namespace: string,
@@ -27,77 +30,64 @@ interface IDeploymentFormProps {
   getBindings: (ns: string) => Promise<IServiceBinding[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
-  namespace: string;
+  clearRepo: () => any;
 }
 
 interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
-  releaseName: string;
-  namespace: string;
   appValues?: string;
   valuesModified: boolean;
   selectedBinding: IServiceBinding | undefined;
 }
 
-class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
+class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
     appValues: undefined,
     isDeploying: false,
-    namespace: this.props.namespace,
-    releaseName: "",
     selectedBinding: undefined,
     valuesModified: false,
   };
 
   public componentDidMount() {
-    const { chartID, fetchChartVersions, getBindings, getChartVersion, chartVersion } = this.props;
-    fetchChartVersions(chartID);
-    getChartVersion(chartID, chartVersion);
-    getBindings(this.props.namespace);
-  }
-
-  public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     const {
-      chartID,
-      chartVersion,
+      appCurrentVersion,
+      chartName,
+      fetchChartVersions,
       getBindings,
       getChartValues,
       getChartVersion,
-      selected,
-      namespace,
+      repo,
     } = this.props;
-    const { version } = selected;
+    const chartID = `${repo}/${chartName}`;
+    fetchChartVersions(chartID);
+    getChartVersion(chartID, appCurrentVersion);
+    getChartValues(chartID, appCurrentVersion);
+    getBindings(this.props.namespace);
+  }
 
-    if (nextProps.namespace !== namespace) {
-      this.setState({ namespace: nextProps.namespace });
-      getBindings(nextProps.namespace);
-      return;
+  public componentDidUpdate(prevProps: IDeploymentFormProps) {
+    const { selected } = this.props;
+    if (selected.values && !this.state.appValues && !this.state.valuesModified) {
+      // First load, set initial values
+      this.setState({ appValues: selected.values });
     }
-
-    if (chartVersion !== nextProps.chartVersion) {
-      getChartVersion(chartID, nextProps.chartVersion);
-      return;
-    }
-
-    if (nextProps.selected.version && nextProps.selected.version !== this.props.selected.version) {
-      getChartValues(chartID, nextProps.selected.version.attributes.version);
-      return;
-    }
-
-    if (!this.state.valuesModified) {
-      if (version) {
-        this.setState({ appValues: nextProps.selected.values });
+    if (selected.values && this.state.appValues && selected.values !== this.state.appValues) {
+      // Values has been modified either because the user has edit them
+      // or because the selected version is now different
+      if (!this.state.valuesModified) {
+        // Only update the default values if the user has not modify them
+        this.setState({ appValues: selected.values });
       }
     }
   }
 
   public render() {
-    const { selected, bindings, error, namespace } = this.props;
+    const { selected, bindings, error, namespace, releaseName } = this.props;
     const { version, versions } = selected;
-    const { appValues, selectedBinding, releaseName } = this.state;
-    if (!version || !versions.length || this.state.isDeploying) {
-      return <div>Loading</div>;
+    const { appValues, selectedBinding } = this.state;
+    if (!version || !versions || !versions.length || this.state.isDeploying) {
+      return <div> Loading </div>;
     }
     return (
       <div>
@@ -107,18 +97,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               {this.props.error && errors.render(error, releaseName, namespace)}
             </div>
             <div className="col-12">
-              <h2>{this.props.chartID}</h2>
+              <h2>
+                {this.props.releaseName} ({this.props.chartName})
+              </h2>
             </div>
             <div className="col-8">
-              <div>
-                <label htmlFor="releaseName">Name</label>
-                <input
-                  id="releaseName"
-                  onChange={this.handleReleaseNameChange}
-                  value={this.state.releaseName}
-                  required={true}
-                />
-              </div>
               <div>
                 <label htmlFor="chartVersion">Version</label>
                 <select
@@ -130,6 +113,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   {versions.map(v => (
                     <option key={v.id} value={v.attributes.version}>
                       {v.attributes.version}{" "}
+                      {v.attributes.version === this.props.appCurrentVersion ? "(current)" : ""}
                     </option>
                   ))}
                 </select>
@@ -150,6 +134,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               <div>
                 <button className="button button-primary" type="submit">
                   Submit
+                </button>
+                <button className="button" onClick={this.handleReselectChartRepo}>
+                  Select Chart repo
                 </button>
               </div>
             </div>
@@ -180,32 +167,35 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, deployChart, push } = this.props;
+    const { releaseName, namespace, selected, upgradeApp, push } = this.props;
     this.setState({ isDeploying: true });
-    const { releaseName, namespace, appValues } = this.state;
+    const { appValues } = this.state;
     if (selected.version) {
-      const deployed = await deployChart(selected.version, releaseName, namespace, appValues);
+      const deployed = await upgradeApp(selected.version, releaseName, namespace, appValues);
+      this.setState({ isDeploying: false });
       if (deployed) {
         push(`/apps/ns/${namespace}/${releaseName}`);
-      } else {
-        this.setState({ isDeploying: false });
       }
     }
   };
 
-  public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
-    this.setState({ releaseName: e.currentTarget.value });
-  };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    this.props.push(
-      `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${
-        e.currentTarget.value
-      }`,
-    );
+    const { repo, chartName, getChartVersion, getChartValues } = this.props;
+    const chartID = `${repo}/${chartName}`;
+    getChartVersion(chartID, e.currentTarget.value);
+    if (!this.state.valuesModified) {
+      // Only update the default values if the user has not modify them
+      getChartValues(chartID, e.currentTarget.value);
+    }
   };
+
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
+
+  public handleReselectChartRepo = () => {
+    this.props.clearRepo();
+  };
 }
 
-export default DeploymentForm;
+export default UpgradeForm;
