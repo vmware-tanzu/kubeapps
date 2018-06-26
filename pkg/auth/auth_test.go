@@ -17,7 +17,7 @@ limitations under the License.
 package auth
 
 import (
-	"strings"
+	"reflect"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,60 +25,109 @@ import (
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func TestCanI(t *testing.T) {
-	resourceList := metav1.APIResourceList{
+func init() {
+	testEnv = true
+}
+
+func newFakeUserAuth() *UserAuth {
+	resourceListV1 := metav1.APIResourceList{
 		GroupVersion: "v1",
 		APIResources: []metav1.APIResource{
 			{Name: "pods", Kind: "Pod"},
 		},
 	}
-	cli := fake.NewSimpleClientset()
-	fakeDiscovery, ok := cli.Discovery().(*fakediscovery.FakeDiscovery)
-	if !ok {
-		t.Fatalf("couldn't convert Discovery() to *FakeDiscovery")
+	resourceListAppsV1Beta1 := metav1.APIResourceList{
+		GroupVersion: "apps/v1beta1",
+		APIResources: []metav1.APIResource{
+			{Name: "deployments", Kind: "Deployment"},
+		},
 	}
-	fakeDiscovery.Resources = []*metav1.APIResourceList{&resourceList}
-	auth := UserAuth{
+	resourceListExtensionsV1Beta1 := metav1.APIResourceList{
+		GroupVersion: "extensions/v1beta1",
+		APIResources: []metav1.APIResource{
+			{Name: "deployments", Kind: "Deployment"},
+		},
+	}
+	cli := fake.NewSimpleClientset()
+	fakeDiscovery, _ := cli.Discovery().(*fakediscovery.FakeDiscovery)
+	fakeDiscovery.Resources = []*metav1.APIResourceList{&resourceListV1, &resourceListAppsV1Beta1, &resourceListExtensionsV1Beta1}
+	return &UserAuth{
 		authCli:      cli.AuthorizationV1(),
 		discoveryCli: cli.Discovery(),
-	}
-	manifest := `---
-apiVersion: v1
-kind: Pod
-`
-	err := auth.CanI("foo", "create", manifest)
-	// Fake client returns an empty result so it will deny any request
-	if !strings.Contains(err.Error(), "Unauthorized to create v1/pods in the foo namespace") {
-		t.Errorf("Unexpected error: %v", err)
 	}
 }
 
-func TestNamespacedCanI(t *testing.T) {
-	resourceList := metav1.APIResourceList{
-		GroupVersion: "v1",
-		APIResources: []metav1.APIResource{
-			{Name: "pods", Kind: "Pod"},
+func TestCanI(t *testing.T) {
+	type test struct {
+		Action          string
+		Namespace       string
+		Manifest        string
+		ExpectedActions []Action
+	}
+	testSuite := []test{
+		{
+			Action:    "create",
+			Namespace: "foo",
+			Manifest: `---
+apiVersion: v1
+kind: Pod
+`,
+			ExpectedActions: []Action{
+				{APIVersion: "v1", Resource: "pods", Namespace: "foo", Verbs: []string{"create"}},
+			},
 		},
-	}
-	cli := fake.NewSimpleClientset()
-	fakeDiscovery, ok := cli.Discovery().(*fakediscovery.FakeDiscovery)
-	if !ok {
-		t.Fatalf("couldn't convert Discovery() to *FakeDiscovery")
-	}
-	fakeDiscovery.Resources = []*metav1.APIResourceList{&resourceList}
-	auth := UserAuth{
-		authCli:      cli.AuthorizationV1(),
-		discoveryCli: cli.Discovery(),
-	}
-	manifest := `---
+		// It should overwrite the default namespace
+		{
+			Action:    "create",
+			Namespace: "foo",
+			Manifest: `---
 apiVersion: v1
 kind: Pod
 metadata:
   namespace: bar
-`
-	err := auth.CanI("foo", "create", manifest)
-	// Fake client returns an empty result so it will deny any request
-	if !strings.Contains(err.Error(), "Unauthorized to create v1/pods in the bar namespace") {
-		t.Errorf("Unexpected error: %v", err)
+`,
+			ExpectedActions: []Action{
+				{APIVersion: "v1", Resource: "pods", Namespace: "bar", Verbs: []string{"create"}},
+			},
+		},
+		// It should report the same resource in different resource groups
+		{
+			Action:    "create",
+			Namespace: "foo",
+			Manifest: `---
+apiVersion: apps/v1beta1
+kind: Deployment
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+`,
+			ExpectedActions: []Action{
+				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create"}},
+				{APIVersion: "extensions/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create"}},
+			},
+		},
+		// It should report the same resource with different verbs when upgrading
+		{
+			Action:    "upgrade",
+			Namespace: "foo",
+			Manifest: `---
+apiVersion: v1
+kind: Pod
+`,
+			ExpectedActions: []Action{
+				{APIVersion: "v1", Resource: "pods", Namespace: "foo", Verbs: []string{"create", "update", "delete"}},
+			},
+		},
+	}
+	for _, tt := range testSuite {
+		auth := newFakeUserAuth()
+		res, err := auth.CanI(tt.Namespace, tt.Action, tt.Manifest)
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		// Fake client returns an empty result so it will deny any request
+		if !reflect.DeepEqual(res, tt.ExpectedActions) {
+			t.Errorf("Expecting %v, received %v", tt.ExpectedActions, res)
+		}
 	}
 }
