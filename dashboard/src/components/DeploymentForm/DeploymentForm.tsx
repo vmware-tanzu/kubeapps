@@ -4,8 +4,8 @@ import { RouterAction } from "react-router-redux";
 
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
-import * as bindingFuncs from "./bindings";
-import * as errors from "./errors";
+import DeploymentBinding from "./DeploymentBinding";
+import DeploymentErrors from "./DeploymentErrors";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
@@ -37,7 +37,6 @@ interface IDeploymentFormState {
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
-  selectedBinding: IServiceBinding | undefined;
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
@@ -46,34 +45,18 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     isDeploying: false,
     namespace: this.props.namespace,
     releaseName: "",
-    selectedBinding: undefined,
     valuesModified: false,
   };
 
   public componentDidMount() {
-    const { chartID, fetchChartVersions, getBindings, getChartVersion, chartVersion } = this.props;
+    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
     fetchChartVersions(chartID);
     getChartVersion(chartID, chartVersion);
-    getBindings(this.props.namespace);
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
-    const {
-      chartID,
-      chartVersion,
-      getBindings,
-      getChartValues,
-      getChartVersion,
-      selected,
-      namespace,
-    } = this.props;
+    const { chartID, chartVersion, getChartValues, getChartVersion, selected } = this.props;
     const { version } = selected;
-
-    if (nextProps.namespace !== namespace) {
-      this.setState({ namespace: nextProps.namespace });
-      getBindings(nextProps.namespace);
-      return;
-    }
 
     if (chartVersion !== nextProps.chartVersion) {
       getChartVersion(chartID, nextProps.chartVersion);
@@ -93,9 +76,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { selected, bindings, error, namespace } = this.props;
+    const { selected, bindings } = this.props;
     const { version, versions } = selected;
-    const { appValues, selectedBinding, releaseName } = this.state;
+    const { appValues, releaseName } = this.state;
     if (!version || !versions.length || this.state.isDeploying) {
       return <div>Loading</div>;
     }
@@ -104,7 +87,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
             <div className="col-8">
-              {this.props.error && errors.render(error, releaseName, namespace)}
+              {this.props.error && <DeploymentErrors {...this.props} releaseName={releaseName} />}
             </div>
             <div className="col-12">
               <h2>{this.props.chartID}</h2>
@@ -154,29 +137,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               </div>
             </div>
             <div className="col-4">
-              {bindings.length > 0 && (
-                <div>
-                  <p>[Optional] Select a service binding for your new app</p>
-                  <label htmlFor="bindings">Bindings</label>
-                  <select onChange={this.onBindingChange}>
-                    {bindingFuncs.bindingOptions(bindings, selectedBinding)}
-                  </select>
-                  {bindingFuncs.bindingDetail(selectedBinding)}
-                </div>
-              )}
+              {bindings.length > 0 && <DeploymentBinding {...this.props} />}
             </div>
           </div>
         </form>
       </div>
     );
   }
-
-  public onBindingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({
-      selectedBinding:
-        this.props.bindings.find(binding => binding.metadata.name === e.target.value) || undefined,
-    });
-  };
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

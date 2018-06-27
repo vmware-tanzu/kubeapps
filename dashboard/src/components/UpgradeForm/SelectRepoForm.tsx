@@ -7,15 +7,6 @@ import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
-// const RequiredRBACRoles: IRBACRole[] = [
-//   {
-//     apiGroup: "kubeapps.com",
-//     namespace: "kubeapps",
-//     resource: "apprepositories",
-//     verbs: ["get"],
-//   },
-// ];
-
 interface ISelectRepoFormProps {
   error: Error | undefined;
   repo: IAppRepository;

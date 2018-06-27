@@ -4,9 +4,9 @@ import { RouterAction } from "react-router-redux";
 import { hapi } from "../../shared/hapi/release";
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";
-import * as errors from "../DeploymentForm/errors";
-import SelectRepoForm from "../SelectRepoForm";
+import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
 import UpgradeForm from "../UpgradeForm";
+import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 
 interface IAppUpgradeProps {
   app: hapi.release.Release;
@@ -48,7 +48,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
   }
 
   public render() {
-    const { app, repos, error, releaseName, namespace } = this.props;
+    const { app, repos, error } = this.props;
     if (
       !repos ||
       !app ||
@@ -60,7 +60,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
       if (!error) {
         return <div>Loading</div>;
       } else {
-        return <div className="col-8">{errors.render(error, releaseName, namespace)}</div>;
+        return <DeploymentErrors {...this.props} />;
       }
     }
     if (!this.props.repo.metadata) {

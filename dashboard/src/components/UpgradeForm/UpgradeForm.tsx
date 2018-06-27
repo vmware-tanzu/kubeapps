@@ -4,8 +4,8 @@ import { RouterAction } from "react-router-redux";
 
 import { IServiceBinding } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
-import * as bindingFuncs from "../DeploymentForm/bindings";
-import * as errors from "../DeploymentForm/errors";
+import DeploymentBinding from "../DeploymentForm/DeploymentBinding";
+import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
@@ -38,14 +38,12 @@ interface IDeploymentFormState {
   // deployment options
   appValues?: string;
   valuesModified: boolean;
-  selectedBinding: IServiceBinding | undefined;
 }
 
 class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
     appValues: undefined,
     isDeploying: false,
-    selectedBinding: undefined,
     valuesModified: false,
   };
 
@@ -54,7 +52,6 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       appCurrentVersion,
       chartName,
       fetchChartVersions,
-      getBindings,
       getChartValues,
       getChartVersion,
       repo,
@@ -63,7 +60,6 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
     fetchChartVersions(chartID);
     getChartVersion(chartID, appCurrentVersion);
     getChartValues(chartID, appCurrentVersion);
-    getBindings(this.props.namespace);
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {
@@ -83,9 +79,9 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   }
 
   public render() {
-    const { selected, bindings, error, namespace, releaseName } = this.props;
+    const { selected, bindings } = this.props;
     const { version, versions } = selected;
-    const { appValues, selectedBinding } = this.state;
+    const { appValues } = this.state;
     if (!version || !versions || !versions.length || this.state.isDeploying) {
       return <div> Loading </div>;
     }
@@ -93,9 +89,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
-            <div className="col-8">
-              {this.props.error && errors.render(error, releaseName, namespace)}
-            </div>
+            <div className="col-8">{this.props.error && <DeploymentErrors {...this.props} />}</div>
             <div className="col-12">
               <h2>
                 {this.props.releaseName} ({this.props.chartName})
@@ -141,29 +135,13 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
               </div>
             </div>
             <div className="col-4">
-              {bindings.length > 0 && (
-                <div>
-                  <p>[Optional] Select a service binding for your new app</p>
-                  <label htmlFor="bindings">Bindings</label>
-                  <select onChange={this.onBindingChange}>
-                    {bindingFuncs.bindingOptions(bindings, selectedBinding)}
-                  </select>
-                  {bindingFuncs.bindingDetail(selectedBinding)}
-                </div>
-              )}
+              {bindings.length > 0 && <DeploymentBinding {...this.props} />}
             </div>
           </div>
         </form>
       </div>
     );
   }
-
-  public onBindingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({
-      selectedBinding:
-        this.props.bindings.find(binding => binding.metadata.name === e.target.value) || undefined,
-    });
-  };
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
