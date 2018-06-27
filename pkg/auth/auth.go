@@ -29,20 +29,56 @@ import (
 	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 )
 
-var (
-	testEnv = false
-)
-
-// UserAuth contains information to check user permissions
-type UserAuth struct {
-	authCli      authorizationv1.AuthorizationV1Interface
-	discoveryCli discovery.DiscoveryInterface
-}
-
 type resource struct {
 	APIVersion string
 	Kind       string
 	Namespace  string
+}
+
+type k8sAuthInterface interface {
+	Validate() error
+	GetResourceList(groupVersion string) (*metav1.APIResourceList, error)
+	CanI(verb, group, resource, namespace string) (bool, error)
+}
+
+type k8sAuth struct {
+	AuthCli      authorizationv1.AuthorizationV1Interface
+	DiscoveryCli discovery.DiscoveryInterface
+}
+
+func (u k8sAuth) Validate() error {
+	_, err := u.AuthCli.SelfSubjectRulesReviews().Create(&authorizationapi.SelfSubjectRulesReview{
+		Spec: authorizationapi.SelfSubjectRulesReviewSpec{
+			Namespace: "default",
+		},
+	})
+	return err
+}
+
+func (u k8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, error) {
+	return u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
+}
+
+func (u k8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
+	res, err := u.AuthCli.SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
+		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+			ResourceAttributes: &authorizationapi.ResourceAttributes{
+				Group:     group,
+				Resource:  resource,
+				Verb:      verb,
+				Namespace: namespace,
+			},
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	return res.Status.Allowed, nil
+}
+
+// UserAuth contains information to check user permissions
+type UserAuth struct {
+	k8sAuth k8sAuthInterface
 }
 
 // Action represents a specific set of verbs against a resource
@@ -64,22 +100,21 @@ func NewAuth(token string) (*UserAuth, error) {
 	kubeClient, err := kubernetes.NewForConfig(config)
 	authCli := kubeClient.AuthorizationV1()
 	discoveryCli := kubeClient.Discovery()
+	k8sAuthCli := k8sAuth{
+		AuthCli:      authCli,
+		DiscoveryCli: discoveryCli,
+	}
 
-	return &UserAuth{authCli, discoveryCli}, nil
+	return &UserAuth{k8sAuthCli}, nil
 }
 
 // Validate checks if the given token is valid
 func (u *UserAuth) Validate() error {
-	_, err := u.authCli.SelfSubjectRulesReviews().Create(&authorizationapi.SelfSubjectRulesReview{
-		Spec: authorizationapi.SelfSubjectRulesReviewSpec{
-			Namespace: "default",
-		},
-	})
-	return err
+	return u.k8sAuth.Validate()
 }
 
-func resolve(discoveryCli discovery.DiscoveryInterface, groupVersion, kind string) (string, error) {
-	resourceList, err := discoveryCli.ServerResourcesForGroupVersion(groupVersion)
+func (u *UserAuth) resolve(groupVersion, kind string) (string, error) {
+	resourceList, err := u.k8sAuth.GetResourceList(groupVersion)
 	if err != nil {
 		return "", nil
 	}
@@ -89,31 +124,6 @@ func resolve(discoveryCli discovery.DiscoveryInterface, groupVersion, kind strin
 		}
 	}
 	return "", fmt.Errorf("Unable to find the kind %s in the resource group %s", kind, groupVersion)
-}
-
-func (u *UserAuth) canPerform(verb, group, resource, namespace string) (bool, error) {
-	meta := metav1.ObjectMeta{}
-	// In the test environment, fake API behaviour adding a name to the resource
-	if testEnv {
-		meta = metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s-%s-%s-%s", verb, group, resource, namespace),
-		}
-	}
-	res, err := u.authCli.SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
-		ObjectMeta: meta,
-		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &authorizationapi.ResourceAttributes{
-				Group:     group,
-				Resource:  resource,
-				Verb:      verb,
-				Namespace: namespace,
-			},
-		},
-	})
-	if err != nil {
-		return false, err
-	}
-	return res.Status.Allowed, nil
 }
 
 func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, error) {
@@ -142,7 +152,7 @@ func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, 
 func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, error) {
 	rejectedActions := []Action{}
 	for _, i := range itemsToCheck {
-		resource, err := resolve(u.discoveryCli, i.APIVersion, i.Kind)
+		resource, err := u.resolve(i.APIVersion, i.Kind)
 		if err != nil {
 			return []Action{}, err
 		}
@@ -151,7 +161,10 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 			// The group should be empty for the core API group
 			group = ""
 		}
-		allowed, _ := u.canPerform(verb, group, resource, i.Namespace)
+		allowed, err := u.k8sAuth.CanI(verb, group, resource, i.Namespace)
+		if err != nil {
+			return []Action{}, err
+		}
 		if !allowed {
 			rejectedActions = append(rejectedActions, Action{
 				APIVersion: i.APIVersion,
@@ -188,11 +201,11 @@ func reduceActionsByVerb(actions []Action) []Action {
 	return res
 }
 
-// CanI checks if the current user can perform the given action on all the resources given in the manifests
-// It returns the list of Actions that the user cannot perform
-func (u *UserAuth) CanI(namespace, action, manifest string) ([]Action, error) {
+// GetForbiddenActions parses a K8s manifest and checks if the current user can do the action given
+// over all the elements of the manifest. It return the list of forbidden Actions if any.
+func (u *UserAuth) GetForbiddenActions(namespace, action, manifest string) ([]Action, error) {
 	resources, err := u.getResourcesToCheck(namespace, manifest)
-	rejectedActions := []Action{}
+	forbiddenActions := []Action{}
 	if err != nil {
 		return []Action{}, err
 	}
@@ -204,16 +217,16 @@ func (u *UserAuth) CanI(namespace, action, manifest string) ([]Action, error) {
 			if err != nil {
 				return []Action{}, err
 			}
-			rejectedActions = append(rejectedActions, actions...)
+			forbiddenActions = append(forbiddenActions, actions...)
 		}
-		if len(rejectedActions) > 0 {
-			rejectedActions = reduceActionsByVerb(rejectedActions)
+		if len(forbiddenActions) > 0 {
+			forbiddenActions = reduceActionsByVerb(forbiddenActions)
 		}
 	default:
-		rejectedActions, err = u.isAllowed(action, resources)
+		forbiddenActions, err = u.isAllowed(action, resources)
 		if err != nil {
 			return []Action{}, err
 		}
 	}
-	return rejectedActions, nil
+	return forbiddenActions, nil
 }

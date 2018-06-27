@@ -163,7 +163,7 @@ func createRelease(w http.ResponseWriter, req *http.Request, params Params) {
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.UserAuth)
-		forbiddenActions, err := userAuth.CanI(params["namespace"], "create", manifest)
+		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
@@ -197,7 +197,7 @@ func upgradeRelease(w http.ResponseWriter, req *http.Request, params Params) {
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.UserAuth)
-		forbiddenActions, err := userAuth.CanI(params["namespace"], "upgrade", manifest)
+		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
@@ -248,7 +248,7 @@ func getRelease(w http.ResponseWriter, req *http.Request, params Params) {
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.UserAuth)
-		forbiddenActions, err := userAuth.CanI(params["namespace"], "get", manifest)
+		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "get", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
@@ -274,7 +274,7 @@ func deleteRelease(w http.ResponseWriter, req *http.Request, params Params) {
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.UserAuth)
-		forbiddenActions, err := userAuth.CanI(params["namespace"], "delete", manifest)
+		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "delete", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return

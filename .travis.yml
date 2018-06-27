@@ -86,3 +86,5 @@ jobs:
     env: IMAGE=kubeapps/apprepository-controller
   - <<: *imageBuild
     env: IMAGE=kubeapps/dashboard
+  - <<: *imageBuild
+    env: IMAGE=kubeapps/tiller-proxy

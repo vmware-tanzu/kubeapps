@@ -21,12 +21,23 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	discovery "k8s.io/client-go/discovery"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/kubernetes/fake"
 )
 
-func init() {
-	testEnv = true
+type fakeK8sAuth struct {
+	DiscoveryCli discovery.DiscoveryInterface
+}
+
+func (u fakeK8sAuth) Validate() error {
+	return nil
+}
+func (u fakeK8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, error) {
+	return u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
+}
+func (u fakeK8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
+	return false, nil
 }
 
 func newFakeUserAuth() *UserAuth {
@@ -51,10 +62,8 @@ func newFakeUserAuth() *UserAuth {
 	cli := fake.NewSimpleClientset()
 	fakeDiscovery, _ := cli.Discovery().(*fakediscovery.FakeDiscovery)
 	fakeDiscovery.Resources = []*metav1.APIResourceList{&resourceListV1, &resourceListAppsV1Beta1, &resourceListExtensionsV1Beta1}
-	return &UserAuth{
-		authCli:      cli.AuthorizationV1(),
-		discoveryCli: cli.Discovery(),
-	}
+	fakeK8sAuthCli := fakeK8sAuth{cli.Discovery()}
+	return &UserAuth{fakeK8sAuthCli}
 }
 
 func TestCanI(t *testing.T) {
@@ -121,11 +130,10 @@ kind: Pod
 	}
 	for _, tt := range testSuite {
 		auth := newFakeUserAuth()
-		res, err := auth.CanI(tt.Namespace, tt.Action, tt.Manifest)
+		res, err := auth.GetForbiddenActions(tt.Namespace, tt.Action, tt.Manifest)
 		if err != nil {
 			t.Errorf("Unexpected error: %v", err)
 		}
-		// Fake client returns an empty result so it will deny any request
 		if !reflect.DeepEqual(res, tt.ExpectedActions) {
 			t.Errorf("Expecting %v, received %v", tt.ExpectedActions, res)
 		}
