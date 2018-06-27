@@ -42,12 +42,17 @@ Kubeapps.
 
 In order to list and view Applications in a namespace, apply the
 `kubeapps-applications-read` ClusterRole in the desired namespace and the
-`kubeapps-tiller-state-read` Role in the `kubeapps` namespace:
+`kubeapps-tiller-state-read`:
 
 ```
-kubectl create -n default rolebinding example-kubeapps-applications-read --clusterrole=kubeapps-applications-read --serviceaccount default:example
-kubectl create -n kubeapps rolebinding example-kubeapps-tiller-state-read --role=kubeapps-tiller-state-read --serviceaccount default:example
+kubectl create -n default rolebinding example-kubeapps-applications-read \
+  --clusterrole=kubeapps-applications-read \
+  --serviceaccount default:example
 ```
+
+Note: This will give read access to all the resources in the default namespace.
+If you want to provide fine-grained access to resources consider creating your
+own roles.
 
 #### Write access to Applications within a namespace
 
@@ -56,9 +61,17 @@ In order to create, update and delete Applications in a namespace, apply the
 `kubeapps-repositories-read` Role in the `kubeapps` namespace:
 
 ```
-kubectl create -n default rolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-write --serviceaccount default:example
-kubectl create -n kubeapps rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
+kubectl create -n default rolebinding example-kubeapps-applications-write \
+  --clusterrole=kubeapps-applications-write \
+  --serviceaccount default:example
+kubectl create -n kubeapps rolebinding example-kubeapps-repositories-read \
+  --role=kubeapps-repositories-read \
+  --serviceaccount default:example
 ```
+
+Note: This will give write access to all the resources in the default namespace.
+If you want to provide fine-grained access to resources consider creating your
+own roles.
 
 ### Functions
 
