@@ -14,7 +14,7 @@ local kubecfg = import "kubecfg.libsonnet";
         {
           apiGroups: ["*"],
           resources: ["*"],
-          verbs: ["list", "get"],
+          verbs: ["list", "get", "watch"],
         },
       ],
     },
