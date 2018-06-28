@@ -43,7 +43,7 @@ local labels = {
       {
         apiGroups: [""],
         resources: ["events"],
-        verbs: ["create"],
+        verbs: ["create", "patch"],
       },
       {
         apiGroups: ["batch"],
