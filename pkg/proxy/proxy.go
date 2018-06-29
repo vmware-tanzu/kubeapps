@@ -77,6 +77,7 @@ type AppOverview struct {
 	ReleaseName string `json:"releaseName"`
 	Version     string `json:"version"`
 	Namespace   string `json:"namespace"`
+	Icon        string `json:"icon,omitempty"`
 }
 
 func (p *Proxy) get(name, namespace string) (*release.Release, error) {
@@ -139,7 +140,12 @@ func (p *Proxy) ListReleases(namespace string) ([]AppOverview, error) {
 	if list != nil {
 		for _, r := range list.Releases {
 			if namespace == "" || namespace == r.Namespace {
-				appList = append(appList, AppOverview{r.Name, r.Chart.Metadata.Version, r.Namespace})
+				appList = append(appList, AppOverview{
+					ReleaseName: r.Name,
+					Version:     r.Chart.Metadata.Version,
+					Namespace:   r.Namespace,
+					Icon:        r.Chart.Metadata.Icon,
+				})
 			}
 		}
 	}
