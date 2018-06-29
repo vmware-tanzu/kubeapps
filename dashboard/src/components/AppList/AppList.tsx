@@ -1,8 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { hapi } from "../../shared/hapi/release";
-import { IAppState } from "../../shared/types";
+import { IAppOverview, IAppState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { MessageAlert, UnexpectedErrorAlert } from "../ErrorAlert";
@@ -42,15 +41,17 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public render() {
-    const { pushSearchFilter, apps: { error, isFetching, items } } = this.props;
-
+    const { pushSearchFilter, apps: { error, isFetching, listOverview } } = this.props;
+    if (!listOverview) {
+      return <div>Loading</div>;
+    }
     return (
       <section className="AppList">
         <PageHeader>
           <div className="col-8">
             <div className="row">
               <h1>Applications</h1>
-              {items.length > 0 && (
+              {listOverview.length > 0 && (
                 <SearchFilter
                   className="margin-l-big"
                   placeholder="search apps..."
@@ -61,7 +62,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
               )}
             </div>
           </div>
-          {items.length > 0 && (
+          {listOverview.length > 0 && (
             <div className="col-4 text-r align-center">
               <Link to="/charts">
                 <button className="button button-accent">Deploy App</button>
@@ -75,48 +76,51 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           ) : error ? (
             this.renderError(error)
           ) : (
-            this.appListItems(items)
+            this.appListItems(listOverview)
           )}
         </main>
       </section>
     );
   }
 
-  public appListItems(items: IAppState["items"]) {
-    if (items.length === 0) {
-      return (
-        <MessageAlert header="Supercharge your Kubernetes cluster">
-          <div>
-            <p className="margin-v-normal">
-              Deploy applications on your Kubernetes cluster with a single click.
-            </p>
-            <div className="padding-b-normal">
-              <Link className="button button-accent" to="/charts">
-                Deploy App
-              </Link>
+  public appListItems(items: IAppState["listOverview"]) {
+    if (items) {
+      if (items.length === 0) {
+        return (
+          <MessageAlert header="Supercharge your Kubernetes cluster">
+            <div>
+              <p className="margin-v-normal">
+                Deploy applications on your Kubernetes cluster with a single click.
+              </p>
+              <div className="padding-b-normal">
+                <Link className="button button-accent" to="/charts">
+                  Deploy App
+                </Link>
+              </div>
             </div>
+          </MessageAlert>
+        );
+      } else {
+        return (
+          <div>
+            <CardGrid>
+              {this.filteredApps(items, this.state.filter).map(r => {
+                return <AppListItem key={r.releaseName} app={r} />;
+              })}
+            </CardGrid>
           </div>
-        </MessageAlert>
-      );
-    } else {
-      return (
-        <div>
-          <CardGrid>
-            {this.filteredApps(items, this.state.filter).map(r => {
-              return <AppListItem key={r.name} app={r} />;
-            })}
-          </CardGrid>
-        </div>
-      );
+        );
+      }
     }
+    return <div />;
   }
 
   private renderError(error: Error) {
     return <UnexpectedErrorAlert />;
   }
 
-  private filteredApps(apps: hapi.release.Release[], filter: string) {
-    return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.name));
+  private filteredApps(apps: IAppOverview[], filter: string) {
+    return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.releaseName));
   }
 
   private handleFilterQueryChange = (filter: string) => {

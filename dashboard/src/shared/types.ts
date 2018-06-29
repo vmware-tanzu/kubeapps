@@ -171,6 +171,7 @@ export interface IAppState {
   deleteError?: Error;
   // currently items are always Helm releases
   items: hapi.release.Release[];
+  listOverview?: IAppOverview[];
   selected?: hapi.release.Release;
 }
 
@@ -321,4 +322,11 @@ export interface IRBACRole {
   clusterWide?: boolean;
   resource: string;
   verbs: string[];
+}
+
+export interface IAppOverview {
+  releaseName: string;
+  namespace: string;
+  version: string;
+  icon?: string;
 }

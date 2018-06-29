@@ -1,7 +1,7 @@
 import { AppRepository } from "./AppRepository";
 import { axios } from "./Auth";
 import { hapi } from "./hapi/release";
-import { IChartVersion } from "./types";
+import { IAppOverview, IChartVersion } from "./types";
 
 export class App {
   public static getResourceURL(namespace?: string, name?: string) {
@@ -64,20 +64,8 @@ export class App {
   }
 
   public static async listApps(namespace?: string) {
-    const { data } = await axios.get<{ data: Array<{ namespace: string; releaseName: string }> }>(
-      App.getResourceURL(namespace),
-    );
+    const { data } = await axios.get<{ data: IAppOverview[] }>(App.getResourceURL(namespace));
     return data.data;
-  }
-
-  public static async getAllWithDetails(namespace?: string) {
-    const appList = await this.listApps(namespace);
-    const releases = await Promise.all<hapi.release.Release>(
-      appList.map(async hr => {
-        return await App.getRelease(hr.namespace, hr.releaseName);
-      }),
-    );
-    return releases;
   }
 
   public static async getRelease(namespace: string, name: string) {

@@ -3,13 +3,20 @@ import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
-import { IChartVersion, IStoreState } from "../shared/types";
+import { IAppOverview, IChartVersion, IStoreState } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Release[]) => {
   return {
     apps,
     type: "RECEIVE_APPS",
+  };
+});
+export const listApps = createAction("REQUEST_APP_LIST");
+export const receiveAppList = createAction("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
+  return {
+    apps,
+    type: "RECEIVE_APP_LIST",
   };
 });
 export const errorApps = createAction("ERROR_APPS", (err: Error) => ({
@@ -27,9 +34,15 @@ export const selectApp = createAction("SELECT_APP", (app: hapi.release.Release) 
   };
 });
 
-const allActions = [requestApps, receiveApps, errorApps, errorDeleteApp, selectApp].map(
-  getReturnOfExpression,
-);
+const allActions = [
+  listApps,
+  requestApps,
+  receiveApps,
+  receiveAppList,
+  errorApps,
+  errorDeleteApp,
+  selectApp,
+].map(getReturnOfExpression);
 export type AppsAction = typeof allActions[number];
 
 export function getApp(releaseName: string, namespace: string) {
@@ -61,10 +74,10 @@ export function fetchApps(ns?: string) {
     if (ns && ns === "_all") {
       ns = undefined;
     }
-    dispatch(requestApps());
+    dispatch(listApps());
     try {
-      const apps = await App.getAllWithDetails(ns);
-      dispatch(receiveApps(apps));
+      const apps = await App.listApps(ns);
+      dispatch(receiveAppList(apps));
     } catch (e) {
       dispatch(errorApps(e));
     }

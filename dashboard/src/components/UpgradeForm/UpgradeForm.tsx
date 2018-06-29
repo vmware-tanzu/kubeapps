@@ -130,7 +130,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
                   Submit
                 </button>
                 <button className="button" onClick={this.handleReselectChartRepo}>
-                  Select Chart repo
+                  Back
                 </button>
               </div>
             </div>
