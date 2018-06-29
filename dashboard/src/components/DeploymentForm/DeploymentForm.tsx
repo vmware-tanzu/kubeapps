@@ -49,14 +49,36 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public componentDidMount() {
-    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
+    const {
+      chartID,
+      fetchChartVersions,
+      getChartVersion,
+      chartVersion,
+      getBindings,
+      namespace,
+    } = this.props;
     fetchChartVersions(chartID);
     getChartVersion(chartID, chartVersion);
+    getBindings(namespace);
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
-    const { chartID, chartVersion, getChartValues, getChartVersion, selected } = this.props;
+    const {
+      chartID,
+      chartVersion,
+      getBindings,
+      getChartValues,
+      getChartVersion,
+      namespace,
+      selected,
+    } = this.props;
     const { version } = selected;
+
+    if (nextProps.namespace !== namespace) {
+      this.setState({ namespace: nextProps.namespace });
+      getBindings(nextProps.namespace);
+      return;
+    }
 
     if (chartVersion !== nextProps.chartVersion) {
       getChartVersion(chartID, nextProps.chartVersion);

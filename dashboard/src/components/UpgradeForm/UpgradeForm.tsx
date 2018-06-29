@@ -52,14 +52,17 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       appCurrentVersion,
       chartName,
       fetchChartVersions,
+      getBindings,
       getChartValues,
       getChartVersion,
+      namespace,
       repo,
     } = this.props;
     const chartID = `${repo}/${chartName}`;
     fetchChartVersions(chartID);
     getChartVersion(chartID, appCurrentVersion);
     getChartValues(chartID, appCurrentVersion);
+    getBindings(namespace);
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {
