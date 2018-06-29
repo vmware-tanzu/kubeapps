@@ -20,6 +20,7 @@ import (
 	"fmt"
 
 	authorizationapi "k8s.io/api/authorization/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	discovery "k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
@@ -28,36 +29,25 @@ import (
 	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 )
 
-// UserAuth contains information to check user permissions
-type UserAuth struct {
-	authCli      authorizationv1.AuthorizationV1Interface
-	discoveryCli discovery.DiscoveryInterface
-}
-
 type resource struct {
 	APIVersion string
 	Kind       string
 	Namespace  string
 }
 
-// NewAuth creates an auth agent
-func NewAuth(token string) (*UserAuth, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
-	// Overwrite default token
-	config.BearerToken = token
-	kubeClient, err := kubernetes.NewForConfig(config)
-	authCli := kubeClient.AuthorizationV1()
-	discoveryCli := kubeClient.Discovery()
-
-	return &UserAuth{authCli, discoveryCli}, nil
+type k8sAuthInterface interface {
+	Validate() error
+	GetResourceList(groupVersion string) (*metav1.APIResourceList, error)
+	CanI(verb, group, resource, namespace string) (bool, error)
 }
 
-// Validate checks if the given token is valid
-func (u *UserAuth) Validate() error {
-	_, err := u.authCli.SelfSubjectRulesReviews().Create(&authorizationapi.SelfSubjectRulesReview{
+type k8sAuth struct {
+	AuthCli      authorizationv1.AuthorizationV1Interface
+	DiscoveryCli discovery.DiscoveryInterface
+}
+
+func (u k8sAuth) Validate() error {
+	_, err := u.AuthCli.SelfSubjectRulesReviews().Create(&authorizationapi.SelfSubjectRulesReview{
 		Spec: authorizationapi.SelfSubjectRulesReviewSpec{
 			Namespace: "default",
 		},
@@ -65,21 +55,12 @@ func (u *UserAuth) Validate() error {
 	return err
 }
 
-func resolve(discoveryCli discovery.DiscoveryInterface, groupVersion, kind string) (string, error) {
-	resourceList, err := discoveryCli.ServerResourcesForGroupVersion(groupVersion)
-	if err != nil {
-		return "", nil
-	}
-	for _, r := range resourceList.APIResources {
-		if r.Kind == kind {
-			return r.Name, nil
-		}
-	}
-	return "", fmt.Errorf("Unable to find the kind %s in the resource group %s", kind, groupVersion)
+func (u k8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, error) {
+	return u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
 }
 
-func (u *UserAuth) canPerform(verb, group, resource, namespace string) (bool, error) {
-	res, err := u.authCli.SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
+func (u k8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
+	res, err := u.AuthCli.SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
 		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationapi.ResourceAttributes{
 				Group:     group,
@@ -93,6 +74,56 @@ func (u *UserAuth) canPerform(verb, group, resource, namespace string) (bool, er
 		return false, err
 	}
 	return res.Status.Allowed, nil
+}
+
+// UserAuth contains information to check user permissions
+type UserAuth struct {
+	k8sAuth k8sAuthInterface
+}
+
+// Action represents a specific set of verbs against a resource
+type Action struct {
+	APIVersion string   `json:"apiGroup"`
+	Resource   string   `json:"resource"`
+	Namespace  string   `json:"namespace"`
+	Verbs      []string `json:"verbs"`
+}
+
+// NewAuth creates an auth agent
+func NewAuth(token string) (*UserAuth, error) {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+	// Overwrite default token
+	config.BearerToken = token
+	kubeClient, err := kubernetes.NewForConfig(config)
+	authCli := kubeClient.AuthorizationV1()
+	discoveryCli := kubeClient.Discovery()
+	k8sAuthCli := k8sAuth{
+		AuthCli:      authCli,
+		DiscoveryCli: discoveryCli,
+	}
+
+	return &UserAuth{k8sAuthCli}, nil
+}
+
+// Validate checks if the given token is valid
+func (u *UserAuth) Validate() error {
+	return u.k8sAuth.Validate()
+}
+
+func (u *UserAuth) resolve(groupVersion, kind string) (string, error) {
+	resourceList, err := u.k8sAuth.GetResourceList(groupVersion)
+	if err != nil {
+		return "", nil
+	}
+	for _, r := range resourceList.APIResources {
+		if r.Kind == kind {
+			return r.Name, nil
+		}
+	}
+	return "", fmt.Errorf("Unable to find the kind %s in the resource group %s", kind, groupVersion)
 }
 
 func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, error) {
@@ -118,45 +149,84 @@ func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, 
 	return result, nil
 }
 
-func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) error {
+func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, error) {
+	rejectedActions := []Action{}
 	for _, i := range itemsToCheck {
-		resource, err := resolve(u.discoveryCli, i.APIVersion, i.Kind)
+		resource, err := u.resolve(i.APIVersion, i.Kind)
 		if err != nil {
-			return err
+			return []Action{}, err
 		}
 		group := i.APIVersion
 		if group == "v1" {
 			// The group should be empty for the core API group
 			group = ""
 		}
-		allowed, _ := u.canPerform(verb, group, resource, i.Namespace)
+		allowed, err := u.k8sAuth.CanI(verb, group, resource, i.Namespace)
+		if err != nil {
+			return []Action{}, err
+		}
 		if !allowed {
-			return fmt.Errorf("Unauthorized to %s %s/%s in the %s namespace", verb, i.APIVersion, resource, i.Namespace)
+			rejectedActions = append(rejectedActions, Action{
+				APIVersion: i.APIVersion,
+				Resource:   resource,
+				Namespace:  i.Namespace,
+				Verbs:      []string{verb},
+			})
 		}
 	}
-	return nil
+	return rejectedActions, nil
 }
 
-// CanI returns if the user can perform the given action with the given chart and parameters
-func (u *UserAuth) CanI(namespace, action, manifest string) error {
+func reduceActionsByVerb(actions []Action) []Action {
+	resMap := map[string]Action{}
+	res := []Action{}
+	for _, action := range actions {
+		req := fmt.Sprintf("%s/%s/%s", action.Namespace, action.APIVersion, action.Resource)
+		if _, ok := resMap[req]; ok {
+			// Element already exists
+			verbs := append(resMap[req].Verbs, action.Verbs...)
+			resMap[req] = Action{
+				APIVersion: action.APIVersion,
+				Resource:   action.Resource,
+				Namespace:  action.Namespace,
+				Verbs:      verbs,
+			}
+		} else {
+			resMap[req] = action
+		}
+	}
+	for _, a := range resMap {
+		res = append(res, a)
+	}
+	return res
+}
+
+// GetForbiddenActions parses a K8s manifest and checks if the current user can do the action given
+// over all the elements of the manifest. It return the list of forbidden Actions if any.
+func (u *UserAuth) GetForbiddenActions(namespace, action, manifest string) ([]Action, error) {
 	resources, err := u.getResourcesToCheck(namespace, manifest)
+	forbiddenActions := []Action{}
 	if err != nil {
-		return err
+		return []Action{}, err
 	}
 	switch action {
 	case "upgrade":
 		// For upgrading a chart the user should be able to create, update and delete resources
 		for _, v := range []string{"create", "update", "delete"} {
-			err = u.isAllowed(v, resources)
+			actions, err := u.isAllowed(v, resources)
 			if err != nil {
-				return err
+				return []Action{}, err
 			}
+			forbiddenActions = append(forbiddenActions, actions...)
+		}
+		if len(forbiddenActions) > 0 {
+			forbiddenActions = reduceActionsByVerb(forbiddenActions)
 		}
 	default:
-		err := u.isAllowed(action, resources)
+		forbiddenActions, err = u.isAllowed(action, resources)
 		if err != nil {
-			return err
+			return []Action{}, err
 		}
 	}
-	return nil
+	return forbiddenActions, nil
 }
