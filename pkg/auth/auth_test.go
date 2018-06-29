@@ -37,6 +37,10 @@ func (u fakeK8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceLi
 	return u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
 }
 func (u fakeK8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
+	// Fake write permissions for pods
+	if resource == "pods" {
+		return true, nil
+	}
 	return false, nil
 }
 
@@ -66,7 +70,7 @@ func newFakeUserAuth() *UserAuth {
 	return &UserAuth{fakeK8sAuthCli}
 }
 
-func TestCanI(t *testing.T) {
+func TestGetForbidden(t *testing.T) {
 	type test struct {
 		Action          string
 		Namespace       string
@@ -74,6 +78,7 @@ func TestCanI(t *testing.T) {
 		ExpectedActions []Action
 	}
 	testSuite := []test{
+		// It should be able to create pods
 		{
 			Action:    "create",
 			Namespace: "foo",
@@ -81,8 +86,18 @@ func TestCanI(t *testing.T) {
 apiVersion: v1
 kind: Pod
 `,
+			ExpectedActions: []Action{},
+		},
+		// It shouldn't be able to create deployments
+		{
+			Action:    "create",
+			Namespace: "foo",
+			Manifest: `---
+apiVersion: apps/v1beta1
+kind: Deployment
+`,
 			ExpectedActions: []Action{
-				{APIVersion: "v1", Resource: "pods", Namespace: "foo", Verbs: []string{"create"}},
+				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create"}},
 			},
 		},
 		// It should overwrite the default namespace
@@ -90,13 +105,13 @@ kind: Pod
 			Action:    "create",
 			Namespace: "foo",
 			Manifest: `---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1beta1
+kind: Deployment
 metadata:
   namespace: bar
 `,
 			ExpectedActions: []Action{
-				{APIVersion: "v1", Resource: "pods", Namespace: "bar", Verbs: []string{"create"}},
+				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "bar", Verbs: []string{"create"}},
 			},
 		},
 		// It should report the same resource in different resource groups
@@ -120,11 +135,11 @@ kind: Deployment
 			Action:    "upgrade",
 			Namespace: "foo",
 			Manifest: `---
-apiVersion: v1
-kind: Pod
+apiVersion: apps/v1beta1
+kind: Deployment
 `,
 			ExpectedActions: []Action{
-				{APIVersion: "v1", Resource: "pods", Namespace: "foo", Verbs: []string{"create", "update", "delete"}},
+				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create", "update", "delete"}},
 			},
 		},
 	}
