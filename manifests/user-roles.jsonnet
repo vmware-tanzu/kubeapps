@@ -7,6 +7,7 @@ local kubecfg = import "kubecfg.libsonnet";
   applications: {
     // kubeapps-applications-read
     // Gives read-only access to Applications within a Namespace in Kubeapps.
+    // It also gives permisions to check self permissions
     // Usage:
     //   Apply kubeapps-applications-read clusterrole to user/serviceaccount in the desired namespace
     read: kube.ClusterRole("kubeapps-applications-read") {
@@ -15,6 +16,11 @@ local kubecfg = import "kubecfg.libsonnet";
           apiGroups: ["*"],
           resources: ["*"],
           verbs: ["list", "get", "watch"],
+        },
+        {
+          apiGroups: ["*"],
+          resources: ["selfsubjectrulesreviews", "selfsubjectaccessreviews"],
+          verbs: ["create"],
         },
       ],
     },
