@@ -83,6 +83,7 @@ export interface IChartAttributes {
 export interface IChartState {
   isFetching: boolean;
   selected: {
+    error?: Error;
     version?: IChartVersion;
     versions: IChartVersion[];
     readme?: string;

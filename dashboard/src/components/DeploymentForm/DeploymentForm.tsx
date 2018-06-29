@@ -25,7 +25,7 @@ interface IDeploymentFormProps {
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: (ns: string) => Promise<IServiceBinding[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   namespace: string;
 }
@@ -98,7 +98,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { selected, bindings } = this.props;
+    const { selected, bindings, chartID } = this.props;
     const { version, versions } = selected;
     const { appValues, releaseName } = this.state;
     if (!version || !versions.length || this.state.isDeploying) {
@@ -109,7 +109,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
             <div className="col-8">
-              {this.props.error && <DeploymentErrors {...this.props} releaseName={releaseName} />}
+              {this.props.error && (
+                <DeploymentErrors
+                  {...this.props}
+                  chartName={chartID.split("/")[0]}
+                  releaseName={releaseName}
+                  repo={chartID.split("/")[1]}
+                  version={version.id}
+                />
+              )}
             </div>
             <div className="col-12">
               <h2>{this.props.chartID}</h2>

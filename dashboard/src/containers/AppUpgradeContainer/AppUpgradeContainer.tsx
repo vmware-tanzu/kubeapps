@@ -22,7 +22,7 @@ function mapStateToProps(
   return {
     app: apps.selected,
     bindings: catalog.bindings,
-    error: apps.error,
+    error: apps.error || charts.selected.error,
     namespace: params.namespace,
     releaseName: params.releaseName,
     repo: repos.repo,

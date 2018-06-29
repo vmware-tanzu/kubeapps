@@ -1,5 +1,11 @@
 import * as React from "react";
-import { AppConflict, ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
+import {
+  AppConflict,
+  ForbiddenError,
+  IRBACRole,
+  MissingChart,
+  NotFoundError,
+} from "../../shared/types";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
 const RequiredRBACRoles: IRBACRole[] = [
@@ -15,11 +21,14 @@ interface IDeploymentErrorProps {
   namespace: string;
   releaseName: string;
   error: Error | undefined;
+  chartName: string;
+  repo: string;
+  version: string;
 }
 
 class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
   public render() {
-    const { error, namespace, releaseName } = this.props;
+    const { chartName, error, namespace, releaseName, repo, version } = this.props;
     switch (error && error.constructor) {
       case AppConflict:
         return (
@@ -44,7 +53,10 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
             action={`deploy the application "${releaseName}"`}
           />
         );
-
+      case MissingChart:
+        return (
+          <NotFoundErrorAlert header={`Chart ${chartName} (v${version}) not found in ${repo}`} />
+        );
       case NotFoundError:
         return (
           <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />

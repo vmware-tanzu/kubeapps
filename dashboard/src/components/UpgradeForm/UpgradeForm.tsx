@@ -28,7 +28,7 @@ interface IDeploymentFormProps {
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: (ns: string) => Promise<IServiceBinding[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   clearRepo: () => any;
 }
@@ -82,9 +82,12 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   }
 
   public render() {
-    const { selected, bindings } = this.props;
+    const { selected, bindings, appCurrentVersion } = this.props;
     const { version, versions } = selected;
     const { appValues } = this.state;
+    if (this.props.error) {
+      return <DeploymentErrors {...this.props} version={appCurrentVersion} />;
+    }
     if (!version || !versions || !versions.length || this.state.isDeploying) {
       return <div> Loading </div>;
     }
@@ -92,7 +95,9 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
-            <div className="col-8">{this.props.error && <DeploymentErrors {...this.props} />}</div>
+            <div className="col-8">
+              {this.props.error && <DeploymentErrors {...this.props} version={version.id} />}
+            </div>
             <div className="col-12">
               <h2>
                 {this.props.releaseName} ({this.props.chartName})

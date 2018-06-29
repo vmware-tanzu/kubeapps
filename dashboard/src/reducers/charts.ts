@@ -32,6 +32,8 @@ const chartsSelectedReducer = (
       };
     case getType(actions.charts.selectReadme):
       return { ...state, readme: action.readme, readmeError: undefined };
+    case getType(actions.charts.errorChart):
+      return { ...state, error: action.err };
     case getType(actions.charts.errorReadme):
       return { ...state, readmeError: action.message };
     case getType(actions.charts.selectValues):
@@ -66,6 +68,8 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
     case getType(actions.charts.selectReadme):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.errorReadme):
+      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
+    case getType(actions.charts.errorChart):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectValues):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };

@@ -30,7 +30,7 @@ interface IAppUpgradeProps {
   fetchChartVersions: (id: string) => Promise<{}>;
   getApp: (releaseName: string, namespace: string) => Promise<void>;
   getBindings: () => Promise<IServiceBinding[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   push: (location: string) => RouterAction;
   fetchRepositories: () => Promise<void>;
@@ -48,7 +48,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
   }
 
   public render() {
-    const { app, repos, error } = this.props;
+    const { app, repos, error, repo } = this.props;
     if (
       !repos ||
       !app ||
@@ -60,7 +60,13 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
       if (!error) {
         return <div>Loading</div>;
       } else {
-        return <DeploymentErrors {...this.props} />;
+        return (
+          <DeploymentErrors
+            {...this.props}
+            chartName={(app.chart && app.chart.metadata && app.chart.metadata.name) || ""}
+            repo={repo.metadata.name}
+          />
+        );
       }
     }
     if (!this.props.repo.metadata) {
