@@ -85,6 +85,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         <UpgradeForm
           {...this.props}
           appCurrentVersion={app.chart.metadata.version}
+          appCurrentValues={(app.config && app.config.raw) || ""}
           chartName={app.chart.metadata.name}
           repo={this.props.repo.metadata.name}
         />

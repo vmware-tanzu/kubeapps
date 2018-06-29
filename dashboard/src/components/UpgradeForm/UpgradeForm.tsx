@@ -12,6 +12,7 @@ import "brace/theme/xcode";
 
 interface IDeploymentFormProps {
   appCurrentVersion: string;
+  appCurrentValues?: string;
   bindings: IServiceBinding[];
   chartName: string;
   namespace: string;
@@ -42,7 +43,7 @@ interface IDeploymentFormState {
 
 class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
-    appValues: undefined,
+    appValues: this.props.appCurrentValues,
     isDeploying: false,
     valuesModified: false,
   };
@@ -53,7 +54,6 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       chartName,
       fetchChartVersions,
       getBindings,
-      getChartValues,
       getChartVersion,
       namespace,
       repo,
@@ -61,22 +61,34 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
     const chartID = `${repo}/${chartName}`;
     fetchChartVersions(chartID);
     getChartVersion(chartID, appCurrentVersion);
-    getChartValues(chartID, appCurrentVersion);
     getBindings(namespace);
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {
-    const { selected } = this.props;
-    if (selected.values && !this.state.appValues && !this.state.valuesModified) {
-      // First load, set initial values
-      this.setState({ appValues: selected.values });
+    const { selected, appCurrentVersion, appCurrentValues } = this.props;
+    if (
+      selected.version &&
+      prevProps.selected.version &&
+      selected.version !== prevProps.selected.version
+    ) {
+      // Version has changed
+      if (selected.version.attributes.version === appCurrentVersion) {
+        // The user has selected back the original version, use the current values
+        if (!this.state.valuesModified) {
+          // Only update the default values if the user has not modify them
+          this.setState({ appValues: appCurrentValues });
+        }
+      }
     }
     if (selected.values && this.state.appValues && selected.values !== this.state.appValues) {
       // Values has been modified either because the user has edit them
       // or because the selected version is now different
       if (!this.state.valuesModified) {
         // Only update the default values if the user has not modify them
-        this.setState({ appValues: selected.values });
+        if (selected.version && selected.version.attributes.version !== appCurrentVersion) {
+          // Only use the default values if the version is not the original one
+          this.setState({ appValues: selected.values });
+        }
       }
     }
   }
@@ -96,7 +108,9 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
             <div className="col-8">
-              {this.props.error && <DeploymentErrors {...this.props} version={version.id} />}
+              {this.props.error && (
+                <DeploymentErrors {...this.props} version={version.attributes.version} />
+              )}
             </div>
             <div className="col-12">
               <h2>

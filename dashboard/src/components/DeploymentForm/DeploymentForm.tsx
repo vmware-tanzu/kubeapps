@@ -115,7 +115,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   chartName={chartID.split("/")[0]}
                   releaseName={releaseName}
                   repo={chartID.split("/")[1]}
-                  version={version.id}
+                  version={version.attributes.version}
                 />
               )}
             </div>
