@@ -20,6 +20,7 @@ const chartsSelectedReducer = (
     case getType(actions.charts.selectChartVersion):
       return {
         ...state,
+        error: undefined,
         readme: undefined,
         readmeError: undefined,
         values: undefined,
@@ -28,6 +29,7 @@ const chartsSelectedReducer = (
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
+        error: undefined,
         versions: action.versions,
       };
     case getType(actions.charts.selectReadme):

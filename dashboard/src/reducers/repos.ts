@@ -47,10 +47,10 @@ const reposReducer = (
   switch (action.type) {
     case getType(actions.repos.receiveRepos):
       const { repos } = action;
-      return { ...state, isFetching: false, repos };
+      return { ...state, isFetching: false, repos, errors: {} };
     case getType(actions.repos.receiveRepo):
       const { repo } = action;
-      return { ...state, isFetching: false, repo };
+      return { ...state, isFetching: false, repo, errors: {} };
     case getType(actions.repos.requestRepos):
       return { ...state, isFetching: true };
     case getType(actions.repos.addRepo):
