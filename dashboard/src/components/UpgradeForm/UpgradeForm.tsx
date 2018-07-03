@@ -35,10 +35,10 @@ interface IDeploymentFormProps {
 }
 
 interface IDeploymentFormState {
-  isDeploying: boolean;
-  // deployment options
   appValues?: string;
+  isDeploying: boolean;
   valuesModified: boolean;
+  version: string;
 }
 
 class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
@@ -46,6 +46,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
     appValues: this.props.appCurrentValues,
     isDeploying: false,
     valuesModified: false,
+    version: this.props.appCurrentVersion,
   };
 
   public componentDidMount() {
@@ -85,7 +86,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       // or because the selected version is now different
       if (!this.state.valuesModified) {
         // Only update the default values if the user has not modify them
-        if (selected.version && selected.version.attributes.version !== appCurrentVersion) {
+        if (this.state.version !== appCurrentVersion) {
           // Only use the default values if the version is not the original one
           this.setState({ appValues: selected.values });
         }
@@ -182,6 +183,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
     const { repo, chartName, getChartVersion, getChartValues } = this.props;
     const chartID = `${repo}/${chartName}`;
+    this.setState({ version: e.currentTarget.value });
     getChartVersion(chartID, e.currentTarget.value);
     if (!this.state.valuesModified) {
       // Only update the default values if the user has not modify them
