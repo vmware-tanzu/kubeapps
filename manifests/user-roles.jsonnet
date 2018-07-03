@@ -4,42 +4,6 @@ local kubecfg = import "kubecfg.libsonnet";
 {
   namespace:: {metadata+: {namespace: "kubeapps"}},
 
-  applications: {
-    // kubeapps-applications-read
-    // Gives read-only access to Applications within a Namespace in Kubeapps.
-    // It also gives permisions to check self permissions
-    // Usage:
-    //   Apply kubeapps-applications-read clusterrole to user/serviceaccount in the desired namespace
-    read: kube.ClusterRole("kubeapps-applications-read") {
-      rules: [
-        {
-          apiGroups: ["*"],
-          resources: ["*"],
-          verbs: ["list", "get", "watch"],
-        },
-        {
-          apiGroups: ["*"],
-          resources: ["selfsubjectrulesreviews", "selfsubjectaccessreviews"],
-          verbs: ["create"],
-        },
-      ],
-    },
-    // kubeapps-applications-write
-    // Gives write access to Applications within a Namespace in Kubeapps.
-    // Usage:
-    //   Apply kubeapps-applications-write clusterrole to user/serviceaccount in the desired namespace.
-    //   AND apply kubeapps-repositories-read role to user/serviceaccount in the kubeapps namespace.
-    write: kube.ClusterRole("kubeapps-applications-write") {
-      rules: [
-        {
-          apiGroups: ["*"],
-          resources: ["*"],
-          verbs: ["create", "patch", "update", "delete"],
-        },
-      ],
-    },
-  },
-
   functions: {
     // kubeapps-functions-read
     // Gives read-only access to Functions within a Namespace in Kubeapps.
