@@ -1,11 +1,18 @@
 import * as React from "react";
 
-import { IAppRepository, MissingChart } from "../../shared/types";
+import { ForbiddenError, IAppRepository, IRBACRole, MissingChart } from "../../shared/types";
 
-import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
+
+const RequiredRBACRoles: IRBACRole = {
+  apiGroup: "kubeapps.com",
+  namespace: "kubeapps",
+  resource: "apprepositories",
+  verbs: ["get"],
+};
 
 interface ISelectRepoFormProps {
   error: Error | undefined;
@@ -84,6 +91,14 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
       switch (this.props.error.constructor) {
         case MissingChart:
           return <NotFoundErrorAlert header={this.props.error.message} />;
+        case ForbiddenError:
+          return (
+            <PermissionsErrorAlert
+              namespace={RequiredRBACRoles.namespace || ""}
+              roles={[RequiredRBACRoles]}
+              action={`list app repositories`}
+            />
+          );
       }
     }
     return <UnexpectedErrorAlert />;
