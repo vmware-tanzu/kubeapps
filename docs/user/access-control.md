@@ -42,7 +42,7 @@ Kubeapps.
 
 In order to list and view Applications in a namespace, apply the `view` ClusterRole
 in the desired namespace. The `view` ClusterRole should be available in most
-Kubernetes distribution, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
+Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```
 kubectl create -n default rolebinding example-view \
@@ -53,9 +53,9 @@ kubectl create -n default rolebinding example-view \
 #### Write access to Applications within a namespace
 
 In order to create, update and delete Applications in a namespace, apply the
-`edit` ClusterRole in the desired namespace and the `kubeapps-repositories-read` 
-Role in the `kubeapps` namespace. The `edit` ClusterRole should be available in most 
-Kubernetes distribution, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
+`edit` ClusterRole in the desired namespace and the `kubeapps-repositories-read`
+Role in the `kubeapps` namespace. The `edit` ClusterRole should be available in most
+Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```
 kubectl create -n default rolebinding example-edit \
