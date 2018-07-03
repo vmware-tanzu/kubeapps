@@ -18,6 +18,7 @@ package auth
 
 import (
 	"fmt"
+	"strings"
 
 	authorizationapi "k8s.io/api/authorization/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -164,6 +165,15 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 		allowed, err := u.k8sAuth.CanI(verb, group, resource, i.Namespace)
 		if err != nil {
 			return []Action{}, err
+		}
+		// If the "group" is versioned the user may be able to have access to any
+		// version of the group but the above call may return "false"
+		if !allowed && strings.Contains(group, "/") {
+			groupID := strings.Split(group, "/")[0]
+			allowed, err = u.k8sAuth.CanI(verb, groupID, resource, i.Namespace)
+			if err != nil {
+				return []Action{}, err
+			}
 		}
 		if !allowed {
 			rejectedActions = append(rejectedActions, Action{

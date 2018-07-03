@@ -41,6 +41,10 @@ func (u fakeK8sAuth) CanI(verb, group, resource, namespace string) (bool, error)
 	if resource == "pods" {
 		return true, nil
 	}
+	// Fake permissions for clusterroles in any version
+	if resource == "clusterroles" && group == "rbac.authorization.k8s.io" {
+		return true, nil
+	}
 	return false, nil
 }
 
@@ -63,9 +67,20 @@ func newFakeUserAuth() *UserAuth {
 			{Name: "deployments", Kind: "Deployment"},
 		},
 	}
+	resourceListRBAC := metav1.APIResourceList{
+		GroupVersion: "rbac.authorization.k8s.io/v1",
+		APIResources: []metav1.APIResource{
+			{Name: "clusterroles", Kind: "ClusterRole"},
+		},
+	}
 	cli := fake.NewSimpleClientset()
 	fakeDiscovery, _ := cli.Discovery().(*fakediscovery.FakeDiscovery)
-	fakeDiscovery.Resources = []*metav1.APIResourceList{&resourceListV1, &resourceListAppsV1Beta1, &resourceListExtensionsV1Beta1}
+	fakeDiscovery.Resources = []*metav1.APIResourceList{
+		&resourceListV1,
+		&resourceListAppsV1Beta1,
+		&resourceListExtensionsV1Beta1,
+		&resourceListRBAC,
+	}
 	fakeK8sAuthCli := fakeK8sAuth{cli.Discovery()}
 	return &UserAuth{fakeK8sAuthCli}
 }
@@ -141,6 +156,16 @@ kind: Deployment
 			ExpectedActions: []Action{
 				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create", "update", "delete"}},
 			},
+		},
+		// It should allow unversioned clusterroles
+		{
+			Action:    "get",
+			Namespace: "foo",
+			Manifest: `---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+`,
+			ExpectedActions: []Action{},
 		},
 	}
 	for _, tt := range testSuite {

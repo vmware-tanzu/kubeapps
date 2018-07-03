@@ -7,7 +7,7 @@ local kube = import "kube.libsonnet";
 {
   namespace:: {metadata+: {namespace: "kube-system"}},
   local proxyContainer = kube.Container("proxy") {
-    image: "kubeapps/tiller-proxy:v0.0.1",
+    image: "kubeapps/tiller-proxy:v0.0.3",
     securityContext: {
       readOnlyRootFilesystem: true,
     },
