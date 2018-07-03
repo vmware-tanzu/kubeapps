@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -29,6 +30,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
+	"k8s.io/helm/pkg/tlsutil"
 
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 )
@@ -38,10 +40,26 @@ var (
 	proxy       *tillerProxy.Proxy
 	kubeClient  kubernetes.Interface
 	disableAuth bool
+
+	tlsCaCertFile string // path to TLS CA certificate file
+	tlsCertFile   string // path to TLS certificate file
+	tlsKeyFile    string // path to TLS key file
+	tlsVerify     bool   // enable TLS and verify remote certificates
+	tlsEnable     bool   // enable TLS
+
+	tlsCaCertDefault = fmt.Sprintf("%s/ca.crt", os.Getenv("HELM_HOME"))
+	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
+	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 )
 
 func init() {
 	settings.AddFlags(pflag.CommandLine)
+	// TLS Flags
+	pflag.StringVar(&tlsCaCertFile, "tls-ca-cert", tlsCaCertDefault, "path to TLS CA certificate file")
+	pflag.StringVar(&tlsCertFile, "tls-cert", tlsCertDefault, "path to TLS certificate file")
+	pflag.StringVar(&tlsKeyFile, "tls-key", tlsKeyDefault, "path to TLS key file")
+	pflag.BoolVar(&tlsVerify, "tls-verify", false, "enable TLS for request and verify remote")
+	pflag.BoolVar(&tlsEnable, "tls", false, "enable TLS for request")
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 }
 
@@ -62,7 +80,30 @@ func main() {
 	}
 
 	log.Printf("Using tiller host: %s", settings.TillerHost)
-	helmClient := helm.NewClient(helm.Host(settings.TillerHost))
+	helmOptions := []helm.Option{helm.Host(settings.TillerHost)}
+	if tlsVerify || tlsEnable {
+		if tlsCaCertFile == "" {
+			tlsCaCertFile = settings.Home.TLSCaCert()
+		}
+		if tlsCertFile == "" {
+			tlsCertFile = settings.Home.TLSCert()
+		}
+		if tlsKeyFile == "" {
+			tlsKeyFile = settings.Home.TLSKey()
+		}
+		log.Printf("Using Key=%q, Cert=%q, CA=%q", tlsKeyFile, tlsCertFile, tlsCaCertFile)
+		tlsopts := tlsutil.Options{KeyFile: tlsKeyFile, CertFile: tlsCertFile, InsecureSkipVerify: true}
+		if tlsVerify {
+			tlsopts.CaCertFile = tlsCaCertFile
+			tlsopts.InsecureSkipVerify = false
+		}
+		tlscfg, err := tlsutil.ClientConfig(tlsopts)
+		if err != nil {
+			log.Fatal(err)
+		}
+		helmOptions = append(helmOptions, helm.WithTLS(tlscfg))
+	}
+	helmClient := helm.NewClient(helmOptions...)
 	err = helmClient.PingTiller()
 	if err != nil {
 		log.Fatalf("Unable to connect to Tiller: %v", err)
@@ -81,8 +122,14 @@ func main() {
 
 	// Routes
 	apiv1 := r.PathPrefix("/v1").Subrouter()
-	apiv1.Methods("GET").Path("/releases").HandlerFunc(listAllReleases)
-	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(WithParams(listReleases))
+	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(WithoutParams(listAllReleases)),
+	))
+	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(WithParams(listReleases)),
+	))
 	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(WithParams(createRelease)),

@@ -18,9 +18,12 @@ package kubeapps
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -50,9 +53,22 @@ const (
 	SystemNS       = "kube-system"
 	Kubeapps_NS    = "kubeapps"
 	MongoDB_Secret = "mongodb"
+	tillerSecret   = "tiller-secret"
 )
 
 var MongoDB_SecretFields = []string{"mongodb-root-password"}
+
+var (
+	tlsCaCertDefault = fmt.Sprintf("%s/ca.crt", os.Getenv("HELM_HOME"))
+	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
+	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
+
+	tlsCaCertFile string // path to TLS CA certificate file
+	tlsCertFile   string // path to TLS certificate file
+	tlsKeyFile    string // path to TLS key file
+	tlsVerify     bool   // enable TLS and verify remote certificates
+	tlsEnable     bool   // enable TLS
+)
 
 var upCmd = &cobra.Command{
 	Use:   "up FLAG",
@@ -154,6 +170,94 @@ List of components that kubeapps up installs:
 			objs = append(objs, prevsecret)
 		}
 
+		// TLS Configuration
+		if tlsVerify || tlsEnable {
+			// Generate secret
+			tlsCaCert, err := ioutil.ReadFile(tlsCaCertFile)
+			if err != nil {
+				return err
+			}
+			tlsCert, err := ioutil.ReadFile(tlsCertFile)
+			if err != nil {
+				return err
+			}
+			tlsKey, err := ioutil.ReadFile(tlsKeyFile)
+			if err != nil {
+				return err
+			}
+			data := map[string]string{
+				"ca.crt":  base64.StdEncoding.EncodeToString(tlsCaCert),
+				"tls.crt": base64.StdEncoding.EncodeToString(tlsCert),
+				"tls.key": base64.StdEncoding.EncodeToString(tlsKey),
+			}
+			tlsCertSecret := buildSecretObject(data, tillerSecret, Kubeapps_NS)
+			objs = append(objs, tlsCertSecret)
+			// Modify tiller deployment to use TLS
+			unstructuredTillerDeployment, index, err := findObj(objs, "tiller-deploy", Kubeapps_NS, "Deployment")
+			if err != nil {
+				return err
+			}
+			depBytes, err := json.Marshal(unstructuredTillerDeployment.Object)
+			if err != nil {
+				return err
+			}
+			tillerDeployment := v1beta1.Deployment{}
+			err = json.Unmarshal(depBytes, &tillerDeployment)
+			if err != nil {
+				return err
+			}
+			certPath := "/etc/certs"
+			modifiedContainers := []v1.Container{}
+			for _, c := range tillerDeployment.Spec.Template.Spec.Containers {
+				switch c.Name {
+				case "tiller":
+					c.Env = append(
+						c.Env,
+						v1.EnvVar{Name: "TILLER_TLS_ENABLE", Value: "1"},
+						v1.EnvVar{Name: "TILLER_TLS_CERTS", Value: certPath},
+					)
+					if tlsVerify {
+						c.Env = append(c.Env, v1.EnvVar{Name: "TILLER_TLS_VERIFY", Value: "1"})
+					}
+				case "proxy":
+					c.Args = append(c.Args, "--tls")
+					if tlsVerify {
+						c.Args = append(c.Args, "--tls-verify")
+					}
+					c.Env = append(c.Env, v1.EnvVar{Name: "HELM_HOME", Value: certPath})
+				default:
+					return fmt.Errorf("Unexpected container %s", c.Name)
+				}
+				c.VolumeMounts = append(c.VolumeMounts, v1.VolumeMount{
+					Name:      "tiller-certs",
+					MountPath: certPath,
+					ReadOnly:  true,
+				})
+				modifiedContainers = append(modifiedContainers, c)
+			}
+			tillerDeployment.Spec.Template.Spec.Containers = modifiedContainers
+			tillerDeployment.Spec.Template.Spec.Volumes = append(
+				tillerDeployment.Spec.Template.Spec.Volumes,
+				v1.Volume{
+					Name: "tiller-certs",
+					VolumeSource: v1.VolumeSource{
+						Secret: &v1.SecretVolumeSource{
+							SecretName: tillerSecret,
+						},
+					},
+				},
+			)
+			newDpm, err := json.Marshal(tillerDeployment)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(newDpm, unstructuredTillerDeployment)
+			if err != nil {
+				return err
+			}
+			objs[index] = unstructuredTillerDeployment
+		}
+
 		if c.DryRun {
 			return dump(cmd.OutOrStdout(), out, c.Discovery, objs)
 		}
@@ -178,10 +282,27 @@ List of components that kubeapps up installs:
 	},
 }
 
+func findObj(objs []*unstructured.Unstructured, name, namespace, kind string) (*unstructured.Unstructured, int, error) {
+	index := 0
+	for _, obj := range objs {
+		if obj.GetName() == name && obj.GetNamespace() == namespace && obj.GetKind() == kind {
+			return obj, index, nil
+		}
+		index++
+	}
+	return nil, -1, fmt.Errorf("Obj %s/%s (%s) not found", namespace, name, kind)
+}
+
 func init() {
 	RootCmd.AddCommand(upCmd)
 	upCmd.Flags().Bool("dry-run", false, "Show manifest to be submitted to the k8s cluster without deploying.")
 	upCmd.Flags().StringP("out", "o", "yaml", "Specify manifest format: yaml | json. Note: used only with --dry-run")
+	// TLS Flags
+	upCmd.Flags().StringVar(&tlsCaCertFile, "tls-ca-cert", tlsCaCertDefault, "path to TLS CA certificate file")
+	upCmd.Flags().StringVar(&tlsCertFile, "tiller-tls-cert", tlsCertDefault, "path to TLS certificate file")
+	upCmd.Flags().StringVar(&tlsKeyFile, "tiller-tls-key", tlsKeyDefault, "path to TLS key file")
+	upCmd.Flags().BoolVar(&tlsVerify, "tiller-tls-verify", false, "enable TLS for request and verify remote")
+	upCmd.Flags().BoolVar(&tlsEnable, "tiller-tls", false, "enable TLS for request")
 }
 
 func dump(w io.Writer, out string, disco discovery.DiscoveryInterface, objs []*unstructured.Unstructured) error {
@@ -301,6 +422,9 @@ func buildSecretObject(pw map[string]string, name, ns string) *unstructured.Unst
 			"metadata": map[string]interface{}{
 				"name":      name,
 				"namespace": ns,
+				"labels": map[string]string{
+					"created-by": "kubeapps",
+				},
 			},
 			"data": pw,
 		},
