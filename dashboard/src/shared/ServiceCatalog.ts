@@ -118,6 +118,7 @@ export interface IServicePlan {
       bullets: string[];
     };
     instanceCreateParameterSchema?: JSONSchema6;
+    serviceBindingCreateParameterSchema?: JSONSchema6;
     free: boolean;
     clusterServiceClassRef: {
       name: string;

@@ -53,7 +53,12 @@ export interface IServiceBinding {
 }
 
 export class ServiceBinding {
-  public static async create(bindingName: string, instanceRefName: string, namespace: string) {
+  public static async create(
+    bindingName: string,
+    instanceRefName: string,
+    namespace: string,
+    parameters: {},
+  ) {
     const url = ServiceBinding.getLink(namespace);
     const { data } = await axios.post<IServiceBinding>(url, {
       metadata: {
@@ -63,6 +68,7 @@ export class ServiceBinding {
         instanceRef: {
           name: instanceRefName,
         },
+        parameters,
       },
     });
     return data;

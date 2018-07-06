@@ -1,23 +1,31 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 
+import { JSONSchema6 } from "json-schema";
+import { ISubmitEvent } from "react-jsonschema-form";
 import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import SchemaForm from "../SchemaForm";
 
 interface IAddBindingButtonProps {
   error?: Error;
-  bindingName: string;
   instanceRefName: string;
   namespace: string;
-  addBinding: (bindingName: string, instanceName: string, namespace: string) => Promise<boolean>;
+  addBinding: (
+    bindingName: string,
+    instanceName: string,
+    namespace: string,
+    parameters: {},
+  ) => Promise<boolean>;
   onAddBinding: () => void;
+  bindingSchema?: JSONSchema6;
 }
 
 interface IAddBindingButtonState {
   modalIsOpen: boolean;
   // deployment options
   bindingName: string;
-  instanceRefName: string;
+  displayNameForm: boolean;
 }
 
 const RequiredRBACRoles: IRBACRole[] = [
@@ -33,13 +41,25 @@ export class AddBindingButton extends React.Component<
   IAddBindingButtonState
 > {
   public state = {
-    error: undefined,
+    bindingName: `${this.props.instanceRefName}-binding`,
+    displayNameForm: true,
     modalIsOpen: false,
-    ...this.props,
   };
 
   public render() {
-    const { modalIsOpen, bindingName, instanceRefName } = this.state;
+    let { bindingSchema } = this.props;
+    const { modalIsOpen, displayNameForm } = this.state;
+    if (!bindingSchema) {
+      bindingSchema = {
+        properties: {
+          kubeappsRawParameters: {
+            title: "Parameters",
+            type: "object",
+          },
+        },
+        type: "object",
+      };
+    }
     return (
       <div className="AddBindingButton">
         <button className="button button-primary" onClick={this.openModal}>
@@ -49,31 +69,29 @@ export class AddBindingButton extends React.Component<
           {this.props.error && <div className="margin-b-big">{this.renderError()}</div>}
           <div className="bind-form">
             <h1>Add Binding</h1>
-            <label htmlFor="binding-name">
-              <span>Name:</span>
-              <input
-                type="text"
-                id="binding-name"
-                value={bindingName}
-                onChange={this.handleNameChange}
-              />
-            </label>
-            <br />
-            <label htmlFor="instance-ref-name">
-              <span>Instance Name:</span>
-              <input
-                type="text"
-                id="instance-ref-name"
-                value={instanceRefName}
-                onChange={this.handleInstanceNameChange}
-              />
-            </label>
-            <button className="button button-primary" onClick={this.bind}>
-              Create Binding
-            </button>
-            <button className="button" onClick={this.closeModal}>
-              Cancel
-            </button>
+            {displayNameForm ? (
+              <SchemaForm schema={this.nameSchema()} onSubmit={this.handleNameChange}>
+                <div>
+                  <button className="button button-primary" type="submit">
+                    Continue
+                  </button>
+                  <button className="button" onClick={this.closeModal}>
+                    Cancel
+                  </button>
+                </div>
+              </SchemaForm>
+            ) : (
+              <SchemaForm schema={bindingSchema} onSubmit={this.handleBind}>
+                <div>
+                  <button className="button button-primary" type="submit">
+                    Submit
+                  </button>
+                  <button className="button" onClick={this.handleBackButton}>
+                    Back
+                  </button>
+                </div>
+              </SchemaForm>
+            )}
           </div>
         </Modal>
       </div>
@@ -82,15 +100,21 @@ export class AddBindingButton extends React.Component<
 
   private closeModal = () => this.setState({ modalIsOpen: false });
   private openModal = () => this.setState({ modalIsOpen: true });
-  private handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ bindingName: e.target.value });
-  private handleInstanceNameChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    this.setState({ instanceRefName: e.target.value });
-  private bind = async () => {
+  private handleNameChange = ({ formData }: ISubmitEvent<{ Name: string }>) => {
+    this.setState({ bindingName: formData.Name, displayNameForm: false });
+  };
+  private handleBackButton = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    this.setState({ displayNameForm: true });
+  };
+
+  private handleBind = async ({ formData }: ISubmitEvent<{ kubeappsRawParameters: {} }>) => {
+    const { kubeappsRawParameters, ...rest } = formData;
     const added = await this.props.addBinding(
       this.state.bindingName,
-      this.state.instanceRefName,
+      this.props.instanceRefName,
       this.props.namespace,
+      kubeappsRawParameters || rest,
     );
     if (added) {
       this.closeModal();
@@ -115,5 +139,19 @@ export class AddBindingButton extends React.Component<
       default:
         return <UnexpectedErrorAlert />;
     }
+  }
+
+  private nameSchema(): JSONSchema6 {
+    return {
+      properties: {
+        Name: {
+          default: this.state.bindingName,
+          description: "Name for ServiceBinding",
+          type: "string",
+        },
+      },
+      required: ["Name"],
+      type: "object",
+    };
   }
 }

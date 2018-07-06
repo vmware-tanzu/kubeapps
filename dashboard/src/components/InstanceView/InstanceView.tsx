@@ -26,7 +26,12 @@ interface IInstanceViewProps {
   svcPlan: IServicePlan | undefined;
   getCatalog: (ns: string) => Promise<any>;
   deprovision: (instance: IServiceInstance) => Promise<boolean>;
-  addBinding: (bindingName: string, instanceName: string, namespace: string) => Promise<boolean>;
+  addBinding: (
+    bindingName: string,
+    instanceName: string,
+    namespace: string,
+    parameters: {},
+  ) => Promise<boolean>;
   removeBinding: (name: string, ns: string) => Promise<boolean>;
 }
 
@@ -205,7 +210,7 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
             </CardGrid>
             <h2>Bindings</h2>
             <AddBindingButton
-              bindingName={instance.metadata.name + "-binding"}
+              bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
               instanceRefName={instance.metadata.name}
               namespace={instance.metadata.namespace}
               addBinding={this.props.addBinding}
