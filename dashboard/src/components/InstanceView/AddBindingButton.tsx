@@ -49,7 +49,7 @@ export class AddBindingButton extends React.Component<
   public render() {
     let { bindingSchema } = this.props;
     const { modalIsOpen, displayNameForm } = this.state;
-    if (!bindingSchema) {
+    if (!bindingSchema || !(bindingSchema.$ref || bindingSchema.properties)) {
       bindingSchema = {
         properties: {
           kubeappsRawParameters: {
