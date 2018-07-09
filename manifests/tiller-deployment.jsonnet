@@ -1,4 +1,4 @@
-// This is literally `helm init -o json` from helm version v2.9.1
+// Based on `helm init -o json` from helm version v2.9.1
 {
     "apiVersion": "extensions/v1beta1",
     "kind": "Deployment",
@@ -64,7 +64,10 @@
                             "initialDelaySeconds": 1,
                             "timeoutSeconds": 1
                         },
-                        "resources": {}
+                        "resources": {},
+                        "args": [
+                            "--storage=secret",
+                        ],
                     }
                 ]
             }
