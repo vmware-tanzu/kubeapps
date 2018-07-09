@@ -26,14 +26,14 @@ Additionally, the dashboard integrates with the [Kubernetes service catalog](htt
 
 The dashboard is written in the Javascript programming language and is developed using the React Javascript library.
 
-### Helm CRD
+### Tiller proxy
 
-[Helm CRD](https://github.com/bitnami-labs/helm-crd) is an experimental Kubernetes controller for Helm releases. It enables cluster operators to secure the Helm tiller server and is used to install, upgrade and uninstall Helm charts.
+In order to secure the access to tiller and allow the dashboard to contact the Helm tiller server we deploy as a sidecar container a proxy that handles the communication with Tiller. The goal of this proxy is to validate that the user doing the request has sufficent permissions to create or delete all the resources.
 
-The controller is developed independently of Kubeapps at [bitnami-labs/helm-crd](https://github.com/bitnami-labs/helm-crd) and is written in the Go programming language.
+This proxy is also written in Go.
 
 ### Kubeless
 
 [Kubeless](http://kubeless.io/) is a Kubernetes-native serverless framework that lets you deploy small bits of code (functions) without having to worry about the underlying infrastructure. It leverages Kubernetes resources to provide auto-scaling, API routing, monitoring, troubleshooting and more.
 
-Kubeless is also written in the Go programming language and is also developed independently of Kubeapps at [kubeless/kubeless](https://github.com/kubeless/kubeless).
+Kubeless is also written in the Go programming language and it is developed independently of Kubeapps at [kubeless/kubeless](https://github.com/kubeless/kubeless).

@@ -3,8 +3,9 @@ import { createAction, getReturnOfExpression } from "typesafe-actions";
 import { Dispatch } from "react-redux";
 import { AppRepository } from "../shared/AppRepository";
 import Secret from "../shared/Secret";
+import * as url from "../shared/url";
 
-import { IAppRepository, IOwnerReference, IStoreState } from "../shared/types";
+import { IAppRepository, IOwnerReference, IStoreState, MissingChart } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", (added: IAppRepository) => ({
@@ -18,6 +19,15 @@ export const receiveRepos = createAction("RECEIVE_REPOS", (repos: IAppRepository
     type: "RECEIVE_REPOS",
   };
 });
+export const requestRepo = createAction("REQUEST_REPO");
+export const receiveRepo = createAction("RECEIVE_REPO", (repo: IAppRepository) => ({
+  repo,
+  type: "RECEIVE_REPO",
+}));
+export const errorChart = createAction("ERROR_CHART", (err: Error) => ({
+  err,
+  type: "ERROR_CHART",
+}));
 export const showForm = createAction("SHOW_FORM");
 export const hideForm = createAction("HIDE_FORM");
 export const resetForm = createAction("RESET_FORM");
@@ -45,8 +55,10 @@ export const errorRepos = createAction(
 const allActions = [
   addRepo,
   addedRepo,
+  errorChart,
   errorRepos,
   requestRepos,
+  receiveRepo,
   receiveRepos,
   resetForm,
   submitForm,
@@ -100,7 +112,7 @@ export const fetchRepos = () => {
   };
 };
 
-export const installRepo = (name: string, url: string, authHeader: string) => {
+export const installRepo = (name: string, repoURL: string, authHeader: string) => {
   return async (dispatch: Dispatch<IStoreState>) => {
     try {
       let auth;
@@ -117,7 +129,7 @@ export const installRepo = (name: string, url: string, authHeader: string) => {
         };
       }
       dispatch(addRepo());
-      const apprepo = await AppRepository.create(name, url, auth);
+      const apprepo = await AppRepository.create(name, repoURL, auth);
       dispatch(addedRepo(apprepo));
 
       if (authHeader.length) {
@@ -141,3 +153,24 @@ export const installRepo = (name: string, url: string, authHeader: string) => {
     }
   };
 };
+
+export function checkChart(repo: string, chartName: string) {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    dispatch(requestRepo());
+    const appRepository = await AppRepository.get(repo);
+    const res = await fetch(url.api.charts.listVersions(`${repo}/${chartName}`));
+    if (res.ok) {
+      dispatch(receiveRepo(appRepository));
+    } else {
+      dispatch(
+        errorChart(new MissingChart(`Chart ${chartName} not found in the repository ${repo}.`)),
+      );
+    }
+  };
+}
+
+export function clearRepo() {
+  return async (dispatch: Dispatch<IStoreState>) => {
+    dispatch(receiveRepo({} as IAppRepository));
+  };
+}

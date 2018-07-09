@@ -4,51 +4,6 @@ local kubecfg = import "kubecfg.libsonnet";
 {
   namespace:: {metadata+: {namespace: "kubeapps"}},
 
-  applications: {
-    // kubeapps-applications-read
-    // Gives read-only access to Applications within a Namespace in Kubeapps.
-    // Usage:
-    //   Apply kubeapps-applications-read clusterrole to user/serviceaccount in the desired namespace
-    //   AND apply kubeapps-tiller-state-read role to user/serviceaccount in the kubeapps namespace.
-    read: kube.ClusterRole("kubeapps-applications-read") {
-      rules: [
-        {
-          apiGroups: ["helm.bitnami.com"],
-          resources: ["helmreleases"],
-          verbs: ["list", "get"],
-        },
-        {
-          apiGroups: ["", "apps"],
-          resources: ["services", "deployments"],
-          verbs: ["list", "watch"],
-        },
-      ],
-    },
-    readTillerState: kube.Role("kubeapps-tiller-state-read") + $.namespace {
-      rules: [
-        {
-          apiGroups: [""],
-          resources: ["configmaps"],
-          verbs: ["list", "get"],
-        },
-      ],
-    },
-    // kubeapps-applications-write
-    // Gives write access to Applications within a Namespace in Kubeapps.
-    // Usage:
-    //   Apply kubeapps-applications-write clusterrole to user/serviceaccount in the desired namespace.
-    //   AND apply kubeapps-repositories-read role to user/serviceaccount in the kubeapps namespace.
-    write: kube.ClusterRole("kubeapps-applications-write") {
-      rules: [
-        {
-          apiGroups: ["helm.bitnami.com"],
-          resources: ["helmreleases"],
-          verbs: ["create", "patch", "delete"],
-        },
-      ],
-    },
-  },
-
   functions: {
     // kubeapps-functions-read
     // Gives read-only access to Functions within a Namespace in Kubeapps.

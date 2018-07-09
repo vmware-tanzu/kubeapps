@@ -1,5 +1,5 @@
 import Axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-import { ForbiddenError, NotFoundError } from "./types";
+import { AppConflict, ForbiddenError, NotFoundError } from "./types";
 
 const AuthTokenKey = "kubeapps_auth_token";
 
@@ -63,11 +63,17 @@ function authenticatedAxiosInstance() {
     response => response,
     e => {
       const err: AxiosError = e;
+      let message = err.message;
+      if (err.response && err.response.data.message) {
+        message = err.response.data.message;
+      }
       switch (err.response && err.response.status) {
         case 403:
-          return Promise.reject(new ForbiddenError());
+          return Promise.reject(new ForbiddenError(message));
         case 404:
-          return Promise.reject(new NotFoundError());
+          return Promise.reject(new NotFoundError(message));
+        case 409:
+          return Promise.reject(new AppConflict(message));
         default:
           return Promise.reject(e);
       }

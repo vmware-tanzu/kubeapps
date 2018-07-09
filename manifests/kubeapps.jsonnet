@@ -49,7 +49,7 @@ local labelifyEach(src) = {
       apprepos: labelifyEach($.dashboard_.apprepository.apprepos),
     },
     chartsvc: labelifyEach($.dashboard_.chartsvc),
-    tillerHelmCRD: labelifyEach($.dashboard_.tillerHelmCRD),
+    tillerProxy: labelifyEach($.dashboard_.tillerProxy),
   },
 
   mongodb_:: (import "mongodb.jsonnet") {
@@ -61,7 +61,6 @@ local labelifyEach(src) = {
     namespace:: $.namespace,
   },
   userRoles: $.userRoles_ {
-    applications: labelifyEach($.userRoles_.applications),
     functions: labelifyEach($.userRoles_.functions),
     serviceCatalog: labelifyEach($.userRoles_.serviceCatalog),
     repositories: labelifyEach($.userRoles_.repositories),

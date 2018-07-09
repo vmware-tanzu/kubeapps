@@ -3,36 +3,14 @@ import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
 import { IServiceBinding } from "../../shared/ServiceBinding";
-import {
-  AppConflict,
-  ForbiddenError,
-  IChartState,
-  IChartVersion,
-  IHelmRelease,
-  IRBACRole,
-  NotFoundError,
-} from "../../shared/types";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { IChartState, IChartVersion } from "../../shared/types";
+import DeploymentBinding from "./DeploymentBinding";
+import DeploymentErrors from "./DeploymentErrors";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
-const RequiredRBACRoles: IRBACRole[] = [
-  {
-    apiGroup: "helm.bitnami.com",
-    resource: "helmreleases",
-    verbs: ["create", "patch"],
-  },
-  {
-    apiGroup: "kubeapps.com",
-    namespace: "kubeapps",
-    resource: "apprepositories",
-    verbs: ["get"],
-  },
-];
-
 interface IDeploymentFormProps {
-  hr?: IHelmRelease;
   bindings: IServiceBinding[];
   chartID: string;
   chartVersion: string;
@@ -43,12 +21,11 @@ interface IDeploymentFormProps {
     releaseName: string,
     namespace: string,
     values?: string,
-    resourceVersion?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: (ns: string) => Promise<IServiceBinding[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   namespace: string;
 }
@@ -60,7 +37,6 @@ interface IDeploymentFormState {
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
-  selectedBinding: IServiceBinding | undefined;
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
@@ -69,34 +45,20 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     isDeploying: false,
     namespace: this.props.namespace,
     releaseName: "",
-    selectedBinding: undefined,
     valuesModified: false,
   };
 
   public componentDidMount() {
     const {
-      hr,
       chartID,
       fetchChartVersions,
-      getBindings,
       getChartVersion,
       chartVersion,
+      getBindings,
+      namespace,
     } = this.props;
     fetchChartVersions(chartID);
     getChartVersion(chartID, chartVersion);
-
-    let namespace = this.props.namespace;
-    if (hr) {
-      namespace = hr.metadata.namespace;
-      this.setState({
-        namespace,
-        releaseName: hr.spec.releaseName,
-      });
-    } else {
-      this.setState({
-        namespace,
-      });
-    }
     getBindings(namespace);
   }
 
@@ -107,13 +69,12 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       getBindings,
       getChartValues,
       getChartVersion,
-      hr,
-      selected,
       namespace,
+      selected,
     } = this.props;
     const { version } = selected;
 
-    if (nextProps.namespace !== namespace && !hr) {
+    if (nextProps.namespace !== namespace) {
       this.setState({ namespace: nextProps.namespace });
       getBindings(nextProps.namespace);
       return;
@@ -131,64 +92,33 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
     if (!this.state.valuesModified) {
       if (version) {
-        if (hr && hr.spec.version === version.attributes.version) {
-          this.setState({ appValues: hr.spec.values });
-        } else if (nextProps.selected.values) {
-          this.setState({ appValues: nextProps.selected.values });
-        }
+        this.setState({ appValues: nextProps.selected.values });
       }
     }
   }
 
   public render() {
-    const { hr, selected, bindings } = this.props;
+    const { selected, bindings, chartID } = this.props;
     const { version, versions } = selected;
-    const { appValues, selectedBinding } = this.state;
-    if (!version || !versions.length) {
+    const { appValues, releaseName } = this.state;
+    if (!version || !versions.length || this.state.isDeploying) {
       return <div>Loading</div>;
     }
-    let bindingDetail = <div />;
-    if (selectedBinding) {
-      const {
-        instanceRef,
-        secretName,
-        secretDatabase,
-        secretHost,
-        secretPassword,
-        secretPort,
-        secretUsername,
-      } = selectedBinding.spec;
-
-      const statuses: Array<[string, string | undefined]> = [
-        ["Instance", instanceRef.name],
-        ["Secret", secretName],
-        ["Database", secretDatabase],
-        ["Host", secretHost],
-        ["Password", secretPassword],
-        ["Port", secretPort],
-        ["Username", secretUsername],
-      ];
-
-      bindingDetail = (
-        <dl className="container margin-normal">
-          {statuses.map(statusPair => {
-            const [key, value] = statusPair;
-            return [
-              <dt key={key}>{key}</dt>,
-              <dd key={value}>
-                <code>{value}</code>
-              </dd>,
-            ];
-          })}
-        </dl>
-      );
-    }
-
     return (
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
-            <div className="col-8">{this.props.error && this.renderError()}</div>
+            <div className="col-8">
+              {this.props.error && (
+                <DeploymentErrors
+                  {...this.props}
+                  chartName={chartID.split("/")[0]}
+                  releaseName={releaseName}
+                  repo={chartID.split("/")[1]}
+                  version={version.attributes.version}
+                />
+              )}
+            </div>
             <div className="col-12">
               <h2>{this.props.chartID}</h2>
             </div>
@@ -200,7 +130,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   onChange={this.handleReleaseNameChange}
                   value={this.state.releaseName}
                   required={true}
-                  disabled={hr ? true : false}
                 />
               </div>
               <div>
@@ -214,7 +143,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   {versions.map(v => (
                     <option key={v.id} value={v.attributes.version}>
                       {v.attributes.version}{" "}
-                      {hr && v.attributes.version === hr.spec.version ? "(current)" : ""}
                     </option>
                   ))}
                 </select>
@@ -239,30 +167,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               </div>
             </div>
             <div className="col-4">
-              {bindings.length > 0 && (
-                <div>
-                  <p>[Optional] Select a service binding for your new app</p>
-                  <label htmlFor="bindings">Bindings</label>
-                  <select onChange={this.onBindingChange}>
-                    <option key="none" value="none">
-                      {" "}
-                      -- Select one --
-                    </option>
-                    {bindings.map(b => (
-                      <option
-                        key={b.metadata.name}
-                        selected={
-                          b.metadata.name === (selectedBinding && selectedBinding.metadata.name)
-                        }
-                        value={b.metadata.name}
-                      >
-                        {b.metadata.name}
-                      </option>
-                    ))}
-                  </select>
-                  {bindingDetail}
-                </div>
-              )}
+              {bindings.length > 0 && <DeploymentBinding {...this.props} />}
             </div>
           </div>
         </form>
@@ -270,27 +175,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     );
   }
 
-  public onBindingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.setState({
-      selectedBinding:
-        this.props.bindings.find(binding => binding.metadata.name === e.target.value) || undefined,
-    });
-  };
-
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, deployChart, push, hr } = this.props;
-    const resourceVersion = hr ? hr.metadata.resourceVersion : undefined;
+    const { selected, deployChart, push } = this.props;
     this.setState({ isDeploying: true });
     const { releaseName, namespace, appValues } = this.state;
     if (selected.version) {
-      const deployed = await deployChart(
-        selected.version,
-        releaseName,
-        namespace,
-        appValues,
-        resourceVersion,
-      );
+      const deployed = await deployChart(selected.version, releaseName, namespace, appValues);
       if (deployed) {
         push(`/apps/ns/${namespace}/${releaseName}`);
       } else {
@@ -303,52 +194,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ releaseName: e.currentTarget.value });
   };
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { hr, chartID, getChartVersion, namespace } = this.props;
-
-    if (hr) {
-      getChartVersion(chartID, e.currentTarget.value);
-    } else {
-      this.props.push(
-        `/apps/ns/${namespace}/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
-      );
-    }
+    this.props.push(
+      `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${
+        e.currentTarget.value
+      }`,
+    );
   };
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
-
-  private renderError() {
-    const { error, hr, namespace } = this.props;
-    const { releaseName } = this.state;
-    const roles = RequiredRBACRoles;
-    if (hr) {
-      roles[0].verbs = ["patch"];
-    } else {
-      roles[0].verbs = ["create"];
-    }
-    switch (error && error.constructor) {
-      case AppConflict:
-        return (
-          <NotFoundErrorAlert
-            header={`The given release name already exists in the cluster. Choose a different one`}
-          />
-        );
-      case ForbiddenError:
-        return (
-          <PermissionsErrorAlert
-            namespace={namespace}
-            roles={roles}
-            action={`${hr ? "upgrade" : "create"} Application "${releaseName}"`}
-          />
-        );
-      case NotFoundError:
-        return (
-          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
-        );
-      default:
-        return <UnexpectedErrorAlert />;
-    }
-  }
 }
 
 export default DeploymentForm;

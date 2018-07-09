@@ -40,24 +40,30 @@ Kubeapps.
 
 #### Read access to Applications within a namespace
 
-In order to list and view Applications in a namespace, apply the
-`kubeapps-applications-read` ClusterRole in the desired namespace and the
-`kubeapps-tiller-state-read` Role in the `kubeapps` namespace:
+In order to list and view Applications in a namespace, apply the `view` ClusterRole
+in the desired namespace. The `view` ClusterRole should be available in most
+Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```
-kubectl create -n default rolebinding example-kubeapps-applications-read --clusterrole=kubeapps-applications-read --serviceaccount default:example
-kubectl create -n kubeapps rolebinding example-kubeapps-tiller-state-read --role=kubeapps-tiller-state-read --serviceaccount default:example
+kubectl create -n default rolebinding example-view \
+  --clusterrole=view \
+  --serviceaccount default:example
 ```
 
 #### Write access to Applications within a namespace
 
 In order to create, update and delete Applications in a namespace, apply the
-`kubeapps-applications-write` ClusterRole in the desired namespace and the
-`kubeapps-repositories-read` Role in the `kubeapps` namespace:
+`edit` ClusterRole in the desired namespace and the `kubeapps-repositories-read`
+Role in the `kubeapps` namespace. The `edit` ClusterRole should be available in most
+Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```
-kubectl create -n default rolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-write --serviceaccount default:example
-kubectl create -n kubeapps rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
+kubectl create -n default rolebinding example-edit \
+  --clusterrole=edit \
+  --serviceaccount default:example
+kubectl create -n kubeapps rolebinding example-kubeapps-repositories-read \
+  --role=kubeapps-repositories-read \
+  --serviceaccount default:example
 ```
 
 ### Functions

@@ -30,21 +30,6 @@ export const api = {
     listVersions: (id: string) => `${api.charts.get(id)}/versions`,
   },
 
-  // /api/kube exposes kubectl add ?watch=true
-  helmreleases: {
-    create: (namespace = "default") =>
-      `/api/kube/apis/helm.bitnami.com/v1/namespaces/${namespace}/helmreleases`,
-    list: (namespace?: string) =>
-      `/api/kube/apis/helm.bitnami.com/v1/${
-        namespace ? `namespaces/${namespace}/` : ""
-      }/helmreleases`,
-    listDetails: (releaseNames: string[]) =>
-      `/api/kube/api/v1/namespaces/kubeapps/configmaps?labelSelector=NAME in (${releaseNames.join(
-        ",",
-      )})`,
-    upgrade: (namespace = "default", releaseName: string) =>
-      `/api/kube/apis/helm.bitnami.com/v1/namespaces/${namespace}/helmreleases/${releaseName}`,
-  },
   serviceinstances: {
     base: `/api/kube/apis/servicecatalog.k8s.io/v1beta1`,
     create: (namespace = "default") =>

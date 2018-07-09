@@ -2,7 +2,7 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
-import { IChart, IChartVersion, IStoreState } from "../shared/types";
+import { IChart, IChartVersion, IStoreState, MissingChart } from "../shared/types";
 import * as url from "../shared/url";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
@@ -17,6 +17,10 @@ export const receiveChartVersions = createAction(
     versions,
   }),
 );
+export const errorChart = createAction("ERROR_CHART", (err: Error) => ({
+  err,
+  type: "ERROR_CHART",
+}));
 export const selectChartVersion = createAction(
   "SELECT_CHART_VERSION",
   (chartVersion: IChartVersion) => ({
@@ -42,6 +46,7 @@ export const selectValues = createAction("SELECT_VALUES", (values: string) => ({
 
 const allActions = [
   requestCharts,
+  errorChart,
   receiveCharts,
   receiveChartVersions,
   selectChartVersion,
@@ -71,11 +76,23 @@ export function fetchChartVersions(id: string) {
 }
 
 export function getChartVersion(id: string, version: string) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+  return async (dispatch: Dispatch<IStoreState>) => {
     dispatch(requestCharts());
-    return fetch(url.api.charts.getVersion(id, version))
-      .then(response => response.json())
-      .then(json => dispatch(selectChartVersion(json.data)));
+    try {
+      const response = await fetch(url.api.charts.getVersion(id, version));
+      const json = await response.json();
+      if (!response.ok) {
+        const error = json.data || response.statusText;
+        if (response.status === 404) {
+          dispatch(errorChart(new MissingChart(error)));
+        } else {
+          dispatch(errorChart(new Error(error)));
+        }
+      }
+      dispatch(selectChartVersion(json.data));
+    } catch (e) {
+      dispatch(errorChart(e));
+    }
   };
 }
 
@@ -93,15 +110,6 @@ export function fetchChartVersionsAndSelectVersion(id: string, version?: string)
       }
       return dispatch(selectChartVersion(cv));
     });
-  };
-}
-
-export function selectChartVersionAndGetFiles(cv: IChartVersion) {
-  return (dispatch: Dispatch<IStoreState>): Promise<any> => {
-    const id = `${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}`;
-    dispatch(selectChartVersion(cv));
-    dispatch(getChartValues(id, cv.attributes.version));
-    return dispatch(getChartReadme(id, cv.attributes.version));
   };
 }
 
