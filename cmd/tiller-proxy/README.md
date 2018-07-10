@@ -42,3 +42,18 @@ By default, authorization for any request is enabled (it can be disabled using t
 Note that the user only needs a valid token in order to list releases.
 
 Right now, the only supported method for authentication is using a bearer token.
+
+# Workflow
+
+Each request should contain at least:
+
+ - The required action: "get", "create", "upgrade" or "delete".
+ - The URL of the chart repository.
+ - The ID of the chart within the chart repository.
+ - The version and values to use.
+
+With that information the proxy will resolve the complete manifest of the application. Then it will gather the different API groups that are included in the manifest to validate that the user identified by the bearer token can perform the requested action.
+
+This is an example diagram of the communication between Kubeapps (the dashboard), the proxy, Tiller and the K8s API for deploying an application "foo" that is composed of a `Deployment` and a `Service`:
+
+![diagram](diagram.png)
