@@ -1,9 +1,12 @@
 import * as React from "react";
-import { IServiceBinding } from "../../shared/ServiceBinding";
+import { IK8sApiSecretResponse, IServiceBinding } from "../../shared/ServiceBinding";
+
 import { RemoveBindingButton } from "../InstanceView/RemoveBindingButton";
+import BindingDetails from "./BindingDetails";
 
 interface IBindingEntryProps {
   binding: IServiceBinding;
+  secret?: IK8sApiSecretResponse;
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
@@ -17,28 +20,8 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
   };
 
   public render() {
-    const { binding, removeBinding } = this.props;
+    const { binding, removeBinding, secret } = this.props;
     const { name, namespace } = binding.metadata;
-
-    const {
-      instanceRef,
-      secretName,
-      secretDatabase,
-      secretHost,
-      secretPassword,
-      secretPort,
-      secretUsername,
-    } = binding.spec;
-
-    const statuses: Array<[string, string | undefined]> = [
-      ["Instance", instanceRef.name],
-      ["Secret", secretName],
-      ["Database", secretDatabase],
-      ["Host", secretHost],
-      ["Password", secretPassword],
-      ["Port", secretPort],
-      ["Username", secretUsername],
-    ];
 
     const condition = [...binding.status.conditions].shift();
     const currentStatus = condition ? (
@@ -67,17 +50,7 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
       rows.push(
         <tr key="info">
           <td colSpan={3}>
-            <dl className="container margin-normal">
-              {statuses.map(statusPair => {
-                const [key, value] = statusPair;
-                return [
-                  <dt key={key}>{key}</dt>,
-                  <dd key={value}>
-                    <code>{value}</code>
-                  </dd>,
-                ];
-              })}
-            </dl>
+            <BindingDetails binding={binding} secret={secret} />
           </td>
         </tr>,
       );

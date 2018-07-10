@@ -5,12 +5,12 @@ import actions from "../actions";
 import { ServiceCatalogAction } from "../actions/catalog";
 import { NamespaceAction } from "../actions/namespace";
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
-import { IServiceBinding } from "../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../shared/ServiceBinding";
 import { IServiceBroker, IServicePlan } from "../shared/ServiceCatalog";
 import { IServiceInstance } from "../shared/ServiceInstance";
 
 export interface IServiceCatalogState {
-  bindings: IServiceBinding[];
+  bindingsWithSecrets: IServiceBindingWithSecret[];
   brokers: IServiceBroker[];
   classes: IClusterServiceClass[];
   errors: {
@@ -27,7 +27,7 @@ export interface IServiceCatalogState {
 }
 
 const initialState: IServiceCatalogState = {
-  bindings: [],
+  bindingsWithSecrets: [],
   brokers: [],
   classes: [],
   errors: {},
@@ -52,9 +52,9 @@ const catalogReducer = (
     case getType(catalog.receiveBrokers):
       const { brokers } = action;
       return { ...state, brokers };
-    case getType(catalog.receiveBindings):
-      const { bindings } = action;
-      return { ...state, bindings };
+    case getType(catalog.receiveBindingsWithSecrets):
+      const { bindingsWithSecrets } = action;
+      return { ...state, bindingsWithSecrets };
     case getType(catalog.receiveClasses):
       const { classes } = action;
       return { ...state, classes };

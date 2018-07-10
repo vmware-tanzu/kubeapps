@@ -1,15 +1,15 @@
 import * as React from "react";
-import { IServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { BindingEntry } from "./BindingListEntry";
 
 interface IBindingList {
-  bindings: IServiceBinding[];
+  bindingsWithSecrets: IServiceBindingWithSecret[];
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
 export class BindingList extends React.Component<IBindingList> {
   public render() {
-    const { removeBinding, bindings } = this.props;
+    const { removeBinding, bindingsWithSecrets } = this.props;
     return (
       <div className="BindingEntryList">
         <table>
@@ -21,11 +21,12 @@ export class BindingList extends React.Component<IBindingList> {
             </tr>
           </thead>
           <tbody>
-            {bindings.length > 0 ? (
-              bindings.map(binding => [
+            {bindingsWithSecrets.length > 0 ? (
+              bindingsWithSecrets.map(b => [
                 <BindingEntry
-                  key={binding.metadata.uid}
-                  binding={binding}
+                  key={b.binding.metadata.uid}
+                  binding={b.binding}
+                  secret={b.secret}
                   removeBinding={removeBinding}
                 />,
               ])

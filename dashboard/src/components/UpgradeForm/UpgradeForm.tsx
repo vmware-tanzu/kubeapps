@@ -2,7 +2,7 @@ import * as React from "react";
 import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
-import { IServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 import DeploymentBinding from "../DeploymentForm/DeploymentBinding";
 import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
@@ -13,7 +13,7 @@ import "brace/theme/xcode";
 interface IDeploymentFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
-  bindings: IServiceBinding[];
+  bindingsWithSecrets: IServiceBindingWithSecret[];
   chartName: string;
   namespace: string;
   releaseName: string;
@@ -28,7 +28,7 @@ interface IDeploymentFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
-  getBindings: (ns: string) => Promise<IServiceBinding[]>;
+  getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<void>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   clearRepo: () => any;
@@ -95,7 +95,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   }
 
   public render() {
-    const { selected, bindings, appCurrentVersion } = this.props;
+    const { selected, bindingsWithSecrets, appCurrentVersion } = this.props;
     const { version, versions } = selected;
     const { appValues } = this.state;
     if (this.props.error) {
@@ -158,7 +158,9 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
               </div>
             </div>
             <div className="col-4">
-              {bindings.length > 0 && <DeploymentBinding {...this.props} />}
+              {bindingsWithSecrets.length > 0 && (
+                <DeploymentBinding bindingsWithSecrets={bindingsWithSecrets} />
+              )}
             </div>
           </div>
         </form>

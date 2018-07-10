@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
-import { IServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
@@ -19,7 +19,7 @@ interface IInstanceViewProps {
     deprovision?: Error;
   };
   instance: IServiceInstance | undefined;
-  bindings: IServiceBinding[];
+  bindingsWithSecrets: IServiceBindingWithSecret[];
   name: string;
   namespace: string;
   svcClass: IClusterServiceClass | undefined;
@@ -96,7 +96,7 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
   }
 
   public render() {
-    const { instance, bindings, svcClass, svcPlan, deprovision } = this.props;
+    const { instance, bindingsWithSecrets, svcClass, svcPlan, deprovision } = this.props;
 
     let body = <span />;
     if (instance) {
@@ -220,7 +220,10 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
             <br />
             {this.props.errors.delete &&
               this.renderError(this.props.errors.delete, "delete", "Binding")}
-            <BindingList bindings={bindings} removeBinding={this.props.removeBinding} />
+            <BindingList
+              bindingsWithSecrets={bindingsWithSecrets}
+              removeBinding={this.props.removeBinding}
+            />
           </div>
         )}
       </div>

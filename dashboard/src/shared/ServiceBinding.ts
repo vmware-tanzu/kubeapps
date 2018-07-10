@@ -1,20 +1,14 @@
 import { axios } from "./Auth";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 
-interface IK8sApiSecretResponse {
+export interface IK8sApiSecretResponse {
   kind: string;
   apiVersion: string;
   metadata: {
     selfLink: string;
     resourceVersion: string;
   };
-  data: {
-    database: string;
-    host: string;
-    password: string;
-    port: string;
-    username: string;
-  };
+  data: { [s: string]: string };
 }
 
 export interface IServiceBinding {
@@ -33,12 +27,7 @@ export interface IServiceBinding {
     instanceRef: {
       name: string;
     };
-    secretName: string | undefined;
-    secretDatabase: string | undefined;
-    secretHost: string | undefined;
-    secretPassword: string | undefined;
-    secretPort: string | undefined;
-    secretUsername: string | undefined;
+    secretName: string;
   };
   status: {
     conditions: ICondition[];
@@ -50,6 +39,11 @@ export interface IServiceBinding {
     orphanMitigationInProgress: boolean;
     unbindStatus: string;
   };
+}
+
+export interface IServiceBindingWithSecret {
+  binding: IServiceBinding;
+  secret?: IK8sApiSecretResponse;
 }
 
 export class ServiceBinding {
@@ -85,20 +79,8 @@ export class ServiceBinding {
     return data;
   }
 
-  public static async list(namespace?: string) {
+  public static async list(namespace?: string): Promise<IServiceBindingWithSecret[]> {
     const bindings = await ServiceCatalog.getItems<IServiceBinding>("servicebindings", namespace);
-
-    // initiate with undefined secrets
-    for (const binding of bindings) {
-      binding.spec = {
-        ...binding.spec,
-        secretDatabase: undefined,
-        secretHost: undefined,
-        secretPassword: undefined,
-        secretPort: undefined,
-        secretUsername: undefined,
-      };
-    }
 
     return Promise.all(
       bindings.map(binding => {
@@ -107,20 +89,11 @@ export class ServiceBinding {
         return axios
           .get<IK8sApiSecretResponse>(this.secretEndpoint(ns) + secretName)
           .then(response => {
-            const { database, host, password, port, username } = response.data.data;
-            const spec = {
-              ...binding.spec,
-              secretDatabase: atob(database),
-              secretHost: atob(host),
-              secretPassword: atob(password),
-              secretPort: atob(port),
-              secretUsername: atob(username),
-            };
-            return { ...binding, spec };
+            return { binding, secret: response.data };
           })
           .catch(err => {
             // return with undefined secrets
-            return { ...binding };
+            return { binding };
           });
       }),
     );
