@@ -78,7 +78,6 @@ var upCmd = &cobra.Command{
 List of components that kubeapps up installs:
 
 - Kubeless (https://github.com/kubeless/kubeless)
-- Sealed-Secrets (https://github.com/bitnami/sealed-secrets)
 - Helm/Tiller (https://github.com/kubernetes/helm)
 - Kubeapps Dashboard (https://github.com/kubeapps/dashboard)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
