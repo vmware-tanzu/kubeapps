@@ -52,8 +52,8 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    addBinding: (bindingName: string, instanceName: string, namespace: string) =>
-      dispatch(actions.catalog.addBinding(bindingName, instanceName, namespace)),
+    addBinding: (bindingName: string, instanceName: string, namespace: string, parameters: {}) =>
+      dispatch(actions.catalog.addBinding(bindingName, instanceName, namespace, parameters)),
     deprovision: (instance: IServiceInstance) => dispatch(actions.catalog.deprovision(instance)),
     getCatalog: (ns: string) => {
       dispatch(actions.catalog.getCatalog(ns));

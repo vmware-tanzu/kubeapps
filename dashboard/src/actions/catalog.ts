@@ -82,10 +82,15 @@ export function provision(
   };
 }
 
-export function addBinding(bindingName: string, instanceName: string, namespace: string) {
+export function addBinding(
+  bindingName: string,
+  instanceName: string,
+  namespace: string,
+  parameters: {},
+) {
   return async (dispatch: Dispatch<IStoreState>) => {
     try {
-      await ServiceBinding.create(bindingName, instanceName, namespace);
+      await ServiceBinding.create(bindingName, instanceName, namespace, parameters);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
