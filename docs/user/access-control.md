@@ -40,13 +40,14 @@ Kubeapps.
 
 #### Read access to Applications within a namespace
 
-In order to list and view Applications in a namespace, apply the `view` ClusterRole
-in the desired namespace. The `view` ClusterRole should be available in most
-Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
+In order to list and view Applications in a namespace, apply the `kubeapps-applications-read`
+ClusterRole in the desired namespace. Note that the `kubeapps-applications-read` role provides
+read access to **all** the resources of a namespace so apply it carefully. In case you want
+to limit the access create a custom cluster role or use one of the [default ones](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```
 kubectl create -n default rolebinding example-view \
-  --clusterrole=view \
+  --clusterrole=kubeapps-applications-read \
   --serviceaccount default:example
 ```
 
