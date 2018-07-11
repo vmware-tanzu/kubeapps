@@ -4,6 +4,21 @@ local kubecfg = import "kubecfg.libsonnet";
 {
   namespace:: {metadata+: {namespace: "kubeapps"}},
 
+applications: {
+    // kubeapps-applications-read
+    // Gives read-only access to all the elements within a Namespace.
+    // Usage:
+    //   Apply kubeapps-applications-read clusterrole to user/serviceaccount in the desired namespace
+    read: kube.ClusterRole("kubeapps-applications-read") {
+      rules: [
+        {
+          apiGroups: ["*"],
+          resources: ["*"],
+          verbs: ["list", "get", "watch"],
+        },
+      ],
+    },
+  },
   functions: {
     // kubeapps-functions-read
     // Gives read-only access to Functions within a Namespace in Kubeapps.
