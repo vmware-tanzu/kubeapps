@@ -30,7 +30,7 @@ The dashboard is written in the Javascript programming language and is developed
 
 In order to secure the access to tiller and allow the dashboard to contact the Helm tiller server we deploy as a sidecar container a proxy that handles the communication with Tiller. The goal of this proxy is to validate that the user doing the request has sufficent permissions to create or delete all the resources.
 
-This proxy is also written in Go.
+This proxy is also written in Go. Check more details about the implementation in this [document](/cmd/tiller-proxy/README.md).
 
 ### Kubeless
 

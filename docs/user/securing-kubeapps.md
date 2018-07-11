@@ -83,7 +83,7 @@ $ kubectl api-versions | grep rbac.authorization
 rbac.authorization.k8s.io/v1
 ```
 
-Once you cluster has RBAC enabled read [this document](/docs/user/access-control.md) to know how to login in Kubeapps using a  token that identifies a user account and how you can create users with different permissions.
+Once your cluster has RBAC enabled read [this document](/docs/user/access-control.md) to know how to login in Kubeapps using a token that identifies a user account and how you can create users with different permissions.
 
 In a nutshell, Kubeapps authorization validates:
 
