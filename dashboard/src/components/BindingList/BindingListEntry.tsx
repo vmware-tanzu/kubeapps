@@ -1,12 +1,11 @@
 import * as React from "react";
-import { IK8sApiSecretResponse, IServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 
 import { RemoveBindingButton } from "../InstanceView/RemoveBindingButton";
 import BindingDetails from "./BindingDetails";
 
 interface IBindingEntryProps {
-  binding: IServiceBinding;
-  secret?: IK8sApiSecretResponse;
+  bindingWithSecret: IServiceBindingWithSecret;
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
@@ -20,7 +19,7 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
   };
 
   public render() {
-    const { binding, removeBinding, secret } = this.props;
+    const { bindingWithSecret, bindingWithSecret: { binding } } = this.props;
     const { name, namespace } = binding.metadata;
 
     const condition = [...binding.status.conditions].shift();
@@ -42,7 +41,7 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
           <button className={"button button-primary button-small"} onClick={this.toggleExpand}>
             Expand/Collapse
           </button>
-          <RemoveBindingButton binding={binding} removeBinding={removeBinding} />
+          <RemoveBindingButton {...this.props} />
         </td>
       </tr>,
     ];
@@ -50,7 +49,7 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
       rows.push(
         <tr key="info">
           <td colSpan={3}>
-            <BindingDetails binding={binding} secret={secret} />
+            <BindingDetails {...bindingWithSecret} />
           </td>
         </tr>,
       );

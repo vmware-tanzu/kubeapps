@@ -1,14 +1,9 @@
 import * as React from "react";
 
-import { IK8sApiSecretResponse, IServiceBinding } from "shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "shared/ServiceBinding";
 import "./BindingDetails.css";
 
-interface IBindingDetailsProps {
-  binding: IServiceBinding;
-  secret?: IK8sApiSecretResponse;
-}
-
-class BindingDetails extends React.Component<IBindingDetailsProps> {
+class BindingDetails extends React.Component<IServiceBindingWithSecret> {
   public render() {
     const { binding, secret } = this.props;
     const { instanceRef, secretName } = binding.spec;

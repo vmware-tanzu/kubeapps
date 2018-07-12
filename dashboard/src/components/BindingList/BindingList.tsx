@@ -25,8 +25,7 @@ export class BindingList extends React.Component<IBindingList> {
               bindingsWithSecrets.map(b => [
                 <BindingEntry
                   key={b.binding.metadata.uid}
-                  binding={b.binding}
-                  secret={b.secret}
+                  bindingWithSecret={b}
                   removeBinding={removeBinding}
                 />,
               ])

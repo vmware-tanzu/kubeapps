@@ -47,9 +47,9 @@ class DeploymentBinding extends React.Component<IDeploymentBindingProps, IDeploy
 
   public onBindingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     this.setState({
-      selectedBinding:
-        this.props.bindingsWithSecrets.find(b => b.binding.metadata.name === e.target.value) ||
-        undefined,
+      selectedBinding: this.props.bindingsWithSecrets.find(
+        b => b.binding.metadata.name === e.target.value,
+      ),
     });
   };
 }

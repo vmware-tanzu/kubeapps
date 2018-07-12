@@ -1,7 +1,7 @@
 import { axios } from "./Auth";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 
-export interface IK8sApiSecretResponse {
+interface IK8sApiSecretResponse {
   kind: string;
   apiVersion: string;
   metadata: {
@@ -11,7 +11,7 @@ export interface IK8sApiSecretResponse {
   data: { [s: string]: string };
 }
 
-export interface IServiceBinding {
+interface IServiceBinding {
   metadata: {
     name: string;
     selfLink: string;
