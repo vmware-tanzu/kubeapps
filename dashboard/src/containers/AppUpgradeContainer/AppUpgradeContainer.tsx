@@ -21,7 +21,7 @@ function mapStateToProps(
 ) {
   return {
     app: apps.selected,
-    bindings: catalog.bindings,
+    bindingsWithSecrets: catalog.bindingsWithSecrets,
     error: apps.error || charts.selected.error,
     namespace: params.namespace,
     releaseName: params.releaseName,

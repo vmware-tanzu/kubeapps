@@ -37,9 +37,10 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
     : undefined;
 
   return {
-    bindings: catalog.bindings.filter(
-      binding =>
-        binding.spec.instanceRef.name === instanceName && binding.metadata.namespace === namespace,
+    bindingsWithSecrets: catalog.bindingsWithSecrets.filter(
+      b =>
+        b.binding.spec.instanceRef.name === instanceName &&
+        b.binding.metadata.namespace === namespace,
     ),
     errors: catalog.errors,
     instance,

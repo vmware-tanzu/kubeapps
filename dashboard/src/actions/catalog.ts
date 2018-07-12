@@ -2,7 +2,7 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
-import { IServiceBinding, ServiceBinding } from "../shared/ServiceBinding";
+import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBinding";
 import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
 import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
@@ -25,11 +25,14 @@ export const receiveInstances = createAction(
   "RECEIVE_INSTANCES",
   (instances: IServiceInstance[]) => ({ type: "RECEIVE_INSTANCES", instances }),
 );
-export const requestBindings = createAction("REQUEST_BINDINGS");
-export const receiveBindings = createAction("RECEIVE_BINDINGS", (bindings: IServiceBinding[]) => ({
-  bindings,
-  type: "RECEIVE_BINDINGS",
-}));
+export const requestBindingsWithSecrets = createAction("REQUEST_BINDINGS_WITH_SECRETS");
+export const receiveBindingsWithSecrets = createAction(
+  "RECEIVE_BINDINGS_WITH_SECRETS",
+  (bindingsWithSecrets: IServiceBindingWithSecret[]) => ({
+    bindingsWithSecrets,
+    type: "RECEIVE_BINDINGS_WITH_SECRETS",
+  }),
+);
 export const requestClasses = createAction("REQUEST_PLANS");
 export const receiveClasses = createAction(
   "RECEIVE_CLASSES",
@@ -57,8 +60,8 @@ const actions = [
   receivePlans,
   requestInstances,
   receiveInstances,
-  requestBindings,
-  receiveBindings,
+  requestBindingsWithSecrets,
+  receiveBindingsWithSecrets,
   requestClasses,
   receiveClasses,
   errorCatalog,
@@ -140,11 +143,11 @@ export function getBindings(ns?: string) {
     if (ns && ns === "_all") {
       ns = undefined;
     }
-    dispatch(requestBindings());
+    dispatch(requestBindingsWithSecrets());
     try {
-      const bindings = await ServiceBinding.list(ns);
-      dispatch(receiveBindings(bindings));
-      return bindings;
+      const bindingsWithSecrets = await ServiceBinding.list(ns);
+      dispatch(receiveBindingsWithSecrets(bindingsWithSecrets));
+      return bindingsWithSecrets;
     } catch (e) {
       return dispatch(errorCatalog(e, "fetch"));
     }

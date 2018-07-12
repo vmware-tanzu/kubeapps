@@ -2,7 +2,7 @@ import * as React from "react";
 import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
-import { IServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 import DeploymentBinding from "./DeploymentBinding";
 import DeploymentErrors from "./DeploymentErrors";
@@ -11,7 +11,7 @@ import "brace/mode/yaml";
 import "brace/theme/xcode";
 
 interface IDeploymentFormProps {
-  bindings: IServiceBinding[];
+  bindingsWithSecrets: IServiceBindingWithSecret[];
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
@@ -24,7 +24,7 @@ interface IDeploymentFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
-  getBindings: (ns: string) => Promise<IServiceBinding[]>;
+  getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<void>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   namespace: string;
@@ -98,7 +98,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { selected, bindings, chartID } = this.props;
+    const { selected, bindingsWithSecrets, chartID } = this.props;
     const { version, versions } = selected;
     const { appValues, releaseName } = this.state;
     if (!version || !versions.length || this.state.isDeploying) {
@@ -167,7 +167,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               </div>
             </div>
             <div className="col-4">
-              {bindings.length > 0 && <DeploymentBinding {...this.props} />}
+              {bindingsWithSecrets.length > 0 && (
+                <DeploymentBinding bindingsWithSecrets={bindingsWithSecrets} />
+              )}
             </div>
           </div>
         </form>

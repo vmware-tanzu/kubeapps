@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { RouterAction } from "react-router-redux";
 import { hapi } from "../../shared/hapi/release";
-import { IServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";
 import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
 import UpgradeForm from "../UpgradeForm";
@@ -10,7 +10,7 @@ import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 
 interface IAppUpgradeProps {
   app: hapi.release.Release;
-  bindings: IServiceBinding[];
+  bindingsWithSecrets: IServiceBindingWithSecret[];
   error: Error | undefined;
   repoError: Error | undefined;
   namespace: string;
@@ -29,7 +29,7 @@ interface IAppUpgradeProps {
   checkChart: (repo: string, chartName: string) => any;
   fetchChartVersions: (id: string) => Promise<{}>;
   getApp: (releaseName: string, namespace: string) => Promise<void>;
-  getBindings: () => Promise<IServiceBinding[]>;
+  getBindings: () => Promise<IServiceBindingWithSecret[]>;
   getChartVersion: (id: string, chartVersion: string) => Promise<void>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   push: (location: string) => RouterAction;

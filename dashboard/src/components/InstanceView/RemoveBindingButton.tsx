@@ -1,8 +1,8 @@
 import * as React from "react";
-import { IServiceBinding } from "../../shared/ServiceBinding";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 
 interface IRemoveBindingButtonProps {
-  binding: IServiceBinding;
+  bindingWithSecret: IServiceBindingWithSecret;
   removeBinding: (name: string, ns: string) => Promise<boolean>;
 }
 
@@ -21,7 +21,7 @@ export class RemoveBindingButton extends React.Component<IRemoveBindingButtonPro
   }
 
   private handleRemoveBindingClick = async () => {
-    const { removeBinding, binding } = this.props;
+    const { removeBinding, bindingWithSecret: { binding } } = this.props;
     const { name, namespace } = binding.metadata;
     removeBinding(name, namespace);
   };
