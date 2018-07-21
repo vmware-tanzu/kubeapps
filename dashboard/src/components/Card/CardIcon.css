@@ -7,4 +7,5 @@
 
 .Card__icon img {
   max-height: 72px;
+  max-width: 160px;
 }

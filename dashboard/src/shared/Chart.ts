@@ -1,7 +1,5 @@
 import axios from "axios";
 
-// import { IFunction, IFunctionList, IResource, IStatus } from "./types";
-
 export default class Chart {
   public static async getReadme(id: string, version: string) {
     const url = `${Chart.APIEndpoint}/assets/${id}/versions/${version}/README.md`;
