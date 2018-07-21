@@ -8,12 +8,12 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.frontend.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
+  - port: {{ .Values.frontend.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
   selector:
-    app: {{ template "kubeapps.name" . }}
+    app: {{ template "kubeapps.fullname" . }}
     release: {{ .Release.Name }}

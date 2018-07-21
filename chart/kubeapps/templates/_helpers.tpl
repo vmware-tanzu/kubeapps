@@ -53,3 +53,31 @@ Create name for the chartsvc based on the fullname
 {{- define "kubeapps.chartsvc.fullname" -}}
 {{ template "kubeapps.fullname" . }}-chartsvc
 {{- end -}}
+
+{{/*
+Create name for the dashboard based on the fullname
+*/}}
+{{- define "kubeapps.dashboard.fullname" -}}
+{{ template "kubeapps.fullname" . }}-dashboard
+{{- end -}}
+
+{{/*
+Create name for the dashboard config based on the fullname
+*/}}
+{{- define "kubeapps.dashboard-config.fullname" -}}
+{{ template "kubeapps.fullname" . }}-dashboard-config
+{{- end -}}
+
+{{/*
+Create name for the frontend config based on the fullname
+*/}}
+{{- define "kubeapps.frontend-config.fullname" -}}
+{{ template "kubeapps.fullname" . }}-frontend-config
+{{- end -}}
+
+{{/*
+Create name for the tiller-proxy based on the fullname
+*/}}
+{{- define "kubeapps.tiller-proxy.fullname" -}}
+{{ template "kubeapps.fullname" . }}-tiller-proxy
+{{- end -}}

@@ -1,4 +1,3 @@
-{{- if not .Release.IsInstall -}}
 {{- range .Values.apprepository.repos -}}
 apiVersion: kubeapps.com/v1alpha1
 kind: AppRepository
@@ -14,4 +13,3 @@ spec:
   url: {{ .url }}
 ---
 {{ end -}}
-{{- end -}}

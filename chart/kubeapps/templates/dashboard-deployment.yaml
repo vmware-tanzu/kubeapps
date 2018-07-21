@@ -1,0 +1,74 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "kubeapps.dashboard.fullname" . }}
+  labels:
+    app: {{ template "kubeapps.dashboard.fullname" . }}
+    chart: {{ template "kubeapps.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "kubeapps.dashboard.fullname" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/dashboard-config.yaml") . | sha256sum }}
+      labels:
+        app: {{ template "kubeapps.dashboard.fullname" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: dashboard
+        image: "{{ .Values.dashboard.image.repository }}:{{ .Values.dashboard.image.tag }}"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 0
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: vhost
+          mountPath: /bitnami/nginx/conf/vhosts
+        - name: config
+          mountPath: /app/config.json
+          subPath: config.json
+        ports:
+        - name: http
+          containerPort: 8080
+        resources:
+{{ toYaml .Values.dashboard.resources | indent 12 }}
+      volumes:
+      - name: vhost
+        configMap:
+          name: {{ template "kubeapps.dashboard-config.fullname" . }}
+          items:
+          - key: vhost.conf
+            path: vhost.conf
+      - name: config
+        configMap:
+          name: {{ template "kubeapps.dashboard-config.fullname" . }}
+          items:
+          - key: config.json
+            path: config.json
+    {{- with .Values.dashboard.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.dashboard.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.dashboard.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
