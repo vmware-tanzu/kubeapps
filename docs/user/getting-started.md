@@ -52,7 +52,7 @@ kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin 
 kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
 ```
 
-NOTE: It's not recommended to create `cluster-admin` users for Kubeapps. Please refer to the [Access Control](docs/access-control.md) documentation to configure fine-grained access control for users.
+NOTE: It's not recommended to create `cluster-admin` users for Kubeapps. Please refer to the [Access Control](/docs/user/access-control.md) documentation to configure fine-grained access control for users.
 
 ## Step 3: Start the Kubeapps Dashboard
 
