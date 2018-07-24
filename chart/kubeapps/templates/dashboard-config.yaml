@@ -22,5 +22,5 @@ data:
     }
   config.json: |-
     {
-      namespace: "{{ .Release.Namespace }}"
+      "namespace": "{{ .Release.Namespace }}"
     }
