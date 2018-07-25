@@ -1,7 +1,7 @@
 1. Get the application URL by running these commands:
 {{- if .Values.ingress.enabled }}
 {{- range .Values.ingress.hosts }}
-  http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}{{ $.Values.ingress.path }}
+  echo http{{ if $.Values.ingress.tls }}s{{ end }}://{{ . }}{{ $.Values.ingress.path }}
 {{- end }}
 {{- else if contains "NodePort" .Values.frontend.service.type }}
   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "kubeapps.fullname" . }})
@@ -13,7 +13,7 @@
   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "kubeapps.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   echo http://$SERVICE_IP:{{ .Values.frontend.service.port }}
 {{- else if contains "ClusterIP" .Values.frontend.service.type }}
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "kubeapps.name" . }},release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "kubeapps.fullname" . }},release={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
   echo "Visit http://127.0.0.1:8080 to use your application"
-  kubectl port-forward $POD_NAME 8080:80
+  kubectl port-forward $POD_NAME 8080:8080
 {{- end }}
