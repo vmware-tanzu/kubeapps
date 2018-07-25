@@ -4,27 +4,27 @@ import { IAppRepository, IAppRepositoryList } from "./types";
 
 export class AppRepository {
   public static async list() {
-    const { data } = await axios.get<IAppRepositoryList>(await AppRepository.getSelfLink());
+    const { data } = await axios.get<IAppRepositoryList>(await AppRepository.getResourceLink());
     return data;
   }
 
   public static async get(name: string) {
-    const { data } = await axios.get(await AppRepository.getSelfLink(name));
+    const { data } = await axios.get(await AppRepository.getResourceLink(name));
     return data;
   }
 
   public static async update(name: string, newApp: IAppRepository) {
-    const { data } = await axios.put(await AppRepository.getSelfLink(name), newApp);
+    const { data } = await axios.put(await AppRepository.getResourceLink(name), newApp);
     return data;
   }
 
   public static async delete(name: string) {
-    const { data } = await axios.delete(await AppRepository.getSelfLink(name));
+    const { data } = await axios.delete(await AppRepository.getResourceLink(name));
     return data;
   }
 
   public static async create(name: string, url: string, auth: any) {
-    const { data } = await axios.post<IAppRepository>(AppRepository.APIEndpoint, {
+    const { data } = await axios.post<IAppRepository>(await AppRepository.getResourceLink(), {
       apiVersion: "kubeapps.com/v1alpha1",
       kind: "AppRepository",
       metadata: {
@@ -37,7 +37,7 @@ export class AppRepository {
 
   private static APIBase: string = "/api/kube";
   private static APIEndpoint: string = `${AppRepository.APIBase}/apis/kubeapps.com/v1alpha1`;
-  private static async getSelfLink(name?: string) {
+  private static async getResourceLink(name?: string) {
     const { namespace } = await Config.getConfig();
     return `${AppRepository.APIEndpoint}/namespaces/${namespace}/apprepositories${
       name ? `/${name}` : ""
