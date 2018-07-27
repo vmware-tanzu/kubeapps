@@ -9,6 +9,9 @@ apprepository:
   syncImage:
     repository: kubeapps/chart-repo
     tag: latest
+  jobsImage:
+    repository: lachlanevenson/k8s-kubectl
+    tag: v1.9.9
   repos:
   - name: stable
     url: https://kubernetes-charts.storage.googleapis.com

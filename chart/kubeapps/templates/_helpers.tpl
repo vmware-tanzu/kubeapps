@@ -48,6 +48,13 @@ Create name for the apprepository-controller based on the fullname
 {{- end -}}
 
 {{/*
+Create name for the apprepository bootstrap job
+*/}}
+{{- define "kubeapps.apprepository-jobs-bootstrap.fullname" -}}
+{{ template "kubeapps.fullname" . }}-apprepository-jobs-bootstrap
+{{- end -}}
+
+{{/*
 Create name for the chartsvc based on the fullname
 */}}
 {{- define "kubeapps.chartsvc.fullname" -}}
