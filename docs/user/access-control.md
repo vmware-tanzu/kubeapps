@@ -55,38 +55,18 @@ kubectl create -n default rolebinding example-view \
 
 In order to create, update and delete Applications in a namespace, apply the
 `edit` ClusterRole in the desired namespace and the `kubeapps-repositories-read`
-Role in the `kubeapps` namespace. The `edit` ClusterRole should be available in most
-Kubernetes distributions, you can find more information about that role [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
+Role in the namespace Kubeapps is installed in. The `edit` ClusterRole should be
+available in most Kubernetes distributions, you can find more information about
+that role
+[here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```
 kubectl create -n default rolebinding example-edit \
   --clusterrole=edit \
   --serviceaccount default:example
-kubectl create -n kubeapps rolebinding example-kubeapps-repositories-read \
+kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
   --role=kubeapps-repositories-read \
   --serviceaccount default:example
-```
-
-### Functions
-
-#### Read access to Functions within a namespace
-
-In order to list and view Functions in a namespace, apply the
-`kubeapps-functions-read` ClusterRole in the desired namespace and the
-`kubeapps-kubeless-config-read` Role in the `kubeless` namespace:
-
-```
-kubectl create -n default rolebinding example-kubeapps-functions-read --clusterrole=kubeapps-functions-read --serviceaccount default:example
-kubectl create -n kubeless rolebinding example-kubeapps-kubeless-config-read --role=kubeapps-kubeless-config-read --serviceaccount default:example
-```
-
-#### Write access to Functions within a namespace
-
-In order to create, update and delete Functions in a namespace, apply the
-`kubeapps-functions-write` ClusterRole in the desired namespace.
-
-```
-kubectl create -n default rolebinding example-kubeapps-functions-write --clusterrole=kubeapps-functions-write --serviceaccount default:example
 ```
 
 ### Service Catalog, Service Instances and Bindings
@@ -131,19 +111,19 @@ kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clust
 #### Read access to App Repositories
 
 In order to list the configured App Repositories in Kubeapps, apply the
-`kubeapps-repositories-read` Role in the kubeapps namespace.
+`kubeapps-repositories-read` Role in the namespace Kubeapps is installed in.
 
 ```
-kubectl create -n kubeapps rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
+kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
 ```
 
 #### Write access to App Repositories
 
 In order to create and refresh App Repositories in Kubeapps, apply the
-`kubeapps-repositories-write` Role in the kubeapps namespace.
+`kubeapps-repositories-write` Role in the namespace KUbeapps is installed in.
 
 ```
-kubectl create -n kubeapps rolebinding example-kubeapps-repositories-write --role=kubeapps-repositories-write --serviceaccount default:example
+kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write --role=kubeapps-repositories-write --serviceaccount default:example
 ```
 
 ### Assigning roles across multiple namespaces
@@ -157,8 +137,8 @@ kubectl create -n example rolebinding example-kubeapps-applications-write --clus
 kubectl create -n example rolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-write --serviceaccount default:example
 ```
 
-Note that there's no need to recreate the RoleBinding in the kubeapps namespace
-that is also needed, since that has already been created.
+Note that there's no need to recreate the RoleBinding in the namespace Kubeapps
+is installed in that is also needed, since that has already been created.
 
 If you want to give access for every namespace, simply create a
 ClusterRoleBinding instead of a RoleBinding. For example, to give the "example" user permissions to manage Applications in _any_ namespace:
