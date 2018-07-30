@@ -26,11 +26,29 @@ spec:
         - /proxy
         args:
         - --host={{ .Values.tillerProxy.host }}
+        {{- if .Values.tillerProxy.tls }}
+        - --tls
+        {{- if .Values.tillerProxy.tls.verify }}
+        - --tls-verify
+        {{- end }}
+        env:
+        - name: HELM_HOME
+          value: /etc/certs
+        volumeMounts:
+        - name: tiller-certs
+          mountPath: /etc/certs
+        {{- end }}
         ports:
         - name: http
           containerPort: {{ .Values.chartsvc.service.port }}
         resources:
 {{ toYaml .Values.tillerProxy.resources | indent 12 }}
+      {{- if .Values.tillerProxy.tls }}
+      volumes:
+      - name: tiller-certs
+        secret: 
+          secretName: {{ template "kubeapps.tiller-proxy.fullname" . }}
+      {{- end }}
     {{- with .Values.tillerProxy.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

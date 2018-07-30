@@ -89,6 +89,11 @@ tillerProxy:
   service:
     port: 8080
   host: tiller-deploy.kube-system:44134
+  tls: {}
+    # ca:
+    # cert:
+    # key:
+    # verify: false
   resources: {}
     # limits:
     #  cpu: 100m
