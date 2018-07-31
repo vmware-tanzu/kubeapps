@@ -120,7 +120,7 @@ kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-
 #### Write access to App Repositories
 
 In order to create and refresh App Repositories in Kubeapps, apply the
-`kubeapps-repositories-write` Role in the namespace KUbeapps is installed in.
+`kubeapps-repositories-write` Role in the namespace Kubeapps is installed in.
 
 ```
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write --role=kubeapps-repositories-write --serviceaccount default:example
