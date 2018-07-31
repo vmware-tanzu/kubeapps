@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: dashboard
-        image: "{{ .Values.dashboard.image.repository }}:{{ .Values.dashboard.image.tag }}"
+        image: {{ template "kubeapps.image" .Values.dashboard.image }}
         livenessProbe:
           httpGet:
             path: /

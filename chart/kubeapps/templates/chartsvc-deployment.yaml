@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: chartsvc
-        image: "{{ .Values.chartsvc.image.repository }}:{{ .Values.chartsvc.image.tag }}"
+        image: {{ template "kubeapps.image" .Values.chartsvc.image }}
         command:
         - /chartsvc
         args:

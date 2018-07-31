@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: proxy
-        image: "{{ .Values.tillerProxy.image.repository }}:{{ .Values.tillerProxy.image.tag }}"
+        image: {{ template "kubeapps.image" .Values.tillerProxy.image }}
         command:
         - /proxy
         args:

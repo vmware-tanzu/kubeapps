@@ -25,6 +25,13 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
+Render image reference
+*/}}
+{{- define "kubeapps.image" -}}
+{{ .registry }}/{{ .repository }}:{{ .tag }}
+{{- end -}}
+
+{{/*
 Create a default fully qualified app name for MongoDB dependency.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}

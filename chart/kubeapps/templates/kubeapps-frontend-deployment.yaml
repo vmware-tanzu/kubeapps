@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+        image: {{ template "kubeapps.image" .Values.frontend.image }}
         livenessProbe:
           httpGet:
             path: /healthz

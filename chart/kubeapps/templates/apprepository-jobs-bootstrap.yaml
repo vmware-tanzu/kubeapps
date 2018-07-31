@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: kubectl
-        image: "{{ .Values.apprepository.jobsImage.repository }}:{{ .Values.apprepository.jobsImage.tag }}"
+        image: {{ template "kubeapps.image" .Values.apprepository.jobsImage }}
         command:
         - kubectl
         - apply 
