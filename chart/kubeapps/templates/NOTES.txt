@@ -9,7 +9,7 @@
   echo http://$NODE_IP:$NODE_PORT
 {{- else if contains "LoadBalancer" .Values.frontend.service.type }}
      NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-           You can watch the status of by running 'kubectl get svc -w {{ template "kubeapps.fullname" . }}'
+           You can watch the status by running 'kubectl get svc -w {{ template "kubeapps.fullname" . }}'
   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "kubeapps.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   echo http://$SERVICE_IP:{{ .Values.frontend.service.port }}
 {{- else if contains "ClusterIP" .Values.frontend.service.type }}
