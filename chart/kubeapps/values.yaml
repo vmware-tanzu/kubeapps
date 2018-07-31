@@ -58,6 +58,18 @@ dashboard:
     tag: latest
   service:
     port: 8080
+  livenessProbe:
+    httpGet:
+      path: /
+      port: 8080
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 8080
+    initialDelaySeconds: 0
+    timeoutSeconds: 5
   resources: {}
     # limits:
     #  cpu: 100m
@@ -77,6 +89,18 @@ frontend:
   service:
     port: 80
     type: ClusterIP
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8080
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /
+      port: 8080
+    initialDelaySeconds: 0
+    timeoutSeconds: 5
   resources: {}
     # limits:
     #  cpu: 100m
