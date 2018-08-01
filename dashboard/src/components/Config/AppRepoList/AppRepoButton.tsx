@@ -19,13 +19,11 @@ interface IAppRepoFormProps {
 const RequiredRBACRoles: IRBACRole[] = [
   {
     apiGroup: "kubeapps.com",
-    namespace: "kubeapps",
     resource: "apprepositories",
     verbs: ["create"],
   },
   {
     apiGroup: "",
-    namespace: "kubeapps",
     resource: "secrets",
     verbs: ["create"],
   },
@@ -104,6 +102,7 @@ interface IAppRepoAddButtonProps {
   error?: Error;
   install: (name: string, url: string, authHeader: string) => Promise<boolean>;
   redirectTo?: string;
+  kubeappsNamespace: string;
 }
 interface IAppRepoAddButtonState {
   authHeader: string;
@@ -159,7 +158,7 @@ export class AppRepoAddButton extends React.Component<
       case ForbiddenError:
         return (
           <PermissionsErrorAlert
-            namespace="kubeapps"
+            namespace={this.props.kubeappsNamespace}
             roles={RequiredRBACRoles}
             action={`create AppRepository "${name}"`}
           />

@@ -3,6 +3,7 @@ import { IServiceCatalogState } from "../reducers/catalog";
 import { IFunctionState } from "../reducers/functions";
 import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
+import { IConfig } from "./Config";
 import { hapi } from "./hapi/release";
 
 // Allow defining multiple error classes
@@ -181,6 +182,7 @@ export interface IStoreState {
   apps: IAppState;
   auth: IAuthState;
   charts: IChartState;
+  config: IConfig;
   repos: IAppRepositoryState;
   deployment: IDeployment;
   functions: IFunctionState;

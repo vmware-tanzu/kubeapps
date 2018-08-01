@@ -15,6 +15,7 @@ interface IDeploymentFormProps {
   appCurrentValues?: string;
   bindingsWithSecrets: IServiceBindingWithSecret[];
   chartName: string;
+  kubeappsNamespace: string;
   namespace: string;
   releaseName: string;
   repo: string;
