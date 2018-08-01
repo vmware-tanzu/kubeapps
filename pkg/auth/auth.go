@@ -84,10 +84,11 @@ type UserAuth struct {
 
 // Action represents a specific set of verbs against a resource
 type Action struct {
-	APIVersion string   `json:"apiGroup"`
-	Resource   string   `json:"resource"`
-	Namespace  string   `json:"namespace"`
-	Verbs      []string `json:"verbs"`
+	APIVersion  string   `json:"apiGroup"`
+	Resource    string   `json:"resource"`
+	Namespace   string   `json:"namespace"`
+	ClusterWide bool     `json:"clusterWide"`
+	Verbs       []string `json:"verbs"`
 }
 
 // NewAuth creates an auth agent
@@ -114,17 +115,17 @@ func (u *UserAuth) Validate() error {
 	return u.k8sAuth.Validate()
 }
 
-func (u *UserAuth) resolve(groupVersion, kind string) (string, error) {
+func (u *UserAuth) resolve(groupVersion, kind string) (string, bool, error) {
 	resourceList, err := u.k8sAuth.GetResourceList(groupVersion)
 	if err != nil {
-		return "", nil
+		return "", false, nil
 	}
 	for _, r := range resourceList.APIResources {
 		if r.Kind == kind {
-			return r.Name, nil
+			return r.Name, r.Namespaced, nil
 		}
 	}
-	return "", fmt.Errorf("Unable to find the kind %s in the resource group %s", kind, groupVersion)
+	return "", false, fmt.Errorf("Unable to find the kind %s in the resource group %s", kind, groupVersion)
 }
 
 func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, error) {
@@ -153,7 +154,7 @@ func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, 
 func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, error) {
 	rejectedActions := []Action{}
 	for _, i := range itemsToCheck {
-		resource, err := u.resolve(i.APIVersion, i.Kind)
+		resource, namespaced, err := u.resolve(i.APIVersion, i.Kind)
 		if err != nil {
 			return []Action{}, err
 		}
@@ -176,12 +177,18 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 			}
 		}
 		if !allowed {
-			rejectedActions = append(rejectedActions, Action{
+			rejectedAction := Action{
 				APIVersion: i.APIVersion,
 				Resource:   resource,
-				Namespace:  i.Namespace,
 				Verbs:      []string{verb},
-			})
+			}
+			if namespaced {
+				rejectedAction.ClusterWide = false
+				rejectedAction.Namespace = i.Namespace
+			} else {
+				rejectedAction.ClusterWide = true
+			}
+			rejectedActions = append(rejectedActions, rejectedAction)
 		}
 	}
 	return rejectedActions, nil
