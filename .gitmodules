@@ -1,6 +1,3 @@
-[submodule "kubeless"]
-	path = manifests/vendor/kubeless
-	url = https://github.com/bitnami/kubeless.git
 [submodule "kubecfg"]
 	path = manifests/vendor/kubecfg
 	url = https://github.com/ksonnet/kubecfg.git
