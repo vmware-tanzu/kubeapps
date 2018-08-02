@@ -1,29 +1,30 @@
 import { axios } from "./Auth";
+import Config from "./Config";
 import { IAppRepository, IAppRepositoryList } from "./types";
 
 export class AppRepository {
   public static async list() {
-    const { data } = await axios.get<IAppRepositoryList>(AppRepository.APIEndpoint);
+    const { data } = await axios.get<IAppRepositoryList>(await AppRepository.getResourceLink());
     return data;
   }
 
   public static async get(name: string) {
-    const { data } = await axios.get(AppRepository.getSelfLink(name));
+    const { data } = await axios.get(await AppRepository.getResourceLink(name));
     return data;
   }
 
   public static async update(name: string, newApp: IAppRepository) {
-    const { data } = await axios.put(AppRepository.getSelfLink(name), newApp);
+    const { data } = await axios.put(await AppRepository.getResourceLink(name), newApp);
     return data;
   }
 
   public static async delete(name: string) {
-    const { data } = await axios.delete(AppRepository.getSelfLink(name));
+    const { data } = await axios.delete(await AppRepository.getResourceLink(name));
     return data;
   }
 
   public static async create(name: string, url: string, auth: any) {
-    const { data } = await axios.post<IAppRepository>(AppRepository.APIEndpoint, {
+    const { data } = await axios.post<IAppRepository>(await AppRepository.getResourceLink(), {
       apiVersion: "kubeapps.com/v1alpha1",
       kind: "AppRepository",
       metadata: {
@@ -34,8 +35,12 @@ export class AppRepository {
     return data;
   }
 
-  private static APIEndpoint: string = "/api/kube/apis/kubeapps.com/v1alpha1/namespaces/kubeapps/apprepositories";
-  private static getSelfLink(name: string): string {
-    return `${AppRepository.APIEndpoint}/${name}`;
+  private static APIBase: string = "/api/kube";
+  private static APIEndpoint: string = `${AppRepository.APIBase}/apis/kubeapps.com/v1alpha1`;
+  private static async getResourceLink(name?: string) {
+    const { namespace } = await Config.getConfig();
+    return `${AppRepository.APIEndpoint}/namespaces/${namespace}/apprepositories${
+      name ? `/${name}` : ""
+    }`;
   }
 }
