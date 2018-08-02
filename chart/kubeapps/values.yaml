@@ -16,7 +16,7 @@ apprepository:
     registry: docker.io
     repository: lachlanevenson/k8s-kubectl
     tag: v1.9.9
-  repos:
+  initialRepos:
   - name: stable
     url: https://kubernetes-charts.storage.googleapis.com
   - name: incubator

@@ -13,7 +13,7 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   apprepositories.yaml: |-
-    {{- range .Values.apprepository.repos }}
+    {{- range .Values.apprepository.initialRepos }}
     apiVersion: kubeapps.com/v1alpha1
     kind: AppRepository
     metadata:
