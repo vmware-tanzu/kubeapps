@@ -3,7 +3,6 @@ local kubecfg = import "kubecfg.libsonnet";
 
 local host = null;
 local tls = false;
-local kubeless = import "kubeless.jsonnet";
 
 local labels = {
   metadata+: {
@@ -32,10 +31,6 @@ local labelifyEach(src) = {
   // This is the main gateway for Kubeapps and acts as a reverse-proxy to the
   // frontend and other services.
   nginx: labelifyEach((import "nginx.jsonnet")),
-
-  // NB: these are left in their usual namespaces, to avoid forcing
-  // non-default command line options onto client tools
-  kubeless: labelifyEach(kubeless),
 
   dashboard_:: (import "kubeapps-dashboard.jsonnet") {
     namespace:: $.namespace,

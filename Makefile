@@ -15,11 +15,8 @@ all: kubeapps kubeapps/dashboard kubeapps/chartsvc kubeapps/chart-repo kubeapps/
 
 static/kubeapps-objs.yaml:
 	KUBEAPPS_VERSION=$${VERSION:-latest} ;\
-	cd manifests/vendor/kubeless ;\
-	KUBELESS_VERSION=$$(git describe --tags --abbrev=0) ;\
-	cd - ;\
 	KUBECFG_JPATH=./manifests/lib:./manifests/vendor/kubecfg/lib:./manifests/vendor/ksonnet-lib \
-		kubecfg show -V VERSION=$$KUBEAPPS_VERSION -V KUBELESS_VERSION=$$KUBELESS_VERSION manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
+	kubecfg show -V VERSION=$$KUBEAPPS_VERSION manifests/kubeapps.jsonnet > static/kubeapps-objs.yaml
 
 $(EMBEDDED_STATIC): static/kubeapps-objs.yaml
 	# force compilation on current OS
