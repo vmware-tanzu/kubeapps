@@ -52,25 +52,26 @@ func newFakeUserAuth() *UserAuth {
 	resourceListV1 := metav1.APIResourceList{
 		GroupVersion: "v1",
 		APIResources: []metav1.APIResource{
-			{Name: "pods", Kind: "Pod"},
+			{Name: "pods", Kind: "Pod", Namespaced: true},
 		},
 	}
 	resourceListAppsV1Beta1 := metav1.APIResourceList{
 		GroupVersion: "apps/v1beta1",
 		APIResources: []metav1.APIResource{
-			{Name: "deployments", Kind: "Deployment"},
+			{Name: "deployments", Kind: "Deployment", Namespaced: true},
 		},
 	}
 	resourceListExtensionsV1Beta1 := metav1.APIResourceList{
 		GroupVersion: "extensions/v1beta1",
 		APIResources: []metav1.APIResource{
-			{Name: "deployments", Kind: "Deployment"},
+			{Name: "deployments", Kind: "Deployment", Namespaced: true},
 		},
 	}
-	resourceListRBAC := metav1.APIResourceList{
+	resourceListClusterRoleRBAC := metav1.APIResourceList{
 		GroupVersion: "rbac.authorization.k8s.io/v1",
 		APIResources: []metav1.APIResource{
-			{Name: "clusterroles", Kind: "ClusterRole"},
+			{Name: "clusterrolebindings", Kind: "ClusterRoleBinding", Namespaced: false},
+			{Name: "clusterroles", Kind: "ClusterRole", Namespaced: false},
 		},
 	}
 	cli := fake.NewSimpleClientset()
@@ -79,7 +80,7 @@ func newFakeUserAuth() *UserAuth {
 		&resourceListV1,
 		&resourceListAppsV1Beta1,
 		&resourceListExtensionsV1Beta1,
-		&resourceListRBAC,
+		&resourceListClusterRoleRBAC,
 	}
 	fakeK8sAuthCli := fakeK8sAuth{cli.Discovery()}
 	return &UserAuth{fakeK8sAuthCli}
@@ -166,6 +167,18 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 `,
 			ExpectedActions: []Action{},
+		},
+		// It should report if a resource is clusterWide
+		{
+			Action:    "get",
+			Namespace: "foo",
+			Manifest: `---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+`,
+			ExpectedActions: []Action{
+				{APIVersion: "rbac.authorization.k8s.io/v1", Resource: "clusterrolebindings", ClusterWide: true, Verbs: []string{"get"}},
+			},
 		},
 	}
 	for _, tt := range testSuite {
