@@ -11,6 +11,7 @@ apprepository:
     registry: docker.io
     repository: kubeapps/chart-repo
     tag: latest
+  # This image is used in a Helm post-install hook to bootstrap the initialRepos below
   jobsImage:
     registry: docker.io
     repository: lachlanevenson/k8s-kubectl
