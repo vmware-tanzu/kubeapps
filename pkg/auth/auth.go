@@ -115,17 +115,22 @@ func (u *UserAuth) Validate() error {
 	return u.k8sAuth.Validate()
 }
 
-func (u *UserAuth) resolve(groupVersion, kind string) (string, bool, error) {
+type resourceInfo struct {
+	Name       string
+	Namespaced bool
+}
+
+func (u *UserAuth) resolve(groupVersion, kind string) (resourceInfo, error) {
 	resourceList, err := u.k8sAuth.GetResourceList(groupVersion)
 	if err != nil {
-		return "", false, nil
+		return resourceInfo{}, err
 	}
 	for _, r := range resourceList.APIResources {
 		if r.Kind == kind {
-			return r.Name, r.Namespaced, nil
+			return resourceInfo{r.Name, r.Namespaced}, nil
 		}
 	}
-	return "", false, fmt.Errorf("Unable to find the kind %s in the resource group %s", kind, groupVersion)
+	return resourceInfo{}, fmt.Errorf("Unable to find the kind %s in the resource group %s", kind, groupVersion)
 }
 
 func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, error) {
@@ -154,7 +159,7 @@ func (u *UserAuth) getResourcesToCheck(namespace, manifest string) ([]resource, 
 func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, error) {
 	rejectedActions := []Action{}
 	for _, i := range itemsToCheck {
-		resource, namespaced, err := u.resolve(i.APIVersion, i.Kind)
+		rInfo, err := u.resolve(i.APIVersion, i.Kind)
 		if err != nil {
 			return []Action{}, err
 		}
@@ -163,7 +168,7 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 			// The group should be empty for the core API group
 			group = ""
 		}
-		allowed, err := u.k8sAuth.CanI(verb, group, resource, i.Namespace)
+		allowed, err := u.k8sAuth.CanI(verb, group, rInfo.Name, i.Namespace)
 		if err != nil {
 			return []Action{}, err
 		}
@@ -171,22 +176,20 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 		// version of the group but the above call may return "false"
 		if !allowed && strings.Contains(group, "/") {
 			groupID := strings.Split(group, "/")[0]
-			allowed, err = u.k8sAuth.CanI(verb, groupID, resource, i.Namespace)
+			allowed, err = u.k8sAuth.CanI(verb, groupID, rInfo.Name, i.Namespace)
 			if err != nil {
 				return []Action{}, err
 			}
 		}
 		if !allowed {
 			rejectedAction := Action{
-				APIVersion: i.APIVersion,
-				Resource:   resource,
-				Verbs:      []string{verb},
+				APIVersion:  i.APIVersion,
+				Resource:    rInfo.Name,
+				Verbs:       []string{verb},
+				ClusterWide: !rInfo.Namespaced,
 			}
-			if namespaced {
-				rejectedAction.ClusterWide = false
+			if rInfo.Namespaced {
 				rejectedAction.Namespace = i.Namespace
-			} else {
-				rejectedAction.ClusterWide = true
 			}
 			rejectedActions = append(rejectedActions, rejectedAction)
 		}
