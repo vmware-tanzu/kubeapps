@@ -19,65 +19,7 @@ applications: {
       ],
     },
   },
-  functions: {
-    // kubeapps-functions-read
-    // Gives read-only access to Functions within a Namespace in Kubeapps.
-    // Usage:
-    //   Apply kubeapps-functions-read clusterrole to user/serviceaccount in the desired namespace
-    //   AND apply kubeapps-kubeless-config-read to user/serviceaccount in the kubeless namespace.
-    read: kube.ClusterRole("kubeapps-functions-read") {
-      rules: [
-        {
-          apiGroups: ["kubeless.io"],
-          resources: ["functions"],
-          verbs: ["list", "get"],
-        },
-        {
-          apiGroups: ["", "apps"],
-          resources: ["pods", "deployments"],
-          verbs: ["list", "watch"],
-        },
-        {
-          apiGroups: [""],
-          resources: ["pods/log"],
-          verbs: ["get"],
-        },
-        // Allows Kubeapps to send GET/POST requests to function endpoints.
-        {
-          apiGroups: [""],
-          resources: ["services/proxy"],
-          verbs: ["get", "create"],
-        },
-      ],
-    },
-    readKubelessConfig: kube.Role("kubeapps-kubeless-config-read") {
-      metadata+: {
-        namespace: "kubeless",
-      },
-      rules: [
-        {
-          apiGroups: [""],
-          resources: ["configmaps"],
-          resourceNames: ["kubeless-config"],
-          verbs: ["get"],
-        },
-      ],
-    },
-    // kubeapps-functions-write
-    // Gives write access to Functions within a Namespace in Kubeapps.
-    // Usage:
-    //   Apply kubeapps-functions-write clusterrole to user/serviceaccount in the desired namespace.
-    write: kube.ClusterRole("kubeapps-functions-write") {
-      rules: [
-        {
-          apiGroups: ["kubeless.io"],
-          resources: ["functions"],
-          verbs: ["create", "update", "delete"],
-        },
-      ],
-    },
-  },
-
+  
   serviceCatalog: {
     // kubeapps-service-catalog-read
     // Gives read-only access to Service Instances and Bindings within a Namespace in Kubeapps.

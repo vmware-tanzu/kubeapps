@@ -56,7 +56,6 @@ local labelifyEach(src) = {
     namespace:: $.namespace,
   },
   userRoles: $.userRoles_ {
-    functions: labelifyEach($.userRoles_.functions),
     serviceCatalog: labelifyEach($.userRoles_.serviceCatalog),
     repositories: labelifyEach($.userRoles_.repositories),
   },
