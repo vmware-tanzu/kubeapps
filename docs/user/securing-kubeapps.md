@@ -4,13 +4,9 @@ In this guide we will explain how to secure the installation of Kubeapps in a mu
 
 The main goal is to secure the access to [Tiller](https://github.com/kubernetes/helm/blob/master/docs/securing_installation.md) (Helm server-side component). Tiller has access to create or delete any resource in the cluster so we should be careful on how we expose the functionality it provides.
 
-Kubeapps deploys by default Tiller configuring it to listen for connections only in `localhost`. Note that one particularity of Tiller is that even if it is only listening in `localhost`, request made with the `helm` tool can still contact it because, under the hoods, what the client does is opening a [`port-forward`](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/) session and connect to it to like a local connection. That means that we still need to add additional security measures to prevent unauthorized access.
-
-Since Tiller is only listening in `localhost`, for exposing Tiller functionality, Kubeapps also deploys as a [sidecar container](https://kubernetes.io/blog/2015/06/the-distributed-system-toolkit-patterns/) a [**proxy**](/cmd/tiller-proxy/README.md) that receives all the requests from the Dashboard (or any other client). This component validates the requests checking that the user is allowed to perform the requested operation and finally redirect it to Tiller.
-
 In order to take advantage of Kubeapps security features you will need to configure two things: a **TLS certificate** to control the access to Tiller and [**RBAC roles**](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to authorize requests.
 
-# Deploy Kubeapps with a TLS certificate
+## Generate a TLS certificate
 
 The first step to restrict the access to Tiller is to use a TLS certificate. If we don't do this any user with access to the Pod in which Tiller is running can escalate privileges. We can generate a self-signed certificate using the tool [`openssl`](https://www.openssl.org/source/). The first thing is creating a certificate authority. You will be asked to introduce a pass phrase for that:
 
@@ -51,16 +47,23 @@ Getting CA Private Key
 Enter pass phrase for kubeapps-ca.key:
 ```
 
-Now that we have all the files needed to use the certificate we just need to deploy (or update) Kubeapps:
+With that we have all the files required to install Tiller with a certificate.
+
+## Install Tiller
+
+Now we can install Tiller using the `helm` CLI tool:
 
 ```
-kubeapps up --tiller-tls \
-  --tiller-tls-cert kubeapps.crt \
-  --tiller-tls-key kubeapps.key \
-  --tls-ca-cert kubeapps-ca.pem
+helm init \
+--override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}' \
+--tiller-tls \
+--tiller-tls-verify \
+--tiller-tls-cert=kubeapps.crt \
+--tiller-tls-key=kubeapps.key \
+--tls-ca-cert=kubeapps-ca.pem
 ```
 
-The above command will generate a secret in the `kubeapps` namespace to store the certificate we've just generated and it will configure Tiller to be accessible using only that certificate. We can verify that executing the `helm` tool locally:
+With that we will deploy Tiller using the certificate we just generated. You can check that it's working as expected executing the `helm` tool locally:
 
 ```
 $ helm version --tiller-namespace kubeapps
@@ -74,7 +77,21 @@ $ helm version --tiller-namespace kubeapps --tls \
 Server: &version.Version{SemVer:"v2.9.1", GitCommit:"20adb27c7c5868466912eebdf6664e7390ebe710", GitTreeState:"clean"}
 ```
 
-# Enable RBAC
+## Deploy Kubeapps with a TLS certificate
+
+This is the command to install Kubeapps with our certificate:
+
+```
+helm install \
+  --tls --tls-ca-cert kubeapps-ca.pem --tls-cert kubeapps.crt --tls-key kubeapps.key \
+  --set tillerProxy.tls.ca="$(cat kubeapps-ca.pem)" \
+  --set tillerProxy.tls.key="$(cat kubeapps.key)" \
+  --set tillerProxy.tls.cert="$(cat kubeapps.crt)" \
+  --namespace kubeapps \
+  ./chart/kubeapps
+```
+
+## Enable RBAC
 
 In order to be able to authorize requests from users it is necessary to enable [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) in the Kubernetes cluster. Some providers have it enabled by default but in some cases you need to set it up explicitly. Check out your provider documentation to know how to enable it. To verify if your cluster has RBAC available you can check if the API group exists:
 
@@ -92,11 +109,11 @@ In a nutshell, Kubeapps authorization validates:
 
 For example, if the user account `foo` wants to deploy a chart `bar` that is composed of a `Deployment` and a `Service` it should have enough permissions to create each one of those. In other case it will receive an error message with the missing permissions required to deploy the chart.
 
-# Storing releases as secrets
+## [Optional] Migrate releases as secrets
 
-One final important point is that Kubeapps configures Tiller to store releases information as `Secrets`. The default helm installation uses `ConfigMaps` instead. `ConfigMaps` are usually less protected by RBAC roles which could leak sensitive information like passwords or other credentials. 
+One final important point is that we have initialized Tiller to store releases information as `Secrets`. The default helm installation uses `ConfigMaps` instead. `ConfigMaps` are usually less protected by RBAC roles which could leak sensitive information like passwords or other credentials. 
 
-If you already have releases stored as `ConfigMaps` (and that is the default for versions of Kubeapps prior to 1.0.0-alpha.5) you will need to migrate them as secrets to be able to see and manage them through Kubeapps. In order to do so there is an auxiliary command in Kubeapps that helps you to do so:
+If you already have releases stored as `ConfigMaps` you will need to migrate them as secrets to be able to see and manage them through Kubeapps. In order to do so there is an auxiliary command in the Kubeapps CLI that helps you to do so:
 
 ```
 $ kubeapps migrate-configmaps-to-secrets

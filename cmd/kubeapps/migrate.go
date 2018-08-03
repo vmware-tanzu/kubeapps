@@ -57,10 +57,10 @@ var migrateCmd = &cobra.Command{
 		}
 
 		for _, cm := range configMaps.Items {
-			_, err := clientset.CoreV1().Secrets(Kubeapps_NS).Create(&v1.Secret{
+			_, err := clientset.CoreV1().Secrets("kube-system").Create(&v1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      cm.Name,
-					Namespace: cm.Namespace,
+					Namespace: "kube-system",
 					Labels:    cm.Labels,
 				},
 				Data: map[string][]byte{
