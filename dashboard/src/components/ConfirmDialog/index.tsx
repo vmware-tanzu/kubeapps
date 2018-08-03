@@ -9,13 +9,11 @@ interface IConfirmDialogProps {
 }
 
 interface IConfirmDialogState {
-  error?: string;
   modalIsOpen: boolean;
 }
 
 class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogState> {
   public state: IConfirmDialogState = {
-    error: undefined,
     modalIsOpen: this.props.modalIsOpen,
   };
 
@@ -33,22 +31,21 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
               transform: "translate(-50%, -50%)",
             },
           }}
+          ariaHideApp={false}
           isOpen={this.props.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.state.error && (
-            <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
-          )}
           {this.props.loading === true ? (
             <div> Loading ... </div>
           ) : (
             <div>
               <div> Are you sure you want to delete this? </div>
-              <button className="button" onClick={this.props.closeModal}>
+              <button id="cancel" className="button" onClick={this.props.closeModal}>
                 Cancel
               </button>
               <button
+                id="delete"
                 className="button button-primary button-danger"
                 type="submit"
                 onClick={this.props.onConfirm}
@@ -61,12 +58,6 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
       </div>
     );
   }
-
-  public openModel = () => {
-    this.setState({
-      modalIsOpen: true,
-    });
-  };
 
   public closeModal = () => {
     this.setState({
