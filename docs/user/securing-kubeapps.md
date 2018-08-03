@@ -108,26 +108,3 @@ In a nutshell, Kubeapps authorization validates:
  - When creating, upgrading or deleting a release it checks that the user is allowed to create, update or delete all the components contained in the release chart.
 
 For example, if the user account `foo` wants to deploy a chart `bar` that is composed of a `Deployment` and a `Service` it should have enough permissions to create each one of those. In other case it will receive an error message with the missing permissions required to deploy the chart.
-
-## [Optional] Migrate releases as secrets
-
-One final important point is that we have initialized Tiller to store releases information as `Secrets`. The default helm installation uses `ConfigMaps` instead. `ConfigMaps` are usually less protected by RBAC roles which could leak sensitive information like passwords or other credentials. 
-
-If you already have releases stored as `ConfigMaps` you will need to migrate them as secrets to be able to see and manage them through Kubeapps. In order to do so there is an auxiliary command in the Kubeapps CLI that helps you to do so:
-
-```
-$ kubeapps migrate-configmaps-to-secrets
-2018/07/09 16:25:44 Migrated foo.v1 as a secret
-2018/07/09 16:25:44 Migrated foo.v2 as a secret
-2018/07/09 16:25:44 Migrated wp.v1 as a secret
-2018/07/09 16:25:44 Done. ConfigMaps are left in the namespace kubeapps to debug possible errors. Please delete them manually
-```
-
-As you can see from the example we have automatically migrated all the revisions of the releases `foo` and `wp` to secrets. Once we are sure that everything work as expected we can delete the remaining `ConfigMaps` to avoid security issues:
-
-```
-$ kubectl delete configmaps -n kubeapps -l OWNER=TILLER
-configmap "foo.v1" deleted
-configmap "foo.v2" deleted
-configmap "wp.v1" deleted
-```

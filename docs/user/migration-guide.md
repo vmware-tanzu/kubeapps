@@ -4,14 +4,14 @@ The release includes several breaking changes that should be handled carefully i
 
  - The recommended way of installing Kubeapps is through its helm chart.
  - The `kubeapps` cli is now deprecated. **It won't be included in future releases**.
- - Kubeapps no longer includes Tiller nor Kubeless by default.
- - The component `Helm CRD` has been substitued with a secure proxy to the Tiller server.
+ - Kubeapps no longer includes Tiller, Kubeless nor SealedSecrets by default.
+ - The component `Helm CRD` has been substitued with a secure proxy to the Tiller server. More info about this proxy [here](../../cmd/tiller-proxy/README.md).
 
 These are the steps you need to follow to upgrade Kubeapps to this version.
 
 ## Install Tiller
 
-Please follow the steps in [this guide](./securing-kubeapps.md) to install Tiller securely. Don't install the Kubeapps chart yet since it will fail because it will find resources that already exist. Once the new Tiller instance is ready you can migrate the existing releases using the utility included in `kubeapps` 1.0.0-alpha.5:
+Please follow the steps in [this guide](./securing-kubeapps.md) to install Tiller securely. Don't install the Kubeapps chart yet since it will fail because it will find resources that already exist. Once the new Tiller instance is ready you can migrate the existing releases using the utility command included in `kubeapps` 1.0.0-alpha.5:
 
 ```
 $ kubeapps migrate-configmaps-to-secrets
@@ -48,7 +48,7 @@ kubectl delete -f https://github.com/kubeless/kubeless/releases/download/v0.6.0/
 
 ## Install the Kubeapps chart
 
-Now you can install the new version of Kubeapps using the Helm chart included in this repository (this command assumes that you have followed the guide [here](./securing-kubeapps.md):
+Now you can install the new version of Kubeapps using the Helm chart included in this repository (this command assumes that you have followed the guide [here](./securing-kubeapps.md))):
 
 ```
 helm install \
@@ -60,6 +60,6 @@ helm install \
   ./chart/kubeapps
 ```
 
-When the chart is finally ready you can access the application showed after installing the chart.
+When the chart is finally ready you can access the application and you will see your previous applications.
 
 If you still want to access Kubeless functions using Kubeapps you need to manually write the URL including the namespace of them. For example `http://localhost:8080/functions/ns/default`.
