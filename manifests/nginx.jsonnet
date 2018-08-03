@@ -33,7 +33,7 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
         spec+: {
           containers_+: {
             default: kube.Container("nginx") {
-              image: "bitnami/nginx:1.12",
+              image: "bitnami/nginx:1.14.0-r27",
               ports_: {
                 http: {containerPort: 8080, protocol: "TCP"},
               },
@@ -50,7 +50,7 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
                 timeoutSeconds: 5,
               },
               volumeMounts_+: {
-                vhost: {mountPath: "/bitnami/nginx/conf/vhosts"},
+                vhost: {mountPath: "/opt/bitnami/nginx/conf/vhosts"},
               },
             },
           },

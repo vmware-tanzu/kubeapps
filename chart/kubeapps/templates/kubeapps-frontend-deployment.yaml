@@ -30,7 +30,7 @@ spec:
 {{ toYaml .Values.frontend.readinessProbe | indent 10 }}
         volumeMounts:
         - name: vhost
-          mountPath: /bitnami/nginx/conf/vhosts
+          mountPath: /opt/bitnami/nginx/conf/vhosts
         ports:
         - name: http
           containerPort: 8080

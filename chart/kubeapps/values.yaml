@@ -86,7 +86,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.14
+    tag: 1.14.0-r27
   service:
     port: 80
     type: ClusterIP
