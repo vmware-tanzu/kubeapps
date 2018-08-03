@@ -50,7 +50,7 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
                 timeoutSeconds: 5,
               },
               volumeMounts_+: {
-                vhost: {mountPath: "/bitnami/nginx/conf/vhosts"},
+                vhost: {mountPath: "/opt/bitnami/nginx/conf/vhosts"},
               },
             },
           },
