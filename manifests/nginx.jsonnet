@@ -33,7 +33,7 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
         spec+: {
           containers_+: {
             default: kube.Container("nginx") {
-              image: "bitnami/nginx:1.12",
+              image: "bitnami/nginx:1.14",
               ports_: {
                 http: {containerPort: 8080, protocol: "TCP"},
               },
