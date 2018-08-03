@@ -51,24 +51,36 @@ local HashedConfigMap(name) = kube.ConfigMap(name) {
                 },
                 volumeMounts_+: {
                   vhost: {mountPath: "/opt/bitnami/nginx/conf/vhosts"},
+                  config: {mountPath: "/app/config.json", subPath: "config.json"},
                 },
               },
             },
             volumes_+: {
-              vhost: kube.ConfigMapVolume($.ui.vhost),
+              vhost: kube.ConfigMapVolume($.ui.config) {
+                configMap+: {
+                  items: [{ key: "vhost.conf", path: "vhost.conf" }],
+                },
+              },
+              config: kube.ConfigMapVolume($.ui.config) {
+                configMap+: {
+                  items: [{ key: "config.json", path: "config.json" }],
+                },
+              },
             },
           },
         },
       },
     },
 
-    vhost: HashedConfigMap(name + "-ui-vhost") + $.namespace {
+    config: HashedConfigMap(name + "-ui-config") + $.namespace {
       metadata+: {labels+: labels},
 
       data+: {
         ui_port:: 8080,
+        namespace:: $.namespace,
 
         "vhost.conf": (importstr "kubeapps-ui-vhost.conf") % self,
+        "config.json": std.toString({ namespace: $.namespace.metadata.namespace }),
       },
     },
   },
