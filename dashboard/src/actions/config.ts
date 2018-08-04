@@ -15,6 +15,7 @@ export type ConfigAction = typeof allActions[number];
 
 export function getConfig() {
   return async (dispatch: Dispatch<IStoreState>) => {
+    dispatch(requestConfig);
     const config = await Config.getConfig();
     return dispatch(receiveConfig(config));
   };
