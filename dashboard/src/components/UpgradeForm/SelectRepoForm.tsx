@@ -88,7 +88,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
         case ForbiddenError:
           return (
             <PermissionsErrorAlert
-              namespace={this.requiredRBACRoles().namespace || ""}
+              namespace={this.props.kubeappsNamespace}
               roles={[this.requiredRBACRoles()]}
               action={`view App Repositories`}
             />
