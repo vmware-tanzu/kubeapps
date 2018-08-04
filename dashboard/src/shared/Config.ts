@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// IConfig is the configuration for Kubeapps
 export interface IConfig {
   namespace: string;
 }
