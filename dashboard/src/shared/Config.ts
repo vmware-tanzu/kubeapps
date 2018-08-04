@@ -7,7 +7,7 @@ export interface IConfig {
 
 export default class Config {
   public static async getConfig() {
-    const url = `${Config.APIEndpoint}`;
+    const url = Config.APIEndpoint;
     const { data } = await axios.get<IConfig>(url);
     return data;
   }
