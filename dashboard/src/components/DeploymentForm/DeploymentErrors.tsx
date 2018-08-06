@@ -8,16 +8,8 @@ import {
 } from "../../shared/types";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
-const RequiredRBACRoles: IRBACRole[] = [
-  {
-    apiGroup: "kubeapps.com",
-    namespace: "kubeapps",
-    resource: "apprepositories",
-    verbs: ["get"],
-  },
-];
-
 interface IDeploymentErrorProps {
+  kubeappsNamespace: string;
   namespace: string;
   releaseName: string;
   error: Error | undefined;
@@ -44,7 +36,7 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
         } catch (e) {
           // Cannot parse the error as a role array
           // return the default roles
-          roles = RequiredRBACRoles;
+          roles = this.requiredRBACRoles();
         }
         return (
           <PermissionsErrorAlert
@@ -64,6 +56,17 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
       default:
         return <UnexpectedErrorAlert />;
     }
+  }
+
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
   }
 }
 

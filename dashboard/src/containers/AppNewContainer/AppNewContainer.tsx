@@ -17,7 +17,7 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { apps, catalog, charts, namespace }: IStoreState,
+  { apps, catalog, charts, config, namespace }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
@@ -25,6 +25,7 @@ function mapStateToProps(
     chartID: `${params.repo}/${params.id}`,
     chartVersion: params.version,
     error: apps.error,
+    kubeappsNamespace: config.namespace,
     namespace: namespace.current,
     selected: charts.selected,
   };

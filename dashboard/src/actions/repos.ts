@@ -71,9 +71,10 @@ const allActions = [
 export type AppReposAction = typeof allActions[number];
 
 export const deleteRepo = (name: string) => {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
     try {
-      await AppRepository.delete(name);
+      const { config: { namespace } } = getState();
+      await AppRepository.delete(name, namespace);
       dispatch(fetchRepos());
       return true;
     } catch (e) {
@@ -84,15 +85,16 @@ export const deleteRepo = (name: string) => {
 };
 
 export const resyncRepo = (name: string) => {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
     try {
-      const repo = await AppRepository.get(name);
+      const { config: { namespace } } = getState();
+      const repo = await AppRepository.get(name, namespace);
       repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
       repo.spec.resyncRequests++;
-      await AppRepository.update(name, repo);
+      await AppRepository.update(name, namespace, repo);
       // TODO: Do something to show progress
       dispatch(requestRepos());
-      const repos = await AppRepository.list();
+      const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
     } catch (e) {
       dispatch(errorRepos(e, "update"));
@@ -101,10 +103,11 @@ export const resyncRepo = (name: string) => {
 };
 
 export const fetchRepos = () => {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
     dispatch(requestRepos());
     try {
-      const repos = await AppRepository.list();
+      const { config: { namespace } } = getState();
+      const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
     } catch (e) {
       dispatch(errorRepos(e, "fetch"));
@@ -113,8 +116,9 @@ export const fetchRepos = () => {
 };
 
 export const installRepo = (name: string, repoURL: string, authHeader: string) => {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
     try {
+      const { config: { namespace } } = getState();
       let auth;
       const secretName = `apprepo-${name}-secrets`;
       if (authHeader.length) {
@@ -129,7 +133,7 @@ export const installRepo = (name: string, repoURL: string, authHeader: string) =
         };
       }
       dispatch(addRepo());
-      const apprepo = await AppRepository.create(name, repoURL, auth);
+      const apprepo = await AppRepository.create(name, namespace, repoURL, auth);
       dispatch(addedRepo(apprepo));
 
       if (authHeader.length) {
@@ -143,7 +147,7 @@ export const installRepo = (name: string, repoURL: string, authHeader: string) =
             name: apprepo.metadata.name,
             uid: apprepo.metadata.uid,
           } as IOwnerReference,
-          "kubeapps",
+          namespace,
         );
       }
       return true;
@@ -155,9 +159,10 @@ export const installRepo = (name: string, repoURL: string, authHeader: string) =
 };
 
 export function checkChart(repo: string, chartName: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+    const { config: { namespace } } = getState();
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(repo);
+    const appRepository = await AppRepository.get(repo, namespace);
     const res = await fetch(url.api.charts.listVersions(`${repo}/${chartName}`));
     if (res.ok) {
       dispatch(receiveRepo(appRepository));

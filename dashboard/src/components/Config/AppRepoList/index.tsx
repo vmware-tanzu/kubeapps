@@ -17,6 +17,7 @@ export interface IAppRepoListProps {
   deleteRepo: (name: string) => Promise<any>;
   resyncRepo: (name: string) => Promise<any>;
   install: (name: string, url: string, authHeader: string) => Promise<boolean>;
+  kubeappsNamespace: string;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -57,7 +58,7 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
   }
 
   public render() {
-    const { errors, repos, install, deleteRepo, resyncRepo } = this.props;
+    const { errors, repos, install, deleteRepo, resyncRepo, kubeappsNamespace } = this.props;
     return (
       <div className="app-repo-list">
         <h1>App Repositories</h1>
@@ -83,7 +84,11 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
             ))}
           </tbody>
         </table>
-        <AppRepoAddButton error={errors.create} install={install} />
+        <AppRepoAddButton
+          error={errors.create}
+          install={install}
+          kubeappsNamespace={kubeappsNamespace}
+        />
       </div>
     );
   }
@@ -93,7 +98,7 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
       case ForbiddenError:
         return (
           <PermissionsErrorAlert
-            namespace="kubeapps"
+            namespace={this.props.kubeappsNamespace}
             roles={RequiredRBACRoles[action]}
             action={`${action} App Repositories`}
           />

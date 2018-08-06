@@ -3,7 +3,6 @@ import * as React from "react";
 import { Provider } from "react-redux";
 import { Redirect, Route, RouteComponentProps } from "react-router";
 import { ConnectedRouter } from "react-router-redux";
-import { ClassViewContainer } from "./ClassView";
 
 import Layout from "../components/Layout";
 import configureStore from "../store";
@@ -14,6 +13,8 @@ import AppView from "./AppViewContainer";
 import ChartList from "./ChartListContainer";
 import ChartView from "./ChartViewContainer";
 import ClassListContainer from "./ClassListContainer";
+import { ClassViewContainer } from "./ClassView";
+import ConfigLoaderContainer from "./ConfigLoaderContainer";
 import FunctionListContainer from "./FunctionListContainer";
 import FunctionViewContainer from "./FunctionViewContainer";
 import HeaderContainer from "./HeaderContainer";
@@ -52,20 +53,22 @@ class Root extends React.Component {
   public render() {
     return (
       <Provider store={store}>
-        <ConnectedRouter history={history}>
-          <Layout headerComponent={HeaderContainer}>
-            <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
-            <Route exact={true} path="/login" component={LoginFormContainer} />
-            {Object.keys(Root.exactRoutes).map(route => (
-              <PrivateRouteContainer
-                key={route}
-                exact={true}
-                path={route}
-                component={Root.exactRoutes[route]}
-              />
-            ))}
-          </Layout>
-        </ConnectedRouter>
+        <ConfigLoaderContainer>
+          <ConnectedRouter history={history}>
+            <Layout headerComponent={HeaderContainer}>
+              <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
+              <Route exact={true} path="/login" component={LoginFormContainer} />
+              {Object.keys(Root.exactRoutes).map(route => (
+                <PrivateRouteContainer
+                  key={route}
+                  exact={true}
+                  path={route}
+                  component={Root.exactRoutes[route]}
+                />
+              ))}
+            </Layout>
+          </ConnectedRouter>
+        </ConfigLoaderContainer>
       </Provider>
     );
   }
