@@ -6,87 +6,38 @@ The main goal is to secure the access to [Tiller](https://github.com/kubernetes/
 
 In order to take advantage of Kubeapps security features you will need to configure two things: a **TLS certificate** to control the access to Tiller and [**RBAC roles**](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to authorize requests.
 
-## Generate a TLS certificate
+## Install Tiller Securely
 
-The first step to restrict the access to Tiller is to use a TLS certificate. If we don't do this any user with access to the Pod in which Tiller is running can escalate privileges. We can generate a self-signed certificate using the tool [`openssl`](https://www.openssl.org/source/). The first thing is creating a certificate authority. You will be asked to introduce a pass phrase for that:
+You can follow the Helm documentation for deploying Tiller in a secure way. In particular we are interested in:
 
-```
-$ openssl genrsa -des3 -out kubeapps-ca.key 2048
-Generating RSA private key, 2048 bit long modulus
-.....................+++
-...................+++
-e is 65537 (0x10001)
-Enter pass phrase for kubeapps-ca.key:
-Verifying - Enter pass phrase for kubeapps-ca.key:
-```
+ - Use a TLS certificate to control the access to the Tiller deployment: https://docs.helm.sh/using_helm/#using-ssl-between-helm-and-tiller
+ - Store release info as secrets: https://docs.helm.sh/using_helm/#tiller-s-release-information
 
-Now we can generate a root certificate with that key. You will be asked for the previous password:
+Following those guides you can find how to create the TLS certificate that we need and the flags necessary to install Tiller:
 
 ```
-$ openssl req -x509 -new -nodes -key kubeapps-ca.key -sha256 -out kubeapps-ca.pem -subj '/CN=localhost'
-Enter pass phrase for kubeapps-ca.key:
-```
-
-Having a certificate authority we can create a proper certificate and sign it. Again you will be asked to introduce the password from the first step:
-
-```
-$ openssl genrsa -out kubeapps.key 2048
-Generating RSA private key, 2048 bit long modulus
-.............................+++
-...................................................................................+++
-e is 65537 (0x10001)
-
-$ openssl req -new -key kubeapps.key -out kubeapps.csr -subj '/CN=localhost'
-
-$ openssl x509 -req -in kubeapps.csr \
-  -CA kubeapps-ca.pem -CAkey kubeapps-ca.key -CAcreateserial \
-  -out kubeapps.crt -sha256
-Signature ok
-subject=/C=EN
-Getting CA Private Key
-Enter pass phrase for kubeapps-ca.key:
-```
-
-With that we have all the files required to install Tiller with a certificate.
-
-## Install Tiller
-
-Now we can install Tiller using the `helm` CLI tool:
-
-```
-helm init \
---override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}' \
---tiller-tls \
---tiller-tls-verify \
---tiller-tls-cert=kubeapps.crt \
---tiller-tls-key=kubeapps.key \
---tls-ca-cert=kubeapps-ca.pem
-```
-
-With that we will deploy Tiller using the certificate we just generated. You can check that it's working as expected executing the `helm` tool locally:
-
-```
-$ helm version --tiller-namespace kubeapps
-...
-Error: cannot connect to Tiller
-$ helm version --tiller-namespace kubeapps --tls \
-  --tls-ca-cert kubeapps-ca.pem \
-  --tls-cert kubeapps.crt \
-  --tls-key kubeapps.key
-...
-Server: &version.Version{SemVer:"v2.9.1", GitCommit:"20adb27c7c5868466912eebdf6664e7390ebe710", GitTreeState:"clean"}
+helm init --tiller-tls --tiller-tls-verify \
+  --override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}' \
+  --tiller-tls-cert ./tiller.cert.pem \
+  --tiller-tls-key ./tiller.key.pem \
+  --tls-ca-cert ca.cert.pem
 ```
 
 ## Deploy Kubeapps with a TLS certificate
 
 This is the command to install Kubeapps with our certificate:
 
+<!--
+TODO: Replace install command when the Chart is published in a repository 
+-->
+
 ```
 helm install \
-  --tls --tls-ca-cert kubeapps-ca.pem --tls-cert kubeapps.crt --tls-key kubeapps.key \
-  --set tillerProxy.tls.ca="$(cat kubeapps-ca.pem)" \
-  --set tillerProxy.tls.key="$(cat kubeapps.key)" \
-  --set tillerProxy.tls.cert="$(cat kubeapps.crt)" \
+  --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem \
+  --set tillerProxy.tls.verify=true \
+  --set tillerProxy.tls.ca="$(cat ca.cert.pem)" \
+  --set tillerProxy.tls.key="$(cat helm.key.pem)" \
+  --set tillerProxy.tls.cert="$(cat helm.cert.pem)" \
   --namespace kubeapps \
   ./chart/kubeapps
 ```
