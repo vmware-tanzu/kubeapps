@@ -1,0 +1,135 @@
+version: 2
+
+## Definitions
+exports: &exports
+  run: |
+    # It is not possible to resolve env vars in the environment section:
+    # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
+    echo "export VERSION=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
+    echo "export PATH=$PATH:${HOME}/google-cloud-sdk/bin" >> $BASH_ENV
+build_image: &build_image
+  machine: true
+  working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
+  environment:
+    GOPATH: /home/circleci/.go_workspace
+  steps:
+    - checkout
+    - <<: *exports
+    - run: make VERSION="$VERSION" $IMAGE
+    - run: |
+        if [[ -z "$CIRCLE_PULL_REQUEST" ]]; then
+          docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+          if [[ -n "$CIRCLE_TAG" ]]; then
+            docker push $IMAGE:$VERSION
+          fi
+          if [[ "$CIRCLE_BRANCH" == "master"  ]]; then
+            docker tag $IMAGE:$VERSION $IMAGE:latest
+            docker push $IMAGE:latest
+          fi
+        fi
+###
+
+workflows:
+  version: 2
+  kubeapps:
+    jobs:
+      - test_and_build_go
+      - test_nodejs
+      - build_chartrepo:
+          requires:
+            - test_and_build_go
+      - build_chartsvc:
+          requires:
+            - test_and_build_go
+      - build_chart_apprepository:
+          requires:
+            - test_and_build_go
+      - build_dashboard:
+          requires:
+            - test_nodejs
+      - build_tiller_proxy:
+          requires:
+            - test_and_build_go
+      - release:
+          requires:
+            - build_chartrepo
+            - build_chartsvc
+            - build_chart_apprepository
+            - build_dashboard
+            - build_tiller_proxy
+
+jobs:
+  test_and_build_go:
+    working_directory: /go/src/github.com/kubeapps/kubeapps
+    environment:
+      CGO_ENABLED: "0"
+      GKE_VERSION: 1.9.7-gke.3
+      CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+    docker:
+      - image: circleci/golang:1.9 
+    steps:
+      - checkout
+      - <<: *exports
+      # Install kubecfg
+      - run: |
+          if ! which kubecfg; then
+            wget -O kubecfg https://github.com/ksonnet/kubecfg/releases/download/v0.7.2/kubecfg-$(go env GOOS)-$(go env GOARCH)
+            install -m 755 kubecfg $GOPATH/bin/kubecfg
+          fi
+      # Install google-cloud-sdk
+      - run: |
+          if [ ! -d ${HOME}/google-cloud-sdk/bin ]; then
+            rm -rf $HOME/google-cloud-sdk;
+            curl https://sdk.cloud.google.com | bash;
+          fi
+      - run: make test
+      - run: BINARY=bin/kubeapps-linux-amd64 make
+      - run: BINARY=bin/kubeapps-darwin-amd64 GOOS=darwin GOARCH=amd64 make
+      - run: BINARY=bin/kubeapps-windows-amd64.exe GOOS=windows GOARCH=amd64 make
+      - store_artifacts:
+          path: bin
+      - persist_to_workspace:
+          root: /go/src/github.com/kubeapps/kubeapps
+          paths: 
+            - bin
+  test_nodejs:
+    docker:
+      - image: circleci/node:8 
+    steps:
+      - checkout
+      - run: yarn install --cwd=dashboard --frozen-lockfile
+      - run: yarn --cwd=dashboard run lint
+      - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
+  build_chartrepo:
+    <<: *build_image
+    environment:
+      - IMAGE=kubeapps/chart-repo
+  build_chartsvc:
+    <<: *build_image
+    environment:
+      - IMAGE=kubeapps/chartsvc
+  build_chart_apprepository:
+    <<: *build_image
+    environment:
+      - IMAGE=kubeapps/apprepository-controller
+  build_dashboard:
+    <<: *build_image
+    environment:
+      - IMAGE=kubeapps/dashboard
+  build_tiller_proxy:
+    <<: *build_image
+    environment:
+      - IMAGE=kubeapps/tiller-proxy
+  release:
+    docker:
+      - image: circleci/golang:1.9 
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/kubeapps
+      - run: |
+          if [[ -n "$CIRCLE_TAG" ]]; then
+            REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG} /tmp/kubeapps/bin
+          fi
+
+ 
