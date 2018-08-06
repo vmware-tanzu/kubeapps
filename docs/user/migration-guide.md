@@ -22,9 +22,9 @@ $ kubeapps migrate-configmaps-to-secrets
 If you list the releases you should be able to see all of them:
 
 ```
-$ helm list --tls --tls-ca-cert cert/kubeapps-ca.pem --tls-cert cert/kubeapps.crt --tls-key cert/kubeapps.key
-NAME               	REVISION	UPDATED                 	STATUS	 CHART          	NAMESPACE
-foo                	1       	Fri Aug  3 15:42:42 2018	DEPLOYED aerospike-0.1.7	default
+$ helm list --tls --tls-ca-cert kubeapps-ca.pem --tls-cert kubeapps.crt --tls-key kubeapps.key
+NAME	REVISION	UPDATED                 	STATUS  	CHART          	NAMESPACE
+foo 	1       	Fri Aug  3 17:50:52 2018	DEPLOYED	aerospike-0.1.7	default
 ```
 
 ## Delete the previous Kubeapps installation
@@ -36,6 +36,13 @@ kubeapps down
 kubectl delete crd helmreleases.helm.bitnami.com sealedsecrets.bitnami.com
 kubectl delete -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.7.0/controller.yaml
 kubectl get helmreleases -o=name --all-namespaces | xargs kubectl patch $1 --type merge -p '{ "metadata": { "finalizers": [] } }'
+```
+
+Wait until everything in the namespace of Kubeapps has been deleted:
+
+```
+$ kubectl get all --namespace kubeapps
+No resources found.
 ```
 
 ### Delete Kubeless
