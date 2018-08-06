@@ -78,7 +78,7 @@ local labels = {
             default: kube.Container("controller") {
               image: "kubeapps/apprepository-controller:" + std.extVar("VERSION"),
               command: ["/apprepository-controller"],
-              args: ["--logtostderr", "--repo-sync-image=kubeapps/chart-repo:" + std.extVar("VERSION")],
+              args: ["--logtostderr", "--repo-sync-image=kubeapps/chart-repo:" + std.extVar("VERSION"), "--mongo-url=mongodb"],
             },
           },
         },
