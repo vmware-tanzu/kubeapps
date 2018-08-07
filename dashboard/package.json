@@ -39,7 +39,8 @@
     "typesafe-actions": "^1.1.2"
   },
   "scripts": {
-    "start": "BROWSER=none react-scripts-ts start",
+    "start":
+      "BROWSER=none REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts-ts start",
     "build": "react-scripts-ts build",
     "test": "react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
@@ -66,6 +67,7 @@
     "@types/react-router-dom": "^4.2.3",
     "@types/react-router-redux": "^5.0.11",
     "@types/react-test-renderer": "^16.0.0",
+    "axios-mock-adapter": "^1.15.0",
     "husky": "0.14.3",
     "lint-staged": "^6.1.0",
     "prettier": "^1.10.2",
