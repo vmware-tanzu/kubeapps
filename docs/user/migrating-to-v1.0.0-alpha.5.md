@@ -14,7 +14,7 @@ These are the steps you need to follow to upgrade Kubeapps to this version.
 Please follow the steps in [this guide](./securing-kubeapps.md) to install Tiller securely. Don't install the Kubeapps chart yet since it will fail because it will find resources that already exist. Once the new Tiller instance is ready you can migrate the existing releases using the utility command included in `kubeapps` 1.0.0-alpha.5:
 
 ```
-$ kubeapps migrate-configmaps-to-secrets --dst-tiller-namespace kube-system
+$ kubeapps migrate-configmaps-to-secrets --target-tiller-namespace kube-system
 2018/08/06 12:24:23 Migrated foo.v1 as a secret
 2018/08/06 12:24:23 Done. ConfigMaps are left in the namespace kubeapps to debug possible errors. Please delete them manually
 ```

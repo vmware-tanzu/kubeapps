@@ -10,10 +10,10 @@ In order to take advantage of Kubeapps security features you will need to config
 
 You can follow the Helm documentation for deploying Tiller in a secure way. In particular we are interested in:
 
- - Use a TLS certificate to control the access to the Tiller deployment: https://docs.helm.sh/using_helm/#using-ssl-between-helm-and-tiller
- - Store release info as secrets: https://docs.helm.sh/using_helm/#tiller-s-release-information
+ - Using a TLS certificate to control the access to the Tiller deployment: https://docs.helm.sh/using_helm/#using-ssl-between-helm-and-tiller
+ - Storing release info as secrets: https://docs.helm.sh/using_helm/#tiller-s-release-information
 
-Following those guides you can find how to create the TLS certificate that we need and the flags necessary to install Tiller:
+From these guides you can find out how to create the TLS certificate and the necessary flags to install Tiller securely:
 
 ```
 helm init --tiller-tls --tiller-tls-verify \
