@@ -11,8 +11,9 @@ export default class Config {
     const { data } = await axios.get<IConfig>(url);
 
     // Development environment config overrides
-    // TODO(miguel) Rename env variable to TELEPRESENCE_CONTAINER_NAMESPACE
-    // and remove package.json yarn run mapping once create-react-app is ejected
+    // TODO(miguel) Rename env variable to KUBEAPPS_NAMESPACE once/if we eject create-react-app
+    // Currently we are using REACT_APP_* because it's the only way to inject env variables in a sealed setup.
+    // Please note that this env variable gets mapped in the run command in the package.json file
     if (process.env.NODE_ENV !== "production" && process.env.REACT_APP_KUBEAPPS_NS) {
       data.namespace = process.env.REACT_APP_KUBEAPPS_NS;
     }
