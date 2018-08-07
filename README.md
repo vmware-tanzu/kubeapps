@@ -2,10 +2,14 @@
 
 [![Build Status](https://travis-ci.org/kubeapps/kubeapps.svg?branch=master)](https://travis-ci.org/kubeapps/kubeapps)
 
-Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-charge your Kubernetes cluster with:
+Kubeapps is a web-based UI for deploying and managing applications in Kubernetes clusters. Kubeapps allows you to:
 
-* Your own application [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
-* [Kubeless](http://kubeless.io/), a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
+- Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
+- Inspect, upgrade and delete Helm-based applications installed in the cluster
+- Add custom and private chart repositories (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
+- Browse and provision external services from the [Service Catalog](https://github.com/kubernetes-incubator/service-catalog) and available Service Brokers
+- Connect Helm-based applications to external services with Service Catalog Bindings
+- Securely manage applications in the cluster with [Role-Based Access Control](docs/user/access-control.md)
 
 ## Quickstart
 
@@ -69,13 +73,13 @@ Please refer to the [Kubeapps Build Guide](docs/developer/build.md) for instruct
 
 ## Developer Documentation
 
-Please refer to the [Kubeapps Developer Documentation](docs/developer/README.md) for instructions on setting up the developer environment for developing Kubeapps components.
+Please refer to the [Kubeapps Developer Documentation](docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
 
 ## Next Steps
 
-[Use the Kubeapps Dashboard](docs/user/dashboard.md) to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
+[Use Kubeapps](docs/user/dashboard.md) to easily manage your applications running in your cluster, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
 
-In case of difficulties installing Kubeapps, find [more detailed installation instructions](docs/user/install.md).
+In case of difficulties installing Kubeapps, checkout the [more detailed installation instructions](docs/user/install.md).
 
 For a more detailed and step-by-step introduction to Kubeapps, read our [introductory walkthrough](docs/user/getting-started.md).
 
