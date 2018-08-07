@@ -63,7 +63,6 @@ jobs:
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       CGO_ENABLED: "0"
-      GKE_VERSION: 1.9.7-gke.3
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
     docker:
       - image: circleci/golang:1.9 
@@ -131,5 +130,3 @@ jobs:
           if [[ -n "$CIRCLE_TAG" ]]; then
             REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG} /tmp/kubeapps/bin
           fi
-
- 
