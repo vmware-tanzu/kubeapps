@@ -13,7 +13,7 @@ export default class Config {
     // Development environment config overrides
     // TODO(miguel) Rename env variable to TELEPRESENCE_CONTAINER_NAMESPACE
     // and remove package.json yarn run mapping once create-react-app is ejected
-    if (process.env.REACT_APP_KUBEAPPS_NS) {
+    if (process.env.NODE_ENV !== "production" && process.env.REACT_APP_KUBEAPPS_NS) {
       data.namespace = process.env.REACT_APP_KUBEAPPS_NS;
     }
 
