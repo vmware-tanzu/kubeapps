@@ -37,9 +37,9 @@ var migrateCmd = &cobra.Command{
 	Short: "Migrates Helm v2 releases from ConfigMaps to Secrets",
 	Long:  "Migrates Helm v2 releases from ConfigMaps to Secrets",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		tillerNs, err := cmd.Flags().GetString("dst-tiller-namespace")
+		tillerNs, err := cmd.Flags().GetString("target-tiller-namespace")
 		if err != nil {
-			return fmt.Errorf("can't get --dst-tiller-namespace flag: %v", err)
+			return fmt.Errorf("can't get --target-tiller-namespace flag: %v", err)
 		}
 
 		config, err := buildOutOfClusterConfig()
@@ -89,5 +89,5 @@ var migrateCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(migrateCmd)
-	migrateCmd.Flags().String("dst-tiller-namespace", "kube-system", "Namespace of target Tiller.")
+	migrateCmd.Flags().String("target-tiller-namespace", "kube-system", "Namespace of target Tiller.")
 }
