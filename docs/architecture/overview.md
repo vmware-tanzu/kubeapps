@@ -2,16 +2,6 @@
 
 This document describes the Kubeapps architecture at a high level.
 
-## The purpose of Kubeapps
-
-Kubeapps is a Kubernetes dashboard that provides simple browse and click deployment of applications and Kubeless functions. The Kubeapps dashboard can do the following:
-
-* List charts from Helm chart repositories
-* Install and uninstall Helm charts from repositories
-* Manage installed chart releases
-* Create, edit and test Kubeless functions
-* Browse, provision and manage external cloud services
-
 ## Components
 
 ### Kubeapps installer
