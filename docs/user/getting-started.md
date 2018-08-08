@@ -95,4 +95,4 @@ Learn more about Kubeapps with the links below:
 
 * [Detailed installation instructions](install.md)
 * [Kubeapps Dashboard documentation](dashboard.md)
-* [Kubeapps components](components.md)
+* [Kubeapps components](../architecture/overview.md)

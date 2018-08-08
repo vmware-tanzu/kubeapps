@@ -54,4 +54,4 @@ An alternative way is to edit the `kubeapps` Service and change it's type from `
 
 * [Walkthrough for new users](getting-started.md)
 * [Kubeapps Dashboard documentation](dashboard.md)
-* [Kubeapps components](components.md)
+* [Kubeapps components](../architecture/overview.md)
