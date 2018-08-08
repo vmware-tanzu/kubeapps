@@ -7,8 +7,8 @@ function commit_list {
   local repo_name=${3:?}
   git fetch --tags
   local previous_tag=`curl -H "Authorization: token $ACCESS_TOKEN" -s https://api.github.com/repos/$repo_domain/$repo_name/tags | jq --raw-output '.[1].name'`
-  local commit_list=`git log $previous_tag..$tag --oneline`
-  echo "$commit_list" | sed -n -e 'H;${x;s/\n/\n- /g;p;}'
+  local commit_list=`git log $previous_tag..$tag --pretty=format:"- %s %H (%an)"`
+  echo "$commit_list"
 }
 
 function get_release_notes {
