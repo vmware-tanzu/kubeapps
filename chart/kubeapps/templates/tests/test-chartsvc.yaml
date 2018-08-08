@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: {{ .Release.Name }}-chartsvc-test
-    image: appropriate/curl
+    image: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
     env:
       - name: CHARTSVC_HOST
         value: {{ template "kubeapps.chartsvc.fullname" . }}.{{ .Release.Namespace }}
