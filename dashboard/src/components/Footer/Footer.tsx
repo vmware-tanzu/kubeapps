@@ -37,7 +37,7 @@ class Footer extends React.Component {
                   />
                 </svg>
               </a>
-              <a href="https://github.com/kubeapps" className="socialIcon margin-h-small">
+              <a href="https://github.com/kubeapps/kubeapps" className="socialIcon margin-h-small">
                 <svg
                   role="img"
                   aria-label="Kubeapps on GitHub"
