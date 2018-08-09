@@ -14,7 +14,7 @@
 ## TL;DR;
 
 ```bash
-helm repo add bitnami https://charts.bitnami.com
+helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
@@ -36,7 +36,7 @@ It also packages the [Bitnami MongoDB chart](https://github.com/helm/charts/tree
 To install the chart with the release name `kubeapps`:
 
 ```console
-$ helm repo add bitnami https://charts.bitnami.com
+$ helm repo add bitnami https://charts.bitnami.com/bitnami
 $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
