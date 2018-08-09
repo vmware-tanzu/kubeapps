@@ -27,10 +27,6 @@ helm init --tiller-tls --tiller-tls-verify \
 
 This is the command to install Kubeapps with our certificate:
 
-<!--
-TODO: Replace install command when the Chart is published in a repository 
--->
-
 ```
 helm install \
   --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem \
@@ -39,7 +35,7 @@ helm install \
   --set tillerProxy.tls.key="$(cat helm.key.pem)" \
   --set tillerProxy.tls.cert="$(cat helm.cert.pem)" \
   --namespace kubeapps \
-  ./chart/kubeapps
+  bitnami/kubeapps
 ```
 
 ## Enable RBAC

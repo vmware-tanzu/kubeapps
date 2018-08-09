@@ -107,6 +107,26 @@ EOF
 $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps -f custom-values.yaml
 ```
 
+### Configuring connection to a secure Tiller installation
+
+In some cases, your organization will rely on a custom, secure installation of Tiller, the Helm server side component.
+
+In that case, you can pass additional settings to Kubeapps' Tiller proxy component at deployment time, for example:
+
+```
+helm install \
+  --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem \
+  --set tillerProxy.host=tiller-deploy.my-custom-ns:44134 \
+  --set tillerProxy.tls.verify=true \
+  --set tillerProxy.tls.ca="$(cat ca.cert.pem)" \
+  --set tillerProxy.tls.key="$(cat helm.key.pem)" \
+  --set tillerProxy.tls.cert="$(cat helm.cert.pem)" \
+  bitnami/kubeapps
+```
+
+Learn more about how to secure your Kubeapps installation [here](https://github.com/kubeapps/kubeapps/blob/master/docs/user/securing-kubeapps.md).
+
+
 ### Exposing Externally
 
 #### LoadBalancer Service
