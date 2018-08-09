@@ -140,12 +140,9 @@ tillerProxy:
 ingress:
   enabled: false
   # annotations: {}
-  annotations:
-    kubernetes.io/ingress.class: addon-http-application-routing
-    # kubernetes.io/tls-acme: "true"
   path: /
   hosts:
-    - kubeapps.local
+  - kubeapps.local
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
