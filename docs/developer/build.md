@@ -59,7 +59,7 @@ make VERSION=myver kubeapps/tiller-proxy
 To test all the components:
 
 ```bash
-make test-all
+make test
 ```
 
 Or if you wish to test specific component(s):
