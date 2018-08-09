@@ -17,6 +17,8 @@ Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`Helm`](https://helm.
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
+> **IMPORTANT**: Kubeapps v1.0.0-alpha.4 and below used the `kubeapps` CLI to install Kubeapps, Tiller and other components. Please [see the migration guide](docs/user/migrating-to-v1.0.0-alpha.5.md) when upgrading from a previous version to v1.0.0-alpha.5 and above.
+
 Use the Helm chart to install the latest version of Kubeapps:
 
 ```bash
