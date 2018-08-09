@@ -106,17 +106,27 @@ apprepository:
 EOF
 $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps -f custom-values.yaml
 ```
+### Configuring connection to a custom namespace Tiller instance
 
-### Configuring connection to a secure Tiller installation
+By default, Helm installs Tiller in the `kube-system` namespace, being the default endpoint that Kubeapps tries to connect to. 
 
-In some cases, your organization will rely on a custom, secure installation of Tiller, the Helm server side component.
+If your instance of Tiller is running in a different namespace or you want to have different instances of Kubeapps connected to different Tiller instances, you can achieve it by doing:
+
+```console
+helm install \
+  --set tillerProxy.host=tiller-deploy.my-custom-namespace:44134 \
+  bitnami/kubeapps
+```
+
+### Configuring connection to a secure Tiller instance
+
+In some cases, your organization will rely on a custom, [secure installation of Tiller](https://docs.helm.sh/using_helm/#using-ssl-between-helm-and-tiller), the Helm server side component.
 
 In that case, you can pass additional settings to Kubeapps' Tiller proxy component at deployment time, for example:
 
-```
+```console
 helm install \
   --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem \
-  --set tillerProxy.host=tiller-deploy.my-custom-ns:44134 \
   --set tillerProxy.tls.verify=true \
   --set tillerProxy.tls.ca="$(cat ca.cert.pem)" \
   --set tillerProxy.tls.key="$(cat helm.key.pem)" \
