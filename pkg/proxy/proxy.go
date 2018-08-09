@@ -56,6 +56,7 @@ func init() {
 type Proxy struct {
 	kubeClient kubernetes.Interface
 	helmClient helm.Interface
+	listLimit  int
 }
 
 func isNotFound(err error) bool {
@@ -65,10 +66,11 @@ func isNotFound(err error) bool {
 }
 
 // NewProxy creates a Proxy
-func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface) *Proxy {
+func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface, releaseListLimit int) *Proxy {
 	return &Proxy{
 		kubeClient: kubeClient,
 		helmClient: helmClient,
+		listLimit:  releaseListLimit,
 	}
 }
 
@@ -81,7 +83,11 @@ type AppOverview struct {
 }
 
 func (p *Proxy) get(name, namespace string) (*release.Release, error) {
-	list, err := p.helmClient.ListReleases(helm.ReleaseListStatuses(releaseStatuses))
+	list, err := p.helmClient.ListReleases(
+		helm.ReleaseListLimit(p.listLimit),
+		helm.ReleaseListNamespace(namespace),
+		helm.ReleaseListStatuses(releaseStatuses),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to list helm releases: %v", err)
 	}
@@ -131,6 +137,8 @@ func (p *Proxy) ResolveManifest(namespace, values string, ch *chart.Chart) (stri
 // ListReleases list releases in a specific namespace if given
 func (p *Proxy) ListReleases(namespace string) ([]AppOverview, error) {
 	list, err := p.helmClient.ListReleases(
+		helm.ReleaseListLimit(p.listLimit),
+		helm.ReleaseListNamespace(namespace),
 		helm.ReleaseListStatuses(releaseStatuses),
 	)
 	if err != nil {

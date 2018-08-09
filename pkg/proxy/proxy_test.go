@@ -44,7 +44,7 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 		})
 	}
 	kubeClient := fake.NewSimpleClientset()
-	return NewProxy(kubeClient, &helmClient)
+	return NewProxy(kubeClient, &helmClient, 256)
 }
 
 func TestListAllReleases(t *testing.T) {
