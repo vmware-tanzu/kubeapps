@@ -24,7 +24,7 @@ helm repo add bitnami https://charts.bitnami.com
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-The above command will deploy Kubeapps into the `kubeapps` namespace in your cluster, it may take a few seconds to execute. Once it has been deployed and the Kubeapps pods are running, port-forward to access the Dashboard:
+The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster, it may take a few seconds to execute. Once it has been deployed and the Kubeapps pods are running, port-forward to access the Dashboard:
 
 ```bash
 export POD_NAME=$(kubectl get pods -n kubeapps -l "app=kubeapps,release=kubeapps" -o name)
