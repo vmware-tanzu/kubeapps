@@ -78,13 +78,13 @@ Please refer to the [Kubeapps Developer Documentation](docs/developer/README.md)
 
 [Use Kubeapps](docs/user/dashboard.md) to easily manage your applications running in your cluster, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
 
-In case of difficulties installing Kubeapps, checkout the [more detailed installation instructions](docs/user/install.md).
+For information on installing and configuring Kubeapps, checkout the [chart README](chart/kubeapps/README.md).
 
 For a more detailed and step-by-step introduction to Kubeapps, read our [introductory walkthrough](docs/user/getting-started.md).
 
 ## Useful Resources
 
 * [Walkthrough for first-time users](docs/user/getting-started.md)
-* [Detailed installation instructions](docs/user/install.md)
+* [Detailed installation instructions](chart/kubeapps/README.md)
 * [Kubeapps Dashboard documentation](docs/user/dashboard.md)
 * [Kubeapps components](docs/architecture/overview.md)

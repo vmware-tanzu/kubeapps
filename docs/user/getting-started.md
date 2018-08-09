@@ -10,7 +10,7 @@ Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://ku
 
 To install Kubeapps, download the latest Kubeapps Installer binary for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases).
 
-Review our [installation guide](./install.md) for more detailed instructions.
+For detailed information on installing and configuring Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
 
 Once the Kubeapps Installer is installed, deploy Kubeapps in your cluster with this command:
 
