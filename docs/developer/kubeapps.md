@@ -1,5 +1,7 @@
 # Kubeapps Installer Developer Guide
 
+## DEPRECATED: The Kubeapps installer has been deprecated in favor of a Helm Chart installation method, more info [here](../user/migrating-to-v1.0.0-alpha.5.md).
+
 The Kubeapps installer is a command-line tool for installing, upgrading and uninstalling the Kubeapps in-cluster components. The tool is written using the Go programming language and the Kubernetes manifests are written in the Jsonnet data templating language.
 
 ## Prerequisites

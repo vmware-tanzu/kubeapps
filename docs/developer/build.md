@@ -26,12 +26,6 @@ cd $KUBEAPPS_DIR
 
 ## Build kubeapps
 
-```bash
-make VERSION=myver
-```
-
-The above command builds the `kubeapps` binary in the current directory. The `VERSION` argument sets build version to `myver ` and when not specified the build date and time is used to generate the version string.
-
 Kubeapps consists of a number of in-cluster components. To build all these components in one go:
 
 ```bash
@@ -55,15 +49,14 @@ make VERSION=myver kubeapps/chart-repo
 
 # to build the kubeapps/apprepository-controller docker image
 make VERSION=myver kubeapps/apprepository-controller
+
+# to build the kubeapps/tiller-proxy docker image
+make VERSION=myver kubeapps/tiller-proxy
 ```
 
 ## Running tests
 
-```bash
-make test
-```
-
-The above command runs the tests for the `kubeapps` binary. To run the tests on all Kubeapps components:
+To test all the components:
 
 ```bash
 make test-all
@@ -73,17 +66,20 @@ Or if you wish to test specific component(s):
 
 ```bash
 # to test the kubeapps binary
-make test test-kubeapps
+make test-kubeapps
 
 # to test kubeapps/dashboard
-make test test-dashboard
+make test-dashboard
 
 # to test the cmd/chartsvc package
-make test test-chartsvc
+make test-chartsvc
 
 # to test the cmd/chart-repo package
-make test test-chart-repo
+make test-chart-repo
 
 # to test the cmd/apprepository-controller package
-make test test-apprepository-controller
+make test-apprepository-controller
+
+# to test the cmd/tiller-proxy package
+make test-tiller-proxy
 ```

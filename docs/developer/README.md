@@ -1,11 +1,5 @@
 # The Kubeapps Components
 
-### Kubeapps installer
-
-The Kubeapps installer is a command-line tool for installing, upgrading and uninstalling the Kubeapps in-cluster components. The tool is written using the Go programming language and the Kubernetes manifests are written in the Jsonnet data templating language.
-
-Please refer to the [Kubeapps Installer Developer Guide](kubeapps.md) for the developer setup.
-
 ### Kubeapps dashboard
 
 The dashboard is the main UI component of the Kubeapps project. Written in Javascript, the dashboard uses the React Javascript library for the frontend.

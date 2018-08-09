@@ -23,9 +23,11 @@ $(EMBEDDED_STATIC): static/kubeapps-objs.yaml
 	GOOS= $(GO) build -o statik ./vendor/github.com/rakyll/statik/statik.go
 	$(GO) generate
 
+# Deprecated, will be removed in future releases
 kubeapps: $(EMBEDDED_STATIC)
 	$(GO) build -o $(BINARY) $(GO_FLAGS) $(IMPORT_PATH)
 
+# TODO(miguel) Create Makefiles per component
 kubeapps/%:
 	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .
 
@@ -41,6 +43,7 @@ test: $(EMBEDDED_STATIC)
 
 test-all: test-kubeapps test-chartsvc test-chart-repo test-apprepository-controller test-dashboard
 
+# Deprecated
 test-kubeapps:
 	$(GO) test -v $(IMPORT_PATH)
 
