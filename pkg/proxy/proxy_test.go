@@ -32,6 +32,10 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 	helmClient := helm.FakeClient{}
 	// Populate Fake helm client with releases
 	for _, r := range existingTillerReleases {
+		status := release.Status_DEPLOYED
+		if r.Status == "DELETED" {
+			status = release.Status_DELETED
+		}
 		helmClient.Rels = append(helmClient.Rels, &release.Release{
 			Name:      r.ReleaseName,
 			Namespace: r.Namespace,
@@ -41,6 +45,11 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 					Icon:    r.Icon,
 				},
 			},
+			Info: &release.Info{
+				Status: &release.Status{
+					Code: status,
+				},
+			},
 		})
 	}
 	kubeClient := fake.NewSimpleClientset()
@@ -48,8 +57,8 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 }
 
 func TestListAllReleases(t *testing.T) {
-	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png"}
-	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png"}
+	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED"}
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
@@ -66,8 +75,8 @@ func TestListAllReleases(t *testing.T) {
 }
 
 func TestListNamespacedRelease(t *testing.T) {
-	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png"}
-	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png"}
+	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED"}
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
@@ -137,7 +146,7 @@ func TestCreateConflictingHelmRelease(t *testing.T) {
 		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
 	ns2 := "other_ns"
-	app := AppOverview{rs, version, ns2, "icon.png"}
+	app := AppOverview{rs, version, ns2, "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	_, err := proxy.CreateRelease(rs, ns, "", ch)
@@ -157,7 +166,7 @@ func TestHelmReleaseUpdated(t *testing.T) {
 	ch := &chart.Chart{
 		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	app := AppOverview{rs, version, ns, "icon.png"}
+	app := AppOverview{rs, version, ns, "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	result, err := proxy.UpdateRelease(rs, ns, "", ch)
@@ -191,7 +200,7 @@ func TestUpdateMissingHelmRelease(t *testing.T) {
 	}
 	// Simulate the same app but in a different namespace
 	ns2 := "other_ns"
-	app := AppOverview{rs, version, ns2, "icon.png"}
+	app := AppOverview{rs, version, ns2, "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	_, err := proxy.UpdateRelease(rs, ns, "", ch)
@@ -204,8 +213,8 @@ func TestUpdateMissingHelmRelease(t *testing.T) {
 }
 
 func TestGetHelmRelease(t *testing.T) {
-	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png"}
-	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png"}
+	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED"}
 	type testStruct struct {
 		existingApps    []AppOverview
 		shouldFail      bool
@@ -237,7 +246,7 @@ func TestGetHelmRelease(t *testing.T) {
 }
 
 func TestHelmReleaseDeleted(t *testing.T) {
-	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png"}
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	err := proxy.DeleteRelease(app.ReleaseName, app.Namespace)
@@ -254,7 +263,7 @@ func TestHelmReleaseDeleted(t *testing.T) {
 }
 
 func TestDeleteMissingHelmRelease(t *testing.T) {
-	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png"}
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	err := proxy.DeleteRelease(app.ReleaseName, "other_ns")

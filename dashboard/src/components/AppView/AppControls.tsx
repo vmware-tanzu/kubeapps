@@ -31,6 +31,10 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
     if (!name || !namespace) {
       return <div> Loading </div>;
     }
+    if (this.props.app.info && this.props.app.info.deleted) {
+      // If the App has been deleted there is nothing to control
+      return null;
+    }
     return (
       <div className="AppControls">
         <button className="button" onClick={this.handleUpgradeClick}>

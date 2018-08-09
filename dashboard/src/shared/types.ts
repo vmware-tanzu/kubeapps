@@ -332,4 +332,5 @@ export interface IAppOverview {
   namespace: string;
   version: string;
   icon?: string;
+  status: string;
 }

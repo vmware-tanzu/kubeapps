@@ -13,3 +13,5 @@ Then run (replacing with the icon you want to use):
 ```
 svgr --no-semi --icon node_modules/open-iconic/svg/cog.svg > src/icons/Cog.tsx
 ```
+
+After that you need to adapt the format to comply with tslint.

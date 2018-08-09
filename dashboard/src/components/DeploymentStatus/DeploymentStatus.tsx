@@ -2,15 +2,20 @@ import * as React from "react";
 
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
+import Warning from "../../icons/Warning";
 import { IDeploymentStatus, IResource } from "../../shared/types";
 import "./DeploymentStatus.css";
 
 interface IDeploymentStatusProps {
   deployments: IResource[];
+  deleted?: boolean;
 }
 
 class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   public render() {
+    if (this.props.deleted) {
+      return this.renderDeletedStatus();
+    }
     return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();
   }
 
@@ -43,6 +48,14 @@ class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
       // loaded yet and no deployments
       return true;
     }
+  }
+
+  private renderDeletedStatus() {
+    return (
+      <span className="DeploymentStatus DeploymentStatus--deleted">
+        <Warning className="icon padding-t-tiny" /> Deleted
+      </span>
+    );
   }
 }
 
