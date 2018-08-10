@@ -6,7 +6,7 @@ function commit_list {
   local repo_domain=${2:?}
   local repo_name=${3:?}
   git fetch --tags
-  local previous_tag=`curl -H "Authorization: token $ACCESS_TOKEN" -s https://api.github.com/repos/$repo_domain/$repo_name/tags | jq --raw-output '.[1].name'`
+  local previous_tag=`git describe --tags $(git rev-list --tags --max-count=1)`
   local commit_list=`git log $previous_tag..$tag --pretty=format:"- %s %H (%an)"`
   echo "$commit_list"
 }
