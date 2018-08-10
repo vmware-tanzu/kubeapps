@@ -53,7 +53,7 @@ class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   private renderDeletedStatus() {
     return (
       <span className="DeploymentStatus DeploymentStatus--deleted">
-        <Warning className="icon padding-t-tiny" /> Deleted
+        <Warning className="icon padding-t-tiny" /> Deleted (Not purged)
       </span>
     );
   }
