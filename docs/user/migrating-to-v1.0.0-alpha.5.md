@@ -58,25 +58,22 @@ No resources found.
 If you want to delete Kubeless (if you are not using it) you can delete it executing the following command:
 
 ```
-kubectl delete -f https://github.com/kubeless/kubeless/releases/download/v0.6.0/kubeless-v0.6.0-alpha.7.yaml
+kubectl delete -f https://github.com/kubeless/kubeless/releases/download/v0.6.0/kubeless-v0.6.0.yaml
 ```
 
 ## Install the Kubeapps chart
 
 Now you can install the new version of Kubeapps using the Helm chart included in this repository:
 
-<!--
-TODO: Replace install command when the Chart is published in a repository 
--->
-
 ```
+helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install \
   --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem \
   --set tillerProxy.tls.ca="$(cat ca.cert.pem)" \
   --set tillerProxy.tls.key="$(cat helm.key.pem)" \
   --set tillerProxy.tls.cert="$(cat helm.cert.pem)" \
   --namespace kubeapps \
-  ./chart/kubeapps
+  bitnami/kubeapps
 ```
 
 **NOTE**: You can skip the TLS flags if you have not installed Helm with a TLS certificate. 
