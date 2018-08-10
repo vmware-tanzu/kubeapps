@@ -111,7 +111,7 @@ func main() {
 		log.Fatalf("Unable to connect to Tiller: %v", err)
 	}
 
-	proxy = tillerProxy.NewProxy(kubeClient, helmClient, listLimit)
+	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
 
 	r := mux.NewRouter()
 

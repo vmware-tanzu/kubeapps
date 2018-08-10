@@ -44,7 +44,7 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 		})
 	}
 	kubeClient := fake.NewSimpleClientset()
-	return NewProxy(kubeClient, &helmClient, 256)
+	return NewProxy(kubeClient, &helmClient)
 }
 
 func TestListAllReleases(t *testing.T) {
@@ -53,7 +53,7 @@ func TestListAllReleases(t *testing.T) {
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
-	releases, err := proxy.ListReleases("")
+	releases, err := proxy.ListReleases("", 256)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -71,7 +71,7 @@ func TestListNamespacedRelease(t *testing.T) {
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
-	releases, err := proxy.ListReleases(app1.Namespace)
+	releases, err := proxy.ListReleases(app1.Namespace, 256)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
