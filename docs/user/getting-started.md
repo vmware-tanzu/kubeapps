@@ -24,11 +24,33 @@ The above commands will deploy Kubeapps into the `kubeapps` namespace in your cl
 
 Access to the Dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server.
 
-```
+For Linux:
+
+```bash
 kubectl create serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
 kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
 ```
+For Windows:
+
+Create a file called GetDashToken.cmd with the following lines in it:
+
+```
+@ECHO OFF
+REM Get the Service Account
+kubectl get serviceaccount kubeapps-operator -o jsonpath={.secrets[].name} > s.txt
+SET /p ks=<s.txt
+DEL s.txt
+
+REM Get the Base64 encoded token
+kubectl get secret %ks% -o jsonpath={.data.token} > b64.txt
+
+REM Decode The Token
+DEL token.txt
+certutil -decode b64.txt token.txt
+
+```
+Open a command prompt and run the GetDashToken.cmd Your token can be found in the token.txt file.
 
 NOTE: It's not recommended to create `cluster-admin` users for Kubeapps. Please refer to the [Access Control](/docs/user/access-control.md) documentation to configure fine-grained access control for users.
 
