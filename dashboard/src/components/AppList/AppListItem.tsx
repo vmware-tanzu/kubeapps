@@ -39,7 +39,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
                       app.status
                     } type-small type-color-white padding-t-tiny padding-h-normal`}
                   >
-                    {app.status}
+                    {app.status.toLowerCase()}
                   </span>
                 </div>
               </div>

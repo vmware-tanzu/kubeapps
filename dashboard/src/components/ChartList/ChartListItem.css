@@ -35,6 +35,18 @@
   display: inline-block;
 }
 
+.DELETED {
+  background-color: #c5c5c5;
+}
+
+.FAILED {
+  background-color: #cb1515;
+}
+
+.DEPLOYED {
+  background-color: #15cb2d;
+}
+
 .ChartListItem__content__info_repo.stable {
   background-color: #1598cb;
 }

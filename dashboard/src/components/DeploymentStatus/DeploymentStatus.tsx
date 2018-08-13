@@ -1,8 +1,8 @@
 import * as React from "react";
 
+import { AlertTriangle } from "react-feather";
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
-import Warning from "../../icons/Warning";
 import { IDeploymentStatus, IResource } from "../../shared/types";
 import "./DeploymentStatus.css";
 
@@ -53,7 +53,7 @@ class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   private renderDeletedStatus() {
     return (
       <span className="DeploymentStatus DeploymentStatus--deleted">
-        <Warning className="icon padding-t-tiny" /> Deleted (Not purged)
+        <AlertTriangle className="icon" style={{ bottom: "-0.425em" }} /> Deleted
       </span>
     );
   }
