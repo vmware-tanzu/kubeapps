@@ -4,7 +4,7 @@ This guide will walk you through the process of deploying Kubeapps for your clus
 
 ## Prerequisites
 
-Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`Helm`](https://helm.sh/) (2.9.1+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/) (2.9.1+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
 
 ## Step 1: Install Kubeapps
 
@@ -15,7 +15,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-> **IMPORTANT** This assumes a non-secured Helm installation in your cluster. We don't recommend this for a production environment. Please, follow [the Kubeapps guide on how to secure Helm and Kubeapps for production](securing-kubeapps.md) to secure your Helm and Kubeapps installation.
+> **IMPORTANT** This assumes an insecured Helm installation, which is not recommended in production. See [the documentation to learn how to secure Helm and Kubeapps in production](securing-kubeapps.md).
 
 For detailed information on installing and configuring Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
 

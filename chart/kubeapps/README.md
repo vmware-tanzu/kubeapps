@@ -40,7 +40,7 @@ $ helm repo add bitnami https://charts.bitnami.com/bitnami
 $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-> **IMPORTANT** This assumes a non-secured Helm installation in your cluster. We don't recommend this for a production environment. Please, follow [the Kubeapps guide on how to secure Helm and Kubeapps for production](https://github.com/kubeapps/kubeapps/blob/master/docs/user/securing-kubeapps.md) to secure your Helm and Kubeapps installation.
+> **IMPORTANT** This assumes an insecured Helm installation, which is not recommended in production. See [the documentation to learn how to secure Helm and Kubeapps in production](securing-kubeapps.md).
 
 The command deploys Kubeapps on the Kubernetes cluster in the `kubeapps` namespace. The [configuration](#configuration) section lists the parameters that can be configured during installation.
 
