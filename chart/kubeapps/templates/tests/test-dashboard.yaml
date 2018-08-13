@@ -9,7 +9,10 @@ spec:
   - name: {{ .Release.Name }}-dashboard-test
     image: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
     env:
-      - name: DASHBOARD_HOST
-        value: {{ template "kubeapps.fullname" . }}.{{ .Release.Namespace }}
-    command: ["sh", "-c", "curl $DASHBOARD_HOST | grep 'You need to enable JavaScript to run this app.'"]
+    - name: DASHBOARD_HOST
+      value: {{ template "kubeapps.fullname" . }}.{{ .Release.Namespace }}
+    command:
+    - sh
+    - -c
+    - curl $DASHBOARD_HOST | grep 'You need to enable JavaScript to run this app'
   restartPolicy: Never
