@@ -225,7 +225,7 @@ func upgradeRelease(w http.ResponseWriter, req *http.Request, params Params) {
 }
 
 func listAllReleases(w http.ResponseWriter, req *http.Request) {
-	apps, err := proxy.ListReleases("")
+	apps, err := proxy.ListReleases("", listLimit)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
@@ -234,7 +234,7 @@ func listAllReleases(w http.ResponseWriter, req *http.Request) {
 }
 
 func listReleases(w http.ResponseWriter, req *http.Request, params Params) {
-	apps, err := proxy.ListReleases(params["namespace"])
+	apps, err := proxy.ListReleases(params["namespace"], listLimit)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
