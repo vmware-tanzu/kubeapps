@@ -9,12 +9,12 @@ import "./DeploymentStatus.css";
 
 interface IDeploymentStatusProps {
   deployments: IResource[];
-  info: hapi.release.IInfo;
+  info?: hapi.release.IInfo;
 }
 
 class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   public render() {
-    if (this.props.info.deleted) {
+    if (this.props.info && this.props.info.deleted) {
       return this.renderDeletedStatus();
     }
     return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();
