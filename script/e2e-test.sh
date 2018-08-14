@@ -25,7 +25,7 @@ kubectl get clusterrolebinding kube-dns-admin >& /dev/null || \
     kubectl create clusterrolebinding kube-dns-admin --serviceaccount=kube-system:default --clusterrole=cluster-admin 
 
 # Wait for Tiller
-k8s_wait_for_pod_ready -n kube-system -l app=helm,name=tiller
+k8s_wait_for_pod_ready kube-system app=helm,name=tiller
 wait_for_tiller
 
 # Install Kubeapps
@@ -34,12 +34,12 @@ helm dep up $ROOT_DIR/chart/kubeapps/
 helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps
 
 # Wait for Kubeapps Pods
-k8s_wait_for_pod_ready -n kubeapps -l app=kubeapps-ci
-k8s_wait_for_pod_ready -n kubeapps -l app=kubeapps-ci-apprepository-controller
-k8s_wait_for_pod_ready -n kubeapps -l app=kubeapps-ci-chartsvc
-k8s_wait_for_pod_ready -n kubeapps -l app=kubeapps-ci-tiller-proxy
-k8s_wait_for_pod_ready -n kubeapps -l app=mongodb
-k8s_wait_for_pod_completed -n kubeapps -l apprepositories.kubeapps.com/repo-name=stable
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-apprepository-controller
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-chartsvc
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-tiller-proxy
+k8s_wait_for_pod_ready kubeapps app=mongodb
+k8s_wait_for_pod_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
 
 # Run helm tests
 helm test --cleanup kubeapps-ci

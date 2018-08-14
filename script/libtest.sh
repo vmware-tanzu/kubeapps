@@ -16,14 +16,16 @@ export TEST_MAX_WAIT_SEC=300
 
 ## k8s specific Helper functions
 k8s_wait_for_pod() {
-    condition=${1:?}
+    namespace=${1:?}
+    labelSelector=${2:?}
+    condition=${3:?}
     echo "Waiting for pod '${@:2}' to be ${condition} ... "
     local -i cnt=${TEST_MAX_WAIT_SEC:?}
 
     # Retries just in case it is not stable
     local -i successCount=0
     while [ "$successCount" -lt "3" ]; do
-        if kubectl get pod "${@:2}" | grep -q $condition; then
+        if kubectl get pod -a -n "$namespace" -l "$labelSelector" | grep -q "$condition"; then
             ((successCount=successCount+1))
         fi
         ((cnt=cnt-1)) || return 1
@@ -32,11 +34,15 @@ k8s_wait_for_pod() {
 
 }
 k8s_wait_for_pod_ready() {
-    k8s_wait_for_pod Running "${@}"
+    namespace=${1:?}
+    labelSelector=${2:?}
+    k8s_wait_for_pod $namespace $labelSelector Running
 }
 
 k8s_wait_for_pod_completed() {
-    k8s_wait_for_pod Completed -a "${@}"
+    namespace=${1:?}
+    labelSelector=${2:?}
+    k8s_wait_for_pod $namespace $labelSelector Completed
 }
 
 ## helm specific helper functions
