@@ -172,3 +172,8 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+# For RBAC support:
+rbac:
+  # Perform creation of RBAC resources
+  create: true
