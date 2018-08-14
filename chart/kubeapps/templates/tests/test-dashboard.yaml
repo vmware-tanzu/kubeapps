@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: {{ .Release.Name }}-dashboard-test
-    image: {{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}
+    image: {{ .Values.testImage.repository }}:{{ .Values.testImage.tag }}
     env:
     - name: DASHBOARD_HOST
       value: {{ template "kubeapps.fullname" . }}.{{ .Release.Namespace }}
