@@ -6,7 +6,6 @@ workflows:
     jobs:
       - test_go
       - test_dashboard
-      - build_kubeapps_cli
       - build_chartrepo:
           requires:
             - test_go
@@ -93,25 +92,6 @@ jobs:
       - run: yarn install --cwd=dashboard --frozen-lockfile
       - run: yarn --cwd=dashboard run lint
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
-  build_kubeapps_cli:
-    working_directory: /go/src/github.com/kubeapps/kubeapps
-    environment:
-      CGO_ENABLED: "0"
-    docker:
-      - image: circleci/golang:1.9 
-    steps:
-      - checkout
-      - <<: *exports
-      - <<: *install_kubecfg
-      - run: BINARY=bin/kubeapps-linux-amd64 make
-      - run: BINARY=bin/kubeapps-darwin-amd64 GOOS=darwin GOARCH=amd64 make
-      - run: BINARY=bin/kubeapps-windows-amd64.exe GOOS=windows GOARCH=amd64 make
-      - store_artifacts:
-          path: bin
-      - persist_to_workspace:
-          root: /go/src/github.com/kubeapps/kubeapps
-          paths: 
-            - bin
   build_chartrepo:
     <<: *build_image
     environment:
@@ -137,9 +117,7 @@ jobs:
       - image: circleci/golang:1.9 
     steps:
       - checkout
-      - attach_workspace:
-          at: /tmp/kubeapps
       - run: |
           if [[ -n "$CIRCLE_TAG" ]]; then
-            REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG} /tmp/kubeapps/bin
+            REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
           fi

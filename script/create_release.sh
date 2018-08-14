@@ -2,7 +2,6 @@
 set -e
 
 TAG=${1:?}
-ASSETS_DIR=${2:?} # Folder containing assets to upload
 
 PROJECT_DIR=$(cd $(dirname $0)/.. && pwd)
 
@@ -27,8 +26,3 @@ else
 fi
 
 echo "RELEASE ID: $RELEASE_ID"
-echo `ls $ASSETS_DIR`
-
-for f in `find $ASSETS_DIR/*`; do
-  upload_asset $REPO_DOMAIN $REPO_NAME $RELEASE_ID $f
-done
