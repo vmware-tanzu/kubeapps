@@ -177,4 +177,3 @@ affinity: {}
 rbac:
   # Perform creation of rbac resources
   create: true
-  
