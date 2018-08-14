@@ -173,7 +173,7 @@ tolerations: []
 
 affinity: {}
 
-## For RBAC support:
+# For RBAC support:
 rbac:
-  # Perform creation of rbac resources
+  # Perform creation of RBAC resources
   create: true
