@@ -3,17 +3,18 @@ import * as React from "react";
 import { AlertTriangle } from "react-feather";
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
+import { hapi } from "../../shared/hapi/release";
 import { IDeploymentStatus, IResource } from "../../shared/types";
 import "./DeploymentStatus.css";
 
 interface IDeploymentStatusProps {
   deployments: IResource[];
-  deleted?: boolean;
+  info: hapi.release.IInfo;
 }
 
 class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   public render() {
-    if (this.props.deleted) {
+    if (this.props.info.deleted) {
       return this.renderDeletedStatus();
     }
     return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();

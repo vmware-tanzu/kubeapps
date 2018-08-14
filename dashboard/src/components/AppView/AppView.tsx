@@ -143,7 +143,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return <div>Loading</div>;
     }
     const { app } = this.props;
-    if (!app) {
+    if (!app || !app.info) {
       return <div>Loading</div>;
     }
     return (
@@ -158,10 +158,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus
-                      deployments={this.deploymentArray()}
-                      deleted={app.info && app.info.deleted ? true : false}
-                    />
+                    <DeploymentStatus deployments={this.deploymentArray()} info={app.info} />
                   </div>
                   <div className="col-8 text-r">
                     <AppControls app={app} deleteApp={this.deleteApp} />
