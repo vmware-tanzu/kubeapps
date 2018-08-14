@@ -2,7 +2,7 @@ import * as React from "react";
 import * as Modal from "react-modal";
 import { Redirect } from "react-router";
 
-import { ForbiddenError, IRBACRole } from "../../../shared/types";
+import { AppConflict, ForbiddenError, IRBACRole, UnprocessableEntity } from "../../../shared/types";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../../ErrorAlert";
 
 interface IAppRepoFormProps {
@@ -60,6 +60,8 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
                 value={name}
                 onChange={handleNameChange}
                 required={true}
+                pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                title="Use lower case alphanumeric characters, '-' or '.'"
               />
             </label>
           </div>
@@ -155,6 +157,12 @@ export class AppRepoAddButton extends React.Component<
     const { error } = this.props;
     const { name } = this.state;
     switch (error && error.constructor) {
+      case AppConflict:
+        return (
+          <UnexpectedErrorAlert
+            text={`App Repository "${name}" already exists, try a different name.`}
+          />
+        );
       case ForbiddenError:
         return (
           <PermissionsErrorAlert
@@ -163,6 +171,8 @@ export class AppRepoAddButton extends React.Component<
             action={`create AppRepository "${name}"`}
           />
         );
+      case UnprocessableEntity:
+        return <UnexpectedErrorAlert text={error && error.message} raw={true} />;
       default:
         return <UnexpectedErrorAlert />;
     }

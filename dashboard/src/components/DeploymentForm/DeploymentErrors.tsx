@@ -5,6 +5,7 @@ import {
   IRBACRole,
   MissingChart,
   NotFoundError,
+  UnprocessableEntity,
 } from "../../shared/types";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
@@ -53,6 +54,8 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
         return (
           <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
         );
+      case UnprocessableEntity:
+        return <UnexpectedErrorAlert text={error && error.message} raw={true} />;
       default:
         return <UnexpectedErrorAlert />;
     }

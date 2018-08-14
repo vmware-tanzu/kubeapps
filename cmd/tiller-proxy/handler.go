@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -108,6 +109,11 @@ func isForbidden(err error) bool {
 	return strings.Contains(err.Error(), "Unauthorized")
 }
 
+func isUnprocessable(err error) bool {
+	re := regexp.MustCompile(`release\s+[^\s]\s+failed`)
+	return re.MatchString(err.Error())
+}
+
 func errorCode(err error) int {
 	errCode := http.StatusInternalServerError
 	if isAlreadyExists(err) {
@@ -116,6 +122,8 @@ func errorCode(err error) int {
 		errCode = http.StatusNotFound
 	} else if isForbidden(err) {
 		errCode = http.StatusForbidden
+	} else if isUnprocessable(err) {
+		errCode = http.StatusUnprocessableEntity
 	}
 	return errCode
 }
@@ -216,7 +224,7 @@ func upgradeRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	}
 	rel, err := proxy.UpdateRelease(params["releaseName"], params["namespace"], chartDetails.Values, ch)
 	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		response.NewErrorResponse(errorCode(err, err.Error()).Write(w)
 		return
 	}
 	log.Printf("Upgraded release %s", rel.Name)

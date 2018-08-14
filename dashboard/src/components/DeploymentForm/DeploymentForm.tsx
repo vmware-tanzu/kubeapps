@@ -129,6 +129,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 <label htmlFor="releaseName">Name</label>
                 <input
                   id="releaseName"
+                  pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                  title="Use lower case alphanumeric characters, '-' or '.'"
                   onChange={this.handleReleaseNameChange}
                   value={this.state.releaseName}
                   required={true}
