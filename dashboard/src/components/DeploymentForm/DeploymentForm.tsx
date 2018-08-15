@@ -11,6 +11,7 @@ import "brace/mode/yaml";
 import "brace/theme/xcode";
 
 interface IDeploymentFormProps {
+  kubeappsNamespace: string;
   bindingsWithSecrets: IServiceBindingWithSecret[];
   chartID: string;
   chartVersion: string;
@@ -98,7 +99,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { selected, bindingsWithSecrets, chartID } = this.props;
+    const { selected, bindingsWithSecrets, chartID, kubeappsNamespace } = this.props;
     const { version, versions } = selected;
     const { appValues, releaseName } = this.state;
     if (!version || !versions.length || this.state.isDeploying) {
@@ -112,6 +113,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               {this.props.error && (
                 <DeploymentErrors
                   {...this.props}
+                  kubeappsNamespace={kubeappsNamespace}
                   chartName={chartID.split("/")[0]}
                   releaseName={releaseName}
                   repo={chartID.split("/")[1]}

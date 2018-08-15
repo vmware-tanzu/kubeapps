@@ -23,6 +23,8 @@ apprepository:
     url: https://kubernetes-charts-incubator.storage.googleapis.com
   - name: svc-cat
     url: https://svc-catalog-charts.storage.googleapis.com
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
   resources: {}
     # limits:
     #  cpu: 100m
@@ -140,12 +142,9 @@ tillerProxy:
 ingress:
   enabled: false
   # annotations: {}
-  annotations:
-    kubernetes.io/ingress.class: addon-http-application-routing
-    # kubernetes.io/tls-acme: "true"
   path: /
   hosts:
-    - kubeapps.local
+  - kubeapps.local
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
@@ -174,8 +173,14 @@ tolerations: []
 
 affinity: {}
 
+# For RBAC support:
+rbac:
+  # Perform creation of RBAC resources
+  create: true
+
 testImage:
   # Image used for the tests. The only requirement is to include curl
   registry: docker.io
   repository: bitnami/nginx
   tag: 1.14.0-r27
+

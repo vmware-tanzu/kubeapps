@@ -13,6 +13,7 @@ interface IAppUpgradeProps {
   bindingsWithSecrets: IServiceBindingWithSecret[];
   error: Error | undefined;
   repoError: Error | undefined;
+  kubeappsNamespace: string;
   namespace: string;
   releaseName: string;
   version: string;

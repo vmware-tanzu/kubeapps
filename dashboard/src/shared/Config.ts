@@ -1,20 +1,25 @@
 import axios from "axios";
 
-interface IConfig {
+// IConfig is the configuration for Kubeapps
+export interface IConfig {
   namespace: string;
 }
 
 export default class Config {
   public static async getConfig() {
-    if (Config.config) {
-      return Config.config;
-    }
-    const url = `${Config.APIEndpoint}`;
+    const url = Config.APIEndpoint;
     const { data } = await axios.get<IConfig>(url);
-    Config.config = data;
-    return Config.config;
+
+    // Development environment config overrides
+    // TODO(miguel) Rename env variable to KUBEAPPS_NAMESPACE once/if we eject create-react-app
+    // Currently we are using REACT_APP_* because it's the only way to inject env variables in a sealed setup.
+    // Please note that this env variable gets mapped in the run command in the package.json file
+    if (process.env.NODE_ENV !== "production" && process.env.REACT_APP_KUBEAPPS_NS) {
+      data.namespace = process.env.REACT_APP_KUBEAPPS_NS;
+    }
+
+    return data;
   }
 
-  private static config: IConfig;
   private static APIEndpoint: string = "/config.json";
 }

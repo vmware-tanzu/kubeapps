@@ -16,13 +16,14 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { apps, catalog, charts, repos }: IStoreState,
+  { apps, catalog, charts, config, repos }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
     app: apps.selected,
     bindingsWithSecrets: catalog.bindingsWithSecrets,
     error: apps.error || charts.selected.error,
+    kubeappsNamespace: config.namespace,
     namespace: params.namespace,
     releaseName: params.releaseName,
     repo: repos.repo,

@@ -7,14 +7,8 @@ import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
-const RequiredRBACRoles: IRBACRole = {
-  apiGroup: "kubeapps.com",
-  namespace: "kubeapps",
-  resource: "apprepositories",
-  verbs: ["get"],
-};
-
 interface ISelectRepoFormProps {
+  kubeappsNamespace: string;
   error: Error | undefined;
   repo: IAppRepository;
   repos: IAppRepository[];
@@ -94,14 +88,23 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
         case ForbiddenError:
           return (
             <PermissionsErrorAlert
-              namespace={RequiredRBACRoles.namespace || ""}
-              roles={[RequiredRBACRoles]}
-              action={`list app repositories`}
+              namespace={this.props.kubeappsNamespace}
+              roles={[this.requiredRBACRoles()]}
+              action={`view App Repositories`}
             />
           );
       }
     }
     return <UnexpectedErrorAlert />;
+  }
+
+  private requiredRBACRoles(): IRBACRole {
+    return {
+      apiGroup: "kubeapps.com",
+      namespace: this.props.kubeappsNamespace,
+      resource: "apprepositories",
+      verbs: ["get"],
+    };
   }
 }
 

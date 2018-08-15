@@ -2,28 +2,41 @@
 
 [![Build Status](https://travis-ci.org/kubeapps/kubeapps.svg?branch=master)](https://travis-ci.org/kubeapps/kubeapps)
 
-Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-charge your Kubernetes cluster with:
+Kubeapps is a web-based UI for deploying and managing applications in Kubernetes clusters. Kubeapps allows you to:
 
-* Your own application [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
-* [Kubeless](http://kubeless.io/), a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
+- Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
+- Inspect, upgrade and delete Helm-based applications installed in the cluster
+- Add custom and private chart repositories (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
+- Browse and provision external services from the [Service Catalog](https://github.com/kubernetes-incubator/service-catalog) and available Service Brokers
+- Connect Helm-based applications to external services with Service Catalog Bindings
+- Secure authentication and authorization based on Kubernetes [Role-Based Access Control](docs/user/access-control.md)
 
 ## Quickstart
 
-Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for Linux, OS X and Windows, and Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/) (2.9.1+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE),`minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
 
 > On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
-The simplest way to try Kubeapps is to deploy it with the Kubeapps Installer on [minikube](https://github.com/kubernetes/minikube). Assuming you are using Linux or OS X, run the following commands to download and install the Kubeapps Installer binary:
+> **IMPORTANT**: Kubeapps v1.0.0-alpha.4 and below used the `kubeapps` CLI to install Kubeapps, Tiller and other components. Please [see the migration guide](docs/user/migrating-to-v1.0.0-alpha.5.md) when upgrading from a previous version to v1.0.0-alpha.5 and above.
+
+Use the Helm chart to install the latest version of Kubeapps:
 
 ```bash
-curl -s https://api.github.com/repos/kubeapps/kubeapps/releases/latest | grep -i $(uname -s) | grep browser_download_url | cut -d '"' -f 4 | wget -i -
-sudo mv kubeapps-$(uname -s| tr '[:upper:]' '[:lower:]')-amd64 /usr/local/bin/kubeapps
-sudo chmod +x /usr/local/bin/kubeapps
-kubeapps up
-kubeapps dashboard
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-These commands will deploy Kubeapps in your cluster and launch a browser with the Kubeapps dashboard.
+> **IMPORTANT** This assumes an insecure Helm installation, which is not recommended in production. See [the documentation to learn how to secure Helm and Kubeapps in production](securing-kubeapps.md).
+
+The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster, it may take a few seconds to execute. For more information on installing and configuring Kubeapps, checkout the [chart README](chart/kubeapps/README.md).
+
+Once it has been deployed and the Kubeapps pods are running, port-forward to access the Dashboard:
+
+```bash
+export POD_NAME=$(kubectl get pods -n kubeapps -l "app=kubeapps,release=kubeapps" -o name)
+echo "Visit http://127.0.0.1:8080 in your browser to access the Kubeapps Dashboard"
+kubectl port-forward -n kubeapps $POD_NAME 8080:8080
+```
 
 ![Dashboard login page](docs/img/dashboard-login.png)
 
@@ -49,7 +62,7 @@ kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{
 To remove Kubeapps from your cluster, simply run:
 
 ```bash
-kubeapps down
+helm delete --purge kubeapps
 ```
 
 To delete the `kubeapps-operator` ServiceAccount and ClusterRoleBinding,
@@ -59,29 +72,24 @@ kubectl delete clusterrolebinding kubeapps-operator
 kubectl delete serviceaccount kubeapps-operator
 ```
 
-## Installation
-
-Get the latest release of the Kubeapps installer for for platform from the [releases](https://github.com/kubeapps/kubeapps/releases) page, add it to your `PATH` and you're ready to go.
-
 ## Build from Source
 
 Please refer to the [Kubeapps Build Guide](docs/developer/build.md) for instructions on setting up the build environment and building Kubeapps from source.
 
 ## Developer Documentation
 
-Please refer to the [Kubeapps Developer Documentation](docs/developer/README.md) for instructions on setting up the developer environment for developing Kubeapps components.
+Please refer to the [Kubeapps Developer Documentation](docs/developer/README.md) for instructions on setting up the developer environment for developing on Kubeapps and its components.
 
 ## Next Steps
 
-[Use the Kubeapps Dashboard](docs/user/dashboard.md) to easily manage the deployments created by Helm in your cluster and to manage your Kubeless functions, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
+[Use Kubeapps](docs/user/dashboard.md) to easily manage your applications running in your cluster, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
 
-In case of difficulties installing Kubeapps, find [more detailed installation instructions](docs/user/install.md).
 
 For a more detailed and step-by-step introduction to Kubeapps, read our [introductory walkthrough](docs/user/getting-started.md).
 
 ## Useful Resources
 
 * [Walkthrough for first-time users](docs/user/getting-started.md)
-* [Detailed installation instructions](docs/user/install.md)
+* [Detailed installation instructions](chart/kubeapps/README.md)
 * [Kubeapps Dashboard documentation](docs/user/dashboard.md)
 * [Kubeapps components](docs/architecture/overview.md)

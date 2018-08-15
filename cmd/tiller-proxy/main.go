@@ -40,6 +40,7 @@ var (
 	proxy       *tillerProxy.Proxy
 	kubeClient  kubernetes.Interface
 	disableAuth bool
+	listLimit   int
 
 	tlsCaCertFile string // path to TLS CA certificate file
 	tlsCertFile   string // path to TLS certificate file
@@ -61,6 +62,7 @@ func init() {
 	pflag.BoolVar(&tlsVerify, "tls-verify", false, "enable TLS for request and verify remote")
 	pflag.BoolVar(&tlsEnable, "tls", false, "enable TLS for request")
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
+	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
 }
 
 func main() {

@@ -12,11 +12,18 @@ It is possible to configure this proxy with the following flags:
 
 ```
       --debug                           enable verbose output
-      --home string                     location of your Helm config. Overrides $HELM_HOME (default "/Users/andresmartinez/.helm")
+      --disable-auth                    Disable authorization check
+      --home string                     location of your Helm config. Overrides $HELM_HOME (default "/root/.helm")
       --host string                     address of Tiller. Overrides $HELM_HOST
       --kube-context string             name of the kubeconfig context to use
+      --list-max int                    maximum number of releases to fetch (default 256)
       --tiller-connection-timeout int   the duration (in seconds) Helm will wait to establish a connection to tiller (default 300)
       --tiller-namespace string         namespace of Tiller (default "kube-system")
+      --tls                             enable TLS for request
+      --tls-ca-cert string              path to TLS CA certificate file (default "/ca.crt")
+      --tls-cert string                 path to TLS certificate file (default "/tls.crt")
+      --tls-key string                  path to TLS key file (default "/tls.key")
+      --tls-verify                      enable TLS for request and verify remote
 ```
 
 # Routes

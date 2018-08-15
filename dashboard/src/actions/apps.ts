@@ -90,9 +90,10 @@ export function deployChart(
   namespace: string,
   values?: string,
 ) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
     try {
-      await App.create(releaseName, namespace, chartVersion, values);
+      const { config: { namespace: kubeappsNamespace } } = getState();
+      await App.create(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;
     } catch (e) {
       dispatch(errorApps(e));
@@ -107,9 +108,10 @@ export function upgradeApp(
   namespace: string,
   values?: string,
 ) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
     try {
-      await App.upgrade(releaseName, namespace, chartVersion, values);
+      const { config: { namespace: kubeappsNamespace } } = getState();
+      await App.upgrade(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;
     } catch (e) {
       dispatch(errorApps(e));

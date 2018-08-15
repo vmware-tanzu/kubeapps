@@ -2,16 +2,6 @@
 
 This document describes the Kubeapps architecture at a high level.
 
-## The purpose of Kubeapps
-
-Kubeapps is a Kubernetes dashboard that provides simple browse and click deployment of applications and Kubeless functions. The Kubeapps dashboard can do the following:
-
-* List charts from Helm chart repositories
-* Install and uninstall Helm charts from repositories
-* Manage installed chart releases
-* Create, edit and test Kubeless functions
-* Browse, provision and manage external cloud services
-
 ## Components
 
 ### Kubeapps installer
@@ -28,7 +18,7 @@ The dashboard is written in the Javascript programming language and is developed
 
 ### Tiller proxy
 
-In order to secure the access to tiller and allow the dashboard to contact the Helm tiller server we deploy as a sidecar container a proxy that handles the communication with Tiller. The goal of this proxy is to validate that the user doing the request has sufficent permissions to create or delete all the resources.
+In order to secure the access to tiller and allow the dashboard to contact the Helm tiller server we deploy a proxy that handles the communication with Tiller. The goal of this proxy is to validate that the user doing the request has sufficent permissions to create or delete all the resources.
 
 This proxy is also written in Go. Check more details about the implementation in this [document](/cmd/tiller-proxy/README.md).
 

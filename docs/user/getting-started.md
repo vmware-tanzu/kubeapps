@@ -1,50 +1,30 @@
 # Get Started with Kubeapps
 
-Kubeapps is a set of tools written by [Bitnami](https://bitnami.com) to super-charge your Kubernetes cluster with:
-
-* Your own applications [dashboard](https://kubeapps.com/), allowing you to deploy Kubernetes-ready applications into your cluster with a single click.
-* [Kubeless](http://kubeless.io/) - a Kubernetes-native Serverless Framework, compatible with [serverless.com](https://serverless.com).
-
 This guide will walk you through the process of deploying Kubeapps for your cluster and installing an example application.
 
 ## Prerequisites
 
-Kubeapps assumes a working Kubernetes cluster (v1.8+) and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps binaries are available for Linux, OS X and Windows, and Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/) (2.9.1+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
 
 ## Step 1: Install Kubeapps
 
-To install Kubeapps, download the latest Kubeapps Installer binary for your platform from the [release page](https://github.com/kubeapps/kubeapps/releases).
+Use the Helm chart to install the latest version of Kubeapps:
 
-Review our [installation guide](./install.md) for more detailed instructions.
-
-Once the Kubeapps Installer is installed, deploy Kubeapps in your cluster with this command:
-
-```
-kubeapps up
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-You should see something like this as Kubeapps is deployed:
+> **IMPORTANT** This assumes an insecure Helm installation, which is not recommended in production. See [the documentation to learn how to secure Helm and Kubeapps in production](securing-kubeapps.md).
 
-![Kubeapps deployment](../img/kubeapps-up.png)
+For detailed information on installing and configuring Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
 
-If you would like to see what exactly `kubeapps up` is installing on your system, we provide `--dry-run` option to show you the Kubeapps manifest as below:
+The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster, it may take a few seconds to execute. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
 
-```
-kubeapps up --dry-run -o yaml
-
-# prefer json format
-kubeapps up --dry-run -o json
-```
-
-To remove Kubeapps from your cluster, run this command:
-
-```
-kubeapps down
-```
 
 ## Step 2: Create a Kubernetes API token
 
-Access to the dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server.
+Access to the Dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server.
 
 ```
 kubectl create serviceaccount kubeapps-operator
@@ -58,11 +38,13 @@ NOTE: It's not recommended to create `cluster-admin` users for Kubeapps. Please 
 
 Once Kubeapps is installed, securely access the Kubeapps Dashboard from your system by running:
 
-```
-kubeapps dashboard
+```bash
+export POD_NAME=$(kubectl get pods -n kubeapps -l "app=kubeapps,release=kubeapps" -o name)
+echo "Visit http://127.0.0.1:8080 in your browser to access the Kubeapps Dashboard"
+kubectl port-forward -n kubeapps $POD_NAME 8080:8080
 ```
 
-This will start an HTTP proxy for secure access to the Kubeapps Dashboard and launch your default browser to access it. Here's what you should see:
+This will start an HTTP proxy for secure access to the Kubeapps Dashboard. Visit http://127.0.0.1:8080/ in your preferred web browser to open the Dashboard. Here's what you should see:
 
 ![Dashboard login page](../img/dashboard-login.png)
 
@@ -98,6 +80,6 @@ To obtain the WordPress username and password, refer to the "Notes" section of t
 
 Learn more about Kubeapps with the links below:
 
-* [Detailed installation instructions](install.md)
+* [Detailed installation instructions](../../chart/kubeapps/README.md)
 * [Kubeapps Dashboard documentation](dashboard.md)
-* [Kubeapps components](components.md)
+* [Kubeapps components](../architecture/overview.md)

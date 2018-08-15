@@ -5,9 +5,10 @@ import actions from "../actions";
 import { AppRepoList } from "../components/Config/AppRepoList";
 import { IStoreState } from "../shared/types";
 
-function mapStateToProps({ repos }: IStoreState) {
+function mapStateToProps({ repos, config }: IStoreState) {
   return {
     errors: repos.errors,
+    kubeappsNamespace: config.namespace,
     repos: repos.repos,
   };
 }
