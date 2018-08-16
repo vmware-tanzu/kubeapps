@@ -69,7 +69,7 @@ kubectl set image -n kubeapps deployment kubeapps-tiller-proxy proxy=kubeapps/ti
 For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
 
 ```
-kubectl delete pod -n kubeapps -l name=tiller
+kubectl delete pod -n kubeapps -l app=kubeapps-tiller-proxy
 ```
 
 Note: If you using a cloud provider to develop the service you will need to retag the image and push it to a public registry.
