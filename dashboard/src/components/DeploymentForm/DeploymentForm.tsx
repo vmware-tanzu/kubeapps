@@ -108,19 +108,19 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     return (
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
+          <div className="col-8">
+            {this.props.error && (
+              <DeploymentErrors
+                {...this.props}
+                kubeappsNamespace={kubeappsNamespace}
+                chartName={chartID.split("/")[0]}
+                releaseName={releaseName}
+                repo={chartID.split("/")[1]}
+                version={version.attributes.version}
+              />
+            )}
+          </div>
           <div className="row">
-            <div className="col-8">
-              {this.props.error && (
-                <DeploymentErrors
-                  {...this.props}
-                  kubeappsNamespace={kubeappsNamespace}
-                  chartName={chartID.split("/")[0]}
-                  releaseName={releaseName}
-                  repo={chartID.split("/")[1]}
-                  version={version.attributes.version}
-                />
-              )}
-            </div>
             <div className="col-12">
               <h2>{this.props.chartID}</h2>
             </div>

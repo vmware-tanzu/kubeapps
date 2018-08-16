@@ -35,8 +35,11 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
       if (this.props.raw) {
         message = (
           <div className="error__content margin-l-enormous">
-            <section className="Terminal elevation-1">
-              <span className="type-color-white">{this.props.text}</span>
+            <section
+              className="Terminal elevation-1 type-color-white"
+              style={{ wordBreak: "break-all" }}
+            >
+              {this.props.text}
             </section>
           </div>
         );
