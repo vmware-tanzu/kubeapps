@@ -29,6 +29,11 @@ func TestParseObjectsSuccess(t *testing.T) {
 		kinds           []string
 	}{
 		{
+			"returns nothing if manifest is empty",
+			"",
+			0, nil, nil,
+		},
+		{
 			"returns a single resource",
 			`
 apiVersion: v1
