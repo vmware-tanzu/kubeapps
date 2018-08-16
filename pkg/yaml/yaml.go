@@ -33,7 +33,6 @@ func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
 	r := strings.NewReader(manifest)
 	decoder := yaml.NewYAMLReader(bufio.NewReader(r))
 	ret := []runtime.Object{}
-	nullResult := []byte("null")
 
 	for {
 		// This reader will return a single K8s resource at the time based on the --- separator
@@ -52,7 +51,7 @@ func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
 		// It is also possible that the provided yaml file is empty from the point of view
 		// of the toJSON parser. For example if the yaml only contain comments.
 		// In which case the returned  will be "null"
-		if bytes.Equal(jsondata, nullResult) {
+		if bytes.Equal(jsondata, []byte("null")) {
 			continue
 		}
 
