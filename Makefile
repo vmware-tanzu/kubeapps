@@ -6,7 +6,7 @@ VERSION ?= dev-$(shell date +%FT%H-%M-%S-%Z)
 GO_PACKAGES = ./...
 GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 
-default: test
+default: all
 
 all: kubeapps/dashboard kubeapps/chartsvc kubeapps/chart-repo kubeapps/apprepository-controller
 
