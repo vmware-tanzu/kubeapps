@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -108,14 +109,25 @@ func isForbidden(err error) bool {
 	return strings.Contains(err.Error(), "Unauthorized")
 }
 
+func isUnprocessable(err error) bool {
+	re := regexp.MustCompile(`release\s+[^\s]\s+failed`)
+	return re.MatchString(err.Error())
+}
+
 func errorCode(err error) int {
-	errCode := http.StatusInternalServerError
+	return errorCodeWithDefault(err, http.StatusInternalServerError)
+}
+
+func errorCodeWithDefault(err error, defaultCode int) int {
+	errCode := defaultCode
 	if isAlreadyExists(err) {
 		errCode = http.StatusConflict
 	} else if isNotFound(err) {
 		errCode = http.StatusNotFound
 	} else if isForbidden(err) {
 		errCode = http.StatusForbidden
+	} else if isUnprocessable(err) {
+		errCode = http.StatusUnprocessableEntity
 	}
 	return errCode
 }
@@ -182,7 +194,7 @@ func createRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	}
 	rel, err := proxy.CreateRelease(chartDetails.ReleaseName, params["namespace"], chartDetails.Values, ch)
 	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 		return
 	}
 	log.Printf("Installed release %s", rel.Name)
@@ -216,7 +228,7 @@ func upgradeRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	}
 	rel, err := proxy.UpdateRelease(params["releaseName"], params["namespace"], chartDetails.Values, ch)
 	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 		return
 	}
 	log.Printf("Upgraded release %s", rel.Name)

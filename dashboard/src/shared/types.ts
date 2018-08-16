@@ -36,6 +36,13 @@ export class AppConflict extends Error {
   }
 }
 
+export class UnprocessableEntity extends Error {
+  constructor(message?: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export interface IRepo {
   name: string;
   url: string;

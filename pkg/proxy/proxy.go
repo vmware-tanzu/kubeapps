@@ -184,7 +184,7 @@ func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (
 		helm.ReleaseName(name),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Unable create release: %v", err)
+		return nil, fmt.Errorf("Unable to create the release: %v", err)
 	}
 	log.Printf("%s successfully installed in %s", name, namespace)
 	return res.GetRelease(), nil
@@ -209,7 +209,7 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 		//helm.UpgradeForce(true), ?
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to update release: %v", err)
+		return nil, fmt.Errorf("Unable to update the release: %v", err)
 	}
 	return res.GetRelease(), nil
 }
@@ -232,7 +232,7 @@ func (p *Proxy) DeleteRelease(name, namespace string) error {
 	}
 	_, err = p.helmClient.DeleteRelease(name, helm.DeletePurge(true))
 	if err != nil {
-		return fmt.Errorf("Unable to delete release: %v", err)
+		return fmt.Errorf("Unable to delete the release: %v", err)
 	}
 	return nil
 }

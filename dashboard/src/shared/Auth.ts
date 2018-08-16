@@ -1,5 +1,5 @@
 import Axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
-import { AppConflict, ForbiddenError, NotFoundError } from "./types";
+import { AppConflict, ForbiddenError, NotFoundError, UnprocessableEntity } from "./types";
 
 const AuthTokenKey = "kubeapps_auth_token";
 
@@ -74,6 +74,8 @@ function authenticatedAxiosInstance() {
           return Promise.reject(new NotFoundError(message));
         case 409:
           return Promise.reject(new AppConflict(message));
+        case 422:
+          return Promise.reject(new UnprocessableEntity(message));
         default:
           return Promise.reject(e);
       }
