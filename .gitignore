@@ -1,6 +1,2 @@
-/kubeapps
-/statik
-/generated
-.GOPATH
 *.*~
 telepresence.log
