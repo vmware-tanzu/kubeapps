@@ -27,6 +27,26 @@
   display: inline-block;
 }
 
+.ChartListItem__content__info_other {
+  background-color: #1598cb;
+  border-radius: 16px;
+  margin-left: 0.3em;
+  color: rgb(0, 0, 0);
+  display: inline-block;
+}
+
+.DELETED {
+  background-color: #c5c5c5;
+}
+
+.FAILED {
+  background-color: #cb1515;
+}
+
+.DEPLOYED {
+  background-color: #15cb2d;
+}
+
 .ChartListItem__content__info_repo.stable {
   background-color: #1598cb;
 }

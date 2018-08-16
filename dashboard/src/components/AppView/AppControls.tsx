@@ -28,19 +28,23 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
 
   public render() {
     const { name, namespace } = this.props.app;
+    const deleted = this.props.app.info && this.props.app.info.deleted;
     if (!name || !namespace) {
       return <div> Loading </div>;
     }
     return (
       <div className="AppControls">
-        <button className="button" onClick={this.handleUpgradeClick}>
-          Upgrade
-        </button>
+        {/* If the app has been deleted hide the upgrade button */}
+        {!deleted && (
+          <button className="button" onClick={this.handleUpgradeClick}>
+            Upgrade
+          </button>
+        )}
         {this.state.upgrade && (
           <Redirect push={true} to={`/apps/ns/${namespace}/upgrade/${name}`} />
         )}
         <button className="button button-danger" onClick={this.openModel}>
-          Delete
+          {deleted ? "Purge" : "Delete"}
         </button>
         <ConfirmDialog
           onConfirm={this.handleDeleteClick}

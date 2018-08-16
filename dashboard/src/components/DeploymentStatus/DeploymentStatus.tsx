@@ -1,16 +1,22 @@
 import * as React from "react";
 
+import { AlertTriangle } from "react-feather";
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
+import { hapi } from "../../shared/hapi/release";
 import { IDeploymentStatus, IResource } from "../../shared/types";
 import "./DeploymentStatus.css";
 
 interface IDeploymentStatusProps {
   deployments: IResource[];
+  info?: hapi.release.IInfo;
 }
 
 class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   public render() {
+    if (this.props.info && this.props.info.deleted) {
+      return this.renderDeletedStatus();
+    }
     return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();
   }
 
@@ -43,6 +49,14 @@ class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
       // loaded yet and no deployments
       return true;
     }
+  }
+
+  private renderDeletedStatus() {
+    return (
+      <span className="DeploymentStatus DeploymentStatus--deleted">
+        <AlertTriangle className="icon" style={{ bottom: "-0.425em" }} /> Deleted
+      </span>
+    );
   }
 }
 

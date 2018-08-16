@@ -16,6 +16,10 @@
   background-color: #fdba12;
 }
 
+.DeploymentStatus--deleted {
+  background-color: #fda5a5;
+}
+
 .DeploymentStatus--pending > .icon {
   animation: fadeinout 2s linear infinite;
 }
