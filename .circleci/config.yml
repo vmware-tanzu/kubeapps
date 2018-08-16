@@ -117,7 +117,6 @@ gke_test: &gke_test
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
         when: always
-
 ###
 
 jobs:
