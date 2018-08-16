@@ -48,6 +48,12 @@ minikube start --extra-config=apiserver.Authorization.Mode=RBAC
 eval $(minikube docker-env)
 ```
 
+Note: By default, Kubeapps will try to fetch the latest version of the image so in order to make this workflow work in Minikube you will need to update the imagePullPolicy first:
+
+```
+kubectl patch deployment kubeapps-tiller-proxy -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}]'
+```
+
 The easiest way to create the `tiller-proxy` image is execute the Makefile task to do so:
 
 ```bash
