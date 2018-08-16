@@ -57,7 +57,7 @@ VERSION=dev make kubeapps/tiller-proxy
 This will generate an image `kubeapps/tiller-proxy:dev` that you can use in the current deployment:
 
 ```
-kubectl set image -n kubeapps deployment tiller-deploy proxy=kubeapps/tiller-proxy:dev
+kubectl set image -n kubeapps deployment kubeapps-tiller-proxy proxy=kubeapps/tiller-proxy:dev
 ```
 
 For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
