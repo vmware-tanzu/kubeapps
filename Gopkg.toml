@@ -6,20 +6,8 @@
   version = "1.0.0"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/gosuri/uitable"
-
-[[constraint]]
-  name = "github.com/rakyll/statik"
-  version = "0.1.1"
-
-[[constraint]]
   name = "github.com/sirupsen/logrus"
   version = "1.0.4"
-
-[[constraint]]
-  name = "github.com/ksonnet/kubecfg"
-  revision = "8634737e0b22b01bb93ffeb09a195d0a6d71a6e5"
 
 [[constraint]]
   name = "google.golang.org/grpc"
@@ -43,14 +31,6 @@
   name = "k8s.io/helm"
   version = "2.9.1"
 
-[[override]]
-  name = "github.com/Azure/go-autorest"
-  revision = "58f6f26e200fa5dfb40c9cd1c83f3e2c860d779d"
-
 [prune]
   go-tests = true
   unused-packages = true
-
-  [[prune.project]]
-    name = "github.com/rakyll/statik"
-    unused-packages = false
