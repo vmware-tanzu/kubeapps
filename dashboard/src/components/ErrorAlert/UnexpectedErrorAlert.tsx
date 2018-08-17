@@ -2,6 +2,7 @@ import * as React from "react";
 import { X } from "react-feather";
 
 import ErrorPageHeader from "./ErrorAlertHeader";
+import "./UnexpectedErrorAlert.css";
 
 interface IUnexpectedErrorPage {
   raw?: boolean;
@@ -35,10 +36,7 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
       if (this.props.raw) {
         message = (
           <div className="error__content margin-l-enormous">
-            <section
-              className="Terminal elevation-1 type-color-white"
-              style={{ wordBreak: "break-all" }}
-            >
+            <section className="Terminal terminal__error elevation-1 type-color-white">
               {this.props.text}
             </section>
           </div>
