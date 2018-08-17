@@ -48,6 +48,12 @@ minikube start --extra-config=apiserver.Authorization.Mode=RBAC
 eval $(minikube docker-env)
 ```
 
+Note: By default, Kubeapps will try to fetch the latest version of the image so in order to make this workflow work in Minikube you will need to update the imagePullPolicy first:
+
+```
+kubectl patch deployment kubeapps-tiller-proxy -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}]'
+```
+
 The easiest way to create the `tiller-proxy` image is execute the Makefile task to do so:
 
 ```bash
@@ -57,13 +63,13 @@ VERSION=dev make kubeapps/tiller-proxy
 This will generate an image `kubeapps/tiller-proxy:dev` that you can use in the current deployment:
 
 ```
-kubectl set image -n kubeapps deployment tiller-deploy proxy=kubeapps/tiller-proxy:dev
+kubectl set image -n kubeapps deployment kubeapps-tiller-proxy proxy=kubeapps/tiller-proxy:dev
 ```
 
 For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
 
 ```
-kubectl delete pod -n kubeapps -l name=tiller
+kubectl delete pod -n kubeapps -l app=kubeapps-tiller-proxy
 ```
 
 Note: If you using a cloud provider to develop the service you will need to retag the image and push it to a public registry.
