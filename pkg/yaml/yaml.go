@@ -18,6 +18,7 @@ package yaml
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"strings"
 
@@ -32,20 +33,29 @@ func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
 	r := strings.NewReader(manifest)
 	decoder := yaml.NewYAMLReader(bufio.NewReader(r))
 	ret := []runtime.Object{}
+	nullResult := []byte("null")
+
 	for {
-		bytes, err := decoder.Read()
+		// This reader will return a single K8s resource at the time based on the --- separator
+		objManifest, err := decoder.Read()
 		if err == io.EOF {
 			break
 		} else if err != nil {
 			return nil, err
 		}
-		if len(bytes) == 0 {
-			continue
-		}
-		jsondata, err := yaml.ToJSON(bytes)
+
+		jsondata, err := yaml.ToJSON(objManifest)
 		if err != nil {
 			return nil, err
 		}
+
+		// It is also possible that the provided yaml file is empty from the point of view
+		// of the toJSON parser. For example if the yaml only contain comments.
+		// In which case the returned  will be "null"
+		if bytes.Equal(jsondata, nullResult) {
+			continue
+		}
+
 		obj, _, err := unstructured.UnstructuredJSONScheme.Decode(jsondata, nil, nil)
 		if err != nil {
 			return nil, err

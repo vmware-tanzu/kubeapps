@@ -21,27 +21,90 @@ import (
 )
 
 func TestParseObjectsSuccess(t *testing.T) {
-	m1 := `apiVersion: v1
+	testCases := []struct {
+		desc            string
+		manifest        string
+		numberResources int
+		apiVersions     []string
+		kinds           []string
+	}{
+		{
+			"returns nothing if manifest is empty",
+			"",
+			0, nil, nil,
+		},
+		{
+			"returns a single resource",
+			`
+apiVersion: v1
 kind: Namespace
 metadata:
-  annotations: {}
-  labels:
-    name: kubeless
-  name: kubeless`
-	rs, err := ParseObjects(m1)
-	if err != nil {
-		t.Error(err)
-	}
-	if len(rs) != 1 {
-		t.Errorf("Expected 1 yaml element, got %v", len(rs))
+  name: kubeapps`,
+			1, []string{"v1"}, []string{"Namespace"},
+		},
+		{
+			"returns multiple resources",
+			`
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kubeapps
+---
+apiVersion: extensions/v1beta1       
+kind: Deployment
+metadata:
+  name: kubeapps`,
+			2, []string{"v1", "extensions/v1beta1"}, []string{"Namespace", "Deployment"},
+		},
+		{
+			"ignores files with just comments",
+			`
+apiVersion: v1
+kind: LonelyNamespace
+metadata:
+  name: kubeapps
+---
+# This is a comment in yaml`,
+			1, []string{"v1"}, []string{"LonelyNamespace"},
+		},
+		{
+			"ignores empty files",
+			`
+apiVersion: v1
+kind: LonelyNamespace
+metadata:
+  name: kubeapps
+---
+---
+`,
+			1, []string{"v1"}, []string{"LonelyNamespace"},
+		},
 	}
 
-	// validate some fields of the parsed object
-	if rs[0].GetAPIVersion() != "v1" {
-		t.Errorf("Expected apiversion=v1, go %s", rs[0].GetAPIVersion())
-	}
-	if rs[0].GetKind() != "Namespace" {
-		t.Errorf("Expected kind = Namespace, go %s", rs[0].GetKind())
+	for _, tt := range testCases {
+		t.Run(tt.desc, func(t *testing.T) {
+			resources, err := ParseObjects(tt.manifest)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if got, want := len(resources), tt.numberResources; got != want {
+				t.Errorf("Expected %d yaml element, got %v", want, got)
+			}
+
+			for i, resource := range resources {
+				if got, want := resource.GetAPIVersion(), tt.apiVersions[i]; got != want {
+					t.Errorf("got %q, want %q", got, want)
+
+				}
+				if got, want := resource.GetAPIVersion(), tt.apiVersions[i]; got != want {
+					t.Errorf("got %q, want %q", got, want)
+				}
+				if got, want := resource.GetKind(), tt.kinds[i]; got != want {
+					t.Errorf("got %q, want %q", got, want)
+				}
+			}
+		})
 	}
 }
 
