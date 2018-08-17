@@ -74,6 +74,31 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// LoadChart should return a Chart struct from an IOReader
+type LoadChart func(in io.Reader) (*chart.Chart, error)
+
+// Interface for exposed funcs
+type Interface interface {
+	ParseDetails(data []byte) (*Details, error)
+	GetChart(details *Details) (*chart.Chart, error)
+}
+
+// Chart struct contains the clients required to retrieve charts info
+type Chart struct {
+	kubeClient kubernetes.Interface
+	netClient  HTTPClient
+	load       LoadChart
+}
+
+// NewChart returns a new Chart
+func NewChart(kubeClient kubernetes.Interface, netClient HTTPClient, load LoadChart) *Chart {
+	return &Chart{
+		kubeClient,
+		netClient,
+		load,
+	}
+}
+
 func getReq(rawURL, authHeader string) (*http.Request, error) {
 	parsedURL, err := url.ParseRequestURI(rawURL)
 	if err != nil {
@@ -164,9 +189,6 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 	return resolveChartURL(repoURL, cv.URLs[0])
 }
 
-// LoadChart should return a Chart struct from an IOReader
-type LoadChart func(in io.Reader) (*chart.Chart, error)
-
 // fetchChart returns the Chart content given an URL and the auth header if needed
 func fetchChart(netClient *HTTPClient, chartURL, authHeader string, load LoadChart) (*chart.Chart, error) {
 	req, err := getReq(chartURL, authHeader)
@@ -186,7 +208,7 @@ func fetchChart(netClient *HTTPClient, chartURL, authHeader string, load LoadCha
 }
 
 // ParseDetails return Chart details
-func ParseDetails(data []byte) (*Details, error) {
+func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 	details := &Details{}
 	err := json.Unmarshal(data, details)
 	if err != nil {
@@ -196,7 +218,7 @@ func ParseDetails(data []byte) (*Details, error) {
 }
 
 // GetChart retrieves and loads a Chart from a registry
-func GetChart(details *Details, kubeClient kubernetes.Interface, netClient HTTPClient, load LoadChart) (*chart.Chart, error) {
+func (c *Chart) GetChart(details *Details) (*chart.Chart, error) {
 	repoURL := details.RepoURL
 	if repoURL == "" {
 		// FIXME: Make configurable
@@ -211,7 +233,7 @@ func GetChart(details *Details, kubeClient kubernetes.Interface, netClient HTTPC
 			namespace = defaultNamespace
 		}
 
-		secret, err := kubeClient.Core().Secrets(namespace).Get(details.Auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
+		secret, err := c.kubeClient.Core().Secrets(namespace).Get(details.Auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +241,7 @@ func GetChart(details *Details, kubeClient kubernetes.Interface, netClient HTTPC
 	}
 
 	log.Printf("Downloading repo %s index...", repoURL)
-	repoIndex, err := fetchRepoIndex(&netClient, repoURL, authHeader)
+	repoIndex, err := fetchRepoIndex(&c.netClient, repoURL, authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +252,7 @@ func GetChart(details *Details, kubeClient kubernetes.Interface, netClient HTTPC
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chartRequested, err := fetchChart(&netClient, chartURL, authHeader, load)
+	chartRequested, err := fetchChart(&c.netClient, chartURL, authHeader, c.load)
 	if err != nil {
 		return nil, err
 	}
