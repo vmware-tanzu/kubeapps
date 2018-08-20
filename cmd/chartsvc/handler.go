@@ -212,7 +212,7 @@ func newChartResponse(c *models.Chart) *apiResponse {
 }
 
 func newChartListResponse(charts []*models.Chart) apiListResponse {
-	var cl apiListResponse
+	cl := apiListResponse{}
 	for _, c := range charts {
 		cl = append(cl, newChartResponse(c))
 	}

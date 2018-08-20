@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"errors"
 	"image/color"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -238,8 +239,11 @@ func Test_listCharts(t *testing.T) {
 			m.AssertExpectations(t)
 			assert.Equal(t, http.StatusOK, w.Code)
 
+			bb, _ := ioutil.ReadAll(w.Body)
+			assert.NotEqual(t, string(bb), `{"data":null}`, "chart list shouldn't be null")
+
 			var b bodyAPIListResponse
-			json.NewDecoder(w.Body).Decode(&b)
+			json.NewDecoder(bytes.NewBuffer(bb)).Decode(&b)
 			assert.Len(t, b.Data, len(tt.charts))
 			for i := range b.Data {
 				assert.Equal(t, b.Data[i].ID, tt.charts[i].ID, "chart id in the response should be the same")
