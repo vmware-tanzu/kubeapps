@@ -26,11 +26,13 @@ class ChartReadme extends React.Component<IChartReadmeProps> {
 
   public render() {
     const { hasError, readme } = this.props;
-    if (hasError) {
+    if (hasError || !readme) {
       return this.renderError();
     }
     return (
-      <div className="ChartReadme">{readme ? <ReactMarkdown source={readme} /> : "Loading"}</div>
+      <div className="ChartReadme">
+        <ReactMarkdown source={readme} />
+      </div>
     );
   }
 

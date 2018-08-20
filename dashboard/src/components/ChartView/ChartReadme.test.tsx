@@ -4,11 +4,11 @@ import * as ReactMarkdown from "react-markdown";
 
 import ChartReadme from "./ChartReadme";
 
-it("renders a loading message if the readme is not present", () => {
+it("renders a README not found message if the readme is not present", () => {
   const wrapper = shallow(
     <ChartReadme getChartReadme={jest.fn()} hasError={false} version="1.2.3" />,
   );
-  expect(wrapper.text()).toBe("Loading");
+  expect(wrapper.text()).toContain("No README found");
 });
 
 describe("getChartReadme", () => {
