@@ -50,8 +50,8 @@ export const errorCatalog = createAction(
   }),
 );
 export const receiveDisableAlphaWarning = createAction("DISABLE_WARNING", () => ({
-  type: "DISABLE_WARNING",
   showAlphaWarning: false,
+  type: "DISABLE_WARNING",
 }));
 
 const actions = [
