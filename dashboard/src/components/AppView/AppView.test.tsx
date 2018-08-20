@@ -1,4 +1,4 @@
-import { mount, shallow } from "enzyme";
+import { shallow } from "enzyme";
 import * as React from "react";
 import { hapi } from "../../shared/hapi/release";
 import { IResource } from "../../shared/types";
@@ -18,6 +18,7 @@ describe("AppViewComponent", () => {
       app: appRelease,
       deleteApp: jest.fn(),
       deleteError: undefined,
+      error: undefined,
       getApp: jest.fn(),
       namespace: "my-happy-place",
       releaseName: "mr-sunshine",
@@ -36,7 +37,7 @@ describe("AppViewComponent", () => {
       We only set websockets for deployment and services
     */
     it("sets a list of web sockets for its deployments and services", () => {
-      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
       wrapper.setProps(validProps);
       const sockets: WebSocket[] = wrapper.state("sockets");
       expect(sockets.length).toEqual(2);
@@ -49,7 +50,7 @@ describe("AppViewComponent", () => {
     });
 
     it("stores other k8s resources directly in the state", () => {
-      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
       wrapper.setProps(validProps);
       const otherResources: Map<string, IResource> = wrapper.state("otherResources");
       const configMap = otherResources["ConfigMap/cm-one"];
