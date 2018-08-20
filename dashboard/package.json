@@ -9,6 +9,7 @@
     "@types/qs": "^6.5.1",
     "@types/react-jsonschema-form": "^1.0.4",
     "@types/react-select": "^1.2.6",
+    "@types/ws": "^6.0.0",
     "axios": "^0.17.1",
     "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
@@ -40,8 +41,7 @@
     "typesafe-actions": "^1.1.2"
   },
   "scripts": {
-    "start":
-      "BROWSER=none REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts-ts start",
+    "start": "BROWSER=none REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts-ts start",
     "build": "react-scripts-ts build",
     "test": "react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
@@ -52,8 +52,15 @@
     "lint-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["tslint -c ./tslint.ci.json --fix", "prettier --write", "git add"],
-    "*.{js,json,css,md}": ["prettier --write", "git add"]
+    "*.{ts,tsx}": [
+      "tslint -c ./tslint.ci.json --fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.{js,json,css,md}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "devDependencies": {
     "@types/enzyme": "^3.1.6",
@@ -76,9 +83,13 @@
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
-    "typescript": "^2.6.2"
+    "typescript": "^2.6.2",
+    "ws": "^6.0.0"
   },
   "jest": {
-    "collectCoverageFrom": ["src/**/*", "!src/**/*.d.ts"]
+    "collectCoverageFrom": [
+      "src/**/*",
+      "!src/**/*.d.ts"
+    ]
   }
 }
