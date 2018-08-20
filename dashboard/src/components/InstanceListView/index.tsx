@@ -6,6 +6,7 @@ import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
+
 import {
   MessageAlert,
   PermissionsErrorAlert,
@@ -15,6 +16,7 @@ import {
 } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
+import AlphaWarning from "./AlphaWarning";
 import { InstanceCardList } from "./InstanceCardList";
 
 export interface InstanceListViewProps {
@@ -29,6 +31,8 @@ export interface InstanceListViewProps {
   pushSearchFilter: (filter: string) => any;
   isInstalled: boolean;
   namespace: string;
+  showAlphaWarning: boolean;
+  disableAlphaWarning: () => Promise<any>;
 }
 
 export interface InstanceListViewState {
@@ -90,7 +94,16 @@ export class InstanceListView extends React.PureComponent<
   }
 
   public render() {
-    const { error, isInstalled, brokers, instances, classes, pushSearchFilter } = this.props;
+    const {
+      error,
+      isInstalled,
+      brokers,
+      instances,
+      classes,
+      pushSearchFilter,
+      showAlphaWarning,
+      disableAlphaWarning,
+    } = this.props;
 
     return (
       <section className="InstanceList">
@@ -118,6 +131,7 @@ export class InstanceListView extends React.PureComponent<
           )}
         </PageHeader>
         <main>
+          {showAlphaWarning ? <AlphaWarning disableWarning={disableAlphaWarning} /> : null}
           {isInstalled ? (
             <div>
               {error ? (
