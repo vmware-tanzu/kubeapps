@@ -34,7 +34,7 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
 
-	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/handler"
+	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 )

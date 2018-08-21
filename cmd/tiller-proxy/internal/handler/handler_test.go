@@ -350,7 +350,7 @@ func TestActions(t *testing.T) {
 		proxy := &proxyFake.FakeProxy{
 			Releases: test.ExistingReleases,
 		}
-		handler := Handler{
+		handler := TillerProxy{
 			DisableAuth: test.DisableAuth,
 			ListLimit:   255,
 			ChartClient: &chartFake.FakeChart{},

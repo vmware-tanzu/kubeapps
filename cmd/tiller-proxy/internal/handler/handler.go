@@ -144,15 +144,15 @@ func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWrite
 	response.NewErrorResponse(http.StatusForbidden, string(body)).Write(w)
 }
 
-// Handler HTTP handler for Tiller Proxy
-type Handler struct {
+// TillerProxy client and configuration
+type TillerProxy struct {
 	DisableAuth bool
 	ListLimit   int
 	ChartClient chartUtils.Interface
 	ProxyClient proxy.Interface
 }
 
-func (h *Handler) logStatus(name string) {
+func (h *TillerProxy) logStatus(name string) {
 	status, err := h.ProxyClient.GetReleaseStatus(name)
 	if err != nil {
 		log.Printf("Unable to fetch release status of %s: %v", name, err)
@@ -162,7 +162,7 @@ func (h *Handler) logStatus(name string) {
 }
 
 // CreateRelease creates a new release in the namespace given as Param
-func (h *Handler) CreateRelease(w http.ResponseWriter, req *http.Request, params Params) {
+func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	log.Printf("Creating Helm Release")
 	chartDetails, ch, err := getChart(req, h.ChartClient)
 	if err != nil {
@@ -197,7 +197,7 @@ func (h *Handler) CreateRelease(w http.ResponseWriter, req *http.Request, params
 }
 
 // UpgradeRelease upgrades a release in the namespace given as Param
-func (h *Handler) UpgradeRelease(w http.ResponseWriter, req *http.Request, params Params) {
+func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	log.Printf("Upgrading Helm Release")
 	chartDetails, ch, err := getChart(req, h.ChartClient)
 	if err != nil {
@@ -232,7 +232,7 @@ func (h *Handler) UpgradeRelease(w http.ResponseWriter, req *http.Request, param
 }
 
 // ListAllReleases list all releases that Tiller stores
-func (h *Handler) ListAllReleases(w http.ResponseWriter, req *http.Request) {
+func (h *TillerProxy) ListAllReleases(w http.ResponseWriter, req *http.Request) {
 	apps, err := h.ProxyClient.ListReleases("", h.ListLimit)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -242,7 +242,7 @@ func (h *Handler) ListAllReleases(w http.ResponseWriter, req *http.Request) {
 }
 
 // ListReleases in the namespace given as Param
-func (h *Handler) ListReleases(w http.ResponseWriter, req *http.Request, params Params) {
+func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, params Params) {
 	apps, err := h.ProxyClient.ListReleases(params["namespace"], h.ListLimit)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -252,7 +252,7 @@ func (h *Handler) ListReleases(w http.ResponseWriter, req *http.Request, params 
 }
 
 // GetRelease returns the release info
-func (h *Handler) GetRelease(w http.ResponseWriter, req *http.Request, params Params) {
+func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -279,7 +279,7 @@ func (h *Handler) GetRelease(w http.ResponseWriter, req *http.Request, params Pa
 }
 
 // DeleteRelease removes a release from a namespace
-func (h *Handler) DeleteRelease(w http.ResponseWriter, req *http.Request, params Params) {
+func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	if !h.DisableAuth {
 		rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
 		if err != nil {
