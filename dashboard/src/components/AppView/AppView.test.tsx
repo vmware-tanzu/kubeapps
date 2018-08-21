@@ -38,8 +38,10 @@ describe("AppViewComponent", () => {
     */
     it("sets a list of web sockets for its deployments and services", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
+      // setProps again so we trigger componentWillReceiveProps
       wrapper.setProps(validProps);
       const sockets: WebSocket[] = wrapper.state("sockets");
+
       expect(sockets.length).toEqual(2);
       expect(sockets[0].url).toBe(
         "ws://localhost/api/kube/apis/apps/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
