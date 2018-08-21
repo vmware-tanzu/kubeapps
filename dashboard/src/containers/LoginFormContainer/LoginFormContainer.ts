@@ -5,9 +5,13 @@ import actions from "../../actions";
 import LoginForm from "../../components/LoginForm";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ auth: { authenticated } }: IStoreState) {
+function mapStateToProps({
+  auth: { authenticated, authenticating, authenticationError },
+}: IStoreState) {
   return {
     authenticated,
+    authenticating,
+    authenticationError,
   };
 }
 
