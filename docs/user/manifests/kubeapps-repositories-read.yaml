@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: kubeapps-repositories-read
+rules:
+- apiGroups: 
+  - kubeapps.com
+  resources: 
+  - apprepositories
+  verbs: 
+  - list
+  - get

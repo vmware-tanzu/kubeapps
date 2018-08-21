@@ -79,6 +79,8 @@ $ kubectl delete crd apprepositories.kubeapps.com
 
 The first command removes most of the Kubernetes components associated with the chart and deletes the release. After that, if there are no more instances of Kubeapps in the cluster you can manually delete the `apprepositories.kubeapps.com` CRD used by Kubeapps that is shared for the entire cluster.
 
+> **NOTE**: If you delete the CRD for `apprepositories.kubeapps.com` it will delete the repositories for **all** the installed instances of `kubeapps`. That'll break existing installations of `kubeapps` if they exist.
+
 ## Configuration
 
 For a full list of configuration parameters of the Kubeapps chart, see the [values.yaml](values.yaml) file.

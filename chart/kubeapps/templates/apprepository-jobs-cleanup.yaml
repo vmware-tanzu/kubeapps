@@ -1,3 +1,5 @@
+# The cleanup job is necessary to remove "apprepositories" created
+# in the bootstrap job or in the web application
 apiVersion: batch/v1
 kind: Job
 metadata:
