@@ -24,7 +24,6 @@ export interface IServiceCatalogState {
   isChecking: boolean;
   isInstalled: boolean;
   plans: IServicePlan[];
-  showAlphaWarning: boolean;
 }
 
 const initialState: IServiceCatalogState = {
@@ -36,7 +35,6 @@ const initialState: IServiceCatalogState = {
   isChecking: true,
   isInstalled: false,
   plans: [],
-  showAlphaWarning: true,
 };
 
 const catalogReducer = (
@@ -57,8 +55,6 @@ const catalogReducer = (
     case getType(catalog.receiveBindingsWithSecrets):
       const { bindingsWithSecrets } = action;
       return { ...state, bindingsWithSecrets };
-    case getType(actions.catalog.receiveDisableAlphaWarning):
-      return { ...state, showAlphaWarning: false };
     case getType(catalog.receiveClasses):
       const { classes } = action;
       return { ...state, classes };

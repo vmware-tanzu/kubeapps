@@ -16,7 +16,6 @@ function mapStateToProps(
   const classes = catalog.classes;
   const instances = catalog.instances;
   const isInstalled = catalog.isInstalled;
-  const showAlphaWarning = catalog.showAlphaWarning;
   return {
     brokers,
     classes,
@@ -26,7 +25,6 @@ function mapStateToProps(
     isInstalled,
     namespace: namespace.current,
     plans,
-    showAlphaWarning,
   };
 }
 
@@ -35,7 +33,6 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());
     },
-    disableAlphaWarning: () => dispatch(actions.catalog.disableAlphaWarning()),
     getCatalog: async (ns: string) => {
       dispatch(actions.catalog.getCatalog(ns));
     },

@@ -16,7 +16,6 @@ import {
 } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
-import AlphaWarning from "./AlphaWarning";
 import { InstanceCardList } from "./InstanceCardList";
 
 export interface InstanceListViewProps {
@@ -31,8 +30,6 @@ export interface InstanceListViewProps {
   pushSearchFilter: (filter: string) => any;
   isInstalled: boolean;
   namespace: string;
-  showAlphaWarning: boolean;
-  disableAlphaWarning: () => Promise<any>;
 }
 
 export interface InstanceListViewState {
@@ -94,16 +91,7 @@ export class InstanceListView extends React.PureComponent<
   }
 
   public render() {
-    const {
-      error,
-      isInstalled,
-      brokers,
-      instances,
-      classes,
-      pushSearchFilter,
-      showAlphaWarning,
-      disableAlphaWarning,
-    } = this.props;
+    const { error, isInstalled, brokers, instances, classes, pushSearchFilter } = this.props;
 
     return (
       <section className="InstanceList">
@@ -131,7 +119,16 @@ export class InstanceListView extends React.PureComponent<
           )}
         </PageHeader>
         <main>
-          {showAlphaWarning ? <AlphaWarning disableWarning={disableAlphaWarning} /> : null}
+          <MessageAlert type="warning">
+            <div>
+              Service Catalog integration is under heavy development. If you find an issue please
+              report it{" "}
+              <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues">
+                {" "}
+                here.
+              </a>
+            </div>
+          </MessageAlert>
           {isInstalled ? (
             <div>
               {error ? (

@@ -49,10 +49,6 @@ export const errorCatalog = createAction(
     type: "ERROR_CATALOG",
   }),
 );
-export const receiveDisableAlphaWarning = createAction("DISABLE_WARNING", () => ({
-  showAlphaWarning: false,
-  type: "DISABLE_WARNING",
-}));
 
 const actions = [
   checkCatalogInstall,
@@ -68,7 +64,6 @@ const actions = [
   receiveBindingsWithSecrets,
   requestClasses,
   receiveClasses,
-  receiveDisableAlphaWarning,
   errorCatalog,
 ].map(getReturnOfExpression);
 
@@ -229,11 +224,5 @@ export function checkCatalogInstalled() {
     const isInstalled = await ServiceCatalog.isCatalogInstalled();
     isInstalled ? dispatch(installed()) : dispatch(notInstalled());
     return isInstalled;
-  };
-}
-
-export function disableAlphaWarning() {
-  return (dispatch: Dispatch<IStoreState>) => {
-    dispatch(receiveDisableAlphaWarning());
   };
 }
