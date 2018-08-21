@@ -239,11 +239,14 @@ func Test_listCharts(t *testing.T) {
 			m.AssertExpectations(t)
 			assert.Equal(t, http.StatusOK, w.Code)
 
-			bb, _ := ioutil.ReadAll(w.Body)
-			assert.NotEqual(t, string(bb), `{"data":null}`, "chart list shouldn't be null")
+			rawResponse, _ := ioutil.ReadAll(w.Body)
+			assert.NotEqual(t, string(rawResponse), `{"data":null}`, "chart list shouldn't be null")
 
 			var b bodyAPIListResponse
-			json.NewDecoder(bytes.NewBuffer(bb)).Decode(&b)
+			err := json.Unmarshal(rawResponse, &b)
+			if err != nil {
+				t.Error(err)
+			}
 			assert.Len(t, b.Data, len(tt.charts))
 			for i := range b.Data {
 				assert.Equal(t, b.Data[i].ID, tt.charts[i].ID, "chart id in the response should be the same")

@@ -41,7 +41,7 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
   public render() {
     const { charts: { isFetching }, pushSearchFilter } = this.props;
     const items = this.filteredCharts(this.props.charts.items, this.state.filter);
-    if (!isFetching && (!items || items.length === 0)) {
+    if (!isFetching && items.length === 0) {
       return (
         <NotFoundErrorAlert
           resource={"Charts"}
