@@ -137,7 +137,7 @@ func main() {
 	authGate := handler.AuthGate()
 
 	// HTTP Handler
-	h := handler.Handler{
+	h := handler.TillerProxy{
 		DisableAuth: disableAuth,
 		ListLimit:   listLimit,
 		ChartClient: chartutils,
