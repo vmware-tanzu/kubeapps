@@ -367,7 +367,7 @@ func Test_GetChartReadme(t *testing.T) {
 			"1.1.1",
 			nil,
 			models.ChartFiles{ID: "my-repo/my-chart"},
-			http.StatusOK,
+			http.StatusNotFound,
 		},
 	}
 
@@ -388,7 +388,7 @@ func Test_GetChartReadme(t *testing.T) {
 			defer res.Body.Close()
 
 			m.AssertExpectations(t)
-			assert.Equal(t, res.StatusCode, tt.wantCode, "http status code should match")
+			assert.Equal(t, tt.wantCode, res.StatusCode, "http status code should match")
 		})
 	}
 }
