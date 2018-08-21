@@ -38,6 +38,10 @@ kubeapps/tiller-proxy:
 	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o ./cmd/tiller-proxy/proxy-static ./cmd/tiller-proxy
 	docker build -t kubeapps/tiller-proxy:$(VERSION) -f cmd/tiller-proxy/Dockerfile cmd/tiller-proxy
 
+kubeapps/chartsvc:
+	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o ./cmd/chartsvc/chartsvc ./cmd/chartsvc
+	docker build -t kubeapps/chartsvc:$(VERSION) -f cmd/chartsvc/Dockerfile cmd/chartsvc
+
 test: $(EMBEDDED_STATIC)
 	$(GO) test $(GO_PACKAGES)
 
