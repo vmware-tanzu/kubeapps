@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"image/color"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -35,7 +34,7 @@ import (
 )
 
 type bodyAPIListResponse struct {
-	Data apiListResponse `json:"data"`
+	Data *apiListResponse `json:"data"`
 }
 
 type bodyAPIResponse struct {
@@ -239,20 +238,18 @@ func Test_listCharts(t *testing.T) {
 			m.AssertExpectations(t)
 			assert.Equal(t, http.StatusOK, w.Code)
 
-			rawResponse, _ := ioutil.ReadAll(w.Body)
-			assert.NotEqual(t, string(rawResponse), `{"data":null}`, "chart list shouldn't be null")
-
 			var b bodyAPIListResponse
-			err := json.Unmarshal(rawResponse, &b)
-			if err != nil {
-				t.Error(err)
+			json.NewDecoder(w.Body).Decode(&b)
+			if b.Data == nil {
+				t.Fatal("chart list shouldn't be null")
 			}
-			assert.Len(t, b.Data, len(tt.charts))
-			for i := range b.Data {
-				assert.Equal(t, b.Data[i].ID, tt.charts[i].ID, "chart id in the response should be the same")
-				assert.Equal(t, b.Data[i].Type, "chart", "response type is chart")
-				assert.Equal(t, b.Data[i].Links.(map[string]interface{})["self"], pathPrefix+"/charts/"+tt.charts[i].ID, "self link should be the same")
-				assert.Equal(t, b.Data[i].Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
+			data := *b.Data
+			assert.Len(t, data, len(tt.charts))
+			for i, resp := range data {
+				assert.Equal(t, resp.ID, tt.charts[i].ID, "chart id in the response should be the same")
+				assert.Equal(t, resp.Type, "chart", "response type is chart")
+				assert.Equal(t, resp.Links.(map[string]interface{})["self"], pathPrefix+"/charts/"+tt.charts[i].ID, "self link should be the same")
+				assert.Equal(t, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			}
 		})
 	}
@@ -296,11 +293,12 @@ func Test_listRepoCharts(t *testing.T) {
 
 			var b bodyAPIListResponse
 			json.NewDecoder(w.Body).Decode(&b)
-			assert.Len(t, b.Data, len(tt.charts))
-			for i := range b.Data {
-				assert.Equal(t, b.Data[i].ID, tt.charts[i].ID, "chart id in the response should be the same")
-				assert.Equal(t, b.Data[i].Type, "chart", "response type is chart")
-				assert.Equal(t, b.Data[i].Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
+			data := *b.Data
+			assert.Len(t, data, len(tt.charts))
+			for i, resp := range data {
+				assert.Equal(t, resp.ID, tt.charts[i].ID, "chart id in the response should be the same")
+				assert.Equal(t, resp.Type, "chart", "response type is chart")
+				assert.Equal(t, resp.Relationships["latestChartVersion"].Data.(map[string]interface{})["version"], tt.charts[i].ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			}
 		})
 	}
@@ -425,10 +423,11 @@ func Test_listChartVersions(t *testing.T) {
 			if tt.wantCode == http.StatusOK {
 				var b bodyAPIListResponse
 				json.NewDecoder(w.Body).Decode(&b)
-				for i := range b.Data {
-					assert.Equal(t, b.Data[i].ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "chart id in the response should be the same")
-					assert.Equal(t, b.Data[i].Type, "chartVersion", "response type is chartVersion")
-					assert.Equal(t, b.Data[i].Attributes.(map[string]interface{})["version"], tt.chart.ChartVersions[i].Version, "chart version should match")
+				data := *b.Data
+				for i, resp := range data {
+					assert.Equal(t, resp.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "chart id in the response should be the same")
+					assert.Equal(t, resp.Type, "chartVersion", "response type is chartVersion")
+					assert.Equal(t, resp.Attributes.(map[string]interface{})["version"], tt.chart.ChartVersions[i].Version, "chart version should match")
 				}
 			}
 		})
