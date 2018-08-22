@@ -123,7 +123,6 @@ jobs:
     steps:
       - checkout
       - <<: *exports
-      - <<: *install_gcloud_sdk
       - run: make test
   test_dashboard:
     docker:
