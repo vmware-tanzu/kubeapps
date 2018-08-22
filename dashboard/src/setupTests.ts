@@ -1,3 +1,4 @@
+import "jest-enzyme";
 import "raf/polyfill"; // polyfill for requestAnimationFrame
 
 import { configure } from "enzyme";
