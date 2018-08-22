@@ -77,7 +77,7 @@ func Test_GetCharts(t *testing.T) {
 
 			var b bodyAPIListResponse
 			json.NewDecoder(res.Body).Decode(&b)
-			assert.Len(t, b.Data, len(tt.charts))
+			assert.Len(t, *b.Data, len(tt.charts))
 		})
 	}
 }
@@ -119,7 +119,7 @@ func Test_GetChartsInRepo(t *testing.T) {
 
 			var b bodyAPIListResponse
 			json.NewDecoder(res.Body).Decode(&b)
-			assert.Len(t, b.Data, len(tt.charts))
+			assert.Len(t, *b.Data, len(tt.charts))
 		})
 	}
 }
