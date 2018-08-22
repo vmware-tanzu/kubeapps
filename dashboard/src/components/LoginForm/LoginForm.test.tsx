@@ -84,5 +84,5 @@ it("disables the input if authenticating", () => {
 
   expect(wrapper.find(".button").props().disabled).toBe(false);
   wrapper.setProps({ authenticating: true });
-  expect(wrapper.find(".button").props().disabled).toBe(true);
+  expect(wrapper.find(".button")).toBeDisabled();
 });
