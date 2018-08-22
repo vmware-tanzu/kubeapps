@@ -21,7 +21,7 @@ import { InstanceCardList } from "./InstanceCardList";
 export interface InstanceListViewProps {
   brokers: IServiceBroker[];
   classes: IClusterServiceClass[];
-  error: Error;
+  error: Error | undefined;
   filter: string;
   getCatalog: (ns: string) => Promise<any>;
   checkCatalogInstalled: () => Promise<any>;
