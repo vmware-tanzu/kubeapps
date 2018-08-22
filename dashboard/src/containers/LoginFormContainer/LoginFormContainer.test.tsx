@@ -33,9 +33,6 @@ describe("LoginFormContainer props", () => {
     const store = makeStore(true, true, "It's a trap");
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
     const form = wrapper.find("LoginForm");
-    // TODO(miguel) tslint complains about this method not existing because of this issue
-    // https://github.com/FormidableLabs/enzyme-matchers/issues/252
-    // It should be fixed in future/newer versions
     expect(form).toHaveProp({
       authenticated: true,
       authenticating: true,

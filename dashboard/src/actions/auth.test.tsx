@@ -1,17 +1,15 @@
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { IStoreState } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { IStoreState } from "../../shared/types";
 import { Auth } from "../shared/Auth";
 
 const mockStore = configureMockStore([thunk]);
 const token = "abcd";
 const validationErrorMsg = "Validation error";
 
-let store: IStoreState;
+let store: any;
 
 beforeEach(() => {
   const state: IAuthState = {
