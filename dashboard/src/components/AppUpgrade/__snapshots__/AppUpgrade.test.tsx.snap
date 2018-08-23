@@ -1,0 +1,127 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders an error if it exists 1`] = `
+<DeploymentErrors
+  app={Object {}}
+  bindingsWithSecrets={Array []}
+  chartName=""
+  checkChart={[Function]}
+  clearRepo={[Function]}
+  error={[Error: foo doesn't exists]}
+  fetchChartVersions={[Function]}
+  fetchRepositories={[Function]}
+  getApp={[Function]}
+  getBindings={[Function]}
+  getChartValues={[Function]}
+  getChartVersion={[Function]}
+  kubeappsNamespace="kubeapps"
+  namespace="default"
+  push={[Function]}
+  releaseName="foo"
+  repo="stable"
+  repos={
+    Array [
+      Object {
+        "metadata": Object {
+          "name": "stable",
+        },
+      },
+    ]
+  }
+  selected={Object {}}
+  upgradeApp={[Function]}
+  version="1.0.0"
+/>
+`;
+
+exports[`renders the repo selection form if not introduced 1`] = `
+<div>
+  <SelectRepoForm
+    app={
+      Object {
+        "chart": Object {
+          "metadata": Object {
+            "name": "bar",
+            "version": "1.0.0",
+          },
+        },
+        "name": "foo",
+      }
+    }
+    bindingsWithSecrets={Array []}
+    chartName="bar"
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getApp={[Function]}
+    getBindings={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    kubeappsNamespace="kubeapps"
+    namespace="default"
+    push={[Function]}
+    releaseName="foo"
+    repo={Object {}}
+    repos={
+      Array [
+        Object {
+          "metadata": Object {
+            "name": "stable",
+          },
+        },
+      ]
+    }
+    selected={Object {}}
+    upgradeApp={[Function]}
+    version="1.0.0"
+  />
+</div>
+`;
+
+exports[`renders the upgrade form when the repo is available 1`] = `
+<div>
+  <UpgradeForm
+    app={
+      Object {
+        "chart": Object {
+          "metadata": Object {
+            "name": "bar",
+            "version": "1.0.0",
+          },
+        },
+        "name": "foo",
+      }
+    }
+    appCurrentValues=""
+    appCurrentVersion="1.0.0"
+    bindingsWithSecrets={Array []}
+    chartName="bar"
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getApp={[Function]}
+    getBindings={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    kubeappsNamespace="kubeapps"
+    namespace="default"
+    push={[Function]}
+    releaseName="foo"
+    repo="stable"
+    repos={
+      Array [
+        Object {
+          "metadata": Object {
+            "name": "stable",
+          },
+        },
+      ]
+    }
+    selected={Object {}}
+    upgradeApp={[Function]}
+    version="1.0.0"
+  />
+</div>
+`;
