@@ -31,7 +31,7 @@ it("should include a header if set", () => {
 });
 
 it("should include a type if set", () => {
-  const wrapper = shallow(<MessageAlert type="foo" />);
+  const wrapper = shallow(<MessageAlert level="foo" />);
   expect(wrapper.find(".alert-foo").exists()).toBe(true);
 });
 

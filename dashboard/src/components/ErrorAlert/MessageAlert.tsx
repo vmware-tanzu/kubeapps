@@ -5,15 +5,15 @@ import ErrorPageHeader from "./ErrorAlertHeader";
 
 interface IMessageAlertPageProps {
   header?: string;
-  type?: string;
+  level?: string;
   children?: JSX.Element;
 }
 
 class MessageAlertPage extends React.Component<IMessageAlertPageProps> {
   public render() {
-    const { type, children, header } = this.props;
+    const { level, children, header } = this.props;
     return (
-      <div className={`alert ${type ? `alert-${type}` : ""} margin-c margin-t-bigger`}>
+      <div className={`alert ${level ? `alert-${level}` : ""} margin-c margin-t-bigger`}>
         {header ? <ErrorPageHeader icon={Info}>{header}</ErrorPageHeader> : null}
         {children && (
           <div className={`message__content ${header ? "margin-l-enormous" : ""}`}>{children}</div>

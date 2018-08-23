@@ -21,7 +21,7 @@ import { InstanceCardList } from "./InstanceCardList";
 export interface InstanceListViewProps {
   brokers: IServiceBroker[];
   classes: IClusterServiceClass[];
-  error: Error | undefined;
+  error: Error;
   filter: string;
   getCatalog: (ns: string) => Promise<any>;
   checkCatalogInstalled: () => Promise<any>;
@@ -119,7 +119,7 @@ export class InstanceListView extends React.PureComponent<
           )}
         </PageHeader>
         <main>
-          <MessageAlert type="warning">
+          <MessageAlert level="warning">
             <div>
               Service Catalog integration is under heavy development. If you find an issue please
               report it{" "}

@@ -26,7 +26,7 @@ it("renders the header links and titles", () => {
   const expectedItems = [
     { children: "Applications", to: "/apps" },
     { children: "Charts", to: "/charts" },
-    { children: "Service Instances (Alpha)", to: "/services/instances" },
+    { children: "Service Instances (alpha)", to: "/services/instances" },
   ];
   items.forEach((item, index) => {
     expect(item.children).toBe(expectedItems[index].children);
