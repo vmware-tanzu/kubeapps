@@ -41,10 +41,10 @@ This builds the `tiller-proxy` binary in the working directory.
 
 ### Running in development
 
-If you are using Minikube it is important to start the cluster enabling RBAC (in order to check the authorization features):
+If you are using Minikube it is important to start the cluster enabling RBAC (on by default in Minikube 0.26+) in order to check the authorization features:
 
 ```
-minikube start --extra-config=apiserver.authorization-mode=RBAC
+minikube start
 eval $(minikube docker-env)
 ```
 
