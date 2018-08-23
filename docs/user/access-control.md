@@ -59,7 +59,7 @@ available in most Kubernetes distributions, you can find more information about
 that role
 [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
-Apart from that role we need to create an additional one to have read access to the app repositories.
+Additionally, we need to create a role to give read access to App Repositories and bind it to our service account.
 
 ```
 export KUBEAPPS_NAMESPACE=kubeapps

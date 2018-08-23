@@ -1,11 +1,10 @@
-# The cleanup job is necessary to remove "apprepositories" created
-# in the bootstrap job or in the web application
+# Clean up the AppRepository resources used by this Kubeapps instance
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ template "kubeapps.apprepository-jobs-cleanup.fullname" . }}
   annotations:
-    helm.sh/hook: pre-delete
+    helm.sh/hook: post-delete
     helm.sh/hook-delete-policy: hook-succeeded
   labels:
     app: {{ template "kubeapps.apprepository-jobs-cleanup.fullname" . }}
