@@ -1,5 +1,5 @@
 import { shallow } from "enzyme";
-import { safeDump as yamlSafeSump } from "js-yaml";
+import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 import { hapi } from "../../shared/hapi/release";
 import { IResource } from "../../shared/types";
@@ -10,7 +10,7 @@ describe("AppViewComponent", () => {
   const generateYamlManifest = (items: any[]): string => {
     let yamlManifest = "";
     items.forEach(i => {
-      yamlManifest += "---\n" + yamlSafeSump(i);
+      yamlManifest += "---\n" + yamlSafeDump(i);
     });
     return yamlManifest;
   };
@@ -40,18 +40,25 @@ describe("AppViewComponent", () => {
   });
 
   describe("State initialization", () => {
+    const resources = {
+      configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
+      deployment: {
+        apiVersion: "extensions/v1beta1",
+        kind: "Deployment",
+        metadata: { name: "deployment-one" },
+      },
+      service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
+    };
+
     /*
       The imported manifest contains one deployment, one service, one config map and some bogus manifests.
       We only set websockets for deployment and services
     */
     it("sets a list of web sockets for its deployments and services", () => {
       const manifest = generateYamlManifest([
-        {
-          apiVersion: "extensions/v1beta1",
-          kind: "Deployment",
-          metadata: { name: "deployment-one" },
-        },
-        { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
+        resources.deployment,
+        resources.service,
+        resources.configMap,
       ]);
 
       const wrapper = shallow(<AppViewComponent {...validProps} />);
@@ -71,9 +78,7 @@ describe("AppViewComponent", () => {
 
     it("stores other k8s resources directly in the state", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
-      const manifest = generateYamlManifest([
-        { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
-      ]);
+      const manifest = generateYamlManifest([resources.configMap, resources.deployment]);
 
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
@@ -82,18 +87,21 @@ describe("AppViewComponent", () => {
       const configMap = otherResources["ConfigMap/cm-one"];
       expect(Object.keys(otherResources).length).toEqual(1);
 
+      // It sets the websocket for the deployment
+      const sockets: WebSocket[] = wrapper.state("sockets");
+      expect(sockets.length).toEqual(1);
+
       expect(configMap).toBeDefined();
       expect(configMap.metadata.name).toEqual("cm-one");
     });
 
     it("does not store empty resources, bogus or without kind attribute", () => {
-      // Only one element in the otherResources array
-      // This means that no other spurious bogus (i.e missing kind: ) definitions were added.
       const wrapper = shallow(<AppViewComponent {...validProps} />);
       const manifest = generateYamlManifest([
         { apiVersion: "v1", metadata: { name: "cm-one" } },
         {},
         "# This is a comment",
+        " ",
       ]);
 
       validProps.app.manifest = manifest;
@@ -101,6 +109,9 @@ describe("AppViewComponent", () => {
 
       const otherResources: Map<string, IResource> = wrapper.state("otherResources");
       expect(Object.keys(otherResources).length).toBe(0);
+
+      const sockets: WebSocket[] = wrapper.state("sockets");
+      expect(sockets.length).toEqual(0);
     });
   });
 });
