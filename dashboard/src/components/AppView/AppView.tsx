@@ -14,12 +14,13 @@ import "./AppView.css";
 import ChartInfo from "./ChartInfo";
 import ServiceTable from "./ServiceTable";
 
-interface IAppViewProps {
+export interface IAppViewProps {
   namespace: string;
   releaseName: string;
   app: hapi.release.Release;
-  error: Error;
-  deleteError: Error;
+  // TODO(miguel) how to make optional props? I tried adding error? but the container complains
+  error: Error | undefined;
+  deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => Promise<void>;
   deleteApp: (releaseName: string, namespace: string) => Promise<boolean>;
 }
@@ -74,7 +75,11 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     if (!newApp) {
       return;
     }
-    const manifest: IResource[] = yaml.safeLoadAll(newApp.manifest);
+    let manifest: IResource[] = yaml.safeLoadAll(newApp.manifest);
+    // Filter out elements in the manifest that does not comply
+    // with { kind: foo }
+    manifest = manifest.filter(r => r && r.kind);
+
     const watchedKinds = ["Deployment", "Service"];
     const otherResources = manifest
       .filter(d => watchedKinds.indexOf(d.kind) < 0)
