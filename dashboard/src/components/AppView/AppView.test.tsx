@@ -1,16 +1,24 @@
 import { shallow } from "enzyme";
+import { safeDump as yamlSafeSump } from "js-yaml";
 import * as React from "react";
 import { hapi } from "../../shared/hapi/release";
 import { IResource } from "../../shared/types";
 import AppViewComponent, { IAppViewProps } from "./AppView";
-import manifest from "./testdata/test-k8s-manifest";
 
 describe("AppViewComponent", () => {
+  // Generates a Yaml file separated by --- containing every object passed.
+  const generateYamlManifest = (items: any[]): string => {
+    let yamlManifest = "";
+    items.forEach(i => {
+      yamlManifest += "---\n" + yamlSafeSump(i);
+    });
+    return yamlManifest;
+  };
+
   let validProps: IAppViewProps;
   beforeEach(() => {
     const appRelease = hapi.release.Release.create({
       info: hapi.release.Info.create(),
-      manifest,
       namespace: "weee",
     });
 
@@ -37,7 +45,17 @@ describe("AppViewComponent", () => {
       We only set websockets for deployment and services
     */
     it("sets a list of web sockets for its deployments and services", () => {
+      const manifest = generateYamlManifest([
+        {
+          apiVersion: "extensions/v1beta1",
+          kind: "Deployment",
+          metadata: { name: "deployment-one" },
+        },
+        { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
+      ]);
+
       const wrapper = shallow(<AppViewComponent {...validProps} />);
+      validProps.app.manifest = manifest;
       // setProps again so we trigger componentWillReceiveProps
       wrapper.setProps(validProps);
       const sockets: WebSocket[] = wrapper.state("sockets");
@@ -53,15 +71,36 @@ describe("AppViewComponent", () => {
 
     it("stores other k8s resources directly in the state", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const manifest = generateYamlManifest([
+        { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
+      ]);
+
+      validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
+
       const otherResources: Map<string, IResource> = wrapper.state("otherResources");
       const configMap = otherResources["ConfigMap/cm-one"];
-      // Only one element in the otherResources array
-      // This means that no other spurious bogus (i.e missing kind: ) definitions were added.
       expect(Object.keys(otherResources).length).toEqual(1);
-      // The config map is stored
+
       expect(configMap).toBeDefined();
       expect(configMap.metadata.name).toEqual("cm-one");
+    });
+
+    it("does not store empty resources, bogus or without kind attribute", () => {
+      // Only one element in the otherResources array
+      // This means that no other spurious bogus (i.e missing kind: ) definitions were added.
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const manifest = generateYamlManifest([
+        { apiVersion: "v1", metadata: { name: "cm-one" } },
+        {},
+        "# This is a comment",
+      ]);
+
+      validProps.app.manifest = manifest;
+      wrapper.setProps(validProps);
+
+      const otherResources: Map<string, IResource> = wrapper.state("otherResources");
+      expect(Object.keys(otherResources).length).toBe(0);
     });
   });
 });
