@@ -584,7 +584,7 @@ func Test_getChartVersionReadme(t *testing.T) {
 			"1.1.1",
 			nil,
 			models.ChartFiles{ID: "my-repo/my-chart"},
-			http.StatusOK,
+			http.StatusNotFound,
 		},
 	}
 
