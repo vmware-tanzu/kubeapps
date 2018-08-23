@@ -63,6 +63,7 @@ To remove Kubeapps from your cluster, simply run:
 
 ```bash
 helm delete --purge kubeapps
+kubectl delete crd apprepositories.kubeapps.com
 ```
 
 To delete the `kubeapps-operator` ServiceAccount and ClusterRoleBinding,
