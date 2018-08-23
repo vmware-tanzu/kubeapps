@@ -2,22 +2,6 @@
 
 
 [[projects]]
-  name = "cloud.google.com/go"
-  packages = ["compute/metadata"]
-  revision = "0fd7230b2a7505833d5f69b75cbd6c9582401479"
-  version = "v0.23.0"
-
-[[projects]]
-  name = "github.com/Azure/go-autorest"
-  packages = [
-    "autorest",
-    "autorest/adal",
-    "autorest/azure",
-    "autorest/date"
-  ]
-  revision = "58f6f26e200fa5dfb40c9cd1c83f3e2c860d779d"
-
-[[projects]]
   name = "github.com/BurntSushi/toml"
   packages = ["."]
   revision = "b26d9c308763d68093482582cea63d69be07a0f0"
@@ -60,25 +44,10 @@
   version = "v1.1.0"
 
 [[projects]]
-  name = "github.com/dgrijalva/jwt-go"
-  packages = ["."]
-  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
-  version = "v3.2.0"
-
-[[projects]]
   name = "github.com/disintegration/imaging"
   packages = ["."]
   revision = "bbcee2f5c9d5e94ca42c8b50ec847fec64a6c134"
   version = "v1.4.2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/docker/spdystream"
-  packages = [
-    ".",
-    "spdy"
-  ]
-  revision = "bc6354cbbc295e925e4c611ffe90c1f287ee54db"
 
 [[projects]]
   name = "github.com/elazarl/go-bindata-assetfs"
@@ -212,20 +181,6 @@
   version = "v0.2.0"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/gophercloud/gophercloud"
-  packages = [
-    ".",
-    "openstack",
-    "openstack/identity/v2/tenants",
-    "openstack/identity/v2/tokens",
-    "openstack/identity/v3/tokens",
-    "openstack/utils",
-    "pagination"
-  ]
-  revision = "5bd6a8f0bae89676ade094aa429146a25bf782e0"
-
-[[projects]]
   name = "github.com/gorilla/context"
   packages = ["."]
   revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
@@ -236,16 +191,6 @@
   packages = ["."]
   revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
   version = "v1.6.2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/gosuri/uitable"
-  packages = [
-    ".",
-    "util/strutil",
-    "util/wordwrap"
-  ]
-  revision = "36ee7e946282a3fb1cfecd476ddc9b35d8847e42"
 
 [[projects]]
   branch = "master"
@@ -309,10 +254,7 @@
 
 [[projects]]
   name = "github.com/ksonnet/kubecfg"
-  packages = [
-    "pkg/kubecfg",
-    "utils"
-  ]
+  packages = ["utils"]
   revision = "8634737e0b22b01bb93ffeb09a195d0a6d71a6e5"
 
 [[projects]]
@@ -334,18 +276,6 @@
     "jwriter"
   ]
   revision = "3fdea8d05856a0c8df22ed4bc71b3219245e4485"
-
-[[projects]]
-  name = "github.com/mattn/go-isatty"
-  packages = ["."]
-  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
-  version = "v0.0.3"
-
-[[projects]]
-  name = "github.com/mattn/go-runewidth"
-  packages = ["."]
-  revision = "9e777a8366cce605130a531d2cd6363d07ad7317"
-  version = "v0.0.2"
 
 [[projects]]
   name = "github.com/matttproud/golang_protobuf_extensions"
@@ -417,18 +347,6 @@
   revision = "94663424ae5ae9856b40a9f170762b4197024661"
 
 [[projects]]
-  name = "github.com/rakyll/statik"
-  packages = ["fs"]
-  revision = "fd36b3595eb2ec8da4b8153b107f7ea08504899d"
-  version = "v0.1.1"
-
-[[projects]]
-  name = "github.com/sergi/go-diff"
-  packages = ["diffmatchpatch"]
-  revision = "1744e2970ca51c86172c8190fadad617561ed6e7"
-  version = "v1.0.0"
-
-[[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
@@ -474,21 +392,6 @@
   version = "v0.3.0"
 
 [[projects]]
-  name = "github.com/yudai/gojsondiff"
-  packages = [
-    ".",
-    "formatter"
-  ]
-  revision = "7b1b7adf999dab73a6eb02669c3d82dbb27a3dd6"
-  version = "1.0.0"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/yudai/golcs"
-  packages = ["."]
-  revision = "ecda9a501e8220fae3b4b600c3db4b0ba22cfc68"
-
-[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
@@ -519,7 +422,6 @@
   name = "golang.org/x/net"
   packages = [
     "context",
-    "context/ctxhttp",
     "http/httpguts",
     "http2",
     "http2/hpack",
@@ -528,18 +430,6 @@
     "trace"
   ]
   revision = "1e491301e022f8f977054da4c2d852decd59571f"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/oauth2"
-  packages = [
-    ".",
-    "google",
-    "internal",
-    "jws",
-    "jwt"
-  ]
-  revision = "1e0a3fa8ba9a5c9eb35c271780101fdaf1b205d7"
 
 [[projects]]
   branch = "master"
@@ -571,23 +461,6 @@
   ]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
-
-[[projects]]
-  name = "google.golang.org/appengine"
-  packages = [
-    ".",
-    "internal",
-    "internal/app_identity",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/modules",
-    "internal/remote_api",
-    "internal/urlfetch",
-    "urlfetch"
-  ]
-  revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
-  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -712,8 +585,6 @@
     "pkg/util/diff",
     "pkg/util/errors",
     "pkg/util/framer",
-    "pkg/util/httpstream",
-    "pkg/util/httpstream/spdy",
     "pkg/util/intstr",
     "pkg/util/json",
     "pkg/util/mergepatch",
@@ -728,7 +599,6 @@
     "pkg/version",
     "pkg/watch",
     "third_party/forked/golang/json",
-    "third_party/forked/golang/netutil",
     "third_party/forked/golang/reflect"
   ]
   revision = "019ae5ada31de202164b118aee88ee2d14075c31"
@@ -846,15 +716,9 @@
     "listers/storage/v1",
     "listers/storage/v1beta1",
     "pkg/version",
-    "plugin/pkg/client/auth",
-    "plugin/pkg/client/auth/azure",
-    "plugin/pkg/client/auth/gcp",
-    "plugin/pkg/client/auth/oidc",
-    "plugin/pkg/client/auth/openstack",
     "rest",
     "rest/watch",
     "testing",
-    "third_party/forked/golang/template",
     "tools/auth",
     "tools/cache",
     "tools/clientcmd",
@@ -863,16 +727,13 @@
     "tools/clientcmd/api/v1",
     "tools/metrics",
     "tools/pager",
-    "tools/portforward",
     "tools/record",
     "tools/reference",
     "transport",
-    "transport/spdy",
     "util/cert",
     "util/flowcontrol",
     "util/homedir",
     "util/integer",
-    "util/jsonpath",
     "util/workqueue"
   ]
   revision = "2ae454230481a7cb5544325e12ad7658ecccd19b"
@@ -911,6 +772,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "51a3d63f3a76923268f58bb675a34afa4104db0bf48aaa746223f22940718c20"
+  inputs-digest = "30828941f40c8c7dd33bdc8cc2837de9d1c30da267cb7c1e392979e1f7968b74"
   solver-name = "gps-cdcl"
   solver-version = 1
