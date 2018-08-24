@@ -1,9 +1,17 @@
 import { shallow } from "enzyme";
 import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
+
 import { hapi } from "../../shared/hapi/release";
-import { IResource } from "../../shared/types";
+import { IResource, ForbiddenError, NotFoundError } from "../../shared/types";
+import DeploymentStatus from "../DeploymentStatus";
+import { PermissionsErrorAlert, NotFoundErrorAlert } from "../ErrorAlert";
+import AppControls from "./AppControls";
+import AppDetails from "./AppDetails";
+import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
+import ChartInfo from "./ChartInfo";
+import ServiceTable from "./ServiceTable";
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -112,6 +120,38 @@ describe("AppViewComponent", () => {
 
       const sockets: WebSocket[] = wrapper.state("sockets");
       expect(sockets.length).toEqual(0);
+    });
+  });
+
+  describe("renderization", () => {
+    it("renders all the elements of an application", () => {
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      expect(wrapper.find(ChartInfo).exists()).toBe(true);
+      expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
+      expect(wrapper.find(AppControls).exists()).toBe(true);
+      expect(wrapper.find(ServiceTable).exists()).toBe(true);
+      expect(wrapper.find(AppNotes).exists()).toBe(true);
+      expect(wrapper.find(AppDetails).exists()).toBe(true);
+    });
+    it("renders a forbidden error if it exists", () => {
+      const wrapper = shallow(
+        <AppViewComponent {...validProps} deleteError={new ForbiddenError()} />,
+      );
+      expect(wrapper.find(PermissionsErrorAlert).exists()).toBe(true);
+      expect(wrapper.find(PermissionsErrorAlert).props()).toMatchObject({
+        action: 'delete Application "mr-sunshine"',
+        namespace: "my-happy-place",
+      });
+    });
+    it("renders a not-found error if it exists", () => {
+      const wrapper = shallow(
+        <AppViewComponent {...validProps} deleteError={new NotFoundError()} />,
+      );
+      expect(wrapper.find(NotFoundErrorAlert).exists()).toBe(true);
+      expect(wrapper.find(NotFoundErrorAlert).props()).toMatchObject({
+        namespace: "my-happy-place",
+        resource: 'Application "mr-sunshine"',
+      });
     });
   });
 });

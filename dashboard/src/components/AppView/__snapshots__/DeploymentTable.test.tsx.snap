@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a deployment ready 1`] = `
+<table>
+  <thead>
+    <tr>
+      <th>
+        NAME
+      </th>
+      <th>
+        DESIRED
+      </th>
+      <th>
+        UP-TO-DATE
+      </th>
+      <th>
+        AVAILABLE
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <DeploymentItem
+      deployment={
+        Object {
+          "kind": "Deployment",
+          "metadata": Object {
+            "name": "foo",
+          },
+          "status": Object {},
+        }
+      }
+      key="foo"
+    />
+  </tbody>
+</table>
+`;

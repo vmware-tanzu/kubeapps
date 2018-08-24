@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a deployment ready 1`] = `
+<tr>
+  <td>
+    deployment-one
+  </td>
+  <td>
+    1
+  </td>
+  <td>
+    1
+  </td>
+  <td>
+    1
+  </td>
+</tr>
+`;
