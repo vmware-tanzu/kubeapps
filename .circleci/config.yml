@@ -4,23 +4,44 @@ workflows:
   version: 2
   kubeapps:
     jobs:
-      - test_go
-      - test_dashboard
+      - test_go:
+          filters:
+            tags:
+              only: /^v.*/
+      - test_dashboard:
+          filters:
+            tags:
+              only: /^v.*/
       - build_chartrepo:
           requires:
             - test_go
+          filters:
+            tags:
+              only: /^v.*/
       - build_chartsvc:
           requires:
             - test_go
+          filters:
+            tags:
+              only: /^v.*/
       - build_chart_apprepository:
           requires:
             - test_go
+          filters:
+            tags:
+              only: /^v.*/
       - build_dashboard:
           requires:
             - test_dashboard
+          filters:
+            tags:
+              only: /^v.*/
       - build_tiller_proxy:
           requires:
             - test_go
+          filters:
+            tags:
+              only: /^v.*/
       - GKE_1_9:
           requires:
             - build_chartrepo
@@ -28,6 +49,11 @@ workflows:
             - build_chart_apprepository
             - build_dashboard
             - build_tiller_proxy
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: master
       - GKE_1_10:
           requires:
             - build_chartrepo
@@ -35,10 +61,20 @@ workflows:
             - build_chart_apprepository
             - build_dashboard
             - build_tiller_proxy
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: master
       - release:
           requires:
             - GKE_1_9
             - GKE_1_10
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: master
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
