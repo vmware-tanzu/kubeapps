@@ -14,7 +14,8 @@ const defaultProps = {
 
 it("renders a deployment details", () => {
   const deployments = new Map<string, IResource>();
-  deployments.foo = {
+  const dep = "foo";
+  deployments[dep] = {
     kind: "Deployment",
     metadata: {
       name: "foo",
@@ -27,7 +28,8 @@ it("renders a deployment details", () => {
 
 it("renders a services details", () => {
   const services = new Map<string, IResource>();
-  services.foo = {
+  const svc = "foo";
+  services[svc] = {
     kind: "Service",
     metadata: {
       name: "foo",
@@ -44,14 +46,16 @@ it("renders a services details", () => {
 
 it("renders a other resources details", () => {
   const otherResources = new Map<string, IResource>();
-  otherResources.r1 = {
+  const r1 = "foo";
+  otherResources[r1] = {
     kind: "Secret",
     metadata: {
       name: "foo",
     },
     status: {},
   } as IResource;
-  otherResources.r2 = {
+  const r2 = "bar";
+  otherResources[r2] = {
     kind: "PersistentVolume",
     metadata: {
       name: "foo",

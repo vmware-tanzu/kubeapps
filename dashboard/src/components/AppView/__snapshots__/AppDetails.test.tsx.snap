@@ -17,7 +17,7 @@ exports[`renders a other resources details 1`] = `
     <table>
       <tbody>
         <tr
-          key="r1"
+          key="foo"
         >
           <td>
             Secret
@@ -28,7 +28,7 @@ exports[`renders a other resources details 1`] = `
           </td>
         </tr>
         <tr
-          key="r2"
+          key="bar"
         >
           <td>
             PersistentVolume
