@@ -5,18 +5,43 @@ exports[`renders an error if it exists 1`] = `
   app={Object {}}
   bindingsWithSecrets={Array []}
   chartName=""
-  checkChart={[Function]}
-  clearRepo={[Function]}
+  checkChart={[MockFunction]}
+  clearRepo={[MockFunction]}
   error={[Error: foo doesn't exists]}
-  fetchChartVersions={[Function]}
-  fetchRepositories={[Function]}
-  getApp={[Function]}
-  getBindings={[Function]}
-  getChartValues={[Function]}
-  getChartVersion={[Function]}
+  fetchChartVersions={[MockFunction]}
+  fetchRepositories={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+        Array [],
+        Array [],
+      ],
+    }
+  }
+  getApp={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "foo",
+          "default",
+        ],
+        Array [
+          "foo",
+          "default",
+        ],
+        Array [
+          "foo",
+          "default",
+        ],
+      ],
+    }
+  }
+  getBindings={[MockFunction]}
+  getChartValues={[MockFunction]}
+  getChartVersion={[MockFunction]}
   kubeappsNamespace="kubeapps"
   namespace="default"
-  push={[Function]}
+  push={[MockFunction]}
   releaseName="foo"
   repo="stable"
   repos={
@@ -29,7 +54,7 @@ exports[`renders an error if it exists 1`] = `
     ]
   }
   selected={Object {}}
-  upgradeApp={[Function]}
+  upgradeApp={[MockFunction]}
   version="1.0.0"
 />
 `;
@@ -50,17 +75,37 @@ exports[`renders the repo selection form if not introduced 1`] = `
     }
     bindingsWithSecrets={Array []}
     chartName="bar"
-    checkChart={[Function]}
-    clearRepo={[Function]}
-    fetchChartVersions={[Function]}
-    fetchRepositories={[Function]}
-    getApp={[Function]}
-    getBindings={[Function]}
-    getChartValues={[Function]}
-    getChartVersion={[Function]}
+    checkChart={[MockFunction]}
+    clearRepo={[MockFunction]}
+    fetchChartVersions={[MockFunction]}
+    fetchRepositories={
+      [MockFunction] {
+        "calls": Array [
+          Array [],
+          Array [],
+        ],
+      }
+    }
+    getApp={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+        ],
+      }
+    }
+    getBindings={[MockFunction]}
+    getChartValues={[MockFunction]}
+    getChartVersion={[MockFunction]}
     kubeappsNamespace="kubeapps"
     namespace="default"
-    push={[Function]}
+    push={[MockFunction]}
     releaseName="foo"
     repo={Object {}}
     repos={
@@ -73,7 +118,7 @@ exports[`renders the repo selection form if not introduced 1`] = `
       ]
     }
     selected={Object {}}
-    upgradeApp={[Function]}
+    upgradeApp={[MockFunction]}
     version="1.0.0"
   />
 </div>
@@ -97,17 +142,47 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     appCurrentVersion="1.0.0"
     bindingsWithSecrets={Array []}
     chartName="bar"
-    checkChart={[Function]}
-    clearRepo={[Function]}
-    fetchChartVersions={[Function]}
-    fetchRepositories={[Function]}
-    getApp={[Function]}
-    getBindings={[Function]}
-    getChartValues={[Function]}
-    getChartVersion={[Function]}
+    checkChart={[MockFunction]}
+    clearRepo={[MockFunction]}
+    fetchChartVersions={[MockFunction]}
+    fetchRepositories={
+      [MockFunction] {
+        "calls": Array [
+          Array [],
+          Array [],
+          Array [],
+          Array [],
+        ],
+      }
+    }
+    getApp={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+        ],
+      }
+    }
+    getBindings={[MockFunction]}
+    getChartValues={[MockFunction]}
+    getChartVersion={[MockFunction]}
     kubeappsNamespace="kubeapps"
     namespace="default"
-    push={[Function]}
+    push={[MockFunction]}
     releaseName="foo"
     repo="stable"
     repos={
@@ -120,7 +195,7 @@ exports[`renders the upgrade form when the repo is available 1`] = `
       ]
     }
     selected={Object {}}
-    upgradeApp={[Function]}
+    upgradeApp={[MockFunction]}
     version="1.0.0"
   />
 </div>
