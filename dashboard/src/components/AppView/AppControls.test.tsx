@@ -1,4 +1,4 @@
-import { mount, shallow } from "enzyme";
+import { shallow } from "enzyme";
 import * as React from "react";
 import { Redirect } from "react-router";
 import { hapi } from "../../shared/hapi/release";
