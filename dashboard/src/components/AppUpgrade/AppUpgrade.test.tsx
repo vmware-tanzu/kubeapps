@@ -60,6 +60,8 @@ it("renders the repo selection form if not introduced", () => {
     />,
   );
   expect(wrapper.find(SelectRepoForm).exists()).toBe(true);
+  expect(wrapper.find(DeploymentErrors).exists()).toBe(false);
+  expect(wrapper.find(UpgradeForm).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -76,6 +78,8 @@ it("renders an error if it exists", () => {
     />,
   );
   expect(wrapper.find(DeploymentErrors).exists()).toBe(true);
+  expect(wrapper.find(SelectRepoForm).exists()).toBe(false);
+  expect(wrapper.find(UpgradeForm).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -102,5 +106,7 @@ it("renders the upgrade form when the repo is available", () => {
     />,
   );
   expect(wrapper.find(UpgradeForm).exists()).toBe(true);
+  expect(wrapper.find(DeploymentErrors).exists()).toBe(false);
+  expect(wrapper.find(SelectRepoForm).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
 });
