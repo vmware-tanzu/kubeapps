@@ -5,7 +5,7 @@ import { IResource } from "shared/types";
 import ServiceItem from "./ServiceItem";
 import ServiceTable from "./ServiceTable";
 
-it("renders a a table with a LoadBalancer", () => {
+it("renders a table with a service with a LoadBalancer", () => {
   const service = {
     metadata: {
       name: "foo",
@@ -23,7 +23,7 @@ it("renders a a table with a LoadBalancer", () => {
   });
 });
 
-it("renders a a table with a LoadBalancer", () => {
+it("renders a table with a service with a ClusterIP", () => {
   const service = {
     metadata: {
       name: "foo",
