@@ -36,9 +36,16 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 		if r.Status == "DELETED" {
 			status = release.Status_DELETED
 		}
+		version := int32(1)
+		for _, versionAdded := range helmClient.Rels {
+			if r.ReleaseName == versionAdded.GetName() {
+				version++
+			}
+		}
 		helmClient.Rels = append(helmClient.Rels, &release.Release{
 			Name:      r.ReleaseName,
 			Namespace: r.Namespace,
+			Version:   version,
 			Chart: &chart.Chart{
 				Metadata: &chart.Metadata{
 					Version: r.Version,
@@ -88,6 +95,24 @@ func TestListNamespacedRelease(t *testing.T) {
 		t.Errorf("It should return both releases")
 	}
 	if !reflect.DeepEqual([]AppOverview{app1}, releases) {
+		t.Errorf("Unexpected list of releases %v", releases)
+	}
+}
+
+func TestListOldRelease(t *testing.T) {
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	appUpgraded := AppOverview{"foo", "1.0.1", "my_ns", "icon.png", "DEPLOYED"}
+	proxy := newFakeProxy([]AppOverview{app, appUpgraded})
+
+	// Should avoid old release versions
+	releases, err := proxy.ListReleases(app.Namespace, 256)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	if len(releases) != 1 {
+		t.Errorf("It should return a sivnle release")
+	}
+	if !reflect.DeepEqual([]AppOverview{appUpgraded}, releases) {
 		t.Errorf("Unexpected list of releases %v", releases)
 	}
 }
