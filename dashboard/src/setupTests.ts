@@ -10,7 +10,7 @@ configure({ adapter: new Adapter() });
 // Mock browser specific APIs like localstorage or Websocket
 const localStorageMock = {
   clear: jest.fn(),
-  getItem: jest.fn(),
+  getItem: jest.fn(() => null),
   setItem: jest.fn(),
 };
 

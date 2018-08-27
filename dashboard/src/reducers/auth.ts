@@ -14,7 +14,10 @@ const initialState: IAuthState = {
   authenticating: false,
 };
 
-const authReducer = (state: IAuthState = initialState, action: AuthAction): IAuthState => {
+const authReducer = (
+  state: IAuthState = initialState,
+  action: AuthAction | { type: "NONE" },
+): IAuthState => {
   switch (action.type) {
     case getType(actions.auth.setAuthenticated):
       return { ...state, authenticated: action.authenticated, authenticating: false };
