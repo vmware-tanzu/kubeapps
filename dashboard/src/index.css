@@ -15,3 +15,9 @@ svg.icon {
   position: relative;
   bottom: -0.125em;
 }
+
+/* Override Hex underline text-decoration in buttons in alerts
+see: https://github.com/bitnami/hex/issues/216 */
+.alert .button {
+  text-decoration: none;
+}
