@@ -24,8 +24,8 @@ describe("authReducer", () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
-            type: getType(actions.auth.setAuthenticated),
             authenticated: e,
+            type: getType(actions.auth.setAuthenticated),
           }),
         ).toEqual({ ...initialState, authenticated: e });
       });
