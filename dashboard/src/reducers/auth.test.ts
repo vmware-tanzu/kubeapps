@@ -6,6 +6,12 @@ describe("authReducer", () => {
   let initialState: IAuthState;
   const errMessage = "It's a trap";
 
+  const actionTypes = {
+    authenticating: getType(actions.auth.authenticating),
+    authenticationError: getType(actions.auth.authenticationError),
+    setAuthenticated: getType(actions.auth.setAuthenticated),
+  };
+
   beforeEach(() => {
     initialState = {
       authenticated: false,
@@ -15,36 +21,38 @@ describe("authReducer", () => {
 
   describe("initial state", () => {
     it("sets authenticated false if no key is found in local storage", () => {
-      expect(authReducer(undefined, { type: "NONE" })).toEqual(initialState);
+      expect(authReducer(undefined, {} as any)).toEqual(initialState);
     });
   });
 
   describe("reducer actions", () => {
-    it("sets value passed in setAuthenticated", () => {
+    it(`sets value passed in ${actionTypes.setAuthenticated}`, () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
             authenticated: e,
-            type: getType(actions.auth.setAuthenticated),
+            type: actionTypes.setAuthenticated as any,
           }),
         ).toEqual({ ...initialState, authenticated: e });
       });
     });
 
-    it("resets authenticated and authenticating if type: AUTHENTICATING", () => {
+    it(`resets authenticated and authenticating if type ${actionTypes.authenticating}`, () => {
       expect(
         authReducer(
           { ...initialState, authenticated: true },
-          { type: getType(actions.auth.authenticating) },
+          { type: actionTypes.authenticating as any },
         ),
       ).toEqual({ ...initialState, authenticating: true, authenticated: false });
     });
 
-    it("resets authenticated, authenticating and sets error if type: AUTHENTICATION_ERROR", () => {
+    it(`resets authenticated, authenticating and sets error if type ${
+      actionTypes.authenticationError
+    }`, () => {
       expect(
         authReducer(
           { authenticating: true, authenticated: true },
-          { type: getType(actions.auth.authenticationError), errorMsg: errMessage },
+          { type: actionTypes.authenticationError as any, errorMsg: errMessage },
         ),
       ).toEqual({ ...initialState, authenticationError: errMessage });
     });
