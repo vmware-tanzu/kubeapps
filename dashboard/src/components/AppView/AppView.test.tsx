@@ -3,9 +3,9 @@ import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
-import { IResource, ForbiddenError, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
-import { PermissionsErrorAlert, NotFoundErrorAlert } from "../ErrorAlert";
+import { NotFoundErrorAlert, PermissionsErrorAlert } from "../ErrorAlert";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -133,22 +133,36 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(AppNotes).exists()).toBe(true);
       expect(wrapper.find(AppDetails).exists()).toBe(true);
     });
-    it("renders a forbidden error if it exists", () => {
+
+    it("renders an error if it exists", () => {
+      const wrapper = shallow(<AppViewComponent {...validProps} error={new NotFoundError()} />);
+      const err = wrapper.find(NotFoundErrorAlert);
+      expect(err.exists()).toBe(true);
+      expect(err.props()).toMatchObject({
+        namespace: "my-happy-place",
+        resource: 'Application "mr-sunshine"',
+      });
+    });
+
+    it("renders a forbidden delete-error if it exists", () => {
       const wrapper = shallow(
         <AppViewComponent {...validProps} deleteError={new ForbiddenError()} />,
       );
-      expect(wrapper.find(PermissionsErrorAlert).exists()).toBe(true);
-      expect(wrapper.find(PermissionsErrorAlert).props()).toMatchObject({
+      const err = wrapper.find(PermissionsErrorAlert);
+      expect(err.exists()).toBe(true);
+      expect(err.props()).toMatchObject({
         action: 'delete Application "mr-sunshine"',
         namespace: "my-happy-place",
       });
     });
-    it("renders a not-found error if it exists", () => {
+
+    it("renders a not-found delete-error if it exists", () => {
       const wrapper = shallow(
         <AppViewComponent {...validProps} deleteError={new NotFoundError()} />,
       );
-      expect(wrapper.find(NotFoundErrorAlert).exists()).toBe(true);
-      expect(wrapper.find(NotFoundErrorAlert).props()).toMatchObject({
+      const err = wrapper.find(NotFoundErrorAlert);
+      expect(err.exists()).toBe(true);
+      expect(err.props()).toMatchObject({
         namespace: "my-happy-place",
         resource: 'Application "mr-sunshine"',
       });
