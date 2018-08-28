@@ -237,8 +237,8 @@ func (p *Proxy) DeleteRelease(name, namespace string) error {
 	return nil
 }
 
-// Interface for exposed funcs
-type Interface interface {
+// TillerClient for exposed funcs
+type TillerClient interface {
 	GetReleaseStatus(relName string) (release.Status_Code, error)
 	ResolveManifest(namespace, values string, ch *chart.Chart) (string, error)
 	ListReleases(namespace string, releaseListLimit int) ([]AppOverview, error)

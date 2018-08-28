@@ -91,8 +91,8 @@ type Action struct {
 	Verbs       []string `json:"verbs"`
 }
 
-// Interface for the exported funcs
-type Interface interface {
+// Checker for the exported funcs
+type Checker interface {
 	Validate() error
 	GetForbiddenActions(namespace, action, manifest string) ([]Action, error)
 }

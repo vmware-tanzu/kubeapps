@@ -77,8 +77,8 @@ type HTTPClient interface {
 // LoadChart should return a Chart struct from an IOReader
 type LoadChart func(in io.Reader) (*chart.Chart, error)
 
-// Interface for exposed funcs
-type Interface interface {
+// Resolver for exposed funcs
+type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
 	GetChart(details *Details) (*chart.Chart, error)
 }

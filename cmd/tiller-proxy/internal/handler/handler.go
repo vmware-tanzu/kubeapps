@@ -117,7 +117,7 @@ func errorCodeWithDefault(err error, defaultCode int) int {
 	return errCode
 }
 
-func getChart(req *http.Request, cu chartUtils.Interface) (*chartUtils.Details, *chart.Chart, error) {
+func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *chart.Chart, error) {
 	defer req.Body.Close()
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -148,8 +148,8 @@ func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWrite
 type TillerProxy struct {
 	DisableAuth bool
 	ListLimit   int
-	ChartClient chartUtils.Interface
-	ProxyClient proxy.Interface
+	ChartClient chartUtils.Resolver
+	ProxyClient proxy.TillerClient
 }
 
 func (h *TillerProxy) logStatus(name string) {
@@ -175,7 +175,7 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Interface)
+		userAuth := req.Context().Value(userKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -210,7 +210,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Interface)
+		userAuth := req.Context().Value(userKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -264,7 +264,7 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Interface)
+		userAuth := req.Context().Value(userKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "get", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
@@ -291,7 +291,7 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Interface)
+		userAuth := req.Context().Value(userKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "delete", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
