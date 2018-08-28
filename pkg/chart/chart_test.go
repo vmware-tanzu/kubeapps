@@ -127,7 +127,8 @@ func TestParseDetails(t *testing.T) {
 			},
 		},
 	}
-	details, err := ParseDetails([]byte(data))
+	ch := Chart{}
+	details, err := ch.ParseDetails([]byte(data))
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
@@ -197,7 +198,12 @@ func TestGetChart(t *testing.T) {
 	}
 	httpClient := newHTTPClient([]Details{target})
 	kubeClient := fake.NewSimpleClientset()
-	ch, err := GetChart(&target, kubeClient, &httpClient, fakeLoadChart)
+	chUtils := Chart{
+		kubeClient: kubeClient,
+		netClient:  &httpClient,
+		load:       fakeLoadChart,
+	}
+	ch, err := chUtils.GetChart(&target)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

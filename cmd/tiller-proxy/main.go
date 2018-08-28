@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
@@ -28,17 +29,25 @@ import (
 	"github.com/urfave/negroni"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	helmChartUtil "k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
 
+	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
+)
+
+const (
+	defaultTimeoutSeconds = 180
 )
 
 var (
 	settings    environment.EnvSettings
 	proxy       *tillerProxy.Proxy
 	kubeClient  kubernetes.Interface
+	netClient   *http.Client
 	disableAuth bool
 	listLimit   int
 
@@ -63,6 +72,10 @@ func init() {
 	pflag.BoolVar(&tlsEnable, "tls", false, "enable TLS for request")
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
+
+	netClient = &http.Client{
+		Timeout: time.Second * defaultTimeoutSeconds,
+	}
 }
 
 func main() {
@@ -112,6 +125,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
+	chartutils := chartUtils.NewChart(kubeClient, netClient, helmChartUtil.LoadArchive)
 
 	r := mux.NewRouter()
 
@@ -120,33 +134,40 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := authGate()
+	authGate := handler.AuthGate()
 
+	// HTTP Handler
+	h := handler.TillerProxy{
+		DisableAuth: disableAuth,
+		ListLimit:   listLimit,
+		ChartClient: chartutils,
+		ProxyClient: proxy,
+	}
 	// Routes
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(WithoutParams(listAllReleases)),
+		negroni.Wrap(handler.WithoutParams(h.ListAllReleases)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(WithParams(listReleases)),
+		negroni.Wrap(handler.WithParams(h.ListReleases)),
 	))
 	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(WithParams(createRelease)),
+		negroni.Wrap(handler.WithParams(h.CreateRelease)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(WithParams(getRelease)),
+		negroni.Wrap(handler.WithParams(h.GetRelease)),
 	))
 	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(WithParams(upgradeRelease)),
+		negroni.Wrap(handler.WithParams(h.UpgradeRelease)),
 	))
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(WithParams(deleteRelease)),
+		negroni.Wrap(handler.WithParams(h.DeleteRelease)),
 	))
 
 	n := negroni.Classic()

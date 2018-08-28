@@ -91,6 +91,12 @@ type Action struct {
 	Verbs       []string `json:"verbs"`
 }
 
+// Checker for the exported funcs
+type Checker interface {
+	Validate() error
+	GetForbiddenActions(namespace, action, manifest string) ([]Action, error)
+}
+
 // NewAuth creates an auth agent
 func NewAuth(token string) (*UserAuth, error) {
 	config, err := rest.InClusterConfig()
@@ -100,6 +106,9 @@ func NewAuth(token string) (*UserAuth, error) {
 	// Overwrite default token
 	config.BearerToken = token
 	kubeClient, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
 	authCli := kubeClient.AuthorizationV1()
 	discoveryCli := kubeClient.Discovery()
 	k8sAuthCli := k8sAuth{
