@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`displays an error if the authenticate handler throws an error 1`] = `
+exports[`displays an error if the authentication error is passed 1`] = `
 <section
   className="LoginForm"
 >
@@ -15,15 +15,6 @@ exports[`displays an error if the authenticate handler throws an error 1`] = `
         role="alert"
       >
         There was an error connecting to the Kubernetes API. Please check that your token is valid.
-        <button
-          className="alert__close"
-          onClick={[Function]}
-        >
-          <X
-            color="currentColor"
-            size="24"
-          />
-        </button>
       </div>
     </div>
     <div

@@ -1,24 +1,24 @@
 import { Location } from "history";
 import * as React from "react";
-import { Lock, X } from "react-feather";
+import { Lock } from "react-feather";
 import { Redirect } from "react-router";
 
 import "./LoginForm.css";
 
 interface ILoginFormProps {
   authenticated: boolean;
+  authenticating: boolean;
+  authenticationError: string | undefined;
   authenticate: (token: string) => any;
   location: Location;
 }
 
 interface ILoginFormState {
-  authenticating: boolean;
   token: string;
-  error?: string;
 }
 
 class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
-  public state: ILoginFormState = { token: "", authenticating: false };
+  public state: ILoginFormState = { token: "" };
   public render() {
     if (this.props.authenticated) {
       const { from } = this.props.location.state || { from: { pathname: "/" } };
@@ -28,13 +28,10 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
       <section className="LoginForm">
         <div className="LoginForm__container padding-v-bigger bg-skew">
           <div className="container container-tiny">
-            {this.state.error && (
+            {this.props.authenticationError && (
               <div className="alert alert-error margin-c" role="alert">
                 There was an error connecting to the Kubernetes API. Please check that your token is
                 valid.
-                <button className="alert__close" onClick={this.handleAlertClose}>
-                  <X />
-                </button>
               </div>
             )}
           </div>
@@ -71,7 +68,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
                     <button
                       type="submit"
                       className="button button-accent"
-                      disabled={this.state.authenticating}
+                      disabled={this.props.authenticating}
                     >
                       Login
                     </button>
@@ -87,21 +84,12 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
 
   private handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    this.setState({ authenticating: true });
     const { token } = this.state;
-    try {
-      return token && (await this.props.authenticate(token));
-    } catch (e) {
-      this.setState({ error: e.toString(), token: "", authenticating: false });
-    }
+    return token && (await this.props.authenticate(token));
   };
 
   private handleTokenChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ token: e.currentTarget.value });
-  };
-
-  private handleAlertClose = (e: React.FormEvent<HTMLButtonElement>) => {
-    this.setState({ error: undefined });
   };
 }
 

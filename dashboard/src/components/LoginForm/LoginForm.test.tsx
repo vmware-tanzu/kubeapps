@@ -12,19 +12,25 @@ const emptyLocation: Location = {
   state: "",
 };
 
+const defaultProps = {
+  authenticate: jest.fn(),
+  authenticated: false,
+  authenticating: false,
+  authenticationError: undefined,
+  location: emptyLocation,
+};
+
+const authenticationError = "it's a trap";
+
 it("renders a token login form", () => {
-  const wrapper = shallow(
-    <LoginForm authenticated={false} authenticate={jest.fn()} location={emptyLocation} />,
-  );
+  const wrapper = shallow(<LoginForm {...defaultProps} />);
   expect(wrapper.find("input#token").exists()).toBe(true);
   expect(wrapper.find(Redirect).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
 });
 
 it("renders a link to the access control documentation", () => {
-  const wrapper = shallow(
-    <LoginForm authenticated={false} authenticate={jest.fn()} location={emptyLocation} />,
-  );
+  const wrapper = shallow(<LoginForm {...defaultProps} />);
   expect(wrapper.find("a").props()).toMatchObject({
     href: "https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md",
     target: "_blank",
@@ -32,28 +38,24 @@ it("renders a link to the access control documentation", () => {
 });
 
 it("updates the token in the state when the input is changed", () => {
-  const wrapper = shallow(
-    <LoginForm authenticated={false} authenticate={jest.fn()} location={emptyLocation} />,
-  );
+  const wrapper = shallow(<LoginForm {...defaultProps} />);
   wrapper.find("input#token").simulate("change", { currentTarget: { value: "f00b4r" } });
   expect(wrapper.state("token")).toBe("f00b4r");
 });
 
 describe("redirect if authenticated", () => {
   it("redirects to / if no current location", () => {
-    const wrapper = shallow(
-      <LoginForm authenticated={true} authenticate={jest.fn()} location={emptyLocation} />,
-    );
+    const wrapper = shallow(<LoginForm {...defaultProps} authenticated={true} />);
     const redirect = wrapper.find(Redirect);
     expect(redirect.exists()).toBe(true);
     expect(redirect.props()).toEqual({ push: false, to: { pathname: "/" } });
   });
 
   it("redirects to previous location", () => {
-    const location = emptyLocation;
+    const location = Object.assign({}, emptyLocation);
     location.state = { from: "/test" };
     const wrapper = shallow(
-      <LoginForm authenticated={true} authenticate={jest.fn()} location={location} />,
+      <LoginForm {...defaultProps} authenticated={true} location={location} />,
     );
     const redirect = wrapper.find(Redirect);
     expect(redirect.exists()).toBe(true);
@@ -62,49 +64,25 @@ describe("redirect if authenticated", () => {
 });
 
 it("calls the authenticate handler when the form is submitted", () => {
-  const authenticate = jest.fn();
-  const wrapper = shallow(
-    <LoginForm authenticated={false} authenticate={authenticate} location={emptyLocation} />,
-  );
+  const wrapper = shallow(<LoginForm {...defaultProps} />);
   wrapper.find("input#token").simulate("change", { currentTarget: { value: "f00b4r" } });
   wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
-  expect(authenticate).toBeCalledWith("f00b4r");
-  expect(wrapper.state("authenticating")).toBe(true);
+  expect(defaultProps.authenticate).toBeCalledWith("f00b4r");
 });
 
-it("displays an error if the authenticate handler throws an error", async () => {
-  const authenticate = async () => {
-    throw new Error("it's a trap");
-  };
+it("displays an error if the authentication error is passed", () => {
   const wrapper = shallow(
-    <LoginForm authenticated={false} authenticate={authenticate} location={emptyLocation} />,
+    <LoginForm {...defaultProps} authenticationError={authenticationError} />,
   );
-  wrapper.find("input#token").simulate("change", { currentTarget: { value: "f00b4r" } });
-  wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
 
-  // wait for promise to resolve
-  try {
-    await authenticate();
-  } catch (e) {
-    expect(wrapper.state()).toMatchObject({
-      authenticating: false,
-      error: e.toString(),
-    });
-
-    wrapper.update();
-    expect(wrapper.find(".alert-error").exists()).toBe(true);
-    expect(wrapper).toMatchSnapshot();
-  }
-});
-
-it("allows you to dismiss the error alert", () => {
-  const wrapper = shallow(
-    <LoginForm authenticated={false} authenticate={jest.fn()} location={emptyLocation} />,
-  );
-  wrapper.setState({ error: "it's a trap" });
   expect(wrapper.find(".alert-error").exists()).toBe(true);
+  expect(wrapper).toMatchSnapshot();
+});
 
-  wrapper.find("button.alert__close").simulate("click");
-  expect(wrapper.find(".alert-error").exists()).toBe(false);
-  expect(wrapper.state("error")).toBeUndefined();
+it("disables the input if authenticating", () => {
+  const wrapper = shallow(<LoginForm {...defaultProps} />);
+
+  expect(wrapper.find(".button").props().disabled).toBe(false);
+  wrapper.setProps({ authenticating: true });
+  expect(wrapper.find(".button")).toBeDisabled();
 });
