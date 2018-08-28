@@ -1,12 +1,16 @@
 #!/bin/bash
 set -e
 
+function getLatestTag {
+  git fetch --tags
+  git describe --tags $(git rev-list --tags --max-count=1)
+}
+
 function commit_list {
   local tag=${1:?}
   local repo_domain=${2:?}
   local repo_name=${3:?}
-  git fetch --tags
-  local previous_tag=`git describe --tags $(git rev-list --tags --max-count=1)`
+  local previous_tag=$(getLatestTag)
   local commit_list=`git log $previous_tag..$tag --pretty=format:"- %s %H (%an)"`
   echo "$commit_list"
 }

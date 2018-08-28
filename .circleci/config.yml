@@ -65,6 +65,11 @@ workflows:
             - build_chart_apprepository
             - build_dashboard
             - build_tiller_proxy
+      - sync_chart:
+          <<: *build_on_master
+          requires:
+            - GKE_1_9
+            - GKE_1_10
       - release:
           <<: *build_on_tag
           requires:
@@ -199,3 +204,18 @@ jobs:
     environment:
       HELM_VERSION: v2.9.1
       GKE_BRANCH: 1.10
+  sync_chart:
+    docker:
+      - image: circleci/golang:1.9
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - "cc:ed:2d:1f:74:3b:32:c3:99:62:d7:7d:81:af:01:e0"
+      - run: |
+          if ls ~/.ssh/id_rsa_* 1> /dev/null 2>&1; then
+            # Change order to use configured ssh_key first
+            ssh-add -D
+            ssh-add ~/.ssh/id_rsa_* ~/.ssh/id_rsa
+          fi
+          ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
