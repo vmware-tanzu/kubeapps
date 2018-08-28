@@ -24,8 +24,8 @@ it("renders a simple view with IP", () => {
       name: "foo",
     },
     spec: {
-      type: "LoadBalancer",
       ports: [{ port: 80 }],
+      type: "LoadBalancer",
     },
     status: {
       loadBalancer: {
@@ -39,18 +39,9 @@ it("renders a simple view with IP", () => {
 
 it("renders an extended view with IP", () => {
   const service = {
-    metadata: {
-      name: "foo",
-    },
-    spec: {
-      type: "LoadBalancer",
-      ports: [{ port: 80, protocol: "http" }],
-    },
-    status: {
-      loadBalancer: {
-        ingress: [{ ip: "1.2.3.4" }],
-      },
-    },
+    metadata: { name: "foo" },
+    spec: { ports: [{ port: 80, protocol: "http" }], type: "LoadBalancer" },
+    status: { loadBalancer: { ingress: [{ ip: "1.2.3.4" }] } },
   } as IResource;
   const wrapper = shallow(<ServiceItem service={service} extended={true} />);
   expect(wrapper).toMatchSnapshot();

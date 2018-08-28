@@ -1,8 +1,8 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
-import DeploymentItem from "./DeploymentItem";
 import { IResource } from "shared/types";
+import DeploymentItem from "./DeploymentItem";
 
 it("renders a deployment ready", () => {
   const wrapper = shallow(

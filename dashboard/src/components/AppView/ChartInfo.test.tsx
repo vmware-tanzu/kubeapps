@@ -1,23 +1,23 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
-import ChartInfo from "./ChartInfo";
 import { hapi } from "shared/hapi/release";
+import ChartInfo from "./ChartInfo";
 
 it("renders a app item", () => {
   const wrapper = shallow(
     <ChartInfo
       app={
         {
-          name: "foo",
           chart: {
             metadata: {
               appVersion: "0.0.1",
-              version: "1.0.0",
-              icon: "icon.png",
               description: "test chart",
+              icon: "icon.png",
+              version: "1.0.0",
             },
           },
+          name: "foo",
         } as hapi.release.Release
       }
     />,
