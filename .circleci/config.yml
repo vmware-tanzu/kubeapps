@@ -95,7 +95,7 @@ build_image: &build_image
     - <<: *exports
     - run: make VERSION="$VERSION" $IMAGE
     - run: |
-        if [[ -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
+        if [[ -z "$CIRCLE_PULL_REQUEST" ]]; then
           docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
           if [[ -n "$CIRCLE_TAG" ]]; then 
             docker push $IMAGE:$VERSION
