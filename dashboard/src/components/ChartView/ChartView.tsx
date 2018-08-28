@@ -90,9 +90,13 @@ class ChartView extends React.Component<IChartViewProps> {
                     <div className="ChartViewSidebar__section">
                       <h2>Home</h2>
                       <div>
-                        <a href={chartAttrs.home} target="_blank">
-                          {chartAttrs.home}
-                        </a>
+                        <ul className="remove-style padding-l-reset margin-b-reset">
+                          <li>
+                            <a href={chartAttrs.home} target="_blank">
+                              {chartAttrs.home}
+                            </a>
+                          </li>
+                        </ul>
                       </div>
                     </div>
                   )}
