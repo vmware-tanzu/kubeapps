@@ -92,11 +92,13 @@ func (p *Proxy) get(name, namespace string) (*release.Release, error) {
 		return nil, fmt.Errorf("Unable to list helm releases: %v", err)
 	}
 	var rel *release.Release
-	if list != nil && list.GetReleases() != nil {
-		for _, r := range list.GetReleases() {
-			if (namespace == "" || namespace == r.Namespace) && r.Name == name {
-				rel = r
-				break
+	if list != nil {
+		if l := list.GetReleases(); l != nil {
+			for _, r := range l {
+				if (namespace == "" || namespace == r.Namespace) && r.Name == name {
+					rel = r
+					break
+				}
 			}
 		}
 	}
