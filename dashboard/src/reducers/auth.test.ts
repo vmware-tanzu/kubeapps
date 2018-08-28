@@ -25,6 +25,9 @@ describe("authReducer", () => {
     });
   });
 
+  // TODO(miguel) doing type assertion `as any` because in typescript 2.7 it seems
+  // that the type gets lost during the creation of the map above.
+  // Remove `as any` once we upgrade typescript
   describe("reducer actions", () => {
     it(`sets value passed in ${actionTypes.setAuthenticated}`, () => {
       [true, false].forEach(e => {
