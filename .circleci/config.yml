@@ -1,80 +1,75 @@
 version: 2
 
+## Build conditions
+# Build in any branch or tag
+build_always: &build_always
+  filters:
+    tags:
+      only: /^v.*/
+# Build only in master or in tags
+build_on_master: &build_on_master
+  filters:
+    tags:
+      only: /^v.*/
+    branches:
+      only: master
+# Build only in tags (release)
+build_on_tag: &build_on_tag
+  filters:
+    tags:
+      only: /^v.*/
+    branches:
+      ignore: /.*/
+
 workflows:
   version: 2
   kubeapps:
     jobs:
       - test_go:
-          filters:
-            tags:
-              only: /^v.*/
+          <<: *build_always
       - test_dashboard:
-          filters:
-            tags:
-              only: /^v.*/
+          <<: *build_always
       - build_chartrepo:
+          <<: *build_always
           requires:
             - test_go
-          filters:
-            tags:
-              only: /^v.*/
       - build_chartsvc:
+          <<: *build_always
           requires:
             - test_go
-          filters:
-            tags:
-              only: /^v.*/
       - build_chart_apprepository:
+          <<: *build_always
           requires:
             - test_go
-          filters:
-            tags:
-              only: /^v.*/
       - build_dashboard:
+          <<: *build_always
           requires:
             - test_dashboard
-          filters:
-            tags:
-              only: /^v.*/
       - build_tiller_proxy:
+          <<: *build_always
           requires:
             - test_go
-          filters:
-            tags:
-              only: /^v.*/
       - GKE_1_9:
+          <<: *build_on_master
           requires:
             - build_chartrepo
             - build_chartsvc
             - build_chart_apprepository
             - build_dashboard
             - build_tiller_proxy
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: master
       - GKE_1_10:
+          <<: *build_on_master
           requires:
             - build_chartrepo
             - build_chartsvc
             - build_chart_apprepository
             - build_dashboard
             - build_tiller_proxy
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: master
       - release:
+          <<: *build_on_tag
           requires:
             - GKE_1_9
             - GKE_1_10
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: master
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -117,7 +112,7 @@ gke_test: &gke_test
     - run: |
         # In case of GKE we will only want to build if it is
         # a build of a branch in the kubeapps repository
-        if [[ -z "$GKE_ADMIN" || -n "$CIRCLE_PULL_REQUESTS" ]]; then
+        if [[ -z "$GKE_ADMIN" ]]; then
           circleci step halt
         fi
     - checkout
@@ -193,10 +188,7 @@ jobs:
       - image: circleci/golang:1.9
     steps:
       - checkout
-      - run: |
-          if [[ -n "$CIRCLE_TAG" ]]; then
-            REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-          fi
+      - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
   GKE_1_9:
     <<: *gke_test
     environment:
