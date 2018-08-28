@@ -6,6 +6,7 @@ import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
+
 import {
   MessageAlert,
   PermissionsErrorAlert,
@@ -118,6 +119,16 @@ export class InstanceListView extends React.PureComponent<
           )}
         </PageHeader>
         <main>
+          <MessageAlert level="warning">
+            <div>
+              Service Catalog integration is under heavy development. If you find an issue please
+              report it{" "}
+              <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues">
+                {" "}
+                here.
+              </a>
+            </div>
+          </MessageAlert>
           {isInstalled ? (
             <div>
               {error ? (

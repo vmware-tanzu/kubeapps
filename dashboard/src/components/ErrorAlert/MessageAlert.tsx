@@ -4,17 +4,20 @@ import { Info } from "react-feather";
 import ErrorPageHeader from "./ErrorAlertHeader";
 
 interface IMessageAlertPageProps {
-  header: string;
+  header?: string;
+  level?: string;
   children?: JSX.Element;
 }
 
 class MessageAlertPage extends React.Component<IMessageAlertPageProps> {
   public render() {
-    const { children, header } = this.props;
+    const { level, children, header } = this.props;
     return (
-      <div className="alert margin-c margin-t-bigger">
-        <ErrorPageHeader icon={Info}>{header}</ErrorPageHeader>
-        {children && <div className="message__content margin-l-enormous">{children}</div>}
+      <div className={`alert ${level ? `alert-${level}` : ""} margin-c margin-t-bigger`}>
+        {header ? <ErrorPageHeader icon={Info}>{header}</ErrorPageHeader> : null}
+        {children && (
+          <div className={`message__content ${header ? "margin-l-enormous" : ""}`}>{children}</div>
+        )}
       </div>
     );
   }

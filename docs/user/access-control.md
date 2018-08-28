@@ -40,12 +40,11 @@ Kubeapps.
 
 #### Read access to Applications within a namespace
 
-In order to list and view Applications in a namespace, apply the `kubeapps-applications-read`
-ClusterRole in the desired namespace. Note that the `kubeapps-applications-read` role provides
-read access to **all** the resources of a namespace so apply it carefully. In case you want
-to limit the access create a custom cluster role or use one of the [default ones](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
+In order to list and view Applications in a namespace, first we will create a `ClusterRole` with read-access to **all** the possible resources. In case you want
+to limit this access, create a custom cluster role or use one of the [default ones](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles). Then we will bind that cluster role to our service account.
 
 ```
+kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-applications-read.yaml
 kubectl create -n default rolebinding example-view \
   --clusterrole=kubeapps-applications-read \
   --serviceaccount default:example
@@ -60,7 +59,11 @@ available in most Kubernetes distributions, you can find more information about
 that role
 [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
+Additionally, we need to create a role to give read access to App Repositories and bind it to our service account.
+
 ```
+export KUBEAPPS_NAMESPACE=kubeapps
+kubectl apply -f -n $KUBEAPPS_NAMESPACE https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
 kubectl create -n default rolebinding example-edit \
   --clusterrole=edit \
   --serviceaccount default:example
@@ -75,34 +78,39 @@ kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-
 
 Service Brokers, Classes and Plans in the Service Catalog are cluster-scoped
 resources, but Service Instances and Bindings can be restricted to a namespace.
-Kubeapps defines two roles (`kubeapps-service-catalog-browse` and
+We'll need to define two roles (`kubeapps-service-catalog-browse` and
 `kubeapps-service-catalog-read`) to separate the roles required to view Service
 Instances and Bindings so that they can be applied to desired namespaces.
 
-In order to list and view Service Instances in a namespace, apply the
+In order to list and view Service Instances in a namespace, we'll create the
 `kubeapps-service-catalog-browse` ClusterRole in all namespaces and the
 `kubeapps-service-catalog-read` in the desired namespace.
 
 ```
+kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-browse.yaml
 kubectl create clusterrolebinding example-kubeapps-service-catalog-browse --clusterrole=kubeapps-service-catalog-browse --serviceaccount default:example
+
+kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-read.yaml
 kubectl create -n default rolebinding example-kubeapps-service-catalog-read --clusterrole=kubeapps-service-catalog-read --serviceaccount default:example
 ```
 
 #### Write access to Service Instances and Bindings within a namespace
 
 In order to create and delete Service Instances and Bindings in a namespace,
-apply the `kubeapps-service-catalog-write` ClusterRole in the desired namespace.
+create and bind the `kubeapps-service-catalog-write` ClusterRole in the desired namespace.
 
 ```
+kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-write.yaml
 kubectl create -n default rolebinding example-kubeapps-service-catalog-write --clusterrole=kubeapps-service-catalog-write --serviceaccount default:example
 ```
 
 #### Admin access to configure Service Brokers
 
 In order to resync Service Brokers from the Service Brokers Configuration page,
-apply the `kubeapps-service-catalog-admin` ClusterRole in all namespaces.
+create and apply the `kubeapps-service-catalog-admin` ClusterRole in all namespaces.
 
 ```
+kubectl apply -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-service-catalog-admin.yaml
 kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clusterrole=kubeapps-service-catalog-admin --serviceaccount default:example
 ```
 
@@ -110,19 +118,23 @@ kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clust
 
 #### Read access to App Repositories
 
-In order to list the configured App Repositories in Kubeapps, apply the
+In order to list the configured App Repositories in Kubeapps, create and apply the
 `kubeapps-repositories-read` Role in the namespace Kubeapps is installed in.
 
 ```
+export KUBEAPPS_NAMESPACE=kubeapps
+kubectl apply -f -n $KUBEAPPS_NAMESPACE https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
 ```
 
 #### Write access to App Repositories
 
-In order to create and refresh App Repositories in Kubeapps, apply the
+In order to create and refresh App Repositories in Kubeapps, create and apply the
 `kubeapps-repositories-write` Role in the namespace Kubeapps is installed in.
 
 ```
+export KUBEAPPS_NAMESPACE=kubeapps
+kubectl apply -f -n $KUBEAPPS_NAMESPACE https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-write.yaml
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write --role=kubeapps-repositories-write --serviceaccount default:example
 ```
 
@@ -147,10 +159,6 @@ ClusterRoleBinding instead of a RoleBinding. For example, to give the "example" 
 kubectl create clusterrolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-read --serviceaccount default:example
 kubectl create clusterrolebinding example-kubeapps-applications-write --clusterrole=kubeapps-applications-write --serviceaccount default:example
 ```
-
-## RBAC rules required by Kubeapps
-
-An up-to-date list of RBAC rules Kubeapps requires can be found [here](/manifests/user-roles.jsonnet).
 
 ## Using a cluster-admin user (not recommended)
 

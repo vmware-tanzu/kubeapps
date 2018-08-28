@@ -41,7 +41,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       to: "/charts",
     },
     {
-      children: "Service Instances",
+      children: "Service Instances (alpha)",
       namespaced: true,
       to: "/services/instances",
     },

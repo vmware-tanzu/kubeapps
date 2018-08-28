@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a welcome message if no apps are available 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+      </div>
+    </div>
+  </PageHeader>
+  <main>
+    <MessageAlertPage
+      header="Supercharge your Kubernetes cluster"
+    >
+      <div>
+        <p
+          className="margin-v-normal"
+        >
+          Deploy applications on your Kubernetes cluster with a single click.
+        </p>
+        <div
+          className="padding-b-normal"
+        >
+          <Link
+            className="button button-accent"
+            replace={false}
+            to="/charts"
+          >
+            Deploy App
+          </Link>
+        </div>
+      </div>
+    </MessageAlertPage>
+  </main>
+</section>
+`;

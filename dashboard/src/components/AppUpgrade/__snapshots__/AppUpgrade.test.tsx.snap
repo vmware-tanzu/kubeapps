@@ -1,0 +1,202 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders an error if it exists 1`] = `
+<DeploymentErrors
+  app={Object {}}
+  bindingsWithSecrets={Array []}
+  chartName=""
+  checkChart={[MockFunction]}
+  clearRepo={[MockFunction]}
+  error={[Error: foo doesn't exists]}
+  fetchChartVersions={[MockFunction]}
+  fetchRepositories={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+        Array [],
+        Array [],
+      ],
+    }
+  }
+  getApp={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "foo",
+          "default",
+        ],
+        Array [
+          "foo",
+          "default",
+        ],
+        Array [
+          "foo",
+          "default",
+        ],
+      ],
+    }
+  }
+  getBindings={[MockFunction]}
+  getChartValues={[MockFunction]}
+  getChartVersion={[MockFunction]}
+  kubeappsNamespace="kubeapps"
+  namespace="default"
+  push={[MockFunction]}
+  releaseName="foo"
+  repo="stable"
+  repos={
+    Array [
+      Object {
+        "metadata": Object {
+          "name": "stable",
+        },
+      },
+    ]
+  }
+  selected={Object {}}
+  upgradeApp={[MockFunction]}
+  version="1.0.0"
+/>
+`;
+
+exports[`renders the repo selection form if not introduced 1`] = `
+<div>
+  <SelectRepoForm
+    app={
+      Object {
+        "chart": Object {
+          "metadata": Object {
+            "name": "bar",
+            "version": "1.0.0",
+          },
+        },
+        "name": "foo",
+      }
+    }
+    bindingsWithSecrets={Array []}
+    chartName="bar"
+    checkChart={[MockFunction]}
+    clearRepo={[MockFunction]}
+    fetchChartVersions={[MockFunction]}
+    fetchRepositories={
+      [MockFunction] {
+        "calls": Array [
+          Array [],
+          Array [],
+        ],
+      }
+    }
+    getApp={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+        ],
+      }
+    }
+    getBindings={[MockFunction]}
+    getChartValues={[MockFunction]}
+    getChartVersion={[MockFunction]}
+    kubeappsNamespace="kubeapps"
+    namespace="default"
+    push={[MockFunction]}
+    releaseName="foo"
+    repo={Object {}}
+    repos={
+      Array [
+        Object {
+          "metadata": Object {
+            "name": "stable",
+          },
+        },
+      ]
+    }
+    selected={Object {}}
+    upgradeApp={[MockFunction]}
+    version="1.0.0"
+  />
+</div>
+`;
+
+exports[`renders the upgrade form when the repo is available 1`] = `
+<div>
+  <UpgradeForm
+    app={
+      Object {
+        "chart": Object {
+          "metadata": Object {
+            "name": "bar",
+            "version": "1.0.0",
+          },
+        },
+        "name": "foo",
+      }
+    }
+    appCurrentValues=""
+    appCurrentVersion="1.0.0"
+    bindingsWithSecrets={Array []}
+    chartName="bar"
+    checkChart={[MockFunction]}
+    clearRepo={[MockFunction]}
+    fetchChartVersions={[MockFunction]}
+    fetchRepositories={
+      [MockFunction] {
+        "calls": Array [
+          Array [],
+          Array [],
+          Array [],
+          Array [],
+        ],
+      }
+    }
+    getApp={
+      [MockFunction] {
+        "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
+        ],
+      }
+    }
+    getBindings={[MockFunction]}
+    getChartValues={[MockFunction]}
+    getChartVersion={[MockFunction]}
+    kubeappsNamespace="kubeapps"
+    namespace="default"
+    push={[MockFunction]}
+    releaseName="foo"
+    repo="stable"
+    repos={
+      Array [
+        Object {
+          "metadata": Object {
+            "name": "stable",
+          },
+        },
+      ]
+    }
+    selected={Object {}}
+    upgradeApp={[MockFunction]}
+    version="1.0.0"
+  />
+</div>
+`;

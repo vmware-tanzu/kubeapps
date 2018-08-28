@@ -176,8 +176,13 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 		http.NotFound(w, req)
 		return
 	}
-
-	w.Write([]byte(files.Readme))
+	readme := []byte(files.Readme)
+	if len(readme) == 0 {
+		log.Errorf("could not find a README for id %s", fileID)
+		http.NotFound(w, req)
+		return
+	}
+	w.Write(readme)
 }
 
 // getChartVersionValues returns the values.yaml for a given chart
@@ -212,7 +217,7 @@ func newChartResponse(c *models.Chart) *apiResponse {
 }
 
 func newChartListResponse(charts []*models.Chart) apiListResponse {
-	var cl apiListResponse
+	cl := apiListResponse{}
 	for _, c := range charts {
 		cl = append(cl, newChartResponse(c))
 	}

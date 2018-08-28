@@ -1,0 +1,19 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: kubeapps-service-catalog-read
+rules:
+- apiGroups:
+  - servicecatalog.k8s.io
+  resources:
+  - serviceinstances
+  - servicebindings
+  verbs: 
+  - list
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
