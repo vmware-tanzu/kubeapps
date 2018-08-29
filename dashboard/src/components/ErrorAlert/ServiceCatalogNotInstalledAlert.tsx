@@ -15,7 +15,7 @@ class ServiceCatalogNotInstalledAlert extends React.Component {
             </a>{" "}
             to browse, provision and manage external services within Kubeapps.
           </p>
-          <Link className="button button-primary button-small" to={`/charts/svc-cat/catalog`}>
+          <Link className="button button-primary button-small" to={"/charts/svc-cat/catalog"}>
             Install Catalog
           </Link>
         </div>

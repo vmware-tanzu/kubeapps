@@ -39,6 +39,6 @@ it("renders a redirect when the button is clicked", () => {
   expect(redirect.exists()).toBe(true);
   expect(redirect.props()).toMatchObject({
     push: true,
-    to: `/apps/ns/test/new/testrepo/test/versions/1.2.3`,
+    to: "/apps/ns/test/new/testrepo/test/versions/1.2.3",
   });
 });
