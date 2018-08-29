@@ -26,7 +26,7 @@ import RepoListContainer from "./RepoListContainer";
 import ServiceCatalogContainer from "./ServiceCatalogContainer";
 
 const history = createHistory();
-const store = configureStore(history);
+export const store = configureStore(history);
 
 class Root extends React.Component {
   public static exactRoutes: {
