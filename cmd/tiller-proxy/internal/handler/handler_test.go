@@ -64,9 +64,10 @@ func TestActions(t *testing.T) {
 		DisableAuth      bool
 		ForbiddenActions []auth.Action
 		// Request params
-		RequestBody string
-		Action      string
-		Params      map[string]string
+		RequestBody  string
+		RequestQuery string
+		Action       string
+		Params       map[string]string
 		// Expected result
 		StatusCode        int
 		RemainingReleases []release.Release
@@ -81,8 +82,9 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "create",
-			Params: map[string]string{"namespace": "default"},
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 200,
 			RemainingReleases: []release.Release{
@@ -98,8 +100,9 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "create",
-			Params: map[string]string{"namespace": "default"},
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 200,
 			RemainingReleases: []release.Release{
@@ -115,8 +118,9 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "create",
-			Params: map[string]string{"namespace": "default"},
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 409,
 			RemainingReleases: []release.Release{
@@ -134,8 +138,9 @@ func TestActions(t *testing.T) {
 			},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "create",
-			Params: map[string]string{"namespace": "default"},
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode:        403,
 			RemainingReleases: []release.Release{},
@@ -149,8 +154,9 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "upgrade",
-			Params: map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestQuery: "",
+			Action:       "upgrade",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        200,
 			RemainingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
@@ -164,8 +170,9 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "upgrade",
-			Params: map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestQuery: "",
+			Action:       "upgrade",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        404,
 			RemainingReleases: []release.Release{},
@@ -181,8 +188,9 @@ func TestActions(t *testing.T) {
 			},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "upgrade",
-			Params: map[string]string{"namespace": "default"},
+			RequestQuery: "",
+			Action:       "upgrade",
+			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode:        403,
 			RemainingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
@@ -195,9 +203,10 @@ func TestActions(t *testing.T) {
 			DisableAuth:      true,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: "",
-			Action:      "delete",
-			Params:      map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        200,
 			RemainingReleases: []release.Release{},
@@ -211,8 +220,9 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "delete",
-			Params: map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestQuery: "",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        404,
 			RemainingReleases: []release.Release{},
@@ -228,8 +238,9 @@ func TestActions(t *testing.T) {
 			},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			Action: "delete",
-			Params: map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestQuery: "",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        403,
 			RemainingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default", Config: &chart.Config{Raw: ""}}},
@@ -242,9 +253,10 @@ func TestActions(t *testing.T) {
 			DisableAuth:      true,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: "",
-			Action:      "get",
-			Params:      map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        200,
 			RemainingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
@@ -257,9 +269,10 @@ func TestActions(t *testing.T) {
 			DisableAuth:      true,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: "",
-			Action:      "get",
-			Params:      map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        404,
 			RemainingReleases: []release.Release{},
@@ -274,9 +287,10 @@ func TestActions(t *testing.T) {
 				auth.Action{APIVersion: "v1", Resource: "pods", Namespace: "default", ClusterWide: false, Verbs: []string{"get"}},
 			},
 			// Request params
-			RequestBody: "",
-			Action:      "get",
-			Params:      map[string]string{"namespace": "default", "releaseName": "foobar"},
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        403,
 			RemainingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default", Config: &chart.Config{Raw: ""}}},
@@ -292,9 +306,10 @@ func TestActions(t *testing.T) {
 			DisableAuth:      false,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: "",
-			Action:      "listall",
-			Params:      map[string]string{},
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "listall",
+			Params:       map[string]string{},
 			// Expected result
 			StatusCode: 200,
 			RemainingReleases: []release.Release{
@@ -313,14 +328,37 @@ func TestActions(t *testing.T) {
 			DisableAuth:      false,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: "",
-			Action:      "list",
-			Params:      map[string]string{"namespace": "default"},
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "list",
+			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 200,
 			RemainingReleases: []release.Release{
 				release.Release{Name: "foobar", Namespace: "default"},
 				release.Release{Name: "foo", Namespace: "not-default"},
+			},
+			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED"}]}`,
+		},
+		{
+			// Scenario params
+			Description: "Filter releases based on status when listing",
+			ExistingReleases: []release.Release{
+				release.Release{Name: "foobar", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DEPLOYED}}},
+				release.Release{Name: "foo", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DELETED}}},
+			},
+			DisableAuth:      false,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "?status=deployed",
+			Action:       "list",
+			Params:       map[string]string{"namespace": "default"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				release.Release{Name: "foobar", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DEPLOYED}}},
+				release.Release{Name: "foo", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DELETED}}},
 			},
 			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED"}]}`,
 		},
@@ -336,7 +374,7 @@ func TestActions(t *testing.T) {
 			ChartClient: &chartFake.FakeChart{},
 			ProxyClient: proxy,
 		}
-		req := httptest.NewRequest("GET", "http://foo.bar", strings.NewReader(test.RequestBody))
+		req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
 		if !test.DisableAuth {
 			fauth := &authFake.FakeAuth{
 				ForbiddenActions: test.ForbiddenActions,

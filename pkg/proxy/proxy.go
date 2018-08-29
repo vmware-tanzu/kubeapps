@@ -161,12 +161,45 @@ func filterList(rels []*release.Release) []*release.Release {
 	return uniq
 }
 
+func getStatuses(statusQuery string) []release.Status_Code {
+	if statusQuery == "" {
+		// Default case
+		return []release.Status_Code{
+			release.Status_DEPLOYED,
+			release.Status_FAILED,
+		}
+	} else if strings.Contains(statusQuery, "all") {
+		return releaseStatuses
+	} else {
+		statuses := []release.Status_Code{}
+		for _, s := range strings.Split(statusQuery, ",") {
+			switch strings.ToLower(s) {
+			case "deployed":
+				statuses = append(statuses, release.Status_DEPLOYED)
+			case "deleted":
+				statuses = append(statuses, release.Status_DELETED)
+			case "deleting":
+				statuses = append(statuses, release.Status_DELETING)
+			case "failed":
+				statuses = append(statuses, release.Status_FAILED)
+			case "superseded":
+				statuses = append(statuses, release.Status_SUPERSEDED)
+			case "pending":
+				statuses = append(statuses, release.Status_PENDING_INSTALL, release.Status_PENDING_UPGRADE, release.Status_PENDING_ROLLBACK)
+			default:
+				log.Debugf("Ignoring unrecognized status %s", s)
+			}
+		}
+		return statuses
+	}
+}
+
 // ListReleases list releases in a specific namespace if given
-func (p *Proxy) ListReleases(namespace string, releaseListLimit int) ([]AppOverview, error) {
+func (p *Proxy) ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error) {
 	list, err := p.helmClient.ListReleases(
 		helm.ReleaseListLimit(releaseListLimit),
 		helm.ReleaseListNamespace(namespace),
-		helm.ReleaseListStatuses(releaseStatuses),
+		helm.ReleaseListStatuses(getStatuses(status)),
 	)
 	if err != nil {
 		return []AppOverview{}, fmt.Errorf("Unable to list helm releases: %v", err)
@@ -269,7 +302,7 @@ func (p *Proxy) DeleteRelease(name, namespace string) error {
 type TillerClient interface {
 	GetReleaseStatus(relName string) (release.Status_Code, error)
 	ResolveManifest(namespace, values string, ch *chart.Chart) (string, error)
-	ListReleases(namespace string, releaseListLimit int) ([]AppOverview, error)
+	ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error)
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
 	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)
 	GetRelease(name, namespace string) (*release.Release, error)

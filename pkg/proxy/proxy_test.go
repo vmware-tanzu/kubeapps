@@ -73,7 +73,7 @@ func TestListAllReleases(t *testing.T) {
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
-	releases, err := proxy.ListReleases("", 256)
+	releases, err := proxy.ListReleases("", 256, "")
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -91,7 +91,7 @@ func TestListNamespacedRelease(t *testing.T) {
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
-	releases, err := proxy.ListReleases(app1.Namespace, 256)
+	releases, err := proxy.ListReleases(app1.Namespace, 256, "")
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -109,7 +109,7 @@ func TestListOldRelease(t *testing.T) {
 	proxy := newFakeProxy([]AppOverview{app, appUpgraded})
 
 	// Should avoid old release versions
-	releases, err := proxy.ListReleases(app.Namespace, 256)
+	releases, err := proxy.ListReleases(app.Namespace, 256, "")
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -133,7 +133,7 @@ func TestMultipleOldReleases(t *testing.T) {
 	proxy := newFakeProxy([]AppOverview{app, appUpgraded, app2, app2Outdated, app2Upgraded})
 
 	// Should avoid old release versions
-	releases, err := proxy.ListReleases(app.Namespace, 256)
+	releases, err := proxy.ListReleases(app.Namespace, 256, "")
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
@@ -148,6 +148,27 @@ func TestMultipleOldReleases(t *testing.T) {
 	}
 	if !reflect.DeepEqual([]AppOverview{appUpgraded, app2Upgraded}, releases) {
 		t.Errorf("Unexpected list of releases %v", releases)
+	}
+}
+
+func TestGetStatuses(t *testing.T) {
+	// TODO: We should test that the helm client receive the correct params
+	// but right now the fake implementation ignores the status filter option
+	type test struct {
+		input          string
+		expectedResult []release.Status_Code
+	}
+	tests := []test{
+		{"", []release.Status_Code{release.Status_DEPLOYED, release.Status_FAILED}},
+		{"all", releaseStatuses},
+		{"deleted,deployed", []release.Status_Code{release.Status_DELETED, release.Status_DEPLOYED}},
+		{"deleted,none,deployed", []release.Status_Code{release.Status_DELETED, release.Status_DEPLOYED}},
+	}
+	for _, tt := range tests {
+		res := getStatuses(tt.input)
+		if !reflect.DeepEqual(res, tt.expectedResult) {
+			t.Errorf("Expecting %v, received %v", tt.expectedResult, res)
+		}
 	}
 }
 

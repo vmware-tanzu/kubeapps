@@ -18,6 +18,8 @@ package fake
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/proto/hapi/release"
@@ -35,16 +37,22 @@ func (f *FakeProxy) ResolveManifest(namespace, values string, ch *chart.Chart) (
 	return "", nil
 }
 
-func (f *FakeProxy) ListReleases(namespace string, releaseListLimit int) ([]proxy.AppOverview, error) {
+func (f *FakeProxy) ListReleases(namespace string, releaseListLimit int, status string) ([]proxy.AppOverview, error) {
 	res := []proxy.AppOverview{}
 	for _, r := range f.Releases {
-		if (namespace == "" || namespace == r.Namespace) && len(res) <= releaseListLimit {
+		relStatus := "DEPLOYED" // Default
+		if r.Info != nil {
+			relStatus = r.Info.Status.Code.String()
+		}
+		if (namespace == "" || namespace == r.Namespace) &&
+			len(res) <= releaseListLimit &&
+			(r.Info == nil || status == strings.ToLower(relStatus)) {
 			res = append(res, proxy.AppOverview{
 				ReleaseName: r.Name,
 				Version:     "",
 				Namespace:   r.Namespace,
 				Icon:        "",
-				Status:      "DEPLOYED",
+				Status:      relStatus,
 			})
 		}
 	}
