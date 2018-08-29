@@ -80,6 +80,19 @@ describe("createAxiosInterceptor", () => {
         expect(error.message).toBe(`Will raise ${t.errorClass.name}`);
       }
     });
+
+    it(`returns the custom error ${t.errorClass.name} if ${t.code} returned`, async () => {
+      moxios.stubRequest(testPath, {
+        response: {},
+        status: t.code,
+      });
+
+      try {
+        await axios.get(testPath);
+      } catch (error) {
+        expect(error.constructor).toBe(t.errorClass);
+      }
+    });
   });
 
   it(`returns the generic error message otherwise`, async () => {
