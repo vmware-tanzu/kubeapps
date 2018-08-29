@@ -1,9 +1,9 @@
-import { AxiosInstance } from "axios";
 import * as moxios from "moxios";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { Auth, createAxiosInstance } from "./Auth";
+import { createAxiosInterceptors } from "../shared/AxiosInstance";
+import { Auth, axios } from "./Auth";
 import {
   AppConflict,
   ForbiddenError,
@@ -12,19 +12,24 @@ import {
   UnprocessableEntity,
 } from "./types";
 
-describe("authenticatedAxiosInstance", () => {
+describe("createAxiosInterceptor", () => {
   const mockStore = configureMockStore([thunk]);
   const testPath = "/internet-is-in-a-box";
   const authToken = "search-google-in-google";
 
   let store: any;
-  let axios: AxiosInstance;
 
-  beforeEach(() => {
+  beforeAll(() => {
     const state: IAuthState = {
       authenticated: false,
       authenticating: false,
     };
+
+    store = mockStore({
+      auth: {
+        state,
+      },
+    });
 
     Auth.validateToken = jest.fn();
     Auth.setAuthToken = jest.fn();
@@ -34,17 +39,16 @@ describe("authenticatedAxiosInstance", () => {
       return authToken;
     });
 
-    store = mockStore({
-      auth: {
-        state,
-      },
-    });
-    axios = createAxiosInstance(store);
+    createAxiosInterceptors(axios, store);
+  });
+
+  beforeEach(() => {
     moxios.install(axios);
   });
 
   afterEach(() => {
     moxios.uninstall(axios);
+    store.clearActions();
   });
 
   it("it includes the auth token if provided", async () => {

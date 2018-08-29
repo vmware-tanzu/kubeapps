@@ -1,11 +1,10 @@
-import createHistory from "history/createBrowserHistory";
 import * as React from "react";
 import { Provider } from "react-redux";
 import { Redirect, Route, RouteComponentProps } from "react-router";
 import { ConnectedRouter } from "react-router-redux";
 
 import Layout from "../components/Layout";
-import configureStore from "../store";
+import store, { history } from "../store";
 import AppList from "./AppListContainer";
 import AppNew from "./AppNewContainer";
 import AppUpgrade from "./AppUpgradeContainer";
@@ -24,9 +23,6 @@ import LoginFormContainer from "./LoginFormContainer";
 import PrivateRouteContainer from "./PrivateRouteContainer";
 import RepoListContainer from "./RepoListContainer";
 import ServiceCatalogContainer from "./ServiceCatalogContainer";
-
-const history = createHistory();
-export const store = configureStore(history);
 
 class Root extends React.Component {
   public static exactRoutes: {
