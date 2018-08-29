@@ -35,10 +35,21 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 		status := release.Status_DEPLOYED
 		if r.Status == "DELETED" {
 			status = release.Status_DELETED
+		} else if r.Status == "FAILED" {
+			status = release.Status_FAILED
+		}
+		version := int32(1)
+		// Increment version number (helm revision counter)
+		// if the same release name has been already added
+		for _, versionAdded := range helmClient.Rels {
+			if r.ReleaseName == versionAdded.GetName() {
+				version++
+			}
 		}
 		helmClient.Rels = append(helmClient.Rels, &release.Release{
 			Name:      r.ReleaseName,
 			Namespace: r.Namespace,
+			Version:   version,
 			Chart: &chart.Chart{
 				Metadata: &chart.Metadata{
 					Version: r.Version,
@@ -88,6 +99,54 @@ func TestListNamespacedRelease(t *testing.T) {
 		t.Errorf("It should return both releases")
 	}
 	if !reflect.DeepEqual([]AppOverview{app1}, releases) {
+		t.Errorf("Unexpected list of releases %v", releases)
+	}
+}
+
+func TestListOldRelease(t *testing.T) {
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	appUpgraded := AppOverview{"foo", "1.0.1", "my_ns", "icon.png", "FAILED"}
+	proxy := newFakeProxy([]AppOverview{app, appUpgraded})
+
+	// Should avoid old release versions
+	releases, err := proxy.ListReleases(app.Namespace, 256)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	if len(releases) != 1 {
+		t.Errorf("It should return a single release")
+	}
+	if releases[0].ReleaseName != "foo" && releases[0].Status != "FAILED" {
+		t.Errorf("It should group releases by release name")
+	}
+	if !reflect.DeepEqual([]AppOverview{appUpgraded}, releases) {
+		t.Errorf("Unexpected list of releases %v", releases)
+	}
+}
+
+func TestMultipleOldReleases(t *testing.T) {
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	appUpgraded := AppOverview{"foo", "1.0.1", "my_ns", "icon.png", "FAILED"}
+	app2 := AppOverview{"bar", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	app2Outdated := AppOverview{"bar", "1.0.2", "my_ns", "icon.png", "DEPLOYED"}
+	app2Upgraded := AppOverview{"bar", "1.0.2", "my_ns", "icon.png", "FAILED"}
+	proxy := newFakeProxy([]AppOverview{app, appUpgraded, app2, app2Outdated, app2Upgraded})
+
+	// Should avoid old release versions
+	releases, err := proxy.ListReleases(app.Namespace, 256)
+	if err != nil {
+		t.Fatalf("Unexpected error %v", err)
+	}
+	if len(releases) != 2 {
+		t.Errorf("It should return two unique releases")
+	}
+	if releases[0].ReleaseName != "foo" && releases[0].Status != "FAILED" {
+		t.Errorf("It should group releases by release name")
+	}
+	if releases[1].ReleaseName != "bar" && releases[1].Status != "FAILED" {
+		t.Errorf("It should group releases by release name")
+	}
+	if !reflect.DeepEqual([]AppOverview{appUpgraded, app2Upgraded}, releases) {
 		t.Errorf("Unexpected list of releases %v", releases)
 	}
 }

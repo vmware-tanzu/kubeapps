@@ -92,11 +92,13 @@ func (p *Proxy) get(name, namespace string) (*release.Release, error) {
 		return nil, fmt.Errorf("Unable to list helm releases: %v", err)
 	}
 	var rel *release.Release
-	if list != nil && list.Releases != nil {
-		for _, r := range list.Releases {
-			if (namespace == "" || namespace == r.Namespace) && r.Name == name {
-				rel = r
-				break
+	if list != nil {
+		if l := list.GetReleases(); l != nil {
+			for _, r := range l {
+				if (namespace == "" || namespace == r.Namespace) && r.Name == name {
+					rel = r
+					break
+				}
 			}
 		}
 	}
@@ -134,6 +136,31 @@ func (p *Proxy) ResolveManifest(namespace, values string, ch *chart.Chart) (stri
 	return strings.TrimLeft(resDry.Release.Manifest, "\n"), nil
 }
 
+// Apply the same filtering than helm CLI
+// Ref: https://github.com/helm/helm/blob/d3b69c1fc1ac62f1cc40f93fcd0cba275c0596de/cmd/helm/list.go#L173
+func filterList(rels []*release.Release) []*release.Release {
+	idx := map[string]int32{}
+
+	for _, r := range rels {
+		name, version := r.GetName(), r.GetVersion()
+		if max, ok := idx[name]; ok {
+			// check if we have a greater version already
+			if max > version {
+				continue
+			}
+		}
+		idx[name] = version
+	}
+
+	uniq := make([]*release.Release, 0, len(idx))
+	for _, r := range rels {
+		if idx[r.GetName()] == r.GetVersion() {
+			uniq = append(uniq, r)
+		}
+	}
+	return uniq
+}
+
 // ListReleases list releases in a specific namespace if given
 func (p *Proxy) ListReleases(namespace string, releaseListLimit int) ([]AppOverview, error) {
 	list, err := p.helmClient.ListReleases(
@@ -146,7 +173,8 @@ func (p *Proxy) ListReleases(namespace string, releaseListLimit int) ([]AppOverv
 	}
 	appList := []AppOverview{}
 	if list != nil {
-		for _, r := range list.Releases {
+		filteredReleases := filterList(list.GetReleases())
+		for _, r := range filteredReleases {
 			if namespace == "" || namespace == r.Namespace {
 				appList = append(appList, AppOverview{
 					ReleaseName: r.Name,
