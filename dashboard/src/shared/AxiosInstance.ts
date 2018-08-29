@@ -11,8 +11,8 @@ import {
   UnprocessableEntity,
 } from "./types";
 
-// authenticatedAxiosInstance returns an axios instance with an interceptor
-// configured to set the current auth token and handle errors.
+// createAxiosInterceptors will configure a set of interceptors to a provided axios instance,
+// relying also on an external redux store for action dispatching
 export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStoreState>) {
   axios.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
@@ -32,10 +32,8 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
       switch (err.response && err.response.status) {
         case 401:
           // Global action dispatch to log the user out
-          if (err.response) {
-            store.dispatch(actions.auth.authenticationError(message));
-            store.dispatch(actions.auth.logout());
-          }
+          store.dispatch(actions.auth.authenticationError(message));
+          store.dispatch(actions.auth.logout());
           return Promise.reject(new UnauthorizedError(message));
         case 403:
           return Promise.reject(new ForbiddenError(message));

@@ -51,7 +51,7 @@ describe("createAxiosInterceptor", () => {
     store.clearActions();
   });
 
-  it("it includes the auth token if provided", async () => {
+  it("includes the auth token if provided", async () => {
     moxios.stubRequest(testPath, {});
 
     await axios.get(testPath);
@@ -95,7 +95,7 @@ describe("createAxiosInterceptor", () => {
     });
   });
 
-  it(`returns the generic error message otherwise`, async () => {
+  it("returns the generic error message otherwise", async () => {
     moxios.stubRequest(testPath, {
       response: { message: "this will be ignored" },
       status: 555,
@@ -108,7 +108,7 @@ describe("createAxiosInterceptor", () => {
     }
   });
 
-  it("it dispatches auth error and logout if 401", async () => {
+  it("dispatches auth error and logout if 401", async () => {
     const expectedActions = [
       {
         errorMsg: "Boom!",
