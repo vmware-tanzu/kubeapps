@@ -15,12 +15,10 @@
 
 set -e
 
-CHARTS_REPO="andresmgot/charts-1"
+CHARTS_REPO="bitnami/charts"
 CHART_REPO_PATH="bitnami/kubeapps"
 PROJECT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
-
-source $PROJECT_DIR/script/release_utils.sh
 
 changedVersion() {
     local currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep "version:")
@@ -55,8 +53,8 @@ updateRepo() {
 
 commitAndPushChanges() {
     local targetRepo=${1:?}
-    local token=${2:?}
     local targetBranch=${2:-"master"}
+    local targetVersion=${3:?}
     if [ ! -f "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml" ]; then
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
@@ -68,7 +66,7 @@ commitAndPushChanges() {
         return 1
     fi
     git add --all .
-    git commit -m "Update Kubeapps chart"
+    git commit -m "kubeapps: bump chart version to $targetVersion"
     # NOTE: This expects to have a loaded SSH key
     git push origin $targetBranch
     cd -
@@ -81,9 +79,10 @@ if changedVersion; then
     mkdir -p $tempDir
     git clone https://github.com/${CHARTS_REPO} $tempDir
     configUser $tempDir $user $email
-    latestVersion=$(getLatestTag)
+    git fetch --tags
+    latestVersion=$(git describe --tags $(git rev-list --tags --max-count=1))
     updateRepo $tempDir $latestVersion
-    commitAndPushChanges $tempDir master
+    commitAndPushChanges $tempDir master $latestVersion
 else
     echo "Skipping Chart sync. The version has not changed"
 fi
