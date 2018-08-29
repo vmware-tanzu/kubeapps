@@ -134,7 +134,7 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(AppDetails).exists()).toBe(true);
     });
 
-    it("renders an error if it exists", () => {
+    it("renders an error if error prop is set", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} error={new NotFoundError()} />);
       const err = wrapper.find(NotFoundErrorAlert);
       expect(err.exists()).toBe(true);
@@ -144,7 +144,7 @@ describe("AppViewComponent", () => {
       });
     });
 
-    it("renders a forbidden delete-error if it exists", () => {
+    it("renders a forbidden delete-error if if the deleteError prop is a ForbiddenError", () => {
       const wrapper = shallow(
         <AppViewComponent {...validProps} deleteError={new ForbiddenError()} />,
       );
@@ -156,7 +156,7 @@ describe("AppViewComponent", () => {
       });
     });
 
-    it("renders a not-found delete-error if it exists", () => {
+    it("renders a not-found delete-error if the deleteError prop is a NotFound error", () => {
       const wrapper = shallow(
         <AppViewComponent {...validProps} deleteError={new NotFoundError()} />,
       );
