@@ -6,7 +6,8 @@
     "no-console": {
       "severity": "warning"
     },
-    "object-literal-sort-keys": false
+    "object-literal-sort-keys": false,
+    "quotemark": [true, "avoid-template"]
   },
   "rulesDirectory": []
 }
