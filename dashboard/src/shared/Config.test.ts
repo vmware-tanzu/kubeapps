@@ -1,5 +1,5 @@
 import axios from "axios";
-import MockAdapter from "axios-mock-adapter";
+import * as moxios from "moxios";
 import Config, { IConfig } from "./Config";
 
 describe("Config", () => {
@@ -8,15 +8,16 @@ describe("Config", () => {
 
   beforeEach(() => {
     initialEnv = { ...process.env };
-    const mock = new MockAdapter(axios);
+    moxios.install(axios);
 
     defaultJSON = require("../../public/config.json");
 
-    mock.onGet("/config.json").reply(200, defaultJSON);
+    moxios.stubRequest("/config.json", { status: 200, response: defaultJSON });
   });
 
   afterEach(() => {
     process.env = initialEnv;
+    moxios.uninstall(axios);
   });
 
   it("returns default namespace if no override provided", async () => {

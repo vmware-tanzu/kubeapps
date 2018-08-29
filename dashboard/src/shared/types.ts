@@ -8,40 +8,25 @@ import { hapi } from "./hapi/release";
 
 // Allow defining multiple error classes
 // tslint:disable:max-classes-per-file
-export class ForbiddenError extends Error {
-  constructor(message?: string) {
-    super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
-}
 
-export class NotFoundError extends Error {
+class CustomError extends Error {
+  // The constructor is defined so we can later on compare the returned object
+  // via err.contructor  == FOO
   constructor(message?: string) {
     super(message);
     Object.setPrototypeOf(this, new.target.prototype);
   }
 }
+export class ForbiddenError extends CustomError {}
+export class UnauthorizedError extends CustomError {}
 
-export class MissingChart extends Error {
-  constructor(message?: string) {
-    super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
-}
+export class NotFoundError extends CustomError {}
 
-export class AppConflict extends Error {
-  constructor(message?: string) {
-    super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
-}
+export class MissingChart extends CustomError {}
 
-export class UnprocessableEntity extends Error {
-  constructor(message?: string) {
-    super(message);
-    Object.setPrototypeOf(this, new.target.prototype);
-  }
-}
+export class AppConflict extends CustomError {}
+
+export class UnprocessableEntity extends CustomError {}
 
 export interface IRepo {
   name: string;
