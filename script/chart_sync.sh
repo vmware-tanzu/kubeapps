@@ -46,7 +46,10 @@ updateRepo() {
     fi
     rm -rf "${targetRepo}/${CHART_REPO_PATH}"
     cp -R "${KUBEAPPS_CHART_DIR}" "${targetRepo}/${CHART_REPO_PATH}"
-    # DANGER: This replaces any tag marked as latest
+    # Update Chart.yaml with new version
+    sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTag}"'/g' "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml"
+    rm "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml.bk"
+    # DANGER: This replaces any tag marked as latest in the values.yaml
     sed -i.bk 's/tag: latest/tag: '"${targetTag}"'/g' "${targetRepo}/${CHART_REPO_PATH}/values.yaml"
     rm "${targetRepo}/${CHART_REPO_PATH}/values.yaml.bk"
 }
