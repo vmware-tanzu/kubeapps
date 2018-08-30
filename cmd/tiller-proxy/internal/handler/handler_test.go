@@ -351,7 +351,7 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody:  "",
-			RequestQuery: "?status=deployed",
+			RequestQuery: "?statuses=deployed",
 			Action:       "list",
 			Params:       map[string]string{"namespace": "default"},
 			// Expected result
