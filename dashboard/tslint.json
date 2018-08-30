@@ -7,7 +7,7 @@
       "severity": "warning"
     },
     "object-literal-sort-keys": false,
-    "quotemark": [true, "avoid-template"]
+    "quotemark": [true, "avoid-template", "avoid-escape"]
   },
   "rulesDirectory": []
 }
