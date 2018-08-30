@@ -1,9 +1,3 @@
-[submodule "kubecfg"]
-	path = manifests/vendor/kubecfg
-	url = https://github.com/ksonnet/kubecfg.git
-[submodule "ksonnet-lib"]
-	path = manifests/vendor/ksonnet-lib
-	url = https://github.com/ksonnet/ksonnet-lib.git
 [submodule "code-generator"]
 	path = cmd/apprepository-controller/vendor/k8s.io/code-generator
 	url = https://github.com/kubernetes/code-generator
