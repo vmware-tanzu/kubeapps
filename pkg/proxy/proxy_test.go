@@ -160,7 +160,7 @@ func TestGetStatuses(t *testing.T) {
 	}
 	tests := []test{
 		{"", []release.Status_Code{release.Status_DEPLOYED, release.Status_FAILED}},
-		{"all", releaseStatuses},
+		{"all", allReleaseStatuses},
 		{"deleted,deployed", []release.Status_Code{release.Status_DELETED, release.Status_DEPLOYED}},
 		{"deleted,none,deployed", []release.Status_Code{release.Status_DELETED, release.Status_DEPLOYED}},
 	}
