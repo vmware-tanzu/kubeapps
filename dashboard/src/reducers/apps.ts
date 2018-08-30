@@ -1,6 +1,6 @@
 import { LOCATION_CHANGE, LocationChangeAction } from "react-router-redux";
-import { getType } from "typesafe-actions";
 
+import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AppsAction } from "../actions/apps";
 import { IAppState } from "../shared/types";
@@ -8,6 +8,7 @@ import { IAppState } from "../shared/types";
 const initialState: IAppState = {
   isFetching: false,
   items: [],
+  listAll: false,
 };
 
 const appsReducer = (
@@ -29,6 +30,8 @@ const appsReducer = (
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.apps };
+    case getType(actions.apps.toggleListAllAction):
+      return { ...state, listAll: !state.listAll };
     case LOCATION_CHANGE:
       return {
         ...state,

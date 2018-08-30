@@ -33,12 +33,14 @@ export const selectApp = createAction("SELECT_APP", (app: hapi.release.Release) 
     type: "SELECT_APP",
   };
 });
+export const toggleListAllAction = createAction("REQUEST_TOGGLE_LIST_ALL");
 
 const allActions = [
   listApps,
   requestApps,
   receiveApps,
   receiveAppList,
+  toggleListAllAction,
   errorApps,
   errorDeleteApp,
   selectApp,
@@ -69,14 +71,14 @@ export function deleteApp(releaseName: string, namespace: string) {
   };
 }
 
-export function fetchApps(ns?: string) {
+export function fetchApps(ns?: string, all?: boolean) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
     if (ns && ns === "_all") {
       ns = undefined;
     }
     dispatch(listApps());
     try {
-      const apps = await App.listApps(ns);
+      const apps = await App.listApps(ns, all);
       dispatch(receiveAppList(apps));
     } catch (e) {
       dispatch(errorApps(e));
@@ -117,5 +119,11 @@ export function upgradeApp(
       dispatch(errorApps(e));
       return false;
     }
+  };
+}
+
+export function toggleListAll() {
+  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
+    dispatch(toggleListAllAction());
   };
 }

@@ -4,7 +4,7 @@ import { hapi } from "./hapi/release";
 import { IAppOverview, IChartVersion } from "./types";
 
 export class App {
-  public static getResourceURL(namespace?: string, name?: string) {
+  public static getResourceURL(namespace?: string, name?: string, query?: string) {
     let url = "/api/tiller-deploy/v1";
     if (namespace) {
       url += `/namespaces/${namespace}`;
@@ -12,6 +12,9 @@ export class App {
     url += "/releases";
     if (name) {
       url += `/${name}`;
+    }
+    if (query) {
+      url += `?${query}`;
     }
     return url;
   }
@@ -65,8 +68,14 @@ export class App {
     return data;
   }
 
-  public static async listApps(namespace?: string) {
-    const { data } = await axios.get<{ data: IAppOverview[] }>(App.getResourceURL(namespace));
+  public static async listApps(namespace?: string, allStatuses?: boolean) {
+    let query;
+    if (allStatuses) {
+      query = "statuses=all";
+    }
+    const { data } = await axios.get<{ data: IAppOverview[] }>(
+      App.getResourceURL(namespace, undefined, query),
+    );
     return data.data;
   }
 
