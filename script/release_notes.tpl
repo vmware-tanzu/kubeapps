@@ -1,19 +1,20 @@
-## Summary
+<!-- ADD SUMMARY HERE -->
 
 ## Installation
 
-To install this release, download the client binary for your operating system:
+To install this release, ensure you add the [Bitnami charts repository](https://github.com/bitnami/charts) to your local Helm cache:
 
-Linux:
 ```
-sudo curl -L https://github.com/kubeapps/installer/releases/download/<<TAG>>/kubeapps-linux-amd64 -o /usr/local/bin/kubeapps && sudo chmod +x /usr/local/bin/kubeapps
-```
-
-OS X:
-```
-sudo curl -L https://github.com/kubeapps/installer/releases/download/<<TAG>>/kubeapps-darwin-amd64 -o /usr/local/bin/kubeapps && sudo chmod +x /usr/local/bin/kubeapps
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
 ```
 
-To get started with Kubeapps, checkout this [walkthrough](https://github.com/kubeapps/kubeapps/blob/master/docs/getting-started.md).
+Install the Kubeapps Helm chart:
+
+```
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
+```
+
+To get started with Kubeapps, checkout this [walkthrough](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md).
 
 ## Changelog
