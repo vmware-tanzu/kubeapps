@@ -57,7 +57,6 @@ updateRepo() {
 commitAndPushChanges() {
     local targetRepo=${1:?}
     local targetBranch=${2:-"master"}
-    local targetVersion=${3:?}
     if [ ! -f "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml" ]; then
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
@@ -68,8 +67,9 @@ commitAndPushChanges() {
         cd -
         return 1
     fi
+    local chartVersion=$(cat ${targetRepo}/${CHART_REPO_PATH}/Chart.yaml | grep version: | awk '{print $2}')
     git add --all .
-    git commit -m "kubeapps: bump chart version to $targetVersion"
+    git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
     git push origin $targetBranch
     cd -
@@ -85,7 +85,7 @@ if changedVersion; then
     git fetch --tags
     latestVersion=$(git describe --tags $(git rev-list --tags --max-count=1))
     updateRepo $tempDir $latestVersion
-    commitAndPushChanges $tempDir master $latestVersion
+    commitAndPushChanges $tempDir master
 else
     echo "Skipping Chart sync. The version has not changed"
 fi
