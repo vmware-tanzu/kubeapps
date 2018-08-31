@@ -20,11 +20,10 @@ interface IAppListProps {
 
 interface IAppListState {
   filter: string;
-  listAll: boolean;
 }
 
 class AppList extends React.Component<IAppListProps, IAppListState> {
-  public state: IAppListState = { filter: "", listAll: false };
+  public state: IAppListState = { filter: "" };
   public componentDidMount() {
     const { fetchApps, filter, namespace, apps } = this.props;
     fetchApps(namespace, apps.listAll);
@@ -39,9 +38,6 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     }
     if (nextProps.filter !== filter) {
       this.setState({ filter: nextProps.filter });
-    }
-    if (nextProps.apps.listAll !== listAll) {
-      this.setState({ listAll: nextProps.apps.listAll });
     }
   }
 
