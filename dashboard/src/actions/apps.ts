@@ -33,7 +33,7 @@ export const selectApp = createAction("SELECT_APP", (app: hapi.release.Release) 
     type: "SELECT_APP",
   };
 });
-export const toggleListAllAction = createAction("REQUEST_TOGGLE_LIST_ALL");
+export const toggleListAllAction = createAction("REQUEST_TOGGLE_APP_LIST_ALL");
 
 const allActions = [
   listApps,
