@@ -28,7 +28,9 @@ class AppListItem extends React.Component<IAppListItemProps> {
                 </p>
                 <div>
                   <span
-                    className={`ChartListItem__content__info_repo type-small type-color-white padding-t-tiny padding-h-normal`}
+                    className={
+                      "ChartListItem__content__info_repo type-small type-color-white padding-t-tiny padding-h-normal"
+                    }
                   >
                     {app.namespace}
                   </span>

@@ -48,7 +48,7 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
           children={
             <div>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={`/config/repos`}>App repositories configuration</Link> page.
+              <Link to={"/config/repos"}>App repositories configuration</Link> page.
             </div>
           }
         />

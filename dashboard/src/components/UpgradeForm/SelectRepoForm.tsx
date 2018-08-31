@@ -90,7 +90,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
             <PermissionsErrorAlert
               namespace={this.props.kubeappsNamespace}
               roles={[this.requiredRBACRoles()]}
-              action={`view App Repositories`}
+              action={"view App Repositories"}
             />
           );
       }

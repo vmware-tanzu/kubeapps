@@ -191,7 +191,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
           <PermissionsErrorAlert
             namespace={namespace}
             roles={RequiredRBACRoles}
-            action={`provision Service Instance`}
+            action={"provision Service Instance"}
           />
         );
       case NotFoundError:

@@ -26,7 +26,7 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
       case AppConflict:
         return (
           <NotFoundErrorAlert
-            header={`The given release name already exists in the cluster. Choose a different one`}
+            header={"The given release name already exists in the cluster. Choose a different one"}
           />
         );
       case ForbiddenError:
