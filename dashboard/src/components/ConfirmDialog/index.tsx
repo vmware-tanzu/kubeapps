@@ -4,6 +4,7 @@ import * as Modal from "react-modal";
 interface IConfirmDialogProps {
   modalIsOpen: boolean;
   loading: boolean;
+  extraElem?: JSX.Element;
   onConfirm: () => Promise<any>;
   closeModal: () => Promise<any>;
 }
@@ -36,6 +37,7 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
           isOpen={this.props.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"
+          ariaHideApp={false}
         >
           {this.state.error && (
             <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
@@ -45,6 +47,7 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
           ) : (
             <div>
               <div> Are you sure you want to delete this? </div>
+              {this.props.extraElem}
               <button className="button" onClick={this.props.closeModal}>
                 Cancel
               </button>

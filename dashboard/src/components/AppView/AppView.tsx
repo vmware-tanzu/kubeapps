@@ -22,7 +22,7 @@ export interface IAppViewProps {
   error: Error | undefined;
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => Promise<void>;
-  deleteApp: (releaseName: string, namespace: string) => Promise<boolean>;
+  deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
 }
 
 interface IAppViewState {
@@ -152,7 +152,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return <div>Loading</div>;
     }
     return (
-      <section className="AppView padding-b-big">
+      <section id="appview" className="AppView padding-b-big">
         <main>
           <div className="container">
             {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
@@ -224,8 +224,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     return Object.keys(this.state.deployments).map(k => this.state.deployments[k]);
   }
 
-  private deleteApp = () => {
-    return this.props.deleteApp(this.props.releaseName, this.props.namespace);
+  private deleteApp = (purge: boolean) => {
+    return this.props.deleteApp(this.props.releaseName, this.props.namespace, purge);
   };
 }
 

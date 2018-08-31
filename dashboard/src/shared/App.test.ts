@@ -71,4 +71,20 @@ describe("App", () => {
       });
     });
   });
+  describe("delete", () => {
+    it("should delete an app in a namespace", async () => {
+      moxios.stubRequest("/api/tiller-deploy/v1/namespaces/default/releases/foo", {
+        response: "ok",
+        status: 200,
+      });
+      expect(await App.delete("foo", "default", false)).toBe("ok");
+    });
+    it("should delete and purge an app in a namespace", async () => {
+      moxios.stubRequest("/api/tiller-deploy/v1/namespaces/default/releases/foo?purge=true", {
+        response: "ok",
+        status: 200,
+      });
+      expect(await App.delete("foo", "default", true)).toBe("ok");
+    });
+  });
 });

@@ -287,7 +287,7 @@ func (p *Proxy) GetRelease(name, namespace string) (*release.Release, error) {
 }
 
 // DeleteRelease deletes a release
-func (p *Proxy) DeleteRelease(name, namespace string) error {
+func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 	lock(name)
 	defer unlock(name)
 	// Validate that the release actually belongs to the namespace
@@ -295,7 +295,7 @@ func (p *Proxy) DeleteRelease(name, namespace string) error {
 	if err != nil {
 		return err
 	}
-	_, err = p.helmClient.DeleteRelease(name, helm.DeletePurge(true))
+	_, err = p.helmClient.DeleteRelease(name, helm.DeletePurge(purge))
 	if err != nil {
 		return fmt.Errorf("Unable to delete the release: %v", err)
 	}
@@ -310,5 +310,5 @@ type TillerClient interface {
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
 	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)
 	GetRelease(name, namespace string) (*release.Release, error)
-	DeleteRelease(name, namespace string) error
+	DeleteRelease(name, namespace string, purge bool) error
 }

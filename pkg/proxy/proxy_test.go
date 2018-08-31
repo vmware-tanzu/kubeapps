@@ -329,7 +329,8 @@ func TestHelmReleaseDeleted(t *testing.T) {
 	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
-	err := proxy.DeleteRelease(app.ReleaseName, app.Namespace)
+	// TODO: Add a test for a non-purged release when the fake helm cli supports it
+	err := proxy.DeleteRelease(app.ReleaseName, app.Namespace, true)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
@@ -346,7 +347,7 @@ func TestDeleteMissingHelmRelease(t *testing.T) {
 	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
-	err := proxy.DeleteRelease(app.ReleaseName, "other_ns")
+	err := proxy.DeleteRelease(app.ReleaseName, "other_ns", true)
 	if err == nil {
 		t.Error("Delete should fail, there is not a release in the namespace specified")
 	}
@@ -395,7 +396,7 @@ func TestEnsureThreadSafety(t *testing.T) {
 			}
 		},
 		func() {
-			err := proxy.DeleteRelease(rs, ns)
+			err := proxy.DeleteRelease(rs, ns, true)
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
