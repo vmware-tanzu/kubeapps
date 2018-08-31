@@ -29,10 +29,14 @@ fi
 
 echo "Creating cluster $CLUSTER in $ZONE (v$VERSION)"
 gcloud container clusters create --cluster-version=$VERSION --zone $ZONE $CLUSTER --num-nodes 5 --machine-type=n1-standard-2
-# Wait for the cluster to respond
+echo "Waiting for the cluster to respond..."
 cnt=20
-until kubectl get pods; do
-    ((cnt=cnt-1)) || (echo "Waited 20 seconds but cluster is not reachable" && exit 1)
+until kubectl get pods > /dev/null 2>&1; do
+    ((cnt=cnt-1))
+    if [[ "$cnt" -eq 0 ]]; then
+        echo "Waited 20 seconds but cluster is not reachable"
+        exit 1
+    fi
     sleep 1
 done
 
