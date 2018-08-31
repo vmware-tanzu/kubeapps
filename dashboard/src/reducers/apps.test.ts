@@ -26,7 +26,7 @@ describe("authReducer", () => {
   });
 
   describe("reducer actions", () => {
-    it(`sets isFetching when requesting an app`, () => {
+    it("sets isFetching when requesting an app", () => {
       [true, false].forEach(e => {
         expect(
           appsReducer(undefined, {
@@ -36,7 +36,7 @@ describe("authReducer", () => {
       });
     });
 
-    it(`toggles the listAll state`, () => {
+    it("toggles the listAll state", () => {
       let state = appsReducer(undefined, {
         type: actionTypes.toggleListAllAction as any,
       });

@@ -36,19 +36,23 @@ it("should toggle the listAll state", () => {
 });
 
 describe("fetches applications", () => {
+  const listApps = App.listApps;
+  let listAppsMock: jest.Mock;
   beforeEach(() => {
     App.listApps = jest.fn(() => []);
+    listAppsMock = App.listApps as jest.Mock;
   });
-  it("fetches all applications", () => {
+  afterEach(() => {
+    App.listApps = listApps;
+  });
+  it("fetches all applications", async () => {
     const expectedActions = [
       { type: getType(actions.apps.listApps) },
       { type: getType(actions.apps.receiveAppList), apps: [] },
     ];
-    return store.dispatch(actions.apps.fetchApps("default", true)).then(() => {
-      const listAppsMock = App.listApps as jest.Mock;
-      expect(store.getActions()).toEqual(expectedActions);
-      expect(listAppsMock.mock.calls[0]).toEqual(["default", true]);
-    });
+    await store.dispatch(actions.apps.fetchApps("default", true));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(listAppsMock.mock.calls[0]).toEqual(["default", true]);
   });
   it("fetches default applications", () => {
     const expectedActions = [
@@ -56,7 +60,6 @@ describe("fetches applications", () => {
       { type: getType(actions.apps.receiveAppList), apps: [] },
     ];
     return store.dispatch(actions.apps.fetchApps("default", false)).then(() => {
-      const listAppsMock = App.listApps as jest.Mock;
       expect(store.getActions()).toEqual(expectedActions);
       expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
     });
