@@ -40,6 +40,14 @@ describe("App", () => {
       });
       expect(await App.listApps()).toEqual(apps);
     });
+    it("should request the releases of a namespace", async () => {
+      const apps = [{ releaseName: "foo" } as IAppOverview];
+      moxios.stubRequest("/api/tiller-deploy/v1/namespaces/default/releases", {
+        response: { data: apps },
+        status: 200,
+      });
+      expect(await App.listApps("default")).toEqual(apps);
+    });
     it("should request the releases of a namespace with any status", async () => {
       const apps = [{ releaseName: "foo" } as IAppOverview];
       moxios.stubRequest("/api/tiller-deploy/v1/namespaces/default/releases?statuses=all", {
