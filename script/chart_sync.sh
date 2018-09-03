@@ -40,24 +40,28 @@ configUser() {
 updateRepo() {
     local targetRepo=${1:?}
     local targetTag=${2:?}
-    if [ ! -f "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml" ]; then
+    local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
+    local chartYaml="${targetChartPath}/Chart.yaml"
+    if [ ! -f "${chartYaml}" ]; then
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
     fi
-    rm -rf "${targetRepo}/${CHART_REPO_PATH}"
-    cp -R "${KUBEAPPS_CHART_DIR}" "${targetRepo}/${CHART_REPO_PATH}"
+    rm -rf "${targetChartPath}"
+    cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
     # Update Chart.yaml with new version
-    sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTag}"'/g' "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml"
-    rm "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml.bk"
+    sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTag}"'/g' "${chartYaml}"
+    rm "${targetChartPath}/Chart.yaml.bk"
     # DANGER: This replaces any tag marked as latest in the values.yaml
-    sed -i.bk 's/tag: latest/tag: '"${targetTag}"'/g' "${targetRepo}/${CHART_REPO_PATH}/values.yaml"
-    rm "${targetRepo}/${CHART_REPO_PATH}/values.yaml.bk"
+    sed -i.bk 's/tag: latest/tag: '"${targetTag}"'/g' "${targetChartPath}/values.yaml"
+    rm "${targetChartPath}/values.yaml.bk"
 }
 
 commitAndPushChanges() {
     local targetRepo=${1:?}
     local targetBranch=${2:-"master"}
-    if [ ! -f "${targetRepo}/${CHART_REPO_PATH}/Chart.yaml" ]; then
+    local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
+    local chartYaml="${targetChartPath}/Chart.yaml"
+    if [ ! -f "${chartYaml}" ]; then
         echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
         return 1
     fi
@@ -67,7 +71,7 @@ commitAndPushChanges() {
         cd -
         return 1
     fi
-    local chartVersion=$(cat ${targetRepo}/${CHART_REPO_PATH}/Chart.yaml | grep version: | awk '{print $2}')
+    local chartVersion=$(grep -w version: ${chartYaml} | awk '{print $2}')
     git add --all .
     git commit -m "kubeapps: bump chart version to $chartVersion"
     # NOTE: This expects to have a loaded SSH key
