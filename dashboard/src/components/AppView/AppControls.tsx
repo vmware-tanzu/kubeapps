@@ -6,6 +6,7 @@ import ConfirmDialog from "../ConfirmDialog";
 
 interface IAppControlsProps {
   app: hapi.release.Release;
+  ariaHideApp?: boolean;
   deleteApp: (purge: boolean) => Promise<boolean>;
 }
 
@@ -53,6 +54,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
           modalIsOpen={this.state.modalIsOpen}
           loading={this.state.deleting}
           closeModal={this.closeModal}
+          ariaHideApp={this.props.ariaHideApp}
           extraElem={
             <div className="margin-v-small text-c">
               <label className="checkbox margin-r-big">

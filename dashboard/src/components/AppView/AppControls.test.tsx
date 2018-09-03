@@ -71,7 +71,7 @@ it("calls delete function with additional purge", () => {
   const app = new hapi.release.Release({ name, namespace });
   const deleteApp = jest.fn(() => false); // Return "false" to avoid redirect when mounting
   // mount() is necessary to render the Modal
-  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} />);
+  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} ariaHideApp={false} />);
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
 

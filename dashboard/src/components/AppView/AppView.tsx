@@ -152,7 +152,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return <div>Loading</div>;
     }
     return (
-      <section id="appview" className="AppView padding-b-big">
+      <section className="AppView padding-b-big">
         <main>
           <div className="container">
             {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}

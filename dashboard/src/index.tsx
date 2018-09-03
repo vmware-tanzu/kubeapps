@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as Modal from "react-modal";
 import { createAxiosInterceptors } from "shared/AxiosInstance";
 import { axios } from "./shared/Auth";
 
@@ -19,3 +20,6 @@ ReactDOM.render(<Root />, document.getElementById("root") as HTMLElement);
 // the Dashboard and we no longer need the external link.
 
 // registerServiceWorker();
+
+// Set App Element for accessibilty
+Modal.setAppElement("#root");
