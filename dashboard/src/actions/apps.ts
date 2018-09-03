@@ -13,12 +13,16 @@ export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Rele
   };
 });
 export const listApps = createAction("REQUEST_APP_LIST");
-export const receiveAppList = createAction("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
-  return {
-    apps,
-    type: "RECEIVE_APP_LIST",
-  };
-});
+export const receiveAppList = createAction(
+  "RECEIVE_APP_LIST",
+  (apps: IAppOverview[], listingAll: boolean) => {
+    return {
+      apps,
+      listingAll,
+      type: "RECEIVE_APP_LIST",
+    };
+  },
+);
 export const errorApps = createAction("ERROR_APPS", (err: Error) => ({
   err,
   type: "ERROR_APPS",
@@ -33,14 +37,12 @@ export const selectApp = createAction("SELECT_APP", (app: hapi.release.Release) 
     type: "SELECT_APP",
   };
 });
-export const toggleListAllAction = createAction("REQUEST_TOGGLE_APP_LIST_ALL");
 
 const allActions = [
   listApps,
   requestApps,
   receiveApps,
   receiveAppList,
-  toggleListAllAction,
   errorApps,
   errorDeleteApp,
   selectApp,
@@ -71,7 +73,7 @@ export function deleteApp(releaseName: string, namespace: string) {
   };
 }
 
-export function fetchApps(ns?: string, all?: boolean) {
+export function fetchApps(ns?: string, all: boolean = false) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
     if (ns && ns === "_all") {
       ns = undefined;
@@ -79,7 +81,7 @@ export function fetchApps(ns?: string, all?: boolean) {
     dispatch(listApps());
     try {
       const apps = await App.listApps(ns, all);
-      dispatch(receiveAppList(apps));
+      dispatch(receiveAppList(apps, all));
     } catch (e) {
       dispatch(errorApps(e));
     }
@@ -119,11 +121,5 @@ export function upgradeApp(
       dispatch(errorApps(e));
       return false;
     }
-  };
-}
-
-export function toggleListAll() {
-  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
-    dispatch(toggleListAllAction());
   };
 }

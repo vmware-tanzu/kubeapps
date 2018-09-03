@@ -8,7 +8,7 @@ import { IAppState } from "../shared/types";
 const initialState: IAppState = {
   isFetching: false,
   items: [],
-  listAll: false,
+  listingAll: false,
 };
 
 const appsReducer = (
@@ -29,9 +29,12 @@ const appsReducer = (
     case getType(actions.apps.listApps):
       return { ...state, isFetching: true };
     case getType(actions.apps.receiveAppList):
-      return { ...state, isFetching: false, listOverview: action.apps };
-    case getType(actions.apps.toggleListAllAction):
-      return { ...state, listAll: !state.listAll };
+      return {
+        ...state,
+        isFetching: false,
+        listOverview: action.apps,
+        listingAll: action.listingAll,
+      };
     case LOCATION_CHANGE:
       return {
         ...state,

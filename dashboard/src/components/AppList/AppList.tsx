@@ -15,7 +15,6 @@ interface IAppListProps {
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
-  toggleListAll: () => Promise<void>;
 }
 
 interface IAppListState {
@@ -26,15 +25,15 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
   public componentDidMount() {
     const { fetchApps, filter, namespace, apps } = this.props;
-    fetchApps(namespace, apps.listAll);
+    fetchApps(namespace, apps.listingAll);
     this.setState({ filter });
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
-    const { apps: { error, listAll }, fetchApps, filter, namespace } = this.props;
+    const { apps: { error, listingAll }, fetchApps, filter, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
-      fetchApps(nextProps.namespace, listAll);
+      fetchApps(nextProps.namespace, listingAll);
     }
     if (nextProps.filter !== filter) {
       this.setState({ filter: nextProps.filter });
@@ -42,7 +41,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public render() {
-    const { pushSearchFilter, apps: { error, isFetching, listOverview, listAll } } = this.props;
+    const { pushSearchFilter, apps: { error, isFetching, listOverview, listingAll } } = this.props;
     if (!listOverview) {
       return <div>Loading</div>;
     }
@@ -67,8 +66,8 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
             <div className="col-5">
               <div className="text-r">
                 <label className="checkbox margin-r-big">
-                  <input type="checkbox" checked={listAll} onChange={this.toggleListAll} />
-                  <span>List all</span>
+                  <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
+                  <span>Show all apps</span>
                 </label>
                 <Link to="/charts">
                   <button className="button button-accent">Deploy App</button>
@@ -123,8 +122,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   private toggleListAll = () => {
-    this.props.fetchApps(this.props.namespace, !this.props.apps.listAll);
-    this.props.toggleListAll();
+    this.props.fetchApps(this.props.namespace, !this.props.apps.listingAll);
   };
 
   private renderError(error: Error) {

@@ -7,21 +7,15 @@ describe("authReducer", () => {
   let initialState: IAppState;
 
   const actionTypes = {
-    errorApps: getType(actions.apps.errorApps),
-    errorDeleteApp: getType(actions.apps.errorDeleteApp),
-    listApps: getType(actions.apps.listApps),
     receiveAppList: getType(actions.apps.receiveAppList),
-    receiveApps: getType(actions.apps.receiveApps),
     requestApps: getType(actions.apps.requestApps),
-    selectApp: getType(actions.apps.selectApp),
-    toggleListAllAction: getType(actions.apps.toggleListAllAction),
   };
 
   beforeEach(() => {
     initialState = {
       isFetching: false,
       items: [],
-      listAll: false,
+      listingAll: false,
     };
   });
 
@@ -38,13 +32,15 @@ describe("authReducer", () => {
 
     it("toggles the listAll state", () => {
       let state = appsReducer(undefined, {
-        type: actionTypes.toggleListAllAction as any,
+        listingAll: true,
+        type: actionTypes.receiveAppList as any,
       });
-      expect(state).toEqual({ ...initialState, listAll: true });
+      expect(state).toEqual({ ...initialState, listingAll: true });
       state = appsReducer(state, {
-        type: actionTypes.toggleListAllAction as any,
+        listingAll: false,
+        type: actionTypes.receiveAppList as any,
       });
-      expect(state).toEqual({ ...initialState, listAll: false });
+      expect(state).toEqual({ ...initialState, listingAll: false });
     });
   });
 });

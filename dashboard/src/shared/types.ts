@@ -165,7 +165,7 @@ export interface IAppState {
   deleteError?: Error;
   // currently items are always Helm releases
   items: hapi.release.Release[];
-  listAll: boolean;
+  listingAll: boolean;
   listOverview?: IAppOverview[];
   selected?: hapi.release.Release;
 }

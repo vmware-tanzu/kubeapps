@@ -32,8 +32,8 @@ it("renders a loading message if it's fetching apps", () => {
         {
           isFetching: true,
           items: [],
-          listAll: false,
           listOverview: [],
+          listingAll: false,
         } as IAppState
       }
     />,
@@ -49,8 +49,8 @@ it("renders a welcome message if no apps are available", () => {
         {
           isFetching: false,
           items: [],
-          listAll: false,
           listOverview: [],
+          listingAll: false,
         } as IAppState
       }
     />,
@@ -66,12 +66,12 @@ it("renders a CardGrid with the available Apps", () => {
         {
           isFetching: false,
           items: [],
-          listAll: false,
           listOverview: [
             {
               releaseName: "foo",
             } as IAppOverview,
           ],
+          listingAll: false,
         } as IAppState
       }
     />,
@@ -93,7 +93,6 @@ it("filters apps", () => {
         {
           isFetching: false,
           items: [],
-          listAll: false,
           listOverview: [
             {
               releaseName: "foo",
@@ -102,6 +101,7 @@ it("filters apps", () => {
               releaseName: "bar",
             } as IAppOverview,
           ],
+          listingAll: false,
         } as IAppState
       }
       filter="bar"
@@ -120,22 +120,21 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
   const apps = {
     isFetching: false,
     items: [],
-    listAll: false,
     listOverview: [{ releaseName: "foo" } as IAppOverview],
+    listingAll: false,
   } as IAppState;
   const wrapper = shallow(
     <AppList
       {...defaultProps}
       apps={apps}
-      toggleListAll={jest.fn(() => {
-        apps.listAll = !apps.listAll;
+      toggleListAll={jest.fn((toggle: boolean) => {
+        apps.listingAll = toggle;
       })}
     />,
   );
   const checkbox = wrapper.find('input[type="checkbox"]');
-  expect(apps.listAll).toBe(false);
+  expect(apps.listingAll).toBe(false);
   checkbox.simulate("change");
-  expect(apps.listAll).toBe(true);
   // The last call to fetchApps should list all the apps
   const fetchCalls = defaultProps.fetchApps.mock.calls;
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
