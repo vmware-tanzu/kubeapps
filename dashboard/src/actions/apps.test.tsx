@@ -55,14 +55,14 @@ describe("fetches applications", () => {
 });
 
 describe("delete applications", () => {
-  const deleteApp = App.delete;
+  const deleteAppOrig = App.delete;
   let deleteAppMock: jest.Mock;
   beforeEach(() => {
-    App.delete = jest.fn(() => []);
-    deleteAppMock = App.delete as jest.Mock;
+    deleteAppMock = jest.fn(() => []);
+    App.delete = deleteAppMock;
   });
   afterEach(() => {
-    App.delete = deleteApp;
+    App.delete = deleteAppOrig;
   });
   it("delete an application", async () => {
     await store.dispatch(actions.apps.deleteApp("foo", "default", false));

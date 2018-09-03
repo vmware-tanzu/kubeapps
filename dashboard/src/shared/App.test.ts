@@ -72,19 +72,29 @@ describe("App", () => {
     });
   });
   describe("delete", () => {
-    it("should delete an app in a namespace", async () => {
-      moxios.stubRequest("/api/tiller-deploy/v1/namespaces/default/releases/foo", {
-        response: "ok",
-        status: 200,
+    [
+      {
+        description: "should delete an app in a namespace",
+        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/foo`,
+        purge: false,
+      },
+      {
+        description: "should delete and purge an app in a namespace",
+        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/foo?purge=true`,
+        purge: true,
+      },
+    ].forEach(t => {
+      it(t.description, async () => {
+        moxios.stubRequest(/.*/, { response: "ok", status: 200 });
+        expect(await App.delete("foo", "default", t.purge)).toBe("ok");
+        expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
       });
-      expect(await App.delete("foo", "default", false)).toBe("ok");
     });
-    it("should delete and purge an app in a namespace", async () => {
-      moxios.stubRequest("/api/tiller-deploy/v1/namespaces/default/releases/foo?purge=true", {
-        response: "ok",
-        status: 200,
-      });
-      expect(await App.delete("foo", "default", true)).toBe("ok");
+    it("throws an error if returns an error 404", async () => {
+      moxios.stubRequest(/.*/, { status: 404 });
+      expect(App.delete("foo", "default", false)).rejects.toThrow(
+        "Request failed with status code 404",
+      );
     });
   });
 });
