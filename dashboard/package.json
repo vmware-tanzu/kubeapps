@@ -49,7 +49,7 @@
     "build-js": "react-scripts-ts build",
     "start": "npm-run-all -p watch-css start-js",
     "build": "npm-run-all build-css build-js",
-    "test": "react-scripts-ts test --env=jsdom",
+    "test": "yarn run build-css && react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
     "tslint-check": "tslint-config-prettier-check ./tslint.ci.json",
     "precommit": "lint-staged",
