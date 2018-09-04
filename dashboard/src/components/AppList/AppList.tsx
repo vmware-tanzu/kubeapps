@@ -48,31 +48,30 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     return (
       <section className="AppList">
         <PageHeader>
-          <div className="col-7">
+          <div className="col-9">
             <div className="row">
               <h1>Applications</h1>
-              {listOverview.length > 0 && (
+              {listOverview.length > 0 && [
                 <SearchFilter
+                  key="searchFilter"
                   className="margin-l-big"
                   placeholder="search apps..."
                   onChange={this.handleFilterQueryChange}
                   value={this.state.filter}
                   onSubmit={pushSearchFilter}
-                />
-              )}
+                />,
+                <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
+                  <input type="checkbox" checked={!listingAll} onChange={this.toggleListAll} />
+                  <span>Show only deployed apps</span>
+                </label>,
+              ]}
             </div>
           </div>
           {listOverview.length > 0 && (
-            <div className="col-5">
-              <div className="text-r">
-                <label className="checkbox margin-r-big">
-                  <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
-                  <span>Show all apps</span>
-                </label>
-                <Link to="/charts">
-                  <button className="button button-accent">Deploy App</button>
-                </Link>
-              </div>
+            <div className="col-3 text-r align-center">
+              <Link to="/charts">
+                <button className="button button-accent">Deploy App</button>
+              </Link>
             </div>
           )}
         </PageHeader>
