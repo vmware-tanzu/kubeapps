@@ -29,42 +29,24 @@ workflows:
           <<: *build_always
       - test_dashboard:
           <<: *build_always
-      - build_chartrepo:
+      - build_go_images:
           <<: *build_always
-          requires:
-            - test_go
-      - build_chartsvc:
-          <<: *build_always
-          requires:
-            - test_go
-      - build_chart_apprepository:
-          <<: *build_always
-          requires:
-            - test_go
       - build_dashboard:
           <<: *build_always
-          requires:
-            - test_dashboard
-      - build_tiller_proxy:
-          <<: *build_always
-          requires:
-            - test_go
       - GKE_1_9:
           <<: *build_on_master
           requires:
-            - build_chartrepo
-            - build_chartsvc
-            - build_chart_apprepository
+            - test_go
+            - test_dashboard
+            - build_go_images
             - build_dashboard
-            - build_tiller_proxy
       - GKE_1_10:
           <<: *build_on_master
           requires:
-            - build_chartrepo
-            - build_chartsvc
-            - build_chart_apprepository
+            - test_go
+            - test_dashboard
+            - build_go_images
             - build_dashboard
-            - build_tiller_proxy
       - sync_chart:
           <<: *build_on_master
           requires:
@@ -90,26 +72,26 @@ exports: &exports
     # It is not possible to resolve env vars in the environment section:
     # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
     echo "export VERSION=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
-build_image: &build_image
+build_images: &build_images
   machine: true
-  working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
-  environment:
-    GOPATH: /home/circleci/.go_workspace
   steps:
     - checkout
     - <<: *exports
-    - run: make VERSION="$VERSION" $IMAGE
     - run: |
-        if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
-          docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-          if [[ -n "$CIRCLE_TAG" ]]; then 
-            docker push $IMAGE:$VERSION
+        read -ra IMG_ARRAY <<< "$IMAGES"
+        for IMAGE in "${IMG_ARRAY[@]}"; do
+          make VERSION="$VERSION" $IMAGE
+          if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
+            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+            if [[ -n "$CIRCLE_TAG" ]]; then 
+              docker push $IMAGE:$VERSION
+            fi
+            if [[ "$CIRCLE_BRANCH" == "master"  ]]; then
+              docker tag $IMAGE:$VERSION $IMAGE:latest
+              docker push $IMAGE:latest
+            fi
           fi
-          if [[ "$CIRCLE_BRANCH" == "master"  ]]; then
-            docker tag $IMAGE:$VERSION $IMAGE:latest
-            docker push $IMAGE:latest
-          fi
-        fi
+        done
 gke_test: &gke_test
   docker:
     - image: circleci/golang:1.9
@@ -168,26 +150,16 @@ jobs:
       - run: yarn install --cwd=dashboard --frozen-lockfile
       - run: yarn --cwd=dashboard run lint
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
-  build_chartrepo:
-    <<: *build_image
+  build_go_images:
+    working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
     environment:
-      - IMAGE=kubeapps/chart-repo
-  build_chartsvc:
-    <<: *build_image
-    environment:
-      - IMAGE=kubeapps/chartsvc
-  build_chart_apprepository:
-    <<: *build_image
-    environment:
-      - IMAGE=kubeapps/apprepository-controller
+      GOPATH: /home/circleci/.go_workspace
+      IMAGES: "kubeapps/apprepository-controller kubeapps/chart-repo kubeapps/chartsvc kubeapps/tiller-proxy"
+    <<: *build_images
   build_dashboard:
-    <<: *build_image
     environment:
-      - IMAGE=kubeapps/dashboard
-  build_tiller_proxy:
-    <<: *build_image
-    environment:
-      - IMAGE=kubeapps/tiller-proxy
+      IMAGES: "kubeapps/dashboard"
+    <<: *build_images
   release:
     docker:
       - image: circleci/golang:1.9
