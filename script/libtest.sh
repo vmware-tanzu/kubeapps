@@ -45,11 +45,20 @@ k8s_wait_for_pod_completed() {
     k8s_wait_for_pod $namespace $labelSelector Completed
 }
 
+k8s_ensure_image() {
+    namespace=${1:?}
+    deployment=${2:?}
+    expectedPattern=${3:?}
+    jsonpath=${4:-'{.spec.template.spec.containers[0].image}'}
+    echo "Checking image for $deployment"
+    kubectl get deployment -n $namespace $deployment -o jsonpath="$jsonpath" | grep $expectedPattern
+}
+
 ## helm specific helper functions
 wait_for_tiller() {
     echo "Waiting for Tiller to be ready ... "
     local -i cnt=${TEST_MAX_WAIT_SEC:?}
-    until helm version "${@}"; do
+    until helm version --tiller-connection-timeout 5 "${@}"; do
         ((cnt=cnt-1)) || return 1
         sleep 1
     done
