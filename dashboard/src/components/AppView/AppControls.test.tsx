@@ -1,5 +1,6 @@
 import { mount, shallow } from "enzyme";
 import * as React from "react";
+import * as ReactModal from "react-modal";
 import { Redirect } from "react-router";
 import { hapi } from "../../shared/hapi/release";
 import ConfirmDialog from "../ConfirmDialog";
@@ -71,7 +72,8 @@ it("calls delete function with additional purge", () => {
   const app = new hapi.release.Release({ name, namespace });
   const deleteApp = jest.fn(() => false); // Return "false" to avoid redirect when mounting
   // mount() is necessary to render the Modal
-  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} ariaHideApp={false} />);
+  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} />);
+  ReactModal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
 

@@ -5,7 +5,6 @@ interface IConfirmDialogProps {
   modalIsOpen: boolean;
   loading: boolean;
   extraElem?: JSX.Element;
-  ariaHideApp?: boolean;
   onConfirm: () => Promise<any>;
   closeModal: () => Promise<any>;
 }
@@ -38,7 +37,6 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
           isOpen={this.props.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"
-          ariaHideApp={this.props.ariaHideApp === false ? false : true}
         >
           {this.state.error && (
             <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
