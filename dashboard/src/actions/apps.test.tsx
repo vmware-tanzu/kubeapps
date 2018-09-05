@@ -35,8 +35,8 @@ describe("fetches applications", () => {
   });
   it("fetches all applications", async () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps) },
-      { type: getType(actions.apps.receiveAppList), apps: [], listingAll: true },
+      { type: getType(actions.apps.listApps), listingAll: true },
+      { type: getType(actions.apps.receiveAppList), apps: [] },
     ];
     await store.dispatch(actions.apps.fetchApps("default", true));
     expect(store.getActions()).toEqual(expectedActions);
@@ -44,8 +44,8 @@ describe("fetches applications", () => {
   });
   it("fetches default applications", () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps) },
-      { type: getType(actions.apps.receiveAppList), apps: [], listingAll: false },
+      { type: getType(actions.apps.listApps), listingAll: false },
+      { type: getType(actions.apps.receiveAppList), apps: [] },
     ];
     return store.dispatch(actions.apps.fetchApps("default", false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);

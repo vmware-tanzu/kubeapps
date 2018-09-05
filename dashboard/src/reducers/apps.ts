@@ -27,14 +27,9 @@ const appsReducer = (
     case getType(actions.apps.selectApp):
       return { ...state, isFetching: false, selected: action.app };
     case getType(actions.apps.listApps):
-      return { ...state, isFetching: true };
+      return { ...state, isFetching: true, listingAll: action.listingAll };
     case getType(actions.apps.receiveAppList):
-      return {
-        ...state,
-        isFetching: false,
-        listOverview: action.apps,
-        listingAll: action.listingAll,
-      };
+      return { ...state, isFetching: false, listOverview: action.apps };
     case LOCATION_CHANGE:
       return {
         ...state,

@@ -12,17 +12,18 @@ export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Rele
     type: "RECEIVE_APPS",
   };
 });
-export const listApps = createAction("REQUEST_APP_LIST");
-export const receiveAppList = createAction(
-  "RECEIVE_APP_LIST",
-  (apps: IAppOverview[], listingAll: boolean) => {
-    return {
-      apps,
-      listingAll,
-      type: "RECEIVE_APP_LIST",
-    };
-  },
-);
+export const listApps = createAction("REQUEST_APP_LIST", (listingAll: boolean) => {
+  return {
+    listingAll,
+    type: "REQUEST_APP_LIST",
+  };
+});
+export const receiveAppList = createAction("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
+  return {
+    apps,
+    type: "RECEIVE_APP_LIST",
+  };
+});
 export const errorApps = createAction("ERROR_APPS", (err: Error) => ({
   err,
   type: "ERROR_APPS",
@@ -78,10 +79,10 @@ export function fetchApps(ns?: string, all: boolean = false) {
     if (ns && ns === "_all") {
       ns = undefined;
     }
-    dispatch(listApps());
+    dispatch(listApps(all));
     try {
       const apps = await App.listApps(ns, all);
-      dispatch(receiveAppList(apps, all));
+      dispatch(receiveAppList(apps));
     } catch (e) {
       dispatch(errorApps(e));
     }

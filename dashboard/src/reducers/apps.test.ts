@@ -7,6 +7,7 @@ describe("authReducer", () => {
   let initialState: IAppState;
 
   const actionTypes = {
+    listApps: getType(actions.apps.listApps),
     receiveAppList: getType(actions.apps.receiveAppList),
     requestApps: getType(actions.apps.requestApps),
   };
@@ -33,14 +34,14 @@ describe("authReducer", () => {
     it("toggles the listAll state", () => {
       let state = appsReducer(undefined, {
         listingAll: true,
-        type: actionTypes.receiveAppList as any,
+        type: actionTypes.listApps as any,
       });
-      expect(state).toEqual({ ...initialState, listingAll: true });
+      expect(state).toEqual({ ...initialState, isFetching: true, listingAll: true });
       state = appsReducer(state, {
         listingAll: false,
-        type: actionTypes.receiveAppList as any,
+        type: actionTypes.listApps as any,
       });
-      expect(state).toEqual({ ...initialState, listingAll: false });
+      expect(state).toEqual({ ...initialState, isFetching: true, listingAll: false });
     });
   });
 });
