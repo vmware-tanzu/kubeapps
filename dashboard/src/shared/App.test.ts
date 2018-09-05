@@ -71,4 +71,30 @@ describe("App", () => {
       });
     });
   });
+  describe("delete", () => {
+    [
+      {
+        description: "should delete an app in a namespace",
+        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/foo`,
+        purge: false,
+      },
+      {
+        description: "should delete and purge an app in a namespace",
+        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/foo?purge=true`,
+        purge: true,
+      },
+    ].forEach(t => {
+      it(t.description, async () => {
+        moxios.stubRequest(/.*/, { response: "ok", status: 200 });
+        expect(await App.delete("foo", "default", t.purge)).toBe("ok");
+        expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
+      });
+    });
+    it("throws an error if returns an error 404", async () => {
+      moxios.stubRequest(/.*/, { status: 404 });
+      expect(App.delete("foo", "default", false)).rejects.toThrow(
+        "Request failed with status code 404",
+      );
+    });
+  });
 });

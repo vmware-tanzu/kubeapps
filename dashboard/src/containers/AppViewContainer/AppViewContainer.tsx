@@ -26,8 +26,8 @@ function mapStateToProps({ apps }: IStoreState, { match: { params } }: IRoutePro
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    deleteApp: (releaseName: string, ns: string) =>
-      dispatch(actions.apps.deleteApp(releaseName, ns)),
+    deleteApp: (releaseName: string, ns: string, purge: boolean) =>
+      dispatch(actions.apps.deleteApp(releaseName, ns, purge)),
     getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
   };
 }

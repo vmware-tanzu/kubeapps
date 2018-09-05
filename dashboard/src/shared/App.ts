@@ -65,8 +65,12 @@ export class App {
     return data;
   }
 
-  public static async delete(releaseName: string, namespace: string) {
-    const { data } = await axios.delete(App.getResourceURL(namespace, releaseName));
+  public static async delete(releaseName: string, namespace: string, purge: boolean) {
+    let purgeQuery;
+    if (purge) {
+      purgeQuery = "purge=true";
+    }
+    const { data } = await axios.delete(App.getResourceURL(namespace, releaseName, purgeQuery));
     return data;
   }
 

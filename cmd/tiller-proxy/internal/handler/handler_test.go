@@ -209,6 +209,22 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        200,
+			RemainingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DELETED}}}},
+			ResponseBody:      "",
+		},
+		{
+			// Scenario params
+			Description:      "Delete and purge a simple release",
+			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
+			DisableAuth:      true,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "?purge=true",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        200,
 			RemainingReleases: []release.Release{},
 			ResponseBody:      "",
 		},

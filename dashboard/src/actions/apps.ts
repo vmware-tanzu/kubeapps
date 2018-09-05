@@ -62,10 +62,10 @@ export function getApp(releaseName: string, namespace: string) {
   };
 }
 
-export function deleteApp(releaseName: string, namespace: string) {
+export function deleteApp(releaseName: string, namespace: string, purge: boolean) {
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
-      await App.delete(releaseName, namespace);
+      await App.delete(releaseName, namespace, purge);
       return true;
     } catch (e) {
       dispatch(errorDeleteApp(e));

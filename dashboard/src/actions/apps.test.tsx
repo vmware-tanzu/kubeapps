@@ -53,3 +53,34 @@ describe("fetches applications", () => {
     });
   });
 });
+
+describe("delete applications", () => {
+  const deleteAppOrig = App.delete;
+  let deleteAppMock: jest.Mock;
+  beforeEach(() => {
+    deleteAppMock = jest.fn(() => []);
+    App.delete = deleteAppMock;
+  });
+  afterEach(() => {
+    App.delete = deleteAppOrig;
+  });
+  it("delete an application", async () => {
+    await store.dispatch(actions.apps.deleteApp("foo", "default", false));
+    expect(store.getActions()).toEqual([]);
+    expect(deleteAppMock.mock.calls[0]).toEqual(["foo", "default", false]);
+  });
+  it("delete and purge an application", async () => {
+    await store.dispatch(actions.apps.deleteApp("foo", "default", true));
+    expect(store.getActions()).toEqual([]);
+    expect(deleteAppMock.mock.calls[0]).toEqual(["foo", "default", true]);
+  });
+  it("delete and throw an error", async () => {
+    const error = new Error("something went wrong!");
+    const expectedActions = [{ type: getType(actions.apps.errorDeleteApp), err: error }];
+    deleteAppMock.mockImplementation(() => {
+      throw error;
+    });
+    expect(await store.dispatch(actions.apps.deleteApp("foo", "default", true))).toBe(false);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
