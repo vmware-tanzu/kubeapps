@@ -34,7 +34,7 @@ cnt=20
 until kubectl get pods > /dev/null 2>&1; do
     ((cnt=cnt-1))
     if [[ "$cnt" -eq 0 ]]; then
-        echo "Waited 20 seconds but cluster is not reachable"
+        echo "Tried 20 times but the cluster is not reachable"
         exit 1
     fi
     sleep 1
