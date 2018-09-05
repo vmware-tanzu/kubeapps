@@ -1,3 +1,4 @@
+# Based off sass-lint YAML sample: https://github.com/sasstools/sass-lint/blob/master/docs/sass-lint.yml
 # Linter Options
 options:
   # Don't merge default rules
