@@ -17,7 +17,8 @@
 set -e
 
 ROOT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
-DEV_TAG=${1:?}
+IMG_MODIFIER=${1:?}
+DEV_TAG=${2:?}
 
 source $ROOT_DIR/script/libtest.sh
 
@@ -25,18 +26,19 @@ source $ROOT_DIR/script/libtest.sh
 kubectl get clusterrolebinding kube-dns-admin >& /dev/null || \
     kubectl create clusterrolebinding kube-dns-admin --serviceaccount=kube-system:default --clusterrole=cluster-admin 
 
-# Wait for Tiller
-k8s_wait_for_pod_ready kube-system app=helm,name=tiller
-wait_for_tiller
-
 # Install Kubeapps
 helm dep up $ROOT_DIR/chart/kubeapps/
 helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
   --set apprepository.image.tag=$DEV_TAG \
+  --set apprepository.image.repository=kubeapps/apprepository-controller$IMG_MODIFIER \
   --set apprepository.syncImage.tag=$DEV_TAG \
+  --set apprepository.syncImage.repository=kubeapps/chart-repo$IMG_MODIFIER \
   --set chartsvc.image.tag=$DEV_TAG \
+  --set chartsvc.image.repository=kubeapps/chartsvc$IMG_MODIFIER \
   --set dashboard.image.tag=$DEV_TAG \
-  --set tillerProxy.image.tag=$DEV_TAG
+  --set dashboard.image.repository=kubeapps/dashboard$IMG_MODIFIER \
+  --set tillerProxy.image.tag=$DEV_TAG \
+  --set tillerProxy.image.repository=kubeapps/tiller-proxy$IMG_MODIFIER
 
 # Ensure that we are testing the correct image
 k8s_ensure_image kubeapps kubeapps-ci-apprepository-controller $DEV_TAG

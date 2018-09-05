@@ -2,6 +2,7 @@ IMPORT_PATH:= github.com/kubeapps/kubeapps
 GO = /usr/bin/env go
 GOFMT = /usr/bin/env gofmt
 VERSION ?= dev-$(shell date +%FT%H-%M-%S-%Z)
+IMG_MODIFIER ?= 
 
 GO_PACKAGES = ./...
 GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
@@ -12,14 +13,14 @@ all: kubeapps/dashboard kubeapps/chartsvc kubeapps/chart-repo kubeapps/appreposi
 
 # TODO(miguel) Create Makefiles per component
 kubeapps/%:
-	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .
+	docker build -t kubeapps/$*$(IMG_MODIFIER):$(VERSION) -f cmd/$*/Dockerfile .
 
 kubeapps/dashboard:
-	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
+	docker build -t kubeapps/dashboard$(IMG_MODIFIER):$(VERSION) -f dashboard/Dockerfile dashboard/
 
 kubeapps/tiller-proxy:
 	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o ./cmd/tiller-proxy/proxy-static ./cmd/tiller-proxy
-	docker build -t kubeapps/tiller-proxy:$(VERSION) -f cmd/tiller-proxy/Dockerfile cmd/tiller-proxy
+	docker build -t kubeapps/tiller-proxy$(IMG_MODIFIER):$(VERSION) -f cmd/tiller-proxy/Dockerfile cmd/tiller-proxy
 
 test:
 	$(GO) test $(GO_PACKAGES)

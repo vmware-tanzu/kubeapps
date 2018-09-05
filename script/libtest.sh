@@ -50,16 +50,11 @@ k8s_ensure_image() {
     deployment=${2:?}
     expectedPattern=${3:?}
     jsonpath=${4:-'{.spec.template.spec.containers[0].image}'}
-    echo "Checking image for $deployment"
-    kubectl get deployment -n $namespace $deployment -o jsonpath="$jsonpath" | grep $expectedPattern
-}
-
-## helm specific helper functions
-wait_for_tiller() {
-    echo "Waiting for Tiller to be ready ... "
-    local -i cnt=${TEST_MAX_WAIT_SEC:?}
-    until helm version --tiller-connection-timeout 5 "${@}"; do
-        ((cnt=cnt-1)) || return 1
-        sleep 1
-    done
+    echo "Checking that $deployment mathes $expectedPattern"
+    if kubectl get deployment -n $namespace $deployment -o jsonpath="$jsonpath" | grep $expectedPattern; then
+        return 0
+    else
+        echo "Failed to found $expectedPattern"
+        return 1
+    fi
 }
