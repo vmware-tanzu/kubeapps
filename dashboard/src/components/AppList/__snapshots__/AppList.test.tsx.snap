@@ -6,7 +6,7 @@ exports[`renders a welcome message if no apps are available 1`] = `
 >
   <PageHeader>
     <div
-      className="col-8"
+      className="col-9"
     >
       <div
         className="row"

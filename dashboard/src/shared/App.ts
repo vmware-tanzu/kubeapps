@@ -3,15 +3,20 @@ import { axios } from "./Auth";
 import { hapi } from "./hapi/release";
 import { IAppOverview, IChartVersion } from "./types";
 
+export const TILLER_PROXY_ROOT_URL = "/api/tiller-deploy/v1";
+
 export class App {
-  public static getResourceURL(namespace?: string, name?: string) {
-    let url = "/api/tiller-deploy/v1";
+  public static getResourceURL(namespace?: string, name?: string, query?: string) {
+    let url = TILLER_PROXY_ROOT_URL;
     if (namespace) {
       url += `/namespaces/${namespace}`;
     }
     url += "/releases";
     if (name) {
       url += `/${name}`;
+    }
+    if (query) {
+      url += `?${query}`;
     }
     return url;
   }
@@ -60,13 +65,23 @@ export class App {
     return data;
   }
 
-  public static async delete(releaseName: string, namespace: string) {
-    const { data } = await axios.delete(App.getResourceURL(namespace, releaseName));
+  public static async delete(releaseName: string, namespace: string, purge: boolean) {
+    let purgeQuery;
+    if (purge) {
+      purgeQuery = "purge=true";
+    }
+    const { data } = await axios.delete(App.getResourceURL(namespace, releaseName, purgeQuery));
     return data;
   }
 
-  public static async listApps(namespace?: string) {
-    const { data } = await axios.get<{ data: IAppOverview[] }>(App.getResourceURL(namespace));
+  public static async listApps(namespace?: string, allStatuses?: boolean) {
+    let query;
+    if (allStatuses) {
+      query = "statuses=all";
+    }
+    const { data } = await axios.get<{ data: IAppOverview[] }>(
+      App.getResourceURL(namespace, undefined, query),
+    );
     return data.data;
   }
 

@@ -10,7 +10,7 @@ class PageHeader extends React.Component<IPageHeaderProps> {
   public render() {
     return (
       <header className="PageHeader">
-        <div className="row padding-t-big padding-b-small collapse-b-phone-land">
+        <div className="row padding-t-big padding-b-small collapse-b-phone-land align-center">
           {this.props.children}
         </div>
       </header>

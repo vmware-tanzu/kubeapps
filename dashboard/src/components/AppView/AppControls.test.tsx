@@ -1,5 +1,6 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import * as React from "react";
+import * as ReactModal from "react-modal";
 import { Redirect } from "react-router";
 import { hapi } from "../../shared/hapi/release";
 import ConfirmDialog from "../ConfirmDialog";
@@ -63,4 +64,29 @@ it("calls delete function when clicking the button", done => {
     });
     done();
   }, 1);
+});
+
+it("calls delete function with additional purge", () => {
+  const name = "foo";
+  const namespace = "bar";
+  const app = new hapi.release.Release({ name, namespace });
+  const deleteApp = jest.fn(() => false); // Return "false" to avoid redirect when mounting
+  // mount() is necessary to render the Modal
+  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} />);
+  ReactModal.setAppElement(document.createElement("div"));
+  wrapper.setState({ modalIsOpen: true });
+  wrapper.update();
+
+  // Check that the checkbox changes the AppControls state
+  const confirm = wrapper.find(ConfirmDialog);
+  expect(confirm.exists()).toBe(true);
+  const checkbox = wrapper.find('input[type="checkbox"]');
+  expect(checkbox.exists()).toBe(true);
+  expect(wrapper.state().purge).toBe(false);
+  checkbox.simulate("change");
+  expect(wrapper.state().purge).toBe(true);
+
+  // Check that the "purge" state is forwarded to deleteApp
+  confirm.props().onConfirm(); // Simulate confirmation
+  expect(deleteApp.mock.calls[0]).toEqual([true]);
 });
