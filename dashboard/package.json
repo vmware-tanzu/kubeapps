@@ -61,8 +61,9 @@
     "lint": "npm-run-all lint-js lint-css"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["tslint -c ./tslint.ci.json --fix", "prettier --write", "git add"],
-    "*.{js,json,css,md}": ["prettier --write", "git add"]
+    "*.{ts,tsx}": ["yarn run lint-js-fix", "prettier --write", "git add"],
+    "*.scss": ["yarn run lint-css-fix", "yarn run lint-css", "prettier --write", "git add"],
+    "*.{js,json,md}": ["prettier --write", "git add"]
   },
   "devDependencies": {
     "@types/enzyme": "^3.1.6",
