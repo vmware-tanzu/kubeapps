@@ -1,16 +1,16 @@
 .error__icon {
-  width: 30px;
-  height: 30px;
   display: inline-block;
-  border-radius: 50%;
+  background: #C7C9C8;
   vertical-align: bottom;
-  background: #c7c9c8;
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
 }
 
 .error__icon > svg {
-  position: relative;
-  color: #ffffff;
-  top: 3px;
-  left: 3px;
   margin: auto;
+  left: 3px;
+  top: 3px;
+  color: #FFFFFF;
+  position: relative;
 }
