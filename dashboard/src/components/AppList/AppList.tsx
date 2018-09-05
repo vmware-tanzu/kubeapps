@@ -61,8 +61,8 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
                   onSubmit={pushSearchFilter}
                 />,
                 <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
-                  <input type="checkbox" checked={!listingAll} onChange={this.toggleListAll} />
-                  <span>Show only deployed apps</span>
+                  <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
+                  <span>Show deleted apps</span>
                 </label>,
               ]}
             </div>
