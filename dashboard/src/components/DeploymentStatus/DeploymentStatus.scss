@@ -1,23 +1,23 @@
 .DeploymentStatus {
-  height: 2.5em;
-  background-color: #f1f1f1;
-  padding: 0 0.875em;
-  line-height: 2.5em;
-  font-size: 1em;
   display: inline-block;
+  font-size: 1em;
+  line-height: 2.5em;
+  padding: 0 0.875em;
+  background-color: #F1F1F1;
+  height: 2.5em;
 }
 
 .DeploymentStatus--success {
-  background-color: #1598cb;
-  color: #fff;
+  color: #FFF;
+  background-color: #1598CB;
 }
 
 .DeploymentStatus--pending {
-  background-color: #fdba12;
+  background-color: #FDBA12;
 }
 
 .DeploymentStatus--deleted {
-  background-color: #fda5a5;
+  background-color: #FDA5A5;
 }
 
 .DeploymentStatus--pending > .icon {
