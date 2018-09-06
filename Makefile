@@ -12,11 +12,14 @@ all: kubeapps/dashboard kubeapps/chartsvc kubeapps/chart-repo kubeapps/appreposi
 
 # TODO(miguel) Create Makefiles per component
 kubeapps/%:
-	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o ./cmd/$*/$*-static ./cmd/$*
-	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile cmd/$*
+	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .
 
 kubeapps/dashboard:
 	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
+
+kubeapps/tiller-proxy:
+	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o ./cmd/tiller-proxy/proxy-static ./cmd/tiller-proxy
+	docker build -t kubeapps/tiller-proxy:$(VERSION) -f cmd/tiller-proxy/Dockerfile cmd/tiller-proxy
 
 test:
 	$(GO) test $(GO_PACKAGES)

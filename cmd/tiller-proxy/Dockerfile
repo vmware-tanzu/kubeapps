@@ -3,5 +3,5 @@ RUN apk --no-cache add ca-certificates
 
 FROM scratch
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY ./tiller-proxy-static /proxy
+COPY ./proxy-static /proxy
 CMD ["/proxy"]
