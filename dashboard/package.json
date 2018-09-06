@@ -42,20 +42,28 @@
     "typesafe-actions": "^1.1.2"
   },
   "scripts": {
-    "start":
+    "build-css": "node-sass-chokidar src/ -o src/",
+    "watch-css": "yarn run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
+    "start-js":
       "BROWSER=none REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts-ts start",
-    "build": "react-scripts-ts build",
-    "test": "react-scripts-ts test --env=jsdom",
+    "build-js": "react-scripts-ts build",
+    "start": "npm-run-all -p watch-css start-js",
+    "build": "npm-run-all build-css build-js",
+    "test": "yarn run build-css && react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject",
     "tslint-check": "tslint-config-prettier-check ./tslint.ci.json",
     "precommit": "lint-staged",
     "prettier": "prettier --write 'src/**/*.{ts,tsx,css}'",
-    "lint": "tslint -c ./tslint.ci.json 'src/**/*.{ts,tsx}'",
-    "lint-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'"
+    "lint-js": "tslint -c ./tslint.ci.json 'src/**/*.{ts,tsx}'",
+    "lint-js-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'",
+    "lint-css": "sass-lint -c ./.sass-lint.yml -v",
+    "lint-css-fix": "sass-lint-auto-fix -c ./.sass-lint.yml",
+    "lint": "npm-run-all lint-js lint-css"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["tslint -c ./tslint.ci.json --fix", "prettier --write", "git add"],
-    "*.{js,json,css,md}": ["prettier --write", "git add"]
+    "*.{ts,tsx}": ["yarn run lint-js-fix", "prettier --write", "git add"],
+    "*.scss": ["yarn run lint-css-fix", "yarn run lint-css", "prettier --write", "git add"],
+    "*.{js,json,md}": ["prettier --write", "git add"]
   },
   "devDependencies": {
     "@types/enzyme": "^3.1.6",
@@ -76,9 +84,13 @@
     "lint-staged": "^6.1.0",
     "mock-socket": "^8.0.2",
     "moxios": "^0.4.0",
+    "node-sass-chokidar": "^1.3.3",
+    "npm-run-all": "^4.1.3",
     "prettier": "^1.10.2",
     "react-svg-loader": "^2.1.0",
     "redux-mock-store": "^1.5.3",
+    "sass-lint": "^1.12.1",
+    "sass-lint-auto-fix": "^0.11.6",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",

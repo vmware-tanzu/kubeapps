@@ -17,7 +17,7 @@ function mapStateToProps({ apps, namespace }: IStoreState, { location }: RouteCo
 
 function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   return {
-    fetchApps: (ns: string) => dispatch(actions.apps.fetchApps(ns)),
+    fetchApps: (ns: string, all: boolean) => dispatch(actions.apps.fetchApps(ns, all)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }

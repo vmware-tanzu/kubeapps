@@ -1,18 +1,18 @@
 .ChartListItem {
-  color: #1c2b39;
+  color: #1C2B39;
 }
 
 .ChartListItem__content {
 }
 
 .ChartListItem__content__title {
-  color: #1c2b39;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: bold;
   margin: 0;
   width: 100%;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #1C2B39;
 }
 
 .ChartListItem__content__info {
@@ -21,36 +21,36 @@
 }
 
 .ChartListItem__content__info_repo {
-  background-color: #1c2b39;
-  border-radius: 16px;
-  color: #fff;
   display: inline-block;
+  color: #FFF;
+  border-radius: 16px;
+  background-color: #1C2B39;
 }
 
 .ChartListItem__content__info_other {
-  background-color: #1598cb;
-  border-radius: 16px;
-  margin-left: 0.3em;
-  color: rgb(0, 0, 0);
   display: inline-block;
+  color: rgb(0, 0, 0);
+  margin-left: 0.3em;
+  border-radius: 16px;
+  background-color: #1598CB;
 }
 
 .DELETED {
-  background-color: #c5c5c5;
+  background-color: #C5C5C5;
 }
 
 .FAILED {
-  background-color: #cb1515;
+  background-color: #CB1515;
 }
 
 .DEPLOYED {
-  background-color: #15cb2d;
+  background-color: #15CB2D;
 }
 
 .ChartListItem__content__info_repo.stable {
-  background-color: #1598cb;
+  background-color: #1598CB;
 }
 
 .ChartListItem__content__info_repo.incubator {
-  background-color: #f58220;
+  background-color: #F58220;
 }
