@@ -89,8 +89,6 @@
     "prettier": "^1.10.2",
     "react-svg-loader": "^2.1.0",
     "redux-mock-store": "^1.5.3",
-    "sass-lint": "^1.12.1",
-    "sass-lint-auto-fix": "^0.11.6",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
