@@ -1,8 +1,8 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
-
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
+import { definedNamespaces } from "../shared/Namespace";
 import { IAppOverview, IChartVersion, IStoreState } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
@@ -76,7 +76,7 @@ export function deleteApp(releaseName: string, namespace: string, purge: boolean
 
 export function fetchApps(ns?: string, all: boolean = false) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
-    if (ns && ns === "_all") {
+    if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(listApps(all));

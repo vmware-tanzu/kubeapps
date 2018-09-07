@@ -2,6 +2,7 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
+import { definedNamespaces } from "../shared/Namespace";
 import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBinding";
 import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
 import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
@@ -140,7 +141,7 @@ export type ServiceCatalogAction = typeof actions[number];
 
 export function getBindings(ns?: string) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    if (ns && ns === "_all") {
+    if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(requestBindingsWithSecrets());
@@ -182,7 +183,7 @@ export function getClasses() {
 
 export function getInstances(ns?: string) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    if (ns && ns === "_all") {
+    if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(requestInstances());

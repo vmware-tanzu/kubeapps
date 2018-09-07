@@ -1,4 +1,5 @@
 import { axios } from "./Auth";
+import { definedNamespaces } from "./Namespace";
 import { IOwnerReference, ISecret } from "./types";
 
 export default class Secret {
@@ -6,7 +7,7 @@ export default class Secret {
     name: string,
     secrets: { [s: string]: string },
     owner: IOwnerReference | undefined,
-    namespace: string = "default",
+    namespace: string = definedNamespaces.default,
   ) {
     const url = Secret.getLink(namespace);
     const { data } = await axios.post<ISecret>(url, {
@@ -22,18 +23,18 @@ export default class Secret {
     return data;
   }
 
-  public static async delete(name: string, namespace: string = "default") {
+  public static async delete(name: string, namespace: string = definedNamespaces.default) {
     const url = this.getLink(namespace, name);
     return axios.delete(url);
   }
 
-  public static async get(name: string, namespace: string = "default") {
+  public static async get(name: string, namespace: string = definedNamespaces.default) {
     const url = this.getLink(namespace, name);
     const { data } = await axios.get<ISecret>(url);
     return data;
   }
 
-  public static async list(namespace: string = "default") {
+  public static async list(namespace: string = definedNamespaces.default) {
     const url = Secret.getLink(namespace);
     const { data } = await axios.get<ISecret>(url);
     return data;

@@ -1,3 +1,4 @@
+import { definedNamespaces } from "./Namespace";
 import { IServiceBroker } from "./ServiceCatalog";
 import { IChartVersion } from "./types";
 
@@ -13,7 +14,7 @@ export const app = {
 export const api = {
   apprepostories: {
     base: "/api/kube/apis/kubeapps.com/v1alpha1",
-    create: (namespace = "default") =>
+    create: (namespace = definedNamespaces.default) =>
       `${api.apprepostories.base}/namespaces/${namespace}/apprepositories`,
   },
 
@@ -32,7 +33,7 @@ export const api = {
 
   serviceinstances: {
     base: "/api/kube/apis/servicecatalog.k8s.io/v1beta1",
-    create: (namespace = "default") =>
+    create: (namespace = definedNamespaces.default) =>
       `${api.serviceinstances.base}/namespaces/${namespace}/serviceinstances`,
   },
 
