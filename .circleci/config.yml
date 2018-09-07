@@ -70,6 +70,11 @@ workflows:
           requires:
             - GKE_1_9
             - GKE_1_10
+      - push_images:
+          <<: *build_always
+          requires:
+            - GKE_1_9
+            - GKE_1_10
       - release:
           <<: *build_on_tag
           requires:
@@ -89,26 +94,25 @@ exports: &exports
   run: |
     # It is not possible to resolve env vars in the environment section:
     # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
-    echo "export VERSION=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
+    # DEV_TAG and PROD_TAG are the tags used for the Kubeapps docker images
+    echo "export DEV_TAG=build-${CIRCLE_SHA1}" >> $BASH_ENV
+    echo "export PROD_TAG=${CIRCLE_TAG:-latest}" >> $BASH_ENV
+    # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
+    # history of the production tag
+    echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
 build_image: &build_image
-  machine: true
-  working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
-  environment:
-    GOPATH: /home/circleci/.go_workspace
+  working_directory: /go/src/github.com/kubeapps/kubeapps
+  docker:
+    - image: circleci/golang:1.9
   steps:
+    - setup_remote_docker
     - checkout
     - <<: *exports
-    - run: make VERSION="$VERSION" $IMAGE
+    - run: make IMG_MODIFIER="$IMG_MODIFIER" VERSION="${DEV_TAG}" ${IMAGE}
     - run: |
-        if [[ -z "$CIRCLE_PULL_REQUEST" ]]; then
+        if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
           docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-          if [[ -n "$CIRCLE_TAG" ]]; then 
-            docker push $IMAGE:$VERSION
-          fi
-          if [[ "$CIRCLE_BRANCH" == "master"  ]]; then
-            docker tag $IMAGE:$VERSION $IMAGE:latest
-            docker push $IMAGE:latest
-          fi
+          docker push ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
         fi
 gke_test: &gke_test
   docker:
@@ -141,8 +145,8 @@ gke_test: &gke_test
         wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-amd64.tar.gz
         tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
         sudo mv linux-amd64/helm /usr/local/bin/
-        helm init
-    - run: ./script/e2e-test.sh
+        helm init --wait
+    - run: ./script/e2e-test.sh $IMG_MODIFIER $DEV_TAG
     - run:
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
@@ -219,3 +223,18 @@ jobs:
             ssh-add ~/.ssh/id_rsa_* ~/.ssh/id_rsa
           fi
           ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
+  push_images:
+    docker:
+      - image: circleci/golang:1.9
+    steps:
+      - setup_remote_docker
+      - <<: *exports
+      - run: |
+          if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
+            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+            for IMAGE in kubeapps/chart-repo kubeapps/chartsvc kubeapps/apprepository-controller kubeapps/dashboard kubeapps/tiller-proxy; do
+              docker pull ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+              docker tag ${IMAGE}${IMG_MODIFIER}:${DEV_TAG} ${IMAGE}:${PROD_TAG}
+              docker push ${IMAGE}:${PROD_TAG}
+            done
+          fi
