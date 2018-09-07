@@ -97,7 +97,7 @@ exports: &exports
     # DEV_TAG and PROD_TAG are the tags used for the Kubeapps docker images
     echo "export DEV_TAG=build-${CIRCLE_SHA1}" >> $BASH_ENV
     echo "export PROD_TAG=${CIRCLE_TAG:-latest}" >> $BASH_ENV
-    # Apart than using a DEV_TAG we use a different image ID to avoid polluting the tag
+    # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
     # history of the production tag
     echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
 build_image: &build_image
