@@ -10,6 +10,8 @@
 
 .Card a,
 .Card a:hover {
+  // TODO: See why we need important here - https://github.com/bitnami/hex/issues/217
+  // sass-lint:disable no-important
   text-decoration: none !important;
 }
 

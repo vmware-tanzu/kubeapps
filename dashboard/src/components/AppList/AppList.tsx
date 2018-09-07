@@ -11,7 +11,7 @@ import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: (ns: string) => Promise<void>;
+  fetchApps: (ns: string, all: boolean) => Promise<void>;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
@@ -24,16 +24,16 @@ interface IAppListState {
 class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
   public componentDidMount() {
-    const { fetchApps, filter, namespace } = this.props;
-    fetchApps(namespace);
+    const { fetchApps, filter, namespace, apps } = this.props;
+    fetchApps(namespace, apps.listingAll);
     this.setState({ filter });
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
-    const { apps: { error }, fetchApps, filter, namespace } = this.props;
+    const { apps: { error, listingAll }, fetchApps, filter, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
-      fetchApps(nextProps.namespace);
+      fetchApps(nextProps.namespace, listingAll);
     }
     if (nextProps.filter !== filter) {
       this.setState({ filter: nextProps.filter });
@@ -41,29 +41,34 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public render() {
-    const { pushSearchFilter, apps: { error, isFetching, listOverview } } = this.props;
+    const { pushSearchFilter, apps: { error, isFetching, listOverview, listingAll } } = this.props;
     if (!listOverview) {
       return <div>Loading</div>;
     }
     return (
       <section className="AppList">
         <PageHeader>
-          <div className="col-8">
+          <div className="col-9">
             <div className="row">
               <h1>Applications</h1>
-              {listOverview.length > 0 && (
+              {listOverview.length > 0 && [
                 <SearchFilter
+                  key="searchFilter"
                   className="margin-l-big"
                   placeholder="search apps..."
                   onChange={this.handleFilterQueryChange}
                   value={this.state.filter}
                   onSubmit={pushSearchFilter}
-                />
-              )}
+                />,
+                <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
+                  <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
+                  <span>Show deleted apps</span>
+                </label>,
+              ]}
             </div>
           </div>
           {listOverview.length > 0 && (
-            <div className="col-4 text-r align-center">
+            <div className="col-3 text-r align-center">
               <Link to="/charts">
                 <button className="button button-accent">Deploy App</button>
               </Link>
@@ -114,6 +119,10 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     }
     return <div />;
   }
+
+  private toggleListAll = () => {
+    this.props.fetchApps(this.props.namespace, !this.props.apps.listingAll);
+  };
 
   private renderError(error: Error) {
     return <UnexpectedErrorAlert />;

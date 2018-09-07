@@ -6,7 +6,7 @@ import ConfirmDialog from "../ConfirmDialog";
 
 interface IAppControlsProps {
   app: hapi.release.Release;
-  deleteApp: () => Promise<boolean>;
+  deleteApp: (purge: boolean) => Promise<boolean>;
 }
 
 interface IAppControlsState {
@@ -15,6 +15,7 @@ interface IAppControlsState {
   redirectToAppList: boolean;
   upgrade: boolean;
   deleting: boolean;
+  purge: boolean;
 }
 
 class AppControls extends React.Component<IAppControlsProps, IAppControlsState> {
@@ -22,6 +23,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
     deleting: false,
     migrate: false,
     modalIsOpen: false,
+    purge: false,
     redirectToAppList: false,
     upgrade: false,
   };
@@ -51,6 +53,14 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
           modalIsOpen={this.state.modalIsOpen}
           loading={this.state.deleting}
           closeModal={this.closeModal}
+          extraElem={
+            <div className="margin-v-small text-c">
+              <label className="checkbox margin-r-big">
+                <input type="checkbox" onChange={this.togglePurge} />
+                <span>Purge release</span>
+              </label>
+            </div>
+          }
         />
         {this.state.redirectToAppList && <Redirect to={`/apps/ns/${namespace}`} />}
       </div>
@@ -75,12 +85,16 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
 
   public handleDeleteClick = async () => {
     this.setState({ deleting: true });
-    const deleted = await this.props.deleteApp();
+    const deleted = await this.props.deleteApp(this.state.purge);
     const s: Partial<IAppControlsState> = { modalIsOpen: false };
     if (deleted) {
       s.redirectToAppList = true;
     }
     this.setState(s as IAppControlsState);
+  };
+
+  private togglePurge = () => {
+    this.setState({ purge: !this.state.purge });
   };
 }
 

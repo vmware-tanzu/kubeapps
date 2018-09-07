@@ -91,11 +91,20 @@ func (f *FakeProxy) GetRelease(name, namespace string) (*release.Release, error)
 	return nil, fmt.Errorf("Release %s not found", name)
 }
 
-func (f *FakeProxy) DeleteRelease(name, namespace string) error {
+func (f *FakeProxy) DeleteRelease(name, namespace string, purge bool) error {
 	for i, r := range f.Releases {
 		if r.Name == name {
-			f.Releases[i] = f.Releases[len(f.Releases)-1]
-			f.Releases = f.Releases[:len(f.Releases)-1]
+			if purge {
+				f.Releases[i] = f.Releases[len(f.Releases)-1]
+				f.Releases = f.Releases[:len(f.Releases)-1]
+			} else {
+				r.Info = &release.Info{
+					Status: &release.Status{
+						Code: release.Status_DELETED,
+					},
+				}
+				f.Releases[i] = r
+			}
 			return nil
 		}
 	}

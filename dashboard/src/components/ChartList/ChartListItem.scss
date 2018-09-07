@@ -6,13 +6,13 @@
 }
 
 .ChartListItem__content__title {
-  color: #1c2b39;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: bold;
   margin: 0;
   width: 100%;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #1c2b39;
 }
 
 .ChartListItem__content__info {
@@ -21,18 +21,18 @@
 }
 
 .ChartListItem__content__info_repo {
-  background-color: #1c2b39;
-  border-radius: 16px;
-  color: #fff;
   display: inline-block;
+  color: #fff;
+  border-radius: 16px;
+  background-color: #1c2b39;
 }
 
 .ChartListItem__content__info_other {
-  background-color: #1598cb;
-  border-radius: 16px;
-  margin-left: 0.3em;
-  color: rgb(0, 0, 0);
   display: inline-block;
+  color: rgb(0, 0, 0);
+  margin-left: 0.3em;
+  border-radius: 16px;
+  background-color: #1598cb;
 }
 
 .DELETED {

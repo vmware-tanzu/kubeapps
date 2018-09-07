@@ -12,7 +12,12 @@ export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Rele
     type: "RECEIVE_APPS",
   };
 });
-export const listApps = createAction("REQUEST_APP_LIST");
+export const listApps = createAction("REQUEST_APP_LIST", (listingAll: boolean) => {
+  return {
+    listingAll,
+    type: "REQUEST_APP_LIST",
+  };
+});
 export const receiveAppList = createAction("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
   return {
     apps,
@@ -57,10 +62,10 @@ export function getApp(releaseName: string, namespace: string) {
   };
 }
 
-export function deleteApp(releaseName: string, namespace: string) {
+export function deleteApp(releaseName: string, namespace: string, purge: boolean) {
   return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
     try {
-      await App.delete(releaseName, namespace);
+      await App.delete(releaseName, namespace, purge);
       return true;
     } catch (e) {
       dispatch(errorDeleteApp(e));
@@ -69,14 +74,14 @@ export function deleteApp(releaseName: string, namespace: string) {
   };
 }
 
-export function fetchApps(ns?: string) {
+export function fetchApps(ns?: string, all: boolean = false) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
     if (ns && ns === "_all") {
       ns = undefined;
     }
-    dispatch(listApps());
+    dispatch(listApps(all));
     try {
-      const apps = await App.listApps(ns);
+      const apps = await App.listApps(ns, all);
       dispatch(receiveAppList(apps));
     } catch (e) {
       dispatch(errorApps(e));

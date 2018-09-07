@@ -1,0 +1,16 @@
+.error__icon {
+  display: inline-block;
+  background: #c7c9c8;
+  vertical-align: bottom;
+  border-radius: 50%;
+  height: 30px;
+  width: 30px;
+}
+
+.error__icon > svg {
+  margin: auto;
+  left: 3px;
+  top: 3px;
+  color: #ffffff;
+  position: relative;
+}
