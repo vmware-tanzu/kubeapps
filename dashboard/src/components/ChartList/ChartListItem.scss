@@ -1,8 +1,5 @@
 .ChartListItem {
-  color: #1C2B39;
-}
-
-.ChartListItem__content {
+  color: #1c2b39;
 }
 
 .ChartListItem__content__title {
@@ -12,7 +9,7 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  color: #1C2B39;
+  color: #1c2b39;
 }
 
 .ChartListItem__content__info {
@@ -22,9 +19,9 @@
 
 .ChartListItem__content__info_repo {
   display: inline-block;
-  color: #FFF;
+  color: #fff;
   border-radius: 16px;
-  background-color: #1C2B39;
+  background-color: #1c2b39;
 }
 
 .ChartListItem__content__info_other {
@@ -32,25 +29,25 @@
   color: rgb(0, 0, 0);
   margin-left: 0.3em;
   border-radius: 16px;
-  background-color: #1598CB;
+  background-color: #1598cb;
 }
 
 .DELETED {
-  background-color: #C5C5C5;
+  background-color: #c5c5c5;
 }
 
 .FAILED {
-  background-color: #CB1515;
+  background-color: #cb1515;
 }
 
 .DEPLOYED {
-  background-color: #15CB2D;
+  background-color: #15cb2d;
 }
 
 .ChartListItem__content__info_repo.stable {
-  background-color: #1598CB;
+  background-color: #1598cb;
 }
 
 .ChartListItem__content__info_repo.incubator {
-  background-color: #F58220;
+  background-color: #f58220;
 }
