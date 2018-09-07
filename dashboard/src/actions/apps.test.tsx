@@ -4,7 +4,7 @@ import { getType } from "typesafe-actions";
 
 import actions from ".";
 import { App } from "../shared/App";
-import { IAppState } from "../shared/types";
+import { IAppState, UnprocessableEntity } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -19,6 +19,9 @@ beforeEach(() => {
   store = mockStore({
     apps: {
       state,
+    },
+    config: {
+      namespace: "kubeapps-ns",
     },
   });
 });
@@ -82,5 +85,36 @@ describe("delete applications", () => {
     });
     expect(await store.dispatch(actions.apps.deleteApp("foo", "default", true))).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("deploy chart", () => {
+  beforeEach(() => {
+    App.create = jest.fn();
+  });
+
+  it("returns true if namespace is correct and deployment is successful", async () => {
+    const res = await store.dispatch(
+      actions.apps.deployChart("my-version" as any, "my-release", "default"),
+    );
+    expect(res).toBe(true);
+    expect(App.create).toHaveBeenCalledWith(
+      "my-release",
+      "default",
+      "kubeapps-ns",
+      "my-version",
+      undefined,
+    );
+    expect(store.getActions().length).toBe(0);
+  });
+
+  it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
+    const res = await store.dispatch(
+      actions.apps.deployChart("my-version" as any, "my-release", "_all"),
+    );
+    expect(res).toBe(false);
+    expect(store.getActions().length).toBe(1);
+    expect(store.getActions()[0].type).toEqual(getType(actions.apps.errorApps));
+    expect(store.getActions()[0].err.constructor).toBe(UnprocessableEntity);
   });
 });
