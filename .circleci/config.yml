@@ -82,7 +82,7 @@ exports: &exports
     # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
     # history of the production tag
     echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
-build_image: &build_image
+build_images: &build_images
   steps:
     - setup_remote_docker
     - checkout
