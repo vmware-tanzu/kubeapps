@@ -30,15 +30,18 @@ it("renders a button to deploy the chart version", () => {
 
 it("renders a redirect with the correct URL when the button is clicked", () => {
   const testCases = [
-    { namespace: "test", url: "/apps/ns/test/new/testrepo/test/versions/1.2.3" },
-    // If the namespace is _all we redirect to default
-    { namespace: "_all", url: "/apps/ns/default/new/testrepo/test/versions/1.2.3" },
+    { namespace: "test", version: "1.2.3", url: "/apps/ns/test/new/testrepo/test/versions/1.2.3" },
+    {
+      namespace: "foo",
+      version: "alpha-0",
+      url: "/apps/ns/foo/new/testrepo/test/versions/alpha-0",
+    },
   ];
 
   testCases.forEach(t => {
-    const wrapper = shallow(
-      <ChartDeployButton version={testChartVersion} namespace={t.namespace} />,
-    );
+    const chartVersion = Object.assign({}, testChartVersion);
+    chartVersion.attributes.version = t.version;
+    const wrapper = shallow(<ChartDeployButton version={chartVersion} namespace={t.namespace} />);
     const button = wrapper.find("button");
     expect(button.exists()).toBe(true);
     expect(wrapper.find(Redirect).exists()).toBe(false);

@@ -3,7 +3,7 @@ import { createAction, getReturnOfExpression } from "typesafe-actions";
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
-import { IAppOverview, IChartVersion, IStoreState } from "../shared/types";
+import { IAppOverview, IChartVersion, IStoreState, UnprocessableEntity } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Release[]) => {
@@ -97,6 +97,12 @@ export function deployChart(
 ) {
   return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
     try {
+      if (namespace === definedNamespaces.all) {
+        throw new UnprocessableEntity(
+          "Namespace not selected. You need to select a namespace using the selector on the top right corner.",
+        );
+      }
+
       const { config: { namespace: kubeappsNamespace } } = getState();
       await App.create(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;
