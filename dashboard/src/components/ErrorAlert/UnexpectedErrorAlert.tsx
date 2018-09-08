@@ -17,7 +17,7 @@ const genericMessage = (
       <li>Check your browser's JavaScript console for errors.</li>
       <li>
         Check the health of Kubeapps components{" "}
-        <code>kubectl get po --all-namespaces -l created-by=kubeapps</code>.
+        <code>helm status &lt;kubeapps_release_name&gt;</code>.
       </li>
       <li>
         <a href="https://github.com/kubeapps/kubeapps/issues/new" target="_blank">
