@@ -79,14 +79,14 @@ Create name for the chartsvc based on the fullname
 Create name for the dashboard based on the fullname
 */}}
 {{- define "kubeapps.dashboard.fullname" -}}
-{{ template "kubeapps.fullname" . }}-dashboard
+{{ template "kubeapps.fullname" . }}-react
 {{- end -}}
 
 {{/*
 Create name for the dashboard config based on the fullname
 */}}
 {{- define "kubeapps.dashboard-config.fullname" -}}
-{{ template "kubeapps.fullname" . }}-dashboard-config
+{{ template "kubeapps.fullname" . }}-react-config
 {{- end -}}
 
 {{/*
