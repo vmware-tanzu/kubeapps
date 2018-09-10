@@ -29,7 +29,7 @@ exports[`when no text is passed renders a default troubleshooting info 1`] = `
           Check the health of Kubeapps components
            
           <code>
-            kubectl get po --all-namespaces -l created-by=kubeapps
+            helm status &lt;kubeapps_release_name&gt;
           </code>
           .
         </li>
