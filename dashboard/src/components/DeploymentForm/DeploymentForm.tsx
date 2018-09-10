@@ -3,12 +3,13 @@ import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, MissingChart, NotFoundError } from "../../shared/types";
 import DeploymentBinding from "./DeploymentBinding";
 import DeploymentErrors from "./DeploymentErrors";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
+import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
 interface IDeploymentFormProps {
   kubeappsNamespace: string;
@@ -26,7 +27,7 @@ interface IDeploymentFormProps {
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   namespace: string;
 }
@@ -102,6 +103,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     const { selected, bindingsWithSecrets, chartID, kubeappsNamespace } = this.props;
     const { version, versions } = selected;
     const { appValues, releaseName } = this.state;
+    if (selected.error) {
+      return this.renderSelectedError(selected.error);
+    }
     if (!version || !versions.length || this.state.isDeploying) {
       return <div>Loading</div>;
     }
@@ -207,6 +211,17 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
+
+  private renderSelectedError(error: Error) {
+    const { chartID } = this.props;
+    switch (error.constructor) {
+      case MissingChart:
+      case NotFoundError:
+        return <NotFoundErrorAlert resource={`Chart "${chartID}"`} />;
+      default:
+        return <UnexpectedErrorAlert />;
+    }
+  }
 }
 
 export default DeploymentForm;
