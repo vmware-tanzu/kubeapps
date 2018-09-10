@@ -56,13 +56,13 @@
     "prettier": "prettier --write 'src/**/*.{ts,tsx,css}'",
     "lint-js": "tslint -c ./tslint.ci.json 'src/**/*.{ts,tsx}'",
     "lint-js-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'",
-    "lint-css": "sass-lint -c ./.sass-lint.yml -v",
-    "lint-css-fix": "sass-lint-auto-fix -c ./.sass-lint.yml",
+    "lint-css": "stylelint --config ./.stylelintrc.json 'src/**/*.scss'",
+    "lint-css-fix": "stylelint --config ./.stylelintrc.json --fix 'src/**/*.scss'",
     "lint": "npm-run-all lint-js lint-css"
   },
   "lint-staged": {
     "*.{ts,tsx}": ["yarn run lint-js-fix", "prettier --write", "git add"],
-    "*.scss": ["yarn run lint-css-fix", "yarn run lint-css", "prettier --write", "git add"],
+    "*.scss": ["yarn run lint-css-fix", "prettier --write", "git add"],
     "*.{js,json,md}": ["prettier --write", "git add"]
   },
   "devDependencies": {
@@ -89,8 +89,10 @@
     "prettier": "^1.10.2",
     "react-svg-loader": "^2.1.0",
     "redux-mock-store": "^1.5.3",
-    "sass-lint": "^1.12.1",
-    "sass-lint-auto-fix": "^0.11.6",
+    "stylelint": "^9.5.0",
+    "stylelint-config-prettier": "^4.0.0",
+    "stylelint-config-recommended-scss": "^3.2.0",
+    "stylelint-scss": "^3.3.0",
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
