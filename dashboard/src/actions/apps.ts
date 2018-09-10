@@ -100,7 +100,7 @@ export function deployChart(
       // You can not deploy applications unless the namespace is set
       if (namespace === definedNamespaces.all) {
         throw new UnprocessableEntity(
-          "Namespace not selected. Please select a namespace using the selector on the top right corner.",
+          "Namespace not selected. Please select a namespace using the selector in the top right corner.",
         );
       }
 

@@ -4,6 +4,7 @@ import { getType } from "typesafe-actions";
 
 import actions from ".";
 import { App } from "../shared/App";
+import { definedNamespaces } from "../shared/Namespace";
 import { IAppState, UnprocessableEntity } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
@@ -110,7 +111,7 @@ describe("deploy chart", () => {
 
   it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "my-release", "_all"),
+      actions.apps.deployChart("my-version" as any, "my-release", definedNamespaces.all),
     );
     expect(res).toBe(false);
     expect(store.getActions().length).toBe(1);

@@ -59,7 +59,7 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
           <UnexpectedErrorAlert
             text={error && error.message}
             raw={true}
-            title="Invalid deployment"
+            title="Failed installation"
           />
         );
       default:
