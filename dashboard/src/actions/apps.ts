@@ -1,9 +1,9 @@
 import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
-
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
-import { IAppOverview, IChartVersion, IStoreState } from "../shared/types";
+import { definedNamespaces } from "../shared/Namespace";
+import { IAppOverview, IChartVersion, IStoreState, UnprocessableEntity } from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Release[]) => {
@@ -76,7 +76,7 @@ export function deleteApp(releaseName: string, namespace: string, purge: boolean
 
 export function fetchApps(ns?: string, all: boolean = false) {
   return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
-    if (ns && ns === "_all") {
+    if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(listApps(all));
@@ -97,6 +97,13 @@ export function deployChart(
 ) {
   return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
     try {
+      // You can not deploy applications unless the namespace is set
+      if (namespace === definedNamespaces.all) {
+        throw new UnprocessableEntity(
+          "Namespace not selected. Please select a namespace using the selector in the top right corner.",
+        );
+      }
+
       const { config: { namespace: kubeappsNamespace } } = getState();
       await App.create(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;

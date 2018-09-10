@@ -7,6 +7,7 @@ import "./UnexpectedErrorAlert.css";
 interface IUnexpectedErrorPage {
   raw?: boolean;
   text?: string;
+  title?: string;
 }
 
 const genericMessage = (
@@ -30,6 +31,9 @@ const genericMessage = (
 );
 
 class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
+  public static defaultProps: Partial<IUnexpectedErrorPage> = {
+    title: "Sorry! Something went wrong.",
+  };
   public render() {
     let message = genericMessage;
     if (this.props.text) {
@@ -45,9 +49,12 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
         message = <p>{this.props.text}</p>;
       }
     }
+    // NOTE(miguel) We are using the non-undefined "!" token in `props.title` because our current version of
+    // typescript does not support react's defaultProps and we are running it in strictNullChecks mode.
+    // Newer versions of it seems to support it https://github.com/Microsoft/TypeScript/wiki/Roadmap#30-july-2018
     return (
       <div className="alert alert-error margin-t-bigger">
-        <ErrorPageHeader icon={X}>Sorry! Something went wrong.</ErrorPageHeader>
+        <ErrorPageHeader icon={X}>{this.props.title!}</ErrorPageHeader>
         <div className="error__content margin-l-enormous">{message}</div>
       </div>
     );

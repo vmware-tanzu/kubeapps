@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import { definedNamespaces } from "../../shared/Namespace";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
@@ -74,7 +75,7 @@ export class ClassList extends React.Component<IClassListProps> {
       <PermissionsErrorAlert
         action="list Service Classes"
         roles={RequiredRBACRoles}
-        namespace="_all"
+        namespace={definedNamespaces.all}
       />
     ) : (
       <UnexpectedErrorAlert />

@@ -2,6 +2,7 @@ import * as React from "react";
 import { RouterAction } from "react-router-redux";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import { definedNamespaces } from "../../shared/Namespace";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
@@ -137,7 +138,7 @@ export class ClassView extends React.Component<IClassViewProps> {
       <PermissionsErrorAlert
         action="list Service Plans"
         roles={RequiredRBACRoles}
-        namespace="_all"
+        namespace={definedNamespaces.all}
       />
     ) : (
       <UnexpectedErrorAlert />

@@ -3,6 +3,7 @@ import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import Function from "../shared/Function";
 import KubelessConfig from "../shared/KubelessConfig";
+import { definedNamespaces } from "../shared/Namespace";
 import { IFunction, IRuntime, IStoreState } from "../shared/types";
 
 export const requestFunctions = createAction("REQUEST_FUNCTIONS");
@@ -44,7 +45,7 @@ export type FunctionsAction = typeof allActions[number];
 
 export function fetchFunctions(ns?: string) {
   return async (dispatch: Dispatch<IStoreState>) => {
-    if (ns && ns === "_all") {
+    if (ns && definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(requestFunctions());

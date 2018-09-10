@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { definedNamespaces } from "../../../shared/Namespace";
 import { IServiceBroker } from "../../../shared/ServiceCatalog";
 import { ForbiddenError, IRBACRole } from "../../../shared/types";
 import Card, { CardContent, CardFooter, CardGrid } from "../../Card";
@@ -82,7 +83,7 @@ class ServiceBrokerList extends React.Component<IServiceBrokerListProps> {
     return error instanceof ForbiddenError ? (
       <PermissionsErrorAlert
         action={`${action} Service Brokers`}
-        namespace="_all"
+        namespace={definedNamespaces.all}
         roles={RequiredRBACRoles[action]}
       />
     ) : (

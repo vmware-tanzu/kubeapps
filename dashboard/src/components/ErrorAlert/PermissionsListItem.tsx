@@ -1,5 +1,6 @@
 import * as React from "react";
 import { IRBACRole } from "shared/types";
+import { definedNamespaces } from "../../shared/Namespace";
 
 import { namespaceText } from "./helpers";
 
@@ -11,7 +12,9 @@ interface IPermissionsListItemProps {
 class PermissionsListItem extends React.Component<IPermissionsListItemProps> {
   public render() {
     const { role } = this.props;
-    const namespace = role.clusterWide ? "_all" : role.namespace || this.props.namespace;
+    const namespace = role.clusterWide
+      ? definedNamespaces.all
+      : role.namespace || this.props.namespace;
     return (
       <li>
         {role.verbs.join(", ")} <code>{role.resource}</code>{" "}

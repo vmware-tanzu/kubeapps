@@ -17,7 +17,8 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
   };
 
   public render() {
-    const { namespace, version } = this.props;
+    const { version } = this.props;
+    const { namespace } = this.props;
     const repoName = version.relationships.chart.data.repo.name;
     const chartName = version.relationships.chart.data.name;
     const versionStr = version.attributes.version;

@@ -28,17 +28,30 @@ it("renders a button to deploy the chart version", () => {
   expect(button.text()).toBe("Deploy using Helm");
 });
 
-it("renders a redirect when the button is clicked", () => {
-  const wrapper = shallow(<ChartDeployButton version={testChartVersion} namespace="test" />);
-  const button = wrapper.find("button");
-  expect(button.exists()).toBe(true);
-  expect(wrapper.find(Redirect).exists()).toBe(false);
+it("renders a redirect with the correct URL when the button is clicked", () => {
+  const testCases = [
+    { namespace: "test", version: "1.2.3", url: "/apps/ns/test/new/testrepo/test/versions/1.2.3" },
+    {
+      namespace: "foo",
+      version: "alpha-0",
+      url: "/apps/ns/foo/new/testrepo/test/versions/alpha-0",
+    },
+  ];
 
-  button.simulate("click");
-  const redirect = wrapper.find(Redirect);
-  expect(redirect.exists()).toBe(true);
-  expect(redirect.props()).toMatchObject({
-    push: true,
-    to: "/apps/ns/test/new/testrepo/test/versions/1.2.3",
+  testCases.forEach(t => {
+    const chartVersion = Object.assign({}, testChartVersion);
+    chartVersion.attributes.version = t.version;
+    const wrapper = shallow(<ChartDeployButton version={chartVersion} namespace={t.namespace} />);
+    const button = wrapper.find("button");
+    expect(button.exists()).toBe(true);
+    expect(wrapper.find(Redirect).exists()).toBe(false);
+
+    button.simulate("click");
+    const redirect = wrapper.find(Redirect);
+    expect(redirect.exists()).toBe(true);
+    expect(redirect.props()).toMatchObject({
+      push: true,
+      to: t.url,
+    });
   });
 });

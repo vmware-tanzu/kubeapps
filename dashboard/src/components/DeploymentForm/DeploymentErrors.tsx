@@ -55,7 +55,13 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
           <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
         );
       case UnprocessableEntity:
-        return <UnexpectedErrorAlert text={error && error.message} raw={true} />;
+        return (
+          <UnexpectedErrorAlert
+            text={error && error.message}
+            raw={true}
+            title="Failed installation"
+          />
+        );
       default:
         return <UnexpectedErrorAlert />;
     }
