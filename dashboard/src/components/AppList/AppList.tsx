@@ -54,7 +54,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           <div className="col-3 text-r align-center">
             {listOverview && (
               <Link to="/charts">
-                <button className="button button-accent">Deploy App</button>
+                <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
             )}
           </div>

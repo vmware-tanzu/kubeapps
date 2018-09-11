@@ -7,6 +7,7 @@ import AppList from "./AppList";
 import AppListItem from "./AppListItem";
 
 let defaultProps = {} as any;
+let props = {} as any;
 
 beforeEach(() => {
   defaultProps = {
@@ -19,70 +20,82 @@ beforeEach(() => {
   };
 });
 
-it("renders a loading message if apps object is empty", () => {
-  const wrapper = shallow(<AppList {...defaultProps} />);
-  expect(wrapper.text()).toBe("Loading");
+describe("while fetching apps", () => {
+  beforeEach(() => {
+    props = { ...defaultProps, apps: { isFetching: true } };
+  });
+
+  it("matches the snapshot", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders a loading message", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.text()).toContain("Loading");
+  });
+
+  it("renders a Application header", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.find("h1").text()).toContain("Applications");
+  });
+
+  it("does not show the search filter nor deploy button", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.find("SearchFilter")).not.toExist();
+    expect(wrapper.find("label.checkbox")).not.toExist();
+    expect(wrapper.find(".deploy-button")).not.toExist();
+  });
 });
 
-it("renders a loading message if it's fetching apps", () => {
-  const wrapper = shallow(
-    <AppList
-      {...defaultProps}
-      apps={
-        {
-          isFetching: true,
-          items: [],
-          listOverview: [],
-          listingAll: false,
-        } as IAppState
-      }
-    />,
-  );
-  expect(wrapper.text()).toContain("Loading");
+describe("when fetched but not apps available", () => {
+  beforeEach(() => {
+    props = { ...defaultProps, apps: { listOverview: [] } };
+  });
+
+  it("matches the snapshot", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders a welcome message", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.find("MessageAlertPage")).toExist();
+  });
+
+  it("shows the search filter, show deleted checkbox and deploy button", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.find("SearchFilter")).toExist();
+    expect(wrapper.find("label.checkbox").key()).toEqual("listall");
+    expect(wrapper.find(".deploy-button")).toExist();
+  });
 });
 
-it("renders a welcome message if no apps are available", () => {
-  const wrapper = shallow(
-    <AppList
-      {...defaultProps}
-      apps={
-        {
-          isFetching: false,
-          items: [],
-          listOverview: [],
-          listingAll: false,
-        } as IAppState
-      }
-    />,
-  );
-  expect(wrapper).toMatchSnapshot();
-});
+describe("when apps available", () => {
+  beforeEach(() => {
+    props = {
+      ...defaultProps,
+      apps: {
+        listOverview: [
+          {
+            releaseName: "foo",
+          } as IAppOverview,
+        ],
+      },
+    };
+  });
 
-it("renders a CardGrid with the available Apps", () => {
-  const wrapper = shallow(
-    <AppList
-      {...defaultProps}
-      apps={
-        {
-          isFetching: false,
-          items: [],
-          listOverview: [
-            {
-              releaseName: "foo",
-            } as IAppOverview,
-          ],
-          listingAll: false,
-        } as IAppState
-      }
-    />,
-  );
-  expect(
-    wrapper
-      .find(CardGrid)
-      .children()
-      .find(AppListItem)
-      .key(),
-  ).toBe("foo");
+  it("matches the snapshot", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders a CardGrid with the available Apps", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    const itemList = wrapper.find(AppListItem);
+    expect(itemList).toExist();
+    expect(itemList.key()).toBe("foo");
+  });
 });
 
 it("filters apps", () => {
