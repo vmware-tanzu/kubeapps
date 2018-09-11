@@ -1,6 +1,7 @@
 import * as React from "react";
 
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
+import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
@@ -10,7 +11,7 @@ import "./ChartView.css";
 
 interface IChartViewProps {
   chartID: string;
-  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => Promise<{}>;
+  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => Promise<void>;
   isFetching: boolean;
   selected: IChartState["selected"];
   selectChartVersion: (version: IChartVersion) => any;
@@ -45,7 +46,10 @@ class ChartView extends React.Component<IChartViewProps> {
 
   public render() {
     const { isFetching, getChartReadme, namespace } = this.props;
-    const { version, readme, readmeError, versions } = this.props.selected;
+    const { version, readme, error, readmeError, versions } = this.props.selected;
+    if (error) {
+      return this.renderError(error);
+    }
     if (isFetching || !version) {
       return <div>Loading</div>;
     }
@@ -137,6 +141,16 @@ class ChartView extends React.Component<IChartViewProps> {
       repoURL === "https://kubernetes-charts.storage.googleapis.com" ||
       repoURL === "https://kubernetes-charts-incubator.storage.googleapis.com"
     );
+  }
+
+  private renderError(error: Error, action: string = "view") {
+    const { chartID } = this.props;
+    switch (error.constructor) {
+      case NotFoundError:
+        return <NotFoundErrorAlert resource={`Chart "${chartID}"`} />;
+      default:
+        return <UnexpectedErrorAlert />;
+    }
   }
 }
 

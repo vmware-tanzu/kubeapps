@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ForbiddenError, IAppRepository, IRBACRole, MissingChart } from "../../shared/types";
+import { ForbiddenError, IAppRepository, IRBACRole, NotFoundError } from "../../shared/types";
 
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 
@@ -83,7 +83,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
   private renderError() {
     if (this.props.error) {
       switch (this.props.error.constructor) {
-        case MissingChart:
+        case NotFoundError:
           return <NotFoundErrorAlert header={this.props.error.message} />;
         case ForbiddenError:
           return (

@@ -5,7 +5,7 @@ import { AppRepository } from "../shared/AppRepository";
 import Secret from "../shared/Secret";
 import * as url from "../shared/url";
 
-import { IAppRepository, IOwnerReference, IStoreState, MissingChart } from "../shared/types";
+import { IAppRepository, IOwnerReference, IStoreState, NotFoundError } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", (added: IAppRepository) => ({
@@ -168,7 +168,7 @@ export function checkChart(repo: string, chartName: string) {
       dispatch(receiveRepo(appRepository));
     } else {
       dispatch(
-        errorChart(new MissingChart(`Chart ${chartName} not found in the repository ${repo}.`)),
+        errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
     }
   };

@@ -1,7 +1,9 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
+import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
+import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
@@ -184,4 +186,15 @@ it("renders the sources links when set", () => {
       </a>,
     ),
   ).toBe(true);
+});
+
+describe("renders errors", () => {
+  it("renders a not found error if it exists", () => {
+    const wrapper = shallow(<ChartView {...props} selected={{ error: new NotFoundError() }} />);
+    expect(wrapper.find(NotFoundErrorPage).exists()).toBe(true);
+  });
+  it("renders a generic error if it exists", () => {
+    const wrapper = shallow(<ChartView {...props} selected={{ error: new Error() }} />);
+    expect(wrapper.find(UnexpectedErrorPage).exists()).toBe(true);
+  });
 });

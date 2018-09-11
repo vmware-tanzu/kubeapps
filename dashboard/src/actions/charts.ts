@@ -2,7 +2,7 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
-import { IChart, IChartVersion, IStoreState, MissingChart } from "../shared/types";
+import { IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 import * as url from "../shared/url";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
@@ -57,49 +57,62 @@ const allActions = [
 ].map(getReturnOfExpression);
 export type ChartsAction = typeof allActions[number];
 
+async function httpGet(dispatch: Dispatch<IStoreState>, targetURL: string) {
+  try {
+    const response = await fetch(targetURL);
+    const json = await response.json();
+    if (!response.ok) {
+      const error = json.data || response.statusText;
+      if (response.status === 404) {
+        dispatch(errorChart(new NotFoundError(error)));
+      } else {
+        dispatch(errorChart(new Error(error)));
+      }
+    } else {
+      return json.data;
+    }
+  } catch (e) {
+    dispatch(errorChart(e));
+  }
+}
+
 export function fetchCharts(repo: string) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     dispatch(requestCharts());
-    return fetch(url.api.charts.list(repo))
-      .then(response => response.json())
-      .then(json => dispatch(receiveCharts(json.data)));
+    const response = await httpGet(dispatch, url.api.charts.list(repo));
+    if (response) {
+      dispatch(receiveCharts(response));
+    }
+    return response;
   };
 }
 
 export function fetchChartVersions(id: string) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     dispatch(requestCharts());
-    return fetch(url.api.charts.listVersions(id))
-      .then(response => response.json())
-      .then(json => dispatch(receiveChartVersions(json.data)));
+    const response = await httpGet(dispatch, url.api.charts.listVersions(id));
+    if (response) {
+      dispatch(receiveChartVersions(response));
+    }
+    return response;
   };
 }
 
 export function getChartVersion(id: string, version: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
     dispatch(requestCharts());
-    try {
-      const response = await fetch(url.api.charts.getVersion(id, version));
-      const json = await response.json();
-      if (!response.ok) {
-        const error = json.data || response.statusText;
-        if (response.status === 404) {
-          dispatch(errorChart(new MissingChart(error)));
-        } else {
-          dispatch(errorChart(new Error(error)));
-        }
-      }
-      dispatch(selectChartVersion(json.data));
-    } catch (e) {
-      dispatch(errorChart(e));
+    const response = await httpGet(dispatch, url.api.charts.getVersion(id, version));
+    if (response) {
+      dispatch(selectChartVersion(response));
     }
+    return response;
   };
 }
 
 export function fetchChartVersionsAndSelectVersion(id: string, version?: string) {
-  return (dispatch: Dispatch<IStoreState>): Promise<{}> => {
-    return dispatch(fetchChartVersions(id)).then((action: any) => {
-      const versions: IChartVersion[] = action.versions;
+  return async (dispatch: Dispatch<IStoreState>) => {
+    const versions = (await dispatch(fetchChartVersions(id))) as IChartVersion[];
+    if (versions) {
       let cv: IChartVersion = versions[0];
       if (version) {
         const found = versions.find(v => v.attributes.version === version);
@@ -108,8 +121,8 @@ export function fetchChartVersionsAndSelectVersion(id: string, version?: string)
         }
         cv = found;
       }
-      return dispatch(selectChartVersion(cv));
-    });
+      dispatch(selectChartVersion(cv));
+    }
   };
 }
 

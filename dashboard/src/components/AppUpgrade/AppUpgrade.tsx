@@ -31,7 +31,7 @@ interface IAppUpgradeProps {
   fetchChartVersions: (id: string) => Promise<{}>;
   getApp: (releaseName: string, namespace: string) => Promise<void>;
   getBindings: () => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   push: (location: string) => RouterAction;
   fetchRepositories: () => Promise<void>;

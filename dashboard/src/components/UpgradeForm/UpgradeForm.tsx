@@ -30,7 +30,7 @@ interface IDeploymentFormProps {
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<{}>;
   getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
+  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
   getChartValues: (id: string, chartVersion: string) => Promise<any>;
   clearRepo: () => any;
 }
