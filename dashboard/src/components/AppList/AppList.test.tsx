@@ -140,7 +140,7 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
 });
 
-it("renders the 'Show deleted apps' even if the app list is empty", () => {
+it("renders the 'Show deleted apps' button even if the app list is empty", () => {
   const wrapper = shallow(
     <AppList
       {...defaultProps}
