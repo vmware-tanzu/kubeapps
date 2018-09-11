@@ -46,4 +46,8 @@ export class Auth {
   }
 }
 
-export const axios = Axios.create();
+const requestConfig = {
+  timeout: 5000, // After the timeout the request gets canceled (default no-timeout)
+};
+
+export const axios = Axios.create(requestConfig);
