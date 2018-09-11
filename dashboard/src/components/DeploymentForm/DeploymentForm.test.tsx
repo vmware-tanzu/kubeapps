@@ -20,6 +20,7 @@ const defaultProps = {
   getChartValues: jest.fn(),
   namespace: "default",
 };
+
 it("renders a loading message if the selected chart is not ready", () => {
   const wrapper = shallow(<DeploymentForm {...defaultProps} />);
   expect(wrapper.text()).toContain("Loading");
@@ -35,6 +36,7 @@ describe("renders an error", () => {
     );
     expect(wrapper.find(NotFoundErrorPage).exists()).toBe(true);
   });
+
   it("renders a generic error", () => {
     const wrapper = shallow(
       <DeploymentForm
