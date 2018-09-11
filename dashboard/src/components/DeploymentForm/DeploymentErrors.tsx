@@ -3,7 +3,6 @@ import {
   AppConflict,
   ForbiddenError,
   IRBACRole,
-  MissingChart,
   NotFoundError,
   UnprocessableEntity,
 } from "../../shared/types";
@@ -21,7 +20,7 @@ interface IDeploymentErrorProps {
 
 class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
   public render() {
-    const { chartName, error, namespace, releaseName, repo, version } = this.props;
+    const { error, namespace, releaseName } = this.props;
     switch (error && error.constructor) {
       case AppConflict:
         return (
@@ -45,10 +44,6 @@ class DeploymentErrors extends React.Component<IDeploymentErrorProps> {
             roles={roles}
             action={`deploy the application "${releaseName}"`}
           />
-        );
-      case MissingChart:
-        return (
-          <NotFoundErrorAlert header={`Chart ${chartName} (v${version}) not found in ${repo}`} />
         );
       case NotFoundError:
         return (

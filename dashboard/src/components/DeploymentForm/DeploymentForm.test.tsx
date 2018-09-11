@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { IChartState, IChartVersion, MissingChart } from "../../shared/types";
+import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import DeploymentForm from "./DeploymentForm";
@@ -30,7 +30,7 @@ describe("renders an error", () => {
     const wrapper = shallow(
       <DeploymentForm
         {...defaultProps}
-        selected={{ error: new MissingChart() } as IChartState["selected"]}
+        selected={{ error: new NotFoundError() } as IChartState["selected"]}
       />,
     );
     expect(wrapper.find(NotFoundErrorPage).exists()).toBe(true);

@@ -2,7 +2,7 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
-import { IChart, IChartVersion, IStoreState, MissingChart } from "../shared/types";
+import { IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 import * as url from "../shared/url";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
@@ -64,7 +64,7 @@ async function httpGet(dispatch: Dispatch<IStoreState>, targetURL: string) {
     if (!response.ok) {
       const error = json.data || response.statusText;
       if (response.status === 404) {
-        dispatch(errorChart(new MissingChart(error)));
+        dispatch(errorChart(new NotFoundError(error)));
       } else {
         dispatch(errorChart(new Error(error)));
       }

@@ -3,7 +3,7 @@ import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
 
 import actions from ".";
-import { MissingChart } from "../shared/types";
+import { NotFoundError } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -40,10 +40,11 @@ describe("fetchCharts", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/chartsvc/v1/charts/foo");
   });
+
   it("returns a 404 error", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.errorChart), err: new MissingChart("not found") },
+      { type: getType(actions.charts.errorChart), err: new NotFoundError("not found") },
     ];
     fetchMock = jest.fn(() => {
       return {
@@ -58,6 +59,7 @@ describe("fetchCharts", () => {
     await store.dispatch(actions.charts.fetchCharts("foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
+
   it("returns a generic error", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
@@ -116,11 +118,12 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(fetchMock.mock.calls[0][0]).toBe("/api/chartsvc/v1/charts/foo/versions");
   });
+
   it("returns a not found error", async () => {
     response = [{ id: "foo", attributes: { version: "1.0.0" } }];
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.errorChart), err: new MissingChart("not found") },
+      { type: getType(actions.charts.errorChart), err: new NotFoundError("not found") },
     ];
     fetchMock = jest.fn(() => {
       return {

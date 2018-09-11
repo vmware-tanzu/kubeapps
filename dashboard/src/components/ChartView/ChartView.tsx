@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IChartState, IChartVersion, MissingChart, NotFoundError } from "../../shared/types";
+import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
@@ -146,7 +146,6 @@ class ChartView extends React.Component<IChartViewProps> {
   private renderError(error: Error, action: string = "view") {
     const { chartID } = this.props;
     switch (error.constructor) {
-      case MissingChart:
       case NotFoundError:
         return <NotFoundErrorAlert resource={`Chart "${chartID}"`} />;
       default:

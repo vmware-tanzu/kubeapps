@@ -3,7 +3,7 @@ import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion, MissingChart, NotFoundError } from "../../shared/types";
+import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import DeploymentBinding from "./DeploymentBinding";
 import DeploymentErrors from "./DeploymentErrors";
 
@@ -213,11 +213,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   private renderSelectedError(error: Error) {
-    const { chartID } = this.props;
+    const { chartID, chartVersion } = this.props;
     switch (error.constructor) {
-      case MissingChart:
       case NotFoundError:
-        return <NotFoundErrorAlert resource={`Chart "${chartID}"`} />;
+        return <NotFoundErrorAlert resource={`Chart "${chartID}" (${chartVersion})`} />;
       default:
         return <UnexpectedErrorAlert />;
     }
