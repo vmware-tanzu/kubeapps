@@ -139,3 +139,20 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
   const fetchCalls = defaultProps.fetchApps.mock.calls;
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
 });
+
+it("renders the 'Show deleted apps' button even if the app list is empty", () => {
+  const wrapper = shallow(
+    <AppList
+      {...defaultProps}
+      apps={
+        {
+          isFetching: false,
+          items: [],
+          listOverview: [],
+          listingAll: false,
+        } as IAppState
+      }
+    />,
+  );
+  expect(wrapper.find('input[type="checkbox"]').exists()).toBe(true);
+});

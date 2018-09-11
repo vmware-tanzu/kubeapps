@@ -51,29 +51,25 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           <div className="col-9">
             <div className="row">
               <h1>Applications</h1>
-              {listOverview.length > 0 && [
-                <SearchFilter
-                  key="searchFilter"
-                  className="margin-l-big"
-                  placeholder="search apps..."
-                  onChange={this.handleFilterQueryChange}
-                  value={this.state.filter}
-                  onSubmit={pushSearchFilter}
-                />,
-                <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
-                  <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
-                  <span>Show deleted apps</span>
-                </label>,
-              ]}
+              <SearchFilter
+                key="searchFilter"
+                className="margin-l-big"
+                placeholder="search apps..."
+                onChange={this.handleFilterQueryChange}
+                value={this.state.filter}
+                onSubmit={pushSearchFilter}
+              />
+              <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
+                <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
+                <span>Show deleted apps</span>
+              </label>
             </div>
           </div>
-          {listOverview.length > 0 && (
-            <div className="col-3 text-r align-center">
-              <Link to="/charts">
-                <button className="button button-accent">Deploy App</button>
-              </Link>
-            </div>
-          )}
+          <div className="col-3 text-r align-center">
+            <Link to="/charts">
+              <button className="button button-accent">Deploy App</button>
+            </Link>
+          </div>
         </PageHeader>
         <main>
           {isFetching ? (
@@ -90,18 +86,14 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
 
   public appListItems(items: IAppState["listOverview"]) {
     if (items) {
-      if (items.length === 0) {
+      const filteredItems = this.filteredApps(items, this.state.filter);
+      if (filteredItems.length === 0) {
         return (
           <MessageAlert header="Supercharge your Kubernetes cluster">
             <div>
               <p className="margin-v-normal">
                 Deploy applications on your Kubernetes cluster with a single click.
               </p>
-              <div className="padding-b-normal">
-                <Link className="button button-accent" to="/charts">
-                  Deploy App
-                </Link>
-              </div>
             </div>
           </MessageAlert>
         );
@@ -109,7 +101,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
         return (
           <div>
             <CardGrid>
-              {this.filteredApps(items, this.state.filter).map(r => {
+              {filteredItems.map(r => {
                 return <AppListItem key={r.releaseName} app={r} />;
               })}
             </CardGrid>
