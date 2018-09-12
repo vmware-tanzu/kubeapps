@@ -47,6 +47,7 @@ frontend:
 # AppRepository Controller is the controller used to manage the repositories to
 # sync. Set apprepository.initialRepos to configure the initial set of
 # repositories to use when first installing Kubeapps.
+apprepository:
   image:
     registry: docker.io
     repository: kubeapps/apprepository-controller
