@@ -40,11 +40,11 @@ describe("while fetching apps", () => {
     expect(wrapper.find("h1").text()).toContain("Applications");
   });
 
-  it("does not show the search filter nor deploy button", () => {
+  it("shows the search filter, show deleted checkbox and deploy button", () => {
     const wrapper = shallow(<AppList {...props} />);
-    expect(wrapper.find("SearchFilter")).not.toExist();
-    expect(wrapper.find("label.checkbox")).not.toExist();
-    expect(wrapper.find(".deploy-button")).not.toExist();
+    expect(wrapper.find("SearchFilter")).toExist();
+    expect(wrapper.find("label.checkbox").key()).toEqual("listall");
+    expect(wrapper.find(".deploy-button")).toExist();
   });
 });
 
@@ -68,6 +68,34 @@ describe("when fetched but not apps available", () => {
     expect(wrapper.find("SearchFilter")).toExist();
     expect(wrapper.find("label.checkbox").key()).toEqual("listall");
     expect(wrapper.find(".deploy-button")).toExist();
+  });
+});
+
+describe("when error present", () => {
+  beforeEach(() => {
+    props = { ...defaultProps, apps: { error: "Boom!" } };
+  });
+
+  it("matches the snapshot", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders a generic error message", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.find("UnexpectedErrorPage")).toExist();
+  });
+
+  it("renders a Application header", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.find("h1").text()).toContain("Applications");
+  });
+
+  it("does not show the search filter nor show deleted checkbox nor deploy button", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper.find("SearchFilter")).not.toExist();
+    expect(wrapper.find("label.checkbox")).not.toExist();
+    expect(wrapper.find(".deploy-button")).not.toExist();
   });
 });
 

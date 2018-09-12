@@ -48,11 +48,11 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           <div className="col-9">
             <div className="row">
               <h1>Applications</h1>
-              {listOverview && this.appListControls()}
+              {!error && this.appListControls()}
             </div>
           </div>
           <div className="col-3 text-r align-center">
-            {listOverview && (
+            {!error && (
               <Link to="/charts">
                 <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
