@@ -168,6 +168,7 @@ jobs:
           tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
           sudo mv linux-amd64/helm /usr/local/bin/
           helm init --client-only
+      - run: helm dep build ./chart/kubeapps/
       - run: helm template ./chart/kubeapps/
   build_go_images:
     docker:
