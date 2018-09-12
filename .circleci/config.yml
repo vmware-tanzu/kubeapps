@@ -29,6 +29,8 @@ workflows:
           <<: *build_always
       - test_dashboard:
           <<: *build_always
+      - test_chart:
+          <<: *build_always
       - build_go_images:
           <<: *build_always
       - build_dashboard:
@@ -154,6 +156,19 @@ jobs:
       - run: yarn install --cwd=dashboard --frozen-lockfile
       - run: yarn --cwd=dashboard run lint
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
+  test_chart:
+    docker:
+      - image: circleci/golang:1.9
+    environment:
+      HELM_VERSION: v2.9.1
+    steps:
+      - checkout
+      - run: |
+          wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-amd64.tar.gz
+          tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
+          sudo mv linux-amd64/helm /usr/local/bin/
+          helm init --client-only
+      - run: helm template ./chart/kubeapps/
   build_go_images:
     docker:
       - image: circleci/golang:1.9
