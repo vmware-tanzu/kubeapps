@@ -41,16 +41,16 @@ helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
   --set tillerProxy.image.repository=kubeapps/tiller-proxy$IMG_MODIFIER
 
 # Ensure that we are testing the correct image
-k8s_ensure_image kubeapps kubeapps-ci-apprepository-controller $DEV_TAG
-k8s_ensure_image kubeapps kubeapps-ci-chartsvc $DEV_TAG
-k8s_ensure_image kubeapps kubeapps-ci-dashboard $DEV_TAG
-k8s_ensure_image kubeapps kubeapps-ci-tiller-proxy $DEV_TAG
+k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
+k8s_ensure_image kubeapps kubeapps-ci-internal-chartsvc $DEV_TAG
+k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
+k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 
 # Wait for Kubeapps Pods
 k8s_wait_for_pod_ready kubeapps app=kubeapps-ci
-k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-apprepository-controller
-k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-chartsvc
-k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-tiller-proxy
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-apprepository-controller
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-chartsvc
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-tiller-proxy
 k8s_wait_for_pod_ready kubeapps app=mongodb
 k8s_wait_for_pod_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
 
