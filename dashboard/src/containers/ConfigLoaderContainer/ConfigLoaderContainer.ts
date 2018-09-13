@@ -5,7 +5,11 @@ import actions from "../../actions";
 import LoadingWrapper from "../../components/LoadingWrapper";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ config }: IStoreState) {
+interface IMapProps {
+  loaded?: boolean;
+}
+
+function mapStateToProps({ config }: IStoreState): IMapProps {
   return {
     loaded: config.loaded,
   };
