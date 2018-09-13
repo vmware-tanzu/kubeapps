@@ -1,7 +1,7 @@
 import * as React from "react";
 import LoaderSpinner from "../LoaderSpinner";
 
-interface ILoadingWrapperProps {
+export interface ILoadingWrapperProps {
   loaded?: boolean;
 }
 

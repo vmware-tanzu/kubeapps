@@ -2,7 +2,7 @@ import * as React from "react";
 
 import "./LoaderSpinner.css";
 
-const LoaderSpinner: React.SFC<{}> = _ => {
+const LoaderSpinner: React.SFC<{}> = () => {
   // Based on http://tobiasahlin.com/spinkit/
   return (
     <div className="spinner">
