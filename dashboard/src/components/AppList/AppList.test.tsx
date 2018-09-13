@@ -1,6 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
+import sharedSpecs from "../../shared/specs";
 import { IAppOverview, IAppState } from "../../shared/types";
 import { CardGrid } from "../Card";
 import AppList from "./AppList";
@@ -25,14 +26,15 @@ describe("while fetching apps", () => {
     props = { ...defaultProps, apps: { isFetching: true } };
   });
 
+  afterAll(() => {
+    // Calling the shared specs here so they are run after all the beforeEach
+    // callbacks have been run which set the default props and prop
+    sharedSpecs.loadingSpecs(AppList, props);
+  });
+
   it("matches the snapshot", () => {
     const wrapper = shallow(<AppList {...props} />);
     expect(wrapper).toMatchSnapshot();
-  });
-
-  it("renders a loading message", () => {
-    const wrapper = shallow(<AppList {...props} />);
-    expect(wrapper.text()).toContain("Loading");
   });
 
   it("renders a Application header", () => {

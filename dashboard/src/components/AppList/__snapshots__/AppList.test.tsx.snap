@@ -54,18 +54,22 @@ exports[`when apps available matches the snapshot 1`] = `
     </div>
   </PageHeader>
   <main>
-    <div>
-      <CardGrid>
-        <AppListItem
-          app={
-            Object {
-              "releaseName": "foo",
+    <LoadingWrapper
+      loaded={true}
+    >
+      <div>
+        <CardGrid>
+          <AppListItem
+            app={
+              Object {
+                "releaseName": "foo",
+              }
             }
-          }
-          key="foo"
-        />
-      </CardGrid>
-    </div>
+            key="foo"
+          />
+        </CardGrid>
+      </div>
+    </LoadingWrapper>
   </main>
 </section>
 `;
@@ -91,9 +95,13 @@ exports[`when error present matches the snapshot 1`] = `
     />
   </PageHeader>
   <main>
-    <UnexpectedErrorPage
-      title="Sorry! Something went wrong."
-    />
+    <LoadingWrapper
+      loaded={true}
+    >
+      <UnexpectedErrorPage
+        title="Sorry! Something went wrong."
+      />
+    </LoadingWrapper>
   </main>
 </section>
 `;
@@ -152,17 +160,21 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
     </div>
   </PageHeader>
   <main>
-    <MessageAlertPage
-      header="Supercharge your Kubernetes cluster"
+    <LoadingWrapper
+      loaded={true}
     >
-      <div>
-        <p
-          className="margin-v-normal"
-        >
-          Deploy applications on your Kubernetes cluster with a single click.
-        </p>
-      </div>
-    </MessageAlertPage>
+      <MessageAlertPage
+        header="Supercharge your Kubernetes cluster"
+      >
+        <div>
+          <p
+            className="margin-v-normal"
+          >
+            Deploy applications on your Kubernetes cluster with a single click.
+          </p>
+        </div>
+      </MessageAlertPage>
+    </LoadingWrapper>
   </main>
 </section>
 `;
@@ -221,9 +233,11 @@ exports[`while fetching apps matches the snapshot 1`] = `
     </div>
   </PageHeader>
   <main>
-    <div>
-      Loading
-    </div>
+    <LoadingWrapper
+      loaded={false}
+    >
+      <div />
+    </LoadingWrapper>
   </main>
 </section>
 `;
