@@ -1,5 +1,5 @@
 import * as React from "react";
-import LoaderSpinner from "../LoaderSpinner";
+import LoadingSpinner from "../LoadingSpinner";
 
 export interface ILoadingWrapperProps {
   loaded?: boolean;
@@ -9,7 +9,7 @@ export interface ILoadingWrapperProps {
 // Currently, I am having issues transforming it via const LoadingWrapper: React.SFC<ILoadingWrapperProps>
 class LoadingWrapper extends React.Component<ILoadingWrapperProps> {
   public render() {
-    return this.props.loaded ? this.props.children : <LoaderSpinner />;
+    return this.props.loaded ? this.props.children : <LoadingSpinner />;
   }
 }
 

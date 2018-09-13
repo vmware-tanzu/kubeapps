@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import LoadingWrapper from ".";
-import LoaderSpinner from "../LoaderSpinner";
+import LoadingSpinner from "../LoadingSpinner";
 
 let props = {} as any;
 
@@ -29,7 +29,7 @@ describe("when loaded is false", () => {
 
   it("renders a spinner", () => {
     const wrapper = renderComponent(props);
-    expect(wrapper.find(LoaderSpinner)).toExist();
+    expect(wrapper.find(LoadingSpinner)).toExist();
   });
 
   it("does not render any children", () => {
@@ -52,7 +52,7 @@ describe("when loaded is true", () => {
 
   it("does not renders a spinner", () => {
     const wrapper = renderComponent(props);
-    expect(wrapper.find(LoaderSpinner)).not.toExist();
+    expect(wrapper.find(LoadingSpinner)).not.toExist();
   });
 
   it("renders it wrapped component", () => {
