@@ -5,7 +5,7 @@ let props = {} as any;
 
 const ChildrenComponent = () => <div>Hello dad!</div>;
 
-const renderComponent = p => {
+const renderComponent = (p: any) => {
   return shallow(
     <LoadingWrapper {...p}>
       <ChildrenComponent />
