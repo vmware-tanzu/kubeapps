@@ -167,8 +167,7 @@ jobs:
       - checkout
       - <<: *install_helm_cli
       - run: helm init --client-only
-      - run: helm dep build ./chart/kubeapps/
-      - run: helm template ./chart/kubeapps/
+      - run: ./script/chart-template-test.sh
   build_go_images:
     docker:
       - image: circleci/golang:1.9
