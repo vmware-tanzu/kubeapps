@@ -16,64 +16,7 @@ data:
       gzip on;
       gzip_static  on;
 
-      # /apps/ns/:namespace
-      location ~ "/apps/ns/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /apps/ns/:namespace/:releaseName
-      location ~ "/apps/ns/[^/]*/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /apps/ns/:namespace/new/:repo/:id/versions/:version
-      location ~ "/apps/ns/[^/]*/new/[^/]*/[^/]*/versions/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /charts
-      location ~ "/charts/?$" {
-        try_files $uri /index.html;
-      }
-      # /charts/:repo
-      location ~ "/charts/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /charts/:repo/:id
-      location ~ "/charts/[^/]*/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /charts/:repo/:id/versions/:version
-      location ~ "/charts/[^/]*/[^/]*/versions/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /config/brokers
-      location ~ "/config/brokers/?$" {
-        try_files $uri /index.html;
-      }
-      # /config/repos
-      location ~ "/config/repos/?$" {
-        try_files $uri /index.html;
-      }
-      # /functions/ns/:namespace
-      location ~ "/functions/ns/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /apps/ns/:namespace/:name
-      location ~ "/functions/ns/[^/]*/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /services/brokers/:brokerName/classes/:className
-      location ~ "/services/brokers/[^/]*/classes/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /services/brokers/:brokerName/instances/ns/:namespace/:instanceName
-      location ~ "/services/brokers/[^/]*/instances/ns/[^/]*/[^/]*/?$" {
-        try_files $uri /index.html;
-      }
-      # /services/classes
-      location ~ "/services/classes/?$" {
-        try_files $uri /index.html;
-      }
-      # /services/instances/ns/:namespace
-      location ~ "/services/instances/ns/[^/]*/?$" {
+      location / {
         try_files $uri /index.html;
       }
 

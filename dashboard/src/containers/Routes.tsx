@@ -26,7 +26,6 @@ class Routes extends React.Component<IChartInfoProps> {
   public static exactRoutes: {
     [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
   } = {
-    // IMPORTANT: These routes should be added to the NGINX configuration
     "/apps/ns/:namespace": AppList,
     "/apps/ns/:namespace/:releaseName": AppView,
     "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNew,
@@ -58,7 +57,7 @@ class Routes extends React.Component<IChartInfoProps> {
             component={Routes.exactRoutes[route]}
           />
         ))}
-        <Route path="*" component={NotFound} />
+        <Route component={NotFound} />
       </Switch>
     );
   }
