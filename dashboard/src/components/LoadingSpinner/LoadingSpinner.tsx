@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import "./LoaderSpinner.css";
+import "./LoadingSpinner.css";
 
 const LoaderSpinner: React.SFC<{}> = () => {
   // Based on http://tobiasahlin.com/spinkit/

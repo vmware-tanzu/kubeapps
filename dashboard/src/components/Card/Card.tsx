@@ -11,7 +11,7 @@ export interface ICardProps {
 
 class Card extends React.Component<ICardProps> {
   public cssClass() {
-    let cssClass = `Card ${this.props.className}`;
+    let cssClass = `Card ${this.props.className || ""}`;
 
     if (this.props.responsive && this.props.responsiveColumns) {
       cssClass = `${cssClass} Card-responsive-${this.props.responsiveColumns}`;
