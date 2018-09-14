@@ -19,11 +19,6 @@ data:
       location / {
         try_files $uri /index.html;
       }
-
-      error_page 404 /index.html;
-      location /404 {
-        internal;
-      }
     }
   config.json: |-
     {
