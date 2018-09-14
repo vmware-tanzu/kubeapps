@@ -1,12 +1,8 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
-import { IChart, IChartState, IRepo } from "../../shared/types";
-import { CardGrid, CardIcon } from "../Card";
-import { NotFoundErrorAlert } from "../ErrorAlert";
-import PageHeader from "../PageHeader";
-import SearchFilter from "../SearchFilter";
-import ChartList from "./ChartList";
+import { IChart, IRepo } from "../../shared/types";
+import { CardIcon } from "../Card";
 import ChartListItem from "./ChartListItem";
 
 jest.mock("../../placeholder.png", () => "placeholder.png");
