@@ -2,7 +2,7 @@
 
 exports[`should render the children elements 1`] = `
 <div
-  className="CardGrid padding-v-big undefined"
+  className="CardGrid padding-v-big "
 >
   <div>
     foo

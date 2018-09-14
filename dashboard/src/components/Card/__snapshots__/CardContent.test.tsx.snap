@@ -2,7 +2,7 @@
 
 exports[`should render the children elements 1`] = `
 <div
-  className="Card__content padding-normal undefined"
+  className="Card__content padding-normal "
 >
   <div>
     foo

@@ -27,7 +27,10 @@ describe("cssClass", () => {
 });
 
 it("should render the children elements", () => {
-  const children = <div>foo</div>;
-  const wrapper = shallow(<Card children={children} />);
+  const wrapper = shallow(
+    <Card>
+      <div>foo</div>
+    </Card>,
+  );
   expect(wrapper.text()).toContain("foo");
 });

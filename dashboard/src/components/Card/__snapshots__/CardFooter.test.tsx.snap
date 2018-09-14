@@ -2,7 +2,7 @@
 
 exports[`should render the children elements 1`] = `
 <div
-  className="Card__footer padding-h-normal undefined"
+  className="Card__footer padding-h-normal "
 >
   <hr
     className="separator-small"

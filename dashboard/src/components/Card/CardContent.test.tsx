@@ -5,12 +5,15 @@ import CardContent from "./CardContent";
 
 it("should render the className", () => {
   const wrapper = shallow(<CardContent className="foo" />);
-  expect(wrapper.find(".foo").exists()).toBe(true);
+  expect(wrapper.find(".foo")).toExist();
 });
 
 it("should render the children elements", () => {
-  const children = <div>foo</div>;
-  const wrapper = shallow(<CardContent children={children} />);
+  const wrapper = shallow(
+    <CardContent>
+      <div>foo</div>
+    </CardContent>,
+  );
   expect(wrapper.text()).toContain("foo");
   expect(wrapper).toMatchSnapshot();
 });
