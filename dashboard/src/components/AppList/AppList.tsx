@@ -5,6 +5,7 @@ import { IAppOverview, IAppState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { MessageAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
@@ -60,13 +61,9 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
         </PageHeader>
         <main>
-          {isFetching ? (
-            <div>Loading</div>
-          ) : error ? (
-            this.renderError(error)
-          ) : (
-            this.appListItems(listOverview)
-          )}
+          <LoadingWrapper loaded={!isFetching}>
+            {error ? this.renderError(error) : this.appListItems(listOverview)}
+          </LoadingWrapper>
         </main>
       </section>
     );
