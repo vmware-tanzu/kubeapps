@@ -15,18 +15,13 @@ class Root extends React.Component {
         <ConfigLoaderContainer>
           <ConnectedRouter history={history}>
             <Layout headerComponent={HeaderContainer}>
-              <Routes namespace={this.getCurrentNamespace()} />
+              <Routes />
             </Layout>
           </ConnectedRouter>
         </ConfigLoaderContainer>
       </Provider>
     );
   }
-
-  private getCurrentNamespace = () => {
-    const { namespace } = store.getState();
-    return namespace.current;
-  };
 }
 
 export default Root;

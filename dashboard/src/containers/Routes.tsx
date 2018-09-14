@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, Switch } from "react-router";
 import NotFound from "../components/NotFound";
+import store from "../store";
 import AppList from "./AppListContainer";
 import AppNew from "./AppNewContainer";
 import AppUpgrade from "./AppUpgradeContainer";
@@ -18,11 +19,7 @@ import PrivateRouteContainer from "./PrivateRouteContainer";
 import RepoListContainer from "./RepoListContainer";
 import ServiceCatalogContainer from "./ServiceCatalogContainer";
 
-interface IChartInfoProps {
-  namespace: string;
-}
-
-class Routes extends React.Component<IChartInfoProps> {
+class Routes extends React.Component {
   public static exactRoutes: {
     [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
   } = {
@@ -57,12 +54,14 @@ class Routes extends React.Component<IChartInfoProps> {
             component={Routes.exactRoutes[route]}
           />
         ))}
+        {/* If the route doesn't match any expected path redirect to a 404 page  */}
         <Route component={NotFound} />
       </Switch>
     );
   }
   public rootNamespacedRedirect = (props: any) => {
-    return <Redirect to={`/apps/ns/${this.props.namespace}`} />;
+    const { namespace } = store.getState();
+    return <Redirect to={`/apps/ns/${namespace.current}`} />;
   };
 }
 
