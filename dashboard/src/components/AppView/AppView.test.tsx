@@ -4,7 +4,7 @@ import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
-import sharedSpecs from "../../shared/specs";
+import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { NotFoundErrorAlert, PermissionsErrorAlert } from "../ErrorAlert";
@@ -41,14 +41,21 @@ describe("AppViewComponent", () => {
   };
 
   context("when app info is null", () => {
-    sharedSpecs.loadingSpecs(AppViewComponent, {
-      ...validProps,
-      app: { ...validProps.app, info: null },
+    itBehavesLike("aLoadingComponent", {
+      component: AppViewComponent,
+      props: {
+        ...validProps,
+        app: { ...validProps.app, info: null },
+      },
     });
   });
 
   context("when otherResources is null", () => {
-    sharedSpecs.loadingSpecs(AppViewComponent, validProps, { otherResources: null });
+    itBehavesLike("aLoadingComponent", {
+      component: AppViewComponent,
+      props: validProps,
+      state: { otherResources: null },
+    });
   });
 
   describe("State initialization", () => {

@@ -1,11 +1,13 @@
-import { mount } from "enzyme";
+import { shallow } from "enzyme";
 import * as React from "react";
-import LoadingSpinner from "../../components/LoadingSpinner";
+import LoadingWrapper from "../../components/LoadingWrapper";
 
 // Shared jest examples that checks that the provided component is rendering the Loading Wrapper
-export default (Component: any, props: any, state?: any) => {
+export default (args: any) => {
+  const { component: Component, props, state } = args;
+
   const renderComponent = () => {
-    const wrapper = mount(<Component {...props} />);
+    const wrapper = shallow(<Component {...props} />);
 
     if (state) {
       wrapper.setState(state);
@@ -14,10 +16,12 @@ export default (Component: any, props: any, state?: any) => {
   };
 
   describe("loading spinner", () => {
-    it("renders", () => {
+    it("renders a wrapper in loaded state = false", () => {
       const wrapper = renderComponent();
 
-      expect(wrapper.find(LoadingSpinner)).toExist();
+      const loadingWrapper = wrapper.find(LoadingWrapper);
+      expect(wrapper.find(LoadingWrapper)).toExist();
+      expect(loadingWrapper.props().loaded).toEqual(false);
     });
 
     it("matches the snapshot", () => {
