@@ -41,34 +41,22 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public render() {
-    const { pushSearchFilter, apps: { error, isFetching, listOverview, listingAll } } = this.props;
-    if (!listOverview) {
-      return <div>Loading</div>;
-    }
+    const { apps: { error, isFetching, listOverview } } = this.props;
     return (
       <section className="AppList">
         <PageHeader>
           <div className="col-9">
             <div className="row">
               <h1>Applications</h1>
-              <SearchFilter
-                key="searchFilter"
-                className="margin-l-big"
-                placeholder="search apps..."
-                onChange={this.handleFilterQueryChange}
-                value={this.state.filter}
-                onSubmit={pushSearchFilter}
-              />
-              <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
-                <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
-                <span>Show deleted apps</span>
-              </label>
+              {!error && this.appListControls()}
             </div>
           </div>
           <div className="col-3 text-r align-center">
-            <Link to="/charts">
-              <button className="button button-accent">Deploy App</button>
-            </Link>
+            {!error && (
+              <Link to="/charts">
+                <button className="deploy-button button button-accent">Deploy App</button>
+              </Link>
+            )}
           </div>
         </PageHeader>
         <main>
@@ -81,6 +69,26 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           )}
         </main>
       </section>
+    );
+  }
+
+  public appListControls() {
+    const { pushSearchFilter, apps: { listingAll } } = this.props;
+    return (
+      <React.Fragment>
+        <SearchFilter
+          key="searchFilter"
+          className="margin-l-big"
+          placeholder="search apps..."
+          onChange={this.handleFilterQueryChange}
+          value={this.state.filter}
+          onSubmit={pushSearchFilter}
+        />
+        <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
+          <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
+          <span>Show deleted apps</span>
+        </label>
+      </React.Fragment>
     );
   }
 
