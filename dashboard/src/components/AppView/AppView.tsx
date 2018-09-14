@@ -7,6 +7,7 @@ import { ForbiddenError, IRBACRole, IResource, NotFoundError } from "../../share
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -140,47 +141,57 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     }
   }
 
+  public get isLoading(): boolean {
+    const { app } = this.props;
+    return !this.state.otherResources || (!app || !app.info);
+  }
+
   public render() {
     if (this.props.error) {
       return this.renderError(this.props.error);
     }
-    if (!this.state.otherResources) {
-      return <div>Loading</div>;
-    }
+
+    return <LoadingWrapper loaded={!this.isLoading}>{this.appInfo()}</LoadingWrapper>;
+  }
+
+  public appInfo() {
     const { app } = this.props;
-    if (!app || !app.info) {
-      return <div>Loading</div>;
-    }
+
+    // Although LoadingWrapper checks that the app is loaded before loading this wrapper
+    // it seems that react renders it even before causing it to crash because app is null
+    // that's why we need to have an app && guard clause
     return (
-      <section className="AppView padding-b-big">
-        <main>
-          <div className="container">
-            {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
-            <div className="row collapse-b-tablet">
-              <div className="col-3">
-                <ChartInfo app={app} />
-              </div>
-              <div className="col-9">
-                <div className="row padding-t-bigger">
-                  <div className="col-4">
-                    <DeploymentStatus deployments={this.deploymentArray()} info={app.info} />
-                  </div>
-                  <div className="col-8 text-r">
-                    <AppControls app={app} deleteApp={this.deleteApp} />
-                  </div>
+      app && (
+        <section className="AppView padding-b-big">
+          <main>
+            <div className="container">
+              {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
+              <div className="row collapse-b-tablet">
+                <div className="col-3">
+                  <ChartInfo app={app} />
                 </div>
-                <ServiceTable services={this.state.services} extended={false} />
-                <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <AppDetails
-                  deployments={this.state.deployments}
-                  services={this.state.services}
-                  otherResources={this.state.otherResources}
-                />
+                <div className="col-9">
+                  <div className="row padding-t-bigger">
+                    <div className="col-4">
+                      <DeploymentStatus deployments={this.deploymentArray()} info={app.info!} />
+                    </div>
+                    <div className="col-8 text-r">
+                      <AppControls app={app} deleteApp={this.deleteApp} />
+                    </div>
+                  </div>
+                  <ServiceTable services={this.state.services} extended={false} />
+                  <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
+                  <AppDetails
+                    deployments={this.state.deployments}
+                    services={this.state.services}
+                    otherResources={this.state.otherResources}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </main>
-      </section>
+          </main>
+        </section>
+      )
     );
   }
 

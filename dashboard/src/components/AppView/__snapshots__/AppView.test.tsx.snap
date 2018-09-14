@@ -1,0 +1,100 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AppViewComponent when app info is null loading spinner matches the snapshot 1`] = `
+<AppView
+  app={
+    Object {
+      "hooks": Array [],
+      "info": null,
+      "namespace": "weee",
+    }
+  }
+  deleteApp={[MockFunction]}
+  getApp={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+      ],
+    }
+  }
+  namespace="my-happy-place"
+  releaseName="mr-sunshine"
+>
+  <LoadingWrapper
+    loaded={false}
+  >
+    <LoaderSpinner>
+      <div
+        className="spinner"
+      >
+        <div
+          className="spinner__bounce1"
+        />
+        <div
+          className="spinner__bounce2"
+        />
+      </div>
+    </LoaderSpinner>
+  </LoadingWrapper>
+</AppView>
+`;
+
+exports[`AppViewComponent when otherResources is null loading spinner matches the snapshot 1`] = `
+<AppView
+  app={
+    Object {
+      "info": Object {},
+      "namespace": "weee",
+    }
+  }
+  deleteApp={[MockFunction]}
+  getApp={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+      ],
+    }
+  }
+  namespace="my-happy-place"
+  releaseName="mr-sunshine"
+>
+  <LoadingWrapper
+    loaded={false}
+  >
+    <LoaderSpinner>
+      <div
+        className="spinner"
+      >
+        <div
+          className="spinner__bounce1"
+        />
+        <div
+          className="spinner__bounce2"
+        />
+      </div>
+    </LoaderSpinner>
+  </LoadingWrapper>
+</AppView>
+`;

@@ -1,8 +1,10 @@
 import { shallow } from "enzyme";
+import context from "jest-context";
 import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
+import sharedSpecs from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { NotFoundErrorAlert, PermissionsErrorAlert } from "../ErrorAlert";
@@ -23,28 +25,30 @@ describe("AppViewComponent", () => {
     return yamlManifest;
   };
 
-  let validProps: IAppViewProps;
-  beforeEach(() => {
-    const appRelease = hapi.release.Release.create({
-      info: hapi.release.Info.create(),
-      namespace: "weee",
-    });
-
-    validProps = {
-      app: appRelease,
-      deleteApp: jest.fn(),
-      deleteError: undefined,
-      error: undefined,
-      getApp: jest.fn(),
-      namespace: "my-happy-place",
-      releaseName: "mr-sunshine",
-    };
+  const appRelease = hapi.release.Release.create({
+    info: hapi.release.Info.create(),
+    namespace: "weee",
   });
 
-  it("renders a loading message if info is not present", () => {
-    validProps.app.info = null;
-    const wrapper = shallow(<AppViewComponent {...validProps} />);
-    expect(wrapper.text()).toBe("Loading");
+  const validProps: IAppViewProps = {
+    app: appRelease,
+    deleteApp: jest.fn(),
+    deleteError: undefined,
+    error: undefined,
+    getApp: jest.fn(),
+    namespace: "my-happy-place",
+    releaseName: "mr-sunshine",
+  };
+
+  context("when app info is null", () => {
+    sharedSpecs.loadingSpecs(AppViewComponent, {
+      ...validProps,
+      app: { ...validProps.app, info: null },
+    });
+  });
+
+  context("when otherResources is null", () => {
+    sharedSpecs.loadingSpecs(AppViewComponent, validProps, { otherResources: null });
   });
 
   describe("State initialization", () => {
