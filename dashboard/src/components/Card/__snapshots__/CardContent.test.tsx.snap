@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render the children elements 1`] = `
+<div
+  className="Card__content padding-normal "
+>
+  <div>
+    foo
+  </div>
+</div>
+`;

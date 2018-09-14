@@ -47,10 +47,10 @@ First install the dashboard dependency packages:
 yarn install
 ```
 
-Next, create a `telepresence` shell to swap the `kubeapps-dashboard-ui` deployment in the `kubeapps` namespace, forwarding local port `3000` to port `8080` of the `kubeapps-dashboard-ui` pod.
+Next, create a `telepresence` shell to swap the `kubeapps-internal-dashboard` deployment in the `kubeapps` namespace, forwarding local port `3000` to port `8080` of the `kubeapps-internal-dashboard` pod.
 
 ```bash
-telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-dashboard --expose 3000:8080 --run-shell
+telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-internal-dashboard --expose 3000:8080 --run-shell
 ```
 
 > **NOTE**: If you encounter issues getting this setup working correctly, please try switching the telepresence proxying method in the above command to `vpn-tcp`. Refer to [the telepresence docs](https://www.telepresence.io/reference/methods) to learn more about the available proxying methods and their limitations.

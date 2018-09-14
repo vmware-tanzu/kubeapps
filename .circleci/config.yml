@@ -29,6 +29,8 @@ workflows:
           <<: *build_always
       - test_dashboard:
           <<: *build_always
+      - test_chart_render:
+          <<: *build_always
       - build_go_images:
           <<: *build_always
       - build_dashboard:
@@ -72,6 +74,11 @@ install_gcloud_sdk: &install_gcloud_sdk
       rm -rf $HOME/google-cloud-sdk;
       curl https://sdk.cloud.google.com | bash;
     fi
+install_helm_cli: &install_helm_cli
+  run: |
+    wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-amd64.tar.gz
+    tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
+    sudo mv linux-amd64/helm /usr/local/bin/
 exports: &exports
   run: |
     # It is not possible to resolve env vars in the environment section:
@@ -123,11 +130,8 @@ gke_test: &gke_test
     - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
     - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
     # Install helm
-    - run: |
-        wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-amd64.tar.gz
-        tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
-        sudo mv linux-amd64/helm /usr/local/bin/
-        helm init --wait
+    - <<: *install_helm_cli
+    - run: helm init --wait
     - run: ./script/e2e-test.sh $IMG_MODIFIER $DEV_TAG
     - run:
         name: Cleanup GKE Cluster
@@ -154,6 +158,16 @@ jobs:
       - run: yarn install --cwd=dashboard --frozen-lockfile
       - run: yarn --cwd=dashboard run lint
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
+  test_chart_render:
+    docker:
+      - image: circleci/golang:1.9
+    environment:
+      HELM_VERSION: v2.9.1
+    steps:
+      - checkout
+      - <<: *install_helm_cli
+      - run: helm init --client-only
+      - run: ./script/chart-template-test.sh
   build_go_images:
     docker:
       - image: circleci/golang:1.9
