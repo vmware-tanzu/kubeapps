@@ -5,6 +5,7 @@ import { hapi } from "../../shared/hapi/release";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";
 import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import LoadingWrapper from "../LoadingWrapper";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 
@@ -59,7 +60,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
       !app.chart.metadata.version
     ) {
       if (!error) {
-        return <div>Loading</div>;
+        return <LoadingWrapper />;
       } else {
         return (
           <DeploymentErrors

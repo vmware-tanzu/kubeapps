@@ -10,7 +10,7 @@ import AppListItem from "./AppListItem";
 
 let props = {} as any;
 
-const defaultProps = {
+const defaultProps: any = {
   apps: {} as IAppState,
   fetchApps: jest.fn(),
   filter: "",
