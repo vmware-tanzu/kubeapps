@@ -1,14 +1,21 @@
 import { shallow } from "enzyme";
+import context from "jest-context";
 import * as React from "react";
 import * as ReactMarkdown from "react-markdown";
 
+import itBehavesLike from "../../shared/specs";
+
 import ChartReadme from "./ChartReadme";
 
-it("renders a loading message if the readme is not present", () => {
-  const wrapper = shallow(
-    <ChartReadme getChartReadme={jest.fn()} hasError={false} version="1.2.3" />,
-  );
-  expect(wrapper.text()).toBe("Loading");
+context("when readme is not present", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: ChartReadme,
+    props: {
+      getChartReadme: jest.fn(),
+      hasError: false,
+      version: "1.2.3",
+    },
+  });
 });
 
 describe("getChartReadme", () => {

@@ -1,8 +1,8 @@
 import * as React from "react";
 
 import { ForbiddenError, IAppRepository, IRBACRole, NotFoundError } from "../../shared/types";
-
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
@@ -29,39 +29,38 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
   };
 
   public render() {
-    if (!this.props.repos) {
-      return <div> Loading </div>;
-    }
     return (
-      <div className="container margin-normal">
-        <div className="col-8">{this.props.error && this.renderError()}</div>
-        <div className="col-12">
-          <h2>Select the source repository of {this.props.chartName}</h2>
+      <LoadingWrapper loaded={this.props.repos.length > 0}>
+        <div className="container margin-normal">
+          <div className="col-8">{this.props.error && this.renderError()}</div>
+          <div className="col-12">
+            <h2>Select the source repository of {this.props.chartName}</h2>
+          </div>
+          <div className="col-8">
+            <label htmlFor="chartRepoName">Chart Repository Name *</label>
+            <select
+              id="chartRepoName"
+              onChange={this.handleChartRepoNameChange}
+              value={this.state.repo}
+              required={true}
+            >
+              {!this.state.repo && <option key="" value="" />}
+              {this.props.repos.map(r => (
+                <option key={r.metadata.name} value={r.metadata.name}>
+                  {r.metadata.name} ({this.getRepoURL(r.metadata.name)})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <p>
+              {" "}
+              * If the repository containing {this.props.chartName} is not in the list add it{" "}
+              <a href="/config/repos"> here </a>.{" "}
+            </p>
+          </div>
         </div>
-        <div className="col-8">
-          <label htmlFor="chartRepoName">Chart Repository Name *</label>
-          <select
-            id="chartRepoName"
-            onChange={this.handleChartRepoNameChange}
-            value={this.state.repo}
-            required={true}
-          >
-            {!this.state.repo && <option key="" value="" />}
-            {this.props.repos.map(r => (
-              <option key={r.metadata.name} value={r.metadata.name}>
-                {r.metadata.name} ({this.getRepoURL(r.metadata.name)})
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <p>
-            {" "}
-            * If the repository containing {this.props.chartName} is not in the list add it{" "}
-            <a href="/config/repos"> here </a>.{" "}
-          </p>
-        </div>
-      </div>
+      </LoadingWrapper>
     );
   }
 

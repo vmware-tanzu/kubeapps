@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
@@ -51,7 +52,7 @@ class ChartView extends React.Component<IChartViewProps> {
       return this.renderError(error);
     }
     if (isFetching || !version) {
-      return <div>Loading</div>;
+      return <LoadingWrapper />;
     }
     const chartAttrs = version.relationships.chart.data;
     return (
