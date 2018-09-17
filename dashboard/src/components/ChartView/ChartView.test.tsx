@@ -1,6 +1,8 @@
 import { shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 
+import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
@@ -83,13 +85,25 @@ it("triggers resetChartVersion when unmounting", () => {
   expect(spy).toHaveBeenCalled();
 });
 
-it("renders a loading message if fetching or if chart version not set", () => {
-  const chartVersionNotSet = shallow(<ChartView {...props} isFetching={false} />);
-  expect(chartVersionNotSet.text()).toBe("Loading");
-  const fetching = shallow(
-    <ChartView {...props} isFetching={true} selected={{ version: {} as IChartVersion }} />,
-  );
-  expect(fetching.text()).toBe("Loading");
+context("when fetching is false but no chart is available", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: ChartView,
+    props: {
+      ...props,
+      isFetching: false,
+    },
+  });
+});
+
+context("when fetching is true and chart is available", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: ChartView,
+    props: {
+      ...props,
+      isFetching: true,
+      selected: { version: {} as IChartVersion },
+    },
+  });
 });
 
 describe("subcomponents", () => {

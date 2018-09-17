@@ -2,6 +2,8 @@ import * as React from "react";
 import { FileText } from "react-feather";
 import * as ReactMarkdown from "react-markdown";
 
+import LoadingWrapper from "../LoadingWrapper";
+
 import "./ChartReadme.css";
 
 interface IChartReadmeProps {
@@ -30,7 +32,13 @@ class ChartReadme extends React.Component<IChartReadmeProps> {
       return this.renderError();
     }
     return (
-      <div className="ChartReadme">{readme ? <ReactMarkdown source={readme} /> : "Loading"}</div>
+      <LoadingWrapper loaded={!!readme}>
+        {readme && (
+          <div className="ChartReadme">
+            <ReactMarkdown source={readme} />
+          </div>
+        )}
+      </LoadingWrapper>
     );
   }
 

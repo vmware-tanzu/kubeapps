@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { hapi } from "shared/hapi/release";
 import { IAppRepository, IChartState } from "shared/types";
+import itBehavesLike from "../../shared/specs";
 import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
@@ -32,10 +33,7 @@ const defaultProps = {
   version: "1.0.0",
 };
 
-it("renders a loading message if apps object is empty", () => {
-  const wrapper = shallow(<AppUpgrade {...defaultProps} />);
-  expect(wrapper.text()).toBe("Loading");
-});
+itBehavesLike("aLoadingComponent", { component: AppUpgrade, props: defaultProps });
 
 it("renders the repo selection form if not introduced", () => {
   const wrapper = shallow(
