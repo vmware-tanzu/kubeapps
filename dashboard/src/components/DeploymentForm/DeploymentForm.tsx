@@ -10,6 +10,7 @@ import DeploymentErrors from "./DeploymentErrors";
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 
 interface IDeploymentFormProps {
   kubeappsNamespace: string;
@@ -107,7 +108,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       return this.renderSelectedError(selected.error);
     }
     if (!version || !versions.length || this.state.isDeploying) {
-      return <div>Loading</div>;
+      return <LoadingWrapper />;
     }
     return (
       <div>

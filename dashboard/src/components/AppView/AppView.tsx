@@ -7,6 +7,7 @@ import { ForbiddenError, IRBACRole, IResource, NotFoundError } from "../../share
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -140,17 +141,25 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     }
   }
 
+  public get isLoading(): boolean {
+    const { app } = this.props;
+    return !this.state.otherResources || (!app || !app.info);
+  }
+
   public render() {
     if (this.props.error) {
       return this.renderError(this.props.error);
     }
-    if (!this.state.otherResources) {
-      return <div>Loading</div>;
-    }
+
+    return this.isLoading ? <LoadingWrapper /> : this.appInfo();
+  }
+
+  public appInfo() {
     const { app } = this.props;
-    if (!app || !app.info) {
-      return <div>Loading</div>;
-    }
+
+    // Although LoadingWrapper checks that the app is loaded before loading this wrapper
+    // it seems that react renders it even before causing it to crash because app is null
+    // that's why we need to have an app && guard clause
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -163,7 +172,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus deployments={this.deploymentArray()} info={app.info} />
+                    <DeploymentStatus deployments={this.deploymentArray()} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
                     <AppControls app={app} deleteApp={this.deleteApp} />
