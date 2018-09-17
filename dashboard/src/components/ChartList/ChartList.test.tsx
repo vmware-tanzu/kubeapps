@@ -29,8 +29,8 @@ it("propagates the filter from the props", () => {
 describe("renderization", () => {
   it("should render an error if no charts are found", () => {
     const wrapper = shallow(<ChartList {...defaultProps} />);
-    expect(wrapper.find(NotFoundErrorAlert).exists()).toBe(true);
-    expect(wrapper.find(".ChartList").exists()).toBe(false);
+    expect(wrapper.find(NotFoundErrorAlert)).toExist();
+    expect(wrapper.find(".ChartList")).not.toExist();
     expect(
       wrapper
         .find(NotFoundErrorAlert)
@@ -47,21 +47,24 @@ describe("renderization", () => {
       items: [],
     } as IChartState;
     const wrapper = shallow(<ChartList {...defaultProps} charts={chartState} />);
-    expect(wrapper.find(NotFoundErrorAlert).exists()).toBe(false);
+
+    expect(wrapper.find(NotFoundErrorAlert)).not.toExist();
     expect(wrapper.text()).toContain("Loading");
   });
 
-  it("should render the list of charts charts", () => {
+  it("should render the list of charts", () => {
     const chartState = {
       isFetching: false,
       selected: {} as IChartState["selected"],
       items: [{ id: "foo", attributes: {} } as IChart, { id: "bar", attributes: {} } as IChart],
     } as IChartState;
     const wrapper = shallow(<ChartList {...defaultProps} charts={chartState} />);
-    expect(wrapper.find(NotFoundErrorAlert).exists()).toBe(false);
-    expect(wrapper.find(PageHeader).exists()).toBe(true);
-    expect(wrapper.find(SearchFilter).exists()).toBe(true);
+
+    expect(wrapper.find(NotFoundErrorAlert)).not.toExist();
+    expect(wrapper.find(PageHeader)).toExist();
+    expect(wrapper.find(SearchFilter)).toExist();
     expect(wrapper.text()).not.toContain("Loading");
+
     const cardGrid = wrapper.find(CardGrid);
     expect(cardGrid).toExist();
     expect(cardGrid.children().length).toBe(chartState.items.length);
@@ -88,6 +91,7 @@ describe("renderization", () => {
     } as IChartState;
     // Filter "foo" app
     const wrapper = shallow(<ChartList {...defaultProps} charts={chartState} filter="foo" />);
+
     const cardGrid = wrapper.find(CardGrid);
     expect(cardGrid).toExist();
     expect(cardGrid.children().length).toBe(1);

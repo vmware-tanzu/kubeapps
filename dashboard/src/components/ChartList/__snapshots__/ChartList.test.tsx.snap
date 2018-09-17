@@ -18,7 +18,7 @@ exports[`renderization should render an error if no charts are found 1`] = `
 </NotFoundErrorPage>
 `;
 
-exports[`renderization should render the list of charts charts 1`] = `
+exports[`renderization should render the list of charts 1`] = `
 <section
   className="ChartList"
 >
