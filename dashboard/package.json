@@ -29,13 +29,13 @@
     "react-lazylog": "^2.1.0",
     "react-markdown": "^3.1.4",
     "react-modal": "^3.1.11",
-    "react-redux": "^5.0.6",
+    "react-redux": "5.0.6",
     "react-router-dom": "^4.2.2",
     "react-router-redux": "^5.0.0-alpha.9",
     "react-scripts-ts": "^2.17.0",
     "react-select": "^1.2.1",
     "react-test-renderer": "^16.2.0",
-    "redux": "^3.7.2",
+    "redux": "4.0.0",
     "redux-devtools-extension": "^2.13.5",
     "redux-thunk": "^2.2.0",
     "ts-jest": "^22.0.1",
@@ -73,7 +73,7 @@
     "@types/react": "^16.0.34",
     "@types/react-dom": "^16.0.3",
     "@types/react-modal": "^3.1.1",
-    "@types/react-redux": "^5.0.14",
+    "@types/react-redux": "^6.0.3",
     "@types/react-router": "^4.0.20",
     "@types/react-router-dom": "^4.2.3",
     "@types/react-router-redux": "^5.0.11",
@@ -97,7 +97,7 @@
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
-    "typescript": "^2.6.2"
+    "typescript": "^3.0.3"
   },
   "jest": {
     "collectCoverageFrom": ["src/**/*", "!src/**/*.d.ts"]

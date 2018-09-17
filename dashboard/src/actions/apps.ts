@@ -1,4 +1,5 @@
-import { Dispatch } from "redux";
+import { Action, Dispatch } from "redux";
+import { ThunkAction } from "redux-thunk";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
@@ -51,7 +52,7 @@ const allActions = [
 export type AppsAction = typeof allActions[number];
 
 export function getApp(releaseName: string, namespace: string) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
+  return async (dispatch: Dispatch): Promise<void> => {
     dispatch(requestApps());
     try {
       const app = await App.getRelease(namespace, releaseName);
@@ -63,7 +64,7 @@ export function getApp(releaseName: string, namespace: string) {
 }
 
 export function deleteApp(releaseName: string, namespace: string, purge: boolean) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+  return async (dispatch: Dispatch): Promise<boolean> => {
     try {
       await App.delete(releaseName, namespace, purge);
       return true;
@@ -74,8 +75,11 @@ export function deleteApp(releaseName: string, namespace: string, purge: boolean
   };
 }
 
-export function fetchApps(ns?: string, all: boolean = false) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
+export function fetchApps(
+  ns?: string,
+  all: boolean = false,
+): ThunkAction<Promise<void>, IStoreState, null, Action> {
+  return async (dispatch: Dispatch): Promise<void> => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
@@ -95,7 +99,7 @@ export function deployChart(
   namespace: string,
   values?: string,
 ) {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
+  return async (dispatch: Dispatch, getState: () => IStoreState): Promise<boolean> => {
     try {
       // You can not deploy applications unless the namespace is set
       if (namespace === definedNamespaces.all) {
@@ -120,7 +124,7 @@ export function upgradeApp(
   namespace: string,
   values?: string,
 ) {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
+  return async (dispatch: Dispatch, getState: () => IStoreState): Promise<boolean> => {
     try {
       const { config: { namespace: kubeappsNamespace } } = getState();
       await App.upgrade(releaseName, namespace, kubeappsNamespace, chartVersion, values);

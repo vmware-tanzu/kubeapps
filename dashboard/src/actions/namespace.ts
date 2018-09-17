@@ -1,4 +1,6 @@
-import { Dispatch } from "react-redux";
+import { Action, Dispatch } from "redux";
+import { ThunkAction } from "redux-thunk";
+
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import Namespace from "../shared/Namespace";
@@ -21,12 +23,12 @@ export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", (namespaces:
 const allActions = [setNamespace, receiveNamespaces].map(getReturnOfExpression);
 export type NamespaceAction = typeof allActions[number];
 
-export function fetchNamespaces() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, void, Action> {
+  return async (dispatch: Dispatch): Promise<void> => {
     try {
       const namespaces = await Namespace.list();
       const namespaceStrings = namespaces.items.map((n: IResource) => n.metadata.name);
-      return dispatch(receiveNamespaces(namespaceStrings));
+      dispatch(receiveNamespaces(namespaceStrings));
     } catch (e) {
       // TODO: handle namespace call error
       return;

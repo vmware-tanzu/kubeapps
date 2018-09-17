@@ -2,7 +2,6 @@ import { Dispatch } from "redux";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
-import { IStoreState } from "../shared/types";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", (authenticated: boolean) => ({
   authenticated,
@@ -24,7 +23,7 @@ const allActions = [setAuthenticated, authenticating, authenticationError].map(
 export type AuthAction = typeof allActions[number];
 
 export function authenticate(token: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch) => {
     dispatch(authenticating());
     try {
       await Auth.validateToken(token);
@@ -37,7 +36,7 @@ export function authenticate(token: string) {
 }
 
 export function logout() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch) => {
     Auth.unsetAuthToken();
     return dispatch(setAuthenticated(false));
   };

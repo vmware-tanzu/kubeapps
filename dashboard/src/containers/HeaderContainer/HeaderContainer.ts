@@ -1,7 +1,8 @@
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import Header from "../../components/Header";
@@ -23,7 +24,7 @@ function mapStateToProps({
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, void, Action>) {
   return {
     fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
     logout: (token: string) => dispatch(actions.auth.logout()),

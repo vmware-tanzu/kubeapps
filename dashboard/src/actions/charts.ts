@@ -1,4 +1,5 @@
-import { Dispatch } from "redux";
+import { Action, Dispatch } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
@@ -57,7 +58,7 @@ const allActions = [
 ].map(getReturnOfExpression);
 export type ChartsAction = typeof allActions[number];
 
-async function httpGet(dispatch: Dispatch<IStoreState>, targetURL: string) {
+async function httpGet(dispatch: Dispatch, targetURL: string) {
   try {
     const response = await fetch(targetURL);
     const json = await response.json();
@@ -77,7 +78,7 @@ async function httpGet(dispatch: Dispatch<IStoreState>, targetURL: string) {
 }
 
 export function fetchCharts(repo: string) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+  return async (dispatch: Dispatch): Promise<{}> => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.list(repo));
     if (response) {
@@ -88,7 +89,7 @@ export function fetchCharts(repo: string) {
 }
 
 export function fetchChartVersions(id: string) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+  return async (dispatch: Dispatch): Promise<{}> => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.listVersions(id));
     if (response) {
@@ -99,7 +100,7 @@ export function fetchChartVersions(id: string) {
 }
 
 export function getChartVersion(id: string, version: string) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<{}> => {
+  return async (dispatch: Dispatch): Promise<{}> => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.getVersion(id, version));
     if (response) {
@@ -110,7 +111,7 @@ export function getChartVersion(id: string, version: string) {
 }
 
 export function fetchChartVersionsAndSelectVersion(id: string, version?: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: ThunkDispatch<IStoreState, null, Action>) => {
     const versions = (await dispatch(fetchChartVersions(id))) as IChartVersion[];
     if (versions) {
       let cv: IChartVersion = versions[0];
@@ -127,7 +128,7 @@ export function fetchChartVersionsAndSelectVersion(id: string, version?: string)
 }
 
 export function getChartReadme(id: string, version: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch) => {
     try {
       const readme = await Chart.getReadme(id, version);
       dispatch(selectReadme(readme));
@@ -139,7 +140,7 @@ export function getChartReadme(id: string, version: string) {
 }
 
 export function getChartValues(id: string, version: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch) => {
     try {
       const values = await Chart.getValues(id, version);
       dispatch(selectValues(values));

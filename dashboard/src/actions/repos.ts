@@ -1,6 +1,8 @@
 import { createAction, getReturnOfExpression } from "typesafe-actions";
 
-import { Dispatch } from "react-redux";
+import { Action, Dispatch } from "redux";
+import { ThunkDispatch } from "redux-thunk";
+
 import { AppRepository } from "../shared/AppRepository";
 import Secret from "../shared/Secret";
 import * as url from "../shared/url";
@@ -71,7 +73,10 @@ const allActions = [
 export type AppReposAction = typeof allActions[number];
 
 export const deleteRepo = (name: string) => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+  return async (
+    dispatch: ThunkDispatch<IStoreState, null, Action>,
+    getState: () => IStoreState,
+  ) => {
     try {
       const { config: { namespace } } = getState();
       await AppRepository.delete(name, namespace);
@@ -85,7 +90,7 @@ export const deleteRepo = (name: string) => {
 };
 
 export const resyncRepo = (name: string) => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+  return async (dispatch: Dispatch, getState: () => IStoreState) => {
     try {
       const { config: { namespace } } = getState();
       const repo = await AppRepository.get(name, namespace);
@@ -103,7 +108,7 @@ export const resyncRepo = (name: string) => {
 };
 
 export const fetchRepos = () => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+  return async (dispatch: Dispatch, getState: () => IStoreState) => {
     dispatch(requestRepos());
     try {
       const { config: { namespace } } = getState();
@@ -116,7 +121,7 @@ export const fetchRepos = () => {
 };
 
 export const installRepo = (name: string, repoURL: string, authHeader: string) => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+  return async (dispatch: Dispatch, getState: () => IStoreState) => {
     try {
       const { config: { namespace } } = getState();
       let auth;
@@ -159,7 +164,7 @@ export const installRepo = (name: string, repoURL: string, authHeader: string) =
 };
 
 export function checkChart(repo: string, chartName: string) {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+  return async (dispatch: Dispatch, getState: () => IStoreState) => {
     const { config: { namespace } } = getState();
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(repo, namespace);
@@ -175,7 +180,7 @@ export function checkChart(repo: string, chartName: string) {
 }
 
 export function clearRepo() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+  return async (dispatch: Dispatch) => {
     dispatch(receiveRepo({} as IAppRepository));
   };
 }
