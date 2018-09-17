@@ -4893,10 +4893,6 @@ jest-config@^22.4.4:
     jest-validate "^22.4.4"
     pretty-format "^22.4.0"
 
-jest-context@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/jest-context/-/jest-context-2.1.0.tgz#8d92b636323ce0698f801b6282029feb987c9545"
-
 jest-diff@^22.1.0:
   version "22.1.0"
   resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-22.1.0.tgz#0fad9d96c87b453896bf939df3dc8aac6919ac38"
@@ -5070,6 +5066,10 @@ jest-mock@^22.1.0:
 jest-mock@^22.4.3:
   version "22.4.3"
   resolved "https://registry.yarnpkg.com/jest-mock/-/jest-mock-22.4.3.tgz#f63ba2f07a1511772cdc7979733397df770aabc7"
+
+jest-plugin-context@^2.9.0:
+  version "2.9.0"
+  resolved "https://registry.yarnpkg.com/jest-plugin-context/-/jest-plugin-context-2.9.0.tgz#602aacbe61213a3bb229067db0eee9e003eb1931"
 
 jest-regex-util@^22.1.0:
   version "22.1.0"

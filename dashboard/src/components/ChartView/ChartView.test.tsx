@@ -1,5 +1,5 @@
 import { shallow } from "enzyme";
-import context from "jest-context";
+import context from "jest-plugin-context";
 import * as React from "react";
 
 import itBehavesLike from "../../shared/specs";

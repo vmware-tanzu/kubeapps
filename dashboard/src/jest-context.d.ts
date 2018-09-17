@@ -1,1 +1,1 @@
-declare module "jest-context";
+declare module "jest-plugin-context";

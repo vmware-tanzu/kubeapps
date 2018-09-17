@@ -1,24 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renderization should render an error if no charts are found 1`] = `
-<NotFoundErrorPage
-  resource="Charts"
->
-  <div>
-    Manage your Helm chart repositories in Kubeapps by visiting the
-     
-    <Link
-      replace={false}
-      to="/config/repos"
-    >
-      App repositories configuration
-    </Link>
-     page.
-  </div>
-</NotFoundErrorPage>
-`;
-
-exports[`renderization should render the list of charts 1`] = `
+exports[`renderization when charts available should render the list of charts 1`] = `
 <section
   className="ChartList"
 >
@@ -34,25 +16,73 @@ exports[`renderization should render the list of charts 1`] = `
       value=""
     />
   </PageHeader>
-  <CardGrid>
-    <ChartListItem
-      chart={
-        Object {
-          "attributes": Object {},
-          "id": "foo",
+  <LoadingWrapper
+    loaded={true}
+  >
+    <CardGrid>
+      <ChartListItem
+        chart={
+          Object {
+            "attributes": Object {},
+            "id": "foo",
+          }
         }
-      }
-      key="foo"
-    />
-    <ChartListItem
-      chart={
-        Object {
-          "attributes": Object {},
-          "id": "bar",
+        key="foo"
+      />
+      <ChartListItem
+        chart={
+          Object {
+            "attributes": Object {},
+            "id": "bar",
+          }
         }
-      }
-      key="bar"
-    />
-  </CardGrid>
+        key="bar"
+      />
+    </CardGrid>
+  </LoadingWrapper>
+  ;
 </section>
+`;
+
+exports[`renderization when fetching apps loading spinner matches the snapshot 1`] = `
+<section
+  className="ChartList"
+>
+  <PageHeader>
+    <h1>
+      Charts
+    </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[MockFunction]}
+      placeholder="search charts..."
+      value=""
+    />
+  </PageHeader>
+  <LoadingWrapper
+    loaded={false}
+  >
+    <CardGrid />
+  </LoadingWrapper>
+  ;
+</section>
+`;
+
+exports[`renderization when no charts should render an error 1`] = `
+<NotFoundErrorPage
+  resource="Charts"
+>
+  <div>
+    Manage your Helm chart repositories in Kubeapps by visiting the
+     
+    <Link
+      replace={false}
+      to="/config/repos"
+    >
+      App repositories configuration
+    </Link>
+     page.
+  </div>
+</NotFoundErrorPage>
 `;
