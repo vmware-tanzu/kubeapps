@@ -1,5 +1,5 @@
 import { shallow } from "enzyme";
-import context from "jest-context";
+import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 
