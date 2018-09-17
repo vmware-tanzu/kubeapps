@@ -19,50 +19,24 @@ set -e
 ROOT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
 DEV_TAG=${1:?}
 IMG_MODIFIER=${2:-""}
-HELM_TLS_FLAGS="--tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem"
+CERTS_DIR="${ROOT_DIR}/script/test-certs"
+HELM_CLIENT_TLS_FLAGS="--tls --tls-cert ${CERTS_DIR}/helm.cert.pem --tls-key ${CERTS_DIR}/helm.key.pem"
 
 source $ROOT_DIR/script/libtest.sh
 
-# Setup tiller with TLS support
-openssl genrsa -out ./ca.key.pem 4096
-cat <<EOF >> tls_config
-[ req ]
-distinguished_name="req_distinguished_name"
-prompt="no"
-
-[ req_distinguished_name ]
-C="ES"
-ST="Andalucia"
-L="Sevilla"
-O="Kubeapps"
-CN="localhost"
-EOF
-openssl req -key ca.key.pem -new -x509 -days 7300 -sha256 -out ca.cert.pem -config tls_config
-
-## server key
-openssl genrsa -out ./tiller.key.pem 4096
-## client key
-openssl genrsa -out ./helm.key.pem 4096
-
-openssl req -key tiller.key.pem -new -sha256 -out tiller.csr.pem -config tls_config
-openssl req -key helm.key.pem -new -sha256 -out helm.csr.pem -config tls_config
-
-openssl x509 -req -CA ca.cert.pem -CAkey ca.key.pem -CAcreateserial -in tiller.csr.pem -out tiller.cert.pem
-openssl x509 -req -CA ca.cert.pem -CAkey ca.key.pem -CAcreateserial -in helm.csr.pem -out helm.cert.pem
-
-# Start helm
+# Install Tiller with TLS support
 helm init \
   --tiller-tls \
-  --tiller-tls-cert ./tiller.cert.pem \
-  --tiller-tls-key ./tiller.key.pem \
+  --tiller-tls-cert ${CERTS_DIR}/tiller.cert.pem \
+  --tiller-tls-key ${CERTS_DIR}/tiller.key.pem \
   --tiller-tls-verify \
-  --tls-ca-cert ca.cert.pem
+  --tls-ca-cert ${CERTS_DIR}/ca.cert.pem
 
 # The flag --wait is not available when using TLS flags:
 # https://github.com/helm/helm/issues/4050
 echo "Waiting for Tiller to be ready ... "
 cnt=60 # 60 retries (about 60s)
-until helm version ${HELM_TLS_FLAGS} --tiller-connection-timeout 1; do
+until helm version ${HELM_CLIENT_TLS_FLAGS} --tiller-connection-timeout 1; do
   ((cnt=cnt-1)) || return 1
   sleep 1
 done
@@ -75,11 +49,10 @@ kubectl get clusterrolebinding kube-dns-admin >& /dev/null || \
 helm dep up $ROOT_DIR/chart/kubeapps/
 helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
     `# Tiller TLS flags` \
-    ${HELM_TLS_FLAGS} \
-    `# cli TLS flags` \
-    --set tillerProxy.tls.ca="$(cat ca.cert.pem)" \
-    --set tillerProxy.tls.key="$(cat helm.key.pem)" \
-    --set tillerProxy.tls.cert="$(cat helm.cert.pem)" \
+    ${HELM_CLIENT_TLS_FLAGS} \
+    `# Tiller-proxy TLS flags` \
+    --set tillerProxy.tls.key="$(cat ${CERTS_DIR}/helm.key.pem)" \
+    --set tillerProxy.tls.cert="$(cat ${CERTS_DIR}/helm.cert.pem)" \
     `# Image flags` \
     --set apprepository.image.tag=$DEV_TAG \
     --set apprepository.image.repository=kubeapps/apprepository-controller$IMG_MODIFIER \
@@ -107,4 +80,4 @@ k8s_wait_for_pod_ready kubeapps app=mongodb
 k8s_wait_for_pod_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
 
 # Run helm tests
-helm test ${HELM_TLS_FLAGS} --cleanup kubeapps-ci
+helm test ${HELM_CLIENT_TLS_FLAGS} --cleanup kubeapps-ci
