@@ -7,7 +7,7 @@ import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
-import { NotFoundErrorAlert, PermissionsErrorAlert } from "../ErrorAlert";
+import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -131,6 +131,18 @@ describe("AppViewComponent", () => {
 
       const sockets: WebSocket[] = wrapper.state("sockets");
       expect(sockets.length).toEqual(0);
+    });
+
+    it("catches errors in the manifest", () => {
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const manifest = "key: value\nkey: other-value";
+
+      validProps.app.manifest = manifest;
+      wrapper.setProps(validProps);
+      wrapper.update();
+
+      const err = wrapper.find(UnexpectedErrorAlert);
+      expect(err.props().text).toContain("duplicated mapping key");
     });
   });
 

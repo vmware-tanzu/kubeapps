@@ -3,7 +3,13 @@ import * as React from "react";
 
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { ForbiddenError, IRBACRole, IResource, NotFoundError } from "../../shared/types";
+import {
+  ForbiddenError,
+  IRBACRole,
+  IResource,
+  NotFoundError,
+  UnprocessableEntity,
+} from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
@@ -31,6 +37,7 @@ interface IAppViewState {
   otherResources: Map<string, IResource>;
   services: Map<string, IResource>;
   sockets: WebSocket[];
+  manifestError?: Error;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -76,7 +83,17 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     if (!newApp) {
       return;
     }
-    let manifest: IResource[] = yaml.safeLoadAll(newApp.manifest);
+    let manifest: IResource[] = [];
+    try {
+      manifest = yaml.safeLoadAll(newApp.manifest);
+    } catch (e) {
+      // The YAML can't be parsed
+      this.setState({
+        manifestError: new UnprocessableEntity(`Unable to parse chart manifest: ${e.message}`),
+      });
+      return;
+    }
+
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
@@ -165,6 +182,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         <main>
           <div className="container">
             {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
+            {this.state.manifestError && this.renderError(this.state.manifestError)}
             <div className="row collapse-b-tablet">
               <div className="col-3">
                 <ChartInfo app={app} />
@@ -217,6 +235,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         return (
           <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
         );
+      case UnprocessableEntity:
+        return <UnexpectedErrorAlert text={error && error.message} raw={true} />;
       default:
         return <UnexpectedErrorAlert />;
     }
