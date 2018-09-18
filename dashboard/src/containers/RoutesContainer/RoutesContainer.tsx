@@ -17,10 +17,11 @@ import FunctionListContainer from "../FunctionListContainer";
 import FunctionViewContainer from "../FunctionViewContainer";
 import InstanceListViewContainer from "../InstanceListViewContainer";
 import InstanceView from "../InstanceView";
+import LoginFormContainer from "../LoginFormContainer";
 import RepoListContainer from "../RepoListContainer";
 import ServiceCatalogContainer from "../ServiceCatalogContainer";
 
-const exactRoutes: {
+const privateRoutes: {
   [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
 } = {
   "/apps/ns/:namespace": AppList,
@@ -41,8 +42,15 @@ const exactRoutes: {
   "/services/instances/ns/:namespace": InstanceListViewContainer,
 };
 
+// Public routes that don't require authentication
+const routes: {
+  [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
+} = {
+  "/login": LoginFormContainer,
+};
+
 function mapStateToProps({ namespace }: IStoreState) {
-  return { namespace: namespace.current, routes: exactRoutes };
+  return { namespace: namespace.current, privateRoutes, routes };
 }
 
 export default withRouter(connect(mapStateToProps)(Routes));
