@@ -6,7 +6,7 @@ import Layout from "../components/Layout";
 import store, { history } from "../store";
 import ConfigLoaderContainer from "./ConfigLoaderContainer";
 import HeaderContainer from "./HeaderContainer";
-import Routes from "./Routes";
+import Routes from "./RoutesContainer";
 
 class Root extends React.Component {
   public render() {

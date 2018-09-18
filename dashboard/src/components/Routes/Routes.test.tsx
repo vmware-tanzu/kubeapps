@@ -1,13 +1,32 @@
 import { mount } from "enzyme";
+import { createMemoryHistory } from "history";
 import * as React from "react";
-import { Redirect, StaticRouter } from "react-router";
-import NotFound from "../components/NotFound";
+import { StaticRouter } from "react-router";
+import { Redirect, RouteComponentProps } from "react-router-dom";
+
+import NotFound from "../NotFound";
 import Routes from "./Routes";
+
+const emptyRouteComponentProps: RouteComponentProps<{}> = {
+  history: createMemoryHistory(),
+  location: {
+    hash: "",
+    pathname: "",
+    search: "",
+    state: "",
+  },
+  match: {
+    isExact: false,
+    params: {},
+    path: "",
+    url: "",
+  },
+};
 
 it("invalid path should show a 404 error", () => {
   const wrapper = mount(
     <StaticRouter location="/random" context={{}}>
-      <Routes />
+      <Routes {...emptyRouteComponentProps} routes={{}} namespace={"default"} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).toExist();
@@ -17,7 +36,7 @@ it("invalid path should show a 404 error", () => {
 it("should render a redirect to the default page", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes />
+      <Routes {...emptyRouteComponentProps} routes={{}} namespace={"default"} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
