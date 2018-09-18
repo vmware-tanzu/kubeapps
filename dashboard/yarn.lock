@@ -2434,7 +2434,7 @@ debug@2.6.9, debug@^2.1.2, debug@^2.2.0, debug@^2.3.3, debug@^2.6.0, debug@^2.6.
   dependencies:
     ms "2.0.0"
 
-debug@^3.0.0:
+debug@=3.1.0, debug@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.1.0.tgz#5bb5a0672628b64149566ba16819e61518c67261"
   dependencies:
@@ -2831,9 +2831,9 @@ enzyme-adapter-utils@^1.8.0:
     object.assign "^4.1.0"
     prop-types "^15.6.2"
 
-enzyme-matchers@^6.0.2:
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/enzyme-matchers/-/enzyme-matchers-6.0.3.tgz#187fb322ed70d38e6160251bc398a53aec1cfc7e"
+enzyme-matchers@^6.0.4:
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/enzyme-matchers/-/enzyme-matchers-6.0.4.tgz#0a4d8303a064a00289e03d8c992277c291074bbc"
   dependencies:
     circular-json-es6 "^2.0.1"
     deep-equal-ident "^1.1.1"
@@ -3441,10 +3441,10 @@ follow-redirects@^1.2.3:
     debug "^3.1.0"
 
 follow-redirects@^1.2.5:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.4.1.tgz#d8120f4518190f55aac65bb6fc7b85fcd666d6aa"
+  version "1.5.8"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.5.8.tgz#1dbfe13e45ad969f813e86c00e5296f525c885a1"
   dependencies:
-    debug "^3.1.0"
+    debug "=3.1.0"
 
 for-in@^1.0.1, for-in@^1.0.2:
   version "1.0.2"
@@ -4762,9 +4762,9 @@ jest-docblock@^22.4.0, jest-docblock@^22.4.3:
   dependencies:
     detect-newline "^2.1.0"
 
-jest-environment-enzyme@^6.0.2:
-  version "6.0.3"
-  resolved "https://registry.yarnpkg.com/jest-environment-enzyme/-/jest-environment-enzyme-6.0.3.tgz#5c9172b709aadf21674ef2504bccea230a921e98"
+jest-environment-enzyme@^6.0.4:
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/jest-environment-enzyme/-/jest-environment-enzyme-6.0.4.tgz#1576bec170bb9025e82579bf63fadbf1aeabe944"
   dependencies:
     jest-environment-jsdom "^22.4.1"
 
@@ -4783,13 +4783,13 @@ jest-environment-node@^22.4.1:
     jest-mock "^22.4.3"
     jest-util "^22.4.3"
 
-jest-enzyme@6.0.2:
-  version "6.0.2"
-  resolved "https://registry.yarnpkg.com/jest-enzyme/-/jest-enzyme-6.0.2.tgz#bc464169de6c2d50602e02bbc9464460507fb295"
+jest-enzyme@^6.0.4:
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/jest-enzyme/-/jest-enzyme-6.0.4.tgz#8dcbab186c41170fdbc2aba5137f74f799e2a578"
   dependencies:
-    enzyme-matchers "^6.0.2"
+    enzyme-matchers "^6.0.4"
     enzyme-to-json "^3.3.0"
-    jest-environment-enzyme "^6.0.2"
+    jest-environment-enzyme "^6.0.4"
 
 jest-get-type@^21.2.0:
   version "21.2.0"
