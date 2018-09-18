@@ -5,6 +5,7 @@ import { IChart, IChartState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { NotFoundErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import ChartListItem from "./ChartListItem";
@@ -67,7 +68,9 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
             onSubmit={pushSearchFilter}
           />
         </PageHeader>
-        {isFetching ? <div>Loading...</div> : <CardGrid>{chartItems}</CardGrid>}
+        <LoadingWrapper loaded={!isFetching}>
+          <CardGrid>{chartItems}</CardGrid>
+        </LoadingWrapper>
       </section>
     );
   }

@@ -1,5 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+/>
+`;
+
 exports[`renders an error if it exists 1`] = `
 <DeploymentErrors
   app={Object {}}
@@ -15,12 +21,17 @@ exports[`renders an error if it exists 1`] = `
         Array [],
         Array [],
         Array [],
+        Array [],
       ],
     }
   }
   getApp={
     [MockFunction] {
       "calls": Array [
+        Array [
+          "foo",
+          "default",
+        ],
         Array [
           "foo",
           "default",
@@ -83,12 +94,17 @@ exports[`renders the repo selection form if not introduced 1`] = `
         "calls": Array [
           Array [],
           Array [],
+          Array [],
         ],
       }
     }
     getApp={
       [MockFunction] {
         "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
           Array [
             "foo",
             "default",
@@ -152,12 +168,17 @@ exports[`renders the upgrade form when the repo is available 1`] = `
           Array [],
           Array [],
           Array [],
+          Array [],
         ],
       }
     }
     getApp={
       [MockFunction] {
         "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
           Array [
             "foo",
             "default",

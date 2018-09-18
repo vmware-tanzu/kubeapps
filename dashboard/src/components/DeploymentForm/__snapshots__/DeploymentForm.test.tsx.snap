@@ -1,5 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+/>
+`;
+
 exports[`renders the full DeploymentForm 1`] = `
 <div>
   <form
