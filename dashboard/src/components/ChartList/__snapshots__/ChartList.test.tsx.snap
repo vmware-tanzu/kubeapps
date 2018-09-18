@@ -40,7 +40,6 @@ exports[`renderization when charts available should render the list of charts 1`
       />
     </CardGrid>
   </LoadingWrapper>
-  ;
 </section>
 `;
 
@@ -65,7 +64,6 @@ exports[`renderization when fetching apps loading spinner matches the snapshot 1
   >
     <CardGrid />
   </LoadingWrapper>
-  ;
 </section>
 `;
 

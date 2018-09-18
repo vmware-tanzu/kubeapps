@@ -1,0 +1,1 @@
+This folder contains dummy self-signed certificates for CI tests.
