@@ -70,7 +70,7 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
         </PageHeader>
         <LoadingWrapper loaded={!isFetching}>
           <CardGrid>{chartItems}</CardGrid>
-        </LoadingWrapper>;
+        </LoadingWrapper>
       </section>
     );
   }
