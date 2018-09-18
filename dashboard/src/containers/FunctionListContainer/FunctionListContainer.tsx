@@ -2,9 +2,11 @@ import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
+import { FunctionsAction } from "../../actions/functions";
+
 import FunctionList from "../../components/FunctionList";
 import { IFunction, IStoreState } from "../../shared/types";
 
@@ -22,15 +24,15 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, FunctionsAction>) {
   return {
     deployFunction: (name: string, namespace: string, spec: IFunction["spec"]) =>
       dispatch(actions.functions.createFunction(name, namespace, spec)),
     fetchFunctions: (ns: string) => dispatch(actions.functions.fetchFunctions(ns)),
     fetchRuntimes: () => dispatch(actions.functions.fetchRuntimes()),
     navigateToFunction: (name: string, namespace: string) =>
-      dispatch(push(`/functions/ns/${namespace}/${name}`)),
-    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
+      dispatch(push(`/functions/ns/${namespace}/${name}`) as any),
+    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter) as any),
   };
 }
 

@@ -1,7 +1,8 @@
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
+import { AppReposAction } from "../actions/repos";
 import { AppRepoList } from "../components/Config/AppRepoList";
 import { IStoreState } from "../shared/types";
 
@@ -13,7 +14,7 @@ function mapStateToProps({ repos, config }: IStoreState) {
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, AppReposAction>) {
   return {
     deleteRepo: async (name: string) => {
       return dispatch(actions.repos.deleteRepo(name));

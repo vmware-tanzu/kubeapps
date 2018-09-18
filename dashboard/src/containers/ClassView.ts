@@ -1,8 +1,10 @@
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
+import { ServiceCatalogAction } from "../actions/catalog";
+
 import { ClassView } from "../components/ClassView";
 import { IStoreState } from "../shared/types";
 
@@ -30,7 +32,7 @@ function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params 
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCatalogAction>) {
   return {
     getClasses: async () => {
       dispatch(actions.catalog.getClasses());
@@ -49,7 +51,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
         actions.catalog.provision(instanceName, namespace, className, planName, parameters),
       );
     },
-    push: (location: string) => dispatch(push(location)),
+    push: (location: string) => dispatch(push(location) as any),
   };
 }
 
