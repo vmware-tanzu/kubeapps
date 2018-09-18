@@ -1,18 +1,18 @@
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IStoreState } from "shared/types";
-import { createAction, getReturnOfExpression } from "typesafe-actions";
+import { ActionType, createActionDeprecated } from "typesafe-actions";
 
 import Config, { IConfig } from "../shared/Config";
 
-export const requestConfig = createAction("REQUEST_CONFIG");
-export const receiveConfig = createAction("RECEIVE_CONFIG", (config: IConfig) => ({
+export const requestConfig = createActionDeprecated("REQUEST_CONFIG");
+export const receiveConfig = createActionDeprecated("RECEIVE_CONFIG", (config: IConfig) => ({
   config,
   type: "RECEIVE_CONFIG",
 }));
 
-const allActions = [requestConfig, receiveConfig].map(getReturnOfExpression);
-export type ConfigAction = typeof allActions[number];
+const allActions = [requestConfig, receiveConfig];
+export type ConfigAction = ActionType<typeof allActions[number]>;
 
 export function getConfig() {
   return async (dispatch: ThunkDispatch<IStoreState, null, Action>) => {

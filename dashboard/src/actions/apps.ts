@@ -1,39 +1,42 @@
 import { Action, Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
-import { createAction, getReturnOfExpression } from "typesafe-actions";
+import { ActionType, createActionDeprecated } from "typesafe-actions";
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
 import { IAppOverview, IChartVersion, IStoreState, UnprocessableEntity } from "../shared/types";
 
-export const requestApps = createAction("REQUEST_APPS");
-export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Release[]) => {
-  return {
-    apps,
-    type: "RECEIVE_APPS",
-  };
-});
-export const listApps = createAction("REQUEST_APP_LIST", (listingAll: boolean) => {
+export const requestApps = createActionDeprecated("REQUEST_APPS");
+export const receiveApps = createActionDeprecated(
+  "RECEIVE_APPS",
+  (apps: hapi.release.Release[]) => {
+    return {
+      apps,
+      type: "RECEIVE_APPS",
+    };
+  },
+);
+export const listApps = createActionDeprecated("REQUEST_APP_LIST", (listingAll: boolean) => {
   return {
     listingAll,
     type: "REQUEST_APP_LIST",
   };
 });
-export const receiveAppList = createAction("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
+export const receiveAppList = createActionDeprecated("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
   return {
     apps,
     type: "RECEIVE_APP_LIST",
   };
 });
-export const errorApps = createAction("ERROR_APPS", (err: Error) => ({
+export const errorApps = createActionDeprecated("ERROR_APPS", (err: Error) => ({
   err,
   type: "ERROR_APPS",
 }));
-export const errorDeleteApp = createAction("ERROR_DELETE_APP", (err: Error) => ({
+export const errorDeleteApp = createActionDeprecated("ERROR_DELETE_APP", (err: Error) => ({
   err,
   type: "ERROR_DELETE_APP",
 }));
-export const selectApp = createAction("SELECT_APP", (app: hapi.release.Release) => {
+export const selectApp = createActionDeprecated("SELECT_APP", (app: hapi.release.Release) => {
   return {
     app,
     type: "SELECT_APP",
@@ -48,8 +51,9 @@ const allActions = [
   errorApps,
   errorDeleteApp,
   selectApp,
-].map(getReturnOfExpression);
-export type AppsAction = typeof allActions[number];
+];
+
+export type AppsAction = ActionType<typeof allActions[number]>;
 
 export function getApp(releaseName: string, namespace: string) {
   return async (dispatch: Dispatch): Promise<void> => {

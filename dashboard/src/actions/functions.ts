@@ -1,17 +1,20 @@
 import { Dispatch } from "redux";
-import { createAction, getReturnOfExpression } from "typesafe-actions";
+import { ActionType, createActionDeprecated } from "typesafe-actions";
 
 import Function from "../shared/Function";
 import KubelessConfig from "../shared/KubelessConfig";
 import { definedNamespaces } from "../shared/Namespace";
 import { IFunction, IRuntime } from "../shared/types";
 
-export const requestFunctions = createAction("REQUEST_FUNCTIONS");
-export const receiveFunctions = createAction("RECEIVE_FUNCTIONS", (functions: IFunction[]) => ({
-  functions,
-  type: "RECEIVE_FUNCTIONS",
-}));
-export const errorFunctions = createAction(
+export const requestFunctions = createActionDeprecated("REQUEST_FUNCTIONS");
+export const receiveFunctions = createActionDeprecated(
+  "RECEIVE_FUNCTIONS",
+  (functions: IFunction[]) => ({
+    functions,
+    type: "RECEIVE_FUNCTIONS",
+  }),
+);
+export const errorFunctions = createActionDeprecated(
   "ERROR_FUNCTIONS",
   (err: Error, op: "create" | "update" | "fetch" | "delete") => ({
     err,
@@ -19,19 +22,22 @@ export const errorFunctions = createAction(
     type: "ERROR_FUNCTIONS",
   }),
 );
-export const selectFunction = createAction("SELECT_FUNCTION", (f: IFunction) => ({
+export const selectFunction = createActionDeprecated("SELECT_FUNCTION", (f: IFunction) => ({
   f,
   type: "SELECT_FUNCTION",
 }));
-export const setPodName = createAction("SET_FUNCTION_POD_NAME", (name: string) => ({
+export const setPodName = createActionDeprecated("SET_FUNCTION_POD_NAME", (name: string) => ({
   name,
   type: "SET_FUNCTION_POD_NAME",
 }));
-export const requestRuntimes = createAction("REQUEST_RUNTIMES");
-export const receiveRuntimes = createAction("RECEIVE_RUNTIMES", (runtimes: IRuntime[]) => ({
-  runtimes,
-  type: "RECEIVE_RUNTIMES",
-}));
+export const requestRuntimes = createActionDeprecated("REQUEST_RUNTIMES");
+export const receiveRuntimes = createActionDeprecated(
+  "RECEIVE_RUNTIMES",
+  (runtimes: IRuntime[]) => ({
+    runtimes,
+    type: "RECEIVE_RUNTIMES",
+  }),
+);
 const allActions = [
   requestFunctions,
   receiveFunctions,
@@ -40,8 +46,8 @@ const allActions = [
   errorFunctions,
   selectFunction,
   setPodName,
-].map(getReturnOfExpression);
-export type FunctionsAction = typeof allActions[number];
+];
+export type FunctionsAction = ActionType<typeof allActions[number]>;
 
 export function fetchFunctions(ns?: string) {
   return async (dispatch: Dispatch) => {
