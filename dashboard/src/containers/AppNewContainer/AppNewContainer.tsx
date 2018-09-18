@@ -53,4 +53,7 @@ function mapDispatchToProps(
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(DeploymentForm);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(DeploymentForm);

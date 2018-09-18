@@ -35,4 +35,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Functions
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(FunctionView);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(FunctionView);

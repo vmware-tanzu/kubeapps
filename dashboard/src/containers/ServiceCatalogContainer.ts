@@ -25,4 +25,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCa
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ServiceCatalogView);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ServiceCatalogView);

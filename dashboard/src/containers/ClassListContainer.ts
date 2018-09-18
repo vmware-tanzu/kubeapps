@@ -34,4 +34,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCa
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ClassList);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ClassList);

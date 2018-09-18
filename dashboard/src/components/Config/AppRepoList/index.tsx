@@ -50,7 +50,10 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
   }
 
   public componentWillReceiveProps(nextProps: IAppRepoListProps) {
-    const { errors: { fetch }, fetchRepos } = this.props;
+    const {
+      errors: { fetch },
+      fetchRepos,
+    } = this.props;
     // refetch if error removed due to location change
     if (fetch && !nextProps.errors.fetch) {
       fetchRepos();

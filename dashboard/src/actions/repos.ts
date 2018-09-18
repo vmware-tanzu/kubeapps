@@ -81,7 +81,9 @@ export const deleteRepo = (name: string) => {
     getState: () => IStoreState,
   ) => {
     try {
-      const { config: { namespace } } = getState();
+      const {
+        config: { namespace },
+      } = getState();
       await AppRepository.delete(name, namespace);
       dispatch(fetchRepos());
       return true;
@@ -95,7 +97,9 @@ export const deleteRepo = (name: string) => {
 export const resyncRepo = (name: string) => {
   return async (dispatch: Dispatch, getState: () => IStoreState) => {
     try {
-      const { config: { namespace } } = getState();
+      const {
+        config: { namespace },
+      } = getState();
       const repo = await AppRepository.get(name, namespace);
       repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
       repo.spec.resyncRequests++;
@@ -114,7 +118,9 @@ export const fetchRepos = () => {
   return async (dispatch: Dispatch, getState: () => IStoreState) => {
     dispatch(requestRepos());
     try {
-      const { config: { namespace } } = getState();
+      const {
+        config: { namespace },
+      } = getState();
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
     } catch (e) {
@@ -126,7 +132,9 @@ export const fetchRepos = () => {
 export const installRepo = (name: string, repoURL: string, authHeader: string) => {
   return async (dispatch: Dispatch, getState: () => IStoreState) => {
     try {
-      const { config: { namespace } } = getState();
+      const {
+        config: { namespace },
+      } = getState();
       let auth;
       const secretName = `apprepo-${name}-secrets`;
       if (authHeader.length) {
@@ -168,7 +176,9 @@ export const installRepo = (name: string, repoURL: string, authHeader: string) =
 
 export function checkChart(repo: string, chartName: string) {
   return async (dispatch: Dispatch, getState: () => IStoreState) => {
-    const { config: { namespace } } = getState();
+    const {
+      config: { namespace },
+    } = getState();
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(repo, namespace);
     const res = await fetch(url.api.charts.listVersions(`${repo}/${chartName}`));

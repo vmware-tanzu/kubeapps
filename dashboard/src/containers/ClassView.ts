@@ -55,4 +55,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCa
   };
 }
 
-export const ClassViewContainer = connect(mapStateToProps, mapDispatchToProps)(ClassView);
+export const ClassViewContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ClassView);

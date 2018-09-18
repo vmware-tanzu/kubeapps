@@ -55,4 +55,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ChartsAct
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppUpgrade);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(AppUpgrade);

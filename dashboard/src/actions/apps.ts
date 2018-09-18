@@ -112,7 +112,9 @@ export function deployChart(
         );
       }
 
-      const { config: { namespace: kubeappsNamespace } } = getState();
+      const {
+        config: { namespace: kubeappsNamespace },
+      } = getState();
       await App.create(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;
     } catch (e) {
@@ -130,7 +132,9 @@ export function upgradeApp(
 ) {
   return async (dispatch: Dispatch, getState: () => IStoreState): Promise<boolean> => {
     try {
-      const { config: { namespace: kubeappsNamespace } } = getState();
+      const {
+        config: { namespace: kubeappsNamespace },
+      } = getState();
       await App.upgrade(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;
     } catch (e) {

@@ -15,7 +15,9 @@ interface IState extends IStoreState {
 function mapStateToProps({
   auth: { authenticated },
   namespace,
-  router: { location: { pathname } },
+  router: {
+    location: { pathname },
+  },
 }: IState) {
   return {
     authenticated,
@@ -33,4 +35,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, void, Action>) 
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Header);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Header);
