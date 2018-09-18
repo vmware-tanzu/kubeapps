@@ -49,7 +49,7 @@ it("calls delete function when clicking the button", done => {
   expect(confirm.exists()).toBe(true);
   confirm.props().onConfirm(); // Simulate confirmation
 
-  expect(wrapper.state().deleting).toBe(true);
+  expect(wrapper.state("deleting")).toBe(true);
   // Wait for the async action to finish
   setTimeout(() => {
     wrapper.update();
@@ -82,9 +82,9 @@ it("calls delete function with additional purge", () => {
   expect(confirm.exists()).toBe(true);
   const checkbox = wrapper.find('input[type="checkbox"]');
   expect(checkbox.exists()).toBe(true);
-  expect(wrapper.state().purge).toBe(false);
+  expect(wrapper.state("purge")).toBe(false);
   checkbox.simulate("change");
-  expect(wrapper.state().purge).toBe(true);
+  expect(wrapper.state("purge")).toBe(true);
 
   // Check that the "purge" state is forwarded to deleteApp
   confirm.props().onConfirm(); // Simulate confirmation
