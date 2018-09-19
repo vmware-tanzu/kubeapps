@@ -1,8 +1,8 @@
 import { connect } from "react-redux";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
-import { ServiceCatalogAction } from "../actions/catalog";
 
 import { ClassList } from "../components/ClassList";
 import { IStoreState } from "../shared/types";
@@ -25,7 +25,7 @@ function mapStateToProps({ catalog }: IStoreState, props: IRouteProps) {
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCatalogAction>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     getClasses: async () => {
       const classes = await dispatch(actions.catalog.getClasses());

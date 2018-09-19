@@ -1,8 +1,8 @@
 import { connect } from "react-redux";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
-import { ServiceCatalogAction } from "../actions/catalog";
 import { InstanceView } from "../components/InstanceView/InstanceView";
 import { IServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
@@ -52,7 +52,7 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCatalogAction>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     addBinding: (bindingName: string, instanceName: string, namespace: string, parameters: {}) =>
       dispatch(actions.catalog.addBinding(bindingName, instanceName, namespace, parameters)),

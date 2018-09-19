@@ -1,4 +1,4 @@
-import { Action, Dispatch } from "redux";
+import { Dispatch } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
 
@@ -112,7 +112,7 @@ export function getChartVersion(id: string, version: string) {
 }
 
 export function fetchChartVersionsAndSelectVersion(id: string, version?: string) {
-  return async (dispatch: ThunkDispatch<IStoreState, null, Action>) => {
+  return async (dispatch: ThunkDispatch<IStoreState, null, ChartsAction>) => {
     const versions = (await dispatch(fetchChartVersions(id))) as IChartVersion[];
     if (versions) {
       let cv: IChartVersion = versions[0];

@@ -1,10 +1,10 @@
 import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
-import { ServiceCatalogAction } from "../actions/catalog";
 import { InstanceListView } from "../components/InstanceListView";
 import { IStoreState } from "../shared/types";
 
@@ -29,7 +29,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCatalogAction>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());

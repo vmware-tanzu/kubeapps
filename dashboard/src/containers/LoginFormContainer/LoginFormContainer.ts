@@ -1,8 +1,8 @@
 import { connect } from "react-redux";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import { AuthAction } from "../../actions/auth";
 import LoginForm from "../../components/LoginForm";
 import { IStoreState } from "../../shared/types";
 
@@ -16,7 +16,7 @@ function mapStateToProps({
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, AuthAction>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     authenticate: (token: string) => dispatch(actions.auth.authenticate(token)),
   };

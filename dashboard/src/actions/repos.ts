@@ -1,6 +1,6 @@
 import { ActionType, createActionDeprecated } from "typesafe-actions";
 
-import { Action, Dispatch } from "redux";
+import { Dispatch } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import { AppRepository } from "../shared/AppRepository";
@@ -77,7 +77,7 @@ export type AppReposAction = ActionType<typeof allActions[number]>;
 
 export const deleteRepo = (name: string) => {
   return async (
-    dispatch: ThunkDispatch<IStoreState, null, Action>,
+    dispatch: ThunkDispatch<IStoreState, null, AppReposAction>,
     getState: () => IStoreState,
   ) => {
     try {

@@ -1,4 +1,4 @@
-import { Action, Dispatch } from "redux";
+import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
 import { App } from "../shared/App";
@@ -82,7 +82,7 @@ export function deleteApp(releaseName: string, namespace: string, purge: boolean
 export function fetchApps(
   ns?: string,
   all: boolean = false,
-): ThunkAction<Promise<void>, IStoreState, null, Action> {
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async (dispatch: Dispatch): Promise<void> => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
@@ -97,13 +97,15 @@ export function fetchApps(
   };
 }
 
+// TODO(miguel) This action creator is properly typed. We should do the same for the rest
+// https://github.com/kubeapps/kubeapps/issues/658
 export function deployChart(
   chartVersion: IChartVersion,
   releaseName: string,
   namespace: string,
   values?: string,
-) {
-  return async (dispatch: Dispatch, getState: () => IStoreState): Promise<boolean> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+  return async (dispatch, getState) => {
     try {
       // You can not deploy applications unless the namespace is set
       if (namespace === definedNamespaces.all) {

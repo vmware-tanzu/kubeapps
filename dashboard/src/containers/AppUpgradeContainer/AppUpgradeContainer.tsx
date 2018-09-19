@@ -1,10 +1,9 @@
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import { AppsAction } from "../../actions/apps";
-import { ChartsAction } from "../../actions/charts";
 
 import AppUpgrade from "../../components/AppUpgrade";
 import { IChartVersion, IStoreState } from "../../shared/types";
@@ -36,7 +35,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ChartsAction & AppsAction>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     checkChart: (repo: string, chartName: string) =>
       dispatch(actions.repos.checkChart(repo, chartName)),
@@ -49,7 +48,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ChartsAct
       dispatch(actions.charts.getChartValues(id, version)),
     getChartVersion: (id: string, version: string) =>
       dispatch(actions.charts.getChartVersion(id, version)),
-    push: (location: string) => dispatch(push(location) as any),
+    push: (location: string) => dispatch(push(location)),
     upgradeApp: (version: IChartVersion, releaseName: string, namespace: string, values?: string) =>
       dispatch(actions.apps.upgradeApp(version, releaseName, namespace, values)),
   };

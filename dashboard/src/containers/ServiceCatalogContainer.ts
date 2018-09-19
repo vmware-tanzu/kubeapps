@@ -1,8 +1,8 @@
 import { connect } from "react-redux";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
-import { ServiceCatalogAction } from "../actions/catalog";
 import { ServiceCatalogView } from "../components/Config/ServiceCatalog";
 import { IServiceBroker } from "../shared/ServiceCatalog";
 import { IStoreState } from "../shared/types";
@@ -15,7 +15,7 @@ function mapStateToProps({ catalog }: IStoreState) {
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ServiceCatalogAction>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());

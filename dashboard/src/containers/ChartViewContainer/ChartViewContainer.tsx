@@ -1,8 +1,8 @@
 import { connect } from "react-redux";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import { ChartsAction } from "../../actions/charts";
 import ChartView from "../../components/ChartView";
 import { IChartVersion, IStoreState } from "../../shared/types";
 
@@ -27,7 +27,7 @@ function mapStateToProps({ charts, namespace }: IStoreState, { match: { params }
 }
 
 function mapDispatchToProps(
-  dispatch: ThunkDispatch<IStoreState, null, ChartsAction>,
+  dispatch: ThunkDispatch<IStoreState, null, Action>,
   { match: { params } }: IRouteProps,
 ) {
   return {

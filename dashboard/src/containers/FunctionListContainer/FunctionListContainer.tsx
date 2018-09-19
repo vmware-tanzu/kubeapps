@@ -2,10 +2,10 @@ import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { push } from "react-router-redux";
+import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import { FunctionsAction } from "../../actions/functions";
 
 import FunctionList from "../../components/FunctionList";
 import { IFunction, IStoreState } from "../../shared/types";
@@ -24,7 +24,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, FunctionsAction>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     deployFunction: (name: string, namespace: string, spec: IFunction["spec"]) =>
       dispatch(actions.functions.createFunction(name, namespace, spec)),
