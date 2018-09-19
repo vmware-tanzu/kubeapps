@@ -26,7 +26,7 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
 it("invalid path should show a 404 error", () => {
   const wrapper = mount(
     <StaticRouter location="/random" context={{}}>
-      <Routes {...emptyRouteComponentProps} routes={{}} privateRoutes={{}} namespace={"default"} />
+      <Routes {...emptyRouteComponentProps} namespace={"default"} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).toExist();
@@ -36,7 +36,7 @@ it("invalid path should show a 404 error", () => {
 it("should render a redirect to the default page", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} routes={{}} privateRoutes={{}} namespace={"default"} />
+      <Routes {...emptyRouteComponentProps} namespace={"default"} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
