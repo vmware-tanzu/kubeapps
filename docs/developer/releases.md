@@ -1,4 +1,4 @@
-# Kubeapps releases Developer Guide
+# Kubeapps Releases Developer Guide
 
 The purpose of this document is to guide you through the process of releasing a new version of Kubeapps.
 
