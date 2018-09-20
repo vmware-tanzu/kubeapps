@@ -18,7 +18,8 @@ class Footer extends React.Component {
                 Made with <Heart className="icon icon-small" /> by Bitnami and{" "}
                 <a href="https://github.com/kubeapps/kubeapps/graphs/contributors" target="_blank">
                   contributors
-                </a>.
+                </a>
+                .
               </p>
             </div>
             <div className="col-6 text-r">

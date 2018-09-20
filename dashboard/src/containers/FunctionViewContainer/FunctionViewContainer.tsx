@@ -1,7 +1,8 @@
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
+import { FunctionsAction } from "../../actions/functions";
 import FunctionView from "../../components/FunctionView";
 import { IFunction, IStoreState } from "../../shared/types";
 
@@ -24,7 +25,7 @@ function mapStateToProps({ functions }: IStoreState, { match: { params } }: IRou
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, FunctionsAction>) {
   return {
     deleteFunction: (n: string, ns: string) => dispatch(actions.functions.deleteFunction(n, ns)),
     getFunction: (n: string, ns: string) => dispatch(actions.functions.getFunction(n, ns)),
@@ -34,4 +35,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(FunctionView);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(FunctionView);

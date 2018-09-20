@@ -16,7 +16,9 @@ export default class KubelessFunction {
   }
 
   public static async getPodName(fn: IFunction) {
-    const { data: { items } } = await axios.get<{ items: IResource[] }>(
+    const {
+      data: { items },
+    } = await axios.get<{ items: IResource[] }>(
       `${KubelessFunction.APIBase}/api/v1/namespaces/${
         fn.metadata.namespace
       }/pods?labelSelector=function=${fn.metadata.name}`,

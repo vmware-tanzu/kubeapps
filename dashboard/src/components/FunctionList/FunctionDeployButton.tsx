@@ -158,7 +158,9 @@ class FunctionDeployButton extends React.Component<
   }
 
   private runtimeToDepsMode() {
-    const { functionSpec: { runtime } } = this.state;
+    const {
+      functionSpec: { runtime },
+    } = this.state;
     if (runtime.match(/go/)) {
       return "toml";
     } else if (runtime.match(/node|php/)) {
@@ -172,7 +174,9 @@ class FunctionDeployButton extends React.Component<
   }
 
   private runtimeToDepsDescription() {
-    const { functionSpec: { runtime } } = this.state;
+    const {
+      functionSpec: { runtime },
+    } = this.state;
     let deps = "";
     this.props.runtimes.forEach(r => {
       if (runtime.match(r.ID)) {
