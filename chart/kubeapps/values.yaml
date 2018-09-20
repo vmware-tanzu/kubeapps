@@ -49,6 +49,7 @@ frontend:
 # sync. Set apprepository.initialRepos to configure the initial set of
 # repositories to use when first installing Kubeapps.
 apprepository:
+  # Running a single controller replica to avoid sync job duplication
   replicaCount: 1
   image:
     registry: docker.io
