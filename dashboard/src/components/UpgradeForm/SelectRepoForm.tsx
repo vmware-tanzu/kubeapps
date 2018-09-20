@@ -1,11 +1,11 @@
 import * as React from "react";
 
-import { ForbiddenError, IAppRepository, IRBACRole, NotFoundError } from "../../shared/types";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { IAppRepository, IRBACRole } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
+import ErrorSelector from "../ErrorAlert/ErrorSelector";
 
 interface ISelectRepoFormProps {
   kubeappsNamespace: string;
@@ -32,7 +32,16 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
     return (
       <LoadingWrapper loaded={this.props.repos.length > 0}>
         <div className="container margin-normal">
-          <div className="col-8">{this.props.error && this.renderError()}</div>
+          <div className="col-8">
+            {this.props.error && (
+              <ErrorSelector
+                error={this.props.error}
+                defaultRequiredRBACRoles={{ view: [this.requiredRBACRoles()] }}
+                action="view"
+                resource={`Chart ${this.state.repo}/${this.props.chartName}`}
+              />
+            )}
+          </div>
           <div className="col-12">
             <h2>Select the source repository of {this.props.chartName}</h2>
           </div>
@@ -78,24 +87,6 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
     });
     return res;
   };
-
-  private renderError() {
-    if (this.props.error) {
-      switch (this.props.error.constructor) {
-        case NotFoundError:
-          return <NotFoundErrorAlert header={this.props.error.message} />;
-        case ForbiddenError:
-          return (
-            <PermissionsErrorAlert
-              namespace={this.props.kubeappsNamespace}
-              roles={[this.requiredRBACRoles()]}
-              action={"view App Repositories"}
-            />
-          );
-      }
-    }
-    return <UnexpectedErrorAlert />;
-  }
 
   private requiredRBACRoles(): IRBACRole {
     return {

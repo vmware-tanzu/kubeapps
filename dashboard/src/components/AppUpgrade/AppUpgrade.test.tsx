@@ -4,7 +4,7 @@ import * as React from "react";
 import { hapi } from "shared/hapi/release";
 import { IAppRepository, IChartState } from "shared/types";
 import itBehavesLike from "../../shared/specs";
-import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 import AppUpgrade from "./AppUpgrade";
@@ -58,7 +58,7 @@ it("renders the repo selection form if not introduced", () => {
     />,
   );
   expect(wrapper.find(SelectRepoForm).exists()).toBe(true);
-  expect(wrapper.find(DeploymentErrors).exists()).toBe(false);
+  expect(wrapper.find(ErrorSelector).exists()).toBe(false);
   expect(wrapper.find(UpgradeForm).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
 });
@@ -75,7 +75,7 @@ it("renders an error if it exists", () => {
       repo={repo}
     />,
   );
-  expect(wrapper.find(DeploymentErrors).exists()).toBe(true);
+  expect(wrapper.find(ErrorSelector).exists()).toBe(true);
   expect(wrapper.find(SelectRepoForm).exists()).toBe(false);
   expect(wrapper.find(UpgradeForm).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
@@ -104,7 +104,7 @@ it("renders the upgrade form when the repo is available", () => {
     />,
   );
   expect(wrapper.find(UpgradeForm).exists()).toBe(true);
-  expect(wrapper.find(DeploymentErrors).exists()).toBe(false);
+  expect(wrapper.find(ErrorSelector).exists()).toBe(false);
   expect(wrapper.find(SelectRepoForm).exists()).toBe(false);
   expect(wrapper).toMatchSnapshot();
 });

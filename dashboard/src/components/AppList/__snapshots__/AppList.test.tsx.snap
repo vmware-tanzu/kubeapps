@@ -98,8 +98,11 @@ exports[`when error present matches the snapshot 1`] = `
     <LoadingWrapper
       loaded={true}
     >
-      <UnexpectedErrorPage
-        title="Sorry! Something went wrong."
+      <ErrorSelector
+        action="list"
+        error="Boom!"
+        namespace="default"
+        resource="Applications"
       />
     </LoadingWrapper>
   </main>

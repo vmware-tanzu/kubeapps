@@ -2,8 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
-import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
-import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
+import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import DeploymentForm from "./DeploymentForm";
 
 const defaultProps = {
@@ -32,7 +31,8 @@ describe("renders an error", () => {
         selected={{ error: new NotFoundError() } as IChartState["selected"]}
       />,
     );
-    expect(wrapper.find(NotFoundErrorPage).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector).html()).toContain("Chart &quot;foo&quot; (1.0.0) not found");
   });
 
   it("renders a generic error", () => {
@@ -42,7 +42,8 @@ describe("renders an error", () => {
         selected={{ error: new Error() } as IChartState["selected"]}
       />,
     );
-    expect(wrapper.find(UnexpectedErrorPage).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector).html()).toContain("Sorry! Something went wrong");
   });
 });
 

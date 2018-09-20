@@ -69,6 +69,7 @@ export class ClassList extends React.Component<IClassListProps> {
     );
   }
 
+  // TODO: Replace with ErrorSelector
   private renderError() {
     const { error } = this.props;
     return error instanceof ForbiddenError ? (

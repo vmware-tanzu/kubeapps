@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { IAppOverview, IAppState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
-import { MessageAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { MessageAlert } from "../ErrorAlert";
+import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
@@ -62,7 +63,16 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
         </PageHeader>
         <main>
           <LoadingWrapper loaded={!isFetching}>
-            {error ? this.renderError(error) : this.appListItems(listOverview)}
+            {error ? (
+              <ErrorSelector
+                error={error}
+                action="list"
+                resource="Applications"
+                namespace={this.props.namespace}
+              />
+            ) : (
+              this.appListItems(listOverview)
+            )}
           </LoadingWrapper>
         </main>
       </section>
@@ -120,10 +130,6 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   private toggleListAll = () => {
     this.props.fetchApps(this.props.namespace, !this.props.apps.listingAll);
   };
-
-  private renderError(error: Error) {
-    return <UnexpectedErrorAlert />;
-  }
 
   private filteredApps(apps: IAppOverview[], filter: string) {
     return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.releaseName));

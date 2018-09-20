@@ -7,66 +7,11 @@ exports[`loading spinner matches the snapshot 1`] = `
 `;
 
 exports[`renders an error if it exists 1`] = `
-<DeploymentErrors
-  app={Object {}}
-  bindingsWithSecrets={Array []}
-  chartName=""
-  checkChart={[MockFunction]}
-  clearRepo={[MockFunction]}
+<ErrorSelector
+  action="update"
   error={[Error: foo doesn't exists]}
-  fetchChartVersions={[MockFunction]}
-  fetchRepositories={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-      ],
-    }
-  }
-  getApp={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-      ],
-    }
-  }
-  getBindings={[MockFunction]}
-  getChartValues={[MockFunction]}
-  getChartVersion={[MockFunction]}
-  kubeappsNamespace="kubeapps"
   namespace="default"
-  push={[MockFunction]}
-  releaseName="foo"
-  repo="stable"
-  repos={
-    Array [
-      Object {
-        "metadata": Object {
-          "name": "stable",
-        },
-      },
-    ]
-  }
-  selected={Object {}}
-  upgradeApp={[MockFunction]}
-  version="1.0.0"
+  resource="Application foo"
 />
 `;
 

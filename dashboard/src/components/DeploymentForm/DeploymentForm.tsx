@@ -3,14 +3,13 @@ import AceEditor from "react-ace";
 import { RouterAction } from "react-router-redux";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
+import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
+import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import LoadingWrapper from "../LoadingWrapper";
 import DeploymentBinding from "./DeploymentBinding";
-import DeploymentErrors from "./DeploymentErrors";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
-import { NotFoundErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
-import LoadingWrapper from "../LoadingWrapper";
 
 interface IDeploymentFormProps {
   kubeappsNamespace: string;
@@ -101,11 +100,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { selected, bindingsWithSecrets, chartID, kubeappsNamespace } = this.props;
+    const { selected, bindingsWithSecrets, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
     const { appValues, releaseName } = this.state;
     if (selected.error) {
-      return this.renderSelectedError(selected.error);
+      return (
+        <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
+      );
     }
     if (!version || !versions.length || this.state.isDeploying) {
       return <LoadingWrapper />;
@@ -114,13 +115,12 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           {this.props.error && (
-            <DeploymentErrors
-              {...this.props}
-              kubeappsNamespace={kubeappsNamespace}
-              chartName={chartID.split("/")[0]}
-              releaseName={releaseName}
-              repo={chartID.split("/")[1]}
-              version={version.attributes.version}
+            <ErrorSelector
+              error={this.props.error}
+              namespace={namespace}
+              defaultRequiredRBACRoles={{ create: this.requiredRBACRoles() }}
+              action="create"
+              resource={`Application ${releaseName}`}
             />
           )}
           <div className="row">
@@ -213,14 +213,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ appValues: value, valuesModified: true });
   };
 
-  private renderSelectedError(error: Error) {
-    const { chartID, chartVersion } = this.props;
-    switch (error.constructor) {
-      case NotFoundError:
-        return <NotFoundErrorAlert resource={`Chart "${chartID}" (${chartVersion})`} />;
-      default:
-        return <UnexpectedErrorAlert />;
-    }
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
   }
 }
 

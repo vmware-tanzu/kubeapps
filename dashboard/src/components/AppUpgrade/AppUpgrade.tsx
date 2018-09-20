@@ -4,7 +4,7 @@ import { RouterAction } from "react-router-redux";
 import { hapi } from "../../shared/hapi/release";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";
-import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import LoadingWrapper from "../LoadingWrapper";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
@@ -50,7 +50,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
   }
 
   public render() {
-    const { app, repos, error, repo } = this.props;
+    const { app, repos, error, namespace, releaseName } = this.props;
     if (
       !repos ||
       !app ||
@@ -63,10 +63,11 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         return <LoadingWrapper />;
       } else {
         return (
-          <DeploymentErrors
-            {...this.props}
-            chartName={(app.chart && app.chart.metadata && app.chart.metadata.name) || ""}
-            repo={repo.metadata.name}
+          <ErrorSelector
+            error={error}
+            namespace={namespace}
+            action="update"
+            resource={`Application ${releaseName}`}
           />
         );
       }

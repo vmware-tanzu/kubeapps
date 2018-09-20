@@ -79,6 +79,7 @@ class ServiceBrokerList extends React.Component<IServiceBrokerListProps> {
     );
   }
 
+  // TODO: Replace with ErrorSelector
   private renderError(error: Error, action = "view") {
     return error instanceof ForbiddenError ? (
       <PermissionsErrorAlert

@@ -2,8 +2,8 @@ import * as React from "react";
 import * as Modal from "react-modal";
 import { Redirect } from "react-router";
 
-import { AppConflict, ForbiddenError, IRBACRole, UnprocessableEntity } from "../../../shared/types";
-import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../../ErrorAlert";
+import { IRBACRole } from "../../../shared/types";
+import ErrorSelector from "../../ErrorAlert/ErrorSelector";
 
 interface IAppRepoFormProps {
   name: string;
@@ -138,7 +138,15 @@ export class AppRepoAddButton extends React.Component<
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.props.error && this.renderError()}
+          {this.props.error && (
+            <ErrorSelector
+              error={this.props.error}
+              defaultRequiredRBACRoles={{ create: RequiredRBACRoles }}
+              action="create"
+              namespace={this.props.kubeappsNamespace}
+              resource="The selected App Repository"
+            />
+          )}
           <AppRepoForm
             name={name}
             url={url}
@@ -151,31 +159,6 @@ export class AppRepoAddButton extends React.Component<
         {redirectTo && <Redirect to={redirectTo} />}
       </div>
     );
-  }
-
-  private renderError() {
-    const { error } = this.props;
-    const { name } = this.state;
-    switch (error && error.constructor) {
-      case AppConflict:
-        return (
-          <UnexpectedErrorAlert
-            text={`App Repository "${name}" already exists, try a different name.`}
-          />
-        );
-      case ForbiddenError:
-        return (
-          <PermissionsErrorAlert
-            namespace={this.props.kubeappsNamespace}
-            roles={RequiredRBACRoles}
-            action={`create AppRepository "${name}"`}
-          />
-        );
-      case UnprocessableEntity:
-        return <UnexpectedErrorAlert text={error && error.message} raw={true} />;
-      default:
-        return <UnexpectedErrorAlert />;
-    }
   }
 
   private closeModal = async () => this.setState({ modalIsOpen: false });
