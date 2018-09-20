@@ -49,7 +49,7 @@ frontend:
 # sync. Set apprepository.initialRepos to configure the initial set of
 # repositories to use when first installing Kubeapps.
 apprepository:
-  replicaCount: 2
+  replicaCount: 1
   image:
     registry: docker.io
     repository: kubeapps/apprepository-controller
