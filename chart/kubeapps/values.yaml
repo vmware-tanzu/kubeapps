@@ -40,7 +40,7 @@ frontend:
       cpu: 500m
       memory: 128Mi
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
@@ -81,7 +81,7 @@ apprepository:
       cpu: 500m
       memory: 128Mi
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
@@ -110,7 +110,7 @@ tillerProxy:
       cpu: 500m
       memory: 128Mi
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
@@ -131,7 +131,7 @@ chartsvc:
       cpu: 500m
       memory: 128Mi
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 32Mi
   livenessProbe:
     httpGet:
@@ -178,7 +178,7 @@ dashboard:
       cpu: 500m
       memory: 128Mi
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
