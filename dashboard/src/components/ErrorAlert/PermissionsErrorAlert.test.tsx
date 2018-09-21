@@ -48,4 +48,5 @@ it("renders a link to access control documentation", () => {
   expect(wrapper.html()).toContain(
     '<a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md" target="_blank">',
   );
+  expect(wrapper.html()).not.toContain("Troubleshooting");
 });

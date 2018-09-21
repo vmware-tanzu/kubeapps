@@ -57,7 +57,7 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
     return (
       <div className="alert alert-error margin-t-bigger">
         <ErrorPageHeader icon={this.props.icon || X}>{this.props.title!}</ErrorPageHeader>
-        {this.props.showGenericMessage !== false && (
+        {(this.props.showGenericMessage !== false || message !== genericMessage) && (
           <div className="error__content margin-l-enormous">{message}</div>
         )}
         {this.props.children && (

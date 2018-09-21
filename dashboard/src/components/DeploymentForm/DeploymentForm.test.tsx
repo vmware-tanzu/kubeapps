@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import itBehavesLike from "../../shared/specs";
-import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
+import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import DeploymentForm from "./DeploymentForm";
 
@@ -44,6 +44,18 @@ describe("renders an error", () => {
     );
     expect(wrapper.find(ErrorSelector).exists()).toBe(true);
     expect(wrapper.find(ErrorSelector).html()).toContain("Sorry! Something went wrong");
+  });
+
+  it("renders a custom error if the deployment failed", () => {
+    const wrapper = shallow(
+      <DeploymentForm {...defaultProps} error={new UnprocessableEntity("wrong format!")} />,
+    );
+    wrapper.setState({ releaseName: "my-app" });
+    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector).html()).toContain(
+      "Sorry! Something went wrong processing my-app",
+    );
+    expect(wrapper.find(ErrorSelector).html()).toContain("wrong format!");
   });
 });
 

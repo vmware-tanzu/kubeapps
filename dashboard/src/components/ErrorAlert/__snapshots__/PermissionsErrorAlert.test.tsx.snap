@@ -3,6 +3,7 @@
 exports[`renders an error message for the action 1`] = `
 <UnexpectedErrorPage
   icon={[Function]}
+  showGenericMessage={false}
   title={
     <span>
       You don't have sufficient permissions to 

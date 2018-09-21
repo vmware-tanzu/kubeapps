@@ -12,6 +12,8 @@ import { namespaceText } from "./helpers";
 
 interface IErrorSelectorProps {
   error: Error;
+  // Resource causing the failure (e.g. "Application my-wordpress")
+  resource: string;
   // Action related to the error (e.g. create, delete)
   action?: string;
   // Default permissions that the component should have
@@ -22,8 +24,6 @@ interface IErrorSelectorProps {
   };
   // Namespace in case the error is namespaced
   namespace?: string;
-  // Resource causing the failure (e.g. "Application my-wordpress")
-  resource?: string;
 }
 
 class ErrorSelector extends React.Component<IErrorSelectorProps> {
@@ -34,7 +34,7 @@ class ErrorSelector extends React.Component<IErrorSelectorProps> {
         return (
           <UnexpectedErrorAlert
             showGenericMessage={false}
-            text={`${resource} already exists, try a different name.`}
+            title={`${resource} already exists, try a different name.`}
           />
         );
       case ForbiddenError:
@@ -62,7 +62,6 @@ class ErrorSelector extends React.Component<IErrorSelectorProps> {
         if (namespace) {
           title = (
             <span>
-              {" "}
               {titleText} <span> in {namespaceText(namespace)}</span>{" "}
             </span>
           );
@@ -81,7 +80,8 @@ class ErrorSelector extends React.Component<IErrorSelectorProps> {
       case UnprocessableEntity:
         return (
           <UnexpectedErrorAlert
-            text={error && error.message}
+            title={`Sorry! Something went wrong processing ${resource}`}
+            text={error.message}
             raw={true}
             showGenericMessage={false}
           />

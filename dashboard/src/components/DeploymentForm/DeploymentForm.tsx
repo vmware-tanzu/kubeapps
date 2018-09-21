@@ -120,7 +120,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               namespace={namespace}
               defaultRequiredRBACRoles={{ create: this.requiredRBACRoles() }}
               action="create"
-              resource={`Application ${releaseName}`}
+              resource={releaseName}
             />
           )}
           <div className="row">

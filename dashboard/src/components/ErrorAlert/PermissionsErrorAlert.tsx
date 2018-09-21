@@ -23,6 +23,7 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
           </span>
         }
         icon={Lock}
+        showGenericMessage={false}
       >
         <div>
           <p>Ask your administrator for the following RBAC roles:</p>
