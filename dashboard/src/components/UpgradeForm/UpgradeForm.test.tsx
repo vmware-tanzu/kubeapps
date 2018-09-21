@@ -1,7 +1,7 @@
 import context from "jest-plugin-context";
 import UpgradeForm from ".";
 import itBehavesLike from "../../shared/specs";
-import { IChart, IChartState, IChartVersion, IChartVersionAttributes } from "../../shared/types";
+import { IChartState, IChartVersion } from "../../shared/types";
 
 const defaultProps: any = {
   bindingsWithSecrets: [],
