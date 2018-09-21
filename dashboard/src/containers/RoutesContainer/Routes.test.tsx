@@ -4,7 +4,7 @@ import * as React from "react";
 import { StaticRouter } from "react-router";
 import { Redirect, RouteComponentProps } from "react-router-dom";
 
-import NotFound from "../NotFound";
+import NotFound from "../../components/NotFound";
 import Routes from "./Routes";
 
 const emptyRouteComponentProps: RouteComponentProps<{}> = {

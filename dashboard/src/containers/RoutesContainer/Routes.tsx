@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
 
+import NotFound from "../../components/NotFound";
 import AppList from "../../containers/AppListContainer";
 import AppNew from "../../containers/AppNewContainer";
 import AppUpgrade from "../../containers/AppUpgradeContainer";
@@ -17,7 +18,6 @@ import LoginFormContainer from "../../containers/LoginFormContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import RepoListContainer from "../../containers/RepoListContainer";
 import ServiceCatalogContainer from "../../containers/ServiceCatalogContainer";
-import NotFound from "../NotFound";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 

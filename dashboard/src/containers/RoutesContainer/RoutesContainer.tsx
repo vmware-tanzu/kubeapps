@@ -1,8 +1,8 @@
 import { connect } from "react-redux";
 import { withRouter } from "react-router";
 
-import Routes from "../../components/Routes";
 import { IStoreState } from "../../shared/types";
+import Routes from "./Routes";
 
 function mapStateToProps({ namespace }: IStoreState) {
   return { namespace: namespace.current };
