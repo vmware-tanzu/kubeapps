@@ -8,6 +8,7 @@ import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -158,7 +159,12 @@ describe("AppViewComponent", () => {
       );
       const err = wrapper.find(ErrorSelector);
       expect(err.exists()).toBe(true);
-      expect(err.shallow().props()).toMatchObject({
+      expect(
+        err
+          .shallow()
+          .find(PermissionsErrorPage)
+          .props(),
+      ).toMatchObject({
         action: "delete Application mr-sunshine",
         namespace: "my-happy-place",
       });

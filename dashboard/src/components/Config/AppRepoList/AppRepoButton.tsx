@@ -29,10 +29,13 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
+let submittedName = "";
+
 export const AppRepoForm = (props: IAppRepoFormProps) => {
   const { name, url, authHeader, update, install, onAfterInstall } = props;
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    submittedName = name;
     const installed = await install(name, url, authHeader);
     if (installed && onAfterInstall) {
       await onAfterInstall();
@@ -144,7 +147,7 @@ export class AppRepoAddButton extends React.Component<
               defaultRequiredRBACRoles={{ create: RequiredRBACRoles }}
               action="create"
               namespace={this.props.kubeappsNamespace}
-              resource="The selected App Repository"
+              resource={`App Repository ${submittedName}`}
             />
           )}
           <AppRepoForm

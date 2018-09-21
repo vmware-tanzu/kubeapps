@@ -3,7 +3,7 @@ import * as React from "react";
 import { RouterAction } from "react-router-redux";
 import { hapi } from "../../shared/hapi/release";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";
+import { IAppRepository, IChartState, IChartVersion, IRBACRole } from "../../shared/types";
 import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import LoadingWrapper from "../LoadingWrapper";
 import UpgradeForm from "../UpgradeForm";
@@ -67,7 +67,8 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
             error={error}
             namespace={namespace}
             action="update"
-            resource={`Application ${releaseName}`}
+            defaultRequiredRBACRoles={{ update: this.requiredRBACRoles() }}
+            resource={releaseName}
           />
         );
       }
@@ -94,6 +95,17 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         />
       </div>
     );
+  }
+
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
   }
 }
 

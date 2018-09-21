@@ -9,9 +9,23 @@ exports[`loading spinner matches the snapshot 1`] = `
 exports[`renders an error if it exists 1`] = `
 <ErrorSelector
   action="update"
+  defaultRequiredRBACRoles={
+    Object {
+      "update": Array [
+        Object {
+          "apiGroup": "kubeapps.com",
+          "namespace": "kubeapps",
+          "resource": "apprepositories",
+          "verbs": Array [
+            "get",
+          ],
+        },
+      ],
+    }
+  }
   error={[Error: foo doesn't exists]}
   namespace="default"
-  resource="Application foo"
+  resource="foo"
 />
 `;
 
@@ -114,12 +128,17 @@ exports[`renders the upgrade form when the repo is available 1`] = `
           Array [],
           Array [],
           Array [],
+          Array [],
         ],
       }
     }
     getApp={
       [MockFunction] {
         "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
           Array [
             "foo",
             "default",
