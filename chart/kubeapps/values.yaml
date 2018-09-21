@@ -37,10 +37,10 @@ frontend:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:
-      cpu: 500m
+      cpu: 250m
       memory: 128Mi
     requests:
-      cpu: 50m
+      cpu: 25m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
@@ -78,10 +78,10 @@ apprepository:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:
-      cpu: 500m
+      cpu: 250m
       memory: 128Mi
     requests:
-      cpu: 50m
+      cpu: 25m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
@@ -107,10 +107,10 @@ tillerProxy:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:
-      cpu: 500m
+      cpu: 250m
       memory: 128Mi
     requests:
-      cpu: 50m
+      cpu: 25m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
@@ -128,10 +128,10 @@ chartsvc:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:
-      cpu: 500m
+      cpu: 250m
       memory: 128Mi
     requests:
-      cpu: 50m
+      cpu: 25m
       memory: 32Mi
   livenessProbe:
     httpGet:
@@ -175,10 +175,10 @@ dashboard:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:
-      cpu: 500m
+      cpu: 250m
       memory: 128Mi
     requests:
-      cpu: 50m
+      cpu: 25m
       memory: 32Mi
   nodeSelector: {}
   tolerations: []
@@ -194,7 +194,7 @@ mongodb:
       cpu: 500m
       memory: 512Mi
     requests:
-      cpu: 100m
+      cpu: 50m
       memory: 256Mi
 
 nodeSelector: {}
