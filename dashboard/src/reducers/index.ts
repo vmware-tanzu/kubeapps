@@ -11,7 +11,7 @@ import functionsReducer from "./functions";
 import namespaceReducer from "./namespace";
 import reposReducer from "./repos";
 
-const rootReducer = combineReducers<IStoreState>({
+const rootReducer = combineReducers<Partial<IStoreState> & { router: any }>({
   apps: appsReducer,
   auth: authReducer,
   catalog: catalogReducer,

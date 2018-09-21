@@ -1,5 +1,6 @@
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import ChartView from "../../components/ChartView";
@@ -25,7 +26,10 @@ function mapStateToProps({ charts, namespace }: IStoreState, { match: { params }
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>, { match: { params } }: IRouteProps) {
+function mapDispatchToProps(
+  dispatch: ThunkDispatch<IStoreState, null, Action>,
+  { match: { params } }: IRouteProps,
+) {
   return {
     fetchChartVersionsAndSelectVersion: (id: string, version?: string) =>
       dispatch(actions.charts.fetchChartVersionsAndSelectVersion(id, version)),
@@ -41,4 +45,7 @@ function chartID(params: IRouteProps["match"]["params"]) {
   return `${params.repo}/${params.id}`;
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ChartView);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ChartView);

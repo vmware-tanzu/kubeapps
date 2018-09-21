@@ -1,7 +1,8 @@
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import Header from "../../components/Header";
@@ -14,7 +15,9 @@ interface IState extends IStoreState {
 function mapStateToProps({
   auth: { authenticated },
   namespace,
-  router: { location: { pathname } },
+  router: {
+    location: { pathname },
+  },
 }: IState) {
   return {
     authenticated,
@@ -23,7 +26,7 @@ function mapStateToProps({
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, void, Action>) {
   return {
     fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
     logout: (token: string) => dispatch(actions.auth.logout()),
@@ -32,4 +35,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Header);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Header);

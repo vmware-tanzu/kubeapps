@@ -21,7 +21,10 @@ export class RemoveBindingButton extends React.Component<IRemoveBindingButtonPro
   }
 
   private handleRemoveBindingClick = async () => {
-    const { removeBinding, bindingWithSecret: { binding } } = this.props;
+    const {
+      removeBinding,
+      bindingWithSecret: { binding },
+    } = this.props;
     const { name, namespace } = binding.metadata;
     removeBinding(name, namespace);
   };

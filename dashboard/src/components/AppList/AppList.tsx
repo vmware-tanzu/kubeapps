@@ -31,7 +31,12 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
-    const { apps: { error, listingAll }, fetchApps, filter, namespace } = this.props;
+    const {
+      apps: { error, listingAll },
+      fetchApps,
+      filter,
+      namespace,
+    } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
       fetchApps(nextProps.namespace, listingAll);
@@ -42,7 +47,9 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public render() {
-    const { apps: { error, isFetching, listOverview } } = this.props;
+    const {
+      apps: { error, isFetching, listOverview },
+    } = this.props;
     return (
       <section className="AppList">
         <PageHeader>
@@ -70,7 +77,10 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public appListControls() {
-    const { pushSearchFilter, apps: { listingAll } } = this.props;
+    const {
+      pushSearchFilter,
+      apps: { listingAll },
+    } = this.props;
     return (
       <React.Fragment>
         <SearchFilter
