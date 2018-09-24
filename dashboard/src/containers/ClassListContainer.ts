@@ -1,7 +1,9 @@
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
+
 import { ClassList } from "../components/ClassList";
 import { IStoreState } from "../shared/types";
 
@@ -23,7 +25,7 @@ function mapStateToProps({ catalog }: IStoreState, props: IRouteProps) {
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     getClasses: async () => {
       const classes = await dispatch(actions.catalog.getClasses());
@@ -32,4 +34,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ClassList);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ClassList);

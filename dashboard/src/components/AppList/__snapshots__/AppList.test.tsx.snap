@@ -14,28 +14,26 @@ exports[`when apps available matches the snapshot 1`] = `
         <h1>
           Applications
         </h1>
-        <React.Fragment>
-          <SearchFilter
-            className="margin-l-big"
-            key="searchFilter"
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
             onChange={[Function]}
-            onSubmit={[MockFunction]}
-            placeholder="search apps..."
-            value=""
+            type="checkbox"
           />
-          <label
-            className="checkbox margin-r-big margin-l-big margin-t-big"
-            key="listall"
-          >
-            <input
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span>
-              Show deleted apps
-            </span>
-          </label>
-        </React.Fragment>
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
     </div>
     <div
@@ -120,28 +118,26 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
         <h1>
           Applications
         </h1>
-        <React.Fragment>
-          <SearchFilter
-            className="margin-l-big"
-            key="searchFilter"
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
             onChange={[Function]}
-            onSubmit={[MockFunction]}
-            placeholder="search apps..."
-            value=""
+            type="checkbox"
           />
-          <label
-            className="checkbox margin-r-big margin-l-big margin-t-big"
-            key="listall"
-          >
-            <input
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span>
-              Show deleted apps
-            </span>
-          </label>
-        </React.Fragment>
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
     </div>
     <div
@@ -193,28 +189,26 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
         <h1>
           Applications
         </h1>
-        <React.Fragment>
-          <SearchFilter
-            className="margin-l-big"
-            key="searchFilter"
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
             onChange={[Function]}
-            onSubmit={[MockFunction]}
-            placeholder="search apps..."
-            value=""
+            type="checkbox"
           />
-          <label
-            className="checkbox margin-r-big margin-l-big margin-t-big"
-            key="listall"
-          >
-            <input
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span>
-              Show deleted apps
-            </span>
-          </label>
-        </React.Fragment>
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
     </div>
     <div
@@ -256,28 +250,26 @@ exports[`while fetching apps matches the snapshot 1`] = `
         <h1>
           Applications
         </h1>
-        <React.Fragment>
-          <SearchFilter
-            className="margin-l-big"
-            key="searchFilter"
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
             onChange={[Function]}
-            onSubmit={[MockFunction]}
-            placeholder="search apps..."
-            value=""
+            type="checkbox"
           />
-          <label
-            className="checkbox margin-r-big margin-l-big margin-t-big"
-            key="listall"
-          >
-            <input
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span>
-              Show deleted apps
-            </span>
-          </label>
-        </React.Fragment>
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
     </div>
     <div

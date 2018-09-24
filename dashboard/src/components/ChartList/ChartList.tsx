@@ -40,7 +40,10 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
   }
 
   public render() {
-    const { charts: { isFetching, items: allItems }, pushSearchFilter } = this.props;
+    const {
+      charts: { isFetching, items: allItems },
+      pushSearchFilter,
+    } = this.props;
     const items = this.filteredCharts(allItems, this.state.filter);
     if (!isFetching && allItems.length === 0) {
       return (

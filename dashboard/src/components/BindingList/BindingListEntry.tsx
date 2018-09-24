@@ -19,7 +19,10 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
   };
 
   public render() {
-    const { bindingWithSecret, bindingWithSecret: { binding } } = this.props;
+    const {
+      bindingWithSecret,
+      bindingWithSecret: { binding },
+    } = this.props;
     const { name, namespace } = binding.metadata;
 
     const condition = [...binding.status.conditions].shift();

@@ -1,6 +1,7 @@
 import { connect } from "react-redux";
 import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import DeploymentForm from "../../components/DeploymentForm";
@@ -31,7 +32,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     deployChart: (
       version: IChartVersion,
@@ -49,4 +50,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(DeploymentForm);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(DeploymentForm);

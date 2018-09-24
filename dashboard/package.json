@@ -12,9 +12,7 @@
     "@types/react-select": "^1.2.6",
     "@types/ws": "^6.0.0",
     "axios": "^0.17.1",
-    "enzyme": "^3.3.0",
     "enzyme-adapter-react-16": "^1.1.1",
-    "jest-enzyme": "6.0.2",
     "js-yaml": "^3.10.0",
     "moniker-native": "^0.1.6",
     "open-iconic": "^1.1.1",
@@ -35,17 +33,16 @@
     "react-scripts-ts": "^2.17.0",
     "react-select": "^1.2.1",
     "react-test-renderer": "^16.2.0",
-    "redux": "^3.7.2",
+    "redux": "^4.0.0",
     "redux-devtools-extension": "^2.13.5",
     "redux-thunk": "^2.2.0",
     "ts-jest": "^22.0.1",
-    "typesafe-actions": "^1.1.2"
+    "typesafe-actions": "^2.0.4"
   },
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "yarn run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
-    "start-js":
-      "BROWSER=none REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts-ts start",
+    "start-js": "BROWSER=none REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts-ts start",
     "build-js": "react-scripts-ts build",
     "start": "npm-run-all -p watch-css start-js",
     "build": "npm-run-all build-css build-js",
@@ -61,9 +58,20 @@
     "lint": "npm-run-all lint-js lint-css"
   },
   "lint-staged": {
-    "*.{ts,tsx}": ["yarn run lint-js-fix", "prettier --write", "git add"],
-    "*.scss": ["yarn run lint-css-fix", "prettier --write", "git add"],
-    "*.{js,json,md}": ["prettier --write", "git add"]
+    "*.{ts,tsx}": [
+      "yarn run lint-js-fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.scss": [
+      "yarn run lint-css-fix",
+      "prettier --write",
+      "git add"
+    ],
+    "*.{js,json,md}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "devDependencies": {
     "@types/enzyme": "^3.1.6",
@@ -73,14 +81,15 @@
     "@types/react": "^16.0.34",
     "@types/react-dom": "^16.0.3",
     "@types/react-modal": "^3.1.1",
-    "@types/react-redux": "^5.0.14",
+    "@types/react-redux": "^6.0.3",
     "@types/react-router": "^4.0.20",
     "@types/react-router-dom": "^4.2.3",
     "@types/react-router-redux": "^5.0.11",
     "@types/react-test-renderer": "^16.0.0",
     "@types/redux-mock-store": "^1.0.0",
+    "enzyme": "^3.6.0",
     "husky": "0.14.3",
-    "jest-enzyme": "6.0.2",
+    "jest-enzyme": "^6.0.4",
     "jest-plugin-context": "^2.9.0",
     "lint-staged": "^6.1.0",
     "mock-socket": "^8.0.2",
@@ -97,9 +106,12 @@
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
-    "typescript": "^2.6.2"
+    "typescript": "^3.0.3"
   },
   "jest": {
-    "collectCoverageFrom": ["src/**/*", "!src/**/*.d.ts"]
+    "collectCoverageFrom": [
+      "src/**/*",
+      "!src/**/*.d.ts"
+    ]
   }
 }

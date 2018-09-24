@@ -1,8 +1,8 @@
 import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
-import { Dispatch } from "redux";
-
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import actions from "../../actions";
 import ChartList from "../../components/ChartList";
 import { IStoreState } from "../../shared/types";
@@ -18,11 +18,14 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     fetchCharts: (repo: string) => dispatch(actions.charts.fetchCharts(repo)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ChartList);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ChartList);
