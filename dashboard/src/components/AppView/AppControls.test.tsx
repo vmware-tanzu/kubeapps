@@ -1,8 +1,10 @@
 import { mount, shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 import * as ReactModal from "react-modal";
 import { Redirect } from "react-router";
 import { hapi } from "../../shared/hapi/release";
+import itBehavesLike from "../../shared/specs";
 import ConfirmDialog from "../ConfirmDialog";
 
 import AppControls from "./AppControls";
@@ -89,4 +91,19 @@ it("calls delete function with additional purge", () => {
   // Check that the "purge" state is forwarded to deleteApp
   confirm.props().onConfirm(); // Simulate confirmation
   expect(deleteApp.mock.calls[0]).toEqual([true]);
+});
+
+context("when name or namespace do not exist", () => {
+  const props = {
+    app: new hapi.release.Release({ name: "name", namespace: "my-ns" }),
+  };
+
+  itBehavesLike("aLoadingComponent", {
+    component: AppControls,
+    props: { ...props, app: { ...props.app, name: null } },
+  });
+  itBehavesLike("aLoadingComponent", {
+    component: AppControls,
+    props: { ...props, app: { ...props.app, namespace: null } },
+  });
 });

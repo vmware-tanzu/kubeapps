@@ -6,6 +6,7 @@ import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 import DeploymentBinding from "../DeploymentForm/DeploymentBinding";
 import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
@@ -103,7 +104,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       return <DeploymentErrors {...this.props} version={appCurrentVersion} />;
     }
     if (!version || !versions || !versions.length || this.state.isDeploying) {
-      return <div> Loading </div>;
+      return <LoadingWrapper />;
     }
     return (
       <div>

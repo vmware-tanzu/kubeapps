@@ -1,5 +1,7 @@
 import * as React from "react";
 import * as Modal from "react-modal";
+import LoadingSpinner from "../LoadingSpinner";
+import "./ConfirmDialog.css";
 
 interface IConfirmDialogProps {
   modalIsOpen: boolean;
@@ -42,7 +44,12 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
             <div className="padding-big margin-b-big bg-action">{this.state.error}</div>
           )}
           {this.props.loading === true ? (
-            <div> Loading ... </div>
+            <div className="row confirm-dialog-loading-info">
+              <div className="col-8 loading-legend">Loading, please wait</div>
+              <div className="col-4">
+                <LoadingSpinner />
+              </div>
+            </div>
           ) : (
             <div>
               <div> Are you sure you want to delete this? </div>
