@@ -1,3 +1,4 @@
+// NOTE(miguel) Typescript types ignored since this file will be removed
 import { Dispatch } from "redux";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
 

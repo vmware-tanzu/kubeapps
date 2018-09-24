@@ -1,4 +1,3 @@
-import { Action, Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 
 import { ActionType, createActionDeprecated } from "typesafe-actions";
@@ -26,8 +25,8 @@ export const receiveNamespaces = createActionDeprecated(
 const allActions = [setNamespace, receiveNamespaces];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
 
-export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, void, Action> {
-  return async (dispatch: Dispatch): Promise<void> => {
+export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+  return async dispatch => {
     try {
       const namespaces = await Namespace.list();
       const namespaceStrings = namespaces.items.map((n: IResource) => n.metadata.name);

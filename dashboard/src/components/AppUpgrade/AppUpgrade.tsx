@@ -29,11 +29,11 @@ interface IAppUpgradeProps {
   ) => Promise<boolean>;
   clearRepo: () => any;
   checkChart: (repo: string, chartName: string) => any;
-  fetchChartVersions: (id: string) => Promise<{}>;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
-  getBindings: () => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
-  getChartValues: (id: string, chartVersion: string) => Promise<any>;
+  fetchChartVersions: (id: string) => Promise<any>;
+  getApp: (releaseName: string, namespace: string) => void;
+  getBindings: () => Promise<void>;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => Promise<void>;
   push: (location: string) => RouterAction;
   fetchRepositories: () => Promise<void>;
 }

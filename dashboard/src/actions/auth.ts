@@ -1,7 +1,8 @@
-import { Dispatch } from "redux";
+import { ThunkAction } from "redux-thunk";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
+import { IStoreState } from "../shared/types";
 
 export const setAuthenticated = createActionDeprecated(
   "SET_AUTHENTICATED",
@@ -27,22 +28,24 @@ const allActions = [setAuthenticated, authenticating, authenticationError];
 
 export type AuthAction = ActionType<typeof allActions[number]>;
 
-export function authenticate(token: string) {
-  return async (dispatch: Dispatch) => {
+export function authenticate(
+  token: string,
+): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
+  return async dispatch => {
     dispatch(authenticating());
     try {
       await Auth.validateToken(token);
       Auth.setAuthToken(token);
-      return dispatch(setAuthenticated(true));
+      dispatch(setAuthenticated(true));
     } catch (e) {
-      return dispatch(authenticationError(e.toString()));
+      dispatch(authenticationError(e.toString()));
     }
   };
 }
 
-export function logout() {
-  return async (dispatch: Dispatch) => {
+export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
+  return async dispatch => {
     Auth.unsetAuthToken();
-    return dispatch(setAuthenticated(false));
+    dispatch(setAuthenticated(false));
   };
 }

@@ -27,10 +27,7 @@ function mapStateToProps({ catalog }: IStoreState, props: IRouteProps) {
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    getClasses: async () => {
-      const classes = await dispatch(actions.catalog.getClasses());
-      return classes;
-    },
+    getClasses: async () => dispatch(actions.catalog.getClasses()),
   };
 }
 
