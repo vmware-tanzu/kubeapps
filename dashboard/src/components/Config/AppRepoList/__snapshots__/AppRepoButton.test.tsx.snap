@@ -1,0 +1,203 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should open a modal with the repository form 1`] = `
+<AppRepoAddButton
+  install={[MockFunction]}
+  kubeappsNamespace="kubeapps"
+>
+  <div
+    className="AppRepoAddButton"
+  >
+    <button
+      className="button button-primary"
+      onClick={[Function]}
+    >
+      Add App Repository
+    </button>
+    <Modal
+      ariaHideApp={true}
+      bodyOpenClassName="ReactModal__Body--open"
+      closeTimeoutMS={0}
+      contentLabel="Modal"
+      isOpen={true}
+      onRequestClose={[Function]}
+      parentSelector={[Function]}
+      portalClassName="ReactModalPortal"
+      shouldCloseOnEsc={true}
+      shouldCloseOnOverlayClick={true}
+      shouldFocusAfterRender={true}
+      shouldReturnFocusAfterClose={true}
+    >
+      <ModalPortal
+        ariaHideApp={true}
+        bodyOpenClassName="ReactModal__Body--open"
+        closeTimeoutMS={0}
+        contentLabel="Modal"
+        defaultStyles={
+          Object {
+            "content": Object {
+              "WebkitOverflowScrolling": "touch",
+              "background": "#fff",
+              "border": "1px solid #ccc",
+              "borderRadius": "4px",
+              "bottom": "40px",
+              "left": "40px",
+              "outline": "none",
+              "overflow": "auto",
+              "padding": "20px",
+              "position": "absolute",
+              "right": "40px",
+              "top": "40px",
+            },
+            "overlay": Object {
+              "backgroundColor": "rgba(255, 255, 255, 0.75)",
+              "bottom": 0,
+              "left": 0,
+              "position": "fixed",
+              "right": 0,
+              "top": 0,
+            },
+          }
+        }
+        isOpen={true}
+        onRequestClose={[Function]}
+        parentSelector={[Function]}
+        portalClassName="ReactModalPortal"
+        shouldCloseOnEsc={true}
+        shouldCloseOnOverlayClick={true}
+        shouldFocusAfterRender={true}
+        shouldReturnFocusAfterClose={true}
+        style={
+          Object {
+            "content": Object {},
+            "overlay": Object {},
+          }
+        }
+      >
+        <div
+          aria-modal="true"
+          className="ReactModal__Overlay"
+          onClick={[Function]}
+          onMouseDown={[Function]}
+          onMouseUp={[Function]}
+          style={
+            Object {
+              "backgroundColor": "rgba(255, 255, 255, 0.75)",
+              "bottom": 0,
+              "left": 0,
+              "position": "fixed",
+              "right": 0,
+              "top": 0,
+            }
+          }
+        >
+          <div
+            aria-label="Modal"
+            className="ReactModal__Content"
+            onClick={[Function]}
+            onKeyDown={[Function]}
+            onMouseDown={[Function]}
+            onMouseUp={[Function]}
+            style={
+              Object {
+                "WebkitOverflowScrolling": "touch",
+                "background": "#fff",
+                "border": "1px solid #ccc",
+                "borderRadius": "4px",
+                "bottom": "40px",
+                "left": "40px",
+                "outline": "none",
+                "overflow": "auto",
+                "padding": "20px",
+                "position": "absolute",
+                "right": "40px",
+                "top": "40px",
+              }
+            }
+            tabIndex="-1"
+          >
+            <Component
+              authHeader=""
+              install={[MockFunction]}
+              name=""
+              onAfterInstall={[Function]}
+              update={[Function]}
+              url=""
+            >
+              <form
+                className="container padding-b-bigger"
+                onSubmit={[Function]}
+              >
+                <div
+                  className="row"
+                >
+                  <div
+                    className="col-12"
+                  >
+                    <div>
+                      <h2>
+                        Add an App Repository
+                      </h2>
+                    </div>
+                    <div>
+                      <label>
+                        <span>
+                          Name:
+                        </span>
+                        <input
+                          onChange={[Function]}
+                          pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                          placeholder="example"
+                          required={true}
+                          title="Use lower case alphanumeric characters, '-' or '.'"
+                          type="text"
+                          value=""
+                        />
+                      </label>
+                    </div>
+                    <div>
+                      <label>
+                        <span>
+                          URL:
+                        </span>
+                        <input
+                          onChange={[Function]}
+                          placeholder="https://charts.example.com/stable"
+                          required={true}
+                          type="url"
+                          value=""
+                        />
+                      </label>
+                    </div>
+                    <div>
+                      <label>
+                        <span>
+                          Authorization Header (optional):
+                        </span>
+                        <input
+                          onChange={[Function]}
+                          placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                          type="text"
+                          value=""
+                        />
+                      </label>
+                    </div>
+                    <div>
+                      <button
+                        className="button button-primary"
+                        type="submit"
+                      >
+                        Install Repo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </Component>
+          </div>
+        </div>
+      </ModalPortal>
+    </Modal>
+  </div>
+</AppRepoAddButton>
+`;
