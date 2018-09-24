@@ -48,7 +48,16 @@ describe("renders an error", () => {
 
   it("renders a custom error if the deployment failed", () => {
     const wrapper = shallow(
-      <DeploymentForm {...defaultProps} error={new UnprocessableEntity("wrong format!")} />,
+      <DeploymentForm
+        {...defaultProps}
+        selected={
+          {
+            version: { attributes: {} },
+            versions: [{ id: "foo", attributes: {} }],
+          } as IChartState["selected"]
+        }
+        error={new UnprocessableEntity("wrong format!")}
+      />,
     );
     wrapper.setState({ releaseName: "my-app" });
     expect(wrapper.find(ErrorSelector).exists()).toBe(true);

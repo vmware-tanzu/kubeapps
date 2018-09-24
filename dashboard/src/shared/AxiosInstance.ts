@@ -3,7 +3,7 @@ import { Store } from "redux";
 import actions from "../actions";
 import { Auth } from "./Auth";
 import {
-  AppConflict,
+  ConflictError,
   ForbiddenError,
   IStoreState,
   NotFoundError,
@@ -40,7 +40,7 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
         case 404:
           return Promise.reject(new NotFoundError(message));
         case 409:
-          return Promise.reject(new AppConflict(message));
+          return Promise.reject(new ConflictError(message));
         case 422:
           return Promise.reject(new UnprocessableEntity(message));
         default:

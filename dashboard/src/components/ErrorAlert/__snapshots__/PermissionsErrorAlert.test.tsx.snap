@@ -16,7 +16,6 @@ exports[`renders an error message for the action 1`] = `
         </code>
          namespace
       </span>
-      .
     </span>
   }
 >

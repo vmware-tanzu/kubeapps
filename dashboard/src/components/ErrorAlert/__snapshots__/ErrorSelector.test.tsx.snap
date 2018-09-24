@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`AppConflict should render a simple message with the name of the resource 1`] = `
+exports[`ConflictError should render a simple message with the name of the resource 1`] = `
 <UnexpectedErrorPage
   showGenericMessage={false}
   title="my app already exists, try a different name."

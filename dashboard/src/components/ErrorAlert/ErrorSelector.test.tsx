@@ -4,7 +4,7 @@ import * as React from "react";
 import { PermissionsErrorAlert } from ".";
 import { definedNamespaces } from "../../shared/Namespace";
 import {
-  AppConflict,
+  ConflictError,
   ForbiddenError,
   IRBACRole,
   NotFoundError,
@@ -15,9 +15,9 @@ import ErrorSelector from "./ErrorSelector";
 import PermissionsListItem from "./PermissionsListItem";
 import UnexpectedErrorAlert from "./UnexpectedErrorAlert";
 
-describe("AppConflict", () => {
+describe("ConflictError", () => {
   it("should render a simple message with the name of the resource", () => {
-    const wrapper = shallow(<ErrorSelector error={new AppConflict()} resource={"my app"} />);
+    const wrapper = shallow(<ErrorSelector error={new ConflictError()} resource={"my app"} />);
     const errAlert = wrapper.find(UnexpectedErrorAlert);
     expect(errAlert).toExist();
     expect(errAlert.html()).toContain("my app already exists, try a different name");
