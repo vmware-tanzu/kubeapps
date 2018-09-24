@@ -1,4 +1,4 @@
-import { mount, shallow } from "enzyme";
+import { mount } from "enzyme";
 import * as React from "react";
 import * as ReactModal from "react-modal";
 import { ConflictError, UnprocessableEntity } from "../../../shared/types";
