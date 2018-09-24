@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { RouterAction } from "react-router-redux";
+import { RouterAction } from "connected-react-router";
 import { hapi } from "../../shared/hapi/release";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";

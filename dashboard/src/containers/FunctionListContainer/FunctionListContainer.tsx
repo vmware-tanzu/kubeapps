@@ -1,7 +1,7 @@
+import { push } from "connected-react-router";
 import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
-import { push } from "react-router-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 

@@ -1,6 +1,6 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import AceEditor from "react-ace";
-import { RouterAction } from "react-router-redux";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";

@@ -1,4 +1,4 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "react-router-redux";
+import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -24,7 +24,7 @@ const namespaceReducer = (
     case getType(actions.namespace.setNamespace):
       return { ...state, current: action.namespace };
     case LOCATION_CHANGE:
-      const pathname = action.payload.pathname;
+      const pathname = action.payload.location.pathname;
       // looks for /ns/:namespace in URL
       const matches = pathname.match(/\/ns\/([^/]*)/);
       if (matches) {

@@ -1,4 +1,3 @@
-import { routerReducer } from "react-router-redux";
 import { combineReducers } from "redux";
 
 import { IStoreState } from "../shared/types";
@@ -11,7 +10,7 @@ import functionsReducer from "./functions";
 import namespaceReducer from "./namespace";
 import reposReducer from "./repos";
 
-const rootReducer = combineReducers<Partial<IStoreState> & { router: any }>({
+const rootReducer = combineReducers<Partial<IStoreState>>({
   apps: appsReducer,
   auth: authReducer,
   catalog: catalogReducer,
@@ -20,7 +19,6 @@ const rootReducer = combineReducers<Partial<IStoreState> & { router: any }>({
   functions: functionsReducer,
   namespace: namespaceReducer,
   repos: reposReducer,
-  router: routerReducer,
 });
 
 export default rootReducer;

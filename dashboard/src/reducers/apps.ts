@@ -1,4 +1,4 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "react-router-redux";
+import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 
 import { getType } from "typesafe-actions";
 import actions from "../actions";
