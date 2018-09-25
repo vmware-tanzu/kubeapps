@@ -5,6 +5,7 @@ import { RouterAction } from "react-router-redux";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
 import DeploymentBinding from "../DeploymentForm/DeploymentBinding";
+import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
@@ -111,7 +112,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       );
     }
     if (!version || !versions || !versions.length || this.state.isDeploying) {
-      return <div> Loading </div>;
+      return <LoadingWrapper />;
     }
     return (
       <div>

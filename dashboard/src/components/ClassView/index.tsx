@@ -100,7 +100,9 @@ export class ClassView extends React.Component<IClassViewProps> {
                     const bullets = (
                       <div>
                         <ul className="margin-reset">
-                          {description.map(bullet => <li key={bullet}>{bullet}</li>)}
+                          {description.map(bullet => (
+                            <li key={bullet}>{bullet}</li>
+                          ))}
                         </ul>
                       </div>
                     );

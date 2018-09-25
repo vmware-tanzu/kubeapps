@@ -13,6 +13,7 @@ ingress:
   #      - chart-example.local
 
 frontend:
+  replicaCount: 2
   image:
     registry: docker.io
     repository: bitnami/nginx
@@ -33,13 +34,14 @@ frontend:
       port: 8080
     initialDelaySeconds: 0
     timeoutSeconds: 5
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -48,6 +50,8 @@ frontend:
 # sync. Set apprepository.initialRepos to configure the initial set of
 # repositories to use when first installing Kubeapps.
 apprepository:
+  # Running a single controller replica to avoid sync job duplication
+  replicaCount: 1
   image:
     registry: docker.io
     repository: kubeapps/apprepository-controller
@@ -71,13 +75,14 @@ apprepository:
     url: https://svc-catalog-charts.storage.googleapis.com
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -86,6 +91,7 @@ apprepository:
 # manage Helm chart releases in the cluster from Kubeapps. Set tillerProxy.host
 # to configure a different Tiller host to use.
 tillerProxy:
+  replicaCount: 2
   image:
     registry: docker.io
     repository: kubeapps/tiller-proxy
@@ -98,32 +104,35 @@ tillerProxy:
     # cert:
     # key:
     # verify: false
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
 
 # Chartsvc is used to serve chart metadata over a REST API.
 chartsvc:
+  replicaCount: 2
   image:
     registry: docker.io
     repository: kubeapps/chartsvc
     tag: latest
   service:
     port: 8080
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
   livenessProbe:
     httpGet:
       path: /live
@@ -144,6 +153,7 @@ chartsvc:
 # internal service used by the main frontend reverse-proxy and should not be
 # accessed directly.
 dashboard:
+  replicaCount: 2
   image:
     registry: docker.io
     repository: kubeapps/dashboard
@@ -162,13 +172,14 @@ dashboard:
       port: 8080
     initialDelaySeconds: 0
     timeoutSeconds: 5
-  resources: {}
-    # limits:
-    #  cpu: 100m
-    #  memory: 128Mi
-    # requests:
-    #  cpu: 100m
-    #  memory: 128Mi
+  # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+  resources:
+    limits:
+      cpu: 250m
+      memory: 128Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -177,18 +188,14 @@ mongodb:
   # Kubeapps uses MongoDB as a cache and persistence is not required
   persistence:
     enabled: false
-
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #  cpu: 100m
-  #  memory: 128Mi
-  # requests:
-  #  cpu: 100m
-  #  memory: 128Mi
+  # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 256Mi
 
 nodeSelector: {}
 
@@ -206,4 +213,3 @@ testImage:
   registry: docker.io
   repository: bitnami/nginx
   tag: 1.14.0-r27
-

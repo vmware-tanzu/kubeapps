@@ -25,7 +25,7 @@ const defaultProps = {
 
 it("propagates the filter from the props", () => {
   const wrapper = shallow(<ChartList {...defaultProps} filter="foo" />);
-  expect(wrapper.state().filter).toBe("foo");
+  expect(wrapper.state("filter")).toBe("foo");
 });
 
 describe("renderization", () => {

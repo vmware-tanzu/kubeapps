@@ -28,7 +28,9 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
         <div>
           <p>Ask your administrator for the following RBAC roles:</p>
           <ul className="error__permisions-list">
-            {roles.map((r, i) => <PermissionsListItem key={i} namespace={namespace} role={r} />)}
+            {roles.map((r, i) => (
+              <PermissionsListItem key={i} namespace={namespace} role={r} />
+            ))}
           </ul>
           <p>
             See the documentation for more info on{" "}
@@ -37,7 +39,8 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
               target="_blank"
             >
               access control in Kubeapps
-            </a>.
+            </a>
+            .
           </p>
         </div>
       </UnexpectedErrorAlert>

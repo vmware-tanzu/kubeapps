@@ -1,5 +1,6 @@
 import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
-import { Store } from "redux";
+import { Action, Store } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 import actions from "../actions";
 import { Auth } from "./Auth";
 import {
@@ -32,8 +33,9 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
       switch (err.response && err.response.status) {
         case 401:
           // Global action dispatch to log the user out
-          store.dispatch(actions.auth.authenticationError(message));
-          store.dispatch(actions.auth.logout());
+          const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
+          dispatch(actions.auth.authenticationError(message));
+          dispatch(actions.auth.logout());
           return Promise.reject(new UnauthorizedError(message));
         case 403:
           return Promise.reject(new ForbiddenError(message));

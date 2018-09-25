@@ -1,5 +1,6 @@
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
 import { InstanceView } from "../components/InstanceView/InstanceView";
@@ -51,7 +52,7 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     addBinding: (bindingName: string, instanceName: string, namespace: string, parameters: {}) =>
       dispatch(actions.catalog.addBinding(bindingName, instanceName, namespace, parameters)),
@@ -63,4 +64,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(InstanceView);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(InstanceView);

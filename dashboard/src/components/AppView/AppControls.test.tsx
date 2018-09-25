@@ -1,8 +1,10 @@
 import { mount, shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 import * as ReactModal from "react-modal";
 import { Redirect } from "react-router";
 import { hapi } from "../../shared/hapi/release";
+import itBehavesLike from "../../shared/specs";
 import ConfirmDialog from "../ConfirmDialog";
 
 import AppControls from "./AppControls";
@@ -49,7 +51,7 @@ it("calls delete function when clicking the button", done => {
   expect(confirm.exists()).toBe(true);
   confirm.props().onConfirm(); // Simulate confirmation
 
-  expect(wrapper.state().deleting).toBe(true);
+  expect(wrapper.state("deleting")).toBe(true);
   // Wait for the async action to finish
   setTimeout(() => {
     wrapper.update();
@@ -82,11 +84,26 @@ it("calls delete function with additional purge", () => {
   expect(confirm.exists()).toBe(true);
   const checkbox = wrapper.find('input[type="checkbox"]');
   expect(checkbox.exists()).toBe(true);
-  expect(wrapper.state().purge).toBe(false);
+  expect(wrapper.state("purge")).toBe(false);
   checkbox.simulate("change");
-  expect(wrapper.state().purge).toBe(true);
+  expect(wrapper.state("purge")).toBe(true);
 
   // Check that the "purge" state is forwarded to deleteApp
   confirm.props().onConfirm(); // Simulate confirmation
   expect(deleteApp.mock.calls[0]).toEqual([true]);
+});
+
+context("when name or namespace do not exist", () => {
+  const props = {
+    app: new hapi.release.Release({ name: "name", namespace: "my-ns" }),
+  };
+
+  itBehavesLike("aLoadingComponent", {
+    component: AppControls,
+    props: { ...props, app: { ...props.app, name: null } },
+  });
+  itBehavesLike("aLoadingComponent", {
+    component: AppControls,
+    props: { ...props, app: { ...props.app, namespace: null } },
+  });
 });

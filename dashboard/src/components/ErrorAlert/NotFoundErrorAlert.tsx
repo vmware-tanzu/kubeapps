@@ -25,7 +25,8 @@ class NotFoundErrorPage extends React.Component<INotFoundErrorPageProps> {
             header
           ) : (
             <span>
-              {resource} not found{namespace && <span> in {namespaceText(namespace)}</span>}.
+              {resource} not found
+              {namespace && <span> in {namespaceText(namespace)}</span>}.
             </span>
           )}
         </ErrorPageHeader>

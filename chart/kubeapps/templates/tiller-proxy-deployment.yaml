@@ -8,7 +8,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.tillerProxy.replicaCount }}
   selector:
     matchLabels:
       app: {{ template "kubeapps.tiller-proxy.fullname" . }}
@@ -38,7 +38,7 @@ spec:
         {{- end }}
         ports:
         - name: http
-          containerPort: {{ .Values.chartsvc.service.port }}
+          containerPort: {{ .Values.tillerProxy.service.port }}
         env:
         - name: POD_NAMESPACE
           valueFrom:
