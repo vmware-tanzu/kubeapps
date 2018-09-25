@@ -1,6 +1,6 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { RouterAction } from "react-router-redux";
 
 import { IChart, IChartState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
