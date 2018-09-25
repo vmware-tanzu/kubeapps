@@ -1,6 +1,6 @@
+import { ConnectedRouter } from "connected-react-router";
 import * as React from "react";
 import { Provider } from "react-redux";
-import { ConnectedRouter } from "react-router-redux";
 
 import Layout from "../components/Layout";
 import store, { history } from "../store";

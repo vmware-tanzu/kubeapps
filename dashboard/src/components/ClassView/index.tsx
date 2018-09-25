@@ -1,6 +1,5 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
-import { RouterAction } from "react-router-redux";
-
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { definedNamespaces } from "../../shared/Namespace";
 import { IServicePlan } from "../../shared/ServiceCatalog";
