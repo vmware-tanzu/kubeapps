@@ -29,11 +29,11 @@ interface IDeploymentFormProps {
     values?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (id: string) => Promise<{}>;
+  fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getBindings: (ns: string) => Promise<void>;
-  getChartVersion: (id: string, chartVersion: string) => void;
-  getChartValues: (id: string, chartVersion: string) => Promise<any>;
-  clearRepo: () => any;
+  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
+  getChartValues: (id: string, chartVersion: string) => Promise<void>;
+  clearRepo: () => Promise<void>;
 }
 
 interface IDeploymentFormState {

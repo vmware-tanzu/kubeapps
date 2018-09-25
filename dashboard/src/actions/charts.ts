@@ -59,7 +59,7 @@ const allActions = [
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
 
-async function httpGet(dispatch: Dispatch, targetURL: string) {
+async function httpGet(dispatch: Dispatch, targetURL: string): Promise<any> {
   try {
     const response = await fetch(targetURL);
     const json = await response.json();
@@ -80,20 +80,19 @@ async function httpGet(dispatch: Dispatch, targetURL: string) {
 
 export function fetchCharts(
   repo: string,
-): ThunkAction<Promise<any>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.list(repo));
     if (response) {
       dispatch(receiveCharts(response));
     }
-    return response;
   };
 }
 
 export function fetchChartVersions(
   id: string,
-): ThunkAction<Promise<any>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<IChartVersion[]>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.listVersions(id));
@@ -107,14 +106,13 @@ export function fetchChartVersions(
 export function getChartVersion(
   id: string,
   version: string,
-): ThunkAction<Promise<any>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.getVersion(id, version));
     if (response) {
       dispatch(selectChartVersion(response));
     }
-    return response;
   };
 }
 
