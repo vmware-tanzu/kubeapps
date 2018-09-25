@@ -33,7 +33,7 @@ The above commands will deploy Kubeapps into the `kubeapps` namespace in your cl
 Once it has been deployed and the Kubeapps pods are running, port-forward to access the Dashboard:
 
 ```bash
-export POD_NAME=$(kubectl get pods -n kubeapps -l "app=kubeapps,release=kubeapps" -o name)
+export POD_NAME=$(kubectl get pods -n kubeapps -l "app=kubeapps,release=kubeapps" -o jsonpath="{.items[0].metadata.name}")
 echo "Visit http://127.0.0.1:8080 in your browser to access the Kubeapps Dashboard"
 kubectl port-forward -n kubeapps $POD_NAME 8080:8080
 ```
