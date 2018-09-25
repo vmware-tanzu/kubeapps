@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
+import { RouterAction } from "react-router-redux";
 
 import { IChart, IChartState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
@@ -14,8 +15,8 @@ interface IChartListProps {
   charts: IChartState;
   repo: string;
   filter: string;
-  fetchCharts: (repo: string) => Promise<{}>;
-  pushSearchFilter: (filter: string) => any;
+  fetchCharts: (repo: string) => void;
+  pushSearchFilter: (filter: string) => RouterAction;
 }
 
 interface IChartListState {

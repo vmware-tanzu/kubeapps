@@ -1,5 +1,6 @@
-import { Dispatch } from "redux";
+import { ThunkAction } from "redux-thunk";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
+import { IStoreState } from "../shared/types";
 
 import Config, { IConfig } from "../shared/Config";
 
@@ -12,10 +13,10 @@ export const receiveConfig = createActionDeprecated("RECEIVE_CONFIG", (config: I
 const allActions = [requestConfig, receiveConfig];
 export type ConfigAction = ActionType<typeof allActions[number]>;
 
-export function getConfig() {
-  return async (dispatch: Dispatch) => {
+export function getConfig(): ThunkAction<Promise<void>, IStoreState, null, ConfigAction> {
+  return async dispatch => {
     dispatch(requestConfig());
     const config = await Config.getConfig();
-    return dispatch(receiveConfig(config));
+    dispatch(receiveConfig(config));
   };
 }

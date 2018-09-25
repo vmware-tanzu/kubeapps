@@ -12,7 +12,7 @@ import "./ChartView.css";
 
 interface IChartViewProps {
   chartID: string;
-  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => Promise<void>;
+  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => void;
   isFetching: boolean;
   selected: IChartState["selected"];
   selectChartVersion: (version: IChartVersion) => any;

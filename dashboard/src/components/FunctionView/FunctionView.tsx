@@ -29,10 +29,10 @@ interface IFunctionViewProps {
   namespace: string;
   function: IFunction | undefined;
   podName: string | undefined;
-  getFunction: (n: string, ns: string) => Promise<void>;
-  getPodName: (fn: IFunction) => Promise<void>;
+  getFunction: (n: string, ns: string) => void;
+  getPodName: (fn: IFunction) => void;
   deleteFunction: (n: string, ns: string) => Promise<boolean>;
-  updateFunction: (fn: Partial<IFunction>) => Promise<void>;
+  updateFunction: (fn: Partial<IFunction>) => void;
 }
 
 interface IFunctionViewState {
