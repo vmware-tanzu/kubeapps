@@ -6,6 +6,7 @@ import { IRBACRole } from "../../shared/types";
 import ErrorAlertHeader from "./ErrorAlertHeader";
 import PermissionsErrorAlert from "./PermissionsErrorAlert";
 import PermissionsListItem from "./PermissionsListItem";
+import { genericMessage } from "./UnexpectedErrorAlert";
 
 it("renders an error message for the action", () => {
   const roles: IRBACRole[] = [];
@@ -48,5 +49,5 @@ it("renders a link to access control documentation", () => {
   expect(wrapper.html()).toContain(
     '<a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md" target="_blank">',
   );
-  expect(wrapper.html()).not.toContain("Troubleshooting");
+  expect(wrapper.html()).not.toContain(shallow(genericMessage).html());
 });

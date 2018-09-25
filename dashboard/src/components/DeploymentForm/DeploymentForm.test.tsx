@@ -1,7 +1,8 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
+import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import DeploymentForm from "./DeploymentForm";
 
@@ -25,14 +26,14 @@ itBehavesLike("aLoadingComponent", { component: DeploymentForm, props: defaultPr
 
 describe("renders an error", () => {
   it("renders an error if it cannot find the given chart", () => {
-    const wrapper = shallow(
+    const wrapper = mount(
       <DeploymentForm
         {...defaultProps}
         selected={{ error: new NotFoundError() } as IChartState["selected"]}
       />,
     );
-    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
-    expect(wrapper.find(ErrorSelector).html()).toContain("Chart &quot;foo&quot; (1.0.0) not found");
+    expect(wrapper.find(ErrorPageHeader).exists()).toBe(true);
+    expect(wrapper.find(ErrorPageHeader).text()).toContain('Chart "foo" (1.0.0) not found');
   });
 
   it("renders a generic error", () => {

@@ -2,13 +2,12 @@ import { mount, shallow } from "enzyme";
 import * as React from "react";
 
 import ErrorPageHeader from "./ErrorAlertHeader";
-import UnexpectedErrorAlert from "./UnexpectedErrorAlert";
+import UnexpectedErrorAlert, { genericMessage } from "./UnexpectedErrorAlert";
 
 describe("when no text is passed", () => {
   it("renders a default troubleshooting info", () => {
     const wrapper = shallow(<UnexpectedErrorAlert />);
-    expect(wrapper.text()).toContain("Troubleshooting");
-    expect(wrapper.text()).toContain("Open an issue on GitHub");
+    expect(wrapper.text()).toContain(shallow(genericMessage).text());
     expect(wrapper).toMatchSnapshot();
   });
 });
@@ -41,8 +40,13 @@ describe("when text is passed", () => {
   });
 
   it("renders the text even if the generic text is disabled", () => {
-    const wrapper = mount(<UnexpectedErrorAlert {...defaultProps} showGenericMessage={false} />);
-    expect(wrapper.text()).toContain("Sorry! Something went wrong");
+    const wrapper = shallow(<UnexpectedErrorAlert {...defaultProps} showGenericMessage={false} />);
+    expect(
+      wrapper
+        .find(ErrorPageHeader)
+        .shallow()
+        .text(),
+    ).toContain("Sorry! Something went wrong");
     const messageWrapper = wrapper.find("p");
     expect(messageWrapper.text()).toContain(defaultProps.text);
   });
@@ -65,13 +69,11 @@ describe("icon", () => {
 describe("genericMessage", () => {
   it("renders the default message", () => {
     const wrapper = shallow(<UnexpectedErrorAlert />);
-    expect(wrapper.html()).toContain("Troubleshooting:");
-    expect(wrapper.html()).toContain("Check the health of Kubeapps components");
+    expect(wrapper.html()).toContain(shallow(genericMessage).html());
   });
   it("avoids the default message", () => {
     const wrapper = shallow(<UnexpectedErrorAlert showGenericMessage={false} />);
-    expect(wrapper.html()).not.toContain("Troubleshooting:");
-    expect(wrapper.html()).not.toContain("Check the health of Kubeapps components");
+    expect(wrapper.html()).not.toContain(shallow(genericMessage).html());
   });
 });
 

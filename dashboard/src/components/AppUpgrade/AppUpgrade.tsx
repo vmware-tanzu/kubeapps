@@ -50,18 +50,17 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
   }
 
   public render() {
-    const { app, repos, error, namespace, releaseName } = this.props;
+    const { app, repos, error, namespace, releaseName, repoError } = this.props;
     if (
       !repos ||
+      repos.length === 0 ||
       !app ||
       !app.chart ||
       !app.chart.metadata ||
       !app.chart.metadata.name ||
       !app.chart.metadata.version
     ) {
-      if (!error) {
-        return <LoadingWrapper />;
-      } else {
+      if (error) {
         return (
           <ErrorSelector
             error={error}
@@ -71,6 +70,18 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
             resource={releaseName}
           />
         );
+      } else if (repoError) {
+        return (
+          <ErrorSelector
+            error={repoError}
+            namespace={this.props.kubeappsNamespace}
+            action="view"
+            defaultRequiredRBACRoles={{ view: this.requiredRBACRoles() }}
+            resource="App Repositories"
+          />
+        );
+      } else {
+        return <LoadingWrapper />;
       }
     }
     if (!this.props.repo.metadata) {

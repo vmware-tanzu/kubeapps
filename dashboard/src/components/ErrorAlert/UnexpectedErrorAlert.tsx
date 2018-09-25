@@ -12,7 +12,7 @@ interface IUnexpectedErrorPage {
   title?: string | JSX.Element;
 }
 
-const genericMessage = (
+export const genericMessage = (
   <div>
     <p>Troubleshooting:</p>
     <ul className="error__troubleshooting">

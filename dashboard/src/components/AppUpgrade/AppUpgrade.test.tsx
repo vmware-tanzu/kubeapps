@@ -1,9 +1,11 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 
 import { hapi } from "shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IAppRepository, IChartState } from "../../shared/types";
+import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import UpgradeForm from "../UpgradeForm";
@@ -58,55 +60,80 @@ it("renders the repo selection form if not introduced", () => {
       ]}
     />,
   );
-  expect(wrapper.find(SelectRepoForm).exists()).toBe(true);
-  expect(wrapper.find(ErrorSelector).exists()).toBe(false);
-  expect(wrapper.find(UpgradeForm).exists()).toBe(false);
+  expect(wrapper.find(SelectRepoForm)).toExist();
+  expect(wrapper.find(ErrorSelector)).not.toExist();
+  expect(wrapper.find(UpgradeForm)).not.toExist();
   expect(wrapper).toMatchSnapshot();
 });
 
-it("renders an error if it exists", () => {
-  const repo = {
-    metadata: { name: "stable" },
-  } as IAppRepository;
-  const wrapper = shallow(
-    <AppUpgrade
-      {...defaultProps}
-      error={new Error("foo doesn't exists")}
-      repos={[repo]}
-      repo={repo}
-    />,
-  );
-  expect(wrapper.find(ErrorSelector).exists()).toBe(true);
-  expect(wrapper.find(SelectRepoForm).exists()).toBe(false);
-  expect(wrapper.find(UpgradeForm).exists()).toBe(false);
-  expect(wrapper.html()).toContain("Sorry! Something went wrong.");
-  expect(wrapper).toMatchSnapshot();
-});
+context("when an error exists", () => {
+  it("renders a generic error message", () => {
+    const repo = {
+      metadata: { name: "stable" },
+    } as IAppRepository;
+    const wrapper = shallow(
+      <AppUpgrade
+        {...defaultProps}
+        error={new Error("foo doesn't exists")}
+        repos={[repo]}
+        repo={repo}
+      />,
+    );
 
-it("renders a forbidden error", () => {
-  const repo = {
-    metadata: { name: "stable" },
-  } as IAppRepository;
-  const wrapper = shallow(
-    <AppUpgrade {...defaultProps} error={new ForbiddenError()} repos={[repo]} repo={repo} />,
-  );
-  expect(wrapper.find(ErrorSelector).exists()).toBe(true);
-  expect(wrapper.find(SelectRepoForm).exists()).toBe(false);
-  expect(wrapper.find(UpgradeForm).exists()).toBe(false);
-  expect(wrapper.html()).toContain(
-    "You don&#x27;t have sufficient permissions to update foo in <span>the <code>default</code> namespace</span>",
-  );
-  expect(
-    wrapper
-      .find(ErrorSelector)
-      .shallow()
-      .find(PermissionsErrorPage)
-      .prop("roles")[0],
-  ).toMatchObject({
-    apiGroup: "kubeapps.com",
-    namespace: "kubeapps",
-    resource: "apprepositories",
-    verbs: ["get"],
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(SelectRepoForm)).not.toExist();
+    expect(wrapper.find(UpgradeForm)).not.toExist();
+
+    expect(wrapper.html()).toContain("Sorry! Something went wrong.");
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders a forbidden message", () => {
+    const repo = {
+      metadata: { name: "stable" },
+    } as IAppRepository;
+    const role = {
+      apiGroup: "kubeapps.com",
+      namespace: "kubeapps",
+      resource: "apprepositories",
+      verbs: ["get"],
+    };
+    const wrapper = mount(
+      <AppUpgrade
+        {...defaultProps}
+        error={new ForbiddenError(JSON.stringify([role]))}
+        repos={[repo]}
+        repo={repo}
+      />,
+    );
+
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(SelectRepoForm)).not.toExist();
+    expect(wrapper.find(UpgradeForm)).not.toExist();
+
+    expect(wrapper.find(ErrorPageHeader).text()).toContain(
+      "You don't have sufficient permissions to update foo in the default namespace",
+    );
+    expect(wrapper.find(PermissionsErrorPage).prop("roles")[0]).toMatchObject(role);
+  });
+
+  it("renders a forbidden message for the repositories", () => {
+    const role = {
+      apiGroup: "kubeapps.com",
+      namespace: "kubeapps",
+      resource: "apprepositories",
+      verbs: ["get"],
+    };
+    const wrapper = mount(<AppUpgrade {...defaultProps} repoError={new ForbiddenError()} />);
+
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(SelectRepoForm)).not.toExist();
+    expect(wrapper.find(UpgradeForm)).not.toExist();
+
+    expect(wrapper.find(ErrorPageHeader).text()).toContain(
+      "You don't have sufficient permissions to view App Repositories in the kubeapps namespace",
+    );
+    expect(wrapper.find(PermissionsErrorPage).prop("roles")[0]).toMatchObject(role);
   });
 });
 
@@ -132,8 +159,8 @@ it("renders the upgrade form when the repo is available", () => {
       repo={repo}
     />,
   );
-  expect(wrapper.find(UpgradeForm).exists()).toBe(true);
-  expect(wrapper.find(ErrorSelector).exists()).toBe(false);
-  expect(wrapper.find(SelectRepoForm).exists()).toBe(false);
+  expect(wrapper.find(UpgradeForm)).toExist();
+  expect(wrapper.find(ErrorSelector)).not.toExist();
+  expect(wrapper.find(SelectRepoForm)).not.toExist();
   expect(wrapper).toMatchSnapshot();
 });

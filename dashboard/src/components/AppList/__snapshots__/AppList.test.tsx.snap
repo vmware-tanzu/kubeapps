@@ -107,6 +107,41 @@ exports[`when error present matches the snapshot 1`] = `
 </section>
 `;
 
+exports[`when error present renders a generic error message 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+      </div>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    />
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+    >
+      <ErrorSelector
+        action="list"
+        error="Boom!"
+        namespace="default"
+        resource="Applications"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
 exports[`when fetched but not apps available matches the snapshot 1`] = `
 <section
   className="AppList"

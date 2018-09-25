@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IAppRepository, IRBACRole } from "../../shared/types";
+import { IAppRepository } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
@@ -36,8 +36,6 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
             {this.props.error && (
               <ErrorSelector
                 error={this.props.error}
-                defaultRequiredRBACRoles={{ view: [this.requiredRBACRoles()] }}
-                action="view"
                 resource={`Chart ${this.state.repo}/${this.props.chartName}`}
               />
             )}
@@ -87,15 +85,6 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
     });
     return res;
   };
-
-  private requiredRBACRoles(): IRBACRole {
-    return {
-      apiGroup: "kubeapps.com",
-      namespace: this.props.kubeappsNamespace,
-      resource: "apprepositories",
-      verbs: ["get"],
-    };
-  }
 }
 
 export default SelectRepoForm;

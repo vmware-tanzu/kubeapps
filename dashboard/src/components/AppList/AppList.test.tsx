@@ -6,6 +6,7 @@ import itBehavesLike from "../../shared/specs";
 import { IAppOverview, IAppState } from "../../shared/types";
 import { CardGrid } from "../Card";
 import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import { genericMessage } from "../ErrorAlert/UnexpectedErrorAlert";
 import AppList from "./AppList";
 import AppListItem from "./AppListItem";
 
@@ -80,7 +81,8 @@ context("when error present", () => {
     const wrapper = shallow(<AppList {...props} />);
     expect(wrapper.find(ErrorSelector)).toExist();
     expect(wrapper.find(ErrorSelector).html()).toContain("Sorry! Something went wrong.");
-    expect(wrapper.find(ErrorSelector).html()).toContain("Troubleshooting:");
+    expect(wrapper.find(ErrorSelector).html()).toContain(shallow(genericMessage).html());
+    expect(wrapper).toMatchSnapshot();
   });
 
   it("renders a Application header", () => {

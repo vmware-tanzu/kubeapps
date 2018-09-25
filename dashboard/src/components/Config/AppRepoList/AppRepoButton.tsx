@@ -29,13 +29,10 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-let submittedName = "";
-
 export const AppRepoForm = (props: IAppRepoFormProps) => {
   const { name, url, authHeader, update, install, onAfterInstall } = props;
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    submittedName = name;
     const installed = await install(name, url, authHeader);
     if (installed && onAfterInstall) {
       await onAfterInstall();
@@ -111,6 +108,7 @@ interface IAppRepoAddButtonProps {
 }
 interface IAppRepoAddButtonState {
   authHeader: string;
+  lastSubmittedName: string;
   modalIsOpen: boolean;
   name: string;
   url: string;
@@ -123,13 +121,14 @@ export class AppRepoAddButton extends React.Component<
   public state = {
     authHeader: "",
     error: undefined,
+    lastSubmittedName: "",
     modalIsOpen: false,
     name: "",
     url: "",
   };
 
   public render() {
-    const { redirectTo, install } = this.props;
+    const { redirectTo } = this.props;
     const { name, url, authHeader } = this.state;
     return (
       <div className="AppRepoAddButton">
@@ -147,7 +146,7 @@ export class AppRepoAddButton extends React.Component<
               defaultRequiredRBACRoles={{ create: RequiredRBACRoles }}
               action="create"
               namespace={this.props.kubeappsNamespace}
-              resource={`App Repository ${submittedName}`}
+              resource={`App Repository ${this.state.lastSubmittedName}`}
             />
           )}
           <AppRepoForm
@@ -155,7 +154,7 @@ export class AppRepoAddButton extends React.Component<
             url={url}
             authHeader={authHeader}
             update={this.updateValues}
-            install={install}
+            install={this.install}
             onAfterInstall={this.closeModal}
           />
         </Modal>
@@ -165,6 +164,11 @@ export class AppRepoAddButton extends React.Component<
   }
 
   private closeModal = async () => this.setState({ modalIsOpen: false });
+  private install = (name: string, url: string, authHeader: string) => {
+    // Store last submitted name to show it in an error if needed
+    this.setState({ lastSubmittedName: this.state.name });
+    return this.props.install(name, url, authHeader);
+  };
   private openModal = async () => this.setState({ modalIsOpen: true });
   private updateValues = async (values: { name: string; url: string; authHeader: string }) =>
     this.setState({ ...values });

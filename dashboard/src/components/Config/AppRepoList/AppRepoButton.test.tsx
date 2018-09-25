@@ -22,6 +22,7 @@ it("should install a repository", done => {
   const wrapper = mount(<AppRepoAddButton {...defaultProps} install={install} />);
   ReactModal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true, name: "my-repo", url: "http://foo.bar" });
+  wrapper.update();
 
   const button = wrapper.find(AppRepoForm).find(".button");
   button.simulate("submit");
@@ -29,7 +30,7 @@ it("should install a repository", done => {
   expect(install).toBeCalledWith("my-repo", "http://foo.bar", "");
   // Wait for the Modal to be closed
   setTimeout(() => {
-    expect(wrapper.state().modalIsOpen).toBe(false);
+    expect(wrapper.state("modalIsOpen")).toBe(false);
     done();
   }, 1);
 });
@@ -39,6 +40,7 @@ describe("render error", () => {
     const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
     ReactModal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true, name: "my-repo" });
+    wrapper.update();
 
     const button = wrapper.find(AppRepoForm).find(".button");
     button.simulate("submit");
@@ -54,10 +56,12 @@ describe("render error", () => {
       "App Repository my-repo already exists, try a different name.",
     );
   });
+
   it("renders an 'unprocessable entity' error", () => {
     const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
     ReactModal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true, name: "my-repo" });
+    wrapper.update();
 
     const button = wrapper.find(AppRepoForm).find(".button");
     button.simulate("submit");
