@@ -27,15 +27,15 @@ interface IAppUpgradeProps {
     namespace: string,
     values?: string,
   ) => Promise<boolean>;
-  clearRepo: () => Promise<void>;
-  checkChart: (repo: string, chartName: string) => Promise<void>;
+  clearRepo: () => void;
+  checkChart: (repo: string, chartName: string) => void;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
-  getBindings: () => Promise<void>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
-  getChartValues: (id: string, chartVersion: string) => Promise<void>;
+  getApp: (releaseName: string, namespace: string) => void;
+  getBindings: (ns: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
-  fetchRepositories: () => Promise<void>;
+  fetchRepositories: () => void;
 }
 
 interface IAppUpgradeState {

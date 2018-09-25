@@ -15,7 +15,7 @@ interface IChartListProps {
   charts: IChartState;
   repo: string;
   filter: string;
-  fetchCharts: (repo: string) => Promise<void>;
+  fetchCharts: (repo: string) => void;
   pushSearchFilter: (filter: string) => RouterAction;
 }
 

@@ -7,7 +7,7 @@ import ConfirmDialog from "../../ConfirmDialog";
 interface IAppRepoListItemProps {
   repo: IAppRepository;
   deleteRepo: (name: string) => Promise<boolean>;
-  resyncRepo: (name: string) => Promise<void>;
+  resyncRepo: (name: string) => void;
 }
 
 interface IAppRepoListItemState {

@@ -30,10 +30,10 @@ interface IDeploymentFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
-  getBindings: (ns: string) => Promise<void>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
-  getChartValues: (id: string, chartVersion: string) => Promise<void>;
-  clearRepo: () => Promise<void>;
+  getBindings: (ns: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => void;
+  clearRepo: () => void;
 }
 
 interface IDeploymentFormState {

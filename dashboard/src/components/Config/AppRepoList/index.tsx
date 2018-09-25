@@ -13,9 +13,9 @@ export interface IAppRepoListProps {
     update?: Error;
   };
   repos: IAppRepository[];
-  fetchRepos: () => Promise<void>;
+  fetchRepos: () => void;
   deleteRepo: (name: string) => Promise<boolean>;
-  resyncRepo: (name: string) => Promise<void>;
+  resyncRepo: (name: string) => void;
   install: (name: string, url: string, authHeader: string) => Promise<boolean>;
   kubeappsNamespace: string;
 }

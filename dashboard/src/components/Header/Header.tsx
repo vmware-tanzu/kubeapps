@@ -14,7 +14,7 @@ import "./Header.css";
 
 interface IHeaderProps {
   authenticated: boolean;
-  fetchNamespaces: () => Promise<void>;
+  fetchNamespaces: () => void;
   logout: () => void;
   namespace: INamespaceState;
   pathname: string;
