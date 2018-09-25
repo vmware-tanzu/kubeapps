@@ -26,7 +26,7 @@ function mapStateToProps({
   };
 }
 
-function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, void, Action>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
     logout: (token: string) => dispatch(actions.auth.logout()),

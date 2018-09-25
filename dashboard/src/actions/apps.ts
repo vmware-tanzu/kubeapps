@@ -1,4 +1,3 @@
-import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
 import { App } from "../shared/App";
@@ -55,8 +54,11 @@ const allActions = [
 
 export type AppsAction = ActionType<typeof allActions[number]>;
 
-export function getApp(releaseName: string, namespace: string) {
-  return async (dispatch: Dispatch): Promise<void> => {
+export function getApp(
+  releaseName: string,
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
     dispatch(requestApps());
     try {
       const app = await App.getRelease(namespace, releaseName);
@@ -67,8 +69,12 @@ export function getApp(releaseName: string, namespace: string) {
   };
 }
 
-export function deleteApp(releaseName: string, namespace: string, purge: boolean) {
-  return async (dispatch: Dispatch): Promise<boolean> => {
+export function deleteApp(
+  releaseName: string,
+  namespace: string,
+  purge: boolean,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+  return async dispatch => {
     try {
       await App.delete(releaseName, namespace, purge);
       return true;
@@ -83,7 +89,7 @@ export function fetchApps(
   ns?: string,
   all: boolean = false,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
-  return async (dispatch: Dispatch): Promise<void> => {
+  return async dispatch => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
@@ -97,8 +103,6 @@ export function fetchApps(
   };
 }
 
-// TODO(miguel) This action creator is properly typed. We should do the same for the rest
-// https://github.com/kubeapps/kubeapps/issues/658
 export function deployChart(
   chartVersion: IChartVersion,
   releaseName: string,
@@ -131,8 +135,8 @@ export function upgradeApp(
   releaseName: string,
   namespace: string,
   values?: string,
-) {
-  return async (dispatch: Dispatch, getState: () => IStoreState): Promise<boolean> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+  return async (dispatch, getState) => {
     try {
       const {
         config: { namespace: kubeappsNamespace },

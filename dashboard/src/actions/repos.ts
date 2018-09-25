@@ -1,7 +1,5 @@
+import { ThunkAction } from "redux-thunk";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
-
-import { Dispatch } from "redux";
-import { ThunkDispatch } from "redux-thunk";
 
 import { AppRepository } from "../shared/AppRepository";
 import Secret from "../shared/Secret";
@@ -66,6 +64,7 @@ const allActions = [
   receiveRepo,
   receiveRepos,
   resetForm,
+  requestRepo,
   submitForm,
   updateForm,
   showForm,
@@ -75,11 +74,10 @@ const allActions = [
 ];
 export type AppReposAction = ActionType<typeof allActions[number]>;
 
-export const deleteRepo = (name: string) => {
-  return async (
-    dispatch: ThunkDispatch<IStoreState, null, AppReposAction>,
-    getState: () => IStoreState,
-  ) => {
+export const deleteRepo = (
+  name: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     try {
       const {
         config: { namespace },
@@ -94,8 +92,10 @@ export const deleteRepo = (name: string) => {
   };
 };
 
-export const resyncRepo = (name: string) => {
-  return async (dispatch: Dispatch, getState: () => IStoreState) => {
+export const resyncRepo = (
+  name: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     try {
       const {
         config: { namespace },
@@ -114,8 +114,8 @@ export const resyncRepo = (name: string) => {
   };
 };
 
-export const fetchRepos = () => {
-  return async (dispatch: Dispatch, getState: () => IStoreState) => {
+export const fetchRepos = (): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     dispatch(requestRepos());
     try {
       const {
@@ -129,8 +129,12 @@ export const fetchRepos = () => {
   };
 };
 
-export const installRepo = (name: string, repoURL: string, authHeader: string) => {
-  return async (dispatch: Dispatch, getState: () => IStoreState) => {
+export const installRepo = (
+  name: string,
+  repoURL: string,
+  authHeader: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     try {
       const {
         config: { namespace },
@@ -174,8 +178,11 @@ export const installRepo = (name: string, repoURL: string, authHeader: string) =
   };
 };
 
-export function checkChart(repo: string, chartName: string) {
-  return async (dispatch: Dispatch, getState: () => IStoreState) => {
+export function checkChart(
+  repo: string,
+  chartName: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
+  return async (dispatch, getState) => {
     const {
       config: { namespace },
     } = getState();
@@ -192,8 +199,8 @@ export function checkChart(repo: string, chartName: string) {
   };
 }
 
-export function clearRepo() {
-  return async (dispatch: Dispatch) => {
+export function clearRepo(): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
+  return async dispatch => {
     dispatch(receiveRepo({} as IAppRepository));
   };
 }
