@@ -13,7 +13,15 @@ beforeEach(() => {
 });
 
 // Regular action creators
-const actionTestCases = [
+// Regular action creators
+interface ITestCase {
+  name: string;
+  action: (...args: any[]) => any;
+  args?: any;
+  payload?: any;
+}
+
+const actionTestCases: ITestCase[] = [
   { name: "setNamespace", action: setNamespace, args: "jack", payload: "jack" },
   {
     name: "receiveNamespces",

@@ -22,6 +22,11 @@ export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
   return (repo: IAppRepository) => resolve(repo);
 });
 
+// Clear repo is basically receiving an empty repo
+export const clearRepo = createAction("RECEIVE_REPO", resolve => {
+  return (repo: IAppRepository) => resolve({});
+});
+
 export const showForm = createAction("SHOW_FORM");
 export const hideForm = createAction("HIDE_FORM");
 export const resetForm = createAction("RESET_FORM");
@@ -39,6 +44,7 @@ export const errorRepos = createAction("ERROR_REPOS", resolve => {
 const allActions = [
   addRepo,
   addedRepo,
+  clearRepo,
   errorRepos,
   requestRepos,
   receiveRepo,
@@ -176,11 +182,5 @@ export function checkChart(
         errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
     }
-  };
-}
-
-export function clearRepo(): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
-  return async dispatch => {
-    dispatch(receiveRepo({} as IAppRepository));
   };
 }
