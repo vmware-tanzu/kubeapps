@@ -20,7 +20,7 @@ const configReducer = (state: IConfigState = initialState, action: ConfigAction)
     case getType(actions.config.receiveConfig):
       return {
         loaded: true,
-        ...action.config,
+        ...action.payload,
       };
     default:
   }
