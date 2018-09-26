@@ -107,3 +107,45 @@ context("when name or namespace do not exist", () => {
     props: { ...props, app: { ...props.app, namespace: null } },
   });
 });
+
+context("when the application has been already deleted", () => {
+  const props = {
+    app: new hapi.release.Release({ name: "name", namespace: "my-ns", info: { deleted: {} } }),
+    deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
+  };
+
+  it("should show Purge instead of Delete in the button title", () => {
+    const wrapper = shallow(<AppControls {...props} />);
+    const button = wrapper.find(".button-danger");
+    expect(button.text()).toBe("Purge");
+  });
+
+  it("should not show the purge checkbox", () => {
+    // mount() is necessary to render the Modal
+    const wrapper = mount(<AppControls {...props} />);
+    ReactModal.setAppElement(document.createElement("div"));
+    wrapper.setState({ modalIsOpen: true });
+    wrapper.update();
+
+    const confirm = wrapper.find(ConfirmDialog);
+    expect(confirm.exists()).toBe(true);
+    const checkbox = wrapper.find('input[type="checkbox"]');
+    expect(checkbox).not.toExist();
+  });
+
+  it("should purge when clicking on delete", () => {
+    // mount() is necessary to render the Modal
+    const deleteApp = jest.fn(() => false);
+    const wrapper = mount(<AppControls {...props} deleteApp={deleteApp} />);
+    ReactModal.setAppElement(document.createElement("div"));
+    wrapper.setState({ modalIsOpen: true, purge: false });
+    wrapper.update();
+
+    const confirm = wrapper.find(ConfirmDialog);
+    expect(confirm.exists()).toBe(true);
+
+    // Check that the "purge" is forwarded to deleteApp
+    confirm.props().onConfirm(); // Simulate confirmation
+    expect(deleteApp.mock.calls[0]).toEqual([true]);
+  });
+});
