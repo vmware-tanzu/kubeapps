@@ -1,38 +1,32 @@
 import { shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 
+import itBehavesLike from "../../shared/specs";
 import { IAppOverview, IAppState } from "../../shared/types";
 import { CardGrid } from "../Card";
 import AppList from "./AppList";
 import AppListItem from "./AppListItem";
 
-let defaultProps = {} as any;
 let props = {} as any;
 
-beforeEach(() => {
-  defaultProps = {
-    apps: {} as IAppState,
-    fetchApps: jest.fn(),
-    filter: "",
-    namespace: "default",
-    pushSearchFilter: jest.fn(),
-    toggleListAll: jest.fn(),
-  };
-});
+const defaultProps: any = {
+  apps: {} as IAppState,
+  fetchApps: jest.fn(),
+  filter: "",
+  namespace: "default",
+  pushSearchFilter: jest.fn(),
+  toggleListAll: jest.fn(),
+};
 
-describe("while fetching apps", () => {
-  beforeEach(() => {
-    props = { ...defaultProps, apps: { isFetching: true } };
-  });
+context("while fetching apps", () => {
+  props = { ...defaultProps, apps: { isFetching: true } };
+
+  itBehavesLike("aLoadingComponent", { component: AppList, props });
 
   it("matches the snapshot", () => {
     const wrapper = shallow(<AppList {...props} />);
     expect(wrapper).toMatchSnapshot();
-  });
-
-  it("renders a loading message", () => {
-    const wrapper = shallow(<AppList {...props} />);
-    expect(wrapper.text()).toContain("Loading");
   });
 
   it("renders a Application header", () => {
@@ -48,7 +42,7 @@ describe("while fetching apps", () => {
   });
 });
 
-describe("when fetched but not apps available", () => {
+context("when fetched but not apps available", () => {
   beforeEach(() => {
     props = { ...defaultProps, apps: { listOverview: [] } };
   });
@@ -71,7 +65,7 @@ describe("when fetched but not apps available", () => {
   });
 });
 
-describe("when error present", () => {
+context("when error present", () => {
   beforeEach(() => {
     props = { ...defaultProps, apps: { error: "Boom!" } };
   });
@@ -99,7 +93,7 @@ describe("when error present", () => {
   });
 });
 
-describe("when apps available", () => {
+context("when apps available", () => {
   beforeEach(() => {
     props = {
       ...defaultProps,

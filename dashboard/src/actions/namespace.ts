@@ -1,32 +1,36 @@
-import { Dispatch } from "react-redux";
-import { createAction, getReturnOfExpression } from "typesafe-actions";
+import { ThunkAction } from "redux-thunk";
+
+import { ActionType, createActionDeprecated } from "typesafe-actions";
 
 import Namespace from "../shared/Namespace";
 import { IResource, IStoreState } from "../shared/types";
 
-export const setNamespace = createAction("SET_NAMESPACE", (namespace: string) => {
+export const setNamespace = createActionDeprecated("SET_NAMESPACE", (namespace: string) => {
   return {
     namespace,
     type: "SET_NAMESPACE",
   };
 });
 
-export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", (namespaces: string[]) => {
-  return {
-    namespaces,
-    type: "RECEIVE_NAMESPACES",
-  };
-});
+export const receiveNamespaces = createActionDeprecated(
+  "RECEIVE_NAMESPACES",
+  (namespaces: string[]) => {
+    return {
+      namespaces,
+      type: "RECEIVE_NAMESPACES",
+    };
+  },
+);
 
-const allActions = [setNamespace, receiveNamespaces].map(getReturnOfExpression);
-export type NamespaceAction = typeof allActions[number];
+const allActions = [setNamespace, receiveNamespaces];
+export type NamespaceAction = ActionType<typeof allActions[number]>;
 
-export function fetchNamespaces() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+  return async dispatch => {
     try {
       const namespaces = await Namespace.list();
       const namespaceStrings = namespaces.items.map((n: IResource) => n.metadata.name);
-      return dispatch(receiveNamespaces(namespaceStrings));
+      dispatch(receiveNamespaces(namespaceStrings));
     } catch (e) {
       // TODO: handle namespace call error
       return;

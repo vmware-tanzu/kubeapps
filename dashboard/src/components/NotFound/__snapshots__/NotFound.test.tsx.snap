@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render the 404 page 1`] = `
+<div
+  className="text-c align-center margin-t-huge"
+>
+  <h3>
+    The page you are looking for can't be found.
+  </h3>
+  <img
+    alt="Kubeapps logo"
+  />
+</div>
+`;

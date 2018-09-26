@@ -8,7 +8,7 @@ export interface ICardContentProps {
 class CardContent extends React.Component<ICardContentProps> {
   public render() {
     return (
-      <div className={`Card__content padding-normal ${this.props.className}`}>
+      <div className={`Card__content padding-normal ${this.props.className || ""}`}>
         {this.props.children}
       </div>
     );

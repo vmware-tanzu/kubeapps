@@ -1,5 +1,6 @@
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import AppView from "../../components/AppView";
@@ -24,7 +25,7 @@ function mapStateToProps({ apps }: IStoreState, { match: { params } }: IRoutePro
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     deleteApp: (releaseName: string, ns: string, purge: boolean) =>
       dispatch(actions.apps.deleteApp(releaseName, ns, purge)),
@@ -32,4 +33,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppView);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(AppView);

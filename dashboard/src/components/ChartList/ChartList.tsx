@@ -1,3 +1,4 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
@@ -5,6 +6,7 @@ import { IChart, IChartState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { NotFoundErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import ChartListItem from "./ChartListItem";
@@ -13,8 +15,8 @@ interface IChartListProps {
   charts: IChartState;
   repo: string;
   filter: string;
-  fetchCharts: (repo: string) => Promise<{}>;
-  pushSearchFilter: (filter: string) => any;
+  fetchCharts: (repo: string) => void;
+  pushSearchFilter: (filter: string) => RouterAction;
 }
 
 interface IChartListState {
@@ -39,7 +41,10 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
   }
 
   public render() {
-    const { charts: { isFetching, items: allItems }, pushSearchFilter } = this.props;
+    const {
+      charts: { isFetching, items: allItems },
+      pushSearchFilter,
+    } = this.props;
     const items = this.filteredCharts(allItems, this.state.filter);
     if (!isFetching && allItems.length === 0) {
       return (
@@ -67,7 +72,9 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
             onSubmit={pushSearchFilter}
           />
         </PageHeader>
-        {isFetching ? <div>Loading...</div> : <CardGrid>{chartItems}</CardGrid>}
+        <LoadingWrapper loaded={!isFetching}>
+          <CardGrid>{chartItems}</CardGrid>
+        </LoadingWrapper>
       </section>
     );
   }

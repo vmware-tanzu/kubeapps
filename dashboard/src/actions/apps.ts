@@ -1,38 +1,41 @@
-import { Dispatch } from "redux";
-import { createAction, getReturnOfExpression } from "typesafe-actions";
+import { ThunkAction } from "redux-thunk";
+import { ActionType, createActionDeprecated } from "typesafe-actions";
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
 import { IAppOverview, IChartVersion, IStoreState, UnprocessableEntity } from "../shared/types";
 
-export const requestApps = createAction("REQUEST_APPS");
-export const receiveApps = createAction("RECEIVE_APPS", (apps: hapi.release.Release[]) => {
-  return {
-    apps,
-    type: "RECEIVE_APPS",
-  };
-});
-export const listApps = createAction("REQUEST_APP_LIST", (listingAll: boolean) => {
+export const requestApps = createActionDeprecated("REQUEST_APPS");
+export const receiveApps = createActionDeprecated(
+  "RECEIVE_APPS",
+  (apps: hapi.release.Release[]) => {
+    return {
+      apps,
+      type: "RECEIVE_APPS",
+    };
+  },
+);
+export const listApps = createActionDeprecated("REQUEST_APP_LIST", (listingAll: boolean) => {
   return {
     listingAll,
     type: "REQUEST_APP_LIST",
   };
 });
-export const receiveAppList = createAction("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
+export const receiveAppList = createActionDeprecated("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
   return {
     apps,
     type: "RECEIVE_APP_LIST",
   };
 });
-export const errorApps = createAction("ERROR_APPS", (err: Error) => ({
+export const errorApps = createActionDeprecated("ERROR_APPS", (err: Error) => ({
   err,
   type: "ERROR_APPS",
 }));
-export const errorDeleteApp = createAction("ERROR_DELETE_APP", (err: Error) => ({
+export const errorDeleteApp = createActionDeprecated("ERROR_DELETE_APP", (err: Error) => ({
   err,
   type: "ERROR_DELETE_APP",
 }));
-export const selectApp = createAction("SELECT_APP", (app: hapi.release.Release) => {
+export const selectApp = createActionDeprecated("SELECT_APP", (app: hapi.release.Release) => {
   return {
     app,
     type: "SELECT_APP",
@@ -47,11 +50,15 @@ const allActions = [
   errorApps,
   errorDeleteApp,
   selectApp,
-].map(getReturnOfExpression);
-export type AppsAction = typeof allActions[number];
+];
 
-export function getApp(releaseName: string, namespace: string) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
+export type AppsAction = ActionType<typeof allActions[number]>;
+
+export function getApp(
+  releaseName: string,
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
     dispatch(requestApps());
     try {
       const app = await App.getRelease(namespace, releaseName);
@@ -62,8 +69,12 @@ export function getApp(releaseName: string, namespace: string) {
   };
 }
 
-export function deleteApp(releaseName: string, namespace: string, purge: boolean) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<boolean> => {
+export function deleteApp(
+  releaseName: string,
+  namespace: string,
+  purge: boolean,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+  return async dispatch => {
     try {
       await App.delete(releaseName, namespace, purge);
       return true;
@@ -74,8 +85,11 @@ export function deleteApp(releaseName: string, namespace: string, purge: boolean
   };
 }
 
-export function fetchApps(ns?: string, all: boolean = false) {
-  return async (dispatch: Dispatch<IStoreState>): Promise<void> => {
+export function fetchApps(
+  ns?: string,
+  all: boolean = false,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
@@ -94,8 +108,8 @@ export function deployChart(
   releaseName: string,
   namespace: string,
   values?: string,
-) {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+  return async (dispatch, getState) => {
     try {
       // You can not deploy applications unless the namespace is set
       if (namespace === definedNamespaces.all) {
@@ -104,7 +118,9 @@ export function deployChart(
         );
       }
 
-      const { config: { namespace: kubeappsNamespace } } = getState();
+      const {
+        config: { namespace: kubeappsNamespace },
+      } = getState();
       await App.create(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;
     } catch (e) {
@@ -119,10 +135,12 @@ export function upgradeApp(
   releaseName: string,
   namespace: string,
   values?: string,
-) {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState): Promise<boolean> => {
+): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+  return async (dispatch, getState) => {
     try {
-      const { config: { namespace: kubeappsNamespace } } = getState();
+      const {
+        config: { namespace: kubeappsNamespace },
+      } = getState();
       await App.upgrade(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       return true;
     } catch (e) {

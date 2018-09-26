@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`cssClass should render with the default class 1`] = `
+<article
+  className="Card "
+>
+  <div
+    className="Card__inner bg-white elevation-1"
+  />
+</article>
+`;

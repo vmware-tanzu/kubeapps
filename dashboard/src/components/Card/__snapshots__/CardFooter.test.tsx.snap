@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render the children elements 1`] = `
+<div
+  className="Card__footer padding-h-normal "
+>
+  <hr
+    className="separator-small"
+  />
+  <div
+    className="padding-b-normal"
+  >
+    <div>
+      foo
+    </div>
+  </div>
+</div>
+`;

@@ -1,11 +1,12 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import AceEditor from "react-ace";
-import { RouterAction } from "react-router-redux";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion } from "../../shared/types";
 import DeploymentBinding from "../DeploymentForm/DeploymentBinding";
 import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
@@ -28,11 +29,11 @@ interface IDeploymentFormProps {
     values?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (id: string) => Promise<{}>;
-  getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
-  getChartValues: (id: string, chartVersion: string) => Promise<any>;
-  clearRepo: () => any;
+  fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
+  getBindings: (ns: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => void;
+  clearRepo: () => void;
 }
 
 interface IDeploymentFormState {
@@ -103,7 +104,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       return <DeploymentErrors {...this.props} version={appCurrentVersion} />;
     }
     if (!version || !versions || !versions.length || this.state.isDeploying) {
-      return <div> Loading </div>;
+      return <LoadingWrapper />;
     }
     return (
       <div>

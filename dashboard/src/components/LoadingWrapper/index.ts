@@ -1,3 +1,3 @@
-import LoadingWrapper from "./LoadingWrapper";
-
+import LoadingWrapper, { ILoadingWrapperProps } from "./LoadingWrapper";
+export { ILoadingWrapperProps };
 export default LoadingWrapper;

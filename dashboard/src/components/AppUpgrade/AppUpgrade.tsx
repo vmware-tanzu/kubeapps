@@ -1,10 +1,11 @@
 import * as React from "react";
 
-import { RouterAction } from "react-router-redux";
+import { RouterAction } from "connected-react-router";
 import { hapi } from "../../shared/hapi/release";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";
 import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import LoadingWrapper from "../LoadingWrapper";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 
@@ -26,15 +27,15 @@ interface IAppUpgradeProps {
     namespace: string,
     values?: string,
   ) => Promise<boolean>;
-  clearRepo: () => any;
-  checkChart: (repo: string, chartName: string) => any;
-  fetchChartVersions: (id: string) => Promise<{}>;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
-  getBindings: () => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
-  getChartValues: (id: string, chartVersion: string) => Promise<any>;
+  clearRepo: () => void;
+  checkChart: (repo: string, chartName: string) => void;
+  fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
+  getApp: (releaseName: string, namespace: string) => void;
+  getBindings: (ns: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
-  fetchRepositories: () => Promise<void>;
+  fetchRepositories: () => void;
 }
 
 interface IAppUpgradeState {
@@ -59,7 +60,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
       !app.chart.metadata.version
     ) {
       if (!error) {
-        return <div>Loading</div>;
+        return <LoadingWrapper />;
       } else {
         return (
           <DeploymentErrors

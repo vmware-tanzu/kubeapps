@@ -1,5 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
+import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
@@ -21,10 +22,7 @@ const defaultProps = {
   namespace: "default",
 };
 
-it("renders a loading message if the selected chart is not ready", () => {
-  const wrapper = shallow(<DeploymentForm {...defaultProps} />);
-  expect(wrapper.text()).toContain("Loading");
-});
+itBehavesLike("aLoadingComponent", { component: DeploymentForm, props: defaultProps });
 
 describe("renders an error", () => {
   it("renders an error if it cannot find the given chart", () => {

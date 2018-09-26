@@ -1,6 +1,5 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
-import { RouterAction } from "react-router-redux";
-
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { definedNamespaces } from "../../shared/Namespace";
 import { IServicePlan } from "../../shared/ServiceCatalog";
@@ -100,7 +99,9 @@ export class ClassView extends React.Component<IClassViewProps> {
                     const bullets = (
                       <div>
                         <ul className="margin-reset">
-                          {description.map(bullet => <li key={bullet}>{bullet}</li>)}
+                          {description.map(bullet => (
+                            <li key={bullet}>{bullet}</li>
+                          ))}
                         </ul>
                       </div>
                     );

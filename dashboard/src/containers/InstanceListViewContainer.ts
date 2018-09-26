@@ -1,7 +1,8 @@
 import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
 import { InstanceListView } from "../components/InstanceListView";
@@ -28,7 +29,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());
@@ -36,8 +37,11 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
     getCatalog: async (ns: string) => {
       dispatch(actions.catalog.getCatalog(ns));
     },
-    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
+    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter) as any),
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(InstanceListView);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(InstanceListView);

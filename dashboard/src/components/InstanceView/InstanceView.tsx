@@ -175,7 +175,11 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
       const free = svcPlan.spec.free ? <span>Free ✓</span> : undefined;
       const bullets = (
         <div>
-          <ul>{description.map(bullet => <li key={bullet}>{bullet}</li>)}</ul>
+          <ul>
+            {description.map(bullet => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
         </div>
       );
 

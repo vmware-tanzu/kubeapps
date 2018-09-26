@@ -14,28 +14,26 @@ exports[`when apps available matches the snapshot 1`] = `
         <h1>
           Applications
         </h1>
-        <React.Fragment>
-          <SearchFilter
-            className="margin-l-big"
-            key="searchFilter"
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
             onChange={[Function]}
-            onSubmit={[MockFunction]}
-            placeholder="search apps..."
-            value=""
+            type="checkbox"
           />
-          <label
-            className="checkbox margin-r-big margin-l-big margin-t-big"
-            key="listall"
-          >
-            <input
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span>
-              Show deleted apps
-            </span>
-          </label>
-        </React.Fragment>
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
     </div>
     <div
@@ -54,18 +52,22 @@ exports[`when apps available matches the snapshot 1`] = `
     </div>
   </PageHeader>
   <main>
-    <div>
-      <CardGrid>
-        <AppListItem
-          app={
-            Object {
-              "releaseName": "foo",
+    <LoadingWrapper
+      loaded={true}
+    >
+      <div>
+        <CardGrid>
+          <AppListItem
+            app={
+              Object {
+                "releaseName": "foo",
+              }
             }
-          }
-          key="foo"
-        />
-      </CardGrid>
-    </div>
+            key="foo"
+          />
+        </CardGrid>
+      </div>
+    </LoadingWrapper>
   </main>
 </section>
 `;
@@ -91,9 +93,13 @@ exports[`when error present matches the snapshot 1`] = `
     />
   </PageHeader>
   <main>
-    <UnexpectedErrorPage
-      title="Sorry! Something went wrong."
-    />
+    <LoadingWrapper
+      loaded={true}
+    >
+      <UnexpectedErrorPage
+        title="Sorry! Something went wrong."
+      />
+    </LoadingWrapper>
   </main>
 </section>
 `;
@@ -112,28 +118,26 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
         <h1>
           Applications
         </h1>
-        <React.Fragment>
-          <SearchFilter
-            className="margin-l-big"
-            key="searchFilter"
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
             onChange={[Function]}
-            onSubmit={[MockFunction]}
-            placeholder="search apps..."
-            value=""
+            type="checkbox"
           />
-          <label
-            className="checkbox margin-r-big margin-l-big margin-t-big"
-            key="listall"
-          >
-            <input
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span>
-              Show deleted apps
-            </span>
-          </label>
-        </React.Fragment>
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
     </div>
     <div
@@ -152,17 +156,82 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
     </div>
   </PageHeader>
   <main>
-    <MessageAlertPage
-      header="Supercharge your Kubernetes cluster"
+    <LoadingWrapper
+      loaded={true}
     >
-      <div>
-        <p
-          className="margin-v-normal"
+      <MessageAlertPage
+        header="Supercharge your Kubernetes cluster"
+      >
+        <div>
+          <p
+            className="margin-v-normal"
+          >
+            Deploy applications on your Kubernetes cluster with a single click.
+          </p>
+        </div>
+      </MessageAlertPage>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching apps loading spinner matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
         >
-          Deploy applications on your Kubernetes cluster with a single click.
-        </p>
+          <input
+            onChange={[Function]}
+            type="checkbox"
+          />
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
-    </MessageAlertPage>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/charts"
+      >
+        <button
+          className="deploy-button button button-accent"
+        >
+          Deploy App
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+    >
+      <div />
+    </LoadingWrapper>
   </main>
 </section>
 `;
@@ -181,28 +250,26 @@ exports[`while fetching apps matches the snapshot 1`] = `
         <h1>
           Applications
         </h1>
-        <React.Fragment>
-          <SearchFilter
-            className="margin-l-big"
-            key="searchFilter"
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
             onChange={[Function]}
-            onSubmit={[MockFunction]}
-            placeholder="search apps..."
-            value=""
+            type="checkbox"
           />
-          <label
-            className="checkbox margin-r-big margin-l-big margin-t-big"
-            key="listall"
-          >
-            <input
-              onChange={[Function]}
-              type="checkbox"
-            />
-            <span>
-              Show deleted apps
-            </span>
-          </label>
-        </React.Fragment>
+          <span>
+            Show deleted apps
+          </span>
+        </label>
       </div>
     </div>
     <div
@@ -221,9 +288,11 @@ exports[`while fetching apps matches the snapshot 1`] = `
     </div>
   </PageHeader>
   <main>
-    <div>
-      Loading
-    </div>
+    <LoadingWrapper
+      loaded={false}
+    >
+      <div />
+    </LoadingWrapper>
   </main>
 </section>
 `;

@@ -5,13 +5,14 @@ import { IAppOverview, IAppState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { MessageAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: (ns: string, all: boolean) => Promise<void>;
+  fetchApps: (ns: string, all: boolean) => void;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
@@ -30,7 +31,12 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
-    const { apps: { error, listingAll }, fetchApps, filter, namespace } = this.props;
+    const {
+      apps: { error, listingAll },
+      fetchApps,
+      filter,
+      namespace,
+    } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
       fetchApps(nextProps.namespace, listingAll);
@@ -41,7 +47,9 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public render() {
-    const { apps: { error, isFetching, listOverview } } = this.props;
+    const {
+      apps: { error, isFetching, listOverview },
+    } = this.props;
     return (
       <section className="AppList">
         <PageHeader>
@@ -60,20 +68,19 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
         </PageHeader>
         <main>
-          {isFetching ? (
-            <div>Loading</div>
-          ) : error ? (
-            this.renderError(error)
-          ) : (
-            this.appListItems(listOverview)
-          )}
+          <LoadingWrapper loaded={!isFetching}>
+            {error ? this.renderError(error) : this.appListItems(listOverview)}
+          </LoadingWrapper>
         </main>
       </section>
     );
   }
 
   public appListControls() {
-    const { pushSearchFilter, apps: { listingAll } } = this.props;
+    const {
+      pushSearchFilter,
+      apps: { listingAll },
+    } = this.props;
     return (
       <React.Fragment>
         <SearchFilter

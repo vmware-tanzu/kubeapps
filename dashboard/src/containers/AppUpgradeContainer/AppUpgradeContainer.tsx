@@ -1,8 +1,10 @@
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
+
 import AppUpgrade from "../../components/AppUpgrade";
 import { IChartVersion, IStoreState } from "../../shared/types";
 
@@ -33,7 +35,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     checkChart: (repo: string, chartName: string) =>
       dispatch(actions.repos.checkChart(repo, chartName)),
@@ -52,4 +54,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(AppUpgrade);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(AppUpgrade);

@@ -3,6 +3,7 @@ import { Redirect } from "react-router";
 
 import { hapi } from "../../shared/hapi/release";
 import ConfirmDialog from "../ConfirmDialog";
+import LoadingWrapper from "../LoadingWrapper";
 
 interface IAppControlsProps {
   app: hapi.release.Release;
@@ -32,7 +33,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
     const { name, namespace } = this.props.app;
     const deleted = this.props.app.info && this.props.app.info.deleted;
     if (!name || !namespace) {
-      return <div> Loading </div>;
+      return <LoadingWrapper />;
     }
     return (
       <div className="AppControls">
