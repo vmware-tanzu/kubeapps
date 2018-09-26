@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { IChart, IChartState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
-import { NotFoundErrorAlert } from "../ErrorAlert";
+import { MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
@@ -48,10 +48,11 @@ class ChartList extends React.Component<IChartListProps, IChartListState> {
     const items = this.filteredCharts(allItems, this.state.filter);
     if (!isFetching && allItems.length === 0) {
       return (
-        <NotFoundErrorAlert
-          resource={"Charts"}
+        <MessageAlert
+          level={"warning"}
           children={
             <div>
+              <h5>Charts not found.</h5>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
               <Link to={"/config/repos"}>App repositories configuration</Link> page.
             </div>

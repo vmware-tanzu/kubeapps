@@ -5,12 +5,14 @@ import ErrorPageHeader from "./ErrorAlertHeader";
 import "./UnexpectedErrorAlert.css";
 
 interface IUnexpectedErrorPage {
+  icon?: any;
   raw?: boolean;
+  showGenericMessage?: boolean;
   text?: string;
-  title?: string;
+  title?: string | JSX.Element;
 }
 
-const genericMessage = (
+export const genericMessage = (
   <div>
     <p>Troubleshooting:</p>
     <ul className="error__troubleshooting">
@@ -54,8 +56,13 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
     // Newer versions of it seems to support it https://github.com/Microsoft/TypeScript/wiki/Roadmap#30-july-2018
     return (
       <div className="alert alert-error margin-t-bigger">
-        <ErrorPageHeader icon={X}>{this.props.title!}</ErrorPageHeader>
-        <div className="error__content margin-l-enormous">{message}</div>
+        <ErrorPageHeader icon={this.props.icon || X}>{this.props.title!}</ErrorPageHeader>
+        {(this.props.showGenericMessage !== false || message !== genericMessage) && (
+          <div className="error__content margin-l-enormous">{message}</div>
+        )}
+        {this.props.children && (
+          <div className="error__content margin-l-enormous">{this.props.children}</div>
+        )}
       </div>
     );
   }

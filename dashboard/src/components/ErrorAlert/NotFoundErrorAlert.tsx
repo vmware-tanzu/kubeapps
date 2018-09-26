@@ -1,3 +1,6 @@
+// NOTE!
+// This component has been deprecated
+// Please use UnexpectedErrorAlert instead
 import * as React from "react";
 import { X } from "react-feather";
 

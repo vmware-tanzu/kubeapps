@@ -122,6 +122,7 @@ export class AddBindingButton extends React.Component<
     }
   };
 
+  // TODO: Replace with ErrorSelector
   private renderError() {
     const { error, namespace } = this.props;
     const { bindingName } = this.state;

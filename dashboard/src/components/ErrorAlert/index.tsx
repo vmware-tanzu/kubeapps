@@ -1,4 +1,5 @@
 import ErrorAlertHeader from "./ErrorAlertHeader";
+import ErrorSelector from "./ErrorSelector";
 import MessageAlert from "./MessageAlert";
 import NotFoundErrorAlert from "./NotFoundErrorAlert";
 import PermissionsErrorAlert from "./PermissionsErrorAlert";
@@ -8,6 +9,7 @@ import UnexpectedErrorAlert from "./UnexpectedErrorAlert";
 
 export {
   ErrorAlertHeader,
+  ErrorSelector,
   MessageAlert,
   NotFoundErrorAlert,
   PermissionsErrorAlert,

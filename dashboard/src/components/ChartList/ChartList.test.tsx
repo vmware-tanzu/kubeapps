@@ -5,7 +5,7 @@ import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import { IChart, IChartState } from "../../shared/types";
 import { CardGrid } from "../Card";
-import { NotFoundErrorAlert } from "../ErrorAlert";
+import { MessageAlert } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import ChartList from "./ChartList";
@@ -32,11 +32,11 @@ describe("renderization", () => {
   context("when no charts", () => {
     it("should render an error", () => {
       const wrapper = shallow(<ChartList {...defaultProps} />);
-      expect(wrapper.find(NotFoundErrorAlert)).toExist();
+      expect(wrapper.find(MessageAlert)).toExist();
       expect(wrapper.find(".ChartList")).not.toExist();
       expect(
         wrapper
-          .find(NotFoundErrorAlert)
+          .find(MessageAlert)
           .children()
           .text(),
       ).toContain("Manage your Helm chart repositories");
@@ -61,7 +61,7 @@ describe("renderization", () => {
     it("should render the list of charts", () => {
       const wrapper = shallow(<ChartList {...defaultProps} charts={chartState} />);
 
-      expect(wrapper.find(NotFoundErrorAlert)).not.toExist();
+      expect(wrapper.find(MessageAlert)).not.toExist();
       expect(wrapper.find(PageHeader)).toExist();
       expect(wrapper.find(SearchFilter)).toExist();
 

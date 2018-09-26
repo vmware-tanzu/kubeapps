@@ -5,7 +5,7 @@ import thunk from "redux-thunk";
 import { createAxiosInterceptors } from "../shared/AxiosInstance";
 import { Auth, axios } from "./Auth";
 import {
-  AppConflict,
+  ConflictError,
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
@@ -63,7 +63,7 @@ describe("createAxiosInterceptor", () => {
     { code: 401, errorClass: UnauthorizedError },
     { code: 403, errorClass: ForbiddenError },
     { code: 404, errorClass: NotFoundError },
-    { code: 409, errorClass: AppConflict },
+    { code: 409, errorClass: ConflictError },
     { code: 422, errorClass: UnprocessableEntity },
   ];
 
