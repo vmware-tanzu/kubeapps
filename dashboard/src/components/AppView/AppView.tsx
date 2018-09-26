@@ -22,7 +22,7 @@ export interface IAppViewProps {
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
+  getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
 }
 

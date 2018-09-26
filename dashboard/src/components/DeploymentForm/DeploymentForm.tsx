@@ -1,6 +1,6 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import AceEditor from "react-ace";
-import { RouterAction } from "react-router-redux";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
@@ -25,10 +25,10 @@ interface IDeploymentFormProps {
     values?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (id: string) => Promise<{}>;
-  getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<{}>;
-  getChartValues: (id: string, chartVersion: string) => Promise<any>;
+  fetchChartVersions: (id: string) => void;
+  getBindings: (ns: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => void;
   namespace: string;
 }
 

@@ -12,7 +12,7 @@ import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: (ns: string, all: boolean) => Promise<void>;
+  fetchApps: (ns: string, all: boolean) => void;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;

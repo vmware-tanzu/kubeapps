@@ -1,5 +1,5 @@
 import { Dispatch } from "redux";
-import { ThunkDispatch } from "redux-thunk";
+import { ThunkAction } from "redux-thunk";
 import { ActionType, createActionDeprecated } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
@@ -59,7 +59,7 @@ const allActions = [
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
 
-async function httpGet(dispatch: Dispatch, targetURL: string) {
+async function httpGet(dispatch: Dispatch, targetURL: string): Promise<any> {
   try {
     const response = await fetch(targetURL);
     const json = await response.json();
@@ -78,19 +78,22 @@ async function httpGet(dispatch: Dispatch, targetURL: string) {
   }
 }
 
-export function fetchCharts(repo: string) {
-  return async (dispatch: Dispatch): Promise<{}> => {
+export function fetchCharts(
+  repo: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.list(repo));
     if (response) {
       dispatch(receiveCharts(response));
     }
-    return response;
   };
 }
 
-export function fetchChartVersions(id: string) {
-  return async (dispatch: Dispatch): Promise<{}> => {
+export function fetchChartVersions(
+  id: string,
+): ThunkAction<Promise<IChartVersion[]>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.listVersions(id));
     if (response) {
@@ -100,19 +103,24 @@ export function fetchChartVersions(id: string) {
   };
 }
 
-export function getChartVersion(id: string, version: string) {
-  return async (dispatch: Dispatch): Promise<{}> => {
+export function getChartVersion(
+  id: string,
+  version: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
     dispatch(requestCharts());
     const response = await httpGet(dispatch, url.api.charts.getVersion(id, version));
     if (response) {
       dispatch(selectChartVersion(response));
     }
-    return response;
   };
 }
 
-export function fetchChartVersionsAndSelectVersion(id: string, version?: string) {
-  return async (dispatch: ThunkDispatch<IStoreState, null, ChartsAction>) => {
+export function fetchChartVersionsAndSelectVersion(
+  id: string,
+  version?: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
     const versions = (await dispatch(fetchChartVersions(id))) as IChartVersion[];
     if (versions) {
       let cv: IChartVersion = versions[0];
@@ -128,27 +136,30 @@ export function fetchChartVersionsAndSelectVersion(id: string, version?: string)
   };
 }
 
-export function getChartReadme(id: string, version: string) {
-  return async (dispatch: Dispatch) => {
+export function getChartReadme(
+  id: string,
+  version: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
     try {
       const readme = await Chart.getReadme(id, version);
       dispatch(selectReadme(readme));
-      return readme;
     } catch (e) {
-      return dispatch(errorReadme(e.toString()));
+      dispatch(errorReadme(e.toString()));
     }
   };
 }
 
-export function getChartValues(id: string, version: string) {
-  return async (dispatch: Dispatch) => {
+export function getChartValues(
+  id: string,
+  version: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
     try {
       const values = await Chart.getValues(id, version);
       dispatch(selectValues(values));
-      return values;
     } catch (e) {
       dispatch(selectValues(""));
-      return "";
     }
   };
 }

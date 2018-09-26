@@ -10,7 +10,7 @@ import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 export interface IClassListProps {
   error: Error;
   classes: IClusterServiceClass[];
-  getClasses: () => Promise<IClusterServiceClass[]>;
+  getClasses: () => void;
 }
 
 const RequiredRBACRoles: IRBACRole[] = [

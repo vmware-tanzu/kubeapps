@@ -1,3 +1,4 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
@@ -14,8 +15,8 @@ interface IChartListProps {
   charts: IChartState;
   repo: string;
   filter: string;
-  fetchCharts: (repo: string) => Promise<{}>;
-  pushSearchFilter: (filter: string) => any;
+  fetchCharts: (repo: string) => void;
+  pushSearchFilter: (filter: string) => RouterAction;
 }
 
 interface IChartListState {
