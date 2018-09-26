@@ -4,7 +4,7 @@ import { RouterAction } from "react-router-redux";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import DeploymentBinding from "./DeploymentBinding";
 

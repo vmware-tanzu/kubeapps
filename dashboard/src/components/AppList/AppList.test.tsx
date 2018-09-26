@@ -5,7 +5,7 @@ import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import { IAppOverview, IAppState } from "../../shared/types";
 import { CardGrid } from "../Card";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import { ErrorSelector } from "../ErrorAlert";
 import { genericMessage } from "../ErrorAlert/UnexpectedErrorAlert";
 import AppList from "./AppList";
 import AppListItem from "./AppListItem";

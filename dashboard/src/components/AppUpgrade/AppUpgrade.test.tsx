@@ -5,9 +5,8 @@ import * as React from "react";
 import { hapi } from "shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IAppRepository, IChartState } from "../../shared/types";
+import { ErrorSelector, PermissionsErrorAlert } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
-import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 import AppUpgrade from "./AppUpgrade";
@@ -114,7 +113,7 @@ context("when an error exists", () => {
     expect(wrapper.find(ErrorPageHeader).text()).toContain(
       "You don't have sufficient permissions to update foo in the default namespace",
     );
-    expect(wrapper.find(PermissionsErrorPage).prop("roles")[0]).toMatchObject(role);
+    expect(wrapper.find(PermissionsErrorAlert).prop("roles")[0]).toMatchObject(role);
   });
 
   it("renders a forbidden message for the repositories", () => {
@@ -133,7 +132,7 @@ context("when an error exists", () => {
     expect(wrapper.find(ErrorPageHeader).text()).toContain(
       "You don't have sufficient permissions to view App Repositories in the kubeapps namespace",
     );
-    expect(wrapper.find(PermissionsErrorPage).prop("roles")[0]).toMatchObject(role);
+    expect(wrapper.find(PermissionsErrorAlert).prop("roles")[0]).toMatchObject(role);
   });
 });
 

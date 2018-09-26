@@ -2,8 +2,8 @@ import { mount, shallow } from "enzyme";
 import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
 import DeploymentForm from "./DeploymentForm";
 
 const defaultProps = {

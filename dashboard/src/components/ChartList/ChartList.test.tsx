@@ -5,7 +5,7 @@ import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import { IChart, IChartState } from "../../shared/types";
 import { CardGrid } from "../Card";
-import MessageAlert from "../ErrorAlert/MessageAlert";
+import { MessageAlert } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import ChartList from "./ChartList";

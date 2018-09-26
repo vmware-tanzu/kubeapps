@@ -4,7 +4,7 @@ import * as React from "react";
 
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import { ErrorSelector } from "../ErrorAlert";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";

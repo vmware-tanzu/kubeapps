@@ -7,7 +7,7 @@ import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";

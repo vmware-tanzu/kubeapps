@@ -5,7 +5,7 @@ import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import { ErrorSelector } from "../ErrorAlert";
 
 interface ISelectRepoFormProps {
   kubeappsNamespace: string;

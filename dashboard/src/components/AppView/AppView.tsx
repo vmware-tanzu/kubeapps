@@ -6,7 +6,7 @@ import { hapi } from "../../shared/hapi/release";
 import { IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
-import ErrorSelector from "../ErrorAlert/ErrorSelector";
+import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
