@@ -1,72 +1,52 @@
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createActionDeprecated } from "typesafe-actions";
-
+import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
 import Secret from "../shared/Secret";
 import * as url from "../shared/url";
+import { errorChart } from "./charts";
 
 import { IAppRepository, IOwnerReference, IStoreState, NotFoundError } from "../shared/types";
 
-export const addRepo = createActionDeprecated("ADD_REPO");
-export const addedRepo = createActionDeprecated("ADDED_REPO", (added: IAppRepository) => ({
-  added,
-  type: "ADDED_REPO",
-}));
-export const requestRepos = createActionDeprecated("REQUEST_REPOS");
-export const receiveRepos = createActionDeprecated("RECEIVE_REPOS", (repos: IAppRepository[]) => {
-  return {
-    repos,
-    type: "RECEIVE_REPOS",
-  };
+export const addRepo = createAction("ADD_REPO");
+export const addedRepo = createAction("ADDED_REPO", resolve => {
+  return (added: IAppRepository) => resolve(added);
 });
-export const requestRepo = createActionDeprecated("REQUEST_REPO");
-export const receiveRepo = createActionDeprecated("RECEIVE_REPO", (repo: IAppRepository) => ({
-  repo,
-  type: "RECEIVE_REPO",
-}));
-export const errorChart = createActionDeprecated("ERROR_CHART", (err: Error) => ({
-  err,
-  type: "ERROR_CHART",
-}));
-export const showForm = createActionDeprecated("SHOW_FORM");
-export const hideForm = createActionDeprecated("HIDE_FORM");
-export const resetForm = createActionDeprecated("RESET_FORM");
-export const submitForm = createActionDeprecated("SUBMIT_FROM");
-export const updateForm = createActionDeprecated(
-  "UPDATE_FORM",
-  (values: { name?: string; namespace?: string; url?: string }) => {
-    return {
-      type: "UPDATE_FORM",
-      values,
-    };
-  },
-);
-export const redirect = createActionDeprecated("REDIRECT", (path: string) => ({
-  type: "REDIRECT",
-  path,
-}));
-export const redirected = createActionDeprecated("REDIRECTED");
-export const errorRepos = createActionDeprecated(
-  "ERROR_REPOS",
-  (err: Error, op: "create" | "update" | "fetch" | "delete") => ({
-    err,
-    op,
-    type: "ERROR_REPOS",
-  }),
-);
+
+export const requestRepos = createAction("REQUEST_REPOS");
+export const receiveRepos = createAction("RECEIVE_REPOS", resolve => {
+  return (repos: IAppRepository[]) => resolve(repos);
+});
+
+export const requestRepo = createAction("REQUEST_REPO");
+export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
+  return (repo: IAppRepository) => resolve(repo);
+});
+
+export const showForm = createAction("SHOW_FORM");
+export const hideForm = createAction("HIDE_FORM");
+export const resetForm = createAction("RESET_FORM");
+export const submitForm = createAction("SUBMIT_FROM");
+
+export const redirect = createAction("REDIRECT", resolve => {
+  return (path: string) => resolve(path);
+});
+
+export const redirected = createAction("REDIRECTED");
+export const errorRepos = createAction("ERROR_REPOS", resolve => {
+  return (err: Error, op: "create" | "update" | "fetch" | "delete") => resolve({ err, op });
+});
 
 const allActions = [
   addRepo,
   addedRepo,
-  errorChart,
   errorRepos,
   requestRepos,
   receiveRepo,
   receiveRepos,
   resetForm,
+  errorChart,
   requestRepo,
   submitForm,
-  updateForm,
   showForm,
   hideForm,
   redirect,

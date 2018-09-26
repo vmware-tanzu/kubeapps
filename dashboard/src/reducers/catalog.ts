@@ -50,22 +50,17 @@ const catalogReducer = (
     case getType(catalog.checkCatalogInstall):
       return { ...state, isChecking: true };
     case getType(catalog.receiveBrokers):
-      const { brokers } = action;
-      return { ...state, brokers };
+      return { ...state, brokers: action.payload };
     case getType(catalog.receiveBindingsWithSecrets):
-      const { bindingsWithSecrets } = action;
-      return { ...state, bindingsWithSecrets };
+      return { ...state, bindingsWithSecrets: action.payload };
     case getType(catalog.receiveClasses):
-      const { classes } = action;
-      return { ...state, classes };
+      return { ...state, classes: action.payload };
     case getType(catalog.receiveInstances):
-      const { instances } = action;
-      return { ...state, instances };
+      return { ...state, instances: action.payload };
     case getType(catalog.receivePlans):
-      const { plans } = action;
-      return { ...state, plans };
+      return { ...state, plans: action.payload };
     case getType(catalog.errorCatalog):
-      return { ...state, errors: { [action.op]: action.err } };
+      return { ...state, errors: { [action.payload.op]: action.payload.err } };
     case LOCATION_CHANGE:
       return { ...state, errors: {} };
     case getType(actions.namespace.setNamespace):
