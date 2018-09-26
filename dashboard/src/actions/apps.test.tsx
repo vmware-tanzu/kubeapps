@@ -39,8 +39,8 @@ describe("fetches applications", () => {
   });
   it("fetches all applications", async () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps), listingAll: true },
-      { type: getType(actions.apps.receiveAppList), apps: [] },
+      { type: getType(actions.apps.listApps), payload: true },
+      { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
     await store.dispatch(actions.apps.fetchApps("default", true));
     expect(store.getActions()).toEqual(expectedActions);
@@ -48,8 +48,8 @@ describe("fetches applications", () => {
   });
   it("fetches default applications", () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps), listingAll: false },
-      { type: getType(actions.apps.receiveAppList), apps: [] },
+      { type: getType(actions.apps.listApps), payload: false },
+      { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
     return store.dispatch(actions.apps.fetchApps("default", false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
@@ -80,7 +80,7 @@ describe("delete applications", () => {
   });
   it("delete and throw an error", async () => {
     const error = new Error("something went wrong!");
-    const expectedActions = [{ type: getType(actions.apps.errorDeleteApp), err: error }];
+    const expectedActions = [{ type: getType(actions.apps.errorDeleteApp), payload: error }];
     deleteAppMock.mockImplementation(() => {
       throw error;
     });
@@ -116,6 +116,6 @@ describe("deploy chart", () => {
     expect(res).toBe(false);
     expect(store.getActions().length).toBe(1);
     expect(store.getActions()[0].type).toEqual(getType(actions.apps.errorApps));
-    expect(store.getActions()[0].err.constructor).toBe(UnprocessableEntity);
+    expect(store.getActions()[0].payload.constructor).toBe(UnprocessableEntity);
   });
 });

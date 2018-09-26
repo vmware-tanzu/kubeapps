@@ -111,11 +111,11 @@ describe("createAxiosInterceptor", () => {
   it("dispatches auth error and logout if 401", async () => {
     const expectedActions = [
       {
-        errorMsg: "Boom!",
+        payload: "Boom!",
         type: "AUTHENTICATION_ERROR",
       },
       {
-        authenticated: false,
+        payload: false,
         type: "SET_AUTHENTICATED",
       },
     ];
