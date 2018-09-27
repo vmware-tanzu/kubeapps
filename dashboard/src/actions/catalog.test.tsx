@@ -26,6 +26,8 @@ const testArgs = {
   params: {},
   instanceName: "my-instance",
 };
+let boomFn: any;
+const errorPayload = (op: string) => ({ err: new Error("Boom!"), op });
 
 beforeEach(() => {
   store = mockStore();
@@ -49,8 +51,15 @@ beforeEach(() => {
   ServiceCatalog.getServiceClasses = jest.fn().mockImplementationOnce(() => {
     return [clusterClass];
   });
+  ServiceCatalog.getServicePlans = jest.fn().mockImplementationOnce(() => {
+    return [servicePlan];
+  });
   ServiceCatalog.deprovisionInstance = jest.fn();
   ServiceCatalog.syncBroker = jest.fn();
+  boomFn = jest.fn().mockImplementationOnce(() => {
+    throw new Error("Boom!");
+  });
+  ServiceCatalog.isCatalogInstalled = jest.fn().mockImplementationOnce(() => true);
 });
 
 // Regular action creators
@@ -145,14 +154,12 @@ describe("provision", () => {
   });
 
   it("dispatches errorCatalog if error creating the instance", async () => {
-    ServiceInstance.create = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceInstance.create = boomFn;
 
     const expectedActions = [
       {
         type: getType(catalogActions.errorCatalog),
-        payload: { err: new Error("Boom!"), op: "create" },
+        payload: errorPayload("create"),
       },
     ];
 
@@ -173,9 +180,7 @@ describe("deprovision", () => {
   });
 
   it("dispatches errorCatalog if error", async () => {
-    ServiceCatalog.deprovisionInstance = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceCatalog.deprovisionInstance = boomFn;
 
     const expectedActions = [
       {
@@ -211,14 +216,12 @@ describe("addBinding", () => {
   });
 
   it("dispatches errorCatalog if error", async () => {
-    ServiceBinding.create = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceBinding.create = boomFn;
 
     const expectedActions = [
       {
         type: getType(catalogActions.errorCatalog),
-        payload: { err: new Error("Boom!"), op: "create" },
+        payload: errorPayload("create"),
       },
     ];
 
@@ -239,14 +242,12 @@ describe("removeBinding", () => {
   });
 
   it("dispatches errorCatalog if error", async () => {
-    ServiceBinding.delete = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceBinding.delete = boomFn;
 
     const expectedActions = [
       {
         type: getType(catalogActions.errorCatalog),
-        payload: { err: new Error("Boom!"), op: "delete" },
+        payload: errorPayload("delete"),
       },
     ];
 
@@ -265,9 +266,7 @@ describe("sync", () => {
   });
 
   it("dispatches errorCatalog if error", async () => {
-    ServiceCatalog.syncBroker = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceCatalog.syncBroker = boomFn;
 
     const expectedActions = [
       {
@@ -301,9 +300,7 @@ describe("getBindings", () => {
   });
 
   it("dispatches requestBindingsWithSecrets and errorCatalog if error", async () => {
-    ServiceBinding.list = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceBinding.list = boomFn;
 
     const expectedActions = [
       {
@@ -311,7 +308,7 @@ describe("getBindings", () => {
       },
       {
         type: getType(catalogActions.errorCatalog),
-        payload: { err: new Error("Boom!"), op: "fetch" },
+        payload: errorPayload("fetch"),
       },
     ];
 
@@ -340,9 +337,7 @@ describe("getBrokers", () => {
   });
 
   it("dispatches requestBrokers and errorCatalog if error", async () => {
-    ServiceCatalog.getServiceBrokers = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceCatalog.getServiceBrokers = boomFn;
 
     const expectedActions = [
       {
@@ -350,7 +345,7 @@ describe("getBrokers", () => {
       },
       {
         type: getType(catalogActions.errorCatalog),
-        payload: { err: new Error("Boom!"), op: "fetch" },
+        payload: errorPayload("fetch"),
       },
     ];
 
@@ -379,9 +374,7 @@ describe("getClasses", () => {
   });
 
   it("dispatches requestClasses and errorCatalog if error", async () => {
-    ServiceCatalog.getServiceClasses = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceCatalog.getServiceClasses = boomFn;
 
     const expectedActions = [
       {
@@ -389,7 +382,7 @@ describe("getClasses", () => {
       },
       {
         type: getType(catalogActions.errorCatalog),
-        payload: { err: new Error("Boom!"), op: "fetch" },
+        payload: errorPayload("fetch"),
       },
     ];
 
@@ -418,9 +411,7 @@ describe("getInstances", () => {
   });
 
   it("dispatches requestInstances and errorCatalog if error", async () => {
-    ServiceInstance.list = jest.fn().mockImplementationOnce(() => {
-      throw new Error("Boom!");
-    });
+    ServiceInstance.list = boomFn;
 
     const expectedActions = [
       {
@@ -428,11 +419,78 @@ describe("getInstances", () => {
       },
       {
         type: getType(catalogActions.errorCatalog),
-        payload: { err: new Error("Boom!"), op: "fetch" },
+        payload: errorPayload("fetch"),
       },
     ];
 
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("getPlans", () => {
+  const provisionCMD = catalogActions.getPlans();
+
+  it("calls ServiceCatalog.getServicePlans and dispatches requestPlans and receivePlans if no error", async () => {
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestPlans),
+      },
+      {
+        type: getType(catalogActions.receivePlans),
+        payload: [servicePlan],
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(ServiceCatalog.getServicePlans).toHaveBeenCalled();
+  });
+
+  it("dispatches requestPlans and errorCatalog if error", async () => {
+    ServiceCatalog.getServicePlans = boomFn;
+
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestPlans),
+      },
+      {
+        type: getType(catalogActions.errorCatalog),
+        payload: errorPayload("fetch"),
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("checkCatalogInstalled", () => {
+  const provisionCMD = catalogActions.checkCatalogInstalled();
+
+  it("dispatches installed = true if installed", async () => {
+    const expectedActions = [
+      {
+        type: getType(catalogActions.installed),
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(ServiceCatalog.isCatalogInstalled).toHaveBeenCalled();
+  });
+
+  it("dispatches installed = false otherwise", async () => {
+    ServiceCatalog.isCatalogInstalled = jest.fn().mockImplementationOnce(() => false);
+
+    const expectedActions = [
+      {
+        type: getType(catalogActions.notInstalled),
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(ServiceCatalog.isCatalogInstalled).toHaveBeenCalled();
   });
 });
