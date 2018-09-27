@@ -90,7 +90,7 @@ it("calls delete function with additional purge", () => {
 
   // Check that the "purge" state is forwarded to deleteApp
   confirm.props().onConfirm(); // Simulate confirmation
-  expect(deleteApp.mock.calls[0]).toEqual([true]);
+  expect(deleteApp).toHaveBeenCalledWith(true);
 });
 
 context("when name or namespace do not exist", () => {
@@ -146,6 +146,6 @@ context("when the application has been already deleted", () => {
 
     // Check that the "purge" is forwarded to deleteApp
     confirm.props().onConfirm(); // Simulate confirmation
-    expect(deleteApp.mock.calls[0]).toEqual([true]);
+    expect(deleteApp).toHaveBeenCalledWith(true);
   });
 });
