@@ -119,3 +119,42 @@ describe("deploy chart", () => {
     expect(store.getActions()[0].payload.constructor).toBe(UnprocessableEntity);
   });
 });
+
+describe("upgradeApp", () => {
+  const provisionCMD = actions.apps.upgradeApp(
+    "my-version" as any,
+    "my-release",
+    definedNamespaces.all,
+  );
+
+  it("calls ServiceBinding.delete and returns true if no error", async () => {
+    App.upgrade = jest.fn().mockImplementationOnce(() => true);
+    const res = await store.dispatch(provisionCMD);
+    expect(res).toBe(true);
+
+    expect(store.getActions().length).toBe(0);
+    expect(App.upgrade).toHaveBeenCalledWith(
+      "my-release",
+      definedNamespaces.all,
+      "kubeapps-ns",
+      "my-version" as any,
+      undefined,
+    );
+  });
+
+  it("dispatches errorCatalog if error", async () => {
+    App.upgrade = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(actions.apps.errorApps),
+        payload: new Error("Boom!"),
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
