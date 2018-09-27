@@ -14,6 +14,7 @@ const broker = { metadata: { name: "wall-street" } } as IServiceBroker;
 const servicePlan = { metadata: { name: "bubble-it-up" } } as IServicePlan;
 const serviceInstance = { metadata: { name: "25-years-morgage" } } as IServiceInstance;
 const bindingWithSecret = { binding: "binding", secret: "secret" } as any;
+const clusterClass = { metadata: { name: "cluster-class" } } as any;
 
 let store: any;
 const testArgs = {
@@ -32,11 +33,24 @@ beforeEach(() => {
   ServiceInstance.create = jest.fn().mockImplementationOnce(() => {
     return { metadata: { name: testArgs.instanceName } };
   });
+  ServiceInstance.list = jest.fn().mockImplementationOnce(() => {
+    return [serviceInstance];
+  });
   ServiceBinding.create = jest.fn().mockImplementationOnce(() => {
     return { metadata: { name: testArgs.bindingName } };
   });
   ServiceBinding.delete = jest.fn();
+  ServiceBinding.list = jest.fn().mockImplementationOnce(() => {
+    return [bindingWithSecret];
+  });
+  ServiceCatalog.getServiceBrokers = jest.fn().mockImplementationOnce(() => {
+    return [broker];
+  });
+  ServiceCatalog.getServiceClasses = jest.fn().mockImplementationOnce(() => {
+    return [clusterClass];
+  });
   ServiceCatalog.deprovisionInstance = jest.fn();
+  ServiceCatalog.syncBroker = jest.fn();
 });
 
 // Regular action creators
@@ -233,6 +247,188 @@ describe("removeBinding", () => {
       {
         type: getType(catalogActions.errorCatalog),
         payload: { err: new Error("Boom!"), op: "delete" },
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("sync", () => {
+  const provisionCMD = catalogActions.sync(broker);
+
+  it("calls ServiceCatalog.syncBroker if no error", async () => {
+    const res = await store.dispatch(provisionCMD);
+    expect(store.getActions().length).toBe(0);
+    expect(ServiceCatalog.syncBroker).toHaveBeenCalledWith(broker);
+  });
+
+  it("dispatches errorCatalog if error", async () => {
+    ServiceCatalog.syncBroker = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(catalogActions.errorCatalog),
+        payload: { err: new Error("Boom!"), op: "update" },
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("getBindings", () => {
+  const provisionCMD = catalogActions.getBindings(testArgs.namespace);
+
+  it("calls ServiceBinding.list and dispatches binding actions if no error", async () => {
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestBindingsWithSecrets),
+      },
+      {
+        type: getType(catalogActions.receiveBindingsWithSecrets),
+        payload: [bindingWithSecret],
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(ServiceBinding.list).toHaveBeenCalledWith(testArgs.namespace);
+  });
+
+  it("dispatches requestBindingsWithSecrets and errorCatalog if error", async () => {
+    ServiceBinding.list = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestBindingsWithSecrets),
+      },
+      {
+        type: getType(catalogActions.errorCatalog),
+        payload: { err: new Error("Boom!"), op: "fetch" },
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("getBrokers", () => {
+  const provisionCMD = catalogActions.getBrokers();
+
+  it("calls ServiceCatalog.getServiceBrokers and dispatches requestBrokers and receiveBroker if no error", async () => {
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestBrokers),
+      },
+      {
+        type: getType(catalogActions.receiveBrokers),
+        payload: [broker],
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(ServiceCatalog.getServiceBrokers).toHaveBeenCalled();
+  });
+
+  it("dispatches requestBrokers and errorCatalog if error", async () => {
+    ServiceCatalog.getServiceBrokers = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestBrokers),
+      },
+      {
+        type: getType(catalogActions.errorCatalog),
+        payload: { err: new Error("Boom!"), op: "fetch" },
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("getClasses", () => {
+  const provisionCMD = catalogActions.getClasses();
+
+  it("calls ServiceCatalog.getServiceClasses and dispatches requestClasses and receiveClasses if no error", async () => {
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestClasses),
+      },
+      {
+        type: getType(catalogActions.receiveClasses),
+        payload: [clusterClass],
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(ServiceCatalog.getServiceClasses).toHaveBeenCalled();
+  });
+
+  it("dispatches requestClasses and errorCatalog if error", async () => {
+    ServiceCatalog.getServiceClasses = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestClasses),
+      },
+      {
+        type: getType(catalogActions.errorCatalog),
+        payload: { err: new Error("Boom!"), op: "fetch" },
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("getInstances", () => {
+  const provisionCMD = catalogActions.getInstances(testArgs.namespace);
+
+  it("calls ServiceInstance.list and dispatches requestInstances and receiveInstances if no error", async () => {
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestInstances),
+      },
+      {
+        type: getType(catalogActions.receiveInstances),
+        payload: [serviceInstance],
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(ServiceInstance.list).toHaveBeenCalledWith(testArgs.namespace);
+  });
+
+  it("dispatches requestInstances and errorCatalog if error", async () => {
+    ServiceInstance.list = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(catalogActions.requestInstances),
+      },
+      {
+        type: getType(catalogActions.errorCatalog),
+        payload: { err: new Error("Boom!"), op: "fetch" },
       },
     ];
 
