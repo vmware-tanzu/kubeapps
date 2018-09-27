@@ -55,12 +55,16 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
           loading={this.state.deleting}
           closeModal={this.closeModal}
           extraElem={
-            <div className="margin-v-small text-c">
-              <label className="checkbox margin-r-big">
-                <input type="checkbox" onChange={this.togglePurge} />
-                <span>Purge release</span>
-              </label>
-            </div>
+            deleted ? (
+              undefined
+            ) : (
+              <div className="margin-b-normal text-c">
+                <label className="checkbox margin-r-big">
+                  <input type="checkbox" onChange={this.togglePurge} />
+                  <span>Purge release</span>
+                </label>
+              </div>
+            )
           }
         />
         {this.state.redirectToAppList && <Redirect to={`/apps/ns/${namespace}`} />}
@@ -86,7 +90,9 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
 
   public handleDeleteClick = async () => {
     this.setState({ deleting: true });
-    const deleted = await this.props.deleteApp(this.state.purge);
+    // Purge the release if the application has been already deleted
+    const alreadyDeleted = this.props.app.info && !!this.props.app.info.deleted;
+    const deleted = await this.props.deleteApp(alreadyDeleted || this.state.purge);
     const s: Partial<IAppControlsState> = { modalIsOpen: false };
     if (deleted) {
       s.redirectToAppList = true;
