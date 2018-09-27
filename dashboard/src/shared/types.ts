@@ -22,7 +22,7 @@ export class UnauthorizedError extends CustomError {}
 
 export class NotFoundError extends CustomError {}
 
-export class AppConflict extends CustomError {}
+export class ConflictError extends CustomError {}
 
 export class UnprocessableEntity extends CustomError {}
 

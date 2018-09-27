@@ -6,70 +6,6 @@ exports[`loading spinner matches the snapshot 1`] = `
 />
 `;
 
-exports[`renders an error if it exists 1`] = `
-<DeploymentErrors
-  app={Object {}}
-  bindingsWithSecrets={Array []}
-  chartName=""
-  checkChart={[MockFunction]}
-  clearRepo={[MockFunction]}
-  error={[Error: foo doesn't exists]}
-  fetchChartVersions={[MockFunction]}
-  fetchRepositories={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-      ],
-    }
-  }
-  getApp={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-      ],
-    }
-  }
-  getBindings={[MockFunction]}
-  getChartValues={[MockFunction]}
-  getChartVersion={[MockFunction]}
-  kubeappsNamespace="kubeapps"
-  namespace="default"
-  push={[MockFunction]}
-  releaseName="foo"
-  repo="stable"
-  repos={
-    Array [
-      Object {
-        "metadata": Object {
-          "name": "stable",
-        },
-      },
-    ]
-  }
-  selected={Object {}}
-  upgradeApp={[MockFunction]}
-  version="1.0.0"
-/>
-`;
-
 exports[`renders the repo selection form if not introduced 1`] = `
 <div>
   <SelectRepoForm
@@ -169,12 +105,22 @@ exports[`renders the upgrade form when the repo is available 1`] = `
           Array [],
           Array [],
           Array [],
+          Array [],
+          Array [],
         ],
       }
     }
     getApp={
       [MockFunction] {
         "calls": Array [
+          Array [
+            "foo",
+            "default",
+          ],
+          Array [
+            "foo",
+            "default",
+          ],
           Array [
             "foo",
             "default",
@@ -220,4 +166,27 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     version="1.0.0"
   />
 </div>
+`;
+
+exports[`when an error exists renders a generic error message 1`] = `
+<ErrorSelector
+  action="update"
+  defaultRequiredRBACRoles={
+    Object {
+      "update": Array [
+        Object {
+          "apiGroup": "kubeapps.com",
+          "namespace": "kubeapps",
+          "resource": "apprepositories",
+          "verbs": Array [
+            "get",
+          ],
+        },
+      ],
+    }
+  }
+  error={[Error: foo doesn't exists]}
+  namespace="default"
+  resource="foo"
+/>
 `;

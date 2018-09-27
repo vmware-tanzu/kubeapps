@@ -3,10 +3,10 @@ import * as React from "react";
 
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { ForbiddenError, IRBACRole, IResource, NotFoundError } from "../../shared/types";
+import { IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
@@ -148,7 +148,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public render() {
     if (this.props.error) {
-      return this.renderError(this.props.error);
+      return (
+        <ErrorSelector
+          error={this.props.error}
+          defaultRequiredRBACRoles={RequiredRBACRoles}
+          action="view"
+          resource={`Application ${this.props.releaseName}`}
+          namespace={this.props.namespace}
+        />
+      );
     }
 
     return this.isLoading ? <LoadingWrapper /> : this.appInfo();
@@ -164,7 +172,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       <section className="AppView padding-b-big">
         <main>
           <div className="container">
-            {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
+            {this.props.deleteError && (
+              <ErrorSelector
+                error={this.props.deleteError}
+                defaultRequiredRBACRoles={RequiredRBACRoles}
+                action="delete"
+                resource={`Application ${this.props.releaseName}`}
+                namespace={this.props.namespace}
+              />
+            )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
                 <ChartInfo app={app} />
@@ -191,35 +207,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         </main>
       </section>
     );
-  }
-
-  private renderError(error: Error, action: string = "view") {
-    const { namespace, releaseName } = this.props;
-    switch (error.constructor) {
-      case ForbiddenError:
-        const message = error ? error.message : "";
-        let roles: IRBACRole[] = [];
-        try {
-          roles = JSON.parse(message);
-        } catch (e) {
-          // Cannot parse the error as a role array
-          // return the default roles
-          roles = RequiredRBACRoles[action];
-        }
-        return (
-          <PermissionsErrorAlert
-            namespace={namespace}
-            roles={roles}
-            action={`${action} Application "${releaseName}"`}
-          />
-        );
-      case NotFoundError:
-        return (
-          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
-        );
-      default:
-        return <UnexpectedErrorAlert />;
-    }
   }
 
   private closeSockets() {

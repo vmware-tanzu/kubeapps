@@ -68,10 +68,13 @@ exports[`renderization when fetching apps loading spinner matches the snapshot 1
 `;
 
 exports[`renderization when no charts should render an error 1`] = `
-<NotFoundErrorPage
-  resource="Charts"
+<MessageAlertPage
+  level="warning"
 >
   <div>
+    <h5>
+      Charts not found.
+    </h5>
     Manage your Helm chart repositories in Kubeapps by visiting the
      
     <Link
@@ -82,5 +85,5 @@ exports[`renderization when no charts should render an error 1`] = `
     </Link>
      page.
   </div>
-</NotFoundErrorPage>
+</MessageAlertPage>
 `;

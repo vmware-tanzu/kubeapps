@@ -3,8 +3,8 @@ import * as React from "react";
 import { RouterAction } from "connected-react-router";
 import { hapi } from "../../shared/hapi/release";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IAppRepository, IChartState, IChartVersion } from "../../shared/types";
-import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import { IAppRepository, IChartState, IChartVersion, IRBACRole } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
@@ -50,25 +50,38 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
   }
 
   public render() {
-    const { app, repos, error, repo } = this.props;
+    const { app, repos, error, namespace, releaseName, repoError } = this.props;
     if (
       !repos ||
+      repos.length === 0 ||
       !app ||
       !app.chart ||
       !app.chart.metadata ||
       !app.chart.metadata.name ||
       !app.chart.metadata.version
     ) {
-      if (!error) {
-        return <LoadingWrapper />;
-      } else {
+      if (error) {
         return (
-          <DeploymentErrors
-            {...this.props}
-            chartName={(app.chart && app.chart.metadata && app.chart.metadata.name) || ""}
-            repo={repo.metadata.name}
+          <ErrorSelector
+            error={error}
+            namespace={namespace}
+            action="update"
+            defaultRequiredRBACRoles={{ update: this.requiredRBACRoles() }}
+            resource={releaseName}
           />
         );
+      } else if (repoError) {
+        return (
+          <ErrorSelector
+            error={repoError}
+            namespace={this.props.kubeappsNamespace}
+            action="view"
+            defaultRequiredRBACRoles={{ view: this.requiredRBACRoles() }}
+            resource="App Repositories"
+          />
+        );
+      } else {
+        return <LoadingWrapper />;
       }
     }
     if (!this.props.repo.metadata) {
@@ -93,6 +106,17 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         />
       </div>
     );
+  }
+
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
   }
 }
 

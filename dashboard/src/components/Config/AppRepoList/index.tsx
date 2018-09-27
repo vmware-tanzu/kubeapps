@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { ForbiddenError, IAppRepository, IRBACRole } from "../../../shared/types";
-import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../../ErrorAlert";
+import { IAppRepository, IRBACRole } from "../../../shared/types";
+import ErrorSelector from "../../ErrorAlert/ErrorSelector";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoListItem } from "./AppRepoListItem";
 
@@ -28,14 +28,14 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
       verbs: ["delete"],
     },
   ],
-  refresh: [
+  update: [
     {
       apiGroup: "kubeapps.com",
       resource: "apprepositories",
       verbs: ["get, update"],
     },
   ],
-  view: [
+  fetch: [
     {
       apiGroup: "kubeapps.com",
       resource: "apprepositories",
@@ -65,9 +65,9 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
     return (
       <div className="app-repo-list">
         <h1>App Repositories</h1>
-        {errors.fetch && this.renderError(errors.fetch)}
-        {errors.delete && this.renderError(errors.delete, "delete")}
-        {errors.update && this.renderError(errors.update, "refresh")}
+        {errors.fetch && this.renderError("fetch")}
+        {errors.delete && this.renderError("delete")}
+        {errors.update && this.renderError("update")}
         <table>
           <thead>
             <tr>
@@ -96,18 +96,15 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
     );
   }
 
-  private renderError(error: Error, action: string = "view") {
-    switch (error.constructor) {
-      case ForbiddenError:
-        return (
-          <PermissionsErrorAlert
-            namespace={this.props.kubeappsNamespace}
-            roles={RequiredRBACRoles[action]}
-            action={`${action} App Repositories`}
-          />
-        );
-      default:
-        return <UnexpectedErrorAlert />;
-    }
+  private renderError(action: string) {
+    return (
+      <ErrorSelector
+        error={this.props.errors[action]}
+        defaultRequiredRBACRoles={RequiredRBACRoles}
+        action={action}
+        namespace={this.props.kubeappsNamespace}
+        resource="App Repositories"
+      />
+    );
   }
 }

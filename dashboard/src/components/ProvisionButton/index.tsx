@@ -183,6 +183,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
     };
   }
 
+  // TODO: Replace with ErrorSelector
   private renderError() {
     const { error, namespace } = this.props;
     switch (error && error.constructor) {

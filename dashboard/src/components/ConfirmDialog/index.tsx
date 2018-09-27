@@ -52,7 +52,7 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
             </div>
           ) : (
             <div>
-              <div> Are you sure you want to delete this? </div>
+              <div className="margin-b-normal"> Are you sure you want to delete this? </div>
               {this.props.extraElem}
               <button className="button" onClick={this.props.closeModal}>
                 Cancel

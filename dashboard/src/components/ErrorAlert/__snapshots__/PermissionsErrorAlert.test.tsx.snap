@@ -1,28 +1,25 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders an error message for the action 1`] = `
-<div
-  className="alert alert-error margin-t-bigger"
-  role="alert"
->
-  <ErrorPageHeader
-    icon={[Function]}
-  >
-    You don't have sufficient permissions to 
-    unit-test
-     in 
+<UnexpectedErrorPage
+  icon={[Function]}
+  showGenericMessage={false}
+  title={
     <span>
-      the 
-      <code>
-        test
-      </code>
-       namespace
+      You don't have sufficient permissions to 
+      unit-test
+       in 
+      <span>
+        the 
+        <code>
+          test
+        </code>
+         namespace
+      </span>
     </span>
-    .
-  </ErrorPageHeader>
-  <div
-    className="error__content margin-l-enormous"
-  >
+  }
+>
+  <div>
     <p>
       Ask your administrator for the following RBAC roles:
     </p>
@@ -41,5 +38,5 @@ exports[`renders an error message for the action 1`] = `
       .
     </p>
   </div>
-</div>
+</UnexpectedErrorPage>
 `;

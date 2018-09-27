@@ -170,6 +170,7 @@ export class InstanceListView extends React.PureComponent<
     );
   }
 
+  // TODO: Replace with ErrorSelector
   private renderError() {
     const { error, namespace } = this.props;
     return error instanceof ForbiddenError ? (
