@@ -7,10 +7,10 @@ import Config from "../shared/Config";
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-const CONFIG = "have you tried to turn it off and on again";
+const testConfig = "have you tried to turn it off and on again";
 
 beforeEach(() => {
-  Config.getConfig = jest.fn(() => CONFIG);
+  Config.getConfig = jest.fn(() => testConfig);
 
   store = mockStore();
 });
@@ -22,7 +22,7 @@ describe("getConfig", () => {
         type: getType(actions.config.requestConfig),
       },
       {
-        payload: CONFIG,
+        payload: testConfig,
         type: getType(actions.config.receiveConfig),
       },
     ];
