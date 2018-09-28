@@ -7,7 +7,8 @@ import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
-import { NotFoundErrorAlert, PermissionsErrorAlert } from "../ErrorAlert";
+import { ErrorSelector } from "../ErrorAlert";
+import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -147,22 +148,24 @@ describe("AppViewComponent", () => {
 
     it("renders an error if error prop is set", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} error={new NotFoundError()} />);
-      const err = wrapper.find(NotFoundErrorAlert);
+      const err = wrapper.find(ErrorSelector);
       expect(err.exists()).toBe(true);
-      expect(err.props()).toMatchObject({
-        namespace: "my-happy-place",
-        resource: 'Application "mr-sunshine"',
-      });
+      expect(err.html()).toContain("Application mr-sunshine not found");
     });
 
     it("renders a forbidden delete-error if if the deleteError prop is a ForbiddenError", () => {
       const wrapper = shallow(
         <AppViewComponent {...validProps} deleteError={new ForbiddenError()} />,
       );
-      const err = wrapper.find(PermissionsErrorAlert);
+      const err = wrapper.find(ErrorSelector);
       expect(err.exists()).toBe(true);
-      expect(err.props()).toMatchObject({
-        action: 'delete Application "mr-sunshine"',
+      expect(
+        err
+          .shallow()
+          .find(PermissionsErrorPage)
+          .props(),
+      ).toMatchObject({
+        action: "delete Application mr-sunshine",
         namespace: "my-happy-place",
       });
     });
@@ -171,12 +174,9 @@ describe("AppViewComponent", () => {
       const wrapper = shallow(
         <AppViewComponent {...validProps} deleteError={new NotFoundError()} />,
       );
-      const err = wrapper.find(NotFoundErrorAlert);
+      const err = wrapper.find(ErrorSelector);
       expect(err.exists()).toBe(true);
-      expect(err.props()).toMatchObject({
-        namespace: "my-happy-place",
-        resource: 'Application "mr-sunshine"',
-      });
+      expect(err.html()).toContain("Application mr-sunshine not found");
     });
   });
 });

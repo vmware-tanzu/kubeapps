@@ -4,8 +4,7 @@ import * as React from "react";
 
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
-import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
-import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
+import { ErrorSelector } from "../ErrorAlert";
 import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
@@ -205,10 +204,12 @@ it("renders the sources links when set", () => {
 describe("renders errors", () => {
   it("renders a not found error if it exists", () => {
     const wrapper = shallow(<ChartView {...props} selected={{ error: new NotFoundError() }} />);
-    expect(wrapper.find(NotFoundErrorPage).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(ErrorSelector).html()).toContain(`Chart ${props.chartID} not found`);
   });
   it("renders a generic error if it exists", () => {
     const wrapper = shallow(<ChartView {...props} selected={{ error: new Error() }} />);
-    expect(wrapper.find(UnexpectedErrorPage).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(ErrorSelector).html()).toContain("Sorry! Something went wrong");
   });
 });

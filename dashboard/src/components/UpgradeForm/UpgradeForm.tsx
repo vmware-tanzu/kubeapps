@@ -3,13 +3,13 @@ import * as React from "react";
 import AceEditor from "react-ace";
 
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
 import DeploymentBinding from "../DeploymentForm/DeploymentBinding";
-import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
 import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
+import { ErrorSelector } from "../ErrorAlert";
 
 interface IDeploymentFormProps {
   appCurrentVersion: string;
@@ -97,11 +97,19 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   }
 
   public render() {
-    const { selected, bindingsWithSecrets, appCurrentVersion } = this.props;
+    const { selected, bindingsWithSecrets, namespace, releaseName } = this.props;
     const { version, versions } = selected;
     const { appValues } = this.state;
     if (this.props.error) {
-      return <DeploymentErrors {...this.props} version={appCurrentVersion} />;
+      return (
+        <ErrorSelector
+          error={this.props.error}
+          namespace={namespace}
+          defaultRequiredRBACRoles={{ update: this.requiredRBACRoles() }}
+          action="update"
+          resource={`Application ${releaseName}`}
+        />
+      );
     }
     if (!version || !versions || !versions.length || this.state.isDeploying) {
       return <LoadingWrapper />;
@@ -110,11 +118,6 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
-            <div className="col-8">
-              {this.props.error && (
-                <DeploymentErrors {...this.props} version={version.attributes.version} />
-              )}
-            </div>
             <div className="col-12">
               <h2>
                 {this.props.releaseName} ({this.props.chartName})
@@ -202,6 +205,17 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   public handleReselectChartRepo = () => {
     this.props.clearRepo();
   };
+
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
+  }
 }
 
 export default UpgradeForm;

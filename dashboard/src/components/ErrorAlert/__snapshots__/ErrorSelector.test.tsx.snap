@@ -1,0 +1,60 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ConflictError should render a simple message with the name of the resource 1`] = `
+<UnexpectedErrorPage
+  showGenericMessage={false}
+  title="my app already exists, try a different name."
+/>
+`;
+
+exports[`ForbiddenError should show an error message with the default RBAC roles 1`] = `
+<PermissionsErrorPage
+  action="view my app"
+  namespace="my-ns"
+  roles={
+    Array [
+      Object {
+        "apiGroup": "v1",
+        "namespace": "my-ns",
+        "resource": "my-app",
+        "verbs": Array [
+          "get",
+          "list",
+        ],
+      },
+    ]
+  }
+/>
+`;
+
+exports[`NotFoundError should include the namespace in the error if given 1`] = `
+<UnexpectedErrorPage
+  showGenericMessage={false}
+  title={
+    <span>
+      my-app not found
+       
+      <span>
+         in 
+        <span>
+          the 
+          <code>
+            my-ns
+          </code>
+           namespace
+        </span>
+      </span>
+       
+    </span>
+  }
+/>
+`;
+
+exports[`UnprocessableEntity Should show the text of the error message 1`] = `
+<UnexpectedErrorPage
+  raw={true}
+  showGenericMessage={false}
+  text="that is wrong!"
+  title="Sorry! Something went wrong processing my-app"
+/>
+`;

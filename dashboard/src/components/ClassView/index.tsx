@@ -133,6 +133,7 @@ export class ClassView extends React.Component<IClassViewProps> {
     );
   }
 
+  // TODO: Replace with ErrorSelector
   private renderError() {
     const { error } = this.props;
     return error instanceof ForbiddenError ? (

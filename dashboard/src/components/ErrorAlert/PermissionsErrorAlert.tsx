@@ -1,8 +1,8 @@
 import * as React from "react";
 import { Lock } from "react-feather";
 
+import { UnexpectedErrorAlert } from ".";
 import { IRBACRole } from "../../shared/types";
-import ErrorPageHeader from "./ErrorAlertHeader";
 import { namespaceText } from "./helpers";
 import PermissionsListItem from "./PermissionsListItem";
 
@@ -16,11 +16,16 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
   public render() {
     const { action, namespace, roles } = this.props;
     return (
-      <div className="alert alert-error margin-t-bigger" role="alert">
-        <ErrorPageHeader icon={Lock}>
-          You don't have sufficient permissions to {action} in {namespaceText(namespace)}.
-        </ErrorPageHeader>
-        <div className="error__content margin-l-enormous">
+      <UnexpectedErrorAlert
+        title={
+          <span>
+            You don't have sufficient permissions to {action} in {namespaceText(namespace)}
+          </span>
+        }
+        icon={Lock}
+        showGenericMessage={false}
+      >
+        <div>
           <p>Ask your administrator for the following RBAC roles:</p>
           <ul className="error__permisions-list">
             {roles.map((r, i) => (
@@ -38,7 +43,7 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
             .
           </p>
         </div>
-      </div>
+      </UnexpectedErrorAlert>
     );
   }
 }
