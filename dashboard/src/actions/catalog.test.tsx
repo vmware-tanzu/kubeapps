@@ -1,4 +1,3 @@
-import context from "jest-plugin-context";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
@@ -260,7 +259,7 @@ describe("sync", () => {
   const provisionCMD = catalogActions.sync(broker);
 
   it("calls ServiceCatalog.syncBroker if no error", async () => {
-    const res = await store.dispatch(provisionCMD);
+    await store.dispatch(provisionCMD);
     expect(store.getActions().length).toBe(0);
     expect(ServiceCatalog.syncBroker).toHaveBeenCalledWith(broker);
   });

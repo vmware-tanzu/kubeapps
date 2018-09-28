@@ -24,7 +24,7 @@ export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
 
 // Clear repo is basically receiving an empty repo
 export const clearRepo = createAction("RECEIVE_REPO", resolve => {
-  return (repo: IAppRepository) => resolve({});
+  return () => resolve({} as IAppRepository);
 });
 
 export const showForm = createAction("SHOW_FORM");
