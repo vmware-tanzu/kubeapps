@@ -10,7 +10,7 @@ import { IStoreState } from "../shared/types";
 
 export const checkCatalogInstall = createAction("CHECK_INSTALL");
 export const installed = createAction("INSTALLED");
-export const notInstalled = createAction("_NOT_INSTALLED");
+export const notInstalled = createAction("NOT_INSTALLED");
 export const requestBrokers = createAction("REQUEST_BROKERS");
 export const receiveBrokers = createAction("RECEIVE_BROKERS", resolve => {
   return (brokers: IServiceBroker[]) => resolve(brokers);
