@@ -61,11 +61,6 @@ apprepository:
     registry: docker.io
     repository: kubeapps/chart-repo
     tag: latest
-  # This image is used in a Helm post-install hook to bootstrap the initialRepos below
-  jobsImage:
-    registry: docker.io
-    repository: lachlanevenson/k8s-kubectl
-    tag: v1.9.9
   initialRepos:
   - name: stable
     url: https://kubernetes-charts.storage.googleapis.com
@@ -83,6 +78,17 @@ apprepository:
     requests:
       cpu: 25m
       memory: 32Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Hooks are used to perform actions like populating
+# apprepositories or creating required resources
+hooks:
+  image:
+    registry: docker.io
+    repository: lachlanevenson/k8s-kubectl
+    tag: v1.9.9
   nodeSelector: {}
   tolerations: []
   affinity: {}
