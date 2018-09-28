@@ -54,7 +54,7 @@ You can upgrade Kubeapps from the Kubeapps web interface. Select the namespace i
 
 > NOTE: If the chart values were modified when deploying Kubeapps the first time, those values need to be set again when upgrading.
 
-It's possible to also upgrade Kubeapps using the HELM CLI. For doing so first upgrade the existing repositories:
+You can also use the Helm CLI to upgrade Kubeapps, first ensure you have updated your local chart repository cache:
 
 ```console
 $ helm repo update
