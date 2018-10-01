@@ -1,26 +1,17 @@
 import { ThunkAction } from "redux-thunk";
 
-import { ActionType, createActionDeprecated } from "typesafe-actions";
+import { ActionType, createAction } from "typesafe-actions";
 
 import Namespace from "../shared/Namespace";
 import { IResource, IStoreState } from "../shared/types";
 
-export const setNamespace = createActionDeprecated("SET_NAMESPACE", (namespace: string) => {
-  return {
-    namespace,
-    type: "SET_NAMESPACE",
-  };
+export const setNamespace = createAction("SET_NAMESPACE", resolve => {
+  return (namespace: string) => resolve(namespace);
 });
 
-export const receiveNamespaces = createActionDeprecated(
-  "RECEIVE_NAMESPACES",
-  (namespaces: string[]) => {
-    return {
-      namespaces,
-      type: "RECEIVE_NAMESPACES",
-    };
-  },
-);
+export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", resolve => {
+  return (namespaces: string[]) => resolve(namespaces);
+});
 
 const allActions = [setNamespace, receiveNamespaces];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
