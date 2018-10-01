@@ -1,28 +1,18 @@
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createActionDeprecated } from "typesafe-actions";
+import { ActionType, createAction } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
 
-export const setAuthenticated = createActionDeprecated(
-  "SET_AUTHENTICATED",
-  (authenticated: boolean) => ({
-    authenticated,
-    type: "SET_AUTHENTICATED",
-  }),
-);
+export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
+  return (authenticated: boolean) => resolve(authenticated);
+});
 
-export const authenticating = createActionDeprecated("AUTHENTICATING", () => ({
-  type: "AUTHENTICATING",
-}));
+export const authenticating = createAction("AUTHENTICATING");
 
-export const authenticationError = createActionDeprecated(
-  "AUTHENTICATION_ERROR",
-  (errorMsg: string) => ({
-    errorMsg,
-    type: "AUTHENTICATION_ERROR",
-  }),
-);
+export const authenticationError = createAction("AUTHENTICATION_ERROR", resolve => {
+  return (errorMsg: string) => resolve(errorMsg);
+});
 
 const allActions = [setAuthenticated, authenticating, authenticationError];
 

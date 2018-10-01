@@ -34,7 +34,7 @@ describe("fetchCharts", () => {
     response = [{ id: "foo" }];
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveCharts), charts: response },
+      { type: getType(actions.charts.receiveCharts), payload: response },
     ];
     await store.dispatch(actions.charts.fetchCharts("foo"));
     expect(store.getActions()).toEqual(expectedActions);
@@ -44,7 +44,7 @@ describe("fetchCharts", () => {
   it("returns a 404 error", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.errorChart), err: new NotFoundError("not found") },
+      { type: getType(actions.charts.errorChart), payload: new NotFoundError("not found") },
     ];
     fetchMock = jest.fn(() => {
       return {
@@ -63,7 +63,7 @@ describe("fetchCharts", () => {
   it("returns a generic error", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.errorChart), err: new Error("something went wrong") },
+      { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
     ];
     fetchMock = jest.fn(() => {
       return {
@@ -85,7 +85,7 @@ describe("fetchChartVersions", () => {
     response = [{ id: "foo" }];
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveChartVersions), versions: response },
+      { type: getType(actions.charts.receiveChartVersions), payload: response },
     ];
     await store.dispatch(actions.charts.fetchChartVersions("foo"));
     expect(store.getActions()).toEqual(expectedActions);
@@ -98,7 +98,7 @@ describe("getChartVersion", () => {
     response = { id: "foo" };
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.selectChartVersion), chartVersion: response },
+      { type: getType(actions.charts.selectChartVersion), payload: response },
     ];
     await store.dispatch(actions.charts.getChartVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
@@ -111,8 +111,8 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     response = [{ id: "foo", attributes: { version: "1.0.0" } }];
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.receiveChartVersions), versions: response },
-      { type: getType(actions.charts.selectChartVersion), chartVersion: response[0] },
+      { type: getType(actions.charts.receiveChartVersions), payload: response },
+      { type: getType(actions.charts.selectChartVersion), payload: response[0] },
     ];
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
@@ -123,7 +123,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     response = [{ id: "foo", attributes: { version: "1.0.0" } }];
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.errorChart), err: new NotFoundError("not found") },
+      { type: getType(actions.charts.errorChart), payload: new NotFoundError("not found") },
     ];
     fetchMock = jest.fn(() => {
       return {
