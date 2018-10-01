@@ -33,16 +33,9 @@ spec:
               # Secret doesn't exists, create it and restart mongodb
               kubectl create secret generic -n {{ .Release.Namespace }} {{ .Values.mongodb.existingSecret }} --from-literal mongodb-root-password=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
               kubectl delete pods -n {{ .Release.Namespace }} -l app=mongodb,release={{ .Release.Name }}
+              # Re-sync repositories reseting resyncRequests
+              kubectl get apprepositories -o=name -n kubeapps {{ .Release.Namespace }} | xargs kubectl patch $1 -n {{ .Release.Namespace }} --type merge -p '{ "spec": { "resyncRequests": 0 } }'
             fi
-            # Re-sync repositories
-            kubectl apply -f /tmp/apprepositories/apprepositories.yaml
-        volumeMounts:
-        - mountPath: /tmp/apprepositories
-          name: apprepositories-config
-      volumes:
-      - name: apprepositories-config
-        configMap:
-          name: {{ template "kubeapps.apprepository-jobs-bootstrap.fullname" . }}
       restartPolicy: OnFailure
       serviceAccountName: {{ template "kubeapps.kubeapps-jobs-upgrade.fullname" . }}
     {{- with .Values.hooks.nodeSelector }}

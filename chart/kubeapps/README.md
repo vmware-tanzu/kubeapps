@@ -50,7 +50,7 @@ The command deploys Kubeapps on the Kubernetes cluster in the `kubeapps` namespa
 
 ## Upgrading Kubeapps
 
-You can upgrade Kubeapps from the Kubeapps web interface. Select the namespace in which Kubeapps is installed (`kubeapps` if you followed the instructions in this guide) and click in the "Upgrade" button. Select the new version and confirm.
+You can upgrade Kubeapps from the Kubeapps web interface. Select the namespace in which Kubeapps is installed (`kubeapps` if you followed the instructions in this guide) and click on the "Upgrade" button. Select the new version and confirm.
 
 > NOTE: If the chart values were modified when deploying Kubeapps the first time, those values need to be set again when upgrading.
 

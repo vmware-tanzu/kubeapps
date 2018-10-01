@@ -2,13 +2,13 @@
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
 metadata:
-  name: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+  name: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: hook-succeeded
     helm.sh/hook-weight: "-10"
   labels:
-    app: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+    app: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -19,27 +19,26 @@ rules:
   - secrets
   verbs:
   - create
-  - delete
 ---
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: RoleBinding
 metadata:
-  name: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+  name: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: hook-succeeded
     helm.sh/hook-weight: "-10"
   labels:
-    app: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+    app: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+  name: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+  name: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
   namespace: {{ .Release.Namespace }}
 {{- end -}}

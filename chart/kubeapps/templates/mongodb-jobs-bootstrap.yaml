@@ -1,12 +1,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+  name: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: hook-succeeded
   labels:
-    app: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+    app: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
@@ -14,7 +14,7 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+        app: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
         release: {{ .Release.Name }}
     spec:
       containers:
@@ -31,7 +31,7 @@ spec:
         - --from-literal
         - mongodb-root-password=`cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1`
       restartPolicy: OnFailure
-      serviceAccountName: {{ template "kubeapps.mongodb-secret-bootstrap.fullname" . }}
+      serviceAccountName: {{ template "kubeapps.mongodb-jobs-boostrap.fullname" . }}
     {{- with .Values.hooks.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
