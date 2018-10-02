@@ -71,13 +71,6 @@ Create name for the apprepository cleanup job
 {{/*
 Create name for the mongodb secret bootstrap job
 */}}
-{{- define "kubeapps.mongodb-jobs-boostrap.fullname" -}}
-{{ template "kubeapps.fullname" . }}-internal-mongodb-jobs-boostrap
-{{- end -}}
-
-{{/*
-Create name for the mongodb secret bootstrap job
-*/}}
 {{- define "kubeapps.mongodb-jobs-cleanup.fullname" -}}
 {{ template "kubeapps.fullname" . }}-internal-mongodb-jobs-cleanup
 {{- end -}}

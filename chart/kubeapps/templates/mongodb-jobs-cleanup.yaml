@@ -21,12 +21,10 @@ spec:
       - name: kubectl
         image: {{ template "kubeapps.image" .Values.hooks.image }}
         command:
-        - kubectl
-        - delete
-        - secret
-        - -n
-        - {{ .Release.Namespace }}
-        - {{ .Values.mongodb.existingSecret }}
+        - /bin/sh
+        args:
+        - -c
+        - "kubectl delete secret -n {{ .Release.Namespace }} {{ .Values.mongodb.existingSecret }} || true"
       restartPolicy: OnFailure
       serviceAccountName: {{ template "kubeapps.mongodb-jobs-cleanup.fullname" . }}
     {{- with .Values.hooks.nodeSelector }}
