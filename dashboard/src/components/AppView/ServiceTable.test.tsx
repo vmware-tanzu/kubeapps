@@ -15,29 +15,10 @@ it("renders a table with a service with a LoadBalancer", () => {
     },
   } as IResource;
   const services = new Map<string, IResource>();
-  services[service.metadata.name] = service;
-  const wrapper = shallow(<ServiceTable services={services} extended={false} />);
+  services.set(service.metadata.name, service);
+  const wrapper = shallow(<ServiceTable services={services} />);
   expect(wrapper.find(ServiceItem).props()).toMatchObject({
-    extended: false,
     service: { metadata: { name: "foo" }, spec: { type: "LoadBalancer" } },
-  });
-});
-
-it("renders a table with a service with a ClusterIP", () => {
-  const service = {
-    metadata: {
-      name: "foo",
-    },
-    spec: {
-      type: "ClusterIP",
-    },
-  } as IResource;
-  const services = new Map<string, IResource>();
-  services[service.metadata.name] = service;
-  const wrapper = shallow(<ServiceTable services={services} extended={true} />);
-  expect(wrapper.find(ServiceItem).props()).toMatchObject({
-    extended: true,
-    service: { metadata: { name: "foo" }, spec: { type: "ClusterIP" } },
   });
 });
 
@@ -59,19 +40,19 @@ it("renders a table with a service with two services", () => {
     },
   } as IResource;
   const services = new Map<string, IResource>();
-  services[service1.metadata.name] = service1;
-  services[service2.metadata.name] = service2;
-  const wrapper = shallow(<ServiceTable services={services} extended={true} />);
+  services.set(service1.metadata.name, service1);
+  services.set(service2.metadata.name, service2);
+  const wrapper = shallow(<ServiceTable services={services} />);
   expect(
     wrapper
       .find(ServiceItem)
       .at(0)
       .props(),
-  ).toMatchObject({ extended: true, service: service1 });
+  ).toMatchObject({ service: service1 });
   expect(
     wrapper
       .find(ServiceItem)
       .at(1)
       .props(),
-  ).toMatchObject({ extended: true, service: service2 });
+  ).toMatchObject({ service: service2 });
 });

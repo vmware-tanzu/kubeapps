@@ -6,22 +6,17 @@ exports[`renders a simple view without IP 1`] = `
     foo
   </td>
   <td>
-    <a
-      href="None"
-      key="None"
-      target="_blank"
-    >
-      <span
-        className="ServiceItem__url padding-tiny padding-h-normal type-small margin-r-small"
-      >
-        None
-      </span>
-    </a>
+    ClusterIP
   </td>
+  <td />
+  <td>
+    None
+  </td>
+  <td />
 </tr>
 `;
 
-exports[`renders an extended view with IP 1`] = `
+exports[`renders a view with IP 1`] = `
 <tr>
   <td>
     foo
@@ -34,7 +29,7 @@ exports[`renders an extended view with IP 1`] = `
     1.2.3.4
   </td>
   <td>
-    80/http
+    80/TCP
   </td>
 </tr>
 `;

@@ -29,7 +29,7 @@ it("renders a deployment details", () => {
 it("renders a services details", () => {
   const services = new Map<string, IResource>();
   const svc = "foo";
-  services[svc] = {
+  services.set(svc, {
     kind: "Service",
     metadata: {
       name: "foo",
@@ -39,7 +39,7 @@ it("renders a services details", () => {
       type: "ClusterIP",
     },
     status: {},
-  } as IResource;
+  } as IResource);
   const wrapper = shallow(<AppDetails {...defaultProps} services={services} />);
   expect(wrapper.find(ServiceTable).props().services).toMatchObject(services);
 });

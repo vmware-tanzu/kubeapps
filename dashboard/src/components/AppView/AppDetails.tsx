@@ -23,10 +23,10 @@ class AppDetails extends React.Component<IAppDetailsProps> {
               <DeploymentTable deployments={this.props.deployments} />
             </div>
           )}
-          {Object.keys(this.props.services).length > 0 && (
+          {this.props.services.size > 0 && (
             <div>
               <h6>Services</h6>
-              <ServiceTable services={this.props.services} extended={true} />
+              <ServiceTable services={this.props.services} />
             </div>
           )}
           <h6>Other Resources</h6>

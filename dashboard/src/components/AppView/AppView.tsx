@@ -8,12 +8,12 @@ import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
+import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
-import ServiceTable from "./ServiceTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -136,7 +136,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         this.setState({ deployments: { ...this.state.deployments, [key]: resource } });
         break;
       case "Service":
-        this.setState({ services: { ...this.state.services, [key]: resource } });
+        this.setState({ services: this.state.services.set(key, resource) });
         break;
     }
   }
@@ -164,7 +164,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
-
     // Although LoadingWrapper checks that the app is loaded before loading this wrapper
     // it seems that react renders it even before causing it to crash because app is null
     // that's why we need to have an app && guard clause
@@ -194,7 +193,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                <ServiceTable services={this.state.services} extended={false} />
+                {this.state.services.size > 0 && <AccessURLTable services={this.state.services} />}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <AppDetails
                   deployments={this.state.deployments}

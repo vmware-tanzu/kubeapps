@@ -1,4 +1,4 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
@@ -9,6 +9,7 @@ import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
+import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -137,13 +138,21 @@ describe("AppViewComponent", () => {
 
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const services = new Map<string, IResource>();
+      services.set("foo", {
+        metadata: { name: "foo" },
+        spec: { type: "loadBalancer", ports: [{ port: 8080 }] },
+        status: { ingress: [{ loadBalancer: { ip: "1.2.3.4" } }] },
+      } as IResource);
+      wrapper.setState({ services });
       expect(wrapper.find(ChartInfo).exists()).toBe(true);
       expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
       expect(wrapper.find(ServiceTable).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
       expect(wrapper.find(AppDetails).exists()).toBe(true);
+      expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
     it("renders an error if error prop is set", () => {

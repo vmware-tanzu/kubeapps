@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when the status is empty should show a Pending text 1`] = `
+<tr>
+  <td>
+    foo
+  </td>
+  <td>
+    LoadBalancer
+  </td>
+  <td>
+    <span
+      className="ServiceItem__not-url type-small margin-r-small padding-tiny padding-h-normal"
+      key="Pending"
+    >
+      Pending
+    </span>
+  </td>
+</tr>
+`;
