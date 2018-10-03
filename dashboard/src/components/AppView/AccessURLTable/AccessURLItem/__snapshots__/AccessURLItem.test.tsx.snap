@@ -10,7 +10,7 @@ exports[`when the status is empty should show a Pending text 1`] = `
   </td>
   <td>
     <span
-      className="ServiceItem__not-url type-small margin-r-small padding-tiny padding-h-normal"
+      className="ServiceItem type-small margin-r-small padding-tiny padding-h-normal"
       key="Pending"
     >
       Pending

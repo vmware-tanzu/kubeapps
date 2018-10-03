@@ -5,9 +5,9 @@ import DeploymentTable from "./DeploymentTable";
 import ServiceTable from "./ServiceTable";
 
 interface IAppDetailsProps {
-  deployments: Map<string, IResource>;
-  services: Map<string, IResource>;
-  otherResources: Map<string, IResource>;
+  deployments: { [d: string]: IResource };
+  otherResources: { [r: string]: IResource };
+  services: { [s: string]: IResource };
 }
 
 class AppDetails extends React.Component<IAppDetailsProps> {
@@ -23,7 +23,7 @@ class AppDetails extends React.Component<IAppDetailsProps> {
               <DeploymentTable deployments={this.props.deployments} />
             </div>
           )}
-          {this.props.services.size > 0 && (
+          {Object.keys(this.props.services).length > 0 && (
             <div>
               <h6>Services</h6>
               <ServiceTable services={this.props.services} />

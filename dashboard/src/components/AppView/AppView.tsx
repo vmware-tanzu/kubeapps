@@ -27,9 +27,9 @@ export interface IAppViewProps {
 }
 
 interface IAppViewState {
-  deployments: Map<string, IResource>;
-  otherResources: Map<string, IResource>;
-  services: Map<string, IResource>;
+  deployments: { [d: string]: IResource };
+  otherResources: { [r: string]: IResource };
+  services: { [s: string]: IResource };
   sockets: WebSocket[];
 }
 
@@ -50,9 +50,9 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
-    deployments: new Map<string, IResource>(),
-    otherResources: new Map<string, IResource>(),
-    services: new Map<string, IResource>(),
+    deployments: {},
+    otherResources: {},
+    services: {},
     sockets: [],
   };
 
@@ -91,7 +91,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         }
         acc[`${r.kind}/${r.metadata.name}`] = r;
         return acc;
-      }, new Map<string, IResource>());
+      }, {});
     this.setState({ otherResources });
 
     const deployments = manifest.filter(d => d.kind === "Deployment");
@@ -136,7 +136,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         this.setState({ deployments: { ...this.state.deployments, [key]: resource } });
         break;
       case "Service":
-        this.setState({ services: this.state.services.set(key, resource) });
+        this.setState({ services: { ...this.state.services, [key]: resource } });
         break;
     }
   }
@@ -193,7 +193,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                {this.state.services.size > 0 && <AccessURLTable services={this.state.services} />}
+                {Object.keys(this.state.services).length > 0 && (
+                  <AccessURLTable services={this.state.services} />
+                )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <AppDetails
                   deployments={this.state.deployments}

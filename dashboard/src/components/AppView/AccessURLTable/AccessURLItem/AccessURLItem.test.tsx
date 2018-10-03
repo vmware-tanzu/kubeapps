@@ -26,9 +26,9 @@ describe("when the status is empty", () => {
 
   it("should not include a link", () => {
     const wrapper = shallow(<AccessURLItem service={service} />);
-    expect(wrapper.find(".ServiceItem__not-url")).toExist();
-    expect(wrapper.find(".ServiceItem__url")).not.toExist();
-    expect(wrapper.find("a")).not.toExist();
+    expect(wrapper.find(".ServiceItem")).toExist();
+    const link = wrapper.find(".ServiceItem").find("a");
+    expect(link).not.toExist();
   });
 });
 
@@ -100,8 +100,9 @@ describe("when the status is populated", () => {
       } as IResource;
       const wrapper = shallow(<AccessURLItem service={service} />);
       test.expectedURLs.forEach(url => {
-        expect(wrapper.find(".ServiceItem__not-url")).not.toExist();
-        expect(wrapper.find(".ServiceItem__url")).toExist();
+        expect(wrapper.find(".ServiceItem")).toExist();
+        const link = wrapper.find(".ServiceItem").find("a");
+        expect(link).toExist();    
         expect(wrapper.text()).toContain(url);
       });
     });

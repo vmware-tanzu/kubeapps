@@ -7,13 +7,13 @@ import ServiceTable from "./ServiceTable";
 import AppDetails from "./AppDetails";
 
 const defaultProps = {
-  deployments: {} as Map<string, IResource>,
-  otherResources: {} as Map<string, IResource>,
-  services: {} as Map<string, IResource>,
+  deployments: {},
+  otherResources: {},
+  services: {},
 };
 
 it("renders a deployment details", () => {
-  const deployments = new Map<string, IResource>();
+  const deployments = {};
   const dep = "foo";
   deployments[dep] = {
     kind: "Deployment",
@@ -27,9 +27,9 @@ it("renders a deployment details", () => {
 });
 
 it("renders a services details", () => {
-  const services = new Map<string, IResource>();
+  const services = {};
   const svc = "foo";
-  services.set(svc, {
+  services[svc] = {
     kind: "Service",
     metadata: {
       name: "foo",
@@ -39,13 +39,13 @@ it("renders a services details", () => {
       type: "ClusterIP",
     },
     status: {},
-  } as IResource);
+  } as IResource;
   const wrapper = shallow(<AppDetails {...defaultProps} services={services} />);
   expect(wrapper.find(ServiceTable).props().services).toMatchObject(services);
 });
 
 it("renders a other resources details", () => {
-  const otherResources = new Map<string, IResource>();
+  const otherResources = {};
   const r1 = "foo";
   otherResources[r1] = {
     kind: "Secret",

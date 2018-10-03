@@ -139,12 +139,13 @@ describe("AppViewComponent", () => {
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
       const wrapper = mount(<AppViewComponent {...validProps} />);
-      const services = new Map<string, IResource>();
-      services.set("foo", {
+      const service = {
         metadata: { name: "foo" },
         spec: { type: "loadBalancer", ports: [{ port: 8080 }] },
         status: { ingress: [{ loadBalancer: { ip: "1.2.3.4" } }] },
-      } as IResource);
+      } as IResource;
+      const services = {};
+      services[service.metadata.name] = service;
       wrapper.setState({ services });
       expect(wrapper.find(ChartInfo).exists()).toBe(true);
       expect(wrapper.find(DeploymentStatus).exists()).toBe(true);

@@ -18,8 +18,8 @@ it("should omit the Service Table if there are no public services", () => {
       loadBalancer: {},
     } as IServiceStatus,
   } as IResource;
-  const services = new Map<string, IResource>();
-  services.set("foo", service);
+  const services = {};
+  services[service.metadata.name] = service;
   const wrapper = shallow(<AccessURLTable services={services} />);
   expect(wrapper.text()).toBe("");
 });
@@ -37,8 +37,8 @@ it("should show the table if any service is a LoadBalancer", () => {
       loadBalancer: {},
     } as IServiceStatus,
   } as IResource;
-  const services = new Map<string, IResource>();
-  services.set("foo", service);
+  const services = {};
+  services[service.metadata.name] = service;
   const wrapper = shallow(<AccessURLTable services={services} />);
   expect(wrapper.find(AccessURLItem)).toExist();
   expect(wrapper).toMatchSnapshot();
