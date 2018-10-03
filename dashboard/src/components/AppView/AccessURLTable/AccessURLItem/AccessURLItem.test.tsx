@@ -102,7 +102,7 @@ describe("when the status is populated", () => {
       test.expectedURLs.forEach(url => {
         expect(wrapper.find(".ServiceItem")).toExist();
         const link = wrapper.find(".ServiceItem").find("a");
-        expect(link).toExist();    
+        expect(link).toExist();
         expect(wrapper.text()).toContain(url);
       });
     });
