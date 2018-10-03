@@ -82,8 +82,8 @@ apprepository:
   tolerations: []
   affinity: {}
 
-# Hooks are used to perform actions like populating
-# apprepositories or creating required resources
+# Hooks are used to perform actions like populating apprepositories
+# or creating required resources during installation or upgrade
 hooks:
   image:
     registry: docker.io
