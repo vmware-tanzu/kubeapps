@@ -8,8 +8,37 @@ interface IAccessURLItem {
 }
 
 class AccessURLItem extends React.Component<IAccessURLItem> {
+  public render() {
+    const { service } = this.props;
+    const isLink = this.isLink();
+    return (
+      <tr>
+        <td>{service.metadata.name}</td>
+        <td>{service.spec.type}</td>
+        <td>
+          {this.URLs().map(l => (
+            <span
+              key={l}
+              className={`ServiceItem ${
+                isLink ? "ServiceItem--with-link" : ""
+              } type-small margin-r-small padding-tiny padding-h-normal`}
+            >
+              {isLink ? (
+                <a className="padding-tiny padding-h-normal" href={l} target="_blank">
+                  {l}
+                </a>
+              ) : (
+                l
+              )}
+            </span>
+          ))}
+        </td>
+      </tr>
+    );
+  }
+
   // isLink returns true if there are any link in the Item
-  get isLink(): boolean {
+  private isLink(): boolean {
     if (
       this.props.service.status.loadBalancer.ingress &&
       this.props.service.status.loadBalancer.ingress.length
@@ -20,7 +49,7 @@ class AccessURLItem extends React.Component<IAccessURLItem> {
   }
 
   // URLs returns the list of URLs obtained from the service status
-  get URLs(): string[] {
+  private URLs(): string[] {
     const URLs: string[] = [];
     const { service } = this.props;
     const status: IServiceStatus = service.status;
@@ -39,35 +68,6 @@ class AccessURLItem extends React.Component<IAccessURLItem> {
       URLs.push("Pending");
     }
     return URLs;
-  }
-
-  public render() {
-    const { service } = this.props;
-    const isLink = this.isLink;
-    return (
-      <tr>
-        <td>{service.metadata.name}</td>
-        <td>{service.spec.type}</td>
-        <td>
-          {this.URLs.map(l => (
-            <span
-              key={l}
-              className={`ServiceItem ${
-                isLink ? "with-link" : ""
-              } type-small margin-r-small padding-tiny padding-h-normal`}
-            >
-              {isLink ? (
-                <a className="padding-tiny padding-h-normal" href={l} target="_blank">
-                  {l}
-                </a>
-              ) : (
-                l
-              )}
-            </span>
-          ))}
-        </td>
-      </tr>
-    );
   }
 
   private getURL(base: string, port: number) {

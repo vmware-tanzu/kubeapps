@@ -8,22 +8,11 @@ interface IServiceTableProps {
 }
 
 class AccessURLTable extends React.Component<IServiceTableProps> {
-  get publicServices() {
-    const { services } = this.props;
-    const publicServices: string[] = [];
-    Object.keys(services).forEach(key => {
-      const spec = services[key].spec as IServiceSpec;
-      if (spec.type === "LoadBalancer") {
-        publicServices.push(key);
-      }
-    });
-    return publicServices;
-  }
-
   public render() {
     const { services } = this.props;
+    const publicServices = this.publicServices();
     return (
-      this.publicServices.length > 0 && (
+      publicServices.length > 0 && (
         <table>
           <thead>
             <tr>
@@ -33,13 +22,25 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
             </tr>
           </thead>
           <tbody>
-            {this.publicServices.map((k: string) => (
+            {publicServices.map((k: string) => (
               <AccessURLItem key={k} service={services[k]} />
             ))}
           </tbody>
         </table>
       )
     );
+  }
+
+  private publicServices() {
+    const { services } = this.props;
+    const publicServices: string[] = [];
+    Object.keys(services).forEach(key => {
+      const spec = services[key].spec as IServiceSpec;
+      if (spec.type === "LoadBalancer") {
+        publicServices.push(key);
+      }
+    });
+    return publicServices;
   }
 }
 
