@@ -2,6 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/kubeapps/kubeapps/tree/master.svg?style=svg)](https://circleci.com/gh/kubeapps/kubeapps/tree/master)
 
+
 Kubeapps is a web-based UI for deploying and managing applications in Kubernetes clusters. Kubeapps allows you to:
 
 - Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
@@ -94,3 +95,7 @@ For a more detailed and step-by-step introduction to Kubeapps, read our [introdu
 * [Detailed installation instructions](chart/kubeapps/README.md)
 * [Kubeapps Dashboard documentation](docs/user/dashboard.md)
 * [Kubeapps components](docs/architecture/overview.md)
+
+## Community
+
+* [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/C9D3TSUG4)
