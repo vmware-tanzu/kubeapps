@@ -1,10 +1,11 @@
 import { shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 
 import { IResource, IServiceSpec, IServiceStatus } from "shared/types";
 import AccessURLItem from "./AccessURLItem";
 
-describe("when the status is empty", () => {
+context("when the status is empty", () => {
   const service = {
     metadata: {
       name: "foo",
@@ -19,20 +20,20 @@ describe("when the status is empty", () => {
   } as IResource;
 
   it("should show a Pending text", () => {
-    const wrapper = shallow(<AccessURLItem service={service} />);
+    const wrapper = shallow(<AccessURLItem loadBalancerService={service} />);
     expect(wrapper.text()).toContain("Pending");
     expect(wrapper).toMatchSnapshot();
   });
 
   it("should not include a link", () => {
-    const wrapper = shallow(<AccessURLItem service={service} />);
+    const wrapper = shallow(<AccessURLItem loadBalancerService={service} />);
     expect(wrapper.find(".ServiceItem")).toExist();
     const link = wrapper.find(".ServiceItem").find("a");
     expect(link).not.toExist();
   });
 });
 
-describe("when the status is populated", () => {
+context("when the status is populated", () => {
   interface Itest {
     description: string;
     ports: any[];
@@ -98,7 +99,7 @@ describe("when the status is populated", () => {
           },
         } as IServiceStatus,
       } as IResource;
-      const wrapper = shallow(<AccessURLItem service={service} />);
+      const wrapper = shallow(<AccessURLItem loadBalancerService={service} />);
       test.expectedURLs.forEach(url => {
         expect(wrapper.find(".ServiceItem")).toExist();
         const link = wrapper.find(".ServiceItem").find("a");

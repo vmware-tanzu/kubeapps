@@ -4,17 +4,17 @@ import { IResource, IServiceSpec, IServiceStatus } from "../../../../shared/type
 import "./AccessURLItem.css";
 
 interface IAccessURLItem {
-  service: IResource;
+  loadBalancerService: IResource;
 }
 
 class AccessURLItem extends React.Component<IAccessURLItem> {
   public render() {
-    const { service } = this.props;
+    const { loadBalancerService } = this.props;
     const isLink = this.isLink();
     return (
       <tr>
-        <td>{service.metadata.name}</td>
-        <td>{service.spec.type}</td>
+        <td>{loadBalancerService.metadata.name}</td>
+        <td>{loadBalancerService.spec.type}</td>
         <td>
           {this.URLs().map(l => (
             <span
@@ -40,8 +40,8 @@ class AccessURLItem extends React.Component<IAccessURLItem> {
   // isLink returns true if there are any link in the Item
   private isLink(): boolean {
     if (
-      this.props.service.status.loadBalancer.ingress &&
-      this.props.service.status.loadBalancer.ingress.length
+      this.props.loadBalancerService.status.loadBalancer.ingress &&
+      this.props.loadBalancerService.status.loadBalancer.ingress.length
     ) {
       return true;
     }
@@ -51,11 +51,11 @@ class AccessURLItem extends React.Component<IAccessURLItem> {
   // URLs returns the list of URLs obtained from the service status
   private URLs(): string[] {
     const URLs: string[] = [];
-    const { service } = this.props;
-    const status: IServiceStatus = service.status;
+    const { loadBalancerService } = this.props;
+    const status: IServiceStatus = loadBalancerService.status;
     if (status.loadBalancer.ingress && status.loadBalancer.ingress.length) {
       status.loadBalancer.ingress.forEach(i => {
-        (service.spec as IServiceSpec).ports.forEach(port => {
+        (loadBalancerService.spec as IServiceSpec).ports.forEach(port => {
           if (i.hostname) {
             URLs.push(this.getURL(i.hostname, port.port));
           }
@@ -70,6 +70,7 @@ class AccessURLItem extends React.Component<IAccessURLItem> {
     return URLs;
   }
 
+  // getURL returns a full URL adding the protocol and the port if needed
   private getURL(base: string, port: number) {
     const protocol = port === 443 ? "https" : "http";
     // Only show the port in the URL if it's not a standard HTTP/HTTPS port

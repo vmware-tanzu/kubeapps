@@ -23,7 +23,7 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
           </thead>
           <tbody>
             {publicServices.map((k: string) => (
-              <AccessURLItem key={k} service={services[k]} />
+              <AccessURLItem key={k} loadBalancerService={services[k]} />
             ))}
           </tbody>
         </table>
@@ -31,7 +31,7 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
     );
   }
 
-  private publicServices() {
+  private publicServices(): string[] {
     const { services } = this.props;
     const publicServices: string[] = [];
     Object.keys(services).forEach(key => {
