@@ -8,6 +8,7 @@ export interface INamespaceState {
   current: string;
   namespaces: string[];
 }
+const foo = "123";
 
 const initialState: INamespaceState = {
   current: localStorage.getItem("kubeapps_namespace") || "default",
