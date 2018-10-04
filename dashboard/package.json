@@ -54,11 +54,11 @@
     "lint-js-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'",
     "lint-css": "stylelint --config ./.stylelintrc.json 'src/**/*.scss'",
     "lint-css-fix": "stylelint --config ./.stylelintrc.json --fix 'src/**/*.scss'",
-    "lint": "npm-run-all lint-js lint-css"
+    "lint": "npm-run-all lint-js lint-css",
+    "ts-compile-check": "tsc -p tsconfig.json --noEmit"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "tsc -p tsconfig.json --noEmit",
       "yarn run lint-js-fix",
       "prettier --write",
       "git add"
@@ -115,7 +115,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "yarn run ts-compile-check && lint-staged"
     }
   }
 }
