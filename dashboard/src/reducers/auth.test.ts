@@ -33,7 +33,7 @@ describe("authReducer", () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
-            authenticated: e,
+            payload: e,
             type: actionTypes.setAuthenticated as any,
           }),
         ).toEqual({ ...initialState, authenticated: e });
@@ -55,7 +55,7 @@ describe("authReducer", () => {
       expect(
         authReducer(
           { authenticating: true, authenticated: true },
-          { type: actionTypes.authenticationError as any, errorMsg: errMessage },
+          { type: actionTypes.authenticationError as any, payload: errMessage },
         ),
       ).toEqual({ ...initialState, authenticationError: errMessage });
     });

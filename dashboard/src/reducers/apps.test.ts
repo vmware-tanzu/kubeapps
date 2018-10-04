@@ -33,12 +33,12 @@ describe("authReducer", () => {
 
     it("toggles the listAll state", () => {
       let state = appsReducer(undefined, {
-        listingAll: true,
+        payload: true,
         type: actionTypes.listApps as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: true, listingAll: true });
       state = appsReducer(state, {
-        listingAll: false,
+        payload: false,
         type: actionTypes.listApps as any,
       });
       expect(state).toEqual({ ...initialState, isFetching: true, listingAll: false });
