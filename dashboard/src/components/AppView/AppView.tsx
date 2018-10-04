@@ -8,12 +8,12 @@ import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
+import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
-import ServiceTable from "./ServiceTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -27,9 +27,9 @@ export interface IAppViewProps {
 }
 
 interface IAppViewState {
-  deployments: Map<string, IResource>;
-  otherResources: Map<string, IResource>;
-  services: Map<string, IResource>;
+  deployments: { [d: string]: IResource };
+  otherResources: { [r: string]: IResource };
+  services: { [s: string]: IResource };
   sockets: WebSocket[];
 }
 
@@ -50,9 +50,9 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
-    deployments: new Map<string, IResource>(),
-    otherResources: new Map<string, IResource>(),
-    services: new Map<string, IResource>(),
+    deployments: {},
+    otherResources: {},
+    services: {},
     sockets: [],
   };
 
@@ -91,7 +91,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         }
         acc[`${r.kind}/${r.metadata.name}`] = r;
         return acc;
-      }, new Map<string, IResource>());
+      }, {});
     this.setState({ otherResources });
 
     const deployments = manifest.filter(d => d.kind === "Deployment");
@@ -164,7 +164,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
-
     // Although LoadingWrapper checks that the app is loaded before loading this wrapper
     // it seems that react renders it even before causing it to crash because app is null
     // that's why we need to have an app && guard clause
@@ -194,7 +193,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                <ServiceTable services={this.state.services} extended={false} />
+                {Object.keys(this.state.services).length > 0 && (
+                  <AccessURLTable services={this.state.services} />
+                )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <AppDetails
                   deployments={this.state.deployments}
