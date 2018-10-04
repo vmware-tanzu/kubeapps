@@ -58,6 +58,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
+      "tsc -p tsconfig.json --noEmit",
       "yarn run lint-js-fix",
       "prettier --write",
       "git add"
