@@ -97,4 +97,6 @@ For a more detailed and step-by-step introduction to Kubeapps, read our [introdu
 
 ## Community
 
-* [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/C9D3TSUG4)
+* [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps)
+
+Click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack org.
