@@ -2,17 +2,20 @@ import * as React from "react";
 
 import { IResource, IServiceSpec } from "../../../shared/types";
 import AccessURLItem from "./AccessURLItem";
+import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressItem";
+import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceItem";
 
 interface IServiceTableProps {
   services: { [s: string]: IResource };
+  ingresses: { [i: string]: IResource };
 }
 
 class AccessURLTable extends React.Component<IServiceTableProps> {
   public render() {
-    const { services } = this.props;
+    const { services, ingresses } = this.props;
     const publicServices = this.publicServices();
     return (
-      publicServices.length > 0 && (
+      (publicServices.length > 0 || Object.keys(ingresses).length > 0) && (
         <table>
           <thead>
             <tr>
@@ -23,7 +26,10 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
           </thead>
           <tbody>
             {publicServices.map((k: string) => (
-              <AccessURLItem key={k} loadBalancerService={services[k]} />
+              <AccessURLItem key={k} URLItem={GetURLItemFromService(services[k])} />
+            ))}
+            {Object.keys(ingresses).map((k: string) => (
+              <AccessURLItem key={k} URLItem={GetURLItemFromIngress(ingresses[k])} />
             ))}
           </tbody>
         </table>
