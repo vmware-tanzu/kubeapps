@@ -4,7 +4,7 @@ import { IResource } from "../../shared/types";
 import DeploymentItem from "./DeploymentItem";
 
 interface IDeploymentTableProps {
-  deployments: Map<string, IResource>;
+  deployments: { [d: string]: IResource };
 }
 
 class DeploymentTable extends React.Component<IDeploymentTableProps> {

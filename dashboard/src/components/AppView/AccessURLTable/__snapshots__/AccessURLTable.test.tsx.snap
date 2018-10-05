@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should show the table if any service is a LoadBalancer 1`] = `
+<table>
+  <thead>
+    <tr>
+      <th>
+        NAME
+      </th>
+      <th>
+        TYPE
+      </th>
+      <th>
+        URL
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <AccessURLItem
+      key="foo"
+      loadBalancerService={
+        Object {
+          "metadata": Object {
+            "name": "foo",
+          },
+          "spec": Object {
+            "ports": Array [
+              Object {
+                "port": 8080,
+              },
+            ],
+            "type": "LoadBalancer",
+          },
+          "status": Object {
+            "loadBalancer": Object {},
+          },
+        }
+      }
+    />
+  </tbody>
+</table>
+`;

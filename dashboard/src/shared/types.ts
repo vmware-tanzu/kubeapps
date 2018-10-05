@@ -99,7 +99,7 @@ export interface IServiceSpec {
 
 export interface IServiceStatus {
   loadBalancer: {
-    ingress?: Array<{ ip: string }>;
+    ingress?: Array<{ ip?: string; hostname?: string }>;
   };
 }
 

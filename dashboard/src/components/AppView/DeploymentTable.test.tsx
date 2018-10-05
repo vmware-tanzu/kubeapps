@@ -6,7 +6,7 @@ import DeploymentItem from "./DeploymentItem";
 import DeploymentTable from "./DeploymentTable";
 
 it("renders a deployment ready", () => {
-  const deployments = new Map<string, IResource>();
+  const deployments = {};
   const dep = "foo";
   deployments[dep] = {
     kind: "Deployment",
@@ -21,7 +21,7 @@ it("renders a deployment ready", () => {
 });
 
 it("renders two deployments", () => {
-  const deployments = new Map<string, IResource>();
+  const deployments = {};
   const dep1 = "foo";
   const dep2 = "bar";
   deployments[dep1] = { kind: "Deployment", metadata: { name: dep1 }, status: {} } as IResource;
