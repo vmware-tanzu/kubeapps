@@ -1,5 +1,5 @@
 import { IResource, IServiceStatus } from "shared/types";
-import { GetURLItemFromService } from "./AccessURLServiceItem";
+import { GetURLItemFromService } from "./AccessURLServiceHelper";
 
 describe("GetURLItemFromService", () => {
   interface Itest {

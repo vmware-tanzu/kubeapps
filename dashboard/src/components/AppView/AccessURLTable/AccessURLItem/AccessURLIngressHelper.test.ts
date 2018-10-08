@@ -1,5 +1,5 @@
 import { IHTTPIngressPath, IIngressRule, IIngressSpec, IResource } from "shared/types";
-import { GetURLItemFromIngress } from "./AccessURLIngressItem";
+import { GetURLItemFromIngress } from "./AccessURLIngressHelper";
 
 describe("GetURLItemFromIngress", () => {
   interface Itest {
