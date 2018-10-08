@@ -13,6 +13,23 @@ interface IChartReadmeProps {
   version: string;
 }
 
+// Code from https://github.com/rexxars/react-markdown/issues/69
+function flatten(text: string, child: any): any {
+  return typeof child === "string"
+    ? text + child
+    : React.Children.toArray(child.props.children).reduce(flatten, text);
+}
+
+function HeadingRenderer(props: any) {
+  const children = React.Children.toArray(props.children);
+  const text = children.reduce(flatten, "");
+  const slug = text
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9_\s]/g, "") // remove punctuation
+    .replace(/\s/g, "-"); // replace spaces with dash
+  return React.createElement("h" + props.level, { id: slug }, props.children);
+}
+
 class ChartReadme extends React.Component<IChartReadmeProps> {
   public componentWillMount() {
     const { getChartReadme, version } = this.props;
@@ -35,7 +52,7 @@ class ChartReadme extends React.Component<IChartReadmeProps> {
       <LoadingWrapper loaded={!!readme}>
         {readme && (
           <div className="ChartReadme">
-            <ReactMarkdown source={readme} />
+            <ReactMarkdown source={readme} renderers={{ heading: HeadingRenderer }} />
           </div>
         )}
       </LoadingWrapper>

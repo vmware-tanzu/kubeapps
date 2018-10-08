@@ -1,4 +1,4 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 import * as ReactMarkdown from "react-markdown";
@@ -56,4 +56,17 @@ it("renders an error when hasError is set", () => {
     <ChartReadme getChartReadme={jest.fn()} hasError={true} version="1.2.3" />,
   );
   expect(wrapper.text()).toContain("No README found");
+});
+
+it("renders the ReactMarkdown content adding IDs for the titles", () => {
+  const wrapper = mount(
+    <ChartReadme
+      getChartReadme={jest.fn()}
+      hasError={false}
+      version="1.2.3"
+      readme="# _Markdown_ 'Readme_or_not'!"
+    />,
+  );
+  const component = wrapper.find("#markdown-readme_or_not");
+  expect(component).toExist();
 });
