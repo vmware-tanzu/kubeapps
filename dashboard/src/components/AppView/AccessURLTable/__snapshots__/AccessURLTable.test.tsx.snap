@@ -53,11 +53,11 @@ exports[`when the app contain services and ingresses should show the table with 
       URLItem={
         Object {
           "URLs": Array [
-            "Pending",
+            "http://foo.bar/ready",
           ],
-          "isLink": false,
+          "isLink": true,
           "name": "foo",
-          "type": "Service LoadBalancer",
+          "type": "Ingress",
         }
       }
       key="foo"
@@ -66,11 +66,11 @@ exports[`when the app contain services and ingresses should show the table with 
       URLItem={
         Object {
           "URLs": Array [
-            "http://foo.bar/ready",
+            "Pending",
           ],
-          "isLink": true,
+          "isLink": false,
           "name": "foo",
-          "type": "Ingress",
+          "type": "Service LoadBalancer",
         }
       }
       key="foo"
