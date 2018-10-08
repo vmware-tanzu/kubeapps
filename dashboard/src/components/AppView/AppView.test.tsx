@@ -64,7 +64,7 @@ describe("AppViewComponent", () => {
     const resources = {
       configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
       deployment: {
-        apiVersion: "extensions/v1beta1",
+        apiVersion: "apps/v1beta1",
         kind: "Deployment",
         metadata: { name: "deployment-one" },
       },
@@ -96,7 +96,7 @@ describe("AppViewComponent", () => {
 
       expect(sockets.length).toEqual(3);
       expect(sockets[0].url).toBe(
-        "ws://localhost/api/kube/apis/extensions/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
+        "ws://localhost/api/kube/apis/apps/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
       );
       expect(sockets[1].url).toBe(
         "ws://localhost/api/kube/api/v1/namespaces/weee/services?watch=true&fieldSelector=metadata.name%3Dsvc-one",
