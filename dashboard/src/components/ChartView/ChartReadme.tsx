@@ -3,6 +3,7 @@ import { FileText } from "react-feather";
 import * as ReactMarkdown from "react-markdown";
 
 import LoadingWrapper from "../LoadingWrapper";
+import HeadingRenderer from "./HeadingRenderer";
 
 import "./ChartReadme.css";
 
@@ -11,23 +12,6 @@ interface IChartReadmeProps {
   hasError: boolean;
   readme?: string;
   version: string;
-}
-
-// Code from https://github.com/rexxars/react-markdown/issues/69
-function flatten(text: string, child: any): any {
-  return typeof child === "string"
-    ? text + child
-    : React.Children.toArray(child.props.children).reduce(flatten, text);
-}
-
-function HeadingRenderer(props: any) {
-  const children = React.Children.toArray(props.children);
-  const text = children.reduce(flatten, "");
-  const slug = text
-    .toLowerCase()
-    .replace(/[^a-zA-Z0-9_\s]/g, "") // remove punctuation
-    .replace(/\s/g, "-"); // replace spaces with dash
-  return React.createElement("h" + props.level, { id: slug }, props.children);
 }
 
 class ChartReadme extends React.Component<IChartReadmeProps> {
