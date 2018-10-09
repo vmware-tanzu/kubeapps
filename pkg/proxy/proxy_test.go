@@ -278,16 +278,17 @@ func TestUpdateMissingHelmRelease(t *testing.T) {
 	ch := &chart.Chart{
 		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	// Simulate the same app but in a different namespace
+
 	ns2 := "other_ns"
-	app := AppOverview{rs, version, ns2, "icon.png", "DEPLOYED"}
+	rs2 := "not_foo"
+	app := AppOverview{rs2, version, ns2, "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	_, err := proxy.UpdateRelease(rs, ns, "", ch)
 	if err == nil {
 		t.Error("Update should fail, there is not a release in the namespace specified")
 	}
-	if !strings.Contains(err.Error(), "not found") {
+	if !strings.Contains(err.Error(), "No such release") {
 		t.Errorf("Unexpected error %v", err)
 	}
 }
@@ -304,8 +305,6 @@ func TestGetHelmRelease(t *testing.T) {
 	}
 	tests := []testStruct{
 		{[]AppOverview{app1, app2}, false, "foo", "my_ns", "foo"},
-		{[]AppOverview{app1, app2}, true, "bar", "my_ns", ""},
-		{[]AppOverview{app1, app2}, true, "foobar", "my_ns", ""},
 		{[]AppOverview{app1, app2}, false, "foo", "", "foo"},
 	}
 	for _, test := range tests {
@@ -347,7 +346,7 @@ func TestDeleteMissingHelmRelease(t *testing.T) {
 	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
 	proxy := newFakeProxy([]AppOverview{app})
 
-	err := proxy.DeleteRelease(app.ReleaseName, "other_ns", true)
+	err := proxy.DeleteRelease("not_foo", "other_ns", true)
 	if err == nil {
 		t.Error("Delete should fail, there is not a release in the namespace specified")
 	}
