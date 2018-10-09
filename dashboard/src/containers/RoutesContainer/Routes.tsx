@@ -10,8 +10,6 @@ import ChartList from "../../containers/ChartListContainer";
 import ChartView from "../../containers/ChartViewContainer";
 import ClassListContainer from "../../containers/ClassListContainer";
 import { ClassViewContainer } from "../../containers/ClassView";
-import FunctionListContainer from "../../containers/FunctionListContainer";
-import FunctionViewContainer from "../../containers/FunctionViewContainer";
 import InstanceListViewContainer from "../../containers/InstanceListViewContainer";
 import InstanceView from "../../containers/InstanceView";
 import LoginFormContainer from "../../containers/LoginFormContainer";
@@ -34,8 +32,6 @@ const privateRoutes: {
   "/charts/:repo/:id/versions/:version": ChartView,
   "/config/brokers": ServiceCatalogContainer,
   "/config/repos": RepoListContainer,
-  "/functions/ns/:namespace": FunctionListContainer,
-  "/functions/ns/:namespace/:name": FunctionViewContainer,
   "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
   "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": InstanceView,
   "/services/classes": ClassListContainer,
