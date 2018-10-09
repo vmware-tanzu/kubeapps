@@ -111,6 +111,26 @@ export interface IPort {
   nodePort: string;
 }
 
+export interface IHTTPIngressPath {
+  path: string;
+}
+export interface IIngressHTTP {
+  paths: IHTTPIngressPath[];
+}
+export interface IIngressRule {
+  host: string;
+  http: IIngressHTTP;
+}
+
+export interface IIngressTLS {
+  hosts: string[];
+}
+
+export interface IIngressSpec {
+  rules: IIngressRule[];
+  tls?: IIngressTLS[];
+}
+
 export interface IResource {
   apiVersion: string;
   kind: string;

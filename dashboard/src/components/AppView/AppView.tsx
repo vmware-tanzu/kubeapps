@@ -30,6 +30,7 @@ interface IAppViewState {
   deployments: { [d: string]: IResource };
   otherResources: { [r: string]: IResource };
   services: { [s: string]: IResource };
+  ingresses: { [i: string]: IResource };
   sockets: WebSocket[];
 }
 
@@ -51,6 +52,7 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
     deployments: {},
+    ingresses: {},
     otherResources: {},
     services: {},
     sockets: [],
@@ -96,27 +98,16 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     const deployments = manifest.filter(d => d.kind === "Deployment");
     const services = manifest.filter(d => d.kind === "Service");
-    const apiBase = WebSocketHelper.apiBase();
+    const ingresses = manifest.filter(d => d.kind === "Ingress");
     const sockets: WebSocket[] = [];
     for (const d of deployments) {
-      const s = new WebSocket(
-        `${apiBase}/apis/apps/v1beta1/namespaces/${
-          newApp.namespace
-        }/deployments?watch=true&fieldSelector=metadata.name%3D${d.metadata.name}`,
-        Auth.wsProtocols(),
-      );
-      s.addEventListener("message", e => this.handleEvent(e));
-      sockets.push(s);
+      sockets.push(this.getSocket("deployments", d.apiVersion, d.metadata.name, newApp.namespace));
     }
     for (const svc of services) {
-      const s = new WebSocket(
-        `${apiBase}/api/v1/namespaces/${
-          newApp.namespace
-        }/services?watch=true&fieldSelector=metadata.name%3D${svc.metadata.name}`,
-        Auth.wsProtocols(),
-      );
-      s.addEventListener("message", e => this.handleEvent(e));
-      sockets.push(s);
+      sockets.push(this.getSocket("services", svc.apiVersion, svc.metadata.name, newApp.namespace));
+    }
+    for (const i of ingresses) {
+      sockets.push(this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace));
     }
     this.setState({
       sockets,
@@ -137,6 +128,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         break;
       case "Service":
         this.setState({ services: { ...this.state.services, [key]: resource } });
+        break;
+      case "Ingress":
+        this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
         break;
     }
   }
@@ -193,8 +187,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                {Object.keys(this.state.services).length > 0 && (
-                  <AccessURLTable services={this.state.services} />
+                {(Object.keys(this.state.services).length > 0 ||
+                  Object.keys(this.state.ingresses).length > 0) && (
+                  <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
                 )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <AppDetails
@@ -208,6 +203,23 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         </main>
       </section>
     );
+  }
+
+  private getSocket(
+    resource: string,
+    apiVersion: string,
+    name: string,
+    namespace: string,
+  ): WebSocket {
+    const apiBase = WebSocketHelper.apiBase();
+    const s = new WebSocket(
+      `${apiBase}/${
+        apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`
+      }/namespaces/${namespace}/${resource}?watch=true&fieldSelector=metadata.name%3D${name}`,
+      Auth.wsProtocols(),
+    );
+    s.addEventListener("message", e => this.handleEvent(e));
+    return s;
   }
 
   private closeSockets() {
