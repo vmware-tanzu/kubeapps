@@ -23,7 +23,7 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
     i => i.metadata.name === params.instanceName && i.metadata.namespace === params.namespace,
   );
   const svcClass = instance
-    ? catalog.classes.find(
+    ? catalog.classes.list.find(
         c =>
           !!instance.spec.clusterServiceClassRef &&
           c.metadata.name === instance.spec.clusterServiceClassRef.name,

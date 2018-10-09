@@ -20,7 +20,10 @@ import { InstanceCardList } from "./InstanceCardList";
 
 export interface InstanceListViewProps {
   brokers: IServiceBroker[];
-  classes: IClusterServiceClass[];
+  classes: {
+    isFetching: boolean;
+    list: IClusterServiceClass[];
+  };
   error: Error;
   filter: string;
   getCatalog: (ns: string) => Promise<any>;
@@ -136,9 +139,10 @@ export class InstanceListView extends React.PureComponent<
               ) : brokers.length > 0 ? (
                 <div>
                   {instances.length > 0 ? (
+                    // TODO: Check ifFetching
                     <InstanceCardList
                       instances={this.filteredServiceInstances(instances, this.state.filter)}
-                      classes={classes}
+                      classes={classes.list}
                     />
                   ) : (
                     <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">

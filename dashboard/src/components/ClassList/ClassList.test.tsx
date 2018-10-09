@@ -10,8 +10,10 @@ import ClassList from "./ClassList";
 
 const defaultProps = {
   error: undefined,
-  classes: [],
-  isFetching: false,
+  classes: {
+    list: [],
+    isFetching: false,
+  },
   getClasses: jest.fn(),
 };
 
@@ -24,7 +26,7 @@ it("should show a warning message if there are no classes available", () => {
 });
 
 context("while fetching classes", () => {
-  const props = { ...defaultProps, isFetching: true };
+  const props = { ...defaultProps, classes: { isFetching: true, list: [] } };
 
   itBehavesLike("aLoadingComponent", { component: ClassList, props });
 
@@ -67,7 +69,9 @@ context("when there are classes available", () => {
         },
       },
     } as IClusterServiceClass;
-    const wrapper = shallow(<ClassList {...defaultProps} classes={[class1, class2]} />);
+    const wrapper = shallow(
+      <ClassList {...defaultProps} classes={{ isFetching: false, list: [class1, class2] }} />,
+    );
     const cardGrid = wrapper.find(CardGrid);
     expect(cardGrid).toExist();
     expect(cardGrid.children().length).toBe(2);

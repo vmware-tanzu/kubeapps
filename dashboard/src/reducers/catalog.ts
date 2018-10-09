@@ -12,7 +12,10 @@ import { IServiceInstance } from "../shared/ServiceInstance";
 export interface IServiceCatalogState {
   bindingsWithSecrets: IServiceBindingWithSecret[];
   brokers: IServiceBroker[];
-  classes: IClusterServiceClass[];
+  classes: {
+    isFetching: boolean;
+    list: IClusterServiceClass[];
+  };
   errors: {
     create?: Error;
     fetch?: Error;
@@ -24,18 +27,16 @@ export interface IServiceCatalogState {
   isChecking: boolean;
   isInstalled: boolean;
   plans: IServicePlan[];
-  isFetching: boolean;
 }
 
 const initialState: IServiceCatalogState = {
   bindingsWithSecrets: [],
   brokers: [],
-  classes: [],
+  classes: { isFetching: false, list: [] },
   errors: {},
   instances: [],
   isChecking: true,
   isInstalled: false,
-  isFetching: false,
   plans: [],
 };
 
@@ -52,19 +53,20 @@ const catalogReducer = (
     case getType(catalog.checkCatalogInstall):
       return { ...state, isChecking: true };
     case getType(catalog.receiveBrokers):
-      return { ...state, isFetching: false, brokers: action.payload };
+      return { ...state, brokers: action.payload };
     case getType(catalog.receiveBindingsWithSecrets):
-      return { ...state, isFetching: false, bindingsWithSecrets: action.payload };
+      return { ...state, bindingsWithSecrets: action.payload };
+    case getType(catalog.requestClasses):
+      const list = state.classes.list;
+      return { ...state, classes: { isFetching: true, list } };
     case getType(catalog.receiveClasses):
-      return { ...state, isFetching: false, classes: action.payload };
+      return { ...state, classes: { isFetching: false, list: action.payload } };
     case getType(catalog.receiveInstances):
-      return { ...state, isFetching: false, instances: action.payload };
+      return { ...state, instances: action.payload };
     case getType(catalog.receivePlans):
-      return { ...state, isFetching: false, plans: action.payload };
+      return { ...state, plans: action.payload };
     case getType(catalog.errorCatalog):
       return { ...state, errors: { [action.payload.op]: action.payload.err } };
-    case getType(catalog.requestClasses):
-      return { ...state, isFetching: true };
     case LOCATION_CHANGE:
       return { ...state, errors: {} };
     case getType(actions.namespace.setNamespace):

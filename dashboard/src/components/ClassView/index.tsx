@@ -23,7 +23,10 @@ const RequiredRBACRoles: IRBACRole[] = [
 ];
 
 interface IClassViewProps {
-  classes: IClusterServiceClass[];
+  classes: {
+    isFetching: boolean;
+    list: IClusterServiceClass[];
+  };
   classname: string;
   createError: Error;
   error: Error;
@@ -83,7 +86,8 @@ export class ClassView extends React.Component<IClassViewProps> {
               <tbody>
                 {svcClass &&
                   classPlans.map(plan => {
-                    const serviceClass = classes.find(
+                    // TODO: Check classes.ifFetching
+                    const serviceClass = classes.list.find(
                       potential =>
                         potential.metadata.name === plan.spec.clusterServiceClassRef.name,
                     );

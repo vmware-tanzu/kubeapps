@@ -10,8 +10,10 @@ import PageHeader from "../PageHeader";
 
 export interface IClassListProps {
   error: Error | undefined;
-  classes: IClusterServiceClass[];
-  isFetching: boolean;
+  classes: {
+    isFetching: boolean;
+    list: IClusterServiceClass[];
+  };
   getClasses: () => void;
 }
 
@@ -30,14 +32,14 @@ export default class ClassList extends React.Component<IClassListProps> {
   }
 
   public render() {
-    const { error, classes, isFetching } = this.props;
+    const { error, classes } = this.props;
     return (
       <div>
         <PageHeader>
           <h1>Classes</h1>
         </PageHeader>
         <main>
-          <LoadingWrapper loaded={!isFetching}>
+          <LoadingWrapper loaded={!classes.isFetching}>
             {error ? (
               <ErrorSelector
                 error={error}
@@ -48,13 +50,13 @@ export default class ClassList extends React.Component<IClassListProps> {
             ) : (
               <p>Types of services available from all brokers</p>
             )}
-            {classes.length === 0 ? (
+            {classes.list.length === 0 ? (
               <MessageAlert level={"warning"}>
                 <h5>Unable to find any class.</h5>
               </MessageAlert>
             ) : (
               <CardGrid>
-                {classes
+                {classes.list
                   .sort((a, b) => a.spec.externalName.localeCompare(b.spec.externalName))
                   .map(svcClass => {
                     const { spec } = svcClass;

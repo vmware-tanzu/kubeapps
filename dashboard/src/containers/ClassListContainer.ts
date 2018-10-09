@@ -17,11 +17,10 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ catalog }: IStoreState, props: IRouteProps) {
-  const { classes, errors, isFetching } = catalog;
+  const { classes, errors } = catalog;
 
   return {
     classes,
-    isFetching,
     error: errors.fetch,
   };
 }
