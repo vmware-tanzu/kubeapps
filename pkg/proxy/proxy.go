@@ -100,10 +100,7 @@ func (p *Proxy) get(name, namespace string) (*release.Release, error) {
 	}
 	if list != nil {
 		if l := list.GetReleases(); l != nil {
-			r := l[0]
-			if (namespace == "" || namespace == r.Namespace) && r.Name == name {
-				return r, nil
-			}
+			return l[0], nil
 		}
 	}
 	return nil, fmt.Errorf("Release %s not found in namespace %s", name, namespace)
