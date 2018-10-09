@@ -3,10 +3,10 @@ import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
-import actions from "../actions";
+import actions from "../../actions";
 
-import { ClassView } from "../components/ClassView";
-import { IStoreState } from "../shared/types";
+import { ClassView } from "../../components/ClassView";
+import { IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
@@ -55,7 +55,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   };
 }
 
-export const ClassViewContainer = connect(
+export default connect(
   mapStateToProps,
   mapDispatchToProps,
 )(ClassView);

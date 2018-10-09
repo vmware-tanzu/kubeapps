@@ -2,10 +2,10 @@ import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
-import actions from "../actions";
-import { InstanceView } from "../components/InstanceView/InstanceView";
-import { IServiceInstance } from "../shared/ServiceInstance";
-import { IStoreState } from "../shared/types";
+import actions from "../../actions";
+import { InstanceView } from "../../components/InstanceView/InstanceView";
+import { IServiceInstance } from "../../shared/ServiceInstance";
+import { IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
