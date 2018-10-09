@@ -21,3 +21,11 @@ This proxy is written in Go. Check more details about the implementation in this
 ### Apprepository CRD and Controller
 
 Chart repositories in Kubeapps are managed with a `CustomResourceDefinition` called `apprepositories.kubeapps.com`. Each repository added to Kubeapps is an object of type `AppRepository` and the `apprepository-controller` will watch for changes on those type of objects to update the list of available charts to deploy.
+
+### `chart-repo`
+
+The `chart-repo` component is tool that scans a Helm chart repository and populates chart metadata in a MongoDB database. This metadata is then served by the chartsvc component. It is maintained as part of the [Helm Monocular project](https://github.com/helm/monocular/tree/master/cmd/chart-repo).
+
+### `chartsvc`
+
+The `chartsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB database. It is maintained as part of the [Helm Monocular project](https://github.com/helm/monocular/tree/master/cmd/chartsvc).
