@@ -4,7 +4,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
 
-import { ClassList } from "../components/ClassList";
+import ClassList from "../components/ClassList";
 import { IStoreState } from "../shared/types";
 
 interface IRouteProps {
@@ -17,10 +17,11 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ catalog }: IStoreState, props: IRouteProps) {
-  const { classes, errors } = catalog;
+  const { classes, errors, isFetching } = catalog;
 
   return {
     classes,
+    isFetching,
     error: errors.fetch,
   };
 }

@@ -24,6 +24,7 @@ export interface IServiceCatalogState {
   isChecking: boolean;
   isInstalled: boolean;
   plans: IServicePlan[];
+  isFetching: boolean;
 }
 
 const initialState: IServiceCatalogState = {
@@ -34,6 +35,7 @@ const initialState: IServiceCatalogState = {
   instances: [],
   isChecking: true,
   isInstalled: false,
+  isFetching: false,
   plans: [],
 };
 
@@ -50,17 +52,19 @@ const catalogReducer = (
     case getType(catalog.checkCatalogInstall):
       return { ...state, isChecking: true };
     case getType(catalog.receiveBrokers):
-      return { ...state, brokers: action.payload };
+      return { ...state, isFetching: false, brokers: action.payload };
     case getType(catalog.receiveBindingsWithSecrets):
-      return { ...state, bindingsWithSecrets: action.payload };
+      return { ...state, isFetching: false, bindingsWithSecrets: action.payload };
     case getType(catalog.receiveClasses):
-      return { ...state, classes: action.payload };
+      return { ...state, isFetching: false, classes: action.payload };
     case getType(catalog.receiveInstances):
-      return { ...state, instances: action.payload };
+      return { ...state, isFetching: false, instances: action.payload };
     case getType(catalog.receivePlans):
-      return { ...state, plans: action.payload };
+      return { ...state, isFetching: false, plans: action.payload };
     case getType(catalog.errorCatalog):
       return { ...state, errors: { [action.payload.op]: action.payload.err } };
+    case getType(catalog.requestClasses):
+      return { ...state, isFetching: true };
     case LOCATION_CHANGE:
       return { ...state, errors: {} };
     case getType(actions.namespace.setNamespace):
