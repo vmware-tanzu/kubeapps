@@ -63,7 +63,6 @@ helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
 
 # Ensure that we are testing the correct image
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
-k8s_ensure_image kubeapps kubeapps-ci-internal-chartsvc $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 
