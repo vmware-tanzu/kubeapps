@@ -11,7 +11,7 @@ function mapStateToProps({ catalog }: IStoreState) {
   return {
     brokers: catalog.brokers,
     errors: catalog.errors,
-    isInstalled: catalog.isInstalled,
+    isInstalled: catalog.isServiceCatalogInstalled,
   };
 }
 

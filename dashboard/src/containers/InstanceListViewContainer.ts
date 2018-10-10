@@ -5,7 +5,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
-import { InstanceListView } from "../components/InstanceListView";
+import InstanceListView from "../components/InstanceListView";
 import { IStoreState } from "../shared/types";
 
 function mapStateToProps(
@@ -16,14 +16,14 @@ function mapStateToProps(
   const plans = catalog.plans;
   const classes = catalog.classes;
   const instances = catalog.instances;
-  const isInstalled = catalog.isInstalled;
+  const isServiceCatalogInstalled = catalog.isServiceCatalogInstalled;
   return {
     brokers,
     classes,
     error: catalog.errors.fetch,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     instances,
-    isInstalled,
+    isServiceCatalogInstalled,
     namespace: namespace.current,
     plans,
   };
@@ -34,8 +34,14 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());
     },
-    getCatalog: async (ns: string) => {
-      dispatch(actions.catalog.getCatalog(ns));
+    getBrokers: async () => {
+      dispatch(actions.catalog.getBrokers());
+    },
+    getClasses: async () => {
+      dispatch(actions.catalog.getClasses());
+    },
+    getInstances: async (ns: string) => {
+      dispatch(actions.catalog.getInstances(ns));
     },
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter) as any),
   };

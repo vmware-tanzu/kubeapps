@@ -19,7 +19,7 @@ interface IRouteProps {
 
 function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRouteProps) {
   const { instanceName, namespace } = params;
-  const instance = catalog.instances.find(
+  const instance = catalog.instances.list.find(
     i => i.metadata.name === params.instanceName && i.metadata.namespace === params.namespace,
   );
   const svcClass = instance
