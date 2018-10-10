@@ -173,7 +173,7 @@ jobs:
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: /home/circleci/.go_workspace
-      IMAGES: "kubeapps/apprepository-controller kubeapps/chart-repo kubeapps/chartsvc kubeapps/tiller-proxy"
+      IMAGES: "kubeapps/apprepository-controller kubeapps/tiller-proxy"
     <<: *build_images
   build_dashboard:
     docker:
@@ -221,7 +221,7 @@ jobs:
       - run: |
           if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-            for IMAGE in kubeapps/chart-repo kubeapps/chartsvc kubeapps/apprepository-controller kubeapps/dashboard kubeapps/tiller-proxy; do
+            for IMAGE in kubeapps/apprepository-controller kubeapps/dashboard kubeapps/tiller-proxy; do
               docker pull ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
               docker tag ${IMAGE}${IMG_MODIFIER}:${DEV_TAG} ${IMAGE}:${PROD_TAG}
               docker push ${IMAGE}:${PROD_TAG}

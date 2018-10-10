@@ -9,7 +9,7 @@ GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name 
 
 default: all
 
-all: kubeapps/dashboard kubeapps/chartsvc kubeapps/chart-repo kubeapps/apprepository-controller
+all: kubeapps/dashboard kubeapps/apprepository-controller
 
 # TODO(miguel) Create Makefiles per component
 kubeapps/%:
@@ -21,7 +21,7 @@ kubeapps/dashboard:
 test:
 	$(GO) test $(GO_PACKAGES)
 
-test-all: test-chartsvc test-chart-repo test-apprepository-controller test-dashboard
+test-all: test-apprepository-controller test-dashboard
 
 test-dashboard:
 	yarn --cwd dashboard/ install --frozen-lockfile

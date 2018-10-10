@@ -41,12 +41,6 @@ make VERSION=myver kubeapps
 # to build the kubeapps/dashboard docker image
 make VERSION=myver kubeapps/dashboard
 
-# to build the kubeapps/chartsvc docker image
-make VERSION=myver kubeapps/chartsvc
-
-# to build the kubeapps/chart-repo docker image
-make VERSION=myver kubeapps/chart-repo
-
 # to build the kubeapps/apprepository-controller docker image
 make VERSION=myver kubeapps/apprepository-controller
 
@@ -70,12 +64,6 @@ make test-kubeapps
 
 # to test kubeapps/dashboard
 make test-dashboard
-
-# to test the cmd/chartsvc package
-make test-chartsvc
-
-# to test the cmd/chart-repo package
-make test-chart-repo
 
 # to test the cmd/apprepository-controller package
 make test-apprepository-controller

@@ -56,10 +56,6 @@ helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
     `# Image flags` \
     --set apprepository.image.tag=$DEV_TAG \
     --set apprepository.image.repository=kubeapps/apprepository-controller$IMG_MODIFIER \
-    --set apprepository.syncImage.tag=$DEV_TAG \
-    --set apprepository.syncImage.repository=kubeapps/chart-repo$IMG_MODIFIER \
-    --set chartsvc.image.tag=$DEV_TAG \
-    --set chartsvc.image.repository=kubeapps/chartsvc$IMG_MODIFIER \
     --set dashboard.image.tag=$DEV_TAG \
     --set dashboard.image.repository=kubeapps/dashboard$IMG_MODIFIER \
     --set tillerProxy.image.tag=$DEV_TAG \
@@ -67,7 +63,6 @@ helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
 
 # Ensure that we are testing the correct image
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
-k8s_ensure_image kubeapps kubeapps-ci-internal-chartsvc $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 
