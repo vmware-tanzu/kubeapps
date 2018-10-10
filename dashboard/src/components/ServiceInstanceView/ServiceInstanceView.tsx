@@ -11,7 +11,7 @@ import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from 
 import AddBindingButton from "./AddBindingButton";
 import DeprovisionButton from "./DeprovisionButton";
 
-interface IInstanceViewProps {
+interface IServiceInstanceViewProps {
   errors: {
     fetch?: Error;
     create?: Error;
@@ -83,12 +83,12 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
   ],
 };
 
-class InstanceView extends React.Component<IInstanceViewProps> {
+class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
   public componentDidMount() {
     this.props.getCatalog(this.props.namespace);
   }
 
-  public componentWillReceiveProps(nextProps: IInstanceViewProps) {
+  public componentWillReceiveProps(nextProps: IServiceInstanceViewProps) {
     const { getCatalog, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
       getCatalog(nextProps.namespace);
@@ -195,7 +195,7 @@ class InstanceView extends React.Component<IInstanceViewProps> {
     }
 
     return (
-      <div className="InstanceView container">
+      <div className="ServiceInstanceView container">
         {this.props.errors.fetch && this.renderError(this.props.errors.fetch)}
         {this.props.errors.deprovision &&
           this.renderError(this.props.errors.deprovision, "deprovision")}
@@ -260,4 +260,4 @@ class InstanceView extends React.Component<IInstanceViewProps> {
   };
 }
 
-export default InstanceView;
+export default ServiceInstanceView;
