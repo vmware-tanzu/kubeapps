@@ -17,9 +17,19 @@ exports[`should show a warning message if there are no classes available 1`] = `
       <MessageAlertPage
         level="warning"
       >
-        <h5>
-          Unable to find any class.
-        </h5>
+        <div>
+          <h5>
+            Service Classes not found.
+          </h5>
+          The Service Catalog server may have failed to populate them. You can find more information about how the Service Catalog works
+          <a
+            href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            target="_blank"
+          >
+            here
+          </a>
+          .
+        </div>
       </MessageAlertPage>
     </LoadingWrapper>
   </main>
@@ -116,9 +126,19 @@ exports[`while fetching classes loading spinner matches the snapshot 1`] = `
       <MessageAlertPage
         level="warning"
       >
-        <h5>
-          Unable to find any class.
-        </h5>
+        <div>
+          <h5>
+            Service Classes not found.
+          </h5>
+          The Service Catalog server may have failed to populate them. You can find more information about how the Service Catalog works
+          <a
+            href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            target="_blank"
+          >
+            here
+          </a>
+          .
+        </div>
       </MessageAlertPage>
     </LoadingWrapper>
   </main>
@@ -142,9 +162,19 @@ exports[`while fetching classes matches the snapshot 1`] = `
       <MessageAlertPage
         level="warning"
       >
-        <h5>
-          Unable to find any class.
-        </h5>
+        <div>
+          <h5>
+            Service Classes not found.
+          </h5>
+          The Service Catalog server may have failed to populate them. You can find more information about how the Service Catalog works
+          <a
+            href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            target="_blank"
+          >
+            here
+          </a>
+          .
+        </div>
       </MessageAlertPage>
     </LoadingWrapper>
   </main>

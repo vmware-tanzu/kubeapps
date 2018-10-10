@@ -21,7 +21,7 @@ it("should show a warning message if there are no classes available", () => {
   const wrapper = shallow(<ClassList {...defaultProps} />);
   const alert = wrapper.find(MessageAlert);
   expect(alert).toExist();
-  expect(alert.html()).toContain("Unable to find any class");
+  expect(alert.html()).toContain("Service Classes not found");
   expect(wrapper).toMatchSnapshot();
 });
 

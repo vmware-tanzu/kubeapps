@@ -52,7 +52,20 @@ export default class ClassList extends React.Component<IClassListProps> {
             )}
             {classes.list.length === 0 ? (
               <MessageAlert level={"warning"}>
-                <h5>Unable to find any class.</h5>
+                <div>
+                  <h5>Service Classes not found.</h5>
+                  The Service Catalog server may have failed to populate them. You can find more
+                  information about how the Service Catalog works
+                  <a
+                    target="_blank"
+                    href={
+                      "https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+                    }
+                  >
+                    here
+                  </a>
+                  .
+                </div>
               </MessageAlert>
             ) : (
               <CardGrid>
