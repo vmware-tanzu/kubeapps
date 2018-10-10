@@ -9,7 +9,7 @@ it("renders the warning for alpha feature", () => {
     <InstanceListView
       {...{} as InstanceListViewProps}
       brokers={[]}
-      classes={[]}
+      classes={{ isFetching: false, list: [] }}
       getCatalog={jest.fn()}
       checkCatalogInstalled={jest.fn()}
       instances={[]}

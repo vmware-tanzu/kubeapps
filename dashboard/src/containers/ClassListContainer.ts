@@ -4,7 +4,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../actions";
 
-import { ClassList } from "../components/ClassList";
+import ClassList from "../components/ClassList";
 import { IStoreState } from "../shared/types";
 
 interface IRouteProps {

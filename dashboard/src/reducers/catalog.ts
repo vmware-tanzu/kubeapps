@@ -12,7 +12,10 @@ import { IServiceInstance } from "../shared/ServiceInstance";
 export interface IServiceCatalogState {
   bindingsWithSecrets: IServiceBindingWithSecret[];
   brokers: IServiceBroker[];
-  classes: IClusterServiceClass[];
+  classes: {
+    isFetching: boolean;
+    list: IClusterServiceClass[];
+  };
   errors: {
     create?: Error;
     fetch?: Error;
@@ -29,7 +32,7 @@ export interface IServiceCatalogState {
 const initialState: IServiceCatalogState = {
   bindingsWithSecrets: [],
   brokers: [],
-  classes: [],
+  classes: { isFetching: false, list: [] },
   errors: {},
   instances: [],
   isChecking: true,
@@ -53,8 +56,11 @@ const catalogReducer = (
       return { ...state, brokers: action.payload };
     case getType(catalog.receiveBindingsWithSecrets):
       return { ...state, bindingsWithSecrets: action.payload };
+    case getType(catalog.requestClasses):
+      const list = state.classes.list;
+      return { ...state, classes: { isFetching: true, list } };
     case getType(catalog.receiveClasses):
-      return { ...state, classes: action.payload };
+      return { ...state, classes: { isFetching: false, list: action.payload } };
     case getType(catalog.receiveInstances):
       return { ...state, instances: action.payload };
     case getType(catalog.receivePlans):
