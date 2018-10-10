@@ -36,10 +36,7 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-export class AddBindingButton extends React.Component<
-  IAddBindingButtonProps,
-  IAddBindingButtonState
-> {
+class AddBindingButton extends React.Component<IAddBindingButtonProps, IAddBindingButtonState> {
   public state = {
     bindingName: `${this.props.instanceRefName}-binding`,
     displayNameForm: true,
@@ -156,3 +153,5 @@ export class AddBindingButton extends React.Component<
     };
   }
 }
+
+export default AddBindingButton;

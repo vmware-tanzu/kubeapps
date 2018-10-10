@@ -32,7 +32,7 @@ export interface InstanceListViewProps {
   namespace: string;
 }
 
-export interface InstanceListViewState {
+interface InstanceListViewState {
   filter: string;
 }
 
@@ -195,3 +195,5 @@ export class InstanceListView extends React.PureComponent<
     });
   };
 }
+
+export default InstanceListView;

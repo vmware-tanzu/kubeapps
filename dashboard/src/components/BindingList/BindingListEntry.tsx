@@ -1,19 +1,19 @@
 import * as React from "react";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 
-import { RemoveBindingButton } from "../InstanceView/RemoveBindingButton";
 import BindingDetails from "./BindingDetails";
+import RemoveBindingButton from "./RemoveBindingButton";
 
-interface IBindingEntryProps {
+interface IBindingListEntryProps {
   bindingWithSecret: IServiceBindingWithSecret;
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
-interface IBindingEntryState {
+interface IBindingListEntryState {
   isExpanded: boolean;
 }
 
-export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEntryState> {
+class BindingListEntry extends React.Component<IBindingListEntryProps, IBindingListEntryState> {
   public state = {
     isExpanded: false,
   };
@@ -62,3 +62,5 @@ export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEn
 
   private toggleExpand = async () => this.setState({ isExpanded: !this.state.isExpanded });
 }
+
+export default BindingListEntry;

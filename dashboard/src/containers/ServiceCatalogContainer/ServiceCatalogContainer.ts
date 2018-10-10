@@ -2,10 +2,10 @@ import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
-import actions from "../actions";
-import { ServiceCatalogView } from "../components/Config/ServiceCatalog";
-import { IServiceBroker } from "../shared/ServiceCatalog";
-import { IStoreState } from "../shared/types";
+import actions from "../../actions";
+import ServiceCatalog from "../../components/Config/ServiceCatalog";
+import { IServiceBroker } from "../../shared/ServiceCatalog";
+import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({ catalog }: IStoreState) {
   return {
@@ -28,4 +28,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(ServiceCatalogView);
+)(ServiceCatalog);

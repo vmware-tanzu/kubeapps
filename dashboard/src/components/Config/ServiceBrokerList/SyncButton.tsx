@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IServiceBroker } from "../../shared/ServiceCatalog";
+import { IServiceBroker } from "../../../shared/ServiceCatalog";
 
 interface ISyncButtonProps {
   broker: IServiceBroker;
