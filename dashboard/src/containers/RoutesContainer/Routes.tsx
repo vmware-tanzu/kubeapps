@@ -9,13 +9,13 @@ import AppView from "../../containers/AppViewContainer";
 import ChartList from "../../containers/ChartListContainer";
 import ChartView from "../../containers/ChartViewContainer";
 import ClassViewContainer from "../../containers/ClassViewContainer";
-import InstanceListViewContainer from "../../containers/InstanceListViewContainer";
 import InstanceView from "../../containers/InstanceViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import RepoListContainer from "../../containers/RepoListContainer";
 import ServiceCatalogContainer from "../../containers/ServiceCatalogContainer";
 import ServiceClassListContainer from "../../containers/ServiceClassListContainer";
+import ServiceInstanceListContainer from "../../containers/ServiceInstanceListContainer";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -35,7 +35,7 @@ const privateRoutes: {
   "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
   "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": InstanceView,
   "/services/classes": ServiceClassListContainer,
-  "/services/instances/ns/:namespace": InstanceListViewContainer,
+  "/services/instances/ns/:namespace": ServiceInstanceListContainer,
 };
 
 // Public routes that don't require authentication

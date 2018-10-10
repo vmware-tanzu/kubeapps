@@ -1,10 +1,10 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
-import { IServiceInstance } from "../../shared/ServiceInstance";
-import { ForbiddenError, IRBACRole } from "../../shared/types";
-import { escapeRegExp } from "../../shared/utils";
+import { IServiceBroker, IServicePlan } from "shared/ServiceCatalog";
+import { IServiceInstance } from "shared/ServiceInstance";
+import { ForbiddenError, IRBACRole } from "shared/types";
+import { escapeRegExp } from "shared/utils";
 
 import { IServiceCatalogState } from "reducers/catalog";
 import {
@@ -16,9 +16,9 @@ import {
 } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
-import { InstanceCardList } from "./InstanceCardList";
+import ServiceInstanceCardList from "./ServiceInstanceCardList";
 
-export interface InstanceListViewProps {
+export interface IServiceInstanceListProps {
   brokers: IServiceBroker[];
   classes: IServiceCatalogState["classes"];
   error: Error;
@@ -32,7 +32,7 @@ export interface InstanceListViewProps {
   namespace: string;
 }
 
-interface InstanceListViewState {
+interface IServiceInstanceListState {
   filter: string;
 }
 
@@ -68,18 +68,18 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-export class InstanceListView extends React.PureComponent<
-  InstanceListViewProps,
-  InstanceListViewState
+class ServiceInstanceList extends React.PureComponent<
+  IServiceInstanceListProps,
+  IServiceInstanceListState
 > {
-  public state: InstanceListViewState = { filter: "" };
+  public state: IServiceInstanceListState = { filter: "" };
   public async componentDidMount() {
     this.props.checkCatalogInstalled();
     this.props.getCatalog(this.props.namespace);
     this.setState({ filter: this.props.filter });
   }
 
-  public componentWillReceiveProps(nextProps: InstanceListViewProps) {
+  public componentWillReceiveProps(nextProps: IServiceInstanceListProps) {
     const { error, filter, getCatalog, isInstalled, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
     if (isInstalled && (nextProps.namespace !== namespace || (error && !nextProps.error))) {
@@ -94,7 +94,7 @@ export class InstanceListView extends React.PureComponent<
     const { error, isInstalled, brokers, instances, classes, pushSearchFilter } = this.props;
 
     return (
-      <section className="InstanceList">
+      <section className="ServiceInstanceList">
         <PageHeader>
           <div className="col-8">
             <div className="row collapse-b-phone-land">
@@ -137,7 +137,7 @@ export class InstanceListView extends React.PureComponent<
                 <div>
                   {instances.length > 0 ? (
                     // TODO: Check isFetching
-                    <InstanceCardList
+                    <ServiceInstanceCardList
                       instances={this.filteredServiceInstances(instances, this.state.filter)}
                       classes={classes.list}
                     />
@@ -196,4 +196,4 @@ export class InstanceListView extends React.PureComponent<
   };
 }
 
-export default InstanceListView;
+export default ServiceInstanceList;

@@ -1,19 +1,19 @@
 import * as React from "react";
 
 import { Link } from "react-router-dom";
-import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
-import { IServiceInstance } from "../../shared/ServiceInstance";
+import { IClusterServiceClass } from "shared/ClusterServiceClass";
+import { IServiceInstance } from "shared/ServiceInstance";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 
-export interface InstanceCardListProps {
+export interface IServiceInstanceCardListProps {
   classes: IClusterServiceClass[];
   instances: IServiceInstance[];
 }
 
-export const InstanceCardList = (props: InstanceCardListProps) => {
+const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props => {
   const { instances, classes } = props;
   return (
-    <div className="InstanceCardList">
+    <div className="ServiceInstanceCardList">
       <section>
         <CardGrid>
           {instances.length > 0 &&
@@ -61,3 +61,5 @@ export const InstanceCardList = (props: InstanceCardListProps) => {
     </div>
   );
 };
+
+export default ServiceInstanceCardList;
