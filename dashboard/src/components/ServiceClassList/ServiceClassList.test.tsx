@@ -2,8 +2,8 @@ import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 
-import { IClusterServiceClass } from "shared/ClusterServiceClass";
-import itBehavesLike from "shared/specs";
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import itBehavesLike from "../../shared/specs";
 import { CardGrid } from "../Card";
 import { MessageAlert } from "../ErrorAlert";
 import ServiceClassList from "./ServiceClassList";

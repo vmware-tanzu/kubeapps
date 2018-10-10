@@ -1,12 +1,11 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IServiceBroker, IServicePlan } from "shared/ServiceCatalog";
-import { IServiceInstance } from "shared/ServiceInstance";
-import { ForbiddenError, IRBACRole } from "shared/types";
-import { escapeRegExp } from "shared/utils";
-
-import { IServiceCatalogState } from "reducers/catalog";
+import { IServiceCatalogState } from "../../reducers/catalog";
+import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
+import { IServiceInstance } from "../../shared/ServiceInstance";
+import { ForbiddenError, IRBACRole } from "../../shared/types";
+import { escapeRegExp } from "../../shared/utils";
 import {
   MessageAlert,
   PermissionsErrorAlert,

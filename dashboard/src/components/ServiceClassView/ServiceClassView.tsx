@@ -1,11 +1,11 @@
 import { RouterAction } from "connected-react-router";
 import * as React from "react";
 
-import { IServiceCatalogState } from "reducers/catalog";
-import { IClusterServiceClass } from "shared/ClusterServiceClass";
-import { definedNamespaces } from "shared/Namespace";
-import { IServicePlan } from "shared/ServiceCatalog";
-import { ForbiddenError, IRBACRole } from "shared/types";
+import { IServiceCatalogState } from "../../reducers/catalog";
+import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
+import { definedNamespaces } from "../../shared/Namespace";
+import { IServicePlan } from "../../shared/ServiceCatalog";
+import { ForbiddenError, IRBACRole } from "../../shared/types";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import ProvisionButton from "./ProvisionButton";
 
