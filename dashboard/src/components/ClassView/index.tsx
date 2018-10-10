@@ -1,5 +1,6 @@
 import { RouterAction } from "connected-react-router";
 import * as React from "react";
+import { IServiceCatalogState } from "reducers/catalog";
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { definedNamespaces } from "../../shared/Namespace";
 import { IServicePlan } from "../../shared/ServiceCatalog";
@@ -23,7 +24,7 @@ const RequiredRBACRoles: IRBACRole[] = [
 ];
 
 interface IClassViewProps {
-  classes: IClusterServiceClass[];
+  classes: IServiceCatalogState["classes"];
   classname: string;
   createError: Error;
   error: Error;
@@ -83,7 +84,8 @@ export class ClassView extends React.Component<IClassViewProps> {
               <tbody>
                 {svcClass &&
                   classPlans.map(plan => {
-                    const serviceClass = classes.find(
+                    // TODO: Check classes.isFetching
+                    const serviceClass = classes.list.find(
                       potential =>
                         potential.metadata.name === plan.spec.clusterServiceClassRef.name,
                     );

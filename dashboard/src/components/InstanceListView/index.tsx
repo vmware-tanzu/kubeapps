@@ -1,12 +1,12 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 
+import { IServiceCatalogState } from "reducers/catalog";
 import {
   MessageAlert,
   PermissionsErrorAlert,
@@ -20,7 +20,7 @@ import { InstanceCardList } from "./InstanceCardList";
 
 export interface InstanceListViewProps {
   brokers: IServiceBroker[];
-  classes: IClusterServiceClass[];
+  classes: IServiceCatalogState["classes"];
   error: Error;
   filter: string;
   getCatalog: (ns: string) => Promise<any>;
@@ -136,9 +136,10 @@ export class InstanceListView extends React.PureComponent<
               ) : brokers.length > 0 ? (
                 <div>
                   {instances.length > 0 ? (
+                    // TODO: Check isFetching
                     <InstanceCardList
                       instances={this.filteredServiceInstances(instances, this.state.filter)}
-                      classes={classes}
+                      classes={classes.list}
                     />
                   ) : (
                     <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
