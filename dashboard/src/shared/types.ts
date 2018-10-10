@@ -1,7 +1,6 @@
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IConfigState } from "../reducers/config";
-import { IFunctionState } from "../reducers/functions";
 import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
@@ -167,16 +166,6 @@ export interface IDeploymentStatus {
   availableReplicas: number;
 }
 
-export interface IFunction extends IResource {
-  spec: {
-    deps: string;
-    function: string;
-    handler: string;
-    runtime: string;
-    checksum: string;
-  };
-}
-
 export interface IAppState {
   isFetching: boolean;
   error?: Error;
@@ -196,7 +185,6 @@ export interface IStoreState {
   config: IConfigState;
   repos: IAppRepositoryState;
   deployment: IDeployment;
-  functions: IFunctionState;
   namespace: INamespaceState;
 }
 
@@ -267,8 +255,6 @@ export interface IAppRepositoryList
       }
     > {}
 
-export interface IFunctionList extends IK8sList<IFunction, {}> {}
-
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
 export interface IStatus extends IK8sResource {
   kind: "Status";
@@ -304,15 +290,6 @@ export interface IRouterPathname {
     location: {
       pathname: string;
     };
-  };
-}
-
-export interface IKubelessConfigMap {
-  metadata: {
-    name: string;
-  };
-  data: {
-    "runtime-images": string;
   };
 }
 

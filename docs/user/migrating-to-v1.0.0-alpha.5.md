@@ -2,10 +2,10 @@
 
 The release includes several breaking changes that should be handled carefully if you are updating Kubeapps from a version prior to v1.0.0-alpha.5. As a summary this release includes the following breaking changes:
 
- - The recommended way of installing Kubeapps is through its Helm chart.
- - The `kubeapps` CLI is now deprecated. **It won't be included in future releases**.
- - Kubeapps no longer installs Tiller, Kubeless and SealedSecrets by default.
- - The [experimental Helm CRD controller](https://github.com/bitnami-labs/helm-crd) has been replaced with a secure REST proxy to the Tiller server. More info about this proxy [here](../../cmd/tiller-proxy/README.md).
+- The recommended way of installing Kubeapps is through its Helm chart.
+- The `kubeapps` CLI is now deprecated. **It won't be included in future releases**.
+- Kubeapps no longer installs Tiller, Kubeless and SealedSecrets by default.
+- The [experimental Helm CRD controller](https://github.com/bitnami-labs/helm-crd) has been replaced with a secure REST proxy to the Tiller server. More info about this proxy [here](../../cmd/tiller-proxy/README.md).
 
 These are the steps you need to follow to upgrade Kubeapps to this version.
 
@@ -33,7 +33,7 @@ NAME	REVISION	UPDATED                 	STATUS  	CHART          	NAMESPACE
 foo 	1       	Mon Aug  6 12:10:07 2018	DEPLOYED	aerospike-0.1.7	default
 ```
 
-**NOTE**: You can skip the TLS flags if you have not installed Helm with a TLS certificate. 
+**NOTE**: You can skip the TLS flags if you have not installed Helm with a TLS certificate.
 
 ## Delete the previous Kubeapps installation
 
@@ -76,8 +76,6 @@ helm install \
   bitnami/kubeapps
 ```
 
-**NOTE**: You can skip the TLS flags if you have not installed Helm with a TLS certificate. 
+**NOTE**: You can skip the TLS flags if you have not installed Helm with a TLS certificate.
 
 When the chart is finally ready you can access the application and you will see your previous applications.
-
-In the following releases Kubeapps will auto-discover if Kubeless is installed and it will show a link to manage them but if you still want to access Kubeless functions with this version you need to manually write the URL including the namespace of them. For example type `http://localhost:8080/functions/ns/default` in your browser to access functions in the `default` namespace.
