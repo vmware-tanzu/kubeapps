@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 
 import { MessageAlert } from "../ErrorAlert";
-import { InstanceListView, InstanceListViewProps } from "./index";
+import InstanceListView, { InstanceListViewProps } from "./InstanceListView";
 
 it("renders the warning for alpha feature", () => {
   const wrapper = shallow(

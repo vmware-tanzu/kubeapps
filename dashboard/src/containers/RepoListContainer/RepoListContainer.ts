@@ -3,7 +3,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import { AppRepoList } from "../../components/Config/AppRepoList";
+import AppRepoList from "../../components/Config/AppRepoList";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({ repos, config }: IStoreState) {

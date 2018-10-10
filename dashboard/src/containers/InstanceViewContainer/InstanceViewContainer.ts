@@ -3,7 +3,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import { InstanceView } from "../../components/InstanceView/InstanceView";
+import InstanceView from "../../components/InstanceView";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { IStoreState } from "../../shared/types";
 

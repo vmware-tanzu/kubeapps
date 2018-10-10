@@ -44,7 +44,7 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
   ],
 };
 
-export class AppRepoList extends React.Component<IAppRepoListProps> {
+class AppRepoList extends React.Component<IAppRepoListProps> {
   public componentDidMount() {
     this.props.fetchRepos();
   }
@@ -108,3 +108,5 @@ export class AppRepoList extends React.Component<IAppRepoListProps> {
     );
   }
 }
+
+export default AppRepoList;

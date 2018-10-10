@@ -9,7 +9,7 @@ import {
   ServiceBrokersNotFoundAlert,
   UnexpectedErrorAlert,
 } from "../../ErrorAlert";
-import SyncButton from "../../SyncButton";
+import SyncButton from "./SyncButton";
 
 import "./ServiceBrokerList.css";
 

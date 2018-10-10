@@ -6,7 +6,7 @@ import { definedNamespaces } from "../../shared/Namespace";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
-import ProvisionButton from "../ProvisionButton";
+import ProvisionButton from "./ProvisionButton";
 
 const RequiredRBACRoles: IRBACRole[] = [
   {
@@ -43,7 +43,7 @@ interface IClassViewProps {
   namespace: string;
 }
 
-export class ClassView extends React.Component<IClassViewProps> {
+class ClassView extends React.Component<IClassViewProps> {
   public componentDidMount() {
     this.props.getClasses();
     this.props.getPlans();
@@ -149,3 +149,5 @@ export class ClassView extends React.Component<IClassViewProps> {
     );
   }
 }
+
+export default ClassView;
