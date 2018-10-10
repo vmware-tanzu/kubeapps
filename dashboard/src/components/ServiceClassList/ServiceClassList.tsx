@@ -8,7 +8,7 @@ import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 
-export interface IClassListProps {
+export interface IServiceClassListProps {
   error: Error | undefined;
   classes: {
     isFetching: boolean;
@@ -26,7 +26,7 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-class ClassList extends React.Component<IClassListProps> {
+class ServiceClassList extends React.Component<IServiceClassListProps> {
   public componentDidMount() {
     this.props.getClasses();
   }
@@ -110,4 +110,4 @@ class ClassList extends React.Component<IClassListProps> {
   }
 }
 
-export default ClassList;
+export default ServiceClassList;

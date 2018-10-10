@@ -3,10 +3,10 @@ import context from "jest-plugin-context";
 import * as React from "react";
 
 import { IClusterServiceClass } from "shared/ClusterServiceClass";
-import itBehavesLike from "../../shared/specs";
+import itBehavesLike from "shared/specs";
 import { CardGrid } from "../Card";
 import { MessageAlert } from "../ErrorAlert";
-import ClassList from "./ClassList";
+import ServiceClassList from "./ServiceClassList";
 
 const defaultProps = {
   error: undefined,
@@ -18,7 +18,7 @@ const defaultProps = {
 };
 
 it("should show a warning message if there are no classes available", () => {
-  const wrapper = shallow(<ClassList {...defaultProps} />);
+  const wrapper = shallow(<ServiceClassList {...defaultProps} />);
   const alert = wrapper.find(MessageAlert);
   expect(alert).toExist();
   expect(alert.html()).toContain("Service Classes not found");
@@ -28,15 +28,15 @@ it("should show a warning message if there are no classes available", () => {
 context("while fetching classes", () => {
   const props = { ...defaultProps, classes: { isFetching: true, list: [] } };
 
-  itBehavesLike("aLoadingComponent", { component: ClassList, props });
+  itBehavesLike("aLoadingComponent", { component: ServiceClassList, props });
 
   it("matches the snapshot", () => {
-    const wrapper = shallow(<ClassList {...props} />);
+    const wrapper = shallow(<ServiceClassList {...props} />);
     expect(wrapper).toMatchSnapshot();
   });
 
   it("renders a Application header", () => {
-    const wrapper = shallow(<ClassList {...props} />);
+    const wrapper = shallow(<ServiceClassList {...props} />);
     expect(wrapper.find("h1").text()).toContain("Classes");
   });
 });
@@ -70,7 +70,10 @@ context("when there are classes available", () => {
       },
     } as IClusterServiceClass;
     const wrapper = shallow(
-      <ClassList {...defaultProps} classes={{ isFetching: false, list: [class1, class2] }} />,
+      <ServiceClassList
+        {...defaultProps}
+        classes={{ isFetching: false, list: [class1, class2] }}
+      />,
     );
     const cardGrid = wrapper.find(CardGrid);
     expect(cardGrid).toExist();

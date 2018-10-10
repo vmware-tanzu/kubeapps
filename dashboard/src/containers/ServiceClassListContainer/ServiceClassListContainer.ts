@@ -2,10 +2,10 @@ import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
-import actions from "../../actions";
+import actions from "actions";
 
-import ClassList from "../../components/ClassList";
-import { IStoreState } from "../../shared/types";
+import ServiceClassList from "components/ServiceClassList";
+import { IStoreState } from "shared/types";
 
 interface IRouteProps {
   match: {
@@ -34,4 +34,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(ClassList);
+)(ServiceClassList);
