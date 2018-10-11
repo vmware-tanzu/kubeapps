@@ -1,13 +1,14 @@
 import * as React from "react";
+
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { BindingEntry } from "./BindingListEntry";
+import BindingEntry from "./BindingListEntry";
 
 interface IBindingList {
   bindingsWithSecrets: IServiceBindingWithSecret[];
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
-export class BindingList extends React.Component<IBindingList> {
+class BindingList extends React.Component<IBindingList> {
   public render() {
     const { removeBinding, bindingsWithSecrets } = this.props;
     return (
@@ -40,3 +41,5 @@ export class BindingList extends React.Component<IBindingList> {
     );
   }
 }
+
+export default BindingList;

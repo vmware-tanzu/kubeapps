@@ -26,7 +26,7 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-export default class ClassList extends React.Component<IClassListProps> {
+class ClassList extends React.Component<IClassListProps> {
   public componentDidMount() {
     this.props.getClasses();
   }
@@ -109,3 +109,5 @@ export default class ClassList extends React.Component<IClassListProps> {
     );
   }
 }
+
+export default ClassList;

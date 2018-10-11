@@ -16,7 +16,7 @@ export interface IServiceCatalogProps {
   sync: (broker: IServiceBroker) => Promise<any>;
 }
 
-export class ServiceCatalogView extends React.Component<IServiceCatalogProps> {
+class ServiceCatalog extends React.Component<IServiceCatalogProps> {
   public async componentDidMount() {
     this.props.checkCatalogInstalled();
     this.props.getBrokers();
@@ -38,3 +38,5 @@ export class ServiceCatalogView extends React.Component<IServiceCatalogProps> {
     );
   }
 }
+
+export default ServiceCatalog;

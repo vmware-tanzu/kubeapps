@@ -1,4 +1,5 @@
 import * as React from "react";
+
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 
 interface IRemoveBindingButtonProps {
@@ -6,7 +7,7 @@ interface IRemoveBindingButtonProps {
   removeBinding: (name: string, ns: string) => Promise<boolean>;
 }
 
-export class RemoveBindingButton extends React.Component<IRemoveBindingButtonProps> {
+class RemoveBindingButton extends React.Component<IRemoveBindingButtonProps> {
   public render() {
     return (
       <div className="RemoveBindingButton">
@@ -29,3 +30,5 @@ export class RemoveBindingButton extends React.Component<IRemoveBindingButtonPro
     removeBinding(name, namespace);
   };
 }
+
+export default RemoveBindingButton;

@@ -5,11 +5,11 @@ import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
-import { BindingList } from "../BindingList/BindingList";
+import BindingList from "../BindingList";
 import Card, { CardContent, CardGrid, CardIcon } from "../Card";
-import DeprovisionButton from "../DeprovisionButton";
 import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
-import { AddBindingButton } from "./AddBindingButton";
+import AddBindingButton from "./AddBindingButton";
+import DeprovisionButton from "./DeprovisionButton";
 
 interface IInstanceViewProps {
   errors: {
@@ -83,7 +83,7 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
   ],
 };
 
-export class InstanceView extends React.Component<IInstanceViewProps> {
+class InstanceView extends React.Component<IInstanceViewProps> {
   public componentDidMount() {
     this.props.getCatalog(this.props.namespace);
   }
@@ -259,3 +259,5 @@ export class InstanceView extends React.Component<IInstanceViewProps> {
     getCatalog(namespace);
   };
 }
+
+export default InstanceView;

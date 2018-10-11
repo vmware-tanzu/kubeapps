@@ -4,9 +4,9 @@ import { RouteComponentProps } from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
-import actions from "../actions";
-import { InstanceListView } from "../components/InstanceListView";
-import { IStoreState } from "../shared/types";
+import actions from "../../actions";
+import InstanceListView from "../../components/InstanceListView";
+import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
   { catalog, namespace }: IStoreState,
