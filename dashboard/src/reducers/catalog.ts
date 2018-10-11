@@ -10,7 +10,10 @@ import { IServiceBroker, IServicePlan } from "../shared/ServiceCatalog";
 import { IServiceInstance } from "../shared/ServiceInstance";
 
 export interface IServiceCatalogState {
-  bindingsWithSecrets: IServiceBindingWithSecret[];
+  bindingsWithSecrets: {
+    isFetching: boolean;
+    list: IServiceBindingWithSecret[];
+  };
   brokers: {
     isFetching: boolean;
     list: IServiceBroker[];
@@ -32,18 +35,21 @@ export interface IServiceCatalogState {
   };
   isChecking: boolean;
   isServiceCatalogInstalled: boolean;
-  plans: IServicePlan[];
+  plans: {
+    isFetching: boolean;
+    list: IServicePlan[];
+  };
 }
 
 const initialState: IServiceCatalogState = {
-  bindingsWithSecrets: [],
+  bindingsWithSecrets: { isFetching: false, list: [] },
   brokers: { isFetching: false, list: [] },
   classes: { isFetching: false, list: [] },
   errors: {},
   instances: { isFetching: false, list: [] },
   isChecking: true,
   isServiceCatalogInstalled: false,
-  plans: [],
+  plans: { isFetching: false, list: [] },
 };
 
 const catalogReducer = (
@@ -64,8 +70,11 @@ const catalogReducer = (
       return { ...state, brokers: { isFetching: true, list } };
     case getType(catalog.receiveBrokers):
       return { ...state, brokers: { isFetching: false, list: action.payload } };
+    case getType(catalog.requestBindingsWithSecrets):
+      list = state.bindingsWithSecrets.list;
+      return { ...state, bindingsWithSecrets: { isFetching: true, list } };
     case getType(catalog.receiveBindingsWithSecrets):
-      return { ...state, bindingsWithSecrets: action.payload };
+      return { ...state, bindingsWithSecrets: { isFetching: false, list: action.payload } };
     case getType(catalog.requestClasses):
       list = state.classes.list;
       return { ...state, classes: { isFetching: true, list } };
@@ -76,8 +85,11 @@ const catalogReducer = (
       return { ...state, instances: { isFetching: true, list } };
     case getType(catalog.receiveInstances):
       return { ...state, instances: { isFetching: false, list: action.payload } };
+    case getType(catalog.requestPlans):
+      list = state.plans.list;
+      return { ...state, plans: { isFetching: true, list } };
     case getType(catalog.receivePlans):
-      return { ...state, plans: action.payload };
+      return { ...state, plans: { isFetching: false, list: action.payload } };
     case getType(catalog.errorCatalog):
       return { ...state, errors: { [action.payload.op]: action.payload.err } };
     case LOCATION_CHANGE:

@@ -4,7 +4,6 @@ import * as React from "react";
 import { IServiceCatalogState } from "../../reducers/catalog";
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { definedNamespaces } from "../../shared/Namespace";
-import { IServicePlan } from "../../shared/ServiceCatalog";
 import { ForbiddenError, IRBACRole } from "../../shared/types";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import ProvisionButton from "./ProvisionButton";
@@ -31,7 +30,7 @@ interface IServiceClassViewProps {
   error: Error;
   getClasses: () => Promise<any>;
   getPlans: () => Promise<any>;
-  plans: IServicePlan[];
+  plans: IServiceCatalogState["plans"];
   provision: (
     instanceName: string,
     namespace: string,
@@ -62,8 +61,9 @@ class ServiceClassView extends React.Component<IServiceClassViewProps> {
       svcClass,
       namespace,
     } = this.props;
+    // TODO: Check if isFetching
     const classPlans = svcClass
-      ? plans.filter(plan => plan.spec.clusterServiceClassRef.name === svcClass.metadata.name)
+      ? plans.list.filter(plan => plan.spec.clusterServiceClassRef.name === svcClass.metadata.name)
       : [];
 
     return (
