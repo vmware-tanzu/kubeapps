@@ -5,7 +5,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 
-import ClassView from "../../components/ClassView";
+import ServiceClassView from "../../components/ServiceClassView";
 import { IStoreState } from "../../shared/types";
 
 interface IRouteProps {
@@ -58,4 +58,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(ClassView);
+)(ServiceClassView);

@@ -1,6 +1,7 @@
 import { RouterAction } from "connected-react-router";
 import * as React from "react";
-import { IServiceCatalogState } from "reducers/catalog";
+
+import { IServiceCatalogState } from "../../reducers/catalog";
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { definedNamespaces } from "../../shared/Namespace";
 import { IServicePlan } from "../../shared/ServiceCatalog";
@@ -23,7 +24,7 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-interface IClassViewProps {
+interface IServiceClassViewProps {
   classes: IServiceCatalogState["classes"];
   classname: string;
   createError: Error;
@@ -43,7 +44,7 @@ interface IClassViewProps {
   namespace: string;
 }
 
-class ClassView extends React.Component<IClassViewProps> {
+class ServiceClassView extends React.Component<IServiceClassViewProps> {
   public componentDidMount() {
     this.props.getClasses();
     this.props.getPlans();
@@ -150,4 +151,4 @@ class ClassView extends React.Component<IClassViewProps> {
   }
 }
 
-export default ClassView;
+export default ServiceClassView;
