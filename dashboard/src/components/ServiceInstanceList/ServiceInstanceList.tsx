@@ -93,6 +93,50 @@ class ServiceInstanceList extends React.PureComponent<
       pushSearchFilter,
     } = this.props;
     const loaded = !brokers.isFetching && !instances.isFetching && !classes.isFetching;
+    let body = <span />;
+    if (!isServiceCatalogInstalled) {
+      body = <ServiceCatalogNotInstalledAlert />;
+    } else {
+      if (brokers.list.length === 0) {
+        body = <ServiceBrokersNotFoundAlert />;
+      } else {
+        if (error) {
+          body = (
+            <ErrorSelector
+              error={error}
+              action="list"
+              defaultRequiredRBACRoles={{ list: RequiredRBACRoles }}
+              resource="Service Brokers, Classes and Instances"
+            />
+          );
+        } else {
+          if (instances.list.length === 0) {
+            body = (
+              <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
+                <div>
+                  <p className="margin-v-normal">
+                    Kubeapps lets you browse, provision and manage external services provided by the
+                    Service Brokers configured in your cluster.
+                  </p>
+                  <div className="padding-t-normal padding-b-normal">
+                    <Link to="/services/classes">
+                      <button className="button button-accent">Deploy Service Instance</button>
+                    </Link>
+                  </div>
+                </div>
+              </MessageAlert>
+            );
+          } else {
+            body = (
+              <ServiceInstanceCardList
+                instances={this.filteredServiceInstances(instances.list, this.state.filter)}
+                classes={classes.list}
+              />
+            );
+          }
+        }
+      }
+    }
     return (
       <section className="InstanceList">
         <PageHeader>
@@ -125,39 +169,7 @@ class ServiceInstanceList extends React.PureComponent<
           </div>
         </MessageAlert>
         <LoadingWrapper loaded={loaded}>
-          <main>
-            {error ? (
-              <ErrorSelector
-                error={error}
-                action="list"
-                defaultRequiredRBACRoles={{ list: RequiredRBACRoles }}
-                resource="Service Brokers, Classes and Instances"
-              />
-            ) : (
-              (!isServiceCatalogInstalled && <ServiceCatalogNotInstalledAlert />) ||
-              (brokers.list.length === 0 && <ServiceBrokersNotFoundAlert />) ||
-              (instances.list.length > 0 ? (
-                <ServiceInstanceCardList
-                  instances={this.filteredServiceInstances(instances.list, this.state.filter)}
-                  classes={classes.list}
-                />
-              ) : (
-                <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
-                  <div>
-                    <p className="margin-v-normal">
-                      Kubeapps lets you browse, provision and manage external services provided by
-                      the Service Brokers configured in your cluster.
-                    </p>
-                    <div className="padding-t-normal padding-b-normal">
-                      <Link to="/services/classes">
-                        <button className="button button-accent">Deploy Service Instance</button>
-                      </Link>
-                    </div>
-                  </div>
-                </MessageAlert>
-              ))
-            )}
-          </main>
+          <main>{body}</main>
         </LoadingWrapper>
       </section>
     );

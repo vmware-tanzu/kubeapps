@@ -91,7 +91,20 @@ const catalogReducer = (
     case getType(catalog.receivePlans):
       return { ...state, plans: { isFetching: false, list: action.payload } };
     case getType(catalog.errorCatalog):
-      return { ...state, errors: { [action.payload.op]: action.payload.err } };
+      const brokers = { ...state.brokers, isFetching: false };
+      const bindingsWithSecrets = { ...state.bindingsWithSecrets, isFetching: false };
+      const classes = { ...state.classes, isFetching: false };
+      const instances = { ...state.instances, isFetching: false };
+      const plans = { ...state.plans, isFetching: false };
+      return {
+        ...state,
+        brokers,
+        bindingsWithSecrets,
+        classes,
+        instances,
+        plans,
+        errors: { [action.payload.op]: action.payload.err },
+      };
     case LOCATION_CHANGE:
       return { ...state, errors: {} };
     case getType(actions.namespace.setNamespace):

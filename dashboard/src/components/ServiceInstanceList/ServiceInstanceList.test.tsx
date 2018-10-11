@@ -66,13 +66,25 @@ context("when all the components are loaded", () => {
   });
 
   it("shows a warning to install no service broker is installed", () => {
-    const wrapper = shallow(<ServiceInstanceList {...defaultProps} />);
+    const wrapper = shallow(
+      <ServiceInstanceList
+        {...defaultProps}
+        // It should ignore errors if the required elements are not installed
+        error={new Error()}
+      />,
+    );
     expect(wrapper.find(ServiceBrokersNotFoundAlert)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
 
   it("shows a forbiden error if it exists", () => {
-    const wrapper = shallow(<ServiceInstanceList {...defaultProps} error={new ForbiddenError()} />);
+    const wrapper = shallow(
+      <ServiceInstanceList
+        {...defaultProps}
+        brokers={{ isFetching: false, list: [{} as IServiceBroker] }}
+        error={new ForbiddenError()}
+      />,
+    );
     expect(wrapper.find(ErrorSelector)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
