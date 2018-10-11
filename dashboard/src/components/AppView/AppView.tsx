@@ -8,12 +8,12 @@ import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
+import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
-import ServiceTable from "./ServiceTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -27,9 +27,10 @@ export interface IAppViewProps {
 }
 
 interface IAppViewState {
-  deployments: Map<string, IResource>;
-  otherResources: Map<string, IResource>;
-  services: Map<string, IResource>;
+  deployments: { [d: string]: IResource };
+  otherResources: { [r: string]: IResource };
+  services: { [s: string]: IResource };
+  ingresses: { [i: string]: IResource };
   sockets: WebSocket[];
 }
 
@@ -50,9 +51,10 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
-    deployments: new Map<string, IResource>(),
-    otherResources: new Map<string, IResource>(),
-    services: new Map<string, IResource>(),
+    deployments: {},
+    ingresses: {},
+    otherResources: {},
+    services: {},
     sockets: [],
   };
 
@@ -91,32 +93,21 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         }
         acc[`${r.kind}/${r.metadata.name}`] = r;
         return acc;
-      }, new Map<string, IResource>());
+      }, {});
     this.setState({ otherResources });
 
     const deployments = manifest.filter(d => d.kind === "Deployment");
     const services = manifest.filter(d => d.kind === "Service");
-    const apiBase = WebSocketHelper.apiBase();
+    const ingresses = manifest.filter(d => d.kind === "Ingress");
     const sockets: WebSocket[] = [];
     for (const d of deployments) {
-      const s = new WebSocket(
-        `${apiBase}/apis/apps/v1beta1/namespaces/${
-          newApp.namespace
-        }/deployments?watch=true&fieldSelector=metadata.name%3D${d.metadata.name}`,
-        Auth.wsProtocols(),
-      );
-      s.addEventListener("message", e => this.handleEvent(e));
-      sockets.push(s);
+      sockets.push(this.getSocket("deployments", d.apiVersion, d.metadata.name, newApp.namespace));
     }
     for (const svc of services) {
-      const s = new WebSocket(
-        `${apiBase}/api/v1/namespaces/${
-          newApp.namespace
-        }/services?watch=true&fieldSelector=metadata.name%3D${svc.metadata.name}`,
-        Auth.wsProtocols(),
-      );
-      s.addEventListener("message", e => this.handleEvent(e));
-      sockets.push(s);
+      sockets.push(this.getSocket("services", svc.apiVersion, svc.metadata.name, newApp.namespace));
+    }
+    for (const i of ingresses) {
+      sockets.push(this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace));
     }
     this.setState({
       sockets,
@@ -137,6 +128,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         break;
       case "Service":
         this.setState({ services: { ...this.state.services, [key]: resource } });
+        break;
+      case "Ingress":
+        this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
         break;
     }
   }
@@ -164,7 +158,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
-
     // Although LoadingWrapper checks that the app is loaded before loading this wrapper
     // it seems that react renders it even before causing it to crash because app is null
     // that's why we need to have an app && guard clause
@@ -194,7 +187,10 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                <ServiceTable services={this.state.services} extended={false} />
+                {(Object.keys(this.state.services).length > 0 ||
+                  Object.keys(this.state.ingresses).length > 0) && (
+                  <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
+                )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <AppDetails
                   deployments={this.state.deployments}
@@ -207,6 +203,23 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         </main>
       </section>
     );
+  }
+
+  private getSocket(
+    resource: string,
+    apiVersion: string,
+    name: string,
+    namespace: string,
+  ): WebSocket {
+    const apiBase = WebSocketHelper.apiBase();
+    const s = new WebSocket(
+      `${apiBase}/${
+        apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`
+      }/namespaces/${namespace}/${resource}?watch=true&fieldSelector=metadata.name%3D${name}`,
+      Auth.wsProtocols(),
+    );
+    s.addEventListener("message", e => this.handleEvent(e));
+    return s;
   }
 
   private closeSockets() {

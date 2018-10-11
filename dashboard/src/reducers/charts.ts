@@ -24,22 +24,22 @@ const chartsSelectedReducer = (
         readme: undefined,
         readmeError: undefined,
         values: undefined,
-        version: action.chartVersion,
+        version: action.payload,
       };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,
         error: undefined,
-        versions: action.versions,
+        versions: action.payload,
       };
     case getType(actions.charts.selectReadme):
-      return { ...state, readme: action.readme, readmeError: undefined };
+      return { ...state, readme: action.payload, readmeError: undefined };
     case getType(actions.charts.errorChart):
-      return { ...state, error: action.err };
+      return { ...state, error: action.payload };
     case getType(actions.charts.errorReadme):
-      return { ...state, readmeError: action.message };
+      return { ...state, readmeError: action.payload };
     case getType(actions.charts.selectValues):
-      return { ...state, values: action.values };
+      return { ...state, values: action.payload };
     case getType(actions.charts.resetChartVersion):
       return initialState.selected;
     default:
@@ -52,7 +52,7 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };
     case getType(actions.charts.receiveCharts):
-      return { ...state, isFetching: false, items: action.charts };
+      return { ...state, isFetching: false, items: action.payload };
     case getType(actions.charts.receiveChartVersions):
       return {
         ...state,

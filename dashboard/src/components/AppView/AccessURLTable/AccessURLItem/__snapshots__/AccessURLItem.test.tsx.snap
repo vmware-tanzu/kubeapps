@@ -1,0 +1,53 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should show only a message (without a link) if the item is not a link 1`] = `
+<tr>
+  <td>
+    foo
+  </td>
+  <td />
+  <td>
+    <span
+      className="ServiceItem  type-small margin-r-small padding-tiny padding-h-normal"
+      key="Pending"
+    >
+      Pending
+    </span>
+  </td>
+</tr>
+`;
+
+exports[`should show only an URL with a link 1`] = `
+<tr>
+  <td>
+    foo
+  </td>
+  <td />
+  <td>
+    <span
+      className="ServiceItem ServiceItem--with-link type-small margin-r-small padding-tiny padding-h-normal"
+      key="http://1.2.3.4:8080"
+    >
+      <a
+        className="padding-tiny padding-h-normal"
+        href="http://1.2.3.4:8080"
+        target="_blank"
+      >
+        http://1.2.3.4:8080
+      </a>
+    </span>
+    <span
+      className="ServiceItem ServiceItem--with-link type-small margin-r-small padding-tiny padding-h-normal"
+      key="https://foo.bar"
+    >
+      <a
+        className="padding-tiny padding-h-normal"
+        href="https://foo.bar"
+        target="_blank"
+      >
+        https://foo.bar
+      </a>
+    </span>
+  </td>
+</tr>
+`;

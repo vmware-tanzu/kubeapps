@@ -27,6 +27,7 @@ import (
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/proto/hapi/release"
+	"k8s.io/helm/pkg/proto/hapi/services"
 )
 
 const (
@@ -89,25 +90,20 @@ func (p *Proxy) get(name, namespace string) (*release.Release, error) {
 		helm.ReleaseListFilter(name),
 		helm.ReleaseListNamespace(namespace),
 		helm.ReleaseListStatuses(allReleaseStatuses),
+		// Get just the latest release
+		helm.ReleaseListLimit(1),
+		helm.ReleaseListSort(int32(services.ListSort_LAST_RELEASED)),
+		helm.ReleaseListOrder(int32(services.ListSort_DESC)),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to list helm releases: %v", err)
 	}
-	var rel *release.Release
 	if list != nil {
 		if l := list.GetReleases(); l != nil {
-			for _, r := range l {
-				if (namespace == "" || namespace == r.Namespace) && r.Name == name {
-					rel = r
-					break
-				}
-			}
+			return l[0], nil
 		}
 	}
-	if rel == nil {
-		return nil, fmt.Errorf("Release %s not found in namespace %s", name, namespace)
-	}
-	return rel, nil
+	return nil, fmt.Errorf("Release %s not found in namespace %s", name, namespace)
 }
 
 // GetReleaseStatus prints the status of the given release if exists

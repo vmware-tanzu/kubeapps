@@ -1,5 +1,5 @@
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createActionDeprecated } from "typesafe-actions";
+import { ActionType, createAction } from "typesafe-actions";
 
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
 import { definedNamespaces } from "../shared/Namespace";
@@ -8,51 +8,38 @@ import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceC
 import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
 
-export const checkCatalogInstall = createActionDeprecated("CHECK_INSTALL");
-export const installed = createActionDeprecated("INSTALLED");
-export const notInstalled = createActionDeprecated("_NOT_INSTALLED");
-export const requestBrokers = createActionDeprecated("REQUEST_BROKERS");
-export const receiveBrokers = createActionDeprecated(
-  "RECEIVE_BROKERS",
-  (brokers: IServiceBroker[]) => ({
-    brokers,
-    type: "RECEIVE_BROKERS",
-  }),
-);
-export const requestPlans = createActionDeprecated("REQUEST_PLANS");
-export const receivePlans = createActionDeprecated("RECEIVE_PLANS", (plans: IServicePlan[]) => ({
-  plans,
-  type: "RECEIVE_PLANS",
-}));
-export const requestInstances = createActionDeprecated("REQUEST_INSTANCES");
-export const receiveInstances = createActionDeprecated(
-  "RECEIVE_INSTANCES",
-  (instances: IServiceInstance[]) => ({ type: "RECEIVE_INSTANCES", instances }),
-);
-export const requestBindingsWithSecrets = createActionDeprecated("REQUEST_BINDINGS_WITH_SECRETS");
-export const receiveBindingsWithSecrets = createActionDeprecated(
-  "RECEIVE_BINDINGS_WITH_SECRETS",
-  (bindingsWithSecrets: IServiceBindingWithSecret[]) => ({
-    bindingsWithSecrets,
-    type: "RECEIVE_BINDINGS_WITH_SECRETS",
-  }),
-);
-export const requestClasses = createActionDeprecated("REQUEST_PLANS");
-export const receiveClasses = createActionDeprecated(
-  "RECEIVE_CLASSES",
-  (classes: IClusterServiceClass[]) => ({
-    classes,
-    type: "RECEIVE_CLASSES",
-  }),
-);
-export const errorCatalog = createActionDeprecated(
-  "ERROR_CATALOG",
-  (err: Error, op: "fetch" | "create" | "delete" | "deprovision" | "update") => ({
-    err,
-    op,
-    type: "ERROR_CATALOG",
-  }),
-);
+export const checkCatalogInstall = createAction("CHECK_INSTALL");
+export const installed = createAction("INSTALLED");
+export const notInstalled = createAction("NOT_INSTALLED");
+export const requestBrokers = createAction("REQUEST_BROKERS");
+export const receiveBrokers = createAction("RECEIVE_BROKERS", resolve => {
+  return (brokers: IServiceBroker[]) => resolve(brokers);
+});
+
+export const requestPlans = createAction("REQUEST_PLANS");
+export const receivePlans = createAction("RECEIVE_PLANS", resolve => {
+  return (plans: IServicePlan[]) => resolve(plans);
+});
+
+export const requestInstances = createAction("REQUEST_INSTANCES");
+export const receiveInstances = createAction("RECEIVE_INSTANCES", resolve => {
+  return (instances: IServiceInstance[]) => resolve(instances);
+});
+
+export const requestBindingsWithSecrets = createAction("REQUEST_BINDINGS_WITH_SECRETS");
+export const receiveBindingsWithSecrets = createAction("RECEIVE_BINDINGS_WITH_SECRETS", resolve => {
+  return (bindingsWithSecrets: IServiceBindingWithSecret[]) => resolve(bindingsWithSecrets);
+});
+
+export const requestClasses = createAction("REQUEST_PLANS");
+export const receiveClasses = createAction("RECEIVE_CLASSES", resolve => {
+  return (classes: IClusterServiceClass[]) => resolve(classes);
+});
+
+export const errorCatalog = createAction("ERROR_CATALOG", resolve => {
+  return (err: Error, op: "fetch" | "create" | "delete" | "deprovision" | "update") =>
+    resolve({ err, op });
+});
 
 const actions = [
   checkCatalogInstall,

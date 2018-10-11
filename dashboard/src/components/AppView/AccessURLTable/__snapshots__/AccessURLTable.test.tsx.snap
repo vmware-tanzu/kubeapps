@@ -1,0 +1,113 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when the app contain ingresses should show the table with available ingresses 1`] = `
+<table>
+  <thead>
+    <tr>
+      <th>
+        NAME
+      </th>
+      <th>
+        TYPE
+      </th>
+      <th>
+        URL
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <AccessURLItem
+      URLItem={
+        Object {
+          "URLs": Array [
+            "http://foo.bar/ready",
+          ],
+          "isLink": true,
+          "name": "foo",
+          "type": "Ingress",
+        }
+      }
+      key="foo"
+    />
+  </tbody>
+</table>
+`;
+
+exports[`when the app contain services and ingresses should show the table with available svcs and ingresses 1`] = `
+<table>
+  <thead>
+    <tr>
+      <th>
+        NAME
+      </th>
+      <th>
+        TYPE
+      </th>
+      <th>
+        URL
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <AccessURLItem
+      URLItem={
+        Object {
+          "URLs": Array [
+            "http://foo.bar/ready",
+          ],
+          "isLink": true,
+          "name": "foo",
+          "type": "Ingress",
+        }
+      }
+      key="foo"
+    />
+    <AccessURLItem
+      URLItem={
+        Object {
+          "URLs": Array [
+            "Pending",
+          ],
+          "isLink": false,
+          "name": "foo",
+          "type": "Service LoadBalancer",
+        }
+      }
+      key="foo"
+    />
+  </tbody>
+</table>
+`;
+
+exports[`when the app contain services should show the table if any service is a LoadBalancer 1`] = `
+<table>
+  <thead>
+    <tr>
+      <th>
+        NAME
+      </th>
+      <th>
+        TYPE
+      </th>
+      <th>
+        URL
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <AccessURLItem
+      URLItem={
+        Object {
+          "URLs": Array [
+            "Pending",
+          ],
+          "isLink": false,
+          "name": "foo",
+          "type": "Service LoadBalancer",
+        }
+      }
+      key="foo"
+    />
+  </tbody>
+</table>
+`;

@@ -1,17 +1,18 @@
 import * as React from "react";
+
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { BindingEntry } from "./BindingListEntry";
+import BindingListEntry from "./BindingListEntry";
 
 interface IBindingList {
   bindingsWithSecrets: IServiceBindingWithSecret[];
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
-export class BindingList extends React.Component<IBindingList> {
+class BindingList extends React.Component<IBindingList> {
   public render() {
     const { removeBinding, bindingsWithSecrets } = this.props;
     return (
-      <div className="BindingEntryList">
+      <div className="BindingList">
         <table>
           <thead>
             <tr>
@@ -23,7 +24,7 @@ export class BindingList extends React.Component<IBindingList> {
           <tbody>
             {bindingsWithSecrets.length > 0 ? (
               bindingsWithSecrets.map(b => [
-                <BindingEntry
+                <BindingListEntry
                   key={b.binding.metadata.uid}
                   bindingWithSecret={b}
                   removeBinding={removeBinding}
@@ -40,3 +41,5 @@ export class BindingList extends React.Component<IBindingList> {
     );
   }
 }
+
+export default BindingList;

@@ -12,7 +12,10 @@ import { IServiceInstance } from "../shared/ServiceInstance";
 export interface IServiceCatalogState {
   bindingsWithSecrets: IServiceBindingWithSecret[];
   brokers: IServiceBroker[];
-  classes: IClusterServiceClass[];
+  classes: {
+    isFetching: boolean;
+    list: IClusterServiceClass[];
+  };
   errors: {
     create?: Error;
     fetch?: Error;
@@ -29,7 +32,7 @@ export interface IServiceCatalogState {
 const initialState: IServiceCatalogState = {
   bindingsWithSecrets: [],
   brokers: [],
-  classes: [],
+  classes: { isFetching: false, list: [] },
   errors: {},
   instances: [],
   isChecking: true,
@@ -50,22 +53,20 @@ const catalogReducer = (
     case getType(catalog.checkCatalogInstall):
       return { ...state, isChecking: true };
     case getType(catalog.receiveBrokers):
-      const { brokers } = action;
-      return { ...state, brokers };
+      return { ...state, brokers: action.payload };
     case getType(catalog.receiveBindingsWithSecrets):
-      const { bindingsWithSecrets } = action;
-      return { ...state, bindingsWithSecrets };
+      return { ...state, bindingsWithSecrets: action.payload };
+    case getType(catalog.requestClasses):
+      const list = state.classes.list;
+      return { ...state, classes: { isFetching: true, list } };
     case getType(catalog.receiveClasses):
-      const { classes } = action;
-      return { ...state, classes };
+      return { ...state, classes: { isFetching: false, list: action.payload } };
     case getType(catalog.receiveInstances):
-      const { instances } = action;
-      return { ...state, instances };
+      return { ...state, instances: action.payload };
     case getType(catalog.receivePlans):
-      const { plans } = action;
-      return { ...state, plans };
+      return { ...state, plans: action.payload };
     case getType(catalog.errorCatalog):
-      return { ...state, errors: { [action.op]: action.err } };
+      return { ...state, errors: { [action.payload.op]: action.payload.err } };
     case LOCATION_CHANGE:
       return { ...state, errors: {} };
     case getType(actions.namespace.setNamespace):

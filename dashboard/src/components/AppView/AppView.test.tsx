@@ -1,14 +1,15 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
+import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -63,11 +64,16 @@ describe("AppViewComponent", () => {
     const resources = {
       configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
       deployment: {
-        apiVersion: "extensions/v1beta1",
+        apiVersion: "apps/v1beta1",
         kind: "Deployment",
         metadata: { name: "deployment-one" },
       },
       service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
+      ingress: {
+        apiVersion: "extensions/v1beta1",
+        kind: "Ingress",
+        metadata: { name: "ingress-one" },
+      },
     };
 
     /*
@@ -79,6 +85,7 @@ describe("AppViewComponent", () => {
         resources.deployment,
         resources.service,
         resources.configMap,
+        resources.ingress,
       ]);
 
       const wrapper = shallow(<AppViewComponent {...validProps} />);
@@ -87,12 +94,15 @@ describe("AppViewComponent", () => {
       wrapper.setProps(validProps);
       const sockets: WebSocket[] = wrapper.state("sockets");
 
-      expect(sockets.length).toEqual(2);
+      expect(sockets.length).toEqual(3);
       expect(sockets[0].url).toBe(
         "ws://localhost/api/kube/apis/apps/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
       );
       expect(sockets[1].url).toBe(
         "ws://localhost/api/kube/api/v1/namespaces/weee/services?watch=true&fieldSelector=metadata.name%3Dsvc-one",
+      );
+      expect(sockets[2].url).toBe(
+        "ws://localhost/api/kube/apis/extensions/v1beta1/namespaces/weee/ingresses?watch=true&fieldSelector=metadata.name%3Dingress-one",
       );
     });
 
@@ -137,13 +147,22 @@ describe("AppViewComponent", () => {
 
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const service = {
+        metadata: { name: "foo" },
+        spec: { type: "loadBalancer", ports: [{ port: 8080 }] },
+        status: { ingress: [{ loadBalancer: { ip: "1.2.3.4" } }] },
+      } as IResource;
+      const services = {};
+      services[service.metadata.name] = service;
+      wrapper.setState({ services });
       expect(wrapper.find(ChartInfo).exists()).toBe(true);
       expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
       expect(wrapper.find(ServiceTable).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
       expect(wrapper.find(AppDetails).exists()).toBe(true);
+      expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
     it("renders an error if error prop is set", () => {
@@ -177,6 +196,32 @@ describe("AppViewComponent", () => {
       const err = wrapper.find(ErrorSelector);
       expect(err.exists()).toBe(true);
       expect(err.html()).toContain("Application mr-sunshine not found");
+    });
+
+    it("renders an URL table if an Ingress exists", () => {
+      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const ingress = {
+        metadata: {
+          name: "foo",
+        },
+        spec: {
+          rules: [
+            {
+              host: "foo.bar",
+              http: {
+                paths: [{ path: "/ready" }],
+              },
+            },
+          ],
+        } as IIngressSpec,
+      } as IResource;
+      const ingresses = {};
+      ingresses[ingress.metadata.name] = ingress;
+      wrapper.setState({ ingresses });
+      const urlTable = wrapper.find(AccessURLTable);
+      expect(urlTable).toExist();
+      expect(urlTable.text()).toContain("Ingress");
+      expect(urlTable.text()).toContain("http://foo.bar/ready");
     });
   });
 });

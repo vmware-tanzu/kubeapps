@@ -3,6 +3,7 @@ import { FileText } from "react-feather";
 import * as ReactMarkdown from "react-markdown";
 
 import LoadingWrapper from "../LoadingWrapper";
+import HeadingRenderer from "./HeadingRenderer";
 
 import "./ChartReadme.css";
 
@@ -35,7 +36,7 @@ class ChartReadme extends React.Component<IChartReadmeProps> {
       <LoadingWrapper loaded={!!readme}>
         {readme && (
           <div className="ChartReadme">
-            <ReactMarkdown source={readme} />
+            <ReactMarkdown source={readme} renderers={{ heading: HeadingRenderer }} />
           </div>
         )}
       </LoadingWrapper>

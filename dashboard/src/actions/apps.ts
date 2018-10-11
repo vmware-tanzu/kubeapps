@@ -1,45 +1,34 @@
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createActionDeprecated } from "typesafe-actions";
+import { ActionType, createAction } from "typesafe-actions";
 import { App } from "../shared/App";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
 import { IAppOverview, IChartVersion, IStoreState, UnprocessableEntity } from "../shared/types";
 
-export const requestApps = createActionDeprecated("REQUEST_APPS");
-export const receiveApps = createActionDeprecated(
-  "RECEIVE_APPS",
-  (apps: hapi.release.Release[]) => {
-    return {
-      apps,
-      type: "RECEIVE_APPS",
-    };
-  },
-);
-export const listApps = createActionDeprecated("REQUEST_APP_LIST", (listingAll: boolean) => {
-  return {
-    listingAll,
-    type: "REQUEST_APP_LIST",
-  };
+export const requestApps = createAction("REQUEST_APPS");
+
+export const receiveApps = createAction("RECEIVE_APPS", resolve => {
+  return (apps: hapi.release.Release[]) => resolve(apps);
 });
-export const receiveAppList = createActionDeprecated("RECEIVE_APP_LIST", (apps: IAppOverview[]) => {
-  return {
-    apps,
-    type: "RECEIVE_APP_LIST",
-  };
+
+export const listApps = createAction("REQUEST_APP_LIST", resolve => {
+  return (listingAll: boolean) => resolve(listingAll);
 });
-export const errorApps = createActionDeprecated("ERROR_APPS", (err: Error) => ({
-  err,
-  type: "ERROR_APPS",
-}));
-export const errorDeleteApp = createActionDeprecated("ERROR_DELETE_APP", (err: Error) => ({
-  err,
-  type: "ERROR_DELETE_APP",
-}));
-export const selectApp = createActionDeprecated("SELECT_APP", (app: hapi.release.Release) => {
-  return {
-    app,
-    type: "SELECT_APP",
-  };
+
+export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
+  return (apps: IAppOverview[]) => resolve(apps);
+});
+
+export const errorApps = createAction("ERROR_APPS", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+export const errorDeleteApp = createAction("ERROR_DELETE_APP", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+export const selectApp = createAction("SELECT_APP", resolve => {
+  return (app: hapi.release.Release) => resolve(app);
 });
 
 const allActions = [

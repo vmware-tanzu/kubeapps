@@ -1,49 +1,42 @@
 import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
-import { ActionType, createActionDeprecated } from "typesafe-actions";
+import { ActionType, createAction } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
 import { IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 import * as url from "../shared/url";
 
-export const requestCharts = createActionDeprecated("REQUEST_CHARTS");
-export const receiveCharts = createActionDeprecated("RECEIVE_CHARTS", (charts: IChart[]) => ({
-  charts,
-  type: "RECEIVE_CHARTS",
-}));
-export const receiveChartVersions = createActionDeprecated(
-  "RECEIVE_CHART_VERSIONS",
-  (versions: IChartVersion[]) => ({
-    type: "RECEIVE_CHART_VERSIONS",
-    versions,
-  }),
-);
-export const errorChart = createActionDeprecated("ERROR_CHART", (err: Error) => ({
-  err,
-  type: "ERROR_CHART",
-}));
-export const selectChartVersion = createActionDeprecated(
-  "SELECT_CHART_VERSION",
-  (chartVersion: IChartVersion) => ({
-    chartVersion,
-    type: "SELECT_CHART_VERSION",
-  }),
-);
-export const resetChartVersion = createActionDeprecated("RESET_CHART_VERSION", () => ({
-  type: "RESET_CHART_VERSION",
-}));
-export const selectReadme = createActionDeprecated("SELECT_README", (readme: string) => ({
-  readme,
-  type: "SELECT_README",
-}));
-export const errorReadme = createActionDeprecated("ERROR_README", (message: string) => ({
-  message,
-  type: "ERROR_README",
-}));
-export const selectValues = createActionDeprecated("SELECT_VALUES", (values: string) => ({
-  type: "SELECT_VALUES",
-  values,
-}));
+export const requestCharts = createAction("REQUEST_CHARTS");
+
+export const receiveCharts = createAction("RECEIVE_CHARTS", resolve => {
+  return (charts: IChart[]) => resolve(charts);
+});
+
+export const receiveChartVersions = createAction("RECEIVE_CHART_VERSIONS", resolve => {
+  return (versions: IChartVersion[]) => resolve(versions);
+});
+
+export const errorChart = createAction("ERROR_CHART", resolve => {
+  return (err: Error) => resolve(err);
+});
+
+export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve => {
+  return (chartVersion: IChartVersion) => resolve(chartVersion);
+});
+
+export const resetChartVersion = createAction("RESET_CHART_VERSION");
+
+export const selectReadme = createAction("SELECT_README", resolve => {
+  return (readme: string) => resolve(readme);
+});
+
+export const errorReadme = createAction("ERROR_README", resolve => {
+  return (message: string) => resolve(message);
+});
+
+export const selectValues = createAction("SELECT_VALUES", resolve => {
+  return (values: string) => resolve(values);
+});
 
 const allActions = [
   requestCharts,

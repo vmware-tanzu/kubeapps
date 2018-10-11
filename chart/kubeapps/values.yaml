@@ -65,13 +65,8 @@ apprepository:
   # Image used to perform chart repository syncs
   syncImage:
     registry: docker.io
-    repository: kubeapps/chart-repo
-    tag: latest
-  # This image is used in a Helm post-install hook to bootstrap the initialRepos below
-  jobsImage:
-    registry: docker.io
-    repository: lachlanevenson/k8s-kubectl
-    tag: v1.9.9
+    repository: quay.io/helmpack/chart-repo
+    tag: v1.0.0
   initialRepos:
   - name: stable
     url: https://kubernetes-charts.storage.googleapis.com
@@ -89,6 +84,17 @@ apprepository:
     requests:
       cpu: 25m
       memory: 32Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Hooks are used to perform actions like populating apprepositories
+# or creating required resources during installation or upgrade
+hooks:
+  image:
+    registry: docker.io
+    repository: lachlanevenson/k8s-kubectl
+    tag: v1.9.9
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -127,8 +133,8 @@ chartsvc:
   replicaCount: 2
   image:
     registry: docker.io
-    repository: kubeapps/chartsvc
-    tag: latest
+    repository: quay.io/helmpack/chartsvc
+    tag: v1.0.0
   service:
     port: 8080
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
@@ -200,6 +206,8 @@ mongodb:
   # Kubeapps uses MongoDB as a cache and persistence is not required
   persistence:
     enabled: false
+  # MongoDB credentials are handled by kubeapps to facilitate upgrades
+  existingSecret: kubeapps-mongodb
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:

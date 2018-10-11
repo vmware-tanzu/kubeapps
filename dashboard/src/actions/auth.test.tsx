@@ -37,7 +37,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        errorMsg: `Error: ${validationErrorMsg}`,
+        payload: `Error: ${validationErrorMsg}`,
         type: getType(actions.auth.authenticationError),
       },
     ];
@@ -53,7 +53,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        authenticated: true,
+        payload: true,
         type: getType(actions.auth.setAuthenticated),
       },
     ];

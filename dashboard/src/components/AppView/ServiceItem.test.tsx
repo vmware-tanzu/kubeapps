@@ -11,11 +11,11 @@ it("renders a simple view without IP", () => {
     },
     spec: {
       type: "ClusterIP",
+      ports: [],
     },
   } as IResource;
-  const wrapper = shallow(<ServiceItem service={service} extended={false} />);
+  const wrapper = shallow(<ServiceItem service={service} />);
   expect(wrapper).toMatchSnapshot();
-  expect(wrapper.find(".ServiceItem__url").text()).toBe("None");
 });
 
 it("renders a simple view with IP", () => {
@@ -33,16 +33,16 @@ it("renders a simple view with IP", () => {
       },
     },
   } as IResource;
-  const wrapper = shallow(<ServiceItem service={service} extended={false} />);
-  expect(wrapper.find(".ServiceItem__url").text()).toBe("http://1.2.3.4");
+  const wrapper = shallow(<ServiceItem service={service} />);
+  expect(wrapper.text()).toContain("1.2.3.4");
 });
 
-it("renders an extended view with IP", () => {
+it("renders a view with IP", () => {
   const service = {
     metadata: { name: "foo" },
-    spec: { ports: [{ port: 80, protocol: "http" }], type: "LoadBalancer" },
+    spec: { ports: [{ port: 80 }], type: "LoadBalancer" },
     status: { loadBalancer: { ingress: [{ ip: "1.2.3.4" }] } },
   } as IResource;
-  const wrapper = shallow(<ServiceItem service={service} extended={true} />);
+  const wrapper = shallow(<ServiceItem service={service} />);
   expect(wrapper).toMatchSnapshot();
 });
