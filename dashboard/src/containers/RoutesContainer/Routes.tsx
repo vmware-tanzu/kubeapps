@@ -8,14 +8,14 @@ import AppUpgrade from "../../containers/AppUpgradeContainer";
 import AppView from "../../containers/AppViewContainer";
 import ChartList from "../../containers/ChartListContainer";
 import ChartView from "../../containers/ChartViewContainer";
-import ClassListContainer from "../../containers/ClassListContainer";
-import { ClassViewContainer } from "../../containers/ClassView";
-import InstanceListViewContainer from "../../containers/InstanceListViewContainer";
-import InstanceView from "../../containers/InstanceView";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import RepoListContainer from "../../containers/RepoListContainer";
 import ServiceCatalogContainer from "../../containers/ServiceCatalogContainer";
+import ServiceClassListContainer from "../../containers/ServiceClassListContainer";
+import ServiceClassViewContainer from "../../containers/ServiceClassViewContainer";
+import ServiceInstanceListContainer from "../../containers/ServiceInstanceListContainer";
+import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewContainer";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -32,10 +32,10 @@ const privateRoutes: {
   "/charts/:repo/:id/versions/:version": ChartView,
   "/config/brokers": ServiceCatalogContainer,
   "/config/repos": RepoListContainer,
-  "/services/brokers/:brokerName/classes/:className": ClassViewContainer,
-  "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": InstanceView,
-  "/services/classes": ClassListContainer,
-  "/services/instances/ns/:namespace": InstanceListViewContainer,
+  "/services/brokers/:brokerName/classes/:className": ServiceClassViewContainer,
+  "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": ServiceInstanceViewContainer,
+  "/services/classes": ServiceClassListContainer,
+  "/services/instances/ns/:namespace": ServiceInstanceListContainer,
 };
 
 // Public routes that don't require authentication
