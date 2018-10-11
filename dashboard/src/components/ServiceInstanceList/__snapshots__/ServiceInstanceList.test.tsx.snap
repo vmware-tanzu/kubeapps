@@ -57,7 +57,7 @@ exports[`when all the components are loaded shows a card list with the different
     loaded={true}
   >
     <main>
-      <Component
+      <ServiceInstanceCardList
         classes={Array []}
         instances={
           Array [

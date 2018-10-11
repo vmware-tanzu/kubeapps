@@ -12,11 +12,7 @@ function mapStateToProps(
   { catalog, namespace }: IStoreState,
   { location }: RouteComponentProps<{ brokerName: string }>,
 ) {
-  const brokers = catalog.brokers;
-  const plans = catalog.plans;
-  const classes = catalog.classes;
-  const instances = catalog.instances;
-  const isServiceCatalogInstalled = catalog.isServiceCatalogInstalled;
+  const { brokers, classes, plans, instances, isServiceCatalogInstalled } = catalog;
   return {
     brokers,
     classes,
