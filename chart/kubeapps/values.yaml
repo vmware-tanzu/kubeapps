@@ -1,3 +1,9 @@
+## Global chart image registry
+## Please, note that this registry would be used for all the containers in the chart and dependencies
+##
+# global:
+#   registry:
+
 # The frontend service is the main reverse proxy used to access the Kubeapps UI
 # To expose Kubeapps externally either configure the ingress object below or
 # set frontend.service.type=LoadBalancer in the frontend configuration.
@@ -184,6 +190,12 @@ dashboard:
   tolerations: []
   affinity: {}
 
+
+##
+## MongoDB chart configuration
+##
+## https://github.com/helm/charts/blob/master/stable/mongodb/values.yaml
+##
 mongodb:
   # Kubeapps uses MongoDB as a cache and persistence is not required
   persistence:

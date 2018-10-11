@@ -28,7 +28,11 @@ If release name contains chart name it will be used as a full name.
 Render image reference
 */}}
 {{- define "kubeapps.image" -}}
-{{ .registry }}/{{ .repository }}:{{ .tag }}
+{{- if .Values.global.registry -}}
+    {{ .Values.global.registry }}/{{ .repository }}:{{ .tag }}
+{{- else -}}
+    {{ .registry }}/{{ .repository }}:{{ .tag }}
+{{- end -}}
 {{- end -}}
 
 {{/*
