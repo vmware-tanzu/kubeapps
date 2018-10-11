@@ -3,7 +3,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import InstanceView from "../../components/InstanceView";
+import ServiceInstanceView from "../../components/ServiceInstanceView";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { IStoreState } from "../../shared/types";
 
@@ -67,4 +67,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(InstanceView);
+)(ServiceInstanceView);

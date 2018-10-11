@@ -2,12 +2,12 @@ import { shallow } from "enzyme";
 import * as React from "react";
 
 import { MessageAlert } from "../ErrorAlert";
-import InstanceListView, { InstanceListViewProps } from "./InstanceListView";
+import ServiceInstanceList, { IServiceInstanceListProps } from "./ServiceInstanceList";
 
 it("renders the warning for alpha feature", () => {
   const wrapper = shallow(
-    <InstanceListView
-      {...{} as InstanceListViewProps}
+    <ServiceInstanceList
+      {...{} as IServiceInstanceListProps}
       brokers={[]}
       classes={{ isFetching: false, list: [] }}
       getCatalog={jest.fn()}
