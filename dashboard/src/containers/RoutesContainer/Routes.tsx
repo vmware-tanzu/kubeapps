@@ -2,12 +2,12 @@ import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
 
 import NotFound from "../../components/NotFound";
-import AppList from "../../containers/AppListContainer";
-import AppNew from "../../containers/AppNewContainer";
-import AppUpgrade from "../../containers/AppUpgradeContainer";
-import AppView from "../../containers/AppViewContainer";
-import ChartList from "../../containers/ChartListContainer";
-import ChartView from "../../containers/ChartViewContainer";
+import AppListContainer from "../../containers/AppListContainer";
+import AppNewContainer from "../../containers/AppNewContainer";
+import AppUpgradeContainer from "../../containers/AppUpgradeContainer";
+import AppViewContainer from "../../containers/AppViewContainer";
+import ChartListContainer from "../../containers/ChartListContainer";
+import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import RepoListContainer from "../../containers/RepoListContainer";
@@ -22,14 +22,14 @@ type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 const privateRoutes: {
   [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
 } = {
-  "/apps/ns/:namespace": AppList,
-  "/apps/ns/:namespace/:releaseName": AppView,
-  "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNew,
-  "/apps/ns/:namespace/upgrade/:releaseName": AppUpgrade,
-  "/charts": ChartList,
-  "/charts/:repo": ChartList,
-  "/charts/:repo/:id": ChartView,
-  "/charts/:repo/:id/versions/:version": ChartView,
+  "/apps/ns/:namespace": AppListContainer,
+  "/apps/ns/:namespace/:releaseName": AppViewContainer,
+  "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNewContainer,
+  "/apps/ns/:namespace/upgrade/:releaseName": AppUpgradeContainer,
+  "/charts": ChartListContainer,
+  "/charts/:repo": ChartListContainer,
+  "/charts/:repo/:id": ChartViewContainer,
+  "/charts/:repo/:id/versions/:version": ChartViewContainer,
   "/config/brokers": ServiceCatalogContainer,
   "/config/repos": RepoListContainer,
   "/services/brokers/:brokerName/classes/:className": ServiceClassViewContainer,
