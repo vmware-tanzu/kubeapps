@@ -196,7 +196,6 @@ dashboard:
   tolerations: []
   affinity: {}
 
-
 ##
 ## MongoDB chart configuration
 ##
