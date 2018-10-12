@@ -36,7 +36,7 @@ Render image reference
         {{- $registryName := $global.registry -}}
     {{- end -}}
 {{- end -}}
-{{ .registryName }}/{{ .repository }}:{{ .tag }}
+{{ $registryName }}/{{ $image.repository }}:{{ $image.tag }}
 {{- end -}}
 
 {{/*
