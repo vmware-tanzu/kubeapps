@@ -1,8 +1,7 @@
-## Global chart image registry
-## Please, note that this registry would be used for all the containers in the chart and dependencies
-##
+## Global Docker image registry
+## Please, note that this will override the image registry for all the images, including dependencies, configured to use the global value
 # global:
-#   registry:
+#   imageRegistry:
 
 # The frontend service is the main reverse proxy used to access the Kubeapps UI
 # To expose Kubeapps externally either configure the ingress object below or
