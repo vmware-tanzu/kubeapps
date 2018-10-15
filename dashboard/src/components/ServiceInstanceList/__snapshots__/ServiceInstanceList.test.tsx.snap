@@ -2,7 +2,7 @@
 
 exports[`when all the components are loaded shows a card list with the different instances if they exists 1`] = `
 <section
-  className="InstanceList"
+  className="ServiceInstanceList"
 >
   <PageHeader>
     <div
@@ -76,7 +76,7 @@ exports[`when all the components are loaded shows a card list with the different
 
 exports[`when all the components are loaded shows a forbiden error if it exists 1`] = `
 <section
-  className="InstanceList"
+  className="ServiceInstanceList"
 >
   <PageHeader>
     <div
@@ -172,7 +172,7 @@ exports[`when all the components are loaded shows a forbiden error if it exists 
 
 exports[`when all the components are loaded shows a warning to install no service broker is installed 1`] = `
 <section
-  className="InstanceList"
+  className="ServiceInstanceList"
 >
   <PageHeader>
     <div
@@ -235,7 +235,7 @@ exports[`when all the components are loaded shows a warning to install no servic
 
 exports[`when all the components are loaded shows a warning to install the Service Catalog if it's not installed 1`] = `
 <section
-  className="InstanceList"
+  className="ServiceInstanceList"
 >
   <PageHeader>
     <div
@@ -298,7 +298,7 @@ exports[`when all the components are loaded shows a warning to install the Servi
 
 exports[`when all the components are loaded shows information of how to deploy a service instance if there are none of them 1`] = `
 <section
-  className="InstanceList"
+  className="ServiceInstanceList"
 >
   <PageHeader>
     <div
@@ -385,7 +385,7 @@ exports[`when all the components are loaded shows information of how to deploy a
 
 exports[`while fetching components loading spinner matches the snapshot 1`] = `
 <section
-  className="InstanceList"
+  className="ServiceInstanceList"
 >
   <PageHeader>
     <div
@@ -448,7 +448,7 @@ exports[`while fetching components loading spinner matches the snapshot 1`] = `
 
 exports[`while fetching components matches the snapshot 1`] = `
 <section
-  className="InstanceList"
+  className="ServiceInstanceList"
 >
   <PageHeader>
     <div
