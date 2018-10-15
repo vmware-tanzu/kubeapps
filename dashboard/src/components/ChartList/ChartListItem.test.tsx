@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 
 import { IChart, IRepo } from "../../shared/types";
-import { CardIcon } from "../Card";
+import { CardIcon, PreformattedCard } from "../Card";
 import ChartListItem from "./ChartListItem";
 
 jest.mock("../../placeholder.png", () => "placeholder.png");
@@ -37,12 +37,24 @@ it("should use the default placeholder for the icon if it doesn't exist", () => 
   chartWithoutIcon.attributes.icon = undefined;
   const wrapper = shallow(<ChartListItem chart={chartWithoutIcon} />);
   // Importing an image returns "undefined"
-  expect(wrapper.find(CardIcon).prop("src")).toBe(undefined);
+  expect(
+    wrapper
+      .find(PreformattedCard)
+      .shallow()
+      .find(CardIcon)
+      .prop("src"),
+  ).toBe(undefined);
 });
 
 it("should place a dash if the version is not avaliable", () => {
   const chartWithoutVersion = { ...defaultChart };
   chartWithoutVersion.relationships.latestChartVersion.data.app_version = "";
   const wrapper = shallow(<ChartListItem chart={chartWithoutVersion} />);
-  expect(wrapper.find(".ChartListItem__content__info_version").text()).toBe("-");
+  expect(
+    wrapper
+      .find(PreformattedCard)
+      .shallow()
+      .find(".type-color-light-blue")
+      .text(),
+  ).toBe("-");
 });

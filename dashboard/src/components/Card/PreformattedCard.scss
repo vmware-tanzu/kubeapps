@@ -1,0 +1,34 @@
+.ListItem {
+  color: #1c2b39;
+}
+
+.ListItem__content__title {
+  margin: 0;
+  width: 100%;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #1c2b39;
+}
+
+.ListItem__content__info {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ListItem__content__info_tag {
+  float: right;
+  margin-left: 3px;
+  margin-bottom: 3px;
+  color: #fff;
+  border-radius: 16px;
+}
+
+.ListItem__content__info_tag-1 {
+  background-color: #1c2b39;
+}
+
+.ListItem__content__info_tag-2 {
+  background-color: #1598cb;
+}
