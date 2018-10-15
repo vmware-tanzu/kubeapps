@@ -10,12 +10,12 @@ describe("catalogReducer", () => {
   beforeEach(() => {
     initialState = {
       bindingsWithSecrets: [],
-      brokers: [],
+      brokers: { isFetching: false, list: [] },
       classes: { isFetching: false, list: [] },
       errors: {},
-      instances: [],
+      instances: { isFetching: false, list: [] },
       isChecking: true,
-      isInstalled: false,
+      isServiceCatalogInstalled: false,
       plans: [],
     };
   });

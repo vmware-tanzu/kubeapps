@@ -11,7 +11,10 @@ import { IServiceInstance } from "../shared/ServiceInstance";
 
 export interface IServiceCatalogState {
   bindingsWithSecrets: IServiceBindingWithSecret[];
-  brokers: IServiceBroker[];
+  brokers: {
+    isFetching: boolean;
+    list: IServiceBroker[];
+  };
   classes: {
     isFetching: boolean;
     list: IClusterServiceClass[];
@@ -23,20 +26,23 @@ export interface IServiceCatalogState {
     deprovision?: Error;
     update?: Error;
   };
-  instances: IServiceInstance[];
+  instances: {
+    isFetching: boolean;
+    list: IServiceInstance[];
+  };
   isChecking: boolean;
-  isInstalled: boolean;
+  isServiceCatalogInstalled: boolean;
   plans: IServicePlan[];
 }
 
 const initialState: IServiceCatalogState = {
   bindingsWithSecrets: [],
-  brokers: [],
+  brokers: { isFetching: false, list: [] },
   classes: { isFetching: false, list: [] },
   errors: {},
-  instances: [],
+  instances: { isFetching: false, list: [] },
   isChecking: true,
-  isInstalled: false,
+  isServiceCatalogInstalled: false,
   plans: [],
 };
 
@@ -45,24 +51,31 @@ const catalogReducer = (
   action: ServiceCatalogAction | LocationChangeAction | NamespaceAction,
 ): IServiceCatalogState => {
   const { catalog } = actions;
+  let list = [];
   switch (action.type) {
     case getType(catalog.installed):
-      return { ...state, isChecking: false, isInstalled: true };
+      return { ...state, isChecking: false, isServiceCatalogInstalled: true };
     case getType(catalog.notInstalled):
-      return { ...state, isChecking: false, isInstalled: false };
+      return { ...state, isChecking: false, isServiceCatalogInstalled: false };
     case getType(catalog.checkCatalogInstall):
       return { ...state, isChecking: true };
+    case getType(catalog.requestBrokers):
+      list = state.brokers.list;
+      return { ...state, brokers: { isFetching: true, list } };
     case getType(catalog.receiveBrokers):
-      return { ...state, brokers: action.payload };
+      return { ...state, brokers: { isFetching: false, list: action.payload } };
     case getType(catalog.receiveBindingsWithSecrets):
       return { ...state, bindingsWithSecrets: action.payload };
     case getType(catalog.requestClasses):
-      const list = state.classes.list;
+      list = state.classes.list;
       return { ...state, classes: { isFetching: true, list } };
     case getType(catalog.receiveClasses):
       return { ...state, classes: { isFetching: false, list: action.payload } };
+    case getType(catalog.requestInstances):
+      list = state.instances.list;
+      return { ...state, instances: { isFetching: true, list } };
     case getType(catalog.receiveInstances):
-      return { ...state, instances: action.payload };
+      return { ...state, instances: { isFetching: false, list: action.payload } };
     case getType(catalog.receivePlans):
       return { ...state, plans: action.payload };
     case getType(catalog.errorCatalog):
