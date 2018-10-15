@@ -9,14 +9,14 @@ describe("catalogReducer", () => {
 
   beforeEach(() => {
     initialState = {
-      bindingsWithSecrets: [],
+      bindingsWithSecrets: { isFetching: false, list: [] },
       brokers: { isFetching: false, list: [] },
       classes: { isFetching: false, list: [] },
       errors: {},
       instances: { isFetching: false, list: [] },
       isChecking: true,
       isServiceCatalogInstalled: false,
-      plans: [],
+      plans: { isFetching: false, list: [] },
     };
   });
 

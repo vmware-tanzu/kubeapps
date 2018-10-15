@@ -1,13 +1,15 @@
 import * as React from "react";
 
+import { IServiceCatalogState } from "reducers/catalog";
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
-import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
-import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
+import { IRBACRole, NotFoundError } from "../../shared/types";
 import BindingList from "../BindingList";
 import Card, { CardContent, CardGrid, CardIcon } from "../Card";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { ErrorSelector } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
+import PageHeader from "../PageHeader";
 import AddBindingButton from "./AddBindingButton";
 import DeprovisionButton from "./DeprovisionButton";
 
@@ -18,13 +20,16 @@ interface IServiceInstanceViewProps {
     delete?: Error;
     deprovision?: Error;
   };
-  instance: IServiceInstance | undefined;
-  bindingsWithSecrets: IServiceBindingWithSecret[];
+  instances: IServiceCatalogState["instances"];
+  bindingsWithSecrets: IServiceCatalogState["bindingsWithSecrets"];
   name: string;
   namespace: string;
-  svcClass: IClusterServiceClass | undefined;
-  svcPlan: IServicePlan | undefined;
-  getCatalog: (ns: string) => Promise<any>;
+  classes: IServiceCatalogState["classes"];
+  plans: IServiceCatalogState["plans"];
+  getInstances: (ns: string) => Promise<any>;
+  getClasses: () => Promise<any>;
+  getPlans: () => Promise<any>;
+  getBindings: (ns: string) => Promise<any>;
   deprovision: (instance: IServiceInstance) => Promise<boolean>;
   addBinding: (
     bindingName: string,
@@ -50,14 +55,7 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
       verbs: ["delete"],
     },
   ],
-  view: [
-    // TODO: cleanup non-required roles
-    {
-      apiGroup: "servicecatalog.k8s.io",
-      clusterWide: true,
-      resource: "clusterservicebrokers",
-      verbs: ["list"],
-    },
+  list: [
     {
       apiGroup: "servicecatalog.k8s.io",
       clusterWide: true,
@@ -85,178 +83,250 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
   public componentDidMount() {
-    this.props.getCatalog(this.props.namespace);
+    this.props.getInstances(this.props.namespace);
+    this.props.getBindings(this.props.namespace);
+    this.props.getClasses();
+    this.props.getPlans();
   }
 
   public componentWillReceiveProps(nextProps: IServiceInstanceViewProps) {
-    const { getCatalog, namespace } = this.props;
+    const { getInstances, getBindings, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getCatalog(nextProps.namespace);
+      getInstances(nextProps.namespace);
+      getBindings(nextProps.namespace);
     }
   }
 
   public render() {
-    const { instance, bindingsWithSecrets, svcClass, svcPlan, deprovision } = this.props;
+    const {
+      name,
+      namespace,
+      instances,
+      bindingsWithSecrets,
+      classes,
+      plans,
+      deprovision,
+    } = this.props;
 
     let body = <span />;
-    if (instance) {
-      const conditions = [...instance.status.conditions];
-      body = (
-        <div>
-          <div>
-            <h3>Status</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Type</th>
-                  <th>Status</th>
-                  <th>Last Transition Time</th>
-                  <th>Reason</th>
-                  <th>Message</th>
-                </tr>
-              </thead>
-              <tbody>
-                {conditions.length > 0 ? (
-                  conditions.map(condition => {
-                    return (
-                      <tr key={condition.lastTransitionTime}>
-                        <td>{condition.type}</td>
-                        <td>{condition.status}</td>
-                        <td>{condition.lastTransitionTime}</td>
-                        <td>
-                          <code>{condition.reason}</code>
-                        </td>
-                        <td>{condition.message}</td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={5}>
-                      <p>No statuses</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    let classCard = <span />;
-    if (svcClass) {
-      const { spec } = svcClass;
-      const { externalMetadata } = spec;
-      const name = externalMetadata ? externalMetadata.displayName : spec.externalName;
-      const description = externalMetadata ? externalMetadata.longDescription : spec.description;
-      const imageUrl = externalMetadata && externalMetadata.imageUrl;
-
-      classCard = (
-        <Card key={svcClass.metadata.uid} responsive={true} responsiveColumns={2}>
-          <CardIcon icon={imageUrl} />
-          <CardContent>
-            <h5>{name}</h5>
-            <p className="margin-b-reset">{description}</p>
-          </CardContent>
-        </Card>
-      );
-    }
-
     let planCard = <span />;
-    if (svcPlan) {
-      const { spec } = svcPlan;
-      const { externalMetadata } = spec;
-      const name = externalMetadata ? externalMetadata.displayName : spec.externalName;
-      const description =
-        externalMetadata && externalMetadata.bullets
-          ? externalMetadata.bullets
-          : [spec.description];
-      const free = svcPlan.spec.free ? <span>Free ✓</span> : undefined;
-      const bullets = (
-        <div>
-          <ul>
-            {description.map(bullet => (
-              <li key={bullet}>{bullet}</li>
-            ))}
-          </ul>
-        </div>
-      );
+    let classCard = <span />;
+    let bindingList = <span />;
 
-      planCard = (
-        <Card key={svcPlan.spec.externalID} responsive={true} responsiveColumns={2}>
-          <CardContent>
-            <h5>{name}</h5>
-            <p className="type-small margin-reset margin-b-big type-color-light-blue">{free}</p>
-            {bullets}
-          </CardContent>
-        </Card>
+    let instance: IServiceInstance | undefined;
+    let svcPlan: IServicePlan | undefined;
+
+    const loaded =
+      !instances.isFetching &&
+      !classes.isFetching &&
+      !plans.isFetching &&
+      !bindingsWithSecrets.isFetching;
+
+    if (loaded && instances.list.length > 0) {
+      instance = instances.list.find(
+        i => i.metadata.name === name && i.metadata.namespace === namespace,
+      );
+      if (!instance) {
+        return (
+          <ErrorSelector
+            error={new NotFoundError(`Instance ${name} not found in ${namespace}`)}
+            resource={`Instance ${name}`}
+            action="get"
+            namespace={namespace}
+          />
+        );
+      }
+      body = this.renderInstance(instance);
+
+      const svcClass =
+        instance &&
+        classes.list.find(
+          c =>
+            !!instance &&
+            !!instance.spec.clusterServiceClassRef &&
+            c.metadata.name === instance.spec.clusterServiceClassRef.name,
+        );
+      if (svcClass) {
+        classCard = this.renderSVCClass(svcClass);
+      }
+
+      svcPlan =
+        instance &&
+        plans.list.find(
+          p =>
+            !!instance &&
+            !!instance.spec.clusterServicePlanRef &&
+            p.metadata.name === instance.spec.clusterServicePlanRef.name,
+        );
+      if (svcPlan) {
+        planCard = this.renderSVCPlan(svcPlan);
+      }
+
+      const bindings =
+        instance &&
+        bindingsWithSecrets.list.filter(
+          b =>
+            b.binding.spec.instanceRef.name === name && b.binding.metadata.namespace === namespace,
+        );
+      bindingList = (
+        <BindingList bindingsWithSecrets={bindings} removeBinding={this.props.removeBinding} />
       );
     }
 
     return (
-      <div className="ServiceInstanceView container">
-        {this.props.errors.fetch && this.renderError(this.props.errors.fetch)}
-        {this.props.errors.deprovision &&
-          this.renderError(this.props.errors.deprovision, "deprovision")}
-        {instance && (
-          <div className="found">
-            <h1>
-              {instance.metadata.namespace}/{instance.metadata.name}
-            </h1>
-            <h2>About</h2>
-            <div>{body}</div>
-            <DeprovisionButton deprovision={deprovision} instance={instance} />
-            <h3>Spec</h3>
-            <CardGrid>
-              {classCard}
-              {planCard}
-            </CardGrid>
-            <h2>Bindings</h2>
-            <AddBindingButton
-              bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
-              instanceRefName={instance.metadata.name}
-              namespace={instance.metadata.namespace}
-              addBinding={this.props.addBinding}
-              onAddBinding={this.onAddBinding}
-              error={this.props.errors.create}
-            />
-            <br />
-            {this.props.errors.delete &&
-              this.renderError(this.props.errors.delete, "delete", "Binding")}
-            <BindingList
-              bindingsWithSecrets={bindingsWithSecrets}
-              removeBinding={this.props.removeBinding}
-            />
-          </div>
-        )}
+      <div className="container">
+        <PageHeader>
+          <h1>{name}</h1>
+        </PageHeader>
+        <main>
+          <LoadingWrapper loaded={loaded}>
+            {this.props.errors.fetch && (
+              <ErrorSelector
+                error={this.props.errors.fetch}
+                resource={`Instance ${name}`}
+                action="list"
+                defaultRequiredRBACRoles={RequiredRBACRoles}
+              />
+            )}
+            {this.props.errors.deprovision && (
+              <ErrorSelector
+                error={this.props.errors.deprovision}
+                resource={`Instance ${name}`}
+                action="deprovision"
+                defaultRequiredRBACRoles={RequiredRBACRoles}
+              />
+            )}
+            {instance && (
+              <div className="found">
+                <h2>About</h2>
+                <div>{body}</div>
+                <DeprovisionButton deprovision={deprovision} instance={instance} />
+                <h3>Spec</h3>
+                <CardGrid>
+                  {classCard}
+                  {planCard}
+                </CardGrid>
+                <h2>Bindings</h2>
+                <AddBindingButton
+                  bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
+                  instanceRefName={instance.metadata.name}
+                  namespace={instance.metadata.namespace}
+                  addBinding={this.props.addBinding}
+                  onAddBinding={this.onAddBinding}
+                  error={this.props.errors.create}
+                />
+                <br />
+                {this.props.errors.delete && (
+                  <ErrorSelector
+                    error={this.props.errors.delete}
+                    resource="Binding"
+                    action="delete"
+                    defaultRequiredRBACRoles={RequiredRBACRoles}
+                  />
+                )}
+                {bindingList}
+              </div>
+            )}
+          </LoadingWrapper>
+        </main>
       </div>
     );
   }
 
-  private renderError(error: Error, action: string = "view", resource: string = "Instance") {
-    const { namespace, name } = this.props;
-    switch (error.constructor) {
-      case ForbiddenError:
-        return (
-          <PermissionsErrorAlert
-            namespace={namespace}
-            roles={RequiredRBACRoles[action]}
-            action={`${action} Service ${resource} "${name}"`}
-          />
-        );
-      case NotFoundError:
-        return (
-          <NotFoundErrorAlert resource={`Service ${resource} "${name}"`} namespace={namespace} />
-        );
-      default:
-        return <UnexpectedErrorAlert />;
-    }
+  private renderInstance(instance: IServiceInstance) {
+    const conditions = [...instance.status.conditions];
+    return (
+      <div>
+        <div>
+          <h3>Status</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Last Transition Time</th>
+                <th>Reason</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {conditions.length > 0 ? (
+                conditions.map(condition => {
+                  return (
+                    <tr key={condition.lastTransitionTime}>
+                      <td>{condition.type}</td>
+                      <td>{condition.status}</td>
+                      <td>{condition.lastTransitionTime}</td>
+                      <td>
+                        <code>{condition.reason}</code>
+                      </td>
+                      <td>{condition.message}</td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={5}>
+                    <p>No statuses</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
+  }
+
+  private renderSVCClass(svcClass: IClusterServiceClass) {
+    const { spec } = svcClass;
+    const { externalMetadata } = spec;
+    const svcName = externalMetadata ? externalMetadata.displayName : spec.externalName;
+    const description = externalMetadata ? externalMetadata.longDescription : spec.description;
+    const imageUrl = externalMetadata && externalMetadata.imageUrl;
+
+    return (
+      <Card key={svcClass.metadata.uid} responsive={true} responsiveColumns={2}>
+        <CardIcon icon={imageUrl} />
+        <CardContent>
+          <h5>{svcName}</h5>
+          <p className="margin-b-reset">{description}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  private renderSVCPlan(svcPlan: IServicePlan) {
+    const { spec } = svcPlan;
+    const { externalMetadata } = spec;
+    const planName = externalMetadata ? externalMetadata.displayName : spec.externalName;
+    const description =
+      externalMetadata && externalMetadata.bullets ? externalMetadata.bullets : [spec.description];
+    const free = svcPlan.spec.free ? <span>Free ✓</span> : undefined;
+    const bullets = (
+      <div>
+        <ul>
+          {description.map(bullet => (
+            <li key={bullet}>{bullet}</li>
+          ))}
+        </ul>
+      </div>
+    );
+
+    return (
+      <Card key={svcPlan.spec.externalID} responsive={true} responsiveColumns={2}>
+        <CardContent>
+          <h5>{planName}</h5>
+          <p className="type-small margin-reset margin-b-big type-color-light-blue">{free}</p>
+          {bullets}
+        </CardContent>
+      </Card>
+    );
   }
 
   private onAddBinding = () => {
-    const { namespace, getCatalog } = this.props;
-    getCatalog(namespace);
+    const { namespace, getBindings } = this.props;
+    getBindings(namespace);
   };
 }
 

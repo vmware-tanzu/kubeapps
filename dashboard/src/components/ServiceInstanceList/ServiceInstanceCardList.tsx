@@ -39,9 +39,7 @@ const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props 
                 <Card key={instance.metadata.uid} responsive={true} responsiveColumns={3}>
                   <CardIcon icon={icon} />
                   <CardContent>
-                    <h5>
-                      {instance.metadata.namespace}/{instance.metadata.name}
-                    </h5>
+                    <h5>{instance.metadata.name}</h5>
                     <p className="type-small margin-reset margin-b-big type-color-light-blue">
                       {instance.spec.clusterServicePlanExternalName}
                     </p>
