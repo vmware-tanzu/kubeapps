@@ -19,36 +19,15 @@ interface IRouteProps {
 
 function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRouteProps) {
   const { instanceName, namespace } = params;
-  const instance = catalog.instances.list.find(
-    i => i.metadata.name === params.instanceName && i.metadata.namespace === params.namespace,
-  );
-  const svcClass = instance
-    ? catalog.classes.list.find(
-        c =>
-          !!instance.spec.clusterServiceClassRef &&
-          c.metadata.name === instance.spec.clusterServiceClassRef.name,
-      )
-    : undefined;
-  const svcPlan = instance
-    ? catalog.plans.find(
-        p =>
-          !!instance.spec.clusterServicePlanRef &&
-          p.metadata.name === instance.spec.clusterServicePlanRef.name,
-      )
-    : undefined;
-
+  const { bindingsWithSecrets, instances, classes, plans } = catalog;
   return {
-    bindingsWithSecrets: catalog.bindingsWithSecrets.filter(
-      b =>
-        b.binding.spec.instanceRef.name === instanceName &&
-        b.binding.metadata.namespace === namespace,
-    ),
+    bindingsWithSecrets,
     errors: catalog.errors,
-    instance,
+    instances,
     name: instanceName,
     namespace,
-    svcClass,
-    svcPlan,
+    classes,
+    plans,
   };
 }
 
@@ -57,8 +36,17 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     addBinding: (bindingName: string, instanceName: string, namespace: string, parameters: {}) =>
       dispatch(actions.catalog.addBinding(bindingName, instanceName, namespace, parameters)),
     deprovision: (instance: IServiceInstance) => dispatch(actions.catalog.deprovision(instance)),
-    getCatalog: (ns: string) => {
-      dispatch(actions.catalog.getCatalog(ns));
+    getPlans: async () => {
+      dispatch(actions.catalog.getPlans());
+    },
+    getClasses: async () => {
+      dispatch(actions.catalog.getClasses());
+    },
+    getInstances: async (ns: string) => {
+      dispatch(actions.catalog.getInstances(ns));
+    },
+    getBindings: async (ns: string) => {
+      dispatch(actions.catalog.getBindings(ns));
     },
     removeBinding: (name: string, ns: string) => dispatch(actions.catalog.removeBinding(name, ns)),
   };

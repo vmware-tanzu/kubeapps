@@ -206,18 +206,6 @@ export function getPlans(): ThunkAction<Promise<void>, IStoreState, null, Servic
   };
 }
 
-export function getCatalog(
-  ns?: string,
-): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
-  return async dispatch => {
-    dispatch(getBindings(ns));
-    dispatch(getBrokers());
-    dispatch(getClasses());
-    dispatch(getInstances(ns));
-    dispatch(getPlans());
-  };
-}
-
 export function checkCatalogInstalled(): ThunkAction<
   Promise<boolean>,
   IStoreState,

@@ -18,6 +18,7 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params } }: IRouteProps) {
+  // TODO: Move svcClass filter to Component
   const svcClass =
     catalog.classes.list.find(potential => !!(potential.spec.externalName === params.className)) ||
     undefined;
