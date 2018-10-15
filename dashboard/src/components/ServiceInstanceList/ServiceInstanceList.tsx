@@ -2,36 +2,36 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IServiceCatalogState } from "../../reducers/catalog";
-import { IServiceBroker, IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
-import { ForbiddenError, IRBACRole } from "../../shared/types";
+import { IRBACRole } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import {
+  ErrorSelector,
   MessageAlert,
-  PermissionsErrorAlert,
   ServiceBrokersNotFoundAlert,
   ServiceCatalogNotInstalledAlert,
-  UnexpectedErrorAlert,
 } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import ServiceInstanceCardList from "./ServiceInstanceCardList";
 
 export interface IServiceInstanceListProps {
-  brokers: IServiceBroker[];
+  brokers: IServiceCatalogState["brokers"];
   classes: IServiceCatalogState["classes"];
-  error: Error;
+  error: Error | undefined;
   filter: string;
-  getCatalog: (ns: string) => Promise<any>;
+  getBrokers: () => Promise<any>;
+  getClasses: () => Promise<any>;
+  getInstances: (ns: string) => Promise<any>;
   checkCatalogInstalled: () => Promise<any>;
-  instances: IServiceInstance[];
-  plans: IServicePlan[];
+  instances: IServiceCatalogState["instances"];
   pushSearchFilter: (filter: string) => any;
-  isInstalled: boolean;
+  isServiceCatalogInstalled: boolean;
   namespace: string;
 }
 
-interface IServiceInstanceListState {
+export interface IServiceInstanceListState {
   filter: string;
 }
 
@@ -53,18 +53,6 @@ const RequiredRBACRoles: IRBACRole[] = [
     resource: "serviceinstances",
     verbs: ["list"],
   },
-  // TODO: these 2 roles should not be required for this view and should be decoupled.
-  {
-    apiGroup: "servicecatalog.k8s.io",
-    resource: "servicebindings",
-    verbs: ["list"],
-  },
-  {
-    apiGroup: "servicecatalog.k8s.io",
-    clusterWide: true,
-    resource: "clusterserviceplans",
-    verbs: ["list"],
-  },
 ];
 
 class ServiceInstanceList extends React.PureComponent<
@@ -74,15 +62,20 @@ class ServiceInstanceList extends React.PureComponent<
   public state: IServiceInstanceListState = { filter: "" };
   public async componentDidMount() {
     this.props.checkCatalogInstalled();
-    this.props.getCatalog(this.props.namespace);
+    this.props.getBrokers();
+    this.props.getClasses();
+    this.props.getInstances(this.props.namespace);
     this.setState({ filter: this.props.filter });
   }
 
   public componentWillReceiveProps(nextProps: IServiceInstanceListProps) {
-    const { error, filter, getCatalog, isInstalled, namespace } = this.props;
+    const { error, filter, getInstances, isServiceCatalogInstalled, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
-    if (isInstalled && (nextProps.namespace !== namespace || (error && !nextProps.error))) {
-      getCatalog(nextProps.namespace);
+    if (
+      isServiceCatalogInstalled &&
+      (nextProps.namespace !== namespace || (error && !nextProps.error))
+    ) {
+      getInstances(nextProps.namespace);
     }
     if (nextProps.filter !== filter) {
       this.setState({ filter: nextProps.filter });
@@ -90,97 +83,82 @@ class ServiceInstanceList extends React.PureComponent<
   }
 
   public render() {
-    const { error, isInstalled, brokers, instances, classes, pushSearchFilter } = this.props;
-
+    const {
+      error,
+      isServiceCatalogInstalled,
+      brokers,
+      instances,
+      classes,
+      pushSearchFilter,
+    } = this.props;
+    const loaded = !brokers.isFetching && !instances.isFetching && !classes.isFetching;
     return (
       <section className="ServiceInstanceList">
         <PageHeader>
           <div className="col-8">
             <div className="row collapse-b-phone-land">
               <h1>Service Instances</h1>
-              {instances.length > 0 && (
-                <SearchFilter
-                  className="margin-l-big "
-                  placeholder="search instances..."
-                  onChange={this.handleFilterQueryChange}
-                  value={this.state.filter}
-                  onSubmit={pushSearchFilter}
-                />
-              )}
+              <SearchFilter
+                className="margin-l-big "
+                placeholder="search instances..."
+                onChange={this.handleFilterQueryChange}
+                value={this.state.filter}
+                onSubmit={pushSearchFilter}
+              />
             </div>
           </div>
-          {instances.length > 0 && (
-            <div className="col-4 text-r align-center">
-              <Link to="/services/classes">
-                <button className="button button-accent">Deploy Service Instance</button>
-              </Link>
-            </div>
-          )}
+          <div className="col-4 text-r align-center">
+            <Link to="/services/classes">
+              <button className="button button-accent">Deploy Service Instance</button>
+            </Link>
+          </div>
         </PageHeader>
-        <main>
-          <MessageAlert level="warning">
-            <div>
-              Service Catalog integration is under heavy development. If you find an issue please
-              report it{" "}
-              <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues">
-                {" "}
-                here.
-              </a>
-            </div>
-          </MessageAlert>
-          {isInstalled ? (
-            <div>
-              {error ? (
-                this.renderError()
-              ) : brokers.length > 0 ? (
-                <div>
-                  {instances.length > 0 ? (
-                    // TODO: Check isFetching
-                    <ServiceInstanceCardList
-                      instances={this.filteredServiceInstances(instances, this.state.filter)}
-                      classes={classes.list}
-                    />
-                  ) : (
-                    <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
-                      <div>
-                        <p className="margin-v-normal">
-                          Kubeapps lets you browse, provision and manage external services provided
-                          by the Service Brokers configured in your cluster.
-                        </p>
-                        <div className="padding-t-normal padding-b-normal">
-                          <Link to="/services/classes">
-                            <button className="button button-accent">
-                              Deploy Service Instance
-                            </button>
-                          </Link>
-                        </div>
-                      </div>
-                    </MessageAlert>
-                  )}
-                </div>
+        <MessageAlert level="warning">
+          <div>
+            Service Catalog integration is under heavy development. If you find an issue please
+            report it{" "}
+            <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues">
+              {" "}
+              here.
+            </a>
+          </div>
+        </MessageAlert>
+        <LoadingWrapper loaded={loaded}>
+          <main>
+            {error ? (
+              <ErrorSelector
+                error={error}
+                action="list"
+                defaultRequiredRBACRoles={{ list: RequiredRBACRoles }}
+                resource="Service Brokers, Classes and Instances"
+              />
+            ) : (
+              (!isServiceCatalogInstalled && <ServiceCatalogNotInstalledAlert />) ||
+              (brokers.list.length === 0 && <ServiceBrokersNotFoundAlert />) ||
+              (instances.list.length > 0 ? (
+                <ServiceInstanceCardList
+                  instances={this.filteredServiceInstances(instances.list, this.state.filter)}
+                  classes={classes.list}
+                />
               ) : (
-                <ServiceBrokersNotFoundAlert />
-              )}
-            </div>
-          ) : (
-            <ServiceCatalogNotInstalledAlert />
-          )}
-        </main>
+                <MessageAlert header="Provision External Services from the Kubernetes Service Catalog">
+                  <div>
+                    <p className="margin-v-normal">
+                      Kubeapps lets you browse, provision and manage external services provided by
+                      the Service Brokers configured in your cluster.
+                    </p>
+                    <div className="padding-t-normal padding-b-normal">
+                      <Link to="/services/classes">
+                        <button className="button button-accent">Deploy Service Instance</button>
+                      </Link>
+                    </div>
+                  </div>
+                </MessageAlert>
+              ))
+            )}
+          </main>
+        </LoadingWrapper>
       </section>
-    );
-  }
-
-  // TODO: Replace with ErrorSelector
-  private renderError() {
-    const { error, namespace } = this.props;
-    return error instanceof ForbiddenError ? (
-      <PermissionsErrorAlert
-        action="list Service Instances"
-        namespace={namespace}
-        roles={RequiredRBACRoles}
-      />
-    ) : (
-      <UnexpectedErrorAlert />
     );
   }
 

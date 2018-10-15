@@ -12,18 +12,14 @@ function mapStateToProps(
   { catalog, namespace }: IStoreState,
   { location }: RouteComponentProps<{ brokerName: string }>,
 ) {
-  const brokers = catalog.brokers;
-  const plans = catalog.plans;
-  const classes = catalog.classes;
-  const instances = catalog.instances;
-  const isInstalled = catalog.isInstalled;
+  const { brokers, classes, plans, instances, isServiceCatalogInstalled } = catalog;
   return {
     brokers,
     classes,
     error: catalog.errors.fetch,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     instances,
-    isInstalled,
+    isServiceCatalogInstalled,
     namespace: namespace.current,
     plans,
   };
@@ -34,8 +30,14 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     checkCatalogInstalled: async () => {
       dispatch(actions.catalog.checkCatalogInstalled());
     },
-    getCatalog: async (ns: string) => {
-      dispatch(actions.catalog.getCatalog(ns));
+    getBrokers: async () => {
+      dispatch(actions.catalog.getBrokers());
+    },
+    getClasses: async () => {
+      dispatch(actions.catalog.getClasses());
+    },
+    getInstances: async (ns: string) => {
+      dispatch(actions.catalog.getInstances(ns));
     },
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter) as any),
   };

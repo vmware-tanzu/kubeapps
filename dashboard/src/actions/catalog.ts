@@ -225,8 +225,8 @@ export function checkCatalogInstalled(): ThunkAction<
   ServiceCatalogAction
 > {
   return async dispatch => {
-    const isInstalled = await ServiceCatalog.isCatalogInstalled();
-    isInstalled ? dispatch(installed()) : dispatch(notInstalled());
-    return isInstalled;
+    const isServiceCatalogInstalled = await ServiceCatalog.isCatalogInstalled();
+    isServiceCatalogInstalled ? dispatch(installed()) : dispatch(notInstalled());
+    return isServiceCatalogInstalled;
   };
 }

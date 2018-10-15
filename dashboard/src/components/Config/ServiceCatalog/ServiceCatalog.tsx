@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { IServiceCatalogState } from "../../../reducers/catalog";
 import { IServiceBroker } from "../../../shared/ServiceCatalog";
 import { ServiceCatalogNotInstalledAlert } from "../../ErrorAlert";
 import ServiceBrokerList from "../ServiceBrokerList";
@@ -9,7 +10,7 @@ export interface IServiceCatalogProps {
     fetch?: Error;
     update?: Error;
   };
-  brokers: IServiceBroker[];
+  brokers: IServiceCatalogState["brokers"];
   checkCatalogInstalled: () => Promise<any>;
   isInstalled: boolean;
   getBrokers: () => Promise<any>;
@@ -31,7 +32,8 @@ class ServiceCatalog extends React.Component<IServiceCatalogProps> {
           <ServiceCatalogNotInstalledAlert />
         ) : (
           <div>
-            <ServiceBrokerList errors={errors} brokers={brokers} sync={sync} />
+            {/* TODO: Check if isFetching */}
+            <ServiceBrokerList errors={errors} brokers={brokers.list} sync={sync} />
           </div>
         )}
       </div>
