@@ -2,8 +2,8 @@ import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 
-import { IServiceBroker } from "shared/ServiceCatalog";
 import ServiceInstanceList from ".";
+import { IServiceBroker } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError } from "../../shared/types";
