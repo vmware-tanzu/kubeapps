@@ -22,7 +22,7 @@ function mapStateToProps(
   { match: { params } }: IRouteProps,
 ) {
   return {
-    bindingsWithSecrets: catalog.bindingsWithSecrets,
+    bindingsWithSecrets: catalog.bindingsWithSecrets.list,
     chartID: `${params.repo}/${params.id}`,
     chartVersion: params.version,
     error: apps.error,

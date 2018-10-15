@@ -23,7 +23,7 @@ function mapStateToProps(
 ) {
   return {
     app: apps.selected,
-    bindingsWithSecrets: catalog.bindingsWithSecrets,
+    bindingsWithSecrets: catalog.bindingsWithSecrets.list,
     error: apps.error || charts.selected.error,
     kubeappsNamespace: config.namespace,
     namespace: params.namespace,
