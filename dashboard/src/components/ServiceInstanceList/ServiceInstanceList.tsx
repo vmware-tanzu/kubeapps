@@ -1,11 +1,10 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
+import { IServiceCatalogState } from "../../reducers/catalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { IRBACRole } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
-
-import { IServiceCatalogState } from "reducers/catalog";
 import {
   ErrorSelector,
   MessageAlert,
@@ -94,7 +93,7 @@ class ServiceInstanceList extends React.PureComponent<
     } = this.props;
     const loaded = !brokers.isFetching && !instances.isFetching && !classes.isFetching;
     return (
-      <section className="InstanceList">
+      <section className="ServiceInstanceList">
         <PageHeader>
           <div className="col-8">
             <div className="row collapse-b-phone-land">

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IServiceCatalogState } from "reducers/catalog";
+import { IServiceCatalogState } from "../../../reducers/catalog";
 import { IServiceBroker } from "../../../shared/ServiceCatalog";
 import { ServiceCatalogNotInstalledAlert } from "../../ErrorAlert";
 import ServiceBrokerList from "../ServiceBrokerList";
