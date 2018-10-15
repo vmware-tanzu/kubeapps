@@ -84,6 +84,7 @@ class ServiceClassView extends React.Component<IServiceClassViewProps> {
               </thead>
               <tbody>
                 {svcClass &&
+                  // TODO: Move the plans to its own component
                   classPlans.map(plan => {
                     // TODO: Check classes.isFetching
                     const serviceClass = classes.list.find(
