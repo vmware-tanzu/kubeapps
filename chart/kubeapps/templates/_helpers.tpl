@@ -32,8 +32,8 @@ Render image reference
 {{- $global := index . 1 -}}
 {{- $registryName := $image.registry -}}
 {{- if $global -}}
-    {{- if $global.regristry -}}
-        {{- $registryName := $global.imageRegistry -}}
+    {{- if $global.imageRegistry -}}
+        {{- $registryName = $global.imageRegistry -}}
     {{- end -}}
 {{- end -}}
 {{ $registryName }}/{{ $image.repository }}:{{ $image.tag }}
