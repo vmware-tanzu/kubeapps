@@ -22,7 +22,7 @@ spec:
       serviceAccountName: {{ template "kubeapps.tiller-proxy.fullname" . }}
       containers:
       - name: proxy
-        image: {{ template "kubeapps.image" .Values.tillerProxy.image }}
+        image: {{ template "kubeapps.image" (list .Values.tillerProxy.image .Values.global) }}
         command:
         - /proxy
         args:
