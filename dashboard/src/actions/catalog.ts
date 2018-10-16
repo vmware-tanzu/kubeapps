@@ -1,6 +1,8 @@
+import * as _ from "lodash";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
+import { JSONSchema6 } from "json-schema";
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
 import { definedNamespaces } from "../shared/Namespace";
 import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBinding";
@@ -60,16 +62,44 @@ const actions = [
 
 export type ServiceCatalogAction = ActionType<typeof actions[number]>;
 
+function isEmptyDeep(obj: any): boolean {
+  if (typeof obj === "number") {
+    // isEmpty(number) is true but it's not empty
+    return false;
+  }
+  if (typeof obj === "object" && !_.isEmpty(obj)) {
+    // Check if nested objects are empty
+    // If some of the keys are not empty the result is not empty
+    return !Object.keys(obj).some(k => {
+      return !isEmptyDeep(obj[k]);
+    });
+  }
+  return _.isEmpty(obj);
+}
+
+function removeEmptyFields(obj: object, schema?: JSONSchema6) {
+  const res = { ...obj };
+  Object.keys(res).forEach(k => {
+    // Delete the key if it's empty and it's marked as optional by the schema
+    if (isEmptyDeep(res[k]) && schema && schema.required && schema.required.indexOf(k) === -1) {
+      delete res[k];
+    }
+  });
+  return res;
+}
+
 export function provision(
   releaseName: string,
   namespace: string,
   className: string,
   planName: string,
   parameters: {},
+  schema?: JSONSchema6,
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
   return async dispatch => {
     try {
-      await ServiceInstance.create(releaseName, namespace, className, planName, parameters);
+      const filteredParams = removeEmptyFields(parameters, schema);
+      await ServiceInstance.create(releaseName, namespace, className, planName, filteredParams);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
@@ -83,10 +113,12 @@ export function addBinding(
   instanceName: string,
   namespace: string,
   parameters: {},
+  schema?: JSONSchema6,
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
   return async dispatch => {
     try {
-      await ServiceBinding.create(bindingName, instanceName, namespace, parameters);
+      const filteredParams = removeEmptyFields(parameters, schema);
+      await ServiceBinding.create(bindingName, instanceName, namespace, filteredParams);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));

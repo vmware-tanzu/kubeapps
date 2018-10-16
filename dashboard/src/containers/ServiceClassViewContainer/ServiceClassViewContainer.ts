@@ -5,6 +5,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 
+import { JSONSchema6 } from "json-schema";
 import ServiceClassView from "../../components/ServiceClassView";
 import { IStoreState } from "../../shared/types";
 
@@ -47,9 +48,10 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       className: string,
       planName: string,
       parameters: {},
+      schema?: JSONSchema6,
     ) => {
       return dispatch(
-        actions.catalog.provision(instanceName, namespace, className, planName, parameters),
+        actions.catalog.provision(instanceName, namespace, className, planName, parameters, schema),
       );
     },
     push: (location: string) => dispatch(push(location)),

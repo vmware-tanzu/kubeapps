@@ -16,6 +16,7 @@ interface IAddBindingButtonProps {
     instanceName: string,
     namespace: string,
     parameters: {},
+    schema?: JSONSchema6,
   ) => Promise<boolean>;
   onAddBinding: () => void;
   bindingSchema?: JSONSchema6;
@@ -112,6 +113,7 @@ class AddBindingButton extends React.Component<IAddBindingButtonProps, IAddBindi
       this.props.instanceRefName,
       this.props.namespace,
       kubeappsRawParameters || rest,
+      this.props.bindingSchema,
     );
     if (added) {
       this.closeModal();

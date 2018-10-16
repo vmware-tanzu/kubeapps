@@ -1,3 +1,4 @@
+import { JSONSchema6 } from "json-schema";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
@@ -165,6 +166,47 @@ describe("provision", () => {
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("filters the submitted parameters if they are not required", async () => {
+    const schema: JSONSchema6 = {
+      required: ["a", "b"],
+    };
+    const params = {
+      a: 1,
+      b: {
+        c: [],
+      },
+      f: {
+        g: [],
+        h: {
+          i: "",
+        },
+      },
+      j: {
+        k: {
+          l: "m",
+        },
+      },
+    };
+    // It omits "f" because it's empty but not "b" because it's required
+    const expectedParams = { a: 1, b: { c: [] }, j: { k: { l: "m" } } };
+    const cmd = catalogActions.provision(
+      testArgs.releaseName,
+      testArgs.namespace,
+      testArgs.className,
+      testArgs.planName,
+      params,
+      schema,
+    );
+    await store.dispatch(cmd);
+    expect(ServiceInstance.create).toHaveBeenCalledWith(
+      testArgs.releaseName,
+      testArgs.namespace,
+      testArgs.className,
+      testArgs.planName,
+      expectedParams,
+    );
+  });
 });
 
 describe("deprovision", () => {
@@ -226,6 +268,45 @@ describe("addBinding", () => {
 
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("filters the submitted parameters if they are not required", async () => {
+    const schema: JSONSchema6 = {
+      required: ["a", "b"],
+    };
+    const params = {
+      a: 1,
+      b: {
+        c: [],
+      },
+      f: {
+        g: [],
+        h: {
+          i: "",
+        },
+      },
+      j: {
+        k: {
+          l: "m",
+        },
+      },
+    };
+    // It omits "f" because it's empty but not "b" because it's required
+    const expectedParams = { a: 1, b: { c: [] }, j: { k: { l: "m" } } };
+    const cmd = catalogActions.addBinding(
+      testArgs.bindingName,
+      testArgs.instanceName,
+      testArgs.namespace,
+      params,
+      schema,
+    );
+    await store.dispatch(cmd);
+    expect(ServiceBinding.create).toHaveBeenCalledWith(
+      testArgs.bindingName,
+      testArgs.instanceName,
+      testArgs.namespace,
+      expectedParams,
+    );
   });
 });
 

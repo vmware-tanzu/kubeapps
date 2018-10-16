@@ -2,6 +2,7 @@ import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
+import { JSONSchema6 } from "json-schema";
 import actions from "../../actions";
 import ServiceInstanceView from "../../components/ServiceInstanceView";
 import { IServiceInstance } from "../../shared/ServiceInstance";
@@ -33,8 +34,16 @@ function mapStateToProps({ catalog }: IStoreState, { match: { params } }: IRoute
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    addBinding: (bindingName: string, instanceName: string, namespace: string, parameters: {}) =>
-      dispatch(actions.catalog.addBinding(bindingName, instanceName, namespace, parameters)),
+    addBinding: (
+      bindingName: string,
+      instanceName: string,
+      namespace: string,
+      parameters: {},
+      schema?: JSONSchema6,
+    ) =>
+      dispatch(
+        actions.catalog.addBinding(bindingName, instanceName, namespace, parameters, schema),
+      ),
     deprovision: (instance: IServiceInstance) => dispatch(actions.catalog.deprovision(instance)),
     getPlans: async () => {
       dispatch(actions.catalog.getPlans());
