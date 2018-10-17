@@ -1,4 +1,3 @@
-import { JSONSchema6 } from "json-schema";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
@@ -168,14 +167,8 @@ describe("provision", () => {
   });
 
   it("filters the submitted parameters if they are not required", async () => {
-    const schema: JSONSchema6 = {
-      required: ["a", "b"],
-    };
     const params = {
       a: 1,
-      b: {
-        c: [],
-      },
       f: {
         g: [],
         h: {
@@ -188,15 +181,14 @@ describe("provision", () => {
         },
       },
     };
-    // It omits "f" because it's empty but not "b" because it's required
-    const expectedParams = { a: 1, b: { c: [] }, j: { k: { l: "m" } } };
+    // It omits "f" because it's empty but not "a" or "j"
+    const expectedParams = { a: 1, j: { k: { l: "m" } } };
     const cmd = catalogActions.provision(
       testArgs.releaseName,
       testArgs.namespace,
       testArgs.className,
       testArgs.planName,
       params,
-      schema,
     );
     await store.dispatch(cmd);
     expect(ServiceInstance.create).toHaveBeenCalledWith(
@@ -271,9 +263,6 @@ describe("addBinding", () => {
   });
 
   it("filters the submitted parameters if they are not required", async () => {
-    const schema: JSONSchema6 = {
-      required: ["a", "b"],
-    };
     const params = {
       a: 1,
       b: {
@@ -291,14 +280,13 @@ describe("addBinding", () => {
         },
       },
     };
-    // It omits "f" because it's empty but not "b" because it's required
-    const expectedParams = { a: 1, b: { c: [] }, j: { k: { l: "m" } } };
+    // It omits "f" because it's empty but not "a" or "j"
+    const expectedParams = { a: 1, j: { k: { l: "m" } } };
     const cmd = catalogActions.addBinding(
       testArgs.bindingName,
       testArgs.instanceName,
       testArgs.namespace,
       params,
-      schema,
     );
     await store.dispatch(cmd);
     expect(ServiceBinding.create).toHaveBeenCalledWith(

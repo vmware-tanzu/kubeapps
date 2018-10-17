@@ -22,7 +22,6 @@ interface IProvisionButtonProps {
     className: string,
     planName: string,
     parameters: {},
-    schema?: JSONSchema6,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
 }
@@ -157,7 +156,6 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
         selectedClass.spec.externalName,
         selectedPlan.spec.externalName,
         kubeappsRawParameters || rest,
-        selectedPlan.spec.instanceCreateParameterSchema,
       );
       if (provisioned) {
         push(
