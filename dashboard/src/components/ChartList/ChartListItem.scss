@@ -1,53 +1,7 @@
-.ChartListItem {
-  color: #1c2b39;
-}
-
-.ChartListItem__content__title {
-  margin: 0;
-  width: 100%;
-  font-weight: bold;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  color: #1c2b39;
-}
-
-.ChartListItem__content__info {
-  display: flex;
-  justify-content: space-between;
-}
-
-.ChartListItem__content__info_repo {
-  display: inline-block;
-  color: #fff;
-  border-radius: 16px;
-  background-color: #1c2b39;
-}
-
-.ChartListItem__content__info_other {
-  display: inline-block;
-  color: rgb(0, 0, 0);
-  margin-left: 0.3em;
-  border-radius: 16px;
+.ListItem__content__info_tag.stable {
   background-color: #1598cb;
 }
 
-.DELETED {
-  background-color: #c5c5c5;
-}
-
-.FAILED {
-  background-color: #cb1515;
-}
-
-.DEPLOYED {
-  background-color: #15cb2d;
-}
-
-.ChartListItem__content__info_repo.stable {
-  background-color: #1598cb;
-}
-
-.ChartListItem__content__info_repo.incubator {
+.ListItem__content__info_tag.incubator {
   background-color: #f58220;
 }
