@@ -62,6 +62,9 @@ const actions = [
 
 export type ServiceCatalogAction = ActionType<typeof actions[number]>;
 
+// Check if all the keys of an object are empty. If any value of the
+// object is a nested object it recursively checks if the inner object
+// is empty.
 function isEmptyDeep(obj: any): boolean {
   if (typeof obj === "number") {
     // isEmpty(number) is true but it's not empty
@@ -77,7 +80,7 @@ function isEmptyDeep(obj: any): boolean {
   return _.isEmpty(obj);
 }
 
-function removeEmptyFields(obj: object, schema?: JSONSchema6) {
+function removeEmptyNonRequiredFields(obj: object, schema?: JSONSchema6) {
   const res = { ...obj };
   Object.keys(res).forEach(k => {
     // Delete the key if it's empty and it's marked as optional by the schema
@@ -98,7 +101,7 @@ export function provision(
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
   return async dispatch => {
     try {
-      const filteredParams = removeEmptyFields(parameters, schema);
+      const filteredParams = removeEmptyNonRequiredFields(parameters, schema);
       await ServiceInstance.create(releaseName, namespace, className, planName, filteredParams);
       return true;
     } catch (e) {
@@ -117,7 +120,7 @@ export function addBinding(
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
   return async dispatch => {
     try {
-      const filteredParams = removeEmptyFields(parameters, schema);
+      const filteredParams = removeEmptyNonRequiredFields(parameters, schema);
       await ServiceBinding.create(bindingName, instanceName, namespace, filteredParams);
       return true;
     } catch (e) {
