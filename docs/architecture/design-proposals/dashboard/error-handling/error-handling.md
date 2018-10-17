@@ -71,7 +71,7 @@ This approach is good, but it has some drawbacks:
 
 #### Implementation details: Single errorContainer connected to global Redux error namespace
 
-We can implement a single ErrorSelector component, rendered only once in the layout and connected to the Redux store. This is a example of [this pattern](https://stackoverflow.com/a/34403521](https://stackoverflow.com/a/34403521).
+We can implement a single ErrorSelector component, rendered only once in the layout and connected to the Redux store. This is a example of [this pattern](https://stackoverflow.com/a/34403521).
 
 This new store will be able to contain more than one error. This aims to support cases in which 2 async calls can return 2 errors that are both relevant. This will also allow us in the future to handle stacked errors easily by using third party libraries like [this one](https://github.com/fkhadra/react-toastify).
 
