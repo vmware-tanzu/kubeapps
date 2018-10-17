@@ -2,7 +2,8 @@ import { shallow } from "enzyme";
 import * as React from "react";
 
 import { IChart, IRepo } from "../../shared/types";
-import { CardIcon, PreformattedCard } from "../Card";
+import { CardIcon } from "../Card";
+import InfoCard from "../InfoCard";
 import ChartListItem from "./ChartListItem";
 
 jest.mock("../../placeholder.png", () => "placeholder.png");
@@ -39,7 +40,7 @@ it("should use the default placeholder for the icon if it doesn't exist", () => 
   // Importing an image returns "undefined"
   expect(
     wrapper
-      .find(PreformattedCard)
+      .find(InfoCard)
       .shallow()
       .find(CardIcon)
       .prop("src"),
@@ -52,7 +53,7 @@ it("should place a dash if the version is not avaliable", () => {
   const wrapper = shallow(<ChartListItem chart={chartWithoutVersion} />);
   expect(
     wrapper
-      .find(PreformattedCard)
+      .find(InfoCard)
       .shallow()
       .find(".type-color-light-blue")
       .text(),

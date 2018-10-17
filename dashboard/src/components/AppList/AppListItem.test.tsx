@@ -3,7 +3,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IAppOverview } from "../../shared/types";
-import { PreformattedCard } from "../Card";
+import InfoCard from "../InfoCard";
 import AppListItem from "./AppListItem";
 
 it("renders a app item", () => {
@@ -19,11 +19,11 @@ it("renders a app item", () => {
       }
     />,
   );
-  const card = wrapper.find(PreformattedCard).shallow();
+  const card = wrapper.find(InfoCard).shallow();
   expect(card.find(Link).props().title).toBe("foo");
   expect(card.find(Link).props().to).toBe("/apps/ns/default/foo");
   expect(card.find(".type-color-light-blue").text()).toBe("1.0.0");
-  expect(card.find(".DEPLOYED").exists()).toBe(true);
+  expect(card.find(".deployed").exists()).toBe(true);
   expect(card.find(".ListItem__content__info_tag-1").text()).toBe("default");
   expect(card.find(".ListItem__content__info_tag-2").text()).toBe("deployed");
 });

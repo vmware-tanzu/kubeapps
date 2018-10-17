@@ -2,7 +2,7 @@ import * as React from "react";
 
 import placeholder from "../../placeholder.png";
 import { IChart } from "../../shared/types";
-import { PreformattedCard } from "../Card";
+import InfoCard from "../InfoCard";
 
 import "./ChartListItem.css";
 
@@ -17,7 +17,7 @@ class ChartListItem extends React.Component<IChartListItemProps> {
     const iconSrc = icon ? `/api/chartsvc/${icon}` : placeholder;
     const latestAppVersion = chart.relationships.latestChartVersion.data.app_version;
     return (
-      <PreformattedCard
+      <InfoCard
         key={`${repo}/${name}`}
         title={name}
         link={`/charts/${chart.id}`}

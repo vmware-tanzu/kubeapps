@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
-import { PreformattedCard } from "../Card";
+import InfoCard from "../InfoCard";
 import ServiceInstanceCard from "./ServiceInstanceCard";
 
 it("should render a Card", () => {
@@ -64,7 +64,7 @@ describe("uses a different class and tag name depending on the status", () => {
           statusReason={test.status}
         />,
       );
-      const card = wrapper.find(PreformattedCard);
+      const card = wrapper.find(InfoCard);
       expect(card).toExist();
       expect(card.props()).toMatchObject({ tag2Class: test.expected, tag2Content: test.expected });
     });

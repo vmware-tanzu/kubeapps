@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Link } from "react-router-dom";
 import Card, { CardContent, CardIcon } from "../Card";
-import "./PreformattedCard.css";
+import "./InfoCard.css";
 
 export interface IServiceInstanceCardProps {
   title: string;
@@ -15,7 +15,7 @@ export interface IServiceInstanceCardProps {
   tag2Content?: string;
 }
 
-const PreformattedCard: React.SFC<IServiceInstanceCardProps> = props => {
+const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
   const { title, link, icon, info, tag1Content, tag1Class, tag2Content, tag2Class } = props;
   return (
     <Card responsive={true} className="ListItem">
@@ -52,4 +52,4 @@ const PreformattedCard: React.SFC<IServiceInstanceCardProps> = props => {
   );
 };
 
-export default PreformattedCard;
+export default InfoCard;

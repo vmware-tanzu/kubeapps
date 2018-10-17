@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { PreformattedCard } from "../Card";
 import "../ChartList/ChartListItem.css";
+import InfoCard from "../InfoCard";
 import "./ServiceInstanceCard.css";
 
 export interface IServiceInstanceCardProps {
@@ -26,7 +26,7 @@ function generalizeStatus(status: string) {
 const ServiceInstanceCard: React.SFC<IServiceInstanceCardProps> = props => {
   const { name, namespace, link, icon, servicePlanName, statusReason } = props;
   return (
-    <PreformattedCard
+    <InfoCard
       title={name}
       link={link}
       icon={icon}
