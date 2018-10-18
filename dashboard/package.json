@@ -5,6 +5,7 @@
   "dependencies": {
     "@types/js-yaml": "^3.10.1",
     "@types/json-schema": "^6.0.1",
+    "@types/lodash": "^4.14.117",
     "@types/moxios": "^0.4.8",
     "@types/pako": "^1.0.0",
     "@types/qs": "^6.5.1",
@@ -15,6 +16,7 @@
     "connected-react-router": "^4.5.0",
     "enzyme-adapter-react-16": "^1.1.1",
     "js-yaml": "^3.10.0",
+    "lodash": "^4.17.11",
     "protobufjs": "^6.8.4",
     "qs": "^6.5.2",
     "raf": "^3.4.0",

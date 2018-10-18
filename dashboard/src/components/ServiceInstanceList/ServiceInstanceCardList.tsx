@@ -1,9 +1,11 @@
 import * as React from "react";
 
-import { Link } from "react-router-dom";
 import { IClusterServiceClass } from "shared/ClusterServiceClass";
 import { IServiceInstance } from "shared/ServiceInstance";
-import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
+import { CardGrid } from "../Card";
+import "../ChartList/ChartListItem.css";
+import ServiceInstanceCard from "./ServiceInstanceCard";
+import "./ServiceInstanceCard.css";
 
 export interface IServiceInstanceCardListProps {
   classes: IClusterServiceClass[];
@@ -20,7 +22,6 @@ const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props 
             instances.map(instance => {
               const conditions = [...instance.status.conditions];
               const status = conditions.shift(); // first in list is most recent
-              const message = status ? status.message : "";
               const svcClass = classes.find(
                 potential =>
                   !!instance.spec.clusterServiceClassRef &&
@@ -31,28 +32,23 @@ const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props 
                 svcClass &&
                 svcClass.spec.externalMetadata &&
                 svcClass.spec.externalMetadata.imageUrl;
-              const link = `/services/brokers/${broker}/instances/ns/${
-                instance.metadata.namespace
-              }/${instance.metadata.name}`;
+              const link =
+                broker &&
+                `/services/brokers/${broker}/instances/ns/${instance.metadata.namespace}/${
+                  instance.metadata.name
+                }`;
 
-              const card = (
-                <Card key={instance.metadata.uid} responsive={true} responsiveColumns={3}>
-                  <CardIcon icon={icon} />
-                  <CardContent>
-                    <h5>{instance.metadata.name}</h5>
-                    <p className="type-small margin-reset margin-b-big type-color-light-blue">
-                      {instance.spec.clusterServicePlanExternalName}
-                    </p>
-                    <p className="margin-b-reset">{message}</p>
-                  </CardContent>
-                  <CardFooter className="text-c">
-                    <Link className="button button-accent" to={link}>
-                      Details
-                    </Link>
-                  </CardFooter>
-                </Card>
+              return (
+                <ServiceInstanceCard
+                  key={instance.metadata.uid}
+                  name={instance.metadata.name}
+                  namespace={instance.metadata.namespace}
+                  link={link}
+                  icon={icon}
+                  servicePlanName={instance.spec.clusterServicePlanExternalName}
+                  statusReason={status && status.reason}
+                />
               );
-              return card;
             })}
         </CardGrid>
       </section>
