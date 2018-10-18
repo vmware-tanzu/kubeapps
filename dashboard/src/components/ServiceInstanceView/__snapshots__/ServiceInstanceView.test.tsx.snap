@@ -886,14 +886,32 @@ exports[`when all the components are loaded when an instance is available should
             >
               <table>
                 <thead>
-                  <tr>
-                    <th>
+                  <tr
+                    className="row"
+                  >
+                    <th
+                      className="col-2"
+                    >
                       Binding
                     </th>
-                    <th>
+                    <th
+                      className="col-2"
+                    >
                       Status
                     </th>
-                    <th />
+                    <th
+                      className="col-2"
+                    >
+                      Message
+                    </th>
+                    <th
+                      className="col-4"
+                    >
+                      Details
+                    </th>
+                    <th
+                      className="col-2"
+                    />
                   </tr>
                 </thead>
                 <tbody>
@@ -925,36 +943,178 @@ exports[`when all the components are loaded when an instance is available should
                     removeBinding={[MockFunction]}
                   >
                     <tr
-                      key="row"
+                      className="row padding-t-small"
                     >
-                      <td>
-                        default
-                        /
+                      <td
+                        className="col-2"
+                      >
                         my-instance
                       </td>
-                      <td>
-                        <div
-                          className="condition"
-                        >
-                          <code>
-                            binding is okay
-                          </code>
-                        </div>
+                      <td
+                        className="col-2"
+                      >
+                        <code />
                       </td>
                       <td
-                        style={
-                          Object {
-                            "display": "flex",
-                            "justifyContent": "space-around",
-                          }
-                        }
+                        className="col-2"
                       >
                         <button
-                          className="button button-primary button-small"
+                          className="button"
                           onClick={[Function]}
                         >
-                          Expand/Collapse
+                          Show message
                         </button>
+                        <MessageDetails
+                          closeModal={[Function]}
+                          message="binding is okay"
+                          modalIsOpen={false}
+                        >
+                          <div
+                            className="MessageDetails"
+                          >
+                            <Modal
+                              ariaHideApp={true}
+                              bodyOpenClassName="ReactModal__Body--open"
+                              className="Terminal"
+                              closeTimeoutMS={0}
+                              contentLabel="Modal"
+                              isOpen={false}
+                              onRequestClose={[Function]}
+                              parentSelector={[Function]}
+                              portalClassName="ReactModalPortal"
+                              shouldCloseOnEsc={true}
+                              shouldCloseOnOverlayClick={true}
+                              shouldFocusAfterRender={true}
+                              shouldReturnFocusAfterClose={true}
+                              style={
+                                Object {
+                                  "content": Object {
+                                    "maxWidth": "80%",
+                                  },
+                                  "overlay": Object {
+                                    "alignItems": "center",
+                                    "display": "flex",
+                                    "justifyContent": "center",
+                                  },
+                                }
+                              }
+                            >
+                              <Portal
+                                containerInfo={
+                                  <div
+                                    class="ReactModalPortal"
+                                  />
+                                }
+                              >
+                                <ModalPortal
+                                  ariaHideApp={true}
+                                  bodyOpenClassName="ReactModal__Body--open"
+                                  className="Terminal"
+                                  closeTimeoutMS={0}
+                                  contentLabel="Modal"
+                                  defaultStyles={
+                                    Object {
+                                      "content": Object {
+                                        "WebkitOverflowScrolling": "touch",
+                                        "background": "#fff",
+                                        "border": "1px solid #ccc",
+                                        "borderRadius": "4px",
+                                        "bottom": "40px",
+                                        "left": "40px",
+                                        "outline": "none",
+                                        "overflow": "auto",
+                                        "padding": "20px",
+                                        "position": "absolute",
+                                        "right": "40px",
+                                        "top": "40px",
+                                      },
+                                      "overlay": Object {
+                                        "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                        "bottom": 0,
+                                        "left": 0,
+                                        "position": "fixed",
+                                        "right": 0,
+                                        "top": 0,
+                                      },
+                                    }
+                                  }
+                                  isOpen={false}
+                                  onRequestClose={[Function]}
+                                  parentSelector={[Function]}
+                                  portalClassName="ReactModalPortal"
+                                  shouldCloseOnEsc={true}
+                                  shouldCloseOnOverlayClick={true}
+                                  shouldFocusAfterRender={true}
+                                  shouldReturnFocusAfterClose={true}
+                                  style={
+                                    Object {
+                                      "content": Object {
+                                        "maxWidth": "80%",
+                                      },
+                                      "overlay": Object {
+                                        "alignItems": "center",
+                                        "display": "flex",
+                                        "justifyContent": "center",
+                                      },
+                                    }
+                                  }
+                                />
+                              </Portal>
+                            </Modal>
+                          </div>
+                        </MessageDetails>
+                      </td>
+                      <td
+                        className="col-4"
+                      >
+                        <BindingDetails
+                          binding={
+                            Object {
+                              "metadata": Object {
+                                "name": "my-instance",
+                                "namespace": "default",
+                                "uid": "binding-my-instance",
+                              },
+                              "spec": Object {
+                                "instanceRef": Object {
+                                  "name": "my-instance",
+                                },
+                              },
+                              "status": Object {
+                                "conditions": Array [
+                                  Object {
+                                    "message": "binding is okay",
+                                  },
+                                ],
+                              },
+                            }
+                          }
+                        >
+                          <dl
+                            className="BindingDetails container margin-normal"
+                          >
+                            <dt
+                              key="Instance"
+                            >
+                              Instance
+                              : 
+                              <b>
+                                my-instance
+                              </b>
+                            </dt>
+                            <dt
+                              key="Secret"
+                            >
+                              Secret
+                              : 
+                              <b />
+                            </dt>
+                          </dl>
+                        </BindingDetails>
+                      </td>
+                      <td
+                        className="col-2"
+                      >
                         <RemoveBindingButton
                           bindingWithSecret={
                             Object {

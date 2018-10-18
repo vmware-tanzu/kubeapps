@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders information about the binding with a secret 1`] = `
+<dl
+  className="BindingDetails container margin-normal"
+>
+  <dt
+    key="Instance"
+  >
+    Instance
+    : 
+    <b>
+      foo
+    </b>
+  </dt>
+  <dt
+    key="Secret"
+  >
+    Secret
+    : 
+    <b>
+      bar
+    </b>
+  </dt>
+  <dt
+    key="mySecret"
+  >
+        
+    mySecret
+    : 
+    <b>
+      content
+
+    </b>
+  </dt>
+</dl>
+`;

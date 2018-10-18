@@ -15,10 +15,12 @@ class BindingList extends React.Component<IBindingList> {
       <div className="BindingList">
         <table>
           <thead>
-            <tr>
-              <th>Binding</th>
-              <th>Status</th>
-              <th />
+            <tr className="row">
+              <th className="col-2">Binding</th>
+              <th className="col-2">Status</th>
+              <th className="col-2">Message</th>
+              <th className="col-4">Details</th>
+              <th className="col-2" />
             </tr>
           </thead>
           <tbody>

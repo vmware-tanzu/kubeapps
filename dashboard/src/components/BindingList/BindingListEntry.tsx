@@ -1,6 +1,7 @@
 import * as React from "react";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 
+import MessageDetails from "../MessageDetails";
 import BindingDetails from "./BindingDetails";
 import RemoveBindingButton from "./RemoveBindingButton";
 
@@ -10,12 +11,12 @@ interface IBindingListEntryProps {
 }
 
 interface IBindingListEntryState {
-  isExpanded: boolean;
+  modalIsOpen: boolean;
 }
 
 class BindingListEntry extends React.Component<IBindingListEntryProps, IBindingListEntryState> {
   public state = {
-    isExpanded: false,
+    modalIsOpen: false,
   };
 
   public render() {
@@ -23,44 +24,53 @@ class BindingListEntry extends React.Component<IBindingListEntryProps, IBindingL
       bindingWithSecret,
       bindingWithSecret: { binding },
     } = this.props;
-    const { name, namespace } = binding.metadata;
+    const { name } = binding.metadata;
 
-    const condition = [...binding.status.conditions].shift();
-    const currentStatus = condition ? (
-      <div className="condition">
-        <code>{condition.message}</code>
-      </div>
-    ) : (
-      undefined
-    );
+    let reason = <span />;
+    let message = "";
+    const condition = [...binding.status.conditions]
+      .sort((a, b) => a.lastTransitionTime.localeCompare(b.lastTransitionTime))
+      .pop();
+    if (condition) {
+      reason = <code>{condition.reason}</code>;
+      message = condition.message;
+    }
 
-    const rows = [
-      <tr key={"row"}>
-        <td>
-          {namespace}/{name}
-        </td>
-        <td>{currentStatus}</td>
-        <td style={{ display: "flex", justifyContent: "space-around" }}>
-          <button className={"button button-primary button-small"} onClick={this.toggleExpand}>
-            Expand/Collapse
+    return (
+      <tr className="row padding-t-small">
+        <td className="col-2">{name}</td>
+        <td className="col-2">{reason}</td>
+        <td className="col-2">
+          <button className="button" onClick={this.openModal}>
+            Show message
           </button>
+          <MessageDetails
+            modalIsOpen={this.state.modalIsOpen}
+            closeModal={this.closeModal}
+            message={message}
+          />
+        </td>
+        <td className="col-4">
+          <BindingDetails {...bindingWithSecret} />
+        </td>
+        <td className="col-2">
           <RemoveBindingButton {...this.props} />
         </td>
-      </tr>,
-    ];
-    if (this.state.isExpanded) {
-      rows.push(
-        <tr key="info">
-          <td colSpan={3}>
-            <BindingDetails {...bindingWithSecret} />
-          </td>
-        </tr>,
-      );
-    }
-    return rows;
+      </tr>
+    );
   }
 
-  private toggleExpand = async () => this.setState({ isExpanded: !this.state.isExpanded });
+  public openModal = () => {
+    this.setState({
+      modalIsOpen: true,
+    });
+  };
+
+  public closeModal = async () => {
+    this.setState({
+      modalIsOpen: false,
+    });
+  };
 }
 
 export default BindingListEntry;

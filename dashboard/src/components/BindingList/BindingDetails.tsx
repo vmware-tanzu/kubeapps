@@ -8,21 +8,30 @@ class BindingDetails extends React.Component<IServiceBindingWithSecret> {
     const { binding, secret } = this.props;
     const { instanceRef, secretName } = binding.spec;
 
-    let statuses: string[][] = [["Instance", instanceRef.name], ["Secret", secretName]];
+    const statuses: string[][] = [["Instance", instanceRef.name], ["Secret", secretName]];
+    let secretDataArray: string[][] = [];
     if (secret) {
       const secretData = Object.keys(secret.data).map(k => [k, atob(secret.data[k])]);
-      statuses = [...statuses, ...secretData];
+      secretDataArray = [...secretData];
     }
     return (
       <dl className="BindingDetails container margin-normal">
         {statuses.map(statusPair => {
           const [key, value] = statusPair;
-          return [
-            <dt key={key}>{key}</dt>,
-            <dd key={value}>
-              <code>{value}</code>
-            </dd>,
-          ];
+          return (
+            <dt key={key}>
+              {key}: <b>{value}</b>
+            </dt>
+          );
+        })}
+        {secretDataArray.map(statusPair => {
+          const [key, value] = statusPair;
+          return (
+            <dt key={key}>
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              {key}: <b>{value}</b>
+            </dt>
+          );
         })}
       </dl>
     );
