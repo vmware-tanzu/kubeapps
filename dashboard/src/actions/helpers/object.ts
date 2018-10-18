@@ -5,7 +5,8 @@ import * as _ from "lodash";
 // is empty.
 export function isEmptyDeep(obj: any): boolean {
   if (typeof obj === "number") {
-    // isEmpty(number) is true but it's not empty
+    // lodash function isEmpty(number) return true
+    // but we should not consider it empty
     return false;
   }
   if (typeof obj === "object" && !_.isEmpty(obj)) {

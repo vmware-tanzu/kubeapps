@@ -166,7 +166,7 @@ describe("provision", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("filters the submitted parameters if they are not required", async () => {
+  it("filters the submitted parameters if they are empty", async () => {
     const params = {
       a: 1,
       f: {
@@ -262,7 +262,7 @@ describe("addBinding", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("filters the submitted parameters if they are not required", async () => {
+  it("filters the submitted parameters if they are empty", async () => {
     const params = {
       a: 1,
       b: {

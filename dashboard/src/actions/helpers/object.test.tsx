@@ -9,6 +9,7 @@ describe("isEmptyDeep", () => {
     { object: { a: { c: { d: "a" } } }, isEmpty: false },
     { object: { a: { c: { d: [] } } }, isEmpty: true },
     { object: { a: { c: { d: {} } } }, isEmpty: true },
+    { object: { a: { c: { d: "a" }, d: "" } }, isEmpty: false },
   ].forEach(t => {
     it(`${JSON.stringify(t.object)} should be ${t.isEmpty ? "empty" : "not empty"}`, () => {
       expect(object.isEmptyDeep(t.object)).toBe(t.isEmpty);
