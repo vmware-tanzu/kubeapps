@@ -7,6 +7,7 @@ import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBind
 import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
 import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
+import helpers from "./helpers";
 
 export const checkCatalogInstall = createAction("CHECK_INSTALL");
 export const installed = createAction("INSTALLED");
@@ -69,7 +70,8 @@ export function provision(
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
   return async dispatch => {
     try {
-      await ServiceInstance.create(releaseName, namespace, className, planName, parameters);
+      const filteredParams = helpers.object.removeEmptyFields(parameters);
+      await ServiceInstance.create(releaseName, namespace, className, planName, filteredParams);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
@@ -86,7 +88,8 @@ export function addBinding(
 ): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
   return async dispatch => {
     try {
-      await ServiceBinding.create(bindingName, instanceName, namespace, parameters);
+      const filteredParams = helpers.object.removeEmptyFields(parameters);
+      await ServiceBinding.create(bindingName, instanceName, namespace, filteredParams);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
