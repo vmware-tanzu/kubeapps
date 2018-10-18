@@ -181,7 +181,16 @@ For annotations, please see [this document](https://github.com/kubernetes/ingres
 
 TLS can be configured using setting the `ingress.hosts[].tls` boolean of the corresponding hostname to true, then you can choose the TLS secret name setting `ingress.hosts[].tlsSecret`. Please see [this example](https://github.com/kubernetes/contrib/tree/master/ingress/controllers/nginx/examples/tls) for more information.
 
-If your cluster has a [cert-manager](https://github.com/jetstack/cert-manager) add-on to automate the management and issuance of TLS certificates, set `ingress.hosts[].certManager` boolean to true to enable the corresponding annotations for cert-manager. Otherwise, you can provide your own certificates using the `ingress.secrets` object.
+You can provide your own certificates using the `ingress.secrets` object. If your cluster has a [cert-manager](https://github.com/jetstack/cert-manager) add-on to automate the management and issuance of TLS certificates, set `ingress.hosts[].certManager` boolean to true to enable the corresponding annotations for cert-manager as shown in the example below:
+
+```console
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps \
+  --set ingress.enabled=true \
+  --set ingress.certManager=true \
+  --set ingress.hosts[0].name=kubeapps.custom.domain \
+  --set ingress.hosts[0].tls=true \
+  --set ingress.hosts[0].tlsSecret=kubeapps-tls
+```
 
 ## Troubleshooting
 
