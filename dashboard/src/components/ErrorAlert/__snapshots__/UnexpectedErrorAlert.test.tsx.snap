@@ -2,7 +2,7 @@
 
 exports[`when no text is passed renders a default troubleshooting info 1`] = `
 <div
-  className="alert alert-error margin-t-bigger"
+  className="alert alert-error margin-bigger"
 >
   <ErrorPageHeader
     icon={[Function]}
