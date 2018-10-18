@@ -165,6 +165,40 @@ describe("provision", () => {
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("filters the submitted parameters if they are empty", async () => {
+    const params = {
+      a: 1,
+      f: {
+        g: [],
+        h: {
+          i: "",
+        },
+      },
+      j: {
+        k: {
+          l: "m",
+        },
+      },
+    };
+    // It omits "f" because it's empty but not "a" or "j"
+    const expectedParams = { a: 1, j: { k: { l: "m" } } };
+    const cmd = catalogActions.provision(
+      testArgs.releaseName,
+      testArgs.namespace,
+      testArgs.className,
+      testArgs.planName,
+      params,
+    );
+    await store.dispatch(cmd);
+    expect(ServiceInstance.create).toHaveBeenCalledWith(
+      testArgs.releaseName,
+      testArgs.namespace,
+      testArgs.className,
+      testArgs.planName,
+      expectedParams,
+    );
+  });
 });
 
 describe("deprovision", () => {
@@ -226,6 +260,41 @@ describe("addBinding", () => {
 
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("filters the submitted parameters if they are empty", async () => {
+    const params = {
+      a: 1,
+      b: {
+        c: [],
+      },
+      f: {
+        g: [],
+        h: {
+          i: "",
+        },
+      },
+      j: {
+        k: {
+          l: "m",
+        },
+      },
+    };
+    // It omits "f" because it's empty but not "a" or "j"
+    const expectedParams = { a: 1, j: { k: { l: "m" } } };
+    const cmd = catalogActions.addBinding(
+      testArgs.bindingName,
+      testArgs.instanceName,
+      testArgs.namespace,
+      params,
+    );
+    await store.dispatch(cmd);
+    expect(ServiceBinding.create).toHaveBeenCalledWith(
+      testArgs.bindingName,
+      testArgs.instanceName,
+      testArgs.namespace,
+      expectedParams,
+    );
   });
 });
 

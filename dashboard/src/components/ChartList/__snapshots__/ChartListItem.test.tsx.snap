@@ -1,42 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should render an item 1`] = `
-<Card
-  className="ChartListItem"
+<InfoCard
+  icon="/api/chartsvc/icon.png"
+  info="1.0.0"
   key="[object Object]/foo"
-  responsive={true}
->
-  <Link
-    replace={false}
-    title="foo"
-    to="/charts/foo"
-  >
-    <CardIcon
-      icon="/api/chartsvc/icon.png"
-    />
-    <CardContent>
-      <div
-        className="ChartListItem__content"
-      >
-        <h3
-          className="ChartListItem__content__title type-big"
-        >
-          foo
-        </h3>
-        <div
-          className="ChartListItem__content__info"
-        >
-          <p
-            className="ChartListItem__content__info_version margin-reset type-small padding-t-tiny type-color-light-blue"
-          >
-            1.0.0
-          </p>
-          <span
-            className="ChartListItem__content__info_repo undefined type-small padding-t-tiny padding-h-normal"
-          />
-        </div>
-      </div>
-    </CardContent>
-  </Link>
-</Card>
+  link="/charts/foo"
+  title="foo"
+/>
 `;
