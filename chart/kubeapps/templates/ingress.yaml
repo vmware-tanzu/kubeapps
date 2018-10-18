@@ -2,12 +2,12 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: {{ template "kubeapps.fullname" $ }}
+  name: {{ template "kubeapps.fullname" . }}
   labels:
-    app: {{ template "kubeapps.name" $ }}
-    chart: {{ template "kubeapps.chart" $ }}
-    release: {{ $.Release.Name }}
-    heritage: {{ $.Release.Service }}
+    app: {{ template "kubeapps.name" . }}
+    chart: {{ template "kubeapps.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.ingress.certManager }}
     kubernetes.io/tls-acme: "true"
@@ -34,5 +34,4 @@ spec:
     secretName: {{ .tlsSecret }}
   {{- end }}
   {{- end }}
----
 {{- end }}
