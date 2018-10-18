@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import LoadingWrapper from "../../../components/LoadingWrapper";
 import { IServiceCatalogState } from "../../../reducers/catalog";
 import { IServiceBroker } from "../../../shared/ServiceCatalog";
 import { ServiceCatalogNotInstalledAlert } from "../../ErrorAlert";
@@ -28,14 +29,15 @@ class ServiceCatalog extends React.Component<IServiceCatalogProps> {
 
     return (
       <div className="service-list-container">
-        {!isInstalled ? (
-          <ServiceCatalogNotInstalledAlert />
-        ) : (
-          <div>
-            {/* TODO: Check if isFetching */}
-            <ServiceBrokerList errors={errors} brokers={brokers.list} sync={sync} />
-          </div>
-        )}
+        <LoadingWrapper loaded={!brokers.isFetching}>
+          {!isInstalled ? (
+            <ServiceCatalogNotInstalledAlert />
+          ) : (
+            <div>
+              <ServiceBrokerList errors={errors} brokers={brokers} sync={sync} />
+            </div>
+          )}
+        </LoadingWrapper>
       </div>
     );
   }

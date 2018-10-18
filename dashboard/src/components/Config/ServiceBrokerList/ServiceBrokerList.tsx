@@ -1,24 +1,20 @@
 import * as React from "react";
 
-import { definedNamespaces } from "../../../shared/Namespace";
+import LoadingWrapper from "../../../components/LoadingWrapper";
+import PageHeader from "../../../components/PageHeader";
+import { IServiceCatalogState } from "../../../reducers/catalog";
 import { IServiceBroker } from "../../../shared/ServiceCatalog";
-import { ForbiddenError, IRBACRole } from "../../../shared/types";
-import Card, { CardContent, CardFooter, CardGrid } from "../../Card";
-import {
-  PermissionsErrorAlert,
-  ServiceBrokersNotFoundAlert,
-  UnexpectedErrorAlert,
-} from "../../ErrorAlert";
-import SyncButton from "./SyncButton";
-
-import "./ServiceBrokerList.css";
+import { IRBACRole } from "../../../shared/types";
+import { CardGrid } from "../../Card";
+import { ErrorSelector, ServiceBrokersNotFoundAlert } from "../../ErrorAlert";
+import ServiceBrokerItem from "./ServiceBrokerItem";
 
 interface IServiceBrokerListProps {
   errors: {
     fetch?: Error;
     update?: Error;
   };
-  brokers: IServiceBroker[];
+  brokers: IServiceCatalogState["brokers"];
   sync: (broker: IServiceBroker) => Promise<any>;
 }
 
@@ -41,56 +37,52 @@ export const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
   ],
 };
 
-class ServiceBrokerList extends React.Component<IServiceBrokerListProps> {
-  public render() {
-    const { brokers, errors, sync } = this.props;
-    return (
-      <div>
-        <h1>Brokers</h1>
-        <hr />
-        {errors.fetch ? (
-          this.renderError(errors.fetch)
-        ) : brokers.length > 0 ? (
-          <div>
-            {errors.update && this.renderError(errors.update, "resync")}
-            <CardGrid className="BrokerList">
-              {brokers.map(broker => (
-                <Card key={broker.metadata.uid} responsive={true} responsiveColumns={3}>
-                  <CardContent>
-                    <h2 className="margin-reset">{broker.metadata.name}</h2>
-                    <p className="type-small margin-reset margin-b-big BrokerList__url">
-                      {broker.spec.url}
-                    </p>
-                    <p className="margin-b-reset">
-                      Last updated {broker.status.lastCatalogRetrievalTime}
-                    </p>
-                  </CardContent>
-                  <CardFooter className="text-c">
-                    <SyncButton sync={sync} broker={broker} />
-                  </CardFooter>
-                </Card>
-              ))}
-            </CardGrid>
-          </div>
-        ) : (
-          <ServiceBrokersNotFoundAlert />
-        )}
-      </div>
-    );
-  }
-
-  // TODO: Replace with ErrorSelector
-  private renderError(error: Error, action = "view") {
-    return error instanceof ForbiddenError ? (
-      <PermissionsErrorAlert
-        action={`${action} Service Brokers`}
-        namespace={definedNamespaces.all}
-        roles={RequiredRBACRoles[action]}
+const ServiceBrokerList: React.SFC<IServiceBrokerListProps> = props => {
+  const { brokers, errors, sync } = props;
+  let body = <span />;
+  if (errors.fetch) {
+    body = (
+      <ErrorSelector
+        error={errors.fetch}
+        resource="Service Brokers"
+        action="view"
+        defaultRequiredRBACRoles={RequiredRBACRoles}
       />
-    ) : (
-      <UnexpectedErrorAlert />
     );
+  } else {
+    if (brokers.list.length > 0) {
+      if (errors.update) {
+        body = (
+          <ErrorSelector
+            error={errors.update}
+            resource="Service Brokers"
+            action="resync"
+            defaultRequiredRBACRoles={RequiredRBACRoles}
+          />
+        );
+      } else {
+        body = (
+          <CardGrid className="BrokerList">
+            {brokers.list.map(broker => (
+              <ServiceBrokerItem key={broker.metadata.uid} broker={broker} sync={sync} />
+            ))}
+          </CardGrid>
+        );
+      }
+    } else {
+      body = <ServiceBrokersNotFoundAlert />;
+    }
   }
-}
+  return (
+    <section className="AppList">
+      <PageHeader>
+        <h1>Service Brokers</h1>
+      </PageHeader>
+      <LoadingWrapper loaded={!brokers.isFetching}>
+        <main>{body}</main>
+      </LoadingWrapper>
+    </section>
+  );
+};
 
 export default ServiceBrokerList;
