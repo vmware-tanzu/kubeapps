@@ -55,7 +55,7 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
     // typescript does not support react's defaultProps and we are running it in strictNullChecks mode.
     // Newer versions of it seems to support it https://github.com/Microsoft/TypeScript/wiki/Roadmap#30-july-2018
     return (
-      <div className="alert alert-error margin-t-bigger">
+      <div className="alert alert-error margin-bigger">
         <ErrorPageHeader icon={this.props.icon || X}>{this.props.title!}</ErrorPageHeader>
         {(this.props.showGenericMessage !== false || message !== genericMessage) && (
           <div className="error__content margin-l-enormous">{message}</div>
