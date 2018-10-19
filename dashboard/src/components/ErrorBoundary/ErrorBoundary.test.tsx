@@ -3,6 +3,9 @@ import * as React from "react";
 import ErrorBoundary from ".";
 import { UnexpectedErrorAlert } from "../ErrorAlert";
 
+// tslint:disable:no-console
+const consoleOrig = console.error;
+
 describe("ErrorBoundary around a component", () => {
   const exampleError = new Error("Bang!");
   const BadRenderor = (props: { throwError?: boolean }) => {
@@ -12,10 +15,13 @@ describe("ErrorBoundary around a component", () => {
     return <div className="no-error" />;
   };
 
-  // tslint:disable:no-console
   beforeEach(() => {
     // To avoid polluting the logs
     console.error = jest.fn();
+  });
+
+  afterEach(() => {
+    console.error = consoleOrig;
   });
 
   it("captures any synchronous error thrown during a descendant render", () => {
