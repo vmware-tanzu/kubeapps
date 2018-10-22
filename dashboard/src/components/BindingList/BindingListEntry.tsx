@@ -5,6 +5,8 @@ import MessageDetails from "../MessageDetails";
 import BindingDetails from "./BindingDetails";
 import RemoveBindingButton from "./RemoveBindingButton";
 
+import "./BindingList.css";
+
 interface IBindingListEntryProps {
   bindingWithSecret: IServiceBindingWithSecret;
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
@@ -37,11 +39,11 @@ class BindingListEntry extends React.Component<IBindingListEntryProps, IBindingL
     }
 
     return (
-      <tr className="row padding-t-small">
-        <td className="col-2">{name}</td>
-        <td className="col-2">{reason}</td>
-        <td className="col-2">
-          <button className="button" onClick={this.openModal}>
+      <tr>
+        <td>{name}</td>
+        <td>{reason}</td>
+        <td>
+          <button className="button button-small" onClick={this.openModal}>
             Show message
           </button>
           <MessageDetails
@@ -50,10 +52,10 @@ class BindingListEntry extends React.Component<IBindingListEntryProps, IBindingL
             message={message}
           />
         </td>
-        <td className="col-4">
+        <td>
           <BindingDetails {...bindingWithSecret} />
         </td>
-        <td className="col-2">
+        <td>
           <RemoveBindingButton {...this.props} />
         </td>
       </tr>
