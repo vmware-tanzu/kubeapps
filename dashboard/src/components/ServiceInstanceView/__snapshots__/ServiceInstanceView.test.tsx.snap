@@ -886,32 +886,20 @@ exports[`when all the components are loaded when an instance is available should
             >
               <table>
                 <thead>
-                  <tr
-                    className="row"
-                  >
-                    <th
-                      className="col-2"
-                    >
+                  <tr>
+                    <th>
                       Binding
                     </th>
-                    <th
-                      className="col-2"
-                    >
+                    <th>
                       Status
                     </th>
-                    <th
-                      className="col-2"
-                    >
+                    <th>
                       Message
                     </th>
-                    <th
-                      className="col-4"
-                    >
+                    <th>
                       Details
                     </th>
-                    <th
-                      className="col-2"
-                    />
+                    <th />
                   </tr>
                 </thead>
                 <tbody>
@@ -942,24 +930,16 @@ exports[`when all the components are loaded when an instance is available should
                     key="binding-my-instance"
                     removeBinding={[MockFunction]}
                   >
-                    <tr
-                      className="row padding-t-small"
-                    >
-                      <td
-                        className="col-2"
-                      >
+                    <tr>
+                      <td>
                         my-instance
                       </td>
-                      <td
-                        className="col-2"
-                      >
+                      <td>
                         <code />
                       </td>
-                      <td
-                        className="col-2"
-                      >
+                      <td>
                         <button
-                          className="button"
+                          className="button button-small"
                           onClick={[Function]}
                         >
                           Show message
@@ -1064,9 +1044,7 @@ exports[`when all the components are loaded when an instance is available should
                           </div>
                         </MessageDetails>
                       </td>
-                      <td
-                        className="col-4"
-                      >
+                      <td>
                         <BindingDetails
                           binding={
                             Object {
@@ -1112,9 +1090,7 @@ exports[`when all the components are loaded when an instance is available should
                           </dl>
                         </BindingDetails>
                       </td>
-                      <td
-                        className="col-2"
-                      >
+                      <td>
                         <RemoveBindingButton
                           bindingWithSecret={
                             Object {

@@ -1,26 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders information about the binding with a secret 1`] = `
-<tr
-  className="row padding-t-small"
->
-  <td
-    className="col-2"
-  >
+<tr>
+  <td>
     foo
   </td>
-  <td
-    className="col-2"
-  >
+  <td>
     <code>
       none
     </code>
   </td>
-  <td
-    className="col-2"
-  >
+  <td>
     <button
-      className="button"
+      className="button button-small"
       onClick={[Function]}
     >
       Show message
@@ -31,9 +23,7 @@ exports[`renders information about the binding with a secret 1`] = `
       modalIsOpen={false}
     />
   </td>
-  <td
-    className="col-4"
-  >
+  <td>
     <BindingDetails
       binding={
         Object {
@@ -95,9 +85,7 @@ exports[`renders information about the binding with a secret 1`] = `
       }
     />
   </td>
-  <td
-    className="col-2"
-  >
+  <td>
     <RemoveBindingButton
       bindingWithSecret={
         Object {
