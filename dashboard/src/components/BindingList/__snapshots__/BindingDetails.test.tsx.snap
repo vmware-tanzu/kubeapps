@@ -5,33 +5,22 @@ exports[`renders information about the binding with a secret 1`] = `
   className="BindingDetails container margin-normal"
 >
   <dt
-    key="Instance"
+    key="bar"
   >
-    Instance
-    : 
-    <b>
-      foo
-    </b>
+    bar
+     
+    <a
+      onClick={[Function]}
+    >
+      (show)
+    </a>
   </dt>
-  <dt
-    key="Secret"
-  >
-    Secret
-    : 
-    <b>
-      bar
-    </b>
-  </dt>
-  <dt
-    key="mySecret"
-  >
-        
-    mySecret
-    : 
-    <b>
-      content
+  <MessageDetails
+    closeModal={[Function]}
+    message="mySecret: content
 
-    </b>
-  </dt>
+"
+    modalIsOpen={false}
+  />
 </dl>
 `;

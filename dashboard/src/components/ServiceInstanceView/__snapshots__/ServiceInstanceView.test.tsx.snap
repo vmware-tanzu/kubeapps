@@ -897,7 +897,7 @@ exports[`when all the components are loaded when an instance is available should
                       Message
                     </th>
                     <th>
-                      Details
+                      Secret
                     </th>
                     <th />
                   </tr>
@@ -1071,22 +1071,113 @@ exports[`when all the components are loaded when an instance is available should
                           <dl
                             className="BindingDetails container margin-normal"
                           >
-                            <dt
-                              key="Instance"
-                            >
-                              Instance
-                              : 
-                              <b>
-                                my-instance
-                              </b>
+                            <dt>
+                               
+                              <a
+                                onClick={[Function]}
+                              >
+                                (show)
+                              </a>
                             </dt>
-                            <dt
-                              key="Secret"
+                            <MessageDetails
+                              closeModal={[Function]}
+                              message="The secret is empty"
+                              modalIsOpen={false}
                             >
-                              Secret
-                              : 
-                              <b />
-                            </dt>
+                              <div
+                                className="MessageDetails"
+                              >
+                                <Modal
+                                  ariaHideApp={true}
+                                  bodyOpenClassName="ReactModal__Body--open"
+                                  className="Terminal"
+                                  closeTimeoutMS={0}
+                                  contentLabel="Modal"
+                                  isOpen={false}
+                                  onRequestClose={[Function]}
+                                  parentSelector={[Function]}
+                                  portalClassName="ReactModalPortal"
+                                  shouldCloseOnEsc={true}
+                                  shouldCloseOnOverlayClick={true}
+                                  shouldFocusAfterRender={true}
+                                  shouldReturnFocusAfterClose={true}
+                                  style={
+                                    Object {
+                                      "content": Object {
+                                        "maxWidth": "80%",
+                                      },
+                                      "overlay": Object {
+                                        "alignItems": "center",
+                                        "display": "flex",
+                                        "justifyContent": "center",
+                                      },
+                                    }
+                                  }
+                                >
+                                  <Portal
+                                    containerInfo={
+                                      <div
+                                        class="ReactModalPortal"
+                                      />
+                                    }
+                                  >
+                                    <ModalPortal
+                                      ariaHideApp={true}
+                                      bodyOpenClassName="ReactModal__Body--open"
+                                      className="Terminal"
+                                      closeTimeoutMS={0}
+                                      contentLabel="Modal"
+                                      defaultStyles={
+                                        Object {
+                                          "content": Object {
+                                            "WebkitOverflowScrolling": "touch",
+                                            "background": "#fff",
+                                            "border": "1px solid #ccc",
+                                            "borderRadius": "4px",
+                                            "bottom": "40px",
+                                            "left": "40px",
+                                            "outline": "none",
+                                            "overflow": "auto",
+                                            "padding": "20px",
+                                            "position": "absolute",
+                                            "right": "40px",
+                                            "top": "40px",
+                                          },
+                                          "overlay": Object {
+                                            "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                            "bottom": 0,
+                                            "left": 0,
+                                            "position": "fixed",
+                                            "right": 0,
+                                            "top": 0,
+                                          },
+                                        }
+                                      }
+                                      isOpen={false}
+                                      onRequestClose={[Function]}
+                                      parentSelector={[Function]}
+                                      portalClassName="ReactModalPortal"
+                                      shouldCloseOnEsc={true}
+                                      shouldCloseOnOverlayClick={true}
+                                      shouldFocusAfterRender={true}
+                                      shouldReturnFocusAfterClose={true}
+                                      style={
+                                        Object {
+                                          "content": Object {
+                                            "maxWidth": "80%",
+                                          },
+                                          "overlay": Object {
+                                            "alignItems": "center",
+                                            "display": "flex",
+                                            "justifyContent": "center",
+                                          },
+                                        }
+                                      }
+                                    />
+                                  </Portal>
+                                </Modal>
+                              </div>
+                            </MessageDetails>
                           </dl>
                         </BindingDetails>
                       </td>

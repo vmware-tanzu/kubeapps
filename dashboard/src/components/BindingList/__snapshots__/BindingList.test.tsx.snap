@@ -17,7 +17,7 @@ exports[`renders information about the binding with a secret 1`] = `
           Message
         </th>
         <th>
-          Details
+          Secret
         </th>
         <th />
       </tr>

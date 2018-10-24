@@ -21,7 +21,7 @@ class BindingList extends React.Component<IBindingList> {
               <th>Binding</th>
               <th>Status</th>
               <th>Message</th>
-              <th>Details</th>
+              <th>Secret</th>
               <th />
             </tr>
           </thead>
