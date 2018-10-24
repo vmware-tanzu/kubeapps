@@ -21,7 +21,7 @@ exports[`renders information about the binding with a secret 1`] = `
 
 "
     modalIsOpen={false}
-    title="Secret content"
+    title="Secret: bar"
   />
 </dl>
 `;

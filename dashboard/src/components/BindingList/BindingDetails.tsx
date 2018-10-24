@@ -40,7 +40,7 @@ class BindingDetails extends React.Component<IServiceBindingWithSecret, IBinding
         <TerminalModal
           modalIsOpen={this.state.modalIsOpen}
           closeModal={this.closeModal}
-          title=`Secret: ${secretName}`
+          title={`Secret: ${secretName}`}
           message={message}
         />
       </dl>
