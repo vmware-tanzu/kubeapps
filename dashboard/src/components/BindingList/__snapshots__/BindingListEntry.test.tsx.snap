@@ -17,10 +17,11 @@ exports[`renders information about the binding with a secret 1`] = `
     >
       Show message
     </button>
-    <MessageDetails
+    <TerminalModal
       closeModal={[Function]}
       message="everything okay here"
       modalIsOpen={false}
+      title="Status Message"
     />
   </td>
   <td>

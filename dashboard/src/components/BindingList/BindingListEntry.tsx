@@ -1,7 +1,7 @@
 import * as React from "react";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 
-import MessageDetails from "../MessageDetails";
+import TerminalModal from "../TerminalModal";
 import BindingDetails from "./BindingDetails";
 import RemoveBindingButton from "./RemoveBindingButton";
 
@@ -46,9 +46,10 @@ class BindingListEntry extends React.Component<IBindingListEntryProps, IBindingL
           <button className="button button-small" onClick={this.openModal}>
             Show message
           </button>
-          <MessageDetails
+          <TerminalModal
             modalIsOpen={this.state.modalIsOpen}
             closeModal={this.closeModal}
+            title="Status Message"
             message={message}
           />
         </td>

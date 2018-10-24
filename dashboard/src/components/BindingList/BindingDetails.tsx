@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import MessageDetails from "../../components/MessageDetails";
+import TerminalModal from "../../components/TerminalModal";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import "./BindingDetails.css";
 
@@ -37,9 +37,10 @@ class BindingDetails extends React.Component<IServiceBindingWithSecret, IBinding
         <dt key={secretName}>
           {secretName} <a onClick={this.openModal}>(show)</a>
         </dt>
-        <MessageDetails
+        <TerminalModal
           modalIsOpen={this.state.modalIsOpen}
           closeModal={this.closeModal}
+          title="Secret content"
           message={message}
         />
       </dl>

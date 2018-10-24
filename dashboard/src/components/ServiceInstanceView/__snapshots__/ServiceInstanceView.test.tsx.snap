@@ -944,10 +944,11 @@ exports[`when all the components are loaded when an instance is available should
                         >
                           Show message
                         </button>
-                        <MessageDetails
+                        <TerminalModal
                           closeModal={[Function]}
                           message="binding is okay"
                           modalIsOpen={false}
+                          title="Status Message"
                         >
                           <div
                             className="MessageDetails"
@@ -1042,7 +1043,7 @@ exports[`when all the components are loaded when an instance is available should
                               </Portal>
                             </Modal>
                           </div>
-                        </MessageDetails>
+                        </TerminalModal>
                       </td>
                       <td>
                         <BindingDetails
@@ -1079,10 +1080,11 @@ exports[`when all the components are loaded when an instance is available should
                                 (show)
                               </a>
                             </dt>
-                            <MessageDetails
+                            <TerminalModal
                               closeModal={[Function]}
                               message="The secret is empty"
                               modalIsOpen={false}
+                              title="Secret content"
                             >
                               <div
                                 className="MessageDetails"
@@ -1177,7 +1179,7 @@ exports[`when all the components are loaded when an instance is available should
                                   </Portal>
                                 </Modal>
                               </div>
-                            </MessageDetails>
+                            </TerminalModal>
                           </dl>
                         </BindingDetails>
                       </td>

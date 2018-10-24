@@ -47,7 +47,7 @@ exports[`renders the message details modal 1`] = `
       <div
         className="Terminal__Top__Title"
       >
-        Message
+        This is a title
       </div>
     </div>
     <div

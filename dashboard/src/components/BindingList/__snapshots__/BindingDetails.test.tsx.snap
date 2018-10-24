@@ -15,12 +15,13 @@ exports[`renders information about the binding with a secret 1`] = `
       (show)
     </a>
   </dt>
-  <MessageDetails
+  <TerminalModal
     closeModal={[Function]}
     message="mySecret: content
 
 "
     modalIsOpen={false}
+    title="Secret content"
   />
 </dl>
 `;

@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 
 import { IServiceBindingWithSecret } from "shared/ServiceBinding";
-import MessageDetails from "../../components/MessageDetails";
+import TerminalModal from "../../components/TerminalModal";
 import BindingDetails from "./BindingDetails";
 
 const bindingWithSecret = {
@@ -76,5 +76,5 @@ it("should show the secret content when clicking the button", () => {
   expect((wrapper.state() as any).modalIsOpen).toBe(false);
   button.simulate("click");
   expect((wrapper.state() as any).modalIsOpen).toBe(true);
-  expect(wrapper.find(MessageDetails).props().message).toContain("mySecret: content");
+  expect(wrapper.find(TerminalModal).props().message).toContain("mySecret: content");
 });

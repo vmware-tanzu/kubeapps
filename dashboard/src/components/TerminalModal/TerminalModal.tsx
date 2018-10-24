@@ -1,15 +1,16 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 
-import "./MessageDetails.css";
+import "./TerminalModal.css";
 
-interface IMessageDetailsProps {
+interface ITerminalModalProps {
   modalIsOpen: boolean;
   closeModal: () => Promise<any>;
+  title: string;
   message: string;
 }
 
-const MessageDetails: React.SFC<IMessageDetailsProps> = props => {
+const TerminalModal: React.SFC<ITerminalModalProps> = props => {
   return (
     <div className="MessageDetails">
       <Modal
@@ -37,7 +38,7 @@ const MessageDetails: React.SFC<IMessageDetailsProps> = props => {
               />
             </a>
           </div>
-          <div className="Terminal__Top__Title">Message</div>
+          <div className="Terminal__Top__Title">{props.title}</div>
         </div>
         <div className="Terminal__Tab">
           <pre className="Terminal__Code">
@@ -49,4 +50,4 @@ const MessageDetails: React.SFC<IMessageDetailsProps> = props => {
   );
 };
 
-export default MessageDetails;
+export default TerminalModal;
