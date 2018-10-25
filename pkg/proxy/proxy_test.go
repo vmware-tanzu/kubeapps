@@ -17,6 +17,7 @@ limitations under the License.
 package proxy
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -288,7 +289,7 @@ func TestUpdateMissingHelmRelease(t *testing.T) {
 	if err == nil {
 		t.Error("Update should fail, there is not a release in the namespace specified")
 	}
-	if !strings.Contains(err.Error(), "No such release") {
+	if !strings.Contains(err.Error(), fmt.Sprintf("release: \"%s\" not found", rs)) {
 		t.Errorf("Unexpected error %v", err)
 	}
 }
