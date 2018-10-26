@@ -1,5 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`if the service broker is not installed shows a warning message 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <h1>
+      Service Brokers
+    </h1>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={true}
+  >
+    <ServiceCatalogNotInstalledAlert />
+  </LoadingWrapper>
+</section>
+`;
+
 exports[`when all the brokers are loaded shows a forbiden (fetch) error if it exists 1`] = `
 <section
   className="AppList"
@@ -68,11 +85,26 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
       ],
     }
   }
+  checkCatalogInstalled={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+      ],
+    }
+  }
   errors={
     Object {
       "update": [Error],
     }
   }
+  getBrokers={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+      ],
+    }
+  }
+  isInstalled={true}
   sync={[MockFunction]}
 >
   <section
@@ -282,7 +314,22 @@ exports[`when all the brokers are loaded shows a warning to install no service b
       "list": Array [],
     }
   }
+  checkCatalogInstalled={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+      ],
+    }
+  }
   errors={Object {}}
+  getBrokers={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+      ],
+    }
+  }
+  isInstalled={true}
   sync={[MockFunction]}
 >
   <section

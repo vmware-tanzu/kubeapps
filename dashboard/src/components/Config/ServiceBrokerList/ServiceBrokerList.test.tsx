@@ -3,12 +3,36 @@ import context from "jest-plugin-context";
 import * as React from "react";
 
 import ServiceBrokerList from ".";
-import { ErrorSelector, ServiceBrokersNotFoundAlert } from "../../../components/ErrorAlert";
+import {
+  ErrorSelector,
+  ServiceBrokersNotFoundAlert,
+  ServiceCatalogNotInstalledAlert,
+} from "../../../components/ErrorAlert";
 import { IServiceBroker } from "../../../shared/ServiceCatalog";
 import itBehavesLike from "../../../shared/specs";
 import { ForbiddenError } from "../../../shared/types";
 
-const defaultProps = { brokers: { isFetching: false, list: [] }, sync: jest.fn(), errors: {} };
+let defaultProps = {
+  getBrokers: jest.fn(),
+  brokers: { isFetching: false, list: [] },
+  sync: jest.fn(),
+  errors: {},
+  checkCatalogInstalled: jest.fn(),
+  isInstalled: true,
+};
+
+beforeEach(() => {
+  // Restart mock stats
+  defaultProps = {
+    getBrokers: jest.fn(),
+    brokers: { isFetching: false, list: [] },
+    sync: jest.fn(),
+    errors: {},
+    checkCatalogInstalled: jest.fn(),
+    isInstalled: true,
+  };
+});
+
 const broker = {
   metadata: { name: "wall-street", uid: "1" },
   spec: {
@@ -18,6 +42,15 @@ const broker = {
     lastCatalogRetrievalTime: "today",
   },
 } as IServiceBroker;
+
+context("if the service broker is not installed", () => {
+  it("shows a warning message", () => {
+    const props = { ...defaultProps, isInstalled: false };
+    const wrapper = shallow(<ServiceBrokerList {...props} />);
+    expect(wrapper.find(ServiceCatalogNotInstalledAlert)).toExist();
+    expect(wrapper).toMatchSnapshot();
+  });
+});
 
 context("while fetching brokers", () => {
   const props = { ...defaultProps, brokers: { isFetching: true, list: [] } };
