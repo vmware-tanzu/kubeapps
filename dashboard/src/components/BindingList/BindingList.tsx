@@ -3,6 +3,8 @@ import * as React from "react";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import BindingListEntry from "./BindingListEntry";
 
+import "./BindingList.css";
+
 interface IBindingList {
   bindingsWithSecrets: IServiceBindingWithSecret[];
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
@@ -18,6 +20,8 @@ class BindingList extends React.Component<IBindingList> {
             <tr>
               <th>Binding</th>
               <th>Status</th>
+              <th>Message</th>
+              <th>Secret</th>
               <th />
             </tr>
           </thead>
@@ -32,7 +36,7 @@ class BindingList extends React.Component<IBindingList> {
               ])
             ) : (
               <tr>
-                <td colSpan={3}>No bindings found</td>
+                <td> No bindings found</td>
               </tr>
             )}
           </tbody>
