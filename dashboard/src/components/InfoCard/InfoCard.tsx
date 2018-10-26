@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { Link } from "react-router-dom";
+import placeholder from "../../placeholder.png";
 import Card, { CardContent, CardIcon } from "../Card";
 import "./InfoCard.css";
 
@@ -16,7 +17,8 @@ export interface IServiceInstanceCardProps {
 }
 
 const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
-  const { title, link, icon, info, tag1Content, tag1Class, tag2Content, tag2Class } = props;
+  const { title, link, info, tag1Content, tag1Class, tag2Content, tag2Class } = props;
+  const icon = props.icon ? props.icon : placeholder;
   return (
     <Card responsive={true} className="ListItem">
       <Link to={link || "#"} title={title}>
@@ -48,6 +50,7 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
           </div>
         </CardContent>
       </Link>
+      {props.children}
     </Card>
   );
 };

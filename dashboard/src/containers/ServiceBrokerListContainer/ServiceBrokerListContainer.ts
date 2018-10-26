@@ -3,7 +3,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
-import ServiceCatalog from "../../components/Config/ServiceCatalog";
+import ServiceBrokerList from "../../components/Config/ServiceBrokerList";
 import { IServiceBroker } from "../../shared/ServiceCatalog";
 import { IStoreState } from "../../shared/types";
 
@@ -28,4 +28,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(ServiceCatalog);
+)(ServiceBrokerList);
