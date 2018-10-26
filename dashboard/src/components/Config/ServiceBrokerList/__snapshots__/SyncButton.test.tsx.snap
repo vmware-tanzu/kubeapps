@@ -2,7 +2,7 @@
 
 exports[`should render the sync button 1`] = `
 <button
-  className="button button-accent"
+  className="button button-small button-accent"
   disabled={false}
   onClick={[Function]}
 >
