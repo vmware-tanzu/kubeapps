@@ -1,4 +1,4 @@
-FROM quay.io/deis/go-dev:v1.8.2 as builder
+FROM golang:1.11 as builder
 COPY . /go/src/github.com/kubeapps/kubeapps
 WORKDIR /go/src/github.com/kubeapps/kubeapps
 RUN CGO_ENABLED=0 go build -a -installsuffix cgo ./cmd/apprepository-controller

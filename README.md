@@ -95,6 +95,12 @@ For a more detailed and step-by-step introduction to Kubeapps, read our [introdu
 * [Kubeapps Dashboard documentation](docs/user/dashboard.md)
 * [Kubeapps components](docs/architecture/overview.md)
 
+## Differences from Monocular
+
+The [Monocular](https://github.com/helm/monocular) project was designed to run a public search and discovery website for Helm repositories (e.g. https://hub.kubeapps.com). Following its 1.0 release, Monocular is focused on delivering the experience for the Helm Hub.
+
+Versions of Monocular 0.7 and older include a basic ability to install, view and delete Helm releases in a Kubernetes cluster. To focus on the Helm Hub experience, these [features have been removed](https://github.com/helm/monocular#looking-for-an-in-cluster-application-management-ui) since the 1.0 release and are no longer supported. We recommend users of Monocular's in-cluster features try Kubeapps as it provides a more featured, robust and secure solution to managing Helm applications in your cluster.
+
 ## Community
 
 * [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps)

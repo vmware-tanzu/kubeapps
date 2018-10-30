@@ -11,7 +11,7 @@ import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import RepoListContainer from "../../containers/RepoListContainer";
-import ServiceCatalogContainer from "../../containers/ServiceCatalogContainer";
+import ServiceBrokerListContainer from "../../containers/ServiceBrokerListContainer";
 import ServiceClassListContainer from "../../containers/ServiceClassListContainer";
 import ServiceClassViewContainer from "../../containers/ServiceClassViewContainer";
 import ServiceInstanceListContainer from "../../containers/ServiceInstanceListContainer";
@@ -30,7 +30,7 @@ const privateRoutes: {
   "/charts/:repo": ChartListContainer,
   "/charts/:repo/:id": ChartViewContainer,
   "/charts/:repo/:id/versions/:version": ChartViewContainer,
-  "/config/brokers": ServiceCatalogContainer,
+  "/config/brokers": ServiceBrokerListContainer,
   "/config/repos": RepoListContainer,
   "/services/brokers/:brokerName/classes/:className": ServiceClassViewContainer,
   "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": ServiceInstanceViewContainer,
