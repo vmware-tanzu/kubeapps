@@ -44,8 +44,6 @@ This builds the `chart-repo` Docker image.
 
 ### Running in development
 
-#### Option 1: Using Telepresence (recommended)
-
 ```bash
 export MONGO_PASSWORD=$(kubectl get secret --namespace kubeapps kubeapps-mongodb -o jsonpath="{.data.mongodb-root-password}" | base64 --decode)
 telepresence --namespace kubeapps --docker-run -e MONGO_PASSWORD=$MONGO_PASSWORD --rm -ti quay.io/helmpack/chart-repo /chart-repo sync --mongo-user=root --mongo-url=kubeapps-mongodb stable https://kubernetes-charts.storage.googleapis.com
