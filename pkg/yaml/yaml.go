@@ -22,11 +22,29 @@ import (
 	"io"
 	"strings"
 
-	"github.com/ksonnet/kubecfg/utils"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
 )
+
+// This function was taken from Kubecfg:
+// https://github.com/ksonnet/kubecfg/blob/9be86f33f20342024dafbd2dd0a4463f3ec96a27/utils/acquire.go#L211
+func flattenToV1(objs []runtime.Object) []*unstructured.Unstructured {
+	ret := make([]*unstructured.Unstructured, 0, len(objs))
+	for _, obj := range objs {
+		switch o := obj.(type) {
+		case *unstructured.UnstructuredList:
+			for i := range o.Items {
+				ret = append(ret, &o.Items[i])
+			}
+		case *unstructured.Unstructured:
+			ret = append(ret, o)
+		default:
+			panic("Unexpected unstructured object type")
+		}
+	}
+	return ret
+}
 
 // ParseObjects returns an Unstructured object list based on the content of a YAML manifest
 func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
@@ -63,5 +81,5 @@ func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
 		ret = append(ret, obj)
 	}
 
-	return utils.FlattenToV1(ret), nil
+	return flattenToV1(ret), nil
 }
