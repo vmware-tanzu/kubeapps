@@ -10,13 +10,13 @@ Please refer to the [Kubeapps Dashboard Developer Guide](dashboard.md) for the d
 
 The `chartsvc` component is a micro-service that creates a API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server.
 
-<!-- TODO: Point to developer guide in Monocular repo  -->
+Please refer to the [Kubeapps chartsvc Developer Guide](chartsvc.md) for the developer setup.
 
 ### chart-repo
 
 The `chart-repo` component is tool that scans a Helm chart repository and populates chart metadata in a MongoDB server. This metadata is then served by the `chartsvc` component.
 
-<!-- TODO: Point to developer guide in Monocular repo  -->
+Please refer to the [Kubeapps chart-repo Developer Guide](chart-repo.md) for the developer setup.
 
 ### tiller-proxy
 
