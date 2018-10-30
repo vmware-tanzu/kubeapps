@@ -56,7 +56,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1beta1.CronJobSpec{
 					Schedule:          "0 * * * *",
-					ConcurrencyPolicy: "Forbid",
+					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
@@ -64,7 +64,7 @@ func Test_newCronJob(t *testing.T) {
 									Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "Never",
+									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:    "sync",
@@ -133,7 +133,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 				Spec: batchv1beta1.CronJobSpec{
 					Schedule:          "0 * * * *",
-					ConcurrencyPolicy: "Forbid",
+					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
@@ -141,7 +141,7 @@ func Test_newCronJob(t *testing.T) {
 									Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
 								},
 								Spec: corev1.PodSpec{
-									RestartPolicy: "Never",
+									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
 											Name:    "sync",
@@ -236,7 +236,7 @@ func Test_newSyncJob(t *testing.T) {
 							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "Never",
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:    "sync",
@@ -308,7 +308,7 @@ func Test_newSyncJob(t *testing.T) {
 							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
 						},
 						Spec: corev1.PodSpec{
-							RestartPolicy: "Never",
+							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
 									Name:    "sync",
