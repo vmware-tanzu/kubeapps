@@ -21,6 +21,11 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
+	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
+	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,12 +42,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-
-	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
-	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
-	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
-	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 )
 
 const controllerAgentName = "apprepository-controller"
@@ -390,8 +389,11 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 		},
 		Spec: batchv1beta1.CronJobSpec{
 			// TODO: make schedule customisable
-			Schedule:          "0 * * * *",
-			ConcurrencyPolicy: "Forbid",
+			Schedule: "0 * * * *",
+			// Set to replace as short-circuit in k8s <1.12
+			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
+			// https://github.com/kubernetes/kubernetes/issues/54870
+			ConcurrencyPolicy: "Replace",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: syncJobSpec(apprepo),
 			},
@@ -426,8 +428,10 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 				Labels: jobLabels(apprepo),
 			},
 			Spec: corev1.PodSpec{
-				// If there's an issue, delay till the next cron
-				RestartPolicy: "Never",
+				// If there's an issue, will restart pod until sucessful or replaced
+				// by another instance of the job scheduled by the cronjob
+				// see: cronJobSpec.concurrencyPolicy
+				RestartPolicy: "OnFailure",
 				Containers: []corev1.Container{
 					{
 						Name:    "sync",
