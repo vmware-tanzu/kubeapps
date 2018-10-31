@@ -1,32 +1,63 @@
 import * as React from "react";
 
-import { IServiceBindingWithSecret } from "shared/ServiceBinding";
+import TerminalModal from "../../components/TerminalModal";
+import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import "./BindingDetails.css";
 
-class BindingDetails extends React.Component<IServiceBindingWithSecret> {
+interface IBindingDetailsState {
+  modalIsOpen: boolean;
+}
+
+class BindingDetails extends React.Component<IServiceBindingWithSecret, IBindingDetailsState> {
+  public state = {
+    modalIsOpen: false,
+  };
+
   public render() {
     const { binding, secret } = this.props;
-    const { instanceRef, secretName } = binding.spec;
+    const { secretName } = binding.spec;
 
-    let statuses: string[][] = [["Instance", instanceRef.name], ["Secret", secretName]];
+    let secretDataArray: string[][] = [];
     if (secret) {
       const secretData = Object.keys(secret.data).map(k => [k, atob(secret.data[k])]);
-      statuses = [...statuses, ...secretData];
+      secretDataArray = [...secretData];
+    }
+    let message = "";
+    if (secretDataArray.length > 0) {
+      message = "";
+      secretDataArray.forEach(statusPair => {
+        const [key, value] = statusPair;
+        message += `${key}: ${value}\n`;
+      });
+    } else {
+      message = "The secret is empty";
     }
     return (
       <dl className="BindingDetails container margin-normal">
-        {statuses.map(statusPair => {
-          const [key, value] = statusPair;
-          return [
-            <dt key={key}>{key}</dt>,
-            <dd key={value}>
-              <code>{value}</code>
-            </dd>,
-          ];
-        })}
+        <dt key={secretName}>
+          {secretName} <a onClick={this.openModal}>(show)</a>
+        </dt>
+        <TerminalModal
+          modalIsOpen={this.state.modalIsOpen}
+          closeModal={this.closeModal}
+          title={`Secret: ${secretName}`}
+          message={message}
+        />
       </dl>
     );
   }
+
+  public openModal = () => {
+    this.setState({
+      modalIsOpen: true,
+    });
+  };
+
+  public closeModal = async () => {
+    this.setState({
+      modalIsOpen: false,
+    });
+  };
 }
 
 export default BindingDetails;
