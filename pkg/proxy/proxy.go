@@ -78,9 +78,7 @@ type AppOverview struct {
 	Status      string `json:"status"`
 }
 
-// TODO: Rename get for getRelease
-// TODO: Remove namespace since release name is unique
-func (p *Proxy) get(name, namespace string) (*release.Release, error) {
+func (p *Proxy) getRelease(name string) (*release.Release, error) {
 	release, err := p.helmClient.ReleaseContent(name)
 
 	if err != nil {
@@ -236,11 +234,11 @@ func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (
 }
 
 // UpdateRelease upgrades a tiller release
-func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error) {
+func (p *Proxy) UpdateRelease(name, values string, ch *chart.Chart) (*release.Release, error) {
 	lock(name)
 	defer unlock(name)
 	// Check if the release already exists
-	_, err := p.get(name, namespace)
+	_, err := p.getRelease(name)
 	if err != nil {
 		return nil, err
 	}
@@ -258,18 +256,18 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 }
 
 // GetRelease returns the info of a release
-func (p *Proxy) GetRelease(name, namespace string) (*release.Release, error) {
+func (p *Proxy) GetRelease(name string) (*release.Release, error) {
 	lock(name)
 	defer unlock(name)
-	return p.get(name, namespace)
+	return p.getRelease(name)
 }
 
 // DeleteRelease deletes a release
-func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
+func (p *Proxy) DeleteRelease(name string, purge bool) error {
 	lock(name)
 	defer unlock(name)
 	// Validate that the release actually belongs to the namespace
-	_, err := p.get(name, namespace)
+	_, err := p.getRelease(name)
 	if err != nil {
 		return err
 	}
@@ -297,11 +295,11 @@ func prettyError(err error) error {
 
 // TillerClient for exposed funcs
 type TillerClient interface {
-	GetReleaseStatus(relName string) (release.Status_Code, error)
+	GetReleaseStatus(name string) (release.Status_Code, error)
 	ResolveManifest(namespace, values string, ch *chart.Chart) (string, error)
 	ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error)
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
-	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)
-	GetRelease(name, namespace string) (*release.Release, error)
-	DeleteRelease(name, namespace string, purge bool) error
+	UpdateRelease(name string, values string, ch *chart.Chart) (*release.Release, error)
+	GetRelease(name string) (*release.Release, error)
+	DeleteRelease(name string, purge bool) error
 }
