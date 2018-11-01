@@ -22,7 +22,6 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/helm/pkg/helm"
@@ -60,12 +59,6 @@ type Proxy struct {
 	kubeClient kubernetes.Interface
 	helmClient helm.Interface
 	listLimit  int
-}
-
-func isNotFound(err error) bool {
-	// Ideally this would be `grpc.Code(err) == codes.NotFound`,
-	// but it seems helm doesn't return grpc codes
-	return strings.Contains(grpc.ErrorDesc(err), "not found")
 }
 
 // NewProxy creates a Proxy
@@ -248,9 +241,7 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 	defer unlock(name)
 	// Check if the release already exists
 	_, err := p.get(name, namespace)
-	if err != nil && isNotFound(err) {
-		return nil, fmt.Errorf("Release %s not found in the namespace %s. Unable to update it", name, namespace)
-	} else if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	log.Printf("Updating release %s", name)
