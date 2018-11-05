@@ -73,7 +73,7 @@ func (f *FakeProxy) CreateRelease(name, namespace, values string, ch *chart.Char
 	return &r, nil
 }
 
-func (f *FakeProxy) UpdateRelease(name string, values string, ch *chart.Chart) (*release.Release, error) {
+func (f *FakeProxy) UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error) {
 	for _, r := range f.Releases {
 		if r.Name == name {
 			return &r, nil
@@ -82,7 +82,7 @@ func (f *FakeProxy) UpdateRelease(name string, values string, ch *chart.Chart) (
 	return nil, fmt.Errorf("Release %s not found", name)
 }
 
-func (f *FakeProxy) GetRelease(name string) (*release.Release, error) {
+func (f *FakeProxy) GetRelease(name, namespace string) (*release.Release, error) {
 	for _, r := range f.Releases {
 		if r.Name == name {
 			return &r, nil
@@ -91,7 +91,7 @@ func (f *FakeProxy) GetRelease(name string) (*release.Release, error) {
 	return nil, fmt.Errorf("Release %s not found", name)
 }
 
-func (f *FakeProxy) DeleteRelease(name string, purge bool) error {
+func (f *FakeProxy) DeleteRelease(name, namespace string, purge bool) error {
 	for i, r := range f.Releases {
 		if r.Name == name {
 			if purge {

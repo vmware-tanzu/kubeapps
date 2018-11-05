@@ -26,12 +26,13 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
-	"github.com/kubeapps/kubeapps/pkg/auth"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	proxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"k8s.io/helm/pkg/proto/hapi/chart"
+
+	"github.com/kubeapps/kubeapps/pkg/auth"
+	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	proxy "github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
 // Context key type for request contexts
@@ -220,7 +221,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 			return
 		}
 	}
-	rel, err := h.ProxyClient.UpdateRelease(params["releaseName"], chartDetails.Values, ch)
+	rel, err := h.ProxyClient.UpdateRelease(params["releaseName"], params["namespace"], chartDetails.Values, ch)
 	if err != nil {
 		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 		return
@@ -252,7 +253,7 @@ func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, par
 
 // GetRelease returns the release info
 func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, params Params) {
-	rel, err := h.ProxyClient.GetRelease(params["releaseName"])
+	rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
@@ -280,7 +281,7 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 // DeleteRelease removes a release from a namespace
 func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	if !h.DisableAuth {
-		rel, err := h.ProxyClient.GetRelease(params["releaseName"])
+		rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
@@ -305,7 +306,7 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 	if req.URL.Query().Get("purge") == "1" || req.URL.Query().Get("purge") == "true" {
 		purge = true
 	}
-	err := h.ProxyClient.DeleteRelease(params["releaseName"], purge)
+	err := h.ProxyClient.DeleteRelease(params["releaseName"], params["namespace"], purge)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return

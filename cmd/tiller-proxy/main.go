@@ -24,9 +24,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
-	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/urfave/negroni"
@@ -36,6 +33,10 @@ import (
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
+
+	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
 const (
@@ -143,8 +144,6 @@ func main() {
 		ProxyClient: proxy,
 	}
 	// Routes
-	// TODO Some of these routes do not require namespace anymore (i.e getRelease)
-	// it has been kept this way for compatibility reasons. Change.
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
 		authGate,
