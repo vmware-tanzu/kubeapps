@@ -2,11 +2,11 @@
 
 exports[`renderization when charts available should render the list of charts 1`] = `
 <section
-  className="ChartList"
+  className="CatalogList"
 >
   <PageHeader>
     <h1>
-      Charts
+      Catalog
     </h1>
     <SearchFilter
       className="margin-l-big"
@@ -20,7 +20,7 @@ exports[`renderization when charts available should render the list of charts 1`
     loaded={true}
   >
     <CardGrid>
-      <ChartListItem
+      <CatalogListItem
         chart={
           Object {
             "attributes": Object {},
@@ -29,7 +29,7 @@ exports[`renderization when charts available should render the list of charts 1`
         }
         key="foo"
       />
-      <ChartListItem
+      <CatalogListItem
         chart={
           Object {
             "attributes": Object {},
@@ -45,11 +45,11 @@ exports[`renderization when charts available should render the list of charts 1`
 
 exports[`renderization when fetching apps loading spinner matches the snapshot 1`] = `
 <section
-  className="ChartList"
+  className="CatalogList"
 >
   <PageHeader>
     <h1>
-      Charts
+      Catalog
     </h1>
     <SearchFilter
       className="margin-l-big"
