@@ -6,7 +6,7 @@ import AppListContainer from "../../containers/AppListContainer";
 import AppNewContainer from "../../containers/AppNewContainer";
 import AppUpgradeContainer from "../../containers/AppUpgradeContainer";
 import AppViewContainer from "../../containers/AppViewContainer";
-import CatalogListContainer from "../../containers/CatalogListContainer";
+import CatalogContainer from "../../containers/CatalogContainer";
 import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
@@ -26,8 +26,8 @@ const privateRoutes: {
   "/apps/ns/:namespace/:releaseName": AppViewContainer,
   "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNewContainer,
   "/apps/ns/:namespace/upgrade/:releaseName": AppUpgradeContainer,
-  "/catalog": CatalogListContainer,
-  "/catalog/:repo": CatalogListContainer,
+  "/catalog": CatalogContainer,
+  "/catalog/:repo": CatalogContainer,
   "/charts/:repo/:id": ChartViewContainer,
   "/charts/:repo/:id/versions/:version": ChartViewContainer,
   "/config/brokers": ServiceBrokerListContainer,
