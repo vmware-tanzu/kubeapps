@@ -301,18 +301,20 @@ func TestGetHelmRelease(t *testing.T) {
 		existingApps    []AppOverview
 		shouldFail      bool
 		targetApp       string
-		tartegNamespace string
+		targetNamespace string
 		expectedResult  string
 	}
 	tests := []testStruct{
 		{[]AppOverview{app1, app2}, false, "foo", "my_ns", "foo"},
 		{[]AppOverview{app1, app2}, false, "foo", "", "foo"},
+		// Can't retrieve release from another namespace
+		{[]AppOverview{app1, app2}, true, "foo", "other_ns", "foo"},
 	}
 	for _, test := range tests {
 		proxy := newFakeProxy(test.existingApps)
-		res, err := proxy.GetRelease(test.targetApp, test.tartegNamespace)
+		res, err := proxy.GetRelease(test.targetApp, test.targetNamespace)
 		if test.shouldFail && err == nil {
-			t.Errorf("Get %s/%s should fail", test.tartegNamespace, test.targetApp)
+			t.Errorf("Get %s/%s should fail", test.targetNamespace, test.targetApp)
 		}
 		if !test.shouldFail {
 			if err != nil {

@@ -78,13 +78,19 @@ type AppOverview struct {
 	Status      string `json:"status"`
 }
 
-// TODO: Rename get for getRelease
-// TODO: Remove namespace since release name is unique
-func (p *Proxy) get(name, namespace string) (*release.Release, error) {
+func (p *Proxy) getRelease(name, namespace string) (*release.Release, error) {
 	release, err := p.helmClient.ReleaseContent(name)
 
 	if err != nil {
 		return nil, prettyError(err)
+	}
+
+	// We check that the release found is from the provided namespace.
+	// If `namespace` is an empty string we do not do that check
+	// This check check is to prevent users of for example updating releases that might be
+	// in namespaces that they do not have access to.
+	if namespace != "" && release.Release.Namespace != namespace {
+		return nil, fmt.Errorf("Release %q not found in namespace %q", name, namespace)
 	}
 
 	return release.Release, nil
@@ -240,7 +246,7 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 	lock(name)
 	defer unlock(name)
 	// Check if the release already exists
-	_, err := p.get(name, namespace)
+	_, err := p.getRelease(name, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -261,7 +267,7 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 func (p *Proxy) GetRelease(name, namespace string) (*release.Release, error) {
 	lock(name)
 	defer unlock(name)
-	return p.get(name, namespace)
+	return p.getRelease(name, namespace)
 }
 
 // DeleteRelease deletes a release
@@ -269,7 +275,7 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 	lock(name)
 	defer unlock(name)
 	// Validate that the release actually belongs to the namespace
-	_, err := p.get(name, namespace)
+	_, err := p.getRelease(name, namespace)
 	if err != nil {
 		return err
 	}
