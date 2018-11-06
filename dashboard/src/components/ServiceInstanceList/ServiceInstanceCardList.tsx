@@ -3,7 +3,6 @@ import * as React from "react";
 import { IClusterServiceClass } from "shared/ClusterServiceClass";
 import { IServiceInstance } from "shared/ServiceInstance";
 import { CardGrid } from "../Card";
-import "../ChartList/ChartListItem.css";
 import ServiceInstanceCard from "./ServiceInstanceCard";
 import "./ServiceInstanceCard.css";
 

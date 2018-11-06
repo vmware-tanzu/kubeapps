@@ -37,8 +37,8 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       to: "/apps",
     },
     {
-      children: "Charts",
-      to: "/charts",
+      children: "Catalog",
+      to: "/catalog",
     },
     {
       children: "Service Instances (alpha)",

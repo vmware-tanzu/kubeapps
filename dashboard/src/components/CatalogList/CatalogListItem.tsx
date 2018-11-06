@@ -4,13 +4,11 @@ import placeholder from "../../placeholder.png";
 import { IChart } from "../../shared/types";
 import InfoCard from "../InfoCard";
 
-import "./ChartListItem.css";
-
-interface IChartListItemProps {
+interface ICatalogListItemProps {
   chart: IChart;
 }
 
-class ChartListItem extends React.Component<IChartListItemProps> {
+class CatalogListItem extends React.Component<ICatalogListItemProps> {
   public render() {
     const { chart } = this.props;
     const { icon, name, repo } = chart.attributes;
@@ -30,4 +28,4 @@ class ChartListItem extends React.Component<IChartListItemProps> {
   }
 }
 
-export default ChartListItem;
+export default CatalogListItem;
