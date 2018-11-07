@@ -19,7 +19,7 @@ exports[`renders a header for the chart 1`] = `
       >
         <Link
           replace={false}
-          to="/charts/testrepo"
+          to="/catalog/testrepo"
         >
           testrepo
         </Link>

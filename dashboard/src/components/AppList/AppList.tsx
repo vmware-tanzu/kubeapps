@@ -61,7 +61,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
           <div className="col-3 text-r align-center">
             {!error && (
-              <Link to="/charts">
+              <Link to="/catalog">
                 <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
             )}
