@@ -141,8 +141,9 @@ func NewController(
 	// Set up an event handler for when CronJob resources get deleted. This
 	// handler will lookup the owner of the given CronJob, and if it is owned by a
 	// AppRepository resource will enqueue that AppRepository resource for
-	// processing. This way, we don't need to implement custom logic for handling
-	// CronJob resources. More info on this pattern:
+	// processing so the CronJob gets correctly recreated. This way, we don't need
+	// to implement custom logic for handling CronJob resources. More info on this
+	// pattern:
 	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
 	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: controller.handleObject,
