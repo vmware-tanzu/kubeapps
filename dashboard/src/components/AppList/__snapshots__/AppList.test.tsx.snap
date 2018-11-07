@@ -41,7 +41,7 @@ exports[`when apps available matches the snapshot 1`] = `
     >
       <Link
         replace={false}
-        to="/charts"
+        to="/catalog"
       >
         <button
           className="deploy-button button button-accent"
@@ -183,7 +183,7 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
     >
       <Link
         replace={false}
-        to="/charts"
+        to="/catalog"
       >
         <button
           className="deploy-button button button-accent"
@@ -254,7 +254,7 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
     >
       <Link
         replace={false}
-        to="/charts"
+        to="/catalog"
       >
         <button
           className="deploy-button button button-accent"
@@ -315,7 +315,7 @@ exports[`while fetching apps matches the snapshot 1`] = `
     >
       <Link
         replace={false}
-        to="/charts"
+        to="/catalog"
       >
         <button
           className="deploy-button button button-accent"

@@ -22,7 +22,7 @@ class ChartHeader extends React.Component<IChartHeaderProps> {
             <h1 className="margin-t-reset">{id}</h1>
             <h5 className="subtitle margin-b-normal">
               {appVersion && <span>{appVersion} - </span>}
-              <Link to={`/charts/${repo}`}>{repo}</Link>
+              <Link to={`/catalog/${repo}`}>{repo}</Link>
             </h5>
             <h5 className="subtitle margin-b-reset">{description}</h5>
           </div>
