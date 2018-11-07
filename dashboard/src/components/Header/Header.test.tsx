@@ -25,7 +25,7 @@ it("renders the header links and titles", () => {
   const items = menubar.children().map(p => p.props().children.props);
   const expectedItems = [
     { children: "Applications", to: "/apps" },
-    { children: "Charts", to: "/charts" },
+    { children: "Catalog", to: "/catalog" },
     { children: "Service Instances (alpha)", to: "/services/instances" },
   ];
   items.forEach((item, index) => {
