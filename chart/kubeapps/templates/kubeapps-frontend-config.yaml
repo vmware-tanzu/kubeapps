@@ -38,6 +38,9 @@ data:
         # Hide Www-Authenticate to prevent it triggering a basic auth prompt in
         # the browser with some clusters
         proxy_hide_header Www-Authenticate;
+        # Keep the connection open with the API server even if idle.
+        # Default 60 seconds, see https://github.com/kubeapps/kubeapps/issues/766
+        proxy_read_timeout 1h;
       }
 
       location /api/chartsvc {
