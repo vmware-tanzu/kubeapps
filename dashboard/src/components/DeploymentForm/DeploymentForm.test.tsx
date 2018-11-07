@@ -60,12 +60,35 @@ describe("renders an error", () => {
         error={new UnprocessableEntity("wrong format!")}
       />,
     );
-    wrapper.setState({ releaseName: "my-app" });
+    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
     expect(wrapper.find(ErrorSelector).exists()).toBe(true);
     expect(wrapper.find(ErrorSelector).html()).toContain(
       "Sorry! Something went wrong processing my-app",
     );
     expect(wrapper.find(ErrorSelector).html()).toContain("wrong format!");
+  });
+
+  it("the error does not change if the release name changes", () => {
+    const expectedErrorMsg = "Sorry! Something went wrong processing my-app";
+
+    const wrapper = shallow(
+      <DeploymentForm
+        {...defaultProps}
+        selected={
+          {
+            version: { attributes: {} },
+            versions: [{ id: "foo", attributes: {} }],
+          } as IChartState["selected"]
+        }
+        error={new UnprocessableEntity("wrong format!")}
+      />,
+    );
+
+    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
+    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector).html()).toContain(expectedErrorMsg);
+    wrapper.setState({ releaseName: "my-app2" });
+    expect(wrapper.find(ErrorSelector).html()).toContain(expectedErrorMsg);
   });
 });
 

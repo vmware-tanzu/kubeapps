@@ -36,6 +36,10 @@ interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
+  // Name of the release that was submitted for creation
+  // This is different than releaseName since it is also used in the error banner
+  // and we do not want to use releaseName since it is controller by the form field.
+  latestSubmittedReleaseName: string;
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
@@ -47,6 +51,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     isDeploying: false,
     namespace: this.props.namespace,
     releaseName: "",
+    latestSubmittedReleaseName: "",
     valuesModified: false,
   };
 
@@ -102,7 +107,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public render() {
     const { selected, bindingsWithSecrets, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
-    const { appValues, releaseName } = this.state;
+    const { appValues } = this.state;
     if (selected.error) {
       return (
         <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
@@ -120,7 +125,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               namespace={namespace}
               defaultRequiredRBACRoles={{ create: this.requiredRBACRoles() }}
               action="create"
-              resource={releaseName}
+              resource={this.state.latestSubmittedReleaseName}
             />
           )}
           <div className="row">
@@ -187,8 +192,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { selected, deployChart, push } = this.props;
-    this.setState({ isDeploying: true });
     const { releaseName, namespace, appValues } = this.state;
+
+    this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
     if (selected.version) {
       const deployed = await deployChart(selected.version, releaseName, namespace, appValues);
       if (deployed) {
@@ -202,6 +208,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ releaseName: e.currentTarget.value });
   };
+
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
     this.props.push(
       `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${
@@ -209,6 +216,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       }`,
     );
   };
+
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
