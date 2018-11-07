@@ -4,6 +4,8 @@ import placeholder from "../../placeholder.png";
 import { IChart } from "../../shared/types";
 import InfoCard from "../InfoCard";
 
+import "./CatalogItem.css";
+
 interface ICatalogItemProps {
   chart: IChart;
 }
