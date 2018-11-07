@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import "../ChartList/ChartListItem.css";
+import "../Catalog/CatalogItem.css";
 import InfoCard from "../InfoCard";
 import "./ServiceInstanceCard.css";
 
