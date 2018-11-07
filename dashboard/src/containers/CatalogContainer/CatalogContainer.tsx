@@ -4,7 +4,7 @@ import { RouteComponentProps } from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import actions from "../../actions";
-import CatalogList from "../../components/CatalogList";
+import Catalog from "../../components/Catalog";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
@@ -28,4 +28,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(CatalogList);
+)(Catalog);

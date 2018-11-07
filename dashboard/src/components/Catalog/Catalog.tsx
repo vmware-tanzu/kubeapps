@@ -9,9 +9,9 @@ import { MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
-import CatalogListItem from "./CatalogListItem";
+import CatalogItem from "./CatalogItem";
 
-interface ICatalogListProps {
+interface ICatalogProps {
   charts: IChartState;
   repo: string;
   filter: string;
@@ -19,12 +19,12 @@ interface ICatalogListProps {
   pushSearchFilter: (filter: string) => RouterAction;
 }
 
-interface ICatalogListState {
+interface ICatalogState {
   filter: string;
 }
 
-class CatalogList extends React.Component<ICatalogListProps, ICatalogListState> {
-  public state: ICatalogListState = {
+class Catalog extends React.Component<ICatalogProps, ICatalogState> {
+  public state: ICatalogState = {
     filter: "",
   };
 
@@ -34,7 +34,7 @@ class CatalogList extends React.Component<ICatalogListProps, ICatalogListState> 
     fetchCharts(repo);
   }
 
-  public componentWillReceiveProps(nextProps: ICatalogListProps) {
+  public componentWillReceiveProps(nextProps: ICatalogProps) {
     if (nextProps.filter !== this.state.filter) {
       this.setState({ filter: nextProps.filter });
     }
@@ -60,9 +60,9 @@ class CatalogList extends React.Component<ICatalogListProps, ICatalogListState> 
         />
       );
     }
-    const chartItems = items.map(c => <CatalogListItem key={c.id} chart={c} />);
+    const chartItems = items.map(c => <CatalogItem key={c.id} chart={c} />);
     return (
-      <section className="CatalogList">
+      <section className="Catalog">
         <PageHeader>
           <h1>Catalog</h1>
           <SearchFilter
@@ -91,4 +91,4 @@ class CatalogList extends React.Component<ICatalogListProps, ICatalogListState> 
   };
 }
 
-export default CatalogList;
+export default Catalog;
