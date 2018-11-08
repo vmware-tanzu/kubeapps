@@ -20,7 +20,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
         link={`/apps/ns/${app.namespace}/${app.releaseName}`}
         title={app.releaseName}
         icon={icon}
-        info={app.version || "-"}
+        info={`${app.chart}/v${app.version || "-"}`}
         tag1Content={app.namespace}
         tag2Content={app.status.toLocaleLowerCase()}
         tag2Class={app.status.toLocaleLowerCase()}

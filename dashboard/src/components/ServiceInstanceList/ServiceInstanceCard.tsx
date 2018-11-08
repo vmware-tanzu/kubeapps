@@ -8,6 +8,7 @@ export interface IServiceInstanceCardProps {
   name: string;
   namespace: string;
   servicePlanName: string;
+  serviceClassName: string;
   statusReason: string | undefined;
   link?: string;
   icon?: string;
@@ -24,13 +25,13 @@ function generalizeStatus(status: string) {
 }
 
 const ServiceInstanceCard: React.SFC<IServiceInstanceCardProps> = props => {
-  const { name, namespace, link, icon, servicePlanName, statusReason } = props;
+  const { name, namespace, link, icon, serviceClassName, servicePlanName, statusReason } = props;
   return (
     <InfoCard
       title={name}
       link={link}
       icon={icon}
-      info={servicePlanName}
+      info={`${serviceClassName}/${servicePlanName}`}
       tag1Content={namespace}
       tag2Class={statusReason && generalizeStatus(statusReason)}
       tag2Content={statusReason && generalizeStatus(statusReason)}
