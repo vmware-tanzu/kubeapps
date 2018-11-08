@@ -17,7 +17,7 @@ it("renders a header for the chart", () => {
   expect(wrapper.text()).toContain("A Test Chart");
   const repoLink = wrapper.find(Link);
   expect(repoLink.exists()).toBe(true);
-  expect(repoLink.props()).toMatchObject({ to: "/charts/testrepo", children: "testrepo" });
+  expect(repoLink.props()).toMatchObject({ to: "/catalog/testrepo", children: "testrepo" });
   expect(wrapper.find(ChartIcon).exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
 });
