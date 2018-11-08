@@ -312,20 +312,22 @@ exports[`when all the components are loaded when an instance is available should
             </CardContent>
           </Card>
         </CardGrid>
-        <h2>
-          Bindings
-        </h2>
-        <AddBindingButton
-          addBinding={[MockFunction]}
-          instanceRefName="my-instance"
-          namespace="default"
-          onAddBinding={[Function]}
-        />
-        <br />
-        <BindingList
-          bindingsWithSecrets={Array []}
-          removeBinding={[MockFunction]}
-        />
+        <div>
+          <h2>
+            Bindings
+          </h2>
+          <AddBindingButton
+            addBinding={[MockFunction]}
+            instanceRefName="my-instance"
+            namespace="default"
+            onAddBinding={[Function]}
+          />
+          <br />
+          <BindingList
+            bindingsWithSecrets={Array []}
+            removeBinding={[MockFunction]}
+          />
+        </div>
       </div>
     </LoadingWrapper>
   </main>
@@ -366,7 +368,22 @@ exports[`when all the components are loaded when an instance is available should
   classes={
     Object {
       "isFetching": false,
-      "list": Array [],
+      "list": Array [
+        Object {
+          "metadata": Object {
+            "name": "my-instance",
+            "uid": "class-my-instance",
+          },
+          "spec": Object {
+            "bindable": true,
+            "description": "this is a class",
+            "externalMetadata": Object {
+              "imageUrl": "img.png",
+            },
+            "externalName": "my-instance",
+          },
+        },
+      ],
     }
   }
   deprovision={[MockFunction]}
@@ -761,433 +778,329 @@ exports[`when all the components are loaded when an instance is available should
             <div
               className="CardGrid padding-v-big "
             >
-              <span />
+              <Card
+                key="class-my-instance"
+                responsive={true}
+                responsiveColumns={2}
+              >
+                <article
+                  className="Card  Card-responsive-2"
+                >
+                  <div
+                    className="Card__inner bg-white elevation-1"
+                  >
+                    <CardIcon
+                      icon="img.png"
+                    >
+                      <div
+                        className="Card__icon bg-light text-c"
+                      >
+                        <img
+                          src="img.png"
+                        />
+                      </div>
+                    </CardIcon>
+                    <CardContent>
+                      <div
+                        className="Card__content padding-normal "
+                      >
+                        <h5 />
+                        <p
+                          className="margin-b-reset"
+                        />
+                      </div>
+                    </CardContent>
+                  </div>
+                </article>
+              </Card>
               <span />
             </div>
           </CardGrid>
-          <h2>
-            Bindings
-          </h2>
-          <AddBindingButton
-            addBinding={[MockFunction]}
-            instanceRefName="my-instance"
-            namespace="default"
-            onAddBinding={[Function]}
-          >
-            <div
-              className="AddBindingButton"
+          <div>
+            <h2>
+              Bindings
+            </h2>
+            <AddBindingButton
+              addBinding={[MockFunction]}
+              instanceRefName="my-instance"
+              namespace="default"
+              onAddBinding={[Function]}
             >
-              <button
-                className="button button-primary"
-                onClick={[Function]}
+              <div
+                className="AddBindingButton"
               >
-                Add Binding
-              </button>
-              <Modal
-                ariaHideApp={true}
-                bodyOpenClassName="ReactModal__Body--open"
-                closeTimeoutMS={0}
-                isOpen={false}
-                onRequestClose={[Function]}
-                parentSelector={[Function]}
-                portalClassName="ReactModalPortal"
-                shouldCloseOnEsc={true}
-                shouldCloseOnOverlayClick={true}
-                shouldFocusAfterRender={true}
-                shouldReturnFocusAfterClose={true}
-              >
-                <Portal
-                  containerInfo={
-                    <div
-                      class="ReactModalPortal"
-                    />
-                  }
+                <button
+                  className="button button-primary"
+                  onClick={[Function]}
                 >
-                  <ModalPortal
-                    ariaHideApp={true}
-                    bodyOpenClassName="ReactModal__Body--open"
-                    closeTimeoutMS={0}
-                    defaultStyles={
-                      Object {
-                        "content": Object {
-                          "WebkitOverflowScrolling": "touch",
-                          "background": "#fff",
-                          "border": "1px solid #ccc",
-                          "borderRadius": "4px",
-                          "bottom": "40px",
-                          "left": "40px",
-                          "outline": "none",
-                          "overflow": "auto",
-                          "padding": "20px",
-                          "position": "absolute",
-                          "right": "40px",
-                          "top": "40px",
-                        },
-                        "overlay": Object {
-                          "backgroundColor": "rgba(255, 255, 255, 0.75)",
-                          "bottom": 0,
-                          "left": 0,
-                          "position": "fixed",
-                          "right": 0,
-                          "top": 0,
-                        },
-                      }
+                  Add Binding
+                </button>
+                <Modal
+                  ariaHideApp={true}
+                  bodyOpenClassName="ReactModal__Body--open"
+                  closeTimeoutMS={0}
+                  isOpen={false}
+                  onRequestClose={[Function]}
+                  parentSelector={[Function]}
+                  portalClassName="ReactModalPortal"
+                  shouldCloseOnEsc={true}
+                  shouldCloseOnOverlayClick={true}
+                  shouldFocusAfterRender={true}
+                  shouldReturnFocusAfterClose={true}
+                >
+                  <Portal
+                    containerInfo={
+                      <div
+                        class="ReactModalPortal"
+                      />
                     }
-                    isOpen={false}
-                    onRequestClose={[Function]}
-                    parentSelector={[Function]}
-                    portalClassName="ReactModalPortal"
-                    shouldCloseOnEsc={true}
-                    shouldCloseOnOverlayClick={true}
-                    shouldFocusAfterRender={true}
-                    shouldReturnFocusAfterClose={true}
-                    style={
-                      Object {
-                        "content": Object {},
-                        "overlay": Object {},
+                  >
+                    <ModalPortal
+                      ariaHideApp={true}
+                      bodyOpenClassName="ReactModal__Body--open"
+                      closeTimeoutMS={0}
+                      defaultStyles={
+                        Object {
+                          "content": Object {
+                            "WebkitOverflowScrolling": "touch",
+                            "background": "#fff",
+                            "border": "1px solid #ccc",
+                            "borderRadius": "4px",
+                            "bottom": "40px",
+                            "left": "40px",
+                            "outline": "none",
+                            "overflow": "auto",
+                            "padding": "20px",
+                            "position": "absolute",
+                            "right": "40px",
+                            "top": "40px",
+                          },
+                          "overlay": Object {
+                            "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                            "bottom": 0,
+                            "left": 0,
+                            "position": "fixed",
+                            "right": 0,
+                            "top": 0,
+                          },
+                        }
                       }
-                    }
-                  />
-                </Portal>
-              </Modal>
-            </div>
-          </AddBindingButton>
-          <br />
-          <BindingList
-            bindingsWithSecrets={
-              Array [
-                Object {
-                  "binding": Object {
-                    "metadata": Object {
-                      "name": "my-instance",
-                      "namespace": "default",
-                      "uid": "binding-my-instance",
-                    },
-                    "spec": Object {
-                      "instanceRef": Object {
+                      isOpen={false}
+                      onRequestClose={[Function]}
+                      parentSelector={[Function]}
+                      portalClassName="ReactModalPortal"
+                      shouldCloseOnEsc={true}
+                      shouldCloseOnOverlayClick={true}
+                      shouldFocusAfterRender={true}
+                      shouldReturnFocusAfterClose={true}
+                      style={
+                        Object {
+                          "content": Object {},
+                          "overlay": Object {},
+                        }
+                      }
+                    />
+                  </Portal>
+                </Modal>
+              </div>
+            </AddBindingButton>
+            <br />
+            <BindingList
+              bindingsWithSecrets={
+                Array [
+                  Object {
+                    "binding": Object {
+                      "metadata": Object {
                         "name": "my-instance",
+                        "namespace": "default",
+                        "uid": "binding-my-instance",
+                      },
+                      "spec": Object {
+                        "instanceRef": Object {
+                          "name": "my-instance",
+                        },
+                      },
+                      "status": Object {
+                        "conditions": Array [
+                          Object {
+                            "message": "binding is okay",
+                          },
+                        ],
                       },
                     },
-                    "status": Object {
-                      "conditions": Array [
-                        Object {
-                          "message": "binding is okay",
-                        },
-                      ],
-                    },
                   },
-                },
-              ]
-            }
-            removeBinding={[MockFunction]}
-          >
-            <div
-              className="BindingList"
+                ]
+              }
+              removeBinding={[MockFunction]}
             >
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                      Binding
-                    </th>
-                    <th>
-                      Status
-                    </th>
-                    <th>
-                      Message
-                    </th>
-                    <th>
-                      Secret
-                    </th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  <BindingListEntry
-                    bindingWithSecret={
-                      Object {
-                        "binding": Object {
-                          "metadata": Object {
-                            "name": "my-instance",
-                            "namespace": "default",
-                            "uid": "binding-my-instance",
-                          },
-                          "spec": Object {
-                            "instanceRef": Object {
+              <div
+                className="BindingList"
+              >
+                <table>
+                  <thead>
+                    <tr>
+                      <th>
+                        Binding
+                      </th>
+                      <th>
+                        Status
+                      </th>
+                      <th>
+                        Message
+                      </th>
+                      <th>
+                        Secret
+                      </th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <BindingListEntry
+                      bindingWithSecret={
+                        Object {
+                          "binding": Object {
+                            "metadata": Object {
                               "name": "my-instance",
+                              "namespace": "default",
+                              "uid": "binding-my-instance",
+                            },
+                            "spec": Object {
+                              "instanceRef": Object {
+                                "name": "my-instance",
+                              },
+                            },
+                            "status": Object {
+                              "conditions": Array [
+                                Object {
+                                  "message": "binding is okay",
+                                },
+                              ],
                             },
                           },
-                          "status": Object {
-                            "conditions": Array [
-                              Object {
-                                "message": "binding is okay",
-                              },
-                            ],
-                          },
-                        },
+                        }
                       }
-                    }
-                    key="binding-my-instance"
-                    removeBinding={[MockFunction]}
-                  >
-                    <tr>
-                      <td>
-                        my-instance
-                      </td>
-                      <td>
-                        <code />
-                      </td>
-                      <td>
-                        <button
-                          className="button button-small"
-                          onClick={[Function]}
-                        >
-                          Show message
-                        </button>
-                        <TerminalModal
-                          closeModal={[Function]}
-                          message="binding is okay"
-                          modalIsOpen={false}
-                          title="Status Message"
-                        >
-                          <div
-                            className="MessageDetails"
+                      key="binding-my-instance"
+                      removeBinding={[MockFunction]}
+                    >
+                      <tr>
+                        <td>
+                          my-instance
+                        </td>
+                        <td>
+                          <code />
+                        </td>
+                        <td>
+                          <button
+                            className="button button-small"
+                            onClick={[Function]}
                           >
-                            <Modal
-                              ariaHideApp={true}
-                              bodyOpenClassName="ReactModal__Body--open"
-                              className="Terminal"
-                              closeTimeoutMS={0}
-                              contentLabel="Modal"
-                              isOpen={false}
-                              onRequestClose={[Function]}
-                              parentSelector={[Function]}
-                              portalClassName="ReactModalPortal"
-                              shouldCloseOnEsc={true}
-                              shouldCloseOnOverlayClick={true}
-                              shouldFocusAfterRender={true}
-                              shouldReturnFocusAfterClose={true}
-                              style={
-                                Object {
-                                  "content": Object {
-                                    "maxWidth": "80%",
-                                  },
-                                  "overlay": Object {
-                                    "alignItems": "center",
-                                    "display": "flex",
-                                    "justifyContent": "center",
-                                  },
-                                }
-                              }
+                            Show message
+                          </button>
+                          <TerminalModal
+                            closeModal={[Function]}
+                            message="binding is okay"
+                            modalIsOpen={false}
+                            title="Status Message"
+                          >
+                            <div
+                              className="MessageDetails"
                             >
-                              <Portal
-                                containerInfo={
-                                  <div
-                                    class="ReactModalPortal"
-                                  />
-                                }
-                              >
-                                <ModalPortal
-                                  ariaHideApp={true}
-                                  bodyOpenClassName="ReactModal__Body--open"
-                                  className="Terminal"
-                                  closeTimeoutMS={0}
-                                  contentLabel="Modal"
-                                  defaultStyles={
-                                    Object {
-                                      "content": Object {
-                                        "WebkitOverflowScrolling": "touch",
-                                        "background": "#fff",
-                                        "border": "1px solid #ccc",
-                                        "borderRadius": "4px",
-                                        "bottom": "40px",
-                                        "left": "40px",
-                                        "outline": "none",
-                                        "overflow": "auto",
-                                        "padding": "20px",
-                                        "position": "absolute",
-                                        "right": "40px",
-                                        "top": "40px",
-                                      },
-                                      "overlay": Object {
-                                        "backgroundColor": "rgba(255, 255, 255, 0.75)",
-                                        "bottom": 0,
-                                        "left": 0,
-                                        "position": "fixed",
-                                        "right": 0,
-                                        "top": 0,
-                                      },
-                                    }
-                                  }
-                                  isOpen={false}
-                                  onRequestClose={[Function]}
-                                  parentSelector={[Function]}
-                                  portalClassName="ReactModalPortal"
-                                  shouldCloseOnEsc={true}
-                                  shouldCloseOnOverlayClick={true}
-                                  shouldFocusAfterRender={true}
-                                  shouldReturnFocusAfterClose={true}
-                                  style={
-                                    Object {
-                                      "content": Object {
-                                        "maxWidth": "80%",
-                                      },
-                                      "overlay": Object {
-                                        "alignItems": "center",
-                                        "display": "flex",
-                                        "justifyContent": "center",
-                                      },
-                                    }
-                                  }
-                                />
-                              </Portal>
-                            </Modal>
-                          </div>
-                        </TerminalModal>
-                      </td>
-                      <td>
-                        <BindingDetails
-                          binding={
-                            Object {
-                              "metadata": Object {
-                                "name": "my-instance",
-                                "namespace": "default",
-                                "uid": "binding-my-instance",
-                              },
-                              "spec": Object {
-                                "instanceRef": Object {
-                                  "name": "my-instance",
-                                },
-                              },
-                              "status": Object {
-                                "conditions": Array [
+                              <Modal
+                                ariaHideApp={true}
+                                bodyOpenClassName="ReactModal__Body--open"
+                                className="Terminal"
+                                closeTimeoutMS={0}
+                                contentLabel="Modal"
+                                isOpen={false}
+                                onRequestClose={[Function]}
+                                parentSelector={[Function]}
+                                portalClassName="ReactModalPortal"
+                                shouldCloseOnEsc={true}
+                                shouldCloseOnOverlayClick={true}
+                                shouldFocusAfterRender={true}
+                                shouldReturnFocusAfterClose={true}
+                                style={
                                   Object {
-                                    "message": "binding is okay",
-                                  },
-                                ],
-                              },
-                            }
-                          }
-                        >
-                          <dl
-                            className="BindingDetails container margin-normal"
-                          >
-                            <dt>
-                               
-                              <a
-                                onClick={[Function]}
+                                    "content": Object {
+                                      "maxWidth": "80%",
+                                    },
+                                    "overlay": Object {
+                                      "alignItems": "center",
+                                      "display": "flex",
+                                      "justifyContent": "center",
+                                    },
+                                  }
+                                }
                               >
-                                (show)
-                              </a>
-                            </dt>
-                            <TerminalModal
-                              closeModal={[Function]}
-                              message="The secret is empty"
-                              modalIsOpen={false}
-                              title="Secret: undefined"
-                            >
-                              <div
-                                className="MessageDetails"
-                              >
-                                <Modal
-                                  ariaHideApp={true}
-                                  bodyOpenClassName="ReactModal__Body--open"
-                                  className="Terminal"
-                                  closeTimeoutMS={0}
-                                  contentLabel="Modal"
-                                  isOpen={false}
-                                  onRequestClose={[Function]}
-                                  parentSelector={[Function]}
-                                  portalClassName="ReactModalPortal"
-                                  shouldCloseOnEsc={true}
-                                  shouldCloseOnOverlayClick={true}
-                                  shouldFocusAfterRender={true}
-                                  shouldReturnFocusAfterClose={true}
-                                  style={
-                                    Object {
-                                      "content": Object {
-                                        "maxWidth": "80%",
-                                      },
-                                      "overlay": Object {
-                                        "alignItems": "center",
-                                        "display": "flex",
-                                        "justifyContent": "center",
-                                      },
-                                    }
+                                <Portal
+                                  containerInfo={
+                                    <div
+                                      class="ReactModalPortal"
+                                    />
                                   }
                                 >
-                                  <Portal
-                                    containerInfo={
-                                      <div
-                                        class="ReactModalPortal"
-                                      />
+                                  <ModalPortal
+                                    ariaHideApp={true}
+                                    bodyOpenClassName="ReactModal__Body--open"
+                                    className="Terminal"
+                                    closeTimeoutMS={0}
+                                    contentLabel="Modal"
+                                    defaultStyles={
+                                      Object {
+                                        "content": Object {
+                                          "WebkitOverflowScrolling": "touch",
+                                          "background": "#fff",
+                                          "border": "1px solid #ccc",
+                                          "borderRadius": "4px",
+                                          "bottom": "40px",
+                                          "left": "40px",
+                                          "outline": "none",
+                                          "overflow": "auto",
+                                          "padding": "20px",
+                                          "position": "absolute",
+                                          "right": "40px",
+                                          "top": "40px",
+                                        },
+                                        "overlay": Object {
+                                          "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                          "bottom": 0,
+                                          "left": 0,
+                                          "position": "fixed",
+                                          "right": 0,
+                                          "top": 0,
+                                        },
+                                      }
                                     }
-                                  >
-                                    <ModalPortal
-                                      ariaHideApp={true}
-                                      bodyOpenClassName="ReactModal__Body--open"
-                                      className="Terminal"
-                                      closeTimeoutMS={0}
-                                      contentLabel="Modal"
-                                      defaultStyles={
-                                        Object {
-                                          "content": Object {
-                                            "WebkitOverflowScrolling": "touch",
-                                            "background": "#fff",
-                                            "border": "1px solid #ccc",
-                                            "borderRadius": "4px",
-                                            "bottom": "40px",
-                                            "left": "40px",
-                                            "outline": "none",
-                                            "overflow": "auto",
-                                            "padding": "20px",
-                                            "position": "absolute",
-                                            "right": "40px",
-                                            "top": "40px",
-                                          },
-                                          "overlay": Object {
-                                            "backgroundColor": "rgba(255, 255, 255, 0.75)",
-                                            "bottom": 0,
-                                            "left": 0,
-                                            "position": "fixed",
-                                            "right": 0,
-                                            "top": 0,
-                                          },
-                                        }
+                                    isOpen={false}
+                                    onRequestClose={[Function]}
+                                    parentSelector={[Function]}
+                                    portalClassName="ReactModalPortal"
+                                    shouldCloseOnEsc={true}
+                                    shouldCloseOnOverlayClick={true}
+                                    shouldFocusAfterRender={true}
+                                    shouldReturnFocusAfterClose={true}
+                                    style={
+                                      Object {
+                                        "content": Object {
+                                          "maxWidth": "80%",
+                                        },
+                                        "overlay": Object {
+                                          "alignItems": "center",
+                                          "display": "flex",
+                                          "justifyContent": "center",
+                                        },
                                       }
-                                      isOpen={false}
-                                      onRequestClose={[Function]}
-                                      parentSelector={[Function]}
-                                      portalClassName="ReactModalPortal"
-                                      shouldCloseOnEsc={true}
-                                      shouldCloseOnOverlayClick={true}
-                                      shouldFocusAfterRender={true}
-                                      shouldReturnFocusAfterClose={true}
-                                      style={
-                                        Object {
-                                          "content": Object {
-                                            "maxWidth": "80%",
-                                          },
-                                          "overlay": Object {
-                                            "alignItems": "center",
-                                            "display": "flex",
-                                            "justifyContent": "center",
-                                          },
-                                        }
-                                      }
-                                    />
-                                  </Portal>
-                                </Modal>
-                              </div>
-                            </TerminalModal>
-                          </dl>
-                        </BindingDetails>
-                      </td>
-                      <td>
-                        <RemoveBindingButton
-                          bindingWithSecret={
-                            Object {
-                              "binding": Object {
+                                    }
+                                  />
+                                </Portal>
+                              </Modal>
+                            </div>
+                          </TerminalModal>
+                        </td>
+                        <td>
+                          <BindingDetails
+                            binding={
+                              Object {
                                 "metadata": Object {
                                   "name": "my-instance",
                                   "namespace": "default",
@@ -1205,29 +1118,169 @@ exports[`when all the components are loaded when an instance is available should
                                     },
                                   ],
                                 },
-                              },
+                              }
                             }
-                          }
-                          removeBinding={[MockFunction]}
-                        >
-                          <div
-                            className="RemoveBindingButton"
                           >
-                            <button
-                              className="button button-small button-danger"
-                              onClick={[Function]}
+                            <dl
+                              className="BindingDetails container margin-normal"
                             >
-                              Remove
-                            </button>
-                          </div>
-                        </RemoveBindingButton>
-                      </td>
-                    </tr>
-                  </BindingListEntry>
-                </tbody>
-              </table>
-            </div>
-          </BindingList>
+                              <dt>
+                                 
+                                <a
+                                  onClick={[Function]}
+                                >
+                                  (show)
+                                </a>
+                              </dt>
+                              <TerminalModal
+                                closeModal={[Function]}
+                                message="The secret is empty"
+                                modalIsOpen={false}
+                                title="Secret: undefined"
+                              >
+                                <div
+                                  className="MessageDetails"
+                                >
+                                  <Modal
+                                    ariaHideApp={true}
+                                    bodyOpenClassName="ReactModal__Body--open"
+                                    className="Terminal"
+                                    closeTimeoutMS={0}
+                                    contentLabel="Modal"
+                                    isOpen={false}
+                                    onRequestClose={[Function]}
+                                    parentSelector={[Function]}
+                                    portalClassName="ReactModalPortal"
+                                    shouldCloseOnEsc={true}
+                                    shouldCloseOnOverlayClick={true}
+                                    shouldFocusAfterRender={true}
+                                    shouldReturnFocusAfterClose={true}
+                                    style={
+                                      Object {
+                                        "content": Object {
+                                          "maxWidth": "80%",
+                                        },
+                                        "overlay": Object {
+                                          "alignItems": "center",
+                                          "display": "flex",
+                                          "justifyContent": "center",
+                                        },
+                                      }
+                                    }
+                                  >
+                                    <Portal
+                                      containerInfo={
+                                        <div
+                                          class="ReactModalPortal"
+                                        />
+                                      }
+                                    >
+                                      <ModalPortal
+                                        ariaHideApp={true}
+                                        bodyOpenClassName="ReactModal__Body--open"
+                                        className="Terminal"
+                                        closeTimeoutMS={0}
+                                        contentLabel="Modal"
+                                        defaultStyles={
+                                          Object {
+                                            "content": Object {
+                                              "WebkitOverflowScrolling": "touch",
+                                              "background": "#fff",
+                                              "border": "1px solid #ccc",
+                                              "borderRadius": "4px",
+                                              "bottom": "40px",
+                                              "left": "40px",
+                                              "outline": "none",
+                                              "overflow": "auto",
+                                              "padding": "20px",
+                                              "position": "absolute",
+                                              "right": "40px",
+                                              "top": "40px",
+                                            },
+                                            "overlay": Object {
+                                              "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                              "bottom": 0,
+                                              "left": 0,
+                                              "position": "fixed",
+                                              "right": 0,
+                                              "top": 0,
+                                            },
+                                          }
+                                        }
+                                        isOpen={false}
+                                        onRequestClose={[Function]}
+                                        parentSelector={[Function]}
+                                        portalClassName="ReactModalPortal"
+                                        shouldCloseOnEsc={true}
+                                        shouldCloseOnOverlayClick={true}
+                                        shouldFocusAfterRender={true}
+                                        shouldReturnFocusAfterClose={true}
+                                        style={
+                                          Object {
+                                            "content": Object {
+                                              "maxWidth": "80%",
+                                            },
+                                            "overlay": Object {
+                                              "alignItems": "center",
+                                              "display": "flex",
+                                              "justifyContent": "center",
+                                            },
+                                          }
+                                        }
+                                      />
+                                    </Portal>
+                                  </Modal>
+                                </div>
+                              </TerminalModal>
+                            </dl>
+                          </BindingDetails>
+                        </td>
+                        <td>
+                          <RemoveBindingButton
+                            bindingWithSecret={
+                              Object {
+                                "binding": Object {
+                                  "metadata": Object {
+                                    "name": "my-instance",
+                                    "namespace": "default",
+                                    "uid": "binding-my-instance",
+                                  },
+                                  "spec": Object {
+                                    "instanceRef": Object {
+                                      "name": "my-instance",
+                                    },
+                                  },
+                                  "status": Object {
+                                    "conditions": Array [
+                                      Object {
+                                        "message": "binding is okay",
+                                      },
+                                    ],
+                                  },
+                                },
+                              }
+                            }
+                            removeBinding={[MockFunction]}
+                          >
+                            <div
+                              className="RemoveBindingButton"
+                            >
+                              <button
+                                className="button button-small button-danger"
+                                onClick={[Function]}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </RemoveBindingButton>
+                        </td>
+                      </tr>
+                    </BindingListEntry>
+                  </tbody>
+                </table>
+              </div>
+            </BindingList>
+          </div>
         </div>
       </LoadingWrapper>
     </main>
@@ -1353,20 +1406,13 @@ exports[`when all the components are loaded when an instance is available should
           <span />
           <span />
         </CardGrid>
-        <h2>
-          Bindings
-        </h2>
-        <AddBindingButton
-          addBinding={[MockFunction]}
-          instanceRefName="my-instance"
-          namespace="default"
-          onAddBinding={[Function]}
-        />
-        <br />
-        <BindingList
-          bindingsWithSecrets={Array []}
-          removeBinding={[MockFunction]}
-        />
+        <h5
+          className="padding-b-big"
+        >
+          <i>
+            Instance Not Bindable
+          </i>
+        </h5>
       </div>
     </LoadingWrapper>
   </main>

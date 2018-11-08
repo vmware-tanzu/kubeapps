@@ -12,6 +12,7 @@ import { ForbiddenError, NotFoundError } from "../../shared/types";
 import BindingListEntry from "../BindingList/BindingListEntry";
 import Card from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
+import AddBindingButton from "./AddBindingButton";
 
 const defaultName = "my-instance";
 const defaultNS = "default";
@@ -131,6 +132,7 @@ context("when all the components are loaded", () => {
               uid: `class-${defaultName}`,
             },
             spec: {
+              bindable: true,
               externalName: defaultName,
               description: "this is a class",
               externalMetadata: {
@@ -170,6 +172,25 @@ context("when all the components are loaded", () => {
     });
 
     it("should show the available bindings", () => {
+      const classes = {
+        isFetching: false,
+        list: [
+          {
+            metadata: {
+              name: defaultName,
+              uid: `class-${defaultName}`,
+            },
+            spec: {
+              bindable: true,
+              externalName: defaultName,
+              description: "this is a class",
+              externalMetadata: {
+                imageUrl: "img.png",
+              },
+            },
+          } as IClusterServiceClass,
+        ],
+      };
       const bindings = {
         isFetching: false,
         list: [
@@ -200,6 +221,7 @@ context("when all the components are loaded", () => {
         <ServiceInstanceView
           {...defaultProps}
           instances={instances}
+          classes={classes}
           bindingsWithSecrets={bindings}
         />,
       );
@@ -207,6 +229,33 @@ context("when all the components are loaded", () => {
         wrapper.find(BindingListEntry).filterWhere(b => b.key() === `binding-${defaultName}`),
       ).toExist();
       expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should not show bindings information if the class is not bindable", () => {
+      const classes = {
+        isFetching: false,
+        list: [
+          {
+            metadata: {
+              name: defaultName,
+              uid: `class-${defaultName}`,
+            },
+            spec: {
+              bindable: false,
+              externalName: defaultName,
+              description: "this is a class",
+              externalMetadata: {
+                imageUrl: "img.png",
+              },
+            },
+          } as IClusterServiceClass,
+        ],
+      };
+      const wrapper = shallow(
+        <ServiceInstanceView {...defaultProps} instances={instances} classes={classes} />,
+      );
+      expect(wrapper.find(AddBindingButton)).not.toExist();
+      expect(wrapper.find(".found").text()).toContain("Instance Not Bindable");
     });
   });
 });
