@@ -63,7 +63,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     getApp(releaseName, namespace);
   }
 
-  public async componentWillReceiveProps(nextProps: IAppViewProps) {
+  public componentWillReceiveProps(nextProps: IAppViewProps) {
     const { releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
       getApp(releaseName, nextProps.namespace);
@@ -78,7 +78,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     if (!newApp) {
       return;
     }
-    let manifest: IResource[] = yaml.safeLoadAll(newApp.manifest);
+    let manifest: IResource[] = yaml.loadAll(newApp.manifest, undefined, { json: true });
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
