@@ -107,7 +107,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public render() {
     const { selected, bindingsWithSecrets, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
-    const { appValues } = this.state;
+    const { appValues, latestSubmittedReleaseName } = this.state;
     if (selected.error) {
       return (
         <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
@@ -125,7 +125,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               namespace={namespace}
               defaultRequiredRBACRoles={{ create: this.requiredRBACRoles() }}
               action="create"
-              resource={this.state.latestSubmittedReleaseName}
+              resource={latestSubmittedReleaseName}
             />
           )}
           <div className="row">

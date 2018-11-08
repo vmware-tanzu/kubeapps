@@ -87,7 +87,7 @@ describe("renders an error", () => {
     wrapper.setState({ latestSubmittedReleaseName: "my-app" });
     expect(wrapper.find(ErrorSelector).exists()).toBe(true);
     expect(wrapper.find(ErrorSelector).html()).toContain(expectedErrorMsg);
-    wrapper.setState({ releaseName: "my-app2" });
+    wrapper.setState({ releaseName: "another-app" });
     expect(wrapper.find(ErrorSelector).html()).toContain(expectedErrorMsg);
   });
 });
