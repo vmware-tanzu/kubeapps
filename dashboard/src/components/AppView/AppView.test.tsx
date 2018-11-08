@@ -144,6 +144,7 @@ describe("AppViewComponent", () => {
       expect(sockets.length).toEqual(0);
     });
 
+    // See https://github.com/kubeapps/kubeapps/issues/632
     it("handles manifests with duplicate keys", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
       const manifest = `
