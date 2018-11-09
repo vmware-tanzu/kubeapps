@@ -78,6 +78,10 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     if (!newApp) {
       return;
     }
+    // TODO(prydonius): Okay to use non-safe load here since we assume the
+    // manifest is pre-parsed by Helm and Kubernetes. Look into switching back
+    // to safeLoadAll once https://github.com/nodeca/js-yaml/issues/456 is
+    // resolved.
     let manifest: IResource[] = yaml.loadAll(newApp.manifest, undefined, { json: true });
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
