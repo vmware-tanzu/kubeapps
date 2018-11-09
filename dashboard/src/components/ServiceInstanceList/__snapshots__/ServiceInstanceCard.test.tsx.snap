@@ -3,7 +3,7 @@
 exports[`should render a Card 1`] = `
 <InfoCard
   icon="an-icon.png"
-  info="database/large"
+  info="large database"
   link="/a/link/somewhere"
   tag1Content="foobar"
   tag2Class="Provisioned"

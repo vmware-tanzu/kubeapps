@@ -31,7 +31,7 @@ const ServiceInstanceCard: React.SFC<IServiceInstanceCardProps> = props => {
       title={name}
       link={link}
       icon={icon}
-      info={`${serviceClassName}/${servicePlanName}`}
+      info={`${servicePlanName} ${serviceClassName}`}
       tag1Content={namespace}
       tag2Class={statusReason && generalizeStatus(statusReason)}
       tag2Content={statusReason && generalizeStatus(statusReason)}
