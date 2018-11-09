@@ -115,6 +115,67 @@ context("when all the components are loaded", () => {
         } as IServiceInstance,
       ],
     };
+    const classes = {
+      isFetching: false,
+      list: [
+        {
+          metadata: {
+            name: defaultName,
+            uid: `class-${defaultName}`,
+          },
+          spec: {
+            bindable: true,
+            externalName: defaultName,
+            description: "this is a class",
+            externalMetadata: {
+              imageUrl: "img.png",
+            },
+          },
+        } as IClusterServiceClass,
+      ],
+    };
+    const plans = {
+      isFetching: false,
+      list: [
+        {
+          metadata: {
+            name: defaultName,
+          },
+          spec: {
+            externalName: defaultName,
+            externalID: `plan-${defaultName}`,
+            description: "this is a plan",
+            free: true,
+          },
+        } as IServicePlan,
+      ],
+    };
+    const bindings = {
+      isFetching: false,
+      list: [
+        {
+          binding: {
+            metadata: {
+              name: defaultName,
+              namespace: defaultNS,
+              uid: `binding-${defaultName}`,
+            },
+            spec: {
+              instanceRef: {
+                name: defaultName,
+              },
+            },
+            status: {
+              conditions: [
+                {
+                  message: "binding is okay",
+                },
+              ],
+            },
+          },
+        } as IServiceBindingWithSecret,
+      ],
+    };
 
     it("should show the instance status info", () => {
       const wrapper = shallow(<ServiceInstanceView {...defaultProps} instances={instances} />);
@@ -123,41 +184,6 @@ context("when all the components are loaded", () => {
     });
 
     it("should show class and plan info if it exists", () => {
-      const classes = {
-        isFetching: false,
-        list: [
-          {
-            metadata: {
-              name: defaultName,
-              uid: `class-${defaultName}`,
-            },
-            spec: {
-              bindable: true,
-              externalName: defaultName,
-              description: "this is a class",
-              externalMetadata: {
-                imageUrl: "img.png",
-              },
-            },
-          } as IClusterServiceClass,
-        ],
-      };
-      const plans = {
-        isFetching: false,
-        list: [
-          {
-            metadata: {
-              name: defaultName,
-            },
-            spec: {
-              externalName: defaultName,
-              externalID: `plan-${defaultName}`,
-              description: "this is a plan",
-              free: true,
-            },
-          } as IServicePlan,
-        ],
-      };
       const wrapper = shallow(
         <ServiceInstanceView
           {...defaultProps}
@@ -172,51 +198,6 @@ context("when all the components are loaded", () => {
     });
 
     it("should show the available bindings", () => {
-      const classes = {
-        isFetching: false,
-        list: [
-          {
-            metadata: {
-              name: defaultName,
-              uid: `class-${defaultName}`,
-            },
-            spec: {
-              bindable: true,
-              externalName: defaultName,
-              description: "this is a class",
-              externalMetadata: {
-                imageUrl: "img.png",
-              },
-            },
-          } as IClusterServiceClass,
-        ],
-      };
-      const bindings = {
-        isFetching: false,
-        list: [
-          {
-            binding: {
-              metadata: {
-                name: defaultName,
-                namespace: defaultNS,
-                uid: `binding-${defaultName}`,
-              },
-              spec: {
-                instanceRef: {
-                  name: defaultName,
-                },
-              },
-              status: {
-                conditions: [
-                  {
-                    message: "binding is okay",
-                  },
-                ],
-              },
-            },
-          } as IServiceBindingWithSecret,
-        ],
-      };
       const wrapper = mount(
         <ServiceInstanceView
           {...defaultProps}
@@ -232,30 +213,19 @@ context("when all the components are loaded", () => {
     });
 
     it("should not show bindings information if the class is not bindable", () => {
-      const classes = {
-        isFetching: false,
-        list: [
-          {
-            metadata: {
-              name: defaultName,
-              uid: `class-${defaultName}`,
-            },
-            spec: {
-              bindable: false,
-              externalName: defaultName,
-              description: "this is a class",
-              externalMetadata: {
-                imageUrl: "img.png",
-              },
-            },
-          } as IClusterServiceClass,
-        ],
-      };
+      const classesNotBindable = { ...classes };
+      classes.list[0].spec.bindable = false;
       const wrapper = shallow(
-        <ServiceInstanceView {...defaultProps} instances={instances} classes={classes} />,
+        <ServiceInstanceView
+          {...defaultProps}
+          instances={instances}
+          classes={classesNotBindable}
+        />,
       );
       expect(wrapper.find(AddBindingButton)).not.toExist();
-      expect(wrapper.find(".found").text()).toContain("Instance Not Bindable");
+      expect(wrapper.find(".found").text()).toContain(
+        "This instance cannot be bound to applications",
+      );
     });
   });
 });

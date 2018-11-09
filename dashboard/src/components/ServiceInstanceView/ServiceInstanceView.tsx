@@ -172,7 +172,6 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
           );
         bindingSection = (
           <div>
-            <h2>Bindings</h2>
             <AddBindingButton
               bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
               instanceRefName={instance.metadata.name}
@@ -194,11 +193,7 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
           </div>
         );
       } else {
-        bindingSection = (
-          <h5 className="padding-b-big">
-            <i>Instance Not Bindable</i>
-          </h5>
-        );
+        bindingSection = <p>This instance cannot be bound to applications</p>;
       }
     }
 
@@ -235,6 +230,7 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
                   {classCard}
                   {planCard}
                 </CardGrid>
+                <h2>Bindings</h2>
                 {bindingSection}
               </div>
             )}

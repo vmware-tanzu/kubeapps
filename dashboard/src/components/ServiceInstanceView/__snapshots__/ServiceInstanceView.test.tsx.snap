@@ -312,10 +312,10 @@ exports[`when all the components are loaded when an instance is available should
             </CardContent>
           </Card>
         </CardGrid>
+        <h2>
+          Bindings
+        </h2>
         <div>
-          <h2>
-            Bindings
-          </h2>
           <AddBindingButton
             addBinding={[MockFunction]}
             instanceRefName="my-instance"
@@ -816,10 +816,10 @@ exports[`when all the components are loaded when an instance is available should
               <span />
             </div>
           </CardGrid>
+          <h2>
+            Bindings
+          </h2>
           <div>
-            <h2>
-              Bindings
-            </h2>
             <AddBindingButton
               addBinding={[MockFunction]}
               instanceRefName="my-instance"
@@ -1406,13 +1406,12 @@ exports[`when all the components are loaded when an instance is available should
           <span />
           <span />
         </CardGrid>
-        <h5
-          className="padding-b-big"
-        >
-          <i>
-            Instance Not Bindable
-          </i>
-        </h5>
+        <h2>
+          Bindings
+        </h2>
+        <p>
+          This instance cannot be bound to applications
+        </p>
       </div>
     </LoadingWrapper>
   </main>
