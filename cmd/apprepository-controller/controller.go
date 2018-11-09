@@ -509,13 +509,17 @@ func deleteJobName(reponame string) string {
 
 // apprepoSyncJobArgs returns a list of args for the sync container
 func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
-	return []string{
+	args := []string{
 		"sync",
 		"--mongo-url=" + mongoURL,
 		"--mongo-user=root",
-		apprepo.GetName(),
-		apprepo.Spec.URL,
 	}
+
+	if userAgentComment != "" {
+		args = append(args, "--user-agent-comment="+userAgentComment)
+	}
+
+	return append(args, apprepo.GetName(), apprepo.Spec.URL)
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container
