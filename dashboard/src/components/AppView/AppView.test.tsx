@@ -145,7 +145,7 @@ describe("AppViewComponent", () => {
     });
 
     // See https://github.com/kubeapps/kubeapps/issues/632
-    it("handles manifests with duplicate keys", () => {
+    it("supports manifests with duplicated keys", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
       const manifest = `
       apiVersion: v1
