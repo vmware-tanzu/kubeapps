@@ -20,7 +20,6 @@ exports[`renders the repo selection form if not introduced 1`] = `
         "name": "foo",
       }
     }
-    bindingsWithSecrets={Array []}
     chartName="bar"
     checkChart={[MockFunction]}
     clearRepo={[MockFunction]}
@@ -52,7 +51,6 @@ exports[`renders the repo selection form if not introduced 1`] = `
         ],
       }
     }
-    getBindings={[MockFunction]}
     getChartValues={[MockFunction]}
     getChartVersion={[MockFunction]}
     kubeappsNamespace="kubeapps"
@@ -92,7 +90,6 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     }
     appCurrentValues=""
     appCurrentVersion="1.0.0"
-    bindingsWithSecrets={Array []}
     chartName="bar"
     checkChart={[MockFunction]}
     clearRepo={[MockFunction]}
@@ -144,7 +141,6 @@ exports[`renders the upgrade form when the repo is available 1`] = `
         ],
       }
     }
-    getBindings={[MockFunction]}
     getChartValues={[MockFunction]}
     getChartVersion={[MockFunction]}
     kubeappsNamespace="kubeapps"
