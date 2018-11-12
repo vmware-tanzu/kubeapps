@@ -127,9 +127,6 @@ exports[`renders the full DeploymentForm 1`] = `
           </button>
         </div>
       </div>
-      <div
-        className="col-4"
-      />
     </div>
   </form>
 </div>

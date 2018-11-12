@@ -4,10 +4,8 @@ import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion } from "../../shared/types";
 
 const defaultProps: any = {
-  bindingsWithSecrets: [],
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
-  getBindings: jest.fn(),
   selected: {} as IChartState["selected"],
 };
 

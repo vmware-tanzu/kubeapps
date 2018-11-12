@@ -2,18 +2,15 @@ import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import AceEditor from "react-ace";
 
-import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
-import DeploymentBinding from "./DeploymentBinding";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
 interface IDeploymentFormProps {
   kubeappsNamespace: string;
-  bindingsWithSecrets: IServiceBindingWithSecret[];
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
@@ -26,7 +23,6 @@ interface IDeploymentFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => void;
-  getBindings: (ns: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   getChartValues: (id: string, chartVersion: string) => void;
   namespace: string;
@@ -56,24 +52,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public componentDidMount() {
-    const {
-      chartID,
-      fetchChartVersions,
-      getChartVersion,
-      chartVersion,
-      getBindings,
-      namespace,
-    } = this.props;
+    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
     fetchChartVersions(chartID);
     getChartVersion(chartID, chartVersion);
-    getBindings(namespace);
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     const {
       chartID,
       chartVersion,
-      getBindings,
       getChartValues,
       getChartVersion,
       namespace,
@@ -83,7 +70,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
     if (nextProps.namespace !== namespace) {
       this.setState({ namespace: nextProps.namespace });
-      getBindings(nextProps.namespace);
       return;
     }
 
@@ -105,7 +91,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { selected, bindingsWithSecrets, chartID, chartVersion, namespace } = this.props;
+    const { selected, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
     const { appValues, latestSubmittedReleaseName } = this.state;
     if (selected.error) {
@@ -177,11 +163,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   Submit
                 </button>
               </div>
-            </div>
-            <div className="col-4">
-              {bindingsWithSecrets.length > 0 && (
-                <DeploymentBinding bindingsWithSecrets={bindingsWithSecrets} />
-              )}
             </div>
           </div>
         </form>
