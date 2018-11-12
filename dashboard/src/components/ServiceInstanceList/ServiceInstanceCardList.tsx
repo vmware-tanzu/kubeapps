@@ -45,6 +45,7 @@ const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props 
                   namespace={instance.metadata.namespace}
                   link={link}
                   icon={icon}
+                  serviceClassName={(svcClass && svcClass.spec.externalName) || "-"}
                   servicePlanName={instance.spec.clusterServicePlanExternalName}
                   statusReason={status && status.reason}
                 />

@@ -76,6 +76,7 @@ type AppOverview struct {
 	Namespace   string `json:"namespace"`
 	Icon        string `json:"icon,omitempty"`
 	Status      string `json:"status"`
+	Chart       string `json:"chart"`
 }
 
 func (p *Proxy) getRelease(name, namespace string) (*release.Release, error) {
@@ -205,6 +206,7 @@ func (p *Proxy) ListReleases(namespace string, releaseListLimit int, status stri
 					Namespace:   r.Namespace,
 					Icon:        r.Chart.Metadata.Icon,
 					Status:      r.Info.Status.Code.String(),
+					Chart:       r.Chart.Metadata.Name,
 				})
 			}
 		}
