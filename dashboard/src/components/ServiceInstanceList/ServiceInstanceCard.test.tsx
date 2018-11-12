@@ -12,7 +12,8 @@ it("should render a Card", () => {
       namespace="foobar"
       link="/a/link/somewhere"
       icon="an-icon.png"
-      servicePlanName="database"
+      serviceClassName="database"
+      servicePlanName="large"
       statusReason="Provisioned"
     />,
   );
@@ -27,7 +28,8 @@ it("should avoid the status tag if it's not defined", () => {
       namespace="foobar"
       icon="an-icon.png"
       link="/a/link/somewhere"
-      servicePlanName="database"
+      serviceClassName="database"
+      servicePlanName="large"
       statusReason={undefined}
     />,
   );
@@ -60,7 +62,8 @@ describe("uses a different class and tag name depending on the status", () => {
           namespace="foobar"
           link="/a/link/somewhere"
           icon="an-icon.png"
-          servicePlanName="database"
+          serviceClassName="database"
+          servicePlanName="large"
           statusReason={test.status}
         />,
       );
