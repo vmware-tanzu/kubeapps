@@ -193,7 +193,7 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
           </div>
         );
       } else {
-        bindingSection = <p>This instance cannot be bound to applications</p>;
+        bindingSection = <p>This instance cannot be bound to applications.</p>;
       }
     }
 
