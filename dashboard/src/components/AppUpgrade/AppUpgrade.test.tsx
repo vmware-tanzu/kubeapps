@@ -13,14 +13,12 @@ import AppUpgrade from "./AppUpgrade";
 
 const defaultProps = {
   app: {} as hapi.release.Release,
-  bindingsWithSecrets: [],
   checkChart: jest.fn(),
   clearRepo: jest.fn(),
   error: undefined,
   fetchChartVersions: jest.fn(),
   fetchRepositories: jest.fn(),
   getApp: jest.fn(),
-  getBindings: jest.fn(),
   getChartValues: jest.fn(),
   getChartVersion: jest.fn(),
   kubeappsNamespace: "kubeapps",

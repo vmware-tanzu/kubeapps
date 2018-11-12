@@ -111,7 +111,7 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
     let body = <span />;
     let planCard = <span />;
     let classCard = <span />;
-    let bindingList = <span />;
+    let bindingSection = <span />;
 
     let instance: IServiceInstance | undefined;
     let svcPlan: IServicePlan | undefined;
@@ -162,15 +162,39 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
         planCard = this.renderSVCPlan(svcPlan);
       }
 
-      const bindings =
-        instance &&
-        bindingsWithSecrets.list.filter(
-          b =>
-            b.binding.spec.instanceRef.name === name && b.binding.metadata.namespace === namespace,
+      if (svcClass && svcClass.spec.bindable) {
+        const bindings =
+          instance &&
+          bindingsWithSecrets.list.filter(
+            b =>
+              b.binding.spec.instanceRef.name === name &&
+              b.binding.metadata.namespace === namespace,
+          );
+        bindingSection = (
+          <div>
+            <AddBindingButton
+              bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
+              instanceRefName={instance.metadata.name}
+              namespace={instance.metadata.namespace}
+              addBinding={this.props.addBinding}
+              onAddBinding={this.onAddBinding}
+              error={this.props.errors.create}
+            />
+            <br />
+            {this.props.errors.delete && (
+              <ErrorSelector
+                error={this.props.errors.delete}
+                resource="Binding"
+                action="delete"
+                defaultRequiredRBACRoles={RequiredRBACRoles}
+              />
+            )}
+            <BindingList bindingsWithSecrets={bindings} removeBinding={this.props.removeBinding} />
+          </div>
         );
-      bindingList = (
-        <BindingList bindingsWithSecrets={bindings} removeBinding={this.props.removeBinding} />
-      );
+      } else {
+        bindingSection = <p>This instance cannot be bound to applications.</p>;
+      }
     }
 
     return (
@@ -207,24 +231,7 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
                   {planCard}
                 </CardGrid>
                 <h2>Bindings</h2>
-                <AddBindingButton
-                  bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
-                  instanceRefName={instance.metadata.name}
-                  namespace={instance.metadata.namespace}
-                  addBinding={this.props.addBinding}
-                  onAddBinding={this.onAddBinding}
-                  error={this.props.errors.create}
-                />
-                <br />
-                {this.props.errors.delete && (
-                  <ErrorSelector
-                    error={this.props.errors.delete}
-                    resource="Binding"
-                    action="delete"
-                    defaultRequiredRBACRoles={RequiredRBACRoles}
-                  />
-                )}
-                {bindingList}
+                {bindingSection}
               </div>
             )}
           </LoadingWrapper>
