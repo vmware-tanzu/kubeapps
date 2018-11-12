@@ -8,7 +8,6 @@ import DeploymentForm from "./DeploymentForm";
 
 const defaultProps = {
   kubeappsNamespace: "kubeapps",
-  bindingsWithSecrets: [],
   chartID: "foo",
   chartVersion: "1.0.0",
   error: undefined,
@@ -16,7 +15,6 @@ const defaultProps = {
   deployChart: jest.fn(),
   push: jest.fn(),
   fetchChartVersions: jest.fn(),
-  getBindings: jest.fn(),
   getChartVersion: jest.fn(),
   getChartValues: jest.fn(),
   namespace: "default",
