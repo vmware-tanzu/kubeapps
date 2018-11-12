@@ -5,3 +5,13 @@
 .ListItem__content__info_tag.incubator {
   background-color: #f58220;
 }
+
+.ListItem__content__info_tag_link {
+  color: #fff;
+  &:hover {
+    color: #fff;
+  }
+  &:visited {
+    color: #fff;
+  }
+}
