@@ -1410,7 +1410,7 @@ exports[`when all the components are loaded when an instance is available should
           Bindings
         </h2>
         <p>
-          This instance cannot be bound to applications
+          This instance cannot be bound to applications.
         </p>
       </div>
     </LoadingWrapper>
