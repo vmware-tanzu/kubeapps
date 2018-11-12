@@ -1,10 +1,10 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 
 import placeholder from "../../placeholder.png";
 import { IChart } from "../../shared/types";
 import InfoCard from "../InfoCard";
 
-import { Link } from "react-router-dom";
 import "./CatalogItem.css";
 
 interface ICatalogItemProps {
