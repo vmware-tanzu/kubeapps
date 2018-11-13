@@ -56,9 +56,11 @@ func Test_userAgent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Override global variables used to generate the userAgent
 			if tt.version != "" {
+				defer func(origVersion string) { version = origVersion }(version)
 				version = tt.version
 			}
 			if tt.userAgentComment != "" {
+				defer func(origAgent string) { userAgentComment = origAgent }(userAgentComment)
 				userAgentComment = tt.userAgentComment
 			}
 			assert.Equal(t, tt.expectedResult, userAgent(), "expected user agent")
