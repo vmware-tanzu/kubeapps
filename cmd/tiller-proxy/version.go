@@ -26,6 +26,12 @@ var (
 	userAgentComment string
 )
 
+// clientWithDefaultUserAgent implements chart.HTTPClient interface
+// and includes an override of the Do method which injects an User-Agent
+type clientWithDefaultUserAgent struct {
+	http.Client
+}
+
 // Returns the user agent to be used during calls to the chart repositories
 // Examples:
 // tiller-proxy/devel

@@ -61,12 +61,6 @@ var (
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 )
 
-// clientWithDefaultUserAgent implements chart.HTTPClient interface
-// and includes an override of the Do method which injects an User-Agent
-type clientWithDefaultUserAgent struct {
-	http.Client
-}
-
 func init() {
 	settings.AddFlags(pflag.CommandLine)
 	// TLS Flags
