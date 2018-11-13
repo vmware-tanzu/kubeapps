@@ -78,5 +78,5 @@ To build the `kubeapps/apprepository-controller` docker image with the docker im
 
 ```bash
 cd $KUBEAPPS_DIR
-make VERSION=myver kubeapps/apprepository-controller
+make IMAGE_TAG=myver kubeapps/apprepository-controller
 ```
