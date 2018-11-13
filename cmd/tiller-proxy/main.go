@@ -77,6 +77,7 @@ func init() {
 	pflag.BoolVar(&tlsEnable, "tls", false, "enable TLS for request")
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
+	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 
 	netClient = &clientWithDefaultUserAgent{
 		Client: http.Client{
