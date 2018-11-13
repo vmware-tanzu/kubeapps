@@ -141,9 +141,8 @@ func NewController(
 	// Set up an event handler for when CronJob resources get deleted. This
 	// handler will lookup the owner of the given CronJob, and if it is owned by a
 	// AppRepository resource will enqueue that AppRepository resource for
-	// processing so the CronJob gets correctly recreated. This way, we don't need
-	// to implement custom logic for handling CronJob resources. More info on this
-	// pattern:
+	// processing. This way, we don't need to implement custom logic for handling
+	// CronJob resources. More info on this pattern:
 	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
 	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: controller.handleObject,
@@ -509,13 +508,17 @@ func deleteJobName(reponame string) string {
 
 // apprepoSyncJobArgs returns a list of args for the sync container
 func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
-	return []string{
+	args := []string{
 		"sync",
 		"--mongo-url=" + mongoURL,
 		"--mongo-user=root",
-		apprepo.GetName(),
-		apprepo.Spec.URL,
 	}
+
+	if userAgentComment != "" {
+		args = append(args, "--user-agent-comment="+userAgentComment)
+	}
+
+	return append(args, apprepo.GetName(), apprepo.Spec.URL)
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container
