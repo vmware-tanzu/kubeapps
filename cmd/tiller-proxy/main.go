@@ -24,6 +24,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
+	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/urfave/negroni"
@@ -33,10 +36,6 @@ import (
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
-
-	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
 const (
@@ -47,7 +46,7 @@ var (
 	settings    environment.EnvSettings
 	proxy       *tillerProxy.Proxy
 	kubeClient  kubernetes.Interface
-	netClient   *http.Client
+	netClient   *clientWithDefaultUserAgent
 	disableAuth bool
 	listLimit   int
 
@@ -62,6 +61,12 @@ var (
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 )
 
+// clientWithDefaultUserAgent implements chart.HTTPClient interface
+// and includes an override of the Do method which injects an User-Agent
+type clientWithDefaultUserAgent struct {
+	http.Client
+}
+
 func init() {
 	settings.AddFlags(pflag.CommandLine)
 	// TLS Flags
@@ -73,8 +78,10 @@ func init() {
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
 
-	netClient = &http.Client{
-		Timeout: time.Second * defaultTimeoutSeconds,
+	netClient = &clientWithDefaultUserAgent{
+		Client: http.Client{
+			Timeout: time.Second * defaultTimeoutSeconds,
+		},
 	}
 }
 
