@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { RouterAction } from "connected-react-router";
 import { hapi } from "../../shared/hapi/release";
-import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 import { IAppRepository, IChartState, IChartVersion, IRBACRole } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
@@ -11,7 +10,6 @@ import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 
 interface IAppUpgradeProps {
   app: hapi.release.Release;
-  bindingsWithSecrets: IServiceBindingWithSecret[];
   error: Error | undefined;
   repoError: Error | undefined;
   kubeappsNamespace: string;
@@ -31,7 +29,6 @@ interface IAppUpgradeProps {
   checkChart: (repo: string, chartName: string) => void;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getApp: (releaseName: string, namespace: string) => void;
-  getBindings: (ns: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   getChartValues: (id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;

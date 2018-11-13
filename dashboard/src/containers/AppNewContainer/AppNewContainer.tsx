@@ -18,11 +18,10 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { apps, catalog, charts, config, namespace }: IStoreState,
+  { apps, charts, config, namespace }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
-    bindingsWithSecrets: catalog.bindingsWithSecrets.list,
     chartID: `${params.repo}/${params.id}`,
     chartVersion: params.version,
     error: apps.error,
@@ -41,7 +40,6 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       values?: string,
     ) => dispatch(actions.apps.deployChart(version, releaseName, namespace, values)),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
-    getBindings: (ns: string) => dispatch(actions.catalog.getBindings(ns)),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),
     getChartVersion: (id: string, version: string) =>

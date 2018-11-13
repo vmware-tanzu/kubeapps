@@ -321,4 +321,5 @@ export interface IAppOverview {
   version: string;
   icon?: string;
   status: string;
+  chart: string;
 }

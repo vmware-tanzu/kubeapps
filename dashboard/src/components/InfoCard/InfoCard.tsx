@@ -11,9 +11,9 @@ export interface IServiceInstanceCardProps {
   link?: string;
   icon?: string;
   tag1Class?: string;
-  tag1Content?: string;
+  tag1Content?: string | JSX.Element;
   tag2Class?: string;
-  tag2Content?: string;
+  tag2Content?: string | JSX.Element;
 }
 
 const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
