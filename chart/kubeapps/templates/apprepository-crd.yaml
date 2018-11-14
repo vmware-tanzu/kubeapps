@@ -1,4 +1,4 @@
-{{- if or (not (.Capabilities.APIVersions.Has "kubeapps.com/v1alpha1")) (.Release.IsUpgrade) -}}
+{{- if not (.Capabilities.APIVersions.Has "kubeapps.com/v1alpha1") -}}
 # The condition above will be true if another instance of Kubeapps is
 # already installed 
 apiVersion: apiextensions.k8s.io/v1beta1
@@ -6,7 +6,8 @@ kind: CustomResourceDefinition
 metadata:
   name: apprepositories.kubeapps.com
   annotations:
-    "helm.sh/resource-policy": keep
+    # We also install it pre-upgrade in the case that the user has removed the CRD before upgrading
+    "helm.sh/hook": pre-install,post-upgrade
   labels:
     app: {{ template "kubeapps.apprepository.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
