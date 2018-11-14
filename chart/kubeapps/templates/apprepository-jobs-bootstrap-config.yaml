@@ -13,6 +13,24 @@ metadata:
     heritage: {{ .Release.Service }}
 data:
   apprepositories.yaml: |-
+    apiVersion: apiextensions.k8s.io/v1beta1
+    kind: CustomResourceDefinition
+    metadata:
+      name: apprepositories.kubeapps.com
+      labels:
+        app: {{ template "kubeapps.apprepository.fullname" . }}
+        chart: {{ template "kubeapps.chart" . }}
+        release: {{ .Release.Name }}
+        heritage: {{ .Release.Service }}
+    spec:
+      group: kubeapps.com
+      names:
+        kind: AppRepository
+        plural: apprepositories
+        shortNames:
+        - apprepos
+      version: v1alpha1
+    ---
     {{- range .Values.apprepository.initialRepos }}
     apiVersion: kubeapps.com/v1alpha1
     kind: AppRepository
