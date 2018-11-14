@@ -6,8 +6,7 @@ kind: CustomResourceDefinition
 metadata:
   name: apprepositories.kubeapps.com
   annotations:
-    # We also install it pre-upgrade in the case that the user has removed the CRD before upgrading
-    "helm.sh/hook": pre-install,post-upgrade
+    "helm.sh/hook": crd-install
   labels:
     app: {{ template "kubeapps.apprepository.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
