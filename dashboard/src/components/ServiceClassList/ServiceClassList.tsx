@@ -55,7 +55,7 @@ class ServiceClassList extends React.Component<IServiceClassListProps> {
                 <div>
                   <h5>Service Classes not found.</h5>
                   The Service Catalog server may have failed to populate them. You can find more
-                  information about how the Service Catalog works
+                  information about how the Service Catalog works{" "}
                   <a
                     target="_blank"
                     href={
