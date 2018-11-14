@@ -164,7 +164,7 @@ jobs:
     docker:
       - image: circleci/golang:1.11
     environment:
-      HELM_VERSION: v2.9.1
+      HELM_VERSION: v2.11.0
     steps:
       - checkout
       - <<: *install_helm_cli
@@ -193,12 +193,12 @@ jobs:
   GKE_1_9:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.9.1
+      HELM_VERSION: v2.11.0
       GKE_BRANCH: 1.9
   GKE_1_10:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.9.1
+      HELM_VERSION: v2.11.0
       GKE_BRANCH: 1.10
   sync_chart:
     docker:
