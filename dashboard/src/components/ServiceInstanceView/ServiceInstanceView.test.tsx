@@ -11,6 +11,7 @@ import { ForbiddenError, NotFoundError } from "../../shared/types";
 import BindingListEntry from "../BindingList/BindingListEntry";
 import { ErrorSelector } from "../ErrorAlert";
 import AddBindingButton from "./AddBindingButton";
+import DeprovisionButton from "./DeprovisionButton";
 import ServiceInstanceInfo from "./ServiceInstanceInfo";
 import ServiceInstanceStatus from "./ServiceInstanceStatus";
 
@@ -183,8 +184,10 @@ context("when all the components are loaded", () => {
     });
 
     it("should not show bindings information if the class is not bindable", () => {
-      const classesNotBindable = { ...classes };
-      classes.list[0].spec.bindable = false;
+      const classesNotBindable = {
+        ...classes,
+        list: [{ ...classes.list[0], spec: { ...classes.list[0].spec, bindable: false } }],
+      };
       const wrapper = shallow(
         <ServiceInstanceView
           {...defaultProps}
@@ -196,6 +199,44 @@ context("when all the components are loaded", () => {
       expect(wrapper.find(".ServiceInstanceView__details").text()).toContain(
         "This instance cannot be bound to applications",
       );
+    });
+
+    const instancesWithReason = (reason: string) => ({
+      ...instances,
+      list: [
+        {
+          ...instances.list[0],
+          status: {
+            conditions: [
+              {
+                ...instances.list[0].status.conditions[0],
+                reason,
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const buttonStateTestCases = [
+      { reason: "Provisioned", disabled: false },
+      { reason: "Unknown", disabled: false },
+      { reason: "Failed", disabled: false },
+      { reason: "Provisioning", disabled: true },
+      { reason: "Deprovisioning", disabled: true },
+    ];
+    buttonStateTestCases.forEach(t => {
+      it(`should have the correct button state when in the ${t.reason} state`, () => {
+        const is = instancesWithReason(t.reason);
+        const wrapper = shallow(
+          <ServiceInstanceView {...defaultProps} instances={is} classes={classes} />,
+        );
+        const deprovisionButton = wrapper.find(DeprovisionButton);
+        const addBindingButton = wrapper.find(AddBindingButton);
+        expect(deprovisionButton).toExist();
+        expect(addBindingButton).toExist();
+        expect(deprovisionButton.props().disabled).toBe(t.disabled);
+      });
     });
   });
 });

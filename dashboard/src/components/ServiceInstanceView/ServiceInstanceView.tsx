@@ -115,6 +115,7 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
     let instance: IServiceInstance | undefined;
     let svcPlan: IServicePlan | undefined;
     let svcClass: IClusterServiceClass | undefined;
+    let isPending: boolean = true;
 
     const loaded =
       !instances.isFetching &&
@@ -137,6 +138,11 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
         );
       }
       body = this.renderInstance(instance);
+
+      // Check if the instance is being provisioned or deprovisioned to disable
+      // certain actions
+      const status = instance.status.conditions[0];
+      isPending = !!(status && status.reason && status.reason.match(/provisioning/i));
 
       // TODO(prydonius): We should probably show an error if the svcClass or
       // svcPlan cannot be found for some reason.
@@ -178,6 +184,7 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
             )}
             <BindingList bindingsWithSecrets={bindings} removeBinding={this.props.removeBinding} />
             <AddBindingButton
+              disabled={isPending}
               bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
               instanceRefName={instance.metadata.name}
               namespace={instance.metadata.namespace}
@@ -238,7 +245,11 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
                         <ServiceInstanceStatus instance={instance} />
                       </div>
                       <div className="col-8 text-r">
-                        <DeprovisionButton deprovision={deprovision} instance={instance} />
+                        <DeprovisionButton
+                          deprovision={deprovision}
+                          instance={instance}
+                          disabled={isPending}
+                        />
                       </div>
                     </div>
                     <div className="ServiceInstanceView__details">
