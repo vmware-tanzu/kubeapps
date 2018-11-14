@@ -595,6 +595,7 @@ exports[`when all the components are loaded when an instance is available should
                 >
                   <DeprovisionButton
                     deprovision={[MockFunction]}
+                    disabled={false}
                     instance={
                       Object {
                         "metadata": Object {
@@ -1183,6 +1184,7 @@ exports[`when all the components are loaded when an instance is available should
                   </BindingList>
                   <AddBindingButton
                     addBinding={[MockFunction]}
+                    disabled={false}
                     instanceRefName="my-instance"
                     namespace="default"
                     onAddBinding={[Function]}
@@ -1192,6 +1194,7 @@ exports[`when all the components are loaded when an instance is available should
                     >
                       <button
                         className="button button-primary"
+                        disabled={false}
                         onClick={[Function]}
                       >
                         Add Binding
@@ -1408,6 +1411,7 @@ exports[`when all the components are loaded when an instance is available should
               >
                 <DeprovisionButton
                   deprovision={[MockFunction]}
+                  disabled={false}
                   instance={
                     Object {
                       "metadata": Object {
