@@ -35,6 +35,7 @@ testCases.forEach(t => {
     } as IServiceInstance;
     const wrapper = shallow(<ServiceInstanceStatus instance={instance} />);
     expect(wrapper.text()).toContain(t.want);
+    expect(wrapper).toMatchSnapshot();
   });
 });
 
@@ -42,4 +43,5 @@ it("displays unknown status when conditions is empty", () => {
   const instance = { ...baseInstance, status: { conditions: [] } } as IServiceInstance;
   const wrapper = shallow(<ServiceInstanceStatus instance={instance} />);
   expect(wrapper.text()).toContain("Unknown");
+  expect(wrapper).toMatchSnapshot();
 });
