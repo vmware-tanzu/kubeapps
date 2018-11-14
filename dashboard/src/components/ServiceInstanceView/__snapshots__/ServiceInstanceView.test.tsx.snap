@@ -585,7 +585,8 @@ exports[`when all the components are loaded when an instance is available should
                           />
                         </svg>
                       </AlertTriangle>
-                       Unknown
+                       
+                      Unknown
                     </span>
                   </ServiceInstanceStatus>
                 </div>

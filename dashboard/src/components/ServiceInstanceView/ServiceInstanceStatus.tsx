@@ -10,66 +10,35 @@ interface IServiceInstanceStatusProps {
   instance: IServiceInstance;
 }
 
+const checkIcon = <Check className="icon padding-t-tiny" />;
+const compassIcon = <Compass className="icon padding-t-tiny" />;
+// TODO(prydonius): move style to CSS once we switch all icons to feather icons
+const alertIcon = <AlertTriangle className="icon" style={{ bottom: "-0.3em" }} />;
+
 const ServiceInstanceStatus: React.SFC<IServiceInstanceStatusProps> = props => {
   const { instance } = props;
   const status = instance.status.conditions[0];
   if (status) {
     if (status.reason.match(/Provisioning/)) {
-      return renderProvisioningStatus();
+      return renderStatus("Provisioning", "pending", compassIcon);
     }
     if (status.reason.match(/Provisioned|Success/)) {
-      return renderProvisionedStatus();
+      return renderStatus("Provisioned", "success", checkIcon);
     }
     if (status.reason.match(/Failed|Error/)) {
-      return renderFailedStatus();
+      return renderStatus("Failed", null, alertIcon);
     }
     if (status.reason.match(/Deprovisioning/)) {
-      return renderDeprovisioningStatus();
+      return renderStatus("Deprovisioning", "pending", compassIcon);
     }
   }
-  return renderUnknownStatus();
+  return renderStatus("Unknown", null, alertIcon);
 };
 
-const renderProvisionedStatus = () => {
-  return (
-    <span className="DeploymentStatus DeploymentStatus--success">
-      <Check className="icon padding-t-tiny" /> Provisioned
-    </span>
-  );
-};
-
-const renderProvisioningStatus = () => {
-  return (
-    <span className="DeploymentStatus DeploymentStatus--pending">
-      <Compass className="icon padding-t-tiny" /> Provisioning
-    </span>
-  );
-};
-
-const renderDeprovisioningStatus = () => {
-  return (
-    <span className="DeploymentStatus DeploymentStatus--pending">
-      <Compass className="icon padding-t-tiny" /> Deprovisioning
-    </span>
-  );
-};
-
-const renderFailedStatus = () => {
-  return (
-    <span className="DeploymentStatus">
-      {/* TODO(prydonius): move style to CSS once we switch all icons to feather icons */}
-      <AlertTriangle className="icon" style={{ bottom: "-0.3em" }} /> Failed
-    </span>
-  );
-};
-
-const renderUnknownStatus = () => {
-  return (
-    <span className="DeploymentStatus">
-      {/* TODO(prydonius): move style to CSS once we switch all icons to feather icons */}
-      <AlertTriangle className="icon" style={{ bottom: "-0.3em" }} /> Unknown
-    </span>
-  );
-};
+const renderStatus = (label: string, modifierClass: string | null, icon: JSX.Element) => (
+  <span className={`DeploymentStatus${modifierClass ? ` DeploymentStatus--${modifierClass}` : ""}`}>
+    {icon} {label}
+  </span>
+);
 
 export default ServiceInstanceStatus;

@@ -14,7 +14,8 @@ exports[`displays unknown status when conditions is empty 1`] = `
       }
     }
   />
-   Unknown
+   
+  Unknown
 </span>
 `;
 
@@ -25,7 +26,8 @@ exports[`renders correct statuses when deprovisioning 1`] = `
   <Compass
     className="icon padding-t-tiny"
   />
-   Deprovisioning
+   
+  Deprovisioning
 </span>
 `;
 
@@ -43,7 +45,8 @@ exports[`renders correct statuses when error 1`] = `
       }
     }
   />
-   Failed
+   
+  Failed
 </span>
 `;
 
@@ -61,7 +64,8 @@ exports[`renders correct statuses when failed 1`] = `
       }
     }
   />
-   Failed
+   
+  Failed
 </span>
 `;
 
@@ -72,7 +76,8 @@ exports[`renders correct statuses when provisioned successfully 1`] = `
   <Check
     className="icon padding-t-tiny"
   />
-   Provisioned
+   
+  Provisioned
 </span>
 `;
 
@@ -83,7 +88,8 @@ exports[`renders correct statuses when provisioning 1`] = `
   <Compass
     className="icon padding-t-tiny"
   />
-   Provisioning
+   
+  Provisioning
 </span>
 `;
 
@@ -101,6 +107,7 @@ exports[`renders correct statuses when unknown 1`] = `
       }
     }
   />
-   Unknown
+   
+  Unknown
 </span>
 `;
