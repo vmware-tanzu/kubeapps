@@ -40,7 +40,7 @@ class DeprovisionButton extends React.Component<IDeprovisionButtonProps, IDeprov
         />
 
         <button
-          className="button button-primary button-small button-danger"
+          className="button button-primary button-danger"
           disabled={this.state.isDeprovisioning}
           onClick={this.openModel}
         >

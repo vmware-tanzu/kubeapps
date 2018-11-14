@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a placeholder icon if service class has no icon 1`] = `
+<CardGrid
+  className="ServiceInstanceInfo"
+>
+  <Card>
+    <CardIcon
+      icon="img.png"
+    />
+    <CardContent>
+      <h5>
+        my-instance
+      </h5>
+      <strong>
+        Class:
+      </strong>
+       
+      my-instance
+      <p />
+      <strong>
+        Plan:
+      </strong>
+       
+      my-instance
+      <p
+        className="type-small margin-reset margin-b-big type-color-light-blue"
+      >
+        <span>
+          Free ✓
+        </span>
+      </p>
+      <div>
+        <ul>
+          <li
+            key="this is a plan"
+          >
+            this is a plan
+          </li>
+        </ul>
+      </div>
+    </CardContent>
+  </Card>
+</CardGrid>
+`;
+
+exports[`renders the Service Instance info 1`] = `
+<CardGrid
+  className="ServiceInstanceInfo"
+>
+  <Card>
+    <CardIcon
+      icon="img.png"
+    />
+    <CardContent>
+      <h5>
+        my-instance
+      </h5>
+      <strong>
+        Class:
+      </strong>
+       
+      my-instance
+      <p />
+      <strong>
+        Plan:
+      </strong>
+       
+      my-instance
+      <p
+        className="type-small margin-reset margin-b-big type-color-light-blue"
+      >
+        <span>
+          Free ✓
+        </span>
+      </p>
+      <div>
+        <ul>
+          <li
+            key="this is a plan"
+          >
+            this is a plan
+          </li>
+        </ul>
+      </div>
+    </CardContent>
+  </Card>
+</CardGrid>
+`;

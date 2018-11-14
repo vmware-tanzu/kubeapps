@@ -6,12 +6,13 @@ import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { IRBACRole, NotFoundError } from "../../shared/types";
 import BindingList from "../BindingList";
-import Card, { CardContent, CardGrid, CardIcon } from "../Card";
-import { ErrorSelector } from "../ErrorAlert";
+import "../DeploymentStatus/DeploymentStatus.css";
+import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
-import PageHeader from "../PageHeader";
 import AddBindingButton from "./AddBindingButton";
 import DeprovisionButton from "./DeprovisionButton";
+import ServiceInstanceInfo from "./ServiceInstanceInfo";
+import ServiceInstanceStatus from "./ServiceInstanceStatus";
 
 interface IServiceInstanceViewProps {
   errors: {
@@ -109,12 +110,11 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
     } = this.props;
 
     let body = <span />;
-    let planCard = <span />;
-    let classCard = <span />;
     let bindingSection = <span />;
 
     let instance: IServiceInstance | undefined;
     let svcPlan: IServicePlan | undefined;
+    let svcClass: IClusterServiceClass | undefined;
 
     const loaded =
       !instances.isFetching &&
@@ -138,7 +138,9 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
       }
       body = this.renderInstance(instance);
 
-      const svcClass =
+      // TODO(prydonius): We should probably show an error if the svcClass or
+      // svcPlan cannot be found for some reason.
+      svcClass =
         instance &&
         classes.list.find(
           c =>
@@ -146,9 +148,6 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
             !!instance.spec.clusterServiceClassRef &&
             c.metadata.name === instance.spec.clusterServiceClassRef.name,
         );
-      if (svcClass) {
-        classCard = this.renderSVCClass(svcClass);
-      }
 
       svcPlan =
         instance &&
@@ -158,9 +157,6 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
             !!instance.spec.clusterServicePlanRef &&
             p.metadata.name === instance.spec.clusterServicePlanRef.name,
         );
-      if (svcPlan) {
-        planCard = this.renderSVCPlan(svcPlan);
-      }
 
       if (svcClass && svcClass.spec.bindable) {
         const bindings =
@@ -172,15 +168,6 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
           );
         bindingSection = (
           <div>
-            <AddBindingButton
-              bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
-              instanceRefName={instance.metadata.name}
-              namespace={instance.metadata.namespace}
-              addBinding={this.props.addBinding}
-              onAddBinding={this.onAddBinding}
-              error={this.props.errors.create}
-            />
-            <br />
             {this.props.errors.delete && (
               <ErrorSelector
                 error={this.props.errors.delete}
@@ -190,6 +177,14 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
               />
             )}
             <BindingList bindingsWithSecrets={bindings} removeBinding={this.props.removeBinding} />
+            <AddBindingButton
+              bindingSchema={svcPlan && svcPlan.spec.serviceBindingCreateParameterSchema}
+              instanceRefName={instance.metadata.name}
+              namespace={instance.metadata.namespace}
+              addBinding={this.props.addBinding}
+              onAddBinding={this.onAddBinding}
+              error={this.props.errors.create}
+            />
           </div>
         );
       } else {
@@ -198,45 +193,67 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
     }
 
     return (
-      <div className="container">
-        <PageHeader>
-          <h1>{name}</h1>
-        </PageHeader>
+      <section className="ServiceInstanceView padding-b-big">
         <main>
           <LoadingWrapper loaded={loaded}>
-            {this.props.errors.fetch && (
-              <ErrorSelector
-                error={this.props.errors.fetch}
-                resource={`Instance ${name}`}
-                action="list"
-                defaultRequiredRBACRoles={RequiredRBACRoles}
-              />
-            )}
-            {this.props.errors.deprovision && (
-              <ErrorSelector
-                error={this.props.errors.deprovision}
-                resource={`Instance ${name}`}
-                action="deprovision"
-                defaultRequiredRBACRoles={RequiredRBACRoles}
-              />
-            )}
-            {instance && (
-              <div className="found">
-                <h2>About</h2>
-                <div>{body}</div>
-                <DeprovisionButton deprovision={deprovision} instance={instance} />
-                <h3>Spec</h3>
-                <CardGrid>
-                  {classCard}
-                  {planCard}
-                </CardGrid>
-                <h2>Bindings</h2>
-                {bindingSection}
-              </div>
-            )}
+            <div className="container">
+              {this.props.errors.fetch && (
+                <ErrorSelector
+                  error={this.props.errors.fetch}
+                  resource={`Instance ${name}`}
+                  action="list"
+                  defaultRequiredRBACRoles={RequiredRBACRoles}
+                />
+              )}
+              {this.props.errors.deprovision && (
+                <ErrorSelector
+                  error={this.props.errors.deprovision}
+                  resource={`Instance ${name}`}
+                  action="deprovision"
+                  defaultRequiredRBACRoles={RequiredRBACRoles}
+                />
+              )}
+              {instance && (
+                <div className="row collapse-b-tablet">
+                  <div className="col-12">
+                    <MessageAlert level="warning">
+                      <div>
+                        <div>Refresh the page to update the status of this Service Instance.</div>
+                        Service Catalog integration is under heavy development. If you find an issue
+                        please report it{" "}
+                        <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues">
+                          {" "}
+                          here
+                        </a>
+                        .
+                      </div>
+                    </MessageAlert>
+                  </div>
+                  <div className="col-3">
+                    <ServiceInstanceInfo instance={instance} svcClass={svcClass} plan={svcPlan} />
+                  </div>
+                  <div className="col-9">
+                    <div className="row padding-t-bigger">
+                      <div className="col-4">
+                        <ServiceInstanceStatus instance={instance} />
+                      </div>
+                      <div className="col-8 text-r">
+                        <DeprovisionButton deprovision={deprovision} instance={instance} />
+                      </div>
+                    </div>
+                    <div className="ServiceInstanceView__details">
+                      <div>{body}</div>
+                      <h2>Bindings</h2>
+                      <hr />
+                      {bindingSection}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </LoadingWrapper>
         </main>
-      </div>
+      </section>
     );
   }
 
@@ -245,7 +262,8 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
     return (
       <div>
         <div>
-          <h3>Status</h3>
+          <h2>Status</h2>
+          <hr />
           <table>
             <thead>
               <tr>
@@ -282,52 +300,6 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
           </table>
         </div>
       </div>
-    );
-  }
-
-  private renderSVCClass(svcClass: IClusterServiceClass) {
-    const { spec } = svcClass;
-    const { externalMetadata } = spec;
-    const svcName = externalMetadata ? externalMetadata.displayName : spec.externalName;
-    const description = externalMetadata ? externalMetadata.longDescription : spec.description;
-    const imageUrl = externalMetadata && externalMetadata.imageUrl;
-
-    return (
-      <Card key={svcClass.metadata.uid} responsive={true} responsiveColumns={2}>
-        <CardIcon icon={imageUrl} />
-        <CardContent>
-          <h5>{svcName}</h5>
-          <p className="margin-b-reset">{description}</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  private renderSVCPlan(svcPlan: IServicePlan) {
-    const { spec } = svcPlan;
-    const { externalMetadata } = spec;
-    const planName = externalMetadata ? externalMetadata.displayName : spec.externalName;
-    const description =
-      externalMetadata && externalMetadata.bullets ? externalMetadata.bullets : [spec.description];
-    const free = svcPlan.spec.free ? <span>Free ✓</span> : undefined;
-    const bullets = (
-      <div>
-        <ul>
-          {description.map(bullet => (
-            <li key={bullet}>{bullet}</li>
-          ))}
-        </ul>
-      </div>
-    );
-
-    return (
-      <Card key={svcPlan.spec.externalID} responsive={true} responsiveColumns={2}>
-        <CardContent>
-          <h5>{planName}</h5>
-          <p className="type-small margin-reset margin-b-big type-color-light-blue">{free}</p>
-          {bullets}
-        </CardContent>
-      </Card>
     );
   }
 
