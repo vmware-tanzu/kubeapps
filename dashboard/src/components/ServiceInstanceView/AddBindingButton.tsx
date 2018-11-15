@@ -8,6 +8,7 @@ import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from 
 import SchemaForm from "../SchemaForm";
 
 interface IAddBindingButtonProps {
+  disabled: boolean;
   error?: Error;
   instanceRefName: string;
   namespace: string;
@@ -59,7 +60,11 @@ class AddBindingButton extends React.Component<IAddBindingButtonProps, IAddBindi
     }
     return (
       <div className="AddBindingButton">
-        <button className="button button-primary" onClick={this.openModal}>
+        <button
+          className="button button-primary"
+          onClick={this.openModal}
+          disabled={this.props.disabled}
+        >
           Add Binding
         </button>
         <Modal isOpen={modalIsOpen} onRequestClose={this.closeModal}>

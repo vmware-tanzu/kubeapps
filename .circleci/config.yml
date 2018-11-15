@@ -96,8 +96,11 @@ build_images: &build_images
     - <<: *exports
     - run: |
         read -ra IMG_ARRAY <<< "$IMAGES"
+        if [[ -n "${CIRCLE_TAG}" ]]; then
+          makeArgs="VERSION=${CIRCLE_TAG}"
+        fi
         for IMAGE in "${IMG_ARRAY[@]}"; do
-          make IMG_MODIFIER="$IMG_MODIFIER" VERSION="${DEV_TAG}" ${IMAGE}
+          make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs ${IMAGE}
           if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
             docker push ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
@@ -161,7 +164,7 @@ jobs:
     docker:
       - image: circleci/golang:1.11
     environment:
-      HELM_VERSION: v2.9.1
+      HELM_VERSION: v2.11.0
     steps:
       - checkout
       - <<: *install_helm_cli
@@ -190,12 +193,12 @@ jobs:
   GKE_1_9:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.9.1
+      HELM_VERSION: v2.11.0
       GKE_BRANCH: 1.9
   GKE_1_10:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.9.1
+      HELM_VERSION: v2.11.0
       GKE_BRANCH: 1.10
   sync_chart:
     docker:

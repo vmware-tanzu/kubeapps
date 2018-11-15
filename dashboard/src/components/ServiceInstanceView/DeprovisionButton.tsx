@@ -3,6 +3,7 @@ import { IServiceInstance } from "../../shared/ServiceInstance";
 import ConfirmDialog from "../ConfirmDialog";
 
 interface IDeprovisionButtonProps {
+  disabled: boolean;
   instance: IServiceInstance;
   deprovision: (instance: IServiceInstance) => Promise<boolean>;
 }
@@ -40,8 +41,8 @@ class DeprovisionButton extends React.Component<IDeprovisionButtonProps, IDeprov
         />
 
         <button
-          className="button button-primary button-small button-danger"
-          disabled={this.state.isDeprovisioning}
+          className="button button-primary button-danger"
+          disabled={this.state.isDeprovisioning || this.props.disabled}
           onClick={this.openModel}
         >
           Deprovision
