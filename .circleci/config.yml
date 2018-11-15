@@ -12,9 +12,7 @@ build_on_master: &build_on_master
     tags:
       only: /^v.*/
     branches:
-      only: 
-      - master
-      - 825-add-e2e-tests-with-stable
+      only: master
 # Build only in tags (release)
 build_on_tag: &build_on_tag
   filters:
