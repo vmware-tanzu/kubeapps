@@ -24,6 +24,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
+	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/urfave/negroni"
@@ -33,10 +36,6 @@ import (
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
-
-	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
 const (
@@ -47,7 +46,7 @@ var (
 	settings    environment.EnvSettings
 	proxy       *tillerProxy.Proxy
 	kubeClient  kubernetes.Interface
-	netClient   *http.Client
+	netClient   *clientWithDefaultUserAgent
 	disableAuth bool
 	listLimit   int
 
@@ -72,9 +71,12 @@ func init() {
 	pflag.BoolVar(&tlsEnable, "tls", false, "enable TLS for request")
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
+	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 
-	netClient = &http.Client{
-		Timeout: time.Second * defaultTimeoutSeconds,
+	netClient = &clientWithDefaultUserAgent{
+		Client: http.Client{
+			Timeout: time.Second * defaultTimeoutSeconds,
+		},
 	}
 }
 

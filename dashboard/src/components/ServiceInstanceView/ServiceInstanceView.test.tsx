@@ -6,12 +6,14 @@ import { IServiceBindingWithSecret } from "shared/ServiceBinding";
 import { IServiceInstance } from "shared/ServiceInstance";
 import ServiceInstanceView from ".";
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
-import { IServicePlan } from "../../shared/ServiceCatalog";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, NotFoundError } from "../../shared/types";
 import BindingListEntry from "../BindingList/BindingListEntry";
-import Card from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
+import AddBindingButton from "./AddBindingButton";
+import DeprovisionButton from "./DeprovisionButton";
+import ServiceInstanceInfo from "./ServiceInstanceInfo";
+import ServiceInstanceStatus from "./ServiceInstanceStatus";
 
 const defaultName = "my-instance";
 const defaultNS = "default";
@@ -41,11 +43,6 @@ context("while fetching components", () => {
     const wrapper = shallow(<ServiceInstanceView {...props} />);
     expect(wrapper).toMatchSnapshot();
   });
-
-  it("renders a Application header", () => {
-    const wrapper = shallow(<ServiceInstanceView {...props} />);
-    expect(wrapper.find("h1").text()).toContain(defaultName);
-  });
 });
 
 context("when all the components are loaded", () => {
@@ -60,6 +57,7 @@ context("when all the components are loaded", () => {
     expect(wrapper.find(ErrorSelector).props()).toMatchObject({
       error: new NotFoundError(`Instance ${defaultName} not found in ${defaultNS}`),
     });
+    expect(wrapper.find(ServiceInstanceInfo)).not.toExist();
   });
 
   it("shows a fetch error if it exists", () => {
@@ -68,6 +66,7 @@ context("when all the components are loaded", () => {
     );
     expect(wrapper.find(ErrorSelector)).toExist();
     expect(wrapper).toMatchSnapshot();
+    expect(wrapper.find(ServiceInstanceInfo)).not.toExist();
   });
 
   it("shows a deprovision error if it exists", () => {
@@ -76,6 +75,7 @@ context("when all the components are loaded", () => {
     );
     expect(wrapper.find(ErrorSelector)).toExist();
     expect(wrapper).toMatchSnapshot();
+    expect(wrapper.find(ServiceInstanceInfo)).not.toExist();
   });
 
   context("when an instance is available", () => {
@@ -114,92 +114,66 @@ context("when all the components are loaded", () => {
         } as IServiceInstance,
       ],
     };
+    const classes = {
+      isFetching: false,
+      list: [
+        {
+          metadata: {
+            name: defaultName,
+            uid: `class-${defaultName}`,
+          },
+          spec: {
+            bindable: true,
+            externalName: defaultName,
+            description: "this is a class",
+            externalMetadata: {
+              imageUrl: "img.png",
+            },
+          },
+        } as IClusterServiceClass,
+      ],
+    };
+    const bindings = {
+      isFetching: false,
+      list: [
+        {
+          binding: {
+            metadata: {
+              name: defaultName,
+              namespace: defaultNS,
+              uid: `binding-${defaultName}`,
+            },
+            spec: {
+              instanceRef: {
+                name: defaultName,
+              },
+            },
+            status: {
+              conditions: [
+                {
+                  message: "binding is okay",
+                },
+              ],
+            },
+          },
+        } as IServiceBindingWithSecret,
+      ],
+    };
 
     it("should show the instance status info", () => {
       const wrapper = shallow(<ServiceInstanceView {...defaultProps} instances={instances} />);
-      expect(wrapper.find(".found")).toExist();
-      expect(wrapper).toMatchSnapshot();
-    });
-
-    it("should show class and plan info if it exists", () => {
-      const classes = {
-        isFetching: false,
-        list: [
-          {
-            metadata: {
-              name: defaultName,
-              uid: `class-${defaultName}`,
-            },
-            spec: {
-              externalName: defaultName,
-              description: "this is a class",
-              externalMetadata: {
-                imageUrl: "img.png",
-              },
-            },
-          } as IClusterServiceClass,
-        ],
-      };
-      const plans = {
-        isFetching: false,
-        list: [
-          {
-            metadata: {
-              name: defaultName,
-            },
-            spec: {
-              externalName: defaultName,
-              externalID: `plan-${defaultName}`,
-              description: "this is a plan",
-              free: true,
-            },
-          } as IServicePlan,
-        ],
-      };
-      const wrapper = shallow(
-        <ServiceInstanceView
-          {...defaultProps}
-          instances={instances}
-          classes={classes}
-          plans={plans}
-        />,
-      );
-      expect(wrapper.find(Card).filterWhere(c => c.key() === `class-${defaultName}`)).toExist();
-      expect(wrapper.find(Card).filterWhere(c => c.key() === `plan-${defaultName}`)).toExist();
+      expect(wrapper.find(ServiceInstanceInfo)).toExist();
+      expect(wrapper.find(ServiceInstanceStatus)).toExist();
+      expect(wrapper.find(".ServiceInstanceView__details")).toExist();
       expect(wrapper).toMatchSnapshot();
     });
 
     it("should show the available bindings", () => {
-      const bindings = {
-        isFetching: false,
-        list: [
-          {
-            binding: {
-              metadata: {
-                name: defaultName,
-                namespace: defaultNS,
-                uid: `binding-${defaultName}`,
-              },
-              spec: {
-                instanceRef: {
-                  name: defaultName,
-                },
-              },
-              status: {
-                conditions: [
-                  {
-                    message: "binding is okay",
-                  },
-                ],
-              },
-            },
-          } as IServiceBindingWithSecret,
-        ],
-      };
       const wrapper = mount(
         <ServiceInstanceView
           {...defaultProps}
           instances={instances}
+          classes={classes}
           bindingsWithSecrets={bindings}
         />,
       );
@@ -207,6 +181,62 @@ context("when all the components are loaded", () => {
         wrapper.find(BindingListEntry).filterWhere(b => b.key() === `binding-${defaultName}`),
       ).toExist();
       expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should not show bindings information if the class is not bindable", () => {
+      const classesNotBindable = {
+        ...classes,
+        list: [{ ...classes.list[0], spec: { ...classes.list[0].spec, bindable: false } }],
+      };
+      const wrapper = shallow(
+        <ServiceInstanceView
+          {...defaultProps}
+          instances={instances}
+          classes={classesNotBindable}
+        />,
+      );
+      expect(wrapper.find(AddBindingButton)).not.toExist();
+      expect(wrapper.find(".ServiceInstanceView__details").text()).toContain(
+        "This instance cannot be bound to applications",
+      );
+    });
+
+    const instancesWithReason = (reason: string) => ({
+      ...instances,
+      list: [
+        {
+          ...instances.list[0],
+          status: {
+            conditions: [
+              {
+                ...instances.list[0].status.conditions[0],
+                reason,
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const buttonStateTestCases = [
+      { reason: "Provisioned", disabled: false },
+      { reason: "Unknown", disabled: false },
+      { reason: "Failed", disabled: false },
+      { reason: "Provisioning", disabled: true },
+      { reason: "Deprovisioning", disabled: true },
+    ];
+    buttonStateTestCases.forEach(t => {
+      it(`should have the correct button state when in the ${t.reason} state`, () => {
+        const is = instancesWithReason(t.reason);
+        const wrapper = shallow(
+          <ServiceInstanceView {...defaultProps} instances={is} classes={classes} />,
+        );
+        const deprovisionButton = wrapper.find(DeprovisionButton);
+        const addBindingButton = wrapper.find(AddBindingButton);
+        expect(deprovisionButton).toExist();
+        expect(addBindingButton).toExist();
+        expect(deprovisionButton.props().disabled).toBe(t.disabled);
+      });
     });
   });
 });

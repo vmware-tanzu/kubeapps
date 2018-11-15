@@ -1,6 +1,6 @@
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
-import { safeDump as yamlSafeDump } from "js-yaml";
+import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
@@ -142,6 +142,24 @@ describe("AppViewComponent", () => {
 
       const sockets: WebSocket[] = wrapper.state("sockets");
       expect(sockets.length).toEqual(0);
+    });
+
+    // See https://github.com/kubeapps/kubeapps/issues/632
+    it("supports manifests with duplicated keys", () => {
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const manifest = `
+      apiVersion: v1
+      metadata:
+        name: cm-one
+        labels:
+          chart: cm-1.2.3
+          chart: cm-1.2.3
+`;
+
+      validProps.app.manifest = manifest;
+      expect(() => {
+        wrapper.setProps(validProps);
+      }).not.toThrow(YAMLException);
     });
   });
 

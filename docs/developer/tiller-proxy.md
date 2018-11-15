@@ -57,7 +57,7 @@ kubectl patch deployment kubeapps-internal-tiller-proxy -n kubeapps --type=json 
 The easiest way to create the `tiller-proxy` image is execute the Makefile task to do so:
 
 ```bash
-VERSION=dev make kubeapps/tiller-proxy
+IMAGE_TAG=dev make kubeapps/tiller-proxy
 ```
 
 This will generate an image `kubeapps/tiller-proxy:dev` that you can use in the current deployment:

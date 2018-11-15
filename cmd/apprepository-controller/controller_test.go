@@ -16,9 +16,10 @@ func Test_newCronJob(t *testing.T) {
 	mongoURL = "mongodb.kubeapps"
 	mongoSecretName = "mongodb"
 	tests := []struct {
-		name     string
-		apprepo  *apprepov1alpha1.AppRepository
-		expected batchv1beta1.CronJob
+		name             string
+		apprepo          *apprepov1alpha1.AppRepository
+		expected         batchv1beta1.CronJob
+		userAgentComment string
 	}{
 		{
 			"my-charts",
@@ -92,9 +93,10 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 			},
+			"",
 		},
 		{
-			"my-charts with auth",
+			"my-charts with auth and userAgent comment",
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -151,6 +153,7 @@ func Test_newCronJob(t *testing.T) {
 												"sync",
 												"--mongo-url=mongodb.kubeapps",
 												"--mongo-user=root",
+												"--user-agent-comment=kubeapps/v2.3",
 												"my-charts",
 												"https://charts.acme.com/my-charts",
 											},
@@ -174,11 +177,16 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 			},
+			"kubeapps/v2.3",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.userAgentComment != "" {
+				userAgentComment = tt.userAgentComment
+				defer func() { userAgentComment = "" }()
+			}
 			result := newCronJob(tt.apprepo)
 			if !reflect.DeepEqual(tt.expected, *result) {
 				t.Errorf("Unexpected result\nExpecting:\n %+v\nReceived:\n %+v", tt.expected, *result)
@@ -191,9 +199,10 @@ func Test_newSyncJob(t *testing.T) {
 	mongoURL = "mongodb.kubeapps"
 	mongoSecretName = "mongodb"
 	tests := []struct {
-		name     string
-		apprepo  *apprepov1alpha1.AppRepository
-		expected batchv1.Job
+		name             string
+		apprepo          *apprepov1alpha1.AppRepository
+		expected         batchv1.Job
+		userAgentComment string
 	}{
 		{
 			"my-charts",
@@ -262,9 +271,10 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
+			"",
 		},
 		{
-			"my-charts with auth",
+			"my-charts with auth and userAgent comment",
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -318,6 +328,7 @@ func Test_newSyncJob(t *testing.T) {
 										"sync",
 										"--mongo-url=mongodb.kubeapps",
 										"--mongo-user=root",
+										"--user-agent-comment=kubeapps/v2.3",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
 									},
@@ -339,11 +350,17 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
+			"kubeapps/v2.3",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.userAgentComment != "" {
+				userAgentComment = tt.userAgentComment
+				defer func() { userAgentComment = "" }()
+			}
+
 			result := newSyncJob(tt.apprepo)
 			if !reflect.DeepEqual(tt.expected, *result) {
 				t.Errorf("Unexpected result\nExpecting:\n %+v\nReceived:\n %+v", tt.expected, *result)
