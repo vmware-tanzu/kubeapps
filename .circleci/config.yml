@@ -147,7 +147,7 @@ gke_test: &gke_test
         # Cancel job if this is a test stable release job but
         # the chart version has not been bumped
         if [[ -n "$TEST_LATEST_RELEASE" ]] && ! changedVersion; then
-          echo Step "aborted, we are not releasing a new version of the chart"
+          echo "Step aborted, we are not releasing a new version of the chart"
           circleci step halt
         fi
     - <<: *exports
