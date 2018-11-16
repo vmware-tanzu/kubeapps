@@ -40,6 +40,7 @@ k8s_wait_for_deployments_rollout() {
             | xargs -n1 kubectl rollout status --namespace $namespace || res=$?
     done
 
+    echo "Wait for deployment rollouts finished, response code '${res}'"
     return $res
 }
 
@@ -51,13 +52,15 @@ k8s_wait_for_job_completed() {
 
     local -i retryTimeSeconds=${TEST_MAX_WAIT_SEC:?}
     local -i retryTimeStepSeconds=5
-
+    
+    echo "Wait for job completion started"
 
     while [ "$retryTimeSeconds" -gt 0 ]; do
         res=$(kubectl get jobs -n $namespace -l $labelSelector \
         -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True")
         # There is a job that finished
         if [[ $res ]]; then
+            echo "Job '${@:2}' completed"
             return 0
         fi
         # It did not finished so we reduce the remaining time and wait for next retry cycle
