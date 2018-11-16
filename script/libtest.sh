@@ -12,9 +12,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-export TEST_MAX_WAIT_SEC=15
+export TEST_MAX_WAIT_SEC=300
 
 ## k8s specific Helper functions
+
+k8s_ensure_image() {
+    namespace=${1:?}
+    deployment=${2:?}
+    expectedPattern=${3:?}
+    jsonpath=${4:-'{.spec.template.spec.containers[0].image}'}
+    echo "Checking that $deployment mathes $expectedPattern"
+    if kubectl get deployment -n $namespace $deployment -o jsonpath="$jsonpath" | grep $expectedPattern; then
+        return 0
+    else
+        echo "Failed to found $expectedPattern"
+        return 1
+    fi
+}
+
+# Waits for the rollout of all the deployments in a provided namespace 
+k8s_wait_for_deployments_rollout() {
+    namespace=${1:?}
+    # Check three times and return the latest result
+    for i in {1..3}; do
+        res=
+        kubectl get deployment -o name --namespace $namespace \
+            | xargs -n1 kubectl rollout status --namespace $namespace || res=$?
+    done
+
+    return $res
+}
 
 # Waits for a set of jobs matching the provided tag to be Completed.
 # It retries up to $TEST_MAX_WAIT_SEC
@@ -42,31 +69,4 @@ k8s_wait_for_job_completed() {
     echo "Job '${@:2}' did not complete"
 
     return 1
-}
-
-k8s_ensure_image() {
-    namespace=${1:?}
-    deployment=${2:?}
-    expectedPattern=${3:?}
-    jsonpath=${4:-'{.spec.template.spec.containers[0].image}'}
-    echo "Checking that $deployment mathes $expectedPattern"
-    if kubectl get deployment -n $namespace $deployment -o jsonpath="$jsonpath" | grep $expectedPattern; then
-        return 0
-    else
-        echo "Failed to found $expectedPattern"
-        return 1
-    fi
-}
-
-# Waits for the rollout of all the deployments in a provided namespace 
-k8s_wait_for_deployments_rollout() {
-    namespace=${1:?}
-    # Check three times and return the latest result
-    for i in {1..3}; do
-        res=
-        kubectl get deployment -o name --namespace $namespace \
-            | xargs -n1 kubectl rollout status --namespace $namespace || res=$?
-    done
-
-    return $res
 }
