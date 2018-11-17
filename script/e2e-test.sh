@@ -66,11 +66,13 @@ k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 
-# Wait for release to have been rolled out
-k8s_wait_for_deployments_rollout kubeapps
-
-# Wait for the import job to have finished
-k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
+# Wait for Kubeapps Pods
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-apprepository-controller
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-chartsvc
+k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-tiller-proxy
+k8s_wait_for_pod_ready kubeapps app=mongodb
+k8s_wait_for_pod_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
 
 # Run helm tests
 helm test ${HELM_CLIENT_TLS_FLAGS} --cleanup kubeapps-ci
