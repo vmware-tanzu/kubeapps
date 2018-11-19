@@ -20,6 +20,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -136,7 +139,8 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := handler.AuthGate()
+	safe := sync.WaitGroup{}
+	authGate := handler.AuthGate(&safe)
 
 	// HTTP Handler
 	h := handler.TillerProxy{
@@ -180,6 +184,19 @@ func main() {
 		port = "8080"
 	}
 	addr := ":" + port
+
+	// Catch SIGINT and SIGKILL
+	// Set up channel on which to send signal notifications.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	log.Info("Set system to get notified on signals")
+	go func() {
+		s := <-c
+		log.Infof("Received signal: %v. Waiting for existing requests to finish", s)
+		safe.Wait()
+		log.Info("All requests have been served. Exiting")
+	}()
+
 	log.WithFields(log.Fields{"addr": addr}).Info("Started Tiller Proxy")
 	err = http.ListenAndServe(addr, n)
 	if err != nil {

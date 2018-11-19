@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
@@ -41,7 +42,7 @@ type contextKey int
 const userKey contextKey = 0
 
 // AuthGate implements middleware to check if the user is logged in before continuing
-func AuthGate() negroni.HandlerFunc {
+func AuthGate(safe *sync.WaitGroup) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		authHeader := strings.Split(req.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
@@ -59,6 +60,8 @@ func AuthGate() negroni.HandlerFunc {
 			return
 		}
 		ctx := context.WithValue(req.Context(), userKey, userAuth)
+		safe.Add(1)
+		defer safe.Done()
 		next(w, req.WithContext(ctx))
 	}
 }
@@ -165,19 +168,19 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 	log.Printf("Creating Helm Release")
 	chartDetails, ch, err := getChart(req, h.ChartClient)
 	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 		return
 	}
 	if !h.DisableAuth {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
-			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
 		if err != nil {
-			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 			return
 		}
 		if len(forbiddenActions) > 0 {
@@ -200,19 +203,19 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 	log.Printf("Upgrading Helm Release")
 	chartDetails, ch, err := getChart(req, h.ChartClient)
 	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 		return
 	}
 	if !h.DisableAuth {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
-			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
-			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 			return
 		}
 		if len(forbiddenActions) > 0 {
