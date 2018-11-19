@@ -24,6 +24,9 @@ HELM_CLIENT_TLS_FLAGS="--tls --tls-cert ${CERTS_DIR}/helm.cert.pem --tls-key ${C
 
 source $ROOT_DIR/script/libtest.sh
 
+echo "IMAGE TAG TO BE TESTED: $DEV_TAG"
+echo "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
+
 # Install Tiller with TLS support
 helm init \
   --tiller-tls \
