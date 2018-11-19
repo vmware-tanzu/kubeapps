@@ -12,37 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -e
+
 export TEST_MAX_WAIT_SEC=300
 
 ## k8s specific Helper functions
-k8s_wait_for_pod() {
+k8s_wait_for_deployment() {
     namespace=${1:?}
-    labelSelector=${2:?}
-    condition=${3:?}
-    echo "Waiting for pod '${@:2}' to be ${condition} ... "
-    local -i cnt=${TEST_MAX_WAIT_SEC:?}
-
-    # Retries just in case it is not stable
-    local -i successCount=0
-    while [ "$successCount" -lt "3" ]; do
-        if kubectl get pod -a -n "$namespace" -l "$labelSelector" | grep -q "$condition"; then
-            ((successCount=successCount+1))
-        fi
-        ((cnt=cnt-1)) || return 1
-        sleep 1
-    done
-
-}
-k8s_wait_for_pod_ready() {
-    namespace=${1:?}
-    labelSelector=${2:?}
-    k8s_wait_for_pod $namespace $labelSelector Running
-}
-
-k8s_wait_for_pod_completed() {
-    namespace=${1:?}
-    labelSelector=${2:?}
-    k8s_wait_for_pod $namespace $labelSelector Completed
+    deployment=${2:?}
+    echo "Waiting for deployment ${deployment} to be successfully rolled out"
+    kubectl rollout status --namespace $namespace deployment ${deployment}
+    res=$?
+    echo "Rollout exit code: '${res}'"
+    return $res
 }
 
 k8s_ensure_image() {
@@ -57,4 +39,36 @@ k8s_ensure_image() {
         echo "Failed to found $expectedPattern"
         return 1
     fi
+}
+
+# Waits for a set of jobs matching the provided tag to be Completed.
+# It retries up to $TEST_MAX_WAIT_SEC
+k8s_wait_for_job_completed() {
+    namespace=${1:?}
+    labelSelector=${2:?}
+
+    local -i retryTimeSeconds=${TEST_MAX_WAIT_SEC:?}
+    local -i retryTimeStepSeconds=5
+
+    echo "Wait for job completion started"
+
+    set +e
+    while [ "$retryTimeSeconds" -gt 0 ]; do
+        res=$(kubectl get jobs -n $namespace -l $labelSelector \
+        -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True")
+        # There is a job that finished
+        if [[ $res ]]; then
+            echo "Job '${@:2}' completed"
+            set -e
+            return 0
+        fi
+        # It did not finished so we reduce the remaining time and wait for next retry cycle
+        echo "Waiting for job '${@:2}' to be completed, will retry in $retryTimeStepSeconds seconds ... "
+        retryTimeSeconds=retryTimeSeconds-$retryTimeStepSeconds
+        sleep $retryTimeStepSeconds
+    done
+    set -e
+    echo "Job '${@:2}' did not complete"
+
+    return 1
 }
