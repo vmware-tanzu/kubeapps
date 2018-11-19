@@ -20,6 +20,11 @@ CHART_REPO_PATH="bitnami/kubeapps"
 PROJECT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
 KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
 
+# Returns the tag for the latest release
+latestReleaseTag() {
+  git describe --tags $(git rev-list --tags --max-count=1)
+}
+
 changedVersion() {
     local currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep "version:")
     local externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO}/master/${CHART_REPO_PATH}/Chart.yaml | grep "version:")

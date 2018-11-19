@@ -26,7 +26,7 @@ if changedVersion; then
     git clone https://github.com/${CHARTS_REPO} $tempDir
     configUser $tempDir $user $email
     git fetch --tags
-    latestVersion=$(git describe --tags $(git rev-list --tags --max-count=1))
+    latestVersion=$(latestReleaseTag)
     updateRepo $tempDir $latestVersion
     commitAndPushChanges $tempDir master
 else

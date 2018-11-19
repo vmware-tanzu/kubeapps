@@ -110,8 +110,6 @@ exports: &exports
     # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
     # history of the production tag
     echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
-    # Latest published release
-    echo "export LATEST_RELEASE_TAG=$(git describe --abbrev=0 --tags $(git rev-list --tags --max-count=1))" >> $BASH_ENV
 build_images: &build_images
   steps:
     - setup_remote_docker
@@ -170,7 +168,8 @@ gke_test: &gke_test
     - run: |
         # If we want to test the latest version instead we override the image to be used
         if [[ -n "$TEST_LATEST_RELEASE" ]]; then
-          DEV_TAG=$LATEST_RELEASE_TAG
+          # latestReleaseTag was sourced in the first step via chart_sync_utils
+          DEV_TAG=$(latestReleaseTag)
           IMG_MODIFIER=""
         fi
         ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER
