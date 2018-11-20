@@ -21,8 +21,11 @@ k8s_wait_for_deployment() {
     namespace=${1:?}
     deployment=${2:?}
     echo "Waiting for deployment ${deployment} to be successfully rolled out"
+    # Avoid to exit the function if the rollout fails
+    set +e
     kubectl rollout status --namespace $namespace deployment ${deployment}
     res=$?
+    set -e
     echo "Rollout exit code: '${res}'"
     return $res
 }
@@ -52,14 +55,16 @@ k8s_wait_for_job_completed() {
 
     echo "Wait for job completion started"
 
-    set +e
     while [ "$retryTimeSeconds" -gt 0 ]; do
-        res=$(kubectl get jobs -n $namespace -l $labelSelector \
-        -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True")
+        # Avoid to exit the function if the job is not completed yet
+        set +e
+        kubectl get jobs -n $namespace -l $labelSelector \
+           -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True"
+        res=$?
+        set -e
         # There is a job that finished
         if [[ $res ]]; then
             echo "Job '${@:2}' completed"
-            set -e
             return 0
         fi
         # It did not finished so we reduce the remaining time and wait for next retry cycle
@@ -67,7 +72,6 @@ k8s_wait_for_job_completed() {
         retryTimeSeconds=retryTimeSeconds-$retryTimeStepSeconds
         sleep $retryTimeStepSeconds
     done
-    set -e
     echo "Job '${@:2}' did not complete"
 
     return 1

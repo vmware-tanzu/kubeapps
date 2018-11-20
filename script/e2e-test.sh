@@ -67,18 +67,18 @@ k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 
 # Wait for Kubeapps Pods
-k8s_wait_for_deployment kubeapps kubeapps-ci
-echo "Deployment kubeapps-ci ready"
-k8s_wait_for_deployment kubeapps kubeapps-ci-internal-apprepository-controller
-echo "Deployment kubeapps-ci-internal-apprepository-controller ready"
-k8s_wait_for_deployment kubeapps kubeapps-ci-internal-chartsvc
-echo "Deployment kubeapps-ci-internal-chartsvc ready"
-k8s_wait_for_deployment kubeapps kubeapps-ci-internal-tiller-proxy
-echo "Deployment kubeapps-ci-internal-tiller-proxy ready"
-k8s_wait_for_deployment kubeapps kubeapps-ci-internal-dashboard
-echo "Deployment kubeapps-ci-internal-dashboard ready"
-k8s_wait_for_deployment kubeapps kubeapps-ci-mongodb
-echo "Deployment kubeapps-ci-mongodb ready"
+deployments=(
+  kubeapps-ci
+  kubeapps-ci-internal-apprepository-controller
+  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-tiller-proxy
+  kubeapps-ci-internal-dashboard
+  kubeapps-ci-mongodb
+)
+for dep in ${deployments[@]}; do
+  k8s_wait_for_deployment kubeapps ${dep}
+  echo "Deployment ${dep} ready"
+done
 
 # Wait for Kubeapps Jobs
 k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
