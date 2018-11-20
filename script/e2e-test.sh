@@ -70,12 +70,25 @@ k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 
 # Wait for Kubeapps Pods
-k8s_wait_for_pod_ready kubeapps app=kubeapps-ci
-k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-apprepository-controller
-k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-chartsvc
-k8s_wait_for_pod_ready kubeapps app=kubeapps-ci-internal-tiller-proxy
-k8s_wait_for_pod_ready kubeapps app=mongodb
-k8s_wait_for_pod_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
+deployments=(
+  kubeapps-ci
+  kubeapps-ci-internal-apprepository-controller
+  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-tiller-proxy
+  kubeapps-ci-internal-dashboard
+  kubeapps-ci-mongodb
+)
+for dep in ${deployments[@]}; do
+  k8s_wait_for_deployment kubeapps ${dep}
+  echo "Deployment ${dep} ready"
+done
+
+# Wait for Kubeapps Jobs
+k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
+echo "Job apprepositories.kubeapps.com/repo-name=stable ready"
+
+echo "All deployments ready. PODs:"
+kubectl get pods -n kubeapps -o wide
 
 # Run helm tests
 helm test ${HELM_CLIENT_TLS_FLAGS} --cleanup kubeapps-ci
