@@ -35,7 +35,7 @@ workflows:
           <<: *build_always
       - build_dashboard:
           <<: *build_always
-      - GKE_1_9_MASTER:
+      - GKE_1_9:
           <<: *build_always
           requires:
             - test_go
@@ -49,7 +49,7 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_10_MASTER:
+      - GKE_1_10:
           <<: *build_always
           requires:
             - test_go
@@ -63,7 +63,7 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_11_MASTER:
+      - GKE_1_11:
           <<: *build_always
           requires:
             - test_go
@@ -80,29 +80,29 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
-            - GKE_1_9_MASTER
+            - GKE_1_9
             - GKE_1_9_LATEST_RELEASE
-            - GKE_1_10_MASTER
+            - GKE_1_10
             - GKE_1_10_LATEST_RELEASE
-            - GKE_1_11_MASTER
+            - GKE_1_11
             - GKE_1_11_LATEST_RELEASE
       - push_images:
           <<: *build_always
           requires:
-            - GKE_1_9_MASTER
+            - GKE_1_9
             - GKE_1_9_LATEST_RELEASE
-            - GKE_1_10_MASTER
+            - GKE_1_10
             - GKE_1_10_LATEST_RELEASE
-            - GKE_1_11_MASTER
+            - GKE_1_11
             - GKE_1_11_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
-            - GKE_1_9_MASTER
+            - GKE_1_9
             - GKE_1_9_LATEST_RELEASE
-            - GKE_1_10_MASTER
+            - GKE_1_10
             - GKE_1_10_LATEST_RELEASE
-            - GKE_1_11_MASTER
+            - GKE_1_11
             - GKE_1_11_LATEST_RELEASE
 
 ## Definitions
@@ -252,7 +252,7 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  GKE_1_9_MASTER:
+  GKE_1_9:
     <<: *gke_test
     environment:
       HELM_VERSION: v2.11.0
@@ -264,18 +264,18 @@ jobs:
       GKE_BRANCH: 1.9
       # We want to also test the chart with the current release of the images
       TEST_LATEST_RELEASE: 1
-  GKE_1_10_MASTER:
+  GKE_1_10:
     <<: *gke_test
     environment:
       HELM_VERSION: v2.11.0
-      GKE_BRANCH: 1.10
+      GKE_BRANCH: "1.10"
   GKE_1_10_LATEST_RELEASE:
     <<: *gke_test
     environment:
       HELM_VERSION: v2.11.0
-      GKE_BRANCH: 1.10
+      GKE_BRANCH: "1.10"
       TEST_LATEST_RELEASE: 1
-  GKE_1_11_MASTER:
+  GKE_1_11:
     <<: *gke_test
     environment:
       HELM_VERSION: v2.11.0
