@@ -1,14 +1,9 @@
 # Migration to v1.0.0
 
 This release includes several breaking changes that can make upgrading fairly
-difficult:
+difficult. Helm 2.10 and above is also now required to install Kubeapps.
 
-- The AppRepository CRD is now installed using the `crd-install` Helm hook
-- The AppRepository objects are now installed as `pre-install` Helm hooks
-- Removal of a migration task to update the credential generation for MongoDB
-  that was introduced in the `v1.0.0-beta.4`
-
-If you have difficulty updating to the v1.0.0 release, we recommend backing up
+If you have difficulty upgrading to the v1.0.0 release, we recommend backing up
 any AppRepository objects (custom repositories) you may have added and perform a
 clean install of Kubeapps.
 
