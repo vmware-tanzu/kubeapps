@@ -3,8 +3,8 @@ import * as Modal from "react-modal";
 
 import { JSONSchema6 } from "json-schema";
 import { ISubmitEvent } from "react-jsonschema-form";
-import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { IRBACRole } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
 import SchemaForm from "../SchemaForm";
 
 interface IAddBindingButtonProps {
@@ -27,6 +27,10 @@ interface IAddBindingButtonState {
   // deployment options
   bindingName: string;
   displayNameForm: boolean;
+  // Name of the binding that was submitted for creation
+  // This is different than bindingName since it is also used in the error banner
+  // and we do not want to use bindingName since it is controller by the form field.
+  latestSubmittedReleaseName: string;
 }
 
 const RequiredRBACRoles: IRBACRole[] = [
@@ -42,6 +46,7 @@ class AddBindingButton extends React.Component<IAddBindingButtonProps, IAddBindi
     bindingName: `${this.props.instanceRefName}-binding`,
     displayNameForm: true,
     modalIsOpen: false,
+    latestSubmittedReleaseName: `${this.props.instanceRefName}-binding`,
   };
 
   public render() {
@@ -68,7 +73,15 @@ class AddBindingButton extends React.Component<IAddBindingButtonProps, IAddBindi
           Add Binding
         </button>
         <Modal isOpen={modalIsOpen} onRequestClose={this.closeModal}>
-          {this.props.error && <div className="margin-b-big">{this.renderError()}</div>}
+          {this.props.error && (
+            <ErrorSelector
+              error={this.props.error}
+              resource={`Service Binding "${this.state.latestSubmittedReleaseName}"`}
+              action="create"
+              namespace={this.props.namespace}
+              defaultRequiredRBACRoles={{ create: RequiredRBACRoles }}
+            />
+          )}
           <div className="bind-form">
             <h1>Add Binding</h1>
             {displayNameForm ? (
@@ -112,6 +125,7 @@ class AddBindingButton extends React.Component<IAddBindingButtonProps, IAddBindi
 
   private handleBind = async ({ formData }: ISubmitEvent<{ kubeappsRawParameters: {} }>) => {
     const { kubeappsRawParameters, ...rest } = formData;
+    this.setState({ latestSubmittedReleaseName: this.state.bindingName });
     const added = await this.props.addBinding(
       this.state.bindingName,
       this.props.instanceRefName,
@@ -123,26 +137,6 @@ class AddBindingButton extends React.Component<IAddBindingButtonProps, IAddBindi
       this.props.onAddBinding();
     }
   };
-
-  // TODO: Replace with ErrorSelector
-  private renderError() {
-    const { error, namespace } = this.props;
-    const { bindingName } = this.state;
-    switch (error && error.constructor) {
-      case ForbiddenError:
-        return (
-          <PermissionsErrorAlert
-            namespace={namespace}
-            roles={RequiredRBACRoles}
-            action={`create Service Binding "${bindingName}"`}
-          />
-        );
-      case NotFoundError:
-        return <NotFoundErrorAlert resource={`Namespace "${namespace}"`} />;
-      default:
-        return <UnexpectedErrorAlert />;
-    }
-  }
 
   private nameSchema(): JSONSchema6 {
     return {

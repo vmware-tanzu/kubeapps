@@ -1,0 +1,21 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`shows a button 1`] = `
+<div
+  className="DeprovisionButton"
+>
+  <ConfirmDialog
+    closeModal={[Function]}
+    loading={false}
+    modalIsOpen={false}
+    onConfirm={[Function]}
+  />
+  <button
+    className="button button-primary button-danger"
+    disabled={false}
+    onClick={[Function]}
+  >
+    Deprovision
+  </button>
+</div>
+`;
