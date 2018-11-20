@@ -36,14 +36,7 @@ workflows:
       - build_dashboard:
           <<: *build_always
       - GKE_1_9_MASTER:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_10_MASTER:
-          <<: *build_on_master
+          <<: *build_always
           requires:
             - test_go
             - test_dashboard
@@ -56,7 +49,28 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
+      - GKE_1_10_MASTER:
+          <<: *build_always
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
       - GKE_1_10_LATEST_RELEASE:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_11_MASTER:
+          <<: *build_always
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_11_LATEST_RELEASE:
           <<: *build_on_master
           requires:
             - test_go
@@ -67,24 +81,29 @@ workflows:
           <<: *build_on_master
           requires:
             - GKE_1_9_MASTER
-            - GKE_1_10_MASTER
             - GKE_1_9_LATEST_RELEASE
+            - GKE_1_10_MASTER
             - GKE_1_10_LATEST_RELEASE
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
       - push_images:
           <<: *build_always
           requires:
             - GKE_1_9_MASTER
-            - GKE_1_10_MASTER
             - GKE_1_9_LATEST_RELEASE
+            - GKE_1_10_MASTER
             - GKE_1_10_LATEST_RELEASE
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
             - GKE_1_9_MASTER
-            - GKE_1_10_MASTER
             - GKE_1_9_LATEST_RELEASE
+            - GKE_1_10_MASTER
             - GKE_1_10_LATEST_RELEASE
-      
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -110,6 +129,8 @@ exports: &exports
     # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
     # history of the production tag
     echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
+    # Kubectl version, we use the same for all the builds since typically it's backwards compatible
+    echo "export KUBECTL_VERSION=v1.12.0" >> $BASH_ENV
 build_images: &build_images
   steps:
     - setup_remote_docker
@@ -122,7 +143,7 @@ build_images: &build_images
         fi
         for IMAGE in "${IMG_ARRAY[@]}"; do
           make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs ${IMAGE}
-          if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+          if [[ -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
             docker push ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
           fi
@@ -131,16 +152,16 @@ gke_test: &gke_test
   docker:
     - image: circleci/golang:1.11
   steps:
-    - checkout
     - run: |
-        source ./script/chart_sync_utils.sh
-
         # In case of GKE we will only want to build if it is
         # a build of a branch in the kubeapps repository
         if [[ -z "$GKE_ADMIN" ]]; then
           echo "Step aborted, we are not in the Kubeapps repository"
           circleci step halt
         fi
+    - checkout
+    - run: |
+        source ./script/chart_sync_utils.sh
 
         # Cancel job if this is a test stable release job but
         # the chart version has not been bumped
@@ -151,7 +172,10 @@ gke_test: &gke_test
     - <<: *exports
     - <<: *install_gcloud_sdk
     # Install kubectl
-    - run: gcloud components install kubectl
+    - run: |
+        curl -LO https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/kubectl
     - setup_remote_docker
     - run: |
         gcloud -q config set project $GKE_PROJECT
@@ -233,11 +257,6 @@ jobs:
     environment:
       HELM_VERSION: v2.11.0
       GKE_BRANCH: 1.9
-  GKE_1_10_MASTER:
-    <<: *gke_test
-    environment:
-      HELM_VERSION: v2.11.0
-      GKE_BRANCH: 1.10
   GKE_1_9_LATEST_RELEASE:
     <<: *gke_test
     environment:
@@ -245,11 +264,27 @@ jobs:
       GKE_BRANCH: 1.9
       # We want to also test the chart with the current release of the images
       TEST_LATEST_RELEASE: 1
+  GKE_1_10_MASTER:
+    <<: *gke_test
+    environment:
+      HELM_VERSION: v2.11.0
+      GKE_BRANCH: 1.10
   GKE_1_10_LATEST_RELEASE:
     <<: *gke_test
     environment:
       HELM_VERSION: v2.11.0
       GKE_BRANCH: 1.10
+      TEST_LATEST_RELEASE: 1
+  GKE_1_11_MASTER:
+    <<: *gke_test
+    environment:
+      HELM_VERSION: v2.11.0
+      GKE_BRANCH: 1.11
+  GKE_1_11_LATEST_RELEASE:
+    <<: *gke_test
+    environment:
+      HELM_VERSION: v2.11.0
+      GKE_BRANCH: 1.11
       TEST_LATEST_RELEASE: 1
   sync_chart:
     docker:
