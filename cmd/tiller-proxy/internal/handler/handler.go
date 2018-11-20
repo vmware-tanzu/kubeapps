@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
-	"sync"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
@@ -42,7 +41,7 @@ type contextKey int
 const userKey contextKey = 0
 
 // AuthGate implements middleware to check if the user is logged in before continuing
-func AuthGate(safe *sync.WaitGroup) negroni.HandlerFunc {
+func AuthGate() negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		authHeader := strings.Split(req.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
@@ -60,8 +59,6 @@ func AuthGate(safe *sync.WaitGroup) negroni.HandlerFunc {
 			return
 		}
 		ctx := context.WithValue(req.Context(), userKey, userAuth)
-		safe.Add(1)
-		defer safe.Done()
 		next(w, req.WithContext(ctx))
 	}
 }

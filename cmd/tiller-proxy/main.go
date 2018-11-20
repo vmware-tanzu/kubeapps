@@ -17,11 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 	"time"
 
@@ -139,8 +139,7 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	safe := sync.WaitGroup{}
-	authGate := handler.AuthGate(&safe)
+	authGate := handler.AuthGate()
 
 	// HTTP Handler
 	h := handler.TillerProxy{
@@ -185,21 +184,31 @@ func main() {
 	}
 	addr := ":" + port
 
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: n,
+	}
+
+	go func() {
+		log.WithFields(log.Fields{"addr": addr}).Info("Started Tiller Proxy")
+		err = srv.ListenAndServe()
+		if err != nil {
+			log.Info(err)
+		}
+	}()
+
 	// Catch SIGINT and SIGKILL
 	// Set up channel on which to send signal notifications.
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	log.Info("Set system to get notified on signals")
-	go func() {
-		s := <-c
-		log.Infof("Received signal: %v. Waiting for existing requests to finish", s)
-		safe.Wait()
-		log.Info("All requests have been served. Exiting")
-	}()
-
-	log.WithFields(log.Fields{"addr": addr}).Info("Started Tiller Proxy")
-	err = http.ListenAndServe(addr, n)
-	if err != nil {
-		log.Fatalf("Unable to start the server: %v", err)
-	}
+	s := <-c
+	log.Infof("Received signal: %v. Waiting for existing requests to finish", s)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+	defer cancel()
+	// Doesn't block if no connections, but will otherwise wait
+	// until the timeout deadline.
+	srv.Shutdown(ctx)
+	log.Info("All requests have been served. Exiting")
+	os.Exit(0)
 }
