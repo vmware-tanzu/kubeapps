@@ -16,68 +16,7 @@
 set -e
 
 CHARTS_REPO="bitnami/charts"
-CHART_REPO_PATH="bitnami/kubeapps"
-PROJECT_DIR=`cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd`
-KUBEAPPS_CHART_DIR="${PROJECT_DIR}/chart/kubeapps"
-
-changedVersion() {
-    local currentVersion=$(cat "${KUBEAPPS_CHART_DIR}/Chart.yaml" | grep "version:")
-    local externalVersion=$(curl -s https://raw.githubusercontent.com/${CHARTS_REPO}/master/${CHART_REPO_PATH}/Chart.yaml | grep "version:")
-    # NOTE: If curl returns an error this will return always true
-    [[ "$currentVersion" != "$externalVersion" ]]
-}
-
-configUser() {
-    local targetRepo=${1:?}
-    local user=${2:?}
-    local email=${3:?}
-    cd $targetRepo
-    git config user.name "$user"
-    git config user.email "$email"
-    cd -
-}
-
-updateRepo() {
-    local targetRepo=${1:?}
-    local targetTag=${2:?}
-    local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
-    local chartYaml="${targetChartPath}/Chart.yaml"
-    if [ ! -f "${chartYaml}" ]; then
-        echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
-        return 1
-    fi
-    rm -rf "${targetChartPath}"
-    cp -R "${KUBEAPPS_CHART_DIR}" "${targetChartPath}"
-    # Update Chart.yaml with new version
-    sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTag}"'/g' "${chartYaml}"
-    rm "${targetChartPath}/Chart.yaml.bk"
-    # DANGER: This replaces any tag marked as latest in the values.yaml
-    sed -i.bk 's/tag: latest/tag: '"${targetTag}"'/g' "${targetChartPath}/values.yaml"
-    rm "${targetChartPath}/values.yaml.bk"
-}
-
-commitAndPushChanges() {
-    local targetRepo=${1:?}
-    local targetBranch=${2:-"master"}
-    local targetChartPath="${targetRepo}/${CHART_REPO_PATH}"
-    local chartYaml="${targetChartPath}/Chart.yaml"
-    if [ ! -f "${chartYaml}" ]; then
-        echo "Wrong repo path. You should provide the root of the repository" > /dev/stderr
-        return 1
-    fi
-    cd $targetRepo
-    if [[ ! $(git diff-index HEAD) ]]; then
-        echo "Not found any change to commit" > /dev/stderr
-        cd -
-        return 1
-    fi
-    local chartVersion=$(grep -w version: ${chartYaml} | awk '{print $2}')
-    git add --all .
-    git commit -m "kubeapps: bump chart version to $chartVersion"
-    # NOTE: This expects to have a loaded SSH key
-    git push origin $targetBranch
-    cd -
-}
+source $(dirname $0)/chart_sync_utils.sh
 
 user=${1:?}
 email=${2:?}
@@ -87,7 +26,7 @@ if changedVersion; then
     git clone https://github.com/${CHARTS_REPO} $tempDir
     configUser $tempDir $user $email
     git fetch --tags
-    latestVersion=$(git describe --tags $(git rev-list --tags --max-count=1))
+    latestVersion=$(latestReleaseTag)
     updateRepo $tempDir $latestVersion
     commitAndPushChanges $tempDir master
 else
