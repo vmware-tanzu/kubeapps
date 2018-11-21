@@ -10,7 +10,7 @@ clean install of Kubeapps.
 To backup a custom repository, run the following command for each repository:
 
 ```
-kubectl get apprepsitory -o yaml <repo name> > <repo name>.yaml
+kubectl get apprepository -o yaml <repo name> > <repo name>.yaml
 ```
 
 **Note**: you do not need to backup the `stable`, `incubator`, `bitnami` or
