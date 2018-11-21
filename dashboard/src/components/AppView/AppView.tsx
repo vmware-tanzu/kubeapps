@@ -3,7 +3,7 @@ import * as React from "react";
 
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { IRBACRole, IResource } from "../../shared/types";
+import { IRBACRole, IResource, ISecret } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -14,6 +14,7 @@ import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
+import SecretTable from "./SecretsTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -31,6 +32,7 @@ interface IAppViewState {
   otherResources: { [r: string]: IResource };
   services: { [s: string]: IResource };
   ingresses: { [i: string]: IResource };
+  secrets: { [s: string]: ISecret };
   sockets: WebSocket[];
 }
 
@@ -55,6 +57,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     ingresses: {},
     otherResources: {},
     services: {},
+    secrets: {},
     sockets: [],
   };
 
@@ -103,6 +106,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const deployments = manifest.filter(d => d.kind === "Deployment");
     const services = manifest.filter(d => d.kind === "Service");
     const ingresses = manifest.filter(d => d.kind === "Ingress");
+    const secrets = manifest.filter(d => d.kind === "Secret");
     const sockets: WebSocket[] = [];
     for (const d of deployments) {
       sockets.push(this.getSocket("deployments", d.apiVersion, d.metadata.name, newApp.namespace));
@@ -112,6 +116,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     }
     for (const i of ingresses) {
       sockets.push(this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace));
+    }
+    for (const s of secrets) {
+      sockets.push(this.getSocket("secrets", s.apiVersion, s.metadata.name, newApp.namespace));
     }
     this.setState({
       sockets,
@@ -124,7 +131,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public handleEvent(e: MessageEvent) {
     const msg = JSON.parse(e.data);
-    const resource: IResource = msg.object;
+    const resource: any = msg.object;
     const key = `${resource.kind}/${resource.metadata.name}`;
     switch (resource.kind) {
       case "Deployment":
@@ -135,6 +142,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         break;
       case "Ingress":
         this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
+        break;
+      case "Secret":
+        this.setState({ secrets: { ...this.state.secrets, [key]: resource } });
         break;
     }
   }
@@ -196,6 +206,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                   <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
                 )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
+                <h6>Secrets</h6>
+                <SecretTable secrets={this.state.secrets} />
                 <AppDetails
                   deployments={this.state.deployments}
                   services={this.state.services}
