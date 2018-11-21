@@ -35,42 +35,44 @@ workflows:
           <<: *build_always
       - build_dashboard:
           <<: *build_always
-      - GKE_1_9:
+      # E2E tests with the images just built
+      - GKE_1_9_LATEST:
           <<: *build_always
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_9_LATEST_RELEASE:
+      # E2E tests with the latest images released
+      - GKE_1_9_RELEASED:
           <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_10:
+      - GKE_1_10_LATEST:
           <<: *build_always
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_10_LATEST_RELEASE:
+      - GKE_1_10_RELEASED:
           <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_11:
+      - GKE_1_11_LATEST:
           <<: *build_always
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_11_LATEST_RELEASE:
+      - GKE_1_11_RELEASED:
           <<: *build_on_master
           requires:
             - test_go
@@ -80,30 +82,30 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
-            - GKE_1_9
-            - GKE_1_9_LATEST_RELEASE
-            - GKE_1_10
-            - GKE_1_10_LATEST_RELEASE
-            - GKE_1_11
-            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_9_LATEST
+            - GKE_1_9_RELEASED
+            - GKE_1_10_LATEST
+            - GKE_1_10_RELEASED
+            - GKE_1_11_LATEST
+            - GKE_1_11_RELEASED
       - push_images:
           <<: *build_always
           requires:
-            - GKE_1_9
-            - GKE_1_9_LATEST_RELEASE
-            - GKE_1_10
-            - GKE_1_10_LATEST_RELEASE
-            - GKE_1_11
-            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_9_LATEST
+            - GKE_1_9_RELEASED
+            - GKE_1_10_LATEST
+            - GKE_1_10_RELEASED
+            - GKE_1_11_LATEST
+            - GKE_1_11_RELEASED
       - release:
           <<: *build_on_tag
           requires:
-            - GKE_1_9
-            - GKE_1_9_LATEST_RELEASE
-            - GKE_1_10
-            - GKE_1_10_LATEST_RELEASE
-            - GKE_1_11
-            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_9_LATEST
+            - GKE_1_9_RELEASED
+            - GKE_1_10_LATEST
+            - GKE_1_10_RELEASED
+            - GKE_1_11_LATEST
+            - GKE_1_11_RELEASED
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -129,8 +131,8 @@ exports: &exports
     # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
     # history of the production tag
     echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
-    # Kubectl version, we use the same for all the builds since typically it's backwards compatible
-    echo "export KUBECTL_VERSION=v1.12.0" >> $BASH_ENV
+    # Helm version (should be +2.10)
+    echo "export HELM_VERSION=v2.11.0" >> $BASH_ENV
 build_images: &build_images
   steps:
     - setup_remote_docker
@@ -252,39 +254,34 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  GKE_1_9:
+  GKE_1_9_LATEST:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.11.0
-      GKE_BRANCH: 1.9
-  GKE_1_9_LATEST_RELEASE:
+      # Note: It's important to quote versions to avoid treating them as decimal numbers
+      GKE_BRANCH: "1.9"
+  GKE_1_9_RELEASED:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.11.0
-      GKE_BRANCH: 1.9
+      GKE_BRANCH: "1.9"
       # We want to also test the chart with the current release of the images
       TEST_LATEST_RELEASE: 1
-  GKE_1_10:
+  GKE_1_10_LATEST:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.11.0
       GKE_BRANCH: "1.10"
-  GKE_1_10_LATEST_RELEASE:
+  GKE_1_10_RELEASED:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.11.0
       GKE_BRANCH: "1.10"
       TEST_LATEST_RELEASE: 1
-  GKE_1_11:
+  GKE_1_11_LATEST:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.11.0
-      GKE_BRANCH: 1.11
-  GKE_1_11_LATEST_RELEASE:
+      GKE_BRANCH: "1.11"
+  GKE_1_11_RELEASED:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.11.0
-      GKE_BRANCH: 1.11
+      GKE_BRANCH: "1.11"
       TEST_LATEST_RELEASE: 1
   sync_chart:
     docker:
