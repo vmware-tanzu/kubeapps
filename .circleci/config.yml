@@ -35,44 +35,42 @@ workflows:
           <<: *build_always
       - build_dashboard:
           <<: *build_always
-      # E2E tests with the images just built
-      - GKE_1_9_LATEST:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      # E2E tests with the latest images released
-      - GKE_1_9_RELEASED:
+      - GKE_1_9_MASTER:
           <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_10_LATEST:
-          <<: *build_always
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_10_RELEASED:
+      - GKE_1_9_LATEST_RELEASE:
           <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_11_LATEST:
-          <<: *build_always
+      - GKE_1_10_MASTER:
+          <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_11_RELEASED:
+      - GKE_1_10_LATEST_RELEASE:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_11_MASTER:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_11_LATEST_RELEASE:
           <<: *build_on_master
           requires:
             - test_go
@@ -82,30 +80,30 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
-            - GKE_1_9_LATEST
-            - GKE_1_9_RELEASED
-            - GKE_1_10_LATEST
-            - GKE_1_10_RELEASED
-            - GKE_1_11_LATEST
-            - GKE_1_11_RELEASED
+            - GKE_1_9_MASTER
+            - GKE_1_9_LATEST_RELEASE
+            - GKE_1_10_MASTER
+            - GKE_1_10_LATEST_RELEASE
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
       - push_images:
           <<: *build_always
           requires:
-            - GKE_1_9_LATEST
-            - GKE_1_9_RELEASED
-            - GKE_1_10_LATEST
-            - GKE_1_10_RELEASED
-            - GKE_1_11_LATEST
-            - GKE_1_11_RELEASED
+            - GKE_1_9_MASTER
+            - GKE_1_9_LATEST_RELEASE
+            - GKE_1_10_MASTER
+            - GKE_1_10_LATEST_RELEASE
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
-            - GKE_1_9_LATEST
-            - GKE_1_9_RELEASED
-            - GKE_1_10_LATEST
-            - GKE_1_10_RELEASED
-            - GKE_1_11_LATEST
-            - GKE_1_11_RELEASED
+            - GKE_1_9_MASTER
+            - GKE_1_9_LATEST_RELEASE
+            - GKE_1_10_MASTER
+            - GKE_1_10_LATEST_RELEASE
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -145,7 +143,7 @@ build_images: &build_images
         fi
         for IMAGE in "${IMG_ARRAY[@]}"; do
           make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs ${IMAGE}
-          if [[ -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+          if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
             docker push ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
           fi
@@ -154,16 +152,16 @@ gke_test: &gke_test
   docker:
     - image: circleci/golang:1.11
   steps:
+    - checkout
     - run: |
+        source ./script/chart_sync_utils.sh
+
         # In case of GKE we will only want to build if it is
         # a build of a branch in the kubeapps repository
         if [[ -z "$GKE_ADMIN" ]]; then
           echo "Step aborted, we are not in the Kubeapps repository"
           circleci step halt
         fi
-    - checkout
-    - run: |
-        source ./script/chart_sync_utils.sh
 
         # Cancel job if this is a test stable release job but
         # the chart version has not been bumped
@@ -227,9 +225,8 @@ jobs:
   test_chart_render:
     docker:
       - image: circleci/golang:1.11
-    environment:
-      HELM_VERSION: v2.11.0
     steps:
+      - <<: *exports
       - checkout
       - <<: *install_helm_cli
       - run: helm init --client-only
@@ -254,31 +251,31 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  GKE_1_9_LATEST:
+  GKE_1_9_MASTER:
     <<: *gke_test
     environment:
       # Note: It's important to quote versions to avoid treating them as decimal numbers
       GKE_BRANCH: "1.9"
-  GKE_1_9_RELEASED:
+  GKE_1_9_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.9"
       # We want to also test the chart with the current release of the images
       TEST_LATEST_RELEASE: 1
-  GKE_1_10_LATEST:
+  GKE_1_10_MASTER:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.10"
-  GKE_1_10_RELEASED:
+  GKE_1_10_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.10"
       TEST_LATEST_RELEASE: 1
-  GKE_1_11_LATEST:
+  GKE_1_11_MASTER:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.11"
-  GKE_1_11_RELEASED:
+  GKE_1_11_LATEST_RELEASE:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.11"
