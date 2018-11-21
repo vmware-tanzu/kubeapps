@@ -165,7 +165,7 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 	log.Printf("Creating Helm Release")
 	chartDetails, ch, err := getChart(req, h.ChartClient)
 	if err != nil {
-		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
 	}
 	if !h.DisableAuth {
@@ -200,7 +200,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 	log.Printf("Upgrading Helm Release")
 	chartDetails, ch, err := getChart(req, h.ChartClient)
 	if err != nil {
-		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
 	}
 	if !h.DisableAuth {
