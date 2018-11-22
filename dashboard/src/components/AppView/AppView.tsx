@@ -90,7 +90,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
 
-    const watchedKinds = ["Deployment", "Service"];
+    const watchedKinds = ["Deployment", "Service", "Secret"];
     const otherResources = manifest
       .filter(d => watchedKinds.indexOf(d.kind) < 0)
       .reduce((acc, r) => {
@@ -103,23 +103,27 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       }, {});
     this.setState({ otherResources });
 
-    const deployments = manifest.filter(d => d.kind === "Deployment");
-    const services = manifest.filter(d => d.kind === "Service");
-    const ingresses = manifest.filter(d => d.kind === "Ingress");
-    const secrets = manifest.filter(d => d.kind === "Secret");
     const sockets: WebSocket[] = [];
-    for (const d of deployments) {
-      sockets.push(this.getSocket("deployments", d.apiVersion, d.metadata.name, newApp.namespace));
-    }
-    for (const svc of services) {
-      sockets.push(this.getSocket("services", svc.apiVersion, svc.metadata.name, newApp.namespace));
-    }
-    for (const i of ingresses) {
-      sockets.push(this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace));
-    }
-    for (const s of secrets) {
-      sockets.push(this.getSocket("secrets", s.apiVersion, s.metadata.name, newApp.namespace));
-    }
+    manifest.forEach(i => {
+      switch (i.kind) {
+        case "Deployment":
+          sockets.push(
+            this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
+          );
+          break;
+        case "Service":
+          sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
+          break;
+        case "Ingress":
+          sockets.push(
+            this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
+          );
+          break;
+        case "Secret":
+          sockets.push(this.getSocket("secrets", i.apiVersion, i.metadata.name, newApp.namespace));
+          break;
+      }
+    });
     this.setState({
       sockets,
     });
@@ -131,7 +135,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public handleEvent(e: MessageEvent) {
     const msg = JSON.parse(e.data);
-    const resource: any = msg.object;
+    const resource: IResource = msg.object;
     const key = `${resource.kind}/${resource.metadata.name}`;
     switch (resource.kind) {
       case "Deployment":
@@ -144,7 +148,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
         break;
       case "Secret":
-        this.setState({ secrets: { ...this.state.secrets, [key]: resource } });
+        const secret: ISecret = msg.object;
+        this.setState({ secrets: { ...this.state.secrets, [key]: secret } });
         break;
     }
   }

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ISecret } from "../../shared/types";
+import { ISecret } from "../../../shared/types";
 import SecretItem from "./SecretItem";
 
 interface IServiceTableProps {

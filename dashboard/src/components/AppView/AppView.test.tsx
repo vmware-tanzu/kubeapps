@@ -74,6 +74,7 @@ describe("AppViewComponent", () => {
         kind: "Ingress",
         metadata: { name: "ingress-one" },
       },
+      secret: { apiVersion: "v1", kind: "Secret", metadata: { name: "secret-one" } },
     };
 
     /*
@@ -86,6 +87,7 @@ describe("AppViewComponent", () => {
         resources.service,
         resources.configMap,
         resources.ingress,
+        resources.secret,
       ]);
 
       const wrapper = shallow(<AppViewComponent {...validProps} />);
@@ -94,7 +96,7 @@ describe("AppViewComponent", () => {
       wrapper.setProps(validProps);
       const sockets: WebSocket[] = wrapper.state("sockets");
 
-      expect(sockets.length).toEqual(3);
+      expect(sockets.length).toEqual(4);
       expect(sockets[0].url).toBe(
         "ws://localhost/api/kube/apis/apps/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
       );
@@ -104,22 +106,31 @@ describe("AppViewComponent", () => {
       expect(sockets[2].url).toBe(
         "ws://localhost/api/kube/apis/extensions/v1beta1/namespaces/weee/ingresses?watch=true&fieldSelector=metadata.name%3Dingress-one",
       );
+      expect(sockets[3].url).toBe(
+        "ws://localhost/api/kube/api/v1/namespaces/weee/secrets?watch=true&fieldSelector=metadata.name%3Dsecret-one",
+      );
     });
 
     it("stores other k8s resources directly in the state", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
-      const manifest = generateYamlManifest([resources.configMap, resources.deployment]);
+      const manifest = generateYamlManifest([
+        resources.deployment,
+        resources.service,
+        resources.configMap,
+        resources.secret,
+      ]);
 
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
 
-      const otherResources: Map<string, IResource> = wrapper.state("otherResources");
+      const otherResources: { [r: string]: IResource } = wrapper.state("otherResources");
       const configMap = otherResources["ConfigMap/cm-one"];
+      // It should skip deployments, services and secrets from "other resources"
       expect(Object.keys(otherResources).length).toEqual(1);
 
       // It sets the websocket for the deployment
       const sockets: WebSocket[] = wrapper.state("sockets");
-      expect(sockets.length).toEqual(1);
+      expect(sockets.length).toEqual(3);
 
       expect(configMap).toBeDefined();
       expect(configMap.metadata.name).toEqual("cm-one");
