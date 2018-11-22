@@ -1,0 +1,94 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when the modal is open shows an error if is present 1`] = `
+<div
+  className="ProvisionButton"
+>
+  <button
+    className="button button-primary button-small"
+    disabled={false}
+    onClick={[Function]}
+  >
+    Provision
+  </button>
+  <Modal
+    ariaHideApp={true}
+    bodyOpenClassName="ReactModal__Body--open"
+    closeTimeoutMS={0}
+    contentLabel="Modal"
+    isOpen={true}
+    onRequestClose={[Function]}
+    parentSelector={[Function]}
+    portalClassName="ReactModalPortal"
+    shouldCloseOnEsc={true}
+    shouldCloseOnOverlayClick={true}
+    shouldFocusAfterRender={true}
+    shouldReturnFocusAfterClose={true}
+    style={
+      Object {
+        "content": Object {
+          "bottom": "auto",
+          "left": "50%",
+          "marginRight": "-50%",
+          "right": "auto",
+          "top": "50%",
+          "transform": "translate(-50%, -50%)",
+        },
+      }
+    }
+  >
+    <ErrorSelector
+      action="provision"
+      defaultRequiredRBACRoles={
+        Object {
+          "provision": Array [
+            Object {
+              "apiGroup": "servicecatalog.k8s.io",
+              "resource": "serviceinstances",
+              "verbs": Array [
+                "create",
+              ],
+            },
+          ],
+        }
+      }
+      error={[Error]}
+      namespace="default"
+      resource="my-class"
+    />
+    <SchemaForm
+      onSubmit={[Function]}
+      schema={
+        Object {
+          "properties": Object {
+            "Name": Object {
+              "default": "",
+              "description": "Name for ServiceInstance",
+              "type": "string",
+            },
+          },
+          "required": Array [
+            "Name",
+          ],
+          "type": "object",
+        }
+      }
+    >
+      <div>
+        <button
+          className="button button-primary"
+          type="submit"
+        >
+          Continue
+        </button>
+        <button
+          className="button"
+          onClick={[Function]}
+        >
+          Cancel
+        </button>
+      </div>
+    </SchemaForm>
+  </Modal>
+</div>
+`;
