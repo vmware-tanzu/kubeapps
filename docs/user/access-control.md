@@ -63,7 +63,7 @@ Additionally, we need to create a role to give read access to App Repositories a
 
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -f -n $KUBEAPPS_NAMESPACE https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
+kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
 kubectl create -n default rolebinding example-edit \
   --clusterrole=edit \
   --serviceaccount default:example
@@ -123,7 +123,7 @@ In order to list the configured App Repositories in Kubeapps, create and apply t
 
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -f -n $KUBEAPPS_NAMESPACE https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
+kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
 ```
 
@@ -134,7 +134,7 @@ In order to create and refresh App Repositories in Kubeapps, create and apply th
 
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -f -n $KUBEAPPS_NAMESPACE https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-write.yaml
+kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-write.yaml
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write --role=kubeapps-repositories-write --serviceaccount default:example
 ```
 
