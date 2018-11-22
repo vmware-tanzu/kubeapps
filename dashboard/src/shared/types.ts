@@ -156,8 +156,21 @@ export interface IOwnerReference {
   uid: string;
 }
 
-export interface ISecret extends IResource {
+export interface ISecret {
+  apiVersion: string;
+  kind: string;
+  type: string;
   data: { [s: string]: string };
+  metadata: {
+    name: string;
+    namespace: string;
+    annotations: string;
+    creationTimestamp: string;
+    selfLink: string;
+    resourceVersion: string;
+    deletionTimestamp?: string;
+    uid: string;
+  };
 }
 
 export interface IDeploymentStatus {
