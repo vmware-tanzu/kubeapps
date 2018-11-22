@@ -53,6 +53,7 @@ data:
       }
 
       location /api/tiller-deploy {
+        proxy_read_timeout 10m;
         rewrite /api/tiller-deploy/(.*) /$1 break;
         rewrite /api/tiller-deploy / break;
         proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};

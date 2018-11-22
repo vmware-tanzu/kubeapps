@@ -20,6 +20,7 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "kubeapps.tiller-proxy.fullname" . }}
+      terminationGracePeriodSeconds: 600
       containers:
       - name: proxy
         image: {{ template "kubeapps.image" (list .Values.tillerProxy.image .Values.global) }}
