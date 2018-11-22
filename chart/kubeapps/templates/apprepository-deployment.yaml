@@ -23,6 +23,7 @@ spec:
       containers:
       - name: controller
         image: {{ template "kubeapps.image" (list .Values.apprepository.image .Values.global) }}
+        imagePullPolicy: IfNotPresent
         command:
         - /apprepository-controller
         args:

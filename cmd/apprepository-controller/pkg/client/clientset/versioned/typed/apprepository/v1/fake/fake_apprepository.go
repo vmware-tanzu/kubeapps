@@ -19,7 +19,7 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepository_v1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -30,29 +30,29 @@ import (
 
 // FakeAppRepositories implements AppRepositoryInterface
 type FakeAppRepositories struct {
-	Fake *FakeKubeappsV1alpha1
+	Fake *FakeKubeappsV1
 	ns   string
 }
 
-var apprepositoriesResource = schema.GroupVersionResource{Group: "kubeapps.com", Version: "v1alpha1", Resource: "apprepositories"}
+var apprepositoriesResource = schema.GroupVersionResource{Group: "kubeapps.com", Version: "v1", Resource: "apprepositories"}
 
-var apprepositoriesKind = schema.GroupVersionKind{Group: "kubeapps.com", Version: "v1alpha1", Kind: "AppRepository"}
+var apprepositoriesKind = schema.GroupVersionKind{Group: "kubeapps.com", Version: "v1", Kind: "AppRepository"}
 
 // Get takes name of the appRepository, and returns the corresponding appRepository object, and an error if there is any.
-func (c *FakeAppRepositories) Get(name string, options v1.GetOptions) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Get(name string, options v1.GetOptions) (result *apprepository_v1.AppRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewGetAction(apprepositoriesResource, c.ns, name), &v1alpha1.AppRepository{})
+		Invokes(testing.NewGetAction(apprepositoriesResource, c.ns, name), &apprepository_v1.AppRepository{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.AppRepository), err
+	return obj.(*apprepository_v1.AppRepository), err
 }
 
 // List takes label and field selectors, and returns the list of AppRepositories that match those selectors.
-func (c *FakeAppRepositories) List(opts v1.ListOptions) (result *v1alpha1.AppRepositoryList, err error) {
+func (c *FakeAppRepositories) List(opts v1.ListOptions) (result *apprepository_v1.AppRepositoryList, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewListAction(apprepositoriesResource, apprepositoriesKind, c.ns, opts), &v1alpha1.AppRepositoryList{})
+		Invokes(testing.NewListAction(apprepositoriesResource, apprepositoriesKind, c.ns, opts), &apprepository_v1.AppRepositoryList{})
 
 	if obj == nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *FakeAppRepositories) List(opts v1.ListOptions) (result *v1alpha1.AppRep
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.AppRepositoryList{}
-	for _, item := range obj.(*v1alpha1.AppRepositoryList).Items {
+	list := &apprepository_v1.AppRepositoryList{}
+	for _, item := range obj.(*apprepository_v1.AppRepositoryList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
 		}
@@ -79,31 +79,31 @@ func (c *FakeAppRepositories) Watch(opts v1.ListOptions) (watch.Interface, error
 }
 
 // Create takes the representation of a appRepository and creates it.  Returns the server's representation of the appRepository, and an error, if there is any.
-func (c *FakeAppRepositories) Create(appRepository *v1alpha1.AppRepository) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Create(appRepository *apprepository_v1.AppRepository) (result *apprepository_v1.AppRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewCreateAction(apprepositoriesResource, c.ns, appRepository), &v1alpha1.AppRepository{})
+		Invokes(testing.NewCreateAction(apprepositoriesResource, c.ns, appRepository), &apprepository_v1.AppRepository{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.AppRepository), err
+	return obj.(*apprepository_v1.AppRepository), err
 }
 
 // Update takes the representation of a appRepository and updates it. Returns the server's representation of the appRepository, and an error, if there is any.
-func (c *FakeAppRepositories) Update(appRepository *v1alpha1.AppRepository) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Update(appRepository *apprepository_v1.AppRepository) (result *apprepository_v1.AppRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewUpdateAction(apprepositoriesResource, c.ns, appRepository), &v1alpha1.AppRepository{})
+		Invokes(testing.NewUpdateAction(apprepositoriesResource, c.ns, appRepository), &apprepository_v1.AppRepository{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.AppRepository), err
+	return obj.(*apprepository_v1.AppRepository), err
 }
 
 // Delete takes name of the appRepository and deletes it. Returns an error if one occurs.
 func (c *FakeAppRepositories) Delete(name string, options *v1.DeleteOptions) error {
 	_, err := c.Fake.
-		Invokes(testing.NewDeleteAction(apprepositoriesResource, c.ns, name), &v1alpha1.AppRepository{})
+		Invokes(testing.NewDeleteAction(apprepositoriesResource, c.ns, name), &apprepository_v1.AppRepository{})
 
 	return err
 }
@@ -112,17 +112,17 @@ func (c *FakeAppRepositories) Delete(name string, options *v1.DeleteOptions) err
 func (c *FakeAppRepositories) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
 	action := testing.NewDeleteCollectionAction(apprepositoriesResource, c.ns, listOptions)
 
-	_, err := c.Fake.Invokes(action, &v1alpha1.AppRepositoryList{})
+	_, err := c.Fake.Invokes(action, &apprepository_v1.AppRepositoryList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched appRepository.
-func (c *FakeAppRepositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *apprepository_v1.AppRepository, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(apprepositoriesResource, c.ns, name, data, subresources...), &v1alpha1.AppRepository{})
+		Invokes(testing.NewPatchSubresourceAction(apprepositoriesResource, c.ns, name, data, subresources...), &apprepository_v1.AppRepository{})
 
 	if obj == nil {
 		return nil, err
 	}
-	return obj.(*v1alpha1.AppRepository), err
+	return obj.(*apprepository_v1.AppRepository), err
 }

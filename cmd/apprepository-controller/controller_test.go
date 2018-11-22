@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -17,16 +17,16 @@ func Test_newCronJob(t *testing.T) {
 	mongoSecretName = "mongodb"
 	tests := []struct {
 		name             string
-		apprepo          *apprepov1alpha1.AppRepository
+		apprepo          *apprepov1.AppRepository
 		expected         batchv1beta1.CronJob
 		userAgentComment string
 	}{
 		{
 			"my-charts",
-			&apprepov1alpha1.AppRepository{
+			&apprepov1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
-					APIVersion: "kubeapps.com/v1alpha1",
+					APIVersion: "kubeapps.com/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-charts",
@@ -36,7 +36,7 @@ func Test_newCronJob(t *testing.T) {
 						"created-by": "kubeapps",
 					},
 				},
-				Spec: apprepov1alpha1.AppRepositorySpec{
+				Spec: apprepov1.AppRepositorySpec{
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 				},
@@ -47,10 +47,10 @@ func Test_newCronJob(t *testing.T) {
 					Namespace: "kubeapps",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							&apprepov1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
 							schema.GroupVersionKind{
-								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
-								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Group:   apprepov1.SchemeGroupVersion.Group,
+								Version: apprepov1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
 							}),
 					},
@@ -97,10 +97,10 @@ func Test_newCronJob(t *testing.T) {
 		},
 		{
 			"my-charts with auth and userAgent comment",
-			&apprepov1alpha1.AppRepository{
+			&apprepov1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
-					APIVersion: "kubeapps.com/v1alpha1",
+					APIVersion: "kubeapps.com/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-charts",
@@ -110,11 +110,11 @@ func Test_newCronJob(t *testing.T) {
 						"created-by": "kubeapps",
 					},
 				},
-				Spec: apprepov1alpha1.AppRepositorySpec{
+				Spec: apprepov1.AppRepositorySpec{
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
-					Auth: apprepov1alpha1.AppRepositoryAuth{
-						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+					Auth: apprepov1.AppRepositoryAuth{
+						Header: &apprepov1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 					},
 				},
@@ -125,10 +125,10 @@ func Test_newCronJob(t *testing.T) {
 					Namespace: "kubeapps",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							&apprepov1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
 							schema.GroupVersionKind{
-								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
-								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Group:   apprepov1.SchemeGroupVersion.Group,
+								Version: apprepov1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
 							}),
 					},
@@ -200,16 +200,16 @@ func Test_newSyncJob(t *testing.T) {
 	mongoSecretName = "mongodb"
 	tests := []struct {
 		name             string
-		apprepo          *apprepov1alpha1.AppRepository
+		apprepo          *apprepov1.AppRepository
 		expected         batchv1.Job
 		userAgentComment string
 	}{
 		{
 			"my-charts",
-			&apprepov1alpha1.AppRepository{
+			&apprepov1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
-					APIVersion: "kubeapps.com/v1alpha1",
+					APIVersion: "kubeapps.com/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-charts",
@@ -219,7 +219,7 @@ func Test_newSyncJob(t *testing.T) {
 						"created-by": "kubeapps",
 					},
 				},
-				Spec: apprepov1alpha1.AppRepositorySpec{
+				Spec: apprepov1.AppRepositorySpec{
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
 				},
@@ -230,10 +230,10 @@ func Test_newSyncJob(t *testing.T) {
 					Namespace:    "kubeapps",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							&apprepov1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
 							schema.GroupVersionKind{
-								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
-								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Group:   apprepov1.SchemeGroupVersion.Group,
+								Version: apprepov1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
 							},
 						),
@@ -275,10 +275,10 @@ func Test_newSyncJob(t *testing.T) {
 		},
 		{
 			"my-charts with auth and userAgent comment",
-			&apprepov1alpha1.AppRepository{
+			&apprepov1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
-					APIVersion: "kubeapps.com/v1alpha1",
+					APIVersion: "kubeapps.com/v1",
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-charts",
@@ -288,11 +288,11 @@ func Test_newSyncJob(t *testing.T) {
 						"created-by": "kubeapps",
 					},
 				},
-				Spec: apprepov1alpha1.AppRepositorySpec{
+				Spec: apprepov1.AppRepositorySpec{
 					Type: "helm",
 					URL:  "https://charts.acme.com/my-charts",
-					Auth: apprepov1alpha1.AppRepositoryAuth{
-						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+					Auth: apprepov1.AppRepositoryAuth{
+						Header: &apprepov1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 					},
 				},
@@ -303,10 +303,10 @@ func Test_newSyncJob(t *testing.T) {
 					Namespace:    "kubeapps",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
-							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							&apprepov1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
 							schema.GroupVersionKind{
-								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
-								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Group:   apprepov1.SchemeGroupVersion.Group,
+								Version: apprepov1.SchemeGroupVersion.Version,
 								Kind:    "AppRepository",
 							},
 						),

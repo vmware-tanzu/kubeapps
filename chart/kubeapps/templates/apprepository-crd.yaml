@@ -1,4 +1,4 @@
-{{- if not (.Capabilities.APIVersions.Has "kubeapps.com/v1alpha1") -}}
+{{- if not (.Capabilities.APIVersions.Has "kubeapps.com/v1") -}}
 # The condition above will be true if another instance of Kubeapps is
 # already installed 
 apiVersion: apiextensions.k8s.io/v1beta1
@@ -19,5 +19,12 @@ spec:
     plural: apprepositories
     shortNames:
     - apprepos
-  version: v1alpha1
+  version: v1
+  versions:
+  - name: v1
+    served: true
+    storage: true
+  - name: v1alpha1
+    served: true
+    storage: false
 {{- end -}}

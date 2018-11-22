@@ -20,7 +20,7 @@ package versioned
 
 import (
 	glog "github.com/golang/glog"
-	kubeappsv1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
+	kubeappsv1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -28,27 +28,27 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	KubeappsV1alpha1() kubeappsv1alpha1.KubeappsV1alpha1Interface
+	KubeappsV1() kubeappsv1.KubeappsV1Interface
 	// Deprecated: please explicitly pick a version if possible.
-	Kubeapps() kubeappsv1alpha1.KubeappsV1alpha1Interface
+	Kubeapps() kubeappsv1.KubeappsV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	kubeappsV1alpha1 *kubeappsv1alpha1.KubeappsV1alpha1Client
+	kubeappsV1 *kubeappsv1.KubeappsV1Client
 }
 
-// KubeappsV1alpha1 retrieves the KubeappsV1alpha1Client
-func (c *Clientset) KubeappsV1alpha1() kubeappsv1alpha1.KubeappsV1alpha1Interface {
-	return c.kubeappsV1alpha1
+// KubeappsV1 retrieves the KubeappsV1Client
+func (c *Clientset) KubeappsV1() kubeappsv1.KubeappsV1Interface {
+	return c.kubeappsV1
 }
 
 // Deprecated: Kubeapps retrieves the default version of KubeappsClient.
 // Please explicitly pick a version.
-func (c *Clientset) Kubeapps() kubeappsv1alpha1.KubeappsV1alpha1Interface {
-	return c.kubeappsV1alpha1
+func (c *Clientset) Kubeapps() kubeappsv1.KubeappsV1Interface {
+	return c.kubeappsV1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -67,7 +67,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.kubeappsV1alpha1, err = kubeappsv1alpha1.NewForConfig(&configShallowCopy)
+	cs.kubeappsV1, err = kubeappsv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.kubeappsV1alpha1 = kubeappsv1alpha1.NewForConfigOrDie(c)
+	cs.kubeappsV1 = kubeappsv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -93,7 +93,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.kubeappsV1alpha1 = kubeappsv1alpha1.New(c)
+	cs.kubeappsV1 = kubeappsv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

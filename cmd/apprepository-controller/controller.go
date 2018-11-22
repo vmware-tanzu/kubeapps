@@ -21,11 +21,11 @@ import (
 	"time"
 
 	"github.com/golang/glog"
-	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1"
 	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
-	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -96,7 +96,7 @@ func NewController(
 	// obtain references to shared index informers for the CronJob and
 	// AppRepository types.
 	cronjobInformer := kubeInformerFactory.Batch().V1beta1().CronJobs()
-	apprepoInformer := apprepoInformerFactory.Kubeapps().V1alpha1().AppRepositories()
+	apprepoInformer := apprepoInformerFactory.Kubeapps().V1().AppRepositories()
 
 	// Create event broadcaster
 	// Add apprepository-controller types to the default Kubernetes Scheme so
@@ -124,8 +124,8 @@ func NewController(
 	apprepoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueAppRepo,
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			oldApp := oldObj.(*apprepov1alpha1.AppRepository)
-			newApp := newObj.(*apprepov1alpha1.AppRepository)
+			oldApp := oldObj.(*apprepov1.AppRepository)
+			newApp := newObj.(*apprepov1.AppRepository)
 			if oldApp.Spec.URL != newApp.Spec.URL || oldApp.Spec.ResyncRequests != newApp.Spec.ResyncRequests {
 				controller.enqueueAppRepo(newApp)
 			}
@@ -375,15 +375,15 @@ func (c *Controller) handleObject(obj interface{}) {
 // newCronJob creates a new CronJob for a AppRepository resource. It also sets
 // the appropriate OwnerReferences on the resource so handleObject can discover
 // the AppRepository resource that 'owns' it.
-func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
+func newCronJob(apprepo *apprepov1.AppRepository) *batchv1beta1.CronJob {
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cronJobName(apprepo),
 			Namespace: apprepo.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(apprepo, schema.GroupVersionKind{
-					Group:   apprepov1alpha1.SchemeGroupVersion.Group,
-					Version: apprepov1alpha1.SchemeGroupVersion.Version,
+					Group:   apprepov1.SchemeGroupVersion.Group,
+					Version: apprepov1.SchemeGroupVersion.Version,
 					Kind:    "AppRepository",
 				}),
 			},
@@ -404,15 +404,15 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 
 // newSyncJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newSyncJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
+func newSyncJob(apprepo *apprepov1.AppRepository) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: cronJobName(apprepo) + "-",
 			Namespace:    apprepo.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(apprepo, schema.GroupVersionKind{
-					Group:   apprepov1alpha1.SchemeGroupVersion.Group,
-					Version: apprepov1alpha1.SchemeGroupVersion.Version,
+					Group:   apprepov1.SchemeGroupVersion.Group,
+					Version: apprepov1.SchemeGroupVersion.Version,
 					Kind:    "AppRepository",
 				}),
 			},
@@ -422,7 +422,7 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 }
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
-func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
+func syncJobSpec(apprepo *apprepov1.AppRepository) batchv1.JobSpec {
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -491,14 +491,14 @@ func cleanupJobSpec(repoName string) batchv1.JobSpec {
 }
 
 // jobLabels returns the labels for the job and cronjob resources
-func jobLabels(apprepo *apprepov1alpha1.AppRepository) map[string]string {
+func jobLabels(apprepo *apprepov1.AppRepository) map[string]string {
 	return map[string]string{
 		"apprepositories.kubeapps.com/repo-name": apprepo.Name,
 	}
 }
 
 // cronJobName returns a unique name for the CronJob managed by an AppRepository
-func cronJobName(apprepo *apprepov1alpha1.AppRepository) string {
+func cronJobName(apprepo *apprepov1.AppRepository) string {
 	return fmt.Sprintf("apprepo-sync-%s", apprepo.GetName())
 }
 
@@ -508,7 +508,7 @@ func deleteJobName(reponame string) string {
 }
 
 // apprepoSyncJobArgs returns a list of args for the sync container
-func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
+func apprepoSyncJobArgs(apprepo *apprepov1.AppRepository) []string {
 	args := []string{
 		"sync",
 		"--mongo-url=" + mongoURL,
@@ -523,7 +523,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container
-func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvVar {
+func apprepoSyncJobEnvVars(apprepo *apprepov1.AppRepository) []corev1.EnvVar {
 	var envVars []corev1.EnvVar
 	envVars = append(envVars, corev1.EnvVar{
 		Name: "MONGO_PASSWORD",
