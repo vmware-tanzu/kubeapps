@@ -243,7 +243,7 @@ It is possible that when upgrading Kubeapps an error appears. Something like:
 Error: configmaps "kubeapps-internal-apprepository-jobs-bootstrap" already exists
 ```
 
-That can be caused by a breaking change in the new chart or because the current chart installation is in a corrupted state. If you find issues upgrading Kubeapps you can follow the next steps:
+That can be caused by a breaking change in the new chart or because the current chart installation is in an inconsistent state. If you find issues upgrading Kubeapps you can follow the next steps:
 
 > Note: This steps assume that you have installed Kubeapps in the namespace `kubeapps` using the name `kubeapps`. If that is not the case replace the command with your namespace and/or name.
 
