@@ -4,7 +4,9 @@ This guide will walk you through the process of deploying Kubeapps for your clus
 
 ## Prerequisites
 
-Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/) (2.9.1+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/) (2.10.0+) installed in your cluster and [`kubectl`](https://kubernetes.io/docs/tasks/tools/install-kubectl/) installed and configured to talk to your Kubernetes cluster. Kubeapps has been tested with Azure Kubernetes Service (AKS), Google Kubernetes Engine (GKE), `minikube` and Docker for Desktop Kubernetes. Kubeapps works on RBAC-enabled clusters and this configuration is encouraged for a more secure install.
+
+> On GKE, you must either be an "Owner" or have the "Container Engine Admin" role in order to install Kubeapps.
 
 ## Step 1: Install Kubeapps
 
@@ -15,12 +17,9 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-> **IMPORTANT** This assumes an insecure Helm installation, which is not recommended in production. See [the documentation to learn how to secure Helm and Kubeapps in production](securing-kubeapps.md).
+For detailed information on installing, configuring and upgrade Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
 
-For detailed information on installing and configuring Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
-
-The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster, it may take a few seconds to execute. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
-
+The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to execute. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
 
 ## Step 2: Create a Kubernetes API token
 
@@ -31,14 +30,17 @@ kubectl create serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
 ```
 
+NOTE: It's not recommended to create `cluster-admin` users for Kubeapps production usage. Please refer to the [Access Control](/docs/user/access-control.md) documentation to configure fine-grained access control for users.
+
 To retrieve the token,
 
-On Linux:
+### On Linux:
 
 ```bash
 kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
 ```
-On Windows:
+
+### On Windows:
 
 Create a file called `GetDashToken.cmd` with the following lines in it:
 
@@ -58,8 +60,6 @@ certutil -decode b64.txt token.txt
 ```
 
 Open a command prompt and run the `GetDashToken.cmd` Your token can be found in the `token.txt` file.
-
-NOTE: It's not recommended to create `cluster-admin` users for Kubeapps. Please refer to the [Access Control](/docs/user/access-control.md) documentation to configure fine-grained access control for users.
 
 ## Step 3: Start the Kubeapps Dashboard
 
@@ -83,23 +83,25 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-* Use the "Charts" page in the Dashboard to select an application from the list of charts in the official Kubernetes chart repository. This example assumes you want to deploy WordPress.
+- Use the "Catalog" page in the Dashboard to select an application from the list of charts in any of the Kubernetes chart repositories. This example assumes you want to deploy WordPress.
 
   ![WordPress chart](../img/wordpress-search.png)
 
-* Click the "Deploy using Helm" button.
+- Click the "Deploy using Helm" button.
 
   ![WordPress chart](../img/wordpress-chart.png)
 
-* You will be prompted for the release name, cluster namespace and values for the application.
+- You will be prompted for the release name and values for the application.
 
   ![WordPress installation](../img/wordpress-installation.png)
 
-* Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
+- Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
 To obtain the WordPress username and password, refer to the "Notes" section of the deployment page, which contains the commands you will need to run to obtain the credentials for the deployment.
+
+You can also in the URLs shown in order to directly access the application.
 
 ![WordPress deployment notes](../img/wordpress-notes.png)
 
@@ -107,6 +109,6 @@ To obtain the WordPress username and password, refer to the "Notes" section of t
 
 Learn more about Kubeapps with the links below:
 
-* [Detailed installation instructions](../../chart/kubeapps/README.md)
-* [Kubeapps Dashboard documentation](dashboard.md)
-* [Kubeapps components](../architecture/overview.md)
+- [Detailed installation instructions](../../chart/kubeapps/README.md)
+- [Kubeapps Dashboard documentation](dashboard.md)
+- [Kubeapps components](../architecture/overview.md)
