@@ -6,7 +6,7 @@ Kubeapps is a web-based UI for deploying and managing applications in Kubernetes
 
 - Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
 - Inspect, upgrade and delete Helm-based applications installed in the cluster
-- Add custom and private chart repositories (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
+- Add custom and [private chart repositories](docs/user/private-app-repository) (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
 - Browse and provision external services from the [Service Catalog](https://github.com/kubernetes-incubator/service-catalog) and available Service Brokers
 - Connect Helm-based applications to external services with Service Catalog Bindings
 - Secure authentication and authorization based on Kubernetes [Role-Based Access Control](docs/user/access-control.md)
@@ -85,15 +85,14 @@ Please refer to the [Kubeapps Developer Documentation](docs/developer/README.md)
 
 [Use Kubeapps](docs/user/dashboard.md) to easily manage your applications running in your cluster, or [look under the hood to see what's included in Kubeapps](docs/architecture/overview.md).
 
-
 For a more detailed and step-by-step introduction to Kubeapps, read our [introductory walkthrough](docs/user/getting-started.md).
 
 ## Useful Resources
 
-* [Walkthrough for first-time users](docs/user/getting-started.md)
-* [Detailed installation instructions](chart/kubeapps/README.md)
-* [Kubeapps Dashboard documentation](docs/user/dashboard.md)
-* [Kubeapps components](docs/architecture/overview.md)
+- [Walkthrough for first-time users](docs/user/getting-started.md)
+- [Detailed installation instructions](chart/kubeapps/README.md)
+- [Kubeapps Dashboard documentation](docs/user/dashboard.md)
+- [Kubeapps components](docs/architecture/overview.md)
 
 ## Differences from Monocular
 
@@ -103,6 +102,6 @@ Versions of Monocular 0.7 and older include a basic ability to install, view and
 
 ## Community
 
-* [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps)
+- [#kubeapps on Kubernetes Slack](https://kubernetes.slack.com/messages/kubeapps)
 
 Click [here](http://slack.k8s.io) to sign up to the Kubernetes Slack org.
