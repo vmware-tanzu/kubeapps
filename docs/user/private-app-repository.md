@@ -52,30 +52,32 @@ Once you create the repository you can click in the link for the specific reposi
 
 It is possible to configure ChartMuseum to use authentication with two different mechanism:
 
-- Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). If you enable this feature, you need to change the URL of the App Repository in Kubeapps to include the credentials: `http://<user>:<password>@<release_name>.<namespace>:8080`
+- Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). To use this feature, it's needed to:
+  - Specify the parameters `secret.AUTH_USER` and `secret.AUTH_PASS` when deploying the ChartMuseum.
+  - Change the URL of the App Repository in Kubeapps to include the credentials: `http://<user>:<password>@<release_name>.<namespace>:8080`
 - Using a [JWT token](https://github.com/chartmuseum/auth-server-example). Once you obtain a valid token you can set it in the Authorization Header field of the App Repository form.
 
 ## Artifactory
 
 JFrog Artifactory is a Repository Manager supporting all major packaging formats, build tools and CI servers.
 
-> Note: In order to use the Helm repository feature, it's necessary to use a Artifactory Pro account.
+> **Note**: In order to use the Helm repository feature, it's necessary to use an Artifactory Pro account.
 
 To use Artifactory with Kubeapps the first thing is adding the JFrog repository to Kubeapps. Go to `Configuration > App Repositories` and add their repository:
 
 <img src="../img/jfrog-repository.png" alt="JFrog repository" width="400px">
 
-Then click on the JFrog repository and deploy Artifactory. For installation instructions, check its README [here](https://github.com/jfrog/charts/tree/master/stable/artifactory).
+Then click on the JFrog repository and deploy Artifactory. For detailed installation instructions, check its [README](https://github.com/jfrog/charts/tree/master/stable/artifactory). If you don't have any further requirement, the values by default will work.
 
-When deployed, during the first login, select "Helm" to create a repository:
+When deployed, during the first login, select "Helm" to initialize a repository:
 
 <img src="../img/jfrog-wizard.png" alt="JFrog repository" width="600px">
 
-By default, Artifactory creates a chart repository called `helm`. That is the one we will use to store our applications.
+By default, Artifactory creates a chart repository called `helm`. That is the one you can use to store your applications.
 
 ### Artifactory: Upload a chart
 
-First, it's needed to obtain the user and password of the Helm repository. To obtain it click in the `helm` repository and in the `Set Me Up` menu, introduce your password. After that you will be able to see the user and password.
+First, it's needed to obtain the user and password of the Helm repository. To obtain it, click in the `helm` repository and, in the `Set Me Up` menu, introduce your password. After that you will be able to see the user and password.
 
 Once you have done that, you will be able to upload a chart:
 
