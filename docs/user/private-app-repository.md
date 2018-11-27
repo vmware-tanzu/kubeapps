@@ -34,9 +34,9 @@ Forwarding from [::1]:8080 -> 8080
 And in a different terminal you can push your chart:
 
 ```console
-$ helm package /kubeapps/chart/kubeapps
-Successfully packaged chart and saved it to: /kubeapps/chart/kubeapps/kubeapps-1.0.0.tgz
-$ curl --data-binary "@kubeapps-1.0.0.tgz" http://localhost:8080/api/charts
+$ helm package /path/to/my/chart
+Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
+$ curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
 {"saved":true}
 ```
 
@@ -54,8 +54,8 @@ It is possible to configure ChartMuseum to use authentication with two different
 
 - Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). To use this feature, it's needed to:
   - Specify the parameters `secret.AUTH_USER` and `secret.AUTH_PASS` when deploying the ChartMuseum.
-  - Change the URL of the App Repository in Kubeapps to include the credentials: `http://<user>:<password>@<release_name>.<namespace>:8080`
-- Using a [JWT token](https://github.com/chartmuseum/auth-server-example). Once you obtain a valid token you can set it in the Authorization Header field of the App Repository form.
+  - Set as Authorization Header a `Basic` auth header using as value the base64 codification of the string `user:password`. For example, for the user "Aladdin" and password "open sesame", it would use the following header field: `Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==`
+- Using a [JWT token](https://github.com/chartmuseum/auth-server-example). Once you obtain a valid token you can set it in the Authorization Header field of the App Repository form. Note that in this case it will be prefixed with `Bearer` . For example: `Bearer UVd4aFpHUnBianB2Y0dWdUlIT=`.
 
 ## Artifactory
 
@@ -69,7 +69,7 @@ To install Artifactory with Kubeapps first add the JFrog repository to Kubeapps.
 
 Then click on the JFrog repository and deploy Artifactory. For detailed installation instructions, check its [README](https://github.com/jfrog/charts/tree/master/stable/artifactory). If you don't have any further requirement, the default values will work.
 
-When deployed, during the first login, select "Helm" to initialize a repository:
+When deployed, in the setup wizard, select "Helm" to initialize a repository:
 
 <img src="../img/jfrog-wizard.png" alt="JFrog repository" width="600px">
 
