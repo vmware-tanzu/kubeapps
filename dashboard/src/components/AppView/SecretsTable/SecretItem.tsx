@@ -12,16 +12,13 @@ interface ISecretItemState {
   showSecret: { [s: string]: boolean };
 }
 
-function initState(secret: ISecret) {
-  const showSecret = {};
-  Object.keys(secret.data).forEach(k => (showSecret[k] = false));
-  return showSecret;
-}
-
 class SecretItem extends React.Component<ISecretItemProps, ISecretItemState> {
-  public state: ISecretItemState = {
-    showSecret: initState(this.props.secret),
-  };
+  public constructor(props: ISecretItemProps) {
+    super(props);
+    const showSecret = {};
+    Object.keys(this.props.secret.data).forEach(k => (showSecret[k] = false));
+    this.state = { showSecret };
+  }
 
   public render() {
     const { secret } = this.props;

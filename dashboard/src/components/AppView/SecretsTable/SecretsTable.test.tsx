@@ -5,7 +5,7 @@ import { IResource } from "shared/types";
 import SecretsTable from ".";
 import SecretItem from "./SecretItem";
 
-it("renders a secret ready", () => {
+it("renders a table with a secret", () => {
   const secrets = {};
   const secret = "foo";
   secrets[secret] = {
@@ -20,7 +20,7 @@ it("renders a secret ready", () => {
   expect(wrapper.find(SecretItem).key()).toBe("foo");
 });
 
-it("renders secrets deployments", () => {
+it("renders a table with several secrets", () => {
   const secrets = {};
   const secret1 = "foo";
   const secret2 = "bar";

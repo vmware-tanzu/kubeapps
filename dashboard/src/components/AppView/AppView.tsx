@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
+import Secret from "../../shared/Secret";
 import { IRBACRole, IResource, ISecret } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
@@ -120,7 +121,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           );
           break;
         case "Secret":
-          sockets.push(this.getSocket("secrets", i.apiVersion, i.metadata.name, newApp.namespace));
+          Secret.get(i.metadata.name, newApp.namespace).then(sec => this.handleResource(sec));
           break;
       }
     });
@@ -147,9 +148,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       case "Ingress":
         this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
         break;
+    }
+  }
+
+  public handleResource(resource: IResource | ISecret) {
+    const key = `${resource.kind}/${resource.metadata.name}`;
+    switch (resource.kind) {
       case "Secret":
-        const secret: ISecret = msg.object;
-        this.setState({ secrets: { ...this.state.secrets, [key]: secret } });
+        this.setState({ secrets: { ...this.state.secrets, [key]: resource as ISecret } });
         break;
     }
   }

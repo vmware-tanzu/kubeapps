@@ -1,8 +1,10 @@
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
+import * as moxios from "moxios";
 import * as React from "react";
 
+import { axios } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
@@ -77,6 +79,14 @@ describe("AppViewComponent", () => {
       secret: { apiVersion: "v1", kind: "Secret", metadata: { name: "secret-one" } },
     };
 
+    beforeEach(() => {
+      moxios.install(axios);
+    });
+
+    afterEach(() => {
+      moxios.uninstall(axios);
+    });
+
     /*
       The imported manifest contains one deployment, one service, one config map and some bogus manifests.
       We only set websockets for deployment and services
@@ -96,7 +106,7 @@ describe("AppViewComponent", () => {
       wrapper.setProps(validProps);
       const sockets: WebSocket[] = wrapper.state("sockets");
 
-      expect(sockets.length).toEqual(4);
+      expect(sockets.length).toEqual(3);
       expect(sockets[0].url).toBe(
         "ws://localhost/api/kube/apis/apps/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
       );
@@ -105,9 +115,6 @@ describe("AppViewComponent", () => {
       );
       expect(sockets[2].url).toBe(
         "ws://localhost/api/kube/apis/extensions/v1beta1/namespaces/weee/ingresses?watch=true&fieldSelector=metadata.name%3Dingress-one",
-      );
-      expect(sockets[3].url).toBe(
-        "ws://localhost/api/kube/api/v1/namespaces/weee/secrets?watch=true&fieldSelector=metadata.name%3Dsecret-one",
       );
     });
 
@@ -130,7 +137,7 @@ describe("AppViewComponent", () => {
 
       // It sets the websocket for the deployment
       const sockets: WebSocket[] = wrapper.state("sockets");
-      expect(sockets.length).toEqual(3);
+      expect(sockets.length).toEqual(2);
 
       expect(configMap).toBeDefined();
       expect(configMap.metadata.name).toEqual("cm-one");
@@ -171,6 +178,36 @@ describe("AppViewComponent", () => {
       expect(() => {
         wrapper.setProps(validProps);
       }).not.toThrow(YAMLException);
+    });
+
+    it("requests a secret", done => {
+      const secretURL = `/api/kube/api/v1/namespaces/${appRelease.namespace}/secrets/${
+        resources.secret.metadata.name
+      }`;
+      moxios.stubRequest(secretURL, {
+        response: JSON.stringify(resources.secret),
+        status: 200,
+      });
+
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const manifest = generateYamlManifest([
+        resources.deployment,
+        resources.service,
+        resources.configMap,
+        resources.secret,
+      ]);
+
+      validProps.app.manifest = manifest;
+      wrapper.setProps(validProps);
+
+      // Wait for the async call to be performed
+      setTimeout(() => {
+        expect(moxios.requests.mostRecent().url).toBe(secretURL);
+        expect(wrapper.state("secrets")).toMatchObject({
+          [`Secret/${resources.secret.metadata.name}`]: resources.secret,
+        });
+        done();
+      }, 1);
     });
   });
 
