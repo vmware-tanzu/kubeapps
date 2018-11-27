@@ -13,7 +13,14 @@ Kubeapps is a web-based UI for deploying and managing applications in Kubernetes
 
 ## Quick Start
 
-For instructions of how to install and use Kubeapps follow the [Getting Started Guide](docs/user/getting-started.md).
+The easiest way of setting up Kubeapps is trough its Helm chart:
+
+```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
+```
+
+For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](docs/user/getting-started.md).
 
 ## Developer Documentation
 

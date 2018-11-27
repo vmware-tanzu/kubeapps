@@ -68,7 +68,7 @@ $ export RELEASE_NAME=kubeapps
 $ helm upgrade $RELEASE_NAME bitnami/kubeapps
 ```
 
-If you find issues upgrading Kubeapps, check the [troubleshooting](#upgrade-process-fail) section.
+If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-upgrading-the-chart) section.
 
 ## Uninstalling Kubeapps
 
@@ -237,13 +237,7 @@ $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps --set rbac.
 
 ### Error while upgrading the Chart
 
-It is possible that when upgrading Kubeapps an error appears. Something like:
-
-```console
-Error: configmaps "kubeapps-internal-apprepository-jobs-bootstrap" already exists
-```
-
-That can be caused by a breaking change in the new chart or because the current chart installation is in an inconsistent state. If you find issues upgrading Kubeapps you can follow the next steps:
+It is possible that when upgrading Kubeapps an error appears. That can be caused by a breaking change in the new chart or because the current chart installation is in an inconsistent state. If you find issues upgrading Kubeapps you can follow the next steps:
 
 > Note: This steps assume that you have installed Kubeapps in the namespace `kubeapps` using the name `kubeapps`. If that is not the case replace the command with your namespace and/or name.
 
