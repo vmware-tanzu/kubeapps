@@ -17,7 +17,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-For detailed information on installing, configuring and upgrade Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
+For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
 
 The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to execute. Once it has been deployed and the Kubeapps pods are running, continue to step 2.
 
@@ -30,7 +30,7 @@ kubectl create serviceaccount kubeapps-operator
 kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin --serviceaccount=default:kubeapps-operator
 ```
 
-NOTE: It's not recommended to create `cluster-admin` users for Kubeapps production usage. Please refer to the [Access Control](/docs/user/access-control.md) documentation to configure fine-grained access control for users.
+> **NOTE** It's not recommended to create `cluster-admin` users for Kubeapps production usage. Please refer to the [Access Control](/docs/user/access-control.md) documentation to configure fine-grained access control for users.
 
 To retrieve the token,
 
@@ -83,7 +83,7 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-- Use the "Catalog" page in the Dashboard to select an application from the list of charts in any of the Kubernetes chart repositories. This example assumes you want to deploy WordPress.
+- Use the "Catalog" page in the Dashboard to select an application from the list of charts in any of the configured Helm chart repositories. This example assumes you want to deploy WordPress.
 
   ![WordPress chart](../img/wordpress-search.png)
 
@@ -101,7 +101,7 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
 To obtain the WordPress username and password, refer to the "Notes" section of the deployment page, which contains the commands you will need to run to obtain the credentials for the deployment.
 
-You can also in the URLs shown in order to directly access the application.
+You can also use the URLs shown to directly access the application.
 
 ![WordPress deployment notes](../img/wordpress-notes.png)
 

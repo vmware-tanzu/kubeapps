@@ -84,7 +84,7 @@ The first command removes most of the Kubernetes components associated with the 
 
 > **NOTE**: If you delete the CRD for `apprepositories.kubeapps.com` it will delete the repositories for **all** the installed instances of `kubeapps`. This will break existing installations of `kubeapps` if they exist.
 
-If you have dedicated a namespace only for Kubeapps you can completely clean remaining completed/failed jobs or any stale resources deleting the namespace
+If you have dedicated a namespace only for Kubeapps you can completely clean remaining completed/failed jobs or any stale resources by deleting the namespace
 
 ```console
 $ kubectl delete namespace kubeapps
@@ -235,7 +235,7 @@ If the above command does not include entries for `rbac.authorization.k8s.io` yo
 $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps --set rbac.create=false
 ```
 
-### Upgrade process fail
+### Error while upgrading the Chart
 
 It is possible that when upgrading Kubeapps an error appears. Something like:
 
