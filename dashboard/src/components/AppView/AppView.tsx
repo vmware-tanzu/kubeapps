@@ -217,7 +217,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                   <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
                 )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <h6>Secrets</h6>
                 <SecretTable secrets={this.state.secrets} />
                 <AppDetails
                   deployments={this.state.deployments}

@@ -13,20 +13,23 @@ class SecretTable extends React.Component<IServiceTableProps> {
     const secretKeys = Object.keys(secrets);
     return (
       secretKeys.length > 0 && (
-        <table>
-          <thead>
-            <tr className="flex">
-              <th className="col-2">NAME</th>
-              <th className="col-2">TYPE</th>
-              <th className="col-7">DATA</th>
-            </tr>
-          </thead>
-          <tbody>
-            {secretKeys.map(k => (
-              <SecretItem key={k} secret={secrets[k]} />
-            ))}
-          </tbody>
-        </table>
+        <div>
+          <h6>Secrets</h6>
+          <table>
+            <thead>
+              <tr className="flex">
+                <th className="col-2">NAME</th>
+                <th className="col-2">TYPE</th>
+                <th className="col-7">DATA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {secretKeys.map(k => (
+                <SecretItem key={k} secret={secrets[k]} />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )
     );
   }
