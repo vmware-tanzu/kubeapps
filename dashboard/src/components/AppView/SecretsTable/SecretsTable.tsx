@@ -11,10 +11,9 @@ class SecretTable extends React.Component<IServiceTableProps> {
   public render() {
     const { secrets } = this.props;
     const secretKeys = Object.keys(secrets);
-    return (
-      secretKeys.length > 0 && (
+    if (secretKeys.length > 0) {
+      return (
         <div>
-          <h6>Secrets</h6>
           <table>
             <thead>
               <tr className="flex">
@@ -30,8 +29,10 @@ class SecretTable extends React.Component<IServiceTableProps> {
             </tbody>
           </table>
         </div>
-      )
-    );
+      );
+    } else {
+      return <p>The current application does not contain any secret.</p>;
+    }
   }
 }
 

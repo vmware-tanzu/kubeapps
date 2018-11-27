@@ -11,8 +11,8 @@ class ServiceTable extends React.Component<IServiceTableProps> {
   public render() {
     const { services } = this.props;
     const svcKeys = Object.keys(services);
-    return (
-      svcKeys.length > 0 && (
+    if (svcKeys.length > 0) {
+      return (
         <table>
           <thead>
             <tr>
@@ -29,8 +29,10 @@ class ServiceTable extends React.Component<IServiceTableProps> {
             ))}
           </tbody>
         </table>
-      )
-    );
+      );
+    } else {
+      return <p>The current application does not contain any service.</p>;
+    }
   }
 }
 

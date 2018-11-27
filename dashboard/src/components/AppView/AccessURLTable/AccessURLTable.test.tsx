@@ -23,7 +23,7 @@ context("when the app contain services", () => {
     const services = {};
     services[service.metadata.name] = service;
     const wrapper = shallow(<AccessURLTable services={services} ingresses={{}} />);
-    expect(wrapper.text()).toBe("");
+    expect(wrapper.text()).toContain("The current application does not expose a public URL");
   });
 
   it("should show the table if any service is a LoadBalancer", () => {

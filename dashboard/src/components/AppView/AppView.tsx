@@ -11,11 +11,13 @@ import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
-import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
+import DeploymentTable from "./DeploymentTable";
+import OtherResourcesTable from "./OtherResourcesTable";
 import SecretTable from "./SecretsTable";
+import ServiceTable from "./ServiceTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -37,13 +39,14 @@ export interface IAppViewProps {
 }
 
 interface IAppViewState {
+  manifest: IResource[];
   deployments: { [d: string]: IResource };
   otherResources: { [r: string]: IResource };
   services: { [s: string]: IResource };
   ingresses: { [i: string]: IResource };
   secrets: { [s: string]: ISecret };
   sockets: WebSocket[];
-  manifest: IResource[];
+  resourcesWithInfo: { [r: string]: boolean };
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -68,13 +71,14 @@ interface IError {
 
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
+    manifest: [],
     deployments: {},
     ingresses: {},
     otherResources: {},
     services: {},
     secrets: {},
     sockets: [],
-    manifest: [],
+    resourcesWithInfo: {},
   };
 
   public async componentDidMount() {
@@ -125,28 +129,34 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     this.setState({ otherResources });
 
     const sockets: WebSocket[] = [];
+    const resourcesWithInfo: { [r: string]: boolean } = {};
     manifest.forEach(i => {
       switch (i.kind) {
         case "Deployment":
+          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
           sockets.push(
             this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Service":
+          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
           sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
           break;
         case "Ingress":
+          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
           sockets.push(
             this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Secret":
+          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
           this.props.getResource("v1", "secrets", newApp.namespace, i.metadata.name);
           break;
       }
     });
     this.setState({
       sockets,
+      resourcesWithInfo,
     });
   }
 
@@ -158,6 +168,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const msg = JSON.parse(e.data);
     const resource: IResource = msg.object;
     const key = `${resource.kind}/${resource.metadata.name}`;
+    this.setState({ resourcesWithInfo: { ...this.state.resourcesWithInfo, [key]: true } });
     switch (resource.kind) {
       case "Deployment":
         this.setState({ deployments: { ...this.state.deployments, [key]: resource } });
@@ -171,9 +182,17 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     }
   }
 
-  public get isLoading(): boolean {
+  public get isAppLoading(): boolean {
     const { app } = this.props;
-    return !this.state.otherResources || (!app || !app.info);
+    return !app || !app.info;
+  }
+
+  public isKindLoading(kind: string): boolean {
+    const targetResources = this.state.manifest.filter(r => r.kind === kind);
+    const loadedResources = targetResources.filter(
+      r => this.state.resourcesWithInfo[`${r.kind}/${r.metadata.name}`],
+    );
+    return loadedResources.length !== targetResources.length;
   }
 
   public render() {
@@ -189,7 +208,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       );
     }
 
-    return this.isLoading ? <LoadingWrapper /> : this.appInfo();
+    return this.isAppLoading ? <LoadingWrapper /> : this.appInfo();
   }
 
   public appInfo() {
@@ -223,17 +242,25 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                {(Object.keys(this.state.services).length > 0 ||
-                  Object.keys(this.state.ingresses).length > 0) && (
+                <h6>Access URLs</h6>
+                <LoadingWrapper
+                  loaded={!this.isKindLoading("Service") && !this.isKindLoading("Ingress")}
+                >
                   <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
-                )}
+                </LoadingWrapper>
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
+                <h6>Secrets</h6>
                 {this.renderSecrets()}
-                <AppDetails
-                  deployments={this.state.deployments}
-                  services={this.state.services}
-                  otherResources={this.state.otherResources}
-                />
+                <h6>Deployments</h6>
+                <LoadingWrapper loaded={!this.isKindLoading("Deployment")}>
+                  <DeploymentTable deployments={this.state.deployments} />
+                </LoadingWrapper>
+                <h6>Services</h6>
+                <LoadingWrapper loaded={!this.isKindLoading("Service")}>
+                  <ServiceTable services={this.state.services} />
+                </LoadingWrapper>
+                <h6>Other Resources</h6>
+                <OtherResourcesTable otherResources={this.state.otherResources} />
               </div>
             </div>
           </div>
@@ -298,12 +325,26 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     return error;
   };
 
+  private findIsFecthing = (type: string): boolean => {
+    const kubeItems = _.pickBy(this.props.resources, (r, k) => {
+      return k.indexOf(`/${type}/`) > -1;
+    });
+    let isFetching = false;
+    _.each(kubeItems, (i, k) => {
+      if (i.isFetching) {
+        isFetching = true;
+      }
+    });
+    return isFetching;
+  };
+
   private renderSecrets = () => {
+    const isFetching = this.findIsFecthing("secrets");
     let secretSection = <SecretTable secrets={this.filterByKind("Secret")} />;
     const secretError = this.findErrorByResourceType("secrets");
     if (secretError) {
       secretSection = (
-        <div>
+        <LoadingWrapper loaded={!isFetching}>
           {secretSection}
           <ErrorSelector
             error={secretError.error}
@@ -312,7 +353,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             resource={`Secret ${secretError.resource}`}
             namespace={this.props.namespace}
           />
-        </div>
+        </LoadingWrapper>
       );
     }
     return secretSection;

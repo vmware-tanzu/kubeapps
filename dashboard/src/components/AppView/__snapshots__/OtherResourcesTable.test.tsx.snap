@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders other resources details 1`] = `
+<table>
+  <tbody>
+    <tr
+      key="foo"
+    >
+      <td>
+        Secret
+      </td>
+      <td />
+      <td>
+        foo
+      </td>
+    </tr>
+    <tr
+      key="bar"
+    >
+      <td>
+        PersistentVolume
+      </td>
+      <td />
+      <td>
+        foo
+      </td>
+    </tr>
+  </tbody>
+</table>
+`;

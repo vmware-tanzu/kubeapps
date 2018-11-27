@@ -17,10 +17,10 @@ import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
-import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
+import OtherResourcesTable from "./OtherResourcesTable";
 import SecretTable from "./SecretsTable/SecretsTable";
 import ServiceTable from "./ServiceTable";
 
@@ -80,14 +80,6 @@ describe("AppViewComponent", () => {
         ...validProps,
         app: { ...validProps.app, info: null },
       },
-    });
-  });
-
-  context("when otherResources is null", () => {
-    itBehavesLike("aLoadingComponent", {
-      component: AppViewComponent,
-      props: validProps,
-      state: { otherResources: null },
     });
   });
 
@@ -222,7 +214,7 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(AppControls).exists()).toBe(true);
       expect(wrapper.find(ServiceTable).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
-      expect(wrapper.find(AppDetails).exists()).toBe(true);
+      expect(wrapper.find(OtherResourcesTable).exists()).toBe(true);
       expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
