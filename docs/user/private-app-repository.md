@@ -55,7 +55,7 @@ It is possible to configure ChartMuseum to use authentication with two different
 - Using HTTP [basic authentication](https://chartmuseum.com/docs/#basic-auth) (user/password). To use this feature, it's needed to:
   - Specify the parameters `secret.AUTH_USER` and `secret.AUTH_PASS` when deploying the ChartMuseum.
   - Set as Authorization Header a `Basic` auth header using as value the base64 codification of the string `user:password`. For example, for the user "Aladdin" and password "open sesame", it would use the following header field: `Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==`
-- Using a [JWT token](https://github.com/chartmuseum/auth-server-example). Once you obtain a valid token you can set it in the Authorization Header field of the App Repository form. Note that in this case it will be prefixed with `Bearer` . For example: `Bearer UVd4aFpHUnBianB2Y0dWdUlIT=`.
+- Using a [JWT token](https://github.com/chartmuseum/auth-server-example). Once you obtain a valid token you can set it in the Authorization Header field of the App Repository form. Note that in this case it will be prefixed with `Bearer`. For example: `Bearer UVd4aFpHUnBianB2Y0dWdUlIT=`.
 
 ## Artifactory
 
