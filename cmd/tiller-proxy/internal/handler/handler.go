@@ -171,9 +171,7 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 	if !h.DisableAuth {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
-			// To resolve the manifest we are contacting tiller that may return an error.
-			// In that case we want to tag the error as UnprocessableEntity by default.
-			response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
+			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.Checker)
@@ -208,9 +206,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 	if !h.DisableAuth {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
-			// To resolve the manifest we are contacting tiller that may return an error.
-			// In that case we want to tag the error as UnprocessableEntity by default.
-			response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
+			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.Checker)

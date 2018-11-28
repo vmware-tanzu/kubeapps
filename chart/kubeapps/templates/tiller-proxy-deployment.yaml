@@ -20,7 +20,8 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "kubeapps.tiller-proxy.fullname" . }}
-      terminationGracePeriodSeconds: 600
+      # Increase termination timeout to let remaining operations to finish before killing the pods
+      terminationGracePeriodSeconds: 300
       containers:
       - name: proxy
         image: {{ template "kubeapps.image" (list .Values.tillerProxy.image .Values.global) }}
