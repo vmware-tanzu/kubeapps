@@ -112,3 +112,4 @@ Learn more about Kubeapps with the links below:
 - [Detailed installation instructions](../../chart/kubeapps/README.md)
 - [Kubeapps Dashboard documentation](dashboard.md)
 - [Kubeapps components](../architecture/overview.md)
+- [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
