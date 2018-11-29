@@ -1,10 +1,10 @@
 import * as yaml from "js-yaml";
+import * as _ from "lodash";
 import * as React from "react";
 
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import Secret from "../../shared/Secret";
-import { IRBACRole, IResource, ISecret } from "../../shared/types";
+import { IKubeItem, IRBACRole, IResource, ISecret } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -21,11 +21,19 @@ export interface IAppViewProps {
   namespace: string;
   releaseName: string;
   app: hapi.release.Release;
+  resources: { [r: string]: IKubeItem };
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
+  getResource: (
+    apiVersion: string,
+    resource: string,
+    namespace: string,
+    name: string,
+    query?: string,
+  ) => void;
 }
 
 interface IAppViewState {
@@ -35,6 +43,7 @@ interface IAppViewState {
   ingresses: { [i: string]: IResource };
   secrets: { [s: string]: ISecret };
   sockets: WebSocket[];
+  manifest: IResource[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -52,6 +61,11 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
   ],
 };
 
+interface IError {
+  resource: string;
+  error: Error;
+}
+
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
     deployments: {},
@@ -60,6 +74,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     services: {},
     secrets: {},
     sockets: [],
+    manifest: [],
   };
 
   public async componentDidMount() {
@@ -90,6 +105,11 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
+    if (!_.isEqual(manifest, this.state.manifest)) {
+      this.setState({ manifest });
+    } else {
+      return;
+    }
 
     const watchedKinds = ["Deployment", "Service", "Secret"];
     const otherResources = manifest
@@ -121,7 +141,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           );
           break;
         case "Secret":
-          Secret.get(i.metadata.name, newApp.namespace).then(sec => this.handleResource(sec));
+          this.props.getResource("v1", "secrets", newApp.namespace, i.metadata.name);
           break;
       }
     });
@@ -147,15 +167,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         break;
       case "Ingress":
         this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
-        break;
-    }
-  }
-
-  public handleResource(resource: IResource | ISecret) {
-    const key = `${resource.kind}/${resource.metadata.name}`;
-    switch (resource.kind) {
-      case "Secret":
-        this.setState({ secrets: { ...this.state.secrets, [key]: resource as ISecret } });
         break;
     }
   }
@@ -217,7 +228,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                   <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
                 )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <SecretTable secrets={this.state.secrets} />
+                {this.renderSecrets()}
                 <AppDetails
                   deployments={this.state.deployments}
                   services={this.state.services}
@@ -261,6 +272,50 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   private deleteApp = (purge: boolean) => {
     return this.props.deleteApp(this.props.releaseName, this.props.namespace, purge);
+  };
+
+  private filterByKind = (kind: string) => {
+    const kubeItems = _.pickBy(this.props.resources, r => {
+      return r.item && r.item.kind === kind;
+    });
+    const res = {};
+    _.each(kubeItems, (i, k) => {
+      res[k] = i.item;
+    });
+    return res;
+  };
+
+  private findErrorByResourceType = (type: string): IError | null => {
+    const kubeItems = _.pickBy(this.props.resources, (r, k) => {
+      return k.indexOf(`/${type}/`) > -1;
+    });
+    let error = null;
+    _.each(kubeItems, (i, k) => {
+      if (i.error) {
+        error = { resource: k, error: i.error };
+      }
+    });
+    return error;
+  };
+
+  private renderSecrets = () => {
+    let secretSection = <SecretTable secrets={this.filterByKind("Secret")} />;
+    const secretError = this.findErrorByResourceType("secrets");
+    if (secretError) {
+      secretSection = (
+        <div>
+          {secretSection}
+          <ErrorSelector
+            error={secretError.error}
+            defaultRequiredRBACRoles={RequiredRBACRoles}
+            action="get"
+            resource={`Secret ${secretError.resource}`}
+            namespace={this.props.namespace}
+          />
+        </div>
+      );
+    }
+    return secretSection;
   };
 }
 

@@ -1,5 +1,561 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`AppViewComponent renders a secret table with a secret and an error 1`] = `
+<AppView
+  app={
+    Object {
+      "info": Object {},
+      "manifest": "---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: deployment-one
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-one
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-one
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-one
+type: Opaque
+data: {}
+",
+      "namespace": "weee",
+    }
+  }
+  deleteApp={[MockFunction]}
+  getApp={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+        Array [
+          "mr-sunshine",
+          "my-happy-place",
+        ],
+      ],
+    }
+  }
+  getResource={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "v1",
+          "secrets",
+          "weee",
+          "secret-one",
+        ],
+        Array [
+          "v1",
+          "secrets",
+          "weee",
+          "secret-one",
+        ],
+        Array [
+          "v1",
+          "secrets",
+          "weee",
+          "secret-one",
+        ],
+      ],
+    }
+  }
+  namespace="my-happy-place"
+  releaseName="mr-sunshine"
+  resources={
+    Object {
+      "v1/secrets/bar": Object {
+        "error": [Error],
+        "isFetching": false,
+      },
+      "v1/secrets/foo": Object {
+        "isFetching": false,
+        "item": Object {
+          "apiVersion": "v1",
+          "data": Object {},
+          "kind": "Secret",
+          "metadata": Object {
+            "name": "secret-one",
+          },
+          "type": "Opaque",
+        },
+      },
+    }
+  }
+>
+  <section
+    className="AppView padding-b-big"
+  >
+    <main>
+      <div
+        className="container"
+      >
+        <div
+          className="row collapse-b-tablet"
+        >
+          <div
+            className="col-3"
+          >
+            <ChartInfo
+              app={
+                Object {
+                  "info": Object {},
+                  "manifest": "---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: deployment-one
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-one
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-one
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-one
+type: Opaque
+data: {}
+",
+                  "namespace": "weee",
+                }
+              }
+            >
+              <CardGrid
+                className="ChartInfo"
+              >
+                <div
+                  className="CardGrid padding-v-big ChartInfo"
+                >
+                  <Card>
+                    <article
+                      className="Card "
+                    >
+                      <div
+                        className="Card__inner bg-white elevation-1"
+                      >
+                        <CardIcon />
+                        <CardContent>
+                          <div
+                            className="Card__content padding-normal "
+                          >
+                            <h5 />
+                            <p
+                              className="margin-b-reset"
+                            />
+                          </div>
+                        </CardContent>
+                        <CardFooter>
+                          <div
+                            className="Card__footer padding-h-normal "
+                          >
+                            <hr
+                              className="separator-small"
+                            />
+                            <div
+                              className="padding-b-normal"
+                            >
+                              <small>
+                                <span />
+                              </small>
+                            </div>
+                          </div>
+                        </CardFooter>
+                      </div>
+                    </article>
+                  </Card>
+                </div>
+              </CardGrid>
+            </ChartInfo>
+          </div>
+          <div
+            className="col-9"
+          >
+            <div
+              className="row padding-t-bigger"
+            >
+              <div
+                className="col-4"
+              >
+                <DeploymentStatus
+                  deployments={Array []}
+                  info={Object {}}
+                >
+                  <span
+                    className="DeploymentStatus DeploymentStatus--success"
+                  >
+                    <Check
+                      className="icon padding-t-tiny"
+                    >
+                      <svg
+                        className="icon padding-t-tiny"
+                        height="1em"
+                        viewBox="0 0 8 8"
+                        width="1em"
+                      >
+                        <path
+                          d="M6.41 1l-.69.72L2.94 4.5l-.81-.78L1.41 3 0 4.41l.72.72 1.5 1.5.69.72.72-.72 3.5-3.5.72-.72L6.41 1z"
+                          fill="currentColor"
+                        />
+                      </svg>
+                    </Check>
+                     Deployed
+                  </span>
+                </DeploymentStatus>
+              </div>
+              <div
+                className="col-8 text-r"
+              >
+                <AppControls
+                  app={
+                    Object {
+                      "info": Object {},
+                      "manifest": "---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: deployment-one
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-one
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-one
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-one
+type: Opaque
+data: {}
+",
+                      "namespace": "weee",
+                    }
+                  }
+                  deleteApp={[Function]}
+                >
+                  <LoadingWrapper
+                    loaded={false}
+                  >
+                    <LoaderSpinner>
+                      <div
+                        className="spinner"
+                      >
+                        <div
+                          className="spinner__bounce1"
+                        />
+                        <div
+                          className="spinner__bounce2"
+                        />
+                      </div>
+                    </LoaderSpinner>
+                  </LoadingWrapper>
+                </AppControls>
+              </div>
+            </div>
+            <AppNotes
+              notes={null}
+            />
+            <div>
+              <SecretTable
+                secrets={
+                  Object {
+                    "v1/secrets/foo": Object {
+                      "apiVersion": "v1",
+                      "data": Object {},
+                      "kind": "Secret",
+                      "metadata": Object {
+                        "name": "secret-one",
+                      },
+                      "type": "Opaque",
+                    },
+                  }
+                }
+              >
+                <div>
+                  <h6>
+                    Secrets
+                  </h6>
+                  <table>
+                    <thead>
+                      <tr
+                        className="flex"
+                      >
+                        <th
+                          className="col-2"
+                        >
+                          NAME
+                        </th>
+                        <th
+                          className="col-2"
+                        >
+                          TYPE
+                        </th>
+                        <th
+                          className="col-7"
+                        >
+                          DATA
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <SecretItem
+                        key="v1/secrets/foo"
+                        secret={
+                          Object {
+                            "apiVersion": "v1",
+                            "data": Object {},
+                            "kind": "Secret",
+                            "metadata": Object {
+                              "name": "secret-one",
+                            },
+                            "type": "Opaque",
+                          }
+                        }
+                      >
+                        <tr
+                          className="flex"
+                        >
+                          <td
+                            className="col-2"
+                          >
+                            secret-one
+                          </td>
+                          <td
+                            className="col-2"
+                          >
+                            Opaque
+                          </td>
+                          <td
+                            className="col-7 padding-small"
+                          />
+                        </tr>
+                      </SecretItem>
+                    </tbody>
+                  </table>
+                </div>
+              </SecretTable>
+              <ErrorSelector
+                action="get"
+                defaultRequiredRBACRoles={
+                  Object {
+                    "view": Array [
+                      Object {
+                        "apiGroup": "apps",
+                        "resource": "deployments",
+                        "verbs": Array [
+                          "list",
+                          "watch",
+                        ],
+                      },
+                      Object {
+                        "apiGroup": "apps",
+                        "resource": "services",
+                        "verbs": Array [
+                          "list",
+                          "watch",
+                        ],
+                      },
+                    ],
+                  }
+                }
+                error={[Error]}
+                namespace="my-happy-place"
+                resource="Secret v1/secrets/bar"
+              >
+                <UnexpectedErrorPage
+                  showGenericMessage={false}
+                  title={
+                    <span>
+                      Secret v1/secrets/bar not found
+                       
+                      <span>
+                         in 
+                        <span>
+                          the 
+                          <code>
+                            my-happy-place
+                          </code>
+                           namespace
+                        </span>
+                      </span>
+                       
+                    </span>
+                  }
+                >
+                  <div
+                    className="alert alert-error margin-v-bigger"
+                  >
+                    <ErrorPageHeader
+                      icon={[Function]}
+                    >
+                      <header>
+                        <div
+                          className="margin-b-big"
+                        >
+                          <h5
+                            className="type-regular"
+                          >
+                            <span
+                              className="error__icon margin-r-small"
+                            >
+                              <X
+                                color="currentColor"
+                                size="24"
+                              >
+                                <svg
+                                  fill="none"
+                                  height="24"
+                                  stroke="currentColor"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  viewBox="0 0 24 24"
+                                  width="24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <line
+                                    x1="18"
+                                    x2="6"
+                                    y1="6"
+                                    y2="18"
+                                  />
+                                  <line
+                                    x1="6"
+                                    x2="18"
+                                    y1="6"
+                                    y2="18"
+                                  />
+                                </svg>
+                              </X>
+                            </span>
+                            <span>
+                              Secret v1/secrets/bar not found
+                               
+                              <span>
+                                 in 
+                                <span>
+                                  the 
+                                  <code>
+                                    my-happy-place
+                                  </code>
+                                   namespace
+                                </span>
+                              </span>
+                               
+                            </span>
+                          </h5>
+                        </div>
+                      </header>
+                    </ErrorPageHeader>
+                  </div>
+                </UnexpectedErrorPage>
+              </ErrorSelector>
+            </div>
+            <AppDetails
+              deployments={Object {}}
+              otherResources={Object {}}
+              services={Object {}}
+            >
+              <div
+                className="AppDetails"
+              >
+                <h2>
+                  Details
+                </h2>
+                <hr />
+                <div
+                  className="AppDetails__content margin-h-big"
+                >
+                  <h6>
+                    Other Resources
+                  </h6>
+                  <table>
+                    <tbody />
+                  </table>
+                </div>
+              </div>
+            </AppDetails>
+          </div>
+        </div>
+      </div>
+    </main>
+  </section>
+</AppView>
+`;
+
 exports[`AppViewComponent when app info is null loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
   loaded={false}

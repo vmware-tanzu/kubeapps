@@ -1,13 +1,17 @@
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
-import * as moxios from "moxios";
 import * as React from "react";
 
-import { axios } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
+import {
+  ForbiddenError,
+  IIngressSpec,
+  IResource,
+  ISecret,
+  NotFoundError,
+} from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
@@ -17,6 +21,7 @@ import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
+import SecretTable from "./SecretsTable/SecretsTable";
 import ServiceTable from "./ServiceTable";
 
 describe("AppViewComponent", () => {
@@ -38,10 +43,34 @@ describe("AppViewComponent", () => {
     app: appRelease,
     deleteApp: jest.fn(),
     deleteError: undefined,
+    resources: {},
     error: undefined,
     getApp: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
+    getResource: jest.fn(),
+  };
+
+  const resources = {
+    configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
+    deployment: {
+      apiVersion: "apps/v1beta1",
+      kind: "Deployment",
+      metadata: { name: "deployment-one" },
+    },
+    service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
+    ingress: {
+      apiVersion: "extensions/v1beta1",
+      kind: "Ingress",
+      metadata: { name: "ingress-one" },
+    },
+    secret: {
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: { name: "secret-one" },
+      type: "Opaque",
+      data: {},
+    },
   };
 
   context("when app info is null", () => {
@@ -63,30 +92,6 @@ describe("AppViewComponent", () => {
   });
 
   describe("State initialization", () => {
-    const resources = {
-      configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
-      deployment: {
-        apiVersion: "apps/v1beta1",
-        kind: "Deployment",
-        metadata: { name: "deployment-one" },
-      },
-      service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
-      ingress: {
-        apiVersion: "extensions/v1beta1",
-        kind: "Ingress",
-        metadata: { name: "ingress-one" },
-      },
-      secret: { apiVersion: "v1", kind: "Secret", metadata: { name: "secret-one" } },
-    };
-
-    beforeEach(() => {
-      moxios.install(axios);
-    });
-
-    afterEach(() => {
-      moxios.uninstall(axios);
-    });
-
     /*
       The imported manifest contains one deployment, one service, one config map and some bogus manifests.
       We only set websockets for deployment and services
@@ -180,15 +185,7 @@ describe("AppViewComponent", () => {
       }).not.toThrow(YAMLException);
     });
 
-    it("requests a secret", done => {
-      const secretURL = `/api/kube/api/v1/namespaces/${appRelease.namespace}/secrets/${
-        resources.secret.metadata.name
-      }`;
-      moxios.stubRequest(secretURL, {
-        response: JSON.stringify(resources.secret),
-        status: 200,
-      });
-
+    it("requests a secret", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
       const manifest = generateYamlManifest([
         resources.deployment,
@@ -200,14 +197,12 @@ describe("AppViewComponent", () => {
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
 
-      // Wait for the async call to be performed
-      setTimeout(() => {
-        expect(moxios.requests.mostRecent().url).toBe(secretURL);
-        expect(wrapper.state("secrets")).toMatchObject({
-          [`Secret/${resources.secret.metadata.name}`]: resources.secret,
-        });
-        done();
-      }, 1);
+      expect(validProps.getResource).toBeCalledWith(
+        "v1",
+        "secrets",
+        appRelease.namespace,
+        resources.secret.metadata.name,
+      );
     });
   });
 
@@ -289,5 +284,23 @@ describe("AppViewComponent", () => {
       expect(urlTable.text()).toContain("Ingress");
       expect(urlTable.text()).toContain("http://foo.bar/ready");
     });
+  });
+
+  it("renders a secret table with a secret and an error", () => {
+    const r = {
+      "v1/secrets/foo": { isFetching: false, item: resources.secret as ISecret },
+      "v1/secrets/bar": { isFetching: false, error: new NotFoundError() },
+    };
+    const wrapper = mount(<AppViewComponent {...validProps} resources={r} />);
+
+    const secrets = wrapper.find(SecretTable).prop("secrets");
+    expect(Object.keys(secrets).length).toBe(1);
+    expect(Object.keys(secrets)[0]).toBe("v1/secrets/foo");
+
+    const error = wrapper.find(ErrorSelector);
+    expect(error).toExist();
+    expect(error.prop("resource")).toBe("Secret v1/secrets/bar");
+
+    expect(wrapper).toMatchSnapshot();
   });
 });

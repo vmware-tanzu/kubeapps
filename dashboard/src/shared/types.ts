@@ -196,6 +196,7 @@ export interface IStoreState {
   auth: IAuthState;
   charts: IChartState;
   config: IConfigState;
+  kube: IKubeState;
   repos: IAppRepositoryState;
   deployment: IDeployment;
   namespace: INamespaceState;
@@ -335,4 +336,14 @@ export interface IAppOverview {
   icon?: string;
   status: string;
   chart: string;
+}
+
+export interface IKubeItem {
+  isFetching: boolean;
+  item?: IResource | ISecret;
+  error?: Error;
+}
+
+export interface IKubeState {
+  items: { [s: string]: IKubeItem };
 }

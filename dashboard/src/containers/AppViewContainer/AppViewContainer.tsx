@@ -15,10 +15,11 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps({ apps }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ apps, kube }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     app: apps.selected,
     deleteError: apps.deleteError,
+    resources: kube.items,
     error: apps.error,
     namespace: params.namespace,
     releaseName: params.releaseName,
@@ -30,6 +31,13 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     deleteApp: (releaseName: string, ns: string, purge: boolean) =>
       dispatch(actions.apps.deleteApp(releaseName, ns, purge)),
     getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
+    getResource: (
+      apiVersion: string,
+      resource: string,
+      namespace: string,
+      name: string,
+      query?: string,
+    ) => dispatch(actions.kube.getResource(apiVersion, resource, namespace, name, query)),
   };
 }
 
