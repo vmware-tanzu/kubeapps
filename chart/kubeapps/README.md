@@ -47,7 +47,7 @@ The command deploys Kubeapps on the Kubernetes cluster in the `kubeapps` namespa
 
 > **Tip**: List all releases using `helm list`
 
-Once you have installed Kubeapps follow the [Getting Started Guide](../docs/user/getting-started.md) for additional information on how to access and use Kubeapps.
+Once you have installed Kubeapps follow the [Getting Started Guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md) for additional information on how to access and use Kubeapps.
 
 ## Upgrading Kubeapps
 
@@ -237,7 +237,7 @@ $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps --set rbac.
 
 ### Error while upgrading the Chart
 
-It is possible that when upgrading Kubeapps an error appears. That can be caused by a breaking change in the new chart or because the current chart installation is in an inconsistent state. If you find issues upgrading Kubeapps you can follow the next steps:
+It is possible that when upgrading Kubeapps an error appears. That can be caused by a breaking change in the new chart or because the current chart installation is in an inconsistent state. If you find issues upgrading Kubeapps you can follow these steps:
 
 > Note: This steps assume that you have installed Kubeapps in the namespace `kubeapps` using the name `kubeapps`. If that is not the case replace the command with your namespace and/or name.
 
@@ -263,23 +263,23 @@ kubectl delete crd apprepositories.kubeapps.com
 
 4.  (Optional) Clean the Kubeapps namespace:
 
-> **Warning**: Don't execute this step if you use the `kubeapps` namespace for something else apart than Kubeapps.
+> **Warning**: Don't execute this step if you have workloads other than Kubeapps in the `kubeapps` namespace.
 
 ```console
 kubectl delete namespace kubeapps
 ```
 
-5.  Install the latest version of Kubeapps (using any custom modification you need):
+5.  Install the latest version of Kubeapps (using any custom modifications you need):
 
 ```console
 helm repo update
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-6.  (Optional) If you backed up any repository in the first step restore it executing:
+6.  (Optional) Restore any repositories you backed up in the first step:
 
 ```console
 kubectl apply -f <repo name>.yaml
 ```
 
-After that you should be able to access to the new version of Kubeapps. If the above doesn't work for you or you find any trouble please open an issue in the Kubeapps repository.
+After that you should be able to access the new version of Kubeapps. If the above doesn't work for you or you run into any other issues please open an [issue](https://github.com/kubeapps/kubeapps/issues/new).
