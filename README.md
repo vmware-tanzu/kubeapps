@@ -6,7 +6,7 @@ Kubeapps is a web-based UI for deploying and managing applications in Kubernetes
 
 - Browse and deploy [Helm](https://github.com/helm/helm) charts from chart repositories
 - Inspect, upgrade and delete Helm-based applications installed in the cluster
-- Add custom and [private chart repositories](docs/user/private-app-repository) (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
+- Add custom and [private chart repositories](docs/user/private-app-repository.md) (supports [ChartMuseum](https://github.com/helm/chartmuseum) and [JFrog Artifactory](https://www.jfrog.com/confluence/display/RTF/Helm+Chart+Repositories))
 - Browse and provision external services from the [Service Catalog](https://github.com/kubernetes-incubator/service-catalog) and available Service Brokers
 - Connect Helm-based applications to external services with Service Catalog Bindings
 - Secure authentication and authorization based on Kubernetes [Role-Based Access Control](docs/user/access-control.md)
