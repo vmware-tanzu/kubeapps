@@ -14,8 +14,7 @@ it("renders a table with a service with a LoadBalancer", () => {
       type: "LoadBalancer",
     },
   } as IResource;
-  const services = {};
-  services[service.metadata.name] = service;
+  const services = [service];
   const wrapper = shallow(<ServiceTable services={services} />);
   expect(wrapper.find(ServiceItem).props()).toMatchObject({
     service: { metadata: { name: "foo" }, spec: { type: "LoadBalancer" } },
@@ -39,9 +38,7 @@ it("renders a table with a service with two services", () => {
       type: "ClusterIP",
     },
   } as IResource;
-  const services = {};
-  services[service1.metadata.name] = service1;
-  services[service2.metadata.name] = service2;
+  const services = [service1, service2];
   const wrapper = shallow(<ServiceTable services={services} />);
   expect(
     wrapper

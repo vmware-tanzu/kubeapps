@@ -3,6 +3,7 @@ import LoadingSpinner from "../LoadingSpinner";
 
 export interface ILoadingWrapperProps {
   loaded?: boolean;
+  size?: string;
 }
 
 // TODO(miguel) Move these kind of components to stateless compontents once we upgrade ts definitions
@@ -13,7 +14,7 @@ class LoadingWrapper extends React.Component<ILoadingWrapperProps> {
   };
 
   public render() {
-    return this.props.loaded ? this.props.children : <LoadingSpinner />;
+    return this.props.loaded ? this.props.children : <LoadingSpinner size={this.props.size} />;
   }
 }
 

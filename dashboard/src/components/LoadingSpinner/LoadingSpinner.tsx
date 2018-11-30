@@ -2,10 +2,14 @@ import * as React from "react";
 
 import "./LoadingSpinner.css";
 
-const LoaderSpinner: React.SFC<{}> = () => {
+export interface ISpinnerProps {
+  size?: string;
+}
+
+const LoaderSpinner: React.SFC<ISpinnerProps> = props => {
   // Based on http://tobiasahlin.com/spinkit/
   return (
-    <div className="spinner">
+    <div className={`spinner ${props.size && `spinner__${props.size}`}`}>
       <div className="spinner__bounce1" />
       <div className="spinner__bounce2" />
     </div>

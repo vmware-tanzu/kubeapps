@@ -4,13 +4,13 @@ import { IResource } from "../../shared/types";
 import DeploymentItem from "./DeploymentItem";
 
 interface IDeploymentTableProps {
-  deployments: { [d: string]: IResource };
+  deployments: IResource[];
 }
 
 class DeploymentTable extends React.Component<IDeploymentTableProps> {
   public render() {
-    const depKeys = Object.keys(this.props.deployments);
-    if (depKeys.length > 0) {
+    const { deployments } = this.props;
+    if (deployments.length > 0) {
       return (
         <table>
           <thead>
@@ -22,8 +22,8 @@ class DeploymentTable extends React.Component<IDeploymentTableProps> {
             </tr>
           </thead>
           <tbody>
-            {depKeys.map((k: string) => (
-              <DeploymentItem key={k} deployment={this.props.deployments[k]} />
+            {deployments.map(d => (
+              <DeploymentItem key={d.metadata.name} deployment={d} />
             ))}
           </tbody>
         </table>

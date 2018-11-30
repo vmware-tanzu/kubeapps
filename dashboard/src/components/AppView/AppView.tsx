@@ -40,13 +40,11 @@ export interface IAppViewProps {
 
 interface IAppViewState {
   manifest: IResource[];
-  deployments: { [d: string]: IResource };
+  deployments: { [d: string]: { resource?: IResource; isFetching: boolean } };
   otherResources: { [r: string]: IResource };
-  services: { [s: string]: IResource };
-  ingresses: { [i: string]: IResource };
-  secrets: { [s: string]: ISecret };
+  services: { [s: string]: { resource?: IResource; isFetching: boolean } };
+  ingresses: { [i: string]: { resource?: IResource; isFetching: boolean } };
   sockets: WebSocket[];
-  resourcesWithInfo: { [r: string]: boolean };
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -76,9 +74,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     ingresses: {},
     otherResources: {},
     services: {},
-    secrets: {},
     sockets: [],
-    resourcesWithInfo: {},
   };
 
   public async componentDidMount() {
@@ -129,34 +125,32 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     this.setState({ otherResources });
 
     const sockets: WebSocket[] = [];
-    const resourcesWithInfo: { [r: string]: boolean } = {};
     manifest.forEach(i => {
+      const id = `${i.kind}/${i.metadata.name}`;
       switch (i.kind) {
         case "Deployment":
-          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
+          this.setState({ deployments: { ...this.state.deployments, [id]: { isFetching: true } } });
           sockets.push(
             this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Service":
-          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
+          this.setState({ services: { ...this.state.services, [id]: { isFetching: true } } });
           sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
           break;
         case "Ingress":
-          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
+          this.setState({ ingresses: { ...this.state.ingresses, [id]: { isFetching: true } } });
           sockets.push(
             this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Secret":
-          resourcesWithInfo[`${i.kind}/${i.metadata.name}`] = false;
-          this.props.getResource("v1", "secrets", newApp.namespace, i.metadata.name);
+          this.props.getResource(i.apiVersion, "secrets", newApp.namespace, i.metadata.name);
           break;
       }
     });
     this.setState({
       sockets,
-      resourcesWithInfo,
     });
   }
 
@@ -168,16 +162,21 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const msg = JSON.parse(e.data);
     const resource: IResource = msg.object;
     const key = `${resource.kind}/${resource.metadata.name}`;
-    this.setState({ resourcesWithInfo: { ...this.state.resourcesWithInfo, [key]: true } });
     switch (resource.kind) {
       case "Deployment":
-        this.setState({ deployments: { ...this.state.deployments, [key]: resource } });
+        this.setState({
+          deployments: { ...this.state.deployments, [key]: { resource, isFetching: false } },
+        });
         break;
       case "Service":
-        this.setState({ services: { ...this.state.services, [key]: resource } });
+        this.setState({
+          services: { ...this.state.services, [key]: { resource, isFetching: false } },
+        });
         break;
       case "Ingress":
-        this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
+        this.setState({
+          ingresses: { ...this.state.ingresses, [key]: { resource, isFetching: false } },
+        });
         break;
     }
   }
@@ -185,14 +184,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public get isAppLoading(): boolean {
     const { app } = this.props;
     return !app || !app.info;
-  }
-
-  public isKindLoading(kind: string): boolean {
-    const targetResources = this.state.manifest.filter(r => r.kind === kind);
-    const loadedResources = targetResources.filter(
-      r => this.state.resourcesWithInfo[`${r.kind}/${r.metadata.name}`],
-    );
-    return loadedResources.length !== targetResources.length;
   }
 
   public render() {
@@ -213,6 +204,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
+    const services = this.arrayFromState("services");
+    const areServicesLoading = this.isLoading("services");
+    const ingresses = this.arrayFromState("ingresses");
+    const areIngressesLoading = this.isLoading("ingresses");
+    const deployments = this.arrayFromState("deployments");
+    const areDeploymentsLoading = this.isLoading("deployments");
     // Although LoadingWrapper checks that the app is loaded before loading this wrapper
     // it seems that react renders it even before causing it to crash because app is null
     // that's why we need to have an app && guard clause
@@ -236,28 +233,29 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus deployments={this.deploymentArray()} info={app.info!} />
+                    <DeploymentStatus
+                      deployments={this.arrayFromState("deployments")}
+                      info={app.info!}
+                    />
                   </div>
                   <div className="col-8 text-r">
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
                 <h6>Access URLs</h6>
-                <LoadingWrapper
-                  loaded={!this.isKindLoading("Service") && !this.isKindLoading("Ingress")}
-                >
-                  <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
+                <LoadingWrapper loaded={!areServicesLoading && !areIngressesLoading} size="small">
+                  <AccessURLTable services={services} ingresses={ingresses} />
                 </LoadingWrapper>
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <h6>Secrets</h6>
                 {this.renderSecrets()}
                 <h6>Deployments</h6>
-                <LoadingWrapper loaded={!this.isKindLoading("Deployment")}>
-                  <DeploymentTable deployments={this.state.deployments} />
+                <LoadingWrapper loaded={!areDeploymentsLoading} size="small">
+                  <DeploymentTable deployments={deployments} />
                 </LoadingWrapper>
                 <h6>Services</h6>
-                <LoadingWrapper loaded={!this.isKindLoading("Service")}>
-                  <ServiceTable services={this.state.services} />
+                <LoadingWrapper loaded={!areServicesLoading} size="small">
+                  <ServiceTable services={services} />
                 </LoadingWrapper>
                 <h6>Other Resources</h6>
                 <OtherResourcesTable otherResources={this.state.otherResources} />
@@ -293,31 +291,36 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     }
   }
 
-  private deploymentArray(): IResource[] {
-    return Object.keys(this.state.deployments).map(k => this.state.deployments[k]);
+  // Retrieve the deployments/service/ingresses if they are already loaded
+  private arrayFromState(type: string): IResource[] {
+    const elems = Object.keys(this.state[type]);
+    const res: IResource[] = [];
+    elems.forEach(e => {
+      if (this.state[type][e].resource) {
+        res.push(this.state[type][e].resource);
+      }
+    });
+    return res;
+  }
+
+  // Retrieve is some deployments/service/ingresses is still loading
+  private isLoading(type: string) {
+    return _.some(this.state[type], e => e.isFetching);
   }
 
   private deleteApp = (purge: boolean) => {
     return this.props.deleteApp(this.props.releaseName, this.props.namespace, purge);
   };
 
-  private filterByKind = (kind: string) => {
-    const kubeItems = _.pickBy(this.props.resources, r => {
-      return r.item && r.item.kind === kind;
-    });
-    const res = {};
-    _.each(kubeItems, (i, k) => {
-      res[k] = i.item;
-    });
-    return res;
-  };
-
-  private findErrorByResourceType = (type: string): IError | null => {
-    const kubeItems = _.pickBy(this.props.resources, (r, k) => {
+  private filterResourceByType = (type: string) => {
+    return _.pickBy(this.props.resources, (r, k) => {
       return k.indexOf(`/${type}/`) > -1;
     });
+  };
+
+  private findError = (resources: { [s: string]: IKubeItem }): IError | null => {
     let error = null;
-    _.each(kubeItems, (i, k) => {
+    _.each(resources, (i, k) => {
       if (i.error) {
         error = { resource: k, error: i.error };
       }
@@ -325,12 +328,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     return error;
   };
 
-  private findIsFecthing = (type: string): boolean => {
-    const kubeItems = _.pickBy(this.props.resources, (r, k) => {
-      return k.indexOf(`/${type}/`) > -1;
-    });
+  private findLoadingResource = (resources: { [s: string]: IKubeItem }): boolean => {
     let isFetching = false;
-    _.each(kubeItems, (i, k) => {
+    _.each(resources, i => {
       if (i.isFetching) {
         isFetching = true;
       }
@@ -339,12 +339,19 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   };
 
   private renderSecrets = () => {
-    const isFetching = this.findIsFecthing("secrets");
-    let secretSection = <SecretTable secrets={this.filterByKind("Secret")} />;
-    const secretError = this.findErrorByResourceType("secrets");
+    const secrets = this.filterResourceByType("secrets");
+    const isFetching = this.findLoadingResource(secrets);
+    const secretItems: ISecret[] = [];
+    Object.keys(secrets).forEach(k => {
+      if (secrets[k].item) {
+        secretItems.push(secrets[k].item as ISecret);
+      }
+    });
+    let secretSection = <SecretTable secrets={secretItems} />;
+    const secretError = this.findError(secrets);
     if (secretError) {
       secretSection = (
-        <LoadingWrapper loaded={!isFetching}>
+        <LoadingWrapper loaded={!isFetching} size="small">
           {secretSection}
           <ErrorSelector
             error={secretError.error}

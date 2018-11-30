@@ -4,14 +4,13 @@ import { IResource } from "../../shared/types";
 import ServiceItem from "./ServiceItem";
 
 interface IServiceTableProps {
-  services: { [s: string]: IResource };
+  services: IResource[];
 }
 
 class ServiceTable extends React.Component<IServiceTableProps> {
   public render() {
     const { services } = this.props;
-    const svcKeys = Object.keys(services);
-    if (svcKeys.length > 0) {
+    if (services.length > 0) {
       return (
         <table>
           <thead>
@@ -24,8 +23,8 @@ class ServiceTable extends React.Component<IServiceTableProps> {
             </tr>
           </thead>
           <tbody>
-            {svcKeys.map(k => (
-              <ServiceItem key={k} service={services[k]} />
+            {services.map(s => (
+              <ServiceItem key={s.metadata.name} service={s} />
             ))}
           </tbody>
         </table>

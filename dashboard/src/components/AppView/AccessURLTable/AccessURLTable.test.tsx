@@ -20,9 +20,8 @@ context("when the app contain services", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = {};
-    services[service.metadata.name] = service;
-    const wrapper = shallow(<AccessURLTable services={services} ingresses={{}} />);
+    const services = [service];
+    const wrapper = shallow(<AccessURLTable services={services} ingresses={[]} />);
     expect(wrapper.text()).toContain("The current application does not expose a public URL");
   });
 
@@ -39,9 +38,8 @@ context("when the app contain services", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = {};
-    services[service.metadata.name] = service;
-    const wrapper = shallow(<AccessURLTable services={services} ingresses={{}} />);
+    const services = [service];
+    const wrapper = shallow(<AccessURLTable services={services} ingresses={[]} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
@@ -63,10 +61,9 @@ context("when the app contain ingresses", () => {
           },
         ],
       } as IIngressSpec,
-    };
-    const ingresses = {};
-    ingresses[ingress.metadata.name] = ingress;
-    const wrapper = shallow(<AccessURLTable services={{}} ingresses={ingresses} />);
+    } as IResource;
+    const ingresses = [ingress];
+    const wrapper = shallow(<AccessURLTable services={[]} ingresses={ingresses} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
@@ -86,8 +83,7 @@ context("when the app contain services and ingresses", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = {};
-    services[service.metadata.name] = service;
+    const services = [service];
     const ingress = {
       metadata: {
         name: "foo",
@@ -102,9 +98,8 @@ context("when the app contain services and ingresses", () => {
           },
         ],
       } as IIngressSpec,
-    };
-    const ingresses = {};
-    ingresses[ingress.metadata.name] = ingress;
+    } as IResource;
+    const ingresses = [ingress];
     const wrapper = shallow(<AccessURLTable services={services} ingresses={ingresses} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();

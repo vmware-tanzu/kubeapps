@@ -6,15 +6,15 @@ import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 
 interface IServiceTableProps {
-  services: { [s: string]: IResource };
-  ingresses: { [i: string]: IResource };
+  services: IResource[];
+  ingresses: IResource[];
 }
 
 class AccessURLTable extends React.Component<IServiceTableProps> {
   public render() {
-    const { services, ingresses } = this.props;
+    const { ingresses } = this.props;
     const publicServices = this.publicServices();
-    if (publicServices.length > 0 || Object.keys(ingresses).length > 0) {
+    if (publicServices.length > 0 || ingresses.length > 0) {
       return (
         <div>
           <table>
@@ -26,11 +26,11 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
               </tr>
             </thead>
             <tbody>
-              {Object.keys(ingresses).map((k: string) => (
-                <AccessURLItem key={k} URLItem={GetURLItemFromIngress(ingresses[k])} />
+              {ingresses.map(i => (
+                <AccessURLItem key={i.metadata.name} URLItem={GetURLItemFromIngress(i)} />
               ))}
-              {publicServices.map((k: string) => (
-                <AccessURLItem key={k} URLItem={GetURLItemFromService(services[k])} />
+              {publicServices.map(s => (
+                <AccessURLItem key={s.metadata.name} URLItem={GetURLItemFromService(s)} />
               ))}
             </tbody>
           </table>
@@ -41,13 +41,13 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
     }
   }
 
-  private publicServices(): string[] {
+  private publicServices(): IResource[] {
     const { services } = this.props;
-    const publicServices: string[] = [];
-    Object.keys(services).forEach(key => {
-      const spec = services[key].spec as IServiceSpec;
+    const publicServices: IResource[] = [];
+    services.forEach(s => {
+      const spec = s.spec as IServiceSpec;
       if (spec.type === "LoadBalancer") {
-        publicServices.push(key);
+        publicServices.push(s);
       }
     });
     return publicServices;
