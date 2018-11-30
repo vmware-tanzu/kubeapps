@@ -5,6 +5,12 @@ import { IResource } from "shared/types";
 import DeploymentItem from "./DeploymentItem";
 import DeploymentTable from "./DeploymentTable";
 
+it("renders a message if there are no services or ingresses", () => {
+  const wrapper = shallow(<DeploymentTable deployments={[]} />);
+  expect(wrapper.find(DeploymentItem)).not.toExist();
+  expect(wrapper.text()).toContain("The current application does not contain any deployment");
+});
+
 it("renders a deployment ready", () => {
   const deployments = [
     {
@@ -43,12 +49,12 @@ it("renders two deployments", () => {
     wrapper
       .find(DeploymentItem)
       .at(0)
-      .key(),
+      .prop("deployment"),
   ).toBe(deployments[0]);
   expect(
     wrapper
       .find(DeploymentItem)
       .at(1)
-      .key(),
+      .prop("deployment"),
   ).toBe(deployments[1]);
 });

@@ -15,6 +15,12 @@ const secret = {
   data: {},
 } as ISecret;
 
+it("renders a message if there are no secrets", () => {
+  const wrapper = shallow(<SecretsTable secrets={[]} />);
+  expect(wrapper.find(SecretItem)).not.toExist();
+  expect(wrapper.text()).toContain("The current application does not contain any secret");
+});
+
 it("renders a table with a secret", () => {
   const wrapper = shallow(<SecretsTable secrets={[secret]} />);
   expect(wrapper).toMatchSnapshot();
@@ -30,12 +36,12 @@ it("renders a table with several secrets", () => {
     wrapper
       .find(SecretItem)
       .at(0)
-      .key(),
+      .prop("secret"),
   ).toBe(secret);
   expect(
     wrapper
       .find(SecretItem)
       .at(1)
-      .key(),
+      .prop("secret"),
   ).toBe(secret2);
 });

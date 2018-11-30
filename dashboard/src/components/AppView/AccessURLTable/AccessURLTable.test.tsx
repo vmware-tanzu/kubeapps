@@ -6,6 +6,12 @@ import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "shared/ty
 import AccessURLItem from "./AccessURLItem";
 import AccessURLTable from "./AccessURLTable";
 
+it("renders a message if there are no services or ingresses", () => {
+  const wrapper = shallow(<AccessURLTable services={[]} ingresses={[]} />);
+  expect(wrapper.find(AccessURLItem)).not.toExist();
+  expect(wrapper.text()).toContain("The current application does not expose a public URL");
+});
+
 context("when the app contain services", () => {
   it("should omit the Service Table if there are no public services", () => {
     const service = {

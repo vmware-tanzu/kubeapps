@@ -15,11 +15,13 @@ import {
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
+import DeploymentTable from "./DeploymentTable";
 import OtherResourcesTable from "./OtherResourcesTable";
 import SecretTable from "./SecretsTable/SecretsTable";
 import ServiceTable from "./ServiceTable";
@@ -251,25 +253,42 @@ describe("AppViewComponent", () => {
       expect(err.html()).toContain("Application mr-sunshine not found");
     });
 
+    it("renders the loading icon if the URLs table is not ready", () => {
+      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const ingress = {
+        isFetching: true,
+      };
+      const ingresses = { foo: ingress };
+      wrapper.setState({ ingresses });
+
+      expect(wrapper.find(AccessURLTable)).not.toExist();
+      const loading = wrapper.find(LoadingWrapper);
+      expect(loading).toExist();
+    });
+
     it("renders an URL table if an Ingress exists", () => {
       const wrapper = mount(<AppViewComponent {...validProps} />);
       const ingress = {
-        metadata: {
-          name: "foo",
-        },
-        spec: {
-          rules: [
-            {
-              host: "foo.bar",
-              http: {
-                paths: [{ path: "/ready" }],
+        isFetching: false,
+        resource: {
+          metadata: {
+            name: "foo",
+          },
+          spec: {
+            rules: [
+              {
+                host: "foo.bar",
+                http: {
+                  paths: [{ path: "/ready" }],
+                },
               },
-            },
-          ],
-        } as IIngressSpec,
-      } as IResource;
+            ],
+          } as IIngressSpec,
+        } as IResource,
+      };
       const ingresses = {};
-      ingresses[ingress.metadata.name] = ingress;
+      ingresses[ingress.resource.metadata.name] = ingress;
+
       wrapper.setState({ ingresses });
       const urlTable = wrapper.find(AccessURLTable);
       expect(urlTable).toExist();
@@ -286,13 +305,50 @@ describe("AppViewComponent", () => {
     const wrapper = mount(<AppViewComponent {...validProps} resources={r} />);
 
     const secrets = wrapper.find(SecretTable).prop("secrets");
-    expect(Object.keys(secrets).length).toBe(1);
-    expect(Object.keys(secrets)[0]).toBe("v1/secrets/foo");
+    expect(secrets.length).toBe(1);
+    expect(secrets[0].metadata.name).toBe(resources.secret.metadata.name);
 
     const error = wrapper.find(ErrorSelector);
     expect(error).toExist();
     expect(error.prop("resource")).toBe("Secret v1/secrets/bar");
 
     expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders the loading icon if the Secret table is not ready", () => {
+    const r = {
+      "v1/secrets/foo": { isFetching: true },
+    };
+    const wrapper = mount(<AppViewComponent {...validProps} resources={r} />);
+
+    expect(wrapper.find(SecretTable)).not.toExist();
+    const loading = wrapper.find(LoadingWrapper);
+    expect(loading).toExist();
+  });
+
+  it("renders the loading icon if the Deployments table is not ready", () => {
+    const wrapper = mount(<AppViewComponent {...validProps} />);
+    const deployment = {
+      isFetching: true,
+    };
+    const deployments = { foo: deployment };
+    wrapper.setState({ deployments });
+
+    expect(wrapper.find(DeploymentTable)).not.toExist();
+    const loading = wrapper.find(LoadingWrapper);
+    expect(loading).toExist();
+  });
+
+  it("renders the loading icon if the Services table is not ready", () => {
+    const wrapper = mount(<AppViewComponent {...validProps} />);
+    const service = {
+      isFetching: true,
+    };
+    const services = { foo: service };
+    wrapper.setState({ services });
+
+    expect(wrapper.find(ServiceTable)).not.toExist();
+    const loading = wrapper.find(LoadingWrapper);
+    expect(loading).toExist();
   });
 });

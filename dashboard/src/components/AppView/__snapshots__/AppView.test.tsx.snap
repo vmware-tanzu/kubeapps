@@ -91,10 +91,6 @@ data: {}
           "mr-sunshine",
           "my-happy-place",
         ],
-        Array [
-          "mr-sunshine",
-          "my-happy-place",
-        ],
       ],
     }
   }
@@ -311,7 +307,7 @@ data: {}
                   >
                     <LoaderSpinner>
                       <div
-                        className="spinner"
+                        className="spinner undefined"
                       >
                         <div
                           className="spinner__bounce1"
@@ -325,14 +321,36 @@ data: {}
                 </AppControls>
               </div>
             </div>
+            <h6>
+              Access URLs
+            </h6>
+            <LoadingWrapper
+              loaded={true}
+              size="small"
+            >
+              <AccessURLTable
+                ingresses={Array []}
+                services={Array []}
+              >
+                <p>
+                  The current application does not expose a public URL.
+                </p>
+              </AccessURLTable>
+            </LoadingWrapper>
             <AppNotes
               notes={null}
             />
-            <div>
+            <h6>
+              Secrets
+            </h6>
+            <LoadingWrapper
+              loaded={true}
+              size="small"
+            >
               <SecretTable
                 secrets={
-                  Object {
-                    "v1/secrets/foo": Object {
+                  Array [
+                    Object {
                       "apiVersion": "v1",
                       "data": Object {},
                       "kind": "Secret",
@@ -341,71 +359,66 @@ data: {}
                       },
                       "type": "Opaque",
                     },
-                  }
+                  ]
                 }
               >
-                <div>
-                  <h6>
-                    Secrets
-                  </h6>
-                  <table>
-                    <thead>
+                <table>
+                  <thead>
+                    <tr
+                      className="flex"
+                    >
+                      <th
+                        className="col-2"
+                      >
+                        NAME
+                      </th>
+                      <th
+                        className="col-2"
+                      >
+                        TYPE
+                      </th>
+                      <th
+                        className="col-7"
+                      >
+                        DATA
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <SecretItem
+                      key="secret-one"
+                      secret={
+                        Object {
+                          "apiVersion": "v1",
+                          "data": Object {},
+                          "kind": "Secret",
+                          "metadata": Object {
+                            "name": "secret-one",
+                          },
+                          "type": "Opaque",
+                        }
+                      }
+                    >
                       <tr
                         className="flex"
                       >
-                        <th
+                        <td
                           className="col-2"
                         >
-                          NAME
-                        </th>
-                        <th
+                          secret-one
+                        </td>
+                        <td
                           className="col-2"
                         >
-                          TYPE
-                        </th>
-                        <th
-                          className="col-7"
-                        >
-                          DATA
-                        </th>
+                          Opaque
+                        </td>
+                        <td
+                          className="col-7 padding-small"
+                        />
                       </tr>
-                    </thead>
-                    <tbody>
-                      <SecretItem
-                        key="v1/secrets/foo"
-                        secret={
-                          Object {
-                            "apiVersion": "v1",
-                            "data": Object {},
-                            "kind": "Secret",
-                            "metadata": Object {
-                              "name": "secret-one",
-                            },
-                            "type": "Opaque",
-                          }
-                        }
-                      >
-                        <tr
-                          className="flex"
-                        >
-                          <td
-                            className="col-2"
-                          >
-                            secret-one
-                          </td>
-                          <td
-                            className="col-2"
-                          >
-                            Opaque
-                          </td>
-                          <td
-                            className="col-7 padding-small"
-                          />
-                        </tr>
-                      </SecretItem>
-                    </tbody>
-                  </table>
-                </div>
+                    </SecretItem>
+                  </tbody>
+                </table>
               </SecretTable>
               <ErrorSelector
                 action="get"
@@ -523,31 +536,47 @@ data: {}
                   </div>
                 </UnexpectedErrorPage>
               </ErrorSelector>
-            </div>
-            <AppDetails
-              deployments={Object {}}
-              otherResources={Object {}}
-              services={Object {}}
+            </LoadingWrapper>
+            <h6>
+              Deployments
+            </h6>
+            <LoadingWrapper
+              loaded={true}
+              size="small"
             >
-              <div
-                className="AppDetails"
+              <DeploymentTable
+                deployments={Array []}
               >
-                <h2>
-                  Details
-                </h2>
-                <hr />
-                <div
-                  className="AppDetails__content margin-h-big"
-                >
-                  <h6>
-                    Other Resources
-                  </h6>
-                  <table>
-                    <tbody />
-                  </table>
-                </div>
-              </div>
-            </AppDetails>
+                <p>
+                  The current application does not contain any deployment.
+                </p>
+              </DeploymentTable>
+            </LoadingWrapper>
+            <h6>
+              Services
+            </h6>
+            <LoadingWrapper
+              loaded={true}
+              size="small"
+            >
+              <ServiceTable
+                services={Array []}
+              >
+                <p>
+                  The current application does not contain any service.
+                </p>
+              </ServiceTable>
+            </LoadingWrapper>
+            <h6>
+              Other Resources
+            </h6>
+            <OtherResourcesTable
+              otherResources={Object {}}
+            >
+              <p>
+                The current application does not contain any additional resource.
+              </p>
+            </OtherResourcesTable>
           </div>
         </div>
       </div>

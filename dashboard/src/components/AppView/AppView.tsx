@@ -347,12 +347,11 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         secretItems.push(secrets[k].item as ISecret);
       }
     });
-    let secretSection = <SecretTable secrets={secretItems} />;
     const secretError = this.findError(secrets);
-    if (secretError) {
-      secretSection = (
-        <LoadingWrapper loaded={!isFetching} size="small">
-          {secretSection}
+    return (
+      <LoadingWrapper loaded={!isFetching} size="small">
+        <SecretTable secrets={secretItems} />
+        {secretError && (
           <ErrorSelector
             error={secretError.error}
             defaultRequiredRBACRoles={RequiredRBACRoles}
@@ -360,10 +359,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             resource={`Secret ${secretError.resource}`}
             namespace={this.props.namespace}
           />
-        </LoadingWrapper>
-      );
-    }
-    return secretSection;
+        )}
+      </LoadingWrapper>
+    );
   };
 }
 

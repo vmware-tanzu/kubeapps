@@ -5,6 +5,12 @@ import { IResource } from "shared/types";
 import ServiceItem from "./ServiceItem";
 import ServiceTable from "./ServiceTable";
 
+it("renders a message if there are no services or ingresses", () => {
+  const wrapper = shallow(<ServiceTable services={[]} />);
+  expect(wrapper.find(ServiceItem)).not.toExist();
+  expect(wrapper.text()).toContain("The current application does not contain any service");
+});
+
 it("renders a table with a service with a LoadBalancer", () => {
   const service = {
     metadata: {
