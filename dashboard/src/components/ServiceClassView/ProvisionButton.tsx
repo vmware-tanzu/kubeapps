@@ -4,8 +4,8 @@ import * as Modal from "react-modal";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServicePlan } from "../../shared/ServiceCatalog";
-import { ForbiddenError, IRBACRole, NotFoundError } from "../../shared/types";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { IRBACRole } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
 import SchemaForm from "../SchemaForm";
 
 import { JSONSchema6 } from "json-schema";
@@ -13,8 +13,8 @@ import { ISubmitEvent } from "react-jsonschema-form";
 
 interface IProvisionButtonProps {
   namespace: string;
-  error: Error;
-  selectedClass?: IClusterServiceClass;
+  error?: Error;
+  selectedClass: IClusterServiceClass;
   selectedPlan: IServicePlan;
   provision: (
     releaseName: string,
@@ -61,7 +61,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
   };
 
   public render() {
-    const { selectedPlan } = this.props;
+    const { selectedClass, selectedPlan, error, namespace } = this.props;
     let schema = selectedPlan.spec.instanceCreateParameterSchema;
     if (!schema) {
       schema = {
@@ -91,7 +91,15 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
           contentLabel="Modal"
           style={this.state.displayNameForm ? smallModalStyle : {}}
         >
-          {this.props.error && <div className="margin-b-big">{this.renderError()}</div>}
+          {error && (
+            <ErrorSelector
+              error={error}
+              resource={selectedClass.spec.externalName}
+              action="provision"
+              defaultRequiredRBACRoles={{ provision: RequiredRBACRoles }}
+              namespace={namespace}
+            />
+          )}
           {this.state.displayNameForm ? (
             <SchemaForm schema={this.nameSchema()} onSubmit={this.handleNameChange}>
               <div>
@@ -106,10 +114,18 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
           ) : (
             <SchemaForm schema={schema} onSubmit={this.handleProvision}>
               <div>
-                <button className="button button-primary" type="submit">
+                <button
+                  className="button button-primary"
+                  type="submit"
+                  disabled={this.state.isProvisioning}
+                >
                   Submit
                 </button>
-                <button className="button" onClick={this.handleBackButton}>
+                <button
+                  className="button"
+                  onClick={this.handleBackButton}
+                  disabled={this.state.isProvisioning}
+                >
                   Back
                 </button>
               </div>
@@ -181,25 +197,6 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
       required: ["Name"],
       type: "object",
     };
-  }
-
-  // TODO: Replace with ErrorSelector
-  private renderError() {
-    const { error, namespace } = this.props;
-    switch (error && error.constructor) {
-      case ForbiddenError:
-        return (
-          <PermissionsErrorAlert
-            namespace={namespace}
-            roles={RequiredRBACRoles}
-            action={"provision Service Instance"}
-          />
-        );
-      case NotFoundError:
-        return <NotFoundErrorAlert resource={`Namespace "${namespace}"`} />;
-      default:
-        return <UnexpectedErrorAlert />;
-    }
   }
 }
 
