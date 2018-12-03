@@ -35,11 +35,13 @@ describe("get resources", () => {
     const expectedActions = [
       {
         type: getType(actions.kube.requestResource),
-        payload: { "v1/default/pods/foo": { isFetching: true } },
+        payload: { "/api/kube/api/v1/namespaces/default/pods/foo": { isFetching: true } },
       },
       {
         type: getType(actions.kube.receiveResource),
-        payload: { "v1/default/pods/foo": { isFetching: false, item: [] } },
+        payload: {
+          "/api/kube/api/v1/namespaces/default/pods/foo": { isFetching: false, item: [] },
+        },
       },
     ];
     await store.dispatch(actions.kube.getResource("v1", "pods", "default", "foo"));

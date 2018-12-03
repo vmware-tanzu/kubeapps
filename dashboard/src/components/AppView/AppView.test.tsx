@@ -1,27 +1,22 @@
-import { mount, shallow } from "enzyme";
+import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
+import SecretTable from "../../containers/SecretsTableContainer";
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import {
-  ForbiddenError,
-  IIngressSpec,
-  IResource,
-  ISecret,
-  NotFoundError,
-} from "../../shared/types";
+import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AccessURLTable from "./AccessURLTable";
+import AccessURLItem from "./AccessURLTable/AccessURLItem";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
-import SecretTable from "./SecretsTable/SecretsTable";
 import ServiceTable from "./ServiceTable";
 
 describe("AppViewComponent", () => {
@@ -43,12 +38,10 @@ describe("AppViewComponent", () => {
     app: appRelease,
     deleteApp: jest.fn(),
     deleteError: undefined,
-    resources: {},
     error: undefined,
     getApp: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
-    getResource: jest.fn(),
   };
 
   const resources = {
@@ -184,31 +177,11 @@ describe("AppViewComponent", () => {
         wrapper.setProps(validProps);
       }).not.toThrow(YAMLException);
     });
-
-    it("requests a secret", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
-      const manifest = generateYamlManifest([
-        resources.deployment,
-        resources.service,
-        resources.configMap,
-        resources.secret,
-      ]);
-
-      validProps.app.manifest = manifest;
-      wrapper.setProps(validProps);
-
-      expect(validProps.getResource).toBeCalledWith(
-        "v1",
-        "secrets",
-        appRelease.namespace,
-        resources.secret.metadata.name,
-      );
-    });
   });
 
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
-      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
       const service = {
         metadata: { name: "foo" },
         spec: { type: "loadBalancer", ports: [{ port: 8080 }] },
@@ -220,9 +193,15 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(ChartInfo).exists()).toBe(true);
       expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
-      expect(wrapper.find(ServiceTable).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
       expect(wrapper.find(AppDetails).exists()).toBe(true);
+      expect(
+        wrapper
+          .find(AppDetails)
+          .shallow()
+          .find(ServiceTable)
+          .exists(),
+      ).toBe(true);
       expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
@@ -260,7 +239,7 @@ describe("AppViewComponent", () => {
     });
 
     it("renders an URL table if an Ingress exists", () => {
-      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
       const ingress = {
         metadata: {
           name: "foo",
@@ -281,26 +260,42 @@ describe("AppViewComponent", () => {
       wrapper.setState({ ingresses });
       const urlTable = wrapper.find(AccessURLTable);
       expect(urlTable).toExist();
-      expect(urlTable.text()).toContain("Ingress");
-      expect(urlTable.text()).toContain("http://foo.bar/ready");
+      expect(
+        urlTable
+          .shallow()
+          .find(AccessURLItem)
+          .shallow()
+          .text(),
+      ).toContain("Ingress");
+      expect(
+        urlTable
+          .shallow()
+          .find(AccessURLItem)
+          .shallow()
+          .text(),
+      ).toContain("http://foo.bar/ready");
     });
   });
 
   it("renders a secret table with a secret and an error", () => {
-    const r = {
-      "v1/secrets/foo": { isFetching: false, item: resources.secret as ISecret },
-      "v1/secrets/bar": { isFetching: false, error: new NotFoundError() },
-    };
-    const wrapper = mount(<AppViewComponent {...validProps} resources={r} />);
+    const manifest = generateYamlManifest([
+      resources.deployment,
+      resources.service,
+      resources.configMap,
+      resources.ingress,
+      resources.secret,
+    ]);
 
-    const secrets = wrapper.find(SecretTable).prop("secrets");
-    expect(Object.keys(secrets).length).toBe(1);
-    expect(Object.keys(secrets)[0]).toBe("v1/secrets/foo");
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    validProps.app.manifest = manifest;
+    // setProps again so we trigger componentWillReceiveProps
+    wrapper.setProps(validProps);
 
-    const error = wrapper.find(ErrorSelector);
-    expect(error).toExist();
-    expect(error.prop("resource")).toBe("Secret v1/secrets/bar");
-
-    expect(wrapper).toMatchSnapshot();
+    const secretTable = wrapper.find(SecretTable);
+    expect(secretTable).toExist();
+    expect(secretTable.props()).toMatchObject({
+      namespace: appRelease.namespace,
+      secretNames: [resources.secret.metadata.name],
+    });
   });
 });

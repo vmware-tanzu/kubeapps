@@ -10,7 +10,7 @@ describe("authReducer", () => {
   const actionTypes = {
     requestResource: getType(actions.kube.requestResource),
     receiveResource: getType(actions.kube.receiveResource),
-    errorKube: getType(actions.kube.errorKube),
+    errorKube: getType(actions.kube.receiveResourceError),
   };
 
   beforeEach(() => {
