@@ -86,7 +86,7 @@ const ErrorSelector: React.SFC<IErrorSelectorProps> = props => {
         />
       );
     default:
-      return <UnexpectedErrorAlert />;
+      return <UnexpectedErrorAlert raw={true} text={error.message} showGenericMessage={true} />;
   }
 };
 

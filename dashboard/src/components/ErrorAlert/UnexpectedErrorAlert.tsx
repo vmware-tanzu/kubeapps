@@ -17,7 +17,7 @@ export const genericMessage = (
     <p>Troubleshooting:</p>
     <ul className="error__troubleshooting">
       <li>Check for network issues.</li>
-      <li>Check your browser's JavaScript console for errors.</li>
+      <li>Check your browser's JavaScript console for additional errors.</li>
       <li>
         Check the health of Kubeapps components{" "}
         <code>helm status &lt;kubeapps_release_name&gt;</code>.
@@ -35,12 +35,13 @@ export const genericMessage = (
 class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
   public static defaultProps: Partial<IUnexpectedErrorPage> = {
     title: "Sorry! Something went wrong.",
+    showGenericMessage: false,
   };
   public render() {
-    let message = genericMessage;
+    let customMessage = null;
     if (this.props.text) {
       if (this.props.raw) {
-        message = (
+        customMessage = (
           <div className="error__content margin-l-enormous">
             <section className="Terminal terminal__error elevation-1 type-color-white">
               {this.props.text}
@@ -48,7 +49,7 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
           </div>
         );
       } else {
-        message = <p>{this.props.text}</p>;
+        customMessage = <p>{this.props.text}</p>;
       }
     }
     // NOTE(miguel) We are using the non-undefined "!" token in `props.title` because our current version of
@@ -57,8 +58,11 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
     return (
       <div className="alert alert-error margin-v-bigger">
         <ErrorPageHeader icon={this.props.icon || X}>{this.props.title!}</ErrorPageHeader>
-        {(this.props.showGenericMessage !== false || message !== genericMessage) && (
-          <div className="error__content margin-l-enormous">{message}</div>
+        {customMessage && (
+          <div className="error__content margin-l-enormous margin-b-big">{customMessage}</div>
+        )}
+        {this.props.showGenericMessage && (
+          <div className="error__content margin-l-enormous">{genericMessage}</div>
         )}
         {this.props.children && (
           <div className="error__content margin-l-enormous">{this.props.children}</div>

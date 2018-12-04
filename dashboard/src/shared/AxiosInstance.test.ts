@@ -97,7 +97,7 @@ describe("createAxiosInterceptor", () => {
 
   it("returns the generic error message otherwise", async () => {
     moxios.stubRequest(testPath, {
-      response: { message: "this will be ignored" },
+      response: {},
       status: 555,
     });
 
@@ -105,6 +105,19 @@ describe("createAxiosInterceptor", () => {
       await axios.get(testPath);
     } catch (error) {
       expect(error.message).toBe("Request failed with status code 555");
+    }
+  });
+
+  it("returns the response message", async () => {
+    moxios.stubRequest(testPath, {
+      response: { message: "this is an error!" },
+      status: 555,
+    });
+
+    try {
+      await axios.get(testPath);
+    } catch (error) {
+      expect(error.message).toBe("this is an error!");
     }
   });
 
