@@ -16,11 +16,18 @@ const kubeReducer = (
 ): IKubeState => {
   switch (action.type) {
     case getType(actions.kube.requestResource):
-      return { ...state, items: { ...state.items, ...action.payload } };
+      const requestedItem = { [action.payload]: { isFetching: true } };
+      return { ...state, items: { ...state.items, ...requestedItem } };
     case getType(actions.kube.receiveResource):
-      return { ...state, items: { ...state.items, ...action.payload } };
+      const rKey = Object.keys(action.payload)[0];
+      const rResource = action.payload[rKey];
+      const receivedItem = { [rKey]: { isFetching: false, item: rResource } };
+      return { ...state, items: { ...state.items, ...receivedItem } };
     case getType(actions.kube.receiveResourceError):
-      return { ...state, items: { ...state.items, ...action.payload } };
+      const eKey = Object.keys(action.payload)[0];
+      const eResource = action.payload[eKey];
+      const erroredItem = { [eKey]: { isFetching: false, error: eResource } };
+      return { ...state, items: { ...state.items, ...erroredItem } };
     case LOCATION_CHANGE:
       return {
         ...state,

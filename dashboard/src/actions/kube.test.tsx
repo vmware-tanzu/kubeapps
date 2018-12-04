@@ -35,12 +35,12 @@ describe("get resources", () => {
     const expectedActions = [
       {
         type: getType(actions.kube.requestResource),
-        payload: { "/api/kube/api/v1/namespaces/default/pods/foo": { isFetching: true } },
+        payload: "/api/kube/api/v1/namespaces/default/pods/foo",
       },
       {
         type: getType(actions.kube.receiveResource),
         payload: {
-          "/api/kube/api/v1/namespaces/default/pods/foo": { isFetching: false, item: [] },
+          "/api/kube/api/v1/namespaces/default/pods/foo": [],
         },
       },
     ];

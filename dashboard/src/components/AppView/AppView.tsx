@@ -98,9 +98,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return;
     }
 
-    const displayedKinds = ["Deployment", "Service", "Secret"];
+    const kindsWithTable = ["Deployment", "Service", "Secret"];
     const otherResources = manifest
-      .filter(d => displayedKinds.indexOf(d.kind) < 0)
+      .filter(d => kindsWithTable.indexOf(d.kind) < 0)
       .reduce((acc, r) => {
         // TODO: skip list resource for now
         if (r.kind === "List") {

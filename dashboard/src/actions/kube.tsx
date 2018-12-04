@@ -1,18 +1,18 @@
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { Kube } from "../shared/Kube";
-import { IKubeItem, IStoreState } from "../shared/types";
+import { IResource, IStoreState } from "../shared/types";
 
 export const requestResource = createAction("REQUEST_RESOURCE", resolve => {
-  return (resource: { [s: string]: IKubeItem }) => resolve(resource);
+  return (resourceID: string) => resolve(resourceID);
 });
 
 export const receiveResource = createAction("RECEIVE_RESOURCE", resolve => {
-  return (resource: { [s: string]: IKubeItem }) => resolve(resource);
+  return (resource: { [resourceID: string]: IResource }) => resolve(resource);
 });
 
 export const receiveResourceError = createAction("RECEIVE_RESOURCE_ERROR", resolve => {
-  return (resource: { [s: string]: IKubeItem }) => resolve(resource);
+  return (resource: { [resourceID: string]: Error }) => resolve(resource);
 });
 
 const allActions = [requestResource, receiveResource, receiveResourceError];
@@ -28,12 +28,12 @@ export function getResource(
 ): ThunkAction<Promise<void>, IStoreState, null, KubeAction> {
   return async dispatch => {
     const key = Kube.getResourceURL(apiVersion, resource, namespace, name, query);
-    dispatch(requestResource({ [key]: { isFetching: true } }));
+    dispatch(requestResource(key));
     try {
       const r = await Kube.getResource(apiVersion, resource, namespace, name, query);
-      dispatch(receiveResource({ [key]: { isFetching: false, item: r } }));
+      dispatch(receiveResource({ [key]: r }));
     } catch (e) {
-      dispatch(receiveResourceError({ [key]: { isFetching: false, error: e } }));
+      dispatch(receiveResourceError({ [key]: e }));
     }
   };
 }

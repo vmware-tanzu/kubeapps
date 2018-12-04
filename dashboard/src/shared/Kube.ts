@@ -1,5 +1,5 @@
 import { axios } from "./Auth";
-import { IResource, ISecret } from "./types";
+import { IResource } from "./types";
 
 export const KUBE_ROOT_URL = "/api/kube";
 
@@ -32,7 +32,7 @@ export class Kube {
     name?: string,
     query?: string,
   ) {
-    const { data } = await axios.get<IResource | ISecret>(
+    const { data } = await axios.get<IResource>(
       this.getResourceURL(apiVersion, resource, namespace, name, query),
     );
     return data;
