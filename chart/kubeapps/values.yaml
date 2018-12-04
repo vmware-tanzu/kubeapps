@@ -127,8 +127,8 @@ apprepository:
 hooks:
   image:
     registry: docker.io
-    repository: lachlanevenson/k8s-kubectl
-    tag: v1.9.9
+    repository: bitnami/kubectl
+    tag: 1.12.3-r13
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -260,6 +260,14 @@ affinity: {}
 rbac:
   # Perform creation of RBAC resources
   create: true
+
+## Pod Security Context
+## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+##
+securityContext:
+  enabled: false
+  fsGroup: 1001
+  runAsUser: 1001
 
 testImage:
   # Image used for the tests. The only requirement is to include curl
