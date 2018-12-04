@@ -12,6 +12,13 @@ export interface IServiceInstanceCardListProps {
   instances: IServiceInstance[];
 }
 
+function lowerCaseFirst(s: string) {
+  return s
+    .charAt(0)
+    .toLocaleLowerCase()
+    .concat(s.slice(1));
+}
+
 const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props => {
   const { instances, classes } = props;
   return (
@@ -47,7 +54,7 @@ const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props 
                   icon={icon}
                   serviceClassName={(svcClass && svcClass.spec.externalName) || "-"}
                   servicePlanName={instance.spec.clusterServicePlanExternalName}
-                  statusReason={status && status.reason}
+                  statusReason={status && lowerCaseFirst(status.reason)}
                 />
               );
             })}
