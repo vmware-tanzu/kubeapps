@@ -16,6 +16,14 @@ export interface IServiceInstanceCardProps {
   tag2Content?: string | JSX.Element;
 }
 
+function truncateTag(tag: string | JSX.Element) {
+  // If it's a JSX.Element or it's small enough, do nothing
+  if (typeof tag !== "string" || tag.length < 20) {
+    return tag;
+  }
+  return tag.slice(0, 20).concat("...");
+}
+
 const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
   const { title, link, info, tag1Content, tag1Class, tag2Content, tag2Class } = props;
   const icon = props.icon ? props.icon : placeholder;
@@ -34,7 +42,7 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
                     className={`ListItem__content__info_tag ListItem__content__info_tag-1 type-small type-color-white padding-t-tiny padding-h-normal ${tag1Class ||
                       ""}`}
                   >
-                    {tag1Content}
+                    {truncateTag(tag1Content)}
                   </span>
                 )}
                 {tag2Content && (
@@ -42,7 +50,7 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
                     className={`ListItem__content__info_tag ListItem__content__info_tag-2 type-small type-color-white padding-t-tiny padding-h-normal margin-b-normal ${tag2Class ||
                       ""}`}
                   >
-                    {tag2Content}
+                    {truncateTag(tag2Content)}
                   </span>
                 )}
               </div>
