@@ -266,8 +266,8 @@ rbac:
 ##
 securityContext:
   enabled: false
-  fsGroup: 1001
   runAsUser: 1001
+  # fsGroup: 1001
 
 testImage:
   # Image used for the tests. The only requirement is to include curl
