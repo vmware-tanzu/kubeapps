@@ -115,4 +115,9 @@ describe("Default error", () => {
     const wrapper = shallow(<ErrorSelector error={new Error("surprise!")} resource="my-app" />);
     expect(wrapper.html()).toContain(shallow(genericMessage).html());
   });
+
+  it("Should contain the message of the error", () => {
+    const wrapper = shallow(<ErrorSelector error={new Error("surprise!")} resource="my-app" />);
+    expect(wrapper.html()).toContain("surprise!");
+  });
 });
