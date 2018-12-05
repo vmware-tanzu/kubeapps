@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import * as React from "react";
 
 import { IClusterServiceClass } from "shared/ClusterServiceClass";
@@ -10,13 +11,6 @@ import "./ServiceInstanceCard.css";
 export interface IServiceInstanceCardListProps {
   classes: IClusterServiceClass[];
   instances: IServiceInstance[];
-}
-
-function lowerCaseFirst(s: string) {
-  return s
-    .charAt(0)
-    .toLocaleLowerCase()
-    .concat(s.slice(1));
 }
 
 const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props => {
@@ -54,7 +48,7 @@ const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props 
                   icon={icon}
                   serviceClassName={(svcClass && svcClass.spec.externalName) || "-"}
                   servicePlanName={instance.spec.clusterServicePlanExternalName}
-                  statusReason={status && lowerCaseFirst(status.reason)}
+                  statusReason={status && _.lowerFirst(status.reason)}
                 />
               );
             })}

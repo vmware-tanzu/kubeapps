@@ -64,19 +64,3 @@ it("should parse JSX elements in the tags", () => {
   expect(tag2Elem).toExist();
   expect(tag2Elem.text()).toBe("tag2");
 });
-
-it("should trim a long tag", () => {
-  const tag1 = "LoremIpsumDolorSitAmetConsecteturAdipiscingElit";
-  const wrapper = shallow(
-    <InfoCard
-      title="foo"
-      info="foobar"
-      link="/a/link/somewhere"
-      icon="an-icon.png"
-      tag1Content={tag1}
-    />,
-  );
-  const tag1Elem = wrapper.find(".ListItem__content__info_tag");
-  expect(tag1Elem).toExist();
-  expect(tag1Elem.text()).toBe("LoremIpsumDolorSitAm...");
-});

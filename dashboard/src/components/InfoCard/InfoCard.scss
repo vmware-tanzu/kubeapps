@@ -23,6 +23,10 @@
   margin-bottom: 3px;
   color: #fff;
   border-radius: 16px;
+  max-width: 150px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .ListItem__content__info_tag-1 {
