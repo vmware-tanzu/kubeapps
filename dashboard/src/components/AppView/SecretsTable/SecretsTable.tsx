@@ -17,7 +17,7 @@ interface IError {
   error: Error;
 }
 
-class SecretTable extends React.Component<IServiceTableProps> {
+class SecretsTable extends React.Component<IServiceTableProps> {
   public async componentDidMount() {
     const { getSecret, secretNames, namespace } = this.props;
     secretNames.forEach(s => {
@@ -71,4 +71,4 @@ class SecretTable extends React.Component<IServiceTableProps> {
   };
 }
 
-export default SecretTable;
+export default SecretsTable;
