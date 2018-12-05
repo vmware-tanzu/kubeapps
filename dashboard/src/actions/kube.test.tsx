@@ -40,7 +40,8 @@ describe("get resources", () => {
       {
         type: getType(actions.kube.receiveResource),
         payload: {
-          "/api/kube/api/v1/namespaces/default/pods/foo": [],
+          key: "/api/kube/api/v1/namespaces/default/pods/foo",
+          resource: [],
         },
       },
     ];

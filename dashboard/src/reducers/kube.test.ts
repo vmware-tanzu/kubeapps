@@ -28,7 +28,7 @@ describe("authReducer", () => {
       });
     });
     it("receives an item", () => {
-      const payload = { foo: { metadata: { name: "foo" } } as IResource };
+      const payload = { key: "foo", resource: { metadata: { name: "foo" } } as IResource };
       const type = actionTypes.receiveResource as any;
       expect(kubeReducer(undefined, { type, payload })).toEqual({
         ...initialState,
@@ -37,7 +37,7 @@ describe("authReducer", () => {
     });
     it("receives an error", () => {
       const error = new Error("bar");
-      const payload = { foo: error };
+      const payload = { key: "foo", error };
       const type = actionTypes.errorKube as any;
       expect(kubeReducer(undefined, { type, payload })).toEqual({
         ...initialState,

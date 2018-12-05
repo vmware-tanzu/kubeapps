@@ -8,11 +8,11 @@ export const requestResource = createAction("REQUEST_RESOURCE", resolve => {
 });
 
 export const receiveResource = createAction("RECEIVE_RESOURCE", resolve => {
-  return (resource: { [resourceID: string]: IResource }) => resolve(resource);
+  return (resource: { key: string; resource: IResource }) => resolve(resource);
 });
 
 export const receiveResourceError = createAction("RECEIVE_RESOURCE_ERROR", resolve => {
-  return (resource: { [resourceID: string]: Error }) => resolve(resource);
+  return (resource: { key: string; error: Error }) => resolve(resource);
 });
 
 const allActions = [requestResource, receiveResource, receiveResourceError];
@@ -31,9 +31,9 @@ export function getResource(
     dispatch(requestResource(key));
     try {
       const r = await Kube.getResource(apiVersion, resource, namespace, name, query);
-      dispatch(receiveResource({ [key]: r }));
+      dispatch(receiveResource({ key, resource: r }));
     } catch (e) {
-      dispatch(receiveResourceError({ [key]: e }));
+      dispatch(receiveResourceError({ key, error: e }));
     }
   };
 }

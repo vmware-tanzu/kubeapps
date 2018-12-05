@@ -5,17 +5,14 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import SecretsTable from "../../components/AppView/SecretsTable";
-import { IKubeItem, IStoreState } from "../../shared/types";
+import { IStoreState } from "../../shared/types";
 
 interface ISecretTableProps {
   namespace: string;
   secretNames: string[];
 }
 
-function filterByResourceType(
-  type: string,
-  resources: { [s: string]: IKubeItem },
-): { [s: string]: IKubeItem } {
+function filterByResourceType(type: string, resources: { [s: string]: any }) {
   return _.pickBy(resources, (r, k) => {
     return k.indexOf(`/${type}/`) > -1;
   });

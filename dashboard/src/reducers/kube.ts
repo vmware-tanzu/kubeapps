@@ -19,14 +19,14 @@ const kubeReducer = (
       const requestedItem = { [action.payload]: { isFetching: true } };
       return { ...state, items: { ...state.items, ...requestedItem } };
     case getType(actions.kube.receiveResource):
-      const rKey = Object.keys(action.payload)[0];
-      const rResource = action.payload[rKey];
-      const receivedItem = { [rKey]: { isFetching: false, item: rResource } };
+      const receivedItem = {
+        [action.payload.key]: { isFetching: false, item: action.payload.resource },
+      };
       return { ...state, items: { ...state.items, ...receivedItem } };
     case getType(actions.kube.receiveResourceError):
-      const eKey = Object.keys(action.payload)[0];
-      const eResource = action.payload[eKey];
-      const erroredItem = { [eKey]: { isFetching: false, error: eResource } };
+      const erroredItem = {
+        [action.payload.key]: { isFetching: false, error: action.payload.error },
+      };
       return { ...state, items: { ...state.items, ...erroredItem } };
     case LOCATION_CHANGE:
       return {

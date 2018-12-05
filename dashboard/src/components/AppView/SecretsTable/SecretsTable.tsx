@@ -8,7 +8,7 @@ import SecretItem from "./SecretItem";
 interface IServiceTableProps {
   namespace: string;
   secretNames: string[];
-  secrets: { [s: string]: IKubeItem };
+  secrets: { [s: string]: IKubeItem<ISecret> };
   getSecret: (namespace: string, name: string) => void;
 }
 
