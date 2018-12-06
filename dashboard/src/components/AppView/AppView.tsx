@@ -2,6 +2,7 @@ import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import * as React from "react";
 
+import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import { IKubeItem, IRBACRole, IResource, ISecret } from "../../shared/types";
@@ -16,35 +17,27 @@ import "./AppView.css";
 import ChartInfo from "./ChartInfo";
 import DeploymentTable from "./DeploymentTable";
 import OtherResourcesTable from "./OtherResourcesTable";
-import SecretTable from "./SecretsTable";
 import ServiceTable from "./ServiceTable";
 
 export interface IAppViewProps {
   namespace: string;
   releaseName: string;
   app: hapi.release.Release;
-  resources: { [r: string]: IKubeItem };
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
-  getResource: (
-    apiVersion: string,
-    resource: string,
-    namespace: string,
-    name: string,
-    query?: string,
-  ) => void;
 }
 
 interface IAppViewState {
-  manifest: IResource[];
-  deployments: { [d: string]: { resource?: IResource; isFetching: boolean } };
+  deployments: { [d: string]: IKubeItem<IResource> };
   otherResources: { [r: string]: IResource };
-  services: { [s: string]: { resource?: IResource; isFetching: boolean } };
-  ingresses: { [i: string]: { resource?: IResource; isFetching: boolean } };
+  services: { [s: string]: IKubeItem<IResource> };
+  ingresses: { [i: string]: IKubeItem<IResource> };
+  secrets: { [s: string]: ISecret };
   sockets: WebSocket[];
+  manifest: IResource[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -62,11 +55,6 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
   ],
 };
 
-interface IError {
-  resource: string;
-  error: Error;
-}
-
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
     manifest: [],
@@ -74,6 +62,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     ingresses: {},
     otherResources: {},
     services: {},
+    secrets: {},
     sockets: [],
   };
 
@@ -111,9 +100,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return;
     }
 
-    const watchedKinds = ["Deployment", "Service", "Secret"];
+    const kindsWithTable = ["Deployment", "Service", "Secret"];
     const otherResources = manifest
-      .filter(d => watchedKinds.indexOf(d.kind) < 0)
+      .filter(d => kindsWithTable.indexOf(d.kind) < 0)
       .reduce((acc, r) => {
         // TODO: skip list resource for now
         if (r.kind === "List") {
@@ -125,32 +114,31 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     this.setState({ otherResources });
 
     const sockets: WebSocket[] = [];
-    manifest.forEach(i => {
-      const id = `${i.kind}/${i.metadata.name}`;
+    let secrets = {};
+    manifest.forEach((i: IResource | ISecret) => {
       switch (i.kind) {
         case "Deployment":
-          this.setState({ deployments: { ...this.state.deployments, [id]: { isFetching: true } } });
           sockets.push(
             this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Service":
-          this.setState({ services: { ...this.state.services, [id]: { isFetching: true } } });
           sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
           break;
         case "Ingress":
-          this.setState({ ingresses: { ...this.state.ingresses, [id]: { isFetching: true } } });
           sockets.push(
             this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Secret":
-          this.props.getResource(i.apiVersion, "secrets", newApp.namespace, i.metadata.name);
+          const secret = i as ISecret;
+          secrets = { ...secrets, [secret.metadata.name]: secret };
           break;
       }
     });
     this.setState({
       sockets,
+      secrets,
     });
   }
 
@@ -165,17 +153,17 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     switch (resource.kind) {
       case "Deployment":
         this.setState({
-          deployments: { ...this.state.deployments, [key]: { resource, isFetching: false } },
+          deployments: { ...this.state.deployments, [key]: { item: resource, isFetching: false } },
         });
         break;
       case "Service":
         this.setState({
-          services: { ...this.state.services, [key]: { resource, isFetching: false } },
+          services: { ...this.state.services, [key]: { item: resource, isFetching: false } },
         });
         break;
       case "Ingress":
         this.setState({
-          ingresses: { ...this.state.ingresses, [key]: { resource, isFetching: false } },
+          ingresses: { ...this.state.ingresses, [key]: { item: resource, isFetching: false } },
         });
         break;
     }
@@ -233,10 +221,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus
-                      deployments={this.arrayFromState("deployments")}
-                      info={app.info!}
-                    />
+                    <DeploymentStatus deployments={deployments} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
                     <AppControls app={app} deleteApp={this.deleteApp} />
@@ -247,8 +232,10 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                   <AccessURLTable services={services} ingresses={ingresses} />
                 </LoadingWrapper>
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <h6>Secrets</h6>
-                {this.renderSecrets()}
+                <SecretTable
+                  namespace={app.namespace}
+                  secretNames={Object.keys(this.state.secrets)}
+                />
                 <h6>Deployments</h6>
                 <LoadingWrapper loaded={!areDeploymentsLoading} size="small">
                   <DeploymentTable deployments={deployments} />
@@ -310,58 +297,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   private deleteApp = (purge: boolean) => {
     return this.props.deleteApp(this.props.releaseName, this.props.namespace, purge);
-  };
-
-  private filterResourceByType = (type: string) => {
-    return _.pickBy(this.props.resources, (r, k) => {
-      return k.indexOf(`/${type}/`) > -1;
-    });
-  };
-
-  private findError = (resources: { [s: string]: IKubeItem }): IError | null => {
-    let error = null;
-    _.each(resources, (i, k) => {
-      if (i.error) {
-        error = { resource: k, error: i.error };
-      }
-    });
-    return error;
-  };
-
-  private findLoadingResource = (resources: { [s: string]: IKubeItem }): boolean => {
-    let isFetching = false;
-    _.each(resources, i => {
-      if (i.isFetching) {
-        isFetching = true;
-      }
-    });
-    return isFetching;
-  };
-
-  private renderSecrets = () => {
-    const secrets = this.filterResourceByType("secrets");
-    const isFetching = this.findLoadingResource(secrets);
-    const secretItems: ISecret[] = [];
-    Object.keys(secrets).forEach(k => {
-      if (secrets[k].item) {
-        secretItems.push(secrets[k].item as ISecret);
-      }
-    });
-    const secretError = this.findError(secrets);
-    return (
-      <LoadingWrapper loaded={!isFetching} size="small">
-        <SecretTable secrets={secretItems} />
-        {secretError && (
-          <ErrorSelector
-            error={secretError.error}
-            defaultRequiredRBACRoles={RequiredRBACRoles}
-            action="get"
-            resource={`Secret ${secretError.resource}`}
-            namespace={this.props.namespace}
-          />
-        )}
-      </LoadingWrapper>
-    );
   };
 }
 

@@ -1,12 +1,13 @@
 import { RouterAction } from "connected-react-router";
 import * as React from "react";
 
+import LoadingWrapper from "../../components/LoadingWrapper";
+import PageHeader from "../../components/PageHeader";
 import { IServiceCatalogState } from "../../reducers/catalog";
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
-import { definedNamespaces } from "../../shared/Namespace";
-import { ForbiddenError, IRBACRole } from "../../shared/types";
-import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
-import ProvisionButton from "./ProvisionButton";
+import { IRBACRole } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
+import ServiceClassPlan from "./ServiceClassPlan";
 
 const RequiredRBACRoles: IRBACRole[] = [
   {
@@ -26,8 +27,8 @@ const RequiredRBACRoles: IRBACRole[] = [
 interface IServiceClassViewProps {
   classes: IServiceCatalogState["classes"];
   classname: string;
-  createError: Error;
-  error: Error;
+  createError?: Error;
+  error?: Error;
   getClasses: () => Promise<any>;
   getPlans: () => Promise<any>;
   plans: IServiceCatalogState["plans"];
@@ -39,7 +40,6 @@ interface IServiceClassViewProps {
     parameters: {},
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  svcClass: IClusterServiceClass | undefined;
   namespace: string;
 }
 
@@ -58,96 +58,69 @@ class ServiceClassView extends React.Component<IServiceClassViewProps> {
       plans,
       provision,
       push,
-      svcClass,
       namespace,
     } = this.props;
-    // TODO: Check if isFetching
-    const classPlans = svcClass
-      ? plans.list.filter(plan => plan.spec.clusterServiceClassRef.name === svcClass.metadata.name)
-      : [];
+    const loaded = !classes.isFetching && !plans.isFetching;
+    let classPlans: JSX.Element[] = [];
+    let svcClass: IClusterServiceClass | undefined;
+
+    if (loaded) {
+      svcClass =
+        classes.list.find(potential => !!(potential.spec.externalName === classname)) || undefined;
+      if (svcClass) {
+        const foundSVCClass = svcClass;
+        const filteredPlans = plans.list.filter(
+          plan => plan.spec.clusterServiceClassRef.name === foundSVCClass.metadata.name,
+        );
+        classPlans = filteredPlans.map(plan => {
+          return (
+            <ServiceClassPlan
+              key={plan.metadata.name}
+              svcClass={foundSVCClass}
+              svcPlan={plan}
+              provision={provision}
+              push={push}
+              createError={createError}
+              namespace={namespace}
+            />
+          );
+        });
+      }
+    }
 
     return (
-      <div className="class-view">
-        <h1>Plans: {classname}</h1>
-        {error ? (
-          this.renderError()
-        ) : (
-          <div>
-            <p>Service Plans available for provisioning under {classname}</p>
-            <table className="striped">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Specs</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {svcClass &&
-                  // TODO: Move the plans to its own component
-                  classPlans.map(plan => {
-                    // TODO: Check classes.isFetching
-                    const serviceClass = classes.list.find(
-                      potential =>
-                        potential.metadata.name === plan.spec.clusterServiceClassRef.name,
-                    );
-                    const { spec } = plan;
-                    const { externalMetadata } = spec;
-                    const name = externalMetadata
-                      ? externalMetadata.displayName
-                      : spec.externalName;
-                    const description =
-                      externalMetadata && externalMetadata.bullets
-                        ? externalMetadata.bullets
-                        : [spec.description];
-                    const bullets = (
-                      <div>
-                        <ul className="margin-reset">
-                          {description.map(bullet => (
-                            <li key={bullet}>{bullet}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    );
-
-                    return (
-                      <tr key={plan.spec.externalID}>
-                        <td>
-                          <b>{name}</b>
-                        </td>
-                        <td>{bullets}</td>
-                        <td className="text-r">
-                          <ProvisionButton
-                            selectedClass={serviceClass}
-                            selectedPlan={plan}
-                            provision={provision}
-                            push={push}
-                            namespace={namespace}
-                            error={createError}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <div className="container">
+        <PageHeader>
+          <h1>Plans: {classname}</h1>
+        </PageHeader>
+        <main>
+          <LoadingWrapper loaded={loaded}>
+            <div className="class-view">
+              {error && (
+                <ErrorSelector
+                  error={error}
+                  resource="Service Plans"
+                  action="list"
+                  defaultRequiredRBACRoles={{ list: RequiredRBACRoles }}
+                />
+              )}
+              <div>
+                <p>Service Plans available for provisioning under {classname}</p>
+                <table className="striped">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Specs</th>
+                      <th />
+                    </tr>
+                  </thead>
+                  <tbody>{classPlans}</tbody>
+                </table>
+              </div>
+            </div>
+          </LoadingWrapper>
+        </main>
       </div>
-    );
-  }
-
-  // TODO: Replace with ErrorSelector
-  private renderError() {
-    const { error } = this.props;
-    return error instanceof ForbiddenError ? (
-      <PermissionsErrorAlert
-        action="list Service Plans"
-        roles={RequiredRBACRoles}
-        namespace={definedNamespaces.all}
-      />
-    ) : (
-      <UnexpectedErrorAlert />
     );
   }
 }

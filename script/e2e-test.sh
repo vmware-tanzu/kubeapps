@@ -27,6 +27,9 @@ source $ROOT_DIR/script/libtest.sh
 echo "IMAGE TAG TO BE TESTED: $DEV_TAG"
 echo "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
 
+# Print cluster version
+kubectl version
+
 # Install Tiller with TLS support
 helm init \
   --tiller-tls \

@@ -10,9 +10,6 @@ if ! gcloud container clusters list; then
     exit 1
 fi
 
-# Resolve latest version from a branch
-VERSION=$(gcloud container get-server-config --zone $GKE_ZONE --format='yaml(validMasterVersions)' 2> /dev/null | grep $BRANCH | awk '{print $2}' | head -n 1)
-
 # Check if the cluster is already running
 if [[ $(gcloud container clusters list --filter="name:${CLUSTER}") ]]; then
     if gcloud container clusters list --filter="name:${CLUSTER}" | grep "STOPPING"; then
@@ -27,8 +24,8 @@ if [[ $(gcloud container clusters list --filter="name:${CLUSTER}") ]]; then
     fi
 fi
 
-echo "Creating cluster $CLUSTER in $ZONE (v$VERSION)"
-gcloud container clusters create --cluster-version=$VERSION --zone $ZONE $CLUSTER --num-nodes 2 --machine-type=n1-standard-2
+echo "Creating cluster $CLUSTER in $ZONE (v$BRANCH)"
+gcloud container clusters create --cluster-version=${BRANCH} --zone $ZONE $CLUSTER --num-nodes 2 --machine-type=n1-standard-2
 echo "Waiting for the cluster to respond..."
 cnt=20
 until kubectl get pods > /dev/null 2>&1; do

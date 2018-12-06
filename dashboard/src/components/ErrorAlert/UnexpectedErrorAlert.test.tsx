@@ -4,14 +4,6 @@ import * as React from "react";
 import ErrorPageHeader from "./ErrorAlertHeader";
 import UnexpectedErrorAlert, { genericMessage } from "./UnexpectedErrorAlert";
 
-describe("when no text is passed", () => {
-  it("renders a default troubleshooting info", () => {
-    const wrapper = shallow(<UnexpectedErrorAlert />);
-    expect(wrapper.text()).toContain(shallow(genericMessage).text());
-    expect(wrapper).toMatchSnapshot();
-  });
-});
-
 describe("when text is passed", () => {
   const defaultProps = {
     text: "This is my error message",
@@ -68,7 +60,7 @@ describe("icon", () => {
 
 describe("genericMessage", () => {
   it("renders the default message", () => {
-    const wrapper = shallow(<UnexpectedErrorAlert />);
+    const wrapper = shallow(<UnexpectedErrorAlert showGenericMessage={true} />);
     expect(wrapper.html()).toContain(shallow(genericMessage).html());
   });
   it("avoids the default message", () => {
@@ -84,13 +76,11 @@ describe("children", () => {
         <div>more info!</div>
       </UnexpectedErrorAlert>,
     );
-    // It should contain two elements error__content, one for the default message and one for the children
-    expect(wrapper.find(".error__content").length).toBe(2);
+    expect(wrapper.find(".error__content").length).toBe(1);
     expect(wrapper.html()).toContain("more info!");
   });
   it("avoids extra elements", () => {
     const wrapper = shallow(<UnexpectedErrorAlert />);
-    // It should contain only one error__content: the default message
-    expect(wrapper.find(".error__content").length).toBe(1);
+    expect(wrapper.find(".error__content").length).toBe(0);
   });
 });

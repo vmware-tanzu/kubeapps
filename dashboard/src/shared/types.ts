@@ -338,12 +338,12 @@ export interface IAppOverview {
   chart: string;
 }
 
-export interface IKubeItem {
+export interface IKubeItem<T> {
   isFetching: boolean;
-  item?: IResource | ISecret;
+  item?: T;
   error?: Error;
 }
 
 export interface IKubeState {
-  items: { [s: string]: IKubeItem };
+  items: { [s: string]: IKubeItem<IResource> };
 }
