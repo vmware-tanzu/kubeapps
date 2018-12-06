@@ -46,7 +46,7 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
         case 422:
           return Promise.reject(new UnprocessableEntity(message));
         default:
-          return Promise.reject(e);
+          return Promise.reject(new Error(message));
       }
     },
   );

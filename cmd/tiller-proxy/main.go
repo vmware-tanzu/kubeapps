@@ -17,9 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -180,9 +183,34 @@ func main() {
 		port = "8080"
 	}
 	addr := ":" + port
-	log.WithFields(log.Fields{"addr": addr}).Info("Started Tiller Proxy")
-	err = http.ListenAndServe(addr, n)
-	if err != nil {
-		log.Fatalf("Unable to start the server: %v", err)
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: n,
 	}
+
+	go func() {
+		log.WithFields(log.Fields{"addr": addr}).Info("Started Tiller Proxy")
+		err = srv.ListenAndServe()
+		if err != nil {
+			log.Info(err)
+		}
+	}()
+
+	// Catch SIGINT and SIGTERM
+	// Set up channel on which to send signal notifications.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	log.Debug("Set system to get notified on signals")
+	s := <-c
+	log.Infof("Received signal: %v. Waiting for existing requests to finish", s)
+	// Set a timeout value high enough to let k8s terminationGracePeriodSeconds to act
+	// accordingly and send a SIGKILL if needed
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3600)
+	defer cancel()
+	// Doesn't block if no connections, but will otherwise wait
+	// until the timeout deadline.
+	srv.Shutdown(ctx)
+	log.Info("All requests have been served. Exiting")
+	os.Exit(0)
 }
