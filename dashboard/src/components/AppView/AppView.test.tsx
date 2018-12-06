@@ -3,7 +3,6 @@ import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
-import SecretTable from "../../containers/SecretsTableContainer";
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
@@ -16,9 +15,9 @@ import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
-import DeploymentTable from "./DeploymentTable";
+import DeploymentsTable from "./DeploymentsTable";
 import OtherResourcesTable from "./OtherResourcesTable";
-import ServiceTable from "./ServiceTable";
+import ServiceTable from "./ServicesTable/ServicesTable";
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -224,26 +223,11 @@ describe("AppViewComponent", () => {
       expect(err.html()).toContain("Application mr-sunshine not found");
     });
 
-    it("renders the loading icon if the URLs table is not ready", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
-      const ingress = {
-        isFetching: true,
-      };
-      const ingresses = { foo: ingress };
-      wrapper.setState({ ingresses });
-      expect(
-        wrapper
-          .find(AccessURLTable)
-          .parent()
-          .prop("loaded"),
-      ).toBe(false);
-    });
-
     it("renders an URL table if an Ingress exists", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
       const ingress = {
         isFetching: false,
-        resource: {
+        item: {
           metadata: {
             name: "foo",
           },
@@ -260,7 +244,7 @@ describe("AppViewComponent", () => {
         } as IResource,
       };
       const ingresses = {};
-      ingresses[ingress.resource.metadata.name] = ingress;
+      ingresses[ingress.item.metadata.name] = ingress;
 
       wrapper.setState({ ingresses });
       const urlTable = wrapper.find(AccessURLTable);
@@ -282,57 +266,87 @@ describe("AppViewComponent", () => {
     });
   });
 
-  it("renders a secret table with a secret and an error", () => {
-    const manifest = generateYamlManifest([
-      resources.deployment,
-      resources.service,
-      resources.configMap,
-      resources.ingress,
-      resources.secret,
-    ]);
-
+  it("forwards services/ingresses", () => {
     const wrapper = shallow(<AppViewComponent {...validProps} />);
-    validProps.app.manifest = manifest;
-    // setProps again so we trigger componentWillReceiveProps
-    wrapper.setProps(validProps);
+    const ingress = {
+      isFetching: false,
+      item: {
+        metadata: {
+          name: "foo",
+        },
+        spec: {
+          rules: [
+            {
+              host: "foo.bar",
+              http: {
+                paths: [{ path: "/ready" }],
+              },
+            },
+          ],
+        } as IIngressSpec,
+      } as IResource,
+    };
+    const ingresses = {};
+    ingresses[ingress.item.metadata.name] = ingress;
+    const service = {
+      isFetching: false,
+      item: {
+        metadata: {
+          name: "foo",
+        },
+        spec: {},
+      } as IResource,
+    };
+    const services = {};
+    services[service.item.metadata.name] = service;
 
-    const secretTable = wrapper.find(SecretTable);
-    expect(secretTable).toExist();
-    expect(secretTable.props()).toMatchObject({
-      namespace: appRelease.namespace,
-      secretNames: [resources.secret.metadata.name],
-    });
+    wrapper.setState({ ingresses, services });
+
+    const accessURLTable = wrapper.find(AccessURLTable);
+    expect(accessURLTable).toExist();
+    expect(accessURLTable.props()).toMatchObject({ ingresses: [ingress], services: [service] });
+
+    const svcTable = wrapper.find(ServiceTable);
+    expect(svcTable).toExist();
+    expect(svcTable.prop("services")).toEqual([service]);
   });
 
-  it("renders the loading icon if the Deployments table is not ready", () => {
+  it("forwards other resources", () => {
     const wrapper = shallow(<AppViewComponent {...validProps} />);
     const deployment = {
-      isFetching: true,
+      isFetching: false,
+      item: {
+        metadata: {
+          name: "foo",
+        },
+        spec: {},
+      } as IResource,
     };
-    const deployments = { foo: deployment };
+    const deployments = {};
+    deployments[deployment.item.metadata.name] = deployment;
+
     wrapper.setState({ deployments });
 
-    expect(
-      wrapper
-        .find(DeploymentTable)
-        .parent()
-        .prop("loaded"),
-    ).toBe(false);
+    const depTable = wrapper.find(DeploymentsTable);
+    expect(depTable).toExist();
+    expect(depTable.prop("deployments")).toEqual([deployment]);
   });
 
-  it("renders the loading icon if the Services table is not ready", () => {
+  it("forwards deployments", () => {
     const wrapper = shallow(<AppViewComponent {...validProps} />);
-    const service = {
-      isFetching: true,
-    };
-    const services = { foo: service };
-    wrapper.setState({ services });
+    const otherResource = {
+      metadata: {
+        name: "foo",
+      },
+      spec: {},
+    } as IResource;
+    const otherResources = {};
+    otherResources[otherResource.metadata.name] = otherResource;
 
-    expect(
-      wrapper
-        .find(ServiceTable)
-        .parent()
-        .prop("loaded"),
-    ).toBe(false);
+    wrapper.setState({ otherResources: [otherResource] });
+
+    const orTable = wrapper.find(OtherResourcesTable);
+    expect(orTable).toExist();
+    expect(orTable.prop("otherResources")).toEqual([otherResource]);
   });
 });

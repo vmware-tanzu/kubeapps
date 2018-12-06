@@ -15,9 +15,9 @@ import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
-import DeploymentTable from "./DeploymentTable";
+import DeploymentsTable from "./DeploymentsTable";
 import OtherResourcesTable from "./OtherResourcesTable";
-import ServiceTable from "./ServiceTable";
+import ServicesTable from "./ServicesTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -32,10 +32,10 @@ export interface IAppViewProps {
 
 interface IAppViewState {
   deployments: { [d: string]: IKubeItem<IResource> };
-  otherResources: { [r: string]: IResource };
   services: { [s: string]: IKubeItem<IResource> };
   ingresses: { [i: string]: IKubeItem<IResource> };
   secrets: { [s: string]: ISecret };
+  otherResources: { [r: string]: IResource };
   sockets: WebSocket[];
   manifest: IResource[];
 }
@@ -115,29 +115,38 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     const sockets: WebSocket[] = [];
     let secrets = {};
+    let deployments = {};
+    let services = {};
+    let ingresses = {};
     manifest.forEach((i: IResource | ISecret) => {
+      const item = { [i.metadata.name]: { isFetching: true } };
       switch (i.kind) {
         case "Deployment":
+          deployments = { ...deployments, ...item };
           sockets.push(
             this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Service":
+          services = { ...services, ...item };
           sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
           break;
         case "Ingress":
+          ingresses = { ...ingresses, ...item };
           sockets.push(
             this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Secret":
-          const secret = i as ISecret;
-          secrets = { ...secrets, [secret.metadata.name]: secret };
+          secrets = { ...secrets, ...item };
           break;
       }
     });
     this.setState({
       sockets,
+      deployments,
+      services,
+      ingresses,
       secrets,
     });
   }
@@ -149,26 +158,29 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public handleEvent(e: MessageEvent) {
     const msg = JSON.parse(e.data);
     const resource: IResource = msg.object;
-    const key = `${resource.kind}/${resource.metadata.name}`;
+    const item = {
+      [resource.metadata.name]: { item: resource, isFetching: false },
+    };
     switch (resource.kind) {
       case "Deployment":
         this.setState({
-          deployments: { ...this.state.deployments, [key]: { item: resource, isFetching: false } },
+          deployments: { ...this.state.deployments, ...item },
         });
         break;
       case "Service":
         this.setState({
-          services: { ...this.state.services, [key]: { item: resource, isFetching: false } },
+          services: { ...this.state.services, ...item },
         });
         break;
       case "Ingress":
         this.setState({
-          ingresses: { ...this.state.ingresses, [key]: { item: resource, isFetching: false } },
+          ingresses: { ...this.state.ingresses, ...item },
         });
         break;
     }
   }
 
+  // isAppLoading checks if the given app has been collected from tiller
   public get isAppLoading(): boolean {
     const { app } = this.props;
     return !app || !app.info;
@@ -193,14 +205,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public appInfo() {
     const { app } = this.props;
     const services = this.arrayFromState("services");
-    const areServicesLoading = this.isLoading("services");
     const ingresses = this.arrayFromState("ingresses");
-    const areIngressesLoading = this.isLoading("ingresses");
     const deployments = this.arrayFromState("deployments");
-    const areDeploymentsLoading = this.isLoading("deployments");
-    // Although LoadingWrapper checks that the app is loaded before loading this wrapper
-    // it seems that react renders it even before causing it to crash because app is null
-    // that's why we need to have an app && guard clause
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -227,25 +233,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                <h6>Access URLs</h6>
-                <LoadingWrapper loaded={!areServicesLoading && !areIngressesLoading} size="small">
-                  <AccessURLTable services={services} ingresses={ingresses} />
-                </LoadingWrapper>
+                <AccessURLTable services={services} ingresses={ingresses} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <SecretTable
                   namespace={app.namespace}
                   secretNames={Object.keys(this.state.secrets)}
                 />
-                <h6>Deployments</h6>
-                <LoadingWrapper loaded={!areDeploymentsLoading} size="small">
-                  <DeploymentTable deployments={deployments} />
-                </LoadingWrapper>
-                <h6>Services</h6>
-                <LoadingWrapper loaded={!areServicesLoading} size="small">
-                  <ServiceTable services={services} />
-                </LoadingWrapper>
-                <h6>Other Resources</h6>
-                <OtherResourcesTable otherResources={this.state.otherResources} />
+                <DeploymentsTable deployments={deployments} />
+                <ServicesTable services={services} />
+                <OtherResourcesTable otherResources={_.map(this.state.otherResources, r => r)} />
               </div>
             </div>
           </div>
@@ -279,20 +275,16 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   // Retrieve the deployments/service/ingresses if they are already loaded
-  private arrayFromState(type: string): IResource[] {
+  private arrayFromState(type: string): Array<IKubeItem<any>> {
     const elems = Object.keys(this.state[type]);
-    const res: IResource[] = [];
+    const res: Array<IKubeItem<any>> = [];
     elems.forEach(e => {
-      if (this.state[type][e].resource) {
-        res.push(this.state[type][e].resource);
+      const resource = this.state[type][e] as IKubeItem<IResource>;
+      if (!resource.isFetching && resource.item) {
+        res.push(resource);
       }
     });
     return res;
-  }
-
-  // Retrieve is some deployments/service/ingresses is still loading
-  private isLoading(type: string) {
-    return _.some(this.state[type], e => e.isFetching);
   }
 
   private deleteApp = (purge: boolean) => {

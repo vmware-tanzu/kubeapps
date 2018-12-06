@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IDeploymentStatus, IResource } from "../../shared/types";
+import { IDeploymentStatus, IResource } from "../../../shared/types";
 
 interface IDeploymentItemProps {
   deployment: IResource;

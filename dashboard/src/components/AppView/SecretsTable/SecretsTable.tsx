@@ -4,28 +4,19 @@ import * as React from "react";
 import { ErrorSelector } from "../../../components/ErrorAlert";
 import LoadingWrapper from "../../../components/LoadingWrapper";
 import { IKubeItem, ISecret } from "../../../shared/types";
+import isSomeResourceLoading from "../helpers";
 import SecretItem from "./SecretItem";
 
 interface IServiceTableProps {
   namespace: string;
   secretNames: string[];
-  secrets: { [s: string]: IKubeItem<ISecret> };
+  secrets: Array<IKubeItem<ISecret>>;
   getSecret: (namespace: string, name: string) => void;
 }
 
 interface IError {
   resource: string;
   error: Error;
-}
-
-function findLoadingResource(resources: { [s: string]: IKubeItem<ISecret> }): boolean {
-  let isFetching = false;
-  _.each(resources, i => {
-    if (i.isFetching) {
-      isFetching = true;
-    }
-  });
-  return isFetching;
 }
 
 class SecretsTable extends React.Component<IServiceTableProps> {
@@ -38,42 +29,44 @@ class SecretsTable extends React.Component<IServiceTableProps> {
 
   public render() {
     const { secrets } = this.props;
-    const secretKeys = Object.keys(secrets);
     const secretError = this.findError();
-    if (secretKeys.length > 0) {
-      return (
-        <div>
-          <h6>Secrets</h6>
-          <LoadingWrapper loaded={!findLoadingResource(secrets)} size="small">
-            <table>
-              <thead>
-                <tr className="flex">
-                  <th className="col-2">NAME</th>
-                  <th className="col-2">TYPE</th>
-                  <th className="col-7">DATA</th>
-                </tr>
-              </thead>
-              <tbody>
-                {secretKeys.map(
-                  k =>
-                    secrets[k].item && <SecretItem key={k} secret={secrets[k].item as ISecret} />,
-                )}
-              </tbody>
-            </table>
-            {secretError && (
-              <ErrorSelector
-                error={secretError.error}
-                action="get"
-                resource={`Secret ${secretError.resource}`}
-                namespace={this.props.namespace}
-              />
-            )}
-          </LoadingWrapper>
-        </div>
+    let secretSection = <p>The current application does not contain any secret.</p>;
+    if (secrets.length > 0) {
+      secretSection = (
+        <React.Fragment>
+          <table>
+            <thead>
+              <tr className="flex">
+                <th className="col-2">NAME</th>
+                <th className="col-2">TYPE</th>
+                <th className="col-7">DATA</th>
+              </tr>
+            </thead>
+            <tbody>
+              {secrets.map(
+                s => s.item && <SecretItem key={s.item.metadata.name} secret={s.item} />,
+              )}
+            </tbody>
+          </table>
+          {secretError && (
+            <ErrorSelector
+              error={secretError.error}
+              action="get"
+              resource={`Secret ${secretError.resource}`}
+              namespace={this.props.namespace}
+            />
+          )}
+        </React.Fragment>
       );
-    } else {
-      return <p>The current application does not contain any secret.</p>;
     }
+    return (
+      <React.Fragment>
+        <h6>Secrets</h6>
+        <LoadingWrapper loaded={!isSomeResourceLoading(secrets)} size="small">
+          {secretSection}
+        </LoadingWrapper>
+      </React.Fragment>
+    );
   }
 
   private findError = (): IError | null => {

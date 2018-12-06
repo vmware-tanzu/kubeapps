@@ -1,23 +1,31 @@
 import * as React from "react";
 
 import { AlertTriangle } from "react-feather";
+import isSomeResourceLoading from "../../components/AppView/helpers";
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
 import { hapi } from "../../shared/hapi/release";
-import { IDeploymentStatus, IResource } from "../../shared/types";
+import { IDeploymentStatus, IKubeItem, IResource } from "../../shared/types";
 import "./DeploymentStatus.css";
 
 interface IDeploymentStatusProps {
-  deployments: IResource[];
+  deployments: Array<IKubeItem<IResource>>;
   info?: hapi.release.IInfo;
 }
 
 class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   public render() {
+    if (isSomeResourceLoading(this.props.deployments)) {
+      return this.renderLoading();
+    }
     if (this.props.info && this.props.info.deleted) {
       return this.renderDeletedStatus();
     }
     return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();
+  }
+
+  private renderLoading() {
+    return <span className="DeploymentStatus">Loading...</span>;
   }
 
   private renderSuccessStatus() {
@@ -40,8 +48,11 @@ class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
     const { deployments } = this.props;
     if (deployments.length > 0) {
       return deployments.every(d => {
-        const status: IDeploymentStatus = d.status;
-        return status.availableReplicas === status.replicas;
+        if (d.item) {
+          const status: IDeploymentStatus = d.item.status;
+          return status.availableReplicas === status.replicas;
+        }
+        return false;
       });
     } else {
       // if there are no deployments, then the app is considered "ready"

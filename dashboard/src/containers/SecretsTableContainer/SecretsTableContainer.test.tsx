@@ -28,7 +28,7 @@ describe("LoginFormContainer props", () => {
     expect(form).toHaveProp({
       namespace: ns,
       secretNames: [name],
-      secrets: { "v1/secrets/foo": item },
+      secrets: [item],
     });
   });
 });

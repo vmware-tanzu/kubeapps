@@ -2,14 +2,44 @@ import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 
-import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "shared/types";
+import itBehavesLike from "../../../shared/specs";
+
+import LoadingWrapper from "../../../components/LoadingWrapper";
+import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
 import AccessURLItem from "./AccessURLItem";
 import AccessURLTable from "./AccessURLTable";
 
+context("when fetching ingresses or services", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: AccessURLTable,
+    props: {
+      ingresses: [{ isFetching: true }],
+      services: [],
+    },
+  });
+  itBehavesLike("aLoadingComponent", {
+    component: AccessURLTable,
+    props: {
+      ingresses: [],
+      services: [{ isFetching: true }],
+    },
+  });
+});
+
 it("renders a message if there are no services or ingresses", () => {
   const wrapper = shallow(<AccessURLTable services={[]} ingresses={[]} />);
-  expect(wrapper.find(AccessURLItem)).not.toExist();
-  expect(wrapper.text()).toContain("The current application does not expose a public URL");
+  expect(
+    wrapper
+      .find(LoadingWrapper)
+      .shallow()
+      .find(AccessURLItem),
+  ).not.toExist();
+  expect(
+    wrapper
+      .find(LoadingWrapper)
+      .shallow()
+      .text(),
+  ).toContain("The current application does not expose a public URL");
 });
 
 context("when the app contain services", () => {
@@ -26,9 +56,14 @@ context("when the app contain services", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = [service];
+    const services = [{ isFetching: false, item: service }];
     const wrapper = shallow(<AccessURLTable services={services} ingresses={[]} />);
-    expect(wrapper.text()).toContain("The current application does not expose a public URL");
+    expect(
+      wrapper
+        .find(LoadingWrapper)
+        .shallow()
+        .text(),
+    ).toContain("The current application does not expose a public URL");
   });
 
   it("should show the table if any service is a LoadBalancer", () => {
@@ -44,7 +79,7 @@ context("when the app contain services", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = [service];
+    const services = [{ isFetching: false, item: service }];
     const wrapper = shallow(<AccessURLTable services={services} ingresses={[]} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
@@ -68,7 +103,7 @@ context("when the app contain ingresses", () => {
         ],
       } as IIngressSpec,
     } as IResource;
-    const ingresses = [ingress];
+    const ingresses = [{ isFetching: false, item: ingress }];
     const wrapper = shallow(<AccessURLTable services={[]} ingresses={ingresses} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
@@ -89,7 +124,7 @@ context("when the app contain services and ingresses", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = [service];
+    const services = [{ isFetching: false, item: service }];
     const ingress = {
       metadata: {
         name: "foo",
@@ -105,7 +140,7 @@ context("when the app contain services and ingresses", () => {
         ],
       } as IIngressSpec,
     } as IResource;
-    const ingresses = [ingress];
+    const ingresses = [{ isFetching: false, item: ingress }];
     const wrapper = shallow(<AccessURLTable services={services} ingresses={ingresses} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
