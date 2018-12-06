@@ -1,8 +1,9 @@
-import { mount, shallow } from "enzyme";
+import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
+import SecretTable from "../../containers/SecretsTableContainer";
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
@@ -10,6 +11,7 @@ import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AccessURLTable from "./AccessURLTable";
+import AccessURLItem from "./AccessURLTable/AccessURLItem";
 import AppControls from "./AppControls";
 import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
@@ -42,6 +44,28 @@ describe("AppViewComponent", () => {
     releaseName: "mr-sunshine",
   };
 
+  const resources = {
+    configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
+    deployment: {
+      apiVersion: "apps/v1beta1",
+      kind: "Deployment",
+      metadata: { name: "deployment-one" },
+    },
+    service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
+    ingress: {
+      apiVersion: "extensions/v1beta1",
+      kind: "Ingress",
+      metadata: { name: "ingress-one" },
+    },
+    secret: {
+      apiVersion: "v1",
+      kind: "Secret",
+      metadata: { name: "secret-one" },
+      type: "Opaque",
+      data: {},
+    },
+  };
+
   context("when app info is null", () => {
     itBehavesLike("aLoadingComponent", {
       component: AppViewComponent,
@@ -61,21 +85,6 @@ describe("AppViewComponent", () => {
   });
 
   describe("State initialization", () => {
-    const resources = {
-      configMap: { apiVersion: "v1", kind: "ConfigMap", metadata: { name: "cm-one" } },
-      deployment: {
-        apiVersion: "apps/v1beta1",
-        kind: "Deployment",
-        metadata: { name: "deployment-one" },
-      },
-      service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
-      ingress: {
-        apiVersion: "extensions/v1beta1",
-        kind: "Ingress",
-        metadata: { name: "ingress-one" },
-      },
-    };
-
     /*
       The imported manifest contains one deployment, one service, one config map and some bogus manifests.
       We only set websockets for deployment and services
@@ -86,6 +95,7 @@ describe("AppViewComponent", () => {
         resources.service,
         resources.configMap,
         resources.ingress,
+        resources.secret,
       ]);
 
       const wrapper = shallow(<AppViewComponent {...validProps} />);
@@ -108,18 +118,24 @@ describe("AppViewComponent", () => {
 
     it("stores other k8s resources directly in the state", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
-      const manifest = generateYamlManifest([resources.configMap, resources.deployment]);
+      const manifest = generateYamlManifest([
+        resources.deployment,
+        resources.service,
+        resources.configMap,
+        resources.secret,
+      ]);
 
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
 
-      const otherResources: Map<string, IResource> = wrapper.state("otherResources");
+      const otherResources: { [r: string]: IResource } = wrapper.state("otherResources");
       const configMap = otherResources["ConfigMap/cm-one"];
+      // It should skip deployments, services and secrets from "other resources"
       expect(Object.keys(otherResources).length).toEqual(1);
 
       // It sets the websocket for the deployment
       const sockets: WebSocket[] = wrapper.state("sockets");
-      expect(sockets.length).toEqual(1);
+      expect(sockets.length).toEqual(2);
 
       expect(configMap).toBeDefined();
       expect(configMap.metadata.name).toEqual("cm-one");
@@ -165,7 +181,7 @@ describe("AppViewComponent", () => {
 
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
-      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
       const service = {
         metadata: { name: "foo" },
         spec: { type: "loadBalancer", ports: [{ port: 8080 }] },
@@ -177,9 +193,15 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(ChartInfo).exists()).toBe(true);
       expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
-      expect(wrapper.find(ServiceTable).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
       expect(wrapper.find(AppDetails).exists()).toBe(true);
+      expect(
+        wrapper
+          .find(AppDetails)
+          .shallow()
+          .find(ServiceTable)
+          .exists(),
+      ).toBe(true);
       expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
@@ -217,7 +239,7 @@ describe("AppViewComponent", () => {
     });
 
     it("renders an URL table if an Ingress exists", () => {
-      const wrapper = mount(<AppViewComponent {...validProps} />);
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
       const ingress = {
         metadata: {
           name: "foo",
@@ -238,8 +260,42 @@ describe("AppViewComponent", () => {
       wrapper.setState({ ingresses });
       const urlTable = wrapper.find(AccessURLTable);
       expect(urlTable).toExist();
-      expect(urlTable.text()).toContain("Ingress");
-      expect(urlTable.text()).toContain("http://foo.bar/ready");
+      expect(
+        urlTable
+          .shallow()
+          .find(AccessURLItem)
+          .shallow()
+          .text(),
+      ).toContain("Ingress");
+      expect(
+        urlTable
+          .shallow()
+          .find(AccessURLItem)
+          .shallow()
+          .text(),
+      ).toContain("http://foo.bar/ready");
+    });
+  });
+
+  it("renders a secret table with a secret and an error", () => {
+    const manifest = generateYamlManifest([
+      resources.deployment,
+      resources.service,
+      resources.configMap,
+      resources.ingress,
+      resources.secret,
+    ]);
+
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    validProps.app.manifest = manifest;
+    // setProps again so we trigger componentWillReceiveProps
+    wrapper.setProps(validProps);
+
+    const secretTable = wrapper.find(SecretTable);
+    expect(secretTable).toExist();
+    expect(secretTable.props()).toMatchObject({
+      namespace: appRelease.namespace,
+      secretNames: [resources.secret.metadata.name],
     });
   });
 });

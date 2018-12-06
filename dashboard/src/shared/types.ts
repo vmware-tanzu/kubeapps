@@ -156,8 +156,21 @@ export interface IOwnerReference {
   uid: string;
 }
 
-export interface ISecret extends IResource {
+export interface ISecret {
+  apiVersion: string;
+  kind: string;
+  type: string;
   data: { [s: string]: string };
+  metadata: {
+    name: string;
+    namespace: string;
+    annotations: string;
+    creationTimestamp: string;
+    selfLink: string;
+    resourceVersion: string;
+    deletionTimestamp?: string;
+    uid: string;
+  };
 }
 
 export interface IDeploymentStatus {
@@ -183,6 +196,7 @@ export interface IStoreState {
   auth: IAuthState;
   charts: IChartState;
   config: IConfigState;
+  kube: IKubeState;
   repos: IAppRepositoryState;
   deployment: IDeployment;
   namespace: INamespaceState;
@@ -322,4 +336,14 @@ export interface IAppOverview {
   icon?: string;
   status: string;
   chart: string;
+}
+
+export interface IKubeItem<T> {
+  isFetching: boolean;
+  item?: T;
+  error?: Error;
+}
+
+export interface IKubeState {
+  items: { [s: string]: IKubeItem<IResource> };
 }

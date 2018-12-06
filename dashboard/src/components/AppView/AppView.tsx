@@ -1,9 +1,11 @@
 import * as yaml from "js-yaml";
+import * as _ from "lodash";
 import * as React from "react";
 
+import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { IRBACRole, IResource } from "../../shared/types";
+import { IRBACRole, IResource, ISecret } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -31,7 +33,9 @@ interface IAppViewState {
   otherResources: { [r: string]: IResource };
   services: { [s: string]: IResource };
   ingresses: { [i: string]: IResource };
+  secrets: { [s: string]: ISecret };
   sockets: WebSocket[];
+  manifest: IResource[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -55,7 +59,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     ingresses: {},
     otherResources: {},
     services: {},
+    secrets: {},
     sockets: [],
+    manifest: [],
   };
 
   public async componentDidMount() {
@@ -86,10 +92,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
+    if (!_.isEqual(manifest, this.state.manifest)) {
+      this.setState({ manifest });
+    } else {
+      return;
+    }
 
-    const watchedKinds = ["Deployment", "Service"];
+    const kindsWithTable = ["Deployment", "Service", "Secret"];
     const otherResources = manifest
-      .filter(d => watchedKinds.indexOf(d.kind) < 0)
+      .filter(d => kindsWithTable.indexOf(d.kind) < 0)
       .reduce((acc, r) => {
         // TODO: skip list resource for now
         if (r.kind === "List") {
@@ -100,21 +111,32 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       }, {});
     this.setState({ otherResources });
 
-    const deployments = manifest.filter(d => d.kind === "Deployment");
-    const services = manifest.filter(d => d.kind === "Service");
-    const ingresses = manifest.filter(d => d.kind === "Ingress");
     const sockets: WebSocket[] = [];
-    for (const d of deployments) {
-      sockets.push(this.getSocket("deployments", d.apiVersion, d.metadata.name, newApp.namespace));
-    }
-    for (const svc of services) {
-      sockets.push(this.getSocket("services", svc.apiVersion, svc.metadata.name, newApp.namespace));
-    }
-    for (const i of ingresses) {
-      sockets.push(this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace));
-    }
+    let secrets = {};
+    manifest.forEach((i: IResource | ISecret) => {
+      switch (i.kind) {
+        case "Deployment":
+          sockets.push(
+            this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
+          );
+          break;
+        case "Service":
+          sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
+          break;
+        case "Ingress":
+          sockets.push(
+            this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
+          );
+          break;
+        case "Secret":
+          const secret = i as ISecret;
+          secrets = { ...secrets, [secret.metadata.name]: secret };
+          break;
+      }
+    });
     this.setState({
       sockets,
+      secrets,
     });
   }
 
@@ -196,6 +218,10 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                   <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
                 )}
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
+                <SecretTable
+                  namespace={app.namespace}
+                  secretNames={Object.keys(this.state.secrets)}
+                />
                 <AppDetails
                   deployments={this.state.deployments}
                   services={this.state.services}
