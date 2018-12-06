@@ -193,7 +193,6 @@ gke_test: &gke_test
         # If we want to test the latest version instead we override the image to be used
         if [[ -n "$TEST_LATEST_RELEASE" ]]; then
           source ./script/chart_sync_utils.sh
-          # latestReleaseTag was sourced in the first step via chart_sync_utils
           DEV_TAG=$(latestReleaseTag)
           IMG_MODIFIER=""
         fi
