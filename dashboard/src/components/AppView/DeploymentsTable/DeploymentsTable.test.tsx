@@ -49,7 +49,7 @@ it("renders a deployment ready", () => {
   ];
   const wrapper = shallow(<DeploymentTable deployments={deployments} />);
   expect(wrapper).toMatchSnapshot();
-  expect(wrapper.find(DeploymentItem).key()).toBe("foo");
+  expect(wrapper.find(DeploymentItem).key()).toContain("foo");
 });
 
 it("renders two deployments", () => {

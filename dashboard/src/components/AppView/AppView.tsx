@@ -5,7 +5,7 @@ import * as React from "react";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { IKubeItem, IRBACRole, IResource, ISecret } from "../../shared/types";
+import { IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -31,11 +31,13 @@ export interface IAppViewProps {
 }
 
 interface IAppViewState {
-  deployments: { [d: string]: IKubeItem<IResource> };
-  services: { [s: string]: IKubeItem<IResource> };
-  ingresses: { [i: string]: IKubeItem<IResource> };
-  secrets: { [s: string]: ISecret };
-  otherResources: { [r: string]: IResource };
+  deployments: Array<IKubeItem<IResource>>;
+  services: Array<IKubeItem<IResource>>;
+  ingresses: Array<IKubeItem<IResource>>;
+  // Other resources are not IKubeItems because
+  // we are not fetching any information for them.
+  otherResources: IResource[];
+  secretNames: string[];
   sockets: WebSocket[];
   manifest: IResource[];
 }
@@ -58,11 +60,11 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
     manifest: [],
-    deployments: {},
-    ingresses: {},
-    otherResources: {},
-    services: {},
-    secrets: {},
+    deployments: [],
+    ingresses: [],
+    otherResources: [],
+    services: [],
+    secretNames: [],
     sockets: [],
   };
 
@@ -102,43 +104,37 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     const kindsWithTable = ["Deployment", "Service", "Secret"];
     const otherResources = manifest
-      .filter(d => kindsWithTable.indexOf(d.kind) < 0)
-      .reduce((acc, r) => {
-        // TODO: skip list resource for now
-        if (r.kind === "List") {
-          return acc;
-        }
-        acc[`${r.kind}/${r.metadata.name}`] = r;
-        return acc;
-      }, {});
+      // TODO: skip list resource for now
+      .filter(d => kindsWithTable.indexOf(d.kind) < 0 && d.kind !== "List");
     this.setState({ otherResources });
 
     const sockets: WebSocket[] = [];
-    let secrets = {};
-    let deployments = {};
-    let services = {};
-    let ingresses = {};
-    manifest.forEach((i: IResource | ISecret) => {
-      const item = { [i.metadata.name]: { isFetching: true } };
+    // Iterate over the current manifest to populate the initial state
+    const secretNames: string[] = [];
+    const deployments: Array<IKubeItem<IResource>> = [];
+    const services: Array<IKubeItem<IResource>> = [];
+    const ingresses: Array<IKubeItem<IResource>> = [];
+    manifest.forEach((i: IResource) => {
+      const resource = { isFetching: true, item: i };
       switch (i.kind) {
         case "Deployment":
-          deployments = { ...deployments, ...item };
+          deployments.push(resource);
           sockets.push(
             this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Service":
-          services = { ...services, ...item };
+          services.push(resource);
           sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
           break;
         case "Ingress":
-          ingresses = { ...ingresses, ...item };
+          ingresses.push(resource);
           sockets.push(
             this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Secret":
-          secrets = { ...secrets, ...item };
+          secretNames.push(i.metadata.name);
           break;
       }
     });
@@ -147,7 +143,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       deployments,
       services,
       ingresses,
-      secrets,
+      secretNames,
     });
   }
 
@@ -158,32 +154,30 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public handleEvent(e: MessageEvent) {
     const msg = JSON.parse(e.data);
     const resource: IResource = msg.object;
-    const item = {
-      [resource.metadata.name]: { item: resource, isFetching: false },
+    const newItem = {
+      isFetching: false,
+      item: resource,
+    };
+    const dropByName = (array: Array<IKubeItem<IResource>>) => {
+      return _.dropWhile(array, r => r.item && r.item.metadata.name === resource.metadata.name);
     };
     switch (resource.kind) {
       case "Deployment":
-        this.setState({
-          deployments: { ...this.state.deployments, ...item },
-        });
+        const newDeps = dropByName(this.state.deployments);
+        newDeps.push(newItem);
+        this.setState({ deployments: newDeps });
         break;
       case "Service":
-        this.setState({
-          services: { ...this.state.services, ...item },
-        });
+        const newSvcs = dropByName(this.state.services);
+        newSvcs.push(newItem);
+        this.setState({ services: newSvcs });
         break;
       case "Ingress":
-        this.setState({
-          ingresses: { ...this.state.ingresses, ...item },
-        });
+        const newIngresses = dropByName(this.state.ingresses);
+        newIngresses.push(newItem);
+        this.setState({ ingresses: newIngresses });
         break;
     }
-  }
-
-  // isAppLoading checks if the given app has been collected from tiller
-  public get isAppLoading(): boolean {
-    const { app } = this.props;
-    return !app || !app.info;
   }
 
   public render() {
@@ -199,14 +193,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       );
     }
 
-    return this.isAppLoading ? <LoadingWrapper /> : this.appInfo();
+    return this.props.app && this.props.app.info ? this.appInfo() : <LoadingWrapper />;
   }
 
   public appInfo() {
     const { app } = this.props;
-    const services = this.arrayFromState("services");
-    const ingresses = this.arrayFromState("ingresses");
-    const deployments = this.arrayFromState("deployments");
+    const { services, ingresses, deployments, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -235,13 +227,10 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 </div>
                 <AccessURLTable services={services} ingresses={ingresses} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <SecretTable
-                  namespace={app.namespace}
-                  secretNames={Object.keys(this.state.secrets)}
-                />
+                <SecretTable namespace={app.namespace} secretNames={secretNames} />
                 <DeploymentsTable deployments={deployments} />
                 <ServicesTable services={services} />
-                <OtherResourcesTable otherResources={_.map(this.state.otherResources, r => r)} />
+                <OtherResourcesTable otherResources={otherResources} />
               </div>
             </div>
           </div>
@@ -272,19 +261,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     for (const s of sockets) {
       s.close();
     }
-  }
-
-  // Retrieve the deployments/service/ingresses if they are already loaded
-  private arrayFromState(type: string): Array<IKubeItem<any>> {
-    const elems = Object.keys(this.state[type]);
-    const res: Array<IKubeItem<any>> = [];
-    elems.forEach(e => {
-      const resource = this.state[type][e] as IKubeItem<IResource>;
-      if (!resource.isFetching && resource.item) {
-        res.push(resource);
-      }
-    });
-    return res;
   }
 
   private deleteApp = (purge: boolean) => {

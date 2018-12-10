@@ -37,7 +37,7 @@ exports[`renders a deployment ready 1`] = `
               "status": Object {},
             }
           }
-          key="foo"
+          key="deployments/foo"
         />
       </tbody>
     </table>

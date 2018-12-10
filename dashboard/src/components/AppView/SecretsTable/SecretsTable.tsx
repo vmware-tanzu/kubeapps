@@ -29,6 +29,28 @@ class SecretsTable extends React.Component<IServiceTableProps> {
 
   public render() {
     const { secrets } = this.props;
+    return (
+      <React.Fragment>
+        <h6>Secrets</h6>
+        <LoadingWrapper loaded={!isSomeResourceLoading(secrets)} size="small">
+          {this.secretSection()}
+        </LoadingWrapper>
+      </React.Fragment>
+    );
+  }
+
+  private findError = (): IError | null => {
+    let error = null;
+    _.each(this.props.secrets, (i, k) => {
+      if (i.error) {
+        error = { resource: k, error: i.error };
+      }
+    });
+    return error;
+  };
+
+  private secretSection() {
+    const { secrets } = this.props;
     const secretError = this.findError();
     let secretSection = <p>The current application does not contain any secret.</p>;
     if (secrets.length > 0) {
@@ -44,7 +66,8 @@ class SecretsTable extends React.Component<IServiceTableProps> {
             </thead>
             <tbody>
               {secrets.map(
-                s => s.item && <SecretItem key={s.item.metadata.name} secret={s.item} />,
+                s =>
+                  s.item && <SecretItem key={`secrets/${s.item.metadata.name}`} secret={s.item} />,
               )}
             </tbody>
           </table>
@@ -59,25 +82,8 @@ class SecretsTable extends React.Component<IServiceTableProps> {
         </React.Fragment>
       );
     }
-    return (
-      <React.Fragment>
-        <h6>Secrets</h6>
-        <LoadingWrapper loaded={!isSomeResourceLoading(secrets)} size="small">
-          {secretSection}
-        </LoadingWrapper>
-      </React.Fragment>
-    );
+    return secretSection;
   }
-
-  private findError = (): IError | null => {
-    let error = null;
-    _.each(this.props.secrets, (i, k) => {
-      if (i.error) {
-        error = { resource: k, error: i.error };
-      }
-    });
-    return error;
-  };
 }
 
 export default SecretsTable;

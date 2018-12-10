@@ -5,6 +5,7 @@ import * as React from "react";
 import itBehavesLike from "../../../shared/specs";
 
 import SecretsTable from ".";
+import { ErrorSelector } from "../../../components/ErrorAlert";
 import LoadingWrapper from "../../../components/LoadingWrapper";
 import { ISecret } from "../../../shared/types";
 import SecretItem from "./SecretItem";
@@ -66,7 +67,7 @@ it("renders a table with a secret", () => {
   ];
   const wrapper = shallow(<SecretsTable {...validProps} secrets={secrets} />);
   expect(wrapper).toMatchSnapshot();
-  expect(wrapper.find(SecretItem).key()).toBe("foo");
+  expect(wrapper.find(SecretItem).key()).toContain("foo");
 });
 
 it("renders a table with several secrets", () => {
@@ -83,31 +84,28 @@ it("renders a table with several secrets", () => {
       .find(SecretItem)
       .at(0)
       .key(),
-  ).toBe(secret1);
+  ).toContain(secret1);
   expect(
     wrapper
       .find(SecretItem)
       .at(1)
       .key(),
-  ).toBe(secret2);
+  ).toContain(secret2);
 });
 
 it("renders a secret table with a secret and an error", () => {
-  // const manifest = generateYamlManifest([
-  //   resources.deployment,
-  //   resources.service,
-  //   resources.configMap,
-  //   resources.ingress,
-  //   resources.secret,
-  // ]);
-  // const wrapper = shallow(<AppViewComponent {...validProps} />);
-  // validProps.app.manifest = manifest;
-  // // setProps again so we trigger componentWillReceiveProps
-  // wrapper.setProps(validProps);
-  // const secretTable = wrapper.find(SecretTable);
-  // expect(secretTable).toExist();
-  // expect(secretTable.props()).toMatchObject({
-  //   namespace: appRelease.namespace,
-  //   secretNames: [resources.secret.metadata.name],
-  // });
+  const secret1 = "foo";
+  const secrets = [
+    { isFetching: false, item: { kind: "Secret", metadata: { name: secret1 } } as ISecret },
+    { isFetching: false, error: new Error("") },
+  ];
+  const wrapper = shallow(<SecretsTable {...validProps} secrets={secrets} />);
+  expect(wrapper.find(SecretItem).length).toBe(1);
+  expect(
+    wrapper
+      .find(SecretItem)
+      .at(0)
+      .key(),
+  ).toContain(secret1);
+  expect(wrapper.find(ErrorSelector)).toExist();
 });

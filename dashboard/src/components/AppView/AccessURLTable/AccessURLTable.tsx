@@ -15,48 +15,11 @@ interface IServiceTableProps {
 class AccessURLTable extends React.Component<IServiceTableProps> {
   public render() {
     const { ingresses, services } = this.props;
-    let ingressSection = <p>The current application does not expose a public URL.</p>;
-    const publicServices = this.publicServices();
-    if (publicServices.length > 0 || ingresses.length > 0) {
-      ingressSection = (
-        <React.Fragment>
-          <table>
-            <thead>
-              <tr>
-                <th>RESOURCE</th>
-                <th>TYPE</th>
-                <th>URL</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ingresses.map(
-                i =>
-                  i.item && (
-                    <AccessURLItem
-                      key={i.item.metadata.name}
-                      URLItem={GetURLItemFromIngress(i.item)}
-                    />
-                  ),
-              )}
-              {publicServices.map(
-                s =>
-                  s.item && (
-                    <AccessURLItem
-                      key={s.item.metadata.name}
-                      URLItem={GetURLItemFromService(s.item)}
-                    />
-                  ),
-              )}
-            </tbody>
-          </table>
-        </React.Fragment>
-      );
-    }
     return (
       <React.Fragment>
         <h6>Access URLs</h6>
         <LoadingWrapper loaded={!isSomeResourceLoading(ingresses.concat(services))} size="small">
-          {ingressSection}
+          {this.accessTableSection()}
         </LoadingWrapper>
       </React.Fragment>
     );
@@ -74,6 +37,48 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
       }
     });
     return publicServices;
+  }
+
+  private accessTableSection() {
+    const { ingresses } = this.props;
+    let accessTableSection = <p>The current application does not expose a public URL.</p>;
+    const publicServices = this.publicServices();
+    if (publicServices.length > 0 || ingresses.length > 0) {
+      accessTableSection = (
+        <React.Fragment>
+          <table>
+            <thead>
+              <tr>
+                <th>RESOURCE</th>
+                <th>TYPE</th>
+                <th>URL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ingresses.map(
+                i =>
+                  i.item && (
+                    <AccessURLItem
+                      key={`accessURL/${i.item.metadata.name}`}
+                      URLItem={GetURLItemFromIngress(i.item)}
+                    />
+                  ),
+              )}
+              {publicServices.map(
+                s =>
+                  s.item && (
+                    <AccessURLItem
+                      key={`accessURL/${s.item.metadata.name}`}
+                      URLItem={GetURLItemFromService(s.item)}
+                    />
+                  ),
+              )}
+            </tbody>
+          </table>
+        </React.Fragment>
+      );
+    }
+    return accessTableSection;
   }
 }
 

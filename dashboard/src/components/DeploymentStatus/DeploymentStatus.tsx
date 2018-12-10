@@ -16,16 +16,12 @@ interface IDeploymentStatusProps {
 class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   public render() {
     if (isSomeResourceLoading(this.props.deployments)) {
-      return this.renderLoading();
+      return <span className="DeploymentStatus">Loading...</span>;
     }
     if (this.props.info && this.props.info.deleted) {
       return this.renderDeletedStatus();
     }
     return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();
-  }
-
-  private renderLoading() {
-    return <span className="DeploymentStatus">Loading...</span>;
   }
 
   private renderSuccessStatus() {
@@ -47,6 +43,8 @@ class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
   private isReady() {
     const { deployments } = this.props;
     if (deployments.length > 0) {
+      // Check if all the deployments has the same number of
+      // desired and available replicas.
       return deployments.every(d => {
         if (d.item) {
           const status: IDeploymentStatus = d.item.status;

@@ -8,7 +8,7 @@ exports[`renders other resources details 1`] = `
   <table>
     <tbody>
       <tr
-        key="foo"
+        key="otherResources/Secret/foo"
       >
         <td>
           Secret
@@ -19,7 +19,7 @@ exports[`renders other resources details 1`] = `
         </td>
       </tr>
       <tr
-        key="foo"
+        key="otherResources/PersistentVolume/foo"
       >
         <td>
           PersistentVolume

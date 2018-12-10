@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
@@ -120,10 +120,10 @@ describe("AppViewComponent", () => {
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
 
-      const otherResources: { [r: string]: IResource } = wrapper.state("otherResources");
-      const configMap = otherResources["ConfigMap/cm-one"];
+      const otherResources: IResource[] = wrapper.state("otherResources");
+      const configMap = otherResources[0];
       // It should skip deployments, services and secrets from "other resources"
-      expect(Object.keys(otherResources).length).toEqual(1);
+      expect(otherResources.length).toEqual(1);
 
       // It sets the websocket for the deployment
       const sockets: WebSocket[] = wrapper.state("sockets");
@@ -240,11 +240,10 @@ describe("AppViewComponent", () => {
                 },
               },
             ],
-          } as IIngressSpec,
-        } as IResource,
+          },
+        },
       };
-      const ingresses = {};
-      ingresses[ingress.item.metadata.name] = ingress;
+      const ingresses = [ingress];
 
       wrapper.setState({ ingresses });
       const urlTable = wrapper.find(AccessURLTable);
@@ -283,11 +282,10 @@ describe("AppViewComponent", () => {
               },
             },
           ],
-        } as IIngressSpec,
-      } as IResource,
+        },
+      },
     };
-    const ingresses = {};
-    ingresses[ingress.item.metadata.name] = ingress;
+    const ingresses = [ingress];
     const service = {
       isFetching: false,
       item: {
@@ -295,10 +293,9 @@ describe("AppViewComponent", () => {
           name: "foo",
         },
         spec: {},
-      } as IResource,
+      },
     };
-    const services = {};
-    services[service.item.metadata.name] = service;
+    const services = [service];
 
     wrapper.setState({ ingresses, services });
 
@@ -320,10 +317,9 @@ describe("AppViewComponent", () => {
           name: "foo",
         },
         spec: {},
-      } as IResource,
+      },
     };
-    const deployments = {};
-    deployments[deployment.item.metadata.name] = deployment;
+    const deployments = [deployment];
 
     wrapper.setState({ deployments });
 
@@ -339,11 +335,10 @@ describe("AppViewComponent", () => {
         name: "foo",
       },
       spec: {},
-    } as IResource;
-    const otherResources = {};
-    otherResources[otherResource.metadata.name] = otherResource;
+    };
+    const otherResources = [otherResource];
 
-    wrapper.setState({ otherResources: [otherResource] });
+    wrapper.setState({ otherResources });
 
     const orTable = wrapper.find(OtherResourcesTable);
     expect(orTable).toExist();

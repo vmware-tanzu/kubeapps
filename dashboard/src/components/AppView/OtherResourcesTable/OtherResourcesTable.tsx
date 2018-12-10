@@ -8,6 +8,15 @@ interface IAppDetailsProps {
 
 class OtherResourcesTable extends React.Component<IAppDetailsProps> {
   public render() {
+    return (
+      <React.Fragment>
+        <h6>Other Resources</h6>
+        {this.otherResourcesSection()}
+      </React.Fragment>
+    );
+  }
+
+  private otherResourcesSection() {
     const { otherResources } = this.props;
     let otherResourcesSection = (
       <p>The current application does not contain any additional resource.</p>
@@ -18,7 +27,7 @@ class OtherResourcesTable extends React.Component<IAppDetailsProps> {
           <tbody>
             {otherResources.map((r: IResource) => {
               return (
-                <tr key={r.metadata.name}>
+                <tr key={`otherResources/${r.kind}/${r.metadata.name}`}>
                   <td>{r.kind}</td>
                   <td>{r.metadata.namespace}</td>
                   <td>{r.metadata.name}</td>
@@ -29,12 +38,7 @@ class OtherResourcesTable extends React.Component<IAppDetailsProps> {
         </table>
       );
     }
-    return (
-      <React.Fragment>
-        <h6>Other Resources</h6>
-        {otherResourcesSection}
-      </React.Fragment>
-    );
+    return otherResourcesSection;
   }
 }
 

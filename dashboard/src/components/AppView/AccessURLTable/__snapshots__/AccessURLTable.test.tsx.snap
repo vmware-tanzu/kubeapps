@@ -80,7 +80,7 @@ exports[`when the app contain ingresses should show the table with available ing
               "type": "Ingress",
             }
           }
-          key="foo"
+          key="accessURL/foo"
         />
       </tbody>
     </table>
@@ -123,7 +123,7 @@ exports[`when the app contain services and ingresses should show the table with 
               "type": "Ingress",
             }
           }
-          key="foo"
+          key="accessURL/foo"
         />
         <AccessURLItem
           URLItem={
@@ -136,7 +136,7 @@ exports[`when the app contain services and ingresses should show the table with 
               "type": "Service LoadBalancer",
             }
           }
-          key="foo"
+          key="accessURL/foo"
         />
       </tbody>
     </table>
@@ -179,7 +179,7 @@ exports[`when the app contain services should show the table if any service is a
               "type": "Service LoadBalancer",
             }
           }
-          key="foo"
+          key="accessURL/foo"
         />
       </tbody>
     </table>
