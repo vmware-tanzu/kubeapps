@@ -58,12 +58,11 @@ k8s_wait_for_job_completed() {
     while [ "$retryTimeSeconds" -gt 0 ]; do
         # Avoid to exit the function if the job is not completed yet
         set +e
-        kubectl get jobs -n $namespace -l $labelSelector \
-           -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True"
+        kubectl get jobs -n $namespace -l $labelSelector -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True"
         res=$?
         set -e
         # There is a job that finished
-        if [[ $res ]]; then
+        if [[ "$res" -eq "0" ]]; then
             echo "Job '${@:2}' completed"
             return 0
         fi
