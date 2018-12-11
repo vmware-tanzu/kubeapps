@@ -102,18 +102,13 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return;
     }
 
-    const kindsWithTable = ["Deployment", "Service", "Secret"];
-    const otherResources = manifest
-      // TODO: skip list resource for now
-      .filter(d => kindsWithTable.indexOf(d.kind) < 0 && d.kind !== "List");
-    this.setState({ otherResources });
-
     const sockets: WebSocket[] = [];
     // Iterate over the current manifest to populate the initial state
     const secretNames: string[] = [];
     const deployments: Array<IKubeItem<IResource>> = [];
     const services: Array<IKubeItem<IResource>> = [];
     const ingresses: Array<IKubeItem<IResource>> = [];
+    const otherResources: IResource[] = [];
     manifest.forEach((i: IResource) => {
       const resource = { isFetching: true, item: i };
       switch (i.kind) {
@@ -136,6 +131,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         case "Secret":
           secretNames.push(i.metadata.name);
           break;
+        default:
+          otherResources.push(i);
       }
     });
     this.setState({
@@ -144,6 +141,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       services,
       ingresses,
       secretNames,
+      otherResources,
     });
   }
 
