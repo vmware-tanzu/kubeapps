@@ -11,7 +11,18 @@ interface ICatalogItemProps {
   chart: IChart;
 }
 
-class CatalogItem extends React.Component<ICatalogItemProps> {
+// 3 lines description max
+const MAX_DESC_LENGTH = 90;
+
+interface ICatalogItemState {
+  fullDescription: boolean;
+}
+
+class CatalogItem extends React.Component<ICatalogItemProps, ICatalogItemState> {
+  public state: ICatalogItemState = {
+    fullDescription: false,
+  };
+
   public render() {
     const { chart } = this.props;
     const { icon, name, repo } = chart.attributes;
@@ -22,6 +33,22 @@ class CatalogItem extends React.Component<ICatalogItemProps> {
         {repo.name}
       </Link>
     );
+    const description = (
+      <div
+        className={`ListItem__content__description
+          ${this.state.fullDescription && "ListItem__content__description-full"}`}
+      >
+        {this.state.fullDescription
+          ? chart.attributes.description
+          : this.trimDescription(chart.attributes.description)}
+        {chart.attributes.description.length > MAX_DESC_LENGTH && (
+          <a onClick={this.toggleFullDescription}>
+            {" "}
+            {this.state.fullDescription ? "Hide" : "Show more"}
+          </a>
+        )}
+      </div>
+    );
     return (
       <InfoCard
         key={`${repo}/${name}`}
@@ -29,10 +56,23 @@ class CatalogItem extends React.Component<ICatalogItemProps> {
         link={`/charts/${chart.id}`}
         info={latestAppVersion || "-"}
         icon={iconSrc}
+        description={description}
         tag1Content={repoTag}
         tag1Class={repo.name}
       />
     );
+  }
+
+  private toggleFullDescription = () => {
+    this.setState({ fullDescription: !this.state.fullDescription });
+  };
+
+  private trimDescription(desc: string): string {
+    if (desc.length > MAX_DESC_LENGTH) {
+      // Trim to the last word under the max length
+      return desc.substr(0, desc.lastIndexOf(" ", MAX_DESC_LENGTH)).concat("... ");
+    }
+    return desc;
   }
 }
 

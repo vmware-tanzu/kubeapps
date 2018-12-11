@@ -2,6 +2,14 @@
 
 exports[`should render an item 1`] = `
 <InfoCard
+  description={
+    <div
+      className="ListItem__content__description
+          false"
+    >
+      
+    </div>
+  }
   icon="/api/chartsvc/icon.png"
   info="1.0.0"
   key="[object Object]/foo"
