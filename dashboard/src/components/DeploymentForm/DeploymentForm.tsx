@@ -1,4 +1,5 @@
 import { RouterAction } from "connected-react-router";
+import * as Moniker from "moniker-native";
 import * as React from "react";
 import AceEditor from "react-ace";
 
@@ -46,7 +47,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     appValues: undefined,
     isDeploying: false,
     namespace: this.props.namespace,
-    releaseName: "",
+    releaseName: Moniker.choose(),
     latestSubmittedReleaseName: "",
     valuesModified: false,
   };
