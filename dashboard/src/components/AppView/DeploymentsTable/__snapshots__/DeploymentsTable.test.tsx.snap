@@ -1,0 +1,78 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a deployment ready 1`] = `
+<Fragment>
+  <h6>
+    Deployments
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    size="small"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            NAME
+          </th>
+          <th>
+            DESIRED
+          </th>
+          <th>
+            UP-TO-DATE
+          </th>
+          <th>
+            AVAILABLE
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <DeploymentItem
+          deployment={
+            Object {
+              "kind": "Deployment",
+              "metadata": Object {
+                "name": "foo",
+              },
+              "status": Object {},
+            }
+          }
+          key="deployments/foo"
+        />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when fetching deployments loading spinner matches the snapshot 1`] = `
+<Fragment>
+  <h6>
+    Deployments
+  </h6>
+  <LoadingWrapper
+    loaded={false}
+    size="small"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            NAME
+          </th>
+          <th>
+            DESIRED
+          </th>
+          <th>
+            UP-TO-DATE
+          </th>
+          <th>
+            AVAILABLE
+          </th>
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;

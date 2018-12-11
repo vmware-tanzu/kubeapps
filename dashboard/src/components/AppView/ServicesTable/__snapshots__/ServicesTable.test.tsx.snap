@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when fetching ingresses or services loading spinner matches the snapshot 1`] = `
+<Fragment>
+  <h6>
+    Services
+  </h6>
+  <LoadingWrapper
+    loaded={false}
+    size="small"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            NAME
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            CLUSTER-IP
+          </th>
+          <th>
+            EXTERNAL-IP
+          </th>
+          <th>
+            PORT(S)
+          </th>
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;

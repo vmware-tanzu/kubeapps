@@ -1,52 +1,84 @@
 import * as React from "react";
 
-import { IResource, IServiceSpec } from "../../../shared/types";
+import LoadingWrapper from "../../../components/LoadingWrapper";
+import { IKubeItem, IResource, IServiceSpec } from "../../../shared/types";
+import isSomeResourceLoading from "../helpers";
 import AccessURLItem from "./AccessURLItem";
 import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 
 interface IServiceTableProps {
-  services: { [s: string]: IResource };
-  ingresses: { [i: string]: IResource };
+  services: Array<IKubeItem<IResource>>;
+  ingresses: Array<IKubeItem<IResource>>;
 }
 
 class AccessURLTable extends React.Component<IServiceTableProps> {
   public render() {
-    const { services, ingresses } = this.props;
-    const publicServices = this.publicServices();
+    const { ingresses, services } = this.props;
     return (
-      (publicServices.length > 0 || Object.keys(ingresses).length > 0) && (
-        <table>
-          <thead>
-            <tr>
-              <th>NAME</th>
-              <th>TYPE</th>
-              <th>URL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.keys(ingresses).map((k: string) => (
-              <AccessURLItem key={k} URLItem={GetURLItemFromIngress(ingresses[k])} />
-            ))}
-            {publicServices.map((k: string) => (
-              <AccessURLItem key={k} URLItem={GetURLItemFromService(services[k])} />
-            ))}
-          </tbody>
-        </table>
-      )
+      <React.Fragment>
+        <h6>Access URLs</h6>
+        <LoadingWrapper loaded={!isSomeResourceLoading(ingresses.concat(services))} size="small">
+          {this.accessTableSection()}
+        </LoadingWrapper>
+      </React.Fragment>
     );
   }
 
-  private publicServices(): string[] {
+  private publicServices(): Array<IKubeItem<IResource>> {
     const { services } = this.props;
-    const publicServices: string[] = [];
-    Object.keys(services).forEach(key => {
-      const spec = services[key].spec as IServiceSpec;
-      if (spec.type === "LoadBalancer") {
-        publicServices.push(key);
+    const publicServices: Array<IKubeItem<IResource>> = [];
+    services.forEach(s => {
+      if (s.item) {
+        const spec = s.item.spec as IServiceSpec;
+        if (spec.type === "LoadBalancer") {
+          publicServices.push(s);
+        }
       }
     });
     return publicServices;
+  }
+
+  private accessTableSection() {
+    const { ingresses } = this.props;
+    let accessTableSection = <p>The current application does not expose a public URL.</p>;
+    const publicServices = this.publicServices();
+    if (publicServices.length > 0 || ingresses.length > 0) {
+      accessTableSection = (
+        <React.Fragment>
+          <table>
+            <thead>
+              <tr>
+                <th>RESOURCE</th>
+                <th>TYPE</th>
+                <th>URL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ingresses.map(
+                i =>
+                  i.item && (
+                    <AccessURLItem
+                      key={`accessURL/${i.item.metadata.name}`}
+                      URLItem={GetURLItemFromIngress(i.item)}
+                    />
+                  ),
+              )}
+              {publicServices.map(
+                s =>
+                  s.item && (
+                    <AccessURLItem
+                      key={`accessURL/${s.item.metadata.name}`}
+                      URLItem={GetURLItemFromService(s.item)}
+                    />
+                  ),
+              )}
+            </tbody>
+          </table>
+        </React.Fragment>
+      );
+    }
+    return accessTableSection;
   }
 }
 

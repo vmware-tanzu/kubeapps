@@ -5,17 +5,19 @@ import * as React from "react";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { IRBACRole, IResource, ISecret } from "../../shared/types";
+import { IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
-import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
+import DeploymentsTable from "./DeploymentsTable";
+import OtherResourcesTable from "./OtherResourcesTable";
+import ServicesTable from "./ServicesTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -29,11 +31,13 @@ export interface IAppViewProps {
 }
 
 interface IAppViewState {
-  deployments: { [d: string]: IResource };
-  otherResources: { [r: string]: IResource };
-  services: { [s: string]: IResource };
-  ingresses: { [i: string]: IResource };
-  secrets: { [s: string]: ISecret };
+  deployments: Array<IKubeItem<IResource>>;
+  services: Array<IKubeItem<IResource>>;
+  ingresses: Array<IKubeItem<IResource>>;
+  // Other resources are not IKubeItems because
+  // we are not fetching any information for them.
+  otherResources: IResource[];
+  secretNames: string[];
   sockets: WebSocket[];
   manifest: IResource[];
 }
@@ -55,13 +59,13 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
-    deployments: {},
-    ingresses: {},
-    otherResources: {},
-    services: {},
-    secrets: {},
-    sockets: [],
     manifest: [],
+    deployments: [],
+    ingresses: [],
+    otherResources: [],
+    services: [],
+    secretNames: [],
+    sockets: [],
   };
 
   public async componentDidMount() {
@@ -98,45 +102,46 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return;
     }
 
-    const kindsWithTable = ["Deployment", "Service", "Secret"];
-    const otherResources = manifest
-      .filter(d => kindsWithTable.indexOf(d.kind) < 0)
-      .reduce((acc, r) => {
-        // TODO: skip list resource for now
-        if (r.kind === "List") {
-          return acc;
-        }
-        acc[`${r.kind}/${r.metadata.name}`] = r;
-        return acc;
-      }, {});
-    this.setState({ otherResources });
-
     const sockets: WebSocket[] = [];
-    let secrets = {};
-    manifest.forEach((i: IResource | ISecret) => {
+    // Iterate over the current manifest to populate the initial state
+    const secretNames: string[] = [];
+    const deployments: Array<IKubeItem<IResource>> = [];
+    const services: Array<IKubeItem<IResource>> = [];
+    const ingresses: Array<IKubeItem<IResource>> = [];
+    const otherResources: IResource[] = [];
+    manifest.forEach((i: IResource) => {
+      const resource = { isFetching: true, item: i };
       switch (i.kind) {
         case "Deployment":
+          deployments.push(resource);
           sockets.push(
             this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Service":
+          services.push(resource);
           sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
           break;
         case "Ingress":
+          ingresses.push(resource);
           sockets.push(
             this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
           );
           break;
         case "Secret":
-          const secret = i as ISecret;
-          secrets = { ...secrets, [secret.metadata.name]: secret };
+          secretNames.push(i.metadata.name);
           break;
+        default:
+          otherResources.push(i);
       }
     });
     this.setState({
       sockets,
-      secrets,
+      deployments,
+      services,
+      ingresses,
+      secretNames,
+      otherResources,
     });
   }
 
@@ -147,23 +152,30 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public handleEvent(e: MessageEvent) {
     const msg = JSON.parse(e.data);
     const resource: IResource = msg.object;
-    const key = `${resource.kind}/${resource.metadata.name}`;
+    const newItem = {
+      isFetching: false,
+      item: resource,
+    };
+    const dropByName = (array: Array<IKubeItem<IResource>>) => {
+      return _.dropWhile(array, r => r.item && r.item.metadata.name === resource.metadata.name);
+    };
     switch (resource.kind) {
       case "Deployment":
-        this.setState({ deployments: { ...this.state.deployments, [key]: resource } });
+        const newDeps = dropByName(this.state.deployments);
+        newDeps.push(newItem);
+        this.setState({ deployments: newDeps });
         break;
       case "Service":
-        this.setState({ services: { ...this.state.services, [key]: resource } });
+        const newSvcs = dropByName(this.state.services);
+        newSvcs.push(newItem);
+        this.setState({ services: newSvcs });
         break;
       case "Ingress":
-        this.setState({ ingresses: { ...this.state.ingresses, [key]: resource } });
+        const newIngresses = dropByName(this.state.ingresses);
+        newIngresses.push(newItem);
+        this.setState({ ingresses: newIngresses });
         break;
     }
-  }
-
-  public get isLoading(): boolean {
-    const { app } = this.props;
-    return !this.state.otherResources || (!app || !app.info);
   }
 
   public render() {
@@ -179,14 +191,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       );
     }
 
-    return this.isLoading ? <LoadingWrapper /> : this.appInfo();
+    return this.props.app && this.props.app.info ? this.appInfo() : <LoadingWrapper />;
   }
 
   public appInfo() {
     const { app } = this.props;
-    // Although LoadingWrapper checks that the app is loaded before loading this wrapper
-    // it seems that react renders it even before causing it to crash because app is null
-    // that's why we need to have an app && guard clause
+    const { services, ingresses, deployments, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -207,26 +217,18 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus deployments={this.deploymentArray()} info={app.info!} />
+                    <DeploymentStatus deployments={deployments} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                {(Object.keys(this.state.services).length > 0 ||
-                  Object.keys(this.state.ingresses).length > 0) && (
-                  <AccessURLTable services={this.state.services} ingresses={this.state.ingresses} />
-                )}
+                <AccessURLTable services={services} ingresses={ingresses} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <SecretTable
-                  namespace={app.namespace}
-                  secretNames={Object.keys(this.state.secrets)}
-                />
-                <AppDetails
-                  deployments={this.state.deployments}
-                  services={this.state.services}
-                  otherResources={this.state.otherResources}
-                />
+                <SecretTable namespace={app.namespace} secretNames={secretNames} />
+                <DeploymentsTable deployments={deployments} />
+                <ServicesTable services={services} />
+                <OtherResourcesTable otherResources={otherResources} />
               </div>
             </div>
           </div>
@@ -257,10 +259,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     for (const s of sockets) {
       s.close();
     }
-  }
-
-  private deploymentArray(): IResource[] {
-    return Object.keys(this.state.deployments).map(k => this.state.deployments[k]);
   }
 
   private deleteApp = (purge: boolean) => {

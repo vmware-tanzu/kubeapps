@@ -19,6 +19,7 @@ function mapStateToProps({ apps, kube }: IStoreState, { match: { params } }: IRo
   return {
     app: apps.selected,
     deleteError: apps.deleteError,
+    resources: kube.items,
     error: apps.error,
     namespace: params.namespace,
     releaseName: params.releaseName,

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { IResource, IServiceSpec, IServiceStatus } from "../../shared/types";
+import { IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
 
 interface IServiceItemProps {
   service: IResource;

@@ -1,113 +1,188 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`when fetching ingresses or services loading spinner matches the snapshot 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={false}
+    size="small"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when fetching ingresses or services loading spinner matches the snapshot 2`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={false}
+    size="small"
+  >
+    <p>
+      The current application does not expose a public URL.
+    </p>
+  </LoadingWrapper>
+</Fragment>
+`;
+
 exports[`when the app contain ingresses should show the table with available ingresses 1`] = `
-<table>
-  <thead>
-    <tr>
-      <th>
-        NAME
-      </th>
-      <th>
-        TYPE
-      </th>
-      <th>
-        URL
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <AccessURLItem
-      URLItem={
-        Object {
-          "URLs": Array [
-            "http://foo.bar/ready",
-          ],
-          "isLink": true,
-          "name": "foo",
-          "type": "Ingress",
-        }
-      }
-      key="foo"
-    />
-  </tbody>
-</table>
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    size="small"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "http://foo.bar/ready",
+              ],
+              "isLink": true,
+              "name": "foo",
+              "type": "Ingress",
+            }
+          }
+          key="accessURL/foo"
+        />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
 `;
 
 exports[`when the app contain services and ingresses should show the table with available svcs and ingresses 1`] = `
-<table>
-  <thead>
-    <tr>
-      <th>
-        NAME
-      </th>
-      <th>
-        TYPE
-      </th>
-      <th>
-        URL
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <AccessURLItem
-      URLItem={
-        Object {
-          "URLs": Array [
-            "http://foo.bar/ready",
-          ],
-          "isLink": true,
-          "name": "foo",
-          "type": "Ingress",
-        }
-      }
-      key="foo"
-    />
-    <AccessURLItem
-      URLItem={
-        Object {
-          "URLs": Array [
-            "Pending",
-          ],
-          "isLink": false,
-          "name": "foo",
-          "type": "Service LoadBalancer",
-        }
-      }
-      key="foo"
-    />
-  </tbody>
-</table>
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    size="small"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "http://foo.bar/ready",
+              ],
+              "isLink": true,
+              "name": "foo",
+              "type": "Ingress",
+            }
+          }
+          key="accessURL/foo"
+        />
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "Pending",
+              ],
+              "isLink": false,
+              "name": "foo",
+              "type": "Service LoadBalancer",
+            }
+          }
+          key="accessURL/foo"
+        />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
 `;
 
 exports[`when the app contain services should show the table if any service is a LoadBalancer 1`] = `
-<table>
-  <thead>
-    <tr>
-      <th>
-        NAME
-      </th>
-      <th>
-        TYPE
-      </th>
-      <th>
-        URL
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <AccessURLItem
-      URLItem={
-        Object {
-          "URLs": Array [
-            "Pending",
-          ],
-          "isLink": false,
-          "name": "foo",
-          "type": "Service LoadBalancer",
-        }
-      }
-      key="foo"
-    />
-  </tbody>
-</table>
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    size="small"
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "Pending",
+              ],
+              "isLink": false,
+              "name": "foo",
+              "type": "Service LoadBalancer",
+            }
+          }
+          key="accessURL/foo"
+        />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
 `;

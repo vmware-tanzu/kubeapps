@@ -1,0 +1,49 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a deleting status 1`] = `
+<span
+  className="DeploymentStatus DeploymentStatus--deleted"
+>
+  <AlertTriangle
+    className="icon"
+    color="currentColor"
+    size="24"
+    style={
+      Object {
+        "bottom": "-0.425em",
+      }
+    }
+  />
+   Deleted
+</span>
+`;
+
+exports[`renders a deployed status 1`] = `
+<span
+  className="DeploymentStatus DeploymentStatus--success"
+>
+  <Check
+    className="icon padding-t-tiny"
+  />
+   Deployed
+</span>
+`;
+
+exports[`renders a deploying status 1`] = `
+<span
+  className="DeploymentStatus DeploymentStatus--pending"
+>
+  <Compass
+    className="icon padding-t-tiny"
+  />
+   Deploying
+</span>
+`;
+
+exports[`renders a loading status 1`] = `
+<span
+  className="DeploymentStatus"
+>
+  Loading...
+</span>
+`;

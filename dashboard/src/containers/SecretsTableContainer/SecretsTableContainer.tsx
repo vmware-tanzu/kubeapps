@@ -5,7 +5,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import SecretsTable from "../../components/AppView/SecretsTable";
-import { IStoreState } from "../../shared/types";
+import { IKubeItem, ISecret, IStoreState } from "../../shared/types";
 
 interface ISecretTableProps {
   namespace: string;
@@ -22,7 +22,7 @@ function mapStateToProps({ kube }: IStoreState, props: ISecretTableProps) {
   return {
     namespace: props.namespace,
     secretNames: props.secretNames,
-    secrets: filterByResourceType("secrets", kube.items),
+    secrets: _.map(filterByResourceType("secrets", kube.items), (i: IKubeItem<ISecret>) => i),
   };
 }
 

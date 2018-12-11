@@ -4,6 +4,7 @@ import { IURLItem } from "./IURLItem";
 // isLink returns true if there are any link in the Item
 function isLink(loadBalancerService: IResource): boolean {
   if (
+    loadBalancerService.status &&
     loadBalancerService.status.loadBalancer.ingress &&
     loadBalancerService.status.loadBalancer.ingress.length
   ) {
@@ -16,7 +17,7 @@ function isLink(loadBalancerService: IResource): boolean {
 function URLs(loadBalancerService: IResource): string[] {
   const res: string[] = [];
   const status: IServiceStatus = loadBalancerService.status;
-  if (status.loadBalancer.ingress && status.loadBalancer.ingress.length) {
+  if (status && status.loadBalancer.ingress && status.loadBalancer.ingress.length) {
     status.loadBalancer.ingress.forEach(i => {
       (loadBalancerService.spec as IServiceSpec).ports.forEach(port => {
         if (i.hostname) {

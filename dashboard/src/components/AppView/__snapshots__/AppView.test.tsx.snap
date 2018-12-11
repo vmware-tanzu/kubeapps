@@ -5,9 +5,3 @@ exports[`AppViewComponent when app info is null loading spinner matches the snap
   loaded={false}
 />
 `;
-
-exports[`AppViewComponent when otherResources is null loading spinner matches the snapshot 1`] = `
-<LoadingWrapper
-  loaded={false}
-/>
-`;

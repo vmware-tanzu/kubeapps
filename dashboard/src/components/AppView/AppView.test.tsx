@@ -3,21 +3,21 @@ import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
-import SecretTable from "../../containers/SecretsTableContainer";
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IIngressSpec, IResource, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AccessURLTable from "./AccessURLTable";
 import AccessURLItem from "./AccessURLTable/AccessURLItem";
 import AppControls from "./AppControls";
-import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
-import ServiceTable from "./ServiceTable";
+import DeploymentsTable from "./DeploymentsTable";
+import OtherResourcesTable from "./OtherResourcesTable";
+import ServiceTable from "./ServicesTable/ServicesTable";
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -76,14 +76,6 @@ describe("AppViewComponent", () => {
     });
   });
 
-  context("when otherResources is null", () => {
-    itBehavesLike("aLoadingComponent", {
-      component: AppViewComponent,
-      props: validProps,
-      state: { otherResources: null },
-    });
-  });
-
   describe("State initialization", () => {
     /*
       The imported manifest contains one deployment, one service, one config map and some bogus manifests.
@@ -128,10 +120,10 @@ describe("AppViewComponent", () => {
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
 
-      const otherResources: { [r: string]: IResource } = wrapper.state("otherResources");
-      const configMap = otherResources["ConfigMap/cm-one"];
+      const otherResources: IResource[] = wrapper.state("otherResources");
+      const configMap = otherResources[0];
       // It should skip deployments, services and secrets from "other resources"
-      expect(Object.keys(otherResources).length).toEqual(1);
+      expect(otherResources.length).toEqual(1);
 
       // It sets the websocket for the deployment
       const sockets: WebSocket[] = wrapper.state("sockets");
@@ -194,14 +186,7 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
-      expect(wrapper.find(AppDetails).exists()).toBe(true);
-      expect(
-        wrapper
-          .find(AppDetails)
-          .shallow()
-          .find(ServiceTable)
-          .exists(),
-      ).toBe(true);
+      expect(wrapper.find(OtherResourcesTable).exists()).toBe(true);
       expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
@@ -241,22 +226,25 @@ describe("AppViewComponent", () => {
     it("renders an URL table if an Ingress exists", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
       const ingress = {
-        metadata: {
-          name: "foo",
-        },
-        spec: {
-          rules: [
-            {
-              host: "foo.bar",
-              http: {
-                paths: [{ path: "/ready" }],
+        isFetching: false,
+        item: {
+          metadata: {
+            name: "foo",
+          },
+          spec: {
+            rules: [
+              {
+                host: "foo.bar",
+                http: {
+                  paths: [{ path: "/ready" }],
+                },
               },
-            },
-          ],
-        } as IIngressSpec,
-      } as IResource;
-      const ingresses = {};
-      ingresses[ingress.metadata.name] = ingress;
+            ],
+          },
+        },
+      };
+      const ingresses = [ingress];
+
       wrapper.setState({ ingresses });
       const urlTable = wrapper.find(AccessURLTable);
       expect(urlTable).toExist();
@@ -277,25 +265,83 @@ describe("AppViewComponent", () => {
     });
   });
 
-  it("renders a secret table with a secret and an error", () => {
-    const manifest = generateYamlManifest([
-      resources.deployment,
-      resources.service,
-      resources.configMap,
-      resources.ingress,
-      resources.secret,
-    ]);
-
+  it("forwards services/ingresses", () => {
     const wrapper = shallow(<AppViewComponent {...validProps} />);
-    validProps.app.manifest = manifest;
-    // setProps again so we trigger componentWillReceiveProps
-    wrapper.setProps(validProps);
+    const ingress = {
+      isFetching: false,
+      item: {
+        metadata: {
+          name: "foo",
+        },
+        spec: {
+          rules: [
+            {
+              host: "foo.bar",
+              http: {
+                paths: [{ path: "/ready" }],
+              },
+            },
+          ],
+        },
+      },
+    };
+    const ingresses = [ingress];
+    const service = {
+      isFetching: false,
+      item: {
+        metadata: {
+          name: "foo",
+        },
+        spec: {},
+      },
+    };
+    const services = [service];
 
-    const secretTable = wrapper.find(SecretTable);
-    expect(secretTable).toExist();
-    expect(secretTable.props()).toMatchObject({
-      namespace: appRelease.namespace,
-      secretNames: [resources.secret.metadata.name],
-    });
+    wrapper.setState({ ingresses, services });
+
+    const accessURLTable = wrapper.find(AccessURLTable);
+    expect(accessURLTable).toExist();
+    expect(accessURLTable.props()).toMatchObject({ ingresses: [ingress], services: [service] });
+
+    const svcTable = wrapper.find(ServiceTable);
+    expect(svcTable).toExist();
+    expect(svcTable.prop("services")).toEqual([service]);
+  });
+
+  it("forwards other resources", () => {
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    const deployment = {
+      isFetching: false,
+      item: {
+        metadata: {
+          name: "foo",
+        },
+        spec: {},
+      },
+    };
+    const deployments = [deployment];
+
+    wrapper.setState({ deployments });
+
+    const depTable = wrapper.find(DeploymentsTable);
+    expect(depTable).toExist();
+    expect(depTable.prop("deployments")).toEqual([deployment]);
+  });
+
+  it("forwards deployments", () => {
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    const otherResource = {
+      metadata: {
+        name: "foo",
+      },
+      spec: {},
+    };
+    const otherResources = [otherResource];
+
+    wrapper.setState({ otherResources });
+
+    const orTable = wrapper.find(OtherResourcesTable);
+    expect(orTable).toExist();
+    expect(orTable.prop("otherResources")).toEqual([otherResource]);
   });
 });
