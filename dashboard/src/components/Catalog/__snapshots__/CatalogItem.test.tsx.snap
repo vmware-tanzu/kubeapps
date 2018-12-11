@@ -5,7 +5,7 @@ exports[`should render an item 1`] = `
   description={
     <div
       className="ListItem__content__description
-          false"
+          "
     >
       
     </div>

@@ -36,7 +36,7 @@ class CatalogItem extends React.Component<ICatalogItemProps, ICatalogItemState> 
     const description = (
       <div
         className={`ListItem__content__description
-          ${this.state.fullDescription && "ListItem__content__description-full"}`}
+          ${this.state.fullDescription ? "ListItem__content__description-full" : ""}`}
       >
         {this.state.fullDescription
           ? chart.attributes.description
