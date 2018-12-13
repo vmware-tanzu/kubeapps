@@ -7,6 +7,7 @@ import "./Layout.css";
 
 interface ILayoutProps {
   headerComponent: React.ComponentClass<any> | React.StatelessComponent<any>;
+  kubeappsVersion: string;
 }
 
 class Layout extends React.Component<ILayoutProps> {
@@ -20,7 +21,7 @@ class Layout extends React.Component<ILayoutProps> {
             <ErrorBoundary>{this.props.children}</ErrorBoundary>
           </div>
         </main>
-        <Footer />
+        <Footer kubeappsVersion={this.props.kubeappsVersion} />
       </section>
     );
   }
