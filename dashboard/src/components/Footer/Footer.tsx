@@ -56,7 +56,7 @@ const Footer: React.SFC<IFooterProps> = props => {
                 />
               </svg>
             </a>
-            <p className="type-color-white type-small margin-b-small">v{props.kubeappsVersion}</p>
+            <p className="type-color-white type-small margin-small">v{props.kubeappsVersion}</p>
           </div>
         </div>
       </div>
