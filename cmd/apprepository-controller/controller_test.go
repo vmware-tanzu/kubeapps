@@ -85,8 +85,10 @@ func Test_newCronJob(t *testing.T) {
 														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 												},
 											},
+											VolumeMounts: []corev1.VolumeMount{},
 										},
 									},
+									Volumes: []corev1.Volume{},
 								},
 							},
 						},
@@ -169,8 +171,10 @@ func Test_newCronJob(t *testing.T) {
 														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 												},
 											},
+											VolumeMounts: []corev1.VolumeMount{},
 										},
 									},
+									Volumes: []corev1.Volume{},
 								},
 							},
 						},
@@ -203,6 +207,7 @@ func Test_newSyncJob(t *testing.T) {
 		apprepo          *apprepov1alpha1.AppRepository
 		expected         batchv1.Job
 		userAgentComment string
+		additionalCACert string
 	}{
 		{
 			"my-charts",
@@ -265,12 +270,15 @@ func Test_newSyncJob(t *testing.T) {
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
 									},
+									VolumeMounts: []corev1.VolumeMount{},
 								},
 							},
+							Volumes: []corev1.Volume{},
 						},
 					},
 				},
 			},
+			"",
 			"",
 		},
 		{
@@ -344,13 +352,99 @@ func Test_newSyncJob(t *testing.T) {
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 										},
 									},
+									VolumeMounts: []corev1.VolumeMount{},
 								},
 							},
+							Volumes: []corev1.Volume{},
 						},
 					},
 				},
 			},
 			"kubeapps/v2.3",
+			"",
+		},
+		{
+			"my-charts",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-sync-my-charts-",
+					Namespace:    "kubeapps",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							},
+						),
+					},
+				},
+				Spec: batchv1.JobSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+						},
+						Spec: corev1.PodSpec{
+							RestartPolicy: "OnFailure",
+							Containers: []corev1.Container{
+								{
+									Name:    "sync",
+									Image:   repoSyncImage,
+									Command: []string{"/chart-repo"},
+									Args: []string{
+										"sync",
+										"--mongo-url=mongodb.kubeapps",
+										"--mongo-user=root",
+										"my-charts",
+										"https://charts.acme.com/my-charts",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "MONGO_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{{
+										Name:      "ca-cert-test",
+										ReadOnly:  true,
+										MountPath: "/etc/registry-ca",
+									}},
+								},
+							},
+							Volumes: []corev1.Volume{{
+								Name: "ca-cert-test",
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName: "ca-cert-test",
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+			"",
+			"ca-cert-test",
 		},
 	}
 
@@ -361,7 +455,7 @@ func Test_newSyncJob(t *testing.T) {
 				defer func() { userAgentComment = "" }()
 			}
 
-			result := newSyncJob(tt.apprepo)
+			result := newSyncJob(tt.apprepo, tt.additionalCACert)
 			if !reflect.DeepEqual(tt.expected, *result) {
 				t.Errorf("Unexpected result\nExpecting:\n %+v\nReceived:\n %+v", tt.expected, *result)
 			}
