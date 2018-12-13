@@ -18,7 +18,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -33,6 +36,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/urfave/negroni"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	helmChartUtil "k8s.io/helm/pkg/chartutil"
@@ -62,6 +66,8 @@ var (
 	tlsCaCertDefault = fmt.Sprintf("%s/ca.crt", os.Getenv("HELM_HOME"))
 	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
+
+	registryCaCerts []string
 )
 
 func init() {
@@ -75,12 +81,7 @@ func init() {
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
-
-	netClient = &clientWithDefaultUserAgent{
-		Client: http.Client{
-			Timeout: time.Second * defaultTimeoutSeconds,
-		},
-	}
+	pflag.StringSliceVar(&registryCaCerts, "helm-registry-ca-cert", []string{}, "Secret holding additional CA Certificates for chart registries")
 }
 
 func main() {
@@ -97,6 +98,37 @@ func main() {
 	kubeClient, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("Unable to create a kubernetes client: %v", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	systemCACert, err := ioutil.ReadFile("/etc/ssl/certs/ca-certificates.crt")
+	if err != nil {
+		log.Fatalf("Unable to read system CA certs: %v", err)
+	}
+	caCertPool.AppendCertsFromPEM(systemCACert)
+
+	if len(registryCaCerts) > 0 {
+		namespace := os.Getenv("POD_NAMESPACE")
+		for _, registryCaCert := range registryCaCerts {
+			caCertSecret, err := kubeClient.CoreV1().Secrets(namespace).Get(registryCaCert, metav1.GetOptions{})
+			if err != nil {
+				log.Fatalf("Unable to read the given CA cert: %v", err)
+			}
+			for _, caCert := range caCertSecret.Data {
+				ok := caCertPool.AppendCertsFromPEM(caCert)
+				log.Printf("Adding CA cert from %s: %v", registryCaCert, ok)
+			}
+		}
+	}
+	netClient = &clientWithDefaultUserAgent{
+		Client: http.Client{
+			Timeout: time.Second * defaultTimeoutSeconds,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: caCertPool,
+				},
+			},
+		},
 	}
 
 	log.Printf("Using tiller host: %s", settings.TillerHost)

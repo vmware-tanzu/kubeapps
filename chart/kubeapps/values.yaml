@@ -100,6 +100,7 @@ apprepository:
   syncImage:
     registry: quay.io
     repository: helmpack/chart-repo
+    # FIXME! Update the version when chart-repo is released
     tag: v1.0.2
   initialRepos:
   - name: stable
@@ -268,6 +269,10 @@ securityContext:
   enabled: false
   runAsUser: 1001
   # fsGroup: 1001
+
+## Custom CA Certificate used in a Helm Registry
+## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#https-configuration-with-a-self-signed-certificate
+# customRegistryCA: 
 
 testImage:
   # Image used for the tests. The only requirement is to include curl

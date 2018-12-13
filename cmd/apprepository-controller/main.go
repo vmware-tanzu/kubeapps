@@ -37,6 +37,7 @@ var (
 	mongoURL         string
 	mongoSecretName  string
 	userAgentComment string
+	registryCaCerts  string
 )
 
 func main() {
@@ -81,4 +82,5 @@ func init() {
 	flag.StringVar(&mongoURL, "mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
 	flag.StringVar(&mongoSecretName, "mongo-secret-name", "mongodb", "Kubernetes secret name for MongoDB credentials")
 	flag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
+	flag.StringVar(&registryCaCerts, "helm-registry-ca-cert", "", "Secret holding additional CA Certificates for chart registries")
 }

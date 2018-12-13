@@ -103,3 +103,7 @@ The above command creates a token with read-only permissions. Now you can go to 
 <img src="../img/jfrog-custom-repo.png" alt="JFrog custom repository" width="400px">
 
 After submitting the repository, you will be able to click on the new repository and see the chart you uploaded in the previous step.
+
+### HTTPS Configuration with a self-signed certificate
+
+It is possible to configure a Helm registry with a self signed TLS Certificate in order to be used over HTTPS. If that's your case and you have used a custom CA to sign the certificate you can add this CA file to your Kubeapps installation. You can do that using the `helm` cli. When installing or upgrading Kubeapps, set the flag `--set customRegistryCA="$(cat /path/to/ca.pem)"`. That will create the necessary secret and will configure Kubeapps to properly use the registry.

@@ -423,6 +423,23 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
 func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
+	volumes := []corev1.Volume{}
+	volumeMounts := []corev1.VolumeMount{}
+	if len(registryCaCerts) > 0 {
+		volumes = append(volumes, corev1.Volume{
+			Name: registryCaCerts,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: registryCaCerts,
+				},
+			},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      registryCaCerts,
+			ReadOnly:  true,
+			MountPath: "/etc/registry-ca",
+		})
+	}
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -435,13 +452,15 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 				RestartPolicy: "OnFailure",
 				Containers: []corev1.Container{
 					{
-						Name:    "sync",
-						Image:   repoSyncImage,
-						Command: []string{"/chart-repo"},
-						Args:    apprepoSyncJobArgs(apprepo),
-						Env:     apprepoSyncJobEnvVars(apprepo),
+						Name:         "sync",
+						Image:        repoSyncImage,
+						Command:      []string{"/chart-repo"},
+						Args:         apprepoSyncJobArgs(apprepo),
+						Env:          apprepoSyncJobEnvVars(apprepo),
+						VolumeMounts: volumeMounts,
 					},
 				},
+				Volumes: volumes,
 			},
 		},
 	}

@@ -32,6 +32,9 @@ spec:
         - --namespace={{ .Release.Namespace }}
         - --mongo-url={{ template "kubeapps.mongodb.fullname" . }}
         - --mongo-secret-name={{ .Values.mongodb.existingSecret }}
+        {{- if .Values.customRegistryCA }}
+        - --helm-registry-ca-cert={{ template "kubeapps.custom-helm-registry.secret" . }}
+        {{- end }}
         resources:
 {{ toYaml .Values.apprepository.resources | indent 12 }}
     {{- with .Values.apprepository.nodeSelector }}
