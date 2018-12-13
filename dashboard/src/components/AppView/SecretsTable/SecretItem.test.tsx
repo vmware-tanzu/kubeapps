@@ -10,7 +10,7 @@ const secret = {
   type: "Opaque",
   metadata: {
     namespace: "ns",
-    name: "deployment-one",
+    name: "secret-one",
     annotations: "",
     creationTimestamp: "",
     selfLink: "",
@@ -35,4 +35,11 @@ it("displays a secret when clicking on the icon", () => {
   icon.simulate("click");
   expect(wrapper.state()).toMatchObject({ showSecret: { foo: true } });
   expect(wrapper.text()).toContain("foo:bar");
+});
+
+it("displays a message if the secret is empty", () => {
+  const emptySecret = Object.assign({}, secret);
+  delete emptySecret.data;
+  const wrapper = shallow(<SecretItem secret={emptySecret} />);
+  expect(wrapper.text()).toContain("The secret is empty");
 });
