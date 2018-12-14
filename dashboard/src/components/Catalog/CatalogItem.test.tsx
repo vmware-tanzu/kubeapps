@@ -86,35 +86,6 @@ context("when the description is too long", () => {
         .shallow()
         .find(".ListItem__content__description")
         .text(),
-    ).toContain("Show more");
-  });
-
-  it("toggles the short/long version", () => {
-    const chartWithDescription = Object.assign({}, defaultChart);
-    chartWithDescription.attributes.description =
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ultrices velit leo, quis pharetra mi vestibulum quis.";
-    const wrapper = shallow(<CatalogItem chart={chartWithDescription} />);
-
-    let link = wrapper
-      .find(InfoCard)
-      .shallow()
-      .find("a");
-    expect(link).toExist();
-
-    link.simulate("click");
-    wrapper.update();
-
-    link = wrapper
-      .find(InfoCard)
-      .shallow()
-      .find("a");
-    expect(link.text()).toBe(" Hide");
-    expect(
-      wrapper
-        .find(InfoCard)
-        .shallow()
-        .find(".ListItem__content__description")
-        .text(),
-    ).toBe(`${chartWithDescription.attributes.description} Hide`);
+    ).toMatch(/\.\.\.$/);
   });
 });

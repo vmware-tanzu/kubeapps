@@ -4,8 +4,7 @@ exports[`should render an item 1`] = `
 <InfoCard
   description={
     <div
-      className="ListItem__content__description
-          "
+      className="ListItem__content__description"
     >
       
     </div>
