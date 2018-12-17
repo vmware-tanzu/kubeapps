@@ -1,12 +1,12 @@
 import { connect } from "react-redux";
 
-import Layout from "../../components/Layout";
+import Footer from "../../components/Footer";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({ config }: IStoreState) {
   return {
-    kubeappsVersion: config.kubeappsVersion,
+    appVersion: config.appVersion,
   };
 }
 
-export default connect(mapStateToProps)(Layout);
+export default connect(mapStateToProps)(Footer);

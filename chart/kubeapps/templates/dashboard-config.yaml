@@ -23,5 +23,5 @@ data:
   config.json: |-
     {
       "namespace": "{{ .Release.Namespace }}"
-      "kubeappsVersion": "{{ .Chart.AppVersion }}"
+      "appVersion": "{{ .Chart.AppVersion }}"
     }

@@ -1,13 +1,12 @@
 import * as React from "react";
 
+import Footer from "../../containers/FooterContainer";
 import ErrorBoundary from "../ErrorBoundary";
-import Footer from "../Footer";
 
 import "./Layout.css";
 
 interface ILayoutProps {
   headerComponent: React.ComponentClass<any> | React.StatelessComponent<any>;
-  kubeappsVersion: string;
 }
 
 class Layout extends React.Component<ILayoutProps> {
@@ -21,7 +20,7 @@ class Layout extends React.Component<ILayoutProps> {
             <ErrorBoundary>{this.props.children}</ErrorBoundary>
           </div>
         </main>
-        <Footer kubeappsVersion={this.props.kubeappsVersion} />
+        <Footer />
       </section>
     );
   }

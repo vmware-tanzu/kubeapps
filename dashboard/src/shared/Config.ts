@@ -3,7 +3,7 @@ import axios from "axios";
 // IConfig is the configuration for Kubeapps
 export interface IConfig {
   namespace: string;
-  kubeappsVersion: string;
+  appVersion: string;
 }
 
 export default class Config {
@@ -17,7 +17,7 @@ export default class Config {
     // Please note that this env variable gets mapped in the run command in the package.json file
     if (process.env.NODE_ENV !== "production" && process.env.REACT_APP_KUBEAPPS_NS) {
       data.namespace = process.env.REACT_APP_KUBEAPPS_NS;
-      data.kubeappsVersion = "DEVEL";
+      data.appVersion = "DEVEL";
     }
 
     return data;

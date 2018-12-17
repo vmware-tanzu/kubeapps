@@ -5,7 +5,7 @@ import logo from "../../logo.svg";
 import Heart from "../../icons/Heart";
 
 interface IFooterProps {
-  kubeappsVersion: string;
+  appVersion: string;
 }
 
 const Footer: React.SFC<IFooterProps> = props => {
@@ -56,7 +56,7 @@ const Footer: React.SFC<IFooterProps> = props => {
                 />
               </svg>
             </a>
-            <p className="type-color-white type-small margin-small">v{props.kubeappsVersion}</p>
+            <p className="type-color-white type-small margin-small">v{props.appVersion}</p>
           </div>
         </div>
       </div>

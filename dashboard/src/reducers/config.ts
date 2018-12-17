@@ -11,7 +11,7 @@ export interface IConfigState extends IConfig {
 const initialState: IConfigState = {
   loaded: false,
   namespace: "",
-  kubeappsVersion: "",
+  appVersion: "",
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
