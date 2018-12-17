@@ -23,4 +23,5 @@ data:
   config.json: |-
     {
       "namespace": "{{ .Release.Namespace }}"
+      "appVersion": "{{ .Chart.AppVersion }}"
     }
