@@ -80,8 +80,6 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
-            - GKE_1_9_MASTER
-            - GKE_1_9_LATEST_RELEASE
             - GKE_1_10_MASTER
             - GKE_1_10_LATEST_RELEASE
             - GKE_1_11_MASTER
@@ -89,8 +87,6 @@ workflows:
       - push_images:
           <<: *build_always
           requires:
-            - GKE_1_9_MASTER
-            - GKE_1_9_LATEST_RELEASE
             - GKE_1_10_MASTER
             - GKE_1_10_LATEST_RELEASE
             - GKE_1_11_MASTER
@@ -98,8 +94,6 @@ workflows:
       - release:
           <<: *build_on_tag
           requires:
-            - GKE_1_9_MASTER
-            - GKE_1_9_LATEST_RELEASE
             - GKE_1_10_MASTER
             - GKE_1_10_LATEST_RELEASE
             - GKE_1_11_MASTER
@@ -251,17 +245,6 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  GKE_1_9_MASTER:
-    <<: *gke_test
-    environment:
-      # Note: It's important to quote versions to avoid treating them as decimal numbers
-      GKE_BRANCH: "1.9"
-  GKE_1_9_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      GKE_BRANCH: "1.9"
-      # We want to also test the chart with the current release of the images
-      TEST_LATEST_RELEASE: 1
   GKE_1_10_MASTER:
     <<: *gke_test
     environment:
