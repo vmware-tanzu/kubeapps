@@ -1,3 +1,4 @@
+import * as _ from "lodash";
 import * as React from "react";
 import { Eye, EyeOff } from "react-feather";
 
@@ -16,16 +17,22 @@ class SecretItem extends React.Component<ISecretItemProps, ISecretItemState> {
   public constructor(props: ISecretItemProps) {
     super(props);
     const showSecret = {};
-    Object.keys(this.props.secret.data).forEach(k => (showSecret[k] = false));
+    if (this.props.secret.data) {
+      Object.keys(this.props.secret.data).forEach(k => (showSecret[k] = false));
+    }
     this.state = { showSecret };
   }
 
   public render() {
     const { secret } = this.props;
     const secretEntries: JSX.Element[] = [];
-    Object.keys(secret.data).forEach(k => {
-      secretEntries.push(this.renderSecretEntry(k));
-    });
+    if (!_.isEmpty(this.props.secret.data)) {
+      Object.keys(secret.data).forEach(k => {
+        secretEntries.push(this.renderSecretEntry(k));
+      });
+    } else {
+      secretEntries.push(<span key="empty">The secret is empty</span>);
+    }
     return (
       <tr className="flex">
         <td className="col-2">{secret.metadata.name}</td>
