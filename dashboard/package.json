@@ -17,6 +17,7 @@
     "enzyme-adapter-react-16": "^1.1.1",
     "js-yaml": "^3.10.0",
     "lodash": "^4.17.11",
+    "moniker-native": "^0.1.6",
     "protobufjs": "^6.8.4",
     "qs": "^6.5.2",
     "raf": "^3.4.0",
