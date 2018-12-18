@@ -100,7 +100,6 @@ apprepository:
   syncImage:
     registry: quay.io
     repository: helmpack/chart-repo
-    # FIXME! Update the version when chart-repo is released
     tag: v1.0.2
   initialRepos:
   - name: stable
@@ -111,11 +110,6 @@ apprepository:
     url: https://svc-catalog-charts.storage.googleapis.com
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
-  # Additional repositories
-  # - name: chartmuseum
-  #   url: https://chartmuseum.default:8080
-  #   # Specify a CA cert if you are using a self-signed cert
-  #   caCert:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:

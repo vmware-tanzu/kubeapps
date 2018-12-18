@@ -13,8 +13,5 @@ annotations:
 spec:
   type: helm
   url: {{ .url }}
-  {{- if .caCert }}
-  caFile: {{ .name }}-ca
-  {{- end }}
 ---
 {{ end -}}
