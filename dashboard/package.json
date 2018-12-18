@@ -2,6 +2,7 @@
   "name": "dashboard",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
   "dependencies": {
     "@types/js-yaml": "^3.10.1",
     "@types/json-schema": "^6.0.1",
@@ -30,7 +31,7 @@
     "react-modal": "^3.1.11",
     "react-redux": "^5.0.6",
     "react-router-dom": "^4.2.2",
-    "react-scripts-ts": "^2.17.0",
+    "react-scripts-ts": "^3.1.0",
     "react-select": "^1.2.1",
     "react-test-renderer": "^16.2.0",
     "redux": "^4.0.0",

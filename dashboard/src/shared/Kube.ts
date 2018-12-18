@@ -1,7 +1,7 @@
 import { axios } from "./Auth";
 import { IResource } from "./types";
 
-export const KUBE_ROOT_URL = "/api/kube";
+export const KUBE_ROOT_URL = "api/kube";
 
 export class Kube {
   public static getResourceURL(
