@@ -1,7 +1,7 @@
 import * as React from "react";
 
+import Footer from "../../containers/FooterContainer";
 import ErrorBoundary from "../ErrorBoundary";
-import Footer from "../Footer";
 
 import "./Layout.css";
 
