@@ -207,7 +207,6 @@ func Test_newSyncJob(t *testing.T) {
 		apprepo          *apprepov1alpha1.AppRepository
 		expected         batchv1.Job
 		userAgentComment string
-		additionalCACert string
 	}{
 		{
 			"my-charts",
@@ -278,7 +277,6 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 			},
-			"",
 			"",
 		},
 		{
@@ -361,7 +359,6 @@ func Test_newSyncJob(t *testing.T) {
 				},
 			},
 			"kubeapps/v2.3",
-			"",
 		},
 		{
 			"my-charts",
@@ -379,8 +376,9 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: apprepov1alpha1.AppRepositorySpec{
-					Type: "helm",
-					URL:  "https://charts.acme.com/my-charts",
+					Type:   "helm",
+					URL:    "https://charts.acme.com/my-charts",
+					CAFile: "ca-cert-test",
 				},
 			},
 			batchv1.Job{
@@ -427,7 +425,7 @@ func Test_newSyncJob(t *testing.T) {
 									VolumeMounts: []corev1.VolumeMount{{
 										Name:      "ca-cert-test",
 										ReadOnly:  true,
-										MountPath: "/etc/registry-ca",
+										MountPath: "/usr/local/share/ca-certificates",
 									}},
 								},
 							},
@@ -444,7 +442,6 @@ func Test_newSyncJob(t *testing.T) {
 				},
 			},
 			"",
-			"ca-cert-test",
 		},
 	}
 
@@ -455,7 +452,7 @@ func Test_newSyncJob(t *testing.T) {
 				defer func() { userAgentComment = "" }()
 			}
 
-			result := newSyncJob(tt.apprepo, tt.additionalCACert)
+			result := newSyncJob(tt.apprepo)
 			if !reflect.DeepEqual(tt.expected, *result) {
 				t.Errorf("Unexpected result\nExpecting:\n %+v\nReceived:\n %+v", tt.expected, *result)
 			}

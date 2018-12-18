@@ -18,6 +18,7 @@ package fake
 
 import (
 	"encoding/json"
+	"net/http"
 
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -31,7 +32,7 @@ func (f *FakeChart) ParseDetails(data []byte) (*chartUtils.Details, error) {
 	return details, err
 }
 
-func (f *FakeChart) GetChart(details *chartUtils.Details) (*chart.Chart, error) {
+func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.HTTPClient) (*chart.Chart, error) {
 	return &chart.Chart{
 		Metadata: &chart.Metadata{
 			Name: details.ChartName,
@@ -40,4 +41,8 @@ func (f *FakeChart) GetChart(details *chartUtils.Details) (*chart.Chart, error) 
 			Raw: details.Values,
 		},
 	}, nil
+}
+
+func (f *FakeChart) InitNetClient(additionalCA string) (*http.Client, error) {
+	return &http.Client{}, nil
 }
