@@ -32,7 +32,10 @@ it("should generate a dummy link if it's not provided", () => {
       tag2Content="running"
     />,
   );
-  expect(wrapper.find(Link).props()).toMatchObject({ to: "#" });
+
+  const links = wrapper.find(Link);
+  expect(links.length).toBe(2);
+  links.forEach(l => expect(l.props()).toMatchObject({ to: "#" }));
 });
 
 it("should avoid tags if they are not defined", () => {
@@ -63,4 +66,15 @@ it("should parse JSX elements in the tags", () => {
   const tag2Elem = wrapper.find(".tag2");
   expect(tag2Elem).toExist();
   expect(tag2Elem.text()).toBe("tag2");
+});
+
+it("should parse a description as text", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" description="a description" />);
+  expect(wrapper.find(".ListItem__content").text()).toContain("a description");
+});
+
+it("should parse a description as JSX.Element", () => {
+  const desc = <div className="description">This is a description</div>;
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" description={desc} />);
+  expect(wrapper.find(".description").text()).toBe("This is a description");
 });

@@ -55,7 +55,10 @@ describe("renderization", () => {
     const chartState = {
       isFetching: false,
       selected: {} as IChartState["selected"],
-      items: [{ id: "foo", attributes: {} } as IChart, { id: "bar", attributes: {} } as IChart],
+      items: [
+        { id: "foo", attributes: { description: "" } } as IChart,
+        { id: "bar", attributes: { description: "" } } as IChart,
+      ],
     } as IChartState;
 
     it("should render the list of charts", () => {

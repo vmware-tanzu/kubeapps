@@ -1,3 +1,4 @@
 {
-  "namespace": "default"
+  "namespace": "default",
+  "appVersion": "DEVEL"
 }

@@ -95,5 +95,15 @@ it("renders the full DeploymentForm", () => {
   const wrapper = shallow(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
+  // Force static name
+  wrapper.setState({ releaseName: "bar" });
   expect(wrapper).toMatchSnapshot();
+});
+
+it("renders a release name by default", () => {
+  const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+  const wrapper = shallow(
+    <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
+  );
+  expect(wrapper.state("releaseName")).toBeTruthy();
 });

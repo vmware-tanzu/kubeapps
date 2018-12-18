@@ -6776,6 +6776,11 @@ mock-socket@^8.0.2:
   dependencies:
     url-parse "^1.2.0"
 
+moniker-native@^0.1.6:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/moniker-native/-/moniker-native-0.1.6.tgz#019af026841c32c78edb420695c14b24dd095d09"
+  integrity sha1-AZrwJoQcMseO20IGlcFLJN0JXQk=
+
 moo@^0.4.3:
   version "0.4.3"
   resolved "https://registry.yarnpkg.com/moo/-/moo-0.4.3.tgz#3f847a26f31cf625a956a87f2b10fbc013bfd10e"
