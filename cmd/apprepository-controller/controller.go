@@ -425,17 +425,20 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
-	if apprepo.Spec.CAFile != "" {
+	if apprepo.Spec.Auth.CustomCA != nil {
 		volumes = append(volumes, corev1.Volume{
-			Name: apprepo.Spec.CAFile,
+			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: apprepo.Spec.CAFile,
+					SecretName: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
+					Items: []corev1.KeyToPath{
+						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
+					},
 				},
 			},
 		})
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      apprepo.Spec.CAFile,
+			Name:      apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
 			ReadOnly:  true,
 			MountPath: "/usr/local/share/ca-certificates",
 		})

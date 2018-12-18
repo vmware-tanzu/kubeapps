@@ -31,11 +31,9 @@ export class App {
     const chartAttrs = chartVersion.relationships.chart.data;
     const repo = await AppRepository.get(chartAttrs.repo.name, kubeappsNamespace);
     const auth = repo.spec.auth;
-    const caFile = repo.spec.caFile;
     const endpoint = App.getResourceURL(namespace);
     const { data } = await axios.post(endpoint, {
       auth,
-      caFile,
       chartName: chartAttrs.name,
       releaseName,
       repoUrl: chartAttrs.repo.url,
@@ -55,11 +53,9 @@ export class App {
     const chartAttrs = chartVersion.relationships.chart.data;
     const repo = await AppRepository.get(chartAttrs.repo.name, kubeappsNamespace);
     const auth = repo.spec.auth;
-    const caFile = repo.spec.caFile;
     const endpoint = App.getResourceURL(namespace, releaseName);
     const { data } = await axios.put(endpoint, {
       auth,
-      caFile,
       chartName: chartAttrs.name,
       releaseName,
       repoUrl: chartAttrs.repo.url,

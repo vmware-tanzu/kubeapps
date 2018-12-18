@@ -43,6 +43,6 @@ func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.H
 	}, nil
 }
 
-func (f *FakeChart) InitNetClient(additionalCA string) (*http.Client, error) {
+func (f *FakeChart) InitNetClient(customCA *chartUtils.CustomCA) (*http.Client, error) {
 	return &http.Client{}, nil
 }

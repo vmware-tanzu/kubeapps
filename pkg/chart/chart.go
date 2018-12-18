@@ -57,8 +57,6 @@ type Details struct {
 	Version string `json:"version"`
 	// Auth is the authentication.
 	Auth Auth `json:"auth,omitempty"`
-	// CAFile is the secret containing the CA certificate to contact the repository.
-	CAFile string `json:"caFile,omitempty"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
 }
@@ -67,6 +65,14 @@ type Details struct {
 type Auth struct {
 	// Header is header based Authorization
 	Header *AuthHeader `json:"header,omitempty"`
+	// CustomCA is an additional CA
+	CustomCA *CustomCA `json:"customCA,omitempty"`
+}
+
+// AuthHeader contains the secret information for authenticate
+type CustomCA struct {
+	// Selects a key of a secret in the pod's namespace
+	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // AuthHeader contains the secret information for authenticate
@@ -87,7 +93,7 @@ type LoadChart func(in io.Reader) (*chart.Chart, error)
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
 	GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error)
-	InitNetClient(additionalCA string) (*http.Client, error)
+	InitNetClient(customCA *CustomCA) (*http.Client, error)
 }
 
 // Chart struct contains the clients required to retrieve charts info
@@ -223,7 +229,7 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 }
 
 // InitNetClient returns an HTTP client loading a custom CA if provided (as a secret)
-func (c *Chart) InitNetClient(additionalCA string) (*http.Client, error) {
+func (c *Chart) InitNetClient(customCA *CustomCA) (*http.Client, error) {
 	// Get the SystemCertPool, continue with an empty pool on error
 	caCertPool, _ := x509.SystemCertPool()
 	if caCertPool == nil {
@@ -231,16 +237,16 @@ func (c *Chart) InitNetClient(additionalCA string) (*http.Client, error) {
 	}
 
 	// If additionalCA is set, load it
-	if additionalCA != "" {
+	if customCA != nil {
 		namespace := os.Getenv("POD_NAMESPACE")
-		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(additionalCA, metav1.GetOptions{})
+		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(customCA.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
 			log.Fatalf("Unable to read the given CA cert: %v", err)
 		}
 
 		// Append our cert to the system pool
-		if ok := caCertPool.AppendCertsFromPEM(caCertSecret.Data["ca.crt"]); !ok {
-			return nil, fmt.Errorf("Failed to append %s to RootCAs", additionalCA)
+		if ok := caCertPool.AppendCertsFromPEM(caCertSecret.Data[customCA.SecretKeyRef.Key]); !ok {
+			return nil, fmt.Errorf("Failed to append %s to RootCAs", customCA.SecretKeyRef.Name)
 		}
 	}
 

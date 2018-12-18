@@ -376,9 +376,13 @@ func Test_newSyncJob(t *testing.T) {
 					},
 				},
 				Spec: apprepov1alpha1.AppRepositorySpec{
-					Type:   "helm",
-					URL:    "https://charts.acme.com/my-charts",
-					CAFile: "ca-cert-test",
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+					Auth: apprepov1alpha1.AppRepositoryAuth{
+						CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
+						},
+					},
 				},
 			},
 			batchv1.Job{
@@ -434,6 +438,9 @@ func Test_newSyncJob(t *testing.T) {
 								VolumeSource: corev1.VolumeSource{
 									Secret: &corev1.SecretVolumeSource{
 										SecretName: "ca-cert-test",
+										Items: []corev1.KeyToPath{
+											{Key: "foo", Path: "ca.crt"},
+										},
 									},
 								},
 							}},
