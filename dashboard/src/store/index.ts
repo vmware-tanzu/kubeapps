@@ -6,7 +6,9 @@ import thunkMiddleware from "redux-thunk";
 
 import rootReducer from "../reducers";
 
+// Use Hash based routing to support deploying Kubeapps in arbitrary URL subpaths
 export const history = createHashHistory();
+
 export default createStore(
   connectRouter(history)(rootReducer), // add router state to reducer
   composeWithDevTools(
