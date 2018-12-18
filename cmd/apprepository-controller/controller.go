@@ -280,7 +280,7 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		// Trigger a manual Job for the initial sync
-		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newSyncJob(apprepo, registryCaCerts))
+		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newSyncJob(apprepo))
 	} else if err == nil {
 		// If the resource already exists, we'll update it
 		glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
@@ -290,7 +290,7 @@ func (c *Controller) syncHandler(key string) error {
 		}
 
 		// The AppRepository has changed, launch a manual Job
-		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newSyncJob(apprepo, registryCaCerts))
+		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newSyncJob(apprepo))
 	}
 
 	// If an error occurs during Get/Create, we'll requeue the item so we can
@@ -396,7 +396,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 			// https://github.com/kubernetes/kubernetes/issues/54870
 			ConcurrencyPolicy: "Replace",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: syncJobSpec(apprepo, registryCaCerts),
+				Spec: syncJobSpec(apprepo),
 			},
 		},
 	}
@@ -404,7 +404,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 
 // newSyncJob triggers a job for the AppRepository resource. It also sets the
 // appropriate OwnerReferences on the resource
-func newSyncJob(apprepo *apprepov1alpha1.AppRepository, additionalCACerts string) *batchv1.Job {
+func newSyncJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: cronJobName(apprepo) + "-",
@@ -417,27 +417,27 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository, additionalCACerts string
 				}),
 			},
 		},
-		Spec: syncJobSpec(apprepo, additionalCACerts),
+		Spec: syncJobSpec(apprepo),
 	}
 }
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
-func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, additionalCACerts string) batchv1.JobSpec {
+func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
-	if len(additionalCACerts) > 0 {
+	if apprepo.Spec.CAFile != "" {
 		volumes = append(volumes, corev1.Volume{
-			Name: additionalCACerts,
+			Name: apprepo.Spec.CAFile,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: additionalCACerts,
+					SecretName: apprepo.Spec.CAFile,
 				},
 			},
 		})
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      additionalCACerts,
+			Name:      apprepo.Spec.CAFile,
 			ReadOnly:  true,
-			MountPath: "/etc/registry-ca",
+			MountPath: "/usr/local/share/ca-certificates",
 		})
 	}
 	return batchv1.JobSpec{

@@ -18,6 +18,8 @@ package chart
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,6 +29,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
@@ -37,8 +40,9 @@ import (
 )
 
 const (
-	defaultNamespace = metav1.NamespaceSystem
-	defaultRepoURL   = "https://kubernetes-charts.storage.googleapis.com"
+	defaultNamespace      = metav1.NamespaceSystem
+	defaultRepoURL        = "https://kubernetes-charts.storage.googleapis.com"
+	defaultTimeoutSeconds = 180
 )
 
 // Details contains the information to retrieve a Chart
@@ -53,6 +57,8 @@ type Details struct {
 	Version string `json:"version"`
 	// Auth is the authentication.
 	Auth Auth `json:"auth,omitempty"`
+	// CAFile is the secret containing the CA certificate to contact the repository.
+	CAFile string `json:"caFile,omitempty"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
 }
@@ -80,21 +86,20 @@ type LoadChart func(in io.Reader) (*chart.Chart, error)
 // Resolver for exposed funcs
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
-	GetChart(details *Details) (*chart.Chart, error)
+	GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error)
+	InitNetClient(additionalCA string) (*http.Client, error)
 }
 
 // Chart struct contains the clients required to retrieve charts info
 type Chart struct {
 	kubeClient kubernetes.Interface
-	netClient  HTTPClient
 	load       LoadChart
 }
 
 // NewChart returns a new Chart
-func NewChart(kubeClient kubernetes.Interface, netClient HTTPClient, load LoadChart) *Chart {
+func NewChart(kubeClient kubernetes.Interface, load LoadChart) *Chart {
 	return &Chart{
 		kubeClient,
-		netClient,
 		load,
 	}
 }
@@ -217,8 +222,41 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
+// InitNetClient returns an HTTP client loading a custom CA if provided (as a secret)
+func (c *Chart) InitNetClient(additionalCA string) (*http.Client, error) {
+	// Get the SystemCertPool, continue with an empty pool on error
+	caCertPool, _ := x509.SystemCertPool()
+	if caCertPool == nil {
+		caCertPool = x509.NewCertPool()
+	}
+
+	// If additionalCA is set, load it
+	if additionalCA != "" {
+		namespace := os.Getenv("POD_NAMESPACE")
+		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(additionalCA, metav1.GetOptions{})
+		if err != nil {
+			log.Fatalf("Unable to read the given CA cert: %v", err)
+		}
+
+		// Append our cert to the system pool
+		if ok := caCertPool.AppendCertsFromPEM(caCertSecret.Data["ca.crt"]); !ok {
+			return nil, fmt.Errorf("Failed to append %s to RootCAs", additionalCA)
+		}
+	}
+
+	// Return Transport for testing purposes
+	return &http.Client{
+		Timeout: time.Second * defaultTimeoutSeconds,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: caCertPool,
+			},
+		},
+	}, nil
+}
+
 // GetChart retrieves and loads a Chart from a registry
-func (c *Chart) GetChart(details *Details) (*chart.Chart, error) {
+func (c *Chart) GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error) {
 	repoURL := details.RepoURL
 	if repoURL == "" {
 		// FIXME: Make configurable
@@ -241,7 +279,7 @@ func (c *Chart) GetChart(details *Details) (*chart.Chart, error) {
 	}
 
 	log.Printf("Downloading repo %s index...", repoURL)
-	repoIndex, err := fetchRepoIndex(&c.netClient, repoURL, authHeader)
+	repoIndex, err := fetchRepoIndex(&netClient, repoURL, authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +290,7 @@ func (c *Chart) GetChart(details *Details) (*chart.Chart, error) {
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chartRequested, err := fetchChart(&c.netClient, chartURL, authHeader, c.load)
+	chartRequested, err := fetchChart(&netClient, chartURL, authHeader, c.load)
 	if err != nil {
 		return nil, err
 	}

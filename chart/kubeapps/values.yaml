@@ -111,6 +111,11 @@ apprepository:
     url: https://svc-catalog-charts.storage.googleapis.com
   - name: bitnami
     url: https://charts.bitnami.com/bitnami
+  # Additional repositories
+  # - name: chartmuseum
+  #   url: https://chartmuseum.default:8080
+  #   # Specify a CA cert if you are using a self-signed cert
+  #   caCert:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:
@@ -269,10 +274,6 @@ securityContext:
   enabled: false
   runAsUser: 1001
   # fsGroup: 1001
-
-## Custom CA Certificate used in a Helm Registry
-## ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#https-configuration-with-a-self-signed-certificate
-# customRegistryCA: 
 
 testImage:
   # Image used for the tests. The only requirement is to include curl

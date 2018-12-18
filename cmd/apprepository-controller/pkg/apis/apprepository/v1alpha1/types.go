@@ -39,6 +39,7 @@ type AppRepositorySpec struct {
 	Type           string            `json:"type"`
 	URL            string            `json:"url"`
 	Auth           AppRepositoryAuth `json:"auth,omitempty"`
+	CAFile         string            `json:"caFile,omitempty"`
 	ResyncRequests uint              `json:"resyncRequests"`
 }
 

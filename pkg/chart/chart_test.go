@@ -200,10 +200,9 @@ func TestGetChart(t *testing.T) {
 	kubeClient := fake.NewSimpleClientset()
 	chUtils := Chart{
 		kubeClient: kubeClient,
-		netClient:  &httpClient,
 		load:       fakeLoadChart,
 	}
-	ch, err := chUtils.GetChart(&target)
+	ch, err := chUtils.GetChart(&target, &httpClient)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

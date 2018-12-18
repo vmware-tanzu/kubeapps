@@ -31,9 +31,6 @@ spec:
         args:
         - --host={{ .Values.tillerProxy.host }}
         - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
-        {{- if .Values.customRegistryCA }}
-        - --helm-registry-ca-cert={{ template "kubeapps.custom-helm-registry.secret" . }}
-        {{- end }}
         {{- if .Values.tillerProxy.tls }}
         - --tls
         {{- if .Values.tillerProxy.tls.verify }}
