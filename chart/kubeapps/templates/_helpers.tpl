@@ -138,9 +138,9 @@ Trailing / is required for the react app to work
 */}}
 {{- define "kubeapps.ingressRewrites" -}}
 {{ range .Values.ingress.hosts -}}
-        {{- if ne .path "/" -}}
-              rewrite ^({{ .path }})$ $1/ permanent;
-        {{ end -}}
+{{- if ne .path "/" -}}
+      rewrite ^({{ .path }})$ $1/ permanent;
+{{- end -}}
 {{- end }}
 {{- end -}}
 
