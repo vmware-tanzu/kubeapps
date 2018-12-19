@@ -5,7 +5,7 @@ import * as React from "react";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { IKubeItem, IRBACRole, IResource } from "../../shared/types";
+import { IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -109,30 +109,36 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const services: Array<IKubeItem<IResource>> = [];
     const ingresses: Array<IKubeItem<IResource>> = [];
     const otherResources: IResource[] = [];
-    manifest.forEach((i: IResource) => {
-      const resource = { isFetching: true, item: i };
+    manifest.forEach((i: IResource | IK8sList<IResource, {}>) => {
+      const item = i as IResource;
+      const resource = { isFetching: true, item };
       switch (i.kind) {
         case "Deployment":
           deployments.push(resource);
           sockets.push(
-            this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
+            this.getSocket("deployments", i.apiVersion, item.metadata.name, newApp.namespace),
           );
           break;
         case "Service":
           services.push(resource);
-          sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
+          sockets.push(
+            this.getSocket("services", i.apiVersion, item.metadata.name, newApp.namespace),
+          );
           break;
         case "Ingress":
           ingresses.push(resource);
           sockets.push(
-            this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
+            this.getSocket("ingresses", i.apiVersion, item.metadata.name, newApp.namespace),
           );
           break;
         case "Secret":
-          secretNames.push(i.metadata.name);
+          secretNames.push(item.metadata.name);
+          break;
+        case "List":
+          (i as IK8sList<IResource, {}>).items.forEach(listItem => otherResources.push(listItem));
           break;
         default:
-          otherResources.push(i);
+          otherResources.push(item);
       }
     });
     this.setState({

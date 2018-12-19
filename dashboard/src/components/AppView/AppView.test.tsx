@@ -344,4 +344,20 @@ describe("AppViewComponent", () => {
     expect(orTable).toExist();
     expect(orTable.prop("otherResources")).toEqual([otherResource]);
   });
+
+  it("renders a list as other resources", () => {
+    const obj = { kind: "ClusterRole", metadata: { name: "foo" } };
+    const list = {
+      kind: "List",
+      items: [obj],
+    };
+    const manifest = generateYamlManifest([list]);
+
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    validProps.app.manifest = manifest;
+    // setProps again so we trigger componentWillReceiveProps
+    wrapper.setProps(validProps);
+
+    expect(wrapper.state("otherResources")).toEqual([obj]);
+  });
 });
