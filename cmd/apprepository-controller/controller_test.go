@@ -361,7 +361,7 @@ func Test_newSyncJob(t *testing.T) {
 			"kubeapps/v2.3",
 		},
 		{
-			"my-charts",
+			"my-charts with a customCA",
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -424,6 +424,104 @@ func Test_newSyncJob(t *testing.T) {
 											Name: "MONGO_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{{
+										Name:      "ca-cert-test",
+										ReadOnly:  true,
+										MountPath: "/usr/local/share/ca-certificates",
+									}},
+								},
+							},
+							Volumes: []corev1.Volume{{
+								Name: "ca-cert-test",
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName: "ca-cert-test",
+										Items: []corev1.KeyToPath{
+											{Key: "foo", Path: "ca.crt"},
+										},
+									},
+								},
+							}},
+						},
+					},
+				},
+			},
+			"",
+		},
+		{
+			"my-charts with a customCA and auth header",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+					Auth: apprepov1alpha1.AppRepositoryAuth{
+						CustomCA: &apprepov1alpha1.AppRepositoryCustomCA{
+							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "ca-cert-test"}, Key: "foo"},
+						},
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"},
+						},
+					},
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-sync-my-charts-",
+					Namespace:    "kubeapps",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							},
+						),
+					},
+				},
+				Spec: batchv1.JobSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+						},
+						Spec: corev1.PodSpec{
+							RestartPolicy: "OnFailure",
+							Containers: []corev1.Container{
+								{
+									Name:    "sync",
+									Image:   repoSyncImage,
+									Command: []string{"/chart-repo"},
+									Args: []string{
+										"sync",
+										"--mongo-url=mongodb.kubeapps",
+										"--mongo-user=root",
+										"my-charts",
+										"https://charts.acme.com/my-charts",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "MONGO_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+										},
+										{
+											Name: "AUTHORIZATION_HEADER",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 										},
 									},
 									VolumeMounts: []corev1.VolumeMount{{
