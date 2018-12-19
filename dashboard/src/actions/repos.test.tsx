@@ -212,10 +212,15 @@ describe("fetchRepos", () => {
 });
 
 describe("installRepo", () => {
-  const installRepoCMD = repoActions.installRepo("my-repo", "http://foo.bar", "");
+  const installRepoCMD = repoActions.installRepo("my-repo", "http://foo.bar", "", "");
 
   context("when authHeader provided", () => {
-    const installRepoCMDAuth = repoActions.installRepo("my-repo", "http://foo.bar", "Bearer: abc");
+    const installRepoCMDAuth = repoActions.installRepo(
+      "my-repo",
+      "http://foo.bar",
+      "Bearer: abc",
+      "",
+    );
 
     const authStruct = {
       header: { secretKeyRef: { key: "authorizationHeader", name: "apprepo-my-repo-secrets" } },
@@ -242,14 +247,47 @@ describe("installRepo", () => {
     });
   });
 
-  context("when authHeader is empty", () => {
+  context("when a customCA is provided", () => {
+    const installRepoCMDAuth = repoActions.installRepo(
+      "my-repo",
+      "http://foo.bar",
+      "",
+      "This is a cert!",
+    );
+
+    const authStruct = {
+      customCA: { secretKeyRef: { key: "ca.crt", name: "apprepo-my-repo-secrets" } },
+    };
+
+    it("calls AppRepository create including a auth struct", async () => {
+      await store.dispatch(installRepoCMDAuth);
+      expect(AppRepository.create).toHaveBeenCalledWith(
+        "my-repo",
+        "my-namespace",
+        "http://foo.bar",
+        authStruct,
+      );
+    });
+
+    it("creates the K8s secret", async () => {
+      await store.dispatch(installRepoCMDAuth);
+      expect(Secret.create).toHaveBeenCalled();
+    });
+
+    it("returns true", async () => {
+      const res = await store.dispatch(installRepoCMDAuth);
+      expect(res).toBe(true);
+    });
+  });
+
+  context("when authHeader and customCA are empty", () => {
     it("calls AppRepository create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
       expect(AppRepository.create).toHaveBeenCalledWith(
         "my-repo",
         "my-namespace",
         "http://foo.bar",
-        undefined,
+        {},
       );
     });
 

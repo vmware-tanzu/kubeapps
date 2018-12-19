@@ -99,6 +99,20 @@ exports[`should open a modal with the repository form 1`] = `
                         </label>
                       </div>
                       <div>
+                        <label>
+                          <span>
+                            Custom CA Certificate (optional):
+                          </span>
+                          <textarea
+                            cols="50"
+                            placeholder="-----BEGIN CERTIFICATE-----
+. . .
+-----END CERTIFICATE-----"
+                            rows="4"
+                          />
+                        </label>
+                      </div>
+                      <div>
                         <button
                           class="button button-primary"
                           type="submit"

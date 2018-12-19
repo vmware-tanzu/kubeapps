@@ -9,10 +9,11 @@ interface IAppRepoFormProps {
   name: string;
   url: string;
   authHeader: string;
+  customCA: string;
   message?: string;
   redirectTo?: string;
-  install: (name: string, url: string, authHeader: string) => Promise<boolean>;
-  update: (values: { name?: string; url?: string; authHeader?: string }) => void;
+  install: (name: string, url: string, authHeader: string, customCA: string) => Promise<boolean>;
+  update: (values: { name?: string; url?: string; authHeader?: string; customCA?: string }) => void;
   onAfterInstall?: () => Promise<any>;
 }
 
@@ -30,10 +31,10 @@ const RequiredRBACRoles: IRBACRole[] = [
 ];
 
 export const AppRepoForm = (props: IAppRepoFormProps) => {
-  const { name, url, authHeader, update, install, onAfterInstall } = props;
+  const { name, url, authHeader, customCA, update, install, onAfterInstall } = props;
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const installed = await install(name, url, authHeader);
+    const installed = await install(name, url, authHeader, customCA);
     if (installed && onAfterInstall) {
       await onAfterInstall();
     }
@@ -44,6 +45,8 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
     update({ url: e.target.value });
   const handleAuthHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     update({ authHeader: e.target.value });
+  const handleCustomCAChange = (e: React.ChangeEvent<HTMLTextAreaElement>) =>
+    update({ customCA: e.target.value });
   return (
     <form className="container padding-b-bigger" onSubmit={handleInstallClick}>
       <div className="row">
@@ -89,6 +92,20 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
             </label>
           </div>
           <div>
+            <label>
+              <span>Custom CA Certificate (optional):</span>
+              <textarea
+                rows={4}
+                cols={50}
+                placeholder={
+                  "-----BEGIN CERTIFICATE-----\n" + ". . .\n" + "-----END CERTIFICATE-----"
+                }
+                value={customCA}
+                onChange={handleCustomCAChange}
+              />
+            </label>
+          </div>
+          <div>
             <button className="button button-primary" type="submit">
               Install Repo
             </button>
@@ -102,12 +119,13 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
 
 interface IAppRepoAddButtonProps {
   error?: Error;
-  install: (name: string, url: string, authHeader: string) => Promise<boolean>;
+  install: (name: string, url: string, authHeader: string, customCA: string) => Promise<boolean>;
   redirectTo?: string;
   kubeappsNamespace: string;
 }
 interface IAppRepoAddButtonState {
   authHeader: string;
+  customCA: string;
   lastSubmittedName: string;
   modalIsOpen: boolean;
   name: string;
@@ -120,6 +138,7 @@ export class AppRepoAddButton extends React.Component<
 > {
   public state = {
     authHeader: "",
+    customCA: "",
     error: undefined,
     lastSubmittedName: "",
     modalIsOpen: false,
@@ -129,7 +148,7 @@ export class AppRepoAddButton extends React.Component<
 
   public render() {
     const { redirectTo } = this.props;
-    const { name, url, authHeader } = this.state;
+    const { name, url, authHeader, customCA } = this.state;
     return (
       <div className="AppRepoAddButton">
         <button className="button button-primary" onClick={this.openModal}>
@@ -153,6 +172,7 @@ export class AppRepoAddButton extends React.Component<
             name={name}
             url={url}
             authHeader={authHeader}
+            customCA={customCA}
             update={this.updateValues}
             install={this.install}
             onAfterInstall={this.closeModal}
@@ -164,12 +184,16 @@ export class AppRepoAddButton extends React.Component<
   }
 
   private closeModal = async () => this.setState({ modalIsOpen: false });
-  private install = (name: string, url: string, authHeader: string) => {
+  private install = (name: string, url: string, authHeader: string, customCA: string) => {
     // Store last submitted name to show it in an error if needed
     this.setState({ lastSubmittedName: this.state.name });
-    return this.props.install(name, url, authHeader);
+    return this.props.install(name, url, authHeader, customCA);
   };
   private openModal = async () => this.setState({ modalIsOpen: true });
-  private updateValues = async (values: { name: string; url: string; authHeader: string }) =>
-    this.setState({ ...values });
+  private updateValues = async (values: {
+    name: string;
+    url: string;
+    authHeader: string;
+    customCA: string;
+  }) => this.setState({ ...values });
 }

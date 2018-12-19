@@ -22,8 +22,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchRepos: async () => {
       return dispatch(actions.repos.fetchRepos());
     },
-    install: async (name: string, url: string, authHeader: string) => {
-      return dispatch(actions.repos.installRepo(name, url, authHeader));
+    install: async (name: string, url: string, authHeader: string, customCA: string) => {
+      return dispatch(actions.repos.installRepo(name, url, authHeader, customCA));
     },
     resyncRepo: async (name: string) => {
       return dispatch(actions.repos.resyncRepo(name));
