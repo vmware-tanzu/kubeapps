@@ -103,13 +103,17 @@ exports[`should open a modal with the repository form 1`] = `
                           <span>
                             Custom CA Certificate (optional):
                           </span>
-                          <textarea
-                            cols="50"
-                            placeholder="-----BEGIN CERTIFICATE-----
-. . .
+                          <pre
+                            class="CertContainer"
+                          >
+                            <textarea
+                              class="CertContent"
+                              placeholder="-----BEGIN CERTIFICATE-----
+...
 -----END CERTIFICATE-----"
-                            rows="4"
-                          />
+                              rows="4"
+                            />
+                          </pre>
                         </label>
                       </div>
                       <div>

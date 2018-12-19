@@ -4,6 +4,7 @@ import { Redirect } from "react-router";
 
 import { IRBACRole } from "../../../shared/types";
 import ErrorSelector from "../../ErrorAlert/ErrorSelector";
+import "./AppRepo.css";
 
 interface IAppRepoFormProps {
   name: string;
@@ -94,15 +95,17 @@ export const AppRepoForm = (props: IAppRepoFormProps) => {
           <div>
             <label>
               <span>Custom CA Certificate (optional):</span>
-              <textarea
-                rows={4}
-                cols={50}
-                placeholder={
-                  "-----BEGIN CERTIFICATE-----\n" + ". . .\n" + "-----END CERTIFICATE-----"
-                }
-                value={customCA}
-                onChange={handleCustomCAChange}
-              />
+              <pre className="CertContainer">
+                <textarea
+                  className="CertContent"
+                  rows={4}
+                  placeholder={
+                    "-----BEGIN CERTIFICATE-----\n" + "...\n" + "-----END CERTIFICATE-----"
+                  }
+                  value={customCA}
+                  onChange={handleCustomCAChange}
+                />
+              </pre>
             </label>
           </div>
           <div>
