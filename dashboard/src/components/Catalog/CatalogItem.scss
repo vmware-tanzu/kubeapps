@@ -15,3 +15,11 @@
     color: #fff;
   }
 }
+
+.ListItem__content__description {
+  overflow: hidden;
+  height: 80px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 14px;
+}
