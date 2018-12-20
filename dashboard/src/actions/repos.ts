@@ -126,7 +126,14 @@ export const installRepo = (
       const {
         config: { namespace },
       } = getState();
-      const auth: { header?: any; customCA?: any } = {};
+      interface ISecretKeyRef {
+        key: string;
+        name: string;
+      }
+      const auth: {
+        header?: { secretKeyRef: ISecretKeyRef };
+        customCA?: { secretKeyRef: ISecretKeyRef };
+      } = {};
       const secrets: { [s: string]: string } = {};
       const secretName = `apprepo-${name}-secrets`;
       if (authHeader.length || customCA.length) {
