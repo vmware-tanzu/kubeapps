@@ -16,7 +16,7 @@ export interface IAppRepoListProps {
   fetchRepos: () => void;
   deleteRepo: (name: string) => Promise<boolean>;
   resyncRepo: (name: string) => void;
-  install: (name: string, url: string, authHeader: string) => Promise<boolean>;
+  install: (name: string, url: string, authHeader: string, customCA: string) => Promise<boolean>;
   kubeappsNamespace: string;
 }
 
