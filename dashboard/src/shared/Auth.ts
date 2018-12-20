@@ -36,7 +36,7 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(token: string) {
     try {
-      await Axios.get("/api/kube/", { headers: { Authorization: `Bearer ${token}` } });
+      await Axios.get("api/kube/", { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) {
       const res = e.response as AxiosResponse;
       if (res.status === 401) {

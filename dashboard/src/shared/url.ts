@@ -13,13 +13,13 @@ export const app = {
 
 export const api = {
   apprepostories: {
-    base: "/api/kube/apis/kubeapps.com/v1alpha1",
+    base: "api/kube/apis/kubeapps.com/v1alpha1",
     create: (namespace = definedNamespaces.default) =>
       `${api.apprepostories.base}/namespaces/${namespace}/apprepositories`,
   },
 
   charts: {
-    base: "/api/chartsvc/v1",
+    base: "api/chartsvc/v1",
     get: (id: string) => `${api.charts.base}/charts/${id}`,
     getReadme: (id: string, version: string) =>
       `${api.charts.base}/assets/${id}/versions/${version}/README.md`,
@@ -32,13 +32,13 @@ export const api = {
   },
 
   serviceinstances: {
-    base: "/api/kube/apis/servicecatalog.k8s.io/v1beta1",
+    base: "api/kube/apis/servicecatalog.k8s.io/v1beta1",
     create: (namespace = definedNamespaces.default) =>
       `${api.serviceinstances.base}/namespaces/${namespace}/serviceinstances`,
   },
 
   clusterservicebrokers: {
-    base: "/api/kube/apis/servicecatalog.k8s.io/v1beta1",
+    base: "api/kube/apis/servicecatalog.k8s.io/v1beta1",
     sync: (broker: IServiceBroker) =>
       `${api.clusterservicebrokers.base}/clusterservicebrokers/${broker.metadata.name}`,
   },

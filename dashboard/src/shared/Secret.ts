@@ -41,6 +41,6 @@ export default class Secret {
   }
 
   private static getLink(namespace: string, name?: string): string {
-    return `/api/kube/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
+    return `api/kube/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
   }
 }
