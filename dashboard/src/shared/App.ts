@@ -3,7 +3,7 @@ import { axios } from "./Auth";
 import { hapi } from "./hapi/release";
 import { IAppOverview, IChartVersion } from "./types";
 
-export const TILLER_PROXY_ROOT_URL = "/api/tiller-deploy/v1";
+export const TILLER_PROXY_ROOT_URL = "api/tiller-deploy/v1";
 
 export class App {
   public static getResourceURL(namespace?: string, name?: string, query?: string) {

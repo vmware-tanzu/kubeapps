@@ -38,7 +38,7 @@ describe("fetchCharts", () => {
     ];
     await store.dispatch(actions.charts.fetchCharts("foo"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/chartsvc/v1/charts/foo");
+    expect(fetchMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo");
   });
 
   it("returns a 404 error", async () => {
@@ -89,7 +89,7 @@ describe("fetchChartVersions", () => {
     ];
     await store.dispatch(actions.charts.fetchChartVersions("foo"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/chartsvc/v1/charts/foo/versions");
+    expect(fetchMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");
   });
 });
 
@@ -102,7 +102,7 @@ describe("getChartVersion", () => {
     ];
     await store.dispatch(actions.charts.getChartVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/chartsvc/v1/charts/foo/versions/1.0.0");
+    expect(fetchMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions/1.0.0");
   });
 });
 
@@ -116,7 +116,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     ];
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/chartsvc/v1/charts/foo/versions");
+    expect(fetchMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");
   });
 
   it("returns a not found error", async () => {
@@ -137,6 +137,6 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     window.fetch = fetchMock;
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/chartsvc/v1/charts/foo/versions");
+    expect(fetchMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");
   });
 });

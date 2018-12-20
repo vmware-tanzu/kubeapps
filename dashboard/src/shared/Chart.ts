@@ -23,5 +23,5 @@ export default class Chart {
     return true;
   }
 
-  private static APIEndpoint: string = "/api/chartsvc/v1";
+  private static APIEndpoint: string = "api/chartsvc/v1";
 }
