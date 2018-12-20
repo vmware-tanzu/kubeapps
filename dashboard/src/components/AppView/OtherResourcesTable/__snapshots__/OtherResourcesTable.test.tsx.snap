@@ -6,6 +6,19 @@ exports[`renders other resources details 1`] = `
     Other Resources
   </h6>
   <table>
+    <thead>
+      <tr>
+        <th>
+          KIND
+        </th>
+        <th>
+          NAMESPACE
+        </th>
+        <th>
+          NAME
+        </th>
+      </tr>
+    </thead>
     <tbody>
       <tr
         key="otherResources/Secret/foo"
@@ -13,7 +26,17 @@ exports[`renders other resources details 1`] = `
         <td>
           Secret
         </td>
-        <td />
+        <td>
+          <i
+            style={
+              Object {
+                "color": "lightgray",
+              }
+            }
+          >
+            Not Namespaced
+          </i>
+        </td>
         <td>
           foo
         </td>
@@ -24,7 +47,17 @@ exports[`renders other resources details 1`] = `
         <td>
           PersistentVolume
         </td>
-        <td />
+        <td>
+          <i
+            style={
+              Object {
+                "color": "lightgray",
+              }
+            }
+          >
+            Not Namespaced
+          </i>
+        </td>
         <td>
           foo
         </td>
