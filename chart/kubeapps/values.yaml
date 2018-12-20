@@ -100,7 +100,8 @@ apprepository:
   syncImage:
     registry: quay.io
     repository: helmpack/chart-repo
-    tag: v1.0.2
+    # TODO: Update tag when a new release is available
+    tag: "@sha256:bf4b31604ec35e8317079546f6e06b2f045958feff5903e2705b76bf3fcbee4b"
   initialRepos:
   - name: stable
     url: https://kubernetes-charts.storage.googleapis.com

@@ -12,7 +12,7 @@ describe("Config", () => {
 
     defaultJSON = require("../../public/config.json");
 
-    moxios.stubRequest("/config.json", { status: 200, response: defaultJSON });
+    moxios.stubRequest("config.json", { status: 200, response: defaultJSON });
   });
 
   afterEach(() => {

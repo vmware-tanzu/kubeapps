@@ -102,8 +102,19 @@ it("renders the full DeploymentForm", () => {
 
 it("renders a release name by default", () => {
   const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
-  const wrapper = shallow(
+  let wrapper = shallow(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
-  expect(wrapper.state("releaseName")).toBeTruthy();
+  const name1 = wrapper.state("releaseName") as string;
+  expect(name1).toBeTruthy();
+  expect(name1.length).toBeGreaterThan(1);
+
+  // When reloading the name should change
+  wrapper = shallow(
+    <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
+  );
+  const name2 = wrapper.state("releaseName") as string;
+  expect(name2).toBeTruthy();
+  expect(name2.length).toBeGreaterThan(1);
+  expect(name2).not.toEqual(name1);
 });
