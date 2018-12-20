@@ -37,7 +37,6 @@ exports[`renders the full DeploymentForm 1`] = `
             pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
             required={true}
             title="Use lower case alphanumeric characters, '-' or '.'"
-            value="bar"
           />
         </div>
         <div>
