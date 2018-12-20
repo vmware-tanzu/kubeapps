@@ -345,19 +345,23 @@ describe("AppViewComponent", () => {
     expect(orTable.prop("otherResources")).toEqual([otherResource]);
   });
 
-  it("renders a list as other resources", () => {
+  it("renders a list of resources", () => {
     const obj = { kind: "ClusterRole", metadata: { name: "foo" } };
     const list = {
       kind: "List",
-      items: [obj],
+      items: [obj, resources.deployment],
     };
-    const manifest = generateYamlManifest([list]);
+    const manifest = generateYamlManifest([resources.service, list]);
 
     const wrapper = shallow(<AppViewComponent {...validProps} />);
     validProps.app.manifest = manifest;
     // setProps again so we trigger componentWillReceiveProps
     wrapper.setProps(validProps);
 
-    expect(wrapper.state("otherResources")).toEqual([obj]);
+    expect(wrapper.state()).toMatchObject({
+      deployments: [{ isFetching: true, item: resources.deployment }],
+      services: [{ isFetching: true, item: resources.service }],
+      otherResources: [obj],
+    });
   });
 });
