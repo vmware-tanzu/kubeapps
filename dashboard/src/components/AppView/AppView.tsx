@@ -245,6 +245,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           result.secretNames.push(item.metadata.name);
           break;
         case "List":
+          // A List can contain an arbitrary set of resources so we treat them as an
+          // additional manifest. We merge the current result with the resources of
+          // the List, concatenating items from both.
           _.assignWith(
             result,
             this.parseResources((i as IK8sList<IResource, {}>).items, namespace),
