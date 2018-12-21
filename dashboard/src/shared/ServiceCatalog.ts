@@ -19,7 +19,7 @@ export class ServiceCatalog {
   }
 
   public static async deprovisionInstance(instance: IServiceInstance) {
-    const { data } = await axios.delete("/api/kube" + instance.metadata.selfLink);
+    const { data } = await axios.delete("api/kube" + instance.metadata.selfLink);
     return data;
   }
 
@@ -56,7 +56,7 @@ export class ServiceCatalog {
     return json.items;
   }
 
-  private static endpoint: string = "/api/kube/apis/servicecatalog.k8s.io/v1beta1";
+  private static endpoint: string = "api/kube/apis/servicecatalog.k8s.io/v1beta1";
 }
 export interface IK8sApiListResponse<T> {
   kind: string;
