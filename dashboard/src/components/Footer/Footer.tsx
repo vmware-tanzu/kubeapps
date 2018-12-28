@@ -9,6 +9,10 @@ interface IFooterProps {
 }
 
 const Footer: React.SFC<IFooterProps> = props => {
+  const linkColor = {
+    color: "#FFF",
+  };
+
   return (
     <footer className="osFooter bg-dark type-color-reverse-anchor-reset">
       <div className="container padding-h-big padding-v-bigger">
@@ -19,7 +23,11 @@ const Footer: React.SFC<IFooterProps> = props => {
             </h4>
             <p className="type-color-white type-small margin-reset">
               Made with <Heart className="icon icon-small" /> by Bitnami and{" "}
-              <a href="https://github.com/kubeapps/kubeapps/graphs/contributors" target="_blank">
+              <a
+                href="https://github.com/kubeapps/kubeapps/graphs/contributors"
+                style={linkColor}
+                target="_blank"
+              >
                 contributors
               </a>
               .
@@ -56,7 +64,15 @@ const Footer: React.SFC<IFooterProps> = props => {
                 />
               </svg>
             </a>
-            <p className="type-color-white type-small margin-small">v{props.appVersion}</p>
+            <p className="type-color-white type-small margin-small version-link">
+              <a
+                href={`https://github.com/kubeapps/kubeapps/releases/tag/${props.appVersion}`}
+                style={linkColor}
+                target="_blank"
+              >
+                {props.appVersion}
+              </a>
+            </p>
           </div>
         </div>
       </div>
