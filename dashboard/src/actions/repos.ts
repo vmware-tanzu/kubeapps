@@ -119,33 +119,52 @@ export const installRepo = (
   name: string,
   repoURL: string,
   authHeader: string,
+  customCA: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     try {
       const {
         config: { namespace },
       } = getState();
-      let auth;
+      interface ISecretKeyRef {
+        key: string;
+        name: string;
+      }
+      const auth: {
+        header?: { secretKeyRef: ISecretKeyRef };
+        customCA?: { secretKeyRef: ISecretKeyRef };
+      } = {};
+      const secrets: { [s: string]: string } = {};
       const secretName = `apprepo-${name}-secrets`;
-      if (authHeader.length) {
+      if (authHeader.length || customCA.length) {
         // ensure we can create secrets in the kubeapps namespace
-        auth = {
-          header: {
+        if (authHeader.length) {
+          auth.header = {
             secretKeyRef: {
               key: "authorizationHeader",
               name: secretName,
             },
-          },
-        };
+          };
+          secrets.authorizationHeader = btoa(authHeader);
+        }
+        if (customCA.length) {
+          auth.customCA = {
+            secretKeyRef: {
+              key: "ca.crt",
+              name: secretName,
+            },
+          };
+          secrets["ca.crt"] = btoa(customCA);
+        }
       }
       dispatch(addRepo());
       const apprepo = await AppRepository.create(name, namespace, repoURL, auth);
       dispatch(addedRepo(apprepo));
 
-      if (authHeader.length) {
+      if (authHeader.length || customCA.length) {
         await Secret.create(
           secretName,
-          { authorizationHeader: btoa(authHeader) },
+          secrets,
           {
             apiVersion: apprepo.apiVersion,
             blockOwnerDeletion: true,

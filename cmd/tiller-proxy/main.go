@@ -41,10 +41,6 @@ import (
 	"k8s.io/helm/pkg/tlsutil"
 )
 
-const (
-	defaultTimeoutSeconds = 180
-)
-
 var (
 	settings    environment.EnvSettings
 	proxy       *tillerProxy.Proxy
@@ -75,12 +71,6 @@ func init() {
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
-
-	netClient = &clientWithDefaultUserAgent{
-		Client: http.Client{
-			Timeout: time.Second * defaultTimeoutSeconds,
-		},
-	}
 }
 
 func main() {
@@ -130,7 +120,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
-	chartutils := chartUtils.NewChart(kubeClient, netClient, helmChartUtil.LoadArchive)
+	chartutils := chartUtils.NewChart(kubeClient, helmChartUtil.LoadArchive)
 
 	r := mux.NewRouter()
 

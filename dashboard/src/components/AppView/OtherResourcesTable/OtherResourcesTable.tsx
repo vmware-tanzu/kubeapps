@@ -24,12 +24,21 @@ class OtherResourcesTable extends React.Component<IAppDetailsProps> {
     if (otherResources.length > 0) {
       otherResourcesSection = (
         <table>
+          <thead>
+            <tr>
+              <th>KIND</th>
+              <th>NAMESPACE</th>
+              <th>NAME</th>
+            </tr>
+          </thead>
           <tbody>
             {otherResources.map((r: IResource) => {
               return (
                 <tr key={`otherResources/${r.kind}/${r.metadata.name}`}>
                   <td>{r.kind}</td>
-                  <td>{r.metadata.namespace}</td>
+                  <td>
+                    {r.metadata.namespace || <i style={{ color: "lightgray" }}>Not Namespaced</i>}
+                  </td>
                   <td>{r.metadata.name}</td>
                 </tr>
               );
