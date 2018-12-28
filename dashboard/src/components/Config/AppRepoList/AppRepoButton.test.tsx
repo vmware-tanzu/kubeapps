@@ -21,13 +21,19 @@ it("should install a repository", done => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} install={install} />);
   ReactModal.setAppElement(document.createElement("div"));
-  wrapper.setState({ modalIsOpen: true, name: "my-repo", url: "http://foo.bar" });
+  wrapper.setState({
+    modalIsOpen: true,
+    name: "my-repo",
+    url: "http://foo.bar",
+    authHeader: "foo",
+    customCA: "bar",
+  });
   wrapper.update();
 
   const button = wrapper.find(AppRepoForm).find(".button");
   button.simulate("submit");
 
-  expect(install).toBeCalledWith("my-repo", "http://foo.bar", "");
+  expect(install).toBeCalledWith("my-repo", "http://foo.bar", "foo", "bar");
   // Wait for the Modal to be closed
   setTimeout(() => {
     expect(wrapper.state("modalIsOpen")).toBe(false);

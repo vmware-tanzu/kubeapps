@@ -8,7 +8,7 @@ export default class Namespace {
     return data;
   }
 
-  private static APIBase: string = "/api/kube";
+  private static APIBase: string = "api/kube";
   private static APIEndpoint: string = `${Namespace.APIBase}/api/v1/namespaces`;
 }
 

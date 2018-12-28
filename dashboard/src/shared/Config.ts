@@ -23,5 +23,5 @@ export default class Config {
     return data;
   }
 
-  private static APIEndpoint: string = "/config.json";
+  private static APIEndpoint: string = "config.json";
 }

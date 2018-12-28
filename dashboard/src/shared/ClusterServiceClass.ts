@@ -44,7 +44,7 @@ export class ClusterServiceClass {
   }
 
   private static getLink(namespace?: string, name?: string): string {
-    return `/api/kube/apis/servicecatalog.k8s.io/v1beta1${
+    return `api/kube/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/clusterserviceclasses${name ? `/${name}` : ""}`;
   }

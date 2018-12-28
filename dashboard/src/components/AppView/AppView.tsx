@@ -5,7 +5,7 @@ import * as React from "react";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { IKubeItem, IRBACRole, IResource } from "../../shared/types";
+import { IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -40,6 +40,15 @@ interface IAppViewState {
   secretNames: string[];
   sockets: WebSocket[];
   manifest: IResource[];
+}
+
+interface IPartialAppViewState {
+  deployments: Array<IKubeItem<IResource>>;
+  services: Array<IKubeItem<IResource>>;
+  ingresses: Array<IKubeItem<IResource>>;
+  otherResources: IResource[];
+  secretNames: string[];
+  sockets: WebSocket[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -102,47 +111,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return;
     }
 
-    const sockets: WebSocket[] = [];
     // Iterate over the current manifest to populate the initial state
-    const secretNames: string[] = [];
-    const deployments: Array<IKubeItem<IResource>> = [];
-    const services: Array<IKubeItem<IResource>> = [];
-    const ingresses: Array<IKubeItem<IResource>> = [];
-    const otherResources: IResource[] = [];
-    manifest.forEach((i: IResource) => {
-      const resource = { isFetching: true, item: i };
-      switch (i.kind) {
-        case "Deployment":
-          deployments.push(resource);
-          sockets.push(
-            this.getSocket("deployments", i.apiVersion, i.metadata.name, newApp.namespace),
-          );
-          break;
-        case "Service":
-          services.push(resource);
-          sockets.push(this.getSocket("services", i.apiVersion, i.metadata.name, newApp.namespace));
-          break;
-        case "Ingress":
-          ingresses.push(resource);
-          sockets.push(
-            this.getSocket("ingresses", i.apiVersion, i.metadata.name, newApp.namespace),
-          );
-          break;
-        case "Secret":
-          secretNames.push(i.metadata.name);
-          break;
-        default:
-          otherResources.push(i);
-      }
-    });
-    this.setState({
-      sockets,
-      deployments,
-      services,
-      ingresses,
-      secretNames,
-      otherResources,
-    });
+    this.setState(this.parseResources(manifest, newApp.namespace));
   }
 
   public componentWillUnmount() {
@@ -235,6 +205,61 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         </main>
       </section>
     );
+  }
+
+  private parseResources(
+    resources: Array<IResource | IK8sList<IResource, {}>>,
+    namespace: string,
+  ): IPartialAppViewState {
+    const result: IPartialAppViewState = {
+      deployments: [],
+      ingresses: [],
+      otherResources: [],
+      services: [],
+      secretNames: [],
+      sockets: [],
+    };
+    resources.forEach(i => {
+      const item = i as IResource;
+      const resource = { isFetching: true, item };
+      switch (i.kind) {
+        case "Deployment":
+          result.deployments.push(resource);
+          result.sockets.push(
+            this.getSocket("deployments", i.apiVersion, item.metadata.name, namespace),
+          );
+          break;
+        case "Service":
+          result.services.push(resource);
+          result.sockets.push(
+            this.getSocket("services", i.apiVersion, item.metadata.name, namespace),
+          );
+          break;
+        case "Ingress":
+          result.ingresses.push(resource);
+          result.sockets.push(
+            this.getSocket("ingresses", i.apiVersion, item.metadata.name, namespace),
+          );
+          break;
+        case "Secret":
+          result.secretNames.push(item.metadata.name);
+          break;
+        case "List":
+          // A List can contain an arbitrary set of resources so we treat them as an
+          // additional manifest. We merge the current result with the resources of
+          // the List, concatenating items from both.
+          _.assignWith(
+            result,
+            this.parseResources((i as IK8sList<IResource, {}>).items, namespace),
+            // Merge the list with the current result
+            (prev, newArray) => prev.concat(newArray),
+          );
+          break;
+        default:
+          result.otherResources.push(item);
+      }
+    });
+    return result;
   }
 
   private getSocket(

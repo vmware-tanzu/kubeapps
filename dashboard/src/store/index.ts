@@ -1,12 +1,14 @@
 import { connectRouter, routerMiddleware } from "connected-react-router";
-import createHistory from "history/createBrowserHistory";
+import { createHashHistory } from "history";
 import { applyMiddleware, createStore } from "redux";
 import { composeWithDevTools } from "redux-devtools-extension";
 import thunkMiddleware from "redux-thunk";
 
 import rootReducer from "../reducers";
 
-export const history = createHistory();
+// Use Hash based routing to support deploying Kubeapps in arbitrary URL subpaths
+export const history = createHashHistory();
+
 export default createStore(
   connectRouter(history)(rootReducer), // add router state to reducer
   composeWithDevTools(
