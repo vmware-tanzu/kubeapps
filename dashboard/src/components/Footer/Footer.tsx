@@ -17,9 +17,13 @@ const Footer: React.SFC<IFooterProps> = props => {
             <h4 className="inverse margin-reset">
               <img src={logo} alt="Kubeapps logo" className="osFooter__logo" />
             </h4>
-            <p className="type-color-white type-small margin-reset">
+            <p className="type-small margin-reset">
               Made with <Heart className="icon icon-small" /> by Bitnami and{" "}
-              <a href="https://github.com/kubeapps/kubeapps/graphs/contributors" target="_blank">
+              <a
+                href="https://github.com/kubeapps/kubeapps/graphs/contributors"
+                className="type-color-white"
+                target="_blank"
+              >
                 contributors
               </a>
               .
@@ -56,7 +60,15 @@ const Footer: React.SFC<IFooterProps> = props => {
                 />
               </svg>
             </a>
-            <p className="type-color-white type-small margin-small">v{props.appVersion}</p>
+            <p className="type-small margin-small version-link">
+              <a
+                href={`https://github.com/kubeapps/kubeapps/releases/tag/${props.appVersion}`}
+                className="type-color-white"
+                target="_blank"
+              >
+                {props.appVersion}
+              </a>
+            </p>
           </div>
         </div>
       </div>

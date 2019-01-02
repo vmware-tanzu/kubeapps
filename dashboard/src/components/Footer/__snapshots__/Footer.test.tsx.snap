@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders version and link to release 1`] = `
+<a
+  className="type-color-white"
+  href="https://github.com/kubeapps/kubeapps/releases/tag/v1.5.5-T500"
+  target="_blank"
+>
+  v1.5.5-T500
+</a>
+`;
