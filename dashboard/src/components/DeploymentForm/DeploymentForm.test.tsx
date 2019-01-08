@@ -109,7 +109,7 @@ it("renders the full DeploymentForm", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
-it("renders a release name by default", () => {
+ it("renders a release name by default, relying in Monickers output", () => {
   const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
   monikerChooseMock.mockImplementationOnce(() => "foo").mockImplementationOnce(() => "bar");
 
