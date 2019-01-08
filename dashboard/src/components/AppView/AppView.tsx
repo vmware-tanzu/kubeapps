@@ -5,6 +5,7 @@ import * as React from "react";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
+import { Kube } from "../../shared/Kube";
 import { IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
@@ -28,6 +29,7 @@ export interface IAppViewProps {
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
+  receiveResource: (p: { key: string; resource: IResource }) => void;
 }
 
 interface IAppViewState {
@@ -129,23 +131,42 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const dropByName = (array: Array<IKubeItem<IResource>>) => {
       return _.dropWhile(array, r => r.item && r.item.metadata.name === resource.metadata.name);
     };
+    let apiVersion = "v1";
+    let apiResource: string;
     switch (resource.kind) {
       case "Deployment":
         const newDeps = dropByName(this.state.deployments);
         newDeps.push(newItem);
         this.setState({ deployments: newDeps });
+        // We won't use resource.apiVersion as it may have a different version
+        // than we want to use in the cache
+        apiVersion = "apps/v1";
+        apiResource = "deployments";
         break;
       case "Service":
         const newSvcs = dropByName(this.state.services);
         newSvcs.push(newItem);
         this.setState({ services: newSvcs });
+        apiResource = "services";
         break;
       case "Ingress":
         const newIngresses = dropByName(this.state.ingresses);
         newIngresses.push(newItem);
         this.setState({ ingresses: newIngresses });
+        apiResource = "ingresses";
         break;
+      default:
+        // Unknown resource, ignore
+        return;
     }
+    // Construct the key used for the store
+    const resourceKey = Kube.getResourceURL(
+      apiVersion,
+      apiResource,
+      resource.metadata.namespace,
+      resource.metadata.name,
+    );
+    this.props.receiveResource({ key: resourceKey, resource });
   }
 
   public render() {

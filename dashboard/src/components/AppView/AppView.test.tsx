@@ -42,6 +42,7 @@ describe("AppViewComponent", () => {
     getApp: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
+    receiveResource: jest.fn(),
   };
 
   const resources = {
