@@ -1,5 +1,7 @@
 import { mount, shallow } from "enzyme";
+import * as Moniker from "moniker-native";
 import * as React from "react";
+
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
@@ -19,8 +21,17 @@ const defaultProps = {
   getChartValues: jest.fn(),
   namespace: "default",
 };
+let monikerChooseMock: jest.Mock;
 
 itBehavesLike("aLoadingComponent", { component: DeploymentForm, props: defaultProps });
+
+beforeEach(() => {
+  monikerChooseMock = Moniker.choose = jest.fn();
+});
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
 describe("renders an error", () => {
   it("renders an error if it cannot find the given chart", () => {
@@ -95,26 +106,23 @@ it("renders the full DeploymentForm", () => {
   const wrapper = shallow(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
-  // Force static name
-  wrapper.setState({ releaseName: "bar" });
   expect(wrapper).toMatchSnapshot();
 });
 
-it("renders a release name by default", () => {
+ it("renders a release name by default, relying in Monickers output", () => {
   const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+  monikerChooseMock.mockImplementationOnce(() => "foo").mockImplementationOnce(() => "bar");
+
   let wrapper = shallow(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
   const name1 = wrapper.state("releaseName") as string;
-  expect(name1).toBeTruthy();
-  expect(name1.length).toBeGreaterThan(1);
+  expect(name1).toBe("foo");
 
   // When reloading the name should change
   wrapper = shallow(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
   const name2 = wrapper.state("releaseName") as string;
-  expect(name2).toBeTruthy();
-  expect(name2.length).toBeGreaterThan(1);
-  expect(name2).not.toEqual(name1);
+  expect(name2).toBe("bar");
 });
