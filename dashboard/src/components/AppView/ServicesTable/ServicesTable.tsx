@@ -1,31 +1,26 @@
 import * as React from "react";
 
-import LoadingWrapper from "../../../components/LoadingWrapper";
-import { IKubeItem, IResource } from "../../../shared/types";
-import isSomeResourceLoading from "../helpers";
-import ServiceItem from "./ServiceItem";
+import ServiceItem from "../../../containers/ServiceItemContainer";
+import { IResourceRef } from "../../../shared/types";
 
 interface IServiceTableProps {
-  services: Array<IKubeItem<IResource>>;
+  serviceRefs: IResourceRef[];
 }
 
 class ServiceTable extends React.Component<IServiceTableProps> {
   public render() {
-    const { services } = this.props;
     return (
       <React.Fragment>
         <h6>Services</h6>
-        <LoadingWrapper loaded={!isSomeResourceLoading(services)} size="small">
-          {this.serviceSection()}
-        </LoadingWrapper>
+        {this.serviceSection()}
       </React.Fragment>
     );
   }
 
   private serviceSection() {
-    const { services } = this.props;
-    let serviceSection = <p>The current application does not contain any service.</p>;
-    if (services.length > 0) {
+    const { serviceRefs } = this.props;
+    let serviceSection = <p>The current application does not contain any Service objects.</p>;
+    if (serviceRefs.length > 0) {
       serviceSection = (
         <table>
           <thead>
@@ -38,10 +33,9 @@ class ServiceTable extends React.Component<IServiceTableProps> {
             </tr>
           </thead>
           <tbody>
-            {services.map(
-              s =>
-                s.item && <ServiceItem key={`services/${s.item.metadata.name}`} service={s.item} />,
-            )}
+            {serviceRefs.map(s => (
+              <ServiceItem key={`services/${s.namespace}/${s.name}`} serviceRef={s} />
+            ))}
           </tbody>
         </table>
       );

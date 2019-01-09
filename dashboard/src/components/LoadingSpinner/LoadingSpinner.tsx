@@ -9,7 +9,7 @@ export interface ISpinnerProps {
 const LoaderSpinner: React.SFC<ISpinnerProps> = props => {
   // Based on http://tobiasahlin.com/spinkit/
   return (
-    <div className={`spinner ${props.size && `spinner__${props.size}`}`}>
+    <div className={`spinner ${props.size && `spinner--${props.size}`}`}>
       <div className="spinner__bounce1" />
       <div className="spinner__bounce2" />
     </div>

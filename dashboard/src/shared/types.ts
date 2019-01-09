@@ -148,6 +148,13 @@ export interface IResource {
   };
 }
 
+export interface IResourceRef {
+  apiVersion: string;
+  kind: string;
+  name: string;
+  namespace: string;
+}
+
 export interface IOwnerReference {
   apiVersion: string;
   blockOwnerDeletion: boolean;

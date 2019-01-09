@@ -6,7 +6,7 @@ import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import { Kube } from "../../shared/Kube";
-import { IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
+import { IK8sList, IKubeItem, IRBACRole, IResource, IResourceRef } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -35,6 +35,7 @@ export interface IAppViewProps {
 interface IAppViewState {
   deployments: Array<IKubeItem<IResource>>;
   services: Array<IKubeItem<IResource>>;
+  serviceRefs: IResourceRef[];
   ingresses: Array<IKubeItem<IResource>>;
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
@@ -47,6 +48,7 @@ interface IAppViewState {
 interface IPartialAppViewState {
   deployments: Array<IKubeItem<IResource>>;
   services: Array<IKubeItem<IResource>>;
+  serviceRefs: IResourceRef[];
   ingresses: Array<IKubeItem<IResource>>;
   otherResources: IResource[];
   secretNames: string[];
@@ -75,6 +77,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     ingresses: [],
     otherResources: [],
     services: [],
+    serviceRefs: [],
     secretNames: [],
     sockets: [],
   };
@@ -187,7 +190,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
-    const { services, ingresses, deployments, secretNames, otherResources } = this.state;
+    const {
+      services,
+      serviceRefs,
+      ingresses,
+      deployments,
+      secretNames,
+      otherResources,
+    } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -218,7 +228,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <SecretTable namespace={app.namespace} secretNames={secretNames} />
                 <DeploymentsTable deployments={deployments} />
-                <ServicesTable services={services} />
+                <ServicesTable serviceRefs={serviceRefs} />
                 <OtherResourcesTable otherResources={otherResources} />
               </div>
             </div>
@@ -226,6 +236,16 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         </main>
       </section>
     );
+  }
+
+  private buildResourceRef(resource: IResource, appNamespace: string): IResourceRef {
+    return {
+      apiVersion: resource.apiVersion,
+      kind: resource.kind,
+      name: resource.metadata.name,
+      // Use the release's namespace if not included in the manifest
+      namespace: resource.metadata.namespace || appNamespace,
+    };
   }
 
   private parseResources(
@@ -237,6 +257,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       ingresses: [],
       otherResources: [],
       services: [],
+      serviceRefs: [],
       secretNames: [],
       sockets: [],
     };
@@ -252,6 +273,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           break;
         case "Service":
           result.services.push(resource);
+          result.serviceRefs.push(this.buildResourceRef(resource.item, namespace));
           result.sockets.push(
             this.getSocket("services", i.apiVersion, item.metadata.name, namespace),
           );

@@ -1,8 +1,16 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
-import { IResource } from "shared/types";
+import { IKubeItem, IResource, IResourceRef } from "../../../shared/types";
 import ServiceItem from "./ServiceItem";
+
+const serviceRef = {
+  name: "foo",
+} as IResourceRef;
+
+const kubeItem: IKubeItem<IResource> = {
+  isFetching: false,
+};
 
 it("renders a simple view without IP", () => {
   const service = {
@@ -14,7 +22,10 @@ it("renders a simple view without IP", () => {
       ports: [],
     },
   } as IResource;
-  const wrapper = shallow(<ServiceItem service={service} />);
+  kubeItem.item = service;
+  const wrapper = shallow(
+    <ServiceItem service={kubeItem} serviceRef={serviceRef} getService={jest.fn()} />,
+  );
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -33,7 +44,10 @@ it("renders a simple view with IP", () => {
       },
     },
   } as IResource;
-  const wrapper = shallow(<ServiceItem service={service} />);
+  kubeItem.item = service;
+  const wrapper = shallow(
+    <ServiceItem service={kubeItem} serviceRef={serviceRef} getService={jest.fn()} />,
+  );
   expect(wrapper.text()).toContain("1.2.3.4");
 });
 
@@ -43,6 +57,9 @@ it("renders a view with IP", () => {
     spec: { ports: [{ port: 80 }], type: "LoadBalancer" },
     status: { loadBalancer: { ingress: [{ ip: "1.2.3.4" }] } },
   } as IResource;
-  const wrapper = shallow(<ServiceItem service={service} />);
+  kubeItem.item = service;
+  const wrapper = shallow(
+    <ServiceItem service={kubeItem} serviceRef={serviceRef} getService={jest.fn()} />,
+  );
   expect(wrapper).toMatchSnapshot();
 });
