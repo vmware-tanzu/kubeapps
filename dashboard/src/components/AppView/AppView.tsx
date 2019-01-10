@@ -29,6 +29,7 @@ export interface IAppViewProps {
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
+  // TODO: remove once WebSockets are moved to Redux store (#882)
   receiveResource: (p: { key: string; resource: IResource }) => void;
 }
 
@@ -167,6 +168,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       resource.metadata.namespace,
       resource.metadata.name,
     );
+    // TODO: this is temporary before we move WebSockets to the Redux store (#882)
     this.props.receiveResource({ key: resourceKey, resource });
   }
 
