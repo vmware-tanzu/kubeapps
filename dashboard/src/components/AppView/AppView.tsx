@@ -134,7 +134,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const dropByName = (array: Array<IKubeItem<IResource>>) => {
       return _.dropWhile(array, r => r.item && r.item.metadata.name === resource.metadata.name);
     };
-    let apiVersion = "v1";
     let apiResource: string;
     switch (resource.kind) {
       case "Deployment":
@@ -143,7 +142,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         this.setState({ deployments: newDeps });
         // We won't use resource.apiVersion as it may have a different version
         // than we want to use in the cache
-        apiVersion = "apps/v1";
         apiResource = "deployments";
         break;
       case "Service":
@@ -164,7 +162,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     }
     // Construct the key used for the store
     const resourceKey = Kube.getResourceURL(
-      apiVersion,
+      resource.apiVersion,
       apiResource,
       resource.metadata.namespace,
       resource.metadata.name,
