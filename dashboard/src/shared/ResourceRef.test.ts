@@ -1,3 +1,4 @@
+import { Kube } from "./Kube";
 import ResourceRef from "./ResourceRef";
 import { IResource } from "./types";
 
@@ -47,6 +48,23 @@ describe("ResourceRef", () => {
 
       const ref = ResourceRef.newFromResource(r, "bar");
       expect(ref.namespace).toBe("bar");
+    });
+  });
+
+  describe("getResourceURL", () => {
+    let kubeGetResourceURLMock: jest.Mock;
+    beforeEach(() => {
+      kubeGetResourceURLMock = Kube.getResourceURL = jest.fn();
+    });
+    it("calls Kube.getResourceURL with the correct arguments", () => {
+      const ref = new ResourceRef();
+      ref.apiVersion = "v1";
+      ref.kind = "Service";
+      ref.name = "foo";
+      ref.namespace = "bar";
+
+      ref.getResourceURL();
+      expect(kubeGetResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");
     });
   });
 });

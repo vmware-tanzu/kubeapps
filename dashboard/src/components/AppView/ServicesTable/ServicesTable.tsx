@@ -34,7 +34,7 @@ class ServiceTable extends React.Component<IServiceTableProps> {
           </thead>
           <tbody>
             {serviceRefs.map(s => (
-              <ServiceItem key={`services/${s.namespace}/${s.name}`} serviceRef={s} />
+              <ServiceItem key={s.getResourceURL()} serviceRef={s} />
             ))}
           </tbody>
         </table>
