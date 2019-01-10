@@ -2,16 +2,10 @@ import * as React from "react";
 import { AlertTriangle } from "react-feather";
 
 import LoadingSpinner from "../../../components/LoadingSpinner";
-import {
-  IKubeItem,
-  IResource,
-  IResourceRef,
-  IServiceSpec,
-  IServiceStatus,
-} from "../../../shared/types";
+import { IKubeItem, IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
 
 interface IServiceItemProps {
-  serviceRef: IResourceRef;
+  name: string;
   service?: IKubeItem<IResource>;
   getService: () => void;
 }
@@ -22,10 +16,10 @@ class ServiceItem extends React.Component<IServiceItemProps> {
   }
 
   public render() {
-    const { serviceRef, service } = this.props;
+    const { name, service } = this.props;
     return (
       <tr>
-        <td>{serviceRef.name}</td>
+        <td>{name}</td>
         {this.renderServiceInfo(service)}
       </tr>
     );

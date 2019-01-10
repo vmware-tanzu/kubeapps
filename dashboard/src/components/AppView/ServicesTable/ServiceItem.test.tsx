@@ -1,12 +1,8 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
-import { IKubeItem, IResource, IResourceRef } from "../../../shared/types";
+import { IKubeItem, IResource } from "../../../shared/types";
 import ServiceItem from "./ServiceItem";
-
-const serviceRef = {
-  name: "foo",
-} as IResourceRef;
 
 const kubeItem: IKubeItem<IResource> = {
   isFetching: false,
@@ -24,7 +20,7 @@ it("renders a simple view without IP", () => {
   } as IResource;
   kubeItem.item = service;
   const wrapper = shallow(
-    <ServiceItem service={kubeItem} serviceRef={serviceRef} getService={jest.fn()} />,
+    <ServiceItem service={kubeItem} name={service.metadata.name} getService={jest.fn()} />,
   );
   expect(wrapper).toMatchSnapshot();
 });
@@ -46,7 +42,7 @@ it("renders a simple view with IP", () => {
   } as IResource;
   kubeItem.item = service;
   const wrapper = shallow(
-    <ServiceItem service={kubeItem} serviceRef={serviceRef} getService={jest.fn()} />,
+    <ServiceItem service={kubeItem} name={service.metadata.name} getService={jest.fn()} />,
   );
   expect(wrapper.text()).toContain("1.2.3.4");
 });
@@ -59,7 +55,7 @@ it("renders a view with IP", () => {
   } as IResource;
   kubeItem.item = service;
   const wrapper = shallow(
-    <ServiceItem service={kubeItem} serviceRef={serviceRef} getService={jest.fn()} />,
+    <ServiceItem service={kubeItem} name={service.metadata.name} getService={jest.fn()} />,
   );
   expect(wrapper).toMatchSnapshot();
 });

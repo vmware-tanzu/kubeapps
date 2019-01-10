@@ -21,7 +21,7 @@ function mapStateToProps({ kube }: IStoreState, props: IServiceItemContainerProp
     serviceRef.name,
   );
   return {
-    ...props,
+    name: serviceRef.name,
     service: kube.items[serviceKey],
   };
 }
