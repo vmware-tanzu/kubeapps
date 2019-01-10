@@ -1,10 +1,10 @@
 import * as React from "react";
 
 import ServiceItem from "../../../containers/ServiceItemContainer";
-import { IResourceRef } from "../../../shared/types";
+import ResourceRef from "../../../shared/ResourceRef";
 
 interface IServiceTableProps {
-  serviceRefs: IResourceRef[];
+  serviceRefs: ResourceRef[];
 }
 
 class ServiceTable extends React.Component<IServiceTableProps> {

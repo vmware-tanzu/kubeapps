@@ -6,10 +6,11 @@ import { ThunkDispatch } from "redux-thunk";
 import actions from "../../actions";
 import ServiceItem from "../../components/AppView/ServicesTable/ServiceItem";
 import { Kube } from "../../shared/Kube";
-import { IResourceRef, IStoreState } from "../../shared/types";
+import ResourceRef from "../../shared/ResourceRef";
+import { IStoreState } from "../../shared/types";
 
 interface IServiceItemContainerProps {
-  serviceRef: IResourceRef;
+  serviceRef: ResourceRef;
 }
 
 function mapStateToProps({ kube }: IStoreState, props: IServiceItemContainerProps) {

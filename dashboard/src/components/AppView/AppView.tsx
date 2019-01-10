@@ -6,7 +6,8 @@ import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import { Kube } from "../../shared/Kube";
-import { IK8sList, IKubeItem, IRBACRole, IResource, IResourceRef } from "../../shared/types";
+import ResourceRef from "../../shared/ResourceRef";
+import { IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -36,7 +37,7 @@ export interface IAppViewProps {
 interface IAppViewState {
   deployments: Array<IKubeItem<IResource>>;
   services: Array<IKubeItem<IResource>>;
-  serviceRefs: IResourceRef[];
+  serviceRefs: ResourceRef[];
   ingresses: Array<IKubeItem<IResource>>;
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
@@ -49,7 +50,7 @@ interface IAppViewState {
 interface IPartialAppViewState {
   deployments: Array<IKubeItem<IResource>>;
   services: Array<IKubeItem<IResource>>;
-  serviceRefs: IResourceRef[];
+  serviceRefs: ResourceRef[];
   ingresses: Array<IKubeItem<IResource>>;
   otherResources: IResource[];
   secretNames: string[];
@@ -238,16 +239,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     );
   }
 
-  private buildResourceRef(resource: IResource, appNamespace: string): IResourceRef {
-    return {
-      apiVersion: resource.apiVersion,
-      kind: resource.kind,
-      name: resource.metadata.name,
-      // Use the release's namespace if not included in the manifest
-      namespace: resource.metadata.namespace || appNamespace,
-    };
-  }
-
   private parseResources(
     resources: Array<IResource | IK8sList<IResource, {}>>,
     namespace: string,
@@ -273,7 +264,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           break;
         case "Service":
           result.services.push(resource);
-          result.serviceRefs.push(this.buildResourceRef(resource.item, namespace));
+          result.serviceRefs.push(ResourceRef.newFromResource(resource.item, namespace));
           result.sockets.push(
             this.getSocket("services", i.apiVersion, item.metadata.name, namespace),
           );
