@@ -142,8 +142,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         const newDeps = dropByName(this.state.deployments);
         newDeps.push(newItem);
         this.setState({ deployments: newDeps });
-        // We won't use resource.apiVersion as it may have a different version
-        // than we want to use in the cache
         apiResource = "deployments";
         break;
       case "Service":
