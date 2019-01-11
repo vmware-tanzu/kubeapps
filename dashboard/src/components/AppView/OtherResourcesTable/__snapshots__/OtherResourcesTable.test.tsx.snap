@@ -12,9 +12,6 @@ exports[`renders other resources details 1`] = `
           KIND
         </th>
         <th>
-          NAMESPACE
-        </th>
-        <th>
           NAME
         </th>
       </tr>
@@ -27,17 +24,6 @@ exports[`renders other resources details 1`] = `
           Secret
         </td>
         <td>
-          <i
-            style={
-              Object {
-                "color": "lightgray",
-              }
-            }
-          >
-            Not Namespaced
-          </i>
-        </td>
-        <td>
           foo
         </td>
       </tr>
@@ -46,17 +32,6 @@ exports[`renders other resources details 1`] = `
       >
         <td>
           PersistentVolume
-        </td>
-        <td>
-          <i
-            style={
-              Object {
-                "color": "lightgray",
-              }
-            }
-          >
-            Not Namespaced
-          </i>
         </td>
         <td>
           foo

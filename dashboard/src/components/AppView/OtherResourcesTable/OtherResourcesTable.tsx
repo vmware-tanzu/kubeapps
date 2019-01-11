@@ -27,7 +27,6 @@ class OtherResourcesTable extends React.Component<IAppDetailsProps> {
           <thead>
             <tr>
               <th>KIND</th>
-              <th>NAMESPACE</th>
               <th>NAME</th>
             </tr>
           </thead>
@@ -36,9 +35,6 @@ class OtherResourcesTable extends React.Component<IAppDetailsProps> {
               return (
                 <tr key={`otherResources/${r.kind}/${r.metadata.name}`}>
                   <td>{r.kind}</td>
-                  <td>
-                    {r.metadata.namespace || <i style={{ color: "lightgray" }}>Not Namespaced</i>}
-                  </td>
                   <td>{r.metadata.name}</td>
                 </tr>
               );
