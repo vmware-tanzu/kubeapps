@@ -1,7 +1,7 @@
 import * as React from "react";
 import { AlertTriangle } from "react-feather";
 
-import LoadingSpinner from "../../../components/LoadingSpinner";
+import LoadingWrapper from "../../../components/LoadingWrapper";
 import { IKubeItem, IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
 
 interface IServiceItemProps {
@@ -29,7 +29,7 @@ class ServiceItem extends React.Component<IServiceItemProps> {
     if (service === undefined || service.isFetching) {
       return (
         <td colSpan={4}>
-          <LoadingSpinner size="inline-small" />
+          <LoadingWrapper size="inline-small" />
         </td>
       );
     }
