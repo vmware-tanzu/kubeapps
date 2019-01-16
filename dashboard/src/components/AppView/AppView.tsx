@@ -239,7 +239,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   private parseResources(
     resources: Array<IResource | IK8sList<IResource, {}>>,
-    namespace: string,
+    releaseNamespace: string,
   ): IPartialAppViewState {
     const result: IPartialAppViewState = {
       deployments: [],
@@ -257,20 +257,20 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         case "Deployment":
           result.deployments.push(resource);
           result.sockets.push(
-            this.getSocket("deployments", i.apiVersion, item.metadata.name, namespace),
+            this.getSocket("deployments", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Service":
           result.services.push(resource);
-          result.serviceRefs.push(new ResourceRef(resource.item, namespace));
+          result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
-            this.getSocket("services", i.apiVersion, item.metadata.name, namespace),
+            this.getSocket("services", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Ingress":
           result.ingresses.push(resource);
           result.sockets.push(
-            this.getSocket("ingresses", i.apiVersion, item.metadata.name, namespace),
+            this.getSocket("ingresses", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Secret":
@@ -282,7 +282,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           // the List, concatenating items from both.
           _.assignWith(
             result,
-            this.parseResources((i as IK8sList<IResource, {}>).items, namespace),
+            this.parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
             // Merge the list with the current result
             (prev, newArray) => prev.concat(newArray),
           );
