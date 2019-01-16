@@ -262,7 +262,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           break;
         case "Service":
           result.services.push(resource);
-          result.serviceRefs.push(ResourceRef.newFromResource(resource.item, namespace));
+          result.serviceRefs.push(new ResourceRef(resource.item, namespace));
           result.sockets.push(
             this.getSocket("services", i.apiVersion, item.metadata.name, namespace),
           );

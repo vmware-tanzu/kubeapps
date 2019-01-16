@@ -3,7 +3,7 @@ import ResourceRef from "./ResourceRef";
 import { IResource } from "./types";
 
 describe("ResourceRef", () => {
-  describe("newFromResource", () => {
+  describe("constructor", () => {
     it("it returns a ResourceRef with the correct details", () => {
       const r = {
         apiVersion: "apps/v1",
@@ -14,7 +14,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = ResourceRef.newFromResource(r);
+      const ref = new ResourceRef(r);
       expect(ref).toBeInstanceOf(ResourceRef);
       expect(ref).toEqual({
         apiVersion: r.apiVersion,
@@ -33,7 +33,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = ResourceRef.newFromResource(r);
+      const ref = new ResourceRef(r);
       expect(ref.namespace).toBe("default");
     });
 
@@ -46,7 +46,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = ResourceRef.newFromResource(r, "bar");
+      const ref = new ResourceRef(r, "bar");
       expect(ref.namespace).toBe("bar");
     });
   });
@@ -56,12 +56,20 @@ describe("ResourceRef", () => {
     beforeEach(() => {
       kubeGetResourceURLMock = Kube.getResourceURL = jest.fn();
     });
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
     it("calls Kube.getResourceURL with the correct arguments", () => {
-      const ref = new ResourceRef();
-      ref.apiVersion = "v1";
-      ref.kind = "Service";
-      ref.name = "foo";
-      ref.namespace = "bar";
+      const r = {
+        apiVersion: "v1",
+        kind: "Service",
+        metadata: {
+          name: "foo",
+          namespace: "bar",
+        },
+      } as IResource;
+
+      const ref = new ResourceRef(r);
 
       ref.getResourceURL();
       expect(kubeGetResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");

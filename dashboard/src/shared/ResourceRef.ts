@@ -1,24 +1,25 @@
 import { Kube } from "./Kube";
 import { IResource } from "./types";
 
+// ResourceRef defines a reference to a namespaced Kubernetes API Object and
+// provides helpers to retrieve the resource URL
 class ResourceRef {
-  // Creates a new ResourceRef instance from an existing IResource. Provide
-  // defaultNamespace to set if the IResource doesn't specify a namespace.
-  // TODO: add support for cluster-scoped resources, or add a ClusterResourceRef
-  // class.
-  public static newFromResource(r: IResource, defaultNamespace: string = "default") {
-    const ref = new ResourceRef();
-    ref.apiVersion = r.apiVersion;
-    ref.kind = r.kind;
-    ref.name = r.metadata.name;
-    ref.namespace = r.metadata.namespace || defaultNamespace;
-    return ref;
-  }
-
   public apiVersion: string;
   public kind: string;
   public name: string;
   public namespace: string;
+
+  // Creates a new ResourceRef instance from an existing IResource. Provide
+  // defaultNamespace to set if the IResource doesn't specify a namespace.
+  // TODO: add support for cluster-scoped resources, or add a ClusterResourceRef
+  // class.
+  constructor(r: IResource, defaultNamespace: string = "default") {
+    this.apiVersion = r.apiVersion;
+    this.kind = r.kind;
+    this.name = r.metadata.name;
+    this.namespace = r.metadata.namespace || defaultNamespace;
+    return this;
+  }
 
   // Gets a full resource URL for the referenced resource
   public getResourceURL() {
