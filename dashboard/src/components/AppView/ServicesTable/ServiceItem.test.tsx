@@ -10,6 +10,14 @@ const kubeItem: IKubeItem<IResource> = {
   isFetching: false,
 };
 
+describe("componentDidMount", () => {
+  it("calls getService", () => {
+    const mock = jest.fn();
+    shallow(<ServiceItem name="foo" getService={mock} />);
+    expect(mock).toHaveBeenCalled();
+  });
+});
+
 context("when fetching services", () => {
   [undefined, { isFetching: true }].forEach(service => {
     itBehavesLike("aLoadingComponent", {
