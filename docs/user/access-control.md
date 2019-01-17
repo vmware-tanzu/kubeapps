@@ -120,6 +120,9 @@ kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clust
 
 In order to list the configured App Repositories in Kubeapps, create and apply the
 `kubeapps-repositories-read` Role in the namespace Kubeapps is installed in.
+If you installed kubeapps with the helm-chart, this role will be present in the target
+namespace, named `{{ template "kubeapps.apprepository.fullname" . }}-repositories-read`,
+so that you simply need to bind users/groups to this role.
 
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
