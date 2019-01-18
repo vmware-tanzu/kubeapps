@@ -300,7 +300,7 @@ describe("AppViewComponent", () => {
       },
     };
     const services = [service];
-    const serviceRefs = [new ResourceRef(service.item as IResource)];
+    const serviceRefs = [new ResourceRef(service.item as IResource, "default")];
 
     wrapper.setState({ ingresses, services, serviceRefs });
 
