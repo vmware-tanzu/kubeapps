@@ -8,6 +8,7 @@ exports[`renders a deployment ready 1`] = `
   <LoadingWrapper
     loaded={true}
     size="small"
+    type={0}
   >
     <table>
       <thead>
@@ -53,6 +54,7 @@ exports[`when fetching deployments loading spinner matches the snapshot 1`] = `
   <LoadingWrapper
     loaded={false}
     size="small"
+    type={0}
   >
     <table>
       <thead>

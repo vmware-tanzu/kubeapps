@@ -10,6 +10,7 @@ exports[`should show a warning message if there are no classes available 1`] = `
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <p>
         Types of services available from all brokers
@@ -47,6 +48,7 @@ exports[`when there are classes available should show a Card item per class 1`] 
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <p>
         Types of services available from all brokers
@@ -120,6 +122,7 @@ exports[`while fetching classes loading spinner matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <p>
         Types of services available from all brokers
@@ -157,6 +160,7 @@ exports[`while fetching classes matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <p>
         Types of services available from all brokers

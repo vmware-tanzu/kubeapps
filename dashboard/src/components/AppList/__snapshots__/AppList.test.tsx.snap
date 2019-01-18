@@ -54,6 +54,7 @@ exports[`when apps available matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <div>
         <CardGrid>
@@ -95,6 +96,7 @@ exports[`when error present matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <ErrorSelector
         action="list"
@@ -130,6 +132,7 @@ exports[`when error present renders a generic error message 1`] = `
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <ErrorSelector
         action="list"
@@ -196,6 +199,7 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <MessageAlertPage
         header="Supercharge your Kubernetes cluster"
@@ -267,6 +271,7 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <div />
     </LoadingWrapper>
@@ -328,6 +333,7 @@ exports[`while fetching apps matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <div />
     </LoadingWrapper>

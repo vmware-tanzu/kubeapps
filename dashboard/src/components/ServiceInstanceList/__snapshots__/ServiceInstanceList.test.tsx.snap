@@ -55,6 +55,7 @@ exports[`when all the components are loaded shows a card list with the different
   </MessageAlertPage>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <main>
       <ServiceInstanceCardList
@@ -129,6 +130,7 @@ exports[`when all the components are loaded shows a forbiden error if it exists 
   </MessageAlertPage>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <main>
       <ErrorSelector
@@ -225,6 +227,7 @@ exports[`when all the components are loaded shows a warning to install no servic
   </MessageAlertPage>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <main>
       <ServiceBrokersNotFoundAlert />
@@ -288,6 +291,7 @@ exports[`when all the components are loaded shows a warning to install the Servi
   </MessageAlertPage>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <main>
       <ServiceCatalogNotInstalledAlert />
@@ -351,6 +355,7 @@ exports[`when all the components are loaded shows information of how to deploy a
   </MessageAlertPage>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <main>
       <MessageAlertPage
@@ -438,6 +443,7 @@ exports[`while fetching components loading spinner matches the snapshot 1`] = `
   </MessageAlertPage>
   <LoadingWrapper
     loaded={false}
+    type={0}
   >
     <main>
       <ServiceBrokersNotFoundAlert />
@@ -501,6 +507,7 @@ exports[`while fetching components matches the snapshot 1`] = `
   </MessageAlertPage>
   <LoadingWrapper
     loaded={false}
+    type={0}
   >
     <main>
       <ServiceBrokersNotFoundAlert />

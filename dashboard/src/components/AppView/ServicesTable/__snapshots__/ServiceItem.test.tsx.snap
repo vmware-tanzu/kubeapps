@@ -8,7 +8,7 @@ exports[`when fetching services loading spinner matches the snapshot 1`] = `
   >
     <LoadingWrapper
       loaded={false}
-      size="inline-small"
+      type={1}
     />
   </td>
 </tr>
@@ -22,7 +22,7 @@ exports[`when fetching services loading spinner matches the snapshot 2`] = `
   >
     <LoadingWrapper
       loaded={false}
-      size="inline-small"
+      type={1}
     />
   </td>
 </tr>

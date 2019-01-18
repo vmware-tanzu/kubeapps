@@ -8,6 +8,7 @@ exports[`when fetching ingresses or services loading spinner matches the snapsho
   <LoadingWrapper
     loaded={false}
     size="small"
+    type={0}
   >
     <table>
       <thead>
@@ -37,6 +38,7 @@ exports[`when fetching ingresses or services loading spinner matches the snapsho
   <LoadingWrapper
     loaded={false}
     size="small"
+    type={0}
   >
     <p>
       The current application does not expose a public URL.
@@ -53,6 +55,7 @@ exports[`when the app contain ingresses should show the table with available ing
   <LoadingWrapper
     loaded={true}
     size="small"
+    type={0}
   >
     <table>
       <thead>
@@ -96,6 +99,7 @@ exports[`when the app contain services and ingresses should show the table with 
   <LoadingWrapper
     loaded={true}
     size="small"
+    type={0}
   >
     <table>
       <thead>
@@ -152,6 +156,7 @@ exports[`when the app contain services should show the table if any service is a
   <LoadingWrapper
     loaded={true}
     size="small"
+    type={0}
   >
     <table>
       <thead>

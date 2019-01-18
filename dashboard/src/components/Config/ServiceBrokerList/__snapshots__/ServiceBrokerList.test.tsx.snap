@@ -11,6 +11,7 @@ exports[`if the service broker is not installed shows a warning message 1`] = `
   </PageHeader>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <ServiceCatalogNotInstalledAlert />
   </LoadingWrapper>
@@ -28,6 +29,7 @@ exports[`when all the brokers are loaded shows a forbiden (fetch) error if it ex
   </PageHeader>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <main>
       <ErrorSelector
@@ -125,6 +127,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
     </PageHeader>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <main>
         <ErrorSelector
@@ -350,6 +353,7 @@ exports[`when all the brokers are loaded shows a warning to install no service b
     </PageHeader>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <main>
         <ServiceBrokersNotFoundAlert>
@@ -443,6 +447,7 @@ exports[`when all the brokers are loaded when there are no errors, renders the b
   </PageHeader>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <main>
       <CardGrid
@@ -483,6 +488,7 @@ exports[`while fetching brokers loading spinner matches the snapshot 1`] = `
   </PageHeader>
   <LoadingWrapper
     loaded={false}
+    type={0}
   >
     <main>
       <ServiceBrokersNotFoundAlert />
@@ -502,6 +508,7 @@ exports[`while fetching brokers matches the snapshot 1`] = `
   </PageHeader>
   <LoadingWrapper
     loaded={false}
+    type={0}
   >
     <main>
       <ServiceBrokersNotFoundAlert />
