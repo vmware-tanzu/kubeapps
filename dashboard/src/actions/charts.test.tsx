@@ -1,3 +1,4 @@
+import axios from "axios";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
@@ -10,6 +11,8 @@ const mockStore = configureMockStore([thunk]);
 let store: any;
 const fetchOrig = window.fetch;
 let fetchMock: jest.Mock;
+const axiosGetOrig = axios.get;
+let axiosGetMock: jest.Mock;
 let response: any;
 
 beforeEach(() => {
@@ -23,10 +26,15 @@ beforeEach(() => {
     };
   });
   window.fetch = fetchMock;
+  axiosGetMock = jest.fn(() => {
+    return { data: response };
+  });
+  axios.get = axiosGetMock;
 });
 
 afterEach(() => {
   window.fetch = fetchOrig;
+  axios.get = axiosGetOrig;
 });
 
 describe("fetchCharts", () => {
@@ -138,5 +146,19 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(fetchMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");
+  });
+});
+
+describe("getChartUpdates", () => {
+  it("gets a chart latest version", async () => {
+    response = { data: { id: "foo" } };
+    const expectedActions = [
+      { type: getType(actions.charts.receiveChartUpdates), payload: response.data },
+    ];
+    await store.dispatch(actions.charts.getChartUpdates("foo", "1.0.0", "0.1.0"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      "api/chartsvc/v1/charts?name=foo&version=1.0.0&appversion=0.1.0",
+    );
   });
 });

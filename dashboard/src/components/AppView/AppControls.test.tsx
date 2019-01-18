@@ -148,4 +148,30 @@ context("when the application has been already deleted", () => {
     confirm.props().onConfirm(); // Simulate confirmation
     expect(deleteApp).toHaveBeenCalledWith(true);
   });
+
+  it("should not show the Upgrade button", () => {
+    const deleteApp = jest.fn(() => false);
+    const wrapper = shallow(<AppControls {...props} deleteApp={deleteApp} />);
+    const buttons = wrapper.find("button");
+    expect(buttons.length).toBe(1);
+    expect(buttons.text()).toBe("Purge");
+  });
+});
+
+context("when a new version is available", () => {
+  const props = {
+    app: new hapi.release.Release({
+      name: "name",
+      namespace: "my-ns",
+      chart: { metadata: { version: "0.0.1" } },
+    }),
+    latest: "1.0.0",
+    deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
+  };
+  it("should show a tooltip to notify the new version", () => {
+    const wrapper = mount(<AppControls {...props} />);
+    const tooltip = wrapper.find(".tooltiptext");
+    expect(tooltip).toExist();
+    expect(tooltip.text()).toContain("New version (1.0.0) found");
+  });
 });

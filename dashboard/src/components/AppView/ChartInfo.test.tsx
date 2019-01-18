@@ -1,6 +1,8 @@
 import { shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 
+import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";
 import ChartInfo from "./ChartInfo";
 
@@ -20,8 +22,59 @@ it("renders a app item", () => {
           name: "foo",
         } as hapi.release.Release
       }
+      latest={""}
     />,
   );
   expect(wrapper.find(".ChartInfo").exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
+});
+
+context("when information about the latest chart is available", () => {
+  it("renders an up to date message if the latest version is not newer", () => {
+    const wrapper = shallow(
+      <ChartInfo
+        app={
+          {
+            chart: {
+              metadata: {
+                appVersion: "0.0.1",
+                description: "test chart",
+                icon: "icon.png",
+                version: "1.0.0",
+              },
+            },
+            name: "foo",
+          } as hapi.release.Release
+        }
+        latest={"1.0.0"}
+      />,
+    );
+    expect(wrapper.html()).toContain("Up to date");
+  });
+  it("renders an new version found message if the latest version is newer", () => {
+    const wrapper = shallow(
+      <ChartInfo
+        app={
+          {
+            chart: {
+              metadata: {
+                appVersion: "0.0.1",
+                description: "test chart",
+                icon: "icon.png",
+                version: "0.0.1",
+              },
+            },
+            name: "foo",
+          } as hapi.release.Release
+        }
+        latest={"1.0.0"}
+      />,
+    );
+    expect(
+      wrapper
+        .find(Link)
+        .children()
+        .text(),
+    ).toContain("New version (1.0.0) available");
+  });
 });

@@ -1,0 +1,67 @@
+.upgrade-button {
+  margin-right: 0.4em;
+}
+
+/* Tooltip container */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #f1f1f1;
+  color: black;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 120%;
+  left: 50%;
+  margin-left: -60px;
+  box-shadow: 0 12px 10px -7px rgba(0, 0, 0, 0.2);
+
+  /* Fade in tooltip - takes 1 second to go from 0% to 100% opac: */
+  opacity: 0;
+  transition: opacity 0.6s;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltip .tooltiptext::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #f1f1f1 transparent transparent transparent;
+}
+
+.notification {
+  position: absolute;
+  right: 15%;
+  top: 22%;
+}
+
+.upgrade-text {
+  padding-right: 1.25em;
+  color: #008145;
+}
+
+.button:hover {
+  .upgrade-text {
+    color: inherit;
+  }
+  .notification {
+    fill: transparent;
+  }
+}

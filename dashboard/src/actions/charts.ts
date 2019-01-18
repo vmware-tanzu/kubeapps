@@ -38,6 +38,14 @@ export const selectValues = createAction("SELECT_VALUES", resolve => {
   return (values: string) => resolve(values);
 });
 
+export const receiveChartUpdates = createAction("RECEIVE_CHART_UPDATES", resolve => {
+  return (chartUpdates: IChart[]) => resolve(chartUpdates);
+});
+
+export const errorChartUpdates = createAction("ERROR_CHART_UPDATES", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 const allActions = [
   requestCharts,
   errorChart,
@@ -48,6 +56,8 @@ const allActions = [
   selectReadme,
   errorReadme,
   selectValues,
+  receiveChartUpdates,
+  errorChartUpdates,
 ];
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
@@ -153,6 +163,21 @@ export function getChartValues(
       dispatch(selectValues(values));
     } catch (e) {
       dispatch(selectValues(""));
+    }
+  };
+}
+
+export function getChartUpdates(
+  name: string,
+  version: string,
+  appVersion: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
+    try {
+      const chartUpdates = await Chart.checkUpdates(name, version, appVersion);
+      dispatch(receiveChartUpdates(chartUpdates));
+    } catch (e) {
+      errorChartUpdates(e);
     }
   };
 }

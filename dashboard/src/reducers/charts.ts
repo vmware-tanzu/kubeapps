@@ -10,6 +10,7 @@ const initialState: IChartState = {
   selected: {
     versions: [],
   },
+  latests: {},
 };
 
 const chartsSelectedReducer = (
@@ -75,6 +76,13 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectValues):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
+    case getType(actions.charts.receiveChartUpdates):
+      if (action.payload.length > 0) {
+        return {
+          ...state,
+          latests: { ...state.latests, [`${action.payload[0].attributes.name}`]: action.payload },
+        };
+      }
     default:
   }
   return state;

@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IChart, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
@@ -42,6 +42,8 @@ describe("AppViewComponent", () => {
     getApp: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
+    checkUpdates: jest.fn(),
+    latest: undefined,
   };
 
   const resources = {
@@ -168,6 +170,23 @@ describe("AppViewComponent", () => {
       expect(() => {
         wrapper.setProps(validProps);
       }).not.toThrow(YAMLException);
+    });
+
+    it("supports manifests check for updates", () => {
+      const checkUpdates = jest.fn();
+      const chart = {
+        metadata: {
+          name: "foo",
+          version: "1.0.0",
+          appVersion: "0.1.0",
+        },
+      };
+      validProps.app.chart = chart;
+      const wrapper = shallow(<AppViewComponent {...validProps} checkUpdates={checkUpdates} />);
+      wrapper.setProps(validProps);
+
+      expect(checkUpdates.mock.calls.length).toBe(1);
+      expect(checkUpdates.mock.calls[0]).toEqual(["foo", "1.0.0", "0.1.0"]);
     });
   });
 
@@ -363,5 +382,26 @@ describe("AppViewComponent", () => {
       services: [{ isFetching: true, item: resources.service }],
       otherResources: [obj],
     });
+  });
+
+  it("forwards the latest version to AppControls and ChartInfo elements", () => {
+    const chart = {
+      metadata: {
+        name: "foo",
+        version: "1.0.0",
+        appVersion: "0.1.0",
+      },
+    };
+    validProps.app.chart = chart;
+    const wrapper = shallow(
+      <AppViewComponent
+        {...validProps}
+        latest={[
+          { relationships: { latestChartVersion: { data: { version: "2.0.0" } } } } as IChart,
+        ]}
+      />,
+    );
+    expect(wrapper.find(AppControls).prop("latest")).toBe("2.0.0");
+    expect(wrapper.find(ChartInfo).prop("latest")).toBe("2.0.0");
   });
 });
