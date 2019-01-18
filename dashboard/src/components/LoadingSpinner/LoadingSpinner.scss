@@ -22,6 +22,14 @@ $spinner-color: #00437b;
   &__bounce2 {
     animation-delay: -1s;
   }
+
+  // Different styles/sizes
+  &--inline-small {
+    margin: 0 auto;
+    height: 15px;
+    width: 15px;
+    top: 2px;
+  }
 }
 
 @keyframes spinner-bounce {

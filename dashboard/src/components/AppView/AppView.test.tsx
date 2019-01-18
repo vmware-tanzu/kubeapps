@@ -4,6 +4,7 @@ import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
+import ResourceRef from "../../shared/ResourceRef";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
@@ -42,6 +43,7 @@ describe("AppViewComponent", () => {
     getApp: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
+    receiveResource: jest.fn(),
   };
 
   const resources = {
@@ -289,6 +291,8 @@ describe("AppViewComponent", () => {
     const service = {
       isFetching: false,
       item: {
+        apiVersion: "v1",
+        kind: "Service",
         metadata: {
           name: "foo",
         },
@@ -296,8 +300,9 @@ describe("AppViewComponent", () => {
       },
     };
     const services = [service];
+    const serviceRefs = [new ResourceRef(service.item as IResource, "default")];
 
-    wrapper.setState({ ingresses, services });
+    wrapper.setState({ ingresses, services, serviceRefs });
 
     const accessURLTable = wrapper.find(AccessURLTable);
     expect(accessURLTable).toExist();
@@ -305,7 +310,7 @@ describe("AppViewComponent", () => {
 
     const svcTable = wrapper.find(ServiceTable);
     expect(svcTable).toExist();
-    expect(svcTable.prop("services")).toEqual([service]);
+    expect(svcTable.prop("serviceRefs")).toEqual(serviceRefs);
   });
 
   it("forwards other resources", () => {

@@ -5,6 +5,8 @@ import * as React from "react";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
+import { Kube } from "../../shared/Kube";
+import ResourceRef from "../../shared/ResourceRef";
 import { IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
@@ -28,11 +30,14 @@ export interface IAppViewProps {
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
+  // TODO: remove once WebSockets are moved to Redux store (#882)
+  receiveResource: (p: { key: string; resource: IResource }) => void;
 }
 
 interface IAppViewState {
   deployments: Array<IKubeItem<IResource>>;
   services: Array<IKubeItem<IResource>>;
+  serviceRefs: ResourceRef[];
   ingresses: Array<IKubeItem<IResource>>;
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
@@ -45,6 +50,7 @@ interface IAppViewState {
 interface IPartialAppViewState {
   deployments: Array<IKubeItem<IResource>>;
   services: Array<IKubeItem<IResource>>;
+  serviceRefs: ResourceRef[];
   ingresses: Array<IKubeItem<IResource>>;
   otherResources: IResource[];
   secretNames: string[];
@@ -73,6 +79,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     ingresses: [],
     otherResources: [],
     services: [],
+    serviceRefs: [],
     secretNames: [],
     sockets: [],
   };
@@ -129,23 +136,39 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const dropByName = (array: Array<IKubeItem<IResource>>) => {
       return _.dropWhile(array, r => r.item && r.item.metadata.name === resource.metadata.name);
     };
+    let apiResource: string;
     switch (resource.kind) {
       case "Deployment":
         const newDeps = dropByName(this.state.deployments);
         newDeps.push(newItem);
         this.setState({ deployments: newDeps });
+        apiResource = "deployments";
         break;
       case "Service":
         const newSvcs = dropByName(this.state.services);
         newSvcs.push(newItem);
         this.setState({ services: newSvcs });
+        apiResource = "services";
         break;
       case "Ingress":
         const newIngresses = dropByName(this.state.ingresses);
         newIngresses.push(newItem);
         this.setState({ ingresses: newIngresses });
+        apiResource = "ingresses";
         break;
+      default:
+        // Unknown resource, ignore
+        return;
     }
+    // Construct the key used for the store
+    const resourceKey = Kube.getResourceURL(
+      resource.apiVersion,
+      apiResource,
+      resource.metadata.namespace,
+      resource.metadata.name,
+    );
+    // TODO: this is temporary before we move WebSockets to the Redux store (#882)
+    this.props.receiveResource({ key: resourceKey, resource });
   }
 
   public render() {
@@ -166,7 +189,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
-    const { services, ingresses, deployments, secretNames, otherResources } = this.state;
+    const {
+      services,
+      serviceRefs,
+      ingresses,
+      deployments,
+      secretNames,
+      otherResources,
+    } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -197,7 +227,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <SecretTable namespace={app.namespace} secretNames={secretNames} />
                 <DeploymentsTable deployments={deployments} />
-                <ServicesTable services={services} />
+                <ServicesTable serviceRefs={serviceRefs} />
                 <OtherResourcesTable otherResources={otherResources} />
               </div>
             </div>
@@ -209,13 +239,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   private parseResources(
     resources: Array<IResource | IK8sList<IResource, {}>>,
-    namespace: string,
+    releaseNamespace: string,
   ): IPartialAppViewState {
     const result: IPartialAppViewState = {
       deployments: [],
       ingresses: [],
       otherResources: [],
       services: [],
+      serviceRefs: [],
       secretNames: [],
       sockets: [],
     };
@@ -226,19 +257,20 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         case "Deployment":
           result.deployments.push(resource);
           result.sockets.push(
-            this.getSocket("deployments", i.apiVersion, item.metadata.name, namespace),
+            this.getSocket("deployments", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Service":
           result.services.push(resource);
+          result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
-            this.getSocket("services", i.apiVersion, item.metadata.name, namespace),
+            this.getSocket("services", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Ingress":
           result.ingresses.push(resource);
           result.sockets.push(
-            this.getSocket("ingresses", i.apiVersion, item.metadata.name, namespace),
+            this.getSocket("ingresses", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Secret":
@@ -250,7 +282,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           // the List, concatenating items from both.
           _.assignWith(
             result,
-            this.parseResources((i as IK8sList<IResource, {}>).items, namespace),
+            this.parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
             // Merge the list with the current result
             (prev, newArray) => prev.concat(newArray),
           );
