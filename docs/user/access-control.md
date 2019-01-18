@@ -118,28 +118,14 @@ kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clust
 
 #### Read access to App Repositories
 
-In order to list the configured App Repositories in Kubeapps, create and apply the
-`kubeapps-repositories-read` Role in the namespace Kubeapps is installed in.
-If you installed kubeapps with the helm-chart, this role will be present in the target
-namespace, named `{{ template "kubeapps.apprepository.fullname" . }}-repositories-read`,
-so that you simply need to bind users/groups to this role.
-
-```
-export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
-kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
-```
+In order to list the configured App Repositories in Kubeapps, [bind users/groups Subjects](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#command-line-utilities) to the `$RELEASE_NAME-repositories-read` role in the namespace Kubeapps was installed into by the helm chart.
 
 #### Write access to App Repositories
 
-In order to create and refresh App Repositories in Kubeapps, create and apply the
-`kubeapps-repositories-write` Role in the namespace Kubeapps is installed in.
+Likewise to the read access bind users/group Subjects to the
+`$RELEASE_NAME-repositories-write` Role in the namespace Kubeapps is installed in
+for users to create and refresh App Repositories in Kubeapps.
 
-```
-export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-write.yaml
-kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write --role=kubeapps-repositories-write --serviceaccount default:example
-```
 
 ### Assigning roles across multiple namespaces
 
