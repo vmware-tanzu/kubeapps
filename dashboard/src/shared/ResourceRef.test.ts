@@ -33,8 +33,20 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r);
+      const ref = new ResourceRef(r, "default");
       expect(ref.namespace).toBe("default");
+    });
+
+    it("throws an error if namespace not in the resource or default namespace not set", () => {
+      const r = {
+        apiVersion: "apps/v1",
+        kind: "Deployment",
+        metadata: {
+          name: "foo",
+        },
+      } as IResource;
+
+      expect(() => new ResourceRef(r)).toThrowError();
     });
 
     it("allows the default namespace to be provided", () => {

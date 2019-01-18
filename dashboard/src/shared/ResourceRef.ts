@@ -13,11 +13,15 @@ class ResourceRef {
   // defaultNamespace to set if the IResource doesn't specify a namespace.
   // TODO: add support for cluster-scoped resources, or add a ClusterResourceRef
   // class.
-  constructor(r: IResource, defaultNamespace: string = "default") {
+  constructor(r: IResource, defaultNamespace?: string) {
     this.apiVersion = r.apiVersion;
     this.kind = r.kind;
     this.name = r.metadata.name;
-    this.namespace = r.metadata.namespace || defaultNamespace;
+    const namespace = r.metadata.namespace || defaultNamespace;
+    if (!namespace) {
+      throw new Error(`Namespace missing for resource ${this.name}, define a default namespace`);
+    }
+    this.namespace = namespace;
     return this;
   }
 
