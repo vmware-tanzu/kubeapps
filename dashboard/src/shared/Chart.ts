@@ -24,7 +24,7 @@ export default class Chart {
     return true;
   }
 
-  public static async checkUpdates(name: string, version: string, appVersion: string) {
+  public static async listWithFilters(name: string, version: string, appVersion: string) {
     const url = `${
       Chart.APIEndpoint
     }/charts?name=${name}&version=${version}&appversion=${appVersion}`;

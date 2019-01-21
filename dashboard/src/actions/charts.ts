@@ -1,9 +1,17 @@
 import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
+import * as semver from "semver";
 import { ActionType, createAction } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
-import { IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
+import {
+  IChart,
+  IChartUpdate,
+  IChartUpdatesList,
+  IChartVersion,
+  IStoreState,
+  NotFoundError,
+} from "../shared/types";
 import * as url from "../shared/url";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
@@ -39,7 +47,7 @@ export const selectValues = createAction("SELECT_VALUES", resolve => {
 });
 
 export const receiveChartUpdates = createAction("RECEIVE_CHART_UPDATES", resolve => {
-  return (chartUpdates: IChart[]) => resolve(chartUpdates);
+  return (chartUpdates: IChartUpdatesList) => resolve(chartUpdates);
 });
 
 export const errorChartUpdates = createAction("ERROR_CHART_UPDATES", resolve => {
@@ -167,15 +175,25 @@ export function getChartValues(
   };
 }
 
-export function getChartUpdates(
+export function listChartsWithFilters(
   name: string,
   version: string,
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const chartUpdates = await Chart.checkUpdates(name, version, appVersion);
-      dispatch(receiveChartUpdates(chartUpdates));
+      const chartUpdates = await Chart.listWithFilters(name, version, appVersion);
+      const updates: IChartUpdate[] = [];
+      chartUpdates.forEach(c => {
+        // semver.compare returns -1 if v2 is bigger than v1
+        if (semver.compare(version, c.relationships.latestChartVersion.data.version) < 0) {
+          updates.push({
+            latestVersion: c.relationships.latestChartVersion.data.version,
+            repository: c.attributes.repo,
+          });
+        }
+      });
+      dispatch(receiveChartUpdates({ name, updates }));
     } catch (e) {
       errorChartUpdates(e);
     }

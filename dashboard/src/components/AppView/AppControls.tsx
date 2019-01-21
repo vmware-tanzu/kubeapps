@@ -2,6 +2,7 @@ import * as React from "react";
 import { ArrowUpCircle } from "react-feather";
 import { Redirect } from "react-router";
 
+import { IChartUpdate } from "shared/types";
 import { hapi } from "../../shared/hapi/release";
 import ConfirmDialog from "../ConfirmDialog";
 import LoadingWrapper from "../LoadingWrapper";
@@ -9,7 +10,7 @@ import "./AppControls.css";
 
 interface IAppControlsProps {
   app: hapi.release.Release;
-  latest?: string;
+  updates?: IChartUpdate[];
   deleteApp: (purge: boolean) => Promise<boolean>;
 }
 
@@ -105,14 +106,8 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   private renderUpgradeButton = () => {
-    const { app, latest } = this.props;
+    const { app, updates } = this.props;
     const deleted = app.info && app.info.deleted;
-    const isOutdated =
-      app.chart &&
-      app.chart.metadata &&
-      app.chart.metadata.version &&
-      latest &&
-      app.chart.metadata.version !== latest;
     let upgradeButton = null;
     // If the app has been deleted hide the upgrade button
     if (!deleted) {
@@ -121,15 +116,17 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
           Upgrade
         </button>
       );
-      // If the app is outdated highligh the upgrade button
-      if (isOutdated) {
+      // If the app is outdated highlight the upgrade button
+      if (updates && updates.length > 0) {
         upgradeButton = (
           <div className="tooltip">
             <button className="button upgrade-button" onClick={this.handleUpgradeClick}>
               <span className="upgrade-text">Upgrade</span>
-              <ArrowUpCircle color="white" size={25} fill="#20cb15" className="notification" />
+              <ArrowUpCircle color="white" size={25} fill="#82C341" className="notification" />
             </button>
-            <span className="tooltiptext tooltip-top">New version ({latest}) found!</span>
+            <span className="tooltiptext tooltip-top">
+              New version(s) ({updates.map(u => u.latestVersion).join(", ")}) found!
+            </span>
           </div>
         );
       }

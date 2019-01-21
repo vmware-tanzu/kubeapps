@@ -9,9 +9,7 @@ import { NotFoundError } from "../shared/types";
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
-const fetchOrig = window.fetch;
 let fetchMock: jest.Mock;
-const axiosGetOrig = axios.get;
 let axiosGetMock: jest.Mock;
 let response: any;
 
@@ -33,8 +31,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  window.fetch = fetchOrig;
-  axios.get = axiosGetOrig;
+  jest.resetAllMocks();
 });
 
 describe("fetchCharts", () => {
@@ -151,11 +148,24 @@ describe("fetchChartVersionsAndSelectVersion", () => {
 
 describe("getChartUpdates", () => {
   it("gets a chart latest version", async () => {
-    response = { data: { id: "foo" } };
+    response = {
+      data: [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: { latestChartVersion: { data: { version: "1.1.0" } } },
+        },
+      ],
+    };
     const expectedActions = [
-      { type: getType(actions.charts.receiveChartUpdates), payload: response.data },
+      {
+        type: getType(actions.charts.receiveChartUpdates),
+        payload: {
+          name: "foo",
+          updates: [{ latestVersion: "1.1.0", repository: { name: "bar" } }],
+        },
+      },
     ];
-    await store.dispatch(actions.charts.getChartUpdates("foo", "1.0.0", "0.1.0"));
+    await store.dispatch(actions.charts.listChartsWithFilters("foo", "1.0.0", "0.1.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       "api/chartsvc/v1/charts?name=foo&version=1.0.0&appversion=0.1.0",

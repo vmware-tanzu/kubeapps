@@ -1,12 +1,11 @@
 import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import * as React from "react";
-import * as semver from "semver";
 
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
-import { IChart, IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
+import { IChartUpdate, IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -29,8 +28,8 @@ export interface IAppViewProps {
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
-  checkUpdates: (name: string, version: string, appVersion: string) => void;
-  latest: IChart[] | undefined;
+  listChartsWithFilters: (name: string, version: string, appVersion: string) => void;
+  updates: IChartUpdate[] | undefined;
 }
 
 interface IAppViewState {
@@ -86,7 +85,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { releaseName, getApp, namespace, latest } = this.props;
+    const { releaseName, getApp, namespace, updates } = this.props;
     if (nextProps.namespace !== namespace) {
       getApp(releaseName, nextProps.namespace);
       return;
@@ -106,9 +105,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       newApp.chart.metadata.name &&
       newApp.chart.metadata.version &&
       newApp.chart.metadata.appVersion &&
-      !latest
+      !updates
     ) {
-      this.props.checkUpdates(
+      this.props.listChartsWithFilters(
         newApp.chart.metadata.name,
         newApp.chart.metadata.version,
         newApp.chart.metadata.appVersion,
@@ -183,8 +182,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public appInfo() {
-    const { app } = this.props;
-    const latest = this.getLatest();
+    const { app, updates } = this.props;
     const { services, ingresses, deployments, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
@@ -201,7 +199,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} latest={latest} />
+                <ChartInfo app={app} updates={updates} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -209,7 +207,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <DeploymentStatus deployments={deployments} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app} latest={latest} deleteApp={this.deleteApp} />
+                    <AppControls app={app} updates={updates} deleteApp={this.deleteApp} />
                   </div>
                 </div>
                 <AccessURLTable services={services} ingresses={ingresses} />
@@ -308,23 +306,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   private deleteApp = (purge: boolean) => {
     return this.props.deleteApp(this.props.releaseName, this.props.namespace, purge);
   };
-
-  private getLatest() {
-    const { app } = this.props;
-    if (app.chart && app.chart.metadata && app.chart.metadata.version) {
-      let latest = app.chart.metadata.version;
-      if (this.props.latest) {
-        this.props.latest.forEach(l => {
-          // semver.compare returns -1 if v2 is bigger than v1
-          if (semver.compare(latest, l.relationships.latestChartVersion.data.version) < 0) {
-            latest = l.relationships.latestChartVersion.data.version;
-          }
-        });
-      }
-      return latest;
-    }
-    return;
-  }
 }
 
 export default AppView;

@@ -22,15 +22,14 @@ it("renders a app item", () => {
           name: "foo",
         } as hapi.release.Release
       }
-      latest={""}
     />,
   );
   expect(wrapper.find(".ChartInfo").exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
 });
 
-context("when information about the latest chart is available", () => {
-  it("renders an up to date message if the latest version is not newer", () => {
+context("when information about updates is available", () => {
+  it("renders an up to date message if there are no updates", () => {
     const wrapper = shallow(
       <ChartInfo
         app={
@@ -46,7 +45,7 @@ context("when information about the latest chart is available", () => {
             name: "foo",
           } as hapi.release.Release
         }
-        latest={"1.0.0"}
+        updates={[]}
       />,
     );
     expect(wrapper.html()).toContain("Up to date");
@@ -67,7 +66,7 @@ context("when information about the latest chart is available", () => {
             name: "foo",
           } as hapi.release.Release
         }
-        latest={"1.0.0"}
+        updates={[{ latestVersion: "1.0.0", repository: { name: "", url: "" } }]}
       />,
     );
     expect(
@@ -75,6 +74,6 @@ context("when information about the latest chart is available", () => {
         .find(Link)
         .children()
         .text(),
-    ).toContain("New version (1.0.0) available");
+    ).toContain("1.0.0 available");
   });
 });

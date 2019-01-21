@@ -24,7 +24,7 @@
   margin-left: -60px;
   box-shadow: 0 12px 10px -7px rgba(0, 0, 0, 0.2);
 
-  /* Fade in tooltip - takes 1 second to go from 0% to 100% opac: */
+  /* Fade in tooltip - takes 0.6s to go from 0% to 100% opac: */
   opacity: 0;
   transition: opacity 0.6s;
 }

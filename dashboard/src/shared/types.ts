@@ -81,7 +81,17 @@ export interface IChartState {
     values?: string;
   };
   items: IChart[];
-  latests: { [chart: string]: IChart[] };
+  updates: { [chart: string]: IChartUpdate[] };
+}
+
+export interface IChartUpdatesList {
+  name: string;
+  updates: IChartUpdate[];
+}
+
+export interface IChartUpdate {
+  latestVersion: string;
+  repository: IRepo;
 }
 
 export interface IDeployment {

@@ -165,13 +165,13 @@ context("when a new version is available", () => {
       namespace: "my-ns",
       chart: { metadata: { version: "0.0.1" } },
     }),
-    latest: "1.0.0",
+    updates: [{ repository: { name: "foo", url: "" }, latestVersion: "1.0.0" }],
     deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
   };
   it("should show a tooltip to notify the new version", () => {
     const wrapper = mount(<AppControls {...props} />);
     const tooltip = wrapper.find(".tooltiptext");
     expect(tooltip).toExist();
-    expect(tooltip.text()).toContain("New version (1.0.0) found");
+    expect(tooltip.text()).toContain("New version(s) (1.0.0) found");
   });
 });

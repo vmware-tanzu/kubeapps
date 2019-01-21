@@ -16,14 +16,14 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params } }: IRouteProps) {
-  let latest;
+  let updates;
   if (
     apps.selected &&
     apps.selected.chart &&
     apps.selected.chart.metadata &&
     apps.selected.chart.metadata.name
   ) {
-    latest = charts.latests[apps.selected.chart.metadata.name];
+    updates = charts.updates[apps.selected.chart.metadata.name];
   }
   return {
     app: apps.selected,
@@ -32,7 +32,7 @@ function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params 
     error: apps.error,
     namespace: params.namespace,
     releaseName: params.releaseName,
-    latest,
+    updates,
   };
 }
 
@@ -41,8 +41,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     deleteApp: (releaseName: string, ns: string, purge: boolean) =>
       dispatch(actions.apps.deleteApp(releaseName, ns, purge)),
     getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
-    checkUpdates: (name: string, version: string, appVersion: string) =>
-      dispatch(actions.charts.getChartUpdates(name, version, appVersion)),
+    listChartsWithFilters: (name: string, version: string, appVersion: string) =>
+      dispatch(actions.charts.listChartsWithFilters(name, version, appVersion)),
   };
 }
 
