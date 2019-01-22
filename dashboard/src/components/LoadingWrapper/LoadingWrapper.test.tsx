@@ -1,7 +1,8 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import LoadingWrapper from ".";
+import LoadingWrapper, { LoaderType } from ".";
 import LoadingSpinner from "../LoadingSpinner";
+import LoadingPlaceholder from "./LoadingPlaceholder";
 
 let props = {} as any;
 
@@ -58,5 +59,13 @@ describe("when loaded is true", () => {
   it("renders it wrapped component", () => {
     const wrapper = renderComponent(props);
     expect(wrapper.find(ChildrenComponent)).toExist();
+  });
+});
+
+describe("loader types", () => {
+  it("renders the LoadingPlaceholder type when specified", () => {
+    const wrapper = renderComponent({ type: LoaderType.Placeholder });
+    expect(wrapper).toMatchSnapshot();
+    expect(wrapper.find(LoadingPlaceholder)).toExist();
   });
 });

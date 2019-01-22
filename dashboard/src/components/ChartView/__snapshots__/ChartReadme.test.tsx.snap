@@ -3,5 +3,6 @@
 exports[`when readme is not present loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
   loaded={false}
+  type={0}
 />
 `;

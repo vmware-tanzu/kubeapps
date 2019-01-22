@@ -7,6 +7,7 @@ exports[`when all the components are loaded shows a deprovision error if it exis
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <div
         className="container"
@@ -83,6 +84,7 @@ exports[`when all the components are loaded shows a fetch error if it exists 1`]
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <div
         className="container"
@@ -351,6 +353,7 @@ exports[`when all the components are loaded when an instance is available should
     <main>
       <LoadingWrapper
         loaded={true}
+        type={0}
       >
         <div
           className="container"
@@ -1286,6 +1289,7 @@ exports[`when all the components are loaded when an instance is available should
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <div
         className="container"
@@ -1531,6 +1535,7 @@ exports[`while fetching components loading spinner matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <div
         className="container"
@@ -1547,6 +1552,7 @@ exports[`while fetching components matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <div
         className="container"

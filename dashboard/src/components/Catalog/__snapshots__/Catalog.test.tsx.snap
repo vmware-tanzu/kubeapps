@@ -18,6 +18,7 @@ exports[`renderization when charts available should render the list of charts 1`
   </PageHeader>
   <LoadingWrapper
     loaded={true}
+    type={0}
   >
     <CardGrid>
       <CatalogItem
@@ -65,6 +66,7 @@ exports[`renderization when fetching apps loading spinner matches the snapshot 1
   </PageHeader>
   <LoadingWrapper
     loaded={false}
+    type={0}
   >
     <CardGrid />
   </LoadingWrapper>
