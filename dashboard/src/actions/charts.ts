@@ -7,7 +7,7 @@ import Chart from "../shared/Chart";
 import {
   IChart,
   IChartUpdate,
-  IChartUpdatesList,
+  IChartUpdateCheck,
   IChartVersion,
   IStoreState,
   NotFoundError,
@@ -46,8 +46,8 @@ export const selectValues = createAction("SELECT_VALUES", resolve => {
   return (values: string) => resolve(values);
 });
 
-export const receiveChartUpdates = createAction("RECEIVE_CHART_UPDATES", resolve => {
-  return (chartUpdates: IChartUpdatesList) => resolve(chartUpdates);
+export const receiveChartUpdate = createAction("RECEIVE_CHART_UPDATES", resolve => {
+  return (chartUpdate: IChartUpdateCheck) => resolve(chartUpdate);
 });
 
 export const errorChartUpdates = createAction("ERROR_CHART_UPDATES", resolve => {
@@ -64,7 +64,7 @@ const allActions = [
   selectReadme,
   errorReadme,
   selectValues,
-  receiveChartUpdates,
+  receiveChartUpdate,
   errorChartUpdates,
 ];
 
@@ -175,25 +175,38 @@ export function getChartValues(
   };
 }
 
-export function listChartsWithFilters(
+export function getChartUpdates(
   name: string,
   version: string,
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const chartUpdates = await Chart.listWithFilters(name, version, appVersion);
-      const updates: IChartUpdate[] = [];
-      chartUpdates.forEach(c => {
-        // semver.compare returns -1 if v2 is bigger than v1
-        if (semver.compare(version, c.relationships.latestChartVersion.data.version) < 0) {
-          updates.push({
-            latestVersion: c.relationships.latestChartVersion.data.version,
-            repository: c.attributes.repo,
-          });
+      const chartsInfo = await Chart.listWithFilters(name, version, appVersion);
+      let update: IChartUpdate = {
+        checked: true,
+        repository: { name: "", url: "" },
+        latestVersion: "",
+      };
+      chartsInfo.forEach(c => {
+        const chartLatestVersion = c.relationships.latestChartVersion.data.version;
+        // semver.compare(v1, v2) returns -1 if v2 is bigger than v1
+        if (semver.compare(version, chartLatestVersion) < 0) {
+          if (
+            update.latestVersion &&
+            semver.compare(update.latestVersion, chartLatestVersion) >= 0
+          ) {
+            // The current update is newer than the chart version, do nothing
+          } else {
+            update = {
+              checked: true,
+              latestVersion: chartLatestVersion,
+              repository: c.attributes.repo,
+            };
+          }
         }
       });
-      dispatch(receiveChartUpdates({ name, updates }));
+      dispatch(receiveChartUpdate({ name, update }));
     } catch (e) {
       errorChartUpdates(e);
     }

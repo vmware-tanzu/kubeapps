@@ -4,26 +4,26 @@ import * as React from "react";
 
 import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";
+import { IChartUpdate } from "shared/types";
 import ChartInfo from "./ChartInfo";
 
+const defaultProps = {
+  app: {
+    chart: {
+      metadata: {
+        appVersion: "0.0.1",
+        description: "test chart",
+        icon: "icon.png",
+        version: "1.0.0",
+      },
+    },
+    name: "foo",
+  } as hapi.release.Release,
+  update: { checked: false } as IChartUpdate,
+};
+
 it("renders a app item", () => {
-  const wrapper = shallow(
-    <ChartInfo
-      app={
-        {
-          chart: {
-            metadata: {
-              appVersion: "0.0.1",
-              description: "test chart",
-              icon: "icon.png",
-              version: "1.0.0",
-            },
-          },
-          name: "foo",
-        } as hapi.release.Release
-      }
-    />,
-  );
+  const wrapper = shallow(<ChartInfo {...defaultProps} />);
   expect(wrapper.find(".ChartInfo").exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
 });
@@ -31,42 +31,15 @@ it("renders a app item", () => {
 context("when information about updates is available", () => {
   it("renders an up to date message if there are no updates", () => {
     const wrapper = shallow(
-      <ChartInfo
-        app={
-          {
-            chart: {
-              metadata: {
-                appVersion: "0.0.1",
-                description: "test chart",
-                icon: "icon.png",
-                version: "1.0.0",
-              },
-            },
-            name: "foo",
-          } as hapi.release.Release
-        }
-        updates={[]}
-      />,
+      <ChartInfo {...defaultProps} update={{ checked: true } as IChartUpdate} />,
     );
     expect(wrapper.html()).toContain("Up to date");
   });
   it("renders an new version found message if the latest version is newer", () => {
     const wrapper = shallow(
       <ChartInfo
-        app={
-          {
-            chart: {
-              metadata: {
-                appVersion: "0.0.1",
-                description: "test chart",
-                icon: "icon.png",
-                version: "0.0.1",
-              },
-            },
-            name: "foo",
-          } as hapi.release.Release
-        }
-        updates={[{ latestVersion: "1.0.0", repository: { name: "", url: "" } }]}
+        {...defaultProps}
+        update={{ checked: true, latestVersion: "1.0.0", repository: { name: "", url: "" } }}
       />,
     );
     expect(

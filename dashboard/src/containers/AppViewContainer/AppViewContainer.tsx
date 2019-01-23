@@ -4,7 +4,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import AppView from "../../components/AppView";
-import { IStoreState } from "../../shared/types";
+import { IChartUpdate, IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
@@ -16,14 +16,19 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params } }: IRouteProps) {
-  let updates;
+  let update: IChartUpdate = {
+    checked: false,
+    latestVersion: "",
+    repository: { name: "", url: "" },
+  };
   if (
     apps.selected &&
     apps.selected.chart &&
     apps.selected.chart.metadata &&
-    apps.selected.chart.metadata.name
+    apps.selected.chart.metadata.name &&
+    charts.updates[apps.selected.chart.metadata.name]
   ) {
-    updates = charts.updates[apps.selected.chart.metadata.name];
+    update = charts.updates[apps.selected.chart.metadata.name];
   }
   return {
     app: apps.selected,
@@ -32,7 +37,7 @@ function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params 
     error: apps.error,
     namespace: params.namespace,
     releaseName: params.releaseName,
-    updates,
+    update,
   };
 }
 
@@ -41,8 +46,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     deleteApp: (releaseName: string, ns: string, purge: boolean) =>
       dispatch(actions.apps.deleteApp(releaseName, ns, purge)),
     getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
-    listChartsWithFilters: (name: string, version: string, appVersion: string) =>
-      dispatch(actions.charts.listChartsWithFilters(name, version, appVersion)),
+    getChartUpdates: (name: string, version: string, appVersion: string) =>
+      dispatch(actions.charts.getChartUpdates(name, version, appVersion)),
   };
 }
 

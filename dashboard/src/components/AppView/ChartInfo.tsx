@@ -11,20 +11,20 @@ import "./ChartInfo.css";
 
 interface IChartInfoProps {
   app: hapi.release.Release;
-  updates?: IChartUpdate[];
+  update: IChartUpdate;
 }
 
 class ChartInfo extends React.Component<IChartInfoProps> {
   public render() {
-    const { app, updates } = this.props;
+    const { app, update } = this.props;
     const name = app.name;
     const metadata = app.chart && app.chart.metadata;
     const icon = metadata && metadata.icon;
     const iconSrc = icon ? icon : placeholder;
-    let isUpdated = null;
-    if (updates) {
-      if (updates.length === 0) {
-        isUpdated = (
+    let updateStatusInfo: JSX.Element | null = null;
+    if (update.checked) {
+      if (!update.latestVersion) {
+        updateStatusInfo = (
           <span>
             -{" "}
             <CheckCircle color="#82C341" className="icon" size={15} style={{ bottom: "-0.2em" }} />{" "}
@@ -32,8 +32,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
           </span>
         );
       } else {
-        const versions = updates.map(u => u.latestVersion);
-        isUpdated = (
+        updateStatusInfo = (
           // TODO: It should already include the repo found when clicking
           <Link to={`/apps/ns/${app.namespace}/upgrade/${app.name}`}>
             <span>
@@ -45,7 +44,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
                 size={15}
                 style={{ bottom: "-0.2em" }}
               />{" "}
-              {versions.join(", ")} available
+              {update.latestVersion} available
             </span>
           </Link>
         );
@@ -57,7 +56,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
         <div>
           {metadata.appVersion && <div>App Version: {metadata.appVersion}</div>}
           <div>
-            Chart Version: {metadata.version} {isUpdated}
+            Chart Version: {metadata.version} {updateStatusInfo}
           </div>
         </div>
       );

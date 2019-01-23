@@ -158,14 +158,14 @@ describe("getChartUpdates", () => {
     };
     const expectedActions = [
       {
-        type: getType(actions.charts.receiveChartUpdates),
+        type: getType(actions.charts.receiveChartUpdate),
         payload: {
           name: "foo",
-          updates: [{ latestVersion: "1.1.0", repository: { name: "bar" } }],
+          update: { checked: true, latestVersion: "1.1.0", repository: { name: "bar" } },
         },
       },
     ];
-    await store.dispatch(actions.charts.listChartsWithFilters("foo", "1.0.0", "0.1.0"));
+    await store.dispatch(actions.charts.getChartUpdates("foo", "1.0.0", "0.1.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       "api/chartsvc/v1/charts?name=foo&version=1.0.0&appversion=0.1.0",

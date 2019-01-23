@@ -76,10 +76,10 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectValues):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
-    case getType(actions.charts.receiveChartUpdates):
+    case getType(actions.charts.receiveChartUpdate):
       return {
         ...state,
-        updates: { ...state.updates, [`${action.payload.name}`]: action.payload.updates },
+        updates: { ...state.updates, [`${action.payload.name}`]: action.payload.update },
       };
     default:
   }

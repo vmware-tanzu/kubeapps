@@ -1,16 +1,16 @@
 import * as React from "react";
-import { ArrowUpCircle } from "react-feather";
 import { Redirect } from "react-router";
 
 import { IChartUpdate } from "shared/types";
-import { hapi } from "../../shared/hapi/release";
-import ConfirmDialog from "../ConfirmDialog";
-import LoadingWrapper from "../LoadingWrapper";
+import { hapi } from "../../../shared/hapi/release";
+import ConfirmDialog from "../../ConfirmDialog";
+import LoadingWrapper from "../../LoadingWrapper";
 import "./AppControls.css";
+import UpgradeButton from "./UpgradeButton";
 
 interface IAppControlsProps {
   app: hapi.release.Release;
-  updates?: IChartUpdate[];
+  update?: IChartUpdate;
   deleteApp: (purge: boolean) => Promise<boolean>;
 }
 
@@ -34,7 +34,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   public render() {
-    const { app } = this.props;
+    const { app, update } = this.props;
     const { name, namespace } = app;
     const deleted = app.info && app.info.deleted;
     if (!name || !namespace) {
@@ -43,9 +43,8 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
     return (
       <div className="AppControls">
         {/* If the app has been deleted hide the upgrade button */}
-        {this.renderUpgradeButton()}
-        {this.state.upgrade && (
-          <Redirect push={true} to={`/apps/ns/${namespace}/upgrade/${name}`} />
+        {!deleted && (
+          <UpgradeButton update={update} upgradeURL={`/apps/ns/${namespace}/upgrade/${name}`} />
         )}
         <button className="button button-danger" onClick={this.openModel}>
           {deleted ? "Purge" : "Delete"}
@@ -73,10 +72,6 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
     );
   }
 
-  public handleUpgradeClick = () => {
-    this.setState({ upgrade: true });
-  };
-
   public openModel = () => {
     this.setState({
       modalIsOpen: true,
@@ -103,35 +98,6 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
 
   private togglePurge = () => {
     this.setState({ purge: !this.state.purge });
-  };
-
-  private renderUpgradeButton = () => {
-    const { app, updates } = this.props;
-    const deleted = app.info && app.info.deleted;
-    let upgradeButton = null;
-    // If the app has been deleted hide the upgrade button
-    if (!deleted) {
-      upgradeButton = (
-        <button className="button" onClick={this.handleUpgradeClick}>
-          Upgrade
-        </button>
-      );
-      // If the app is outdated highlight the upgrade button
-      if (updates && updates.length > 0) {
-        upgradeButton = (
-          <div className="tooltip">
-            <button className="button upgrade-button" onClick={this.handleUpgradeClick}>
-              <span className="upgrade-text">Upgrade</span>
-              <ArrowUpCircle color="white" size={25} fill="#82C341" className="notification" />
-            </button>
-            <span className="tooltiptext tooltip-top">
-              New version(s) ({updates.map(u => u.latestVersion).join(", ")}) found!
-            </span>
-          </div>
-        );
-      }
-    }
-    return upgradeButton;
   };
 }
 

@@ -28,8 +28,8 @@ export interface IAppViewProps {
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
-  listChartsWithFilters: (name: string, version: string, appVersion: string) => void;
-  updates: IChartUpdate[] | undefined;
+  getChartUpdates: (name: string, version: string, appVersion: string) => void;
+  update: IChartUpdate;
 }
 
 interface IAppViewState {
@@ -79,13 +79,23 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     sockets: [],
   };
 
+  private getUpdates = _.memoize((app: hapi.release.Release) => {
+    if (app.chart && app.chart.metadata && app.chart.metadata.name && app.chart.metadata.version) {
+      this.props.getChartUpdates(
+        app.chart.metadata.name,
+        app.chart.metadata.version,
+        app.chart.metadata.appVersion || "",
+      );
+    }
+  });
+
   public async componentDidMount() {
     const { releaseName, getApp, namespace } = this.props;
     getApp(releaseName, namespace);
   }
 
   public componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { releaseName, getApp, namespace, updates } = this.props;
+    const { releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
       getApp(releaseName, nextProps.namespace);
       return;
@@ -98,20 +108,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const newApp = nextProps.app;
     if (!newApp) {
       return;
-    }
-    if (
-      newApp.chart &&
-      newApp.chart.metadata &&
-      newApp.chart.metadata.name &&
-      newApp.chart.metadata.version &&
-      newApp.chart.metadata.appVersion &&
-      !updates
-    ) {
-      this.props.listChartsWithFilters(
-        newApp.chart.metadata.name,
-        newApp.chart.metadata.version,
-        newApp.chart.metadata.appVersion,
-      );
     }
 
     // TODO(prydonius): Okay to use non-safe load here since we assume the
@@ -182,7 +178,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public appInfo() {
-    const { app, updates } = this.props;
+    const { app, update } = this.props;
+    this.getUpdates(app);
     const { services, ingresses, deployments, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
@@ -199,7 +196,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} updates={updates} />
+                <ChartInfo app={app} update={update} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -207,7 +204,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <DeploymentStatus deployments={deployments} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app} updates={updates} deleteApp={this.deleteApp} />
+                    <AppControls app={app} update={update} deleteApp={this.deleteApp} />
                   </div>
                 </div>
                 <AccessURLTable services={services} ingresses={ingresses} />

@@ -5,7 +5,7 @@ import * as React from "react";
 
 import { hapi } from "../../shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IChartUpdate, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
@@ -42,8 +42,8 @@ describe("AppViewComponent", () => {
     getApp: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
-    listChartsWithFilters: jest.fn(),
-    updates: undefined,
+    getChartUpdates: jest.fn(),
+    update: {} as IChartUpdate,
   };
 
   const resources = {
@@ -173,7 +173,7 @@ describe("AppViewComponent", () => {
     });
 
     it("supports manifests check for updates", () => {
-      const listChartsWithFilters = jest.fn();
+      const getChartUpdates = jest.fn();
       const chart = {
         metadata: {
           name: "foo",
@@ -183,12 +183,12 @@ describe("AppViewComponent", () => {
       };
       validProps.app.chart = chart;
       const wrapper = shallow(
-        <AppViewComponent {...validProps} listChartsWithFilters={listChartsWithFilters} />,
+        <AppViewComponent {...validProps} getChartUpdates={getChartUpdates} />,
       );
       wrapper.setProps(validProps);
 
-      expect(listChartsWithFilters.mock.calls.length).toBe(1);
-      expect(listChartsWithFilters.mock.calls[0]).toEqual(["foo", "1.0.0", "0.1.0"]);
+      expect(getChartUpdates.mock.calls.length).toBe(1);
+      expect(getChartUpdates.mock.calls[0]).toEqual(["foo", "1.0.0", "0.1.0"]);
     });
   });
 
@@ -387,9 +387,9 @@ describe("AppViewComponent", () => {
   });
 
   it("forwards updates to AppControls and ChartInfo elements", () => {
-    const updates = [{ repository: { name: "foo", url: "" }, latestVersion: "2.0.0" }];
-    const wrapper = shallow(<AppViewComponent {...validProps} updates={updates} />);
-    expect(wrapper.find(AppControls).prop("updates")).toBe(updates);
-    expect(wrapper.find(ChartInfo).prop("updates")).toBe(updates);
+    const update = { checked: true, repository: { name: "foo", url: "" }, latestVersion: "2.0.0" };
+    const wrapper = shallow(<AppViewComponent {...validProps} update={update} />);
+    expect(wrapper.find(AppControls).prop("update")).toBe(update);
+    expect(wrapper.find(ChartInfo).prop("update")).toBe(update);
   });
 });
