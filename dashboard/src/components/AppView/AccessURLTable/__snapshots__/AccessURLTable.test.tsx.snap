@@ -7,8 +7,7 @@ exports[`when fetching ingresses or services loading spinner matches the snapsho
   </h6>
   <LoadingWrapper
     loaded={false}
-    size="small"
-    type={0}
+    type={1}
   >
     <table>
       <thead>
@@ -37,8 +36,7 @@ exports[`when fetching ingresses or services loading spinner matches the snapsho
   </h6>
   <LoadingWrapper
     loaded={false}
-    size="small"
-    type={0}
+    type={1}
   >
     <p>
       The current application does not expose a public URL.
@@ -54,8 +52,7 @@ exports[`when the app contain ingresses should show the table with available ing
   </h6>
   <LoadingWrapper
     loaded={true}
-    size="small"
-    type={0}
+    type={1}
   >
     <table>
       <thead>
@@ -98,8 +95,7 @@ exports[`when the app contain services and ingresses should show the table with 
   </h6>
   <LoadingWrapper
     loaded={true}
-    size="small"
-    type={0}
+    type={1}
   >
     <table>
       <thead>
@@ -155,8 +151,7 @@ exports[`when the app contain services should show the table if any service is a
   </h6>
   <LoadingWrapper
     loaded={true}
-    size="small"
-    type={0}
+    type={1}
   >
     <table>
       <thead>
@@ -186,6 +181,46 @@ exports[`when the app contain services should show the table if any service is a
           }
           key="accessURL/foo"
         />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when the contains resources with errors displays the error 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    type={1}
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="could not find Ingress"
+        >
+          <td
+            colSpan={3}
+          >
+            Error: 
+            could not find Ingress
+          </td>
+        </tr>
       </tbody>
     </table>
   </LoadingWrapper>

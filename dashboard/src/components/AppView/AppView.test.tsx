@@ -3,6 +3,7 @@ import context from "jest-plugin-context";
 import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
+import AccessURLTable from "../../containers/AccessURLTableContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
 import itBehavesLike from "../../shared/specs";
@@ -10,8 +11,6 @@ import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
-import AccessURLTable from "./AccessURLTable";
-import AccessURLItem from "./AccessURLTable/AccessURLItem";
 import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
@@ -224,47 +223,6 @@ describe("AppViewComponent", () => {
       expect(err.exists()).toBe(true);
       expect(err.html()).toContain("Application mr-sunshine not found");
     });
-
-    it("renders an URL table if an Ingress exists", () => {
-      const wrapper = shallow(<AppViewComponent {...validProps} />);
-      const ingress = {
-        isFetching: false,
-        item: {
-          metadata: {
-            name: "foo",
-          },
-          spec: {
-            rules: [
-              {
-                host: "foo.bar",
-                http: {
-                  paths: [{ path: "/ready" }],
-                },
-              },
-            ],
-          },
-        },
-      };
-      const ingresses = [ingress];
-
-      wrapper.setState({ ingresses });
-      const urlTable = wrapper.find(AccessURLTable);
-      expect(urlTable).toExist();
-      expect(
-        urlTable
-          .shallow()
-          .find(AccessURLItem)
-          .shallow()
-          .text(),
-      ).toContain("Ingress");
-      expect(
-        urlTable
-          .shallow()
-          .find(AccessURLItem)
-          .shallow()
-          .text(),
-      ).toContain("http://foo.bar/ready");
-    });
   });
 
   it("forwards services/ingresses", () => {
@@ -287,7 +245,7 @@ describe("AppViewComponent", () => {
         },
       },
     };
-    const ingresses = [ingress];
+    const ingressRefs = [new ResourceRef(ingress.item as IResource, "default")];
     const service = {
       isFetching: false,
       item: {
@@ -299,14 +257,13 @@ describe("AppViewComponent", () => {
         spec: {},
       },
     };
-    const services = [service];
     const serviceRefs = [new ResourceRef(service.item as IResource, "default")];
 
-    wrapper.setState({ ingresses, services, serviceRefs });
+    wrapper.setState({ ingressRefs, serviceRefs });
 
     const accessURLTable = wrapper.find(AccessURLTable);
     expect(accessURLTable).toExist();
-    expect(accessURLTable.props()).toMatchObject({ ingresses: [ingress], services: [service] });
+    expect(accessURLTable.props()).toMatchObject({ ingressRefs, serviceRefs });
 
     const svcTable = wrapper.find(ServiceTable);
     expect(svcTable).toExist();

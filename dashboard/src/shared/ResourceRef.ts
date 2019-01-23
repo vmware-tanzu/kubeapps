@@ -39,6 +39,8 @@ class ResourceRef {
     switch (this.kind) {
       case "Service":
         return "services";
+      case "Ingress":
+        return "ingresses";
       default:
         throw new Error(`Don't know path for ${this.kind}, register it in ResourceRef`);
     }
