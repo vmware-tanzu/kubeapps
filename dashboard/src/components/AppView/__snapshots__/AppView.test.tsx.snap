@@ -3,5 +3,6 @@
 exports[`AppViewComponent when app info is null loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
   loaded={false}
+  type={0}
 />
 `;

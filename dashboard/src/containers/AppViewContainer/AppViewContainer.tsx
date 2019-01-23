@@ -4,7 +4,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import AppView from "../../components/AppView";
-import { IChartUpdate, IStoreState } from "../../shared/types";
+import { IChartUpdate, IResource, IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
@@ -48,6 +48,9 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
     getChartUpdates: (name: string, version: string, appVersion: string) =>
       dispatch(actions.charts.getChartUpdates(name, version, appVersion)),
+    // TODO: remove once WebSockets are moved to Redux store (#882)
+    receiveResource: (payload: { key: string; resource: IResource }) =>
+      dispatch(actions.kube.receiveResource(payload)),
   };
 }
 

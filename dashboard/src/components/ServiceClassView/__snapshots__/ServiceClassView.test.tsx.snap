@@ -13,6 +13,7 @@ exports[`when all the components are loaded when an service class is available s
   <main>
     <LoadingWrapper
       loaded={true}
+      type={0}
     >
       <div
         className="class-view"
@@ -97,6 +98,7 @@ exports[`while fetching components loading spinner matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <div
         className="class-view"
@@ -142,6 +144,7 @@ exports[`while fetching components matches the snapshot 1`] = `
   <main>
     <LoadingWrapper
       loaded={false}
+      type={0}
     >
       <div
         className="class-view"

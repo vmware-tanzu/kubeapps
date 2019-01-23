@@ -1,6 +1,34 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders a simple view without IP 1`] = `
+exports[`when fetching services loading spinner matches the snapshot 1`] = `
+<tr>
+  <td />
+  <td
+    colSpan={4}
+  >
+    <LoadingWrapper
+      loaded={false}
+      type={1}
+    />
+  </td>
+</tr>
+`;
+
+exports[`when fetching services loading spinner matches the snapshot 2`] = `
+<tr>
+  <td />
+  <td
+    colSpan={4}
+  >
+    <LoadingWrapper
+      loaded={false}
+      type={1}
+    />
+  </td>
+</tr>
+`;
+
+exports[`when there is a valid Service renders a simple view without IP 1`] = `
 <tr>
   <td>
     foo
@@ -16,7 +44,7 @@ exports[`renders a simple view without IP 1`] = `
 </tr>
 `;
 
-exports[`renders a view with IP 1`] = `
+exports[`when there is a valid Service renders a view with IP 1`] = `
 <tr>
   <td>
     foo
