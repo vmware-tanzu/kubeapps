@@ -54,7 +54,7 @@ it("renders a message if there are no services or ingresses", () => {
   ).toContain("The current application does not expose a public URL");
 });
 
-context("when the app contain services", () => {
+context("when the app contains services", () => {
   it("should omit the Service Table if there are no public services", () => {
     const service = {
       kind: "Service",
@@ -104,7 +104,7 @@ context("when the app contain services", () => {
   });
 });
 
-context("when the app contain ingresses", () => {
+context("when the app contains ingresses", () => {
   it("should show the table with available ingresses", () => {
     const ingress = {
       kind: "Ingress",
@@ -131,7 +131,7 @@ context("when the app contain ingresses", () => {
   });
 });
 
-context("when the app contain services and ingresses", () => {
+context("when the app contains services and ingresses", () => {
   it("should show the table with available svcs and ingresses", () => {
     const service = {
       kind: "Service",
@@ -172,20 +172,19 @@ context("when the app contain services and ingresses", () => {
   });
 });
 
-context("when the contains resources with errors", () => {
+context("when the app contains resources with errors", () => {
   it("displays the error", () => {
     const services = [{ isFetching: false, error: new Error("could not find Service") }];
     const ingresses = [{ isFetching: false, error: new Error("could not find Ingress") }];
     const wrapper = shallow(
       <AccessURLTable services={services} ingresses={ingresses} fetchIngresses={jest.fn()} />,
     );
-    expect(wrapper.find(AccessURLItem)).not.toExist();
-    expect(wrapper.find("table").text()).toContain("could not find Ingress");
 
     // The Service error is not shown, as it is filtered out because without the
     // resource we can't determine whether it is a public LoadBalancer Service
     // or not. The Service error will be shown in the Services table anyway.
-    expect(wrapper.find("table").text()).not.toContain("could not find Service");
+    expect(wrapper.find(AccessURLItem)).not.toExist();
+    expect(wrapper.find("table").text()).toContain("could not find Ingress");
 
     expect(wrapper).toMatchSnapshot();
   });
