@@ -8,6 +8,7 @@ import { IResource } from "./types";
 const ResourceKindToPlural = {
   Service: "services",
   Ingress: "ingresses",
+  Deployment: "deployments",
 };
 
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and

@@ -36,6 +36,7 @@ export interface IAppViewProps {
 
 interface IAppViewState {
   deployments: Array<IKubeItem<IResource>>;
+  deployRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   // Other resources are not IKubeItems because
@@ -48,6 +49,7 @@ interface IAppViewState {
 
 interface IPartialAppViewState {
   deployments: Array<IKubeItem<IResource>>;
+  deployRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   otherResources: IResource[];
@@ -75,6 +77,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     manifest: [],
     deployments: [],
     ingressRefs: [],
+    deployRefs: [],
     otherResources: [],
     serviceRefs: [],
     secretNames: [],
@@ -180,7 +183,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
-    const { serviceRefs, ingressRefs, deployments, secretNames, otherResources } = this.state;
+    const {
+      serviceRefs,
+      ingressRefs,
+      deployments,
+      deployRefs,
+      secretNames,
+      otherResources,
+    } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -210,7 +220,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <SecretTable namespace={app.namespace} secretNames={secretNames} />
-                <DeploymentsTable deployments={deployments} />
+                <DeploymentsTable deployRefs={deployRefs} />
                 <ServicesTable serviceRefs={serviceRefs} />
                 <OtherResourcesTable otherResources={otherResources} />
               </div>
@@ -228,6 +238,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const result: IPartialAppViewState = {
       deployments: [],
       ingressRefs: [],
+      deployRefs: [],
       otherResources: [],
       serviceRefs: [],
       secretNames: [],
@@ -239,6 +250,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       switch (i.kind) {
         case "Deployment":
           result.deployments.push(resource);
+          result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
             this.getSocket("deployments", i.apiVersion, item.metadata.name, releaseNamespace),
           );

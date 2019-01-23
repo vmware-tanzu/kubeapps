@@ -265,21 +265,18 @@ describe("AppViewComponent", () => {
   it("forwards other resources", () => {
     const wrapper = shallow(<AppViewComponent {...validProps} />);
     const deployment = {
-      isFetching: false,
-      item: {
-        metadata: {
-          name: "foo",
-        },
-        spec: {},
+      metadata: {
+        name: "foo",
       },
+      spec: {},
     };
-    const deployments = [deployment];
+    const deployRefs = [new ResourceRef(deployment as IResource, "default")];
 
-    wrapper.setState({ deployments });
+    wrapper.setState({ deployRefs });
 
     const depTable = wrapper.find(DeploymentsTable);
     expect(depTable).toExist();
-    expect(depTable.prop("deployments")).toEqual([deployment]);
+    expect(depTable.prop("deployRefs")).toEqual(deployRefs);
   });
 
   it("forwards deployments", () => {

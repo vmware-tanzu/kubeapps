@@ -1,80 +1,40 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders a deployment ready 1`] = `
+exports[`renders a DeploymentItem 1`] = `
 <Fragment>
   <h6>
     Deployments
   </h6>
-  <LoadingWrapper
-    loaded={true}
-    size="small"
-    type={0}
-  >
-    <table>
-      <thead>
-        <tr>
-          <th>
-            NAME
-          </th>
-          <th>
-            DESIRED
-          </th>
-          <th>
-            UP-TO-DATE
-          </th>
-          <th>
-            AVAILABLE
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <DeploymentItem
-          deployment={
-            Object {
-              "kind": "Deployment",
-              "metadata": Object {
-                "name": "foo",
-              },
-              "status": Object {},
-            }
+  <table>
+    <thead>
+      <tr>
+        <th>
+          NAME
+        </th>
+        <th>
+          DESIRED
+        </th>
+        <th>
+          UP-TO-DATE
+        </th>
+        <th>
+          AVAILABLE
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <Connect(DeploymentItem)
+        deployRef={
+          ResourceRef {
+            "apiVersion": undefined,
+            "kind": "Deployment",
+            "name": "foo",
+            "namespace": "default",
           }
-          key="deployments/foo"
-        />
-      </tbody>
-    </table>
-  </LoadingWrapper>
-</Fragment>
-`;
-
-exports[`when fetching deployments loading spinner matches the snapshot 1`] = `
-<Fragment>
-  <h6>
-    Deployments
-  </h6>
-  <LoadingWrapper
-    loaded={false}
-    size="small"
-    type={0}
-  >
-    <table>
-      <thead>
-        <tr>
-          <th>
-            NAME
-          </th>
-          <th>
-            DESIRED
-          </th>
-          <th>
-            UP-TO-DATE
-          </th>
-          <th>
-            AVAILABLE
-          </th>
-        </tr>
-      </thead>
-      <tbody />
-    </table>
-  </LoadingWrapper>
+        }
+        key="api/kube/apis/undefined/namespaces/default/deployments/foo"
+      />
+    </tbody>
+  </table>
 </Fragment>
 `;
