@@ -4,11 +4,11 @@ import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
+import DeploymentStatus from "../../containers/DeploymentStatusContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
-import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AppControls from "./AppControls";
@@ -51,7 +51,7 @@ describe("AppViewComponent", () => {
       apiVersion: "apps/v1beta1",
       kind: "Deployment",
       metadata: { name: "deployment-one" },
-    },
+    } as IResource,
     service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } } as IResource,
     ingress: {
       apiVersion: "extensions/v1beta1",
@@ -310,7 +310,7 @@ describe("AppViewComponent", () => {
     wrapper.setProps(validProps);
 
     expect(wrapper.state()).toMatchObject({
-      deployments: [{ isFetching: true, item: resources.deployment }],
+      deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
       serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
       otherResources: [obj],
     });

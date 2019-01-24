@@ -3,10 +3,10 @@ import * as React from "react";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
-import { IKubeItem, IKubeState, IResource } from "shared/types";
-import DeploymentItemContainer from ".";
-import DeploymentItem from "../../components/AppView/DeploymentsTable/DeploymentItem";
+import DeploymentStatusContainer from ".";
+import DeploymentStatus from "../../components/DeploymentStatus";
 import ResourceRef from "../../shared/ResourceRef";
+import { IKubeItem, IKubeState, IResource } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -17,8 +17,8 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   return mockStore({ kube: state });
 };
 
-describe("DeploymentItemContainer", () => {
-  it("maps Deployment in store to DeploymentItem props", () => {
+describe("DeploymentStatusContainer", () => {
+  it("maps Deployment in store to DeploymentStatus props", () => {
     const ns = "wee";
     const name = "foo";
     const item = { isFetching: false, item: { metadata: { name } } as IResource };
@@ -33,11 +33,10 @@ describe("DeploymentItemContainer", () => {
         name,
       },
     } as IResource);
-    const wrapper = shallow(<DeploymentItemContainer store={store} deployRef={ref} />);
-    const form = wrapper.find(DeploymentItem);
+    const wrapper = shallow(<DeploymentStatusContainer store={store} deployRefs={[ref]} />);
+    const form = wrapper.find(DeploymentStatus);
     expect(form).toHaveProp({
-      name,
-      deployment: item,
+      deployments: [item],
     });
   });
 });
