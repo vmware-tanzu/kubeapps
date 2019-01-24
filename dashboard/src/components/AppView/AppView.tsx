@@ -88,8 +88,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     getApp(releaseName, namespace);
   }
 
-  public async componentDidUpdate(prevProps: IAppViewProps) {
-    if (!_.eq(this.props.app, prevProps.app)) {
+  public componentDidUpdate(prevProps: IAppViewProps) {
+    if (this.props.app !== prevProps.app) {
       // App has changed, update chart updates info
       const { app } = this.props;
       if (

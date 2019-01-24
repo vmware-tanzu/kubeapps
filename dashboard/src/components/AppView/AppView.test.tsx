@@ -172,25 +172,6 @@ describe("AppViewComponent", () => {
         wrapper.setProps(validProps);
       }).not.toThrow(YAMLException);
     });
-
-    it("supports manifests check for updates", () => {
-      const getChartUpdates = jest.fn();
-      const chart = {
-        metadata: {
-          name: "foo",
-          version: "1.0.0",
-          appVersion: "0.1.0",
-        },
-      };
-      validProps.app.chart = chart;
-      const wrapper = shallow(
-        <AppViewComponent {...validProps} getChartUpdates={getChartUpdates} />,
-      );
-      wrapper.setProps(validProps);
-
-      expect(getChartUpdates.mock.calls.length).toBe(1);
-      expect(getChartUpdates.mock.calls[0]).toEqual(["foo", "1.0.0", "0.1.0"]);
-    });
   });
 
   describe("renderization", () => {
