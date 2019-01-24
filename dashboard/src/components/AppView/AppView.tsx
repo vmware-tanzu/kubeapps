@@ -36,9 +36,7 @@ export interface IAppViewProps {
 
 interface IAppViewState {
   deployments: Array<IKubeItem<IResource>>;
-  services: Array<IKubeItem<IResource>>;
   serviceRefs: ResourceRef[];
-  ingresses: Array<IKubeItem<IResource>>;
   ingressRefs: ResourceRef[];
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
@@ -50,9 +48,7 @@ interface IAppViewState {
 
 interface IPartialAppViewState {
   deployments: Array<IKubeItem<IResource>>;
-  services: Array<IKubeItem<IResource>>;
   serviceRefs: ResourceRef[];
-  ingresses: Array<IKubeItem<IResource>>;
   ingressRefs: ResourceRef[];
   otherResources: IResource[];
   secretNames: string[];
@@ -78,10 +74,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
     manifest: [],
     deployments: [],
-    ingresses: [],
     ingressRefs: [],
     otherResources: [],
-    services: [],
     serviceRefs: [],
     secretNames: [],
     sockets: [],
@@ -148,15 +142,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         apiResource = "deployments";
         break;
       case "Service":
-        const newSvcs = dropByName(this.state.services);
-        newSvcs.push(newItem);
-        this.setState({ services: newSvcs });
         apiResource = "services";
         break;
       case "Ingress":
-        const newIngresses = dropByName(this.state.ingresses);
-        newIngresses.push(newItem);
-        this.setState({ ingresses: newIngresses });
         apiResource = "ingresses";
         break;
       default:
@@ -239,10 +227,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   ): IPartialAppViewState {
     const result: IPartialAppViewState = {
       deployments: [],
-      ingresses: [],
       ingressRefs: [],
       otherResources: [],
-      services: [],
       serviceRefs: [],
       secretNames: [],
       sockets: [],
@@ -258,14 +244,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           );
           break;
         case "Service":
-          result.services.push(resource);
           result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
             this.getSocket("services", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Ingress":
-          result.ingresses.push(resource);
           result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
             this.getSocket("ingresses", i.apiVersion, item.metadata.name, releaseNamespace),

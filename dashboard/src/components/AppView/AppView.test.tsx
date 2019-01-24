@@ -52,7 +52,7 @@ describe("AppViewComponent", () => {
       kind: "Deployment",
       metadata: { name: "deployment-one" },
     },
-    service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } },
+    service: { apiVersion: "v1", kind: "Service", metadata: { name: "svc-one" } } as IResource,
     ingress: {
       apiVersion: "extensions/v1beta1",
       kind: "Ingress",
@@ -175,14 +175,6 @@ describe("AppViewComponent", () => {
   describe("renderization", () => {
     it("renders all the elements of an application", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
-      const service = {
-        metadata: { name: "foo" },
-        spec: { type: "loadBalancer", ports: [{ port: 8080 }] },
-        status: { ingress: [{ loadBalancer: { ip: "1.2.3.4" } }] },
-      } as IResource;
-      const services = {};
-      services[service.metadata.name] = service;
-      wrapper.setState({ services });
       expect(wrapper.find(ChartInfo).exists()).toBe(true);
       expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
@@ -322,7 +314,7 @@ describe("AppViewComponent", () => {
 
     expect(wrapper.state()).toMatchObject({
       deployments: [{ isFetching: true, item: resources.deployment }],
-      services: [{ isFetching: true, item: resources.service }],
+      serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
       otherResources: [obj],
     });
   });
