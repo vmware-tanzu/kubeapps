@@ -2,6 +2,7 @@ import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import * as React from "react";
 
+import AccessURLTable from "../../containers/AccessURLTableContainer";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
@@ -12,7 +13,6 @@ import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
-import AccessURLTable from "./AccessURLTable";
 import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
@@ -36,9 +36,8 @@ export interface IAppViewProps {
 
 interface IAppViewState {
   deployments: Array<IKubeItem<IResource>>;
-  services: Array<IKubeItem<IResource>>;
   serviceRefs: ResourceRef[];
-  ingresses: Array<IKubeItem<IResource>>;
+  ingressRefs: ResourceRef[];
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
   otherResources: IResource[];
@@ -49,9 +48,8 @@ interface IAppViewState {
 
 interface IPartialAppViewState {
   deployments: Array<IKubeItem<IResource>>;
-  services: Array<IKubeItem<IResource>>;
   serviceRefs: ResourceRef[];
-  ingresses: Array<IKubeItem<IResource>>;
+  ingressRefs: ResourceRef[];
   otherResources: IResource[];
   secretNames: string[];
   sockets: WebSocket[];
@@ -76,9 +74,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
     manifest: [],
     deployments: [],
-    ingresses: [],
+    ingressRefs: [],
     otherResources: [],
-    services: [],
     serviceRefs: [],
     secretNames: [],
     sockets: [],
@@ -145,15 +142,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         apiResource = "deployments";
         break;
       case "Service":
-        const newSvcs = dropByName(this.state.services);
-        newSvcs.push(newItem);
-        this.setState({ services: newSvcs });
         apiResource = "services";
         break;
       case "Ingress":
-        const newIngresses = dropByName(this.state.ingresses);
-        newIngresses.push(newItem);
-        this.setState({ ingresses: newIngresses });
         apiResource = "ingresses";
         break;
       default:
@@ -189,14 +180,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app } = this.props;
-    const {
-      services,
-      serviceRefs,
-      ingresses,
-      deployments,
-      secretNames,
-      otherResources,
-    } = this.state;
+    const { serviceRefs, ingressRefs, deployments, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -223,7 +207,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <AppControls app={app} deleteApp={this.deleteApp} />
                   </div>
                 </div>
-                <AccessURLTable services={services} ingresses={ingresses} />
+                <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <SecretTable namespace={app.namespace} secretNames={secretNames} />
                 <DeploymentsTable deployments={deployments} />
@@ -243,9 +227,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   ): IPartialAppViewState {
     const result: IPartialAppViewState = {
       deployments: [],
-      ingresses: [],
+      ingressRefs: [],
       otherResources: [],
-      services: [],
       serviceRefs: [],
       secretNames: [],
       sockets: [],
@@ -261,14 +244,13 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           );
           break;
         case "Service":
-          result.services.push(resource);
           result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
             this.getSocket("services", i.apiVersion, item.metadata.name, releaseNamespace),
           );
           break;
         case "Ingress":
-          result.ingresses.push(resource);
+          result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
             this.getSocket("ingresses", i.apiVersion, item.metadata.name, releaseNamespace),
           );

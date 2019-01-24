@@ -7,8 +7,7 @@ exports[`when fetching ingresses or services loading spinner matches the snapsho
   </h6>
   <LoadingWrapper
     loaded={false}
-    size="small"
-    type={0}
+    type={1}
   >
     <table>
       <thead>
@@ -37,8 +36,7 @@ exports[`when fetching ingresses or services loading spinner matches the snapsho
   </h6>
   <LoadingWrapper
     loaded={false}
-    size="small"
-    type={0}
+    type={1}
   >
     <p>
       The current application does not expose a public URL.
@@ -47,15 +45,14 @@ exports[`when fetching ingresses or services loading spinner matches the snapsho
 </Fragment>
 `;
 
-exports[`when the app contain ingresses should show the table with available ingresses 1`] = `
+exports[`when the app contains ingresses should show the table with available ingresses 1`] = `
 <Fragment>
   <h6>
     Access URLs
   </h6>
   <LoadingWrapper
     loaded={true}
-    size="small"
-    type={0}
+    type={1}
   >
     <table>
       <thead>
@@ -91,15 +88,54 @@ exports[`when the app contain ingresses should show the table with available ing
 </Fragment>
 `;
 
-exports[`when the app contain services and ingresses should show the table with available svcs and ingresses 1`] = `
+exports[`when the app contains resources with errors displays the error 1`] = `
 <Fragment>
   <h6>
     Access URLs
   </h6>
   <LoadingWrapper
     loaded={true}
-    size="small"
-    type={0}
+    type={1}
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="could not find Ingress"
+        >
+          <td
+            colSpan={3}
+          >
+            Error: 
+            could not find Ingress
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when the app contains services and ingresses should show the table with available svcs and ingresses 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    type={1}
   >
     <table>
       <thead>
@@ -148,15 +184,14 @@ exports[`when the app contain services and ingresses should show the table with 
 </Fragment>
 `;
 
-exports[`when the app contain services should show the table if any service is a LoadBalancer 1`] = `
+exports[`when the app contains services should show the table if any service is a LoadBalancer 1`] = `
 <Fragment>
   <h6>
     Access URLs
   </h6>
   <LoadingWrapper
     loaded={true}
-    size="small"
-    type={0}
+    type={1}
   >
     <table>
       <thead>
