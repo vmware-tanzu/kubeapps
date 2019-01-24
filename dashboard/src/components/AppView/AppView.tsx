@@ -83,21 +83,31 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     sockets: [],
   };
 
-  private getUpdates = _.memoize((app: hapi.release.Release) => {
-    if (app.chart && app.chart.metadata && app.chart.metadata.name && app.chart.metadata.version) {
-      this.props.getChartUpdates(
-        app.chart.metadata.name,
-        app.chart.metadata.version,
-        app.chart.metadata.appVersion || "",
-      );
-    }
-  });
-
   public async componentDidMount() {
     const { releaseName, getApp, namespace } = this.props;
     getApp(releaseName, namespace);
   }
 
+  public async componentDidUpdate(prevProps: IAppViewProps) {
+    if (!_.eq(this.props.app, prevProps.app)) {
+      // App has changed, update chart updates info
+      const { app } = this.props;
+      if (
+        app.chart &&
+        app.chart.metadata &&
+        app.chart.metadata.name &&
+        app.chart.metadata.version
+      ) {
+        this.props.getChartUpdates(
+          app.chart.metadata.name,
+          app.chart.metadata.version,
+          app.chart.metadata.appVersion || "",
+        );
+      }
+    }
+  }
+
+  // componentWillReceiveProps is deprecated use componentDidUpdate instead
   public componentWillReceiveProps(nextProps: IAppViewProps) {
     const { releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
@@ -193,7 +203,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app, update } = this.props;
-    this.getUpdates(app);
     const { serviceRefs, ingressRefs, deployments, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
