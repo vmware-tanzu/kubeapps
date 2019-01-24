@@ -1,6 +1,15 @@
 import { Kube } from "./Kube";
 import { IResource } from "./types";
 
+// We explicitly define the plurals here, just in case a generic pluralizer
+// isn't sufficient. Note that CRDs can explicitly define pluralized forms,
+// which might not match with the Kind. If this becomes difficult to
+// maintain we can add a generic pluralizer and a way to override.
+const ResourceKindToPlural = {
+  Service: "services",
+  Ingress: "ingresses",
+};
+
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
 class ResourceRef {
@@ -27,23 +36,16 @@ class ResourceRef {
 
   // Gets a full resource URL for the referenced resource
   public getResourceURL() {
-    return Kube.getResourceURL(this.apiVersion, this.resourcePath(), this.namespace, this.name);
+    return Kube.getResourceURL(this.apiVersion, this.resourcePlural(), this.namespace, this.name);
   }
 
   // Gets the plural form of the resource Kind for use in the resource path
-  private resourcePath() {
-    // We explicitly define the plurals here, just in case a generic pluralizer
-    // isn't sufficient. Note that CRDs can explicitly define pluralized forms,
-    // which might not match with the Kind. If this becomes difficult to
-    // maintain we can add a generic pluralizer and a way to override.
-    switch (this.kind) {
-      case "Service":
-        return "services";
-      case "Ingress":
-        return "ingresses";
-      default:
-        throw new Error(`Don't know path for ${this.kind}, register it in ResourceRef`);
+  private resourcePlural() {
+    const plural = ResourceKindToPlural[this.kind];
+    if (!plural) {
+      throw new Error(`Don't know plural for ${this.kind}, register it in ResourceRef`);
     }
+    return plural;
   }
 }
 

@@ -86,5 +86,22 @@ describe("ResourceRef", () => {
       ref.getResourceURL();
       expect(kubeGetResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");
     });
+
+    it("throws an error if the resource kind isn't registered", () => {
+      const r = {
+        apiVersion: "v1",
+        kind: "ThisKindWillNeverExist",
+        metadata: {
+          name: "foo",
+          namespace: "bar",
+        },
+      } as IResource;
+
+      const ref = new ResourceRef(r);
+
+      expect(() => ref.getResourceURL()).toThrow(
+        "Don't know plural for ThisKindWillNeverExist, register it in ResourceRef",
+      );
+    });
   });
 });
