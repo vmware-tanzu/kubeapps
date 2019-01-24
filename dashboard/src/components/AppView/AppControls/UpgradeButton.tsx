@@ -2,10 +2,8 @@ import * as React from "react";
 import { ArrowUpCircle } from "react-feather";
 import { Redirect } from "react-router";
 
-import { IChartUpdate } from "shared/types";
-
 interface IUpgradeButtonProps {
-  update?: IChartUpdate;
+  updateVersion?: string;
   upgradeURL: string;
 }
 
@@ -19,23 +17,21 @@ class UpgradeButton extends React.Component<IUpgradeButtonProps, IUpgradeButtonS
   };
 
   public render() {
-    const { update, upgradeURL } = this.props;
+    const { updateVersion, upgradeURL } = this.props;
     let upgradeButton = (
       <button className="button" onClick={this.handleUpgradeClick}>
         Upgrade
       </button>
     );
     // If the app is outdated highlight the upgrade button
-    if (update && update.latestVersion) {
+    if (updateVersion) {
       upgradeButton = (
         <div className="tooltip">
           <button className="button upgrade-button" onClick={this.handleUpgradeClick}>
             <span className="upgrade-text">Upgrade</span>
             <ArrowUpCircle color="white" size={25} fill="#82C341" className="notification" />
           </button>
-          <span className="tooltiptext tooltip-top">
-            New version ({update.latestVersion}) found!
-          </span>
+          <span className="tooltiptext tooltip-top">New version ({updateVersion}) found!</span>
         </div>
       );
     }

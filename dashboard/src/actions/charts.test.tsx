@@ -161,7 +161,7 @@ describe("getChartUpdates", () => {
         type: getType(actions.charts.receiveChartUpdate),
         payload: {
           name: "foo",
-          update: { checked: true, latestVersion: "1.1.0", repository: { name: "bar" } },
+          update: { latestVersion: "1.1.0", repository: { name: "bar" } },
         },
       },
     ];

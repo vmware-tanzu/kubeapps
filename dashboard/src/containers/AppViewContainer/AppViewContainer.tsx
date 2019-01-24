@@ -16,11 +16,7 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params } }: IRouteProps) {
-  let update: IChartUpdate = {
-    checked: false,
-    latestVersion: "",
-    repository: { name: "", url: "" },
-  };
+  let update: IChartUpdate | undefined;
   if (
     apps.selected &&
     apps.selected.chart &&

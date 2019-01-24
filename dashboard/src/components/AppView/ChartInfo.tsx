@@ -11,7 +11,7 @@ import "./ChartInfo.css";
 
 interface IChartInfoProps {
   app: hapi.release.Release;
-  update: IChartUpdate;
+  update?: IChartUpdate;
 }
 
 class ChartInfo extends React.Component<IChartInfoProps> {
@@ -22,7 +22,9 @@ class ChartInfo extends React.Component<IChartInfoProps> {
     const icon = metadata && metadata.icon;
     const iconSrc = icon ? icon : placeholder;
     let updateStatusInfo: JSX.Element | null = null;
-    if (update.checked) {
+    // If update is not set yet we cannot know if there is
+    // an update available or not
+    if (update) {
       if (!update.latestVersion) {
         updateStatusInfo = (
           <span>

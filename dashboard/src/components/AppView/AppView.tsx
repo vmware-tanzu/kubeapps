@@ -31,7 +31,7 @@ export interface IAppViewProps {
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
   getChartUpdates: (name: string, version: string, appVersion: string) => void;
-  update: IChartUpdate;
+  update: IChartUpdate | undefined;
   // TODO: remove once WebSockets are moved to Redux store (#882)
   receiveResource: (p: { key: string; resource: IResource }) => void;
 }

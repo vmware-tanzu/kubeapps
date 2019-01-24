@@ -44,7 +44,10 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
       <div className="AppControls">
         {/* If the app has been deleted hide the upgrade button */}
         {!deleted && (
-          <UpgradeButton update={update} upgradeURL={`/apps/ns/${namespace}/upgrade/${name}`} />
+          <UpgradeButton
+            updateVersion={(update && update.latestVersion) || ""}
+            upgradeURL={`/apps/ns/${namespace}/upgrade/${name}`}
+          />
         )}
         <button className="button button-danger" onClick={this.openModel}>
           {deleted ? "Purge" : "Delete"}

@@ -4,14 +4,7 @@ import * as semver from "semver";
 import { ActionType, createAction } from "typesafe-actions";
 
 import Chart from "../shared/Chart";
-import {
-  IChart,
-  IChartUpdate,
-  IChartUpdateCheck,
-  IChartVersion,
-  IStoreState,
-  NotFoundError,
-} from "../shared/types";
+import { IChart, IChartUpdate, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 import * as url from "../shared/url";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
@@ -47,7 +40,7 @@ export const selectValues = createAction("SELECT_VALUES", resolve => {
 });
 
 export const receiveChartUpdate = createAction("RECEIVE_CHART_UPDATES", resolve => {
-  return (chartUpdate: IChartUpdateCheck) => resolve(chartUpdate);
+  return (chartUpdate: { name: string; update: IChartUpdate }) => resolve(chartUpdate);
 });
 
 export const errorChartUpdates = createAction("ERROR_CHART_UPDATES", resolve => {
@@ -177,29 +170,23 @@ export function getChartValues(
 
 export function getChartUpdates(
   name: string,
-  version: string,
+  currentVersion: string,
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const chartsInfo = await Chart.listWithFilters(name, version, appVersion);
+      const chartsInfo = await Chart.listWithFilters(name, currentVersion, appVersion);
       let update: IChartUpdate = {
-        checked: true,
         repository: { name: "", url: "" },
         latestVersion: "",
       };
       chartsInfo.forEach(c => {
         const chartLatestVersion = c.relationships.latestChartVersion.data.version;
-        // semver.compare(v1, v2) returns -1 if v2 is bigger than v1
-        if (semver.compare(version, chartLatestVersion) < 0) {
-          if (
-            update.latestVersion &&
-            semver.compare(update.latestVersion, chartLatestVersion) >= 0
-          ) {
+        if (semver.gt(chartLatestVersion, currentVersion)) {
+          if (update.latestVersion && semver.gt(update.latestVersion, chartLatestVersion)) {
             // The current update is newer than the chart version, do nothing
           } else {
             update = {
-              checked: true,
               latestVersion: chartLatestVersion,
               repository: c.attributes.repo,
             };

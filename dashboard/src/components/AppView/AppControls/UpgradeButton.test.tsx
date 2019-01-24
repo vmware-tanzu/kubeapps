@@ -22,9 +22,8 @@ it("renders a redirect when clicking upgrade", () => {
 });
 
 context("when a new version is available", () => {
-  const update = { checked: true, repository: { name: "foo", url: "" }, latestVersion: "1.0.0" };
   it("should show a tooltip to notify the new version", () => {
-    const wrapper = mount(<UpgradeButton update={update} upgradeURL="" />);
+    const wrapper = mount(<UpgradeButton updateVersion="1.0.0" upgradeURL="" />);
     const tooltip = wrapper.find(".tooltiptext");
     expect(tooltip).toExist();
     expect(tooltip.text()).toContain("New version (1.0.0) found");

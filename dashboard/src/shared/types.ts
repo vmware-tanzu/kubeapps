@@ -86,13 +86,7 @@ export interface IChartState {
   updates: { [chartName: string]: IChartUpdate };
 }
 
-export interface IChartUpdateCheck {
-  name: string;
-  update: IChartUpdate;
-}
-
 export interface IChartUpdate {
-  checked: boolean;
   latestVersion: string;
   repository: IRepo;
 }

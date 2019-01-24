@@ -4,7 +4,6 @@ import * as React from "react";
 
 import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";
-import { IChartUpdate } from "shared/types";
 import ChartInfo from "./ChartInfo";
 
 const defaultProps = {
@@ -19,7 +18,7 @@ const defaultProps = {
     },
     name: "foo",
   } as hapi.release.Release,
-  update: { checked: false } as IChartUpdate,
+  updateCheck: { checked: false },
 };
 
 it("renders a app item", () => {
@@ -31,7 +30,10 @@ it("renders a app item", () => {
 context("when information about updates is available", () => {
   it("renders an up to date message if there are no updates", () => {
     const wrapper = shallow(
-      <ChartInfo {...defaultProps} update={{ checked: true } as IChartUpdate} />,
+      <ChartInfo
+        {...defaultProps}
+        update={{ latestVersion: "", repository: { name: "", url: "" } }}
+      />,
     );
     expect(wrapper.html()).toContain("Up to date");
   });
@@ -39,7 +41,7 @@ context("when information about updates is available", () => {
     const wrapper = shallow(
       <ChartInfo
         {...defaultProps}
-        update={{ checked: true, latestVersion: "1.0.0", repository: { name: "", url: "" } }}
+        update={{ latestVersion: "1.0.0", repository: { name: "", url: "" } }}
       />,
     );
     expect(
