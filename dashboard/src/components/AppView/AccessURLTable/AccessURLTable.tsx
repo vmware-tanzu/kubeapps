@@ -1,24 +1,34 @@
 import * as React from "react";
 
-import LoadingWrapper from "../../../components/LoadingWrapper";
+import LoadingWrapper, { LoaderType } from "../../../components/LoadingWrapper";
 import { IKubeItem, IResource, IServiceSpec } from "../../../shared/types";
 import isSomeResourceLoading from "../helpers";
 import AccessURLItem from "./AccessURLItem";
 import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 
-interface IServiceTableProps {
+interface IAccessURLTableProps {
   services: Array<IKubeItem<IResource>>;
   ingresses: Array<IKubeItem<IResource>>;
+  fetchIngresses: () => void;
 }
 
-class AccessURLTable extends React.Component<IServiceTableProps> {
+class AccessURLTable extends React.Component<IAccessURLTableProps> {
+  public componentDidMount() {
+    // Fetch all related Ingress resources. We don't need to fetch Services as
+    // they are expected to be watched by the ServiceTable.
+    this.props.fetchIngresses();
+  }
+
   public render() {
     const { ingresses, services } = this.props;
     return (
       <React.Fragment>
         <h6>Access URLs</h6>
-        <LoadingWrapper loaded={!isSomeResourceLoading(ingresses.concat(services))} size="small">
+        <LoadingWrapper
+          loaded={!isSomeResourceLoading(ingresses.concat(services))}
+          type={LoaderType.Placeholder}
+        >
           {this.accessTableSection()}
         </LoadingWrapper>
       </React.Fragment>
@@ -55,30 +65,30 @@ class AccessURLTable extends React.Component<IServiceTableProps> {
               </tr>
             </thead>
             <tbody>
-              {ingresses.map(
-                i =>
-                  i.item && (
-                    <AccessURLItem
-                      key={`accessURL/${i.item.metadata.name}`}
-                      URLItem={GetURLItemFromIngress(i.item)}
-                    />
-                  ),
-              )}
-              {publicServices.map(
-                s =>
-                  s.item && (
-                    <AccessURLItem
-                      key={`accessURL/${s.item.metadata.name}`}
-                      URLItem={GetURLItemFromService(s.item)}
-                    />
-                  ),
-              )}
+              {ingresses.map(i => this.renderTableEntry(i))}
+              {publicServices.map(s => this.renderTableEntry(s))}
             </tbody>
           </table>
         </React.Fragment>
       );
     }
     return accessTableSection;
+  }
+
+  private renderTableEntry(i: IKubeItem<IResource>) {
+    if (i.error) {
+      return (
+        <tr key={i.error.message}>
+          <td colSpan={3}>Error: {i.error.message}</td>
+        </tr>
+      );
+    }
+    if (i.item) {
+      const urlItem =
+        i.item.kind === "Ingress" ? GetURLItemFromIngress(i.item) : GetURLItemFromService(i.item);
+      return <AccessURLItem key={`accessURL/${i.item.metadata.name}`} URLItem={urlItem} />;
+    }
+    return;
   }
 }
 
