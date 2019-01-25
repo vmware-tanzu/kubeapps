@@ -7,7 +7,7 @@ import AccessURLTable from "../../containers/AccessURLTableContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IChartUpdate, IResource, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IChartUpdateInfo, IResource, NotFoundError } from "../../shared/types";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
@@ -43,8 +43,9 @@ describe("AppViewComponent", () => {
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
     getChartUpdates: jest.fn(),
-    update: {} as IChartUpdate,
+    updateInfo: {} as IChartUpdateInfo,
     receiveResource: jest.fn(),
+    push: jest.fn(),
   };
 
   const resources = {
@@ -323,8 +324,8 @@ describe("AppViewComponent", () => {
 
   it("forwards updates to AppControls and ChartInfo elements", () => {
     const update = { checked: true, repository: { name: "foo", url: "" }, latestVersion: "2.0.0" };
-    const wrapper = shallow(<AppViewComponent {...validProps} update={update} />);
-    expect(wrapper.find(AppControls).prop("update")).toBe(update);
-    expect(wrapper.find(ChartInfo).prop("update")).toBe(update);
+    const wrapper = shallow(<AppViewComponent {...validProps} updateInfo={update} />);
+    expect(wrapper.find(AppControls).prop("updateInfo")).toBe(update);
+    expect(wrapper.find(ChartInfo).prop("updateInfo")).toBe(update);
   });
 });

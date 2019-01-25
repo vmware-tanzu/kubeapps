@@ -1,10 +1,11 @@
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import AppView from "../../components/AppView";
-import { IChartUpdate, IResource, IStoreState } from "../../shared/types";
+import { IChartUpdateInfo, IResource, IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
@@ -16,15 +17,15 @@ interface IRouteProps {
 }
 
 function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params } }: IRouteProps) {
-  let update: IChartUpdate | undefined;
+  let updateInfo: IChartUpdateInfo | undefined;
   if (
     apps.selected &&
     apps.selected.chart &&
     apps.selected.chart.metadata &&
     apps.selected.chart.metadata.name &&
-    charts.updates[apps.selected.chart.metadata.name]
+    charts.updatesInfo[apps.selected.chart.metadata.name]
   ) {
-    update = charts.updates[apps.selected.chart.metadata.name];
+    updateInfo = charts.updatesInfo[apps.selected.chart.metadata.name];
   }
   return {
     app: apps.selected,
@@ -33,7 +34,7 @@ function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params 
     error: apps.error,
     namespace: params.namespace,
     releaseName: params.releaseName,
-    update,
+    updateInfo,
   };
 }
 
@@ -47,6 +48,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     // TODO: remove once WebSockets are moved to Redux store (#882)
     receiveResource: (payload: { key: string; resource: IResource }) =>
       dispatch(actions.kube.receiveResource(payload)),
+    push: (location: string) => dispatch(push(location)),
   };
 }
 

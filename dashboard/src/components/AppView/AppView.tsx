@@ -1,3 +1,4 @@
+import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import * as React from "react";
@@ -8,7 +9,7 @@ import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
-import { IChartUpdate, IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
+import { IChartUpdateInfo, IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
@@ -31,9 +32,10 @@ export interface IAppViewProps {
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
   getChartUpdates: (name: string, version: string, appVersion: string) => void;
-  update: IChartUpdate | undefined;
+  updateInfo: IChartUpdateInfo | undefined;
   // TODO: remove once WebSockets are moved to Redux store (#882)
   receiveResource: (p: { key: string; resource: IResource }) => void;
+  push: (location: string) => RouterAction;
 }
 
 interface IAppViewState {
@@ -202,7 +204,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public appInfo() {
-    const { app, update } = this.props;
+    const { app, updateInfo, push } = this.props;
     const { serviceRefs, ingressRefs, deployments, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
@@ -219,7 +221,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} update={update} />
+                <ChartInfo app={app} updateInfo={updateInfo} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -227,7 +229,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <DeploymentStatus deployments={deployments} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app} update={update} deleteApp={this.deleteApp} />
+                    <AppControls
+                      app={app}
+                      updateInfo={updateInfo}
+                      deleteApp={this.deleteApp}
+                      push={push}
+                    />
                   </div>
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />

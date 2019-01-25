@@ -1,7 +1,8 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Redirect } from "react-router";
 
-import { IChartUpdate } from "shared/types";
+import { IChartUpdateInfo } from "shared/types";
 import { hapi } from "../../../shared/hapi/release";
 import ConfirmDialog from "../../ConfirmDialog";
 import LoadingWrapper from "../../LoadingWrapper";
@@ -10,8 +11,9 @@ import UpgradeButton from "./UpgradeButton";
 
 interface IAppControlsProps {
   app: hapi.release.Release;
-  update?: IChartUpdate;
+  updateInfo?: IChartUpdateInfo;
   deleteApp: (purge: boolean) => Promise<boolean>;
+  push: (location: string) => RouterAction;
 }
 
 interface IAppControlsState {
@@ -34,7 +36,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   public render() {
-    const { app, update } = this.props;
+    const { app, updateInfo, push } = this.props;
     const { name, namespace } = app;
     const deleted = app.info && app.info.deleted;
     if (!name || !namespace) {
@@ -45,8 +47,10 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
         {/* If the app has been deleted hide the upgrade button */}
         {!deleted && (
           <UpgradeButton
-            updateVersion={(update && update.latestVersion) || ""}
-            upgradeURL={`/apps/ns/${namespace}/upgrade/${name}`}
+            updateVersion={(updateInfo && updateInfo.latestVersion) || ""}
+            releaseName={name}
+            releaseNamespace={namespace}
+            push={push}
           />
         )}
         <button className="button button-danger" onClick={this.openModel}>

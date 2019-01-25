@@ -83,10 +83,10 @@ export interface IChartState {
   items: IChart[];
   // TODO: change the key for an unique ID so we don't find conflicts
   // between the same chart name available in different repositories
-  updates: { [chartName: string]: IChartUpdate };
+  updatesInfo: { [chartName: string]: IChartUpdateInfo };
 }
 
-export interface IChartUpdate {
+export interface IChartUpdateInfo {
   latestVersion: string;
   repository: IRepo;
 }

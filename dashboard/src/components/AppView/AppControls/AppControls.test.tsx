@@ -13,7 +13,9 @@ it("calls delete function when clicking the button", done => {
   const name = "foo";
   const namespace = "bar";
   const app = new hapi.release.Release({ name, namespace });
-  const wrapper = shallow(<AppControls app={app} deleteApp={jest.fn(() => true)} />);
+  const wrapper = shallow(
+    <AppControls app={app} deleteApp={jest.fn(() => true)} push={jest.fn()} />,
+  );
   const button = wrapper
     .find(".AppControls")
     .children()
@@ -52,7 +54,7 @@ it("calls delete function with additional purge", () => {
   const app = new hapi.release.Release({ name, namespace });
   const deleteApp = jest.fn(() => false); // Return "false" to avoid redirect when mounting
   // mount() is necessary to render the Modal
-  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} />);
+  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} push={jest.fn()} />);
   ReactModal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
@@ -93,14 +95,14 @@ context("when the application has been already deleted", () => {
   };
 
   it("should show Purge instead of Delete in the button title", () => {
-    const wrapper = shallow(<AppControls {...props} />);
+    const wrapper = shallow(<AppControls {...props} push={jest.fn()} />);
     const button = wrapper.find(".button-danger");
     expect(button.text()).toBe("Purge");
   });
 
   it("should not show the purge checkbox", () => {
     // mount() is necessary to render the Modal
-    const wrapper = mount(<AppControls {...props} />);
+    const wrapper = mount(<AppControls {...props} push={jest.fn()} />);
     ReactModal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true });
     wrapper.update();
@@ -114,7 +116,7 @@ context("when the application has been already deleted", () => {
   it("should purge when clicking on delete", () => {
     // mount() is necessary to render the Modal
     const deleteApp = jest.fn(() => false);
-    const wrapper = mount(<AppControls {...props} deleteApp={deleteApp} />);
+    const wrapper = mount(<AppControls {...props} deleteApp={deleteApp} push={jest.fn()} />);
     ReactModal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true, purge: false });
     wrapper.update();
@@ -129,7 +131,7 @@ context("when the application has been already deleted", () => {
 
   it("should not show the Upgrade button", () => {
     const deleteApp = jest.fn(() => false);
-    const wrapper = shallow(<AppControls {...props} deleteApp={deleteApp} />);
+    const wrapper = shallow(<AppControls {...props} deleteApp={deleteApp} push={jest.fn()} />);
     const buttons = wrapper.find("button");
     expect(buttons.length).toBe(1);
     expect(buttons.text()).toBe("Purge");

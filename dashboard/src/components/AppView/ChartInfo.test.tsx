@@ -32,7 +32,7 @@ context("when information about updates is available", () => {
     const wrapper = shallow(
       <ChartInfo
         {...defaultProps}
-        update={{ latestVersion: "", repository: { name: "", url: "" } }}
+        updateInfo={{ latestVersion: "", repository: { name: "", url: "" } }}
       />,
     );
     expect(wrapper.html()).toContain("Up to date");
@@ -41,7 +41,7 @@ context("when information about updates is available", () => {
     const wrapper = shallow(
       <ChartInfo
         {...defaultProps}
-        update={{ latestVersion: "1.0.0", repository: { name: "", url: "" } }}
+        updateInfo={{ latestVersion: "1.0.0", repository: { name: "", url: "" } }}
       />,
     );
     expect(

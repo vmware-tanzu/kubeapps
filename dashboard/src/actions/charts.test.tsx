@@ -7,10 +7,11 @@ import actions from ".";
 import { NotFoundError } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
+jest.mock("axios");
+const axiosGetMock = axios.get as jest.Mock;
 
 let store: any;
 let fetchMock: jest.Mock;
-let axiosGetMock: jest.Mock;
 let response: any;
 
 beforeEach(() => {
@@ -24,10 +25,9 @@ beforeEach(() => {
     };
   });
   window.fetch = fetchMock;
-  axiosGetMock = jest.fn(() => {
+  axiosGetMock.mockImplementation(() => {
     return { data: response };
   });
-  axios.get = axiosGetMock;
 });
 
 afterEach(() => {
@@ -161,7 +161,7 @@ describe("getChartUpdates", () => {
         type: getType(actions.charts.receiveChartUpdate),
         payload: {
           name: "foo",
-          update: { latestVersion: "1.1.0", repository: { name: "bar" } },
+          updateInfo: { latestVersion: "1.1.0", repository: { name: "bar" } },
         },
       },
     ];

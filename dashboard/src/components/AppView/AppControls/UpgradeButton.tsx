@@ -1,51 +1,35 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { ArrowUpCircle } from "react-feather";
-import { Redirect } from "react-router";
 
 interface IUpgradeButtonProps {
   updateVersion?: string;
-  upgradeURL: string;
+  releaseName: string;
+  releaseNamespace: string;
+  push: (location: string) => RouterAction;
 }
 
-interface IUpgradeButtonState {
-  upgrade: boolean;
-}
-
-class UpgradeButton extends React.Component<IUpgradeButtonProps, IUpgradeButtonState> {
-  public state: IUpgradeButtonState = {
-    upgrade: false,
-  };
-
-  public render() {
-    const { updateVersion, upgradeURL } = this.props;
-    let upgradeButton = (
-      <button className="button" onClick={this.handleUpgradeClick}>
-        Upgrade
-      </button>
-    );
-    // If the app is outdated highlight the upgrade button
-    if (updateVersion) {
-      upgradeButton = (
-        <div className="tooltip">
-          <button className="button upgrade-button" onClick={this.handleUpgradeClick}>
-            <span className="upgrade-text">Upgrade</span>
-            <ArrowUpCircle color="white" size={25} fill="#82C341" className="notification" />
-          </button>
-          <span className="tooltiptext tooltip-top">New version ({updateVersion}) found!</span>
-        </div>
-      );
-    }
-    return (
-      <React.Fragment>
-        {upgradeButton}
-        {this.state.upgrade && <Redirect push={true} to={upgradeURL} />}
-      </React.Fragment>
+const UpgradeButton: React.SFC<IUpgradeButtonProps> = props => {
+  const { updateVersion, push, releaseName, releaseNamespace } = props;
+  const onClick = () => push(`/apps/ns/${releaseNamespace}/upgrade/${releaseName}`);
+  let upgradeButton = (
+    <button className="button" onClick={onClick}>
+      Upgrade
+    </button>
+  );
+  // If the app is outdated highlight the upgrade button
+  if (updateVersion) {
+    upgradeButton = (
+      <div className="tooltip">
+        <button className="button upgrade-button" onClick={onClick}>
+          <span className="upgrade-text">Upgrade</span>
+          <ArrowUpCircle color="white" size={25} fill="#82C341" className="notification" />
+        </button>
+        <span className="tooltiptext tooltip-top">New version ({updateVersion}) found!</span>
+      </div>
     );
   }
-
-  private handleUpgradeClick = () => {
-    this.setState({ upgrade: true });
-  };
-}
+  return upgradeButton;
+};
 
 export default UpgradeButton;

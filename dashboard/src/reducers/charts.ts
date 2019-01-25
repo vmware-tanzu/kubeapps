@@ -10,7 +10,7 @@ const initialState: IChartState = {
   selected: {
     versions: [],
   },
-  updates: {},
+  updatesInfo: {},
 };
 
 const chartsSelectedReducer = (
@@ -79,9 +79,9 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
     case getType(actions.charts.receiveChartUpdate):
       return {
         ...state,
-        updates: {
-          ...state.updates,
-          [`${action.payload.name}`]: action.payload.update,
+        updatesInfo: {
+          ...state.updatesInfo,
+          [`${action.payload.name}`]: action.payload.updateInfo,
         },
       };
     default:
