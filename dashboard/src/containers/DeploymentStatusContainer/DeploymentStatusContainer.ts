@@ -14,6 +14,7 @@ interface IDeploymentStatusContainerProps {
 
 function mapStateToProps({ kube }: IStoreState, props: IDeploymentStatusContainerProps) {
   const { deployRefs, info } = props;
+  // The Deployments are expected to be fetched and watched by the DeploymentItem.
   return {
     deployments: filterByResourceRefs(deployRefs, kube.items),
     info,
