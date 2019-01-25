@@ -30,7 +30,7 @@ function mapDispatchToProps(
       dispatch(
         actions.kube.getResource(
           deployRef.apiVersion,
-          "deployments",
+          deployRef.resourcePlural(),
           deployRef.namespace,
           deployRef.name,
         ),

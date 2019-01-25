@@ -33,7 +33,14 @@ function mapDispatchToProps(
     // ServiceItemContainers.
     fetchIngresses: () => {
       props.ingressRefs.forEach(r => {
-        dispatch(actions.kube.getResource(r.apiVersion, "ingresses", r.namespace, r.name));
+        dispatch(
+          actions.kube.getResource(
+            r.apiVersion,
+            props.ingressRefs[0].resourcePlural(),
+            r.namespace,
+            r.name,
+          ),
+        );
       });
     },
   };

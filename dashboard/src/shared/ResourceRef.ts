@@ -41,7 +41,7 @@ class ResourceRef {
   }
 
   // Gets the plural form of the resource Kind for use in the resource path
-  private resourcePlural() {
+  public resourcePlural() {
     const plural = ResourceKindToPlural[this.kind];
     if (!plural) {
       throw new Error(`Don't know plural for ${this.kind}, register it in ResourceRef`);
