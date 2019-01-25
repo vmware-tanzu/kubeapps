@@ -1,92 +1,45 @@
 import { shallow } from "enzyme";
-import context from "jest-plugin-context";
 import * as React from "react";
 
-import itBehavesLike from "../../../shared/specs";
-
-import { IResource } from "shared/types";
-import LoadingWrapper from "../../../components/LoadingWrapper";
-import DeploymentItem from "./DeploymentItem";
+import DeploymentItemContainer from "../../../containers/DeploymentItemContainer";
+import ResourceRef from "../../../shared/ResourceRef";
+import { IResource } from "../../../shared/types";
 import DeploymentTable from "./DeploymentsTable";
 
-context("when fetching deployments", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: DeploymentTable,
-    props: {
-      deployments: [{ isFetching: true }],
-    },
-  });
-});
-
 it("renders a message if there are no deployments", () => {
-  const wrapper = shallow(<DeploymentTable deployments={[]} />);
-  expect(
-    wrapper
-      .find(LoadingWrapper)
-      .shallow()
-      .find(DeploymentItem),
-  ).not.toExist();
-  expect(
-    wrapper
-      .find(LoadingWrapper)
-      .shallow()
-      .text(),
-  ).toContain("The current application does not contain any deployment");
+  const wrapper = shallow(<DeploymentTable deployRefs={[]} />);
+  expect(wrapper.find(DeploymentItemContainer)).not.toExist();
+  expect(wrapper.text()).toContain(
+    "The current application does not contain any Deployment objects",
+  );
 });
 
-it("renders a deployment ready", () => {
-  const deployments = [
-    {
-      isFetching: false,
-      item: {
-        kind: "Deployment",
-        metadata: {
-          name: "foo",
-        },
-        status: {},
-      } as IResource,
-    },
+it("renders a DeploymentItem", () => {
+  const deployRefs = [
+    new ResourceRef({ kind: "Deployment", metadata: { name: "foo" } } as IResource, "default"),
   ];
-  const wrapper = shallow(<DeploymentTable deployments={deployments} />);
+  const wrapper = shallow(<DeploymentTable deployRefs={deployRefs} />);
   expect(wrapper).toMatchSnapshot();
-  expect(wrapper.find(DeploymentItem).key()).toContain("foo");
+  expect(wrapper.find(DeploymentItemContainer)).toExist();
 });
 
 it("renders two deployments", () => {
-  const deployments = [
-    {
-      isFetching: false,
-      item: {
-        kind: "Deployment",
-        metadata: {
-          name: "foo",
-        },
-        status: {},
-      } as IResource,
-    },
-    {
-      isFetching: false,
-      item: {
-        kind: "Deployment",
-        metadata: {
-          name: "bar",
-        },
-        status: {},
-      } as IResource,
-    },
+  const deployRefs = [
+    new ResourceRef({ kind: "Deployment", metadata: { name: "foo" } } as IResource, "default"),
+    new ResourceRef({ kind: "Deployment", metadata: { name: "bar" } } as IResource, "default"),
   ];
-  const wrapper = shallow(<DeploymentTable deployments={deployments} />);
-  expect(wrapper.find(DeploymentItem).length).toBe(2);
+  const wrapper = shallow(<DeploymentTable deployRefs={deployRefs} />);
+  expect(wrapper.find(DeploymentItemContainer).length).toBe(2);
   expect(
     wrapper
-      .find(DeploymentItem)
+      .find(DeploymentItemContainer)
       .at(0)
-      .prop("deployment"),
-  ).toBe(deployments[0].item);
+      .prop("deployRef"),
+  ).toBe(deployRefs[0]);
   expect(
     wrapper
-      .find(DeploymentItem)
+      .find(DeploymentItemContainer)
       .at(1)
-      .prop("deployment"),
-  ).toBe(deployments[1].item);
+      .prop("deployRef"),
+  ).toBe(deployRefs[1]);
 });
