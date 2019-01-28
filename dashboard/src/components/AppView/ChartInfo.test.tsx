@@ -18,7 +18,6 @@ const defaultProps = {
     },
     name: "foo",
   } as hapi.release.Release,
-  updateCheck: { checked: false },
 };
 
 it("renders a app item", () => {
