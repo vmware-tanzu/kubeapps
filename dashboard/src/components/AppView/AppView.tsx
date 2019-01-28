@@ -4,14 +4,14 @@ import * as _ from "lodash";
 import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
+import DeploymentStatus from "../../containers/DeploymentStatusContainer";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
-import { IChartUpdateInfo, IK8sList, IKubeItem, IRBACRole, IResource } from "../../shared/types";
+import { IChartUpdateInfo, IK8sList, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
-import DeploymentStatus from "../DeploymentStatus";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
@@ -39,7 +39,7 @@ export interface IAppViewProps {
 }
 
 interface IAppViewState {
-  deployments: Array<IKubeItem<IResource>>;
+  deployRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   // Other resources are not IKubeItems because
@@ -51,7 +51,7 @@ interface IAppViewState {
 }
 
 interface IPartialAppViewState {
-  deployments: Array<IKubeItem<IResource>>;
+  deployRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   otherResources: IResource[];
@@ -77,8 +77,8 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
     manifest: [],
-    deployments: [],
     ingressRefs: [],
+    deployRefs: [],
     otherResources: [],
     serviceRefs: [],
     secretNames: [],
@@ -151,19 +151,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public handleEvent(e: MessageEvent) {
     const msg = JSON.parse(e.data);
     const resource: IResource = msg.object;
-    const newItem = {
-      isFetching: false,
-      item: resource,
-    };
-    const dropByName = (array: Array<IKubeItem<IResource>>) => {
-      return _.dropWhile(array, r => r.item && r.item.metadata.name === resource.metadata.name);
-    };
     let apiResource: string;
     switch (resource.kind) {
       case "Deployment":
-        const newDeps = dropByName(this.state.deployments);
-        newDeps.push(newItem);
-        this.setState({ deployments: newDeps });
         apiResource = "deployments";
         break;
       case "Service":
@@ -205,7 +195,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app, updateInfo, push } = this.props;
-    const { serviceRefs, ingressRefs, deployments, secretNames, otherResources } = this.state;
+    const { serviceRefs, ingressRefs, deployRefs, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -226,7 +216,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus deployments={deployments} info={app.info!} />
+                    <DeploymentStatus deployRefs={deployRefs} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
                     <AppControls
@@ -240,7 +230,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <SecretTable namespace={app.namespace} secretNames={secretNames} />
-                <DeploymentsTable deployments={deployments} />
+                <DeploymentsTable deployRefs={deployRefs} />
                 <ServicesTable serviceRefs={serviceRefs} />
                 <OtherResourcesTable otherResources={otherResources} />
               </div>
@@ -256,8 +246,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     releaseNamespace: string,
   ): IPartialAppViewState {
     const result: IPartialAppViewState = {
-      deployments: [],
       ingressRefs: [],
+      deployRefs: [],
       otherResources: [],
       serviceRefs: [],
       secretNames: [],
@@ -268,7 +258,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       const resource = { isFetching: true, item };
       switch (i.kind) {
         case "Deployment":
-          result.deployments.push(resource);
+          result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
           result.sockets.push(
             this.getSocket("deployments", i.apiVersion, item.metadata.name, releaseNamespace),
           );

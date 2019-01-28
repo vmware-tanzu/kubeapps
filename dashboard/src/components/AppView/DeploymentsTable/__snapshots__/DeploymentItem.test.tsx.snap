@@ -1,9 +1,37 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders a deployment ready 1`] = `
+exports[`when fetching deployments loading spinner matches the snapshot 1`] = `
+<tr>
+  <td />
+  <td
+    colSpan={3}
+  >
+    <LoadingWrapper
+      loaded={false}
+      type={1}
+    />
+  </td>
+</tr>
+`;
+
+exports[`when fetching deployments loading spinner matches the snapshot 2`] = `
+<tr>
+  <td />
+  <td
+    colSpan={3}
+  >
+    <LoadingWrapper
+      loaded={false}
+      type={1}
+    />
+  </td>
+</tr>
+`;
+
+exports[`when there is a valid Deployment renders info about the Deployment status 1`] = `
 <tr>
   <td>
-    deployment-one
+    foo
   </td>
   <td>
     1
