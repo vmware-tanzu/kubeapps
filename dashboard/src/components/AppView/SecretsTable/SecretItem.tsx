@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import { isEmpty } from "lodash";
 import * as React from "react";
 import { AlertTriangle } from "react-feather";
 
@@ -51,15 +51,17 @@ class SecretItem extends React.Component<ISecretItemProps> {
       return (
         <React.Fragment>
           <td className="col-2">{item.type}</td>
-          <td className="col-7 padding-small">
-            {item.data ? (
-              Object.keys(item.data).map(k => (
-                <SecretItemDatum key={`${item.metadata.name}/${k}`} name={k} value={item.data[k]} />
-              ))
-            ) : (
+          {isEmpty(item.data) ? (
+            <td className="col-7">
               <span>This Secret is empty</span>
-            )}
-          </td>
+            </td>
+          ) : (
+            <td className="col-7 padding-small">
+              {Object.keys(item.data).map(k => (
+                <SecretItemDatum key={`${item.metadata.name}/${k}`} name={k} value={item.data[k]} />
+              ))}
+            </td>
+          )}
         </React.Fragment>
       );
     }
