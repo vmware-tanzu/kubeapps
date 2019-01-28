@@ -173,6 +173,47 @@ describe("AppViewComponent", () => {
         wrapper.setProps(validProps);
       }).not.toThrow(YAMLException);
     });
+
+    it("calls getChartUpdates if app info is available", () => {
+      const getChartUpdates = jest.fn();
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      wrapper.setProps({
+        ...validProps,
+        app: {
+          chart: {
+            metadata: {
+              name: "foo",
+              version: "1.0.0",
+              appVersion: "0.1.0",
+            },
+          },
+        },
+        getChartUpdates,
+        updateInfo: undefined,
+      });
+      expect(getChartUpdates.mock.calls.length).toBe(1);
+      expect(getChartUpdates.mock.calls[0]).toEqual(["foo", "1.0.0", "0.1.0"]);
+    });
+
+    it("does not call getChartUpdates if updateInfo is already available", () => {
+      const getChartUpdates = jest.fn();
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      wrapper.setProps({
+        ...validProps,
+        app: {
+          chart: {
+            metadata: {
+              name: "foo",
+              version: "1.0.0",
+              appVersion: "0.1.0",
+            },
+          },
+        },
+        getChartUpdates,
+        updateInfo: { latestVersion: "1.1.0" },
+      });
+      expect(getChartUpdates.mock.calls.length).toBe(0);
+    });
   });
 
   describe("renderization", () => {

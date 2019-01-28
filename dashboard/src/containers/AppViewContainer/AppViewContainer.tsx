@@ -4,6 +4,7 @@ import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
+import { getChartUpdatesKey } from "../../actions/charts";
 import AppView from "../../components/AppView";
 import { IChartUpdateInfo, IResource, IStoreState } from "../../shared/types";
 
@@ -23,9 +24,16 @@ function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params 
     apps.selected.chart &&
     apps.selected.chart.metadata &&
     apps.selected.chart.metadata.name &&
-    charts.updatesInfo[apps.selected.chart.metadata.name]
+    apps.selected.chart.metadata.version
   ) {
-    updateInfo = charts.updatesInfo[apps.selected.chart.metadata.name];
+    const updateKey = getChartUpdatesKey(
+      apps.selected.chart.metadata.name,
+      apps.selected.chart.metadata.version,
+      apps.selected.chart.metadata.appVersion || "",
+    );
+    if (charts.updatesInfo[updateKey]) {
+      updateInfo = charts.updatesInfo[updateKey];
+    }
   }
   return {
     app: apps.selected,

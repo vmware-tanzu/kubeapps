@@ -46,7 +46,7 @@ export const selectValues = createAction("SELECT_VALUES", resolve => {
 });
 
 export const receiveChartUpdate = createAction("RECEIVE_CHART_UPDATES", resolve => {
-  return (chartUpdate: { name: string; updateInfo: IChartUpdateInfo }) => resolve(chartUpdate);
+  return (chartUpdate: { id: string; updateInfo: IChartUpdateInfo }) => resolve(chartUpdate);
 });
 
 export const errorChartUpdates = createAction("ERROR_CHART_UPDATES", resolve => {
@@ -174,6 +174,17 @@ export function getChartValues(
   };
 }
 
+// getChartUpdates return an unique key for a chart with a version
+// this ensures that the same key is reused for the same chart and version
+// but gets updated if the version changes
+export function getChartUpdatesKey(
+  name: string,
+  currentVersion: string,
+  appVersion: string,
+): string {
+  return `${name}/${currentVersion}/${appVersion}`;
+}
+
 export function getChartUpdates(
   name: string,
   currentVersion: string,
@@ -199,7 +210,12 @@ export function getChartUpdates(
           }
         }
       });
-      dispatch(receiveChartUpdate({ name, updateInfo }));
+      dispatch(
+        receiveChartUpdate({
+          id: getChartUpdatesKey(name, currentVersion, appVersion),
+          updateInfo,
+        }),
+      );
     } catch (e) {
       errorChartUpdates(e);
     }

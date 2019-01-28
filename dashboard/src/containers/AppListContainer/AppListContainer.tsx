@@ -8,11 +8,15 @@ import actions from "../../actions";
 import AppList from "../../components/AppList";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ apps, namespace }: IStoreState, { location }: RouteComponentProps<{}>) {
+function mapStateToProps(
+  { apps, namespace, charts }: IStoreState,
+  { location }: RouteComponentProps<{}>,
+) {
   return {
     apps,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     namespace: namespace.current,
+    updatesInfo: charts.updatesInfo,
   };
 }
 
@@ -20,6 +24,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   return {
     fetchApps: (ns: string, all: boolean) => dispatch(actions.apps.fetchApps(ns, all)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
+    getChartUpdates: (name: string, version: string, appVersion: string) =>
+      dispatch(actions.charts.getChartUpdates(name, version, appVersion)),
   };
 }
 

@@ -344,6 +344,7 @@ export interface IAppOverview {
   icon?: string;
   status: string;
   chart: string;
+  chartMetadata: hapi.chart.Metadata;
 }
 
 export interface IKubeItem<T> {

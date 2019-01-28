@@ -91,14 +91,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public componentDidUpdate(prevProps: IAppViewProps) {
-    if (this.props.app !== prevProps.app) {
+    const { app } = this.props;
+    if (app !== prevProps.app) {
       // App has changed, update chart updates info
-      const { app } = this.props;
       if (
         app.chart &&
         app.chart.metadata &&
         app.chart.metadata.name &&
-        app.chart.metadata.version
+        app.chart.metadata.version &&
+        !this.props.updateInfo
       ) {
         this.props.getChartUpdates(
           app.chart.metadata.name,

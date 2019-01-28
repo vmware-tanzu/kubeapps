@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IAppOverview, IAppState } from "../../shared/types";
+import { getChartUpdatesKey } from "../../actions/charts";
+import { IAppOverview, IAppState, IChartUpdateInfo } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
@@ -15,7 +16,9 @@ interface IAppListProps {
   fetchApps: (ns: string, all: boolean) => void;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
+  getChartUpdates: (name: string, version: string, appVersion: string) => void;
   filter: string;
+  updatesInfo: { [releaseName: string]: IChartUpdateInfo | undefined };
 }
 
 interface IAppListState {
@@ -30,7 +33,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     this.setState({ filter });
   }
 
-  public componentWillReceiveProps(nextProps: IAppListProps) {
+  public componentDidUpdate(prevProps: IAppListProps) {
     const {
       apps: { error, listingAll },
       fetchApps,
@@ -38,11 +41,30 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
       namespace,
     } = this.props;
     // refetch if new namespace or error removed due to location change
-    if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
-      fetchApps(nextProps.namespace, listingAll);
+    if (prevProps.namespace !== namespace || (error && !prevProps.apps.error)) {
+      fetchApps(namespace, listingAll);
     }
-    if (nextProps.filter !== filter) {
-      this.setState({ filter: nextProps.filter });
+    if (prevProps.filter !== filter) {
+      this.setState({ filter });
+    }
+    if (prevProps.apps !== this.props.apps && this.props.apps.listOverview) {
+      this.props.apps.listOverview.forEach(app => {
+        if (
+          !this.props.updatesInfo[
+            getChartUpdatesKey(
+              app.chartMetadata.name,
+              app.chartMetadata.version,
+              app.chartMetadata.appVersion,
+            )
+          ]
+        ) {
+          this.props.getChartUpdates(
+            app.chartMetadata.name,
+            app.chartMetadata.version,
+            app.chartMetadata.appVersion,
+          );
+        }
+      });
     }
   }
 
@@ -126,7 +148,17 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           <div>
             <CardGrid>
               {filteredItems.map(r => {
-                return <AppListItem key={r.releaseName} app={r} />;
+                const appVersion = r.chartMetadata.appVersion || "";
+                const updateKey = `${r.chartMetadata.name}/${
+                  r.chartMetadata.version
+                }/${appVersion}`;
+                return (
+                  <AppListItem
+                    key={r.releaseName}
+                    app={r}
+                    updateInfo={this.props.updatesInfo[updateKey]}
+                  />
+                );
               })}
             </CardGrid>
           </div>

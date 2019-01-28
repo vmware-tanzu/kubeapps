@@ -81,7 +81,7 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
         ...state,
         updatesInfo: {
           ...state.updatesInfo,
-          [`${action.payload.name}`]: action.payload.updateInfo,
+          [`${action.payload.id}`]: action.payload.updateInfo,
         },
       };
     default:

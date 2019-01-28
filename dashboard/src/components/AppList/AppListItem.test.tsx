@@ -18,6 +18,7 @@ it("renders an app item", () => {
           chart: "myapp",
         } as IAppOverview
       }
+      updateInfo={undefined}
     />,
   );
   const card = wrapper.find(InfoCard).shallow();
@@ -37,4 +38,23 @@ it("renders an app item", () => {
   expect(card.find(".deployed").exists()).toBe(true);
   expect(card.find(".ListItem__content__info_tag-1").text()).toBe("default");
   expect(card.find(".ListItem__content__info_tag-2").text()).toBe("deployed");
+});
+
+it("should set a banner if there are updates available", () => {
+  const wrapper = shallow(
+    <AppListItem
+      app={
+        {
+          namespace: "default",
+          releaseName: "foo",
+          status: "DEPLOYED",
+          version: "1.0.0",
+          chart: "myapp",
+        } as IAppOverview
+      }
+      updateInfo={{ latestVersion: "1.1.0", repository: { name: "", url: "" } }}
+    />,
+  );
+  const card = wrapper.find(InfoCard);
+  expect(card.prop("banner")).toBe("v1.1.0 available");
 });
