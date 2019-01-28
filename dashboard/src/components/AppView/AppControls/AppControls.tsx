@@ -1,13 +1,19 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Redirect } from "react-router";
 
-import { hapi } from "../../shared/hapi/release";
-import ConfirmDialog from "../ConfirmDialog";
-import LoadingWrapper from "../LoadingWrapper";
+import { IChartUpdateInfo } from "shared/types";
+import { hapi } from "../../../shared/hapi/release";
+import ConfirmDialog from "../../ConfirmDialog";
+import LoadingWrapper from "../../LoadingWrapper";
+import "./AppControls.css";
+import UpgradeButton from "./UpgradeButton";
 
 interface IAppControlsProps {
   app: hapi.release.Release;
+  updateInfo?: IChartUpdateInfo;
   deleteApp: (purge: boolean) => Promise<boolean>;
+  push: (location: string) => RouterAction;
 }
 
 interface IAppControlsState {
@@ -30,8 +36,9 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   public render() {
-    const { name, namespace } = this.props.app;
-    const deleted = this.props.app.info && this.props.app.info.deleted;
+    const { app, updateInfo, push } = this.props;
+    const { name, namespace } = app;
+    const deleted = app.info && app.info.deleted;
     if (!name || !namespace) {
       return <LoadingWrapper />;
     }
@@ -39,12 +46,12 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
       <div className="AppControls">
         {/* If the app has been deleted hide the upgrade button */}
         {!deleted && (
-          <button className="button" onClick={this.handleUpgradeClick}>
-            Upgrade
-          </button>
-        )}
-        {this.state.upgrade && (
-          <Redirect push={true} to={`/apps/ns/${namespace}/upgrade/${name}`} />
+          <UpgradeButton
+            updateVersion={(updateInfo && updateInfo.latestVersion) || ""}
+            releaseName={name}
+            releaseNamespace={namespace}
+            push={push}
+          />
         )}
         <button className="button button-danger" onClick={this.openModel}>
           {deleted ? "Purge" : "Delete"}
@@ -71,10 +78,6 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
       </div>
     );
   }
-
-  public handleUpgradeClick = () => {
-    this.setState({ upgrade: true });
-  };
 
   public openModel = () => {
     this.setState({

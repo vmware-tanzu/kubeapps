@@ -1,3 +1,4 @@
+import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
 import * as _ from "lodash";
 import * as React from "react";
@@ -9,7 +10,7 @@ import { Auth } from "../../shared/Auth";
 import { hapi } from "../../shared/hapi/release";
 import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
-import { IK8sList, IRBACRole, IResource } from "../../shared/types";
+import { IChartUpdateInfo, IK8sList, IRBACRole, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
@@ -30,8 +31,11 @@ export interface IAppViewProps {
   deleteError: Error | undefined;
   getApp: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
+  getChartUpdates: (name: string, version: string, appVersion: string) => void;
+  updateInfo: IChartUpdateInfo | undefined;
   // TODO: remove once WebSockets are moved to Redux store (#882)
   receiveResource: (p: { key: string; resource: IResource }) => void;
+  push: (location: string) => RouterAction;
 }
 
 interface IAppViewState {
@@ -86,6 +90,26 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     getApp(releaseName, namespace);
   }
 
+  public componentDidUpdate(prevProps: IAppViewProps) {
+    if (this.props.app !== prevProps.app) {
+      // App has changed, update chart updates info
+      const { app } = this.props;
+      if (
+        app.chart &&
+        app.chart.metadata &&
+        app.chart.metadata.name &&
+        app.chart.metadata.version
+      ) {
+        this.props.getChartUpdates(
+          app.chart.metadata.name,
+          app.chart.metadata.version,
+          app.chart.metadata.appVersion || "",
+        );
+      }
+    }
+  }
+
+  // componentWillReceiveProps is deprecated use componentDidUpdate instead
   public componentWillReceiveProps(nextProps: IAppViewProps) {
     const { releaseName, getApp, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
@@ -101,6 +125,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     if (!newApp) {
       return;
     }
+
     // TODO(prydonius): Okay to use non-safe load here since we assume the
     // manifest is pre-parsed by Helm and Kubernetes. Look into switching back
     // to safeLoadAll once https://github.com/nodeca/js-yaml/issues/456 is
@@ -169,7 +194,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public appInfo() {
-    const { app } = this.props;
+    const { app, updateInfo, push } = this.props;
     const { serviceRefs, ingressRefs, deployRefs, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
@@ -186,7 +211,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} />
+                <ChartInfo app={app} updateInfo={updateInfo} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -194,7 +219,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <DeploymentStatus deployRefs={deployRefs} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app} deleteApp={this.deleteApp} />
+                    <AppControls
+                      app={app}
+                      updateInfo={updateInfo}
+                      deleteApp={this.deleteApp}
+                      push={push}
+                    />
                   </div>
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />

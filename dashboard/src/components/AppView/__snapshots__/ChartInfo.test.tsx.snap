@@ -28,6 +28,7 @@ exports[`renders a app item 1`] = `
           <div>
             Chart Version: 
             1.0.0
+             
           </div>
         </div>
       </small>

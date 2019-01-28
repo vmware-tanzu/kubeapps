@@ -14,6 +14,7 @@ const defaultChartState = {
   isFetching: false,
   selected: {} as IChartState["selected"],
   items: [],
+  updatesInfo: {},
 } as IChartState;
 const defaultProps = {
   charts: defaultChartState,
