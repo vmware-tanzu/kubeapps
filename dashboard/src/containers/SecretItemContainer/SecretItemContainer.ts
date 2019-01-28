@@ -31,7 +31,7 @@ function mapDispatchToProps(
       dispatch(
         actions.kube.getResource(
           secretRef.apiVersion,
-          "secrets",
+          secretRef.resourcePlural(),
           secretRef.namespace,
           secretRef.name,
         ),
