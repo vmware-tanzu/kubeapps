@@ -1,9 +1,18 @@
 import { ThunkAction } from "redux-thunk";
+import * as semver from "semver";
 import { ActionType, createAction } from "typesafe-actions";
 import { App } from "../shared/App";
+import Chart from "../shared/Chart";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
-import { IAppOverview, IChartVersion, IStoreState, UnprocessableEntity } from "../shared/types";
+import {
+  IAppOverviewWithUpdateInfo,
+  IChartUpdateInfo,
+  IChartVersion,
+  IReleaseWithUpdateInfo,
+  IStoreState,
+  UnprocessableEntity,
+} from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 
@@ -16,7 +25,7 @@ export const listApps = createAction("REQUEST_APP_LIST", resolve => {
 });
 
 export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
-  return (apps: IAppOverview[]) => resolve(apps);
+  return (apps: IAppOverviewWithUpdateInfo[]) => resolve(apps);
 });
 
 export const errorApps = createAction("ERROR_APPS", resolve => {
@@ -28,7 +37,7 @@ export const errorDeleteApp = createAction("ERROR_DELETE_APP", resolve => {
 });
 
 export const selectApp = createAction("SELECT_APP", resolve => {
-  return (app: hapi.release.Release) => resolve(app);
+  return (app: IReleaseWithUpdateInfo) => resolve(app);
 });
 
 const allActions = [
@@ -58,6 +67,57 @@ export function getApp(
   };
 }
 
+async function getChartUpdates(name: string, currentVersion: string, appVersion: string) {
+  const chartsInfo = await Chart.listWithFilters(name, currentVersion, appVersion);
+  let updateInfo: IChartUpdateInfo = {
+    repository: { name: "", url: "" },
+    latestVersion: "",
+  };
+  chartsInfo.forEach(c => {
+    const chartLatestVersion = c.relationships.latestChartVersion.data.version;
+    if (semver.gt(chartLatestVersion, currentVersion)) {
+      if (updateInfo.latestVersion && semver.gt(updateInfo.latestVersion, chartLatestVersion)) {
+        // The current update is newer than the chart version, do nothing
+      } else {
+        updateInfo = {
+          latestVersion: chartLatestVersion,
+          repository: c.attributes.repo,
+        };
+      }
+    }
+  });
+  return updateInfo;
+}
+
+export function getAppWithUpdateInfo(
+  releaseName: string,
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
+    dispatch(requestApps());
+    try {
+      const app = await App.getRelease(namespace, releaseName);
+      dispatch(selectApp(app));
+      if (
+        app.chart &&
+        app.chart.metadata &&
+        app.chart.metadata.name &&
+        app.chart.metadata.version &&
+        app.chart.metadata.appVersion
+      ) {
+        const name = app.chart.metadata.name;
+        const currentVersion = app.chart.metadata.version;
+        const appVersion = app.chart.metadata.appVersion;
+        const updateInfo = await getChartUpdates(name, currentVersion, appVersion);
+        const appWithUpdateInfo = Object.assign({ updateInfo }, app);
+        dispatch(selectApp(appWithUpdateInfo));
+      }
+    } catch (e) {
+      dispatch(errorApps(e));
+    }
+  };
+}
+
 export function deleteApp(
   releaseName: string,
   namespace: string,
@@ -74,7 +134,7 @@ export function deleteApp(
   };
 }
 
-export function fetchApps(
+export function fetchAppsWithUpdatesInfo(
   ns?: string,
   all: boolean = false,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
@@ -86,6 +146,18 @@ export function fetchApps(
     try {
       const apps = await App.listApps(ns, all);
       dispatch(receiveAppList(apps));
+      const appsWithUpdateInfo = await Promise.all(
+        apps.map(
+          async (app): Promise<IAppOverviewWithUpdateInfo> => {
+            const name = app.chartMetadata.name;
+            const currentVersion = app.chartMetadata.version;
+            const appVersion = app.chartMetadata.appVersion;
+            const updateInfo = await getChartUpdates(name, currentVersion, appVersion);
+            return { ...app, updateInfo };
+          },
+        ),
+      );
+      dispatch(receiveAppList(appsWithUpdateInfo));
     } catch (e) {
       dispatch(errorApps(e));
     }

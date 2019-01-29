@@ -5,7 +5,6 @@ import { getType } from "typesafe-actions";
 
 import actions from ".";
 import { NotFoundError } from "../shared/types";
-import { getChartUpdatesKey } from "./charts";
 
 const mockStore = configureMockStore([thunk]);
 jest.mock("axios");
@@ -144,62 +143,5 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(fetchMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");
-  });
-});
-
-describe("getChartUpdatesKey", () => {
-  it("returns a key based on name, version and appversion", () => {
-    expect(getChartUpdatesKey("foo", "1.0.0", "2.0.0")).toBe("foo/1.0.0/2.0.0");
-  });
-});
-
-describe("getChartUpdates", () => {
-  it("gets a chart latest version", async () => {
-    response = {
-      data: [
-        {
-          attributes: { repo: { name: "bar" } },
-          relationships: { latestChartVersion: { data: { version: "1.1.0" } } },
-        },
-      ],
-    };
-    const expectedActions = [
-      {
-        type: getType(actions.charts.receiveChartUpdate),
-        payload: {
-          id: "foo/1.0.0/0.1.0",
-          updateInfo: { latestVersion: "1.1.0", repository: { name: "bar" } },
-        },
-      },
-    ];
-    await store.dispatch(actions.charts.getChartUpdates("foo", "1.0.0", "0.1.0"));
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      "api/chartsvc/v1/charts?name=foo&version=1.0.0&appversion=0.1.0",
-    );
-  });
-  it("does not populate updateInfo if there are no new versions", async () => {
-    response = {
-      data: [
-        {
-          attributes: { repo: { name: "bar" } },
-          relationships: { latestChartVersion: { data: { version: "1.1.0" } } },
-        },
-      ],
-    };
-    const expectedActions = [
-      {
-        type: getType(actions.charts.receiveChartUpdate),
-        payload: {
-          id: "foo/1.1.0/0.1.0",
-          updateInfo: { latestVersion: "", repository: { name: "", url: "" } },
-        },
-      },
-    ];
-    await store.dispatch(actions.charts.getChartUpdates("foo", "1.1.0", "0.1.0"));
-    expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(
-      "api/chartsvc/v1/charts?name=foo&version=1.1.0&appversion=0.1.0",
-    );
   });
 });

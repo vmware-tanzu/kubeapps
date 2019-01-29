@@ -1,21 +1,22 @@
 import * as React from "react";
 
 import placeholder from "../../placeholder.png";
-import { IAppOverview, IChartUpdateInfo } from "../../shared/types";
+import { IAppOverviewWithUpdateInfo } from "../../shared/types";
 import InfoCard from "../InfoCard";
 import "./AppListItem.css";
 
 interface IAppListItemProps {
-  app: IAppOverview;
-  updateInfo: IChartUpdateInfo | undefined;
+  app: IAppOverviewWithUpdateInfo;
 }
 
 class AppListItem extends React.Component<IAppListItemProps> {
   public render() {
-    const { app, updateInfo } = this.props;
+    const { app } = this.props;
     const icon = app.icon ? app.icon : placeholder;
     const banner =
-      updateInfo && updateInfo.latestVersion ? `v${updateInfo.latestVersion} available` : undefined;
+      app.updateInfo && app.updateInfo.latestVersion
+        ? `v${app.updateInfo.latestVersion} available`
+        : undefined;
     return (
       <InfoCard
         key={app.releaseName}

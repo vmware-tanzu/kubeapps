@@ -1,8 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { getChartUpdatesKey } from "../../actions/charts";
-import { IAppOverview, IAppState, IChartUpdateInfo } from "../../shared/types";
+import { IAppOverview, IAppState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
@@ -13,12 +12,10 @@ import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: (ns: string, all: boolean) => void;
+  fetchAppsWithUpdatesInfo: (ns: string, all: boolean) => void;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
-  getChartUpdates: (name: string, version: string, appVersion: string) => void;
   filter: string;
-  updatesInfo: { [releaseName: string]: IChartUpdateInfo | undefined };
 }
 
 interface IAppListState {
@@ -28,43 +25,24 @@ interface IAppListState {
 class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
   public componentDidMount() {
-    const { fetchApps, filter, namespace, apps } = this.props;
-    fetchApps(namespace, apps.listingAll);
+    const { fetchAppsWithUpdatesInfo, filter, namespace, apps } = this.props;
+    fetchAppsWithUpdatesInfo(namespace, apps.listingAll);
     this.setState({ filter });
   }
 
-  public componentDidUpdate(prevProps: IAppListProps) {
+  public componentWillReceiveProps(nextProps: IAppListProps) {
     const {
       apps: { error, listingAll },
-      fetchApps,
+      fetchAppsWithUpdatesInfo,
       filter,
       namespace,
     } = this.props;
     // refetch if new namespace or error removed due to location change
-    if (prevProps.namespace !== namespace || (error && !prevProps.apps.error)) {
-      fetchApps(namespace, listingAll);
+    if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
+      fetchAppsWithUpdatesInfo(nextProps.namespace, listingAll);
     }
-    if (prevProps.filter !== filter) {
-      this.setState({ filter });
-    }
-    if (prevProps.apps !== this.props.apps && this.props.apps.listOverview) {
-      this.props.apps.listOverview.forEach(app => {
-        if (
-          !this.props.updatesInfo[
-            getChartUpdatesKey(
-              app.chartMetadata.name,
-              app.chartMetadata.version,
-              app.chartMetadata.appVersion,
-            )
-          ]
-        ) {
-          this.props.getChartUpdates(
-            app.chartMetadata.name,
-            app.chartMetadata.version,
-            app.chartMetadata.appVersion,
-          );
-        }
-      });
+    if (nextProps.filter !== filter) {
+      this.setState({ filter: nextProps.filter });
     }
   }
 
@@ -148,17 +126,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           <div>
             <CardGrid>
               {filteredItems.map(r => {
-                const appVersion = r.chartMetadata.appVersion || "";
-                const updateKey = `${r.chartMetadata.name}/${
-                  r.chartMetadata.version
-                }/${appVersion}`;
-                return (
-                  <AppListItem
-                    key={r.releaseName}
-                    app={r}
-                    updateInfo={this.props.updatesInfo[updateKey]}
-                  />
-                );
+                return <AppListItem key={r.releaseName} app={r} />;
               })}
             </CardGrid>
           </div>
@@ -169,7 +137,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   private toggleListAll = () => {
-    this.props.fetchApps(this.props.namespace, !this.props.apps.listingAll);
+    this.props.fetchAppsWithUpdatesInfo(this.props.namespace, !this.props.apps.listingAll);
   };
 
   private filteredApps(apps: IAppOverview[], filter: string) {

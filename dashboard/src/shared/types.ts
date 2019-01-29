@@ -81,9 +81,6 @@ export interface IChartState {
     values?: string;
   };
   items: IChart[];
-  // TODO: change the key for an unique ID so we don't find conflicts
-  // between the same chart name available in different repositories
-  updatesInfo: { [chartName: string]: IChartUpdateInfo };
 }
 
 export interface IChartUpdateInfo {
@@ -187,15 +184,23 @@ export interface IDeploymentStatus {
   availableReplicas: number;
 }
 
+export interface IReleaseWithUpdateInfo extends hapi.release.Release {
+  updateInfo?: IChartUpdateInfo;
+}
+
+export interface IAppOverviewWithUpdateInfo extends IAppOverview {
+  updateInfo?: IChartUpdateInfo;
+}
+
 export interface IAppState {
   isFetching: boolean;
   error?: Error;
   deleteError?: Error;
   // currently items are always Helm releases
-  items: hapi.release.Release[];
+  items: IReleaseWithUpdateInfo[];
   listingAll: boolean;
-  listOverview?: IAppOverview[];
-  selected?: hapi.release.Release;
+  listOverview?: IAppOverviewWithUpdateInfo[];
+  selected?: IReleaseWithUpdateInfo;
 }
 
 export interface IStoreState {

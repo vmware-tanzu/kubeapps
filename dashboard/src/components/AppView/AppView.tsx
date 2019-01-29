@@ -7,10 +7,9 @@ import AccessURLTable from "../../containers/AccessURLTableContainer";
 import DeploymentStatus from "../../containers/DeploymentStatusContainer";
 import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
-import { hapi } from "../../shared/hapi/release";
 import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
-import { IChartUpdateInfo, IK8sList, IRBACRole, IResource } from "../../shared/types";
+import { IK8sList, IRBACRole, IReleaseWithUpdateInfo, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
@@ -25,14 +24,12 @@ import ServicesTable from "./ServicesTable";
 export interface IAppViewProps {
   namespace: string;
   releaseName: string;
-  app: hapi.release.Release;
+  app: IReleaseWithUpdateInfo;
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
-  getApp: (releaseName: string, namespace: string) => void;
+  getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
-  getChartUpdates: (name: string, version: string, appVersion: string) => void;
-  updateInfo: IChartUpdateInfo | undefined;
   // TODO: remove once WebSockets are moved to Redux store (#882)
   receiveResource: (p: { key: string; resource: IResource }) => void;
   push: (location: string) => RouterAction;
@@ -86,35 +83,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   };
 
   public async componentDidMount() {
-    const { releaseName, getApp, namespace } = this.props;
-    getApp(releaseName, namespace);
-  }
-
-  public componentDidUpdate(prevProps: IAppViewProps) {
-    const { app } = this.props;
-    if (app !== prevProps.app) {
-      // App has changed, update chart updates info
-      if (
-        app.chart &&
-        app.chart.metadata &&
-        app.chart.metadata.name &&
-        app.chart.metadata.version &&
-        !this.props.updateInfo
-      ) {
-        this.props.getChartUpdates(
-          app.chart.metadata.name,
-          app.chart.metadata.version,
-          app.chart.metadata.appVersion || "",
-        );
-      }
-    }
+    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
+    getAppWithUpdateInfo(releaseName, namespace);
   }
 
   // componentWillReceiveProps is deprecated use componentDidUpdate instead
   public componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { releaseName, getApp, namespace } = this.props;
+    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(releaseName, nextProps.namespace);
+      getAppWithUpdateInfo(releaseName, nextProps.namespace);
       return;
     }
     if (nextProps.error) {
@@ -195,7 +172,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public appInfo() {
-    const { app, updateInfo, push } = this.props;
+    const { app, push } = this.props;
     const { serviceRefs, ingressRefs, deployRefs, secretNames, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
@@ -212,7 +189,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} updateInfo={updateInfo} />
+                <ChartInfo app={app} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -220,12 +197,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <DeploymentStatus deployRefs={deployRefs} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls
-                      app={app}
-                      updateInfo={updateInfo}
-                      deleteApp={this.deleteApp}
-                      push={push}
-                    />
+                    <AppControls app={app} deleteApp={this.deleteApp} push={push} />
                   </div>
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />

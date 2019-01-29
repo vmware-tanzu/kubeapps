@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IAppOverview } from "../../shared/types";
+import { IAppOverview, IAppOverviewWithUpdateInfo } from "../../shared/types";
 import InfoCard from "../InfoCard";
 import AppListItem from "./AppListItem";
 
@@ -18,7 +18,6 @@ it("renders an app item", () => {
           chart: "myapp",
         } as IAppOverview
       }
-      updateInfo={undefined}
     />,
   );
   const card = wrapper.find(InfoCard).shallow();
@@ -50,9 +49,9 @@ it("should set a banner if there are updates available", () => {
           status: "DEPLOYED",
           version: "1.0.0",
           chart: "myapp",
-        } as IAppOverview
+          updateInfo: { latestVersion: "1.1.0", repository: { name: "", url: "" } },
+        } as IAppOverviewWithUpdateInfo
       }
-      updateInfo={{ latestVersion: "1.1.0", repository: { name: "", url: "" } }}
     />,
   );
   const card = wrapper.find(InfoCard);

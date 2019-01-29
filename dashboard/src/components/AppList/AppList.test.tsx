@@ -19,6 +19,7 @@ const defaultProps: any = {
   namespace: "default",
   pushSearchFilter: jest.fn(),
   toggleListAll: jest.fn(),
+  fetchAppsWithUpdatesInfo: jest.fn(),
 };
 
 context("while fetching apps", () => {
@@ -114,7 +115,6 @@ context("when apps available", () => {
           } as IAppOverview,
         ],
       },
-      updatesInfo: {},
     };
   });
 
@@ -161,7 +161,6 @@ it("filters apps", () => {
         } as IAppState
       }
       filter="bar"
-      updatesInfo={{}}
     />,
   );
   expect(
@@ -196,14 +195,13 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
       toggleListAll={jest.fn((toggle: boolean) => {
         apps.listingAll = toggle;
       })}
-      updatesInfo={{}}
     />,
   );
   const checkbox = wrapper.find('input[type="checkbox"]');
   expect(apps.listingAll).toBe(false);
   checkbox.simulate("change");
   // The last call to fetchApps should list all the apps
-  const fetchCalls = defaultProps.fetchApps.mock.calls;
+  const fetchCalls = defaultProps.fetchAppsWithUpdatesInfo.mock.calls;
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
 });
 
@@ -222,31 +220,4 @@ it("renders the 'Show deleted apps' button even if the app list is empty", () =>
     />,
   );
   expect(wrapper.find('input[type="checkbox"]').exists()).toBe(true);
-});
-
-it("calls getChartUpdates if apps info is available", () => {
-  const getChartUpdates = jest.fn();
-  const wrapper = shallow(<AppList {...defaultProps} />);
-  wrapper.setProps({
-    ...defaultProps,
-    apps: {
-      isFetching: false,
-      items: [],
-      listOverview: [
-        {
-          releaseName: "foo",
-          chartMetadata: {
-            name: "bar",
-            version: "1.0.0",
-            appVersion: "0.1.0",
-          },
-        } as IAppOverview,
-      ],
-      listingAll: false,
-    } as IAppState,
-    getChartUpdates,
-    updatesInfo: {},
-  });
-  expect(getChartUpdates.mock.calls.length).toBe(1);
-  expect(getChartUpdates.mock.calls[0]).toEqual(["bar", "1.0.0", "0.1.0"]);
 });

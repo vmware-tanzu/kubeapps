@@ -4,6 +4,7 @@ import { getType } from "typesafe-actions";
 
 import actions from ".";
 import { App } from "../shared/App";
+import Chart from "../shared/Chart";
 import { definedNamespaces } from "../shared/Namespace";
 import { IAppState, UnprocessableEntity } from "../shared/types";
 
@@ -28,21 +29,21 @@ beforeEach(() => {
 });
 
 describe("fetches applications", () => {
-  const listAppsOrig = App.listApps;
   let listAppsMock: jest.Mock;
   beforeEach(() => {
     listAppsMock = jest.fn(() => []);
     App.listApps = listAppsMock;
   });
   afterEach(() => {
-    App.listApps = listAppsOrig;
+    jest.clearAllMocks();
   });
   it("fetches all applications", async () => {
     const expectedActions = [
       { type: getType(actions.apps.listApps), payload: true },
       { type: getType(actions.apps.receiveAppList), payload: [] },
+      { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    await store.dispatch(actions.apps.fetchApps("default", true));
+    await store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", true));
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["default", true]);
   });
@@ -50,10 +51,73 @@ describe("fetches applications", () => {
     const expectedActions = [
       { type: getType(actions.apps.listApps), payload: false },
       { type: getType(actions.apps.receiveAppList), payload: [] },
+      { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    return store.dispatch(actions.apps.fetchApps("default", false)).then(() => {
+    return store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
+    });
+  });
+
+  describe("fetches chart updates", () => {
+    it("gets a chart latest version", async () => {
+      const appsResponse = [
+        { chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" } },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: { latestChartVersion: { data: { version: "1.1.0" } } },
+        },
+      ];
+      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
+      App.listApps = jest.fn(() => appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        {
+          type: getType(actions.apps.receiveAppList),
+          payload: [
+            {
+              ...appsResponse[0],
+              updateInfo: { latestVersion: "1.1.0", repository: { name: "bar" } },
+            },
+          ],
+        },
+      ];
+      return store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false)).then(() => {
+        expect(store.getActions()).toEqual(expectedActions);
+      });
+    });
+
+    it("does not populate updateInfo if there are no new versions", async () => {
+      const appsResponse = [
+        { chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" } },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: { latestChartVersion: { data: { version: "1.0.0" } } },
+        },
+      ];
+      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
+      App.listApps = jest.fn(() => appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        {
+          type: getType(actions.apps.receiveAppList),
+          payload: [
+            {
+              ...appsResponse[0],
+              updateInfo: { latestVersion: "", repository: { name: "", url: "" } },
+            },
+          ],
+        },
+      ];
+      return store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false)).then(() => {
+        expect(store.getActions()).toEqual(expectedActions);
+      });
     });
   });
 });

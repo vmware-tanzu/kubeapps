@@ -16,16 +16,14 @@ function mapStateToProps(
     apps,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     namespace: namespace.current,
-    updatesInfo: charts.updatesInfo,
   };
 }
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    fetchApps: (ns: string, all: boolean) => dispatch(actions.apps.fetchApps(ns, all)),
+    fetchAppsWithUpdatesInfo: (ns: string, all: boolean) =>
+      dispatch(actions.apps.fetchAppsWithUpdatesInfo(ns, all)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
-    getChartUpdates: (name: string, version: string, appVersion: string) =>
-      dispatch(actions.charts.getChartUpdates(name, version, appVersion)),
   };
 }
 
