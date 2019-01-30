@@ -6,6 +6,7 @@ import { IResource } from "./types";
 // which might not match with the Kind. If this becomes difficult to
 // maintain we can add a generic pluralizer and a way to override.
 const ResourceKindToPlural = {
+  Secret: "secrets",
   Service: "services",
   Ingress: "ingresses",
   Deployment: "deployments",
@@ -41,7 +42,7 @@ class ResourceRef {
   }
 
   // Gets the plural form of the resource Kind for use in the resource path
-  private resourcePlural() {
+  public resourcePlural() {
     const plural = ResourceKindToPlural[this.kind];
     if (!plural) {
       throw new Error(`Don't know plural for ${this.kind}, register it in ResourceRef`);

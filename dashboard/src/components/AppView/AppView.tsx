@@ -5,7 +5,6 @@ import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import DeploymentStatus from "../../containers/DeploymentStatusContainer";
-import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
@@ -19,6 +18,7 @@ import "./AppView.css";
 import ChartInfo from "./ChartInfo";
 import DeploymentsTable from "./DeploymentsTable";
 import OtherResourcesTable from "./OtherResourcesTable";
+import SecretsTable from "./SecretsTable";
 import ServicesTable from "./ServicesTable";
 
 export interface IAppViewProps {
@@ -39,10 +39,10 @@ interface IAppViewState {
   deployRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
+  secretRefs: ResourceRef[];
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
   otherResources: IResource[];
-  secretNames: string[];
   sockets: WebSocket[];
   manifest: IResource[];
 }
@@ -51,8 +51,8 @@ interface IPartialAppViewState {
   deployRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
+  secretRefs: ResourceRef[];
   otherResources: IResource[];
-  secretNames: string[];
   sockets: WebSocket[];
 }
 
@@ -78,7 +78,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     deployRefs: [],
     otherResources: [],
     serviceRefs: [],
-    secretNames: [],
+    secretRefs: [],
     sockets: [],
   };
 
@@ -173,7 +173,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app, push } = this.props;
-    const { serviceRefs, ingressRefs, deployRefs, secretNames, otherResources } = this.state;
+    const { serviceRefs, ingressRefs, deployRefs, secretRefs, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -202,7 +202,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <SecretTable namespace={app.namespace} secretNames={secretNames} />
+                <SecretsTable secretRefs={secretRefs} />
                 <DeploymentsTable deployRefs={deployRefs} />
                 <ServicesTable serviceRefs={serviceRefs} />
                 <OtherResourcesTable otherResources={otherResources} />
@@ -223,7 +223,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       deployRefs: [],
       otherResources: [],
       serviceRefs: [],
-      secretNames: [],
+      secretRefs: [],
       sockets: [],
     };
     resources.forEach(i => {
@@ -249,7 +249,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           );
           break;
         case "Secret":
-          result.secretNames.push(item.metadata.name);
+          result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
           break;
         case "List":
           // A List can contain an arbitrary set of resources so we treat them as an
