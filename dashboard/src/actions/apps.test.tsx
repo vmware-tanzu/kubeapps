@@ -41,7 +41,6 @@ describe("fetches applications", () => {
     const expectedActions = [
       { type: getType(actions.apps.listApps), payload: true },
       { type: getType(actions.apps.receiveAppList), payload: [] },
-      { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
     await store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", true));
     expect(store.getActions()).toEqual(expectedActions);
@@ -50,7 +49,6 @@ describe("fetches applications", () => {
   it("fetches default applications", () => {
     const expectedActions = [
       { type: getType(actions.apps.listApps), payload: false },
-      { type: getType(actions.apps.receiveAppList), payload: [] },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
     return store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false)).then(() => {
@@ -76,18 +74,18 @@ describe("fetches applications", () => {
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
         {
-          type: getType(actions.apps.receiveAppList),
-          payload: [
-            {
-              ...appsResponse[0],
-              updateInfo: { latestVersion: "1.1.0", repository: { name: "bar" } },
-            },
-          ],
+          type: getType(actions.apps.updateAppListItem),
+          payload: {
+            ...appsResponse[0],
+            updateInfo: { latestVersion: "1.1.0", repository: { name: "bar" } },
+          },
         },
       ];
-      return store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false)).then(() => {
-        expect(store.getActions()).toEqual(expectedActions);
-      });
+      return store
+        .dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false))
+        .then(async (p: Array<Promise<void>>) => {
+          Promise.all(p).then(() => expect(store.getActions()).toEqual(expectedActions));
+        });
     });
 
     it("does not populate updateInfo if there are no new versions", async () => {
@@ -106,18 +104,18 @@ describe("fetches applications", () => {
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
         {
-          type: getType(actions.apps.receiveAppList),
-          payload: [
-            {
-              ...appsResponse[0],
-              updateInfo: { latestVersion: "", repository: { name: "", url: "" } },
-            },
-          ],
+          type: getType(actions.apps.updateAppListItem),
+          payload: {
+            ...appsResponse[0],
+            updateInfo: { latestVersion: "", repository: { name: "", url: "" } },
+          },
         },
       ];
-      return store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false)).then(() => {
-        expect(store.getActions()).toEqual(expectedActions);
-      });
+      return store
+        .dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false))
+        .then(async (p: Array<Promise<void>>) => {
+          Promise.all(p).then(() => expect(store.getActions()).toEqual(expectedActions));
+        });
     });
   });
 });

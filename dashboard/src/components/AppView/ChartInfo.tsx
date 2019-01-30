@@ -2,14 +2,14 @@ import * as React from "react";
 import { ArrowUpCircle, CheckCircle } from "react-feather";
 import { Link } from "react-router-dom";
 
-import { IReleaseWithUpdateInfo } from "shared/types";
+import { IRelease } from "shared/types";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 
 import placeholder from "../../placeholder.png";
 import "./ChartInfo.css";
 
 interface IChartInfoProps {
-  app: IReleaseWithUpdateInfo;
+  app: IRelease;
 }
 
 class ChartInfo extends React.Component<IChartInfoProps> {

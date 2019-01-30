@@ -6,10 +6,10 @@ import Chart from "../shared/Chart";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
 import {
-  IAppOverviewWithUpdateInfo,
+  IAppOverview,
   IChartUpdateInfo,
   IChartVersion,
-  IReleaseWithUpdateInfo,
+  IRelease,
   IStoreState,
   UnprocessableEntity,
 } from "../shared/types";
@@ -25,7 +25,11 @@ export const listApps = createAction("REQUEST_APP_LIST", resolve => {
 });
 
 export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
-  return (apps: IAppOverviewWithUpdateInfo[]) => resolve(apps);
+  return (apps: IAppOverview[]) => resolve(apps);
+});
+
+export const updateAppListItem = createAction("UPDATE_APP_LIST_ITEM", resolve => {
+  return (app: IAppOverview) => resolve(app);
 });
 
 export const errorApps = createAction("ERROR_APPS", resolve => {
@@ -37,7 +41,7 @@ export const errorDeleteApp = createAction("ERROR_DELETE_APP", resolve => {
 });
 
 export const selectApp = createAction("SELECT_APP", resolve => {
-  return (app: IReleaseWithUpdateInfo) => resolve(app);
+  return (app: IRelease) => resolve(app);
 });
 
 const allActions = [
@@ -45,6 +49,7 @@ const allActions = [
   requestApps,
   receiveApps,
   receiveAppList,
+  updateAppListItem,
   errorApps,
   errorDeleteApp,
   selectApp,
@@ -67,7 +72,7 @@ export function getApp(
   };
 }
 
-async function getChartUpdates(name: string, currentVersion: string, appVersion: string) {
+async function getAppUpdates(name: string, currentVersion: string, appVersion: string) {
   const chartsInfo = await Chart.listWithFilters(name, currentVersion, appVersion);
   let updateInfo: IChartUpdateInfo = {
     repository: { name: "", url: "" },
@@ -108,7 +113,7 @@ export function getAppWithUpdateInfo(
         const name = app.chart.metadata.name;
         const currentVersion = app.chart.metadata.version;
         const appVersion = app.chart.metadata.appVersion;
-        const updateInfo = await getChartUpdates(name, currentVersion, appVersion);
+        const updateInfo = await getAppUpdates(name, currentVersion, appVersion);
         const appWithUpdateInfo = Object.assign({ updateInfo }, app);
         dispatch(selectApp(appWithUpdateInfo));
       }
@@ -134,10 +139,10 @@ export function deleteApp(
   };
 }
 
-export function fetchAppsWithUpdatesInfo(
+export function fetchApps(
   ns?: string,
   all: boolean = false,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<AppsAction>, IStoreState, null, AppsAction> {
   return async dispatch => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
@@ -145,22 +150,30 @@ export function fetchAppsWithUpdatesInfo(
     dispatch(listApps(all));
     try {
       const apps = await App.listApps(ns, all);
-      dispatch(receiveAppList(apps));
-      const appsWithUpdateInfo = await Promise.all(
-        apps.map(
-          async (app): Promise<IAppOverviewWithUpdateInfo> => {
-            const name = app.chartMetadata.name;
-            const currentVersion = app.chartMetadata.version;
-            const appVersion = app.chartMetadata.appVersion;
-            const updateInfo = await getChartUpdates(name, currentVersion, appVersion);
-            return { ...app, updateInfo };
-          },
-        ),
-      );
-      dispatch(receiveAppList(appsWithUpdateInfo));
+      return dispatch(receiveAppList(apps));
     } catch (e) {
-      dispatch(errorApps(e));
+      return dispatch(errorApps(e));
     }
+  };
+}
+
+export function fetchAppsWithUpdatesInfo(
+  ns?: string,
+  all: boolean = false,
+): ThunkAction<Promise<Array<Promise<void>>>, IStoreState, null, AppsAction> {
+  return async dispatch => {
+    const fetchAction = await dispatch(fetchApps(ns, all));
+    let apps: IAppOverview[] = [];
+    if (fetchAction.type === "RECEIVE_APP_LIST") {
+      apps = fetchAction.payload;
+    }
+    return apps.map(async app => {
+      const name = app.chartMetadata.name;
+      const currentVersion = app.chartMetadata.version;
+      const appVersion = app.chartMetadata.appVersion;
+      const updateInfo = await getAppUpdates(name, currentVersion, appVersion);
+      dispatch(updateAppListItem({ ...app, updateInfo }));
+    });
   };
 }
 

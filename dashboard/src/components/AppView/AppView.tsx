@@ -9,7 +9,7 @@ import SecretTable from "../../containers/SecretsTableContainer";
 import { Auth } from "../../shared/Auth";
 import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
-import { IK8sList, IRBACRole, IReleaseWithUpdateInfo, IResource } from "../../shared/types";
+import { IK8sList, IRBACRole, IRelease, IResource } from "../../shared/types";
 import WebSocketHelper from "../../shared/WebSocketHelper";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
@@ -24,7 +24,7 @@ import ServicesTable from "./ServicesTable";
 export interface IAppViewProps {
   namespace: string;
   releaseName: string;
-  app: IReleaseWithUpdateInfo;
+  app: IRelease;
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;

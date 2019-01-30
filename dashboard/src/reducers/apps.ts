@@ -30,6 +30,14 @@ const appsReducer = (
       return { ...state, isFetching: true, listingAll: action.payload };
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.payload };
+    case getType(actions.apps.updateAppListItem):
+      if (state.listOverview) {
+        const appOverviewIndex = state.listOverview.findIndex(
+          a => a.releaseName === action.payload.releaseName,
+        );
+        state.listOverview[appOverviewIndex] = action.payload;
+      }
+      return { ...state };
     case LOCATION_CHANGE:
       return {
         ...state,

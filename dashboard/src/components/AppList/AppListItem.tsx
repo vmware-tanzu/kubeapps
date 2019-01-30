@@ -1,12 +1,12 @@
 import * as React from "react";
 
 import placeholder from "../../placeholder.png";
-import { IAppOverviewWithUpdateInfo } from "../../shared/types";
+import { IAppOverview } from "../../shared/types";
 import InfoCard from "../InfoCard";
 import "./AppListItem.css";
 
 interface IAppListItemProps {
-  app: IAppOverviewWithUpdateInfo;
+  app: IAppOverview;
 }
 
 class AppListItem extends React.Component<IAppListItemProps> {

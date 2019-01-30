@@ -184,11 +184,7 @@ export interface IDeploymentStatus {
   availableReplicas: number;
 }
 
-export interface IReleaseWithUpdateInfo extends hapi.release.Release {
-  updateInfo?: IChartUpdateInfo;
-}
-
-export interface IAppOverviewWithUpdateInfo extends IAppOverview {
+export interface IRelease extends hapi.release.Release {
   updateInfo?: IChartUpdateInfo;
 }
 
@@ -197,10 +193,10 @@ export interface IAppState {
   error?: Error;
   deleteError?: Error;
   // currently items are always Helm releases
-  items: IReleaseWithUpdateInfo[];
+  items: IRelease[];
   listingAll: boolean;
-  listOverview?: IAppOverviewWithUpdateInfo[];
-  selected?: IReleaseWithUpdateInfo;
+  listOverview?: IAppOverview[];
+  selected?: IRelease;
 }
 
 export interface IStoreState {
@@ -350,6 +346,8 @@ export interface IAppOverview {
   status: string;
   chart: string;
   chartMetadata: hapi.chart.Metadata;
+  // UpdateInfo is internally populated
+  updateInfo?: IChartUpdateInfo;
 }
 
 export interface IKubeItem<T> {

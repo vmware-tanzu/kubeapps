@@ -2,14 +2,14 @@ import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Redirect } from "react-router";
 
-import { IReleaseWithUpdateInfo } from "shared/types";
+import { IRelease } from "shared/types";
 import ConfirmDialog from "../../ConfirmDialog";
 import LoadingWrapper from "../../LoadingWrapper";
 import "./AppControls.css";
 import UpgradeButton from "./UpgradeButton";
 
 interface IAppControlsProps {
-  app: IReleaseWithUpdateInfo;
+  app: IRelease;
   deleteApp: (purge: boolean) => Promise<boolean>;
   push: (location: string) => RouterAction;
 }

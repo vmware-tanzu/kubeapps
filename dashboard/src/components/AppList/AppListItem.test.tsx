@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IAppOverview, IAppOverviewWithUpdateInfo } from "../../shared/types";
+import { IAppOverview } from "../../shared/types";
 import InfoCard from "../InfoCard";
 import AppListItem from "./AppListItem";
 
@@ -50,7 +50,7 @@ it("should set a banner if there are updates available", () => {
           version: "1.0.0",
           chart: "myapp",
           updateInfo: { latestVersion: "1.1.0", repository: { name: "", url: "" } },
-        } as IAppOverviewWithUpdateInfo
+        } as IAppOverview
       }
     />,
   );

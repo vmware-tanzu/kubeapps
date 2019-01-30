@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";
-import { IReleaseWithUpdateInfo } from "shared/types";
+import { IRelease } from "shared/types";
 import ChartInfo from "./ChartInfo";
 
 const defaultProps = {
@@ -29,7 +29,7 @@ it("renders a app item", () => {
 
 context("when information about updates is available", () => {
   it("renders an up to date message if there are no updates", () => {
-    const appWithoutUpdates = { ...defaultProps.app, updateInfo: {} } as IReleaseWithUpdateInfo;
+    const appWithoutUpdates = { ...defaultProps.app, updateInfo: {} } as IRelease;
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithoutUpdates} />);
     expect(wrapper.html()).toContain("Up to date");
   });
@@ -37,7 +37,7 @@ context("when information about updates is available", () => {
     const appWithUpdates = {
       ...defaultProps.app,
       updateInfo: { latestVersion: "1.0.0" },
-    } as IReleaseWithUpdateInfo;
+    } as IRelease;
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
     expect(
       wrapper
