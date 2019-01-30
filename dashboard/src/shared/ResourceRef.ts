@@ -6,6 +6,7 @@ import { IResource } from "./types";
 // which might not match with the Kind. If this becomes difficult to
 // maintain we can add a generic pluralizer and a way to override.
 const ResourceKindToPlural = {
+  Secret: "secrets",
   Service: "services",
   Ingress: "ingresses",
   Deployment: "deployments",
