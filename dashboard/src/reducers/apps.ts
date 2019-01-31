@@ -1,4 +1,5 @@
 import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
+import { cloneDeep } from "lodash";
 
 import { getType } from "typesafe-actions";
 import actions from "../actions";
@@ -30,14 +31,22 @@ const appsReducer = (
       return { ...state, isFetching: true, listingAll: action.payload };
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.payload };
-    case getType(actions.apps.updateAppListItem):
-      if (state.listOverview) {
-        const appOverviewIndex = state.listOverview.findIndex(
+    case getType(actions.apps.receiveAppUpdateInfo):
+      const stateCopy = cloneDeep(state);
+      if (stateCopy.listOverview) {
+        // TODO: Review structure to use byID and update items directly
+        const appOverviewIndex = stateCopy.listOverview.findIndex(
           a => a.releaseName === action.payload.releaseName,
         );
-        state.listOverview[appOverviewIndex] = action.payload;
+        stateCopy.listOverview[appOverviewIndex] = {
+          ...stateCopy.listOverview[appOverviewIndex],
+          updateInfo: action.payload.updateInfo,
+        };
       }
-      return { ...state };
+      if (stateCopy.selected && stateCopy.selected.name === action.payload.releaseName) {
+        stateCopy.selected.updateInfo = action.payload.updateInfo;
+      }
+      return { ...stateCopy };
     case LOCATION_CHANGE:
       return {
         ...state,

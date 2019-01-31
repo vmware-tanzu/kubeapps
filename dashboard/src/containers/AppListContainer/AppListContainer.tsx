@@ -21,8 +21,8 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    fetchAppsWithUpdatesInfo: (ns: string, all: boolean) =>
-      dispatch(actions.apps.fetchAppsWithUpdatesInfo(ns, all)),
+    fetchAppsWithUpdateInfo: (ns: string, all: boolean) =>
+      dispatch(actions.apps.fetchAppsWithUpdateInfo(ns, all)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }

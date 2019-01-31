@@ -19,7 +19,7 @@ const defaultProps: any = {
   namespace: "default",
   pushSearchFilter: jest.fn(),
   toggleListAll: jest.fn(),
-  fetchAppsWithUpdatesInfo: jest.fn(),
+  fetchAppsWithUpdateInfo: jest.fn(),
 };
 
 context("while fetching apps", () => {
@@ -201,7 +201,7 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
   expect(apps.listingAll).toBe(false);
   checkbox.simulate("change");
   // The last call to fetchApps should list all the apps
-  const fetchCalls = defaultProps.fetchAppsWithUpdatesInfo.mock.calls;
+  const fetchCalls = defaultProps.fetchAppsWithUpdateInfo.mock.calls;
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
 });
 

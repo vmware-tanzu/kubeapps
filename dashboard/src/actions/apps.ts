@@ -28,8 +28,8 @@ export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
   return (apps: IAppOverview[]) => resolve(apps);
 });
 
-export const updateAppListItem = createAction("UPDATE_APP_LIST_ITEM", resolve => {
-  return (app: IAppOverview) => resolve(app);
+export const receiveAppUpdateInfo = createAction("RECEIVE_APP_UPDATE_INFO", resolve => {
+  return (partialApp: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(partialApp);
 });
 
 export const errorApps = createAction("ERROR_APPS", resolve => {
@@ -49,7 +49,7 @@ const allActions = [
   requestApps,
   receiveApps,
   receiveAppList,
-  updateAppListItem,
+  receiveAppUpdateInfo,
   errorApps,
   errorDeleteApp,
   selectApp,
@@ -72,26 +72,33 @@ export function getApp(
   };
 }
 
-async function getAppUpdates(name: string, currentVersion: string, appVersion: string) {
-  const chartsInfo = await Chart.listWithFilters(name, currentVersion, appVersion);
-  let updateInfo: IChartUpdateInfo = {
-    repository: { name: "", url: "" },
-    latestVersion: "",
-  };
-  chartsInfo.forEach(c => {
-    const chartLatestVersion = c.relationships.latestChartVersion.data.version;
-    if (semver.gt(chartLatestVersion, currentVersion)) {
-      if (updateInfo.latestVersion && semver.gt(updateInfo.latestVersion, chartLatestVersion)) {
-        // The current update is newer than the chart version, do nothing
-      } else {
-        updateInfo = {
-          latestVersion: chartLatestVersion,
-          repository: c.attributes.repo,
-        };
+function getAppUpdateInfo(
+  releaseName: string,
+  chartName: string,
+  currentVersion: string,
+  appVersion: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
+    const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
+    let updateInfo: IChartUpdateInfo = {
+      repository: { name: "", url: "" },
+      latestVersion: "",
+    };
+    chartsInfo.forEach(c => {
+      const chartLatestVersion = c.relationships.latestChartVersion.data.version;
+      if (semver.gt(chartLatestVersion, currentVersion)) {
+        if (updateInfo.latestVersion && semver.gt(updateInfo.latestVersion, chartLatestVersion)) {
+          // The current update is newer than the chart version, do nothing
+        } else {
+          updateInfo = {
+            latestVersion: chartLatestVersion,
+            repository: c.attributes.repo,
+          };
+        }
       }
-    }
-  });
-  return updateInfo;
+    });
+    dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
+  };
 }
 
 export function getAppWithUpdateInfo(
@@ -110,12 +117,14 @@ export function getAppWithUpdateInfo(
         app.chart.metadata.version &&
         app.chart.metadata.appVersion
       ) {
-        const name = app.chart.metadata.name;
-        const currentVersion = app.chart.metadata.version;
-        const appVersion = app.chart.metadata.appVersion;
-        const updateInfo = await getAppUpdates(name, currentVersion, appVersion);
-        const appWithUpdateInfo = Object.assign({ updateInfo }, app);
-        dispatch(selectApp(appWithUpdateInfo));
+        dispatch(
+          getAppUpdateInfo(
+            app.name,
+            app.chart.metadata.name,
+            app.chart.metadata.version,
+            app.chart.metadata.appVersion,
+          ),
+        );
       }
     } catch (e) {
       dispatch(errorApps(e));
@@ -139,10 +148,11 @@ export function deleteApp(
   };
 }
 
+// fetchApps returns a list apps for other actions to compose on top of it
 export function fetchApps(
   ns?: string,
   all: boolean = false,
-): ThunkAction<Promise<AppsAction>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<IAppOverview[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
@@ -150,30 +160,31 @@ export function fetchApps(
     dispatch(listApps(all));
     try {
       const apps = await App.listApps(ns, all);
-      return dispatch(receiveAppList(apps));
+      dispatch(receiveAppList(apps));
+      return apps;
     } catch (e) {
-      return dispatch(errorApps(e));
+      dispatch(errorApps(e));
+      return [];
     }
   };
 }
 
-export function fetchAppsWithUpdatesInfo(
+export function fetchAppsWithUpdateInfo(
   ns?: string,
   all: boolean = false,
-): ThunkAction<Promise<Array<Promise<void>>>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    const fetchAction = await dispatch(fetchApps(ns, all));
-    let apps: IAppOverview[] = [];
-    if (fetchAction.type === "RECEIVE_APP_LIST") {
-      apps = fetchAction.payload;
-    }
-    return apps.map(async app => {
-      const name = app.chartMetadata.name;
-      const currentVersion = app.chartMetadata.version;
-      const appVersion = app.chartMetadata.appVersion;
-      const updateInfo = await getAppUpdates(name, currentVersion, appVersion);
-      dispatch(updateAppListItem({ ...app, updateInfo }));
-    });
+    const apps = await dispatch(fetchApps(ns, all));
+    apps.forEach(app =>
+      dispatch(
+        getAppUpdateInfo(
+          app.releaseName,
+          app.chartMetadata.name,
+          app.chartMetadata.version,
+          app.chartMetadata.appVersion,
+        ),
+      ),
+    );
   };
 }
 

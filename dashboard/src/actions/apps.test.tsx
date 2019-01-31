@@ -42,7 +42,7 @@ describe("fetches applications", () => {
       { type: getType(actions.apps.listApps), payload: true },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", true));
+    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", true));
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["default", true]);
   });
@@ -51,7 +51,7 @@ describe("fetches applications", () => {
       { type: getType(actions.apps.listApps), payload: false },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    return store.dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false)).then(() => {
+    return store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
     });
@@ -60,7 +60,10 @@ describe("fetches applications", () => {
   describe("fetches chart updates", () => {
     it("gets a chart latest version", async () => {
       const appsResponse = [
-        { chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" } },
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
+        },
       ];
       const chartUpdatesResponse = [
         {
@@ -74,23 +77,24 @@ describe("fetches applications", () => {
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
         {
-          type: getType(actions.apps.updateAppListItem),
+          type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
-            ...appsResponse[0],
+            releaseName: "foobar",
             updateInfo: { latestVersion: "1.1.0", repository: { name: "bar" } },
           },
         },
       ];
-      return store
-        .dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false))
-        .then(async (p: Array<Promise<void>>) => {
-          Promise.all(p).then(() => expect(store.getActions()).toEqual(expectedActions));
-        });
+      return store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false)).then(() => {
+        expect(store.getActions()).toEqual(expectedActions);
+      });
     });
 
     it("does not populate updateInfo if there are no new versions", async () => {
       const appsResponse = [
-        { chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" } },
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
+        },
       ];
       const chartUpdatesResponse = [
         {
@@ -104,18 +108,16 @@ describe("fetches applications", () => {
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
         {
-          type: getType(actions.apps.updateAppListItem),
+          type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
-            ...appsResponse[0],
+            releaseName: "foobar",
             updateInfo: { latestVersion: "", repository: { name: "", url: "" } },
           },
         },
       ];
-      return store
-        .dispatch(actions.apps.fetchAppsWithUpdatesInfo("default", false))
-        .then(async (p: Array<Promise<void>>) => {
-          Promise.all(p).then(() => expect(store.getActions()).toEqual(expectedActions));
-        });
+      return store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false)).then(() => {
+        expect(store.getActions()).toEqual(expectedActions);
+      });
     });
   });
 });
