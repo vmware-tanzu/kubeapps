@@ -41,6 +41,22 @@ class ResourceRef {
     return Kube.getResourceURL(this.apiVersion, this.resourcePlural(), this.namespace, this.name);
   }
 
+  public watchResourceURL() {
+    return Kube.watchResourceURL(this.apiVersion, this.resourcePlural(), this.namespace, this.name);
+  }
+
+  public getResource() {
+    return Kube.getResource(this.apiVersion, this.resourcePlural(), this.namespace, this.name);
+  }
+
+  // Opens and returns a WebSocket for the requested resource. Note: it is
+  // important that this socket be properly closed when no longer needed. The
+  // returned WebSocket can be attached to an event listener to read data from
+  // the socket.
+  public watchResource() {
+    return Kube.watchResource(this.apiVersion, this.resourcePlural(), this.namespace, this.name);
+  }
+
   // Gets the plural form of the resource Kind for use in the resource path
   public resourcePlural() {
     const plural = ResourceKindToPlural[this.kind];

@@ -27,15 +27,7 @@ function mapDispatchToProps(
 ) {
   const { secretRef } = props;
   return {
-    getSecret: () =>
-      dispatch(
-        actions.kube.getResource(
-          secretRef.apiVersion,
-          secretRef.resourcePlural(),
-          secretRef.namespace,
-          secretRef.name,
-        ),
-      ),
+    getSecret: () => dispatch(actions.kube.getResource(secretRef)),
   };
 }
 

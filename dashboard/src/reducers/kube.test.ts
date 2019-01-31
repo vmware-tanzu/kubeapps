@@ -15,6 +15,7 @@ describe("authReducer", () => {
   beforeEach(() => {
     initialState = {
       items: {},
+      sockets: {},
     };
   });
 

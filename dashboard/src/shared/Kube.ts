@@ -1,7 +1,13 @@
-import { axios } from "./Auth";
+import { Auth, axios } from "./Auth";
 import { IResource } from "./types";
 
-export const KUBE_ROOT_URL = "api/kube";
+export const APIBase = "api/kube";
+export let WebSocketAPIBase: string;
+if (location.protocol === "https:") {
+  WebSocketAPIBase = `wss://${window.location.host}${window.location.pathname}`;
+} else {
+  WebSocketAPIBase = `ws://${window.location.host}${window.location.pathname}`;
+}
 
 export class Kube {
   public static getResourceURL(
@@ -11,7 +17,7 @@ export class Kube {
     name?: string,
     query?: string,
   ) {
-    let url = `${KUBE_ROOT_URL}/${apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`}`;
+    let url = `${APIBase}/${apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`}`;
     if (namespace) {
       url += `/namespaces/${namespace}`;
     }
@@ -21,6 +27,24 @@ export class Kube {
     }
     if (query) {
       url += `?${query}`;
+    }
+    return url;
+  }
+
+  public static watchResourceURL(
+    apiVersion: string,
+    resource: string,
+    namespace?: string,
+    name?: string,
+    query?: string,
+  ) {
+    let url = this.getResourceURL(apiVersion, resource, namespace);
+    url = `${WebSocketAPIBase}${url}?watch=true`;
+    if (name) {
+      url += `&fieldSelector=metadata.name%3D${name}`;
+    }
+    if (query) {
+      url += `&${query}`;
     }
     return url;
   }
@@ -36,5 +60,22 @@ export class Kube {
       this.getResourceURL(apiVersion, resource, namespace, name, query),
     );
     return data;
+  }
+
+  // Opens and returns a WebSocket for the requested resource. Note: it is
+  // important that this socket be properly closed when no longer needed. The
+  // returned WebSocket can be attached to an event listener to read data from
+  // the socket.
+  public static watchResource(
+    apiVersion: string,
+    resource: string,
+    namespace?: string,
+    name?: string,
+    query?: string,
+  ) {
+    return new WebSocket(
+      this.watchResourceURL(apiVersion, resource, namespace, name, query),
+      Auth.wsProtocols(),
+    );
   }
 }
