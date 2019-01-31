@@ -34,7 +34,7 @@ kubectl create clusterrolebinding kubeapps-operator --clusterrole=cluster-admin 
 
 To retrieve the token,
 
-### On Linux:
+### On Linux/macOS:
 
 ```bash
 kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
