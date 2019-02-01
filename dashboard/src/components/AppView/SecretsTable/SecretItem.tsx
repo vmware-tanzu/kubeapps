@@ -1,71 +1,72 @@
-import * as _ from "lodash";
+import { isEmpty } from "lodash";
 import * as React from "react";
-import { Eye, EyeOff } from "react-feather";
+import { AlertTriangle } from "react-feather";
 
-import { ISecret } from "../../../shared/types";
+import LoadingWrapper, { LoaderType } from "../../../components/LoadingWrapper";
+import { IKubeItem, ISecret } from "../../../shared/types";
 import "./SecretContent.css";
+import SecretItemDatum from "./SecretItemDatum";
 
 interface ISecretItemProps {
-  secret: ISecret;
+  name: string;
+  secret?: IKubeItem<ISecret>;
+  getSecret: () => void;
 }
 
-interface ISecretItemState {
-  showSecret: { [s: string]: boolean };
-}
-
-class SecretItem extends React.Component<ISecretItemProps, ISecretItemState> {
-  public constructor(props: ISecretItemProps) {
-    super(props);
-    const showSecret = {};
-    if (this.props.secret.data) {
-      Object.keys(this.props.secret.data).forEach(k => (showSecret[k] = false));
-    }
-    this.state = { showSecret };
+class SecretItem extends React.Component<ISecretItemProps> {
+  public componentDidMount() {
+    this.props.getSecret();
   }
 
   public render() {
-    const { secret } = this.props;
-    const secretEntries: JSX.Element[] = [];
-    if (!_.isEmpty(this.props.secret.data)) {
-      Object.keys(secret.data).forEach(k => {
-        secretEntries.push(this.renderSecretEntry(k));
-      });
-    } else {
-      secretEntries.push(<span key="empty">The secret is empty</span>);
-    }
+    const { name, secret } = this.props;
     return (
       <tr className="flex">
-        <td className="col-2">{secret.metadata.name}</td>
-        <td className="col-2">{secret.type}</td>
-        <td className="col-7 padding-small">{secretEntries}</td>
+        <td className="col-3">{name}</td>
+        {this.renderSecretInfo(secret)}
       </tr>
     );
   }
 
-  private renderSecretEntry = (name: string) => {
-    const toggle = () => this.toggleDisplay(name);
-    const text = atob(this.props.secret.data[name]);
-    return (
-      <span key={name} className="flex">
-        <a onClick={toggle}>{this.state.showSecret[name] ? <EyeOff /> : <Eye />}</a>
-        <span className="flex margin-l-normal">
-          <span>{name}:</span>
-          {this.state.showSecret[name] ? (
-            <pre className="SecretContainer">
-              <code className="SecretContent">{text}</code>
-            </pre>
+  private renderSecretInfo(secret?: IKubeItem<ISecret>) {
+    if (secret === undefined || secret.isFetching) {
+      return (
+        <td className="col-9">
+          <LoadingWrapper type={LoaderType.Placeholder} />
+        </td>
+      );
+    }
+    if (secret.error) {
+      return (
+        <td className="col-9">
+          <span className="flex">
+            <AlertTriangle />
+            <span className="flex margin-l-normal">Error: {secret.error.message}</span>
+          </span>
+        </td>
+      );
+    }
+    if (secret.item) {
+      const item = secret.item;
+      return (
+        <React.Fragment>
+          <td className="col-2">{item.type}</td>
+          {isEmpty(item.data) ? (
+            <td className="col-7">
+              <span>This Secret is empty</span>
+            </td>
           ) : (
-            <span className="margin-l-small">{text.length} bytes</span>
+            <td className="col-7 padding-small">
+              {Object.keys(item.data).map(k => (
+                <SecretItemDatum key={`${item.metadata.name}/${k}`} name={k} value={item.data[k]} />
+              ))}
+            </td>
           )}
-        </span>
-      </span>
-    );
-  };
-
-  private toggleDisplay = (name: string) => {
-    const { showSecret } = this.state;
-    this.setState({ showSecret: { ...showSecret, [name]: !showSecret[name] } });
-  };
+        </React.Fragment>
+      );
+    }
+    return null;
+  }
 }
 
 export default SecretItem;
