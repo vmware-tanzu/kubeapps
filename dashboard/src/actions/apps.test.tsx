@@ -46,15 +46,14 @@ describe("fetches applications", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["default", true]);
   });
-  it("fetches default applications", () => {
+  it("fetches default applications", async () => {
     const expectedActions = [
       { type: getType(actions.apps.listApps), payload: false },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    return store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false)).then(() => {
-      expect(store.getActions()).toEqual(expectedActions);
-      expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
-    });
+    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
   });
 
   describe("fetches chart updates", () => {
@@ -84,9 +83,8 @@ describe("fetches applications", () => {
           },
         },
       ];
-      return store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false)).then(() => {
-        expect(store.getActions()).toEqual(expectedActions);
-      });
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      expect(store.getActions()).toEqual(expectedActions);
     });
 
     it("does not populate updateInfo if there are no new versions", async () => {
@@ -115,9 +113,8 @@ describe("fetches applications", () => {
           },
         },
       ];
-      return store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false)).then(() => {
-        expect(store.getActions()).toEqual(expectedActions);
-      });
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      expect(store.getActions()).toEqual(expectedActions);
     });
   });
 });

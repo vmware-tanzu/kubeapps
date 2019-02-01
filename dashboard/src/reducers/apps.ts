@@ -1,10 +1,9 @@
 import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
-import { cloneDeep } from "lodash";
 
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AppsAction } from "../actions/apps";
-import { IAppState } from "../shared/types";
+import { IAppState, IRelease } from "../shared/types";
 
 const initialState: IAppState = {
   isFetching: false,
@@ -32,21 +31,29 @@ const appsReducer = (
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.payload };
     case getType(actions.apps.receiveAppUpdateInfo):
-      const stateCopy = cloneDeep(state);
-      if (stateCopy.listOverview) {
+      let listOverview;
+      if (state.listOverview) {
         // TODO: Review structure to use byID and update items directly
-        const appOverviewIndex = stateCopy.listOverview.findIndex(
+        const appOverviewIndex = state.listOverview.findIndex(
           a => a.releaseName === action.payload.releaseName,
         );
-        stateCopy.listOverview[appOverviewIndex] = {
-          ...stateCopy.listOverview[appOverviewIndex],
-          updateInfo: action.payload.updateInfo,
-        };
+        // Replace item in listOverview array
+        listOverview = [
+          ...state.listOverview.slice(0, appOverviewIndex),
+          { ...state.listOverview[appOverviewIndex], updateInfo: action.payload.updateInfo },
+          ...state.listOverview.slice(appOverviewIndex + 1),
+        ];
       }
-      if (stateCopy.selected && stateCopy.selected.name === action.payload.releaseName) {
-        stateCopy.selected.updateInfo = action.payload.updateInfo;
+      let selected;
+      if (state.selected && state.selected.name === action.payload.releaseName) {
+        // TODO(andres) It's required to convert as IRelease to avoid missing toJSON property
+        selected = { ...state.selected, updateInfo: action.payload.updateInfo } as IRelease;
       }
-      return { ...stateCopy };
+      return {
+        ...state,
+        listOverview: listOverview || state.listOverview,
+        selected: selected || state.selected,
+      };
     case LOCATION_CHANGE:
       return {
         ...state,

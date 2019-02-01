@@ -29,7 +29,7 @@ export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
 });
 
 export const receiveAppUpdateInfo = createAction("RECEIVE_APP_UPDATE_INFO", resolve => {
-  return (partialApp: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(partialApp);
+  return (payload: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(payload);
 });
 
 export const errorApps = createAction("ERROR_APPS", resolve => {
@@ -60,14 +60,16 @@ export type AppsAction = ActionType<typeof allActions[number]>;
 export function getApp(
   releaseName: string,
   namespace: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<hapi.release.Release | undefined>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
     try {
       const app = await App.getRelease(namespace, releaseName);
       dispatch(selectApp(app));
+      return app;
     } catch (e) {
       dispatch(errorApps(e));
+      return;
     }
   };
 }
@@ -108,9 +110,9 @@ export function getAppWithUpdateInfo(
   return async dispatch => {
     dispatch(requestApps());
     try {
-      const app = await App.getRelease(namespace, releaseName);
-      dispatch(selectApp(app));
+      const app = await dispatch(getApp(releaseName, namespace));
       if (
+        app &&
         app.chart &&
         app.chart.metadata &&
         app.chart.metadata.name &&
@@ -148,7 +150,7 @@ export function deleteApp(
   };
 }
 
-// fetchApps returns a list apps for other actions to compose on top of it
+// fetchApps returns a list of apps for other actions to compose on top of it
 export function fetchApps(
   ns?: string,
   all: boolean = false,
