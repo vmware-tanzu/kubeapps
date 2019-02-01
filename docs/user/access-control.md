@@ -58,7 +58,12 @@ Role in the namespace Kubeapps is installed in. The `edit` ClusterRole should be
 available in most Kubernetes distributions, you can find more information about
 that role
 [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
-
+kubectl create -n default rolebinding example-edit \
+  --clusterrole=edit \
+  --serviceaccount default:example
+kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
+  --role=kubeapps-repositories-read \
+  --serviceaccount default:example
 
 ### Service Catalog, Service Instances and Bindings
 
