@@ -18,19 +18,12 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 )
 
 var (
 	version          = "devel"
 	userAgentComment string
 )
-
-// clientWithDefaultUserAgent implements chart.HTTPClient interface
-// and includes an override of the Do method which injects an User-Agent
-type clientWithDefaultUserAgent struct {
-	http.Client
-}
 
 // Returns the user agent to be used during calls to the chart repositories
 // Examples:
@@ -44,10 +37,4 @@ func userAgent() string {
 		ua = fmt.Sprintf("%s (%s)", ua, userAgentComment)
 	}
 	return ua
-}
-
-func (c *clientWithDefaultUserAgent) Do(req *http.Request) (*http.Response, error) {
-	req.Header.Set("User-Agent", userAgent())
-
-	return c.Client.Do(req)
 }
