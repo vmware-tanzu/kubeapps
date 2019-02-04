@@ -69,7 +69,7 @@ kubeapps dashboard --port=5000
 
 #### Troubleshooting
 
-In some cases, the react processes keep listening on the 3000 port, even when you disconnect telepresence. If you see that `localhost:3000` is still serving the dashboard, even with your telepresence down, check if there is a react process running (`ps aux | grep react`) and kill it.
+In some cases, the Create React App scripts keep listening on the 3000 port, even when you disconnect telepresence. If you see that `localhost:3000` is still serving the dashboard, even with your telepresence down, check if there is a Create React App script process running (`ps aux | grep react`) and kill it.
 
 ### Running tests
 
