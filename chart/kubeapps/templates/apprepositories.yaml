@@ -13,5 +13,20 @@ annotations:
 spec:
   type: helm
   url: {{ .url }}
+  {{- if or .caCert .authorizationHeader }}
+  auth:
+    {{- if .caCert }}
+    customCA:
+      secretKeyRef:
+        key: ca.crt
+        name: {{ template "kubeapps.fullname" $ }}-{{ .name }}
+    {{- end }}
+    {{- if .authorizationHeader }}
+    header:
+      secretKeyRef:
+        key: authorizationHeader
+        name: {{ template "kubeapps.fullname" $ }}-{{ .name }}
+    {{- end }}
+  {{- end }}
 ---
 {{ end -}}
