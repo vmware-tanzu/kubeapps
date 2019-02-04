@@ -66,7 +66,7 @@ kubectl create -n default rolebinding example-edit \
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
   --role=kubeapps-repositories-read \
   --serviceaccount default:example
- ```
+```
 
 ### Service Catalog, Service Instances and Bindings
 
@@ -132,9 +132,6 @@ for users to create and refresh App Repositories in Kubeapps
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
 export KUBEAPPS_RELEASE_NAME=kubeapps
-kubectl create -n default rolebinding example-edit \
-  --clusterrole=edit \
-  --serviceaccount default:example
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write \
   --role=$KUBEAPPS_RELEASE_NAME-repositories-write \
   --serviceaccount default:example
