@@ -17,9 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"testing"
 
 	"github.com/arschles/assert"
@@ -66,22 +63,4 @@ func Test_userAgent(t *testing.T) {
 			assert.Equal(t, tt.expectedResult, userAgent(), "expected user agent")
 		})
 	}
-}
-
-func Test_clientWithDefaultUserAgentOverride(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		assert.Equal(t, "tiller-proxy/devel", req.Header.Get("User-Agent"), "expected user agent")
-	}))
-	// Close the server when test finishes
-	defer server.Close()
-
-	serverURL, _ := url.Parse(server.URL)
-
-	netClient = &clientWithDefaultUserAgent{}
-	_, err := netClient.Do(&http.Request{
-		URL:    serverURL,
-		Header: map[string][]string{},
-	})
-
-	assert.NoErr(t, err)
 }
