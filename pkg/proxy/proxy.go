@@ -71,17 +71,17 @@ func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface) *Proxy
 
 // AppOverview represents the basics of a release
 type AppOverview struct {
-	ReleaseName string `json:"releaseName"`
-	Version     string `json:"version"`
-	Namespace   string `json:"namespace"`
-	Icon        string `json:"icon,omitempty"`
-	Status      string `json:"status"`
-	Chart       string `json:"chart"`
+	ReleaseName   string         `json:"releaseName"`
+	Version       string         `json:"version"`
+	Namespace     string         `json:"namespace"`
+	Icon          string         `json:"icon,omitempty"`
+	Status        string         `json:"status"`
+	Chart         string         `json:"chart"`
+	ChartMetadata chart.Metadata `json:"chartMetadata"`
 }
 
 func (p *Proxy) getRelease(name, namespace string) (*release.Release, error) {
 	release, err := p.helmClient.ReleaseContent(name)
-
 	if err != nil {
 		return nil, prettyError(err)
 	}
@@ -201,12 +201,13 @@ func (p *Proxy) ListReleases(namespace string, releaseListLimit int, status stri
 		for _, r := range filteredReleases {
 			if namespace == "" || namespace == r.Namespace {
 				appList = append(appList, AppOverview{
-					ReleaseName: r.Name,
-					Version:     r.Chart.Metadata.Version,
-					Namespace:   r.Namespace,
-					Icon:        r.Chart.Metadata.Icon,
-					Status:      r.Info.Status.Code.String(),
-					Chart:       r.Chart.Metadata.Name,
+					ReleaseName:   r.Name,
+					Version:       r.Chart.Metadata.Version,
+					Namespace:     r.Namespace,
+					Icon:          r.Chart.Metadata.Icon,
+					Status:        r.Info.Status.Code.String(),
+					Chart:         r.Chart.Metadata.Name,
+					ChartMetadata: *r.Chart.Metadata,
 				})
 			}
 		}

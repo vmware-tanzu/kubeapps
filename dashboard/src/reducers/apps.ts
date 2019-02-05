@@ -3,7 +3,7 @@ import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { AppsAction } from "../actions/apps";
-import { IAppState } from "../shared/types";
+import { IAppState, IRelease } from "../shared/types";
 
 const initialState: IAppState = {
   isFetching: false,
@@ -30,6 +30,30 @@ const appsReducer = (
       return { ...state, isFetching: true, listingAll: action.payload };
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.payload };
+    case getType(actions.apps.receiveAppUpdateInfo):
+      let listOverview;
+      if (state.listOverview) {
+        // TODO: Review structure to use byID and update items directly
+        const appOverviewIndex = state.listOverview.findIndex(
+          a => a.releaseName === action.payload.releaseName,
+        );
+        // Replace item in listOverview array
+        listOverview = [
+          ...state.listOverview.slice(0, appOverviewIndex),
+          { ...state.listOverview[appOverviewIndex], updateInfo: action.payload.updateInfo },
+          ...state.listOverview.slice(appOverviewIndex + 1),
+        ];
+      }
+      let selected;
+      if (state.selected && state.selected.name === action.payload.releaseName) {
+        // TODO(andres) It's required to convert as IRelease to avoid missing toJSON property
+        selected = { ...state.selected, updateInfo: action.payload.updateInfo } as IRelease;
+      }
+      return {
+        ...state,
+        listOverview: listOverview || state.listOverview,
+        selected: selected || state.selected,
+      };
     case LOCATION_CHANGE:
       return {
         ...state,
