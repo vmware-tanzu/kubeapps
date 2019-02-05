@@ -93,20 +93,22 @@ type LoadChart func(in io.Reader) (*chart.Chart, error)
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
 	GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error)
-	InitNetClient(customCA *CustomCA) (*http.Client, error)
+	InitNetClient(customCA *CustomCA) (HTTPClient, error)
 }
 
 // Chart struct contains the clients required to retrieve charts info
 type Chart struct {
 	kubeClient kubernetes.Interface
 	load       LoadChart
+	userAgent  string
 }
 
 // NewChart returns a new Chart
-func NewChart(kubeClient kubernetes.Interface, load LoadChart) *Chart {
+func NewChart(kubeClient kubernetes.Interface, load LoadChart, userAgent string) *Chart {
 	return &Chart{
 		kubeClient,
 		load,
+		userAgent,
 	}
 }
 
@@ -228,8 +230,21 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
+// clientWithDefaultUserAgent implements chart.HTTPClient interface
+// and includes an override of the Do method which injects an User-Agent
+type clientWithDefaultUserAgent struct {
+	client    HTTPClient
+	userAgent string
+}
+
+// Do HTTP request
+func (c *clientWithDefaultUserAgent) Do(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", c.userAgent)
+	return c.client.Do(req)
+}
+
 // InitNetClient returns an HTTP client loading a custom CA if provided (as a secret)
-func (c *Chart) InitNetClient(customCA *CustomCA) (*http.Client, error) {
+func (c *Chart) InitNetClient(customCA *CustomCA) (HTTPClient, error) {
 	// Get the SystemCertPool, continue with an empty pool on error
 	caCertPool, _ := x509.SystemCertPool()
 	if caCertPool == nil {
@@ -251,13 +266,16 @@ func (c *Chart) InitNetClient(customCA *CustomCA) (*http.Client, error) {
 	}
 
 	// Return Transport for testing purposes
-	return &http.Client{
-		Timeout: time.Second * defaultTimeoutSeconds,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				RootCAs: caCertPool,
+	return &clientWithDefaultUserAgent{
+		client: &http.Client{
+			Timeout: time.Second * defaultTimeoutSeconds,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: caCertPool,
+				},
 			},
 		},
+		userAgent: c.userAgent,
 	}, nil
 }
 
