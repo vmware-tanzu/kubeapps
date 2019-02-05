@@ -18,6 +18,7 @@ describe("componentDidMount", () => {
         ingresses={[]}
         fetchIngresses={mock}
         watchServices={jest.fn()}
+        closeWatches={jest.fn()}
       />,
     );
     expect(mock).toHaveBeenCalled();
@@ -31,8 +32,26 @@ describe("componentDidMount", () => {
         ingresses={[]}
         fetchIngresses={jest.fn()}
         watchServices={mock}
+        closeWatches={jest.fn()}
       />,
     );
+    expect(mock).toHaveBeenCalled();
+  });
+});
+
+describe("componentWillUnmount", () => {
+  it("closes watches on the Services", () => {
+    const mock = jest.fn();
+    const wrapper = shallow(
+      <AccessURLTable
+        services={[]}
+        ingresses={[]}
+        fetchIngresses={jest.fn()}
+        watchServices={mock}
+        closeWatches={jest.fn()}
+      />,
+    );
+    wrapper.unmount();
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -45,6 +64,7 @@ context("when fetching ingresses or services", () => {
       services: [],
       fetchIngresses: jest.fn(),
       watchServices: jest.fn(),
+      closeWatches: jest.fn(),
     },
   });
   itBehavesLike("aLoadingComponent", {
@@ -54,6 +74,7 @@ context("when fetching ingresses or services", () => {
       services: [{ isFetching: true }],
       fetchIngresses: jest.fn(),
       watchServices: jest.fn(),
+      closeWatches: jest.fn(),
     },
   });
 });
@@ -65,6 +86,7 @@ it("renders a message if there are no services or ingresses", () => {
       ingresses={[]}
       fetchIngresses={jest.fn()}
       watchServices={jest.fn()}
+      closeWatches={jest.fn()}
     />,
   );
   expect(
@@ -103,6 +125,7 @@ context("when the app contains services", () => {
         ingresses={[]}
         fetchIngresses={jest.fn()}
         watchServices={jest.fn()}
+        closeWatches={jest.fn()}
       />,
     );
     expect(
@@ -134,6 +157,7 @@ context("when the app contains services", () => {
         ingresses={[]}
         fetchIngresses={jest.fn()}
         watchServices={jest.fn()}
+        closeWatches={jest.fn()}
       />,
     );
     expect(wrapper.find(AccessURLItem)).toExist();
@@ -166,6 +190,7 @@ context("when the app contains ingresses", () => {
         ingresses={ingresses}
         fetchIngresses={jest.fn()}
         watchServices={jest.fn()}
+        closeWatches={jest.fn()}
       />,
     );
     expect(wrapper.find(AccessURLItem)).toExist();
@@ -212,6 +237,7 @@ context("when the app contains services and ingresses", () => {
         ingresses={ingresses}
         fetchIngresses={jest.fn()}
         watchServices={jest.fn()}
+        closeWatches={jest.fn()}
       />,
     );
     expect(wrapper.find(AccessURLItem)).toExist();
@@ -229,6 +255,7 @@ context("when the app contains resources with errors", () => {
         ingresses={ingresses}
         fetchIngresses={jest.fn()}
         watchServices={jest.fn()}
+        closeWatches={jest.fn()}
       />,
     );
 

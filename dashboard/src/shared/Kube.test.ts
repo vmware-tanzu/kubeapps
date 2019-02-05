@@ -40,7 +40,7 @@ describe("App", () => {
     });
   });
 
-  describe("getResourceURL", () => {
+  describe("watchResourceURL", () => {
     [
       {
         description: "returns the version and resource",

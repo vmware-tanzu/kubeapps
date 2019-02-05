@@ -41,6 +41,11 @@ function mapDispatchToProps(
         dispatch(actions.kube.getAndWatchResource(r));
       });
     },
+    closeWatches: () => {
+      props.serviceRefs.forEach(r => {
+        dispatch(actions.kube.closeWatchResource(r));
+      });
+    },
   };
 }
 

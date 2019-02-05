@@ -18,6 +18,15 @@ describe("componentDidMount", () => {
   });
 });
 
+describe("componentWillUnmount", () => {
+  it("calls closeWatch", () => {
+    const mock = jest.fn();
+    const wrapper = shallow(<ServiceItem name="foo" watchService={jest.fn()} closeWatch={mock} />);
+    wrapper.unmount();
+    expect(mock).toHaveBeenCalled();
+  });
+});
+
 context("when fetching services", () => {
   [undefined, { isFetching: true }].forEach(service => {
     itBehavesLike("aLoadingComponent", {
