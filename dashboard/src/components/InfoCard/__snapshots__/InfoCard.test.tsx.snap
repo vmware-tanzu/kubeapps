@@ -6,6 +6,7 @@ exports[`should render a Card 1`] = `
   responsive={true}
 >
   <Link
+    className="ListItem__header"
     replace={false}
     title="foo"
     to="/a/link/somewhere"

@@ -2,16 +2,14 @@ import * as React from "react";
 import { ArrowUpCircle, CheckCircle } from "react-feather";
 import { Link } from "react-router-dom";
 
-import { hapi } from "shared/hapi/release";
-import { IChartUpdateInfo } from "shared/types";
+import { IRelease } from "shared/types";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 
 import placeholder from "../../placeholder.png";
 import "./ChartInfo.css";
 
 interface IChartInfoProps {
-  app: hapi.release.Release;
-  updateInfo?: IChartUpdateInfo;
+  app: IRelease;
 }
 
 class ChartInfo extends React.Component<IChartInfoProps> {
@@ -49,11 +47,11 @@ class ChartInfo extends React.Component<IChartInfoProps> {
   }
 
   private updateStatusInfo() {
-    const { app, updateInfo } = this.props;
+    const { app } = this.props;
     // If update is not set yet we cannot know if there is
     // an update available or not
-    if (updateInfo) {
-      if (!updateInfo.latestVersion) {
+    if (app.updateInfo) {
+      if (!app.updateInfo.latestVersion) {
         return (
           <span>
             -{" "}
@@ -74,7 +72,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
                 size={15}
                 style={{ bottom: "-0.2em" }}
               />{" "}
-              {updateInfo.latestVersion} available
+              {app.updateInfo.latestVersion} available
             </span>
           </Link>
         );

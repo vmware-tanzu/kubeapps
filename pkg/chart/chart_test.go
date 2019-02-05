@@ -142,9 +142,13 @@ type fakeHTTPClient struct {
 	repoURLs  []string
 	chartURLs []string
 	index     *repo.IndexFile
+	userAgent string
 }
 
 func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
+	if f.userAgent != "" && h.Header.Get("User-Agent") != f.userAgent {
+		return nil, fmt.Errorf("Wrong user agent: %s", h.Header.Get("User-Agent"))
+	}
 	for _, repoURL := range f.repoURLs {
 		if h.URL.String() == fmt.Sprintf("%sindex.yaml", repoURL) {
 			// Return fake chart index (not customizable per repo)
@@ -171,7 +175,7 @@ func fakeLoadChart(in io.Reader) (*chart.Chart, error) {
 	return &chart.Chart{}, nil
 }
 
-func newHTTPClient(charts []Details) fakeHTTPClient {
+func newHTTPClient(charts []Details, userAgent string) HTTPClient {
 	var repoURLs []string
 	var chartURLs []string
 	entries := map[string]repo.ChartVersions{}
@@ -186,7 +190,10 @@ func newHTTPClient(charts []Details) fakeHTTPClient {
 		entries[ch.ChartName] = chartVersions
 	}
 	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
-	return fakeHTTPClient{repoURLs, chartURLs, index}
+	return &clientWithDefaultUserAgent{
+		client:    &fakeHTTPClient{repoURLs, chartURLs, index, userAgent},
+		userAgent: userAgent,
+	}
 }
 
 func TestGetChart(t *testing.T) {
@@ -196,13 +203,38 @@ func TestGetChart(t *testing.T) {
 		ReleaseName: "foo",
 		Version:     "1.0.0",
 	}
-	httpClient := newHTTPClient([]Details{target})
+	httpClient := newHTTPClient([]Details{target}, "")
 	kubeClient := fake.NewSimpleClientset()
 	chUtils := Chart{
 		kubeClient: kubeClient,
 		load:       fakeLoadChart,
 	}
-	ch, err := chUtils.GetChart(&target, &httpClient)
+	ch, err := chUtils.GetChart(&target, httpClient)
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+	if ch == nil {
+		t.Errorf("It should return a Chart")
+	}
+}
+
+func TestGetChartWithCustomUserAgent(t *testing.T) {
+	target := Details{
+		RepoURL:     "http://foo.com/",
+		ChartName:   "test",
+		ReleaseName: "foo",
+		Version:     "1.0.0",
+	}
+
+	httpClient := newHTTPClient([]Details{target}, "tiller-proxy/devel")
+	kubeClient := fake.NewSimpleClientset()
+	chUtils := Chart{
+		kubeClient: kubeClient,
+		load:       fakeLoadChart,
+		userAgent:  "tiller-proxy/devel",
+	}
+
+	ch, err := chUtils.GetChart(&target, httpClient)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

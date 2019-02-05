@@ -1,9 +1,18 @@
 import { ThunkAction } from "redux-thunk";
+import * as semver from "semver";
 import { ActionType, createAction } from "typesafe-actions";
 import { App } from "../shared/App";
+import Chart from "../shared/Chart";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
-import { IAppOverview, IChartVersion, IStoreState, UnprocessableEntity } from "../shared/types";
+import {
+  IAppOverview,
+  IChartUpdateInfo,
+  IChartVersion,
+  IRelease,
+  IStoreState,
+  UnprocessableEntity,
+} from "../shared/types";
 
 export const requestApps = createAction("REQUEST_APPS");
 
@@ -19,6 +28,10 @@ export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
   return (apps: IAppOverview[]) => resolve(apps);
 });
 
+export const receiveAppUpdateInfo = createAction("RECEIVE_APP_UPDATE_INFO", resolve => {
+  return (payload: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(payload);
+});
+
 export const errorApps = createAction("ERROR_APPS", resolve => {
   return (err: Error) => resolve(err);
 });
@@ -28,7 +41,7 @@ export const errorDeleteApp = createAction("ERROR_DELETE_APP", resolve => {
 });
 
 export const selectApp = createAction("SELECT_APP", resolve => {
-  return (app: hapi.release.Release) => resolve(app);
+  return (app: IRelease) => resolve(app);
 });
 
 const allActions = [
@@ -36,6 +49,7 @@ const allActions = [
   requestApps,
   receiveApps,
   receiveAppList,
+  receiveAppUpdateInfo,
   errorApps,
   errorDeleteApp,
   selectApp,
@@ -46,12 +60,74 @@ export type AppsAction = ActionType<typeof allActions[number]>;
 export function getApp(
   releaseName: string,
   namespace: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<hapi.release.Release | undefined>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
     try {
       const app = await App.getRelease(namespace, releaseName);
       dispatch(selectApp(app));
+      return app;
+    } catch (e) {
+      dispatch(errorApps(e));
+      return;
+    }
+  };
+}
+
+function getAppUpdateInfo(
+  releaseName: string,
+  chartName: string,
+  currentVersion: string,
+  appVersion: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
+    const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
+    let updateInfo: IChartUpdateInfo = {
+      repository: { name: "", url: "" },
+      latestVersion: "",
+    };
+    chartsInfo.forEach(c => {
+      const chartLatestVersion = c.relationships.latestChartVersion.data.version;
+      if (semver.gt(chartLatestVersion, currentVersion)) {
+        if (updateInfo.latestVersion && semver.gt(updateInfo.latestVersion, chartLatestVersion)) {
+          // The current update is newer than the chart version, do nothing
+        } else {
+          updateInfo = {
+            latestVersion: chartLatestVersion,
+            repository: c.attributes.repo,
+          };
+        }
+      }
+    });
+    dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
+  };
+}
+
+export function getAppWithUpdateInfo(
+  releaseName: string,
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
+    dispatch(requestApps());
+    try {
+      const app = await dispatch(getApp(releaseName, namespace));
+      if (
+        app &&
+        app.chart &&
+        app.chart.metadata &&
+        app.chart.metadata.name &&
+        app.chart.metadata.version &&
+        app.chart.metadata.appVersion
+      ) {
+        dispatch(
+          getAppUpdateInfo(
+            app.name,
+            app.chart.metadata.name,
+            app.chart.metadata.version,
+            app.chart.metadata.appVersion,
+          ),
+        );
+      }
     } catch (e) {
       dispatch(errorApps(e));
     }
@@ -74,10 +150,11 @@ export function deleteApp(
   };
 }
 
+// fetchApps returns a list of apps for other actions to compose on top of it
 export function fetchApps(
   ns?: string,
   all: boolean = false,
-): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+): ThunkAction<Promise<IAppOverview[]>, IStoreState, null, AppsAction> {
   return async dispatch => {
     if (ns && ns === definedNamespaces.all) {
       ns = undefined;
@@ -86,9 +163,30 @@ export function fetchApps(
     try {
       const apps = await App.listApps(ns, all);
       dispatch(receiveAppList(apps));
+      return apps;
     } catch (e) {
       dispatch(errorApps(e));
+      return [];
     }
+  };
+}
+
+export function fetchAppsWithUpdateInfo(
+  ns?: string,
+  all: boolean = false,
+): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
+  return async dispatch => {
+    const apps = await dispatch(fetchApps(ns, all));
+    apps.forEach(app =>
+      dispatch(
+        getAppUpdateInfo(
+          app.releaseName,
+          app.chartMetadata.name,
+          app.chartMetadata.version,
+          app.chartMetadata.appVersion,
+        ),
+      ),
+    );
   };
 }
 
