@@ -19,13 +19,13 @@ spec:
     customCA:
       secretKeyRef:
         key: ca.crt
-        name: {{ template "kubeapps.fullname" $ }}-{{ .name }}
+        name: {{ template "kubeapps.apprepository-secret.name" . }}
     {{- end }}
     {{- if .authorizationHeader }}
     header:
       secretKeyRef:
         key: authorizationHeader
-        name: {{ template "kubeapps.fullname" $ }}-{{ .name }}
+        name: {{ template "kubeapps.apprepository-secret.name" . }}
     {{- end }}
   {{- end }}
 ---

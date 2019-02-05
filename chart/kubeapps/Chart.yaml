@@ -17,5 +17,5 @@ maintainers:
   email: containers@bitnami.com
 - name: prydonius
   email: adnan@bitnami.com
-# 2.10+ required because we need the install-crd hook type
-tillerVersion: ">=2.10.0"
+# 2.12+ required because we need helm to be compiled with go 1.11
+tillerVersion: ">=2.12.0"

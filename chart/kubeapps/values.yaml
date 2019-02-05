@@ -114,10 +114,10 @@ apprepository:
   # Additional repositories
   # - name: chartmuseum
   #   url: https://chartmuseum.default:8080
-  #   # Specify an Authorization Header if you are using an authentication method
+  #   # Specify an Authorization Header if you are using an authentication method.
   #   authorizationHeader: "Bearer xrxNC..."
-  #   # If you're providing your own certificates, please use this to add the certificates as secrets
-  #   # key and certificate should start with -----BEGIN CERTIFICATE----- or
+  #   # If you're providing your own certificates, please use this to add the certificates as secrets.
+  #   # It should start with -----BEGIN CERTIFICATE----- or
   #   # -----BEGIN RSA PRIVATE KEY-----
   #   caCert:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
