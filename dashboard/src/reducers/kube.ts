@@ -46,6 +46,9 @@ const kubeReducer = (
           [key]: socket,
         },
       };
+    // TODO(adnan): this won't handle cases where one component closes a socket
+    // another one is using. Whilst not a problem today, a reference counter
+    // approach could be used here to enable this in the future.
     case getType(actions.kube.closeWatchResource):
       key = action.payload.watchResourceURL();
       const { sockets } = state;
