@@ -23,6 +23,11 @@ const configReducer = (state: IConfigState = initialState, action: ConfigAction)
         loaded: true,
         ...action.payload,
       };
+    case getType(actions.config.errorConfig):
+      return {
+        ...state,
+        error: action.payload,
+      };
     default:
   }
   return state;
