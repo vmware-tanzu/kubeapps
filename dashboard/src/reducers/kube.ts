@@ -52,14 +52,14 @@ const kubeReducer = (
     case getType(actions.kube.closeWatchResource):
       key = action.payload.watchResourceURL();
       const { sockets } = state;
-      const { [key]: foundSocket, ...restSockets } = sockets;
+      const { [key]: foundSocket, ...otherSockets } = sockets;
       // close the socket if it exists
       if (foundSocket !== undefined) {
         foundSocket.close();
       }
       return {
         ...state,
-        sockets: restSockets,
+        sockets: otherSockets,
       };
     case LOCATION_CHANGE:
       return {
