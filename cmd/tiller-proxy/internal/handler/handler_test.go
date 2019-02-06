@@ -332,7 +332,7 @@ func TestActions(t *testing.T) {
 				release.Release{Name: "foobar", Namespace: "default"},
 				release.Release{Name: "foo", Namespace: "not-default"},
 			},
-			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED","chart":""},{"releaseName":"foo","version":"","namespace":"not-default","status":"DEPLOYED","chart":""}]}`,
+			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED","chart":"","chartMetadata":{}},{"releaseName":"foo","version":"","namespace":"not-default","status":"DEPLOYED","chart":"","chartMetadata":{}}]}`,
 		},
 		{
 			// Scenario params
@@ -354,7 +354,7 @@ func TestActions(t *testing.T) {
 				release.Release{Name: "foobar", Namespace: "default"},
 				release.Release{Name: "foo", Namespace: "not-default"},
 			},
-			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED","chart":""}]}`,
+			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED","chart":"","chartMetadata":{}}]}`,
 		},
 		{
 			// Scenario params
@@ -376,7 +376,7 @@ func TestActions(t *testing.T) {
 				release.Release{Name: "foobar", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DEPLOYED}}},
 				release.Release{Name: "foo", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DELETED}}},
 			},
-			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED","chart":""}]}`,
+			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED","chart":"","chartMetadata":{}}]}`,
 		},
 	}
 	for _, test := range tests {
