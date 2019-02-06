@@ -2,16 +2,14 @@ import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Redirect } from "react-router";
 
-import { IChartUpdateInfo } from "shared/types";
-import { hapi } from "../../../shared/hapi/release";
+import { IRelease } from "shared/types";
 import ConfirmDialog from "../../ConfirmDialog";
 import LoadingWrapper from "../../LoadingWrapper";
 import "./AppControls.css";
 import UpgradeButton from "./UpgradeButton";
 
 interface IAppControlsProps {
-  app: hapi.release.Release;
-  updateInfo?: IChartUpdateInfo;
+  app: IRelease;
   deleteApp: (purge: boolean) => Promise<boolean>;
   push: (location: string) => RouterAction;
 }
@@ -36,7 +34,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   public render() {
-    const { app, updateInfo, push } = this.props;
+    const { app, push } = this.props;
     const { name, namespace } = app;
     const deleted = app.info && app.info.deleted;
     if (!name || !namespace) {
@@ -47,7 +45,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
         {/* If the app has been deleted hide the upgrade button */}
         {!deleted && (
           <UpgradeButton
-            updateVersion={(updateInfo && updateInfo.latestVersion) || ""}
+            updateVersion={app.updateInfo && app.updateInfo.latestVersion}
             releaseName={name}
             releaseNamespace={namespace}
             push={push}

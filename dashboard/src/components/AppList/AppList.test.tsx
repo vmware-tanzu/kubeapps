@@ -19,6 +19,7 @@ const defaultProps: any = {
   namespace: "default",
   pushSearchFilter: jest.fn(),
   toggleListAll: jest.fn(),
+  fetchAppsWithUpdateInfo: jest.fn(),
 };
 
 context("while fetching apps", () => {
@@ -106,6 +107,11 @@ context("when apps available", () => {
         listOverview: [
           {
             releaseName: "foo",
+            chartMetadata: {
+              name: "bar",
+              version: "1.0.0",
+              appVersion: "0.1.0",
+            },
           } as IAppOverview,
         ],
       },
@@ -136,9 +142,19 @@ it("filters apps", () => {
           listOverview: [
             {
               releaseName: "foo",
+              chartMetadata: {
+                name: "foobar",
+                version: "1.0.0",
+                appVersion: "0.1.0",
+              },
             } as IAppOverview,
             {
               releaseName: "bar",
+              chartMetadata: {
+                name: "foobar",
+                version: "1.0.0",
+                appVersion: "0.1.0",
+              },
             } as IAppOverview,
           ],
           listingAll: false,
@@ -160,7 +176,16 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
   const apps = {
     isFetching: false,
     items: [],
-    listOverview: [{ releaseName: "foo" } as IAppOverview],
+    listOverview: [
+      {
+        releaseName: "foo",
+        chartMetadata: {
+          name: "bar",
+          version: "1.0.0",
+          appVersion: "0.1.0",
+        },
+      } as IAppOverview,
+    ],
     listingAll: false,
   } as IAppState;
   const wrapper = shallow(
@@ -176,7 +201,7 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
   expect(apps.listingAll).toBe(false);
   checkbox.simulate("change");
   // The last call to fetchApps should list all the apps
-  const fetchCalls = defaultProps.fetchApps.mock.calls;
+  const fetchCalls = defaultProps.fetchAppsWithUpdateInfo.mock.calls;
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
 });
 
