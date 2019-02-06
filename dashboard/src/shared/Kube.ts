@@ -9,6 +9,17 @@ if (location.protocol === "https:") {
   WebSocketAPIBase = `ws://${window.location.host}${window.location.pathname}`;
 }
 
+// We explicitly define the plurals here, just in case a generic pluralizer
+// isn't sufficient. Note that CRDs can explicitly define pluralized forms,
+// which might not match with the Kind. If this becomes difficult to
+// maintain we can add a generic pluralizer and a way to override.
+const ResourceKindToPlural = {
+  Secret: "secrets",
+  Service: "services",
+  Ingress: "ingresses",
+  Deployment: "deployments",
+};
+
 export class Kube {
   public static getResourceURL(
     apiVersion: string,
@@ -77,5 +88,14 @@ export class Kube {
       this.watchResourceURL(apiVersion, resource, namespace, name, query),
       Auth.wsProtocols(),
     );
+  }
+
+  // Gets the plural form of the resource Kind for use in the resource path
+  public static resourcePlural(kind: string) {
+    const plural = ResourceKindToPlural[kind];
+    if (!plural) {
+      throw new Error(`Don't know plural for ${kind}, register it in Kube`);
+    }
+    return plural;
   }
 }

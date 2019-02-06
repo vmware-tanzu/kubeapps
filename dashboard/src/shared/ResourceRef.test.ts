@@ -162,42 +162,4 @@ describe("ResourceRef", () => {
       expect(kubeWatchResourceMock).toBeCalledWith("v1", "services", "bar", "foo");
     });
   });
-
-  describe("resourcePlural", () => {
-    const tests = [
-      { kind: "Service", expected: "services" },
-      { kind: "Ingress", expected: "ingresses" },
-      { kind: "Deployment", expected: "deployments" },
-    ];
-    tests.forEach(t => {
-      it(`returns the correct plural for ${t.kind}`, () => {
-        const r = {
-          kind: t.kind,
-          metadata: {
-            name: "foo",
-            namespace: "foo",
-          },
-        } as IResource;
-        const ref = new ResourceRef(r);
-        expect(ref.resourcePlural()).toBe(t.expected);
-      });
-    });
-
-    it("throws an error if the resource kind isn't registered", () => {
-      const r = {
-        apiVersion: "v1",
-        kind: "ThisKindWillNeverExist",
-        metadata: {
-          name: "foo",
-          namespace: "bar",
-        },
-      } as IResource;
-
-      const ref = new ResourceRef(r);
-
-      expect(() => ref.resourcePlural()).toThrow(
-        "Don't know plural for ThisKindWillNeverExist, register it in ResourceRef",
-      );
-    });
-  });
 });
