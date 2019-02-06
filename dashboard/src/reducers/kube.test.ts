@@ -100,6 +100,8 @@ describe("authReducer", () => {
           },
         });
         const socket = newState.sockets[ref.watchResourceURL()];
+        // listeners is a defined property on the mock-socket:
+        // https://github.com/thoov/mock-socket/blob/bed8c9237fa4b9c348a4cf5a22b59569c4cd10f2/index.d.ts#L7
         const listener = (socket as any).listeners.message[0];
         expect(listener).toBeDefined();
         listener();
