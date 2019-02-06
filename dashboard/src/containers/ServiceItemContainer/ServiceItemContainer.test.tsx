@@ -13,6 +13,7 @@ const mockStore = configureMockStore([thunk]);
 const makeStore = (secrets: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
     items: secrets,
+    sockets: {},
   };
   return mockStore({ kube: state });
 };

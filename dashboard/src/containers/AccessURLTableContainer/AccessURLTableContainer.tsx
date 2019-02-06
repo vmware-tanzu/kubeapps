@@ -33,14 +33,17 @@ function mapDispatchToProps(
     // ServiceItemContainers.
     fetchIngresses: () => {
       props.ingressRefs.forEach(r => {
-        dispatch(
-          actions.kube.getResource(
-            r.apiVersion,
-            props.ingressRefs[0].resourcePlural(),
-            r.namespace,
-            r.name,
-          ),
-        );
+        dispatch(actions.kube.getResource(r));
+      });
+    },
+    watchServices: () => {
+      props.serviceRefs.forEach(r => {
+        dispatch(actions.kube.getAndWatchResource(r));
+      });
+    },
+    closeWatches: () => {
+      props.serviceRefs.forEach(r => {
+        dispatch(actions.kube.closeWatchResource(r));
       });
     },
   };

@@ -45,7 +45,6 @@ var (
 	settings    environment.EnvSettings
 	proxy       *tillerProxy.Proxy
 	kubeClient  kubernetes.Interface
-	netClient   *clientWithDefaultUserAgent
 	disableAuth bool
 	listLimit   int
 
@@ -120,7 +119,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
-	chartutils := chartUtils.NewChart(kubeClient, helmChartUtil.LoadArchive)
+	chartutils := chartUtils.NewChart(kubeClient, helmChartUtil.LoadArchive, userAgent())
 
 	r := mux.NewRouter()
 

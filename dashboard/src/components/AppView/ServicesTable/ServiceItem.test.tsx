@@ -11,9 +11,18 @@ const kubeItem: IKubeItem<IResource> = {
 };
 
 describe("componentDidMount", () => {
-  it("calls getService", () => {
+  it("calls watchService", () => {
     const mock = jest.fn();
-    shallow(<ServiceItem name="foo" getService={mock} />);
+    shallow(<ServiceItem name="foo" watchService={mock} closeWatch={jest.fn()} />);
+    expect(mock).toHaveBeenCalled();
+  });
+});
+
+describe("componentWillUnmount", () => {
+  it("calls closeWatch", () => {
+    const mock = jest.fn();
+    const wrapper = shallow(<ServiceItem name="foo" watchService={jest.fn()} closeWatch={mock} />);
+    wrapper.unmount();
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -24,11 +33,18 @@ context("when fetching services", () => {
       component: ServiceItem,
       props: {
         service,
-        getService: jest.fn(),
+        watchService: jest.fn(),
       },
     });
     it("displays the name of the Service", () => {
-      const wrapper = shallow(<ServiceItem service={service} name="foo" getService={jest.fn()} />);
+      const wrapper = shallow(
+        <ServiceItem
+          service={service}
+          name="foo"
+          watchService={jest.fn()}
+          closeWatch={jest.fn()}
+        />,
+      );
       expect(wrapper.text()).toContain("foo");
     });
   });
@@ -39,7 +55,9 @@ context("when there is an error fetching the Service", () => {
     error: new Error('services "foo" not found'),
     isFetching: false,
   };
-  const wrapper = shallow(<ServiceItem service={service} name="foo" getService={jest.fn()} />);
+  const wrapper = shallow(
+    <ServiceItem service={service} name="foo" watchService={jest.fn()} closeWatch={jest.fn()} />,
+  );
 
   it("diplays the Service name in the first column", () => {
     expect(
@@ -73,7 +91,12 @@ context("when there is a valid Service", () => {
     } as IResource;
     kubeItem.item = service;
     const wrapper = shallow(
-      <ServiceItem service={kubeItem} name={service.metadata.name} getService={jest.fn()} />,
+      <ServiceItem
+        service={kubeItem}
+        name={service.metadata.name}
+        watchService={jest.fn()}
+        closeWatch={jest.fn()}
+      />,
     );
     expect(wrapper).toMatchSnapshot();
   });
@@ -95,7 +118,12 @@ context("when there is a valid Service", () => {
     } as IResource;
     kubeItem.item = service;
     const wrapper = shallow(
-      <ServiceItem service={kubeItem} name={service.metadata.name} getService={jest.fn()} />,
+      <ServiceItem
+        service={kubeItem}
+        name={service.metadata.name}
+        watchService={jest.fn()}
+        closeWatch={jest.fn()}
+      />,
     );
     expect(wrapper.text()).toContain("1.2.3.4");
   });
@@ -108,7 +136,12 @@ context("when there is a valid Service", () => {
     } as IResource;
     kubeItem.item = service;
     const wrapper = shallow(
-      <ServiceItem service={kubeItem} name={service.metadata.name} getService={jest.fn()} />,
+      <ServiceItem
+        service={kubeItem}
+        name={service.metadata.name}
+        watchService={jest.fn()}
+        closeWatch={jest.fn()}
+      />,
     );
     expect(wrapper).toMatchSnapshot();
   });

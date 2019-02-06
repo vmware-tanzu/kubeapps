@@ -78,3 +78,10 @@ it("should parse a description as JSX.Element", () => {
   const wrapper = shallow(<InfoCard title="foo" info="foobar" description={desc} />);
   expect(wrapper.find(".description").text()).toBe("This is a description");
 });
+
+it("should render a banner if exists", () => {
+  const wrapper = shallow(<InfoCard title="foo" info="foobar" banner="this is important!" />);
+  const banner = wrapper.find(".ListItem__banner");
+  expect(banner).toExist();
+  expect(banner.text()).toBe("this is important!");
+});
