@@ -26,15 +26,7 @@ function mapDispatchToProps(
 ) {
   const { deployRef } = props;
   return {
-    getDeployment: () =>
-      dispatch(
-        actions.kube.getResource(
-          deployRef.apiVersion,
-          deployRef.resourcePlural(),
-          deployRef.namespace,
-          deployRef.name,
-        ),
-      ),
+    getDeployment: () => dispatch(actions.kube.getResource(deployRef)),
   };
 }
 

@@ -26,15 +26,8 @@ function mapDispatchToProps(
 ) {
   const { serviceRef } = props;
   return {
-    getService: () =>
-      dispatch(
-        actions.kube.getResource(
-          serviceRef.apiVersion,
-          serviceRef.resourcePlural(),
-          serviceRef.namespace,
-          serviceRef.name,
-        ),
-      ),
+    watchService: () => dispatch(actions.kube.getAndWatchResource(serviceRef)),
+    closeWatch: () => dispatch(actions.kube.closeWatchResource(serviceRef)),
   };
 }
 
