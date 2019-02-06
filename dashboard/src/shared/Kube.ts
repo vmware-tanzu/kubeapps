@@ -20,6 +20,9 @@ const ResourceKindToPlural = {
   Deployment: "deployments",
 };
 
+// Kube is a lower-level class for interacting with the Kubernetes API. Use
+// ResourceRef to interact with a single API resource rather than using Kube
+// directly.
 export class Kube {
   public static getResourceURL(
     apiVersion: string,
