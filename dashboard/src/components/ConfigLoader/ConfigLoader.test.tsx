@@ -26,8 +26,10 @@ context("when there is an error", () => {
   });
 });
 
-it("calls getConfig", () => {
-  const getConfig = jest.fn();
-  shallow(<ConfigLoader getConfig={getConfig} />);
-  expect(getConfig).toHaveBeenCalled();
-});
+describe("componentDidMount", () => {
+  it("calls getConfig", () => {
+    const getConfig = jest.fn();
+    shallow(<ConfigLoader getConfig={getConfig} />);
+    expect(getConfig).toHaveBeenCalled();
+  });
+})
