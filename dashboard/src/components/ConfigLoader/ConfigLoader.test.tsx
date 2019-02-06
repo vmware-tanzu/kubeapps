@@ -26,7 +26,7 @@ context("when there is an error", () => {
   });
 });
 
-it("calls getConfig when loading components", () => {
+it("calls getConfig", () => {
   const getConfig = jest.fn();
   shallow(<ConfigLoader getConfig={getConfig} />);
   expect(getConfig).toHaveBeenCalled();
