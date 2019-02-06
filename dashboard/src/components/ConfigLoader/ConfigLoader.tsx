@@ -3,22 +3,29 @@ import * as React from "react";
 import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAlert";
 import LoadingWrapper, { ILoadingWrapperProps } from "../../components/LoadingWrapper";
 
-export interface IConfigLoaderProps extends ILoadingWrapperProps {
+interface IConfigLoaderProps extends ILoadingWrapperProps {
+  getConfig: () => void;
   error?: Error;
 }
 
-const ConfigLoader: React.SFC<IConfigLoaderProps> = props => {
-  const { error, ...otherProps } = props;
-  if (props.error) {
-    return (
-      <UnexpectedErrorPage
-        raw={true}
-        showGenericMessage={true}
-        text={`Unable to load Kubeapps configuration: ${props.error.message}`}
-      />
-    );
+class ConfigLoader extends React.Component<IConfigLoaderProps> {
+  public componentDidMount() {
+    this.props.getConfig();
   }
-  return <LoadingWrapper {...otherProps} />;
-};
+
+  public render() {
+    const { error, ...otherProps } = this.props;
+    if (error) {
+      return (
+        <UnexpectedErrorPage
+          raw={true}
+          showGenericMessage={true}
+          text={`Unable to load Kubeapps configuration: ${error.message}`}
+        />
+      );
+    }
+    return <LoadingWrapper {...otherProps} />;
+  }
+}
 
 export default ConfigLoader;

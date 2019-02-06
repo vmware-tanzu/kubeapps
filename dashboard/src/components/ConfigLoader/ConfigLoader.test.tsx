@@ -11,14 +11,23 @@ context("when the config is not ready", () => {
     component: ConfigLoader,
     props: {
       loaded: false,
+      getConfig: jest.fn(),
     },
   });
 });
 
 context("when there is an error", () => {
   it("renders the error details", () => {
-    const wrapper = shallow(<ConfigLoader error={new Error("Wrong config!")} />);
+    const wrapper = shallow(
+      <ConfigLoader error={new Error("Wrong config!")} getConfig={jest.fn()} />,
+    );
     expect(wrapper.find(UnexpectedErrorPage)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
+});
+
+it("calls getConfig when loading components", () => {
+  const getConfig = jest.fn();
+  shallow(<ConfigLoader getConfig={getConfig} />);
+  expect(getConfig).toHaveBeenCalled();
 });

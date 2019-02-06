@@ -2,6 +2,14 @@
 
 exports[`when the config is not ready loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
+  getConfig={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+        Array [],
+      ],
+    }
+  }
   loaded={false}
   type={0}
 />

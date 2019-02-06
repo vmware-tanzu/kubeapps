@@ -1,5 +1,3 @@
-import ConfigLoader, { IConfigLoaderProps } from "./ConfigLoader";
-
-export { IConfigLoaderProps };
+import ConfigLoader from "./ConfigLoader";
 
 export default ConfigLoader;
