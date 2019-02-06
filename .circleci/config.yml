@@ -109,8 +109,8 @@ exports: &exports
     # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
     # history of the production tag
     echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
-    # Helm version (should be +2.12)
-    echo "export HELM_VERSION=v2.12.3" >> $BASH_ENV
+    # Helm version (should be +2.10)
+    echo "export HELM_VERSION=v2.11.0" >> $BASH_ENV
 build_images: &build_images
   steps:
     - setup_remote_docker
