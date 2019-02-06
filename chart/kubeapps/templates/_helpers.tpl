@@ -139,3 +139,13 @@ Create name for the secrets related to an app repository
 apprepo-{{ .name }}-secrets
 {{- end -}}
 
+{{/*
+Repositories that include a caCert or an authorizationHeader
+*/}}
+{{- define "kubeapps.repos-with-orphan-secrets" -}}
+{{- range .Values.apprepository.initialRepos }}
+{{- if or .caCert .authorizationHeader }}
+.name
+{{- end }}
+{{- end }}
+{{- end -}}
