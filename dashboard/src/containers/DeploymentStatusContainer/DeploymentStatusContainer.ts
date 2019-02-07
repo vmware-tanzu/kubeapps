@@ -1,6 +1,9 @@
 import * as _ from "lodash";
 import { connect } from "react-redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
+import actions from "../../actions";
 import DeploymentStatus from "../../components/DeploymentStatus";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
@@ -14,11 +17,31 @@ interface IDeploymentStatusContainerProps {
 
 function mapStateToProps({ kube }: IStoreState, props: IDeploymentStatusContainerProps) {
   const { deployRefs, info } = props;
-  // The Deployments are expected to be fetched and watched by the DeploymentItem.
   return {
     deployments: filterByResourceRefs(deployRefs, kube.items),
     info,
   };
 }
 
-export default connect(mapStateToProps)(DeploymentStatus);
+function mapDispatchToProps(
+  dispatch: ThunkDispatch<IStoreState, null, Action>,
+  props: IDeploymentStatusContainerProps,
+) {
+  return {
+    watchDeployments: () => {
+      props.deployRefs.forEach(r => {
+        dispatch(actions.kube.getAndWatchResource(r));
+      });
+    },
+    closeWatches: () => {
+      props.deployRefs.forEach(r => {
+        dispatch(actions.kube.closeWatchResource(r));
+      });
+    },
+  };
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(DeploymentStatus);

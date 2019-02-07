@@ -2,7 +2,9 @@
 
 exports[`when fetching deployments loading spinner matches the snapshot 1`] = `
 <tr>
-  <td />
+  <td>
+    foo
+  </td>
   <td
     colSpan={3}
   >
@@ -16,7 +18,9 @@ exports[`when fetching deployments loading spinner matches the snapshot 1`] = `
 
 exports[`when fetching deployments loading spinner matches the snapshot 2`] = `
 <tr>
-  <td />
+  <td>
+    foo
+  </td>
   <td
     colSpan={3}
   >
