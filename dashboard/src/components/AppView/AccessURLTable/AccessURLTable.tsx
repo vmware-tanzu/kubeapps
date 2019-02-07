@@ -11,6 +11,8 @@ interface IAccessURLTableProps {
   services: Array<IKubeItem<IResource>>;
   ingresses: Array<IKubeItem<IResource>>;
   fetchIngresses: () => void;
+  watchServices: () => void;
+  closeWatches: () => void;
 }
 
 class AccessURLTable extends React.Component<IAccessURLTableProps> {
@@ -18,6 +20,11 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
     // Fetch all related Ingress resources. We don't need to fetch Services as
     // they are expected to be watched by the ServiceTable.
     this.props.fetchIngresses();
+    this.props.watchServices();
+  }
+
+  public componentWillUnmount() {
+    this.props.closeWatches();
   }
 
   public render() {

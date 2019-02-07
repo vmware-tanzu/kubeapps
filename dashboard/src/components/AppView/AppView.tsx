@@ -6,10 +6,9 @@ import * as React from "react";
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import DeploymentStatus from "../../containers/DeploymentStatusContainer";
 import { Auth } from "../../shared/Auth";
-import { Kube } from "../../shared/Kube";
+import { APIBase, Kube, WebSocketAPIBase } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
 import { IK8sList, IRBACRole, IRelease, IResource } from "../../shared/types";
-import WebSocketHelper from "../../shared/WebSocketHelper";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
@@ -238,9 +237,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
           break;
         case "Service":
           result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          result.sockets.push(
-            this.getSocket("services", i.apiVersion, item.metadata.name, releaseNamespace),
-          );
           break;
         case "Ingress":
           result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
@@ -269,15 +265,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     return result;
   }
 
+  // TODO(adnan): remove when removing all sockets from this component
   private getSocket(
     resource: string,
     apiVersion: string,
     name: string,
     namespace: string,
   ): WebSocket {
-    const apiBase = WebSocketHelper.apiBase();
     const s = new WebSocket(
-      `${apiBase}/${
+      `${WebSocketAPIBase}${APIBase}/${
         apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`
       }/namespaces/${namespace}/${resource}?watch=true&fieldSelector=metadata.name%3D${name}`,
       Auth.wsProtocols(),
@@ -285,7 +281,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     s.addEventListener("message", e => this.handleEvent(e));
     return s;
   }
-
   private closeSockets() {
     const { sockets } = this.state;
     for (const s of sockets) {

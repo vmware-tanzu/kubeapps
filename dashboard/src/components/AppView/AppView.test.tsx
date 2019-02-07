@@ -83,7 +83,8 @@ describe("AppViewComponent", () => {
       The imported manifest contains one deployment, one service, one config map and some bogus manifests.
       We only set websockets for deployment and services
     */
-    it("sets a list of web sockets for its deployments and services", () => {
+    //  TODO(adnan): remove this test once we've switched entirely to redux watching
+    it("sets a list of web sockets for its deployments and ingresses", () => {
       const manifest = generateYamlManifest([
         resources.deployment,
         resources.service,
@@ -98,14 +99,11 @@ describe("AppViewComponent", () => {
       wrapper.setProps(validProps);
       const sockets: WebSocket[] = wrapper.state("sockets");
 
-      expect(sockets.length).toEqual(3);
+      expect(sockets.length).toEqual(2);
       expect(sockets[0].url).toBe(
         "ws://localhost/api/kube/apis/apps/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
       );
       expect(sockets[1].url).toBe(
-        "ws://localhost/api/kube/api/v1/namespaces/weee/services?watch=true&fieldSelector=metadata.name%3Dsvc-one",
-      );
-      expect(sockets[2].url).toBe(
         "ws://localhost/api/kube/apis/extensions/v1beta1/namespaces/weee/ingresses?watch=true&fieldSelector=metadata.name%3Dingress-one",
       );
     });
@@ -129,7 +127,7 @@ describe("AppViewComponent", () => {
 
       // It sets the websocket for the deployment
       const sockets: WebSocket[] = wrapper.state("sockets");
-      expect(sockets.length).toEqual(2);
+      expect(sockets.length).toEqual(1);
 
       expect(configMap).toBeDefined();
       expect(configMap.metadata.name).toEqual("cm-one");

@@ -358,4 +358,5 @@ export interface IKubeItem<T> {
 
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource> };
+  sockets: { [s: string]: WebSocket };
 }
