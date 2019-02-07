@@ -53,22 +53,20 @@ kubectl create -n default rolebinding example-view \
 #### Write access to Applications within a namespace
 
 In order to create, update and delete Applications in a namespace, apply the
-`edit` ClusterRole in the desired namespace and the `kubeapps-repositories-read`
+`edit` ClusterRole in the desired namespace and the `$KUBEAPPS_RELEASE_NAME-repositories-read`
 Role in the namespace Kubeapps is installed in. The `edit` ClusterRole should be
 available in most Kubernetes distributions, you can find more information about
 that role
 [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
-Additionally, we need to create a role to give read access to App Repositories and bind it to our service account.
-
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
+export KUBEAPPS_RELEASE_NAME=kubeapps
 kubectl create -n default rolebinding example-edit \
   --clusterrole=edit \
   --serviceaccount default:example
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
-  --role=kubeapps-repositories-read \
+  --role=$KUBEAPPS_RELEASE_NAME-repositories-read \
   --serviceaccount default:example
 ```
 
@@ -118,24 +116,27 @@ kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clust
 
 #### Read access to App Repositories
 
-In order to list the configured App Repositories in Kubeapps, create and apply the
-`kubeapps-repositories-read` Role in the namespace Kubeapps is installed in.
-
+In order to list the configured App Repositories in Kubeapps, [bind users/groups Subjects](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#command-line-utilities) to the `$RELEASE_NAME-repositories-read` role in the namespace Kubeapps was installed into by the helm chart.
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-read.yaml
-kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read --role=kubeapps-repositories-read --serviceaccount default:example
+export KUBEAPPS_RELEASE_NAME=kubeapps
+kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
+  --role=$KUBEAPPS_RELEASE_NAME-repositories-read \
+  --serviceaccount default:example
 ```
 
 #### Write access to App Repositories
 
-In order to create and refresh App Repositories in Kubeapps, create and apply the
-`kubeapps-repositories-write` Role in the namespace Kubeapps is installed in.
+Likewise to the read access bind users/group Subjects to the
+`$KUBEAPPS_RELEASE_NAME-repositories-write` Role in the namespace Kubeapps is installed in
+for users to create and refresh App Repositories in Kubeapps
 
 ```
 export KUBEAPPS_NAMESPACE=kubeapps
-kubectl apply -n $KUBEAPPS_NAMESPACE -f https://raw.githubusercontent.com/kubeapps/kubeapps/master/docs/user/manifests/kubeapps-repositories-write.yaml
-kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write --role=kubeapps-repositories-write --serviceaccount default:example
+export KUBEAPPS_RELEASE_NAME=kubeapps
+kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write \
+  --role=$KUBEAPPS_RELEASE_NAME-repositories-write \
+  --serviceaccount default:example
 ```
 
 ### Assigning roles across multiple namespaces
