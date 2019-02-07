@@ -26,7 +26,8 @@ function mapDispatchToProps(
 ) {
   const { deployRef } = props;
   return {
-    getDeployment: () => dispatch(actions.kube.getResource(deployRef)),
+    watchDeployment: () => dispatch(actions.kube.getAndWatchResource(deployRef)),
+    closeWatch: () => dispatch(actions.kube.closeWatchResource(deployRef)),
   };
 }
 

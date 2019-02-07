@@ -11,9 +11,20 @@ const kubeItem: IKubeItem<IResource> = {
 };
 
 describe("componentDidMount", () => {
-  it("calls getDeployment", () => {
+  it("calls watchDeployment", () => {
     const mock = jest.fn();
-    shallow(<DeploymentItem name="foo" getDeployment={mock} />);
+    shallow(<DeploymentItem name="foo" watchDeployment={mock} closeWatch={jest.fn()} />);
+    expect(mock).toHaveBeenCalled();
+  });
+});
+
+describe("componentWillUnmount", () => {
+  it("calls closeWatch", () => {
+    const mock = jest.fn();
+    const wrapper = shallow(
+      <DeploymentItem name="foo" watchDeployment={jest.fn()} closeWatch={mock} />,
+    );
+    wrapper.unmount();
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -24,13 +35,18 @@ context("when fetching deployments", () => {
       component: DeploymentItem,
       props: {
         deployment,
-        getDeployment: jest.fn(),
+        watchDeployment: jest.fn(),
       },
     });
 
     it("displays the name of the deployment", () => {
       const wrapper = shallow(
-        <DeploymentItem deployment={deployment} name="foo" getDeployment={jest.fn()} />,
+        <DeploymentItem
+          deployment={deployment}
+          name="foo"
+          watchDeployment={jest.fn()}
+          closeWatch={jest.fn()}
+        />,
       );
       expect(wrapper.text()).toContain("foo");
     });
@@ -43,7 +59,12 @@ context("when there is an error fetching the Deployment", () => {
     isFetching: false,
   };
   const wrapper = shallow(
-    <DeploymentItem deployment={deployment} name="foo" getDeployment={jest.fn()} />,
+    <DeploymentItem
+      deployment={deployment}
+      name="foo"
+      watchDeployment={jest.fn()}
+      closeWatch={jest.fn()}
+    />,
   );
 
   it("diplays the Deployment name in the first column", () => {
@@ -78,7 +99,8 @@ context("when there is a valid Deployment", () => {
       <DeploymentItem
         deployment={kubeItem}
         name={deployment.metadata.name}
-        getDeployment={jest.fn()}
+        watchDeployment={jest.fn()}
+        closeWatch={jest.fn()}
       />,
     );
     expect(wrapper).toMatchSnapshot();

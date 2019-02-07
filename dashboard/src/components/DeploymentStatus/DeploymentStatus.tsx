@@ -11,9 +11,19 @@ import "./DeploymentStatus.css";
 interface IDeploymentStatusProps {
   deployments: Array<IKubeItem<IResource>>;
   info?: hapi.release.IInfo;
+  watchDeployments: () => void;
+  closeWatches: () => void;
 }
 
 class DeploymentStatus extends React.Component<IDeploymentStatusProps> {
+  public componentDidMount() {
+    this.props.watchDeployments();
+  }
+
+  public componentWillUnmount() {
+    this.props.closeWatches();
+  }
+
   public render() {
     if (isSomeResourceLoading(this.props.deployments)) {
       return <span className="DeploymentStatus">Loading...</span>;

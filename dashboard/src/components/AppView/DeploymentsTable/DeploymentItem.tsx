@@ -7,12 +7,17 @@ import { IDeploymentStatus, IKubeItem, IResource } from "../../../shared/types";
 interface IDeploymentItemProps {
   name: string;
   deployment?: IKubeItem<IResource>;
-  getDeployment: () => void;
+  watchDeployment: () => void;
+  closeWatch: () => void;
 }
 
 class DeploymentItem extends React.Component<IDeploymentItemProps> {
   public componentDidMount() {
-    this.props.getDeployment();
+    this.props.watchDeployment();
+  }
+
+  public componentWillUnmount() {
+    this.props.closeWatch();
   }
 
   public render() {

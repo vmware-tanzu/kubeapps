@@ -5,8 +5,7 @@ import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import DeploymentStatus from "../../containers/DeploymentStatusContainer";
-import { Auth } from "../../shared/Auth";
-import { APIBase, Kube, WebSocketAPIBase } from "../../shared/Kube";
+import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
 import { IK8sList, IRBACRole, IRelease, IResource } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
@@ -42,7 +41,6 @@ interface IAppViewState {
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
   otherResources: IResource[];
-  sockets: WebSocket[];
   manifest: IResource[];
 }
 
@@ -52,7 +50,6 @@ interface IPartialAppViewState {
   ingressRefs: ResourceRef[];
   secretRefs: ResourceRef[];
   otherResources: IResource[];
-  sockets: WebSocket[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -78,7 +75,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     otherResources: [],
     serviceRefs: [],
     secretRefs: [],
-    sockets: [],
   };
 
   public async componentDidMount() {
@@ -94,8 +90,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return;
     }
     if (nextProps.error) {
-      // close any existing sockets
-      this.closeSockets();
       return;
     }
     const newApp = nextProps.app;
@@ -119,10 +113,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     // Iterate over the current manifest to populate the initial state
     this.setState(this.parseResources(manifest, newApp.namespace));
-  }
-
-  public componentWillUnmount() {
-    this.closeSockets();
   }
 
   public handleEvent(e: MessageEvent) {
@@ -223,7 +213,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       otherResources: [],
       serviceRefs: [],
       secretRefs: [],
-      sockets: [],
     };
     resources.forEach(i => {
       const item = i as IResource;
@@ -231,18 +220,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       switch (i.kind) {
         case "Deployment":
           result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          result.sockets.push(
-            this.getSocket("deployments", i.apiVersion, item.metadata.name, releaseNamespace),
-          );
           break;
         case "Service":
           result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
           break;
         case "Ingress":
           result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          result.sockets.push(
-            this.getSocket("ingresses", i.apiVersion, item.metadata.name, releaseNamespace),
-          );
           break;
         case "Secret":
           result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
@@ -263,29 +246,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       }
     });
     return result;
-  }
-
-  // TODO(adnan): remove when removing all sockets from this component
-  private getSocket(
-    resource: string,
-    apiVersion: string,
-    name: string,
-    namespace: string,
-  ): WebSocket {
-    const s = new WebSocket(
-      `${WebSocketAPIBase}${APIBase}/${
-        apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`
-      }/namespaces/${namespace}/${resource}?watch=true&fieldSelector=metadata.name%3D${name}`,
-      Auth.wsProtocols(),
-    );
-    s.addEventListener("message", e => this.handleEvent(e));
-    return s;
-  }
-  private closeSockets() {
-    const { sockets } = this.state;
-    for (const s of sockets) {
-      s.close();
-    }
   }
 
   private deleteApp = (purge: boolean) => {
