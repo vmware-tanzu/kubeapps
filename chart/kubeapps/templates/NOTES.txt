@@ -13,8 +13,8 @@ Kubeapps can be accessed via port {{ .Values.frontend.service.port }} on the fol
 
 CAVEAT:
   Some App Repositories has been installed with a custom CA or authorization header.
-This generates secrets that won't be cleaned up if the repository is deleted through the Web application.
-You can delete them manually or when uninstalling this chart.
+  This generates secrets that won't be cleaned up if the repository is deleted through the Web application.
+  You can delete them manually or when uninstalling this chart.
 
 {{- end }}
 

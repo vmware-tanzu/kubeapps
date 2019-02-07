@@ -24,8 +24,10 @@ spec:
         command:
         - /bin/sh
         args:
-        - -c
-        - kubectl delete apprepositories.kubeapps.com -n {{ .Release.Namespace }} --all; kubectl delete secrets -n {{ .Release.Namespace }} -l app={{ template "kubeapps.name" $ }},release={{ $.Release.Name }}
+        - -ec
+        - |
+          kubectl delete apprepositories.kubeapps.com -n {{ .Release.Namespace }} --all
+          kubectl delete secrets -n {{ .Release.Namespace }} -l app={{ template "kubeapps.name" $ }},release={{ $.Release.Name }}
       restartPolicy: OnFailure
       serviceAccountName: {{ template "kubeapps.apprepository-jobs-cleanup.fullname" . }}
     {{- with .Values.hooks.nodeSelector }}
