@@ -4,10 +4,16 @@ import * as React from "react";
 import { IResource } from "shared/types";
 import DeploymentStatus from "./DeploymentStatus";
 
+const defaultProps = {
+  watchDeployments: jest.fn(),
+  closeWatches: jest.fn(),
+  deployments: [],
+};
+
 describe("componentDidMount", () => {
   it("calls watchDeployments", () => {
     const mock = jest.fn();
-    shallow(<DeploymentStatus deployments={[]} watchDeployments={mock} closeWatches={jest.fn()} />);
+    shallow(<DeploymentStatus {...defaultProps} watchDeployments={mock} />);
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -15,9 +21,7 @@ describe("componentDidMount", () => {
 describe("componentWillUnmount", () => {
   it("calls watchDeployments", () => {
     const mock = jest.fn();
-    const wrapper = shallow(
-      <DeploymentStatus deployments={[]} watchDeployments={jest.fn()} closeWatches={mock} />,
-    );
+    const wrapper = shallow(<DeploymentStatus {...defaultProps} closeWatches={mock} />);
     wrapper.unmount();
     expect(mock).toHaveBeenCalled();
   });
@@ -29,13 +33,7 @@ it("renders a loading status", () => {
       isFetching: true,
     },
   ];
-  const wrapper = shallow(
-    <DeploymentStatus
-      deployments={deployments}
-      watchDeployments={jest.fn()}
-      closeWatches={jest.fn()}
-    />,
-  );
+  const wrapper = shallow(<DeploymentStatus {...defaultProps} deployments={deployments} />);
   expect(wrapper.text()).toContain("Loading");
   expect(wrapper).toMatchSnapshot();
 });
@@ -47,12 +45,7 @@ it("renders a deleting status", () => {
     },
   ];
   const wrapper = shallow(
-    <DeploymentStatus
-      deployments={deployments}
-      info={{ deleted: {} }}
-      watchDeployments={jest.fn()}
-      closeWatches={jest.fn()}
-    />,
+    <DeploymentStatus {...defaultProps} deployments={deployments} info={{ deleted: {} }} />,
   );
   expect(wrapper.text()).toContain("Deleted");
   expect(wrapper).toMatchSnapshot();
@@ -70,13 +63,7 @@ it("renders a deploying status", () => {
       } as IResource,
     },
   ];
-  const wrapper = shallow(
-    <DeploymentStatus
-      deployments={deployments}
-      watchDeployments={jest.fn()}
-      closeWatches={jest.fn()}
-    />,
-  );
+  const wrapper = shallow(<DeploymentStatus {...defaultProps} deployments={deployments} />);
   expect(wrapper.text()).toContain("Deploying");
   expect(wrapper).toMatchSnapshot();
 });
@@ -93,13 +80,7 @@ it("renders a deployed status", () => {
       } as IResource,
     },
   ];
-  const wrapper = shallow(
-    <DeploymentStatus
-      deployments={deployments}
-      watchDeployments={jest.fn()}
-      closeWatches={jest.fn()}
-    />,
-  );
+  const wrapper = shallow(<DeploymentStatus {...defaultProps} deployments={deployments} />);
   expect(wrapper.text()).toContain("Deployed");
   expect(wrapper).toMatchSnapshot();
 });

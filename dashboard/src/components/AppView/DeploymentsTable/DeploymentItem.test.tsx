@@ -10,10 +10,16 @@ const kubeItem: IKubeItem<IResource> = {
   isFetching: false,
 };
 
+const defaultProps = {
+  name: "foo",
+  watchDeployment: jest.fn(),
+  closeWatch: jest.fn(),
+};
+
 describe("componentDidMount", () => {
   it("calls watchDeployment", () => {
     const mock = jest.fn();
-    shallow(<DeploymentItem name="foo" watchDeployment={mock} closeWatch={jest.fn()} />);
+    shallow(<DeploymentItem {...defaultProps} watchDeployment={mock} />);
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -21,9 +27,7 @@ describe("componentDidMount", () => {
 describe("componentWillUnmount", () => {
   it("calls closeWatch", () => {
     const mock = jest.fn();
-    const wrapper = shallow(
-      <DeploymentItem name="foo" watchDeployment={jest.fn()} closeWatch={mock} />,
-    );
+    const wrapper = shallow(<DeploymentItem {...defaultProps} closeWatch={mock} />);
     wrapper.unmount();
     expect(mock).toHaveBeenCalled();
   });
@@ -34,20 +38,13 @@ context("when fetching deployments", () => {
     itBehavesLike("aLoadingComponent", {
       component: DeploymentItem,
       props: {
+        ...defaultProps,
         deployment,
-        watchDeployment: jest.fn(),
       },
     });
 
     it("displays the name of the deployment", () => {
-      const wrapper = shallow(
-        <DeploymentItem
-          deployment={deployment}
-          name="foo"
-          watchDeployment={jest.fn()}
-          closeWatch={jest.fn()}
-        />,
-      );
+      const wrapper = shallow(<DeploymentItem {...defaultProps} deployment={deployment} />);
       expect(wrapper.text()).toContain("foo");
     });
   });
@@ -58,14 +55,7 @@ context("when there is an error fetching the Deployment", () => {
     error: new Error('deployments "foo" not found'),
     isFetching: false,
   };
-  const wrapper = shallow(
-    <DeploymentItem
-      deployment={deployment}
-      name="foo"
-      watchDeployment={jest.fn()}
-      closeWatch={jest.fn()}
-    />,
-  );
+  const wrapper = shallow(<DeploymentItem {...defaultProps} deployment={deployment} />);
 
   it("diplays the Deployment name in the first column", () => {
     expect(
@@ -96,12 +86,7 @@ context("when there is a valid Deployment", () => {
     } as IResource;
     kubeItem.item = deployment;
     const wrapper = shallow(
-      <DeploymentItem
-        deployment={kubeItem}
-        name={deployment.metadata.name}
-        watchDeployment={jest.fn()}
-        closeWatch={jest.fn()}
-      />,
+      <DeploymentItem {...defaultProps} deployment={kubeItem} name={deployment.metadata.name} />,
     );
     expect(wrapper).toMatchSnapshot();
   });
