@@ -53,18 +53,20 @@ kubectl create -n default rolebinding example-view \
 #### Write access to Applications within a namespace
 
 In order to create, update and delete Applications in a namespace, apply the
-`edit` ClusterRole in the desired namespace and the `$RELEASE_NAME-repositories-read`
+`edit` ClusterRole in the desired namespace and the `$KUBEAPPS_RELEASE_NAME-repositories-read`
 Role in the namespace Kubeapps is installed in. The `edit` ClusterRole should be
 available in most Kubernetes distributions, you can find more information about
 that role
 [here](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles).
 
 ```
+export KUBEAPPS_NAMESPACE=kubeapps
+export KUBEAPPS_RELEASE_NAME=kubeapps
 kubectl create -n default rolebinding example-edit \
   --clusterrole=edit \
   --serviceaccount default:example
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
-  --role=kubeapps-repositories-read \
+  --role=$KUBEAPPS_RELEASE_NAME-repositories-read \
   --serviceaccount default:example
 ```
 
@@ -126,7 +128,7 @@ kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-
 #### Write access to App Repositories
 
 Likewise to the read access bind users/group Subjects to the
-`$RELEASE_NAME-repositories-write` Role in the namespace Kubeapps is installed in
+`$KUBEAPPS_RELEASE_NAME-repositories-write` Role in the namespace Kubeapps is installed in
 for users to create and refresh App Repositories in Kubeapps
 
 ```
