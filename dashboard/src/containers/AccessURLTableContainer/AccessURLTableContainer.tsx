@@ -28,19 +28,19 @@ function mapDispatchToProps(
   props: IAccessURLTableContainerProps,
 ) {
   return {
-    // Fetch each Ingress in the ingressRefs. We don't have an action for
-    // fetching Services as they are assumed to be fetched and watched by the
-    // ServiceItemContainers.
     fetchIngresses: () => {
       props.ingressRefs.forEach(r => {
-        dispatch(
-          actions.kube.getResource(
-            r.apiVersion,
-            props.ingressRefs[0].resourcePlural(),
-            r.namespace,
-            r.name,
-          ),
-        );
+        dispatch(actions.kube.getResource(r));
+      });
+    },
+    watchServices: () => {
+      props.serviceRefs.forEach(r => {
+        dispatch(actions.kube.getAndWatchResource(r));
+      });
+    },
+    closeWatches: () => {
+      props.serviceRefs.forEach(r => {
+        dispatch(actions.kube.closeWatchResource(r));
       });
     },
   };

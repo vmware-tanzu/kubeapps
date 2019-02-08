@@ -61,6 +61,11 @@ exports[`when apps available matches the snapshot 1`] = `
           <AppListItem
             app={
               Object {
+                "chartMetadata": Object {
+                  "appVersion": "0.1.0",
+                  "name": "bar",
+                  "version": "1.0.0",
+                },
                 "releaseName": "foo",
               }
             }

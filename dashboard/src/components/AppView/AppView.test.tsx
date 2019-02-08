@@ -8,7 +8,7 @@ import DeploymentStatus from "../../containers/DeploymentStatusContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IChartUpdateInfo, IResource, NotFoundError } from "../../shared/types";
+import { ForbiddenError, IResource, NotFoundError } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AppControls from "./AppControls";
@@ -39,11 +39,9 @@ describe("AppViewComponent", () => {
     deleteApp: jest.fn(),
     deleteError: undefined,
     error: undefined,
-    getApp: jest.fn(),
+    getAppWithUpdateInfo: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
-    getChartUpdates: jest.fn(),
-    updateInfo: {} as IChartUpdateInfo,
     receiveResource: jest.fn(),
     push: jest.fn(),
   };
@@ -60,14 +58,13 @@ describe("AppViewComponent", () => {
       apiVersion: "extensions/v1beta1",
       kind: "Ingress",
       metadata: { name: "ingress-one" },
-    },
+    } as IResource,
     secret: {
       apiVersion: "v1",
       kind: "Secret",
       metadata: { name: "secret-one" },
       type: "Opaque",
-      data: {},
-    },
+    } as IResource,
   };
 
   context("when app info is null", () => {
@@ -83,9 +80,8 @@ describe("AppViewComponent", () => {
   describe("State initialization", () => {
     /*
       The imported manifest contains one deployment, one service, one config map and some bogus manifests.
-      We only set websockets for deployment and services
     */
-    it("sets a list of web sockets for its deployments and services", () => {
+    it("sets ResourceRefs for its deployments, services, ingresses and secrets", () => {
       const manifest = generateYamlManifest([
         resources.deployment,
         resources.service,
@@ -98,18 +94,19 @@ describe("AppViewComponent", () => {
       validProps.app.manifest = manifest;
       // setProps again so we trigger componentWillReceiveProps
       wrapper.setProps(validProps);
-      const sockets: WebSocket[] = wrapper.state("sockets");
 
-      expect(sockets.length).toEqual(3);
-      expect(sockets[0].url).toBe(
-        "ws://localhost/api/kube/apis/apps/v1beta1/namespaces/weee/deployments?watch=true&fieldSelector=metadata.name%3Ddeployment-one",
-      );
-      expect(sockets[1].url).toBe(
-        "ws://localhost/api/kube/api/v1/namespaces/weee/services?watch=true&fieldSelector=metadata.name%3Dsvc-one",
-      );
-      expect(sockets[2].url).toBe(
-        "ws://localhost/api/kube/apis/extensions/v1beta1/namespaces/weee/ingresses?watch=true&fieldSelector=metadata.name%3Dingress-one",
-      );
+      expect(wrapper.state("deployRefs")).toEqual([
+        new ResourceRef(resources.deployment, appRelease.namespace),
+      ]);
+      expect(wrapper.state("serviceRefs")).toEqual([
+        new ResourceRef(resources.service, appRelease.namespace),
+      ]);
+      expect(wrapper.state("ingressRefs")).toEqual([
+        new ResourceRef(resources.ingress, appRelease.namespace),
+      ]);
+      expect(wrapper.state("secretRefs")).toEqual([
+        new ResourceRef(resources.secret, appRelease.namespace),
+      ]);
     });
 
     it("stores other k8s resources directly in the state", () => {
@@ -129,10 +126,6 @@ describe("AppViewComponent", () => {
       // It should skip deployments, services and secrets from "other resources"
       expect(otherResources.length).toEqual(1);
 
-      // It sets the websocket for the deployment
-      const sockets: WebSocket[] = wrapper.state("sockets");
-      expect(sockets.length).toEqual(2);
-
       expect(configMap).toBeDefined();
       expect(configMap.metadata.name).toEqual("cm-one");
     });
@@ -149,11 +142,11 @@ describe("AppViewComponent", () => {
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
 
-      const otherResources: Map<string, IResource> = wrapper.state("otherResources");
-      expect(Object.keys(otherResources).length).toBe(0);
-
-      const sockets: WebSocket[] = wrapper.state("sockets");
-      expect(sockets.length).toEqual(0);
+      expect(wrapper.state("otherResources")).toEqual([]);
+      expect(wrapper.state("deployRefs")).toEqual([]);
+      expect(wrapper.state("serviceRefs")).toEqual([]);
+      expect(wrapper.state("ingressRefs")).toEqual([]);
+      expect(wrapper.state("secretRefs")).toEqual([]);
     });
 
     // See https://github.com/kubeapps/kubeapps/issues/632
@@ -317,12 +310,5 @@ describe("AppViewComponent", () => {
       serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
       otherResources: [obj],
     });
-  });
-
-  it("forwards updates to AppControls and ChartInfo elements", () => {
-    const update = { checked: true, repository: { name: "foo", url: "" }, latestVersion: "2.0.0" };
-    const wrapper = shallow(<AppViewComponent {...validProps} updateInfo={update} />);
-    expect(wrapper.find(AppControls).prop("updateInfo")).toBe(update);
-    expect(wrapper.find(ChartInfo).prop("updateInfo")).toBe(update);
   });
 });

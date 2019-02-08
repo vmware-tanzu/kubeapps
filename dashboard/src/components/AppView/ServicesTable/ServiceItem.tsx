@@ -7,12 +7,17 @@ import { IKubeItem, IResource, IServiceSpec, IServiceStatus } from "../../../sha
 interface IServiceItemProps {
   name: string;
   service?: IKubeItem<IResource>;
-  getService: () => void;
+  watchService: () => void;
+  closeWatch: () => void;
 }
 
 class ServiceItem extends React.Component<IServiceItemProps> {
   public componentDidMount() {
-    this.props.getService();
+    this.props.watchService();
+  }
+
+  public componentWillUnmount() {
+    this.props.closeWatch();
   }
 
   public render() {

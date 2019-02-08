@@ -88,30 +88,18 @@ describe("ResourceRef", () => {
     });
   });
 
-  describe("resourcePlural", () => {
-    const tests = [
-      { kind: "Service", expected: "services" },
-      { kind: "Ingress", expected: "ingresses" },
-      { kind: "Deployment", expected: "deployments" },
-    ];
-    tests.forEach(t => {
-      it(`returns the correct plural for ${t.kind}`, () => {
-        const r = {
-          kind: t.kind,
-          metadata: {
-            name: "foo",
-            namespace: "foo",
-          },
-        } as IResource;
-        const ref = new ResourceRef(r);
-        expect(ref.resourcePlural()).toBe(t.expected);
-      });
+  describe("watchResourceURL", () => {
+    let kubeWatchResourceURLMock: jest.Mock;
+    beforeEach(() => {
+      kubeWatchResourceURLMock = Kube.watchResourceURL = jest.fn();
     });
-
-    it("throws an error if the resource kind isn't registered", () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+    it("calls Kube.watchResourceURL with the correct arguments", () => {
       const r = {
         apiVersion: "v1",
-        kind: "ThisKindWillNeverExist",
+        kind: "Service",
         metadata: {
           name: "foo",
           namespace: "bar",
@@ -120,9 +108,58 @@ describe("ResourceRef", () => {
 
       const ref = new ResourceRef(r);
 
-      expect(() => ref.resourcePlural()).toThrow(
-        "Don't know plural for ThisKindWillNeverExist, register it in ResourceRef",
-      );
+      ref.watchResourceURL();
+      expect(kubeWatchResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");
+    });
+  });
+
+  describe("getResource", () => {
+    let kubeGetResourceMock: jest.Mock;
+    beforeEach(() => {
+      kubeGetResourceMock = Kube.getResource = jest.fn();
+    });
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+    it("calls Kube.getResource with the correct arguments", () => {
+      const r = {
+        apiVersion: "v1",
+        kind: "Service",
+        metadata: {
+          name: "foo",
+          namespace: "bar",
+        },
+      } as IResource;
+
+      const ref = new ResourceRef(r);
+
+      ref.getResource();
+      expect(kubeGetResourceMock).toBeCalledWith("v1", "services", "bar", "foo");
+    });
+  });
+
+  describe("watchResource", () => {
+    let kubeWatchResourceMock: jest.Mock;
+    beforeEach(() => {
+      kubeWatchResourceMock = Kube.watchResource = jest.fn();
+    });
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+    it("calls Kube.watchResource with the correct arguments", () => {
+      const r = {
+        apiVersion: "v1",
+        kind: "Service",
+        metadata: {
+          name: "foo",
+          namespace: "bar",
+        },
+      } as IResource;
+
+      const ref = new ResourceRef(r);
+
+      ref.watchResource();
+      expect(kubeWatchResourceMock).toBeCalledWith("v1", "services", "bar", "foo");
     });
   });
 });

@@ -5,12 +5,9 @@ import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import DeploymentStatus from "../../containers/DeploymentStatusContainer";
-import { Auth } from "../../shared/Auth";
-import { hapi } from "../../shared/hapi/release";
 import { Kube } from "../../shared/Kube";
 import ResourceRef from "../../shared/ResourceRef";
-import { IChartUpdateInfo, IK8sList, IRBACRole, IResource } from "../../shared/types";
-import WebSocketHelper from "../../shared/WebSocketHelper";
+import { IK8sList, IRBACRole, IRelease, IResource } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
@@ -25,14 +22,12 @@ import ServicesTable from "./ServicesTable";
 export interface IAppViewProps {
   namespace: string;
   releaseName: string;
-  app: hapi.release.Release;
+  app: IRelease;
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
-  getApp: (releaseName: string, namespace: string) => void;
+  getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
-  getChartUpdates: (name: string, version: string, appVersion: string) => void;
-  updateInfo: IChartUpdateInfo | undefined;
   // TODO: remove once WebSockets are moved to Redux store (#882)
   receiveResource: (p: { key: string; resource: IResource }) => void;
   push: (location: string) => RouterAction;
@@ -46,7 +41,6 @@ interface IAppViewState {
   // Other resources are not IKubeItems because
   // we are not fetching any information for them.
   otherResources: IResource[];
-  sockets: WebSocket[];
   manifest: IResource[];
 }
 
@@ -56,7 +50,6 @@ interface IPartialAppViewState {
   ingressRefs: ResourceRef[];
   secretRefs: ResourceRef[];
   otherResources: IResource[];
-  sockets: WebSocket[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -82,43 +75,21 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     otherResources: [],
     serviceRefs: [],
     secretRefs: [],
-    sockets: [],
   };
 
   public async componentDidMount() {
-    const { releaseName, getApp, namespace } = this.props;
-    getApp(releaseName, namespace);
-  }
-
-  public componentDidUpdate(prevProps: IAppViewProps) {
-    if (this.props.app !== prevProps.app) {
-      // App has changed, update chart updates info
-      const { app } = this.props;
-      if (
-        app.chart &&
-        app.chart.metadata &&
-        app.chart.metadata.name &&
-        app.chart.metadata.version
-      ) {
-        this.props.getChartUpdates(
-          app.chart.metadata.name,
-          app.chart.metadata.version,
-          app.chart.metadata.appVersion || "",
-        );
-      }
-    }
+    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
+    getAppWithUpdateInfo(releaseName, namespace);
   }
 
   // componentWillReceiveProps is deprecated use componentDidUpdate instead
   public componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { releaseName, getApp, namespace } = this.props;
+    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(releaseName, nextProps.namespace);
+      getAppWithUpdateInfo(releaseName, nextProps.namespace);
       return;
     }
     if (nextProps.error) {
-      // close any existing sockets
-      this.closeSockets();
       return;
     }
     const newApp = nextProps.app;
@@ -142,10 +113,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     // Iterate over the current manifest to populate the initial state
     this.setState(this.parseResources(manifest, newApp.namespace));
-  }
-
-  public componentWillUnmount() {
-    this.closeSockets();
   }
 
   public handleEvent(e: MessageEvent) {
@@ -194,7 +161,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public appInfo() {
-    const { app, updateInfo, push } = this.props;
+    const { app, push } = this.props;
     const { serviceRefs, ingressRefs, deployRefs, secretRefs, otherResources } = this.state;
     return (
       <section className="AppView padding-b-big">
@@ -211,7 +178,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} updateInfo={updateInfo} />
+                <ChartInfo app={app} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -219,12 +186,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     <DeploymentStatus deployRefs={deployRefs} info={app.info!} />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls
-                      app={app}
-                      updateInfo={updateInfo}
-                      deleteApp={this.deleteApp}
-                      push={push}
-                    />
+                    <AppControls app={app} deleteApp={this.deleteApp} push={push} />
                   </div>
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
@@ -251,7 +213,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       otherResources: [],
       serviceRefs: [],
       secretRefs: [],
-      sockets: [],
     };
     resources.forEach(i => {
       const item = i as IResource;
@@ -259,21 +220,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       switch (i.kind) {
         case "Deployment":
           result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          result.sockets.push(
-            this.getSocket("deployments", i.apiVersion, item.metadata.name, releaseNamespace),
-          );
           break;
         case "Service":
           result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          result.sockets.push(
-            this.getSocket("services", i.apiVersion, item.metadata.name, releaseNamespace),
-          );
           break;
         case "Ingress":
           result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          result.sockets.push(
-            this.getSocket("ingresses", i.apiVersion, item.metadata.name, releaseNamespace),
-          );
           break;
         case "Secret":
           result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
@@ -294,30 +246,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       }
     });
     return result;
-  }
-
-  private getSocket(
-    resource: string,
-    apiVersion: string,
-    name: string,
-    namespace: string,
-  ): WebSocket {
-    const apiBase = WebSocketHelper.apiBase();
-    const s = new WebSocket(
-      `${apiBase}/${
-        apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`
-      }/namespaces/${namespace}/${resource}?watch=true&fieldSelector=metadata.name%3D${name}`,
-      Auth.wsProtocols(),
-    );
-    s.addEventListener("message", e => this.handleEvent(e));
-    return s;
-  }
-
-  private closeSockets() {
-    const { sockets } = this.state;
-    for (const s of sockets) {
-      s.close();
-    }
   }
 
   private deleteApp = (purge: boolean) => {

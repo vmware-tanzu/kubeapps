@@ -12,7 +12,7 @@ import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: (ns: string, all: boolean) => void;
+  fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
@@ -25,21 +25,21 @@ interface IAppListState {
 class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
   public componentDidMount() {
-    const { fetchApps, filter, namespace, apps } = this.props;
-    fetchApps(namespace, apps.listingAll);
+    const { fetchAppsWithUpdateInfo, filter, namespace, apps } = this.props;
+    fetchAppsWithUpdateInfo(namespace, apps.listingAll);
     this.setState({ filter });
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
     const {
       apps: { error, listingAll },
-      fetchApps,
+      fetchAppsWithUpdateInfo,
       filter,
       namespace,
     } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
-      fetchApps(nextProps.namespace, listingAll);
+      fetchAppsWithUpdateInfo(nextProps.namespace, listingAll);
     }
     if (nextProps.filter !== filter) {
       this.setState({ filter: nextProps.filter });
@@ -137,7 +137,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   private toggleListAll = () => {
-    this.props.fetchApps(this.props.namespace, !this.props.apps.listingAll);
+    this.props.fetchAppsWithUpdateInfo(this.props.namespace, !this.props.apps.listingAll);
   };
 
   private filteredApps(apps: IAppOverview[], filter: string) {
