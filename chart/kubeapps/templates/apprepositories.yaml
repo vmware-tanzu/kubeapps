@@ -4,7 +4,11 @@ kind: AppRepository
 metadata:
   name: {{ .name }}
   annotations:
-    "helm.sh/hook": pre-install
+    # Using the hook crd-install to avoid issue w/Helm v1.11
+    # https://github.com/kubeapps/kubeapps/pull/955#pullrequestreview-200764260
+    "helm.sh/hook": crd-install
+    # Make sure this runs after the AppRepository CRD install
+    "helm.sh/hook-weight": "10"
   labels:
     app: {{ template "kubeapps.apprepository.fullname" $ }}
     chart: {{ template "kubeapps.chart" $ }}
