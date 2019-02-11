@@ -32,4 +32,4 @@ describe("componentDidMount", () => {
     shallow(<ConfigLoader getConfig={getConfig} />);
     expect(getConfig).toHaveBeenCalled();
   });
-})
+});
