@@ -51,7 +51,7 @@ export class Auth {
       // Tries to use well known authorization headers.
       // Oauth2_proxy uses the header "authorization" while
       // keycloak-gatekeeper uses "x-auth-token-id"
-      return headers.authorization || headers["x-auth-token-id"] || null;
+      return (headers && (headers.authorization || headers["x-auth-token-id"])) || null;
     } catch (e) {
       return null;
     }
