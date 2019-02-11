@@ -1,7 +1,9 @@
 import { shallow } from "enzyme";
 import { Location } from "history";
+import context from "jest-plugin-context";
 import * as React from "react";
 import { Redirect } from "react-router-dom";
+import itBehavesLike from "../../shared/specs";
 
 import LoginForm from "./LoginForm";
 
@@ -18,9 +20,26 @@ const defaultProps = {
   authenticating: false,
   authenticationError: undefined,
   location: emptyLocation,
+  tryToAutoAuthenticate: jest.fn(),
+  autoAuthenticating: false,
 };
 
 const authenticationError = "it's a trap";
+
+describe("componentDidMount", () => {
+  it("should call tryToAutoAuthenticate", () => {
+    const tryToAutoAuthenticate = jest.fn();
+    shallow(<LoginForm {...defaultProps} tryToAutoAuthenticate={tryToAutoAuthenticate} />);
+    expect(tryToAutoAuthenticate).toHaveBeenCalled();
+  });
+});
+
+context("while trying to auto login", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: LoginForm,
+    props: { ...defaultProps, autoAuthenticating: true },
+  });
+});
 
 it("renders a token login form", () => {
   const wrapper = shallow(<LoginForm {...defaultProps} />);

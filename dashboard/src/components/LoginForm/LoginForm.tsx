@@ -3,13 +3,16 @@ import * as React from "react";
 import { Lock } from "react-feather";
 import { Redirect } from "react-router";
 
+import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 
 interface ILoginFormProps {
   authenticated: boolean;
   authenticating: boolean;
+  autoAuthenticating: boolean;
   authenticationError: string | undefined;
   authenticate: (token: string) => any;
+  tryToAutoAuthenticate: () => void;
   location: Location;
 }
 
@@ -19,7 +22,15 @@ interface ILoginFormState {
 
 class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
   public state: ILoginFormState = { token: "" };
+
+  public componentDidMount() {
+    this.props.tryToAutoAuthenticate();
+  }
+
   public render() {
+    if (this.props.autoAuthenticating) {
+      return <LoadingWrapper />;
+    }
     if (this.props.authenticated) {
       const { from } = this.props.location.state || { from: { pathname: "/" } };
       return <Redirect to={from} />;

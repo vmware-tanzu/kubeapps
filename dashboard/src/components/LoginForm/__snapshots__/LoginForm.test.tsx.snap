@@ -154,3 +154,10 @@ exports[`renders a token login form 1`] = `
   </div>
 </section>
 `;
+
+exports[`while trying to auto login loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;

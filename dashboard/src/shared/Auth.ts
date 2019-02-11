@@ -44,6 +44,16 @@ export class Auth {
       }
     }
   }
+
+  public static async fetchToken(): Promise<string | null> {
+    try {
+      const { headers } = await Axios.get("/");
+      // oauth2_proxy set the header "authorization" while keycloak-proxy uses "x-auth-token-id"
+      return headers.authorization || headers["x-auth-token-id"] || null;
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 export const axios = Axios.create();

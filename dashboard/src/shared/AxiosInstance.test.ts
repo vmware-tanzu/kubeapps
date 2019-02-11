@@ -23,6 +23,8 @@ describe("createAxiosInterceptor", () => {
     const state: IAuthState = {
       authenticated: false,
       authenticating: false,
+      autoAuthenticating: false,
+      autoAuthenticated: false,
     };
 
     store = mockStore({

@@ -10,12 +10,15 @@ describe("authReducer", () => {
     authenticating: getType(actions.auth.authenticating),
     authenticationError: getType(actions.auth.authenticationError),
     setAuthenticated: getType(actions.auth.setAuthenticated),
+    setAutoAuthenticated: getType(actions.auth.setAutoAuthenticated),
   };
 
   beforeEach(() => {
     initialState = {
       authenticated: false,
       authenticating: false,
+      autoAuthenticating: false,
+      autoAuthenticated: false,
     };
   });
 
@@ -54,10 +57,34 @@ describe("authReducer", () => {
     }`, () => {
       expect(
         authReducer(
-          { authenticating: true, authenticated: true },
+          {
+            authenticating: true,
+            authenticated: true,
+            autoAuthenticating: true,
+            autoAuthenticated: true,
+          },
           { type: actionTypes.authenticationError as any, payload: errMessage },
         ),
       ).toEqual({ ...initialState, authenticationError: errMessage });
+    });
+
+    it("sets authenticated and autoauthenticated", () => {
+      expect(
+        authReducer(
+          {
+            authenticating: true,
+            authenticated: false,
+            autoAuthenticating: true,
+            autoAuthenticated: false,
+          },
+          { type: actionTypes.setAutoAuthenticated as any, payload: true },
+        ),
+      ).toEqual({
+        authenticating: false,
+        authenticated: true,
+        autoAuthenticating: false,
+        autoAuthenticated: true,
+      });
     });
   });
 });

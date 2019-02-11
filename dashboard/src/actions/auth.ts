@@ -14,7 +14,19 @@ export const authenticationError = createAction("AUTHENTICATION_ERROR", resolve 
   return (errorMsg: string) => resolve(errorMsg);
 });
 
-const allActions = [setAuthenticated, authenticating, authenticationError];
+export const autoAuthenticating = createAction("AUTO_AUTHENTICATING");
+
+export const setAutoAuthenticated = createAction("SET_AUTO_AUTHENTICATED", resolve => {
+  return (authenticated: boolean) => resolve(authenticated);
+});
+
+const allActions = [
+  setAuthenticated,
+  authenticating,
+  authenticationError,
+  autoAuthenticating,
+  setAutoAuthenticated,
+];
 
 export type AuthAction = ActionType<typeof allActions[number]>;
 
@@ -37,5 +49,22 @@ export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthActi
   return async dispatch => {
     Auth.unsetAuthToken();
     dispatch(setAuthenticated(false));
+  };
+}
+
+export function tryToAutoAuthenticate(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
+  return async dispatch => {
+    dispatch(autoAuthenticating());
+    try {
+      const token = await Auth.fetchToken();
+      if (token) {
+        Auth.setAuthToken(token);
+        dispatch(setAutoAuthenticated(true));
+      } else {
+        dispatch(setAutoAuthenticated(false));
+      }
+    } catch (e) {
+      dispatch(authenticationError(e.toString()));
+    }
   };
 }

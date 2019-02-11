@@ -13,7 +13,7 @@ interface IState extends IStoreState {
 }
 
 function mapStateToProps({
-  auth: { authenticated },
+  auth: { authenticated, autoAuthenticated },
   namespace,
   router: {
     location: { pathname },
@@ -23,13 +23,15 @@ function mapStateToProps({
     authenticated,
     namespace,
     pathname,
+    // If autoAuthenticated it's not possible to logout
+    disableLogout: autoAuthenticated,
   };
 }
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
-    logout: (token: string) => dispatch(actions.auth.logout()),
+    logout: () => dispatch(actions.auth.logout()),
     push: (path: string) => dispatch(push(path)),
     setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),
   };
