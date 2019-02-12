@@ -10,14 +10,13 @@ describe("authReducer", () => {
     authenticating: getType(actions.auth.authenticating),
     authenticationError: getType(actions.auth.authenticationError),
     setAuthenticated: getType(actions.auth.setAuthenticated),
-    setAutoAuthenticated: getType(actions.auth.setAutoAuthenticated),
   };
 
   beforeEach(() => {
     initialState = {
       authenticated: false,
       authenticating: false,
-      autoAuthenticating: false,
+      checkingOIDCToken: false,
       autoAuthenticated: false,
     };
   });
@@ -36,7 +35,7 @@ describe("authReducer", () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
-            payload: e,
+            payload: { authenticated: e, withToken: "foo" },
             type: actionTypes.setAuthenticated as any,
           }),
         ).toEqual({ ...initialState, authenticated: e });
@@ -60,7 +59,7 @@ describe("authReducer", () => {
           {
             authenticating: true,
             authenticated: true,
-            autoAuthenticating: true,
+            checkingOIDCToken: true,
             autoAuthenticated: true,
           },
           { type: actionTypes.authenticationError as any, payload: errMessage },
@@ -74,15 +73,18 @@ describe("authReducer", () => {
           {
             authenticating: true,
             authenticated: false,
-            autoAuthenticating: true,
+            checkingOIDCToken: true,
             autoAuthenticated: false,
           },
-          { type: actionTypes.setAutoAuthenticated as any, payload: true },
+          {
+            type: actionTypes.setAuthenticated as any,
+            payload: { authenticated: true, withToken: false },
+          },
         ),
       ).toEqual({
         authenticating: false,
         authenticated: true,
-        autoAuthenticating: false,
+        checkingOIDCToken: false,
         autoAuthenticated: true,
       });
     });

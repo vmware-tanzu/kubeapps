@@ -33,27 +33,19 @@ export class Auth {
     };
   }
 
-  // Throws an error if the token is invalid
-  public static async validateToken(token: string) {
+  // Throws an error if accessing the Kubernetes API returns an Unauthorized error
+  public static async validate(token?: string) {
     try {
-      await Axios.get("api/kube/", { headers: { Authorization: `Bearer ${token}` } });
+      let options = {};
+      if (token) {
+        options = { headers: { Authorization: `Bearer ${token}` } };
+      }
+      await Axios.get("api/kube/", options);
     } catch (e) {
       const res = e.response as AxiosResponse;
-      if (res.status === 401) {
+      if (res.status === 401 || res.status === 403) {
         throw new Error("invalid token");
       }
-    }
-  }
-
-  public static async fetchToken(): Promise<string | null> {
-    try {
-      const { headers } = await Axios.get("/");
-      // Tries to use well known authorization headers.
-      // Oauth2_proxy uses the header "authorization" while
-      // keycloak-gatekeeper uses "x-auth-token-id"
-      return (headers && (headers.authorization || headers["x-auth-token-id"])) || null;
-    } catch (e) {
-      return null;
     }
   }
 }

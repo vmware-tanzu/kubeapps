@@ -11,14 +11,14 @@ const mockStore = configureMockStore([thunk]);
 const makeStore = (
   authenticated: boolean,
   authenticating: boolean,
-  autoAuthenticating: boolean,
+  checkingOIDCToken: boolean,
   autoAuthenticated: boolean,
   authenticationError: string,
 ) => {
   const state: IAuthState = {
     authenticated,
     authenticating,
-    autoAuthenticating,
+    checkingOIDCToken,
     autoAuthenticated,
     authenticationError,
   };
@@ -40,7 +40,7 @@ describe("LoginFormContainer props", () => {
     expect(form).toHaveProp({
       authenticated: true,
       authenticating: true,
-      autoAuthenticating: true,
+      checkingOIDCToken: true,
       authenticationError: "It's a trap",
     });
   });

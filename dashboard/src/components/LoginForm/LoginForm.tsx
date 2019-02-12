@@ -9,7 +9,7 @@ import "./LoginForm.css";
 interface ILoginFormProps {
   authenticated: boolean;
   authenticating: boolean;
-  autoAuthenticating: boolean;
+  checkingOIDCToken: boolean;
   authenticationError: string | undefined;
   authenticate: (token: string) => any;
   tryToAutoAuthenticate: () => void;
@@ -28,7 +28,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
   }
 
   public render() {
-    if (this.props.autoAuthenticating) {
+    if (this.props.checkingOIDCToken) {
       return <LoadingWrapper />;
     }
     if (this.props.authenticated) {

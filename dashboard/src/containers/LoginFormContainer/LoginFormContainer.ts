@@ -7,12 +7,12 @@ import LoginForm from "../../components/LoginForm";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
-  auth: { authenticated, authenticating, authenticationError, autoAuthenticating },
+  auth: { authenticated, authenticating, authenticationError, checkingOIDCToken },
 }: IStoreState) {
   return {
     authenticated,
     authenticating,
-    autoAuthenticating,
+    checkingOIDCToken,
     authenticationError,
   };
 }

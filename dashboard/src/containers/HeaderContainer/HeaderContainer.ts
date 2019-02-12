@@ -24,7 +24,7 @@ function mapStateToProps({
     namespace,
     pathname,
     // If autoAuthenticated it's not possible to logout
-    disableLogout: autoAuthenticated,
+    hideLogoutLink: autoAuthenticated,
   };
 }
 

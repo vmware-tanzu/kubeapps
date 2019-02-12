@@ -16,7 +16,7 @@ const defaultProps = {
   pathname: "",
   push: jest.fn(),
   setNamespace: jest.fn(),
-  disableLogout: false,
+  hideLogoutLink: false,
 };
 it("renders the header links and titles", () => {
   const wrapper = shallow(<Header {...defaultProps} />);
@@ -33,8 +33,8 @@ it("renders the header links and titles", () => {
   });
 });
 
-it("disables the logout link", () => {
-  const wrapper = shallow(<Header {...defaultProps} disableLogout={true} />);
+it("disables the logout link when disableLogout is set", () => {
+  const wrapper = shallow(<Header {...defaultProps} hideLogoutLink={true} />);
   const links = wrapper.find(NavLink);
   expect(links.length).toBeGreaterThan(1);
   links.children().forEach(link => {

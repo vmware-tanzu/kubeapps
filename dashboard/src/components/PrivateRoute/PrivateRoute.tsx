@@ -5,6 +5,7 @@ type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 interface IPrivateRouteProps extends IRouteComponentPropsAndRouteProps {
   authenticated: boolean;
+  autoAuthenticated: boolean;
 }
 
 class PrivateRoute extends React.Component<IPrivateRouteProps> {

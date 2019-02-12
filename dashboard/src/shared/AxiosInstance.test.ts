@@ -23,7 +23,7 @@ describe("createAxiosInterceptor", () => {
     const state: IAuthState = {
       authenticated: false,
       authenticating: false,
-      autoAuthenticating: false,
+      checkingOIDCToken: false,
       autoAuthenticated: false,
     };
 
@@ -33,7 +33,6 @@ describe("createAxiosInterceptor", () => {
       },
     });
 
-    Auth.validateToken = jest.fn();
     Auth.setAuthToken = jest.fn();
     Auth.unsetAuthToken = jest.fn();
 
@@ -130,7 +129,7 @@ describe("createAxiosInterceptor", () => {
         type: "AUTHENTICATION_ERROR",
       },
       {
-        payload: false,
+        payload: { authenticated: false },
         type: "SET_AUTHENTICATED",
       },
     ];

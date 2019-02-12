@@ -18,7 +18,7 @@ const makeStore = (authenticated: boolean, autoAuthenticated: boolean) => {
     authenticated,
     autoAuthenticated,
     authenticating: false,
-    autoAuthenticating: false,
+    checkingOIDCToken: false,
   };
   return mockStore({ auth: state, router: { location: emptyLocation } });
 };
@@ -30,7 +30,7 @@ describe("LoginFormContainer props", () => {
     const form = wrapper.find("Header");
     expect(form).toHaveProp({
       authenticated: true,
-      disableLogout: true,
+      hideLogoutLink: true,
     });
   });
 });

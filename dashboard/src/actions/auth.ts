@@ -5,7 +5,7 @@ import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
-  return (authenticated: boolean) => resolve(authenticated);
+  return (authenticated: boolean, withToken?: boolean) => resolve({ authenticated, withToken });
 });
 
 export const authenticating = createAction("AUTHENTICATING");
@@ -14,33 +14,30 @@ export const authenticationError = createAction("AUTHENTICATION_ERROR", resolve 
   return (errorMsg: string) => resolve(errorMsg);
 });
 
-export const autoAuthenticating = createAction("AUTO_AUTHENTICATING");
+export const checkingOIDCToken = createAction("CHECKING_OIDC_TOKEN");
 
-export const setAutoAuthenticated = createAction("SET_AUTO_AUTHENTICATED", resolve => {
-  return (authenticated: boolean) => resolve(authenticated);
-});
-
-const allActions = [
-  setAuthenticated,
-  authenticating,
-  authenticationError,
-  autoAuthenticating,
-  setAutoAuthenticated,
-];
+const allActions = [setAuthenticated, authenticating, authenticationError, checkingOIDCToken];
 
 export type AuthAction = ActionType<typeof allActions[number]>;
 
 export function authenticate(
-  token: string,
+  token?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     dispatch(authenticating());
     try {
-      await Auth.validateToken(token);
-      Auth.setAuthToken(token);
-      dispatch(setAuthenticated(true));
+      await Auth.validate(token);
+      if (token) {
+        Auth.setAuthToken(token);
+      }
+      dispatch(setAuthenticated(true, !!token));
     } catch (e) {
-      dispatch(authenticationError(e.toString()));
+      if (token) {
+        // The error will only be meaningful if a token was given
+        dispatch(authenticationError(e.toString()));
+      } else {
+        dispatch(setAuthenticated(false));
+      }
     }
   };
 }
@@ -54,17 +51,7 @@ export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthActi
 
 export function tryToAutoAuthenticate(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
-    dispatch(autoAuthenticating());
-    try {
-      const token = await Auth.fetchToken();
-      if (token) {
-        Auth.setAuthToken(token);
-        dispatch(setAutoAuthenticated(true));
-      } else {
-        dispatch(setAutoAuthenticated(false));
-      }
-    } catch (e) {
-      dispatch(authenticationError(e.toString()));
-    }
+    dispatch(checkingOIDCToken());
+    dispatch(authenticate(undefined));
   };
 }

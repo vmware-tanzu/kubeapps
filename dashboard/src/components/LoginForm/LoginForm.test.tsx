@@ -21,7 +21,7 @@ const defaultProps = {
   authenticationError: undefined,
   location: emptyLocation,
   tryToAutoAuthenticate: jest.fn(),
-  autoAuthenticating: false,
+  checkingOIDCToken: false,
 };
 
 const authenticationError = "it's a trap";
@@ -37,7 +37,7 @@ describe("componentDidMount", () => {
 context("while trying to auto login", () => {
   itBehavesLike("aLoadingComponent", {
     component: LoginForm,
-    props: { ...defaultProps, autoAuthenticating: true },
+    props: { ...defaultProps, checkingOIDCToken: true },
   });
 });
 
