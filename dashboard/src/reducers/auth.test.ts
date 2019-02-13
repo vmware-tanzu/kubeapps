@@ -34,7 +34,7 @@ describe("authReducer", () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
-            payload: { authenticated: e, withToken: "foo" },
+            payload: { authenticated: e },
             type: actionTypes.setAuthenticated as any,
           }),
         ).toEqual({ ...initialState, authenticated: e });

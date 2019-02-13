@@ -32,6 +32,7 @@ describe("createAxiosInterceptor", () => {
       },
     });
 
+    Auth.validateToken = jest.fn();
     Auth.setAuthToken = jest.fn();
     Auth.unsetAuthToken = jest.fn();
 

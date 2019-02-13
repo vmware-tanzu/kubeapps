@@ -36,9 +36,9 @@ describe("Auth", () => {
       expect(token).toEqual("foo");
     });
   });
-  it("should catch errors in the request", async () => {
+  it("should not return a token if the info is not present", async () => {
     Axios.head = jest.fn(() => {
-      throw new Error();
+      return {};
     });
     const token = await Auth.fetchOIDCToken();
     expect(token).toEqual(null);

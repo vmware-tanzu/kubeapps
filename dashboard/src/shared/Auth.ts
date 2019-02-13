@@ -38,30 +38,24 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(token: string) {
     try {
-      let options = {};
-      if (token) {
-        options = { headers: { Authorization: `Bearer ${token}` } };
-      }
-      await Axios.get("api/kube/", options);
+      await Axios.get("api/kube/", { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) {
       const res = e.response as AxiosResponse;
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401) {
         throw new Error("invalid token");
       }
     }
   }
 
+  // fetchOIDCToken does a HEAD request to collect the Bearer token
+  // from the authorization header if exists
   public static async fetchOIDCToken(): Promise<string | null> {
-    try {
-      const { headers } = await Axios.head("/");
-      if (headers && headers.authorization) {
-        const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
-        if (tokenMatch) {
-          return tokenMatch[1];
-        }
+    const { headers } = await Axios.head("/");
+    if (headers && headers.authorization) {
+      const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
+      if (tokenMatch) {
+        return tokenMatch[1];
       }
-    } catch (e) {
-      // Unable to fetch
     }
     return null;
   }

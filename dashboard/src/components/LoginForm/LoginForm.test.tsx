@@ -26,14 +26,14 @@ const defaultProps = {
 const authenticationError = "it's a trap";
 
 describe("componentDidMount", () => {
-  it("should call tryToAutoAuthenticate", () => {
+  it("should call tryToAuthenticateWithOIDC", () => {
     const tryToAuthenticateWithOIDC = jest.fn();
     shallow(<LoginForm {...defaultProps} tryToAuthenticateWithOIDC={tryToAuthenticateWithOIDC} />);
     expect(tryToAuthenticateWithOIDC).toHaveBeenCalled();
   });
 });
 
-context("while trying to auto login", () => {
+context("while authenticating", () => {
   itBehavesLike("aLoadingComponent", {
     component: LoginForm,
     props: { ...defaultProps, authenticating: true },

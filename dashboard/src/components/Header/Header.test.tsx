@@ -33,7 +33,7 @@ it("renders the header links and titles", () => {
   });
 });
 
-it("disables the logout link when disableLogout is set", () => {
+it("disables the logout link when hideLogoutLink is set", () => {
   const wrapper = shallow(<Header {...defaultProps} hideLogoutLink={true} />);
   const links = wrapper.find(NavLink);
   expect(links.length).toBeGreaterThan(1);
