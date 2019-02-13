@@ -1,12 +1,14 @@
 import Axios, { AxiosResponse } from "axios";
 const AuthTokenKey = "kubeapps_auth_token";
+const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 
 export class Auth {
   public static getAuthToken() {
     return localStorage.getItem(AuthTokenKey);
   }
 
-  public static setAuthToken(token: string) {
+  public static setAuthToken(token: string, oidc?: boolean) {
+    localStorage.setItem(AuthTokenOIDCKey, (!!oidc).toString());
     return localStorage.setItem(AuthTokenKey, token);
   }
 
@@ -33,8 +35,8 @@ export class Auth {
     };
   }
 
-  // Throws an error if accessing the Kubernetes API returns an Unauthorized error
-  public static async validate(token?: string) {
+  // Throws an error if the token is invalid
+  public static async validateToken(token: string) {
     try {
       let options = {};
       if (token) {
@@ -47,6 +49,21 @@ export class Auth {
         throw new Error("invalid token");
       }
     }
+  }
+
+  public static async fetchOIDCToken(): Promise<string | null> {
+    try {
+      const { headers } = await Axios.head("/");
+      if (headers && headers.authorization) {
+        const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
+        if (tokenMatch) {
+          return tokenMatch[1];
+        }
+      }
+    } catch (e) {
+      // Unable to fetch
+    }
+    return null;
   }
 }
 

@@ -7,12 +7,11 @@ import LoginForm from "../../components/LoginForm";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
-  auth: { authenticated, authenticating, authenticationError, checkingOIDCToken },
+  auth: { authenticated, authenticating, authenticationError },
 }: IStoreState) {
   return {
     authenticated,
     authenticating,
-    checkingOIDCToken,
     authenticationError,
   };
 }
@@ -20,7 +19,7 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     authenticate: (token: string) => dispatch(actions.auth.authenticate(token)),
-    tryToAutoAuthenticate: () => dispatch(actions.auth.tryToAutoAuthenticate()),
+    tryToAuthenticateWithOIDC: () => dispatch(actions.auth.tryToAuthenticateWithOIDC()),
   };
 }
 

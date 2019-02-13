@@ -13,7 +13,7 @@ interface IState extends IStoreState {
 }
 
 function mapStateToProps({
-  auth: { authenticated, autoAuthenticated },
+  auth: { authenticated, oidcAuthenticated },
   namespace,
   router: {
     location: { pathname },
@@ -23,8 +23,8 @@ function mapStateToProps({
     authenticated,
     namespace,
     pathname,
-    // If autoAuthenticated it's not possible to logout
-    hideLogoutLink: autoAuthenticated,
+    // If oidcAuthenticated it's not possible to logout
+    hideLogoutLink: oidcAuthenticated,
   };
 }
 

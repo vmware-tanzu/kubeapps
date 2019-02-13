@@ -9,10 +9,9 @@ import "./LoginForm.css";
 interface ILoginFormProps {
   authenticated: boolean;
   authenticating: boolean;
-  checkingOIDCToken: boolean;
   authenticationError: string | undefined;
   authenticate: (token: string) => any;
-  tryToAutoAuthenticate: () => void;
+  tryToAuthenticateWithOIDC: () => void;
   location: Location;
 }
 
@@ -24,11 +23,11 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
   public state: ILoginFormState = { token: "" };
 
   public componentDidMount() {
-    this.props.tryToAutoAuthenticate();
+    this.props.tryToAuthenticateWithOIDC();
   }
 
   public render() {
-    if (this.props.checkingOIDCToken) {
+    if (this.props.authenticating) {
       return <LoadingWrapper />;
     }
     if (this.props.authenticated) {
@@ -76,11 +75,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
                     />
                   </div>
                   <p>
-                    <button
-                      type="submit"
-                      className="button button-accent"
-                      disabled={this.props.authenticating}
-                    >
+                    <button type="submit" className="button button-accent">
                       Login
                     </button>
                   </p>

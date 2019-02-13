@@ -15,11 +15,11 @@ beforeEach(() => {
   const state: IAuthState = {
     authenticated: false,
     authenticating: false,
-    checkingOIDCToken: false,
-    autoAuthenticated: false,
+    oidcAuthenticated: false,
   };
 
-  Auth.validate = jest.fn();
+  Auth.validateToken = jest.fn();
+  Auth.fetchOIDCToken = jest.fn(() => "token");
   Auth.setAuthToken = jest.fn();
 
   store = mockStore({
@@ -35,7 +35,7 @@ afterEach(() => {
 
 describe("authenticate", () => {
   it("dispatches authenticating and auth error if invalid", () => {
-    Auth.validate = jest.fn().mockImplementationOnce(() => {
+    Auth.validateToken = jest.fn().mockImplementationOnce(() => {
       throw new Error(validationErrorMsg);
     });
     const expectedActions = [
@@ -59,7 +59,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        payload: { authenticated: true, withToken: true },
+        payload: { authenticated: true },
         type: getType(actions.auth.setAuthenticated),
       },
     ];
@@ -70,25 +70,25 @@ describe("authenticate", () => {
   });
 });
 
-describe("auto authenticate", () => {
-  it("dispatches authenticating but no auth if doesn't return a token", () => {
-    Auth.validate = jest.fn().mockImplementationOnce(() => {
+describe("OIDC authentication", () => {
+  it("dispatches authenticating and auth error if invalid", () => {
+    Auth.validateToken = jest.fn().mockImplementationOnce(() => {
       throw new Error(validationErrorMsg);
     });
     const expectedActions = [
       {
-        type: getType(actions.auth.checkingOIDCToken),
+        type: getType(actions.auth.authenticating),
       },
       {
         type: getType(actions.auth.authenticating),
       },
       {
-        payload: { authenticated: false },
-        type: getType(actions.auth.setAuthenticated),
+        payload: `Error: ${validationErrorMsg}`,
+        type: getType(actions.auth.authenticationError),
       },
     ];
 
-    return store.dispatch(actions.auth.tryToAutoAuthenticate()).then(() => {
+    return store.dispatch(actions.auth.tryToAuthenticateWithOIDC()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -96,18 +96,18 @@ describe("auto authenticate", () => {
   it("dispatches authenticating and auth ok if valid", () => {
     const expectedActions = [
       {
-        type: getType(actions.auth.checkingOIDCToken),
+        type: getType(actions.auth.authenticating),
       },
       {
         type: getType(actions.auth.authenticating),
       },
       {
-        payload: { authenticated: true, withToken: false },
+        payload: { authenticated: true, oidc: true },
         type: getType(actions.auth.setAuthenticated),
       },
     ];
 
-    return store.dispatch(actions.auth.tryToAutoAuthenticate()).then(() => {
+    return store.dispatch(actions.auth.tryToAuthenticateWithOIDC()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });

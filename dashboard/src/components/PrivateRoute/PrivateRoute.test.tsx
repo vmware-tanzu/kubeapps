@@ -27,7 +27,6 @@ it("redirects to the /login route if not authenticated", () => {
   const wrapper = shallow(
     <PrivateRoute
       authenticated={false}
-      autoAuthenticated={false}
       path="/test"
       component={MockComponent}
       {...emptyRouteComponentProps}
@@ -46,7 +45,6 @@ it("renders the given component when authenticated", () => {
   const wrapper = shallow(
     <PrivateRoute
       authenticated={true}
-      autoAuthenticated={false}
       path="/test"
       component={MockComponent}
       {...emptyRouteComponentProps}

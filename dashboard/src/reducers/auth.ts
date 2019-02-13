@@ -6,16 +6,14 @@ import { AuthAction } from "../actions/auth";
 export interface IAuthState {
   authenticated: boolean;
   authenticating: boolean;
-  checkingOIDCToken: boolean;
-  autoAuthenticated: boolean;
+  oidcAuthenticated: boolean;
   authenticationError?: string;
 }
 
 const initialState: IAuthState = {
   authenticated: !(localStorage.getItem("kubeapps_auth_token") === null),
   authenticating: false,
-  checkingOIDCToken: false,
-  autoAuthenticated: false,
+  oidcAuthenticated: localStorage.getItem("kubeapps_auth_token_oidc") === "true",
 };
 
 const authReducer = (state: IAuthState = initialState, action: AuthAction): IAuthState => {
@@ -24,21 +22,17 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
       return {
         ...state,
         authenticated: action.payload.authenticated,
-        autoAuthenticated: !action.payload.withToken,
-        checkingOIDCToken: false,
+        oidcAuthenticated: !!action.payload.oidc,
         authenticating: false,
       };
     case getType(actions.auth.authenticating):
       return { ...state, authenticated: false, authenticating: true };
-    case getType(actions.auth.checkingOIDCToken):
-      return { ...state, authenticated: false, checkingOIDCToken: true };
     case getType(actions.auth.authenticationError):
       return {
         ...state,
         authenticated: false,
         authenticating: false,
-        checkingOIDCToken: false,
-        autoAuthenticated: false,
+        oidcAuthenticated: false,
         authenticationError: action.payload,
       };
     default:

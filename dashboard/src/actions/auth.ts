@@ -5,7 +5,7 @@ import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
-  return (authenticated: boolean, withToken?: boolean) => resolve({ authenticated, withToken });
+  return (authenticated: boolean, oidc?: boolean) => resolve({ authenticated, oidc });
 });
 
 export const authenticating = createAction("AUTHENTICATING");
@@ -14,30 +14,22 @@ export const authenticationError = createAction("AUTHENTICATION_ERROR", resolve 
   return (errorMsg: string) => resolve(errorMsg);
 });
 
-export const checkingOIDCToken = createAction("CHECKING_OIDC_TOKEN");
-
-const allActions = [setAuthenticated, authenticating, authenticationError, checkingOIDCToken];
+const allActions = [setAuthenticated, authenticating, authenticationError];
 
 export type AuthAction = ActionType<typeof allActions[number]>;
 
 export function authenticate(
-  token?: string,
+  token: string,
+  oidc?: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     dispatch(authenticating());
     try {
-      await Auth.validate(token);
-      if (token) {
-        Auth.setAuthToken(token);
-      }
-      dispatch(setAuthenticated(true, !!token));
+      await Auth.validateToken(token);
+      Auth.setAuthToken(token, oidc);
+      dispatch(setAuthenticated(true, oidc));
     } catch (e) {
-      if (token) {
-        // The error will only be meaningful if a token was given
-        dispatch(authenticationError(e.toString()));
-      } else {
-        dispatch(setAuthenticated(false));
-      }
+      dispatch(authenticationError(e.toString()));
     }
   };
 }
@@ -49,9 +41,19 @@ export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthActi
   };
 }
 
-export function tryToAutoAuthenticate(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
+export function tryToAuthenticateWithOIDC(): ThunkAction<
+  Promise<void>,
+  IStoreState,
+  null,
+  AuthAction
+> {
   return async dispatch => {
-    dispatch(checkingOIDCToken());
-    dispatch(authenticate(undefined));
+    dispatch(authenticating());
+    const token = await Auth.fetchOIDCToken();
+    if (token) {
+      dispatch(authenticate(token, true));
+    } else {
+      dispatch(setAuthenticated(false));
+    }
   };
 }

@@ -16,8 +16,7 @@ describe("authReducer", () => {
     initialState = {
       authenticated: false,
       authenticating: false,
-      checkingOIDCToken: false,
-      autoAuthenticated: false,
+      oidcAuthenticated: false,
     };
   });
 
@@ -59,33 +58,30 @@ describe("authReducer", () => {
           {
             authenticating: true,
             authenticated: true,
-            checkingOIDCToken: true,
-            autoAuthenticated: true,
+            oidcAuthenticated: true,
           },
           { type: actionTypes.authenticationError as any, payload: errMessage },
         ),
       ).toEqual({ ...initialState, authenticationError: errMessage });
     });
 
-    it("sets authenticated and autoauthenticated", () => {
+    it("sets authenticated and oidcAuthenticated", () => {
       expect(
         authReducer(
           {
             authenticating: true,
             authenticated: false,
-            checkingOIDCToken: true,
-            autoAuthenticated: false,
+            oidcAuthenticated: false,
           },
           {
             type: actionTypes.setAuthenticated as any,
-            payload: { authenticated: true, withToken: false },
+            payload: { authenticated: true, oidc: true },
           },
         ),
       ).toEqual({
         authenticating: false,
         authenticated: true,
-        checkingOIDCToken: false,
-        autoAuthenticated: true,
+        oidcAuthenticated: true,
       });
     });
   });

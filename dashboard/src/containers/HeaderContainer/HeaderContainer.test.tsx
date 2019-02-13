@@ -13,12 +13,11 @@ const emptyLocation = {
   search: "",
 };
 
-const makeStore = (authenticated: boolean, autoAuthenticated: boolean) => {
+const makeStore = (authenticated: boolean, oidcAuthenticated: boolean) => {
   const state: IAuthState = {
     authenticated,
-    autoAuthenticated,
+    oidcAuthenticated,
     authenticating: false,
-    checkingOIDCToken: false,
   };
   return mockStore({ auth: state, router: { location: emptyLocation } });
 };

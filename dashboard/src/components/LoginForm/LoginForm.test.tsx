@@ -20,24 +20,23 @@ const defaultProps = {
   authenticating: false,
   authenticationError: undefined,
   location: emptyLocation,
-  tryToAutoAuthenticate: jest.fn(),
-  checkingOIDCToken: false,
+  tryToAuthenticateWithOIDC: jest.fn(),
 };
 
 const authenticationError = "it's a trap";
 
 describe("componentDidMount", () => {
   it("should call tryToAutoAuthenticate", () => {
-    const tryToAutoAuthenticate = jest.fn();
-    shallow(<LoginForm {...defaultProps} tryToAutoAuthenticate={tryToAutoAuthenticate} />);
-    expect(tryToAutoAuthenticate).toHaveBeenCalled();
+    const tryToAuthenticateWithOIDC = jest.fn();
+    shallow(<LoginForm {...defaultProps} tryToAuthenticateWithOIDC={tryToAuthenticateWithOIDC} />);
+    expect(tryToAuthenticateWithOIDC).toHaveBeenCalled();
   });
 });
 
 context("while trying to auto login", () => {
   itBehavesLike("aLoadingComponent", {
     component: LoginForm,
-    props: { ...defaultProps, checkingOIDCToken: true },
+    props: { ...defaultProps, authenticating: true },
   });
 });
 
@@ -96,12 +95,4 @@ it("displays an error if the authentication error is passed", () => {
 
   expect(wrapper.find(".alert-error").exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
-});
-
-it("disables the input if authenticating", () => {
-  const wrapper = shallow(<LoginForm {...defaultProps} />);
-
-  expect(wrapper.find(".button").props().disabled).toBe(false);
-  wrapper.setProps({ authenticating: true });
-  expect(wrapper.find(".button")).toBeDisabled();
 });
