@@ -23,7 +23,9 @@ function mapStateToProps({
     authenticated,
     namespace,
     pathname,
-    // If oidcAuthenticated it's not possible to logout
+    // If oidcAuthenticated it's not yet supported to logout
+    // Some IdP like Keycloak allows to hit an endpoint to logout:
+    // https://www.keycloak.org/docs/latest/securing_apps/index.html#logout-endpoint
     hideLogoutLink: oidcAuthenticated,
   };
 }
