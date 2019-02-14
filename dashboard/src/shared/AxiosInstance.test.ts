@@ -129,7 +129,7 @@ describe("createAxiosInterceptor", () => {
         type: "AUTHENTICATION_ERROR",
       },
       {
-        payload: { authenticated: false },
+        payload: { authenticated: false, oidc: false },
         type: "SET_AUTHENTICATED",
       },
     ];

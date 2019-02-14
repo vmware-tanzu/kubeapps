@@ -59,7 +59,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        payload: { authenticated: true },
+        payload: { authenticated: true, oidc: false },
         type: getType(actions.auth.setAuthenticated),
       },
     ];
