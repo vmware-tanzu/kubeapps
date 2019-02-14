@@ -7,8 +7,8 @@ export class Auth {
     return localStorage.getItem(AuthTokenKey);
   }
 
-  public static setAuthToken(token: string, oidc?: boolean) {
-    localStorage.setItem(AuthTokenOIDCKey, (!!oidc).toString());
+  public static setAuthToken(token: string, oidc: boolean) {
+    localStorage.setItem(AuthTokenOIDCKey, oidc.toString());
     return localStorage.setItem(AuthTokenKey, token);
   }
 
@@ -52,7 +52,7 @@ export class Auth {
   public static async fetchOIDCToken(): Promise<string | null> {
     const { headers } = await Axios.head("/");
     if (headers && headers.authorization) {
-      const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
+      const tokenMatch = (headers.authorization as string).match(/Bearer\s([a-zA-Z0-9\._-]*)/);
       if (tokenMatch) {
         return tokenMatch[1];
       }

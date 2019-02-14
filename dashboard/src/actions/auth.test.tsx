@@ -48,7 +48,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token)).then(() => {
+    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -64,7 +64,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token)).then(() => {
+    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });

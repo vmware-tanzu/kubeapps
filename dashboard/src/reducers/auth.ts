@@ -22,7 +22,7 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
       return {
         ...state,
         authenticated: action.payload.authenticated,
-        oidcAuthenticated: !!action.payload.oidc,
+        oidcAuthenticated: action.payload.oidc,
         authenticating: false,
       };
     case getType(actions.auth.authenticating):

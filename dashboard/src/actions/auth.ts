@@ -5,7 +5,7 @@ import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
-  return (authenticated: boolean, oidc?: boolean) => resolve({ authenticated, oidc });
+  return (authenticated: boolean, oidc: boolean) => resolve({ authenticated, oidc });
 });
 
 export const authenticating = createAction("AUTHENTICATING");
@@ -20,7 +20,7 @@ export type AuthAction = ActionType<typeof allActions[number]>;
 
 export function authenticate(
   token: string,
-  oidc?: boolean,
+  oidc: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     dispatch(authenticating());
@@ -37,7 +37,7 @@ export function authenticate(
 export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     Auth.unsetAuthToken();
-    dispatch(setAuthenticated(false));
+    dispatch(setAuthenticated(false, false));
   };
 }
 
@@ -53,7 +53,7 @@ export function tryToAuthenticateWithOIDC(): ThunkAction<
     if (token) {
       dispatch(authenticate(token, true));
     } else {
-      dispatch(setAuthenticated(false));
+      dispatch(setAuthenticated(false, false));
     }
   };
 }
