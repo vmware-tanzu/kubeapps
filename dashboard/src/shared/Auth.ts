@@ -52,7 +52,7 @@ export class Auth {
   public static async fetchOIDCToken(): Promise<string | null> {
     const { headers } = await Axios.head("/");
     if (headers && headers.authorization) {
-      const tokenMatch = (headers.authorization as string).match(/Bearer\s([a-zA-Z0-9\._-]*)/);
+      const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
       if (tokenMatch) {
         return tokenMatch[1];
       }
