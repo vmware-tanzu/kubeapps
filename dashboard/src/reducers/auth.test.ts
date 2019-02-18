@@ -16,6 +16,7 @@ describe("authReducer", () => {
     initialState = {
       authenticated: false,
       authenticating: false,
+      oidcAuthenticated: false,
     };
   });
 
@@ -33,7 +34,7 @@ describe("authReducer", () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
-            payload: e,
+            payload: { authenticated: e, oidc: false },
             type: actionTypes.setAuthenticated as any,
           }),
         ).toEqual({ ...initialState, authenticated: e });
@@ -54,10 +55,34 @@ describe("authReducer", () => {
     }`, () => {
       expect(
         authReducer(
-          { authenticating: true, authenticated: true },
+          {
+            authenticating: true,
+            authenticated: true,
+            oidcAuthenticated: true,
+          },
           { type: actionTypes.authenticationError as any, payload: errMessage },
         ),
       ).toEqual({ ...initialState, authenticationError: errMessage });
+    });
+
+    it("sets authenticated and oidcAuthenticated", () => {
+      expect(
+        authReducer(
+          {
+            authenticating: true,
+            authenticated: false,
+            oidcAuthenticated: false,
+          },
+          {
+            type: actionTypes.setAuthenticated as any,
+            payload: { authenticated: true, oidc: true },
+          },
+        ),
+      ).toEqual({
+        authenticating: false,
+        authenticated: true,
+        oidcAuthenticated: true,
+      });
     });
   });
 });

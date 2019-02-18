@@ -5,7 +5,7 @@ import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
-  return (authenticated: boolean) => resolve(authenticated);
+  return (authenticated: boolean, oidc: boolean) => resolve({ authenticated, oidc });
 });
 
 export const authenticating = createAction("AUTHENTICATING");
@@ -20,13 +20,14 @@ export type AuthAction = ActionType<typeof allActions[number]>;
 
 export function authenticate(
   token: string,
+  oidc: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     dispatch(authenticating());
     try {
       await Auth.validateToken(token);
-      Auth.setAuthToken(token);
-      dispatch(setAuthenticated(true));
+      Auth.setAuthToken(token, oidc);
+      dispatch(setAuthenticated(true, oidc));
     } catch (e) {
       dispatch(authenticationError(e.toString()));
     }
@@ -36,6 +37,23 @@ export function authenticate(
 export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     Auth.unsetAuthToken();
-    dispatch(setAuthenticated(false));
+    dispatch(setAuthenticated(false, false));
+  };
+}
+
+export function tryToAuthenticateWithOIDC(): ThunkAction<
+  Promise<void>,
+  IStoreState,
+  null,
+  AuthAction
+> {
+  return async dispatch => {
+    dispatch(authenticating());
+    const token = await Auth.fetchOIDCToken();
+    if (token) {
+      dispatch(authenticate(token, true));
+    } else {
+      dispatch(setAuthenticated(false, false));
+    }
   };
 }

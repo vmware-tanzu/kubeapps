@@ -13,7 +13,7 @@ interface IState extends IStoreState {
 }
 
 function mapStateToProps({
-  auth: { authenticated },
+  auth: { authenticated, oidcAuthenticated },
   namespace,
   router: {
     location: { pathname },
@@ -23,13 +23,17 @@ function mapStateToProps({
     authenticated,
     namespace,
     pathname,
+    // If oidcAuthenticated it's not yet supported to logout
+    // Some IdP like Keycloak allows to hit an endpoint to logout:
+    // https://www.keycloak.org/docs/latest/securing_apps/index.html#logout-endpoint
+    hideLogoutLink: oidcAuthenticated,
   };
 }
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
-    logout: (token: string) => dispatch(actions.auth.logout()),
+    logout: () => dispatch(actions.auth.logout()),
     push: (path: string) => dispatch(push(path)),
     setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),
   };

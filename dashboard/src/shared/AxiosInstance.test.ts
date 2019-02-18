@@ -23,6 +23,7 @@ describe("createAxiosInterceptor", () => {
     const state: IAuthState = {
       authenticated: false,
       authenticating: false,
+      oidcAuthenticated: false,
     };
 
     store = mockStore({
@@ -128,7 +129,7 @@ describe("createAxiosInterceptor", () => {
         type: "AUTHENTICATION_ERROR",
       },
       {
-        payload: false,
+        payload: { authenticated: false, oidc: false },
         type: "SET_AUTHENTICATED",
       },
     ];

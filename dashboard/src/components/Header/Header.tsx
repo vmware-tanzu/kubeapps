@@ -20,6 +20,7 @@ interface IHeaderProps {
   pathname: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
+  hideLogoutLink: boolean;
 }
 
 interface IHeaderState {
@@ -63,7 +64,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   }
 
   public render() {
-    const { fetchNamespaces, namespace, authenticated: showNav } = this.props;
+    const { fetchNamespaces, namespace, authenticated: showNav, hideLogoutLink } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -125,11 +126,13 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                     </ul>
                   </li>
-                  <li>
-                    <NavLink to="#" onClick={this.handleLogout}>
-                      <LogOut size={16} className="icon margin-r-tiny" /> Logout
-                    </NavLink>
-                  </li>
+                  {!hideLogoutLink && (
+                    <li>
+                      <NavLink to="#" onClick={this.handleLogout}>
+                        <LogOut size={16} className="icon margin-r-tiny" /> Logout
+                      </NavLink>
+                    </li>
+                  )}
                 </ul>
               </div>
             )}

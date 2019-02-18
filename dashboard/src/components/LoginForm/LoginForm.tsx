@@ -3,6 +3,7 @@ import * as React from "react";
 import { Lock } from "react-feather";
 import { Redirect } from "react-router";
 
+import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 
 interface ILoginFormProps {
@@ -10,6 +11,7 @@ interface ILoginFormProps {
   authenticating: boolean;
   authenticationError: string | undefined;
   authenticate: (token: string) => any;
+  tryToAuthenticateWithOIDC: () => void;
   location: Location;
 }
 
@@ -19,7 +21,15 @@ interface ILoginFormState {
 
 class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
   public state: ILoginFormState = { token: "" };
+
+  public componentDidMount() {
+    this.props.tryToAuthenticateWithOIDC();
+  }
+
   public render() {
+    if (this.props.authenticating) {
+      return <LoadingWrapper />;
+    }
     if (this.props.authenticated) {
       const { from } = this.props.location.state || { from: { pathname: "/" } };
       return <Redirect to={from} />;
@@ -65,11 +75,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
                     />
                   </div>
                   <p>
-                    <button
-                      type="submit"
-                      className="button button-accent"
-                      disabled={this.props.authenticating}
-                    >
+                    <button type="submit" className="button button-accent">
                       Login
                     </button>
                   </p>
