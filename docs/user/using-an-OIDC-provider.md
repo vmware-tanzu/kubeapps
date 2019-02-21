@@ -1,6 +1,6 @@
 # Using an OIDC Provider with Kubeapps
 
-OpenID Connect (OIDC) is a simple identity layer on top of the OAuth 2.0 protocol, which allows computing clients to verify the identity of an end-user based on the authentication performed by an authorization server, as well as to obtain basic profile information about the end-user.
+OpenID Connect (OIDC) is a simple identity layer on top of the OAuth 2.0 protocol, which allows clients to verify the identity of an user based on the authentication performed by an authorization server, as well as to obtain basic profile information about the user.
 
 It is possible to configure your Kubernetes cluster to use an OIDC provider in order to manage accounts, groups and roles with a single application. This guide will explain how you can use an existing OIDC provider to authenticate users within Kubeapps.
 
@@ -23,7 +23,7 @@ For Kubeapps to use an Identity Provider it's necessary to configure at least th
 
 **Note**: Depending on the configuration of the Identity Provider more parameters may be needed.
 
-In the next sections we will explain how you can find the parameters above for some of the identity providers tested.
+In the next sections we will explain how you can find the parameters above for some of the identity providers tested. If you have configured your cluster to use an Identity Provider you will already know some of these parameters.
 
 ### Keycloak
 
@@ -94,8 +94,6 @@ spec:
         - --client-id=$AUTH_PROXY_CLIENT_ID
         - --client-secret=$AUTH_PROXY_CLIENT_SECRET
         - --discovery-url=$AUTH_PROXY_DISCOVERY_URL
-        - --skip-openid-provider-tls-verify
-        - --secure-cookie=false
         - --upstream-url=http://kubeapps/
         - --resources=uri=/api/kube/*|white-listed=true
         - --listen=0.0.0.0:3000
@@ -125,10 +123,11 @@ EOF
 The above is a sample deployment, depending on the configuration of the Identity Provider those flags may vary. For this example we use:
 
 - `--client-id`, `--client-secret` and `--discovery-url`: Client ID, Secret and IdP URL as stated in the section above.
-- `--skip-openid-provider-tls-verify`, `--secure-cookie=false`: If the `discovery-url` is served through HTTPS with a self-signed certificate (i.e. Keycloak or Dex), those flags are necessary to avoid errors while validating the TLS certificate.
 - `--upstream-url`: Internal URL for the `kubeapps` service.
 - `--resources=uri=/api/kube/*|white-listed=true`: This setting enables WebSockets to work correctly, which Kubeapps relies on to show up-to-date information. Kubeapps handles the injection of the OIDC token into every Kubernetes API request, so it is not necessary for Keycloak Gatekeeper to do it.
 - `listen=0.0.0.0:3000`: Listen in all the interfaces.
+
+**NOTE**: If the identity provider is deployed with a self-signed certificate (which may be the case for Keycloak or Dex) you will need to disable the TLS and cookie verification. For doing so you can add the flags `--skip-openid-provider-tls-verify` and `--secure-cookie=false` to the deployment above. You can find more options for the `keycloak-gatekeeper` proxy [here](https://www.keycloak.org/docs/latest/securing_apps/index.html#_keycloak_generic_adapter).
 
 ## Exposing the proxy
 
@@ -155,8 +154,8 @@ spec:
 EOF
 ```
 
-Once you do that you can access the application, you will be prompted to introduce your credentials:
+Once you create the ingress rule and you access the proxy, you will be redirected to your IdP. There, you will be prompted to introduce your credentials:
 
 ![Proxy Login](../img/auth-proxy-login.png)
 
-After introducing those credentials you will be redirected to the Kubeapps application.
+After successfully introduce the credentials, you will be finally redirected to Kubeapps.

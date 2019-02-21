@@ -1,12 +1,12 @@
-# Kubeapps Login Form
+# Kubeapps Login
 
-By default, when first visiting Kubeapps, a login form is shown for the user to introduce a personal token for a specific service account:
+By default, when first visiting Kubeapps, a login form is shown for the user to introduce a Kubernetes API token:
 
 ![Dashboard Login](../img/dashboard-login.png)
 
-You can find more information about access control in Kubeapps in this [document](./access-control.md).
+The goal of the login form is to identify the user and associate it with a Kubernetes service account. This identity information will be used by Kubeapps to authenticate the user against the Kubernetes API. You can find more information about access control in Kubeapps in this [document](./access-control.md).
 
-However, it's possible to disable this form or delegate the authentication to an OIDC provider so Kubeapps users don't need to introduce a token in the login form.
+However, it's possible to disable the form or delegate the authentication to an OIDC provider so users don't need to introduce a token in the login form.
 
 ## Bypassing authentication
 
