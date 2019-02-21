@@ -10,9 +10,9 @@ However, it's possible to disable this form or delegate the authentication to an
 
 ## Bypassing authentication
 
-Kubeapps expects an `Authorization` header that will be used to validate operations agains the Kubernetes API. This is usually set with the login form but if Kubeapps is exposed with an Ingress object, it's possible to hardcode a valid token in the Ingress configuration and automatically include it in all the requests.
+Kubeapps will skip the login form if it detects that an `Authorization` header is already being set by a reverse-proxy, such as an Ingress. An Ingress object can be configured to inject a hardcoded valid Kubernetes API token on every request to Kubeapps to force the login form to be skipped and enable all API requests to use the hardcoded token.
 
-**NOTE**: This is not suitable for production since anyone with access to Kubeapps would be granted with the permissions associated with the hardcoded token.
+**NOTE**: This is not recommended in production since anyone with access to Kubeapps would be granted with the permissions associated with the hardcoded token.
 
 This is an example of the values that you can configure in the Kubeapps chart in order to set a valid token:
 
@@ -33,4 +33,4 @@ You just need to substitute TOKEN with the actual value of the token. The above 
 
 # Using an OIDC provider
 
-In case you want to use OAuth 2.0 to authenticate Kubeapps users follow this [guide](./using-an-OIDC-provider.md).
+In case you want to use OpenID Connect to authenticate Kubeapps users, and your Kubernetes API server is configured to use the same OIDC provider, follow this [guide](./using-an-OIDC-provider.md).

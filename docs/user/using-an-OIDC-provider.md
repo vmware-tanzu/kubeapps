@@ -6,7 +6,7 @@ It is possible to configure your Kubernetes cluster to use an OIDC provider in o
 
 ## Pre-requisites
 
-For this guide we assume that you have a Kubernetes cluster that is properly configured to use an Identity Provider to handle the authorization of your cluster. You can find more information about how Kubernetes uses OIDC tokens [here](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This means that the Kubernetes API server should be configured to use that OIDC provider.
+For this guide we assume that you have a Kubernetes cluster that is properly configured to use an Identity Provider (IdP) to handle the authorization of your cluster. You can find more information about how Kubernetes uses OIDC tokens [here](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This means that the Kubernetes API server should be configured to use that OIDC provider.
 
 There are several Identity Providers (IdP) that can be used in a Kubernetes cluster. The steps of this guide have been validated using the following providers:
 
@@ -127,12 +127,12 @@ The above is a sample deployment, depending on the configuration of the Identity
 - `--client-id`, `--client-secret` and `--discovery-url`: Client ID, Secret and IdP URL as stated in the section above.
 - `--skip-openid-provider-tls-verify`, `--secure-cookie=false`: If the `discovery-url` is served through HTTPS with a self-signed certificate (i.e. Keycloak or Dex), those flags are necessary to avoid errors while validating the TLS certificate.
 - `--upstream-url`: Internal URL for the `kubeapps` service.
-- `--resources=uri=/api/kube/*|white-listed=true`: In order to use WebSockets we need to bypass the authentication for those request. In that case, Kubeapps will inject the `Bearer` token manually.
+- `--resources=uri=/api/kube/*|white-listed=true`: This setting enables WebSockets to work correctly, which Kubeapps relies on to show up-to-date information. Kubeapps handles the injection of the OIDC token into every Kubernetes API request, so it is not necessary for Keycloak Gatekeeper to do it.
 - `listen=0.0.0.0:3000`: Listen in all the interfaces.
 
 ## Exposing the proxy
 
-Once the proxy is in place and it's able to connect to the IdP we will need to expose it to access it as the main endpoint for Kubeapps (instead of the `kubeapps` service). We can do that with an Ingress object. Note that for doing so an [Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-controllers) is needed. There are also other methods to expose the `kubeapps-auth-proxy` service, for example using `LoadBalancer` as type in a cloud environment. In case an Ingress is used, remember to modify the host `kubeapps.local` for the value that you want to use as hostname for your application:
+Once the proxy is in place and it's able to connect to the IdP we will need to expose it to access it as the main endpoint for Kubeapps (instead of the `kubeapps` service). We can do that with an Ingress object. Note that for doing so an [Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-controllers) is needed. There are also other methods to expose the `kubeapps-auth-proxy` service, for example using `LoadBalancer` as type in a cloud environment. In case an Ingress is used, remember to modify the host `kubeapps.local` for the value that you want to use as a hostname for Kubeapps:
 
 ```
 kubectl create -n $KUBEAPPS_NAMESPACE -f - -o yaml << EOF
