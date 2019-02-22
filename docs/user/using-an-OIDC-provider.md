@@ -158,4 +158,4 @@ Once you create the ingress rule and you access the proxy, you will be redirecte
 
 ![Proxy Login](../img/auth-proxy-login.png)
 
-After successfully introduce the credentials, you will be finally redirected to Kubeapps.
+After successfully logging in with your IdP, you will be redirected to Kubeapps and be authenticated with your user's OIDC token.
