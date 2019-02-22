@@ -61,7 +61,30 @@ In the case of Google we can use an OAuth 2.0 client ID. You can find more infor
 
 The main difference is that instead of accessing the Kubeapps service, we will be using a proxy service that would be in charge of authenticating users against the IdP and inject the required credentials in the requests to Kubeapps. There are some available solutions for this like [keycloak-gatekeeper](https://github.com/keycloak/keycloak-gatekeeper) and [oauth2_proxy](https://github.com/pusher/oauth2_proxy). For this guide we will use `keycloak-gatekeeper` since it has support for WebSockets.
 
-First we will create a Kubernetes deployment and service for the proxy. For the snippet below, you need to set the environment variables `AUTH_PROXY_CLIENT_ID`, `AUTH_PROXY_CLIENT_SECRET` and `AUTH_PROXY_DISCOVERY_URL` with the information from the IdP and `KUBEAPPS_NAMESPACE`.
+Once the proxy is accessible, you will be redirected to your IdP. There, you will be prompted to introduce your credentials:
+
+![Proxy Login](../img/auth-proxy-login.png)
+
+After successfully logging in with your IdP, you will be redirected to Kubeapps and be authenticated with your user's OIDC token.
+
+The next sections explain how you can deploy this proxy either using the Kubeapps chart or manually.
+
+### Using the chart
+
+Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar container if you specify the necessary flags. In a nutshell you need to enable the feature and set the client ID, secret and the IdP URL. This is an example for using Google as IdP, modify the flags below to adapt them:
+
+```
+helm install bitnami/kubeapps \
+  --namespace kubeapps --name kubeapps \
+  --set authProxy.enabled=true \
+  --set authProxy.clientID=my-client-id.apps.googleusercontent.com \
+  --set authProxy.clientSecret=my-client-secret \
+  --set authProxy.discoveryURL=https://accounts.google.com
+```
+
+### Manual deployment
+
+In case you want to manually deploy the proxy, first you will create a Kubernetes deployment and service for the proxy. For the snippet below, you need to set the environment variables `AUTH_PROXY_CLIENT_ID`, `AUTH_PROXY_CLIENT_SECRET` and `AUTH_PROXY_DISCOVERY_URL` with the information from the IdP and `KUBEAPPS_NAMESPACE`.
 
 ```
 export AUTH_PROXY_CLIENT_ID=<ID>
@@ -129,7 +152,7 @@ The above is a sample deployment, depending on the configuration of the Identity
 
 **NOTE**: If the identity provider is deployed with a self-signed certificate (which may be the case for Keycloak or Dex) you will need to disable the TLS and cookie verification. For doing so you can add the flags `--skip-openid-provider-tls-verify` and `--secure-cookie=false` to the deployment above. You can find more options for the `keycloak-gatekeeper` proxy [here](https://www.keycloak.org/docs/latest/securing_apps/index.html#_keycloak_generic_adapter).
 
-## Exposing the proxy
+#### Exposing the proxy
 
 Once the proxy is in place and it's able to connect to the IdP we will need to expose it to access it as the main endpoint for Kubeapps (instead of the `kubeapps` service). We can do that with an Ingress object. Note that for doing so an [Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-controllers) is needed. There are also other methods to expose the `kubeapps-auth-proxy` service, for example using `LoadBalancer` as type in a cloud environment. In case an Ingress is used, remember to modify the host `kubeapps.local` for the value that you want to use as a hostname for Kubeapps:
 
@@ -153,9 +176,3 @@ spec:
         path: /
 EOF
 ```
-
-Once you create the ingress rule and you access the proxy, you will be redirected to your IdP. There, you will be prompted to introduce your credentials:
-
-![Proxy Login](../img/auth-proxy-login.png)
-
-After successfully logging in with your IdP, you will be redirected to Kubeapps and be authenticated with your user's OIDC token.
