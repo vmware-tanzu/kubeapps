@@ -57,7 +57,10 @@ updateRepo() {
     sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTag}"'/g' "${chartYaml}"
     rm "${targetChartPath}/Chart.yaml.bk"
     # DANGER: This replaces any tag marked as latest in the values.yaml
-    sed -i.bk 's/tag: latest/tag: '"${targetTag}"'/g' "${targetChartPath}/values.yaml"
+    local tagWithoutV=$(echo $targetTag | tr -d v)
+    sed -i.bk 's/tag: latest/tag: '"${tagWithoutV}"'/g' "${targetChartPath}/values.yaml"
+    # Use bitnami images
+    sed -i.bk 's/repository: kubeapps\/\(.*\)/repository: bitnami\/kubeapps-\1/g' "${targetChartPath}/values.yaml"
     rm "${targetChartPath}/values.yaml.bk"
 }
 
