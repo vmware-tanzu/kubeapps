@@ -101,7 +101,7 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
 To obtain the WordPress username and password, refer to the "Notes" section of the deployment page, which contains the commands you will need to run to obtain the credentials for the deployment.
 
-You can also use the URLs shown to directly access the application.
+You can also use the URLs shown to directly access the application. Note that, depending on your cloud provider of choice, it may take some time for an access URL to be available for the application. If using Minikube, you will need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
 
 ![WordPress deployment notes](../img/wordpress-notes.png)
 
