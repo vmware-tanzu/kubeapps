@@ -81,25 +81,36 @@ function getAppUpdateInfo(
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
-    let updateInfo: IChartUpdateInfo = {
-      repository: { name: "", url: "" },
-      latestVersion: "",
-    };
-    chartsInfo.forEach(c => {
-      const chartLatestVersion = c.relationships.latestChartVersion.data.version;
-      if (semver.gt(chartLatestVersion, currentVersion)) {
-        if (updateInfo.latestVersion && semver.gt(updateInfo.latestVersion, chartLatestVersion)) {
-          // The current update is newer than the chart version, do nothing
-        } else {
-          updateInfo = {
-            latestVersion: chartLatestVersion,
-            repository: c.attributes.repo,
-          };
-        }
+    dispatch(requestApps());
+    try {
+      const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
+      let updateInfo: IChartUpdateInfo = {
+        upToDate: true,
+        repository: { name: "", url: "" },
+        latestVersion: "",
+      };
+      if (chartsInfo.length > 0) {
+        // Initialize updateInfo with the first chart found
+        updateInfo = {
+          upToDate: true,
+          latestVersion: chartsInfo[0].relationships.latestChartVersion.data.version,
+          repository: chartsInfo[0].attributes.repo,
+        };
+        chartsInfo.forEach(c => {
+          const chartLatestVersion = c.relationships.latestChartVersion.data.version;
+          if (semver.gt(chartLatestVersion, updateInfo.latestVersion)) {
+            updateInfo.latestVersion = chartLatestVersion;
+            updateInfo.repository = c.attributes.repo;
+          }
+          if (semver.gt(chartLatestVersion, currentVersion)) {
+            updateInfo.upToDate = false;
+          }
+        });
       }
-    });
-    dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
+      dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
+    } catch (e) {
+      dispatch(errorApps(e));
+    }
   };
 }
 

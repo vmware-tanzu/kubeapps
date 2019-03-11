@@ -75,11 +75,12 @@ describe("fetches applications", () => {
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        { type: getType(actions.apps.requestApps) },
         {
           type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
             releaseName: "foobar",
-            updateInfo: { latestVersion: "1.1.0", repository: { name: "bar" } },
+            updateInfo: { upToDate: false, latestVersion: "1.1.0", repository: { name: "bar" } },
           },
         },
       ];
@@ -87,7 +88,7 @@ describe("fetches applications", () => {
       expect(store.getActions()).toEqual(expectedActions);
     });
 
-    it("does not populate updateInfo if there are no new versions", async () => {
+    it("set up upToDate=true if the application is up to date", async () => {
       const appsResponse = [
         {
           releaseName: "foobar",
@@ -105,11 +106,12 @@ describe("fetches applications", () => {
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        { type: getType(actions.apps.requestApps) },
         {
           type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
             releaseName: "foobar",
-            updateInfo: { latestVersion: "", repository: { name: "", url: "" } },
+            updateInfo: { upToDate: true, latestVersion: "1.0.0", repository: { name: "bar" } },
           },
         },
       ];

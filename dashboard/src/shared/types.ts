@@ -84,6 +84,7 @@ export interface IChartState {
 }
 
 export interface IChartUpdateInfo {
+  upToDate: boolean;
   latestVersion: string;
   repository: IRepo;
 }

@@ -29,14 +29,14 @@ it("renders a app item", () => {
 
 context("when information about updates is available", () => {
   it("renders an up to date message if there are no updates", () => {
-    const appWithoutUpdates = { ...defaultProps.app, updateInfo: {} } as IRelease;
+    const appWithoutUpdates = { ...defaultProps.app, updateInfo: { upToDate: true } } as IRelease;
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithoutUpdates} />);
     expect(wrapper.html()).toContain("Up to date");
   });
   it("renders an new version found message if the latest version is newer", () => {
     const appWithUpdates = {
       ...defaultProps.app,
-      updateInfo: { latestVersion: "1.0.0" },
+      updateInfo: { upToDate: false, latestVersion: "1.0.0" },
     } as IRelease;
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
     expect(

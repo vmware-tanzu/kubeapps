@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { hapi } from "shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
-import { ForbiddenError, IAppRepository, IChartState } from "../../shared/types";
+import { ForbiddenError, IAppRepository, IChartState, IRelease } from "../../shared/types";
 import { ErrorSelector, PermissionsErrorAlert } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import UpgradeForm from "../UpgradeForm";
@@ -13,12 +13,13 @@ import AppUpgrade from "./AppUpgrade";
 
 const defaultProps = {
   app: {} as hapi.release.Release,
+  isFetching: false,
   checkChart: jest.fn(),
   clearRepo: jest.fn(),
   error: undefined,
   fetchChartVersions: jest.fn(),
   fetchRepositories: jest.fn(),
-  getApp: jest.fn(),
+  getAppWithUpdateInfo: jest.fn(),
   getChartValues: jest.fn(),
   getChartVersion: jest.fn(),
   kubeappsNamespace: "kubeapps",
@@ -33,7 +34,10 @@ const defaultProps = {
   version: "1.0.0",
 };
 
-itBehavesLike("aLoadingComponent", { component: AppUpgrade, props: defaultProps });
+itBehavesLike("aLoadingComponent", {
+  component: AppUpgrade,
+  props: { ...defaultProps, isFetching: true },
+});
 
 it("renders the repo selection form if not introduced", () => {
   const wrapper = shallow(
@@ -48,7 +52,7 @@ it("renders the repo selection form if not introduced", () => {
             },
           },
           name: "foo",
-        } as hapi.release.Release
+        } as IRelease
       }
       repos={[
         {
@@ -150,7 +154,40 @@ it("renders the upgrade form when the repo is available", () => {
             },
           },
           name: "foo",
-        } as hapi.release.Release
+        } as IRelease
+      }
+      repos={[repo]}
+      repo={repo}
+    />,
+  );
+  expect(wrapper.find(UpgradeForm)).toExist();
+  expect(wrapper.find(ErrorSelector)).not.toExist();
+  expect(wrapper.find(SelectRepoForm)).not.toExist();
+  expect(wrapper).toMatchSnapshot();
+});
+
+it("skips the repo selection form if the app contains upgrade info", () => {
+  const repo = {
+    metadata: { name: "stable" },
+  } as IAppRepository;
+  const wrapper = shallow(
+    <AppUpgrade
+      {...defaultProps}
+      app={
+        {
+          chart: {
+            metadata: {
+              name: "bar",
+              version: "1.0.0",
+            },
+          },
+          name: "foo",
+          updateInfo: {
+            upToDate: true,
+            latestVersion: "",
+            repository: { name: "stable", url: "" },
+          },
+        } as IRelease
       }
       repos={[repo]}
       repo={repo}

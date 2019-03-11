@@ -51,6 +51,7 @@ const appsReducer = (
       }
       return {
         ...state,
+        isFetching: false,
         listOverview: listOverview || state.listOverview,
         selected: selected || state.selected,
       };
