@@ -3,32 +3,57 @@
 exports[`renders a header for the chart 1`] = `
 <header>
   <div
-    className="ChartView__heading margin-normal"
+    className="ChartView__heading margin-normal row"
   >
-    <ChartIcon />
     <div
-      className="title margin-l-small"
+      className="col-1 ChartHeader_img"
     >
-      <h1
-        className="margin-t-reset"
+      <ChartIcon />
+    </div>
+    <div
+      className="col-8"
+    >
+      <div
+        className="title margin-l-small"
       >
-        testrepo/test
-      </h1>
-      <h5
-        className="subtitle margin-b-normal"
-      >
-        <Link
-          replace={false}
-          to="/catalog/testrepo"
+        <h1
+          className="margin-t-reset"
         >
-          testrepo
-        </Link>
-      </h5>
-      <h5
-        className="subtitle margin-b-reset"
-      >
-        A Test Chart
-      </h5>
+          testrepo/test
+        </h1>
+        <h5
+          className="subtitle margin-b-normal"
+        >
+          <span>
+            1.2.3
+             - 
+          </span>
+          <Link
+            replace={false}
+            to="/catalog/testrepo"
+          >
+            testrepo
+          </Link>
+        </h5>
+        <h5
+          className="subtitle margin-b-reset"
+        >
+          A Test Chart
+        </h5>
+      </div>
+    </div>
+    <div
+      className="col-3 ChartHeader_button"
+    >
+      <ChartDeployButton
+        version={
+          Object {
+            "attributes": Object {
+              "app_version": "1.2.3",
+            },
+          }
+        }
+      />
     </div>
   </div>
   <hr />

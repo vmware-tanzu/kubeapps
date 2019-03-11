@@ -9,6 +9,11 @@ const testProps: any = {
   description: "A Test Chart",
   id: "testrepo/test",
   repo: "testrepo",
+  version: {
+    attributes: {
+      app_version: "1.2.3",
+    },
+  },
 };
 
 it("renders a header for the chart", () => {
@@ -23,7 +28,7 @@ it("renders a header for the chart", () => {
 });
 
 it("displays the appVersion", () => {
-  const wrapper = shallow(<ChartHeader {...testProps} appVersion="1.2.3" />);
+  const wrapper = shallow(<ChartHeader {...testProps} />);
   expect(wrapper.text()).toContain("1.2.3");
 });
 
