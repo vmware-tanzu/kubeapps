@@ -293,7 +293,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/keycloak-gatekeeper
-    tag: 2.3.0-scratch-r1
+    tag: 2.3.0-r1
   # Mandatory parametes
   discoveryURL:
   clientID:
