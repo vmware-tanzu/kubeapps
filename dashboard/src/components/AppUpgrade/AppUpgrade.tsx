@@ -103,6 +103,8 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         );
       }
     }
+    // If there is update info about the app we can automatically chose the repository
+    // with the latest version
     if (app.updateInfo) {
       const repoWithLatest = repos.find(
         r => r.metadata.name === (app.updateInfo && app.updateInfo.repository.name),

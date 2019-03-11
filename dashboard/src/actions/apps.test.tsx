@@ -75,7 +75,7 @@ describe("fetches applications", () => {
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestApps) },
+        { type: getType(actions.apps.requestAppUpdateInfo) },
         {
           type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
@@ -106,7 +106,7 @@ describe("fetches applications", () => {
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
-        { type: getType(actions.apps.requestApps) },
+        { type: getType(actions.apps.requestAppUpdateInfo) },
         {
           type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {

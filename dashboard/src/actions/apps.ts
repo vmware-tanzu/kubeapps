@@ -28,6 +28,8 @@ export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
   return (apps: IAppOverview[]) => resolve(apps);
 });
 
+export const requestAppUpdateInfo = createAction("REQUEST_APP_UPDATE_INFO");
+
 export const receiveAppUpdateInfo = createAction("RECEIVE_APP_UPDATE_INFO", resolve => {
   return (payload: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(payload);
 });
@@ -49,6 +51,7 @@ const allActions = [
   requestApps,
   receiveApps,
   receiveAppList,
+  requestAppUpdateInfo,
   receiveAppUpdateInfo,
   errorApps,
   errorDeleteApp,
@@ -81,7 +84,7 @@ function getAppUpdateInfo(
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestApps());
+    dispatch(requestAppUpdateInfo());
     try {
       const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
       let updateInfo: IChartUpdateInfo = {
