@@ -176,7 +176,7 @@ imagePullSecrets:
 {{- range .Values.global.imagePullSecrets }}
   - name: {{ . }}
 {{- end }}
-{{- else if or .Values.frontend.image.pullSecrets .Values.apprepository.image.pullSecrets .Values.syncImage.pullSecrets .Values.hooks.image.pullSecrets .Values.tillerProxy.image.pullSecrets .Values.chartsvc.image.pullSecrets .Values.dashboard.image.pullSecrets .Values.authProxy.image.pullSecrets }}
+{{- else if or .Values.frontend.image.pullSecrets .Values.apprepository.image.pullSecrets .Values.apprepository.syncImage.pullSecrets .Values.hooks.image.pullSecrets .Values.tillerProxy.image.pullSecrets .Values.chartsvc.image.pullSecrets .Values.dashboard.image.pullSecrets .Values.authProxy.image.pullSecrets }}
 imagePullSecrets:
 {{- range .Values.frontend.image.pullSecrets }}
   - name: {{ . }}
@@ -184,7 +184,7 @@ imagePullSecrets:
 {{- range .Values.apprepository.image.pullSecrets }}
   - name: {{ . }}
 {{- end }}
-{{- range .Values.syncImage.pullSecrets }}
+{{- range .Values.apprepository.syncImage.pullSecrets }}
   - name: {{ . }}
 {{- end }}
 {{- range .Values.hooks.image.pullSecrets }}
@@ -203,7 +203,7 @@ imagePullSecrets:
   - name: {{ . }}
 {{- end }}
 {{- end -}}
-{{- else if or .Values.frontend.image.pullSecrets .Values.apprepository.image.pullSecrets .Values.syncImage.pullSecrets .Values.hooks.image.pullSecrets .Values.tillerProxy.image.pullSecrets .Values.chartsvc.image.pullSecrets .Values.dashboard.image.pullSecrets .Values.authProxy.image.pullSecrets }}
+{{- else if or .Values.frontend.image.pullSecrets .Values.apprepository.image.pullSecrets .Values.apprepository.syncImage.pullSecrets .Values.hooks.image.pullSecrets .Values.tillerProxy.image.pullSecrets .Values.chartsvc.image.pullSecrets .Values.dashboard.image.pullSecrets .Values.authProxy.image.pullSecrets }}
 imagePullSecrets:
 {{- range .Values.frontend.image.pullSecrets }}
   - name: {{ . }}
@@ -211,7 +211,7 @@ imagePullSecrets:
 {{- range .Values.apprepository.image.pullSecrets }}
   - name: {{ . }}
 {{- end }}
-{{- range .Values.syncImage.pullSecrets }}
+{{- range .Values.apprepository.syncImage.pullSecrets }}
   - name: {{ . }}
 {{- end }}
 {{- range .Values.hooks.image.pullSecrets }}
