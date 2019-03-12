@@ -1,7 +1,11 @@
-## Global Docker image registry
-## Please, note that this will override the image registry for all the images, including dependencies, configured to use the global value
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry and imagePullSecrets
+##
 # global:
-#   imageRegistry:
+#   imageRegistry: myRegistryName
+#   imagePullSecrets:
+#     - myRegistryKeySecretName
 
 # The frontend service is the main reverse proxy used to access the Kubeapps UI
 # To expose Kubeapps externally either configure the ingress object below or
@@ -25,7 +29,7 @@ ingress:
     # Keep the connection open with the API server even if idle (the default is 60 seconds)
     # Setting it to 10 minutes which should be enough for our current use case of deploying/upgrading/deleting apps
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    
+
   # The list of hostnames to be covered with this ingress record.
   # Most likely this will be just one host, but in the event more hosts are needed, this is an array
   hosts:
@@ -58,6 +62,12 @@ frontend:
     registry: docker.io
     repository: bitnami/nginx
     tag: 1.14.0-r27
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   service:
     port: 80
     type: ClusterIP
@@ -96,11 +106,23 @@ apprepository:
     registry: docker.io
     repository: kubeapps/apprepository-controller
     tag: latest
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   # Image used to perform chart repository syncs
   syncImage:
     registry: docker.io
     repository: bitnami/kubeapps-chart-repo
     tag: 1.4.0-r1
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   initialRepos:
   - name: stable
     url: https://kubernetes-charts.storage.googleapis.com
@@ -138,6 +160,12 @@ hooks:
     registry: docker.io
     repository: bitnami/kubectl
     tag: 1.12.3-r13
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -151,6 +179,12 @@ tillerProxy:
     registry: docker.io
     repository: kubeapps/tiller-proxy
     tag: latest
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   service:
     port: 8080
   host: tiller-deploy.kube-system:44134
@@ -178,6 +212,12 @@ chartsvc:
     registry: docker.io
     repository: bitnami/kubeapps-chartsvc
     tag: 1.4.0
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   service:
     port: 8080
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
@@ -213,6 +253,12 @@ dashboard:
     registry: docker.io
     repository: kubeapps/dashboard
     tag: latest
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   service:
     port: 8080
   livenessProbe:
@@ -294,6 +340,12 @@ authProxy:
     registry: docker.io
     repository: bitnami/keycloak-gatekeeper
     tag: 2.3.0-r1
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ##
+    # pullSecrets:
+    #   - myRegistryKeySecretName
   # Mandatory parametes
   discoveryURL:
   clientID:

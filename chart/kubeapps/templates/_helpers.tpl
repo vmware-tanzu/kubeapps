@@ -160,3 +160,74 @@ Frontend service port number
 8080
 {{- end -}}
 {{- end -}}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "kubeapps.imagePullSecrets" -}}
+{{/*
+Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
+but Helm 2.9 and 2.10 does not support it, so we need to implement this if-else logic.
+Also, we can not use a single if because lazy evaluation is not an option
+*/}}
+{{- if .Values.global }}
+{{- if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{- range .Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- else if or .Values.frontend.image.pullSecrets .Values.apprepository.image.pullSecrets .Values.syncImage.pullSecrets .Values.hooks.image.pullSecrets .Values.tillerProxy.image.pullSecrets .Values.chartsvc.image.pullSecrets .Values.dashboard.image.pullSecrets .Values.authProxy.image.pullSecrets }}
+imagePullSecrets:
+{{- range .Values.frontend.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.apprepository.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.syncImage.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.hooks.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.tillerProxy.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.chartsvc.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.dashboard.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.authProxy.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- end -}}
+{{- else if or .Values.frontend.image.pullSecrets .Values.apprepository.image.pullSecrets .Values.syncImage.pullSecrets .Values.hooks.image.pullSecrets .Values.tillerProxy.image.pullSecrets .Values.chartsvc.image.pullSecrets .Values.dashboard.image.pullSecrets .Values.authProxy.image.pullSecrets }}
+imagePullSecrets:
+{{- range .Values.frontend.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.apprepository.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.syncImage.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.hooks.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.dashboard.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.chartsvc.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.tillerProxy.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- range .Values.authProxy.image.pullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- end -}}
+{{- end -}}
