@@ -93,22 +93,19 @@ function getAppUpdateInfo(
         latestVersion: "",
       };
       if (chartsInfo.length > 0) {
-        // Initialize updateInfo with the first chart found
+        const sortedCharts = chartsInfo.sort((a, b) =>
+          semver.compare(
+            a.relationships.latestChartVersion.data.version,
+            b.relationships.latestChartVersion.data.version,
+          ),
+        );
+        const latestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
+        // Initialize updateInfo with the latest chart found
         updateInfo = {
-          upToDate: true,
-          latestVersion: chartsInfo[0].relationships.latestChartVersion.data.version,
-          repository: chartsInfo[0].attributes.repo,
+          upToDate: semver.gte(currentVersion, latestVersion),
+          latestVersion,
+          repository: sortedCharts[0].attributes.repo,
         };
-        chartsInfo.forEach(c => {
-          const chartLatestVersion = c.relationships.latestChartVersion.data.version;
-          if (semver.gt(chartLatestVersion, updateInfo.latestVersion)) {
-            updateInfo.latestVersion = chartLatestVersion;
-            updateInfo.repository = c.attributes.repo;
-          }
-          if (semver.gt(chartLatestVersion, currentVersion)) {
-            updateInfo.upToDate = false;
-          }
-        });
       }
       dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
     } catch (e) {

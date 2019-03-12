@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { RouterAction } from "connected-react-router";
+import { Link } from "react-router-dom";
 import {
   IAppRepository,
   IChartState,
@@ -8,7 +9,7 @@ import {
   IRBACRole,
   IRelease,
 } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
+import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
@@ -89,9 +90,15 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         );
       } else if (repos.length === 0) {
         return (
-          <ErrorSelector
-            error={new Error("Unable to any repo to upgrade from")}
-            resource={releaseName}
+          <MessageAlert
+            level={"warning"}
+            children={
+              <div>
+                <h5>Chart repositories not found.</h5>
+                Manage your Helm chart repositories in Kubeapps by visiting the{" "}
+                <Link to={"/config/repos"}>App repositories configuration</Link> page.
+              </div>
+            }
           />
         );
       } else {

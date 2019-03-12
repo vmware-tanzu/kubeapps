@@ -157,3 +157,21 @@ context("when there is a new version available", () => {
     expect(wrapper.find(UpgradeButton).prop("updateVersion")).toBe("1.0.0");
   });
 });
+
+context("when the application is up to date", () => {
+  it("should not forward the latest version", () => {
+    const name = "foo";
+    const namespace = "bar";
+    const app = {
+      name,
+      namespace,
+      updateInfo: {
+        upToDate: true,
+        latestVersion: "1.0.0",
+      },
+    } as IRelease;
+    const wrapper = shallow(<AppControls app={app} deleteApp={jest.fn()} push={jest.fn()} />);
+
+    expect(wrapper.find(UpgradeButton).prop("updateVersion")).toBe(undefined);
+  });
+});

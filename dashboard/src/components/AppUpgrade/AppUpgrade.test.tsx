@@ -5,7 +5,7 @@ import * as React from "react";
 import { hapi } from "shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IAppRepository, IChartState, IRelease } from "../../shared/types";
-import { ErrorSelector, PermissionsErrorAlert } from "../ErrorAlert";
+import { ErrorSelector, MessageAlert, PermissionsErrorAlert } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
@@ -33,6 +33,10 @@ const defaultProps = {
   upgradeApp: jest.fn(),
   version: "1.0.0",
 };
+
+beforeEach(() => {
+  jest.resetAllMocks();
+});
 
 itBehavesLike("aLoadingComponent", {
   component: AppUpgrade,
@@ -135,6 +139,49 @@ context("when an error exists", () => {
       "You don't have sufficient permissions to view App Repositories in the kubeapps namespace",
     );
     expect(wrapper.find(PermissionsErrorAlert).prop("roles")[0]).toMatchObject(role);
+  });
+
+  it("renders a warning message if there are no repositories", () => {
+    const wrapper = shallow(<AppUpgrade {...defaultProps} />);
+
+    expect(wrapper.find(MessageAlert)).toExist();
+    expect(wrapper.find(SelectRepoForm)).not.toExist();
+    expect(wrapper.find(UpgradeForm)).not.toExist();
+
+    expect(
+      wrapper
+        .find(MessageAlert)
+        .children()
+        .text(),
+    ).toContain("Chart repositories not found");
+  });
+
+  it("renders an error message if the app information is missing some metadata", () => {
+    const repo = {
+      metadata: { name: "stable" },
+    } as IAppRepository;
+    const wrapper = mount(
+      <AppUpgrade
+        {...defaultProps}
+        repos={[repo]}
+        app={
+          {
+            chart: {
+              metadata: {},
+            },
+            name: "foo",
+          } as IRelease
+        }
+      />,
+    );
+
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(SelectRepoForm)).not.toExist();
+    expect(wrapper.find(UpgradeForm)).not.toExist();
+
+    expect(wrapper.find(ErrorSelector).text()).toContain(
+      "Unable to obtain the required information to upgrade",
+    );
   });
 });
 
