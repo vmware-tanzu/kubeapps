@@ -51,7 +51,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
     // If update is not set yet we cannot know if there is
     // an update available or not
     if (app.updateInfo) {
-      if (!app.updateInfo.latestVersion) {
+      if (app.updateInfo.upToDate) {
         return (
           <span>
             -{" "}
@@ -61,7 +61,6 @@ class ChartInfo extends React.Component<IChartInfoProps> {
         );
       } else {
         return (
-          // TODO: It should already include the repo found when clicking
           <Link to={`/apps/ns/${app.namespace}/upgrade/${app.name}`}>
             <span>
               -{" "}

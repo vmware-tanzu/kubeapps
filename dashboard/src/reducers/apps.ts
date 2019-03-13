@@ -30,6 +30,8 @@ const appsReducer = (
       return { ...state, isFetching: true, listingAll: action.payload };
     case getType(actions.apps.receiveAppList):
       return { ...state, isFetching: false, listOverview: action.payload };
+    case getType(actions.apps.requestAppUpdateInfo):
+      return { ...state, isFetching: true };
     case getType(actions.apps.receiveAppUpdateInfo):
       let listOverview;
       if (state.listOverview) {
@@ -51,6 +53,7 @@ const appsReducer = (
       }
       return {
         ...state,
+        isFetching: false,
         listOverview: listOverview || state.listOverview,
         selected: selected || state.selected,
       };

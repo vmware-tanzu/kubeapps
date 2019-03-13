@@ -7,7 +7,9 @@ import { hapi } from "../../../shared/hapi/release";
 import itBehavesLike from "../../../shared/specs";
 import ConfirmDialog from "../../ConfirmDialog";
 
+import { IRelease } from "shared/types";
 import AppControls from "./AppControls";
+import UpgradeButton from "./UpgradeButton";
 
 it("calls delete function when clicking the button", done => {
   const name = "foo";
@@ -135,5 +137,41 @@ context("when the application has been already deleted", () => {
     const buttons = wrapper.find("button");
     expect(buttons.length).toBe(1);
     expect(buttons.text()).toBe("Purge");
+  });
+});
+
+context("when there is a new version available", () => {
+  it("should forward the latest version", () => {
+    const name = "foo";
+    const namespace = "bar";
+    const app = {
+      name,
+      namespace,
+      updateInfo: {
+        upToDate: false,
+        latestVersion: "1.0.0",
+      },
+    } as IRelease;
+    const wrapper = shallow(<AppControls app={app} deleteApp={jest.fn()} push={jest.fn()} />);
+
+    expect(wrapper.find(UpgradeButton).prop("updateVersion")).toBe("1.0.0");
+  });
+});
+
+context("when the application is up to date", () => {
+  it("should not forward the latest version", () => {
+    const name = "foo";
+    const namespace = "bar";
+    const app = {
+      name,
+      namespace,
+      updateInfo: {
+        upToDate: true,
+        latestVersion: "1.0.0",
+      },
+    } as IRelease;
+    const wrapper = shallow(<AppControls app={app} deleteApp={jest.fn()} push={jest.fn()} />);
+
+    expect(wrapper.find(UpgradeButton).prop("updateVersion")).toBe(undefined);
   });
 });

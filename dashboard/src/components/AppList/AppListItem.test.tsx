@@ -49,7 +49,11 @@ it("should set a banner if there are updates available", () => {
           status: "DEPLOYED",
           version: "1.0.0",
           chart: "myapp",
-          updateInfo: { latestVersion: "1.1.0", repository: { name: "", url: "" } },
+          updateInfo: {
+            upToDate: false,
+            latestVersion: "1.1.0",
+            repository: { name: "", url: "" },
+          },
         } as IAppOverview
       }
     />,
