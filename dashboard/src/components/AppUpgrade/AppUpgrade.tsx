@@ -1,15 +1,22 @@
 import * as React from "react";
 
 import { RouterAction } from "connected-react-router";
-import { hapi } from "../../shared/hapi/release";
-import { IAppRepository, IChartState, IChartVersion, IRBACRole } from "../../shared/types";
-import { ErrorSelector } from "../ErrorAlert";
+import { Link } from "react-router-dom";
+import {
+  IAppRepository,
+  IChartState,
+  IChartVersion,
+  IRBACRole,
+  IRelease,
+} from "../../shared/types";
+import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import UpgradeForm from "../UpgradeForm";
 import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 
 interface IAppUpgradeProps {
-  app: hapi.release.Release;
+  app: IRelease;
+  isFetching: boolean;
   error: Error | undefined;
   repoError: Error | undefined;
   kubeappsNamespace: string;
@@ -28,7 +35,7 @@ interface IAppUpgradeProps {
   clearRepo: () => void;
   checkChart: (repo: string, chartName: string) => void;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
-  getApp: (releaseName: string, namespace: string) => void;
+  getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   getChartValues: (id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
@@ -41,13 +48,17 @@ interface IAppUpgradeState {
 
 class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
   public componentDidMount() {
-    const { releaseName, getApp, namespace, fetchRepositories } = this.props;
-    getApp(releaseName, namespace);
+    const { releaseName, getAppWithUpdateInfo, namespace, fetchRepositories } = this.props;
+    getAppWithUpdateInfo(releaseName, namespace);
     fetchRepositories();
   }
 
   public render() {
-    const { app, repos, error, namespace, releaseName, repoError } = this.props;
+    const { app, repos, error, namespace, releaseName, repoError, isFetching } = this.props;
+    let { repo } = this.props;
+    if (isFetching) {
+      return <LoadingWrapper />;
+    }
     if (
       !repos ||
       repos.length === 0 ||
@@ -77,11 +88,39 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
             resource="App Repositories"
           />
         );
+      } else if (repos.length === 0) {
+        return (
+          <MessageAlert
+            level={"warning"}
+            children={
+              <div>
+                <h5>Chart repositories not found.</h5>
+                Manage your Helm chart repositories in Kubeapps by visiting the{" "}
+                <Link to={"/config/repos"}>App repositories configuration</Link> page.
+              </div>
+            }
+          />
+        );
       } else {
-        return <LoadingWrapper />;
+        return (
+          <ErrorSelector
+            error={new Error("Unable to obtain the required information to upgrade")}
+            resource={releaseName}
+          />
+        );
       }
     }
-    if (!this.props.repo.metadata) {
+    // If there is update info about the app we can automatically chose the repository
+    // with the latest version
+    if (app.updateInfo) {
+      const repoWithLatest = repos.find(
+        r => r.metadata.name === (app.updateInfo && app.updateInfo.repository.name),
+      );
+      if (repoWithLatest) {
+        repo = repoWithLatest;
+      }
+    }
+    if (!repo.metadata) {
       return (
         <div>
           <SelectRepoForm
@@ -99,7 +138,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
           appCurrentVersion={app.chart.metadata.version}
           appCurrentValues={(app.config && app.config.raw) || ""}
           chartName={app.chart.metadata.name}
-          repo={this.props.repo.metadata.name}
+          repo={repo.metadata.name}
         />
       </div>
     );

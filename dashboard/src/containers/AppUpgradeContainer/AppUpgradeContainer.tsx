@@ -23,6 +23,7 @@ function mapStateToProps(
 ) {
   return {
     app: apps.selected,
+    isFetching: apps.isFetching || repos.isFetching,
     error: apps.error || charts.selected.error,
     kubeappsNamespace: config.namespace,
     namespace: params.namespace,
@@ -41,7 +42,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     clearRepo: () => dispatch(actions.repos.clearRepo()),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
     fetchRepositories: () => dispatch(actions.repos.fetchRepos()),
-    getApp: (releaseName: string, ns: string) => dispatch(actions.apps.getApp(releaseName, ns)),
+    getAppWithUpdateInfo: (releaseName: string, ns: string) =>
+      dispatch(actions.apps.getAppWithUpdateInfo(releaseName, ns)),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),
     getChartVersion: (id: string, version: string) =>

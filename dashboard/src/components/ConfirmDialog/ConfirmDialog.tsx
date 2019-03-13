@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as Modal from "react-modal";
-import LoadingSpinner from "../LoadingSpinner";
+import LoadingWrapper from "../LoadingWrapper";
 import "./ConfirmDialog.css";
 
 interface IConfirmDialogProps {
@@ -47,7 +47,7 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
             <div className="row confirm-dialog-loading-info">
               <div className="col-8 loading-legend">Loading, please wait</div>
               <div className="col-4">
-                <LoadingSpinner />
+                <LoadingWrapper />
               </div>
             </div>
           ) : (
