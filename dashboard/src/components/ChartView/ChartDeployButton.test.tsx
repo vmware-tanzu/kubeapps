@@ -25,7 +25,7 @@ it("renders a button to deploy the chart version", () => {
   const wrapper = shallow(<ChartDeployButton version={testChartVersion} namespace="test" />);
   const button = wrapper.find("button");
   expect(button.exists()).toBe(true);
-  expect(button.text()).toBe("Deploy using Helm");
+  expect(button.text()).toBe("Deploy");
 });
 
 it("renders a redirect with the correct URL when the button is clicked", () => {

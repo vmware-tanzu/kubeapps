@@ -5,7 +5,6 @@ import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
-import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
 import ChartReadme from "./ChartReadme";
@@ -108,13 +107,7 @@ context("when fetching is true and chart is available", () => {
 describe("subcomponents", () => {
   const wrapper = shallow(<ChartView {...props} selected={{ version: testVersion }} />);
 
-  for (const component of [
-    ChartHeader,
-    ChartReadme,
-    ChartDeployButton,
-    ChartVersionsList,
-    ChartMaintainers,
-  ]) {
+  for (const component of [ChartHeader, ChartReadme, ChartVersionsList, ChartMaintainers]) {
     it(`renders ${component.name}`, () => {
       expect(wrapper.find(component).exists()).toBe(true);
     });

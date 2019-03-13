@@ -3,7 +3,6 @@ import * as React from "react";
 import { IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
-import ChartDeployButton from "./ChartDeployButton";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
 import ChartReadme from "./ChartReadme";
@@ -62,7 +61,8 @@ class ChartView extends React.Component<IChartViewProps> {
           description={chartAttrs.description}
           icon={chartAttrs.icon}
           repo={chartAttrs.repo.name}
-          appVersion={version.attributes.app_version}
+          version={version}
+          namespace={namespace}
         />
         <main>
           <div className="container container-fluid">
@@ -77,10 +77,6 @@ class ChartView extends React.Component<IChartViewProps> {
               </div>
               <div className="col-3 ChartView__sidebar-container">
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
-                  <div className="ChartViewSidebar__section">
-                    <h2>Usage</h2>
-                    <ChartDeployButton version={version} namespace={namespace} />
-                  </div>
                   <div className="ChartViewSidebar__section">
                     <h2>Chart Versions</h2>
                     <ChartVersionsList selected={version} versions={versions} />

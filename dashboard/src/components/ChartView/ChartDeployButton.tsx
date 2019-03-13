@@ -24,9 +24,9 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
     const versionStr = version.attributes.version;
 
     return (
-      <div className="ChartDeployButton">
-        <button className="button button-primary" onClick={this.handleClick}>
-          Deploy using Helm
+      <div className="ChartDeployButton text-r">
+        <button className="button button-primary button-accent" onClick={this.handleClick}>
+          Deploy
         </button>
         {this.state.clicked && (
           <Redirect
