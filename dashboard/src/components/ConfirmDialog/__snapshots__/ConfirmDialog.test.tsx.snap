@@ -1,0 +1,52 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when loading is true loading spinner matches the snapshot 1`] = `
+<div
+  className="ConfirmDialog"
+>
+  <Modal
+    ariaHideApp={true}
+    bodyOpenClassName="ReactModal__Body--open"
+    closeTimeoutMS={0}
+    contentLabel="Modal"
+    isOpen={false}
+    onRequestClose={[Function]}
+    parentSelector={[Function]}
+    portalClassName="ReactModalPortal"
+    shouldCloseOnEsc={true}
+    shouldCloseOnOverlayClick={true}
+    shouldFocusAfterRender={true}
+    shouldReturnFocusAfterClose={true}
+    style={
+      Object {
+        "content": Object {
+          "bottom": "auto",
+          "left": "50%",
+          "marginRight": "-50%",
+          "right": "auto",
+          "top": "50%",
+          "transform": "translate(-50%, -50%)",
+        },
+      }
+    }
+  >
+    <div
+      className="row confirm-dialog-loading-info"
+    >
+      <div
+        className="col-8 loading-legend"
+      >
+        Loading, please wait
+      </div>
+      <div
+        className="col-4"
+      >
+        <LoadingWrapper
+          loaded={false}
+          type={0}
+        />
+      </div>
+    </div>
+  </Modal>
+</div>
+`;
