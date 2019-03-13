@@ -28,6 +28,8 @@ export const receiveAppList = createAction("RECEIVE_APP_LIST", resolve => {
   return (apps: IAppOverview[]) => resolve(apps);
 });
 
+export const requestAppUpdateInfo = createAction("REQUEST_APP_UPDATE_INFO");
+
 export const receiveAppUpdateInfo = createAction("RECEIVE_APP_UPDATE_INFO", resolve => {
   return (payload: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(payload);
 });
@@ -49,6 +51,7 @@ const allActions = [
   requestApps,
   receiveApps,
   receiveAppList,
+  requestAppUpdateInfo,
   receiveAppUpdateInfo,
   errorApps,
   errorDeleteApp,
@@ -81,25 +84,33 @@ function getAppUpdateInfo(
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
-    let updateInfo: IChartUpdateInfo = {
-      repository: { name: "", url: "" },
-      latestVersion: "",
-    };
-    chartsInfo.forEach(c => {
-      const chartLatestVersion = c.relationships.latestChartVersion.data.version;
-      if (semver.gt(chartLatestVersion, currentVersion)) {
-        if (updateInfo.latestVersion && semver.gt(updateInfo.latestVersion, chartLatestVersion)) {
-          // The current update is newer than the chart version, do nothing
-        } else {
-          updateInfo = {
-            latestVersion: chartLatestVersion,
-            repository: c.attributes.repo,
-          };
-        }
+    dispatch(requestAppUpdateInfo());
+    try {
+      const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
+      let updateInfo: IChartUpdateInfo = {
+        upToDate: true,
+        repository: { name: "", url: "" },
+        latestVersion: "",
+      };
+      if (chartsInfo.length > 0) {
+        const sortedCharts = chartsInfo.sort((a, b) =>
+          semver.compare(
+            a.relationships.latestChartVersion.data.version,
+            b.relationships.latestChartVersion.data.version,
+          ),
+        );
+        const latestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
+        // Initialize updateInfo with the latest chart found
+        updateInfo = {
+          upToDate: semver.gte(currentVersion, latestVersion),
+          latestVersion,
+          repository: sortedCharts[0].attributes.repo,
+        };
       }
-    });
-    dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
+      dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
+    } catch (e) {
+      dispatch(errorApps(e));
+    }
   };
 }
 
