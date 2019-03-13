@@ -16,20 +16,37 @@ a ServiceBinding object.
 
 ## Service Catalog and Kubeapps
 
-Kubeapps has native integration with the Service Catalog and allow Kubeapps users
+Kubeapps has native integration with the Service Catalog and allows Kubeapps users
 to provision external cloud services directly from the Kubeapps interface.
 
 In this tutorial we will explain how to deploy the Service Catalog into your cluster,
 we will configure two Service Brokers (GCP and Azure) and we will provision some
-cloud services that then will use in other applications.
+cloud services that we will then use in other applications.
 
 This tutorial assumes that you already have a Kubernetes cluster setup with Helm and
 Kubeapps. If you don't have Helm or Kubeapps you can follow the [installation instructions for Kubeapps](getting-started.md).
 
 ## Deploy Service Catalog
 
-The Service Catalog is distributed as a Helm Chart. To deploy it in your cluster, run
-the following:
+The Service Catalog is distributed as a Helm Chart and it is ready to be
+deployed with Kubeapps.
+
+To deploy it in your cluster, navigate to `Service Instances` and click on
+`Install Catalog`.
+
+![Service Catalog installation](../img/install-service-catalog.png)
+
+You will deploy the Service Catalog as any other Helm Chart
+installed through Kubeapps. We recommend to at least change the following value in
+`values.yaml`:
+
+```
+asyncBindingOperationsEnabled: true
+```
+
+This value is needed for some of the GCP Service Classes to work properly.
+
+Alternatively, you can deploy the Service Catalog using the Helm CLI:
 
 ```
 helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
@@ -74,7 +91,7 @@ account and billing settings set up properly.
 
 Once you have your account set up, follow the instructions at https://cloud.google.com/kubernetes-engine/docs/how-to/add-on/service-catalog/install-service-catalog. 
 You can skip the part of deploying the Service Catalog (which we already deployed
-using the Helm Chart). Although the instructions mention GKE, those should work
+using the Helm Chart). Although the instructions mention GKE, they should work
 in any Kubernetes cluster.
 
 To check that the broker has been succesfully deployed run the following:
@@ -138,8 +155,12 @@ Once provisioned you will be able to create a Binding to connect your applicatio
 to it. Click on `Add Binding` and select a name for it (the default should
 be OK). Creating a new binding should be very fast. 
 
+![Azure MySQL provisioned](../img/azure-mysql-provisioned.png)
+
 Once the binding creation has been completed, the details of the created
-secret can be explored directly from the same page, clicking on `show`.
+secret can be explored directly from the same page, clicking on `show`. (Make sure
+to have access to this page (maybe in a different browser tab) as we will need
+those values in the next step).
 
 It is important to understand the schema of the secret, as it is dependent
 on the broker and the instance. For Azure MySQL the secret will have the
@@ -161,7 +182,7 @@ we will search for `wordpress`:
 
 ![Searching Wordpress](../img/search-wordpress.png)
 
-We will click on `Deploy` and will modify the values.yaml of the application
+We will click on `Deploy` and will modify the `values.yaml` of the application
 with the following values:
 
 ```
@@ -181,7 +202,7 @@ If we check the wordpress pod log we can see that it connected successfully
 to the Azure MySQL database:
 
 ```
-k logs wordpress-app-wordpress-597b9dbb5-2rk4k
+kubectl logs wordpress-app-wordpress-597b9dbb5-2rk4k
 
 Welcome to the Bitnami wordpress container
 Subscribe to project updates by watching https://github.com/bitnami/bitnami-docker-wordpress
@@ -228,15 +249,17 @@ the location. We will leave the rest of the options with the default values:
 
 ![Google Cloud Storage options](../img/gcp-storage-options.png)
 
-Once provisioned, we will add a binding clicking on `Add binding`:
+Once provisioned, click on `Add binding` to create a binding:
 
 ![Google Cloud Storage binding options](../img/gcp-storage-binding-options.png)
 
 That will create a new service account in your GCP project with the right
-persmissions to access the bucket.
+permissions to access the bucket.
 
 Once the binding creation has been completed, the details of the created
-secret can be explored directly from the same page, clicking on `show`.
+secret can be explored directly from the same page, clicking on `show`. (Make sure
+to have access to this page (maybe in a different browser tab) as we will need
+those values in the next step).
 
 It is important to understand the schema of the secret, as it is dependent
 on the broker and the instance. For Google Storage the secret will have the
@@ -269,7 +292,7 @@ gcp.secret.key: privateKeyData
 
 As ChartMuseum expects the format of the authentication information contained
 in the JSON, it is only needed to specify the key of the secret that contains
-that JSON (in our case `privateKeyData`)
+that JSON (in our case `privateKeyData`).
 
 Click on `Submit` and it should be deployed successfully, using the GCP
 bucket as backend.
