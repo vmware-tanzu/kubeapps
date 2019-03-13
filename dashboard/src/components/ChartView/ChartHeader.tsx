@@ -22,7 +22,7 @@ class ChartHeader extends React.Component<IChartHeaderProps> {
     return (
       <header>
         <div className="ChartView__heading margin-normal row">
-          <div className="col-1 ChartHeader_img">
+          <div className="col-1 ChartHeader__icon">
             <ChartIcon icon={icon} />
           </div>
           <div className="col-9">
@@ -35,7 +35,7 @@ class ChartHeader extends React.Component<IChartHeaderProps> {
               <h5 className="subtitle margin-b-reset">{description}</h5>
             </div>
           </div>
-          <div className="col-2 ChartHeader_button">
+          <div className="col-2 ChartHeader__button">
             <ChartDeployButton version={version} namespace={namespace} />
           </div>
         </div>
