@@ -6,7 +6,7 @@ exports[`renders a header for the chart 1`] = `
     className="ChartView__heading margin-normal row"
   >
     <div
-      className="col-1 ChartHeader_img"
+      className="col-1 ChartHeader__icon"
     >
       <ChartIcon />
     </div>
@@ -43,7 +43,7 @@ exports[`renders a header for the chart 1`] = `
       </div>
     </div>
     <div
-      className="col-2 ChartHeader_button"
+      className="col-2 ChartHeader__button"
     >
       <ChartDeployButton
         version={
