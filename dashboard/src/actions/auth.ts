@@ -34,9 +34,7 @@ export function authenticate(
   };
 }
 
-export function logout(
-  needRefresh?: boolean,
-): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
+export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     Auth.unsetAuthToken();
     dispatch(setAuthenticated(false, false));
