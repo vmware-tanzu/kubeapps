@@ -25,7 +25,18 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
   axios.interceptors.response.use(
     response => response,
     e => {
+      const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
       const err: AxiosError = e;
+      if (
+        err.config.xsrfCookieName === "XSRF-TOKEN" &&
+        err.code === undefined &&
+        err.message === "Network Error" &&
+        !err.response &&
+        Auth.usingOIDCToken()
+      ) {
+        // The OIDC token is no longer valid, logout
+        dispatch(actions.auth.logout());
+      }
       let message = err.message;
       if (err.response && err.response.data.message) {
         message = err.response.data.message;
@@ -33,7 +44,6 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
       switch (err.response && err.response.status) {
         case 401:
           // Global action dispatch to log the user out
-          const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
           dispatch(actions.auth.authenticationError(message));
           dispatch(actions.auth.logout());
           return Promise.reject(new UnauthorizedError(message));

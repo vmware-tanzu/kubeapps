@@ -2,6 +2,7 @@ import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
+import { axios } from "../shared/Auth";
 import Chart from "../shared/Chart";
 import { IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 import * as url from "../shared/url";
@@ -54,17 +55,17 @@ export type ChartsAction = ActionType<typeof allActions[number]>;
 
 async function httpGet(dispatch: Dispatch, targetURL: string): Promise<any> {
   try {
-    const response = await fetch(targetURL);
-    const json = await response.json();
-    if (!response.ok) {
-      const error = json.data || response.statusText;
+    const response: any = await axios.get(targetURL);
+    // const json = await response.json();
+    if (response.status !== 200) {
+      const error = response.data || response.statusText;
       if (response.status === 404) {
         dispatch(errorChart(new NotFoundError(error)));
       } else {
         dispatch(errorChart(new Error(error)));
       }
     } else {
-      return json.data;
+      return response.data.data;
     }
   } catch (e) {
     dispatch(errorChart(e));
