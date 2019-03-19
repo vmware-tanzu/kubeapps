@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
-import { Auth } from "shared/Auth";
+import { Auth } from "../../shared/Auth";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
