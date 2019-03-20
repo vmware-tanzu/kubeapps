@@ -1,4 +1,5 @@
-import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+
 import { Action, Store } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import actions from "../actions";
@@ -12,23 +13,23 @@ import {
   UnprocessableEntity,
 } from "./types";
 
-// createAxiosInterceptors will configure a set of interceptors to a provided axios instance,
-// relying also on an external redux store for action dispatching
-export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStoreState>) {
-  axios.interceptors.request.use((config: AxiosRequestConfig) => {
+function addAuthHeaders(axiosInstance: AxiosInstance) {
+  axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
     return config;
   });
-  axios.interceptors.response.use(
+}
+
+function addErrorHandling(axiosInstance: AxiosInstance, store: Store<IStoreState>) {
+  axiosInstance.interceptors.response.use(
     response => response,
     e => {
       const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
       const err: AxiosError = e;
       if (
-        err.config.xsrfCookieName === "XSRF-TOKEN" &&
         err.code === undefined &&
         err.message === "Network Error" &&
         !err.response &&
@@ -61,3 +62,18 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
     },
   );
 }
+// createAxiosInterceptors will configure a set of interceptors to a provided axios instance,
+// relying also on an external redux store for action dispatching
+export function createAxiosInterceptors(axiosInstance: AxiosInstance, store: Store<IStoreState>) {
+  addErrorHandling(axiosInstance, store);
+}
+
+export function createAxiosInterceptorsWithAuth(
+  axiosInstance: AxiosInstance,
+  store: Store<IStoreState>,
+) {
+  addAuthHeaders(axiosInstance);
+  addErrorHandling(axiosInstance, store);
+}
+
+export const axios = Axios.create();

@@ -2,7 +2,7 @@ import * as moxios from "moxios";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { createAxiosInterceptors } from "../shared/AxiosInstance";
+import { createAxiosInterceptorsWithAuth } from "../shared/AxiosInstance";
 import { Auth, axios } from "./Auth";
 import {
   ConflictError,
@@ -21,6 +21,7 @@ describe("createAxiosInterceptor", () => {
 
   beforeAll(() => {
     const state: IAuthState = {
+      sessionExpired: false,
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
@@ -40,7 +41,7 @@ describe("createAxiosInterceptor", () => {
       return authToken;
     });
 
-    createAxiosInterceptors(axios, store);
+    createAxiosInterceptorsWithAuth(axios, store);
   });
 
   beforeEach(() => {
@@ -122,11 +123,14 @@ describe("createAxiosInterceptor", () => {
     }
   });
 
-  it("dispatches auth error and logout if 401", async () => {
+  it("dispatches auth error if 401", async () => {
     const expectedActions = [
       {
         payload: "Boom!",
         type: "AUTHENTICATION_ERROR",
+      },
+      {
+        type: "AUTHENTICATION_EXPIRED",
       },
       {
         payload: { authenticated: false, oidc: false },

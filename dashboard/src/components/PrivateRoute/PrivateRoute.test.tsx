@@ -26,6 +26,7 @@ class MockComponent extends React.Component {}
 it("redirects to the /login route if not authenticated", () => {
   const wrapper = shallow(
     <PrivateRoute
+      sessionExpired={false}
       authenticated={false}
       path="/test"
       component={MockComponent}
@@ -44,6 +45,7 @@ it("redirects to the /login route if not authenticated", () => {
 it("renders the given component when authenticated", () => {
   const wrapper = shallow(
     <PrivateRoute
+      sessionExpired={false}
       authenticated={true}
       path="/test"
       component={MockComponent}

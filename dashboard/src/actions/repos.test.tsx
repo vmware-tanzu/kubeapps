@@ -4,7 +4,7 @@ import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
 import actions from ".";
 import { AppRepository } from "../shared/AppRepository";
-import { axios } from "../shared/Auth";
+import { axios } from "../shared/AxiosInstance";
 import Secret from "../shared/Secret";
 import { IAppRepository, NotFoundError } from "../shared/types";
 

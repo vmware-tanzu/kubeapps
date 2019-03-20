@@ -1,7 +1,7 @@
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
-import { axios } from "../shared/Auth";
+import { axios } from "../shared/AxiosInstance";
 import Secret from "../shared/Secret";
 import * as url from "../shared/url";
 import { errorChart } from "./charts";

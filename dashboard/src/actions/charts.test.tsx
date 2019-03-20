@@ -1,7 +1,7 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
-import { axios } from "../shared/Auth";
+import { axios } from "../shared/AxiosInstance";
 
 import actions from ".";
 import { NotFoundError } from "../shared/types";

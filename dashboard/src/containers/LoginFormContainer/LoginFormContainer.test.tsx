@@ -9,12 +9,14 @@ import LoginForm from "./LoginFormContainer";
 const mockStore = configureMockStore([thunk]);
 
 const makeStore = (
+  sessionExpired: boolean,
   authenticated: boolean,
   authenticating: boolean,
   oidcAuthenticated: boolean,
   authenticationError: string,
 ) => {
   const state: IAuthState = {
+    sessionExpired,
     authenticated,
     authenticating,
     oidcAuthenticated,
@@ -32,7 +34,7 @@ const emptyLocation: Location = {
 
 describe("LoginFormContainer props", () => {
   it("maps authentication redux states to props", () => {
-    const store = makeStore(true, true, true, "It's a trap");
+    const store = makeStore(true, true, true, true, "It's a trap");
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
     const form = wrapper.find("LoginForm");
     expect(form).toHaveProp({

@@ -14,7 +14,9 @@ export const authenticationError = createAction("AUTHENTICATION_ERROR", resolve 
   return (errorMsg: string) => resolve(errorMsg);
 });
 
-const allActions = [setAuthenticated, authenticating, authenticationError];
+export const setExpiredSession = createAction("AUTHENTICATION_EXPIRED");
+
+const allActions = [setAuthenticated, authenticating, authenticationError, setExpiredSession];
 
 export type AuthAction = ActionType<typeof allActions[number]>;
 
@@ -37,6 +39,8 @@ export function authenticate(
 export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     Auth.unsetAuthToken();
+    // Expire the session if we are using OIDC tokens
+    dispatch(setExpiredSession());
     dispatch(setAuthenticated(false, false));
   };
 }

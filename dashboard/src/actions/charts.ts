@@ -2,7 +2,7 @@ import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
-import { axios } from "../shared/Auth";
+import { axios } from "../shared/AxiosInstance";
 import Chart from "../shared/Chart";
 import { IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
 import * as url from "../shared/url";

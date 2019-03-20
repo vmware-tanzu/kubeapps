@@ -1,37 +1,26 @@
 import * as React from "react";
 import * as Modal from "react-modal";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
-import { Auth } from "../../shared/Auth";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 interface IPrivateRouteProps extends IRouteComponentPropsAndRouteProps {
   authenticated: boolean;
+  sessionExpired: boolean;
 }
 
-interface IPrivateRouteState {
-  previouslyAuthenticated: boolean;
-}
-
-class PrivateRoute extends React.Component<IPrivateRouteProps, IPrivateRouteState> {
-  public state: IPrivateRouteState = {
-    previouslyAuthenticated: false,
-  };
-
+class PrivateRoute extends React.Component<IPrivateRouteProps> {
   public render() {
     const { authenticated, component: Component, ...rest } = this.props;
     return <Route {...rest} render={this.renderRouteIfAuthenticated} />;
   }
 
   public renderRouteIfAuthenticated = (props: RouteComponentProps<any>) => {
-    const { authenticated, component: Component } = this.props;
+    const { sessionExpired, authenticated, component: Component } = this.props;
     if (authenticated && Component) {
-      if (!this.state.previouslyAuthenticated) {
-        this.setState({ previouslyAuthenticated: true });
-      }
       return <Component {...props} />;
     }
-    if (!authenticated && this.state.previouslyAuthenticated && Auth.usingOIDCToken()) {
+    if (sessionExpired) {
       return (
         <Modal
           style={{

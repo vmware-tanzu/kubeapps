@@ -1,15 +1,16 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 import * as Modal from "react-modal";
-import { createAxiosInterceptors } from "shared/AxiosInstance";
-import { axios } from "./shared/Auth";
+import * as Axios from "shared/AxiosInstance";
+import * as Auth from "./shared/Auth";
 
 import Root from "./containers/Root";
 import "./index.css";
 import store from "./store";
 // import registerServiceWorker from "./registerServiceWorker";
 
-createAxiosInterceptors(axios, store);
+Axios.createAxiosInterceptors(Axios.axios, store);
+Axios.createAxiosInterceptorsWithAuth(Auth.axios, store);
 
 ReactDOM.render(<Root />, document.getElementById("root") as HTMLElement);
 

@@ -14,6 +14,7 @@ describe("authReducer", () => {
 
   beforeEach(() => {
     initialState = {
+      sessionExpired: false,
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
@@ -50,18 +51,12 @@ describe("authReducer", () => {
       ).toEqual({ ...initialState, authenticating: true, authenticated: false });
     });
 
-    it(`resets authenticated, authenticating and sets error if type ${
-      actionTypes.authenticationError
-    }`, () => {
+    it(`sets error if type ${actionTypes.authenticationError}`, () => {
       expect(
-        authReducer(
-          {
-            authenticating: true,
-            authenticated: true,
-            oidcAuthenticated: true,
-          },
-          { type: actionTypes.authenticationError as any, payload: errMessage },
-        ),
+        authReducer(initialState, {
+          type: actionTypes.authenticationError as any,
+          payload: errMessage,
+        }),
       ).toEqual({ ...initialState, authenticationError: errMessage });
     });
 
@@ -69,6 +64,7 @@ describe("authReducer", () => {
       expect(
         authReducer(
           {
+            sessionExpired: false,
             authenticating: true,
             authenticated: false,
             oidcAuthenticated: false,
@@ -79,6 +75,7 @@ describe("authReducer", () => {
           },
         ),
       ).toEqual({
+        sessionExpired: false,
         authenticating: false,
         authenticated: true,
         oidcAuthenticated: true,

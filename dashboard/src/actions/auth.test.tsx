@@ -13,6 +13,7 @@ let store: any;
 
 beforeEach(() => {
   const state: IAuthState = {
+    sessionExpired: false,
     authenticated: false,
     authenticating: false,
     oidcAuthenticated: false,
