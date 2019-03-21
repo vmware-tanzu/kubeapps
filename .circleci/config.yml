@@ -242,7 +242,7 @@ jobs:
     environment:
       GKE_BRANCH: "1.11"
       TEST_LATEST_RELEASE: 1
-  GKE_1_12MASTER:
+  GKE_1_12_MASTER:
     <<: *gke_test
     environment:
       GKE_BRANCH: "1.12"
