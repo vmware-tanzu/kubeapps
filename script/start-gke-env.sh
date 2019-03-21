@@ -25,7 +25,7 @@ if [[ $(gcloud container clusters list --filter="name:${CLUSTER}") ]]; then
 fi
 
 echo "Creating cluster $CLUSTER in $ZONE (v$BRANCH)"
-gcloud container clusters create --cluster-version=${BRANCH} --zone $ZONE $CLUSTER --num-nodes 2 --machine-type=n1-standard-2 --preemptible
+gcloud container clusters create --cluster-version=${BRANCH} --zone $ZONE $CLUSTER --num-nodes 2 --machine-type=n1-standard-2 --preemptible --labels=team=kubeapps
 echo "Waiting for the cluster to respond..."
 cnt=20
 until kubectl get pods > /dev/null 2>&1; do
