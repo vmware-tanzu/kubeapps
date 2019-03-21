@@ -56,3 +56,12 @@ it("renders the given component when authenticated", () => {
   const wrapper2 = shallow(<RenderMethod {...emptyRouteComponentProps} />);
   expect(wrapper2.find(MockComponent).exists()).toBe(true);
 });
+
+it("renders modal to reload the page if the session is expired", () => {
+  const wrapper = shallow(
+    <PrivateRoute sessionExpired={true} authenticated={false} {...emptyRouteComponentProps} />,
+  );
+  const renderization: JSX.Element = wrapper.prop("render")();
+  expect(renderization.type.toString()).toContain("Modal");
+  expect(renderization.props.isOpen).toBe(true);
+});

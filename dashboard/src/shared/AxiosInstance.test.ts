@@ -12,7 +12,7 @@ import {
   UnprocessableEntity,
 } from "./types";
 
-describe("createAxiosInterceptor", () => {
+describe("createAxiosInterceptorWithAuth", () => {
   const mockStore = configureMockStore([thunk]);
   const testPath = "/internet-is-in-a-box";
   const authToken = "search-google-in-google";

@@ -112,4 +112,20 @@ describe("OIDC authentication", () => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
+
+  it("logouts expiring the session ", () => {
+    const expectedActions = [
+      {
+        type: getType(actions.auth.setExpiredSession),
+      },
+      {
+        payload: { authenticated: false, oidc: false },
+        type: getType(actions.auth.setAuthenticated),
+      },
+    ];
+
+    return store.dispatch(actions.auth.logout()).then(() => {
+      expect(store.getActions()).toEqual(expectedActions);
+    });
+  });
 });

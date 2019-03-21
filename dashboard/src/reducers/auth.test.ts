@@ -10,6 +10,7 @@ describe("authReducer", () => {
     authenticating: getType(actions.auth.authenticating),
     authenticationError: getType(actions.auth.authenticationError),
     setAuthenticated: getType(actions.auth.setAuthenticated),
+    setExpiredSession: getType(actions.auth.setExpiredSession),
   };
 
   beforeEach(() => {
@@ -79,6 +80,70 @@ describe("authReducer", () => {
         authenticating: false,
         authenticated: true,
         oidcAuthenticated: true,
+      });
+    });
+
+    it("unsets session expired", () => {
+      expect(
+        authReducer(
+          {
+            sessionExpired: true,
+            authenticating: true,
+            authenticated: false,
+            oidcAuthenticated: false,
+          },
+          {
+            type: actionTypes.setAuthenticated as any,
+            payload: { authenticated: true, oidc: true },
+          },
+        ),
+      ).toEqual({
+        sessionExpired: false,
+        authenticating: false,
+        authenticated: true,
+        oidcAuthenticated: true,
+      });
+    });
+
+    it("sets session expired", () => {
+      expect(
+        authReducer(
+          {
+            sessionExpired: false,
+            authenticating: false,
+            authenticated: false,
+            oidcAuthenticated: true,
+          },
+          {
+            type: actionTypes.setExpiredSession as any,
+          },
+        ),
+      ).toEqual({
+        sessionExpired: true,
+        authenticating: false,
+        authenticated: false,
+        oidcAuthenticated: true,
+      });
+    });
+
+    it("ignores session expired if not oidcAuthenticated", () => {
+      expect(
+        authReducer(
+          {
+            sessionExpired: false,
+            authenticating: false,
+            authenticated: false,
+            oidcAuthenticated: false,
+          },
+          {
+            type: actionTypes.setExpiredSession as any,
+          },
+        ),
+      ).toEqual({
+        sessionExpired: false,
+        authenticating: false,
+        authenticated: false,
+        oidcAuthenticated: false,
       });
     });
   });
