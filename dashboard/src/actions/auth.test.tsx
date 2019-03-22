@@ -106,6 +106,9 @@ describe("OIDC authentication", () => {
         payload: { authenticated: true, oidc: true },
         type: getType(actions.auth.setAuthenticated),
       },
+      {
+        type: getType(actions.auth.unsetSessionExpired),
+      },
     ];
 
     return store.dispatch(actions.auth.tryToAuthenticateWithOIDC()).then(() => {
@@ -113,10 +116,11 @@ describe("OIDC authentication", () => {
     });
   });
 
-  it("logouts expiring the session ", () => {
+  it("expires the session and logs out ", () => {
+    Auth.usingOIDCToken = jest.fn(() => true);
     const expectedActions = [
       {
-        type: getType(actions.auth.setExpiredSession),
+        type: getType(actions.auth.setSessionExpired),
       },
       {
         payload: { authenticated: false, oidc: false },
@@ -124,7 +128,7 @@ describe("OIDC authentication", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.logout()).then(() => {
+    return store.dispatch(actions.auth.expireSession()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });

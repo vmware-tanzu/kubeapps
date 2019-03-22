@@ -26,8 +26,6 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
         authenticated: action.payload.authenticated,
         oidcAuthenticated: action.payload.oidc,
         authenticating: false,
-        // If authenticated the session is no longer expired
-        sessionExpired: action.payload.authenticated ? false : state.sessionExpired,
       };
     case getType(actions.auth.authenticating):
       return { ...state, authenticated: false, authenticating: true };
@@ -36,11 +34,15 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
         ...state,
         authenticationError: action.payload,
       };
-    case getType(actions.auth.setExpiredSession):
+    case getType(actions.auth.setSessionExpired):
       return {
         ...state,
-        // The session can only expire if we are using OIDC tokens
-        sessionExpired: state.oidcAuthenticated ? true : state.sessionExpired,
+        sessionExpired: true,
+      };
+    case getType(actions.auth.unsetSessionExpired):
+      return {
+        ...state,
+        sessionExpired: false,
       };
     default:
   }

@@ -1,4 +1,4 @@
-import { axios } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 import { IStatus } from "./types";
 
@@ -35,7 +35,7 @@ export class ServiceInstance {
     planName: string,
     parameters: {},
   ) {
-    const { data } = await axios.post<IStatus>(this.getLink(namespace), {
+    const { data } = await axiosWithAuth.post<IStatus>(this.getLink(namespace), {
       apiVersion: "servicecatalog.k8s.io/v1beta1",
       kind: "ServiceInstance",
       metadata: {
@@ -52,7 +52,7 @@ export class ServiceInstance {
 
   public static async get(namespace?: string, name?: string): Promise<IServiceInstance> {
     const url = this.getLink(namespace, name);
-    const { data } = await axios.get<IServiceInstance>(url);
+    const { data } = await axiosWithAuth.get<IServiceInstance>(url);
     return data;
   }
 

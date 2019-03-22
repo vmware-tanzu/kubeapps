@@ -2,8 +2,8 @@ import * as moxios from "moxios";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { createAxiosInterceptorsWithAuth } from "../shared/AxiosInstance";
-import { Auth, axios } from "./Auth";
+import { addAuthHeaders, addErrorHandling, axios } from "../shared/AxiosInstance";
+import { Auth } from "./Auth";
 import {
   ConflictError,
   ForbiddenError,
@@ -41,7 +41,8 @@ describe("createAxiosInterceptorWithAuth", () => {
       return authToken;
     });
 
-    createAxiosInterceptorsWithAuth(axios, store);
+    addErrorHandling(axios, store);
+    addAuthHeaders(axios);
   });
 
   beforeEach(() => {
@@ -128,9 +129,6 @@ describe("createAxiosInterceptorWithAuth", () => {
       {
         payload: "Boom!",
         type: "AUTHENTICATION_ERROR",
-      },
-      {
-        type: "AUTHENTICATION_EXPIRED",
       },
       {
         payload: { authenticated: false, oidc: false },

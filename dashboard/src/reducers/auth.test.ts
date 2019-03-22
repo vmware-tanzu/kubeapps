@@ -10,7 +10,8 @@ describe("authReducer", () => {
     authenticating: getType(actions.auth.authenticating),
     authenticationError: getType(actions.auth.authenticationError),
     setAuthenticated: getType(actions.auth.setAuthenticated),
-    setExpiredSession: getType(actions.auth.setExpiredSession),
+    setSessionExpired: getType(actions.auth.setSessionExpired),
+    unsetSessionExpired: getType(actions.auth.unsetSessionExpired),
   };
 
   beforeEach(() => {
@@ -93,15 +94,14 @@ describe("authReducer", () => {
             oidcAuthenticated: false,
           },
           {
-            type: actionTypes.setAuthenticated as any,
-            payload: { authenticated: true, oidc: true },
+            type: actionTypes.unsetSessionExpired as any,
           },
         ),
       ).toEqual({
         sessionExpired: false,
-        authenticating: false,
-        authenticated: true,
-        oidcAuthenticated: true,
+        authenticating: true,
+        authenticated: false,
+        oidcAuthenticated: false,
       });
     });
 
@@ -115,7 +115,7 @@ describe("authReducer", () => {
             oidcAuthenticated: true,
           },
           {
-            type: actionTypes.setExpiredSession as any,
+            type: actionTypes.setSessionExpired as any,
           },
         ),
       ).toEqual({
@@ -123,27 +123,6 @@ describe("authReducer", () => {
         authenticating: false,
         authenticated: false,
         oidcAuthenticated: true,
-      });
-    });
-
-    it("ignores session expired if not oidcAuthenticated", () => {
-      expect(
-        authReducer(
-          {
-            sessionExpired: false,
-            authenticating: false,
-            authenticated: false,
-            oidcAuthenticated: false,
-          },
-          {
-            type: actionTypes.setExpiredSession as any,
-          },
-        ),
-      ).toEqual({
-        sessionExpired: false,
-        authenticating: false,
-        authenticated: false,
-        oidcAuthenticated: false,
       });
     });
   });

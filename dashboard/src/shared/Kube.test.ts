@@ -1,13 +1,13 @@
 import * as moxios from "moxios";
-import { axios } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase, Kube, WebSocketAPIBase } from "./Kube";
 
 describe("App", () => {
   beforeEach(() => {
-    moxios.install(axios);
+    moxios.install(axiosWithAuth);
   });
   afterEach(() => {
-    moxios.uninstall(axios);
+    moxios.uninstall(axiosWithAuth);
   });
   describe("getResourceURL", () => {
     [

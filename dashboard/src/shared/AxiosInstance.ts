@@ -13,7 +13,7 @@ import {
   UnprocessableEntity,
 } from "./types";
 
-function addAuthHeaders(axiosInstance: AxiosInstance) {
+export function addAuthHeaders(axiosInstance: AxiosInstance) {
   axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
     if (authToken) {
@@ -23,7 +23,7 @@ function addAuthHeaders(axiosInstance: AxiosInstance) {
   });
 }
 
-function addErrorHandling(axiosInstance: AxiosInstance, store: Store<IStoreState>) {
+export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<IStoreState>) {
   axiosInstance.interceptors.response.use(
     response => response,
     e => {
@@ -36,7 +36,7 @@ function addErrorHandling(axiosInstance: AxiosInstance, store: Store<IStoreState
         Auth.usingOIDCToken()
       ) {
         // The OIDC token is no longer valid, logout
-        dispatch(actions.auth.logout());
+        dispatch(actions.auth.expireSession());
       }
       let message = err.message;
       if (err.response && err.response.data.message) {
@@ -45,8 +45,9 @@ function addErrorHandling(axiosInstance: AxiosInstance, store: Store<IStoreState
       switch (err.response && err.response.status) {
         case 401:
           // Global action dispatch to log the user out
+          // Expire the session if we are using OIDC tokens
           dispatch(actions.auth.authenticationError(message));
-          dispatch(actions.auth.logout());
+          dispatch(actions.auth.expireSession());
           return Promise.reject(new UnauthorizedError(message));
         case 403:
           return Promise.reject(new ForbiddenError(message));
@@ -62,18 +63,8 @@ function addErrorHandling(axiosInstance: AxiosInstance, store: Store<IStoreState
     },
   );
 }
-// createAxiosInterceptors will configure a set of interceptors to a provided axios instance,
-// relying also on an external redux store for action dispatching
-export function createAxiosInterceptors(axiosInstance: AxiosInstance, store: Store<IStoreState>) {
-  addErrorHandling(axiosInstance, store);
-}
 
-export function createAxiosInterceptorsWithAuth(
-  axiosInstance: AxiosInstance,
-  store: Store<IStoreState>,
-) {
-  addAuthHeaders(axiosInstance);
-  addErrorHandling(axiosInstance, store);
-}
-
+// Error handling is added with an interceptor in index.tsx
 export const axios = Axios.create();
+// Authorization headers and error handling are added with an interceptor in index.tsx
+export const axiosWithAuth = Axios.create();

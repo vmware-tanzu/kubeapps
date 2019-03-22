@@ -65,5 +65,3 @@ export class Auth {
     return null;
   }
 }
-
-export const axios = Axios.create();

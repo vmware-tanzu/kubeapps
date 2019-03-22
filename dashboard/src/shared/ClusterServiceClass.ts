@@ -1,4 +1,4 @@
-import { axios } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { ServiceCatalog } from "./ServiceCatalog";
 
 export interface IClusterServiceClass {
@@ -34,7 +34,7 @@ export interface IClusterServiceClass {
 export class ClusterServiceClass {
   public static async get(namespace?: string, name?: string): Promise<IClusterServiceClass> {
     const url = this.getLink(namespace, name);
-    const { data } = await axios.get<IClusterServiceClass>(url);
+    const { data } = await axiosWithAuth.get<IClusterServiceClass>(url);
     return data;
   }
 

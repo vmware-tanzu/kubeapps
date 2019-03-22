@@ -1,14 +1,14 @@
 import * as moxios from "moxios";
 import { App, TILLER_PROXY_ROOT_URL } from "./App";
-import { axios } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { IAppOverview } from "./types";
 
 describe("App", () => {
   beforeEach(() => {
-    moxios.install(axios);
+    moxios.install(axiosWithAuth);
   });
   afterEach(() => {
-    moxios.uninstall(axios);
+    moxios.uninstall(axiosWithAuth);
   });
   describe("getResourceURL", () => {
     [

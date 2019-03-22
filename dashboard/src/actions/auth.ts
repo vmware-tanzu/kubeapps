@@ -14,9 +14,16 @@ export const authenticationError = createAction("AUTHENTICATION_ERROR", resolve 
   return (errorMsg: string) => resolve(errorMsg);
 });
 
-export const setExpiredSession = createAction("AUTHENTICATION_EXPIRED");
+export const setSessionExpired = createAction("SET_AUTHENTICATION_SESSION_EXPIRED");
+export const unsetSessionExpired = createAction("UNSET_AUTHENTICATION_SESSION_EXPIRED");
 
-const allActions = [setAuthenticated, authenticating, authenticationError, setExpiredSession];
+const allActions = [
+  setAuthenticated,
+  authenticating,
+  authenticationError,
+  setSessionExpired,
+  unsetSessionExpired,
+];
 
 export type AuthAction = ActionType<typeof allActions[number]>;
 
@@ -30,6 +37,9 @@ export function authenticate(
       await Auth.validateToken(token);
       Auth.setAuthToken(token, oidc);
       dispatch(setAuthenticated(true, oidc));
+      if (oidc) {
+        dispatch(unsetSessionExpired());
+      }
     } catch (e) {
       dispatch(authenticationError(e.toString()));
     }
@@ -39,9 +49,16 @@ export function authenticate(
 export function logout(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     Auth.unsetAuthToken();
-    // Expire the session if we are using OIDC tokens
-    dispatch(setExpiredSession());
     dispatch(setAuthenticated(false, false));
+  };
+}
+
+export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
+  return async dispatch => {
+    if (Auth.usingOIDCToken()) {
+      dispatch(setSessionExpired());
+    }
+    dispatch(logout());
   };
 }
 
