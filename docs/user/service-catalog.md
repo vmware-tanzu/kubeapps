@@ -28,7 +28,7 @@ Kubeapps. If you don't have Helm or Kubeapps you can follow the [installation in
 
 ## Deploy Service Catalog
 
-The Service Catalog is distributed as a Helm Chart and it is ready to be
+The Service Catalog is distributed as a Helm chart and it is ready to be
 deployed with Kubeapps.
 
 To deploy it in your cluster, navigate to `Service Instances` and click on
@@ -36,7 +36,7 @@ To deploy it in your cluster, navigate to `Service Instances` and click on
 
 ![Service Catalog installation](../img/install-service-catalog.png)
 
-You will deploy the Service Catalog as any other Helm Chart
+You will deploy the Service Catalog as any other Helm chart
 installed through Kubeapps. We recommend to at least change the following value in
 `values.yaml`:
 
@@ -69,13 +69,13 @@ Broker for Azure on AKS Quickstart](https://github.com/Azure/open-service-broker
 Although the Quickstart mentions AKS, the instructions should work in any Kubernetes
 cluster.
 
-To check that the broker has been succesfully deployed run the following:
+To check that the broker has been successfully deployed run the following:
 
 ```
 kubectl get ClusterServiceBroker osba
 ```
 
-If the Broker has been succesfully installed and the catalog has been properly
+If the Broker has been successfully installed and the catalog has been properly
 downloaded you should get the following output:
 
 ```
@@ -91,16 +91,16 @@ account and billing settings set up properly.
 
 Once you have your account set up, follow the instructions at https://cloud.google.com/kubernetes-engine/docs/how-to/add-on/service-catalog/install-service-catalog. 
 You can skip the part of deploying the Service Catalog (which we already deployed
-using the Helm Chart). Although the instructions mention GKE, they should work
+using the Helm chart). Although the instructions mention GKE, they should work
 in any Kubernetes cluster.
 
-To check that the broker has been succesfully deployed run the following:
+To check that the broker has been successfully deployed run the following:
 
 ```
 kubectl get ClusterServiceBroker gcp-broker
 ```
 
-If the Broker has been succesfully installed and the catalog has been properly
+If the Broker has been successfully installed and the catalog has been properly
 downloaded you should get the following output:
 
 ```
@@ -228,7 +228,7 @@ mysql-c INFO  MySQL server listening and working at 93489418-7a54-4b2c-b807-d239
 ## Example 2. Chartmuseum using a GCP storage bucket
 
 [ChartMuseum](https://github.com/helm/chartmuseum) is an open-source project
-that allows you to easily have your own valid Helm Chart Repository. It has
+that allows you to easily have your own valid Helm chart repository. It has
 support for different cloud storage backends, including [Google Cloud Storage](https://cloud.google.com/storage/).
 
 In this example we will create a Google Cloud Storage instance with Kubeapps
