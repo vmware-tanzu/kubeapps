@@ -82,6 +82,8 @@ workflows:
           requires:
             - GKE_1_11_MASTER
             - GKE_1_11_LATEST_RELEASE
+            - GKE_1_12_MASTER
+            - GKE_1_12_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
