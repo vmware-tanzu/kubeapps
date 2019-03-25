@@ -37,7 +37,8 @@ class PrivateRoute extends React.Component<IPrivateRouteProps> {
         >
           <div>
             <div className="margin-b-normal">
-              Your session has expired, please reload to refresh your credentials.
+              Your session has expired or there is a different network issue, please reload the
+              page.
             </div>
             <div className="flex text-c">
               <button className="button" onClick={this.reload}>

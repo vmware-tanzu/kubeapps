@@ -107,7 +107,8 @@ describe("OIDC authentication", () => {
         type: getType(actions.auth.setAuthenticated),
       },
       {
-        type: getType(actions.auth.unsetSessionExpired),
+        payload: { sessionExpired: false },
+        type: getType(actions.auth.setSessionExpired),
       },
     ];
 
@@ -120,6 +121,7 @@ describe("OIDC authentication", () => {
     Auth.usingOIDCToken = jest.fn(() => true);
     const expectedActions = [
       {
+        payload: { sessionExpired: true },
         type: getType(actions.auth.setSessionExpired),
       },
       {

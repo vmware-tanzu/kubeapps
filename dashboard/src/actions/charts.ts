@@ -56,6 +56,7 @@ export type ChartsAction = ActionType<typeof allActions[number]>;
 async function httpGet(dispatch: Dispatch, targetURL: string): Promise<any> {
   try {
     const response = await axios.get(targetURL);
+    // If non-2XX response (not ok)
     if (response.status < 200 || response.status > 299) {
       const error = response.data || response.statusText;
       if (response.status === 404) {

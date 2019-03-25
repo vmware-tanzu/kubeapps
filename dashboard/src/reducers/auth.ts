@@ -37,12 +37,7 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
     case getType(actions.auth.setSessionExpired):
       return {
         ...state,
-        sessionExpired: true,
-      };
-    case getType(actions.auth.unsetSessionExpired):
-      return {
-        ...state,
-        sessionExpired: false,
+        sessionExpired: action.payload.sessionExpired,
       };
     default:
   }

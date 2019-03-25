@@ -11,7 +11,6 @@ describe("authReducer", () => {
     authenticationError: getType(actions.auth.authenticationError),
     setAuthenticated: getType(actions.auth.setAuthenticated),
     setSessionExpired: getType(actions.auth.setSessionExpired),
-    unsetSessionExpired: getType(actions.auth.unsetSessionExpired),
   };
 
   beforeEach(() => {
@@ -94,7 +93,8 @@ describe("authReducer", () => {
             oidcAuthenticated: false,
           },
           {
-            type: actionTypes.unsetSessionExpired as any,
+            type: actionTypes.setSessionExpired as any,
+            payload: { sessionExpired: false },
           },
         ),
       ).toEqual({
@@ -115,6 +115,7 @@ describe("authReducer", () => {
             oidcAuthenticated: true,
           },
           {
+            payload: { sessionExpired: true },
             type: actionTypes.setSessionExpired as any,
           },
         ),
