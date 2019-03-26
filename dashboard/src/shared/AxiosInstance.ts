@@ -1,4 +1,5 @@
-import { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+
 import { Action, Store } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import actions from "../actions";
@@ -12,20 +13,31 @@ import {
   UnprocessableEntity,
 } from "./types";
 
-// createAxiosInterceptors will configure a set of interceptors to a provided axios instance,
-// relying also on an external redux store for action dispatching
-export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStoreState>) {
-  axios.interceptors.request.use((config: AxiosRequestConfig) => {
+export function addAuthHeaders(axiosInstance: AxiosInstance) {
+  axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
     }
     return config;
   });
-  axios.interceptors.response.use(
+}
+
+export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<IStoreState>) {
+  axiosInstance.interceptors.response.use(
     response => response,
     e => {
+      const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
       const err: AxiosError = e;
+      if (
+        err.code === undefined &&
+        err.message === "Network Error" &&
+        !err.response &&
+        Auth.usingOIDCToken()
+      ) {
+        // The OIDC token is no longer valid, logout
+        dispatch(actions.auth.expireSession());
+      }
       let message = err.message;
       if (err.response && err.response.data.message) {
         message = err.response.data.message;
@@ -33,9 +45,9 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
       switch (err.response && err.response.status) {
         case 401:
           // Global action dispatch to log the user out
-          const dispatch = store.dispatch as ThunkDispatch<IStoreState, null, Action>;
+          // Expire the session if we are using OIDC tokens
           dispatch(actions.auth.authenticationError(message));
-          dispatch(actions.auth.logout());
+          dispatch(actions.auth.expireSession());
           return Promise.reject(new UnauthorizedError(message));
         case 403:
           return Promise.reject(new ForbiddenError(message));
@@ -51,3 +63,8 @@ export function createAxiosInterceptors(axios: AxiosInstance, store: Store<IStor
     },
   );
 }
+
+// Error handling is added with an interceptor in index.tsx
+export const axios = Axios.create();
+// Authorization headers and error handling are added with an interceptor in index.tsx
+export const axiosWithAuth = Axios.create();

@@ -2,8 +2,8 @@ import * as moxios from "moxios";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { createAxiosInterceptors } from "../shared/AxiosInstance";
-import { Auth, axios } from "./Auth";
+import { addAuthHeaders, addErrorHandling, axios } from "../shared/AxiosInstance";
+import { Auth } from "./Auth";
 import {
   ConflictError,
   ForbiddenError,
@@ -12,7 +12,7 @@ import {
   UnprocessableEntity,
 } from "./types";
 
-describe("createAxiosInterceptor", () => {
+describe("createAxiosInterceptorWithAuth", () => {
   const mockStore = configureMockStore([thunk]);
   const testPath = "/internet-is-in-a-box";
   const authToken = "search-google-in-google";
@@ -21,6 +21,7 @@ describe("createAxiosInterceptor", () => {
 
   beforeAll(() => {
     const state: IAuthState = {
+      sessionExpired: false,
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
@@ -40,7 +41,8 @@ describe("createAxiosInterceptor", () => {
       return authToken;
     });
 
-    createAxiosInterceptors(axios, store);
+    addErrorHandling(axios, store);
+    addAuthHeaders(axios);
   });
 
   beforeEach(() => {
@@ -122,7 +124,7 @@ describe("createAxiosInterceptor", () => {
     }
   });
 
-  it("dispatches auth error and logout if 401", async () => {
+  it("dispatches auth error if 401", async () => {
     const expectedActions = [
       {
         payload: "Boom!",

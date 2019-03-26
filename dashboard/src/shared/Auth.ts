@@ -16,6 +16,11 @@ export class Auth {
     return localStorage.removeItem(AuthTokenKey);
   }
 
+  public static usingOIDCToken() {
+    const oidc = localStorage.getItem(AuthTokenOIDCKey);
+    return oidc === "true" ? true : false;
+  }
+
   public static wsProtocols() {
     const token = this.getAuthToken();
     if (!token) {
@@ -60,5 +65,3 @@ export class Auth {
     return null;
   }
 }
-
-export const axios = Axios.create();

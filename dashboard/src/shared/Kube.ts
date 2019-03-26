@@ -1,4 +1,5 @@
-import { Auth, axios } from "./Auth";
+import { Auth } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { IResource } from "./types";
 
 export const APIBase = "api/kube";
@@ -70,7 +71,7 @@ export class Kube {
     name?: string,
     query?: string,
   ) {
-    const { data } = await axios.get<IResource>(
+    const { data } = await axiosWithAuth.get<IResource>(
       this.getResourceURL(apiVersion, resource, namespace, name, query),
     );
     return data;

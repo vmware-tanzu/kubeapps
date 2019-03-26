@@ -15,6 +15,7 @@ const emptyLocation = {
 
 const makeStore = (authenticated: boolean, oidcAuthenticated: boolean) => {
   const state: IAuthState = {
+    sessionExpired: false,
     authenticated,
     oidcAuthenticated,
     authenticating: false,

@@ -1,4 +1,4 @@
-import axios from "axios";
+import { axios } from "./AxiosInstance";
 import { IChart } from "./types";
 
 export default class Chart {

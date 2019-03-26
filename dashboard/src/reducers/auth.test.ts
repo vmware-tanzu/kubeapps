@@ -10,10 +10,12 @@ describe("authReducer", () => {
     authenticating: getType(actions.auth.authenticating),
     authenticationError: getType(actions.auth.authenticationError),
     setAuthenticated: getType(actions.auth.setAuthenticated),
+    setSessionExpired: getType(actions.auth.setSessionExpired),
   };
 
   beforeEach(() => {
     initialState = {
+      sessionExpired: false,
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
@@ -50,18 +52,12 @@ describe("authReducer", () => {
       ).toEqual({ ...initialState, authenticating: true, authenticated: false });
     });
 
-    it(`resets authenticated, authenticating and sets error if type ${
-      actionTypes.authenticationError
-    }`, () => {
+    it(`sets error if type ${actionTypes.authenticationError}`, () => {
       expect(
-        authReducer(
-          {
-            authenticating: true,
-            authenticated: true,
-            oidcAuthenticated: true,
-          },
-          { type: actionTypes.authenticationError as any, payload: errMessage },
-        ),
+        authReducer(initialState, {
+          type: actionTypes.authenticationError as any,
+          payload: errMessage,
+        }),
       ).toEqual({ ...initialState, authenticationError: errMessage });
     });
 
@@ -69,6 +65,7 @@ describe("authReducer", () => {
       expect(
         authReducer(
           {
+            sessionExpired: false,
             authenticating: true,
             authenticated: false,
             oidcAuthenticated: false,
@@ -79,8 +76,53 @@ describe("authReducer", () => {
           },
         ),
       ).toEqual({
+        sessionExpired: false,
         authenticating: false,
         authenticated: true,
+        oidcAuthenticated: true,
+      });
+    });
+
+    it("unsets session expired", () => {
+      expect(
+        authReducer(
+          {
+            sessionExpired: true,
+            authenticating: true,
+            authenticated: false,
+            oidcAuthenticated: false,
+          },
+          {
+            type: actionTypes.setSessionExpired as any,
+            payload: { sessionExpired: false },
+          },
+        ),
+      ).toEqual({
+        sessionExpired: false,
+        authenticating: true,
+        authenticated: false,
+        oidcAuthenticated: false,
+      });
+    });
+
+    it("sets session expired", () => {
+      expect(
+        authReducer(
+          {
+            sessionExpired: false,
+            authenticating: false,
+            authenticated: false,
+            oidcAuthenticated: true,
+          },
+          {
+            payload: { sessionExpired: true },
+            type: actionTypes.setSessionExpired as any,
+          },
+        ),
+      ).toEqual({
+        sessionExpired: true,
+        authenticating: false,
+        authenticated: false,
         oidcAuthenticated: true,
       });
     });

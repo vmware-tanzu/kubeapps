@@ -4,8 +4,11 @@ import { withRouter } from "react-router";
 import PrivateRoute from "../../components/PrivateRoute";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ auth: { authenticated, oidcAuthenticated } }: IStoreState) {
+function mapStateToProps({
+  auth: { authenticated, oidcAuthenticated, sessionExpired },
+}: IStoreState) {
   return {
+    sessionExpired,
     authenticated,
     oidcAuthenticated,
   };

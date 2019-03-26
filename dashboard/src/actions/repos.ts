@@ -1,6 +1,7 @@
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
+import { axios } from "../shared/AxiosInstance";
 import Secret from "../shared/Secret";
 import * as url from "../shared/url";
 import { errorChart } from "./charts";
@@ -193,10 +194,10 @@ export function checkChart(
     } = getState();
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(repo, namespace);
-    const res = await fetch(url.api.charts.listVersions(`${repo}/${chartName}`));
-    if (res.ok) {
+    try {
+      await axios.get(url.api.charts.listVersions(`${repo}/${chartName}`));
       dispatch(receiveRepo(appRepository));
-    } else {
+    } catch (e) {
       dispatch(
         errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
