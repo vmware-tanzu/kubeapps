@@ -197,10 +197,11 @@ jobs:
       - <<: *exports
       - run: make test
   test_e2e:
-    working_directory: /go/src/github.com/kubeapps/kubeapps
+    working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
     machine: true
     environment:
       CGO_ENABLED: "0"
+      GOPATH: /home/circleci/.go_workspace
     # docker:
     #   - image: circleci/golang:1.11
     steps:
