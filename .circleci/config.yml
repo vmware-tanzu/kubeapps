@@ -35,62 +35,62 @@ workflows:
           <<: *build_always
       - build_dashboard:
           <<: *build_always
-      - test_e2e:
+      - local_e2e_tests:
           <<: *build_always
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      # - GKE_1_11_MASTER:
-      #     <<: *build_on_master
-      #     requires:
-      #       - test_go
-      #       - test_dashboard
-      #       - build_go_images
-      #       - build_dashboard
-      # - GKE_1_11_LATEST_RELEASE:
-      #     <<: *build_on_master
-      #     requires:
-      #       - test_go
-      #       - test_dashboard
-      #       - build_go_images
-      #       - build_dashboard
-      # - GKE_1_12_MASTER:
-      #     <<: *build_on_master
-      #     requires:
-      #       - test_go
-      #       - test_dashboard
-      #       - build_go_images
-      #       - build_dashboard
-      # - GKE_1_12_LATEST_RELEASE:
-      #     <<: *build_on_master
-      #     requires:
-      #       - test_go
-      #       - test_dashboard
-      #       - build_go_images
-      #       - build_dashboard
-      # - sync_chart:
-      #     <<: *build_on_master
-      #     requires:
-      #       - GKE_1_11_MASTER
-      #       - GKE_1_11_LATEST_RELEASE
-      #       - GKE_1_12_MASTER
-      #       - GKE_1_12_LATEST_RELEASE
-      # - push_images:
-      #     <<: *build_always
-      #     requires:
-      #       - GKE_1_11_MASTER
-      #       - GKE_1_11_LATEST_RELEASE
-      #       - GKE_1_12_MASTER
-      #       - GKE_1_12_LATEST_RELEASE
-      # - release:
-      #     <<: *build_on_tag
-      #     requires:
-      #       - GKE_1_11_MASTER
-      #       - GKE_1_11_LATEST_RELEASE
-      #       - GKE_1_12_MASTER
-      #       - GKE_1_12_LATEST_RELEASE
+      - GKE_1_11_MASTER:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_11_LATEST_RELEASE:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_12_MASTER:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_12_LATEST_RELEASE:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - sync_chart:
+          <<: *build_on_master
+          requires:
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_12_MASTER
+            - GKE_1_12_LATEST_RELEASE
+      - push_images:
+          <<: *build_always
+          requires:
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_12_MASTER
+            - GKE_1_12_LATEST_RELEASE
+      - release:
+          <<: *build_on_tag
+          requires:
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_12_MASTER
+            - GKE_1_12_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -248,14 +248,16 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  test_e2e:
+  local_e2e_tests:
     working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
     machine: true
     environment:
       GOPATH: /home/circleci/.go_workspace
+      IMAGES: "kubeapps/apprepository-controller kubeapps/tiller-proxy kubeapps/dashboard"
     steps:
       - checkout
       - <<: *exports
+      # By default Go 1.9 is installed, we need 1.11 to use kind
       - run: |
           sudo rm -rf /usr/local/go/*
           sudo chown $(whoami) /usr/local/go
@@ -266,6 +268,18 @@ jobs:
       - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
       - <<: *install_kubectl
       - <<: *install_helm_cli
+      - run: |
+          read -ra IMG_ARRAY <<< "$IMAGES"
+          if [[ -n "${CIRCLE_TAG}" ]]; then
+           makeArgs="VERSION=${CIRCLE_TAG}"
+          fi
+          for IMAGE in "${IMG_ARRAY[@]}"; do
+            make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs ${IMAGE}
+            if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+              docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+              docker push ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+            fi
+          done
       - <<: *run_e2e_tests
   GKE_1_11_MASTER:
     <<: *gke_test
