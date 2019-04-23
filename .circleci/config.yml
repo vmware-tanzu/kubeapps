@@ -263,7 +263,7 @@ jobs:
           tar -C /usr/local -xzf go1.11.9.linux-amd64.tar.gz
       - run: go get -u sigs.k8s.io/kind
       - run: kind create cluster
-      - run: export KUBECONFIG="$(kind get kubeconfig-path --name="kind")"
+      - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
       - <<: *install_kubectl
       - <<: *install_helm_cli
       - <<: *run_e2e_tests
