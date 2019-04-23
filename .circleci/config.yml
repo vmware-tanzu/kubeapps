@@ -25,65 +25,67 @@ workflows:
   version: 2
   kubeapps:
     jobs:
-      - test_go:
+      - test_e2e:
           <<: *build_always
-      - test_dashboard:
-          <<: *build_always
-      - test_chart_render:
-          <<: *build_always
-      - build_go_images:
-          <<: *build_always
-      - build_dashboard:
-          <<: *build_always
-      - GKE_1_11_MASTER:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_11_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_12_MASTER:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - GKE_1_12_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
-      - sync_chart:
-          <<: *build_on_master
-          requires:
-            - GKE_1_11_MASTER
-            - GKE_1_11_LATEST_RELEASE
-            - GKE_1_12_MASTER
-            - GKE_1_12_LATEST_RELEASE
-      - push_images:
-          <<: *build_always
-          requires:
-            - GKE_1_11_MASTER
-            - GKE_1_11_LATEST_RELEASE
-            - GKE_1_12_MASTER
-            - GKE_1_12_LATEST_RELEASE
-      - release:
-          <<: *build_on_tag
-          requires:
-            - GKE_1_11_MASTER
-            - GKE_1_11_LATEST_RELEASE
-            - GKE_1_12_MASTER
-            - GKE_1_12_LATEST_RELEASE
+      # - test_go:
+      #     <<: *build_always
+      # - test_dashboard:
+      #     <<: *build_always
+      # - test_chart_render:
+      #     <<: *build_always
+      # - build_go_images:
+      #     <<: *build_always
+      # - build_dashboard:
+      #     <<: *build_always
+      # - GKE_1_11_MASTER:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - GKE_1_11_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - GKE_1_12_MASTER:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - GKE_1_12_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
+      # - sync_chart:
+      #     <<: *build_on_master
+      #     requires:
+      #       - GKE_1_11_MASTER
+      #       - GKE_1_11_LATEST_RELEASE
+      #       - GKE_1_12_MASTER
+      #       - GKE_1_12_LATEST_RELEASE
+      # - push_images:
+      #     <<: *build_always
+      #     requires:
+      #       - GKE_1_11_MASTER
+      #       - GKE_1_11_LATEST_RELEASE
+      #       - GKE_1_12_MASTER
+      #       - GKE_1_12_LATEST_RELEASE
+      # - release:
+      #     <<: *build_on_tag
+      #     requires:
+      #       - GKE_1_11_MASTER
+      #       - GKE_1_11_LATEST_RELEASE
+      #       - GKE_1_12_MASTER
+      #       - GKE_1_12_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -190,6 +192,17 @@ jobs:
       CGO_ENABLED: "0"
     docker:
       - image: circleci/golang:1.11
+    steps:
+      - checkout
+      - <<: *exports
+      - run: make test
+  test_e2e:
+    working_directory: /go/src/github.com/kubeapps/kubeapps
+    machine: true
+    environment:
+      CGO_ENABLED: "0"
+    # docker:
+    #   - image: circleci/golang:1.11
     steps:
       - checkout
       - <<: *exports
