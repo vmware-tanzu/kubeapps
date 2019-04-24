@@ -140,7 +140,7 @@ build_images: &build_images
     - persist_to_workspace:
         root: images
         paths:
-          - *
+          - "*"
 install_kubectl: &install_kubectl
   run: |
     curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl
