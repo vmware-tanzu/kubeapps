@@ -247,20 +247,15 @@ jobs:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
   local_e2e_tests:
-    working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
     machine: true
-    environment:
-      GOPATH: /home/circleci/.go_workspace
     steps:
       - checkout
       - <<: *exports
-      # By default Go 1.9 is installed, we need 1.11 to use kind
+      # Install kind
       - run: |
-          sudo rm -rf /usr/local/go/*
-          sudo chown $(whoami) /usr/local/go
-          curl -LO https://dl.google.com/go/go1.11.9.linux-amd64.tar.gz
-          tar -C /usr/local -xzf go1.11.9.linux-amd64.tar.gz
-      - run: go get -u sigs.k8s.io/kind
+          curl -LO https://github.com/kubernetes-sigs/kind/releases/download/0.2.1/kind-linux-amd64
+          chmod +x kind-linux-amd64
+          sudo mv kind-linux-amd64 /usr/local/bin/kind
       - run: kind create cluster
       - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
       - <<: *install_kubectl
