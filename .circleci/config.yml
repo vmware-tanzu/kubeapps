@@ -276,7 +276,7 @@ jobs:
       # Load images from other jobs
       - attach_workspace:
           at: /tmp/images
-      - run: kind load image-archive /tmp/images/*
+      - run: for image in /tmp/images/*; do kind load image-archive "$image"; done
       - <<: *run_e2e_tests
   GKE_1_11_MASTER:
     <<: *gke_test
