@@ -192,14 +192,6 @@ gke_test: &gke_test
     # Install helm
     - <<: *install_helm_cli
     - <<: *run_e2e_tests
-    - run: |
-        # If we want to test the latest version instead we override the image to be used
-        if [[ -n "$TEST_LATEST_RELEASE" ]]; then
-          source ./script/chart_sync_utils.sh
-          DEV_TAG=$(latestReleaseTag)
-          IMG_MODIFIER=""
-        fi
-        ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER
     - run:
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
