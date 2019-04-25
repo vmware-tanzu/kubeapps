@@ -186,6 +186,7 @@ gke_test: &gke_test
         if [ -a $GOOGLE_APPLICATION_CREDENTIALS ]; then
           gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
         fi
+    - <<: *install_kubectl
     # A GKE cluster name cannot contain non-alphanumeric characters (nor uppercase letters)
     - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
     - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
