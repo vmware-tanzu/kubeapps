@@ -33,7 +33,7 @@ describe("render", () => {
   });
 });
 
-it("goes back if clicking in the Back button", () => {
+it("goes back when clicking in the Back button", () => {
   const goBack = jest.fn();
   const upgradeApp = jest.fn();
   const selected = {
