@@ -44,6 +44,7 @@ exports[`renders the repo selection form if not introduced 1`] = `
     }
     getChartValues={[MockFunction]}
     getChartVersion={[MockFunction]}
+    goBack={[MockFunction]}
     isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"
@@ -105,6 +106,7 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     }
     getChartValues={[MockFunction]}
     getChartVersion={[MockFunction]}
+    goBack={[MockFunction]}
     isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"
@@ -174,6 +176,7 @@ exports[`skips the repo selection form if the app contains upgrade info 1`] = `
     }
     getChartValues={[MockFunction]}
     getChartVersion={[MockFunction]}
+    goBack={[MockFunction]}
     isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"

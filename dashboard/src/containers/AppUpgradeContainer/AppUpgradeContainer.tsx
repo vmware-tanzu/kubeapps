@@ -1,4 +1,4 @@
-import { push } from "connected-react-router";
+import { goBack, push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -49,6 +49,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     getChartVersion: (id: string, version: string) =>
       dispatch(actions.charts.getChartVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
+    goBack: () => dispatch(goBack()),
     upgradeApp: (version: IChartVersion, releaseName: string, namespace: string, values?: string) =>
       dispatch(actions.apps.upgradeApp(version, releaseName, namespace, values)),
   };
