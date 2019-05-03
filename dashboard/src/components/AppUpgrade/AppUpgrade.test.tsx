@@ -25,6 +25,7 @@ const defaultProps = {
   kubeappsNamespace: "kubeapps",
   namespace: "default",
   push: jest.fn(),
+  goBack: jest.fn(),
   releaseName: "foo",
   repo: {} as IAppRepository,
   repoError: undefined,

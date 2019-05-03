@@ -26,6 +26,7 @@ interface IDeploymentFormProps {
     values?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
+  goBack: () => RouterAction;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getChartVersion: (id: string, chartVersion: string) => void;
   getChartValues: (id: string, chartVersion: string) => void;
@@ -84,7 +85,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   }
 
   public render() {
-    const { selected, namespace, releaseName } = this.props;
+    const { selected, namespace, releaseName, goBack } = this.props;
     const { version, versions } = selected;
     const { appValues } = this.state;
     if (this.props.error) {
@@ -144,7 +145,7 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
                 <button className="button button-primary" type="submit">
                   Submit
                 </button>
-                <button className="button" onClick={this.handleReselectChartRepo}>
+                <button className="button" type="button" onClick={goBack}>
                   Back
                 </button>
               </div>
@@ -182,10 +183,6 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
 
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
-  };
-
-  public handleReselectChartRepo = () => {
-    this.props.clearRepo();
   };
 
   private requiredRBACRoles(): IRBACRole[] {
