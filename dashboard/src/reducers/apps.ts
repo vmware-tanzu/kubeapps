@@ -39,12 +39,16 @@ const appsReducer = (
         const appOverviewIndex = state.listOverview.findIndex(
           a => a.releaseName === action.payload.releaseName,
         );
-        // Replace item in listOverview array
-        listOverview = [
-          ...state.listOverview.slice(0, appOverviewIndex),
-          { ...state.listOverview[appOverviewIndex], updateInfo: action.payload.updateInfo },
-          ...state.listOverview.slice(appOverviewIndex + 1),
-        ];
+        // If the release exists in the listOverview, update the updateInfo
+        // field. If it doesn't exist, we don't do anything, it will get fetched
+        // when loading the app list
+        if (appOverviewIndex >= 0) {
+          listOverview = [
+            ...state.listOverview.slice(0, appOverviewIndex),
+            { ...state.listOverview[appOverviewIndex], updateInfo: action.payload.updateInfo },
+            ...state.listOverview.slice(appOverviewIndex + 1),
+          ];
+        }
       }
       let selected;
       if (state.selected && state.selected.name === action.payload.releaseName) {
