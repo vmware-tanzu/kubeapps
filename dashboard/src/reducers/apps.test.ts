@@ -104,11 +104,10 @@ describe("appsReducer", () => {
       });
 
       it("sets updateInfo for selected if release name matches", () => {
+        const selected = { name: "test" };
         let state = {
           ...initialState,
-          selected: {
-            name: "test",
-          },
+          selected,
         } as IAppState;
 
         state = appsReducer(state, {
@@ -119,15 +118,14 @@ describe("appsReducer", () => {
           type: actionTypes.receiveAppUpdateInfo,
         });
 
-        expect(state.selected!.updateInfo).toEqual(testUpdateInfo);
+        expect(state.selected).toEqual({ ...selected, updateInfo: testUpdateInfo });
       });
 
-      it("doesn't set updateInfo for selected if release name does not match", () => {
+      it("doesn't change selected if release name does not match", () => {
+        const selected = { name: "test" };
         let state = {
           ...initialState,
-          selected: {
-            name: "test",
-          },
+          selected,
         } as IAppState;
 
         state = appsReducer(state, {
@@ -138,7 +136,7 @@ describe("appsReducer", () => {
           type: actionTypes.receiveAppUpdateInfo,
         });
 
-        expect(state.selected!.updateInfo).toBeUndefined();
+        expect(state.selected).toBe(selected);
       });
 
       it("doesn't set updateInfo for selected if selected is undefined", () => {
