@@ -20,14 +20,14 @@ import (
 	"fmt"
 	"strings"
 
+	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 	authorizationapi "k8s.io/api/authorization/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	discovery "k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	"k8s.io/client-go/rest"
-
-	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 )
 
 type resource struct {
@@ -170,6 +170,11 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 	for _, i := range itemsToCheck {
 		rInfo, err := u.resolve(i.APIVersion, i.Kind)
 		if err != nil {
+			if k8sErrors.IsNotFound(err) {
+				// The resource version/kind is not registered in the k8s API so
+				// we assume it's a CRD that is going to be created with the chart
+				continue
+			}
 			return []Action{}, err
 		}
 		group := i.APIVersion
