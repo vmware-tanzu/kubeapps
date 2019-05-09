@@ -189,7 +189,7 @@ kind: ClusterRoleBinding
 				{APIVersion: "rbac.authorization.k8s.io/v1", Resource: "clusterrolebindings", ClusterWide: true, Verbs: []string{"get"}},
 			},
 		},
-		// It should allow an unrecognized resources
+		// It should allow an unrecognized resource
 		{
 			Action:    "get",
 			Namespace: "foo",
