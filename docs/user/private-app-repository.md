@@ -103,3 +103,28 @@ The above command creates a token with read-only permissions. Now you can go to 
 <img src="../img/jfrog-custom-repo.png" alt="JFrog custom repository" width="400px">
 
 After submitting the repository, you will be able to click on the new repository and see the chart you uploaded in the previous step.
+
+## Modifying the synchronization job
+
+Kubeapps runs a periodic job (CronJob) to populate and synchronize the charts existing in each repository. Since Kubeapps v1.4.0, it's possible to modify the spec of this job. This is useful if you need to run the pod in a certain Kubernetes node, or set some environment variables. To do so you can edit (or create) an AppRepository adding the field `syncJobPodTemplate`. For example:
+
+```yaml
+apiVersion: kubeapps.com/v1alpha1
+kind: AppRepository
+metadata:
+  name: my-repo
+  namespace: kubeapps
+spec:
+  syncJobPodTemplate:
+    metadata:
+      labels:
+        my-repo: "isPrivate"
+    spec:
+      containers:
+        - env:
+            - name: FOO
+              value: BAR
+  url: https://my.charts.com/
+```
+
+The above will generate a pod with the label `my-repo: isPrivate` and the environment variable `FOO=BAR`.
