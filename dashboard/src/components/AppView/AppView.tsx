@@ -215,34 +215,38 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       secretRefs: [],
     };
     resources.forEach(i => {
-      const item = i as IResource;
-      const resource = { isFetching: true, item };
-      switch (i.kind) {
-        case "Deployment":
-          result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          break;
-        case "Service":
-          result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          break;
-        case "Ingress":
-          result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          break;
-        case "Secret":
-          result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
-          break;
-        case "List":
-          // A List can contain an arbitrary set of resources so we treat them as an
-          // additional manifest. We merge the current result with the resources of
-          // the List, concatenating items from both.
-          _.assignWith(
-            result,
-            this.parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
-            // Merge the list with the current result
-            (prev, newArray) => prev.concat(newArray),
-          );
-          break;
-        default:
-          result.otherResources.push(item);
+      // The item may be a list
+      const itemList = i as IK8sList<IResource, {}>;
+      if (itemList.items) {
+        // If the resource  has a list of items, treat them as a list
+        // A List can contain an arbitrary set of resources so we treat them as an
+        // additional manifest. We merge the current result with the resources of
+        // the List, concatenating items from both.
+        _.assignWith(
+          result,
+          this.parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
+          // Merge the list with the current result
+          (prev, newArray) => prev.concat(newArray),
+        );
+      } else {
+        const item = i as IResource;
+        const resource = { isFetching: true, item };
+        switch (i.kind) {
+          case "Deployment":
+            result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "Service":
+            result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "Ingress":
+            result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "Secret":
+            result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          default:
+            result.otherResources.push(item);
+        }
       }
     });
     return result;
