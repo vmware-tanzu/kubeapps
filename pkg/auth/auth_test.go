@@ -18,9 +18,12 @@ package auth
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	discovery "k8s.io/client-go/discovery"
 	fakediscovery "k8s.io/client-go/discovery/fake"
 	"k8s.io/client-go/kubernetes/fake"
@@ -34,8 +37,14 @@ func (u fakeK8sAuth) Validate() error {
 	return nil
 }
 func (u fakeK8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, error) {
-	return u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
+	g, err := u.DiscoveryCli.ServerResourcesForGroupVersion(groupVersion)
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		// Fake DiscoveryCli doesn't return a valid NotFound error so we need to forge it
+		err = k8sErrors.NewNotFound(schema.GroupResource{}, groupVersion)
+	}
+	return g, err
 }
+
 func (u fakeK8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
 	// Fake write permissions for pods
 	if resource == "pods" {
@@ -179,6 +188,16 @@ kind: ClusterRoleBinding
 			ExpectedActions: []Action{
 				{APIVersion: "rbac.authorization.k8s.io/v1", Resource: "clusterrolebindings", ClusterWide: true, Verbs: []string{"get"}},
 			},
+		},
+		// It should allow an unrecognized resource, so that CRDs can be installed before CRs
+		{
+			Action:    "get",
+			Namespace: "foo",
+			Manifest: `---
+apiVersion: foo.bar.io/v1
+kind: FooBar
+`,
+			ExpectedActions: []Action{},
 		},
 	}
 	for _, tt := range testSuite {
