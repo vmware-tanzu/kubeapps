@@ -311,4 +311,24 @@ describe("AppViewComponent", () => {
       otherResources: [obj],
     });
   });
+
+  it("renders a list of roles", () => {
+    const obj = { kind: "ClusterRole", metadata: { name: "foo" } };
+    const list = {
+      kind: "RoleList",
+      items: [obj, resources.deployment],
+    };
+    const manifest = generateYamlManifest([resources.service, list]);
+
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    validProps.app.manifest = manifest;
+    // setProps again so we trigger componentWillReceiveProps
+    wrapper.setProps(validProps);
+
+    expect(wrapper.state()).toMatchObject({
+      deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
+      serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
+      otherResources: [obj],
+    });
+  });
 });
