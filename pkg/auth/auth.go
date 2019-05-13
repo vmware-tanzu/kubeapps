@@ -173,6 +173,8 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 			if k8sErrors.IsNotFound(err) {
 				// The resource version/kind is not registered in the k8s API so
 				// we assume it's a CRD that is going to be created with the chart
+				// In any case, if a chart tries to install a resource that doesn't
+				// exist it's fine to ignore it here since the installation will fail
 				continue
 			}
 			return []Action{}, err
