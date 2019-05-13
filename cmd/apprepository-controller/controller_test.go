@@ -573,13 +573,16 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
+							Affinity: &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
 							Containers: []corev1.Container{
 								{
 									Env: []corev1.EnvVar{
 										{Name: "FOO", Value: "BAR"},
 									},
+									VolumeMounts: []corev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
 								},
 							},
+							Volumes: []corev1.Volume{{Name: "foo", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}}},
 						},
 					},
 				},
@@ -608,6 +611,7 @@ func Test_newSyncJob(t *testing.T) {
 							},
 						},
 						Spec: corev1.PodSpec{
+							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
 							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
@@ -629,10 +633,10 @@ func Test_newSyncJob(t *testing.T) {
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
 									},
-									VolumeMounts: nil,
+									VolumeMounts: []corev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
 								},
 							},
-							Volumes: nil,
+							Volumes: []corev1.Volume{{Name: "foo", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}}},
 						},
 					},
 				},
