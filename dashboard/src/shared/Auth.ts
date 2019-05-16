@@ -55,12 +55,16 @@ export class Auth {
   // fetchOIDCToken does a HEAD request to collect the Bearer token
   // from the authorization header if exists
   public static async fetchOIDCToken(): Promise<string | null> {
-    const { headers } = await Axios.head("/");
-    if (headers && headers.authorization) {
-      const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
-      if (tokenMatch) {
-        return tokenMatch[1];
+    try {
+      const { headers } = await Axios.head("");
+      if (headers && headers.authorization) {
+        const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
+        if (tokenMatch) {
+          return tokenMatch[1];
+        }
       }
+    } catch (e) {
+      // Unable to retrieve token
     }
     return null;
   }
