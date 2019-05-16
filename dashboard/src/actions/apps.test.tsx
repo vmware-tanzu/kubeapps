@@ -118,6 +118,37 @@ describe("fetches applications", () => {
       await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
       expect(store.getActions()).toEqual(expectedActions);
     });
+
+    it("set up upToDate=true if the application version is not semver compatible", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: { latestChartVersion: { data: { version: "1.0" } } },
+        },
+      ];
+      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
+      App.listApps = jest.fn(() => appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        { type: getType(actions.apps.requestAppUpdateInfo) },
+        {
+          type: getType(actions.apps.receiveAppUpdateInfo),
+          payload: {
+            releaseName: "foobar",
+            updateInfo: { upToDate: true, latestVersion: "", repository: { name: "", url: "" } },
+          },
+        },
+      ];
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      expect(store.getActions()).toEqual(expectedActions);
+    });
   });
 });
 
