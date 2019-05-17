@@ -29,7 +29,8 @@ describe("Auth", () => {
 
   describe("fetchOIDCToken", () => {
     it("should fetch a token", async () => {
-      Axios.head = jest.fn(() => {
+      Axios.head = jest.fn(path => {
+        expect(path).toEqual("");
         return { headers: { authorization: "Bearer foo" } };
       });
       const token = await Auth.fetchOIDCToken();
@@ -39,6 +40,13 @@ describe("Auth", () => {
   it("should not return a token if the info is not present", async () => {
     Axios.head = jest.fn(() => {
       return {};
+    });
+    const token = await Auth.fetchOIDCToken();
+    expect(token).toEqual(null);
+  });
+  it("should not return a token if the call fails", async () => {
+    Axios.head = jest.fn(() => {
+      throw new Error();
     });
     const token = await Auth.fetchOIDCToken();
     expect(token).toEqual(null);
