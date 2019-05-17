@@ -1,9 +1,9 @@
 package main
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/go-test/deep"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -85,10 +85,10 @@ func Test_newCronJob(t *testing.T) {
 														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 												},
 											},
-											VolumeMounts: []corev1.VolumeMount{},
+											VolumeMounts: nil,
 										},
 									},
-									Volumes: []corev1.Volume{},
+									Volumes: nil,
 								},
 							},
 						},
@@ -171,10 +171,10 @@ func Test_newCronJob(t *testing.T) {
 														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 												},
 											},
-											VolumeMounts: []corev1.VolumeMount{},
+											VolumeMounts: nil,
 										},
 									},
-									Volumes: []corev1.Volume{},
+									Volumes: nil,
 								},
 							},
 						},
@@ -192,8 +192,8 @@ func Test_newCronJob(t *testing.T) {
 				defer func() { userAgentComment = "" }()
 			}
 			result := newCronJob(tt.apprepo)
-			if !reflect.DeepEqual(tt.expected, *result) {
-				t.Errorf("Unexpected result\nExpecting:\n %+v\nReceived:\n %+v", tt.expected, *result)
+			if diff := deep.Equal(tt.expected, *result); diff != nil {
+				t.Error(diff)
 			}
 		})
 	}
@@ -269,10 +269,10 @@ func Test_newSyncJob(t *testing.T) {
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
 									},
-									VolumeMounts: []corev1.VolumeMount{},
+									VolumeMounts: nil,
 								},
 							},
-							Volumes: []corev1.Volume{},
+							Volumes: nil,
 						},
 					},
 				},
@@ -350,10 +350,10 @@ func Test_newSyncJob(t *testing.T) {
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-secrets"}, Key: "AuthorizationHeader"}},
 										},
 									},
-									VolumeMounts: []corev1.VolumeMount{},
+									VolumeMounts: nil,
 								},
 							},
-							Volumes: []corev1.Volume{},
+							Volumes: nil,
 						},
 					},
 				},
@@ -548,6 +548,101 @@ func Test_newSyncJob(t *testing.T) {
 			},
 			"",
 		},
+		{
+			"my-charts with a custom pod template",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+					SyncJobPodTemplate: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"foo": "bar",
+							},
+						},
+						Spec: corev1.PodSpec{
+							Affinity: &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
+							Containers: []corev1.Container{
+								{
+									Env: []corev1.EnvVar{
+										{Name: "FOO", Value: "BAR"},
+									},
+									VolumeMounts: []corev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
+								},
+							},
+							Volumes: []corev1.Volume{{Name: "foo", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}}},
+						},
+					},
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-sync-my-charts-",
+					Namespace:    "kubeapps",
+					OwnerReferences: []metav1.OwnerReference{
+						*metav1.NewControllerRef(
+							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
+							schema.GroupVersionKind{
+								Group:   apprepov1alpha1.SchemeGroupVersion.Group,
+								Version: apprepov1alpha1.SchemeGroupVersion.Version,
+								Kind:    "AppRepository",
+							},
+						),
+					},
+				},
+				Spec: batchv1.JobSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								"apprepositories.kubeapps.com/repo-name": "my-charts",
+								"foo":                                    "bar",
+							},
+						},
+						Spec: corev1.PodSpec{
+							Affinity:      &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{}}},
+							RestartPolicy: "OnFailure",
+							Containers: []corev1.Container{
+								{
+									Name:    "sync",
+									Image:   repoSyncImage,
+									Command: []string{"/chart-repo"},
+									Args: []string{
+										"sync",
+										"--mongo-url=mongodb.kubeapps",
+										"--mongo-user=root",
+										"my-charts",
+										"https://charts.acme.com/my-charts",
+									},
+									Env: []corev1.EnvVar{
+										{Name: "FOO", Value: "BAR"},
+										{
+											Name: "MONGO_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+										},
+									},
+									VolumeMounts: []corev1.VolumeMount{{Name: "foo", MountPath: "/bar"}},
+								},
+							},
+							Volumes: []corev1.Volume{{Name: "foo", VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}}}},
+						},
+					},
+				},
+			},
+			"",
+		},
 	}
 
 	for _, tt := range tests {
@@ -558,8 +653,8 @@ func Test_newSyncJob(t *testing.T) {
 			}
 
 			result := newSyncJob(tt.apprepo)
-			if !reflect.DeepEqual(tt.expected, *result) {
-				t.Errorf("Unexpected result\nExpecting:\n %+v\nReceived:\n %+v", tt.expected, *result)
+			if diff := deep.Equal(tt.expected, *result); diff != nil {
+				t.Error(diff)
 			}
 		})
 	}
@@ -617,8 +712,8 @@ func Test_newCleanupJob(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := newCleanupJob(tt.repoName, tt.namespace)
-			if !reflect.DeepEqual(tt.expected, *result) {
-				t.Errorf("Unexpected result\nExpecting:\n %+v\nReceived:\n %+v", tt.expected, *result)
+			if diff := deep.Equal(tt.expected, *result); diff != nil {
+				t.Error(diff)
 			}
 		})
 	}
