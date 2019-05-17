@@ -443,29 +443,34 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 			MountPath: "/usr/local/share/ca-certificates",
 		})
 	}
+	// Get the predefined pod spec for the apprepo definition if exists
+	podTemplateSpec := apprepo.Spec.SyncJobPodTemplate
+	// Add labels
+	if len(podTemplateSpec.ObjectMeta.Labels) == 0 {
+		podTemplateSpec.ObjectMeta.Labels = map[string]string{}
+	}
+	for k, v := range jobLabels(apprepo) {
+		podTemplateSpec.ObjectMeta.Labels[k] = v
+	}
+	// If there's an issue, will restart pod until sucessful or replaced
+	// by another instance of the job scheduled by the cronjob
+	// see: cronJobSpec.concurrencyPolicy
+	podTemplateSpec.Spec.RestartPolicy = "OnFailure"
+	// Populate container spec
+	if len(podTemplateSpec.Spec.Containers) == 0 {
+		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
+	}
+	podTemplateSpec.Spec.Containers[0].Name = "sync"
+	podTemplateSpec.Spec.Containers[0].Image = repoSyncImage
+	podTemplateSpec.Spec.Containers[0].Command = []string{"/chart-repo"}
+	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo)
+	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo)...)
+	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
+	// Add volumes
+	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
+
 	return batchv1.JobSpec{
-		Template: corev1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: jobLabels(apprepo),
-			},
-			Spec: corev1.PodSpec{
-				// If there's an issue, will restart pod until sucessful or replaced
-				// by another instance of the job scheduled by the cronjob
-				// see: cronJobSpec.concurrencyPolicy
-				RestartPolicy: "OnFailure",
-				Containers: []corev1.Container{
-					{
-						Name:         "sync",
-						Image:        repoSyncImage,
-						Command:      []string{"/chart-repo"},
-						Args:         apprepoSyncJobArgs(apprepo),
-						Env:          apprepoSyncJobEnvVars(apprepo),
-						VolumeMounts: volumeMounts,
-					},
-				},
-				Volumes: volumes,
-			},
-		},
+		Template: podTemplateSpec,
 	}
 }
 
