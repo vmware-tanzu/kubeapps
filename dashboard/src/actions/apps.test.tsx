@@ -119,7 +119,7 @@ describe("fetches applications", () => {
       expect(store.getActions()).toEqual(expectedActions);
     });
 
-    it("set up upToDate=true if the application version is not semver compatible", async () => {
+    it("set an error if the application version is not semver compatible", async () => {
       const appsResponse = [
         {
           releaseName: "foobar",
@@ -142,7 +142,12 @@ describe("fetches applications", () => {
           type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
             releaseName: "foobar",
-            updateInfo: { upToDate: true, latestVersion: "", repository: { name: "", url: "" } },
+            updateInfo: {
+              error: new Error("Invalid Version: 1.0"),
+              upToDate: false,
+              latestVersion: "",
+              repository: { name: "", url: "" },
+            },
           },
         },
       ];

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ArrowUpCircle, CheckCircle } from "react-feather";
+import { AlertTriangle, ArrowUpCircle, CheckCircle } from "react-feather";
 import { Link } from "react-router-dom";
 
 import { IRelease } from "shared/types";
@@ -51,6 +51,20 @@ class ChartInfo extends React.Component<IChartInfoProps> {
     // If update is not set yet we cannot know if there is
     // an update available or not
     if (app.updateInfo) {
+      if (app.updateInfo.error) {
+        return (
+          <div>
+            <AlertTriangle
+              color="white"
+              fill="#FDBA12"
+              className="icon"
+              size={15}
+              style={{ bottom: "-0.2em" }}
+            />{" "}
+            <span>Updates check failed. {app.updateInfo.error.message}</span>
+          </div>
+        );
+      }
       if (app.updateInfo.upToDate) {
         return (
           <span>
