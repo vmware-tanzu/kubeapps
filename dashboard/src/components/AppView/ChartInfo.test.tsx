@@ -52,6 +52,6 @@ context("when information about updates is available", () => {
       updateInfo: { error: new Error("Boom!"), upToDate: false, latestVersion: "" },
     } as IRelease;
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
-    expect(wrapper.html()).toContain("Updates check failed. Boom!");
+    expect(wrapper.html()).toContain("Update check failed. Boom!");
   });
 });
