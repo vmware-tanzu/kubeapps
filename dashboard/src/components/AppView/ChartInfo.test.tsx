@@ -46,4 +46,12 @@ context("when information about updates is available", () => {
         .text(),
     ).toContain("1.0.0 available");
   });
+  it("renders a warning if there are errors with the update info", () => {
+    const appWithUpdates = {
+      ...defaultProps.app,
+      updateInfo: { error: new Error("Boom!"), upToDate: false, latestVersion: "" },
+    } as IRelease;
+    const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
+    expect(wrapper.html()).toContain("Update check failed. Boom!");
+  });
 });
