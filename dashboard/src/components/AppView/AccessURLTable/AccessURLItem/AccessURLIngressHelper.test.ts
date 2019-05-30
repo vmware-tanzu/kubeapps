@@ -4,9 +4,9 @@ import { GetURLItemFromIngress } from "./AccessURLIngressHelper";
 describe("GetURLItemFromIngress", () => {
   interface Itest {
     description: string;
-    hosts: string[];
-    paths: IHTTPIngressPath[];
-    tlsHosts: string[];
+    hosts?: string[];
+    paths?: IHTTPIngressPath[];
+    tlsHosts?: string[];
     expectedURLs: string[];
   }
   const tests: Itest[] = [
@@ -38,6 +38,27 @@ describe("GetURLItemFromIngress", () => {
       tlsHosts: ["foo.bar"],
       expectedURLs: ["https://foo.bar", "http://not-foo.bar"],
     },
+    {
+      description: "it should ignore an ingress if it has no hosts",
+      hosts: undefined,
+      paths: [],
+      tlsHosts: ["foo.bar"],
+      expectedURLs: [],
+    },
+    {
+      description: "it should ignore paths if undefined",
+      hosts: ["foo.bar"],
+      paths: undefined,
+      tlsHosts: [],
+      expectedURLs: ["http://foo.bar"],
+    },
+    {
+      description: "it should ignore TLS if the hosts are undefined",
+      hosts: ["foo.bar"],
+      paths: [],
+      tlsHosts: undefined,
+      expectedURLs: ["http://foo.bar"],
+    },
   ];
   tests.forEach(test => {
     it(test.description, () => {
@@ -49,19 +70,21 @@ describe("GetURLItemFromIngress", () => {
           rules: [],
         } as IIngressSpec,
       } as IResource;
-      test.hosts.forEach(h => {
-        const rule = {
-          host: h,
-          http: {
-            paths: [],
-          },
-        } as IIngressRule;
-        if (test.paths.length > 0) {
-          rule.http.paths = test.paths;
-        }
-        ingress.spec.rules.push(rule);
-      });
-      if (test.tlsHosts.length > 0) {
+      if (test.hosts) {
+        test.hosts.forEach(h => {
+          const rule = {
+            host: h,
+            http: {
+              paths: [],
+            },
+          } as IIngressRule;
+          if (test.paths && test.paths.length > 0) {
+            rule.http.paths = test.paths;
+          }
+          ingress.spec.rules.push(rule);
+        });
+      }
+      if (test.tlsHosts && test.tlsHosts.length > 0) {
         ingress.spec.tls = [
           {
             hosts: test.tlsHosts,
