@@ -61,7 +61,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
               size={15}
               style={{ bottom: "-0.2em" }}
             />{" "}
-            <span>Updates check failed. {app.updateInfo.error.message}</span>
+            <span>Update check failed. {app.updateInfo.error.message}</span>
           </div>
         );
       }
