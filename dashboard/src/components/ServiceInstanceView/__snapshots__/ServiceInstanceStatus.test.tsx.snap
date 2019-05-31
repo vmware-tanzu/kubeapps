@@ -2,7 +2,7 @@
 
 exports[`displays unknown status when conditions is empty 1`] = `
 <span
-  className="DeploymentStatus"
+  className="ApplicationStatus"
 >
   <AlertTriangle
     className="icon"
@@ -21,7 +21,7 @@ exports[`displays unknown status when conditions is empty 1`] = `
 
 exports[`renders correct statuses when deprovisioning 1`] = `
 <span
-  className="DeploymentStatus DeploymentStatus--pending"
+  className="ApplicationStatus ApplicationStatus--pending"
 >
   <Compass
     className="icon padding-t-tiny"
@@ -33,7 +33,7 @@ exports[`renders correct statuses when deprovisioning 1`] = `
 
 exports[`renders correct statuses when error 1`] = `
 <span
-  className="DeploymentStatus"
+  className="ApplicationStatus"
 >
   <AlertTriangle
     className="icon"
@@ -52,7 +52,7 @@ exports[`renders correct statuses when error 1`] = `
 
 exports[`renders correct statuses when failed 1`] = `
 <span
-  className="DeploymentStatus"
+  className="ApplicationStatus"
 >
   <AlertTriangle
     className="icon"
@@ -71,7 +71,7 @@ exports[`renders correct statuses when failed 1`] = `
 
 exports[`renders correct statuses when provisioned successfully 1`] = `
 <span
-  className="DeploymentStatus DeploymentStatus--success"
+  className="ApplicationStatus ApplicationStatus--success"
 >
   <Check
     className="icon padding-t-tiny"
@@ -83,7 +83,7 @@ exports[`renders correct statuses when provisioned successfully 1`] = `
 
 exports[`renders correct statuses when provisioning 1`] = `
 <span
-  className="DeploymentStatus DeploymentStatus--pending"
+  className="ApplicationStatus ApplicationStatus--pending"
 >
   <Compass
     className="icon padding-t-tiny"
@@ -95,7 +95,7 @@ exports[`renders correct statuses when provisioning 1`] = `
 
 exports[`renders correct statuses when unknown 1`] = `
 <span
-  className="DeploymentStatus"
+  className="ApplicationStatus"
 >
   <AlertTriangle
     className="icon"
