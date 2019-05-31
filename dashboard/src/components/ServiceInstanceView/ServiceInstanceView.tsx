@@ -6,7 +6,6 @@ import { IServicePlan } from "../../shared/ServiceCatalog";
 import { IServiceInstance } from "../../shared/ServiceInstance";
 import { IRBACRole, NotFoundError } from "../../shared/types";
 import BindingList from "../BindingList";
-import "../DeploymentStatus/DeploymentStatus.css";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AddBindingButton from "./AddBindingButton";

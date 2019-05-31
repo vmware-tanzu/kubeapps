@@ -4,7 +4,6 @@ import { AlertTriangle } from "react-feather";
 import { IServiceInstance } from "shared/ServiceInstance";
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
-import "../DeploymentStatus/DeploymentStatus.css";
 
 interface IServiceInstanceStatusProps {
   instance: IServiceInstance;

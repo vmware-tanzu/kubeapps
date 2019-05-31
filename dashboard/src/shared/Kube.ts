@@ -19,6 +19,8 @@ const ResourceKindToPlural = {
   Service: "services",
   Ingress: "ingresses",
   Deployment: "deployments",
+  StatefulSet: "statefulsets",
+  DaemonSet: "daemonsets",
 };
 
 // Kube is a lower-level class for interacting with the Kubernetes API. Use
