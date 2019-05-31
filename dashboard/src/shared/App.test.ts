@@ -5,10 +5,11 @@ import { IAppOverview } from "./types";
 
 describe("App", () => {
   beforeEach(() => {
-    moxios.install(axiosWithAuth);
+    // Import as "any" to avoid typescript syntax error
+    moxios.install(axiosWithAuth as any);
   });
   afterEach(() => {
-    moxios.uninstall(axiosWithAuth);
+    moxios.uninstall(axiosWithAuth as any);
   });
   describe("getResourceURL", () => {
     [
