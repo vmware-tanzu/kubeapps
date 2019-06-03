@@ -46,11 +46,12 @@ describe("createAxiosInterceptorWithAuth", () => {
   });
 
   beforeEach(() => {
-    moxios.install(axios);
+    // Import as "any" to avoid typescript syntax error
+    moxios.install(axios as any);
   });
 
   afterEach(() => {
-    moxios.uninstall(axios);
+    moxios.uninstall(axios as any);
     store.clearActions();
   });
 
