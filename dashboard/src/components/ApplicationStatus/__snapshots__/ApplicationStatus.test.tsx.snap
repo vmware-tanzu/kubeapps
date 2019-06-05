@@ -18,28 +18,6 @@ exports[`renders a deleting status 1`] = `
 </span>
 `;
 
-exports[`renders a deployed status 1`] = `
-<span
-  className="ApplicationStatus ApplicationStatus--success"
->
-  <Check
-    className="icon padding-t-tiny"
-  />
-   Deployed
-</span>
-`;
-
-exports[`renders a deploying status 1`] = `
-<span
-  className="ApplicationStatus ApplicationStatus--pending"
->
-  <Compass
-    className="icon padding-t-tiny"
-  />
-   Deploying
-</span>
-`;
-
 exports[`renders a loading status 1`] = `
 <span
   className="ApplicationStatus"

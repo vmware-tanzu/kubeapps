@@ -45,7 +45,7 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps> {
   private renderSuccessStatus() {
     return (
       <span className="ApplicationStatus ApplicationStatus--success">
-        <Check className="icon padding-t-tiny" /> Deployed
+        <Check className="icon padding-t-tiny" /> Ready
       </span>
     );
   }
@@ -53,7 +53,7 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps> {
   private renderPendingStatus() {
     return (
       <span className="ApplicationStatus ApplicationStatus--pending">
-        <Compass className="icon padding-t-tiny" /> Deploying
+        <Compass className="icon padding-t-tiny" /> Not Ready
       </span>
     );
   }
