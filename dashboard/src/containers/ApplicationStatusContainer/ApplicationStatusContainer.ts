@@ -32,25 +32,13 @@ function mapDispatchToProps(
   props: IApplicationStatusContainerProps,
 ) {
   return {
-    watchDeployments: () => {
-      props.deployRefs.forEach(r => {
-        dispatch(actions.kube.getAndWatchResource(r));
-      });
-      props.statefulsetRefs.forEach(r => {
-        dispatch(actions.kube.getAndWatchResource(r));
-      });
-      props.daemonsetRefs.forEach(r => {
+    watchWorkloads: () => {
+      [...props.deployRefs, ...props.statefulsetRefs, ...props.daemonsetRefs].forEach(r => {
         dispatch(actions.kube.getAndWatchResource(r));
       });
     },
     closeWatches: () => {
-      props.deployRefs.forEach(r => {
-        dispatch(actions.kube.closeWatchResource(r));
-      });
-      props.statefulsetRefs.forEach(r => {
-        dispatch(actions.kube.closeWatchResource(r));
-      });
-      props.daemonsetRefs.forEach(r => {
+      [...props.deployRefs, ...props.statefulsetRefs, ...props.daemonsetRefs].forEach(r => {
         dispatch(actions.kube.closeWatchResource(r));
       });
     },

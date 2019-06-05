@@ -5,7 +5,7 @@ import { IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
 
 const defaultProps = {
-  watchDeployments: jest.fn(),
+  watchWorkloads: jest.fn(),
   closeWatches: jest.fn(),
   deployments: [],
   statefulsets: [],
@@ -13,15 +13,15 @@ const defaultProps = {
 };
 
 describe("componentDidMount", () => {
-  it("calls watchDeployments", () => {
+  it("calls watchWorkloads", () => {
     const mock = jest.fn();
-    shallow(<ApplicationStatus {...defaultProps} watchDeployments={mock} />);
+    shallow(<ApplicationStatus {...defaultProps} watchWorkloads={mock} />);
     expect(mock).toHaveBeenCalled();
   });
 });
 
 describe("componentWillUnmount", () => {
-  it("calls watchDeployments", () => {
+  it("calls closeWatches", () => {
     const mock = jest.fn();
     const wrapper = shallow(<ApplicationStatus {...defaultProps} closeWatches={mock} />);
     wrapper.unmount();

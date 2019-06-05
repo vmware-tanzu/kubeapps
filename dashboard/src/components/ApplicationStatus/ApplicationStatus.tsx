@@ -19,13 +19,13 @@ interface IApplicationStatusProps {
   statefulsets: Array<IKubeItem<IResource>>;
   daemonsets: Array<IKubeItem<IResource>>;
   info?: hapi.release.IInfo;
-  watchDeployments: () => void;
+  watchWorkloads: () => void;
   closeWatches: () => void;
 }
 
 class ApplicationStatus extends React.Component<IApplicationStatusProps> {
   public componentDidMount() {
-    this.props.watchDeployments();
+    this.props.watchWorkloads();
   }
 
   public componentWillUnmount() {
