@@ -4,7 +4,8 @@ import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
-import DeploymentStatus from "../../containers/DeploymentStatusContainer";
+import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
+import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
 import itBehavesLike from "../../shared/specs";
@@ -64,6 +65,16 @@ describe("AppViewComponent", () => {
       kind: "Secret",
       metadata: { name: "secret-one" },
       type: "Opaque",
+    } as IResource,
+    daemonset: {
+      apiVersion: "apps/v1beta1",
+      kind: "DaemonSet",
+      metadata: { name: "daemonset-one" },
+    } as IResource,
+    statefulset: {
+      apiVersion: "apps/v1beta1",
+      kind: "StatefulSet",
+      metadata: { name: "statefulset-one" },
     } as IResource,
   };
 
@@ -172,7 +183,7 @@ describe("AppViewComponent", () => {
     it("renders all the elements of an application", () => {
       const wrapper = shallow(<AppViewComponent {...validProps} />);
       expect(wrapper.find(ChartInfo).exists()).toBe(true);
-      expect(wrapper.find(DeploymentStatus).exists()).toBe(true);
+      expect(wrapper.find(ApplicationStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
       expect(wrapper.find(OtherResourcesTable).exists()).toBe(true);
@@ -330,5 +341,28 @@ describe("AppViewComponent", () => {
       serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
       otherResources: [obj],
     });
+  });
+
+  it("forwards statefulsets and daemonsets", () => {
+    const otherResources = [resources.statefulset, resources.daemonset];
+    const manifest = generateYamlManifest(otherResources);
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    validProps.app.manifest = manifest;
+    // setProps again so we trigger componentWillReceiveProps
+    wrapper.setProps(validProps);
+
+    const orTable = wrapper.find(OtherResourcesTable);
+    expect(orTable).toExist();
+    expect(orTable.prop("otherResources")).toEqual(otherResources);
+
+    const applicationStatus = wrapper.find(ApplicationStatusContainer);
+    expect(applicationStatus).toExist();
+
+    expect(applicationStatus.prop("statefulsetRefs")).toEqual([
+      new ResourceRef(resources.statefulset, appRelease.namespace),
+    ]);
+    expect(applicationStatus.prop("daemonsetRefs")).toEqual([
+      new ResourceRef(resources.daemonset, appRelease.namespace),
+    ]);
   });
 });

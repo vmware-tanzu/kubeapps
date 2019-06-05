@@ -4,8 +4,7 @@ import * as _ from "lodash";
 import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
-import DeploymentStatus from "../../containers/DeploymentStatusContainer";
-import { Kube } from "../../shared/Kube";
+import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import ResourceRef from "../../shared/ResourceRef";
 import { IK8sList, IRBACRole, IRelease, IResource } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
@@ -35,6 +34,8 @@ export interface IAppViewProps {
 
 interface IAppViewState {
   deployRefs: ResourceRef[];
+  statefulSetRefs: ResourceRef[];
+  daemonSetRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   secretRefs: ResourceRef[];
@@ -46,6 +47,8 @@ interface IAppViewState {
 
 interface IPartialAppViewState {
   deployRefs: ResourceRef[];
+  statefulSetRefs: ResourceRef[];
+  daemonSetRefs: ResourceRef[];
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   secretRefs: ResourceRef[];
@@ -72,6 +75,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     manifest: [],
     ingressRefs: [],
     deployRefs: [],
+    statefulSetRefs: [],
+    daemonSetRefs: [],
     otherResources: [],
     serviceRefs: [],
     secretRefs: [],
@@ -115,35 +120,6 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     this.setState(this.parseResources(manifest, newApp.namespace));
   }
 
-  public handleEvent(e: MessageEvent) {
-    const msg = JSON.parse(e.data);
-    const resource: IResource = msg.object;
-    let apiResource: string;
-    switch (resource.kind) {
-      case "Deployment":
-        apiResource = "deployments";
-        break;
-      case "Service":
-        apiResource = "services";
-        break;
-      case "Ingress":
-        apiResource = "ingresses";
-        break;
-      default:
-        // Unknown resource, ignore
-        return;
-    }
-    // Construct the key used for the store
-    const resourceKey = Kube.getResourceURL(
-      resource.apiVersion,
-      apiResource,
-      resource.metadata.namespace,
-      resource.metadata.name,
-    );
-    // TODO: this is temporary before we move WebSockets to the Redux store (#882)
-    this.props.receiveResource({ key: resourceKey, resource });
-  }
-
   public render() {
     if (this.props.error) {
       return (
@@ -162,7 +138,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public appInfo() {
     const { app, push } = this.props;
-    const { serviceRefs, ingressRefs, deployRefs, secretRefs, otherResources } = this.state;
+    const {
+      serviceRefs,
+      ingressRefs,
+      deployRefs,
+      statefulSetRefs,
+      daemonSetRefs,
+      secretRefs,
+      otherResources,
+    } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -183,7 +167,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus deployRefs={deployRefs} info={app.info!} />
+                    <ApplicationStatus
+                      deployRefs={deployRefs}
+                      statefulsetRefs={statefulSetRefs}
+                      daemonsetRefs={daemonSetRefs}
+                      info={app.info!}
+                    />
                   </div>
                   <div className="col-8 text-r">
                     <AppControls app={app} deleteApp={this.deleteApp} push={push} />
@@ -210,6 +199,8 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     const result: IPartialAppViewState = {
       ingressRefs: [],
       deployRefs: [],
+      statefulSetRefs: [],
+      daemonSetRefs: [],
       otherResources: [],
       serviceRefs: [],
       secretRefs: [],
@@ -234,6 +225,16 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         switch (i.kind) {
           case "Deployment":
             result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "StatefulSet":
+            result.statefulSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            // TODO: Create a statefulset table
+            result.otherResources.push(item);
+            break;
+          case "DaemonSet":
+            result.daemonSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            // TODO: Create a daemonset table
+            result.otherResources.push(item);
             break;
           case "Service":
             result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));

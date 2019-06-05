@@ -2,7 +2,7 @@
 
 exports[`renders a deleting status 1`] = `
 <span
-  className="DeploymentStatus DeploymentStatus--deleted"
+  className="ApplicationStatus ApplicationStatus--deleted"
 >
   <AlertTriangle
     className="icon"
@@ -20,7 +20,7 @@ exports[`renders a deleting status 1`] = `
 
 exports[`renders a deployed status 1`] = `
 <span
-  className="DeploymentStatus DeploymentStatus--success"
+  className="ApplicationStatus ApplicationStatus--success"
 >
   <Check
     className="icon padding-t-tiny"
@@ -31,7 +31,7 @@ exports[`renders a deployed status 1`] = `
 
 exports[`renders a deploying status 1`] = `
 <span
-  className="DeploymentStatus DeploymentStatus--pending"
+  className="ApplicationStatus ApplicationStatus--pending"
 >
   <Compass
     className="icon padding-t-tiny"
@@ -42,7 +42,7 @@ exports[`renders a deploying status 1`] = `
 
 exports[`renders a loading status 1`] = `
 <span
-  className="DeploymentStatus"
+  className="ApplicationStatus"
 >
   Loading...
 </span>

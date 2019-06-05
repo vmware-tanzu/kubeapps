@@ -2,9 +2,9 @@ import * as React from "react";
 
 import { AlertTriangle } from "react-feather";
 import { IServiceInstance } from "shared/ServiceInstance";
+import "../../components/ApplicationStatus/ApplicationStatus.css";
 import Check from "../../icons/Check";
 import Compass from "../../icons/Compass";
-import "../DeploymentStatus/DeploymentStatus.css";
 
 interface IServiceInstanceStatusProps {
   instance: IServiceInstance;
@@ -36,7 +36,9 @@ const ServiceInstanceStatus: React.SFC<IServiceInstanceStatusProps> = props => {
 };
 
 const renderStatus = (label: string, modifierClass: string | null, icon: JSX.Element) => (
-  <span className={`DeploymentStatus${modifierClass ? ` DeploymentStatus--${modifierClass}` : ""}`}>
+  <span
+    className={`ApplicationStatus${modifierClass ? ` ApplicationStatus--${modifierClass}` : ""}`}
+  >
     {icon} {label}
   </span>
 );

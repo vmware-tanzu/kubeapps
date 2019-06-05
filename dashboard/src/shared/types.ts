@@ -186,6 +186,17 @@ export interface IDeploymentStatus {
   availableReplicas: number;
 }
 
+export interface IStatefulsetStatus {
+  replicas: number;
+  updatedReplicas: number;
+  readyReplicas: number;
+}
+
+export interface IDaemonsetStatus {
+  currentNumberScheduled: number;
+  numberReady: number;
+}
+
 export interface IRelease extends hapi.release.Release {
   updateInfo?: IChartUpdateInfo;
 }
