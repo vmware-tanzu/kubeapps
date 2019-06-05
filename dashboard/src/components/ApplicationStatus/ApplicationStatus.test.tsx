@@ -53,6 +53,23 @@ it("renders a deleting status", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
+it("renders a failed status", () => {
+  const deployments = [
+    {
+      isFetching: false,
+    },
+  ];
+  const wrapper = shallow(
+    <ApplicationStatus
+      {...defaultProps}
+      deployments={deployments}
+      info={{ status: { code: 4 } }}
+    />,
+  );
+  expect(wrapper.text()).toContain("Failed");
+  expect(wrapper).toMatchSnapshot();
+});
+
 describe("isFetching", () => {
   const tests: Array<{
     title: string;
