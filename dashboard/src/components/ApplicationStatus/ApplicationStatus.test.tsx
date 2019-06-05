@@ -53,6 +53,23 @@ it("renders a deleting status", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
+it("renders a failed status", () => {
+  const deployments = [
+    {
+      isFetching: false,
+    },
+  ];
+  const wrapper = shallow(
+    <ApplicationStatus
+      {...defaultProps}
+      deployments={deployments}
+      info={{ status: { code: 4 } }}
+    />,
+  );
+  expect(wrapper.text()).toContain("Failed");
+  expect(wrapper).toMatchSnapshot();
+});
+
 describe("isFetching", () => {
   const tests: Array<{
     title: string;
@@ -167,41 +184,7 @@ describe("isFetching", () => {
           daemonsets={t.daemonsets}
         />,
       );
-      expect(wrapper.text()).toContain(t.deployed ? "Deployed" : "Deploying");
+      expect(wrapper.text()).toContain(t.deployed ? "Ready" : "Not Ready");
     });
   });
-});
-
-it("renders a deploying status", () => {
-  const deployments = [
-    {
-      isFetching: false,
-      item: {
-        status: {
-          replicas: 1,
-          availableReplicas: 0,
-        },
-      } as IResource,
-    },
-  ];
-  const wrapper = shallow(<ApplicationStatus {...defaultProps} deployments={deployments} />);
-  expect(wrapper.text()).toContain("Deploying");
-  expect(wrapper).toMatchSnapshot();
-});
-
-it("renders a deployed status", () => {
-  const deployments = [
-    {
-      isFetching: false,
-      item: {
-        status: {
-          replicas: 1,
-          availableReplicas: 1,
-        },
-      } as IResource,
-    },
-  ];
-  const wrapper = shallow(<ApplicationStatus {...defaultProps} deployments={deployments} />);
-  expect(wrapper.text()).toContain("Deployed");
-  expect(wrapper).toMatchSnapshot();
 });

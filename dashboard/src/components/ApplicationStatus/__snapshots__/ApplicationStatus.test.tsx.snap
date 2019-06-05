@@ -18,25 +18,22 @@ exports[`renders a deleting status 1`] = `
 </span>
 `;
 
-exports[`renders a deployed status 1`] = `
+exports[`renders a failed status 1`] = `
 <span
-  className="ApplicationStatus ApplicationStatus--success"
+  className="ApplicationStatus ApplicationStatus--error"
 >
-  <Check
-    className="icon padding-t-tiny"
+  <AlertTriangle
+    className="icon"
+    color="currentColor"
+    size="24"
+    style={
+      Object {
+        "bottom": "-0.425em",
+        "left": "-0.3em",
+      }
+    }
   />
-   Deployed
-</span>
-`;
-
-exports[`renders a deploying status 1`] = `
-<span
-  className="ApplicationStatus ApplicationStatus--pending"
->
-  <Compass
-    className="icon padding-t-tiny"
-  />
-   Deploying
+  Failed
 </span>
 `;
 
