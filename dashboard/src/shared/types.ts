@@ -87,6 +87,7 @@ export interface IChartUpdateInfo {
   upToDate: boolean;
   latestVersion: string;
   repository: IRepo;
+  error?: Error;
 }
 
 export interface IDeployment {

@@ -5,15 +5,17 @@ import { IURLItem } from "./IURLItem";
 function URLs(ingress: IResource): string[] {
   const spec = ingress.spec as IIngressSpec;
   const res: string[] = [];
-  spec.rules.forEach(r => {
-    if (r.http.paths.length > 0) {
-      r.http.paths.forEach(p => {
-        res.push(getURL(r.host, spec.tls, p.path));
-      });
-    } else {
-      res.push(getURL(r.host, spec.tls));
-    }
-  });
+  if (spec.rules) {
+    spec.rules.forEach(r => {
+      if (r.http && r.http.paths.length > 0) {
+        r.http.paths.forEach(p => {
+          res.push(getURL(r.host, spec.tls, p.path));
+        });
+      } else {
+        res.push(getURL(r.host, spec.tls));
+      }
+    });
+  }
   return res;
 }
 
@@ -23,7 +25,7 @@ function getURL(hostname: string, tls?: IIngressTLS[], path?: string) {
   const protocol =
     tls &&
     tls.some(tlsRule => {
-      return tlsRule.hosts.indexOf(hostname) > -1;
+      return tlsRule.hosts && tlsRule.hosts.indexOf(hostname) > -1;
     })
       ? "https"
       : "http";

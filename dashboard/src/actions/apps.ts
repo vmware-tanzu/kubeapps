@@ -109,17 +109,13 @@ function getAppUpdateInfo(
       }
       dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
     } catch (e) {
-      if (e.message.includes("Invalid Version")) {
-        // The version is not semver compatible so we cannot look for new versions
-        const updateInfo: IChartUpdateInfo = {
-          upToDate: true,
-          repository: { name: "", url: "" },
-          latestVersion: "",
-        };
-        dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
-        return;
-      }
-      dispatch(errorApps(e));
+      const updateInfo: IChartUpdateInfo = {
+        error: e,
+        upToDate: false,
+        repository: { name: "", url: "" },
+        latestVersion: "",
+      };
+      dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
     }
   };
 }

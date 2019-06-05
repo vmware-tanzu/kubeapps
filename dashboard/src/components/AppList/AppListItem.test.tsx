@@ -61,3 +61,27 @@ it("should set a banner if there are updates available", () => {
   const card = wrapper.find(InfoCard);
   expect(card.prop("banner")).toBe("v1.1.0 available");
 });
+
+it("should not set a banner if there are errors in the update info", () => {
+  const wrapper = shallow(
+    <AppListItem
+      app={
+        {
+          namespace: "default",
+          releaseName: "foo",
+          status: "DEPLOYED",
+          version: "1.0.0",
+          chart: "myapp",
+          updateInfo: {
+            error: new Error("Boom!"),
+            upToDate: false,
+            latestVersion: "",
+            repository: { name: "", url: "" },
+          },
+        } as IAppOverview
+      }
+    />,
+  );
+  const card = wrapper.find(InfoCard);
+  expect(card.prop("banner")).toBe(undefined);
+});
