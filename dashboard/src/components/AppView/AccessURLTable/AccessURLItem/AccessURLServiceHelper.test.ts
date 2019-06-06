@@ -2,14 +2,14 @@ import { IResource, IServiceStatus } from "shared/types";
 import { GetURLItemFromService } from "./AccessURLServiceHelper";
 
 describe("GetURLItemFromService", () => {
-  interface Itest {
+  interface ITest {
     description: string;
     ports: any[];
     ingress: any[];
     expectedLink: boolean;
     expectedURLs: string[];
   }
-  const tests: Itest[] = [
+  const tests: ITest[] = [
     {
       description: "it not return a link if the ingress definition is empty",
       ports: [{ port: 8080 }],

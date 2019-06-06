@@ -11,9 +11,10 @@ exports[`renders the message details modal 1`] = `
     closeTimeoutMS={0}
     contentLabel="Modal"
     isOpen={false}
-    onRequestClose={[MockFunction]}
+    onRequestClose={[Function]}
     parentSelector={[Function]}
     portalClassName="ReactModalPortal"
+    role="dialog"
     shouldCloseOnEsc={true}
     shouldCloseOnOverlayClick={true}
     shouldFocusAfterRender={true}
@@ -40,7 +41,7 @@ exports[`renders the message details modal 1`] = `
         <a>
           <span
             className="Terminal__Top__Button Terminal__Top__Button--red"
-            onClick={[MockFunction]}
+            onClick={[Function]}
           />
         </a>
       </div>

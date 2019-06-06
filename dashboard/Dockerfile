@@ -7,5 +7,5 @@ RUN yarn install --frozen-lockfile
 COPY . /app
 RUN yarn run build
 
-FROM bitnami/nginx:1.16.0-r3
+FROM bitnami/nginx:1.16.0-r40
 COPY --from=build /app/build /app

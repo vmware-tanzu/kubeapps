@@ -13,6 +13,7 @@ exports[`when loading is true loading spinner matches the snapshot 1`] = `
     onRequestClose={[Function]}
     parentSelector={[Function]}
     portalClassName="ReactModalPortal"
+    role="dialog"
     shouldCloseOnEsc={true}
     shouldCloseOnOverlayClick={true}
     shouldFocusAfterRender={true}

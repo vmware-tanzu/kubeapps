@@ -66,10 +66,11 @@ describe("ResourceRef", () => {
   describe("getResourceURL", () => {
     let kubeGetResourceURLMock: jest.Mock;
     beforeEach(() => {
-      kubeGetResourceURLMock = Kube.getResourceURL = jest.fn();
+      kubeGetResourceURLMock = jest.fn();
+      Kube.getResourceURL = kubeGetResourceURLMock;
     });
     afterEach(() => {
-      jest.restoreAllMocks();
+      jest.resetAllMocks();
     });
     it("calls Kube.getResourceURL with the correct arguments", () => {
       const r = {
@@ -91,10 +92,11 @@ describe("ResourceRef", () => {
   describe("watchResourceURL", () => {
     let kubeWatchResourceURLMock: jest.Mock;
     beforeEach(() => {
-      kubeWatchResourceURLMock = Kube.watchResourceURL = jest.fn();
+      kubeWatchResourceURLMock = jest.fn();
+      Kube.watchResourceURL = kubeWatchResourceURLMock;
     });
     afterEach(() => {
-      jest.restoreAllMocks();
+      jest.resetAllMocks();
     });
     it("calls Kube.watchResourceURL with the correct arguments", () => {
       const r = {
@@ -116,10 +118,11 @@ describe("ResourceRef", () => {
   describe("getResource", () => {
     let kubeGetResourceMock: jest.Mock;
     beforeEach(() => {
-      kubeGetResourceMock = Kube.getResource = jest.fn();
+      kubeGetResourceMock = jest.fn();
+      Kube.getResource = kubeGetResourceMock;
     });
     afterEach(() => {
-      jest.restoreAllMocks();
+      jest.resetAllMocks();
     });
     it("calls Kube.getResource with the correct arguments", () => {
       const r = {
@@ -141,10 +144,11 @@ describe("ResourceRef", () => {
   describe("watchResource", () => {
     let kubeWatchResourceMock: jest.Mock;
     beforeEach(() => {
-      kubeWatchResourceMock = Kube.watchResource = jest.fn();
+      kubeWatchResourceMock = jest.fn();
+      Kube.watchResource = kubeWatchResourceMock;
     });
     afterEach(() => {
-      jest.restoreAllMocks();
+      jest.resetAllMocks();
     });
     it("calls Kube.watchResource with the correct arguments", () => {
       const r = {

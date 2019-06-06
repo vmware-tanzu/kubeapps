@@ -22,33 +22,18 @@ exports[`renders the repo selection form if not introduced 1`] = `
       }
     }
     chartName="bar"
-    checkChart={[MockFunction]}
-    clearRepo={[MockFunction]}
-    fetchChartVersions={[MockFunction]}
-    fetchRepositories={
-      [MockFunction] {
-        "calls": Array [
-          Array [],
-        ],
-      }
-    }
-    getAppWithUpdateInfo={
-      [MockFunction] {
-        "calls": Array [
-          Array [
-            "foo",
-            "default",
-          ],
-        ],
-      }
-    }
-    getChartValues={[MockFunction]}
-    getChartVersion={[MockFunction]}
-    goBack={[MockFunction]}
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getAppWithUpdateInfo={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    goBack={[Function]}
     isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"
-    push={[MockFunction]}
+    push={[Function]}
     releaseName="foo"
     repo={Object {}}
     repos={
@@ -61,7 +46,7 @@ exports[`renders the repo selection form if not introduced 1`] = `
       ]
     }
     selected={Object {}}
-    upgradeApp={[MockFunction]}
+    upgradeApp={[Function]}
     version="1.0.0"
   />
 </div>
@@ -84,33 +69,18 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     appCurrentValues=""
     appCurrentVersion="1.0.0"
     chartName="bar"
-    checkChart={[MockFunction]}
-    clearRepo={[MockFunction]}
-    fetchChartVersions={[MockFunction]}
-    fetchRepositories={
-      [MockFunction] {
-        "calls": Array [
-          Array [],
-        ],
-      }
-    }
-    getAppWithUpdateInfo={
-      [MockFunction] {
-        "calls": Array [
-          Array [
-            "foo",
-            "default",
-          ],
-        ],
-      }
-    }
-    getChartValues={[MockFunction]}
-    getChartVersion={[MockFunction]}
-    goBack={[MockFunction]}
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getAppWithUpdateInfo={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    goBack={[Function]}
     isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"
-    push={[MockFunction]}
+    push={[Function]}
     releaseName="foo"
     repo="stable"
     repos={
@@ -123,7 +93,7 @@ exports[`renders the upgrade form when the repo is available 1`] = `
       ]
     }
     selected={Object {}}
-    upgradeApp={[MockFunction]}
+    upgradeApp={[Function]}
     version="1.0.0"
   />
 </div>
@@ -154,33 +124,18 @@ exports[`skips the repo selection form if the app contains upgrade info 1`] = `
     appCurrentValues=""
     appCurrentVersion="1.0.0"
     chartName="bar"
-    checkChart={[MockFunction]}
-    clearRepo={[MockFunction]}
-    fetchChartVersions={[MockFunction]}
-    fetchRepositories={
-      [MockFunction] {
-        "calls": Array [
-          Array [],
-        ],
-      }
-    }
-    getAppWithUpdateInfo={
-      [MockFunction] {
-        "calls": Array [
-          Array [
-            "foo",
-            "default",
-          ],
-        ],
-      }
-    }
-    getChartValues={[MockFunction]}
-    getChartVersion={[MockFunction]}
-    goBack={[MockFunction]}
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getAppWithUpdateInfo={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    goBack={[Function]}
     isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"
-    push={[MockFunction]}
+    push={[Function]}
     releaseName="foo"
     repo="stable"
     repos={
@@ -193,7 +148,7 @@ exports[`skips the repo selection form if the app contains upgrade info 1`] = `
       ]
     }
     selected={Object {}}
-    upgradeApp={[MockFunction]}
+    upgradeApp={[Function]}
     version="1.0.0"
   />
 </div>

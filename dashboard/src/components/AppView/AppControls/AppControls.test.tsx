@@ -45,7 +45,7 @@ it("calls delete function when clicking the button", done => {
     expect(redirect.props()).toMatchObject({
       push: false,
       to: `/apps/ns/${namespace}`,
-    });
+    } as any);
     done();
   }, 1);
 });
