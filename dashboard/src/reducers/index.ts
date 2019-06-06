@@ -10,7 +10,7 @@ import kubeReducer from "./kube";
 import namespaceReducer from "./namespace";
 import reposReducer from "./repos";
 
-const rootReducer = combineReducers<Partial<IStoreState>>({
+const rootReducer = combineReducers<IStoreState>({
   apps: appsReducer,
   auth: authReducer,
   catalog: catalogReducer,

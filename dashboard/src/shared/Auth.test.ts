@@ -17,7 +17,9 @@ describe("Auth", () => {
 
   describe("when there is an error", () => {
     it("should throw error for 401 error codes", async () => {
-      const mock = jest.fn().mockRejectedValue({ response: { status: 401 } });
+      const mock = jest.fn(() => {
+        return Promise.reject({ response: { status: 401 } });
+      });
       Axios.get = mock;
       try {
         await Auth.validateToken("foo");

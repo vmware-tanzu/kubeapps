@@ -156,7 +156,7 @@ exports[`when all the components are loaded shows a fetch error if it exists 1`]
 
 exports[`when all the components are loaded when an instance is available should show the available bindings 1`] = `
 <ServiceInstanceView
-  addBinding={[MockFunction]}
+  addBinding={[Function]}
   bindingsWithSecrets={
     Object {
       "isFetching": false,
@@ -206,96 +206,12 @@ exports[`when all the components are loaded when an instance is available should
       ],
     }
   }
-  deprovision={[MockFunction]}
+  deprovision={[Function]}
   errors={Object {}}
-  getBindings={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-      ],
-    }
-  }
-  getClasses={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-      ],
-    }
-  }
-  getInstances={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-        Array [
-          "default",
-        ],
-      ],
-    }
-  }
-  getPlans={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-        Array [],
-      ],
-    }
-  }
+  getBindings={[Function]}
+  getClasses={[Function]}
+  getInstances={[Function]}
+  getPlans={[Function]}
   instances={
     Object {
       "isFetching": false,
@@ -345,7 +261,7 @@ exports[`when all the components are loaded when an instance is available should
       "list": Array [],
     }
   }
-  removeBinding={[MockFunction]}
+  removeBinding={[Function]}
 >
   <section
     className="ServiceInstanceView padding-b-big"
@@ -597,7 +513,7 @@ exports[`when all the components are loaded when an instance is available should
                   className="col-8 text-r"
                 >
                   <DeprovisionButton
-                    deprovision={[MockFunction]}
+                    deprovision={[Function]}
                     disabled={false}
                     instance={
                       Object {
@@ -657,6 +573,7 @@ exports[`when all the components are loaded when an instance is available should
                             onRequestClose={[Function]}
                             parentSelector={[Function]}
                             portalClassName="ReactModalPortal"
+                            role="dialog"
                             shouldCloseOnEsc={true}
                             shouldCloseOnOverlayClick={true}
                             shouldFocusAfterRender={true}
@@ -716,6 +633,7 @@ exports[`when all the components are loaded when an instance is available should
                                 onRequestClose={[Function]}
                                 parentSelector={[Function]}
                                 portalClassName="ReactModalPortal"
+                                role="dialog"
                                 shouldCloseOnEsc={true}
                                 shouldCloseOnOverlayClick={true}
                                 shouldFocusAfterRender={true}
@@ -836,7 +754,7 @@ exports[`when all the components are loaded when an instance is available should
                         },
                       ]
                     }
-                    removeBinding={[MockFunction]}
+                    removeBinding={[Function]}
                   >
                     <div
                       className="BindingList"
@@ -885,7 +803,7 @@ exports[`when all the components are loaded when an instance is available should
                               }
                             }
                             key="binding-my-instance"
-                            removeBinding={[MockFunction]}
+                            removeBinding={[Function]}
                           >
                             <tr>
                               <td>
@@ -920,6 +838,7 @@ exports[`when all the components are loaded when an instance is available should
                                       onRequestClose={[Function]}
                                       parentSelector={[Function]}
                                       portalClassName="ReactModalPortal"
+                                      role="dialog"
                                       shouldCloseOnEsc={true}
                                       shouldCloseOnOverlayClick={true}
                                       shouldFocusAfterRender={true}
@@ -980,6 +899,7 @@ exports[`when all the components are loaded when an instance is available should
                                           onRequestClose={[Function]}
                                           parentSelector={[Function]}
                                           portalClassName="ReactModalPortal"
+                                          role="dialog"
                                           shouldCloseOnEsc={true}
                                           shouldCloseOnOverlayClick={true}
                                           shouldFocusAfterRender={true}
@@ -1056,6 +976,7 @@ exports[`when all the components are loaded when an instance is available should
                                           onRequestClose={[Function]}
                                           parentSelector={[Function]}
                                           portalClassName="ReactModalPortal"
+                                          role="dialog"
                                           shouldCloseOnEsc={true}
                                           shouldCloseOnOverlayClick={true}
                                           shouldFocusAfterRender={true}
@@ -1116,6 +1037,7 @@ exports[`when all the components are loaded when an instance is available should
                                               onRequestClose={[Function]}
                                               parentSelector={[Function]}
                                               portalClassName="ReactModalPortal"
+                                              role="dialog"
                                               shouldCloseOnEsc={true}
                                               shouldCloseOnOverlayClick={true}
                                               shouldFocusAfterRender={true}
@@ -1165,7 +1087,7 @@ exports[`when all the components are loaded when an instance is available should
                                       },
                                     }
                                   }
-                                  removeBinding={[MockFunction]}
+                                  removeBinding={[Function]}
                                 >
                                   <div
                                     className="RemoveBindingButton"
@@ -1186,7 +1108,7 @@ exports[`when all the components are loaded when an instance is available should
                     </div>
                   </BindingList>
                   <AddBindingButton
-                    addBinding={[MockFunction]}
+                    addBinding={[Function]}
                     disabled={false}
                     instanceRefName="my-instance"
                     namespace="default"
@@ -1210,6 +1132,7 @@ exports[`when all the components are loaded when an instance is available should
                         onRequestClose={[Function]}
                         parentSelector={[Function]}
                         portalClassName="ReactModalPortal"
+                        role="dialog"
                         shouldCloseOnEsc={true}
                         shouldCloseOnOverlayClick={true}
                         shouldFocusAfterRender={true}
@@ -1256,6 +1179,7 @@ exports[`when all the components are loaded when an instance is available should
                             onRequestClose={[Function]}
                             parentSelector={[Function]}
                             portalClassName="ReactModalPortal"
+                            role="dialog"
                             shouldCloseOnEsc={true}
                             shouldCloseOnOverlayClick={true}
                             shouldFocusAfterRender={true}
@@ -1414,7 +1338,7 @@ exports[`when all the components are loaded when an instance is available should
                 className="col-8 text-r"
               >
                 <DeprovisionButton
-                  deprovision={[MockFunction]}
+                  deprovision={[Function]}
                   disabled={false}
                   instance={
                     Object {

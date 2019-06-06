@@ -17,7 +17,7 @@ exports[`when all the components are loaded shows a card list with the different
         <SearchFilter
           className="margin-l-big "
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search instances..."
           value=""
         />
@@ -92,7 +92,7 @@ exports[`when all the components are loaded shows a forbiden error if it exists 
         <SearchFilter
           className="margin-l-big "
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search instances..."
           value=""
         />
@@ -189,7 +189,7 @@ exports[`when all the components are loaded shows a warning to install no servic
         <SearchFilter
           className="margin-l-big "
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search instances..."
           value=""
         />
@@ -253,7 +253,7 @@ exports[`when all the components are loaded shows a warning to install the Servi
         <SearchFilter
           className="margin-l-big "
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search instances..."
           value=""
         />
@@ -317,7 +317,7 @@ exports[`when all the components are loaded shows information of how to deploy a
         <SearchFilter
           className="margin-l-big "
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search instances..."
           value=""
         />
@@ -405,7 +405,7 @@ exports[`while fetching components loading spinner matches the snapshot 1`] = `
         <SearchFilter
           className="margin-l-big "
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search instances..."
           value=""
         />
@@ -469,7 +469,7 @@ exports[`while fetching components matches the snapshot 1`] = `
         <SearchFilter
           className="margin-l-big "
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search instances..."
           value=""
         />

@@ -18,7 +18,7 @@ exports[`when apps available matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search apps..."
           value=""
         />
@@ -168,7 +168,7 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search apps..."
           value=""
         />
@@ -240,7 +240,7 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search apps..."
           value=""
         />
@@ -302,7 +302,7 @@ exports[`while fetching apps matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[MockFunction]}
+          onSubmit={[Function]}
           placeholder="search apps..."
           value=""
         />

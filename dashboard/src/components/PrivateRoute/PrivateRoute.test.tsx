@@ -39,7 +39,7 @@ it("redirects to the /login route if not authenticated", () => {
   expect(wrapper2.find(Redirect).props()).toMatchObject({
     push: false,
     to: { pathname: "/login" },
-  });
+  } as any);
 });
 
 it("renders the given component when authenticated", () => {

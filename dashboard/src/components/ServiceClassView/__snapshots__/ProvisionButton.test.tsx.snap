@@ -20,6 +20,7 @@ exports[`when the modal is open shows an error if is present 1`] = `
     onRequestClose={[Function]}
     parentSelector={[Function]}
     portalClassName="ReactModalPortal"
+    role="dialog"
     shouldCloseOnEsc={true}
     shouldCloseOnOverlayClick={true}
     shouldFocusAfterRender={true}

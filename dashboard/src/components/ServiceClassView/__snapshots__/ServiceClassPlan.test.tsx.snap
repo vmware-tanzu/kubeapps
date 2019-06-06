@@ -27,8 +27,8 @@ exports[`renders a service plan 1`] = `
   >
     <ProvisionButton
       namespace="default"
-      provision={[MockFunction]}
-      push={[MockFunction]}
+      provision={[Function]}
+      push={[Function]}
       selectedClass={
         Object {
           "metadata": Object {

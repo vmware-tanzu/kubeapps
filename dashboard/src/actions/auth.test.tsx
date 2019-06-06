@@ -22,6 +22,7 @@ beforeEach(() => {
   Auth.validateToken = jest.fn();
   Auth.fetchOIDCToken = jest.fn(() => "token");
   Auth.setAuthToken = jest.fn();
+  Auth.unsetAuthToken = jest.fn();
 
   store = mockStore({
     auth: {

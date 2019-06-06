@@ -17,7 +17,7 @@ function mapStateToProps({ kube }: IStoreState, props: ISecretItemContainerProps
   return {
     name: secretRef.name,
     // convert IKubeItem<IResource> to IKubeItem<ISecret>
-    secret: kube.items[secretRef.getResourceURL()] as IKubeItem<ISecret>,
+    secret: (kube.items[secretRef.getResourceURL()] as any) as IKubeItem<ISecret>,
   };
 }
 

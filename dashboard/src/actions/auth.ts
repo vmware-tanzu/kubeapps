@@ -53,7 +53,7 @@ export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, A
     if (Auth.usingOIDCToken()) {
       dispatch(setSessionExpired(true));
     }
-    dispatch(logout());
+    return dispatch(logout());
   };
 }
 

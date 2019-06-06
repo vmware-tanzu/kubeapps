@@ -52,6 +52,6 @@ it("renders a redirect with the correct URL when the button is clicked", () => {
     expect(redirect.props()).toMatchObject({
       push: true,
       to: t.url,
-    });
+    } as any);
   });
 });

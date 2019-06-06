@@ -87,27 +87,15 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
       ],
     }
   }
-  checkCatalogInstalled={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-    }
-  }
+  checkCatalogInstalled={[Function]}
   errors={
     Object {
       "update": [Error],
     }
   }
-  getBrokers={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-    }
-  }
+  getBrokers={[Function]}
   isInstalled={true}
-  sync={[MockFunction]}
+  sync={[Function]}
 >
   <section
     className="AppList"
@@ -317,23 +305,11 @@ exports[`when all the brokers are loaded shows a warning to install no service b
       "list": Array [],
     }
   }
-  checkCatalogInstalled={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-    }
-  }
+  checkCatalogInstalled={[Function]}
   errors={Object {}}
-  getBrokers={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-      ],
-    }
-  }
+  getBrokers={[Function]}
   isInstalled={true}
-  sync={[MockFunction]}
+  sync={[Function]}
 >
   <section
     className="AppList"
@@ -469,7 +445,7 @@ exports[`when all the brokers are loaded when there are no errors, renders the b
             }
           }
           key="1"
-          sync={[MockFunction]}
+          sync={[Function]}
         />
       </CardGrid>
     </main>

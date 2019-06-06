@@ -26,11 +26,12 @@ let monikerChooseMock: jest.Mock;
 itBehavesLike("aLoadingComponent", { component: DeploymentForm, props: defaultProps });
 
 beforeEach(() => {
-  monikerChooseMock = Moniker.choose = jest.fn();
+  monikerChooseMock = jest.fn();
+  Moniker.choose = monikerChooseMock;
 });
 
 afterEach(() => {
-  jest.restoreAllMocks();
+  jest.resetAllMocks();
 });
 
 describe("renders an error", () => {

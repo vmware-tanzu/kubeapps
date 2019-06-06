@@ -146,7 +146,7 @@ exports[`renders information about the binding with a secret 1`] = `
           },
         }
       }
-      removeBinding={[MockFunction]}
+      removeBinding={[Function]}
     />
   </td>
 </tr>

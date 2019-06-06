@@ -2,7 +2,7 @@
 
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
-  install={[MockFunction]}
+  install={[Function]}
   kubeappsNamespace="kubeapps"
 >
   <div
@@ -23,6 +23,7 @@ exports[`should open a modal with the repository form 1`] = `
       onRequestClose={[Function]}
       parentSelector={[Function]}
       portalClassName="ReactModalPortal"
+      role="dialog"
       shouldCloseOnEsc={true}
       shouldCloseOnOverlayClick={true}
       shouldFocusAfterRender={true}
@@ -34,15 +35,15 @@ exports[`should open a modal with the repository form 1`] = `
             class="ReactModalPortal"
           >
             <div
-              aria-modal="true"
               class="ReactModal__Overlay ReactModal__Overlay--after-open"
               style="position: fixed; top: 0px; left: 0px; right: 0px; bottom: 0px; background-color: rgba(255, 255, 255, 0.75);"
             >
               <div
-                aria-label="Modal"
-                class="ReactModal__Content ReactModal__Content--after-open"
                 style="position: absolute; top: 40px; left: 40px; right: 40px; bottom: 40px; border: 1px solid #ccc; background: rgb(255, 255, 255); overflow: auto; border-radius: 4px; outline: none; padding: 20px;"
+                class="ReactModal__Content ReactModal__Content--after-open"
                 tabindex="-1"
+                role="dialog"
+                aria-label="Modal"
               >
                 <form
                   class="container padding-b-bigger"
@@ -64,11 +65,11 @@ exports[`should open a modal with the repository form 1`] = `
                             Name:
                           </span>
                           <input
-                            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                            type="text"
                             placeholder="example"
                             required=""
+                            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                             title="Use lower case alphanumeric characters, '-' or '.'"
-                            type="text"
                             value=""
                           />
                         </label>
@@ -79,9 +80,9 @@ exports[`should open a modal with the repository form 1`] = `
                             URL:
                           </span>
                           <input
+                            type="url"
                             placeholder="https://charts.example.com/stable"
                             required=""
-                            type="url"
                             value=""
                           />
                         </label>
@@ -92,8 +93,8 @@ exports[`should open a modal with the repository form 1`] = `
                             Authorization Header (optional):
                           </span>
                           <input
-                            placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
                             type="text"
+                            placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
                             value=""
                           />
                         </label>
@@ -108,10 +109,10 @@ exports[`should open a modal with the repository form 1`] = `
                           >
                             <textarea
                               class="CertContent"
-                              placeholder="-----BEGIN CERTIFICATE-----
-...
------END CERTIFICATE-----"
                               rows="4"
+                              placeholder="-----BEGIN CERTIFICATE-----
+                            ...
+                            -----END CERTIFICATE-----"
                             />
                           </pre>
                         </label>
@@ -167,6 +168,7 @@ exports[`should open a modal with the repository form 1`] = `
           onRequestClose={[Function]}
           parentSelector={[Function]}
           portalClassName="ReactModalPortal"
+          role="dialog"
           shouldCloseOnEsc={true}
           shouldCloseOnOverlayClick={true}
           shouldFocusAfterRender={true}

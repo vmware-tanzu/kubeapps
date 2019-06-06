@@ -2,14 +2,14 @@ import { IHTTPIngressPath, IIngressRule, IIngressSpec, IResource } from "shared/
 import { GetURLItemFromIngress } from "./AccessURLIngressHelper";
 
 describe("GetURLItemFromIngress", () => {
-  interface Itest {
+  interface ITest {
     description: string;
     hosts?: string[];
     paths?: IHTTPIngressPath[];
     tlsHosts?: string[];
     expectedURLs: string[];
   }
-  const tests: Itest[] = [
+  const tests: ITest[] = [
     {
       description: "it should show the host without port",
       hosts: ["foo.bar"],

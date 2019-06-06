@@ -22,7 +22,7 @@ exports[`renders a card with the service broker 1`] = `
           },
         }
       }
-      sync={[MockFunction]}
+      sync={[Function]}
     />
   </CardFooter>
 </InfoCard>

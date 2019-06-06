@@ -220,7 +220,6 @@ export interface IStoreState {
   config: IConfigState;
   kube: IKubeState;
   repos: IAppRepositoryState;
-  deployment: IDeployment;
   namespace: INamespaceState;
 }
 
@@ -258,38 +257,38 @@ export interface IK8sList<I, M> extends IK8sResource {
 
 export interface IAppRepository
   extends IK8sObject<
-      {
-        clusterName: string;
-        creationTimestamp: string;
-        deletionGracePeriodSeconds: string | null;
-        deletionTimestamp: string | null;
-        resourceVersion: string;
-        selfLink: string;
-      },
-      {
-        type: string;
-        url: string;
-        auth: {
-          header: {
-            secretKeyRef: {
-              name: string;
-              key: string;
-            };
+    {
+      clusterName: string;
+      creationTimestamp: string;
+      deletionGracePeriodSeconds: string | null;
+      deletionTimestamp: string | null;
+      resourceVersion: string;
+      selfLink: string;
+    },
+    {
+      type: string;
+      url: string;
+      auth: {
+        header: {
+          secretKeyRef: {
+            name: string;
+            key: string;
           };
         };
-      },
-      undefined
-    > {}
+      };
+    },
+    undefined
+  > {}
 
 export interface IAppRepositoryList
   extends IK8sList<
-      IAppRepository,
-      {
-        continue: string;
-        resourceVersion: string;
-        selfLink: string;
-      }
-    > {}
+    IAppRepository,
+    {
+      continue: string;
+      resourceVersion: string;
+      selfLink: string;
+    }
+  > {}
 
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
 export interface IStatus extends IK8sResource {
