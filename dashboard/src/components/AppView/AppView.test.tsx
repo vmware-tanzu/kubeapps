@@ -4,8 +4,8 @@ import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
 import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
-import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
+import ApplicationStatusContainer from "../../containers/ApplicationStatusContainer";
 import { hapi } from "../../shared/hapi/release";
 import ResourceRef from "../../shared/ResourceRef";
 import itBehavesLike from "../../shared/specs";
@@ -16,9 +16,9 @@ import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
-import DeploymentsTable from "./DeploymentsTable";
 import OtherResourcesTable from "./OtherResourcesTable";
 import ServiceTable from "./ServicesTable/ServicesTable";
+import WorkloadTable from "./WorkloadTable";
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -43,7 +43,6 @@ describe("AppViewComponent", () => {
     getAppWithUpdateInfo: jest.fn(),
     namespace: "my-happy-place",
     releaseName: "mr-sunshine",
-    receiveResource: jest.fn(),
     push: jest.fn(),
   };
 
@@ -269,7 +268,7 @@ describe("AppViewComponent", () => {
     expect(svcTable.prop("serviceRefs")).toEqual(serviceRefs);
   });
 
-  it("forwards other resources", () => {
+  it("forwards deployments", () => {
     const wrapper = shallow(<AppViewComponent {...validProps} />);
     const deployment = {
       metadata: {
@@ -281,12 +280,50 @@ describe("AppViewComponent", () => {
 
     wrapper.setState({ deployRefs });
 
-    const depTable = wrapper.find(DeploymentsTable);
+    const depTable = wrapper
+      .find(WorkloadTable)
+      .filterWhere(e => e.prop("title") === "Deployments");
     expect(depTable).toExist();
-    expect(depTable.prop("deployRefs")).toEqual(deployRefs);
+    expect(depTable.prop("resourceRefs")).toEqual(deployRefs);
   });
 
-  it("forwards deployments", () => {
+  it("forwards statefulsets", () => {
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    const r = {
+      metadata: {
+        name: "foo",
+      },
+      spec: {},
+    };
+    const ref = [new ResourceRef(r as IResource, "default")];
+
+    wrapper.setState({ statefulSetRefs: ref });
+
+    const depTable = wrapper
+      .find(WorkloadTable)
+      .filterWhere(e => e.prop("title") === "StatefulSets");
+    expect(depTable).toExist();
+    expect(depTable.prop("resourceRefs")).toEqual(ref);
+  });
+
+  it("forwards daemonsets", () => {
+    const wrapper = shallow(<AppViewComponent {...validProps} />);
+    const r = {
+      metadata: {
+        name: "foo",
+      },
+      spec: {},
+    };
+    const ref = [new ResourceRef(r as IResource, "default")];
+
+    wrapper.setState({ daemonSetRefs: ref });
+
+    const depTable = wrapper.find(WorkloadTable).filterWhere(e => e.prop("title") === "DaemonSets");
+    expect(depTable).toExist();
+    expect(depTable.prop("resourceRefs")).toEqual(ref);
+  });
+
+  it("forwards other resources", () => {
     const wrapper = shallow(<AppViewComponent {...validProps} />);
     const otherResource = {
       metadata: {
@@ -344,16 +381,12 @@ describe("AppViewComponent", () => {
   });
 
   it("forwards statefulsets and daemonsets", () => {
-    const otherResources = [resources.statefulset, resources.daemonset];
-    const manifest = generateYamlManifest(otherResources);
+    const r = [resources.statefulset, resources.daemonset];
+    const manifest = generateYamlManifest(r);
     const wrapper = shallow(<AppViewComponent {...validProps} />);
     validProps.app.manifest = manifest;
     // setProps again so we trigger componentWillReceiveProps
     wrapper.setProps(validProps);
-
-    const orTable = wrapper.find(OtherResourcesTable);
-    expect(orTable).toExist();
-    expect(orTable.prop("otherResources")).toEqual(otherResources);
 
     const applicationStatus = wrapper.find(ApplicationStatusContainer);
     expect(applicationStatus).toExist();

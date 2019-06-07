@@ -13,10 +13,10 @@ import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
-import DeploymentsTable from "./DeploymentsTable";
 import OtherResourcesTable from "./OtherResourcesTable";
 import SecretsTable from "./SecretsTable";
 import ServicesTable from "./ServicesTable";
+import WorkloadTable from "./WorkloadTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -27,8 +27,6 @@ export interface IAppViewProps {
   deleteError: Error | undefined;
   getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
-  // TODO: remove once WebSockets are moved to Redux store (#882)
-  receiveResource: (p: { key: string; resource: IResource }) => void;
   push: (location: string) => RouterAction;
 }
 
@@ -181,7 +179,32 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <SecretsTable secretRefs={secretRefs} />
-                <DeploymentsTable deployRefs={deployRefs} />
+                <WorkloadTable
+                  resourceRefs={deployRefs}
+                  title="Deployments"
+                  status={{
+                    DESIRED: "replicas",
+                    "UP-TO-DATE": "updatedReplicas",
+                    AVAILABLE: "availableReplicas",
+                  }}
+                />
+                <WorkloadTable
+                  resourceRefs={statefulSetRefs}
+                  title="StatefulSets"
+                  status={{
+                    DESIRED: "replicas",
+                    "UP-TO-DATE": "updatedReplicas",
+                    READY: "readyReplicas",
+                  }}
+                />
+                <WorkloadTable
+                  resourceRefs={daemonSetRefs}
+                  title="DaemonSets"
+                  status={{
+                    DESIRED: "currentNumberScheduled",
+                    AVAILABLE: "numberReady",
+                  }}
+                />
                 <ServicesTable serviceRefs={serviceRefs} />
                 <OtherResourcesTable otherResources={otherResources} />
               </div>
@@ -228,13 +251,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             break;
           case "StatefulSet":
             result.statefulSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
-            // TODO: Create a statefulset table
-            result.otherResources.push(item);
             break;
           case "DaemonSet":
             result.daemonSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
-            // TODO: Create a daemonset table
-            result.otherResources.push(item);
             break;
           case "Service":
             result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
