@@ -35,12 +35,13 @@ describe("WorkloadItemContainer", () => {
       },
     } as IResource);
     const wrapper = shallow(
-      <WorkloadItemContainer store={store} resourceRef={ref} statusFields={[]} />,
+      <WorkloadItemContainer store={store} resourceRef={ref} statusFields={["foo"]} />,
     );
     const form = wrapper.find(WorkloadItem);
     expect(form).toHaveProp({
       name,
       resource: item,
+      statusFields: ["foo"],
     });
   });
 });
