@@ -1,4 +1,3 @@
-{{- $root := . -}}
 {{- range .Values.apprepository.initialRepos }}
 apiVersion: kubeapps.com/v1alpha1
 kind: AppRepository
@@ -26,11 +25,11 @@ metadata:
 spec:
   type: helm
   url: {{ .url }}
-  {{- if $root.Values.securityContext.enabled }}
+  {{- if $.Values.securityContext.enabled }}
   syncJobPodTemplate:
     spec:
       securityContext:
-        runAsUser: {{ $root.Values.securityContext.runAsUser }}
+        runAsUser: {{ $.Values.securityContext.runAsUser }}
   {{- end }}
   {{- if or .caCert .authorizationHeader }}
   auth:
