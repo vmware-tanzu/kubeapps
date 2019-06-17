@@ -4,8 +4,8 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
 import { IKubeItem, IKubeState, IResource } from "shared/types";
-import DeploymentItemContainer from ".";
-import DeploymentItem from "../../components/AppView/DeploymentsTable/DeploymentItem";
+import WorkloadItemContainer from ".";
+import WorkloadItem from "../../components/AppView/WorkloadTable/WorkloadTableItem";
 import ResourceRef from "../../shared/ResourceRef";
 
 const mockStore = configureMockStore([thunk]);
@@ -18,27 +18,30 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   return mockStore({ kube: state });
 };
 
-describe("DeploymentItemContainer", () => {
-  it("maps Deployment in store to DeploymentItem props", () => {
+describe("WorkloadItemContainer", () => {
+  it("maps resource in store to WorkloadItem props", () => {
     const ns = "wee";
     const name = "foo";
     const item = { isFetching: false, item: { metadata: { name } } as IResource };
     const store = makeStore({
-      "api/kube/apis/apps/v1/namespaces/wee/deployments/foo": item,
+      "api/kube/apis/apps/v1/namespaces/wee/statefulsets/foo": item,
     });
     const ref = new ResourceRef({
       apiVersion: "apps/v1",
-      kind: "Deployment",
+      kind: "StatefulSet",
       metadata: {
         namespace: ns,
         name,
       },
     } as IResource);
-    const wrapper = shallow(<DeploymentItemContainer store={store} deployRef={ref} />);
-    const form = wrapper.find(DeploymentItem);
+    const wrapper = shallow(
+      <WorkloadItemContainer store={store} resourceRef={ref} statusFields={["foo"]} />,
+    );
+    const form = wrapper.find(WorkloadItem);
     expect(form).toHaveProp({
       name,
-      deployment: item,
+      resource: item,
+      statusFields: ["foo"],
     });
   });
 });

@@ -4,7 +4,7 @@ import * as React from "react";
 
 import itBehavesLike from "../../../shared/specs";
 import { IKubeItem, IResource } from "../../../shared/types";
-import DeploymentItem from "./DeploymentItem";
+import WorkloadTableItem from "./WorkloadTableItem";
 
 const kubeItem: IKubeItem<IResource> = {
   isFetching: false,
@@ -12,14 +12,15 @@ const kubeItem: IKubeItem<IResource> = {
 
 const defaultProps = {
   name: "foo",
-  watchDeployment: jest.fn(),
+  watchResource: jest.fn(),
   closeWatch: jest.fn(),
+  statusFields: [],
 };
 
 describe("componentDidMount", () => {
-  it("calls watchDeployment", () => {
+  it("calls watchResource", () => {
     const mock = jest.fn();
-    shallow(<DeploymentItem {...defaultProps} watchDeployment={mock} />);
+    shallow(<WorkloadTableItem {...defaultProps} watchResource={mock} />);
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -27,37 +28,37 @@ describe("componentDidMount", () => {
 describe("componentWillUnmount", () => {
   it("calls closeWatch", () => {
     const mock = jest.fn();
-    const wrapper = shallow(<DeploymentItem {...defaultProps} closeWatch={mock} />);
+    const wrapper = shallow(<WorkloadTableItem {...defaultProps} closeWatch={mock} />);
     wrapper.unmount();
     expect(mock).toHaveBeenCalled();
   });
 });
 
-context("when fetching deployments", () => {
-  [undefined, { isFetching: true }].forEach(deployment => {
+context("when fetching resources", () => {
+  [undefined, { isFetching: true }].forEach(resource => {
     itBehavesLike("aLoadingComponent", {
-      component: DeploymentItem,
+      component: WorkloadTableItem,
       props: {
         ...defaultProps,
-        deployment,
+        resource,
       },
     });
 
-    it("displays the name of the deployment", () => {
-      const wrapper = shallow(<DeploymentItem {...defaultProps} deployment={deployment} />);
+    it("displays the name of the resource", () => {
+      const wrapper = shallow(<WorkloadTableItem {...defaultProps} resource={resource} />);
       expect(wrapper.text()).toContain("foo");
     });
   });
 });
 
-context("when there is an error fetching the Deployment", () => {
-  const deployment = {
+context("when there is an error fetching the resource", () => {
+  const resource = {
     error: new Error('deployments "foo" not found'),
     isFetching: false,
   };
-  const wrapper = shallow(<DeploymentItem {...defaultProps} deployment={deployment} />);
+  const wrapper = shallow(<WorkloadTableItem {...defaultProps} resource={resource} />);
 
-  it("diplays the Deployment name in the first column", () => {
+  it("diplays the resource name in the first column", () => {
     expect(
       wrapper
         .find("td")
@@ -76,8 +77,8 @@ context("when there is an error fetching the Deployment", () => {
   });
 });
 
-context("when there is a valid Deployment", () => {
-  it("renders info about the Deployment status", () => {
+context("when there is a valid resouce", () => {
+  it("renders info about the resource status", () => {
     const deployment = {
       metadata: {
         name: "foo",
@@ -86,7 +87,12 @@ context("when there is a valid Deployment", () => {
     } as IResource;
     kubeItem.item = deployment;
     const wrapper = shallow(
-      <DeploymentItem {...defaultProps} deployment={kubeItem} name={deployment.metadata.name} />,
+      <WorkloadTableItem
+        {...defaultProps}
+        resource={kubeItem}
+        name={deployment.metadata.name}
+        statusFields={Object.keys(deployment.status)}
+      />,
     );
     expect(wrapper).toMatchSnapshot();
   });
