@@ -17,7 +17,9 @@ class AppListItem extends React.Component<IAppListItemProps> {
     let bannerColor;
     if (app.updateInfo && !app.updateInfo.error && !app.updateInfo.upToDate) {
       if (app.chartMetadata.appVersion !== app.updateInfo.appLatestVersion) {
-        // New app version
+        // We assume that if there is a new chart version and the app version changes
+        // this means that there is a new app version available
+        // We cannot compare app versions since they don't follow the semver standard
         banner = `New app version ${app.updateInfo.appLatestVersion} available`;
         bannerColor = "blue";
       } else {
