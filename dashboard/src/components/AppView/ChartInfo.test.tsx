@@ -33,10 +33,10 @@ context("when information about updates is available", () => {
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithoutUpdates} />);
     expect(wrapper.html()).toContain("Up to date");
   });
-  it("renders an new version found message if the latest version is newer", () => {
+  it("renders an new version found message if the chart latest version is newer", () => {
     const appWithUpdates = {
       ...defaultProps.app,
-      updateInfo: { upToDate: false, latestVersion: "1.0.0" },
+      updateInfo: { upToDate: false, appLatestVersion: "0.0.1", chartLatestVersion: "1.0.0" },
     } as IRelease;
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
     expect(
@@ -44,12 +44,25 @@ context("when information about updates is available", () => {
         .find(Link)
         .children()
         .text(),
-    ).toContain("1.0.0 available");
+    ).toContain("Chart v1.0.0 available");
+  });
+  it("renders an new version found message if the chart latest version is newer", () => {
+    const appWithUpdates = {
+      ...defaultProps.app,
+      updateInfo: { upToDate: false, appLatestVersion: "1.1.0", chartLatestVersion: "1.0.0" },
+    } as IRelease;
+    const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
+    expect(
+      wrapper
+        .find(Link)
+        .children()
+        .text(),
+    ).toContain("New App version 1.1.0 available");
   });
   it("renders a warning if there are errors with the update info", () => {
     const appWithUpdates = {
       ...defaultProps.app,
-      updateInfo: { error: new Error("Boom!"), upToDate: false, latestVersion: "" },
+      updateInfo: { error: new Error("Boom!"), upToDate: false, chartLatestVersion: "" },
     } as IRelease;
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
     expect(wrapper.html()).toContain("Update check failed. Boom!");

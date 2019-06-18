@@ -90,7 +90,8 @@ function getAppUpdateInfo(
       let updateInfo: IChartUpdateInfo = {
         upToDate: true,
         repository: { name: "", url: "" },
-        latestVersion: "",
+        chartLatestVersion: "",
+        appLatestVersion: "",
       };
       if (chartsInfo.length > 0) {
         const sortedCharts = chartsInfo.sort((a, b) =>
@@ -99,11 +100,13 @@ function getAppUpdateInfo(
             b.relationships.latestChartVersion.data.version,
           ),
         );
-        const latestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
+        const chartLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.version;
+        const appLatestVersion = sortedCharts[0].relationships.latestChartVersion.data.app_version;
         // Initialize updateInfo with the latest chart found
         updateInfo = {
-          upToDate: semver.gte(currentVersion, latestVersion),
-          latestVersion,
+          upToDate: semver.gte(currentVersion, chartLatestVersion),
+          chartLatestVersion,
+          appLatestVersion,
           repository: sortedCharts[0].attributes.repo,
         };
       }
@@ -113,7 +116,8 @@ function getAppUpdateInfo(
         error: e,
         upToDate: false,
         repository: { name: "", url: "" },
-        latestVersion: "",
+        chartLatestVersion: "",
+        appLatestVersion: "",
       };
       dispatch(receiveAppUpdateInfo({ releaseName, updateInfo }));
     }

@@ -25,7 +25,9 @@ class ChartInfo extends React.Component<IChartInfoProps> {
         <div>
           {metadata.appVersion && <div>App Version: {metadata.appVersion}</div>}
           <div>
-            Chart Version: {metadata.version} {this.updateStatusInfo()}
+            <span>Chart Version: {metadata.version}</span>
+            <br />
+            <span>{this.updateStatusInfo()}</span>
           </div>
         </div>
       );
@@ -68,7 +70,6 @@ class ChartInfo extends React.Component<IChartInfoProps> {
       if (app.updateInfo.upToDate) {
         return (
           <span>
-            -{" "}
             <CheckCircle color="#82C341" className="icon" size={15} style={{ bottom: "-0.2em" }} />{" "}
             Up to date
           </span>
@@ -77,7 +78,6 @@ class ChartInfo extends React.Component<IChartInfoProps> {
         return (
           <Link to={`/apps/ns/${app.namespace}/upgrade/${app.name}`}>
             <span>
-              -{" "}
               <ArrowUpCircle
                 color="white"
                 className="icon"
@@ -85,7 +85,11 @@ class ChartInfo extends React.Component<IChartInfoProps> {
                 size={15}
                 style={{ bottom: "-0.2em" }}
               />{" "}
-              {app.updateInfo.latestVersion} available
+              {app.chart &&
+              app.chart.metadata &&
+              app.chart.metadata.appVersion !== app.updateInfo.appLatestVersion
+                ? `New App version ${app.updateInfo.appLatestVersion} available`
+                : `Chart v${app.updateInfo.chartLatestVersion} available`}
             </span>
           </Link>
         );

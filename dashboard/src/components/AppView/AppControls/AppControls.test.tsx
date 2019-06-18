@@ -149,12 +149,13 @@ context("when there is a new version available", () => {
       namespace,
       updateInfo: {
         upToDate: false,
-        latestVersion: "1.0.0",
+        chartLatestVersion: "1.0.0",
+        appLatestVersion: "1.0.0",
       },
     } as IRelease;
     const wrapper = shallow(<AppControls app={app} deleteApp={jest.fn()} push={jest.fn()} />);
 
-    expect(wrapper.find(UpgradeButton).prop("updateVersion")).toBe("1.0.0");
+    expect(wrapper.find(UpgradeButton).prop("newVersion")).toBe(true);
   });
 });
 
@@ -167,7 +168,8 @@ context("when the application is up to date", () => {
       namespace,
       updateInfo: {
         upToDate: true,
-        latestVersion: "1.0.0",
+        chartLatestVersion: "1.1.0",
+        appLatestVersion: "1.1.0",
       },
     } as IRelease;
     const wrapper = shallow(<AppControls app={app} deleteApp={jest.fn()} push={jest.fn()} />);

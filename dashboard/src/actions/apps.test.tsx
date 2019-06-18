@@ -67,7 +67,9 @@ describe("fetches applications", () => {
       const chartUpdatesResponse = [
         {
           attributes: { repo: { name: "bar" } },
-          relationships: { latestChartVersion: { data: { version: "1.1.0" } } },
+          relationships: {
+            latestChartVersion: { data: { app_version: "1.0.0", version: "1.1.0" } },
+          },
         },
       ];
       Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
@@ -80,7 +82,12 @@ describe("fetches applications", () => {
           type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
             releaseName: "foobar",
-            updateInfo: { upToDate: false, latestVersion: "1.1.0", repository: { name: "bar" } },
+            updateInfo: {
+              upToDate: false,
+              appLatestVersion: "1.0.0",
+              chartLatestVersion: "1.1.0",
+              repository: { name: "bar" },
+            },
           },
         },
       ];
@@ -98,7 +105,9 @@ describe("fetches applications", () => {
       const chartUpdatesResponse = [
         {
           attributes: { repo: { name: "bar" } },
-          relationships: { latestChartVersion: { data: { version: "1.0.0" } } },
+          relationships: {
+            latestChartVersion: { data: { app_version: "0.1.0", version: "1.0.0" } },
+          },
         },
       ];
       Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
@@ -111,7 +120,12 @@ describe("fetches applications", () => {
           type: getType(actions.apps.receiveAppUpdateInfo),
           payload: {
             releaseName: "foobar",
-            updateInfo: { upToDate: true, latestVersion: "1.0.0", repository: { name: "bar" } },
+            updateInfo: {
+              upToDate: true,
+              appLatestVersion: "0.1.0",
+              chartLatestVersion: "1.0.0",
+              repository: { name: "bar" },
+            },
           },
         },
       ];
@@ -145,7 +159,8 @@ describe("fetches applications", () => {
             updateInfo: {
               error: new Error("Invalid Version: 1.0"),
               upToDate: false,
-              latestVersion: "",
+              chartLatestVersion: "",
+              appLatestVersion: "",
               repository: { name: "", url: "" },
             },
           },

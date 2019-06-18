@@ -45,9 +45,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
         {/* If the app has been deleted hide the upgrade button */}
         {!deleted && (
           <UpgradeButton
-            updateVersion={
-              app.updateInfo && !app.updateInfo.upToDate ? app.updateInfo.latestVersion : undefined
-            }
+            newVersion={app.updateInfo && !app.updateInfo.upToDate}
             releaseName={name}
             releaseNamespace={namespace}
             push={push}

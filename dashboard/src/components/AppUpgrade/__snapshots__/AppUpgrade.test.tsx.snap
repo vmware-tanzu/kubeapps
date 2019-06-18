@@ -112,7 +112,8 @@ exports[`skips the repo selection form if the app contains upgrade info 1`] = `
         },
         "name": "foo",
         "updateInfo": Object {
-          "latestVersion": "",
+          "appLatestVersion": "1.1.0",
+          "chartLatestVersion": "1.1.0",
           "repository": Object {
             "name": "stable",
             "url": "",

@@ -13,10 +13,19 @@ class AppListItem extends React.Component<IAppListItemProps> {
   public render() {
     const { app } = this.props;
     const icon = app.icon ? app.icon : placeholder;
-    const banner =
-      app.updateInfo && !app.updateInfo.error && !app.updateInfo.upToDate
-        ? `v${app.updateInfo.latestVersion} available`
-        : undefined;
+    let banner;
+    let bannerColor;
+    if (app.updateInfo && !app.updateInfo.error && !app.updateInfo.upToDate) {
+      if (app.chartMetadata.appVersion !== app.updateInfo.appLatestVersion) {
+        // New app version
+        banner = `New app version ${app.updateInfo.appLatestVersion} available`;
+        bannerColor = "blue";
+      } else {
+        // New chart version
+        banner = `Chart v${app.updateInfo.chartLatestVersion} available`;
+        bannerColor = "green";
+      }
+    }
     return (
       <InfoCard
         key={app.releaseName}
@@ -25,6 +34,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
         icon={icon}
         info={`${app.chart} v${app.version || "-"}`}
         banner={banner}
+        bannerColor={bannerColor}
         tag1Content={app.namespace}
         tag2Content={app.status.toLocaleLowerCase()}
         tag2Class={app.status.toLocaleLowerCase()}

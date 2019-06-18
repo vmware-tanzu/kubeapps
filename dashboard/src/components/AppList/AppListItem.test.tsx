@@ -39,7 +39,7 @@ it("renders an app item", () => {
   expect(card.find(".ListItem__content__info_tag-2").text()).toBe("deployed");
 });
 
-it("should set a banner if there are updates available", () => {
+it("should set a green banner if there are chart updates available", () => {
   const wrapper = shallow(
     <AppListItem
       app={
@@ -49,9 +49,13 @@ it("should set a banner if there are updates available", () => {
           status: "DEPLOYED",
           version: "1.0.0",
           chart: "myapp",
+          chartMetadata: {
+            appVersion: "1.1.0",
+          },
           updateInfo: {
             upToDate: false,
-            latestVersion: "1.1.0",
+            chartLatestVersion: "1.1.0",
+            appLatestVersion: "1.1.0",
             repository: { name: "", url: "" },
           },
         } as IAppOverview
@@ -59,7 +63,34 @@ it("should set a banner if there are updates available", () => {
     />,
   );
   const card = wrapper.find(InfoCard);
-  expect(card.prop("banner")).toBe("v1.1.0 available");
+  expect(card.prop("banner")).toBe("Chart v1.1.0 available");
+});
+
+it("should set a blue banner if there are app updates available", () => {
+  const wrapper = shallow(
+    <AppListItem
+      app={
+        {
+          namespace: "default",
+          releaseName: "foo",
+          status: "DEPLOYED",
+          version: "1.0.0",
+          chart: "myapp",
+          chartMetadata: {
+            appVersion: "1.0.0",
+          },
+          updateInfo: {
+            upToDate: false,
+            chartLatestVersion: "1.1.0",
+            appLatestVersion: "1.1.0",
+            repository: { name: "", url: "" },
+          },
+        } as IAppOverview
+      }
+    />,
+  );
+  const card = wrapper.find(InfoCard);
+  expect(card.prop("banner")).toBe("New app version 1.1.0 available");
 });
 
 it("should not set a banner if there are errors in the update info", () => {
@@ -75,7 +106,8 @@ it("should not set a banner if there are errors in the update info", () => {
           updateInfo: {
             error: new Error("Boom!"),
             upToDate: false,
-            latestVersion: "",
+            chartLatestVersion: "",
+            appLatestVersion: "",
             repository: { name: "", url: "" },
           },
         } as IAppOverview
