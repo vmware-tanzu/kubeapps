@@ -18,6 +18,7 @@ package chart
 
 import (
 	"bytes"
+	"crypto/sha1"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -44,6 +45,17 @@ const (
 	defaultRepoURL        = "https://kubernetes-charts.storage.googleapis.com"
 	defaultTimeoutSeconds = 180
 )
+
+type repoIndex struct {
+	checksum string
+	index    *repo.IndexFile
+}
+
+var repoIndexes map[string]*repoIndex
+
+func init() {
+	repoIndexes = map[string]*repoIndex{}
+}
 
 // Details contains the information to retrieve a Chart
 type Details struct {
@@ -145,14 +157,26 @@ func readResponseBody(res *http.Response) ([]byte, error) {
 	return body, nil
 }
 
-func parseIndex(data []byte) (*repo.IndexFile, error) {
-	index := &repo.IndexFile{}
-	err := yaml.Unmarshal(data, index)
-	if err != nil {
-		return index, err
+func checksum(data []byte) string {
+	hasher := sha1.New()
+	hasher.Write(data)
+	return string(hasher.Sum(nil))
+}
+
+func parseIndex(repoURL string, data []byte) (*repo.IndexFile, error) {
+	sha := checksum(data)
+	// Cache the result of parsing the repo index since parsing this YAML
+	// is an expensive operation. See https://github.com/kubeapps/kubeapps/issues/1052
+	if repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != sha {
+		index := &repo.IndexFile{}
+		err := yaml.Unmarshal(data, index)
+		if err != nil {
+			return index, err
+		}
+		index.SortEntries()
+		repoIndexes[repoURL] = &repoIndex{sha, index}
 	}
-	index.SortEntries()
-	return index, nil
+	return repoIndexes[repoURL].index, nil
 }
 
 // fetchRepoIndex returns a Helm repository
@@ -171,7 +195,7 @@ func fetchRepoIndex(netClient *HTTPClient, repoURL string, authHeader string) (*
 		return nil, err
 	}
 
-	return parseIndex(data)
+	return parseIndex(repoURL, data)
 }
 
 func resolveChartURL(index, chart string) (string, error) {
