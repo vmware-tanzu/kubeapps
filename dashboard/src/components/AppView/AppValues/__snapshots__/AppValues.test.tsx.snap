@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`match snapshot with values 1`] = `
+<Fragment>
+  <h6>
+    Installation Values
+  </h6>
+  <ReactAce
+    cursorStart={1}
+    editorProps={
+      Object {
+        "$blockScrolling": Infinity,
+      }
+    }
+    enableBasicAutocompletion={false}
+    enableLiveAutocompletion={false}
+    focus={false}
+    fontSize={12}
+    height="500px"
+    highlightActiveLine={true}
+    maxLines={40}
+    minLines={null}
+    mode="yaml"
+    name="values"
+    onChange={null}
+    onLoad={null}
+    onPaste={null}
+    onScroll={null}
+    readOnly={true}
+    scrollMargin={
+      Array [
+        0,
+        0,
+        0,
+        0,
+      ]
+    }
+    setOptions={
+      Object {
+        "showPrintMargin": false,
+      }
+    }
+    showGutter={true}
+    showPrintMargin={true}
+    style={Object {}}
+    tabSize={4}
+    theme="xcode"
+    value="foo: bar"
+    width="100%"
+    wrapEnabled={false}
+  />
+</Fragment>
+`;
+
+exports[`match snapshot without values 1`] = `
+<Fragment>
+  <h6>
+    Installation Values
+  </h6>
+  <p>
+    The current application was installed without specifying any values
+  </p>
+</Fragment>
+`;
