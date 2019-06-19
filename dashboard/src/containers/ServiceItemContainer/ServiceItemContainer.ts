@@ -1,4 +1,3 @@
-import * as _ from "lodash";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";

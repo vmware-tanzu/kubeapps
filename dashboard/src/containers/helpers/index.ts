@@ -1,5 +1,3 @@
-import * as _ from "lodash";
-
 import ResourceRef from "../../shared/ResourceRef";
 import { IKubeState } from "../../shared/types";
 
