@@ -242,3 +242,18 @@ func TestGetChartWithCustomUserAgent(t *testing.T) {
 		t.Errorf("It should return a Chart")
 	}
 }
+
+func TestGetIndexFromCache(t *testing.T) {
+	repoURL := "https://test.com"
+	data := []byte("foo")
+	index, sha := getIndexFromCache(repoURL, data)
+	if index != nil {
+		t.Error("Index should be empty since it's not in the cache yet")
+	}
+	fakeIndex := &repo.IndexFile{}
+	storeIndexInCache(repoURL, fakeIndex, sha)
+	index, _ = getIndexFromCache(repoURL, data)
+	if index != fakeIndex {
+		t.Error("It should return the stored index")
+	}
+}
