@@ -1,6 +1,6 @@
 import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
-import * as _ from "lodash";
+import { assignWith, isEqual } from "lodash";
 import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
@@ -108,7 +108,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
-    if (!_.isEqual(manifest, this.state.manifest)) {
+    if (!isEqual(manifest, this.state.manifest)) {
       this.setState({ manifest });
     } else {
       return;
@@ -236,7 +236,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         // A List can contain an arbitrary set of resources so we treat them as an
         // additional manifest. We merge the current result with the resources of
         // the List, concatenating items from both.
-        _.assignWith(
+        assignWith(
           result,
           this.parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
           // Merge the list with the current result
