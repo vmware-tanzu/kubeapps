@@ -16,9 +16,7 @@ import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
-import OtherResourcesTable from "./OtherResourcesTable";
-import ServiceTable from "./ServicesTable/ServicesTable";
-import WorkloadTable from "./WorkloadTable";
+import WorkloadTable from "./ResourceTable";
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -185,7 +183,7 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(ApplicationStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
-      expect(wrapper.find(OtherResourcesTable).exists()).toBe(true);
+      expect(wrapper.find(WorkloadTable).exists()).toBe(true);
       expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
@@ -263,7 +261,7 @@ describe("AppViewComponent", () => {
     expect(accessURLTable).toExist();
     expect(accessURLTable.props()).toMatchObject({ ingressRefs, serviceRefs });
 
-    const svcTable = wrapper.find(ServiceTable);
+    const svcTable = wrapper.find(WorkloadTable);
     expect(svcTable).toExist();
     expect(svcTable.prop("serviceRefs")).toEqual(serviceRefs);
   });
@@ -335,7 +333,7 @@ describe("AppViewComponent", () => {
 
     wrapper.setState({ otherResources });
 
-    const orTable = wrapper.find(OtherResourcesTable);
+    const orTable = wrapper.find(WorkloadTable);
     expect(orTable).toExist();
     expect(orTable.prop("otherResources")).toEqual([otherResource]);
   });
