@@ -39,7 +39,6 @@ describe("ResourceItemContainer", () => {
     expect(form).toHaveProp({
       name,
       resource: item,
-      statusFields: ["foo"],
     });
   });
 });

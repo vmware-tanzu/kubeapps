@@ -31,6 +31,7 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
   }
 
   private renderInfo(resource?: IKubeItem<IResource>) {
+    const { name } = this.props;
     if (resource === undefined || resource.isFetching) {
       return (
         <React.Fragment>

@@ -129,13 +129,13 @@ describe("AppViewComponent", () => {
       validProps.app.manifest = manifest;
       wrapper.setProps(validProps);
 
-      const otherResources: IResource[] = wrapper.state("otherResources");
+      const otherResources: ResourceRef[] = wrapper.state("otherResources");
       const configMap = otherResources[0];
       // It should skip deployments, services and secrets from "other resources"
       expect(otherResources.length).toEqual(1);
 
       expect(configMap).toBeDefined();
-      expect(configMap.metadata.name).toEqual("cm-one");
+      expect(configMap.name).toEqual("cm-one");
     });
 
     it("does not store empty resources, bogus or without kind attribute", () => {
@@ -261,9 +261,9 @@ describe("AppViewComponent", () => {
     expect(accessURLTable).toExist();
     expect(accessURLTable.props()).toMatchObject({ ingressRefs, serviceRefs });
 
-    const svcTable = wrapper.find(WorkloadTable);
+    const svcTable = wrapper.find(WorkloadTable).findWhere(t => t.prop("title") === "Services");
     expect(svcTable).toExist();
-    expect(svcTable.prop("serviceRefs")).toEqual(serviceRefs);
+    expect(svcTable.prop("resourceRefs")).toEqual(serviceRefs);
   });
 
   it("forwards deployments", () => {
@@ -333,13 +333,15 @@ describe("AppViewComponent", () => {
 
     wrapper.setState({ otherResources });
 
-    const orTable = wrapper.find(WorkloadTable);
+    const orTable = wrapper
+      .find(WorkloadTable)
+      .filterWhere(e => e.prop("title") === "Other Resources");
     expect(orTable).toExist();
-    expect(orTable.prop("otherResources")).toEqual([otherResource]);
+    expect(orTable.prop("resourceRefs")).toEqual([otherResource]);
   });
 
   it("renders a list of resources", () => {
-    const obj = { kind: "ClusterRole", metadata: { name: "foo" } };
+    const obj = { kind: "ClusterRole", metadata: { name: "foo" } } as IResource;
     const list = {
       kind: "List",
       items: [obj, resources.deployment],
@@ -354,12 +356,12 @@ describe("AppViewComponent", () => {
     expect(wrapper.state()).toMatchObject({
       deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
       serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
-      otherResources: [obj],
+      otherResources: [new ResourceRef(obj, appRelease.namespace)],
     });
   });
 
   it("renders a list of roles", () => {
-    const obj = { kind: "ClusterRole", metadata: { name: "foo" } };
+    const obj = { kind: "ClusterRole", metadata: { name: "foo" } } as IResource;
     const list = {
       kind: "RoleList",
       items: [obj, resources.deployment],
@@ -374,7 +376,7 @@ describe("AppViewComponent", () => {
     expect(wrapper.state()).toMatchObject({
       deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
       serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
-      otherResources: [obj],
+      otherResources: [new ResourceRef(obj, appRelease.namespace)],
     });
   });
 
