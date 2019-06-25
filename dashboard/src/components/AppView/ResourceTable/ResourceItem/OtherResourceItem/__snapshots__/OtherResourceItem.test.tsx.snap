@@ -17,21 +17,3 @@ exports[`renders a ConfigMap 1`] = `
   </td>
 </tr>
 `;
-
-exports[`renders a complete DaemonSet 1`] = `
-<tr
-  className="flex"
-  key="otherResources/ConfigMap/foo"
->
-  <td
-    className="col-6"
-  >
-    foo
-  </td>
-  <td
-    className="col-6"
-  >
-    ConfigMap
-  </td>
-</tr>
-`;
