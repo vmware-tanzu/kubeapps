@@ -4,7 +4,7 @@ import * as React from "react";
 import ResourceRef from "shared/ResourceRef";
 import OtherResourceItem from "./OtherResourceItem";
 
-it("renders a complete DaemonSet", () => {
+it("renders a ConfigMap", () => {
   const cm = {
     name: "foo",
     kind: "ConfigMap",

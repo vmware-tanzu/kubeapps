@@ -11,7 +11,7 @@ import StatefulSetItemRow from "./StatefulSetItem";
 
 interface IResourceItemProps {
   name: string;
-  resource?: IKubeItem<IResource>;
+  resource?: IKubeItem<IResource | ISecret>;
   watchResource: () => void;
   closeWatch: () => void;
 }
@@ -30,7 +30,7 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
     return <tr className="flex">{this.renderInfo(resource)}</tr>;
   }
 
-  private renderInfo(resource?: IKubeItem<IResource>) {
+  private renderInfo(resource?: IKubeItem<IResource | ISecret>) {
     const { name } = this.props;
     if (resource === undefined || resource.isFetching) {
       return (
@@ -56,19 +56,18 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
       );
     }
     if (resource.item) {
+      const r = resource.item as IResource;
       switch (resource.item.kind) {
         case "Deployment":
-          return <DeploymentItemRow resource={resource.item} />;
+          return <DeploymentItemRow resource={r} />;
         case "StatefulSet":
-          return <StatefulSetItemRow resource={resource.item} />;
+          return <StatefulSetItemRow resource={r} />;
         case "DaemonSet":
-          return <DaemonSetItemRow resource={resource.item} />;
+          return <DaemonSetItemRow resource={r} />;
         case "Service":
-          return <ServiceItem resource={resource.item} />;
+          return <ServiceItem resource={r} />;
         case "Secret":
-          // TODO: Set double type
-          const i = (resource.item as any) as ISecret;
-          return <SecretItem resource={i} />;
+          return <SecretItem resource={resource.item as ISecret} />;
       }
     }
     return null;
