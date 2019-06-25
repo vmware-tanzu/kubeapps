@@ -11,12 +11,12 @@ import { SecretColumns } from "./ResourceItem/SecretItem/SecretItem";
 import { ServiceColumns } from "./ResourceItem/ServiceItem/ServiceItem";
 import { StatefulSetColumns } from "./ResourceItem/StatefulSetItem/StatefulSetItem";
 
-interface IWorkloadItemTableProps {
+interface IResourceTableProps {
   title: string;
   resourceRefs: ResourceRef[];
 }
 
-class WorkloadTable extends React.Component<IWorkloadItemTableProps> {
+class ResourceTable extends React.Component<IResourceTableProps> {
   public render() {
     const { resourceRefs } = this.props;
     let section = null;
@@ -70,4 +70,4 @@ class WorkloadTable extends React.Component<IWorkloadItemTableProps> {
   }
 }
 
-export default WorkloadTable;
+export default ResourceTable;

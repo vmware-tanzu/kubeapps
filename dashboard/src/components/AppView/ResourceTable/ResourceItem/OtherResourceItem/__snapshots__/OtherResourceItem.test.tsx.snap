@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders a complete DaemonSet 1`] = `
+exports[`renders a ConfigMap 1`] = `
 <tr
   className="flex"
   key="otherResources/ConfigMap/foo"
