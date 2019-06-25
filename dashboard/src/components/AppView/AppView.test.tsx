@@ -16,7 +16,7 @@ import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import AppViewComponent, { IAppViewProps } from "./AppView";
 import ChartInfo from "./ChartInfo";
-import WorkloadTable from "./ResourceTable";
+import ResourceTable from "./ResourceTable";
 
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
@@ -183,7 +183,7 @@ describe("AppViewComponent", () => {
       expect(wrapper.find(ApplicationStatus).exists()).toBe(true);
       expect(wrapper.find(AppControls).exists()).toBe(true);
       expect(wrapper.find(AppNotes).exists()).toBe(true);
-      expect(wrapper.find(WorkloadTable).exists()).toBe(true);
+      expect(wrapper.find(ResourceTable).exists()).toBe(true);
       expect(wrapper.find(AccessURLTable).exists()).toBe(true);
     });
 
@@ -261,7 +261,7 @@ describe("AppViewComponent", () => {
     expect(accessURLTable).toExist();
     expect(accessURLTable.props()).toMatchObject({ ingressRefs, serviceRefs });
 
-    const svcTable = wrapper.find(WorkloadTable).findWhere(t => t.prop("title") === "Services");
+    const svcTable = wrapper.find(ResourceTable).findWhere(t => t.prop("title") === "Services");
     expect(svcTable).toExist();
     expect(svcTable.prop("resourceRefs")).toEqual(serviceRefs);
   });
@@ -279,7 +279,7 @@ describe("AppViewComponent", () => {
     wrapper.setState({ deployRefs });
 
     const depTable = wrapper
-      .find(WorkloadTable)
+      .find(ResourceTable)
       .filterWhere(e => e.prop("title") === "Deployments");
     expect(depTable).toExist();
     expect(depTable.prop("resourceRefs")).toEqual(deployRefs);
@@ -298,7 +298,7 @@ describe("AppViewComponent", () => {
     wrapper.setState({ statefulSetRefs: ref });
 
     const depTable = wrapper
-      .find(WorkloadTable)
+      .find(ResourceTable)
       .filterWhere(e => e.prop("title") === "StatefulSets");
     expect(depTable).toExist();
     expect(depTable.prop("resourceRefs")).toEqual(ref);
@@ -316,7 +316,7 @@ describe("AppViewComponent", () => {
 
     wrapper.setState({ daemonSetRefs: ref });
 
-    const depTable = wrapper.find(WorkloadTable).filterWhere(e => e.prop("title") === "DaemonSets");
+    const depTable = wrapper.find(ResourceTable).filterWhere(e => e.prop("title") === "DaemonSets");
     expect(depTable).toExist();
     expect(depTable.prop("resourceRefs")).toEqual(ref);
   });
@@ -334,7 +334,7 @@ describe("AppViewComponent", () => {
     wrapper.setState({ otherResources });
 
     const orTable = wrapper
-      .find(WorkloadTable)
+      .find(ResourceTable)
       .filterWhere(e => e.prop("title") === "Other Resources");
     expect(orTable).toExist();
     expect(orTable.prop("resourceRefs")).toEqual([otherResource]);
