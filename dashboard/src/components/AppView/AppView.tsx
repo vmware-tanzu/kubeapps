@@ -11,6 +11,7 @@ import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
+import AppValues from "./AppValues";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
 import ResourceTable from "./ResourceTable";
@@ -179,6 +180,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 <ResourceTable resourceRefs={daemonSetRefs} title="DaemonSets" />
                 <ResourceTable resourceRefs={serviceRefs} title="Services" />
                 <ResourceTable resourceRefs={otherResources} title="Other Resources" />
+                <AppValues values={(app.config && app.config.raw) || ""} />
               </div>
             </div>
           </div>
