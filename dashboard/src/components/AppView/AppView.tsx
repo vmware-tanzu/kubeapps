@@ -13,10 +13,7 @@ import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
-import OtherResourcesTable from "./OtherResourcesTable";
-import SecretsTable from "./SecretsTable";
-import ServicesTable from "./ServicesTable";
-import WorkloadTable from "./WorkloadTable";
+import ResourceTable from "./ResourceTable";
 
 export interface IAppViewProps {
   namespace: string;
@@ -37,9 +34,7 @@ interface IAppViewState {
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   secretRefs: ResourceRef[];
-  // Other resources are not IKubeItems because
-  // we are not fetching any information for them.
-  otherResources: IResource[];
+  otherResources: ResourceRef[];
   manifest: IResource[];
 }
 
@@ -50,7 +45,7 @@ interface IPartialAppViewState {
   serviceRefs: ResourceRef[];
   ingressRefs: ResourceRef[];
   secretRefs: ResourceRef[];
-  otherResources: IResource[];
+  otherResources: ResourceRef[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -178,35 +173,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <SecretsTable secretRefs={secretRefs} />
-                <WorkloadTable
-                  resourceRefs={deployRefs}
-                  title="Deployments"
-                  status={{
-                    DESIRED: "replicas",
-                    "UP-TO-DATE": "updatedReplicas",
-                    AVAILABLE: "availableReplicas",
-                  }}
-                />
-                <WorkloadTable
-                  resourceRefs={statefulSetRefs}
-                  title="StatefulSets"
-                  status={{
-                    DESIRED: "replicas",
-                    "UP-TO-DATE": "updatedReplicas",
-                    READY: "readyReplicas",
-                  }}
-                />
-                <WorkloadTable
-                  resourceRefs={daemonSetRefs}
-                  title="DaemonSets"
-                  status={{
-                    DESIRED: "currentNumberScheduled",
-                    AVAILABLE: "numberReady",
-                  }}
-                />
-                <ServicesTable serviceRefs={serviceRefs} />
-                <OtherResourcesTable otherResources={otherResources} />
+                <ResourceTable resourceRefs={secretRefs} title="Secrets" />
+                <ResourceTable resourceRefs={deployRefs} title="Deployments" />
+                <ResourceTable resourceRefs={statefulSetRefs} title="StatefulSets" />
+                <ResourceTable resourceRefs={daemonSetRefs} title="DaemonSets" />
+                <ResourceTable resourceRefs={serviceRefs} title="Services" />
+                <ResourceTable resourceRefs={otherResources} title="Other Resources" />
               </div>
             </div>
           </div>
@@ -265,7 +237,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
             break;
           default:
-            result.otherResources.push(item);
+            result.otherResources.push(new ResourceRef(resource.item, releaseNamespace));
         }
       }
     });
