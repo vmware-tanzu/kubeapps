@@ -12,46 +12,7 @@ import AccessURLTable from "./AccessURLTable";
 describe("componentDidMount", () => {
   it("fetches ingresses", () => {
     const mock = jest.fn();
-    shallow(
-      <AccessURLTable
-        services={[]}
-        ingresses={[]}
-        fetchIngresses={mock}
-        watchServices={jest.fn()}
-        closeWatches={jest.fn()}
-      />,
-    );
-    expect(mock).toHaveBeenCalled();
-  });
-
-  it("initiates a watch on services", () => {
-    const mock = jest.fn();
-    shallow(
-      <AccessURLTable
-        services={[]}
-        ingresses={[]}
-        fetchIngresses={jest.fn()}
-        watchServices={mock}
-        closeWatches={jest.fn()}
-      />,
-    );
-    expect(mock).toHaveBeenCalled();
-  });
-});
-
-describe("componentWillUnmount", () => {
-  it("closes watches on the Services", () => {
-    const mock = jest.fn();
-    const wrapper = shallow(
-      <AccessURLTable
-        services={[]}
-        ingresses={[]}
-        fetchIngresses={jest.fn()}
-        watchServices={mock}
-        closeWatches={jest.fn()}
-      />,
-    );
-    wrapper.unmount();
+    shallow(<AccessURLTable services={[]} ingresses={[]} fetchIngresses={mock} />);
     expect(mock).toHaveBeenCalled();
   });
 });
@@ -81,13 +42,7 @@ context("when fetching ingresses or services", () => {
 
 it("renders a message if there are no services or ingresses", () => {
   const wrapper = shallow(
-    <AccessURLTable
-      services={[]}
-      ingresses={[]}
-      fetchIngresses={jest.fn()}
-      watchServices={jest.fn()}
-      closeWatches={jest.fn()}
-    />,
+    <AccessURLTable services={[]} ingresses={[]} fetchIngresses={jest.fn()} />,
   );
   expect(
     wrapper
@@ -120,13 +75,7 @@ context("when the app contains services", () => {
     } as IResource;
     const services = [{ isFetching: false, item: service }];
     const wrapper = shallow(
-      <AccessURLTable
-        services={services}
-        ingresses={[]}
-        fetchIngresses={jest.fn()}
-        watchServices={jest.fn()}
-        closeWatches={jest.fn()}
-      />,
+      <AccessURLTable services={services} ingresses={[]} fetchIngresses={jest.fn()} />,
     );
     expect(
       wrapper
@@ -152,13 +101,7 @@ context("when the app contains services", () => {
     } as IResource;
     const services = [{ isFetching: false, item: service }];
     const wrapper = shallow(
-      <AccessURLTable
-        services={services}
-        ingresses={[]}
-        fetchIngresses={jest.fn()}
-        watchServices={jest.fn()}
-        closeWatches={jest.fn()}
-      />,
+      <AccessURLTable services={services} ingresses={[]} fetchIngresses={jest.fn()} />,
     );
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
@@ -185,13 +128,7 @@ context("when the app contains ingresses", () => {
     } as IResource;
     const ingresses = [{ isFetching: false, item: ingress }];
     const wrapper = shallow(
-      <AccessURLTable
-        services={[]}
-        ingresses={ingresses}
-        fetchIngresses={jest.fn()}
-        watchServices={jest.fn()}
-        closeWatches={jest.fn()}
-      />,
+      <AccessURLTable services={[]} ingresses={ingresses} fetchIngresses={jest.fn()} />,
     );
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
@@ -232,13 +169,7 @@ context("when the app contains services and ingresses", () => {
     } as IResource;
     const ingresses = [{ isFetching: false, item: ingress }];
     const wrapper = shallow(
-      <AccessURLTable
-        services={services}
-        ingresses={ingresses}
-        fetchIngresses={jest.fn()}
-        watchServices={jest.fn()}
-        closeWatches={jest.fn()}
-      />,
+      <AccessURLTable services={services} ingresses={ingresses} fetchIngresses={jest.fn()} />,
     );
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
@@ -250,13 +181,7 @@ context("when the app contains resources with errors", () => {
     const services = [{ isFetching: false, error: new Error("could not find Service") }];
     const ingresses = [{ isFetching: false, error: new Error("could not find Ingress") }];
     const wrapper = shallow(
-      <AccessURLTable
-        services={services}
-        ingresses={ingresses}
-        fetchIngresses={jest.fn()}
-        watchServices={jest.fn()}
-        closeWatches={jest.fn()}
-      />,
+      <AccessURLTable services={services} ingresses={ingresses} fetchIngresses={jest.fn()} />,
     );
 
     // The Service error is not shown, as it is filtered out because without the

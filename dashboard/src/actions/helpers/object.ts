@@ -1,4 +1,4 @@
-import * as _ from "lodash";
+import { isEmpty } from "lodash";
 
 // Check if all the keys of an object are empty. If any value of the
 // object is a nested object it recursively checks if the inner object
@@ -9,14 +9,14 @@ export function isEmptyDeep(obj: any): boolean {
     // but we should not consider it empty
     return false;
   }
-  if (typeof obj === "object" && !_.isEmpty(obj)) {
+  if (typeof obj === "object" && !isEmpty(obj)) {
     // Check if nested objects are empty
     // If some of the keys are not empty the result is not empty
     return !Object.keys(obj).some(k => {
       return !isEmptyDeep(obj[k]);
     });
   }
-  return _.isEmpty(obj);
+  return isEmpty(obj);
 }
 
 // Remove empty keys from an object (recursively)

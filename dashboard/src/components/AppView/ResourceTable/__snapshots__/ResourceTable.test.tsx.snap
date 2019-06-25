@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a ResourceItem 1`] = `
+<Fragment>
+  <h6 />
+  <table>
+    <thead>
+      <tr
+        className="flex"
+      >
+        <Component />
+      </tr>
+    </thead>
+    <tbody>
+      <Connect(WorkloadItem)
+        key="api/kube/apis/undefined/namespaces/default/deployments/foo"
+        resourceRef={
+          ResourceRef {
+            "apiVersion": undefined,
+            "kind": "Deployment",
+            "name": "foo",
+            "namespace": "default",
+          }
+        }
+      />
+    </tbody>
+  </table>
+</Fragment>
+`;

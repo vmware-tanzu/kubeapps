@@ -1,5 +1,4 @@
 import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
-import * as _ from "lodash";
 
 import { getType } from "typesafe-actions";
 import actions from "../actions";

@@ -1,4 +1,3 @@
-import * as _ from "lodash";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -31,16 +30,6 @@ function mapDispatchToProps(
     fetchIngresses: () => {
       props.ingressRefs.forEach(r => {
         dispatch(actions.kube.getResource(r));
-      });
-    },
-    watchServices: () => {
-      props.serviceRefs.forEach(r => {
-        dispatch(actions.kube.getAndWatchResource(r));
-      });
-    },
-    closeWatches: () => {
-      props.serviceRefs.forEach(r => {
-        dispatch(actions.kube.closeWatchResource(r));
       });
     },
   };

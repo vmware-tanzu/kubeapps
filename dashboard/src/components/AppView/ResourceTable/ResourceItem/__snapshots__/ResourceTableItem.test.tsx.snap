@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when fetching resources loading spinner matches the snapshot 1`] = `
+<tr
+  className="flex"
+>
+  <td
+    className="col-3"
+  >
+    foo
+  </td>
+  <td
+    className="col-9"
+  >
+    <LoadingWrapper
+      loaded={false}
+      type={1}
+    />
+  </td>
+</tr>
+`;
+
+exports[`when fetching resources loading spinner matches the snapshot 2`] = `
+<tr
+  className="flex"
+>
+  <td
+    className="col-3"
+  >
+    foo
+  </td>
+  <td
+    className="col-9"
+  >
+    <LoadingWrapper
+      loaded={false}
+      type={1}
+    />
+  </td>
+</tr>
+`;
+
+exports[`when there is a valid resouce renders info about the resource status 1`] = `
+<tr
+  className="flex"
+/>
+`;
