@@ -35,7 +35,7 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
     <Card responsive={true} className="ListItem">
       <Link to={link || "#"} title={title} className="ListItem__header">
         <CardIcon icon={icon} />
-        {banner && <p className={"ListItem__banner"}>{banner}</p>}
+        {banner && <p className="ListItem__banner">{banner}</p>}
       </Link>
       <CardContent>
         <div className="ListItem__content">

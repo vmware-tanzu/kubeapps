@@ -39,7 +39,7 @@ it("renders an app item", () => {
   expect(card.find(".ListItem__content__info_tag-2").text()).toBe("deployed");
 });
 
-it("should set a green banner if there are chart updates available", () => {
+it("should set a banner if there are chart updates available", () => {
   const wrapper = shallow(
     <AppListItem
       app={
@@ -66,7 +66,7 @@ it("should set a green banner if there are chart updates available", () => {
   expect(card.prop("banner")).toBe("Update available");
 });
 
-it("should set a blue banner if there are app updates available", () => {
+it("should set a banner if there are app updates available", () => {
   const wrapper = shallow(
     <AppListItem
       app={
