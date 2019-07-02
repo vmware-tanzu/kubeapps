@@ -53,7 +53,8 @@ describe("appsReducer", () => {
       ];
       const testUpdateInfo = {
         upToDate: false,
-        latestVersion: "1.0.0",
+        chartLatestVersion: "1.0.0",
+        appLatestVersion: "1.0.0",
         repository: { name: "myrepo", url: "myrepo.com" },
       };
 

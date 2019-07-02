@@ -232,7 +232,8 @@ it("skips the repo selection form if the app contains upgrade info", () => {
           name: "foo",
           updateInfo: {
             upToDate: true,
-            latestVersion: "",
+            chartLatestVersion: "1.1.0",
+            appLatestVersion: "1.1.0",
             repository: { name: "stable", url: "" },
           },
         } as IRelease

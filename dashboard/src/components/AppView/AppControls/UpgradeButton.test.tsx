@@ -1,6 +1,7 @@
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
+import { ArrowUpCircle } from "react-feather";
 import { Redirect } from "react-router";
 
 import UpgradeButton from "./UpgradeButton";
@@ -20,12 +21,11 @@ it("renders a redirect when clicking upgrade", () => {
 });
 
 context("when a new version is available", () => {
-  it("should show a tooltip to notify the new version", () => {
+  it("should show a modify the style", () => {
     const wrapper = mount(
-      <UpgradeButton updateVersion="1.0.0" releaseName="" releaseNamespace="" push={jest.fn()} />,
+      <UpgradeButton newVersion={true} releaseName="" releaseNamespace="" push={jest.fn()} />,
     );
-    const tooltip = wrapper.find(".tooltiptext");
-    expect(tooltip).toExist();
-    expect(tooltip.text()).toContain("New version (1.0.0) found");
+    const icon = wrapper.find(ArrowUpCircle);
+    expect(icon).toExist();
   });
 });

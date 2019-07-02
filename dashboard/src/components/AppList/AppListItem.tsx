@@ -15,7 +15,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
     const icon = app.icon ? app.icon : placeholder;
     const banner =
       app.updateInfo && !app.updateInfo.error && !app.updateInfo.upToDate
-        ? `v${app.updateInfo.latestVersion} available`
+        ? "Update available"
         : undefined;
     return (
       <InfoCard

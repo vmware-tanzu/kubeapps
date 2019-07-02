@@ -85,7 +85,8 @@ export interface IChartState {
 
 export interface IChartUpdateInfo {
   upToDate: boolean;
-  latestVersion: string;
+  chartLatestVersion: string;
+  appLatestVersion: string;
   repository: IRepo;
   error?: Error;
 }
