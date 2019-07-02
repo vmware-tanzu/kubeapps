@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AlertTriangle, ArrowUpCircle, CheckCircle } from "react-feather";
+import { AlertTriangle, CheckCircle } from "react-feather";
 import { Link } from "react-router-dom";
 
 import { IRelease } from "shared/types";
@@ -26,8 +26,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
           {metadata.appVersion && <div>App Version: {metadata.appVersion}</div>}
           <div>
             <span>Chart Version: {metadata.version}</span>
-            <br />
-            <span>{this.updateStatusInfo()}</span>
+            {this.updateStatusInfo()}
           </div>
         </div>
       );
@@ -53,9 +52,10 @@ class ChartInfo extends React.Component<IChartInfoProps> {
     // If update is not set yet we cannot know if there is
     // an update available or not
     if (app.updateInfo) {
+      let updateContent = null;
       if (app.updateInfo.error) {
-        return (
-          <div>
+        updateContent = (
+          <React.Fragment>
             <AlertTriangle
               color="white"
               fill="#FDBA12"
@@ -64,36 +64,54 @@ class ChartInfo extends React.Component<IChartInfoProps> {
               style={{ bottom: "-0.2em" }}
             />{" "}
             <span>Update check failed. {app.updateInfo.error.message}</span>
-          </div>
-        );
-      }
-      if (app.updateInfo.upToDate) {
-        return (
-          <span>
-            <CheckCircle color="#82C341" className="icon" size={15} style={{ bottom: "-0.2em" }} />{" "}
-            Up to date
-          </span>
+          </React.Fragment>
         );
       } else {
-        return (
-          <Link to={`/apps/ns/${app.namespace}/upgrade/${app.name}`}>
-            <span>
-              <ArrowUpCircle
-                color="white"
+        if (app.updateInfo.upToDate) {
+          updateContent = (
+            <React.Fragment>
+              <CheckCircle
+                color="#82C341"
                 className="icon"
-                fill="#82C341"
                 size={15}
                 style={{ bottom: "-0.2em" }}
               />{" "}
-              {app.chart &&
-              app.chart.metadata &&
-              app.chart.metadata.appVersion !== app.updateInfo.appLatestVersion
-                ? `New App version ${app.updateInfo.appLatestVersion} available`
-                : `Chart v${app.updateInfo.chartLatestVersion} available`}
-            </span>
-          </Link>
-        );
+              Up to date
+            </React.Fragment>
+          );
+        } else {
+          const update =
+            app.chart &&
+            app.chart.metadata &&
+            app.chart.metadata.appVersion !== app.updateInfo.appLatestVersion ? (
+              // A new version for the app is available
+              <span>
+                A new version for {app.chart.metadata.name} is available:{" "}
+                {app.updateInfo.appLatestVersion}.
+              </span>
+            ) : (
+              // Just a new chart version
+              <span>A new chart version is available: {app.updateInfo.chartLatestVersion}.</span>
+            );
+          updateContent = (
+            <React.Fragment>
+              <h5 className="ChartInfoUpdate">Update Available</h5>
+              {update}
+              <br />
+              <span>
+                Click <Link to={`/apps/ns/${app.namespace}/upgrade/${app.name}`}>here</Link> to
+                upgrade.
+              </span>
+            </React.Fragment>
+          );
+        }
       }
+      return (
+        <div>
+          <hr className="separator-small" />
+          {updateContent}
+        </div>
+      );
     }
     return;
   }

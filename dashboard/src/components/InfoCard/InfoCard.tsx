@@ -11,7 +11,6 @@ export interface IServiceInstanceCardProps {
   link?: string;
   icon?: string;
   banner?: string;
-  bannerColor?: string;
   description?: string | JSX.Element;
   tag1Class?: string;
   tag1Content?: string | JSX.Element;
@@ -30,18 +29,13 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
     tag2Content,
     tag2Class,
     banner,
-    bannerColor,
   } = props;
   const icon = props.icon ? props.icon : placeholder;
   return (
     <Card responsive={true} className="ListItem">
       <Link to={link || "#"} title={title} className="ListItem__header">
         <CardIcon icon={icon} />
-        {banner && (
-          <p className={`ListItem__banner ${bannerColor && `ListItem__banner_${bannerColor}`}`}>
-            {banner}
-          </p>
-        )}
+        {banner && <p className={"ListItem__banner"}>{banner}</p>}
       </Link>
       <CardContent>
         <div className="ListItem__content">

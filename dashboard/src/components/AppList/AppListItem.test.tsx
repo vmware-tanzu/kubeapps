@@ -63,7 +63,7 @@ it("should set a green banner if there are chart updates available", () => {
     />,
   );
   const card = wrapper.find(InfoCard);
-  expect(card.prop("banner")).toBe("Chart v1.1.0 available");
+  expect(card.prop("banner")).toBe("Update available");
 });
 
 it("should set a blue banner if there are app updates available", () => {
@@ -90,7 +90,7 @@ it("should set a blue banner if there are app updates available", () => {
     />,
   );
   const card = wrapper.find(InfoCard);
-  expect(card.prop("banner")).toBe("New app version 1.1.0 available");
+  expect(card.prop("banner")).toBe("Update available");
 });
 
 it("should not set a banner if there are errors in the update info", () => {

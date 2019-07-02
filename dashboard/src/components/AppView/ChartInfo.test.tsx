@@ -2,15 +2,16 @@ import { shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 
-import { Link } from "react-router-dom";
 import { hapi } from "shared/hapi/release";
 import { IRelease } from "shared/types";
+import { CardFooter } from "../../components/Card";
 import ChartInfo from "./ChartInfo";
 
 const defaultProps = {
   app: {
     chart: {
       metadata: {
+        name: "bar",
         appVersion: "0.0.1",
         description: "test chart",
         icon: "icon.png",
@@ -41,12 +42,12 @@ context("when information about updates is available", () => {
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
     expect(
       wrapper
-        .find(Link)
+        .find(CardFooter)
         .children()
         .text(),
-    ).toContain("Chart v1.0.0 available");
+    ).toContain("A new chart version is available: 1.0.0");
   });
-  it("renders an new version found message if the chart latest version is newer", () => {
+  it("renders an new version found message if the app latest version is newer", () => {
     const appWithUpdates = {
       ...defaultProps.app,
       updateInfo: { upToDate: false, appLatestVersion: "1.1.0", chartLatestVersion: "1.0.0" },
@@ -54,10 +55,10 @@ context("when information about updates is available", () => {
     const wrapper = shallow(<ChartInfo {...defaultProps} app={appWithUpdates} />);
     expect(
       wrapper
-        .find(Link)
+        .find(CardFooter)
         .children()
         .text(),
-    ).toContain("New App version 1.1.0 available");
+    ).toContain("A new version for bar is available: 1.1.0");
   });
   it("renders a warning if there are errors with the update info", () => {
     const appWithUpdates = {

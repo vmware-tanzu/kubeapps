@@ -30,8 +30,6 @@ exports[`renders a app item 1`] = `
               Chart Version: 
               1.0.0
             </span>
-            <br />
-            <span />
           </div>
         </div>
       </small>
