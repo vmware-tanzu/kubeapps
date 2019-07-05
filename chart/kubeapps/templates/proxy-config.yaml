@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "kubeapps.proxy-configmap.fullname" . }}
+  labels:
+    app: {{ template "kubeapps.frontend-config.fullname" . }}
+    chart: {{ template "kubeapps.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+data:
+  https_proxy: {{- with .Values.jobsRepositorySyncProxy.https_proxy }}
+  http_proxy: {{- with .Values.jobsRepositorySyncProxy.http_proxy }}
+  no_proxy: {{- with .Values.jobsRepositorySyncProxy.no_proxy }}

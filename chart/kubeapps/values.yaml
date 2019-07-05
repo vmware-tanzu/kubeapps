@@ -35,7 +35,12 @@ apprepository:
   nodeSelector: {}
   tolerations: []
   affinity: {}
-  
+
+jobsRepositorySyncProxy:
+  https_proxy: ""
+  http_proxy: ""
+  no_proxy: "0.0.0.0/0" # no  proxy for all
+
 chartsvc:
   image:
     registry: docker.io

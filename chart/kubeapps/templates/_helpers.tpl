@@ -62,6 +62,13 @@ Create name for the apprepository bootstrap job
 {{- end -}}
 
 {{/*
+Create name for the proxy configMap
+*/}}
+{{- define "kubeapps.proxy-configmap.fullname" -}}
+{{ template "kubeapps.fullname" . }}-proxy-configmap
+{{- end -}}
+
+{{/*
 Create name for the apprepository cleanup job
 */}}
 {{- define "kubeapps.apprepository-jobs-cleanup.fullname" -}}
