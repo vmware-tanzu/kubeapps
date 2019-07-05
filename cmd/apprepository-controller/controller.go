@@ -508,6 +508,27 @@ func cleanupJobSpec(repoName string) batchv1.JobSpec {
 										Key:                  "mongodb-root-password",
 									},
 								},
+								Name: "https_proxy",
+								ValueFrom: &corev1.EnvVarSource{
+                                    configMapKeyRef: &corev1.ConfigMapKeySelector{
+                                		LocalObjectReference: corev1.LocalObjectReference{Name: proxyConfigMap},
+                                	    Key:                  "https_proxy",
+                                    },
+                                },
+								Name: "http_proxy",
+								ValueFrom: &corev1.EnvVarSource{
+                                    configMapKeyRef: &corev1.ConfigMapKeySelector{
+                                		LocalObjectReference: corev1.LocalObjectReference{Name: proxyConfigMap},
+                                	    Key:                  "http_proxy",
+                                    },
+                                },
+								Name: "no_proxy",
+								ValueFrom: &corev1.EnvVarSource{
+                                    configMapKeyRef: &corev1.ConfigMapKeySelector{
+                                		LocalObjectReference: corev1.LocalObjectReference{Name: proxyConfigMap},
+                                	    Key:                  "no_proxy",
+                                    },
+                                },
 							},
 						},
 					},

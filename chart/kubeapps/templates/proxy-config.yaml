@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: {{ template "kubeapps.proxy-configmap.fullname" . }}
   labels:
-    app: {{ template "kubeapps.frontend-config.fullname" . }}
+    app: {{ template "kubeapps.proxy-configmap.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
