@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`completes with 0 if a status field is not populated 1`] = `
+<Fragment>
+  <td
+    className="col-6"
+  >
+    foo
+  </td>
+  <td
+    className="col-3"
+  >
+    1
+  </td>
+  <td
+    className="col-3"
+  >
+    0
+  </td>
+</Fragment>
+`;
+
+exports[`renders a complete DaemonSet 1`] = `
+<Fragment>
+  <td
+    className="col-6"
+  >
+    foo
+  </td>
+  <td
+    className="col-3"
+  >
+    1
+  </td>
+  <td
+    className="col-3"
+  >
+    1
+  </td>
+</Fragment>
+`;

@@ -1,0 +1,187 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should open a modal with the repository form 1`] = `
+<AppRepoAddButton
+  install={[Function]}
+  kubeappsNamespace="kubeapps"
+>
+  <div
+    className="AppRepoAddButton"
+  >
+    <button
+      className="button button-primary"
+      onClick={[Function]}
+    >
+      Add App Repository
+    </button>
+    <Modal
+      ariaHideApp={true}
+      bodyOpenClassName="ReactModal__Body--open"
+      closeTimeoutMS={0}
+      contentLabel="Modal"
+      isOpen={true}
+      onRequestClose={[Function]}
+      parentSelector={[Function]}
+      portalClassName="ReactModalPortal"
+      role="dialog"
+      shouldCloseOnEsc={true}
+      shouldCloseOnOverlayClick={true}
+      shouldFocusAfterRender={true}
+      shouldReturnFocusAfterClose={true}
+    >
+      <Portal
+        containerInfo={
+          <div
+            class="ReactModalPortal"
+          >
+            <div
+              class="ReactModal__Overlay ReactModal__Overlay--after-open"
+              style="position: fixed; top: 0px; left: 0px; right: 0px; bottom: 0px; background-color: rgba(255, 255, 255, 0.75);"
+            >
+              <div
+                style="position: absolute; top: 40px; left: 40px; right: 40px; bottom: 40px; border: 1px solid #ccc; background: rgb(255, 255, 255); overflow: auto; border-radius: 4px; outline: none; padding: 20px;"
+                class="ReactModal__Content ReactModal__Content--after-open"
+                tabindex="-1"
+                role="dialog"
+                aria-label="Modal"
+              >
+                <form
+                  class="container padding-b-bigger"
+                >
+                  <div
+                    class="row"
+                  >
+                    <div
+                      class="col-12"
+                    >
+                      <div>
+                        <h2>
+                          Add an App Repository
+                        </h2>
+                      </div>
+                      <div>
+                        <label>
+                          <span>
+                            Name:
+                          </span>
+                          <input
+                            type="text"
+                            placeholder="example"
+                            required=""
+                            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                            title="Use lower case alphanumeric characters, '-' or '.'"
+                            value=""
+                          />
+                        </label>
+                      </div>
+                      <div>
+                        <label>
+                          <span>
+                            URL:
+                          </span>
+                          <input
+                            type="url"
+                            placeholder="https://charts.example.com/stable"
+                            required=""
+                            value=""
+                          />
+                        </label>
+                      </div>
+                      <div>
+                        <label>
+                          <span>
+                            Authorization Header (optional):
+                          </span>
+                          <input
+                            type="text"
+                            placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                            value=""
+                          />
+                        </label>
+                      </div>
+                      <div>
+                        <label>
+                          <span>
+                            Custom CA Certificate (optional):
+                          </span>
+                          <pre
+                            class="CertContainer"
+                          >
+                            <textarea
+                              class="CertContent"
+                              rows="4"
+                              placeholder="-----BEGIN CERTIFICATE-----
+                            ...
+                            -----END CERTIFICATE-----"
+                            />
+                          </pre>
+                        </label>
+                      </div>
+                      <div>
+                        <button
+                          class="button button-primary"
+                          type="submit"
+                        >
+                          Install Repo
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <ModalPortal
+          ariaHideApp={true}
+          bodyOpenClassName="ReactModal__Body--open"
+          closeTimeoutMS={0}
+          contentLabel="Modal"
+          defaultStyles={
+            Object {
+              "content": Object {
+                "WebkitOverflowScrolling": "touch",
+                "background": "#fff",
+                "border": "1px solid #ccc",
+                "borderRadius": "4px",
+                "bottom": "40px",
+                "left": "40px",
+                "outline": "none",
+                "overflow": "auto",
+                "padding": "20px",
+                "position": "absolute",
+                "right": "40px",
+                "top": "40px",
+              },
+              "overlay": Object {
+                "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                "bottom": 0,
+                "left": 0,
+                "position": "fixed",
+                "right": 0,
+                "top": 0,
+              },
+            }
+          }
+          isOpen={true}
+          onRequestClose={[Function]}
+          parentSelector={[Function]}
+          portalClassName="ReactModalPortal"
+          role="dialog"
+          shouldCloseOnEsc={true}
+          shouldCloseOnOverlayClick={true}
+          shouldFocusAfterRender={true}
+          shouldReturnFocusAfterClose={true}
+          style={
+            Object {
+              "content": Object {},
+              "overlay": Object {},
+            }
+          }
+        />
+      </Portal>
+    </Modal>
+  </div>
+</AppRepoAddButton>
+`;

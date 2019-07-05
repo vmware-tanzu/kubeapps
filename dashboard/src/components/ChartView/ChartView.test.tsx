@@ -1,8 +1,10 @@
 import { shallow } from "enzyme";
+import context from "jest-plugin-context";
 import * as React from "react";
 
-import { IChartState, IChartVersion } from "../../shared/types";
-import ChartDeployButton from "./ChartDeployButton";
+import itBehavesLike from "../../shared/specs";
+import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
 import ChartReadme from "./ChartReadme";
@@ -81,25 +83,31 @@ it("triggers resetChartVersion when unmounting", () => {
   expect(spy).toHaveBeenCalled();
 });
 
-it("renders a loading message if fetching or if chart version not set", () => {
-  const chartVersionNotSet = shallow(<ChartView {...props} isFetching={false} />);
-  expect(chartVersionNotSet.text()).toBe("Loading");
-  const fetching = shallow(
-    <ChartView {...props} isFetching={true} selected={{ version: {} as IChartVersion }} />,
-  );
-  expect(fetching.text()).toBe("Loading");
+context("when fetching is false but no chart is available", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: ChartView,
+    props: {
+      ...props,
+      isFetching: false,
+    },
+  });
+});
+
+context("when fetching is true and chart is available", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: ChartView,
+    props: {
+      ...props,
+      isFetching: true,
+      selected: { version: {} as IChartVersion },
+    },
+  });
 });
 
 describe("subcomponents", () => {
   const wrapper = shallow(<ChartView {...props} selected={{ version: testVersion }} />);
 
-  for (const component of [
-    ChartHeader,
-    ChartReadme,
-    ChartDeployButton,
-    ChartVersionsList,
-    ChartMaintainers,
-  ]) {
+  for (const component of [ChartHeader, ChartReadme, ChartVersionsList, ChartMaintainers]) {
     it(`renders ${component.name}`, () => {
       expect(wrapper.find(component).exists()).toBe(true);
     });
@@ -184,4 +192,17 @@ it("renders the sources links when set", () => {
       </a>,
     ),
   ).toBe(true);
+});
+
+describe("renders errors", () => {
+  it("renders a not found error if it exists", () => {
+    const wrapper = shallow(<ChartView {...props} selected={{ error: new NotFoundError() }} />);
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(ErrorSelector).html()).toContain(`Chart ${props.chartID} not found`);
+  });
+  it("renders a generic error if it exists", () => {
+    const wrapper = shallow(<ChartView {...props} selected={{ error: new Error() }} />);
+    expect(wrapper.find(ErrorSelector)).toExist();
+    expect(wrapper.find(ErrorSelector).html()).toContain("Sorry! Something went wrong");
+  });
 });

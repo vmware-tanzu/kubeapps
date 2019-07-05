@@ -8,16 +8,17 @@ describe("Config", () => {
 
   beforeEach(() => {
     initialEnv = { ...process.env };
-    moxios.install(axios);
+    // Import as "any" to avoid typescript syntax error
+    moxios.install(axios as any);
 
     defaultJSON = require("../../public/config.json");
 
-    moxios.stubRequest("/config.json", { status: 200, response: defaultJSON });
+    moxios.stubRequest("config.json", { status: 200, response: defaultJSON });
   });
 
   afterEach(() => {
     process.env = initialEnv;
-    moxios.uninstall(axios);
+    moxios.uninstall(axios as any);
   });
 
   it("returns default namespace if no override provided", async () => {

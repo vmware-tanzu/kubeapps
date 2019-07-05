@@ -26,13 +26,12 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
-	log "github.com/sirupsen/logrus"
-	"github.com/urfave/negroni"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	proxy "github.com/kubeapps/kubeapps/pkg/proxy"
+	log "github.com/sirupsen/logrus"
+	"github.com/urfave/negroni"
+	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 // Context key type for request contexts
@@ -127,7 +126,11 @@ func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *
 	if err != nil {
 		return nil, nil, err
 	}
-	ch, err := cu.GetChart(chartDetails)
+	netClient, err := cu.InitNetClient(chartDetails.Auth.CustomCA)
+	if err != nil {
+		return nil, nil, err
+	}
+	ch, err := cu.GetChart(chartDetails, netClient)
 	if err != nil {
 		return nil, nil, err
 	}

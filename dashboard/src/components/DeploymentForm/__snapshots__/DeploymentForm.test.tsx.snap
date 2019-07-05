@@ -1,0 +1,133 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;
+
+exports[`renders the full DeploymentForm 1`] = `
+<div>
+  <form
+    className="container padding-b-bigger"
+    onSubmit={[Function]}
+  >
+    <div
+      className="row"
+    >
+      <div
+        className="col-12"
+      >
+        <h2>
+          foo
+        </h2>
+      </div>
+      <div
+        className="col-8"
+      >
+        <div>
+          <label
+            htmlFor="releaseName"
+          >
+            Name
+          </label>
+          <input
+            id="releaseName"
+            onChange={[Function]}
+            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+            required={true}
+            title="Use lower case alphanumeric characters, '-' or '.'"
+          />
+        </div>
+        <div>
+          <label
+            htmlFor="chartVersion"
+          >
+            Version
+          </label>
+          <select
+            id="chartVersion"
+            onChange={[Function]}
+            required={true}
+            value="1.2.3"
+          >
+            <option
+              key="foo"
+              value="1.2.3"
+            >
+              1.2.3
+               
+            </option>
+          </select>
+        </div>
+        <div
+          style={
+            Object {
+              "marginBottom": "1em",
+            }
+          }
+        >
+          <label
+            htmlFor="values"
+          >
+            Values (YAML)
+          </label>
+          <ReactAce
+            cursorStart={1}
+            editorProps={
+              Object {
+                "$blockScrolling": Infinity,
+              }
+            }
+            enableBasicAutocompletion={false}
+            enableLiveAutocompletion={false}
+            focus={false}
+            fontSize={12}
+            height="500px"
+            highlightActiveLine={true}
+            maxLines={null}
+            minLines={null}
+            mode="yaml"
+            name="values"
+            onChange={[Function]}
+            onLoad={null}
+            onPaste={null}
+            onScroll={null}
+            readOnly={false}
+            scrollMargin={
+              Array [
+                0,
+                0,
+                0,
+                0,
+              ]
+            }
+            setOptions={
+              Object {
+                "showPrintMargin": false,
+              }
+            }
+            showGutter={true}
+            showPrintMargin={true}
+            style={Object {}}
+            tabSize={4}
+            theme="xcode"
+            value=""
+            width="100%"
+            wrapEnabled={false}
+          />
+        </div>
+        <div>
+          <button
+            className="button button-primary"
+            type="submit"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+`;

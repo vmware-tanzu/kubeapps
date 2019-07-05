@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a Card 1`] = `
+<InfoCard
+  icon="an-icon.png"
+  info="large database"
+  link="/a/link/somewhere"
+  tag1Content="foobar"
+  tag2Class="Provisioned"
+  tag2Content="Provisioned"
+  title="foo"
+/>
+`;

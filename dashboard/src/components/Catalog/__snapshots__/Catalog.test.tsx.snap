@@ -1,0 +1,95 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renderization when charts available should render the list of charts 1`] = `
+<section
+  className="Catalog"
+>
+  <PageHeader>
+    <h1>
+      Catalog
+    </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search charts..."
+      value=""
+    />
+  </PageHeader>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <CardGrid>
+      <CatalogItem
+        chart={
+          Object {
+            "attributes": Object {
+              "description": "",
+            },
+            "id": "foo",
+          }
+        }
+        key="foo"
+      />
+      <CatalogItem
+        chart={
+          Object {
+            "attributes": Object {
+              "description": "",
+            },
+            "id": "bar",
+          }
+        }
+        key="bar"
+      />
+    </CardGrid>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`renderization when fetching apps loading spinner matches the snapshot 1`] = `
+<section
+  className="Catalog"
+>
+  <PageHeader>
+    <h1>
+      Catalog
+    </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search charts..."
+      value=""
+    />
+  </PageHeader>
+  <LoadingWrapper
+    loaded={false}
+    type={0}
+  >
+    <CardGrid />
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`renderization when no charts should render an error 1`] = `
+<MessageAlertPage
+  level="warning"
+>
+  <div>
+    <h5>
+      Charts not found.
+    </h5>
+    Manage your Helm chart repositories in Kubeapps by visiting the
+     
+    <Link
+      replace={false}
+      to="/config/repos"
+    >
+      App repositories configuration
+    </Link>
+     page.
+  </div>
+</MessageAlertPage>
+`;

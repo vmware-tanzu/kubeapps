@@ -28,7 +28,22 @@ If release name contains chart name it will be used as a full name.
 Render image reference
 */}}
 {{- define "kubeapps.image" -}}
-{{ .registry }}/{{ .repository }}:{{ .tag }}
+{{- $image := index . 0 -}}
+{{- $global := index . 1 -}}
+{{/*
+Helm 2.11 supports the assignment of a value to a variable defined in a different scope,
+but Helm 2.9 and 2.10 doesn't support it, so we need to implement this if-else logic.
+Also, we can't use a single if because lazy evaluation is not an option
+*/}}
+{{- if $global -}}
+    {{- if $global.imageRegistry -}}
+        {{ $global.imageRegistry }}/{{ $image.repository }}:{{ $image.tag }}
+    {{- else -}}
+        {{ $image.registry }}/{{ $image.repository }}:{{ $image.tag }}
+    {{- end -}}
+{{- else -}}
+    {{ $image.registry }}/{{ $image.repository }}:{{ $image.tag }}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -51,14 +66,14 @@ Create chart name and version as used by the chart label.
 Create name for the apprepository-controller based on the fullname
 */}}
 {{- define "kubeapps.apprepository.fullname" -}}
-{{ template "kubeapps.fullname" . }}-apprepository-controller
+{{ template "kubeapps.fullname" . }}-internal-apprepository-controller
 {{- end -}}
 
 {{/*
 Create name for the apprepository bootstrap job
 */}}
 {{- define "kubeapps.apprepository-jobs-bootstrap.fullname" -}}
-{{ template "kubeapps.fullname" . }}-apprepository-jobs-bootstrap
+{{ template "kubeapps.fullname" . }}-internal-apprepository-jobs-bootstrap
 {{- end -}}
 
 {{/*
@@ -72,28 +87,42 @@ Create name for the proxy configMap
 Create name for the apprepository cleanup job
 */}}
 {{- define "kubeapps.apprepository-jobs-cleanup.fullname" -}}
-{{ template "kubeapps.fullname" . }}-apprepository-jobs-cleanup
+{{ template "kubeapps.fullname" . }}-internal-apprepository-jobs-cleanup
+{{- end -}}
+
+{{/*
+Create name for the mongodb secret bootstrap job
+*/}}
+{{- define "kubeapps.mongodb-jobs-cleanup.fullname" -}}
+{{ template "kubeapps.fullname" . }}-internal-mongodb-jobs-cleanup
+{{- end -}}
+
+{{/*
+Create name for the kubeapps upgrade job
+*/}}
+{{- define "kubeapps.kubeapps-jobs-upgrade.fullname" -}}
+{{ template "kubeapps.fullname" . }}-internal-kubeapps-jobs-upgrade
 {{- end -}}
 
 {{/*
 Create name for the chartsvc based on the fullname
 */}}
 {{- define "kubeapps.chartsvc.fullname" -}}
-{{ template "kubeapps.fullname" . }}-chartsvc
+{{ template "kubeapps.fullname" . }}-internal-chartsvc
 {{- end -}}
 
 {{/*
 Create name for the dashboard based on the fullname
 */}}
 {{- define "kubeapps.dashboard.fullname" -}}
-{{ template "kubeapps.fullname" . }}-dashboard
+{{ template "kubeapps.fullname" . }}-internal-dashboard
 {{- end -}}
 
 {{/*
 Create name for the dashboard config based on the fullname
 */}}
 {{- define "kubeapps.dashboard-config.fullname" -}}
-{{ template "kubeapps.fullname" . }}-dashboard-config
+{{ template "kubeapps.fullname" . }}-internal-dashboard-config
 {{- end -}}
 
 {{/*
@@ -107,5 +136,51 @@ Create name for the frontend config based on the fullname
 Create name for the tiller-proxy based on the fullname
 */}}
 {{- define "kubeapps.tiller-proxy.fullname" -}}
-{{ template "kubeapps.fullname" . }}-tiller-proxy
+{{ template "kubeapps.fullname" . }}-internal-tiller-proxy
+{{- end -}}
+
+{{/*
+Create name for the secrets related to an app repository
+*/}}
+{{- define "kubeapps.apprepository-secret.name" -}}
+apprepo-{{ .name }}-secrets
+{{- end -}}
+
+{{/*
+Repositories that include a caCert or an authorizationHeader
+*/}}
+{{- define "kubeapps.repos-with-orphan-secrets" -}}
+{{- range .Values.apprepository.initialRepos }}
+{{- if or .caCert .authorizationHeader }}
+.name
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Frontend service port number
+*/}}
+{{- define "kubeapps.frontend-port-number" -}}
+{{- if .Values.authProxy.enabled -}}
+3000
+{{- else -}}
+8080
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the proper Docker Image Registry Secret Names
+*/}}
+{{- define "kubeapps.imagePullSecrets" -}}
+{{/*
+We can not use a single if because lazy evaluation is not an option
+*/}}
+{{- if .Values.global }}
+{{- if .Values.global.imagePullSecrets }}
+imagePullSecrets:
+{{- range .Values.global.imagePullSecrets }}
+  - name: {{ . }}
+{{- end }}
+{{- end -}}
+{{- end -}}
 {{- end -}}

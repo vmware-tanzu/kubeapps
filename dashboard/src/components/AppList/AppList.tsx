@@ -4,14 +4,15 @@ import { Link } from "react-router-dom";
 import { IAppOverview, IAppState } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
-import { MessageAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import { ErrorSelector, MessageAlert } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
 
 interface IAppListProps {
   apps: IAppState;
-  fetchApps: (ns: string, all: boolean) => Promise<void>;
+  fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
@@ -24,16 +25,21 @@ interface IAppListState {
 class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
   public componentDidMount() {
-    const { fetchApps, filter, namespace, apps } = this.props;
-    fetchApps(namespace, apps.listingAll);
+    const { fetchAppsWithUpdateInfo, filter, namespace, apps } = this.props;
+    fetchAppsWithUpdateInfo(namespace, apps.listingAll);
     this.setState({ filter });
   }
 
   public componentWillReceiveProps(nextProps: IAppListProps) {
-    const { apps: { error, listingAll }, fetchApps, filter, namespace } = this.props;
+    const {
+      apps: { error, listingAll },
+      fetchAppsWithUpdateInfo,
+      filter,
+      namespace,
+    } = this.props;
     // refetch if new namespace or error removed due to location change
     if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
-      fetchApps(nextProps.namespace, listingAll);
+      fetchAppsWithUpdateInfo(nextProps.namespace, listingAll);
     }
     if (nextProps.filter !== filter) {
       this.setState({ filter: nextProps.filter });
@@ -41,67 +47,77 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   public render() {
-    const { pushSearchFilter, apps: { error, isFetching, listOverview, listingAll } } = this.props;
-    if (!listOverview) {
-      return <div>Loading</div>;
-    }
+    const {
+      apps: { error, isFetching, listOverview },
+    } = this.props;
     return (
       <section className="AppList">
         <PageHeader>
           <div className="col-9">
             <div className="row">
               <h1>Applications</h1>
-              {listOverview.length > 0 && [
-                <SearchFilter
-                  key="searchFilter"
-                  className="margin-l-big"
-                  placeholder="search apps..."
-                  onChange={this.handleFilterQueryChange}
-                  value={this.state.filter}
-                  onSubmit={pushSearchFilter}
-                />,
-                <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
-                  <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
-                  <span>Show deleted apps</span>
-                </label>,
-              ]}
+              {!error && this.appListControls()}
             </div>
           </div>
-          {listOverview.length > 0 && (
-            <div className="col-3 text-r align-center">
-              <Link to="/charts">
-                <button className="button button-accent">Deploy App</button>
+          <div className="col-3 text-r align-center">
+            {!error && (
+              <Link to="/catalog">
+                <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
-            </div>
-          )}
+            )}
+          </div>
         </PageHeader>
         <main>
-          {isFetching ? (
-            <div>Loading</div>
-          ) : error ? (
-            this.renderError(error)
-          ) : (
-            this.appListItems(listOverview)
-          )}
+          <LoadingWrapper loaded={!isFetching}>
+            {error ? (
+              <ErrorSelector
+                error={error}
+                action="list"
+                resource="Applications"
+                namespace={this.props.namespace}
+              />
+            ) : (
+              this.appListItems(listOverview)
+            )}
+          </LoadingWrapper>
         </main>
       </section>
     );
   }
 
+  public appListControls() {
+    const {
+      pushSearchFilter,
+      apps: { listingAll },
+    } = this.props;
+    return (
+      <React.Fragment>
+        <SearchFilter
+          key="searchFilter"
+          className="margin-l-big"
+          placeholder="search apps..."
+          onChange={this.handleFilterQueryChange}
+          value={this.state.filter}
+          onSubmit={pushSearchFilter}
+        />
+        <label className="checkbox margin-r-big margin-l-big margin-t-big" key="listall">
+          <input type="checkbox" checked={listingAll} onChange={this.toggleListAll} />
+          <span>Show deleted apps</span>
+        </label>
+      </React.Fragment>
+    );
+  }
+
   public appListItems(items: IAppState["listOverview"]) {
     if (items) {
-      if (items.length === 0) {
+      const filteredItems = this.filteredApps(items, this.state.filter);
+      if (filteredItems.length === 0) {
         return (
           <MessageAlert header="Supercharge your Kubernetes cluster">
             <div>
               <p className="margin-v-normal">
                 Deploy applications on your Kubernetes cluster with a single click.
               </p>
-              <div className="padding-b-normal">
-                <Link className="button button-accent" to="/charts">
-                  Deploy App
-                </Link>
-              </div>
             </div>
           </MessageAlert>
         );
@@ -109,7 +125,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
         return (
           <div>
             <CardGrid>
-              {this.filteredApps(items, this.state.filter).map(r => {
+              {filteredItems.map(r => {
                 return <AppListItem key={r.releaseName} app={r} />;
               })}
             </CardGrid>
@@ -121,12 +137,8 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   private toggleListAll = () => {
-    this.props.fetchApps(this.props.namespace, !this.props.apps.listingAll);
+    this.props.fetchAppsWithUpdateInfo(this.props.namespace, !this.props.apps.listingAll);
   };
-
-  private renderError(error: Error) {
-    return <UnexpectedErrorAlert />;
-  }
 
   private filteredApps(apps: IAppOverview[], filter: string) {
     return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.releaseName));

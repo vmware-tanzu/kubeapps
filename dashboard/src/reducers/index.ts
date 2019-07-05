@@ -1,4 +1,3 @@
-import { routerReducer } from "react-router-redux";
 import { combineReducers } from "redux";
 
 import { IStoreState } from "../shared/types";
@@ -7,7 +6,7 @@ import authReducer from "./auth";
 import catalogReducer from "./catalog";
 import chartsReducer from "./charts";
 import configReducer from "./config";
-import functionsReducer from "./functions";
+import kubeReducer from "./kube";
 import namespaceReducer from "./namespace";
 import reposReducer from "./repos";
 
@@ -17,10 +16,9 @@ const rootReducer = combineReducers<IStoreState>({
   catalog: catalogReducer,
   charts: chartsReducer,
   config: configReducer,
-  functions: functionsReducer,
+  kube: kubeReducer,
   namespace: namespaceReducer,
   repos: reposReducer,
-  router: routerReducer,
 });
 
 export default rootReducer;

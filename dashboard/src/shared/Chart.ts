@@ -1,4 +1,5 @@
-import axios from "axios";
+import { axios } from "./AxiosInstance";
+import { IChart } from "./types";
 
 export default class Chart {
   public static async getReadme(id: string, version: string) {
@@ -23,5 +24,13 @@ export default class Chart {
     return true;
   }
 
-  private static APIEndpoint: string = "/api/chartsvc/v1";
+  public static async listWithFilters(name: string, version: string, appVersion: string) {
+    const url = `${
+      Chart.APIEndpoint
+    }/charts?name=${name}&version=${version}&appversion=${appVersion}`;
+    const { data } = await axios.get<{ data: IChart[] }>(url);
+    return data.data;
+  }
+
+  private static APIEndpoint: string = "api/chartsvc/v1";
 }

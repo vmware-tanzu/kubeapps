@@ -1,4 +1,5 @@
-import { axios } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
+import { definedNamespaces } from "./Namespace";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 
 interface IK8sApiSecretResponse {
@@ -54,7 +55,7 @@ export class ServiceBinding {
     parameters: {},
   ) {
     const url = ServiceBinding.getLink(namespace);
-    const { data } = await axios.post<IServiceBinding>(url, {
+    const { data } = await axiosWithAuth.post<IServiceBinding>(url, {
       metadata: {
         name: bindingName,
       },
@@ -70,12 +71,12 @@ export class ServiceBinding {
 
   public static async delete(name: string, namespace: string) {
     const url = this.getLink(namespace, name);
-    return axios.delete(url);
+    return axiosWithAuth.delete(url);
   }
 
   public static async get(namespace: string, name: string) {
     const url = this.getLink(namespace, name);
-    const { data } = await axios.get<IServiceBinding>(url);
+    const { data } = await axiosWithAuth.get<IServiceBinding>(url);
     return data;
   }
 
@@ -86,7 +87,7 @@ export class ServiceBinding {
       bindings.map(binding => {
         const { secretName } = binding.spec;
         const ns = binding.metadata.namespace;
-        return axios
+        return axiosWithAuth
           .get<IK8sApiSecretResponse>(this.secretEndpoint(ns) + secretName)
           .then(response => {
             return { binding, secret: response.data };
@@ -100,12 +101,12 @@ export class ServiceBinding {
   }
 
   private static getLink(namespace?: string, name?: string): string {
-    return `/api/kube/apis/servicecatalog.k8s.io/v1beta1${
+    return `api/kube/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/servicebindings${name ? `/${name}` : ""}`;
   }
 
-  private static secretEndpoint(namespace: string = "default"): string {
-    return `/api/kube/api/v1/namespaces/${namespace}/secrets/`;
+  private static secretEndpoint(namespace: string = definedNamespaces.default): string {
+    return `api/kube/api/v1/namespaces/${namespace}/secrets/`;
   }
 }

@@ -1,35 +1,52 @@
+import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
+import { assignWith, isEqual } from "lodash";
 import * as React from "react";
 
-import { Auth } from "../../shared/Auth";
-import { hapi } from "../../shared/hapi/release";
-import { ForbiddenError, IRBACRole, IResource, NotFoundError } from "../../shared/types";
-import WebSocketHelper from "../../shared/WebSocketHelper";
-import DeploymentStatus from "../DeploymentStatus";
-import { NotFoundErrorAlert, PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
+import AccessURLTable from "../../containers/AccessURLTableContainer";
+import ApplicationStatus from "../../containers/ApplicationStatusContainer";
+import ResourceRef from "../../shared/ResourceRef";
+import { IK8sList, IRBACRole, IRelease, IResource } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import AppControls from "./AppControls";
-import AppDetails from "./AppDetails";
 import AppNotes from "./AppNotes";
+import AppValues from "./AppValues";
 import "./AppView.css";
 import ChartInfo from "./ChartInfo";
-import ServiceTable from "./ServiceTable";
+import ResourceTable from "./ResourceTable";
 
 export interface IAppViewProps {
   namespace: string;
   releaseName: string;
-  app: hapi.release.Release;
+  app: IRelease;
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
-  getApp: (releaseName: string, namespace: string) => Promise<void>;
+  getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
+  push: (location: string) => RouterAction;
 }
 
 interface IAppViewState {
-  deployments: Map<string, IResource>;
-  otherResources: Map<string, IResource>;
-  services: Map<string, IResource>;
-  sockets: WebSocket[];
+  deployRefs: ResourceRef[];
+  statefulSetRefs: ResourceRef[];
+  daemonSetRefs: ResourceRef[];
+  serviceRefs: ResourceRef[];
+  ingressRefs: ResourceRef[];
+  secretRefs: ResourceRef[];
+  otherResources: ResourceRef[];
+  manifest: IResource[];
+}
+
+interface IPartialAppViewState {
+  deployRefs: ResourceRef[];
+  statefulSetRefs: ResourceRef[];
+  daemonSetRefs: ResourceRef[];
+  serviceRefs: ResourceRef[];
+  ingressRefs: ResourceRef[];
+  secretRefs: ResourceRef[];
+  otherResources: ResourceRef[];
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -49,113 +66,94 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class AppView extends React.Component<IAppViewProps, IAppViewState> {
   public state: IAppViewState = {
-    deployments: new Map<string, IResource>(),
-    otherResources: new Map<string, IResource>(),
-    services: new Map<string, IResource>(),
-    sockets: [],
+    manifest: [],
+    ingressRefs: [],
+    deployRefs: [],
+    statefulSetRefs: [],
+    daemonSetRefs: [],
+    otherResources: [],
+    serviceRefs: [],
+    secretRefs: [],
   };
 
   public async componentDidMount() {
-    const { releaseName, getApp, namespace } = this.props;
-    getApp(releaseName, namespace);
+    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
+    getAppWithUpdateInfo(releaseName, namespace);
   }
 
-  public async componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { releaseName, getApp, namespace } = this.props;
+  // componentWillReceiveProps is deprecated use componentDidUpdate instead
+  public componentWillReceiveProps(nextProps: IAppViewProps) {
+    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
-      getApp(releaseName, nextProps.namespace);
+      getAppWithUpdateInfo(releaseName, nextProps.namespace);
       return;
     }
     if (nextProps.error) {
-      // close any existing sockets
-      this.closeSockets();
       return;
     }
     const newApp = nextProps.app;
     if (!newApp) {
       return;
     }
-    let manifest: IResource[] = yaml.safeLoadAll(newApp.manifest);
+
+    // TODO(prydonius): Okay to use non-safe load here since we assume the
+    // manifest is pre-parsed by Helm and Kubernetes. Look into switching back
+    // to safeLoadAll once https://github.com/nodeca/js-yaml/issues/456 is
+    // resolved.
+    let manifest: IResource[] = yaml.loadAll(newApp.manifest, undefined, { json: true });
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
-
-    const watchedKinds = ["Deployment", "Service"];
-    const otherResources = manifest
-      .filter(d => watchedKinds.indexOf(d.kind) < 0)
-      .reduce((acc, r) => {
-        // TODO: skip list resource for now
-        if (r.kind === "List") {
-          return acc;
-        }
-        acc[`${r.kind}/${r.metadata.name}`] = r;
-        return acc;
-      }, new Map<string, IResource>());
-    this.setState({ otherResources });
-
-    const deployments = manifest.filter(d => d.kind === "Deployment");
-    const services = manifest.filter(d => d.kind === "Service");
-    const apiBase = WebSocketHelper.apiBase();
-    const sockets: WebSocket[] = [];
-    for (const d of deployments) {
-      const s = new WebSocket(
-        `${apiBase}/apis/apps/v1beta1/namespaces/${
-          newApp.namespace
-        }/deployments?watch=true&fieldSelector=metadata.name%3D${d.metadata.name}`,
-        Auth.wsProtocols(),
-      );
-      s.addEventListener("message", e => this.handleEvent(e));
-      sockets.push(s);
+    if (!isEqual(manifest, this.state.manifest)) {
+      this.setState({ manifest });
+    } else {
+      return;
     }
-    for (const svc of services) {
-      const s = new WebSocket(
-        `${apiBase}/api/v1/namespaces/${
-          newApp.namespace
-        }/services?watch=true&fieldSelector=metadata.name%3D${svc.metadata.name}`,
-        Auth.wsProtocols(),
-      );
-      s.addEventListener("message", e => this.handleEvent(e));
-      sockets.push(s);
-    }
-    this.setState({
-      sockets,
-    });
-  }
 
-  public componentWillUnmount() {
-    this.closeSockets();
-  }
-
-  public handleEvent(e: MessageEvent) {
-    const msg = JSON.parse(e.data);
-    const resource: IResource = msg.object;
-    const key = `${resource.kind}/${resource.metadata.name}`;
-    switch (resource.kind) {
-      case "Deployment":
-        this.setState({ deployments: { ...this.state.deployments, [key]: resource } });
-        break;
-      case "Service":
-        this.setState({ services: { ...this.state.services, [key]: resource } });
-        break;
-    }
+    // Iterate over the current manifest to populate the initial state
+    this.setState(this.parseResources(manifest, newApp.namespace));
   }
 
   public render() {
     if (this.props.error) {
-      return this.renderError(this.props.error);
+      return (
+        <ErrorSelector
+          error={this.props.error}
+          defaultRequiredRBACRoles={RequiredRBACRoles}
+          action="view"
+          resource={`Application ${this.props.releaseName}`}
+          namespace={this.props.namespace}
+        />
+      );
     }
-    if (!this.state.otherResources) {
-      return <div>Loading</div>;
-    }
-    const { app } = this.props;
-    if (!app || !app.info) {
-      return <div>Loading</div>;
-    }
+
+    return this.props.app && this.props.app.info ? this.appInfo() : <LoadingWrapper />;
+  }
+
+  public appInfo() {
+    const { app, push } = this.props;
+    const {
+      serviceRefs,
+      ingressRefs,
+      deployRefs,
+      statefulSetRefs,
+      daemonSetRefs,
+      secretRefs,
+      otherResources,
+    } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
           <div className="container">
-            {this.props.deleteError && this.renderError(this.props.deleteError, "delete")}
+            {this.props.deleteError && (
+              <ErrorSelector
+                error={this.props.deleteError}
+                defaultRequiredRBACRoles={RequiredRBACRoles}
+                action="delete"
+                resource={`Application ${this.props.releaseName}`}
+                namespace={this.props.namespace}
+              />
+            )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
                 <ChartInfo app={app} />
@@ -163,19 +161,26 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
               <div className="col-9">
                 <div className="row padding-t-bigger">
                   <div className="col-4">
-                    <DeploymentStatus deployments={this.deploymentArray()} info={app.info} />
+                    <ApplicationStatus
+                      deployRefs={deployRefs}
+                      statefulsetRefs={statefulSetRefs}
+                      daemonsetRefs={daemonSetRefs}
+                      info={app.info!}
+                    />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app} deleteApp={this.deleteApp} />
+                    <AppControls app={app} deleteApp={this.deleteApp} push={push} />
                   </div>
                 </div>
-                <ServiceTable services={this.state.services} extended={false} />
+                <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
                 <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
-                <AppDetails
-                  deployments={this.state.deployments}
-                  services={this.state.services}
-                  otherResources={this.state.otherResources}
-                />
+                <ResourceTable resourceRefs={secretRefs} title="Secrets" />
+                <ResourceTable resourceRefs={deployRefs} title="Deployments" />
+                <ResourceTable resourceRefs={statefulSetRefs} title="StatefulSets" />
+                <ResourceTable resourceRefs={daemonSetRefs} title="DaemonSets" />
+                <ResourceTable resourceRefs={serviceRefs} title="Services" />
+                <ResourceTable resourceRefs={otherResources} title="Other Resources" />
+                <AppValues values={(app.config && app.config.raw) || ""} />
               </div>
             </div>
           </div>
@@ -184,44 +189,61 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     );
   }
 
-  private renderError(error: Error, action: string = "view") {
-    const { namespace, releaseName } = this.props;
-    switch (error.constructor) {
-      case ForbiddenError:
-        const message = error ? error.message : "";
-        let roles: IRBACRole[] = [];
-        try {
-          roles = JSON.parse(message);
-        } catch (e) {
-          // Cannot parse the error as a role array
-          // return the default roles
-          roles = RequiredRBACRoles[action];
+  private parseResources(
+    resources: Array<IResource | IK8sList<IResource, {}>>,
+    releaseNamespace: string,
+  ): IPartialAppViewState {
+    const result: IPartialAppViewState = {
+      ingressRefs: [],
+      deployRefs: [],
+      statefulSetRefs: [],
+      daemonSetRefs: [],
+      otherResources: [],
+      serviceRefs: [],
+      secretRefs: [],
+    };
+    resources.forEach(i => {
+      // The item may be a list
+      const itemList = i as IK8sList<IResource, {}>;
+      if (itemList.items) {
+        // If the resource  has a list of items, treat them as a list
+        // A List can contain an arbitrary set of resources so we treat them as an
+        // additional manifest. We merge the current result with the resources of
+        // the List, concatenating items from both.
+        assignWith(
+          result,
+          this.parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
+          // Merge the list with the current result
+          (prev, newArray) => prev.concat(newArray),
+        );
+      } else {
+        const item = i as IResource;
+        const resource = { isFetching: true, item };
+        switch (i.kind) {
+          case "Deployment":
+            result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "StatefulSet":
+            result.statefulSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "DaemonSet":
+            result.daemonSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "Service":
+            result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "Ingress":
+            result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          case "Secret":
+            result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            break;
+          default:
+            result.otherResources.push(new ResourceRef(resource.item, releaseNamespace));
         }
-        return (
-          <PermissionsErrorAlert
-            namespace={namespace}
-            roles={roles}
-            action={`${action} Application "${releaseName}"`}
-          />
-        );
-      case NotFoundError:
-        return (
-          <NotFoundErrorAlert resource={`Application "${releaseName}"`} namespace={namespace} />
-        );
-      default:
-        return <UnexpectedErrorAlert />;
-    }
-  }
-
-  private closeSockets() {
-    const { sockets } = this.state;
-    for (const s of sockets) {
-      s.close();
-    }
-  }
-
-  private deploymentArray(): IResource[] {
-    return Object.keys(this.state.deployments).map(k => this.state.deployments[k]);
+      }
+    });
+    return result;
   }
 
   private deleteApp = (purge: boolean) => {

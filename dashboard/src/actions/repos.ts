@@ -1,79 +1,74 @@
-import { createAction, getReturnOfExpression } from "typesafe-actions";
-
-import { Dispatch } from "react-redux";
+import { ThunkAction } from "redux-thunk";
+import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
+import { axios } from "../shared/AxiosInstance";
 import Secret from "../shared/Secret";
 import * as url from "../shared/url";
+import { errorChart } from "./charts";
 
-import { IAppRepository, IOwnerReference, IStoreState, MissingChart } from "../shared/types";
+import { IAppRepository, IOwnerReference, IStoreState, NotFoundError } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
-export const addedRepo = createAction("ADDED_REPO", (added: IAppRepository) => ({
-  added,
-  type: "ADDED_REPO",
-}));
-export const requestRepos = createAction("REQUEST_REPOS");
-export const receiveRepos = createAction("RECEIVE_REPOS", (repos: IAppRepository[]) => {
-  return {
-    repos,
-    type: "RECEIVE_REPOS",
-  };
+export const addedRepo = createAction("ADDED_REPO", resolve => {
+  return (added: IAppRepository) => resolve(added);
 });
+
+export const requestRepos = createAction("REQUEST_REPOS");
+export const receiveRepos = createAction("RECEIVE_REPOS", resolve => {
+  return (repos: IAppRepository[]) => resolve(repos);
+});
+
 export const requestRepo = createAction("REQUEST_REPO");
-export const receiveRepo = createAction("RECEIVE_REPO", (repo: IAppRepository) => ({
-  repo,
-  type: "RECEIVE_REPO",
-}));
-export const errorChart = createAction("ERROR_CHART", (err: Error) => ({
-  err,
-  type: "ERROR_CHART",
-}));
+export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
+  return (repo: IAppRepository) => resolve(repo);
+});
+
+// Clear repo is basically receiving an empty repo
+export const clearRepo = createAction("RECEIVE_REPO", resolve => {
+  return () => resolve({} as IAppRepository);
+});
+
 export const showForm = createAction("SHOW_FORM");
 export const hideForm = createAction("HIDE_FORM");
 export const resetForm = createAction("RESET_FORM");
 export const submitForm = createAction("SUBMIT_FROM");
-export const updateForm = createAction(
-  "UPDATE_FORM",
-  (values: { name?: string; namespace?: string; url?: string }) => {
-    return {
-      type: "UPDATE_FORM",
-      values,
-    };
-  },
-);
-export const redirect = createAction("REDIRECT", (path: string) => ({ type: "REDIRECT", path }));
+
+export const redirect = createAction("REDIRECT", resolve => {
+  return (path: string) => resolve(path);
+});
+
 export const redirected = createAction("REDIRECTED");
-export const errorRepos = createAction(
-  "ERROR_REPOS",
-  (err: Error, op: "create" | "update" | "fetch" | "delete") => ({
-    err,
-    op,
-    type: "ERROR_REPOS",
-  }),
-);
+export const errorRepos = createAction("ERROR_REPOS", resolve => {
+  return (err: Error, op: "create" | "update" | "fetch" | "delete") => resolve({ err, op });
+});
 
 const allActions = [
   addRepo,
   addedRepo,
-  errorChart,
+  clearRepo,
   errorRepos,
   requestRepos,
   receiveRepo,
   receiveRepos,
   resetForm,
+  errorChart,
+  requestRepo,
   submitForm,
-  updateForm,
   showForm,
   hideForm,
   redirect,
   redirected,
-].map(getReturnOfExpression);
-export type AppReposAction = typeof allActions[number];
+];
+export type AppReposAction = ActionType<typeof allActions[number]>;
 
-export const deleteRepo = (name: string) => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+export const deleteRepo = (
+  name: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     try {
-      const { config: { namespace } } = getState();
+      const {
+        config: { namespace },
+      } = getState();
       await AppRepository.delete(name, namespace);
       dispatch(fetchRepos());
       return true;
@@ -84,10 +79,14 @@ export const deleteRepo = (name: string) => {
   };
 };
 
-export const resyncRepo = (name: string) => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+export const resyncRepo = (
+  name: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     try {
-      const { config: { namespace } } = getState();
+      const {
+        config: { namespace },
+      } = getState();
       const repo = await AppRepository.get(name, namespace);
       repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
       repo.spec.resyncRequests++;
@@ -102,11 +101,13 @@ export const resyncRepo = (name: string) => {
   };
 };
 
-export const fetchRepos = () => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+export const fetchRepos = (): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     dispatch(requestRepos());
     try {
-      const { config: { namespace } } = getState();
+      const {
+        config: { namespace },
+      } = getState();
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
     } catch (e) {
@@ -115,31 +116,56 @@ export const fetchRepos = () => {
   };
 };
 
-export const installRepo = (name: string, repoURL: string, authHeader: string) => {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
+export const installRepo = (
+  name: string,
+  repoURL: string,
+  authHeader: string,
+  customCA: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
     try {
-      const { config: { namespace } } = getState();
-      let auth;
+      const {
+        config: { namespace },
+      } = getState();
+      interface ISecretKeyRef {
+        key: string;
+        name: string;
+      }
+      const auth: {
+        header?: { secretKeyRef: ISecretKeyRef };
+        customCA?: { secretKeyRef: ISecretKeyRef };
+      } = {};
+      const secrets: { [s: string]: string } = {};
       const secretName = `apprepo-${name}-secrets`;
-      if (authHeader.length) {
+      if (authHeader.length || customCA.length) {
         // ensure we can create secrets in the kubeapps namespace
-        auth = {
-          header: {
+        if (authHeader.length) {
+          auth.header = {
             secretKeyRef: {
               key: "authorizationHeader",
               name: secretName,
             },
-          },
-        };
+          };
+          secrets.authorizationHeader = btoa(authHeader);
+        }
+        if (customCA.length) {
+          auth.customCA = {
+            secretKeyRef: {
+              key: "ca.crt",
+              name: secretName,
+            },
+          };
+          secrets["ca.crt"] = btoa(customCA);
+        }
       }
       dispatch(addRepo());
       const apprepo = await AppRepository.create(name, namespace, repoURL, auth);
       dispatch(addedRepo(apprepo));
 
-      if (authHeader.length) {
+      if (authHeader.length || customCA.length) {
         await Secret.create(
           secretName,
-          { authorizationHeader: btoa(authHeader) },
+          secrets,
           {
             apiVersion: apprepo.apiVersion,
             blockOwnerDeletion: true,
@@ -158,24 +184,23 @@ export const installRepo = (name: string, repoURL: string, authHeader: string) =
   };
 };
 
-export function checkChart(repo: string, chartName: string) {
-  return async (dispatch: Dispatch<IStoreState>, getState: () => IStoreState) => {
-    const { config: { namespace } } = getState();
+export function checkChart(
+  repo: string,
+  chartName: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
+  return async (dispatch, getState) => {
+    const {
+      config: { namespace },
+    } = getState();
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(repo, namespace);
-    const res = await fetch(url.api.charts.listVersions(`${repo}/${chartName}`));
-    if (res.ok) {
+    try {
+      await axios.get(url.api.charts.listVersions(`${repo}/${chartName}`));
       dispatch(receiveRepo(appRepository));
-    } else {
+    } catch (e) {
       dispatch(
-        errorChart(new MissingChart(`Chart ${chartName} not found in the repository ${repo}.`)),
+        errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
     }
-  };
-}
-
-export function clearRepo() {
-  return async (dispatch: Dispatch<IStoreState>) => {
-    dispatch(receiveRepo({} as IAppRepository));
   };
 }

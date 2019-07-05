@@ -1,0 +1,517 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when all the components are loaded shows a card list with the different instances if they exists 1`] = `
+<section
+  className="ServiceInstanceList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row collapse-b-phone-land"
+      >
+        <h1>
+          Service Instances
+        </h1>
+        <SearchFilter
+          className="margin-l-big "
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search instances..."
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="col-4 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/services/classes"
+      >
+        <button
+          className="button button-accent"
+        >
+          Deploy Service Instance
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <MessageAlertPage
+    level="warning"
+  >
+    <div>
+      Service Catalog integration is under heavy development. If you find an issue please report it
+       
+      <a
+        href="https://github.com/kubeapps/kubeapps/issues"
+        target="_blank"
+      >
+         
+        here.
+      </a>
+    </div>
+  </MessageAlertPage>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <main>
+      <ServiceInstanceCardList
+        classes={Array []}
+        instances={
+          Array [
+            Object {
+              "metadata": Object {
+                "name": "foo",
+              },
+            },
+          ]
+        }
+      />
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`when all the components are loaded shows a forbiden error if it exists 1`] = `
+<section
+  className="ServiceInstanceList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row collapse-b-phone-land"
+      >
+        <h1>
+          Service Instances
+        </h1>
+        <SearchFilter
+          className="margin-l-big "
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search instances..."
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="col-4 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/services/classes"
+      >
+        <button
+          className="button button-accent"
+        >
+          Deploy Service Instance
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <MessageAlertPage
+    level="warning"
+  >
+    <div>
+      Service Catalog integration is under heavy development. If you find an issue please report it
+       
+      <a
+        href="https://github.com/kubeapps/kubeapps/issues"
+        target="_blank"
+      >
+         
+        here.
+      </a>
+    </div>
+  </MessageAlertPage>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <main>
+      <ErrorSelector
+        action="list"
+        defaultRequiredRBACRoles={
+          Object {
+            "list": Array [
+              Object {
+                "apiGroup": "servicecatalog.k8s.io",
+                "clusterWide": true,
+                "resource": "clusterservicebrokers",
+                "verbs": Array [
+                  "list",
+                ],
+              },
+              Object {
+                "apiGroup": "servicecatalog.k8s.io",
+                "clusterWide": true,
+                "resource": "clusterserviceclasses",
+                "verbs": Array [
+                  "list",
+                ],
+              },
+              Object {
+                "apiGroup": "servicecatalog.k8s.io",
+                "resource": "serviceinstances",
+                "verbs": Array [
+                  "list",
+                ],
+              },
+            ],
+          }
+        }
+        error={[Error]}
+        resource="Service Brokers, Classes and Instances"
+      />
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`when all the components are loaded shows a warning to install no service broker is installed 1`] = `
+<section
+  className="ServiceInstanceList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row collapse-b-phone-land"
+      >
+        <h1>
+          Service Instances
+        </h1>
+        <SearchFilter
+          className="margin-l-big "
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search instances..."
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="col-4 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/services/classes"
+      >
+        <button
+          className="button button-accent"
+        >
+          Deploy Service Instance
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <MessageAlertPage
+    level="warning"
+  >
+    <div>
+      Service Catalog integration is under heavy development. If you find an issue please report it
+       
+      <a
+        href="https://github.com/kubeapps/kubeapps/issues"
+        target="_blank"
+      >
+         
+        here.
+      </a>
+    </div>
+  </MessageAlertPage>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <main>
+      <ServiceBrokersNotFoundAlert />
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`when all the components are loaded shows a warning to install the Service Catalog if it's not installed 1`] = `
+<section
+  className="ServiceInstanceList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row collapse-b-phone-land"
+      >
+        <h1>
+          Service Instances
+        </h1>
+        <SearchFilter
+          className="margin-l-big "
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search instances..."
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="col-4 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/services/classes"
+      >
+        <button
+          className="button button-accent"
+        >
+          Deploy Service Instance
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <MessageAlertPage
+    level="warning"
+  >
+    <div>
+      Service Catalog integration is under heavy development. If you find an issue please report it
+       
+      <a
+        href="https://github.com/kubeapps/kubeapps/issues"
+        target="_blank"
+      >
+         
+        here.
+      </a>
+    </div>
+  </MessageAlertPage>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <main>
+      <ServiceCatalogNotInstalledAlert />
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`when all the components are loaded shows information of how to deploy a service instance if there are none of them 1`] = `
+<section
+  className="ServiceInstanceList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row collapse-b-phone-land"
+      >
+        <h1>
+          Service Instances
+        </h1>
+        <SearchFilter
+          className="margin-l-big "
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search instances..."
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="col-4 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/services/classes"
+      >
+        <button
+          className="button button-accent"
+        >
+          Deploy Service Instance
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <MessageAlertPage
+    level="warning"
+  >
+    <div>
+      Service Catalog integration is under heavy development. If you find an issue please report it
+       
+      <a
+        href="https://github.com/kubeapps/kubeapps/issues"
+        target="_blank"
+      >
+         
+        here.
+      </a>
+    </div>
+  </MessageAlertPage>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <main>
+      <MessageAlertPage
+        header="Provision External Services from the Kubernetes Service Catalog"
+      >
+        <div>
+          <p
+            className="margin-v-normal"
+          >
+            Kubeapps lets you browse, provision and manage external services provided by the Service Brokers configured in your cluster.
+          </p>
+          <div
+            className="padding-t-normal padding-b-normal"
+          >
+            <Link
+              replace={false}
+              to="/services/classes"
+            >
+              <button
+                className="button button-accent"
+              >
+                Deploy Service Instance
+              </button>
+            </Link>
+          </div>
+        </div>
+      </MessageAlertPage>
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`while fetching components loading spinner matches the snapshot 1`] = `
+<section
+  className="ServiceInstanceList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row collapse-b-phone-land"
+      >
+        <h1>
+          Service Instances
+        </h1>
+        <SearchFilter
+          className="margin-l-big "
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search instances..."
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="col-4 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/services/classes"
+      >
+        <button
+          className="button button-accent"
+        >
+          Deploy Service Instance
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <MessageAlertPage
+    level="warning"
+  >
+    <div>
+      Service Catalog integration is under heavy development. If you find an issue please report it
+       
+      <a
+        href="https://github.com/kubeapps/kubeapps/issues"
+        target="_blank"
+      >
+         
+        here.
+      </a>
+    </div>
+  </MessageAlertPage>
+  <LoadingWrapper
+    loaded={false}
+    type={0}
+  >
+    <main>
+      <ServiceBrokersNotFoundAlert />
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`while fetching components matches the snapshot 1`] = `
+<section
+  className="ServiceInstanceList"
+>
+  <PageHeader>
+    <div
+      className="col-8"
+    >
+      <div
+        className="row collapse-b-phone-land"
+      >
+        <h1>
+          Service Instances
+        </h1>
+        <SearchFilter
+          className="margin-l-big "
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search instances..."
+          value=""
+        />
+      </div>
+    </div>
+    <div
+      className="col-4 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/services/classes"
+      >
+        <button
+          className="button button-accent"
+        >
+          Deploy Service Instance
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <MessageAlertPage
+    level="warning"
+  >
+    <div>
+      Service Catalog integration is under heavy development. If you find an issue please report it
+       
+      <a
+        href="https://github.com/kubeapps/kubeapps/issues"
+        target="_blank"
+      >
+         
+        here.
+      </a>
+    </div>
+  </MessageAlertPage>
+  <LoadingWrapper
+    loaded={false}
+    type={0}
+  >
+    <main>
+      <ServiceBrokersNotFoundAlert />
+    </main>
+  </LoadingWrapper>
+</section>
+`;

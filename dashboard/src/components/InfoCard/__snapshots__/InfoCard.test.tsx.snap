@@ -1,0 +1,57 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a Card 1`] = `
+<Card
+  className="ListItem"
+  responsive={true}
+>
+  <Link
+    className="ListItem__header"
+    replace={false}
+    title="foo"
+    to="/a/link/somewhere"
+  >
+    <CardIcon
+      icon="an-icon.png"
+    />
+  </Link>
+  <CardContent>
+    <div
+      className="ListItem__content"
+    >
+      <Link
+        replace={false}
+        title="foo"
+        to="/a/link/somewhere"
+      >
+        <h3
+          className="ListItem__content__title type-big"
+        >
+          foo
+        </h3>
+      </Link>
+      <div
+        className="ListItem__content__info"
+      >
+        <p
+          className="margin-reset type-small padding-t-tiny type-color-light-blue"
+        >
+          foobar
+        </p>
+        <div>
+          <span
+            className="ListItem__content__info_tag ListItem__content__info_tag-1 type-small type-color-white padding-t-tiny padding-h-normal blue"
+          >
+            database
+          </span>
+          <span
+            className="ListItem__content__info_tag ListItem__content__info_tag-2 type-small type-color-white padding-t-tiny padding-h-normal margin-b-normal red"
+          >
+            running
+          </span>
+        </div>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+`;

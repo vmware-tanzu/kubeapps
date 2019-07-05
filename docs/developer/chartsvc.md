@@ -1,6 +1,6 @@
-# Kubeapps ChartSVC Developer Guide
+# Kubeapps chartsvc Developer Guide
 
-The `chartsvc` component is a micro-service that creates a API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server.
+The `chartsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server. Its source is maintained in the [Monocular project repository](https://github.com/helm/monocular).
 
 ## Prerequisites
 
@@ -8,78 +8,74 @@ The `chartsvc` component is a micro-service that creates a API endpoint for acce
 - [Make](https://www.gnu.org/software/make/)
 - [Go programming language](https://golang.org/dl/)
 - [Docker CE](https://www.docker.com/community-edition)
-- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/)
+- [Kubernetes cluster (v1.8+)](https://kubernetes.io/docs/setup/pick-right-solution/). [Minikube](https://github.com/kubernetes/minikbue) is recommended.
 - [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
 - [Telepresence](https://telepresence.io)
-
-*Telepresence is not a hard requirement, but is recommended for a better developer experience*
 
 ## Environment
 
 ```bash
 export GOPATH=~/gopath/
 export PATH=$GOPATH/bin:$PATH
-export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
+export MONOCULAR_DIR=$GOPATH
 ```
-## Download the kubeapps source code
+
+## Download the Monocular source code
 
 ```bash
-git clone --recurse-submodules https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
+git clone https://github.com/helm/monocular $MONOCULAR_DIR
 ```
 
-The `chartsvc` sources are located under the `cmd/chartsvc/` directory of the repository.
-
-```bash
-cd $KUBEAPPS_DIR/cmd/chartsvc
-```
+The `chartsvc` sources are located under the `cmd/chartsvc/` directory.
 
 ### Install Kubeapps in your cluster
 
 Kubeapps is a Kubernetes-native application. To develop and test Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](../../chart/kubeapps/README.md) to install Kubeapps in your cluster.
 
-### Building the `chartsvc` binary
+### Building the `chartsvc` image
 
 ```bash
-go build
+cd $MONOCULAR_DIR
+dep ensure
+make -C cmd/chartsvc docker-build
 ```
 
-This builds the `chartsvc` binary in the working directory.
+This builds the `chartsvc` Docker image.
 
 ### Running in development
 
-[Telepresence](https://www.telepresence.io/) is a local development tool for Kubernetes microservices. As `chartsvc` is a service running in the Kubernetes cluster we use telepresence to proxy requests to the `chartsvc` running in your cluster to your local development host.
-
-Create a `telepresence` shell to swap the `chartsvc` deployment in the `kubeapps` namespace, forwarding local port `9000` to port `8080` of the `chartsvc` pod.
+#### Option 1: Using Telepresence (recommended)
 
 ```bash
-telepresence --namespace kubeapps --method inject-tcp --swap-deployment chartsvc --expose 9000:8080 --run-shell
+telepresence --swap-deployment kubeapps-internal-chartsvc --namespace kubeapps --expose 8080:8080 --docker-run --rm -ti quay.io/helmpack/chartsvc /chartsvc --mongo-user=root --mongo-url=kubeapps-mongodb
 ```
 
-> **NOTE**: If you encounter issues getting this setup working correctly, please try switching the telepresence proxying method in the above command to `vpn-tcp`. Refer to [the telepresence docs](https://www.telepresence.io/reference/methods) to learn more about the available proxying methods and their limitations.
+Note that the chartsvc should be rebuilt for new changes to take effect.
 
-Next, launch the `chartsvc` locally within the telepresence shell:
+#### Option 2: Replacing the image in the chartsvc Deployment
 
-```bash
-export PORT=9000
-./chartsvc --mongo-url=mongodb.kubeapps --mongo-user=root
+Note: By default, Kubeapps will try to fetch the latest version of the image so in order to make this workflow work in Minikube you will need to update the imagePullPolicy first:
+
+```
+kubectl patch deployment kubeapps-internal-chartsvc -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}]'
 ```
 
-From this point any API requests made to the `chartsvc` will be served by the service running locally on your development host.
+```
+kubectl set image -n kubeapps deployment kubeapps-internal-chartsvc chartsvc=quay.io/helmpack/chartsvc:latest
+```
+
+For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
+
+```
+kubectl delete pod -n kubeapps -l app=kubeapps-internal-chartsvc
+```
+
+Note: If you using a cloud provider to develop the service you will need to retag the image and push it to a public registry.
 
 ### Running tests
 
-To start the tests on the `chartsvc` execute the following command:
+You can run the chartsvc tests along with the tests for the Monocular project:
 
 ```bash
-cd $KUBEAPPS_DIR/cmd/chartsvc
-go test
-```
-
-## Building the kubeapps/chartsvc Docker image
-
-To build the `kubeapps/chartsvc` docker image with the docker image tag `myver`:
-
-```bash
-cd $KUBEAPPS_DIR
-make VERSION=myver kubeapps/chartsvc
+go test -v ./...
 ```

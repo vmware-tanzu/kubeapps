@@ -1,0 +1,23 @@
+.upgrade-button {
+  margin-right: 0.4em;
+}
+
+.notification {
+  position: absolute;
+  right: 15%;
+  top: 22%;
+}
+
+.upgrade-text {
+  padding-right: 1.25em;
+  color: #008145;
+}
+
+.button:hover {
+  .upgrade-text {
+    color: inherit;
+  }
+  .notification {
+    fill: transparent;
+  }
+}

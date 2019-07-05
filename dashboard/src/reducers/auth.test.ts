@@ -10,12 +10,15 @@ describe("authReducer", () => {
     authenticating: getType(actions.auth.authenticating),
     authenticationError: getType(actions.auth.authenticationError),
     setAuthenticated: getType(actions.auth.setAuthenticated),
+    setSessionExpired: getType(actions.auth.setSessionExpired),
   };
 
   beforeEach(() => {
     initialState = {
+      sessionExpired: false,
       authenticated: false,
       authenticating: false,
+      oidcAuthenticated: false,
     };
   });
 
@@ -33,7 +36,7 @@ describe("authReducer", () => {
       [true, false].forEach(e => {
         expect(
           authReducer(undefined, {
-            authenticated: e,
+            payload: { authenticated: e, oidc: false },
             type: actionTypes.setAuthenticated as any,
           }),
         ).toEqual({ ...initialState, authenticated: e });
@@ -49,15 +52,79 @@ describe("authReducer", () => {
       ).toEqual({ ...initialState, authenticating: true, authenticated: false });
     });
 
-    it(`resets authenticated, authenticating and sets error if type ${
-      actionTypes.authenticationError
-    }`, () => {
+    it(`sets error if type ${actionTypes.authenticationError}`, () => {
+      expect(
+        authReducer(initialState, {
+          type: actionTypes.authenticationError as any,
+          payload: errMessage,
+        }),
+      ).toEqual({ ...initialState, authenticationError: errMessage });
+    });
+
+    it("sets authenticated and oidcAuthenticated", () => {
       expect(
         authReducer(
-          { authenticating: true, authenticated: true },
-          { type: actionTypes.authenticationError as any, errorMsg: errMessage },
+          {
+            sessionExpired: false,
+            authenticating: true,
+            authenticated: false,
+            oidcAuthenticated: false,
+          },
+          {
+            type: actionTypes.setAuthenticated as any,
+            payload: { authenticated: true, oidc: true },
+          },
         ),
-      ).toEqual({ ...initialState, authenticationError: errMessage });
+      ).toEqual({
+        sessionExpired: false,
+        authenticating: false,
+        authenticated: true,
+        oidcAuthenticated: true,
+      });
+    });
+
+    it("unsets session expired", () => {
+      expect(
+        authReducer(
+          {
+            sessionExpired: true,
+            authenticating: true,
+            authenticated: false,
+            oidcAuthenticated: false,
+          },
+          {
+            type: actionTypes.setSessionExpired as any,
+            payload: { sessionExpired: false },
+          },
+        ),
+      ).toEqual({
+        sessionExpired: false,
+        authenticating: true,
+        authenticated: false,
+        oidcAuthenticated: false,
+      });
+    });
+
+    it("sets session expired", () => {
+      expect(
+        authReducer(
+          {
+            sessionExpired: false,
+            authenticating: false,
+            authenticated: false,
+            oidcAuthenticated: true,
+          },
+          {
+            payload: { sessionExpired: true },
+            type: actionTypes.setSessionExpired as any,
+          },
+        ),
+      ).toEqual({
+        sessionExpired: true,
+        authenticating: false,
+        authenticated: false,
+        oidcAuthenticated: true,
+      });
     });
   });
 });

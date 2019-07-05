@@ -1,30 +1,29 @@
 IMPORT_PATH:= github.com/kubeapps/kubeapps
 GO = /usr/bin/env go
 GOFMT = /usr/bin/env gofmt
-VERSION ?= dev-$(shell date +%FT%H-%M-%S-%Z)
+IMAGE_TAG ?= dev-$(shell date +%FT%H-%M-%S-%Z)
+VERSION ?= $$(git rev-parse HEAD)
+
+IMG_MODIFIER ?= 
 
 GO_PACKAGES = ./...
 GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
 
 default: all
 
-all: kubeapps/dashboard kubeapps/chartsvc kubeapps/chart-repo kubeapps/apprepository-controller
+all: kubeapps/dashboard kubeapps/apprepository-controller
 
 # TODO(miguel) Create Makefiles per component
 kubeapps/%:
-	docker build -t kubeapps/$*:$(VERSION) -f cmd/$*/Dockerfile .
+	docker build -t kubeapps/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
 
 kubeapps/dashboard:
-	docker build -t kubeapps/dashboard:$(VERSION) -f dashboard/Dockerfile dashboard/
-
-kubeapps/tiller-proxy:
-	CGO_ENABLED=0 GOOS=linux go build -installsuffix cgo -o ./cmd/tiller-proxy/proxy-static ./cmd/tiller-proxy
-	docker build -t kubeapps/tiller-proxy:$(VERSION) -f cmd/tiller-proxy/Dockerfile cmd/tiller-proxy
+	docker build -t kubeapps/dashboard$(IMG_MODIFIER):$(IMAGE_TAG) -f dashboard/Dockerfile dashboard/
 
 test:
 	$(GO) test $(GO_PACKAGES)
 
-test-all: test-chartsvc test-chart-repo test-apprepository-controller test-dashboard
+test-all: test-apprepository-controller test-dashboard
 
 test-dashboard:
 	yarn --cwd dashboard/ install --frozen-lockfile

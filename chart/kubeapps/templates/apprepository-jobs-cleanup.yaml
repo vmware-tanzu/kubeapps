@@ -18,29 +18,33 @@ spec:
         app: {{ template "kubeapps.apprepository-jobs-cleanup.fullname" . }}
         release: {{ .Release.Name }}
     spec:
+{{- include "kubeapps.imagePullSecrets" . | indent 6 }}
       containers:
       - name: kubectl
-        image: {{ template "kubeapps.image" .Values.apprepository.jobsImage }}
+        image: {{ template "kubeapps.image" (list .Values.hooks.image .Values.global) }}
         command:
-        - kubectl
-        - delete
-        - apprepositories.kubeapps.com
-        - -n
-        - {{ .Release.Namespace }} 
-        - --all
-        resources:
-{{ toYaml .Values.apprepository.resources | indent 12 }}
+        - /bin/sh
+        args:
+        - -ec
+        - |
+          kubectl delete apprepositories.kubeapps.com -n {{ .Release.Namespace }} --all
+          kubectl delete secrets -n {{ .Release.Namespace }} -l app={{ template "kubeapps.name" $ }},release={{ $.Release.Name }}
       restartPolicy: OnFailure
       serviceAccountName: {{ template "kubeapps.apprepository-jobs-cleanup.fullname" . }}
-    {{- with .Values.apprepository.nodeSelector }}
+    {{- with .Values.hooks.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
     {{- end }}
-    {{- with .Values.apprepository.affinity }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
+    {{- with .Values.hooks.affinity }}
       affinity:
 {{ toYaml . | indent 8 }}
     {{- end }}
-    {{- with .Values.apprepository.tolerations }}
+    {{- with .Values.hooks.tolerations }}
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}

@@ -2,17 +2,17 @@ import * as moxios from "moxios";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import { createAxiosInterceptors } from "../shared/AxiosInstance";
-import { Auth, axios } from "./Auth";
+import { addAuthHeaders, addErrorHandling, axios } from "../shared/AxiosInstance";
+import { Auth } from "./Auth";
 import {
-  AppConflict,
+  ConflictError,
   ForbiddenError,
   NotFoundError,
   UnauthorizedError,
   UnprocessableEntity,
 } from "./types";
 
-describe("createAxiosInterceptor", () => {
+describe("createAxiosInterceptorWithAuth", () => {
   const mockStore = configureMockStore([thunk]);
   const testPath = "/internet-is-in-a-box";
   const authToken = "search-google-in-google";
@@ -21,8 +21,10 @@ describe("createAxiosInterceptor", () => {
 
   beforeAll(() => {
     const state: IAuthState = {
+      sessionExpired: false,
       authenticated: false,
       authenticating: false,
+      oidcAuthenticated: false,
     };
 
     store = mockStore({
@@ -39,15 +41,17 @@ describe("createAxiosInterceptor", () => {
       return authToken;
     });
 
-    createAxiosInterceptors(axios, store);
+    addErrorHandling(axios, store);
+    addAuthHeaders(axios);
   });
 
   beforeEach(() => {
-    moxios.install(axios);
+    // Import as "any" to avoid typescript syntax error
+    moxios.install(axios as any);
   });
 
   afterEach(() => {
-    moxios.uninstall(axios);
+    moxios.uninstall(axios as any);
     store.clearActions();
   });
 
@@ -63,7 +67,7 @@ describe("createAxiosInterceptor", () => {
     { code: 401, errorClass: UnauthorizedError },
     { code: 403, errorClass: ForbiddenError },
     { code: 404, errorClass: NotFoundError },
-    { code: 409, errorClass: AppConflict },
+    { code: 409, errorClass: ConflictError },
     { code: 422, errorClass: UnprocessableEntity },
   ];
 
@@ -97,7 +101,7 @@ describe("createAxiosInterceptor", () => {
 
   it("returns the generic error message otherwise", async () => {
     moxios.stubRequest(testPath, {
-      response: { message: "this will be ignored" },
+      response: {},
       status: 555,
     });
 
@@ -108,14 +112,27 @@ describe("createAxiosInterceptor", () => {
     }
   });
 
-  it("dispatches auth error and logout if 401", async () => {
+  it("returns the response message", async () => {
+    moxios.stubRequest(testPath, {
+      response: { message: "this is an error!" },
+      status: 555,
+    });
+
+    try {
+      await axios.get(testPath);
+    } catch (error) {
+      expect(error.message).toBe("this is an error!");
+    }
+  });
+
+  it("dispatches auth error if 401", async () => {
     const expectedActions = [
       {
-        errorMsg: "Boom!",
+        payload: "Boom!",
         type: "AUTHENTICATION_ERROR",
       },
       {
-        authenticated: false,
+        payload: { authenticated: false, oidc: false },
         type: "SET_AUTHENTICATED",
       },
     ];

@@ -1,0 +1,178 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when all the components are loaded when an service class is available should show the class info 1`] = `
+<div
+  className="container"
+>
+  <PageHeader>
+    <h1>
+      Plans: 
+      my-class
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <div
+        className="class-view"
+      >
+        <div>
+          <p>
+            Service Plans available for provisioning under 
+            my-class
+          </p>
+          <table
+            className="striped"
+          >
+            <thead>
+              <tr>
+                <th>
+                  Name
+                </th>
+                <th>
+                  Specs
+                </th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              <ServiceClassPlan
+                key="my-class"
+                namespace="default"
+                provision={[Function]}
+                push={[Function]}
+                svcClass={
+                  Object {
+                    "metadata": Object {
+                      "name": "my-class",
+                      "uid": "class-my-class",
+                    },
+                    "spec": Object {
+                      "bindable": true,
+                      "description": "this is a class",
+                      "externalMetadata": Object {
+                        "imageUrl": "img.png",
+                      },
+                      "externalName": "my-class",
+                    },
+                  }
+                }
+                svcPlan={
+                  Object {
+                    "metadata": Object {
+                      "name": "my-class",
+                    },
+                    "spec": Object {
+                      "clusterServiceClassRef": Object {
+                        "name": "my-class",
+                      },
+                      "description": "this is a plan",
+                      "externalID": "plan-my-class",
+                      "externalName": "my-class",
+                      "free": true,
+                    },
+                  }
+                }
+              />
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </LoadingWrapper>
+  </main>
+</div>
+`;
+
+exports[`while fetching components loading spinner matches the snapshot 1`] = `
+<div
+  className="container"
+>
+  <PageHeader>
+    <h1>
+      Plans: 
+      my-class
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <div
+        className="class-view"
+      >
+        <div>
+          <p>
+            Service Plans available for provisioning under 
+            my-class
+          </p>
+          <table
+            className="striped"
+          >
+            <thead>
+              <tr>
+                <th>
+                  Name
+                </th>
+                <th>
+                  Specs
+                </th>
+                <th />
+              </tr>
+            </thead>
+            <tbody />
+          </table>
+        </div>
+      </div>
+    </LoadingWrapper>
+  </main>
+</div>
+`;
+
+exports[`while fetching components matches the snapshot 1`] = `
+<div
+  className="container"
+>
+  <PageHeader>
+    <h1>
+      Plans: 
+      my-class
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <div
+        className="class-view"
+      >
+        <div>
+          <p>
+            Service Plans available for provisioning under 
+            my-class
+          </p>
+          <table
+            className="striped"
+          >
+            <thead>
+              <tr>
+                <th>
+                  Name
+                </th>
+                <th>
+                  Specs
+                </th>
+                <th />
+              </tr>
+            </thead>
+            <tbody />
+          </table>
+        </div>
+      </div>
+    </LoadingWrapper>
+  </main>
+</div>
+`;

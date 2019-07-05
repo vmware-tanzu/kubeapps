@@ -22,7 +22,7 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -61,12 +61,6 @@ type Proxy struct {
 	listLimit  int
 }
 
-func isNotFound(err error) bool {
-	// Ideally this would be `grpc.Code(err) == codes.NotFound`,
-	// but it seems helm doesn't return grpc codes
-	return strings.Contains(grpc.ErrorDesc(err), "not found")
-}
-
 // NewProxy creates a Proxy
 func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface) *Proxy {
 	return &Proxy{
@@ -77,37 +71,30 @@ func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface) *Proxy
 
 // AppOverview represents the basics of a release
 type AppOverview struct {
-	ReleaseName string `json:"releaseName"`
-	Version     string `json:"version"`
-	Namespace   string `json:"namespace"`
-	Icon        string `json:"icon,omitempty"`
-	Status      string `json:"status"`
+	ReleaseName   string         `json:"releaseName"`
+	Version       string         `json:"version"`
+	Namespace     string         `json:"namespace"`
+	Icon          string         `json:"icon,omitempty"`
+	Status        string         `json:"status"`
+	Chart         string         `json:"chart"`
+	ChartMetadata chart.Metadata `json:"chartMetadata"`
 }
 
-func (p *Proxy) get(name, namespace string) (*release.Release, error) {
-	list, err := p.helmClient.ListReleases(
-		helm.ReleaseListFilter(name),
-		helm.ReleaseListNamespace(namespace),
-		helm.ReleaseListStatuses(allReleaseStatuses),
-	)
+func (p *Proxy) getRelease(name, namespace string) (*release.Release, error) {
+	release, err := p.helmClient.ReleaseContent(name)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to list helm releases: %v", err)
+		return nil, prettyError(err)
 	}
-	var rel *release.Release
-	if list != nil {
-		if l := list.GetReleases(); l != nil {
-			for _, r := range l {
-				if (namespace == "" || namespace == r.Namespace) && r.Name == name {
-					rel = r
-					break
-				}
-			}
-		}
+
+	// We check that the release found is from the provided namespace.
+	// If `namespace` is an empty string we do not do that check
+	// This check check is to prevent users of for example updating releases that might be
+	// in namespaces that they do not have access to.
+	if namespace != "" && release.Release.Namespace != namespace {
+		return nil, fmt.Errorf("Release %q not found in namespace %q", name, namespace)
 	}
-	if rel == nil {
-		return nil, fmt.Errorf("Release %s not found in namespace %s", name, namespace)
-	}
-	return rel, nil
+
+	return release.Release, nil
 }
 
 // GetReleaseStatus prints the status of the given release if exists
@@ -214,11 +201,13 @@ func (p *Proxy) ListReleases(namespace string, releaseListLimit int, status stri
 		for _, r := range filteredReleases {
 			if namespace == "" || namespace == r.Namespace {
 				appList = append(appList, AppOverview{
-					ReleaseName: r.Name,
-					Version:     r.Chart.Metadata.Version,
-					Namespace:   r.Namespace,
-					Icon:        r.Chart.Metadata.Icon,
-					Status:      r.Info.Status.Code.String(),
+					ReleaseName:   r.Name,
+					Version:       r.Chart.Metadata.Version,
+					Namespace:     r.Namespace,
+					Icon:          r.Chart.Metadata.Icon,
+					Status:        r.Info.Status.Code.String(),
+					Chart:         r.Chart.Metadata.Name,
+					ChartMetadata: *r.Chart.Metadata,
 				})
 			}
 		}
@@ -260,10 +249,8 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 	lock(name)
 	defer unlock(name)
 	// Check if the release already exists
-	_, err := p.get(name, namespace)
-	if err != nil && isNotFound(err) {
-		return nil, fmt.Errorf("Release %s not found in the namespace %s. Unable to update it", name, namespace)
-	} else if err != nil {
+	_, err := p.getRelease(name, namespace)
+	if err != nil {
 		return nil, err
 	}
 	log.Printf("Updating release %s", name)
@@ -283,7 +270,7 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 func (p *Proxy) GetRelease(name, namespace string) (*release.Release, error) {
 	lock(name)
 	defer unlock(name)
-	return p.get(name, namespace)
+	return p.getRelease(name, namespace)
 }
 
 // DeleteRelease deletes a release
@@ -291,7 +278,7 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 	lock(name)
 	defer unlock(name)
 	// Validate that the release actually belongs to the namespace
-	_, err := p.get(name, namespace)
+	_, err := p.getRelease(name, namespace)
 	if err != nil {
 		return err
 	}
@@ -300,6 +287,21 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 		return fmt.Errorf("Unable to delete the release: %v", err)
 	}
 	return nil
+}
+
+// extracted from https://github.com/helm/helm/blob/master/cmd/helm/helm.go#L227
+// prettyError unwraps or rewrites certain errors to make them more user-friendly.
+func prettyError(err error) error {
+	// Add this check can prevent the object creation if err is nil.
+	if err == nil {
+		return nil
+	}
+	// If it's grpc's error, make it more user-friendly.
+	if s, ok := status.FromError(err); ok {
+		return fmt.Errorf(s.Message())
+	}
+	// Else return the original error.
+	return err
 }
 
 // TillerClient for exposed funcs

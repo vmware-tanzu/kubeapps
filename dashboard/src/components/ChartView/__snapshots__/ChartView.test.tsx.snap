@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when fetching is false but no chart is available loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;
+
+exports[`when fetching is true and chart is available loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;

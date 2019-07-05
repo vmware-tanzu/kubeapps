@@ -59,7 +59,7 @@ kubectl -n kubeapps scale deployment apprepository-controller --replicas=0
 You can now execute the `apprepository-controller` binary on the developer host with:
 
 ```bash
-./apprepository-controller --logtostderr --repo-sync-image=kubeapps/chart-repo:myver --kubeconfig ~/.kube/config
+./apprepository-controller --logtostderr --repo-sync-image=quay.io/helmpack/chart-repo:myver --kubeconfig ~/.kube/config
 ```
 
 Performing application repository actions in the Kubeapps dashboard will now trigger operations in the `apprepository-controller` binary running locally on your development host.
@@ -78,5 +78,5 @@ To build the `kubeapps/apprepository-controller` docker image with the docker im
 
 ```bash
 cd $KUBEAPPS_DIR
-make VERSION=myver kubeapps/apprepository-controller
+make IMAGE_TAG=myver kubeapps/apprepository-controller
 ```

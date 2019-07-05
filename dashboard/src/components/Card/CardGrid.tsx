@@ -10,7 +10,9 @@ export interface ICardGridProps {
 class CardGrid extends React.Component<ICardGridProps> {
   public render() {
     return (
-      <div className={`CardGrid padding-v-big ${this.props.className}`}>{this.props.children}</div>
+      <div className={`CardGrid padding-v-big ${this.props.className || ""}`}>
+        {this.props.children}
+      </div>
     );
   }
 }

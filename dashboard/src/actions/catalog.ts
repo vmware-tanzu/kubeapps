@@ -1,54 +1,46 @@
-import { Dispatch } from "redux";
-import { createAction, getReturnOfExpression } from "typesafe-actions";
+import { ThunkAction } from "redux-thunk";
+import { ActionType, createAction } from "typesafe-actions";
 
 import { IClusterServiceClass } from "../shared/ClusterServiceClass";
+import { definedNamespaces } from "../shared/Namespace";
 import { IServiceBindingWithSecret, ServiceBinding } from "../shared/ServiceBinding";
 import { IServiceBroker, IServicePlan, ServiceCatalog } from "../shared/ServiceCatalog";
 import { IServiceInstance, ServiceInstance } from "../shared/ServiceInstance";
 import { IStoreState } from "../shared/types";
+import helpers from "./helpers";
 
 export const checkCatalogInstall = createAction("CHECK_INSTALL");
 export const installed = createAction("INSTALLED");
-export const notInstalled = createAction("_NOT_INSTALLED");
+export const notInstalled = createAction("NOT_INSTALLED");
 export const requestBrokers = createAction("REQUEST_BROKERS");
-export const receiveBrokers = createAction("RECEIVE_BROKERS", (brokers: IServiceBroker[]) => ({
-  brokers,
-  type: "RECEIVE_BROKERS",
-}));
+export const receiveBrokers = createAction("RECEIVE_BROKERS", resolve => {
+  return (brokers: IServiceBroker[]) => resolve(brokers);
+});
+
 export const requestPlans = createAction("REQUEST_PLANS");
-export const receivePlans = createAction("RECEIVE_PLANS", (plans: IServicePlan[]) => ({
-  plans,
-  type: "RECEIVE_PLANS",
-}));
+export const receivePlans = createAction("RECEIVE_PLANS", resolve => {
+  return (plans: IServicePlan[]) => resolve(plans);
+});
+
 export const requestInstances = createAction("REQUEST_INSTANCES");
-export const receiveInstances = createAction(
-  "RECEIVE_INSTANCES",
-  (instances: IServiceInstance[]) => ({ type: "RECEIVE_INSTANCES", instances }),
-);
+export const receiveInstances = createAction("RECEIVE_INSTANCES", resolve => {
+  return (instances: IServiceInstance[]) => resolve(instances);
+});
+
 export const requestBindingsWithSecrets = createAction("REQUEST_BINDINGS_WITH_SECRETS");
-export const receiveBindingsWithSecrets = createAction(
-  "RECEIVE_BINDINGS_WITH_SECRETS",
-  (bindingsWithSecrets: IServiceBindingWithSecret[]) => ({
-    bindingsWithSecrets,
-    type: "RECEIVE_BINDINGS_WITH_SECRETS",
-  }),
-);
+export const receiveBindingsWithSecrets = createAction("RECEIVE_BINDINGS_WITH_SECRETS", resolve => {
+  return (bindingsWithSecrets: IServiceBindingWithSecret[]) => resolve(bindingsWithSecrets);
+});
+
 export const requestClasses = createAction("REQUEST_PLANS");
-export const receiveClasses = createAction(
-  "RECEIVE_CLASSES",
-  (classes: IClusterServiceClass[]) => ({
-    classes,
-    type: "RECEIVE_CLASSES",
-  }),
-);
-export const errorCatalog = createAction(
-  "ERROR_CATALOG",
-  (err: Error, op: "fetch" | "create" | "delete" | "deprovision" | "update") => ({
-    err,
-    op,
-    type: "ERROR_CATALOG",
-  }),
-);
+export const receiveClasses = createAction("RECEIVE_CLASSES", resolve => {
+  return (classes: IClusterServiceClass[]) => resolve(classes);
+});
+
+export const errorCatalog = createAction("ERROR_CATALOG", resolve => {
+  return (err: Error, op: "fetch" | "create" | "delete" | "deprovision" | "update") =>
+    resolve({ err, op });
+});
 
 const actions = [
   checkCatalogInstall,
@@ -65,7 +57,9 @@ const actions = [
   requestClasses,
   receiveClasses,
   errorCatalog,
-].map(getReturnOfExpression);
+];
+
+export type ServiceCatalogAction = ActionType<typeof actions[number]>;
 
 export function provision(
   releaseName: string,
@@ -73,10 +67,11 @@ export function provision(
   className: string,
   planName: string,
   parameters: {},
-) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     try {
-      await ServiceInstance.create(releaseName, namespace, className, planName, parameters);
+      const filteredParams = helpers.object.removeEmptyFields(parameters);
+      await ServiceInstance.create(releaseName, namespace, className, planName, filteredParams);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
@@ -90,10 +85,11 @@ export function addBinding(
   instanceName: string,
   namespace: string,
   parameters: {},
-) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     try {
-      await ServiceBinding.create(bindingName, instanceName, namespace, parameters);
+      const filteredParams = helpers.object.removeEmptyFields(parameters);
+      await ServiceBinding.create(bindingName, instanceName, namespace, filteredParams);
       return true;
     } catch (e) {
       dispatch(errorCatalog(e, "create"));
@@ -102,8 +98,11 @@ export function addBinding(
   };
 }
 
-export function removeBinding(name: string, namespace: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function removeBinding(
+  name: string,
+  namespace: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     try {
       await ServiceBinding.delete(name, namespace);
       return true;
@@ -114,8 +113,10 @@ export function removeBinding(name: string, namespace: string) {
   };
 }
 
-export function deprovision(instance: IServiceInstance) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function deprovision(
+  instance: IServiceInstance,
+): ThunkAction<Promise<boolean>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     try {
       await ServiceCatalog.deprovisionInstance(instance);
       return true;
@@ -126,8 +127,10 @@ export function deprovision(instance: IServiceInstance) {
   };
 }
 
-export function sync(broker: IServiceBroker) {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function sync(
+  broker: IServiceBroker,
+): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     try {
       await ServiceCatalog.syncBroker(broker);
     } catch (e) {
@@ -136,93 +139,85 @@ export function sync(broker: IServiceBroker) {
   };
 }
 
-export type ServiceCatalogAction = typeof actions[number];
-
-export function getBindings(ns?: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
-    if (ns && ns === "_all") {
+export function getBindings(
+  ns?: string,
+): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
+    if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(requestBindingsWithSecrets());
     try {
       const bindingsWithSecrets = await ServiceBinding.list(ns);
       dispatch(receiveBindingsWithSecrets(bindingsWithSecrets));
-      return bindingsWithSecrets;
     } catch (e) {
-      return dispatch(errorCatalog(e, "fetch"));
+      dispatch(errorCatalog(e, "fetch"));
     }
   };
 }
 
-export function getBrokers() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function getBrokers(): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     dispatch(requestBrokers());
     try {
       const brokers = await ServiceCatalog.getServiceBrokers();
       dispatch(receiveBrokers(brokers));
-      return brokers;
     } catch (e) {
-      return dispatch(errorCatalog(e, "fetch"));
+      dispatch(errorCatalog(e, "fetch"));
     }
   };
 }
 
-export function getClasses() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function getClasses(): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     dispatch(requestClasses());
     try {
       const classes = await ServiceCatalog.getServiceClasses();
       dispatch(receiveClasses(classes));
-      return classes;
     } catch (e) {
-      return dispatch(errorCatalog(e, "fetch"));
+      dispatch(errorCatalog(e, "fetch"));
     }
   };
 }
 
-export function getInstances(ns?: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
-    if (ns && ns === "_all") {
+export function getInstances(
+  ns?: string,
+): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
+    if (ns && ns === definedNamespaces.all) {
       ns = undefined;
     }
     dispatch(requestInstances());
     try {
       const instances = await ServiceInstance.list(ns);
       dispatch(receiveInstances(instances));
-      return instances;
     } catch (e) {
-      return dispatch(errorCatalog(e, "fetch"));
+      dispatch(errorCatalog(e, "fetch"));
     }
   };
 }
 
-export function getPlans() {
-  return async (dispatch: Dispatch<IStoreState>) => {
+export function getPlans(): ThunkAction<Promise<void>, IStoreState, null, ServiceCatalogAction> {
+  return async dispatch => {
     dispatch(requestPlans());
     try {
       const plans = await ServiceCatalog.getServicePlans();
       dispatch(receivePlans(plans));
-      return plans;
     } catch (e) {
-      return dispatch(errorCatalog(e, "fetch"));
+      dispatch(errorCatalog(e, "fetch"));
     }
   };
 }
 
-export function getCatalog(ns?: string) {
-  return async (dispatch: Dispatch<IStoreState>) => {
-    dispatch(getBindings(ns));
-    dispatch(getBrokers());
-    dispatch(getClasses());
-    dispatch(getInstances(ns));
-    dispatch(getPlans());
-  };
-}
-
-export function checkCatalogInstalled() {
-  return async (dispatch: Dispatch<IStoreState>) => {
-    const isInstalled = await ServiceCatalog.isCatalogInstalled();
-    isInstalled ? dispatch(installed()) : dispatch(notInstalled());
-    return isInstalled;
+export function checkCatalogInstalled(): ThunkAction<
+  Promise<boolean>,
+  IStoreState,
+  null,
+  ServiceCatalogAction
+> {
+  return async dispatch => {
+    const isServiceCatalogInstalled = await ServiceCatalog.isCatalogInstalled();
+    isServiceCatalogInstalled ? dispatch(installed()) : dispatch(notInstalled());
+    return isServiceCatalogInstalled;
   };
 }

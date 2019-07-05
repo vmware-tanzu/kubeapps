@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders information about the binding with a secret 1`] = `
+<dl
+  className="BindingDetails container margin-normal"
+>
+  <dt
+    key="bar"
+  >
+    bar
+     
+    <a
+      onClick={[Function]}
+    >
+      (show)
+    </a>
+  </dt>
+  <TerminalModal
+    closeModal={[Function]}
+    message="mySecret: content
+  
+  "
+    modalIsOpen={false}
+    title="Secret: bar"
+  />
+</dl>
+`;

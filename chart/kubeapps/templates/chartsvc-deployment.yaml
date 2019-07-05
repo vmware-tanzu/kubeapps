@@ -8,7 +8,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.chartsvc.replicaCount }}
   selector:
     matchLabels:
       app: {{ template "kubeapps.chartsvc.fullname" . }}
@@ -19,9 +19,10 @@ spec:
         app: {{ template "kubeapps.chartsvc.fullname" . }}
         release: {{ .Release.Name }}
     spec:
+{{- include "kubeapps.imagePullSecrets" . | indent 6 }}
       containers:
       - name: chartsvc
-        image: {{ template "kubeapps.image" .Values.chartsvc.image }}
+        image: {{ template "kubeapps.image" (list .Values.chartsvc.image .Values.global) }}
         command:
         - /chartsvc
         args:
@@ -31,17 +32,26 @@ spec:
         - name: MONGO_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ template "kubeapps.mongodb.fullname" . }}
+              name: {{ .Values.mongodb.existingSecret }}
               key: mongodb-root-password
         ports:
         - name: http
           containerPort: {{ .Values.chartsvc.service.port }}
+        livenessProbe:
+{{ toYaml .Values.chartsvc.livenessProbe | indent 10 }}
+        readinessProbe:
+{{ toYaml .Values.chartsvc.readinessProbe | indent 10 }}
         resources:
 {{ toYaml .Values.chartsvc.resources | indent 12 }}
     {{- with .Values.chartsvc.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
     {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
     {{- with .Values.chartsvc.affinity }}
       affinity:
 {{ toYaml . | indent 8 }}

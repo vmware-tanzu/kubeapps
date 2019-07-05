@@ -9,6 +9,11 @@ const testProps: any = {
   description: "A Test Chart",
   id: "testrepo/test",
   repo: "testrepo",
+  version: {
+    attributes: {
+      app_version: "1.2.3",
+    },
+  },
 };
 
 it("renders a header for the chart", () => {
@@ -17,13 +22,13 @@ it("renders a header for the chart", () => {
   expect(wrapper.text()).toContain("A Test Chart");
   const repoLink = wrapper.find(Link);
   expect(repoLink.exists()).toBe(true);
-  expect(repoLink.props()).toMatchObject({ to: "/charts/testrepo", children: "testrepo" });
+  expect(repoLink.props()).toMatchObject({ to: "/catalog/testrepo", children: "testrepo" });
   expect(wrapper.find(ChartIcon).exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
 });
 
 it("displays the appVersion", () => {
-  const wrapper = shallow(<ChartHeader {...testProps} appVersion="1.2.3" />);
+  const wrapper = shallow(<ChartHeader {...testProps} />);
   expect(wrapper.text()).toContain("1.2.3");
 });
 

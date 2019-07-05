@@ -1,10 +1,11 @@
 import * as React from "react";
+import { definedNamespaces } from "../../shared/Namespace";
 
 export function namespaceText(namespace?: string) {
   if (!namespace) {
     return "";
   }
-  if (namespace === "_all") {
+  if (namespace === definedNamespaces.all) {
     return "all namespaces";
   } else {
     return (

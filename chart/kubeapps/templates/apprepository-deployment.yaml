@@ -8,7 +8,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.apprepository.replicaCount }}
   selector:
     matchLabels:
       app: {{ template "kubeapps.apprepository.fullname" . }}
@@ -20,17 +20,19 @@ spec:
         release: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ template "kubeapps.apprepository.fullname" . }}
+{{- include "kubeapps.imagePullSecrets" . | indent 6 }}
       containers:
       - name: controller
-        image: {{ template "kubeapps.image" .Values.apprepository.image }}
+        image: {{ template "kubeapps.image" (list .Values.apprepository.image .Values.global) }}
         command:
         - /apprepository-controller
         args:
         - --logtostderr
-        - --repo-sync-image={{ template "kubeapps.image" .Values.apprepository.syncImage }}
+        - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
+        - --repo-sync-image={{ template "kubeapps.image" (list .Values.apprepository.syncImage .Values.global) }}
         - --namespace={{ .Release.Namespace }}
         - --mongo-url={{ template "kubeapps.mongodb.fullname" . }}
-        - --mongo-secret-name={{ template "kubeapps.mongodb.fullname" . }}
+        - --mongo-secret-name={{ .Values.mongodb.existingSecret }}
         resources:
 {{ toYaml .Values.apprepository.resources | indent 12 }}
     {{- with .Values.apprepository.nodeSelector }}
@@ -41,6 +43,11 @@ spec:
       affinity:
 {{ toYaml . | indent 8 }}
     {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
     {{- with .Values.apprepository.tolerations }}
       tolerations:
 {{ toYaml . | indent 8 }}

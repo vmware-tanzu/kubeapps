@@ -8,7 +8,7 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.dashboard.replicaCount }}
   selector:
     matchLabels:
       app: {{ template "kubeapps.dashboard.fullname" . }}
@@ -21,16 +21,17 @@ spec:
         app: {{ template "kubeapps.dashboard.fullname" . }}
         release: {{ .Release.Name }}
     spec:
+{{- include "kubeapps.imagePullSecrets" . | indent 6 }}
       containers:
       - name: dashboard
-        image: {{ template "kubeapps.image" .Values.dashboard.image }}
+        image: {{ template "kubeapps.image" (list .Values.dashboard.image .Values.global) }}
         livenessProbe:
 {{ toYaml .Values.dashboard.livenessProbe | indent 10 }}
         readinessProbe:
 {{ toYaml .Values.dashboard.readinessProbe | indent 10 }}
         volumeMounts:
         - name: vhost
-          mountPath: /opt/bitnami/nginx/conf/vhosts
+          mountPath: /opt/bitnami/nginx/conf/server_blocks
         - name: config
           mountPath: /app/config.json
           subPath: config.json
@@ -56,6 +57,11 @@ spec:
       nodeSelector:
 {{ toYaml . | indent 8 }}
     {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
     {{- with .Values.dashboard.affinity }}
       affinity:
 {{ toYaml . | indent 8 }}

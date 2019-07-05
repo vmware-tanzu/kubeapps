@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a service plan 1`] = `
+<tr
+  key="plan-my-class"
+>
+  <td>
+    <b>
+      my-class
+    </b>
+  </td>
+  <td>
+    <div>
+      <ul
+        className="margin-reset"
+      >
+        <li
+          key="this is a plan"
+        >
+          this is a plan
+        </li>
+      </ul>
+    </div>
+  </td>
+  <td
+    className="text-r"
+  >
+    <ProvisionButton
+      namespace="default"
+      provision={[Function]}
+      push={[Function]}
+      selectedClass={
+        Object {
+          "metadata": Object {
+            "name": "my-class",
+            "uid": "class-my-class",
+          },
+          "spec": Object {
+            "bindable": true,
+            "description": "this is a class",
+            "externalMetadata": Object {
+              "imageUrl": "img.png",
+            },
+            "externalName": "my-class",
+          },
+        }
+      }
+      selectedPlan={
+        Object {
+          "metadata": Object {
+            "name": "my-class",
+          },
+          "spec": Object {
+            "clusterServiceClassRef": Object {
+              "name": "my-class",
+            },
+            "description": "this is a plan",
+            "externalID": "plan-my-class",
+            "externalName": "my-class",
+            "free": true,
+          },
+        }
+      }
+    />
+  </td>
+</tr>
+`;

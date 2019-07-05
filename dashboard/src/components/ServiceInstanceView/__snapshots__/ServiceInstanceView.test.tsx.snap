@@ -1,0 +1,1487 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when all the components are loaded shows a deprovision error if it exists 1`] = `
+<section
+  className="ServiceInstanceView padding-b-big"
+>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <div
+        className="container"
+      >
+        <ErrorSelector
+          action="deprovision"
+          defaultRequiredRBACRoles={
+            Object {
+              "delete": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "servicebindings",
+                  "verbs": Array [
+                    "delete",
+                  ],
+                },
+              ],
+              "deprovision": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "serviceinstances",
+                  "verbs": Array [
+                    "delete",
+                  ],
+                },
+              ],
+              "list": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "clusterWide": true,
+                  "resource": "clusterserviceclasses",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "serviceinstances",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "servicebindings",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "clusterWide": true,
+                  "resource": "clusterserviceplans",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+              ],
+            }
+          }
+          error={[Error]}
+          resource="Instance my-instance"
+        />
+      </div>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when all the components are loaded shows a fetch error if it exists 1`] = `
+<section
+  className="ServiceInstanceView padding-b-big"
+>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <div
+        className="container"
+      >
+        <ErrorSelector
+          action="list"
+          defaultRequiredRBACRoles={
+            Object {
+              "delete": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "servicebindings",
+                  "verbs": Array [
+                    "delete",
+                  ],
+                },
+              ],
+              "deprovision": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "serviceinstances",
+                  "verbs": Array [
+                    "delete",
+                  ],
+                },
+              ],
+              "list": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "clusterWide": true,
+                  "resource": "clusterserviceclasses",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "serviceinstances",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "resource": "servicebindings",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "clusterWide": true,
+                  "resource": "clusterserviceplans",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+              ],
+            }
+          }
+          error={[Error]}
+          resource="Instance my-instance"
+        />
+      </div>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when all the components are loaded when an instance is available should show the available bindings 1`] = `
+<ServiceInstanceView
+  addBinding={[Function]}
+  bindingsWithSecrets={
+    Object {
+      "isFetching": false,
+      "list": Array [
+        Object {
+          "binding": Object {
+            "metadata": Object {
+              "name": "my-instance",
+              "namespace": "default",
+              "uid": "binding-my-instance",
+            },
+            "spec": Object {
+              "instanceRef": Object {
+                "name": "my-instance",
+              },
+            },
+            "status": Object {
+              "conditions": Array [
+                Object {
+                  "message": "binding is okay",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    }
+  }
+  classes={
+    Object {
+      "isFetching": false,
+      "list": Array [
+        Object {
+          "metadata": Object {
+            "name": "my-instance",
+            "uid": "class-my-instance",
+          },
+          "spec": Object {
+            "bindable": true,
+            "description": "this is a class",
+            "externalMetadata": Object {
+              "imageUrl": "img.png",
+            },
+            "externalName": "my-instance",
+          },
+        },
+      ],
+    }
+  }
+  deprovision={[Function]}
+  errors={Object {}}
+  getBindings={[Function]}
+  getClasses={[Function]}
+  getInstances={[Function]}
+  getPlans={[Function]}
+  instances={
+    Object {
+      "isFetching": false,
+      "list": Array [
+        Object {
+          "metadata": Object {
+            "creationTimestamp": "",
+            "finalizers": Array [],
+            "generation": 1,
+            "name": "my-instance",
+            "namespace": "default",
+            "resourceVersion": "",
+            "selfLink": "",
+            "uid": "",
+          },
+          "spec": Object {
+            "clusterServiceClassExternalName": "my-instance",
+            "clusterServiceClassRef": Object {
+              "name": "my-instance",
+            },
+            "clusterServicePlanExternalName": "my-instance",
+            "clusterServicePlanRef": Object {
+              "name": "my-instance",
+            },
+            "externalID": "my-instance",
+          },
+          "status": Object {
+            "conditions": Array [
+              Object {
+                "lastTransitionTime": "1",
+                "message": "everything okay here",
+                "reason": "none",
+                "status": "good",
+                "type": "a type",
+              },
+            ],
+          },
+        },
+      ],
+    }
+  }
+  name="my-instance"
+  namespace="default"
+  plans={
+    Object {
+      "isFetching": false,
+      "list": Array [],
+    }
+  }
+  removeBinding={[Function]}
+>
+  <section
+    className="ServiceInstanceView padding-b-big"
+  >
+    <main>
+      <LoadingWrapper
+        loaded={true}
+        type={0}
+      >
+        <div
+          className="container"
+        >
+          <div
+            className="row collapse-b-tablet"
+          >
+            <div
+              className="col-12"
+            >
+              <MessageAlertPage
+                level="warning"
+              >
+                <div
+                  className="alert alert-warning margin-c margin-t-bigger"
+                >
+                  <div
+                    className="message__content "
+                  >
+                    <div>
+                      <div>
+                        Refresh the page to update the status of this Service Instance.
+                      </div>
+                      Service Catalog integration is under heavy development. If you find an issue please report it
+                       
+                      <a
+                        href="https://github.com/kubeapps/kubeapps/issues"
+                        target="_blank"
+                      >
+                         
+                        here
+                      </a>
+                      .
+                    </div>
+                  </div>
+                </div>
+              </MessageAlertPage>
+            </div>
+            <div
+              className="col-3"
+            >
+              <ServiceInstanceInfo
+                instance={
+                  Object {
+                    "metadata": Object {
+                      "creationTimestamp": "",
+                      "finalizers": Array [],
+                      "generation": 1,
+                      "name": "my-instance",
+                      "namespace": "default",
+                      "resourceVersion": "",
+                      "selfLink": "",
+                      "uid": "",
+                    },
+                    "spec": Object {
+                      "clusterServiceClassExternalName": "my-instance",
+                      "clusterServiceClassRef": Object {
+                        "name": "my-instance",
+                      },
+                      "clusterServicePlanExternalName": "my-instance",
+                      "clusterServicePlanRef": Object {
+                        "name": "my-instance",
+                      },
+                      "externalID": "my-instance",
+                    },
+                    "status": Object {
+                      "conditions": Array [
+                        Object {
+                          "lastTransitionTime": "1",
+                          "message": "everything okay here",
+                          "reason": "none",
+                          "status": "good",
+                          "type": "a type",
+                        },
+                      ],
+                    },
+                  }
+                }
+                svcClass={
+                  Object {
+                    "metadata": Object {
+                      "name": "my-instance",
+                      "uid": "class-my-instance",
+                    },
+                    "spec": Object {
+                      "bindable": true,
+                      "description": "this is a class",
+                      "externalMetadata": Object {
+                        "imageUrl": "img.png",
+                      },
+                      "externalName": "my-instance",
+                    },
+                  }
+                }
+              >
+                <CardGrid
+                  className="ServiceInstanceInfo"
+                >
+                  <div
+                    className="CardGrid padding-v-big ServiceInstanceInfo"
+                  >
+                    <Card>
+                      <article
+                        className="Card "
+                      >
+                        <div
+                          className="Card__inner bg-white elevation-1"
+                        >
+                          <CardIcon
+                            icon="img.png"
+                          >
+                            <div
+                              className="Card__icon bg-light text-c"
+                            >
+                              <img
+                                src="img.png"
+                              />
+                            </div>
+                          </CardIcon>
+                          <CardContent>
+                            <div
+                              className="Card__content padding-normal "
+                            >
+                              <h5>
+                                my-instance
+                              </h5>
+                              <strong>
+                                Class:
+                              </strong>
+                               
+                              <p />
+                            </div>
+                          </CardContent>
+                        </div>
+                      </article>
+                    </Card>
+                  </div>
+                </CardGrid>
+              </ServiceInstanceInfo>
+            </div>
+            <div
+              className="col-9"
+            >
+              <div
+                className="row padding-t-bigger"
+              >
+                <div
+                  className="col-4"
+                >
+                  <ServiceInstanceStatus
+                    instance={
+                      Object {
+                        "metadata": Object {
+                          "creationTimestamp": "",
+                          "finalizers": Array [],
+                          "generation": 1,
+                          "name": "my-instance",
+                          "namespace": "default",
+                          "resourceVersion": "",
+                          "selfLink": "",
+                          "uid": "",
+                        },
+                        "spec": Object {
+                          "clusterServiceClassExternalName": "my-instance",
+                          "clusterServiceClassRef": Object {
+                            "name": "my-instance",
+                          },
+                          "clusterServicePlanExternalName": "my-instance",
+                          "clusterServicePlanRef": Object {
+                            "name": "my-instance",
+                          },
+                          "externalID": "my-instance",
+                        },
+                        "status": Object {
+                          "conditions": Array [
+                            Object {
+                              "lastTransitionTime": "1",
+                              "message": "everything okay here",
+                              "reason": "none",
+                              "status": "good",
+                              "type": "a type",
+                            },
+                          ],
+                        },
+                      }
+                    }
+                  >
+                    <span
+                      className="ApplicationStatus"
+                    >
+                      <AlertTriangle
+                        className="icon"
+                        color="currentColor"
+                        size="24"
+                        style={
+                          Object {
+                            "bottom": "-0.3em",
+                          }
+                        }
+                      >
+                        <svg
+                          className="icon"
+                          fill="none"
+                          height="24"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          style={
+                            Object {
+                              "bottom": "-0.3em",
+                            }
+                          }
+                          viewBox="0 0 24 24"
+                          width="24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+                          />
+                          <line
+                            x1="12"
+                            x2="12"
+                            y1="9"
+                            y2="13"
+                          />
+                          <line
+                            x1="12"
+                            x2="12"
+                            y1="17"
+                            y2="17"
+                          />
+                        </svg>
+                      </AlertTriangle>
+                       
+                      Unknown
+                    </span>
+                  </ServiceInstanceStatus>
+                </div>
+                <div
+                  className="col-8 text-r"
+                >
+                  <DeprovisionButton
+                    deprovision={[Function]}
+                    disabled={false}
+                    instance={
+                      Object {
+                        "metadata": Object {
+                          "creationTimestamp": "",
+                          "finalizers": Array [],
+                          "generation": 1,
+                          "name": "my-instance",
+                          "namespace": "default",
+                          "resourceVersion": "",
+                          "selfLink": "",
+                          "uid": "",
+                        },
+                        "spec": Object {
+                          "clusterServiceClassExternalName": "my-instance",
+                          "clusterServiceClassRef": Object {
+                            "name": "my-instance",
+                          },
+                          "clusterServicePlanExternalName": "my-instance",
+                          "clusterServicePlanRef": Object {
+                            "name": "my-instance",
+                          },
+                          "externalID": "my-instance",
+                        },
+                        "status": Object {
+                          "conditions": Array [
+                            Object {
+                              "lastTransitionTime": "1",
+                              "message": "everything okay here",
+                              "reason": "none",
+                              "status": "good",
+                              "type": "a type",
+                            },
+                          ],
+                        },
+                      }
+                    }
+                  >
+                    <div
+                      className="DeprovisionButton"
+                    >
+                      <ConfirmDialog
+                        closeModal={[Function]}
+                        loading={false}
+                        modalIsOpen={false}
+                        onConfirm={[Function]}
+                      >
+                        <div
+                          className="ConfirmDialog"
+                        >
+                          <Modal
+                            ariaHideApp={true}
+                            bodyOpenClassName="ReactModal__Body--open"
+                            closeTimeoutMS={0}
+                            contentLabel="Modal"
+                            isOpen={false}
+                            onRequestClose={[Function]}
+                            parentSelector={[Function]}
+                            portalClassName="ReactModalPortal"
+                            role="dialog"
+                            shouldCloseOnEsc={true}
+                            shouldCloseOnOverlayClick={true}
+                            shouldFocusAfterRender={true}
+                            shouldReturnFocusAfterClose={true}
+                            style={
+                              Object {
+                                "content": Object {
+                                  "bottom": "auto",
+                                  "left": "50%",
+                                  "marginRight": "-50%",
+                                  "right": "auto",
+                                  "top": "50%",
+                                  "transform": "translate(-50%, -50%)",
+                                },
+                              }
+                            }
+                          >
+                            <Portal
+                              containerInfo={
+                                <div
+                                  class="ReactModalPortal"
+                                />
+                              }
+                            >
+                              <ModalPortal
+                                ariaHideApp={true}
+                                bodyOpenClassName="ReactModal__Body--open"
+                                closeTimeoutMS={0}
+                                contentLabel="Modal"
+                                defaultStyles={
+                                  Object {
+                                    "content": Object {
+                                      "WebkitOverflowScrolling": "touch",
+                                      "background": "#fff",
+                                      "border": "1px solid #ccc",
+                                      "borderRadius": "4px",
+                                      "bottom": "40px",
+                                      "left": "40px",
+                                      "outline": "none",
+                                      "overflow": "auto",
+                                      "padding": "20px",
+                                      "position": "absolute",
+                                      "right": "40px",
+                                      "top": "40px",
+                                    },
+                                    "overlay": Object {
+                                      "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                      "bottom": 0,
+                                      "left": 0,
+                                      "position": "fixed",
+                                      "right": 0,
+                                      "top": 0,
+                                    },
+                                  }
+                                }
+                                isOpen={false}
+                                onRequestClose={[Function]}
+                                parentSelector={[Function]}
+                                portalClassName="ReactModalPortal"
+                                role="dialog"
+                                shouldCloseOnEsc={true}
+                                shouldCloseOnOverlayClick={true}
+                                shouldFocusAfterRender={true}
+                                shouldReturnFocusAfterClose={true}
+                                style={
+                                  Object {
+                                    "content": Object {
+                                      "bottom": "auto",
+                                      "left": "50%",
+                                      "marginRight": "-50%",
+                                      "right": "auto",
+                                      "top": "50%",
+                                      "transform": "translate(-50%, -50%)",
+                                    },
+                                  }
+                                }
+                              />
+                            </Portal>
+                          </Modal>
+                        </div>
+                      </ConfirmDialog>
+                      <button
+                        className="button button-primary button-danger"
+                        disabled={false}
+                        onClick={[Function]}
+                      >
+                        Deprovision
+                      </button>
+                    </div>
+                  </DeprovisionButton>
+                </div>
+              </div>
+              <div
+                className="ServiceInstanceView__details"
+              >
+                <div>
+                  <div>
+                    <div>
+                      <h2>
+                        Status
+                      </h2>
+                      <hr />
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>
+                              Type
+                            </th>
+                            <th>
+                              Status
+                            </th>
+                            <th>
+                              Last Transition Time
+                            </th>
+                            <th>
+                              Reason
+                            </th>
+                            <th>
+                              Message
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr
+                            key="1"
+                          >
+                            <td>
+                              a type
+                            </td>
+                            <td>
+                              good
+                            </td>
+                            <td>
+                              1
+                            </td>
+                            <td>
+                              <code>
+                                none
+                              </code>
+                            </td>
+                            <td>
+                              everything okay here
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                <h2>
+                  Bindings
+                </h2>
+                <hr />
+                <div>
+                  <BindingList
+                    bindingsWithSecrets={
+                      Array [
+                        Object {
+                          "binding": Object {
+                            "metadata": Object {
+                              "name": "my-instance",
+                              "namespace": "default",
+                              "uid": "binding-my-instance",
+                            },
+                            "spec": Object {
+                              "instanceRef": Object {
+                                "name": "my-instance",
+                              },
+                            },
+                            "status": Object {
+                              "conditions": Array [
+                                Object {
+                                  "message": "binding is okay",
+                                },
+                              ],
+                            },
+                          },
+                        },
+                      ]
+                    }
+                    removeBinding={[Function]}
+                  >
+                    <div
+                      className="BindingList"
+                    >
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>
+                              Binding
+                            </th>
+                            <th>
+                              Status
+                            </th>
+                            <th>
+                              Message
+                            </th>
+                            <th>
+                              Secret
+                            </th>
+                            <th />
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <BindingListEntry
+                            bindingWithSecret={
+                              Object {
+                                "binding": Object {
+                                  "metadata": Object {
+                                    "name": "my-instance",
+                                    "namespace": "default",
+                                    "uid": "binding-my-instance",
+                                  },
+                                  "spec": Object {
+                                    "instanceRef": Object {
+                                      "name": "my-instance",
+                                    },
+                                  },
+                                  "status": Object {
+                                    "conditions": Array [
+                                      Object {
+                                        "message": "binding is okay",
+                                      },
+                                    ],
+                                  },
+                                },
+                              }
+                            }
+                            key="binding-my-instance"
+                            removeBinding={[Function]}
+                          >
+                            <tr>
+                              <td>
+                                my-instance
+                              </td>
+                              <td>
+                                <code />
+                              </td>
+                              <td>
+                                <button
+                                  className="button button-small"
+                                  onClick={[Function]}
+                                >
+                                  Show message
+                                </button>
+                                <TerminalModal
+                                  closeModal={[Function]}
+                                  message="binding is okay"
+                                  modalIsOpen={false}
+                                  title="Status Message"
+                                >
+                                  <div
+                                    className="MessageDetails"
+                                  >
+                                    <Modal
+                                      ariaHideApp={true}
+                                      bodyOpenClassName="ReactModal__Body--open"
+                                      className="Terminal"
+                                      closeTimeoutMS={0}
+                                      contentLabel="Modal"
+                                      isOpen={false}
+                                      onRequestClose={[Function]}
+                                      parentSelector={[Function]}
+                                      portalClassName="ReactModalPortal"
+                                      role="dialog"
+                                      shouldCloseOnEsc={true}
+                                      shouldCloseOnOverlayClick={true}
+                                      shouldFocusAfterRender={true}
+                                      shouldReturnFocusAfterClose={true}
+                                      style={
+                                        Object {
+                                          "content": Object {
+                                            "maxWidth": "80%",
+                                          },
+                                          "overlay": Object {
+                                            "alignItems": "center",
+                                            "display": "flex",
+                                            "justifyContent": "center",
+                                          },
+                                        }
+                                      }
+                                    >
+                                      <Portal
+                                        containerInfo={
+                                          <div
+                                            class="ReactModalPortal"
+                                          />
+                                        }
+                                      >
+                                        <ModalPortal
+                                          ariaHideApp={true}
+                                          bodyOpenClassName="ReactModal__Body--open"
+                                          className="Terminal"
+                                          closeTimeoutMS={0}
+                                          contentLabel="Modal"
+                                          defaultStyles={
+                                            Object {
+                                              "content": Object {
+                                                "WebkitOverflowScrolling": "touch",
+                                                "background": "#fff",
+                                                "border": "1px solid #ccc",
+                                                "borderRadius": "4px",
+                                                "bottom": "40px",
+                                                "left": "40px",
+                                                "outline": "none",
+                                                "overflow": "auto",
+                                                "padding": "20px",
+                                                "position": "absolute",
+                                                "right": "40px",
+                                                "top": "40px",
+                                              },
+                                              "overlay": Object {
+                                                "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                                "bottom": 0,
+                                                "left": 0,
+                                                "position": "fixed",
+                                                "right": 0,
+                                                "top": 0,
+                                              },
+                                            }
+                                          }
+                                          isOpen={false}
+                                          onRequestClose={[Function]}
+                                          parentSelector={[Function]}
+                                          portalClassName="ReactModalPortal"
+                                          role="dialog"
+                                          shouldCloseOnEsc={true}
+                                          shouldCloseOnOverlayClick={true}
+                                          shouldFocusAfterRender={true}
+                                          shouldReturnFocusAfterClose={true}
+                                          style={
+                                            Object {
+                                              "content": Object {
+                                                "maxWidth": "80%",
+                                              },
+                                              "overlay": Object {
+                                                "alignItems": "center",
+                                                "display": "flex",
+                                                "justifyContent": "center",
+                                              },
+                                            }
+                                          }
+                                        />
+                                      </Portal>
+                                    </Modal>
+                                  </div>
+                                </TerminalModal>
+                              </td>
+                              <td>
+                                <BindingDetails
+                                  binding={
+                                    Object {
+                                      "metadata": Object {
+                                        "name": "my-instance",
+                                        "namespace": "default",
+                                        "uid": "binding-my-instance",
+                                      },
+                                      "spec": Object {
+                                        "instanceRef": Object {
+                                          "name": "my-instance",
+                                        },
+                                      },
+                                      "status": Object {
+                                        "conditions": Array [
+                                          Object {
+                                            "message": "binding is okay",
+                                          },
+                                        ],
+                                      },
+                                    }
+                                  }
+                                >
+                                  <dl
+                                    className="BindingDetails container margin-normal"
+                                  >
+                                    <dt>
+                                       
+                                      <a
+                                        onClick={[Function]}
+                                      >
+                                        (show)
+                                      </a>
+                                    </dt>
+                                    <TerminalModal
+                                      closeModal={[Function]}
+                                      message="The secret is empty"
+                                      modalIsOpen={false}
+                                      title="Secret: undefined"
+                                    >
+                                      <div
+                                        className="MessageDetails"
+                                      >
+                                        <Modal
+                                          ariaHideApp={true}
+                                          bodyOpenClassName="ReactModal__Body--open"
+                                          className="Terminal"
+                                          closeTimeoutMS={0}
+                                          contentLabel="Modal"
+                                          isOpen={false}
+                                          onRequestClose={[Function]}
+                                          parentSelector={[Function]}
+                                          portalClassName="ReactModalPortal"
+                                          role="dialog"
+                                          shouldCloseOnEsc={true}
+                                          shouldCloseOnOverlayClick={true}
+                                          shouldFocusAfterRender={true}
+                                          shouldReturnFocusAfterClose={true}
+                                          style={
+                                            Object {
+                                              "content": Object {
+                                                "maxWidth": "80%",
+                                              },
+                                              "overlay": Object {
+                                                "alignItems": "center",
+                                                "display": "flex",
+                                                "justifyContent": "center",
+                                              },
+                                            }
+                                          }
+                                        >
+                                          <Portal
+                                            containerInfo={
+                                              <div
+                                                class="ReactModalPortal"
+                                              />
+                                            }
+                                          >
+                                            <ModalPortal
+                                              ariaHideApp={true}
+                                              bodyOpenClassName="ReactModal__Body--open"
+                                              className="Terminal"
+                                              closeTimeoutMS={0}
+                                              contentLabel="Modal"
+                                              defaultStyles={
+                                                Object {
+                                                  "content": Object {
+                                                    "WebkitOverflowScrolling": "touch",
+                                                    "background": "#fff",
+                                                    "border": "1px solid #ccc",
+                                                    "borderRadius": "4px",
+                                                    "bottom": "40px",
+                                                    "left": "40px",
+                                                    "outline": "none",
+                                                    "overflow": "auto",
+                                                    "padding": "20px",
+                                                    "position": "absolute",
+                                                    "right": "40px",
+                                                    "top": "40px",
+                                                  },
+                                                  "overlay": Object {
+                                                    "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                                    "bottom": 0,
+                                                    "left": 0,
+                                                    "position": "fixed",
+                                                    "right": 0,
+                                                    "top": 0,
+                                                  },
+                                                }
+                                              }
+                                              isOpen={false}
+                                              onRequestClose={[Function]}
+                                              parentSelector={[Function]}
+                                              portalClassName="ReactModalPortal"
+                                              role="dialog"
+                                              shouldCloseOnEsc={true}
+                                              shouldCloseOnOverlayClick={true}
+                                              shouldFocusAfterRender={true}
+                                              shouldReturnFocusAfterClose={true}
+                                              style={
+                                                Object {
+                                                  "content": Object {
+                                                    "maxWidth": "80%",
+                                                  },
+                                                  "overlay": Object {
+                                                    "alignItems": "center",
+                                                    "display": "flex",
+                                                    "justifyContent": "center",
+                                                  },
+                                                }
+                                              }
+                                            />
+                                          </Portal>
+                                        </Modal>
+                                      </div>
+                                    </TerminalModal>
+                                  </dl>
+                                </BindingDetails>
+                              </td>
+                              <td>
+                                <RemoveBindingButton
+                                  bindingWithSecret={
+                                    Object {
+                                      "binding": Object {
+                                        "metadata": Object {
+                                          "name": "my-instance",
+                                          "namespace": "default",
+                                          "uid": "binding-my-instance",
+                                        },
+                                        "spec": Object {
+                                          "instanceRef": Object {
+                                            "name": "my-instance",
+                                          },
+                                        },
+                                        "status": Object {
+                                          "conditions": Array [
+                                            Object {
+                                              "message": "binding is okay",
+                                            },
+                                          ],
+                                        },
+                                      },
+                                    }
+                                  }
+                                  removeBinding={[Function]}
+                                >
+                                  <div
+                                    className="RemoveBindingButton"
+                                  >
+                                    <button
+                                      className="button button-small button-danger"
+                                      onClick={[Function]}
+                                    >
+                                      Remove
+                                    </button>
+                                  </div>
+                                </RemoveBindingButton>
+                              </td>
+                            </tr>
+                          </BindingListEntry>
+                        </tbody>
+                      </table>
+                    </div>
+                  </BindingList>
+                  <AddBindingButton
+                    addBinding={[Function]}
+                    disabled={false}
+                    instanceRefName="my-instance"
+                    namespace="default"
+                    onAddBinding={[Function]}
+                  >
+                    <div
+                      className="AddBindingButton"
+                    >
+                      <button
+                        className="button button-primary"
+                        disabled={false}
+                        onClick={[Function]}
+                      >
+                        Add Binding
+                      </button>
+                      <Modal
+                        ariaHideApp={true}
+                        bodyOpenClassName="ReactModal__Body--open"
+                        closeTimeoutMS={0}
+                        isOpen={false}
+                        onRequestClose={[Function]}
+                        parentSelector={[Function]}
+                        portalClassName="ReactModalPortal"
+                        role="dialog"
+                        shouldCloseOnEsc={true}
+                        shouldCloseOnOverlayClick={true}
+                        shouldFocusAfterRender={true}
+                        shouldReturnFocusAfterClose={true}
+                      >
+                        <Portal
+                          containerInfo={
+                            <div
+                              class="ReactModalPortal"
+                            />
+                          }
+                        >
+                          <ModalPortal
+                            ariaHideApp={true}
+                            bodyOpenClassName="ReactModal__Body--open"
+                            closeTimeoutMS={0}
+                            defaultStyles={
+                              Object {
+                                "content": Object {
+                                  "WebkitOverflowScrolling": "touch",
+                                  "background": "#fff",
+                                  "border": "1px solid #ccc",
+                                  "borderRadius": "4px",
+                                  "bottom": "40px",
+                                  "left": "40px",
+                                  "outline": "none",
+                                  "overflow": "auto",
+                                  "padding": "20px",
+                                  "position": "absolute",
+                                  "right": "40px",
+                                  "top": "40px",
+                                },
+                                "overlay": Object {
+                                  "backgroundColor": "rgba(255, 255, 255, 0.75)",
+                                  "bottom": 0,
+                                  "left": 0,
+                                  "position": "fixed",
+                                  "right": 0,
+                                  "top": 0,
+                                },
+                              }
+                            }
+                            isOpen={false}
+                            onRequestClose={[Function]}
+                            parentSelector={[Function]}
+                            portalClassName="ReactModalPortal"
+                            role="dialog"
+                            shouldCloseOnEsc={true}
+                            shouldCloseOnOverlayClick={true}
+                            shouldFocusAfterRender={true}
+                            shouldReturnFocusAfterClose={true}
+                            style={
+                              Object {
+                                "content": Object {},
+                                "overlay": Object {},
+                              }
+                            }
+                          />
+                        </Portal>
+                      </Modal>
+                    </div>
+                  </AddBindingButton>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </LoadingWrapper>
+    </main>
+  </section>
+</ServiceInstanceView>
+`;
+
+exports[`when all the components are loaded when an instance is available should show the instance status info 1`] = `
+<section
+  className="ServiceInstanceView padding-b-big"
+>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <div
+        className="container"
+      >
+        <div
+          className="row collapse-b-tablet"
+        >
+          <div
+            className="col-12"
+          >
+            <MessageAlertPage
+              level="warning"
+            >
+              <div>
+                <div>
+                  Refresh the page to update the status of this Service Instance.
+                </div>
+                Service Catalog integration is under heavy development. If you find an issue please report it
+                 
+                <a
+                  href="https://github.com/kubeapps/kubeapps/issues"
+                  target="_blank"
+                >
+                   
+                  here
+                </a>
+                .
+              </div>
+            </MessageAlertPage>
+          </div>
+          <div
+            className="col-3"
+          >
+            <ServiceInstanceInfo
+              instance={
+                Object {
+                  "metadata": Object {
+                    "creationTimestamp": "",
+                    "finalizers": Array [],
+                    "generation": 1,
+                    "name": "my-instance",
+                    "namespace": "default",
+                    "resourceVersion": "",
+                    "selfLink": "",
+                    "uid": "",
+                  },
+                  "spec": Object {
+                    "clusterServiceClassExternalName": "my-instance",
+                    "clusterServiceClassRef": Object {
+                      "name": "my-instance",
+                    },
+                    "clusterServicePlanExternalName": "my-instance",
+                    "clusterServicePlanRef": Object {
+                      "name": "my-instance",
+                    },
+                    "externalID": "my-instance",
+                  },
+                  "status": Object {
+                    "conditions": Array [
+                      Object {
+                        "lastTransitionTime": "1",
+                        "message": "everything okay here",
+                        "reason": "none",
+                        "status": "good",
+                        "type": "a type",
+                      },
+                    ],
+                  },
+                }
+              }
+            />
+          </div>
+          <div
+            className="col-9"
+          >
+            <div
+              className="row padding-t-bigger"
+            >
+              <div
+                className="col-4"
+              >
+                <ServiceInstanceStatus
+                  instance={
+                    Object {
+                      "metadata": Object {
+                        "creationTimestamp": "",
+                        "finalizers": Array [],
+                        "generation": 1,
+                        "name": "my-instance",
+                        "namespace": "default",
+                        "resourceVersion": "",
+                        "selfLink": "",
+                        "uid": "",
+                      },
+                      "spec": Object {
+                        "clusterServiceClassExternalName": "my-instance",
+                        "clusterServiceClassRef": Object {
+                          "name": "my-instance",
+                        },
+                        "clusterServicePlanExternalName": "my-instance",
+                        "clusterServicePlanRef": Object {
+                          "name": "my-instance",
+                        },
+                        "externalID": "my-instance",
+                      },
+                      "status": Object {
+                        "conditions": Array [
+                          Object {
+                            "lastTransitionTime": "1",
+                            "message": "everything okay here",
+                            "reason": "none",
+                            "status": "good",
+                            "type": "a type",
+                          },
+                        ],
+                      },
+                    }
+                  }
+                />
+              </div>
+              <div
+                className="col-8 text-r"
+              >
+                <DeprovisionButton
+                  deprovision={[Function]}
+                  disabled={false}
+                  instance={
+                    Object {
+                      "metadata": Object {
+                        "creationTimestamp": "",
+                        "finalizers": Array [],
+                        "generation": 1,
+                        "name": "my-instance",
+                        "namespace": "default",
+                        "resourceVersion": "",
+                        "selfLink": "",
+                        "uid": "",
+                      },
+                      "spec": Object {
+                        "clusterServiceClassExternalName": "my-instance",
+                        "clusterServiceClassRef": Object {
+                          "name": "my-instance",
+                        },
+                        "clusterServicePlanExternalName": "my-instance",
+                        "clusterServicePlanRef": Object {
+                          "name": "my-instance",
+                        },
+                        "externalID": "my-instance",
+                      },
+                      "status": Object {
+                        "conditions": Array [
+                          Object {
+                            "lastTransitionTime": "1",
+                            "message": "everything okay here",
+                            "reason": "none",
+                            "status": "good",
+                            "type": "a type",
+                          },
+                        ],
+                      },
+                    }
+                  }
+                />
+              </div>
+            </div>
+            <div
+              className="ServiceInstanceView__details"
+            >
+              <div>
+                <div>
+                  <div>
+                    <h2>
+                      Status
+                    </h2>
+                    <hr />
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>
+                            Type
+                          </th>
+                          <th>
+                            Status
+                          </th>
+                          <th>
+                            Last Transition Time
+                          </th>
+                          <th>
+                            Reason
+                          </th>
+                          <th>
+                            Message
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          key="1"
+                        >
+                          <td>
+                            a type
+                          </td>
+                          <td>
+                            good
+                          </td>
+                          <td>
+                            1
+                          </td>
+                          <td>
+                            <code>
+                              none
+                            </code>
+                          </td>
+                          <td>
+                            everything okay here
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              <h2>
+                Bindings
+              </h2>
+              <hr />
+              <p>
+                This instance cannot be bound to applications.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching components loading spinner matches the snapshot 1`] = `
+<section
+  className="ServiceInstanceView padding-b-big"
+>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <div
+        className="container"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching components matches the snapshot 1`] = `
+<section
+  className="ServiceInstanceView padding-b-big"
+>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <div
+        className="container"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;

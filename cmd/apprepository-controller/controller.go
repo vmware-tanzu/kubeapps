@@ -21,6 +21,11 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
+	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
+	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,12 +42,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/workqueue"
-
-	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
-	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
-	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
-	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
 )
 
 const controllerAgentName = "apprepository-controller"
@@ -142,8 +141,9 @@ func NewController(
 	// Set up an event handler for when CronJob resources get deleted. This
 	// handler will lookup the owner of the given CronJob, and if it is owned by a
 	// AppRepository resource will enqueue that AppRepository resource for
-	// processing. This way, we don't need to implement custom logic for handling
-	// CronJob resources. More info on this pattern:
+	// processing so the CronJob gets correctly recreated. This way, we don't need
+	// to implement custom logic for handling CronJob resources. More info on this
+	// pattern:
 	// https://github.com/kubernetes/community/blob/8cafef897a22026d42f5e5bb3f104febe7e29830/contributors/devel/controllers.md
 	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		DeleteFunc: controller.handleObject,
@@ -390,8 +390,11 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 		},
 		Spec: batchv1beta1.CronJobSpec{
 			// TODO: make schedule customisable
-			Schedule:          "0 * * * *",
-			ConcurrencyPolicy: "Forbid",
+			Schedule: "0 * * * *",
+			// Set to replace as short-circuit in k8s <1.12
+			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
+			// https://github.com/kubernetes/kubernetes/issues/54870
+			ConcurrencyPolicy: "Replace",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: syncJobSpec(apprepo),
 			},
@@ -420,25 +423,54 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository) *batchv1.Job {
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
 func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
-	return batchv1.JobSpec{
-		Template: corev1.PodTemplateSpec{
-			ObjectMeta: metav1.ObjectMeta{
-				Labels: jobLabels(apprepo),
-			},
-			Spec: corev1.PodSpec{
-				// If there's an issue, delay till the next cron
-				RestartPolicy: "Never",
-				Containers: []corev1.Container{
-					{
-						Name:    "sync",
-						Image:   repoSyncImage,
-						Command: []string{"/chart-repo"},
-						Args:    apprepoSyncJobArgs(apprepo),
-						Env:     apprepoSyncJobEnvVars(apprepo),
+	volumes := []corev1.Volume{}
+	volumeMounts := []corev1.VolumeMount{}
+	if apprepo.Spec.Auth.CustomCA != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
+					Items: []corev1.KeyToPath{
+						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
 					},
 				},
 			},
-		},
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
+			ReadOnly:  true,
+			MountPath: "/usr/local/share/ca-certificates",
+		})
+	}
+	// Get the predefined pod spec for the apprepo definition if exists
+	podTemplateSpec := apprepo.Spec.SyncJobPodTemplate
+	// Add labels
+	if len(podTemplateSpec.ObjectMeta.Labels) == 0 {
+		podTemplateSpec.ObjectMeta.Labels = map[string]string{}
+	}
+	for k, v := range jobLabels(apprepo) {
+		podTemplateSpec.ObjectMeta.Labels[k] = v
+	}
+	// If there's an issue, will restart pod until sucessful or replaced
+	// by another instance of the job scheduled by the cronjob
+	// see: cronJobSpec.concurrencyPolicy
+	podTemplateSpec.Spec.RestartPolicy = "OnFailure"
+	// Populate container spec
+	if len(podTemplateSpec.Spec.Containers) == 0 {
+		podTemplateSpec.Spec.Containers = []corev1.Container{{}}
+	}
+	podTemplateSpec.Spec.Containers[0].Name = "sync"
+	podTemplateSpec.Spec.Containers[0].Image = repoSyncImage
+	podTemplateSpec.Spec.Containers[0].Command = []string{"/chart-repo"}
+	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo)
+	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo)...)
+	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
+	// Add volumes
+	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
+
+	return batchv1.JobSpec{
+		Template: podTemplateSpec,
 	}
 }
 
@@ -504,13 +536,17 @@ func deleteJobName(reponame string) string {
 
 // apprepoSyncJobArgs returns a list of args for the sync container
 func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
-	return []string{
+	args := []string{
 		"sync",
 		"--mongo-url=" + mongoURL,
 		"--mongo-user=root",
-		apprepo.GetName(),
-		apprepo.Spec.URL,
 	}
+
+	if userAgentComment != "" {
+		args = append(args, "--user-agent-comment="+userAgentComment)
+	}
+
+	return append(args, apprepo.GetName(), apprepo.Spec.URL)
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container

@@ -1,6 +1,84 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders a welcome message if no apps are available 1`] = `
+exports[`when apps available matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
+            onChange={[Function]}
+            type="checkbox"
+          />
+          <span>
+            Show deleted apps
+          </span>
+        </label>
+      </div>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/catalog"
+      >
+        <button
+          className="deploy-button button button-accent"
+        >
+          Deploy App
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <div>
+        <CardGrid>
+          <AppListItem
+            app={
+              Object {
+                "chartMetadata": Object {
+                  "appVersion": "0.1.0",
+                  "name": "bar",
+                  "version": "1.0.0",
+                },
+                "releaseName": "foo",
+              }
+            }
+            key="foo"
+          />
+        </CardGrid>
+      </div>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when error present matches the snapshot 1`] = `
 <section
   className="AppList"
 >
@@ -16,30 +94,254 @@ exports[`renders a welcome message if no apps are available 1`] = `
         </h1>
       </div>
     </div>
+    <div
+      className="col-3 text-r align-center"
+    />
   </PageHeader>
   <main>
-    <MessageAlertPage
-      header="Supercharge your Kubernetes cluster"
+    <LoadingWrapper
+      loaded={true}
+      type={0}
     >
-      <div>
-        <p
-          className="margin-v-normal"
-        >
-          Deploy applications on your Kubernetes cluster with a single click.
-        </p>
-        <div
-          className="padding-b-normal"
-        >
-          <Link
-            className="button button-accent"
-            replace={false}
-            to="/charts"
-          >
-            Deploy App
-          </Link>
-        </div>
+      <ErrorSelector
+        action="list"
+        error="Boom!"
+        namespace="default"
+        resource="Applications"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when error present renders a generic error message 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
       </div>
-    </MessageAlertPage>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    />
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <ErrorSelector
+        action="list"
+        error="Boom!"
+        namespace="default"
+        resource="Applications"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when fetched but not apps available matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
+            onChange={[Function]}
+            type="checkbox"
+          />
+          <span>
+            Show deleted apps
+          </span>
+        </label>
+      </div>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/catalog"
+      >
+        <button
+          className="deploy-button button button-accent"
+        >
+          Deploy App
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <MessageAlertPage
+        header="Supercharge your Kubernetes cluster"
+      >
+        <div>
+          <p
+            className="margin-v-normal"
+          >
+            Deploy applications on your Kubernetes cluster with a single click.
+          </p>
+        </div>
+      </MessageAlertPage>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching apps loading spinner matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
+            onChange={[Function]}
+            type="checkbox"
+          />
+          <span>
+            Show deleted apps
+          </span>
+        </label>
+      </div>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/catalog"
+      >
+        <button
+          className="deploy-button button button-accent"
+        >
+          Deploy App
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <div />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching apps matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
+            onChange={[Function]}
+            type="checkbox"
+          />
+          <span>
+            Show deleted apps
+          </span>
+        </label>
+      </div>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    >
+      <Link
+        replace={false}
+        to="/catalog"
+      >
+        <button
+          className="deploy-button button button-accent"
+        >
+          Deploy App
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <div />
+    </LoadingWrapper>
   </main>
 </section>
 `;

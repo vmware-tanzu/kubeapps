@@ -17,6 +17,7 @@ limitations under the License.
 package proxy
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -54,6 +55,7 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 				Metadata: &chart.Metadata{
 					Version: r.Version,
 					Icon:    r.Icon,
+					Name:    r.Chart,
 				},
 			},
 			Info: &release.Info{
@@ -68,8 +70,16 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 }
 
 func TestListAllReleases(t *testing.T) {
-	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
-	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED"}
+	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon2.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
@@ -81,13 +91,23 @@ func TestListAllReleases(t *testing.T) {
 		t.Errorf("It should return both releases")
 	}
 	if !reflect.DeepEqual([]AppOverview{app1, app2}, releases) {
+		t.Log(releases[0].ChartMetadata)
+		t.Log(app1.ChartMetadata)
 		t.Errorf("Unexpected list of releases %v", releases)
 	}
 }
 
 func TestListNamespacedRelease(t *testing.T) {
-	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
-	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED"}
+	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon2.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app1, app2})
 
 	// Should return all the releases if no namespace is given
@@ -104,8 +124,16 @@ func TestListNamespacedRelease(t *testing.T) {
 }
 
 func TestListOldRelease(t *testing.T) {
-	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
-	appUpgraded := AppOverview{"foo", "1.0.1", "my_ns", "icon.png", "FAILED"}
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	appUpgraded := AppOverview{"foo", "1.0.1", "my_ns", "icon.png", "FAILED", "wordpress", chart.Metadata{
+		Version: "1.0.1",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app, appUpgraded})
 
 	// Should avoid old release versions
@@ -125,11 +153,31 @@ func TestListOldRelease(t *testing.T) {
 }
 
 func TestMultipleOldReleases(t *testing.T) {
-	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
-	appUpgraded := AppOverview{"foo", "1.0.1", "my_ns", "icon.png", "FAILED"}
-	app2 := AppOverview{"bar", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
-	app2Outdated := AppOverview{"bar", "1.0.2", "my_ns", "icon.png", "DEPLOYED"}
-	app2Upgraded := AppOverview{"bar", "1.0.2", "my_ns", "icon.png", "FAILED"}
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	appUpgraded := AppOverview{"foo", "1.0.1", "my_ns", "icon.png", "FAILED", "wordpress", chart.Metadata{
+		Version: "1.0.1",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	app2 := AppOverview{"bar", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	app2Outdated := AppOverview{"bar", "1.0.2", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.2",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	app2Upgraded := AppOverview{"bar", "1.0.2", "my_ns", "icon.png", "FAILED", "wordpress", chart.Metadata{
+		Version: "1.0.2",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app, appUpgraded, app2, app2Outdated, app2Upgraded})
 
 	// Should avoid old release versions
@@ -226,7 +274,11 @@ func TestCreateConflictingHelmRelease(t *testing.T) {
 		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
 	ns2 := "other_ns"
-	app := AppOverview{rs, version, ns2, "icon.png", "DEPLOYED"}
+	app := AppOverview{rs, version, ns2, "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	_, err := proxy.CreateRelease(rs, ns, "", ch)
@@ -246,7 +298,11 @@ func TestHelmReleaseUpdated(t *testing.T) {
 	ch := &chart.Chart{
 		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	app := AppOverview{rs, version, ns, "icon.png", "DEPLOYED"}
+	app := AppOverview{rs, version, ns, "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	result, err := proxy.UpdateRelease(rs, ns, "", ch)
@@ -278,41 +334,54 @@ func TestUpdateMissingHelmRelease(t *testing.T) {
 	ch := &chart.Chart{
 		Metadata: &chart.Metadata{Name: chartName, Version: version},
 	}
-	// Simulate the same app but in a different namespace
+
 	ns2 := "other_ns"
-	app := AppOverview{rs, version, ns2, "icon.png", "DEPLOYED"}
+	rs2 := "not_foo"
+	app := AppOverview{rs2, version, ns2, "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	_, err := proxy.UpdateRelease(rs, ns, "", ch)
 	if err == nil {
 		t.Error("Update should fail, there is not a release in the namespace specified")
 	}
-	if !strings.Contains(err.Error(), "not found") {
+	if !strings.Contains(err.Error(), fmt.Sprintf("release: \"%s\" not found", rs)) {
 		t.Errorf("Unexpected error %v", err)
 	}
 }
 
 func TestGetHelmRelease(t *testing.T) {
-	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
-	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED"}
+	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon2.png",
+		Name:    "wordpress",
+	}}
 	type testStruct struct {
 		existingApps    []AppOverview
 		shouldFail      bool
 		targetApp       string
-		tartegNamespace string
+		targetNamespace string
 		expectedResult  string
 	}
 	tests := []testStruct{
 		{[]AppOverview{app1, app2}, false, "foo", "my_ns", "foo"},
-		{[]AppOverview{app1, app2}, true, "bar", "my_ns", ""},
-		{[]AppOverview{app1, app2}, true, "foobar", "my_ns", ""},
 		{[]AppOverview{app1, app2}, false, "foo", "", "foo"},
+		// Can't retrieve release from another namespace
+		{[]AppOverview{app1, app2}, true, "foo", "other_ns", "foo"},
 	}
 	for _, test := range tests {
 		proxy := newFakeProxy(test.existingApps)
-		res, err := proxy.GetRelease(test.targetApp, test.tartegNamespace)
+		res, err := proxy.GetRelease(test.targetApp, test.targetNamespace)
 		if test.shouldFail && err == nil {
-			t.Errorf("Get %s/%s should fail", test.tartegNamespace, test.targetApp)
+			t.Errorf("Get %s/%s should fail", test.targetNamespace, test.targetApp)
 		}
 		if !test.shouldFail {
 			if err != nil {
@@ -326,7 +395,11 @@ func TestGetHelmRelease(t *testing.T) {
 }
 
 func TestHelmReleaseDeleted(t *testing.T) {
-	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app})
 
 	// TODO: Add a test for a non-purged release when the fake helm cli supports it
@@ -344,10 +417,14 @@ func TestHelmReleaseDeleted(t *testing.T) {
 }
 
 func TestDeleteMissingHelmRelease(t *testing.T) {
-	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED"}
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 	proxy := newFakeProxy([]AppOverview{app})
 
-	err := proxy.DeleteRelease(app.ReleaseName, "other_ns", true)
+	err := proxy.DeleteRelease("not_foo", "other_ns", true)
 	if err == nil {
 		t.Error("Delete should fail, there is not a release in the namespace specified")
 	}

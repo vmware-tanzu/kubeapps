@@ -1,0 +1,25 @@
+.ListItem__content__info_tag.stable {
+  background-color: #1598cb;
+}
+
+.ListItem__content__info_tag.incubator {
+  background-color: #f58220;
+}
+
+.ListItem__content__info_tag_link {
+  color: #fff;
+  &:hover {
+    color: #fff;
+  }
+  &:visited {
+    color: #fff;
+  }
+}
+
+.ListItem__content__description {
+  overflow: hidden;
+  height: 80px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 14px;
+}

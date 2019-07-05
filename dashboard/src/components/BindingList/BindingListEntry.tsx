@@ -1,61 +1,79 @@
 import * as React from "react";
 import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
 
-import { RemoveBindingButton } from "../InstanceView/RemoveBindingButton";
+import TerminalModal from "../TerminalModal";
 import BindingDetails from "./BindingDetails";
+import RemoveBindingButton from "./RemoveBindingButton";
 
-interface IBindingEntryProps {
+import "./BindingList.css";
+
+interface IBindingListEntryProps {
   bindingWithSecret: IServiceBindingWithSecret;
   removeBinding: (name: string, namespace: string) => Promise<boolean>;
 }
 
-interface IBindingEntryState {
-  isExpanded: boolean;
+interface IBindingListEntryState {
+  modalIsOpen: boolean;
 }
 
-export class BindingEntry extends React.Component<IBindingEntryProps, IBindingEntryState> {
+class BindingListEntry extends React.Component<IBindingListEntryProps, IBindingListEntryState> {
   public state = {
-    isExpanded: false,
+    modalIsOpen: false,
   };
 
   public render() {
-    const { bindingWithSecret, bindingWithSecret: { binding } } = this.props;
-    const { name, namespace } = binding.metadata;
+    const {
+      bindingWithSecret,
+      bindingWithSecret: { binding },
+    } = this.props;
+    const { name } = binding.metadata;
 
-    const condition = [...binding.status.conditions].shift();
-    const currentStatus = condition ? (
-      <div className="condition">
-        <code>{condition.message}</code>
-      </div>
-    ) : (
-      undefined
-    );
+    let reason = <span />;
+    let message = "";
+    const condition = [...binding.status.conditions]
+      .sort((a, b) => a.lastTransitionTime.localeCompare(b.lastTransitionTime))
+      .pop();
+    if (condition) {
+      reason = <code>{condition.reason}</code>;
+      message = condition.message;
+    }
 
-    const rows = [
-      <tr key={"row"}>
+    return (
+      <tr>
+        <td>{name}</td>
+        <td>{reason}</td>
         <td>
-          {namespace}/{name}
-        </td>
-        <td>{currentStatus}</td>
-        <td style={{ display: "flex", justifyContent: "space-around" }}>
-          <button className={"button button-primary button-small"} onClick={this.toggleExpand}>
-            Expand/Collapse
+          <button className="button button-small" onClick={this.openModal}>
+            Show message
           </button>
+          <TerminalModal
+            modalIsOpen={this.state.modalIsOpen}
+            closeModal={this.closeModal}
+            title="Status Message"
+            message={message}
+          />
+        </td>
+        <td>
+          <BindingDetails {...bindingWithSecret} />
+        </td>
+        <td>
           <RemoveBindingButton {...this.props} />
         </td>
-      </tr>,
-    ];
-    if (this.state.isExpanded) {
-      rows.push(
-        <tr key="info">
-          <td colSpan={3}>
-            <BindingDetails {...bindingWithSecret} />
-          </td>
-        </tr>,
-      );
-    }
-    return rows;
+      </tr>
+    );
   }
 
-  private toggleExpand = async () => this.setState({ isExpanded: !this.state.isExpanded });
+  public openModal = () => {
+    this.setState({
+      modalIsOpen: true,
+    });
+  };
+
+  public closeModal = async () => {
+    this.setState({
+      modalIsOpen: false,
+    });
+  };
 }
+
+export default BindingListEntry;

@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loader types renders the LoadingPlaceholder type when specified 1`] = `<LoadingPlaceholder />`;
+
+exports[`when loaded is false matches the snapshot 1`] = `<LoaderSpinner />`;
+
+exports[`when loaded is true matches the snapshot 1`] = `<ChildrenComponent />`;

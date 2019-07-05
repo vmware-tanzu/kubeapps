@@ -1,0 +1,189 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should show a warning message if there are no classes available 1`] = `
+<div>
+  <PageHeader>
+    <h1>
+      Classes
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <p>
+        Types of services available from all brokers
+      </p>
+      <MessageAlertPage
+        level="warning"
+      >
+        <div>
+          <h5>
+            Service Classes not found.
+          </h5>
+          The Service Catalog server may have failed to populate them. You can find more information about how the Service Catalog works
+           
+          <a
+            href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            target="_blank"
+          >
+            here
+          </a>
+          .
+        </div>
+      </MessageAlertPage>
+    </LoadingWrapper>
+  </main>
+</div>
+`;
+
+exports[`when there are classes available should show a Card item per class 1`] = `
+<div>
+  <PageHeader>
+    <h1>
+      Classes
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <p>
+        Types of services available from all brokers
+      </p>
+      <CardGrid>
+        <Card
+          key="2"
+          responsive={true}
+          responsiveColumns={3}
+        >
+          <CardIcon
+            icon="http://bar-image"
+          />
+          <CardContent>
+            <h5 />
+            <p
+              className="margin-b-reset"
+            />
+          </CardContent>
+          <CardFooter
+            className="text-c"
+          >
+            <Link
+              className="button button-accent"
+              replace={false}
+              to="/services/brokers/gcp/classes/bar"
+            >
+              Select a plan
+            </Link>
+          </CardFooter>
+        </Card>
+        <Card
+          key="1"
+          responsive={true}
+          responsiveColumns={3}
+        >
+          <CardIcon
+            icon="http://foo-image"
+          />
+          <CardContent>
+            <h5 />
+            <p
+              className="margin-b-reset"
+            />
+          </CardContent>
+          <CardFooter
+            className="text-c"
+          >
+            <Link
+              className="button button-accent"
+              replace={false}
+              to="/services/brokers/azure/classes/foo"
+            >
+              Select a plan
+            </Link>
+          </CardFooter>
+        </Card>
+      </CardGrid>
+    </LoadingWrapper>
+  </main>
+</div>
+`;
+
+exports[`while fetching classes loading spinner matches the snapshot 1`] = `
+<div>
+  <PageHeader>
+    <h1>
+      Classes
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <p>
+        Types of services available from all brokers
+      </p>
+      <MessageAlertPage
+        level="warning"
+      >
+        <div>
+          <h5>
+            Service Classes not found.
+          </h5>
+          The Service Catalog server may have failed to populate them. You can find more information about how the Service Catalog works
+           
+          <a
+            href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            target="_blank"
+          >
+            here
+          </a>
+          .
+        </div>
+      </MessageAlertPage>
+    </LoadingWrapper>
+  </main>
+</div>
+`;
+
+exports[`while fetching classes matches the snapshot 1`] = `
+<div>
+  <PageHeader>
+    <h1>
+      Classes
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <p>
+        Types of services available from all brokers
+      </p>
+      <MessageAlertPage
+        level="warning"
+      >
+        <div>
+          <h5>
+            Service Classes not found.
+          </h5>
+          The Service Catalog server may have failed to populate them. You can find more information about how the Service Catalog works
+           
+          <a
+            href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            target="_blank"
+          >
+            here
+          </a>
+          .
+        </div>
+      </MessageAlertPage>
+    </LoadingWrapper>
+  </main>
+</div>
+`;

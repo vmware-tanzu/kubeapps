@@ -4,7 +4,9 @@ import { getType } from "typesafe-actions";
 
 import actions from ".";
 import { App } from "../shared/App";
-import { IAppState } from "../shared/types";
+import Chart from "../shared/Chart";
+import { definedNamespaces } from "../shared/Namespace";
+import { IAppState, UnprocessableEntity } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -20,36 +22,152 @@ beforeEach(() => {
     apps: {
       state,
     },
+    config: {
+      namespace: "kubeapps-ns",
+    },
   });
 });
 
 describe("fetches applications", () => {
-  const listAppsOrig = App.listApps;
   let listAppsMock: jest.Mock;
   beforeEach(() => {
     listAppsMock = jest.fn(() => []);
     App.listApps = listAppsMock;
   });
   afterEach(() => {
-    App.listApps = listAppsOrig;
+    jest.clearAllMocks();
   });
   it("fetches all applications", async () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps), listingAll: true },
-      { type: getType(actions.apps.receiveAppList), apps: [] },
+      { type: getType(actions.apps.listApps), payload: true },
+      { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    await store.dispatch(actions.apps.fetchApps("default", true));
+    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", true));
     expect(store.getActions()).toEqual(expectedActions);
     expect(listAppsMock.mock.calls[0]).toEqual(["default", true]);
   });
-  it("fetches default applications", () => {
+  it("fetches default applications", async () => {
     const expectedActions = [
-      { type: getType(actions.apps.listApps), listingAll: false },
-      { type: getType(actions.apps.receiveAppList), apps: [] },
+      { type: getType(actions.apps.listApps), payload: false },
+      { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    return store.dispatch(actions.apps.fetchApps("default", false)).then(() => {
+    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
+  });
+
+  describe("fetches chart updates", () => {
+    it("gets a chart latest version", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: {
+            latestChartVersion: { data: { app_version: "1.0.0", version: "1.1.0" } },
+          },
+        },
+      ];
+      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
+      App.listApps = jest.fn(() => appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        { type: getType(actions.apps.requestAppUpdateInfo) },
+        {
+          type: getType(actions.apps.receiveAppUpdateInfo),
+          payload: {
+            releaseName: "foobar",
+            updateInfo: {
+              upToDate: false,
+              appLatestVersion: "1.0.0",
+              chartLatestVersion: "1.1.0",
+              repository: { name: "bar" },
+            },
+          },
+        },
+      ];
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
       expect(store.getActions()).toEqual(expectedActions);
-      expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
+    });
+
+    it("set up upToDate=true if the application is up to date", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: {
+            latestChartVersion: { data: { app_version: "0.1.0", version: "1.0.0" } },
+          },
+        },
+      ];
+      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
+      App.listApps = jest.fn(() => appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        { type: getType(actions.apps.requestAppUpdateInfo) },
+        {
+          type: getType(actions.apps.receiveAppUpdateInfo),
+          payload: {
+            releaseName: "foobar",
+            updateInfo: {
+              upToDate: true,
+              appLatestVersion: "0.1.0",
+              chartLatestVersion: "1.0.0",
+              repository: { name: "bar" },
+            },
+          },
+        },
+      ];
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      expect(store.getActions()).toEqual(expectedActions);
+    });
+
+    it("set an error if the application version is not semver compatible", async () => {
+      const appsResponse = [
+        {
+          releaseName: "foobar",
+          chartMetadata: { name: "foo", version: "1.0", appVersion: "0.1.0" },
+        },
+      ];
+      const chartUpdatesResponse = [
+        {
+          attributes: { repo: { name: "bar" } },
+          relationships: { latestChartVersion: { data: { version: "1.0" } } },
+        },
+      ];
+      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
+      App.listApps = jest.fn(() => appsResponse);
+      const expectedActions = [
+        { type: getType(actions.apps.listApps), payload: false },
+        { type: getType(actions.apps.receiveAppList), payload: appsResponse },
+        { type: getType(actions.apps.requestAppUpdateInfo) },
+        {
+          type: getType(actions.apps.receiveAppUpdateInfo),
+          payload: {
+            releaseName: "foobar",
+            updateInfo: {
+              error: new Error("Invalid Version: 1.0"),
+              upToDate: false,
+              chartLatestVersion: "",
+              appLatestVersion: "",
+              repository: { name: "", url: "" },
+            },
+          },
+        },
+      ];
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      expect(store.getActions()).toEqual(expectedActions);
     });
   });
 });
@@ -76,11 +194,81 @@ describe("delete applications", () => {
   });
   it("delete and throw an error", async () => {
     const error = new Error("something went wrong!");
-    const expectedActions = [{ type: getType(actions.apps.errorDeleteApp), err: error }];
+    const expectedActions = [{ type: getType(actions.apps.errorDeleteApp), payload: error }];
     deleteAppMock.mockImplementation(() => {
       throw error;
     });
     expect(await store.dispatch(actions.apps.deleteApp("foo", "default", true))).toBe(false);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("deploy chart", () => {
+  beforeEach(() => {
+    App.create = jest.fn();
+  });
+
+  it("returns true if namespace is correct and deployment is successful", async () => {
+    const res = await store.dispatch(
+      actions.apps.deployChart("my-version" as any, "my-release", "default"),
+    );
+    expect(res).toBe(true);
+    expect(App.create).toHaveBeenCalledWith(
+      "my-release",
+      "default",
+      "kubeapps-ns",
+      "my-version",
+      undefined,
+    );
+    expect(store.getActions().length).toBe(0);
+  });
+
+  it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
+    const res = await store.dispatch(
+      actions.apps.deployChart("my-version" as any, "my-release", definedNamespaces.all),
+    );
+    expect(res).toBe(false);
+    expect(store.getActions().length).toBe(1);
+    expect(store.getActions()[0].type).toEqual(getType(actions.apps.errorApps));
+    expect(store.getActions()[0].payload.constructor).toBe(UnprocessableEntity);
+  });
+});
+
+describe("upgradeApp", () => {
+  const provisionCMD = actions.apps.upgradeApp(
+    "my-version" as any,
+    "my-release",
+    definedNamespaces.all,
+  );
+
+  it("calls ServiceBinding.delete and returns true if no error", async () => {
+    App.upgrade = jest.fn().mockImplementationOnce(() => true);
+    const res = await store.dispatch(provisionCMD);
+    expect(res).toBe(true);
+
+    expect(store.getActions().length).toBe(0);
+    expect(App.upgrade).toHaveBeenCalledWith(
+      "my-release",
+      definedNamespaces.all,
+      "kubeapps-ns",
+      "my-version" as any,
+      undefined,
+    );
+  });
+
+  it("dispatches errorCatalog if error", async () => {
+    App.upgrade = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(actions.apps.errorApps),
+        payload: new Error("Boom!"),
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

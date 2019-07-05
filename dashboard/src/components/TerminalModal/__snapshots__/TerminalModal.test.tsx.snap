@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders the message details modal 1`] = `
+<div
+  className="MessageDetails"
+>
+  <Modal
+    ariaHideApp={true}
+    bodyOpenClassName="ReactModal__Body--open"
+    className="Terminal"
+    closeTimeoutMS={0}
+    contentLabel="Modal"
+    isOpen={false}
+    onRequestClose={[Function]}
+    parentSelector={[Function]}
+    portalClassName="ReactModalPortal"
+    role="dialog"
+    shouldCloseOnEsc={true}
+    shouldCloseOnOverlayClick={true}
+    shouldFocusAfterRender={true}
+    shouldReturnFocusAfterClose={true}
+    style={
+      Object {
+        "content": Object {
+          "maxWidth": "80%",
+        },
+        "overlay": Object {
+          "alignItems": "center",
+          "display": "flex",
+          "justifyContent": "center",
+        },
+      }
+    }
+  >
+    <div
+      className="Terminal__Top type-small"
+    >
+      <div
+        className="Terminal__Top__Buttons"
+      >
+        <a>
+          <span
+            className="Terminal__Top__Button Terminal__Top__Button--red"
+            onClick={[Function]}
+          />
+        </a>
+      </div>
+      <div
+        className="Terminal__Top__Title"
+      >
+        This is a title
+      </div>
+    </div>
+    <div
+      className="Terminal__Tab"
+    >
+      <pre
+        className="Terminal__Code"
+      >
+        <code>
+          This is a message!
+        </code>
+      </pre>
+    </div>
+  </Modal>
+</div>
+`;

@@ -1,0 +1,228 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when fetching ingresses or services loading spinner matches the snapshot 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={false}
+    type={1}
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody />
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when fetching ingresses or services loading spinner matches the snapshot 2`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={false}
+    type={1}
+  >
+    <p>
+      The current application does not expose a public URL.
+    </p>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when the app contains ingresses should show the table with available ingresses 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    type={1}
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "http://foo.bar/ready",
+              ],
+              "isLink": true,
+              "name": "foo",
+              "type": "Ingress",
+            }
+          }
+          key="accessURL/foo"
+        />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when the app contains resources with errors displays the error 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    type={1}
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          key="could not find Ingress"
+        >
+          <td
+            colSpan={3}
+          >
+            Error: 
+            could not find Ingress
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when the app contains services and ingresses should show the table with available svcs and ingresses 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    type={1}
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "http://foo.bar/ready",
+              ],
+              "isLink": true,
+              "name": "foo",
+              "type": "Ingress",
+            }
+          }
+          key="accessURL/foo"
+        />
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "Pending",
+              ],
+              "isLink": false,
+              "name": "foo",
+              "type": "Service LoadBalancer",
+            }
+          }
+          key="accessURL/foo"
+        />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;
+
+exports[`when the app contains services should show the table if any service is a LoadBalancer 1`] = `
+<Fragment>
+  <h6>
+    Access URLs
+  </h6>
+  <LoadingWrapper
+    loaded={true}
+    type={1}
+  >
+    <table>
+      <thead>
+        <tr>
+          <th>
+            RESOURCE
+          </th>
+          <th>
+            TYPE
+          </th>
+          <th>
+            URL
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <AccessURLItem
+          URLItem={
+            Object {
+              "URLs": Array [
+                "Pending",
+              ],
+              "isLink": false,
+              "name": "foo",
+              "type": "Service LoadBalancer",
+            }
+          }
+          key="accessURL/foo"
+        />
+      </tbody>
+    </table>
+  </LoadingWrapper>
+</Fragment>
+`;

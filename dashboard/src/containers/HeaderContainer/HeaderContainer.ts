@@ -1,7 +1,8 @@
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
-import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import Header from "../../components/Header";
@@ -12,24 +13,33 @@ interface IState extends IStoreState {
 }
 
 function mapStateToProps({
-  auth: { authenticated },
+  auth: { authenticated, oidcAuthenticated },
   namespace,
-  router: { location: { pathname } },
+  router: {
+    location: { pathname },
+  },
 }: IState) {
   return {
     authenticated,
     namespace,
     pathname,
+    // If oidcAuthenticated it's not yet supported to logout
+    // Some IdP like Keycloak allows to hit an endpoint to logout:
+    // https://www.keycloak.org/docs/latest/securing_apps/index.html#logout-endpoint
+    hideLogoutLink: oidcAuthenticated,
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
-    logout: (token: string) => dispatch(actions.auth.logout()),
+    logout: () => dispatch(actions.auth.logout()),
     push: (path: string) => dispatch(push(path)),
     setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Header);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Header);

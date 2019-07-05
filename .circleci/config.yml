@@ -29,52 +29,68 @@ workflows:
           <<: *build_always
       - test_dashboard:
           <<: *build_always
-      - build_chartrepo:
+      - test_chart_render:
           <<: *build_always
-          requires:
-            - test_go
-      - build_chartsvc:
+      - build_go_images:
           <<: *build_always
-          requires:
-            - test_go
-      - build_chart_apprepository:
-          <<: *build_always
-          requires:
-            - test_go
       - build_dashboard:
           <<: *build_always
-          requires:
-            - test_dashboard
-      - build_tiller_proxy:
+      - local_e2e_tests:
           <<: *build_always
           requires:
             - test_go
-      - GKE_1_9:
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_11_MASTER:
           <<: *build_on_master
           requires:
-            - build_chartrepo
-            - build_chartsvc
-            - build_chart_apprepository
+            - test_go
+            - test_dashboard
+            - build_go_images
             - build_dashboard
-            - build_tiller_proxy
-      - GKE_1_10:
+      - GKE_1_11_LATEST_RELEASE:
           <<: *build_on_master
           requires:
-            - build_chartrepo
-            - build_chartsvc
-            - build_chart_apprepository
+            - test_go
+            - test_dashboard
+            - build_go_images
             - build_dashboard
-            - build_tiller_proxy
+      - GKE_1_12_MASTER:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - GKE_1_12_LATEST_RELEASE:
+          <<: *build_on_master
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
       - sync_chart:
           <<: *build_on_master
           requires:
-            - GKE_1_9
-            - GKE_1_10
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_12_MASTER
+            - GKE_1_12_LATEST_RELEASE
+      - push_images:
+          <<: *build_always
+          requires:
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_12_MASTER
+            - GKE_1_12_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
-            - GKE_1_9
-            - GKE_1_10
+            - GKE_1_11_MASTER
+            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_12_MASTER
+            - GKE_1_12_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -85,46 +101,83 @@ install_gcloud_sdk: &install_gcloud_sdk
       rm -rf $HOME/google-cloud-sdk;
       curl https://sdk.cloud.google.com | bash;
     fi
+install_helm_cli: &install_helm_cli
+  run: |
+    wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-amd64.tar.gz
+    tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
+    sudo mv linux-amd64/helm /usr/local/bin/
 exports: &exports
   run: |
     # It is not possible to resolve env vars in the environment section:
     # https://circleci.com/docs/2.0/env-vars/#using-bash_env-to-set-environment-variables
-    echo "export VERSION=${CIRCLE_TAG:-build-$CIRCLE_WORKFLOW_ID}" >> $BASH_ENV
-build_image: &build_image
-  machine: true
-  working_directory: /home/circleci/.go_workspace/src/github.com/kubeapps/kubeapps
-  environment:
-    GOPATH: /home/circleci/.go_workspace
+    # DEV_TAG and PROD_TAG are the tags used for the Kubeapps docker images
+    echo "export DEV_TAG=build-${CIRCLE_SHA1}" >> $BASH_ENV
+    echo "export PROD_TAG=${CIRCLE_TAG:-latest}" >> $BASH_ENV
+    # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
+    # history of the production tag
+    echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
+    # Helm version (should be +2.10)
+    echo "export HELM_VERSION=v2.14.0" >> $BASH_ENV
+build_images: &build_images
   steps:
+    - setup_remote_docker
     - checkout
     - <<: *exports
-    - run: make VERSION="$VERSION" $IMAGE
     - run: |
-        if [[ -z "$CIRCLE_PULL_REQUEST" ]]; then
-          docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-          if [[ -n "$CIRCLE_TAG" ]]; then 
-            docker push $IMAGE:$VERSION
-          fi
-          if [[ "$CIRCLE_BRANCH" == "master"  ]]; then
-            docker tag $IMAGE:$VERSION $IMAGE:latest
-            docker push $IMAGE:latest
-          fi
+        mkdir -p images/
+        read -ra IMG_ARRAY <<< "$IMAGES"
+        if [[ -n "${CIRCLE_TAG}" ]]; then
+          makeArgs="VERSION=${CIRCLE_TAG}"
         fi
+        for IMAGE in "${IMG_ARRAY[@]}"; do
+          make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
+          if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+            docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+          fi
+          docker save kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+        done
+    - persist_to_workspace:
+        root: images
+        paths:
+          - "*"
+install_kubectl: &install_kubectl
+  run: |
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl
+    chmod +x ./kubectl
+    sudo mv ./kubectl /usr/local/bin/kubectl
+run_e2e_tests: &run_e2e_tests
+  run: |
+    # If we want to test the latest version instead we override the image to be used
+    if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+      source ./script/chart_sync_utils.sh
+      DEV_TAG=$(latestReleaseTag)
+      IMG_MODIFIER=""
+    fi
+    ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER
 gke_test: &gke_test
   docker:
-    - image: circleci/golang:1.9
+    - image: circleci/golang:1.11
   steps:
+    - checkout
     - run: |
+        source ./script/chart_sync_utils.sh
+
         # In case of GKE we will only want to build if it is
         # a build of a branch in the kubeapps repository
         if [[ -z "$GKE_ADMIN" ]]; then
+          echo "Step aborted, we are not in the Kubeapps repository"
           circleci step halt
         fi
-    - checkout
+
+        # Cancel job if this is a test stable release job but
+        # the chart version has not been bumped
+        if [[ -n "$TEST_LATEST_RELEASE" ]] && ! changedVersion; then
+          echo "Step aborted, we are not releasing a new version of the chart"
+          circleci step halt
+        fi
     - <<: *exports
     - <<: *install_gcloud_sdk
-    # Install kubectl
-    - run: gcloud components install kubectl
     - setup_remote_docker
     - run: |
         gcloud -q config set project $GKE_PROJECT
@@ -133,16 +186,13 @@ gke_test: &gke_test
         if [ -a $GOOGLE_APPLICATION_CREDENTIALS ]; then
           gcloud -q auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS;
         fi
+    - <<: *install_kubectl
     # A GKE cluster name cannot contain non-alphanumeric characters (nor uppercase letters)
-    - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
+    - run: echo "export ESCAPED_GKE_CLUSTER=$(echo ${GKE_CLUSTER}-${CIRCLE_BRANCH:-$CIRCLE_TAG}-${TEST_LATEST_RELEASE}-${GKE_BRANCH}-ci | sed 's/[^a-z0-9-]//g')" >> $BASH_ENV
     - run: ./script/start-gke-env.sh $ESCAPED_GKE_CLUSTER $GKE_ZONE $GKE_BRANCH $GKE_ADMIN > /dev/null
     # Install helm
-    - run: |
-        wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-amd64.tar.gz
-        tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
-        sudo mv linux-amd64/helm /usr/local/bin/
-        helm init
-    - run: ./script/e2e-test.sh
+    - <<: *install_helm_cli
+    - <<: *run_e2e_tests
     - run:
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
@@ -155,7 +205,7 @@ jobs:
     environment:
       CGO_ENABLED: "0"
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.11
     steps:
       - checkout
       - <<: *exports
@@ -168,45 +218,75 @@ jobs:
       - run: yarn install --cwd=dashboard --frozen-lockfile
       - run: yarn --cwd=dashboard run lint
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
-  build_chartrepo:
-    <<: *build_image
+  test_chart_render:
+    docker:
+      - image: circleci/golang:1.11
+    steps:
+      - <<: *exports
+      - checkout
+      - <<: *install_helm_cli
+      - run: helm init --client-only
+      - run: ./script/chart-template-test.sh
+  build_go_images:
+    docker:
+      - image: circleci/golang:1.11
+    working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
-      - IMAGE=kubeapps/chart-repo
-  build_chartsvc:
-    <<: *build_image
-    environment:
-      - IMAGE=kubeapps/chartsvc
-  build_chart_apprepository:
-    <<: *build_image
-    environment:
-      - IMAGE=kubeapps/apprepository-controller
+      GOPATH: /home/circleci/.go_workspace
+      IMAGES: "apprepository-controller tiller-proxy"
+    <<: *build_images
   build_dashboard:
-    <<: *build_image
+    docker:
+      - image: circleci/golang:1.11
     environment:
-      - IMAGE=kubeapps/dashboard
-  build_tiller_proxy:
-    <<: *build_image
-    environment:
-      - IMAGE=kubeapps/tiller-proxy
+      IMAGES: "dashboard"
+    <<: *build_images
   release:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.11
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  GKE_1_9:
+  local_e2e_tests:
+    machine: true
+    steps:
+      - checkout
+      - <<: *exports
+      # Install kind
+      - run: |
+          curl -LO https://github.com/kubernetes-sigs/kind/releases/download/0.2.1/kind-linux-amd64
+          chmod +x kind-linux-amd64
+          sudo mv kind-linux-amd64 /usr/local/bin/kind
+      - run: kind create cluster
+      - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
+      - <<: *install_kubectl
+      - <<: *install_helm_cli
+      # Load images from other jobs
+      - attach_workspace:
+          at: /tmp/images
+      - run: for image in /tmp/images/*; do kind load image-archive "$image"; done
+      - <<: *run_e2e_tests
+  GKE_1_11_MASTER:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.9.1
-      GKE_BRANCH: 1.9
-  GKE_1_10:
+      GKE_BRANCH: "1.11"
+  GKE_1_11_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      HELM_VERSION: v2.9.1
-      GKE_BRANCH: 1.10
+      GKE_BRANCH: "1.11"
+      TEST_LATEST_RELEASE: 1
+  GKE_1_12_MASTER:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: "1.12"
+  GKE_1_12_LATEST_RELEASE:
+    <<: *gke_test
+    environment:
+      GKE_BRANCH: "1.12"
+      TEST_LATEST_RELEASE: 1
   sync_chart:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.11
     steps:
       - checkout
       - add_ssh_keys:
@@ -219,3 +299,18 @@ jobs:
             ssh-add ~/.ssh/id_rsa_* ~/.ssh/id_rsa
           fi
           ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
+  push_images:
+    docker:
+      - image: circleci/golang:1.11
+    steps:
+      - setup_remote_docker
+      - <<: *exports
+      - run: |
+          if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
+            docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
+            for IMAGE in kubeapps/apprepository-controller kubeapps/dashboard kubeapps/tiller-proxy; do
+              docker pull ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
+              docker tag ${IMAGE}${IMG_MODIFIER}:${DEV_TAG} ${IMAGE}:${PROD_TAG}
+              docker push ${IMAGE}:${PROD_TAG}
+            done
+          fi

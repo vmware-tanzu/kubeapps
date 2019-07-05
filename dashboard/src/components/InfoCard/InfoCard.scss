@@ -1,0 +1,56 @@
+.ListItem {
+  color: #1c2b39;
+}
+
+.ListItem__content__title {
+  margin: 0;
+  width: 100%;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #1c2b39;
+}
+
+.ListItem__content__info {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ListItem__content__info_tag {
+  float: right;
+  margin-left: 3px;
+  margin-bottom: 3px;
+  color: #fff;
+  border-radius: 16px;
+  max-width: 150px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ListItem__content__info_tag-0 {
+  background-color: #1c2b39;
+}
+
+.ListItem__content__info_tag-1 {
+  background-color: #1598cb;
+}
+
+.ListItem__header {
+  position: relative;
+  display: block;
+}
+
+.ListItem__banner {
+  position: absolute;
+  bottom: 0;
+  background: #008145;
+  color: white;
+  width: 100%;
+  left: 0;
+  margin: 0;
+  text-align: center;
+  padding: 0.25em 0;
+  font-size: 14px;
+}

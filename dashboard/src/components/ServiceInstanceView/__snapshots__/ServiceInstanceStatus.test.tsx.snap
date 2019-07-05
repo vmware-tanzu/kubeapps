@@ -1,0 +1,113 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`displays unknown status when conditions is empty 1`] = `
+<span
+  className="ApplicationStatus"
+>
+  <AlertTriangle
+    className="icon"
+    color="currentColor"
+    size="24"
+    style={
+      Object {
+        "bottom": "-0.3em",
+      }
+    }
+  />
+   
+  Unknown
+</span>
+`;
+
+exports[`renders correct statuses when deprovisioning 1`] = `
+<span
+  className="ApplicationStatus ApplicationStatus--pending"
+>
+  <Compass
+    className="icon padding-t-tiny"
+  />
+   
+  Deprovisioning
+</span>
+`;
+
+exports[`renders correct statuses when error 1`] = `
+<span
+  className="ApplicationStatus"
+>
+  <AlertTriangle
+    className="icon"
+    color="currentColor"
+    size="24"
+    style={
+      Object {
+        "bottom": "-0.3em",
+      }
+    }
+  />
+   
+  Failed
+</span>
+`;
+
+exports[`renders correct statuses when failed 1`] = `
+<span
+  className="ApplicationStatus"
+>
+  <AlertTriangle
+    className="icon"
+    color="currentColor"
+    size="24"
+    style={
+      Object {
+        "bottom": "-0.3em",
+      }
+    }
+  />
+   
+  Failed
+</span>
+`;
+
+exports[`renders correct statuses when provisioned successfully 1`] = `
+<span
+  className="ApplicationStatus ApplicationStatus--success"
+>
+  <Check
+    className="icon padding-t-tiny"
+  />
+   
+  Provisioned
+</span>
+`;
+
+exports[`renders correct statuses when provisioning 1`] = `
+<span
+  className="ApplicationStatus ApplicationStatus--pending"
+>
+  <Compass
+    className="icon padding-t-tiny"
+  />
+   
+  Provisioning
+</span>
+`;
+
+exports[`renders correct statuses when unknown 1`] = `
+<span
+  className="ApplicationStatus"
+>
+  <AlertTriangle
+    className="icon"
+    color="currentColor"
+    size="24"
+    style={
+      Object {
+        "bottom": "-0.3em",
+      }
+    }
+  />
+   
+  Unknown
+</span>
+`;

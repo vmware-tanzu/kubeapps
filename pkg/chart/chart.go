@@ -18,6 +18,9 @@ package chart
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,6 +30,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
@@ -37,9 +41,21 @@ import (
 )
 
 const (
-	defaultNamespace = metav1.NamespaceSystem
-	defaultRepoURL   = "https://kubernetes-charts.storage.googleapis.com"
+	defaultNamespace      = metav1.NamespaceSystem
+	defaultRepoURL        = "https://kubernetes-charts.storage.googleapis.com"
+	defaultTimeoutSeconds = 180
 )
+
+type repoIndex struct {
+	checksum string
+	index    *repo.IndexFile
+}
+
+var repoIndexes map[string]*repoIndex
+
+func init() {
+	repoIndexes = map[string]*repoIndex{}
+}
 
 // Details contains the information to retrieve a Chart
 type Details struct {
@@ -61,6 +77,14 @@ type Details struct {
 type Auth struct {
 	// Header is header based Authorization
 	Header *AuthHeader `json:"header,omitempty"`
+	// CustomCA is an additional CA
+	CustomCA *CustomCA `json:"customCA,omitempty"`
+}
+
+// AuthHeader contains the secret information for authenticate
+type CustomCA struct {
+	// Selects a key of a secret in the pod's namespace
+	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // AuthHeader contains the secret information for authenticate
@@ -80,22 +104,23 @@ type LoadChart func(in io.Reader) (*chart.Chart, error)
 // Resolver for exposed funcs
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
-	GetChart(details *Details) (*chart.Chart, error)
+	GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error)
+	InitNetClient(customCA *CustomCA) (HTTPClient, error)
 }
 
 // Chart struct contains the clients required to retrieve charts info
 type Chart struct {
 	kubeClient kubernetes.Interface
-	netClient  HTTPClient
 	load       LoadChart
+	userAgent  string
 }
 
 // NewChart returns a new Chart
-func NewChart(kubeClient kubernetes.Interface, netClient HTTPClient, load LoadChart) *Chart {
+func NewChart(kubeClient kubernetes.Interface, load LoadChart, userAgent string) *Chart {
 	return &Chart{
 		kubeClient,
-		netClient,
 		load,
+		userAgent,
 	}
 }
 
@@ -132,6 +157,27 @@ func readResponseBody(res *http.Response) ([]byte, error) {
 	return body, nil
 }
 
+func checksum(data []byte) string {
+	hasher := sha256.New()
+	hasher.Write(data)
+	return string(hasher.Sum(nil))
+}
+
+// Cache the result of parsing the repo index since parsing this YAML
+// is an expensive operation. See https://github.com/kubeapps/kubeapps/issues/1052
+func getIndexFromCache(repoURL string, data []byte) (*repo.IndexFile, string) {
+	sha := checksum(data)
+	if repoIndexes[repoURL] == nil || repoIndexes[repoURL].checksum != sha {
+		// The repository is not in the cache or the content changed
+		return nil, sha
+	}
+	return repoIndexes[repoURL].index, sha
+}
+
+func storeIndexInCache(repoURL string, index *repo.IndexFile, sha string) {
+	repoIndexes[repoURL] = &repoIndex{sha, index}
+}
+
 func parseIndex(data []byte) (*repo.IndexFile, error) {
 	index := &repo.IndexFile{}
 	err := yaml.Unmarshal(data, index)
@@ -158,7 +204,16 @@ func fetchRepoIndex(netClient *HTTPClient, repoURL string, authHeader string) (*
 		return nil, err
 	}
 
-	return parseIndex(data)
+	index, sha := getIndexFromCache(repoURL, data)
+	if index == nil {
+		// index not found in the cache, parse it
+		index, err = parseIndex(data)
+		if err != nil {
+			return nil, err
+		}
+		storeIndexInCache(repoURL, index, sha)
+	}
+	return index, nil
 }
 
 func resolveChartURL(index, chart string) (string, error) {
@@ -217,8 +272,57 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
+// clientWithDefaultUserAgent implements chart.HTTPClient interface
+// and includes an override of the Do method which injects an User-Agent
+type clientWithDefaultUserAgent struct {
+	client    HTTPClient
+	userAgent string
+}
+
+// Do HTTP request
+func (c *clientWithDefaultUserAgent) Do(req *http.Request) (*http.Response, error) {
+	req.Header.Set("User-Agent", c.userAgent)
+	return c.client.Do(req)
+}
+
+// InitNetClient returns an HTTP client loading a custom CA if provided (as a secret)
+func (c *Chart) InitNetClient(customCA *CustomCA) (HTTPClient, error) {
+	// Get the SystemCertPool, continue with an empty pool on error
+	caCertPool, _ := x509.SystemCertPool()
+	if caCertPool == nil {
+		caCertPool = x509.NewCertPool()
+	}
+
+	// If additionalCA is set, load it
+	if customCA != nil {
+		namespace := os.Getenv("POD_NAMESPACE")
+		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(customCA.SecretKeyRef.Name, metav1.GetOptions{})
+		if err != nil {
+			log.Fatalf("Unable to read the given CA cert: %v", err)
+		}
+
+		// Append our cert to the system pool
+		if ok := caCertPool.AppendCertsFromPEM(caCertSecret.Data[customCA.SecretKeyRef.Key]); !ok {
+			return nil, fmt.Errorf("Failed to append %s to RootCAs", customCA.SecretKeyRef.Name)
+		}
+	}
+
+	// Return Transport for testing purposes
+	return &clientWithDefaultUserAgent{
+		client: &http.Client{
+			Timeout: time.Second * defaultTimeoutSeconds,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					RootCAs: caCertPool,
+				},
+			},
+		},
+		userAgent: c.userAgent,
+	}, nil
+}
+
 // GetChart retrieves and loads a Chart from a registry
-func (c *Chart) GetChart(details *Details) (*chart.Chart, error) {
+func (c *Chart) GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error) {
 	repoURL := details.RepoURL
 	if repoURL == "" {
 		// FIXME: Make configurable
@@ -241,7 +345,7 @@ func (c *Chart) GetChart(details *Details) (*chart.Chart, error) {
 	}
 
 	log.Printf("Downloading repo %s index...", repoURL)
-	repoIndex, err := fetchRepoIndex(&c.netClient, repoURL, authHeader)
+	repoIndex, err := fetchRepoIndex(&netClient, repoURL, authHeader)
 	if err != nil {
 		return nil, err
 	}
@@ -252,7 +356,7 @@ func (c *Chart) GetChart(details *Details) (*chart.Chart, error) {
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chartRequested, err := fetchChart(&c.netClient, chartURL, authHeader, c.load)
+	chartRequested, err := fetchChart(&netClient, chartURL, authHeader, c.load)
 	if err != nil {
 		return nil, err
 	}

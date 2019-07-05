@@ -1,18 +1,17 @@
+import { RouterAction } from "connected-react-router";
+import * as Moniker from "moniker-native";
 import * as React from "react";
 import AceEditor from "react-ace";
-import { RouterAction } from "react-router-redux";
 
-import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion } from "../../shared/types";
-import DeploymentBinding from "./DeploymentBinding";
-import DeploymentErrors from "./DeploymentErrors";
+import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
 interface IDeploymentFormProps {
   kubeappsNamespace: string;
-  bindingsWithSecrets: IServiceBindingWithSecret[];
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
@@ -24,10 +23,9 @@ interface IDeploymentFormProps {
     values?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (id: string) => Promise<{}>;
-  getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
-  getChartValues: (id: string, chartVersion: string) => Promise<any>;
+  fetchChartVersions: (id: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => void;
   namespace: string;
 }
 
@@ -35,6 +33,10 @@ interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
+  // Name of the release that was submitted for creation
+  // This is different than releaseName since it is also used in the error banner
+  // and we do not want to use releaseName since it is controller by the form field.
+  latestSubmittedReleaseName: string;
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
@@ -45,29 +47,21 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     appValues: undefined,
     isDeploying: false,
     namespace: this.props.namespace,
-    releaseName: "",
+    releaseName: Moniker.choose(),
+    latestSubmittedReleaseName: "",
     valuesModified: false,
   };
 
   public componentDidMount() {
-    const {
-      chartID,
-      fetchChartVersions,
-      getChartVersion,
-      chartVersion,
-      getBindings,
-      namespace,
-    } = this.props;
+    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
     fetchChartVersions(chartID);
     getChartVersion(chartID, chartVersion);
-    getBindings(namespace);
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     const {
       chartID,
       chartVersion,
-      getBindings,
       getChartValues,
       getChartVersion,
       namespace,
@@ -77,7 +71,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
     if (nextProps.namespace !== namespace) {
       this.setState({ namespace: nextProps.namespace });
-      getBindings(nextProps.namespace);
       return;
     }
 
@@ -99,23 +92,27 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { selected, bindingsWithSecrets, chartID, kubeappsNamespace } = this.props;
+    const { selected, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
-    const { appValues, releaseName } = this.state;
+    const { appValues, latestSubmittedReleaseName } = this.state;
+    if (selected.error) {
+      return (
+        <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
+      );
+    }
     if (!version || !versions.length || this.state.isDeploying) {
-      return <div>Loading</div>;
+      return <LoadingWrapper />;
     }
     return (
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           {this.props.error && (
-            <DeploymentErrors
-              {...this.props}
-              kubeappsNamespace={kubeappsNamespace}
-              chartName={chartID.split("/")[0]}
-              releaseName={releaseName}
-              repo={chartID.split("/")[1]}
-              version={version.attributes.version}
+            <ErrorSelector
+              error={this.props.error}
+              namespace={namespace}
+              defaultRequiredRBACRoles={{ create: this.requiredRBACRoles() }}
+              action="create"
+              resource={latestSubmittedReleaseName}
             />
           )}
           <div className="row">
@@ -168,11 +165,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 </button>
               </div>
             </div>
-            <div className="col-4">
-              {bindingsWithSecrets.length > 0 && (
-                <DeploymentBinding bindingsWithSecrets={bindingsWithSecrets} />
-              )}
-            </div>
           </div>
         </form>
       </div>
@@ -182,8 +174,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { selected, deployChart, push } = this.props;
-    this.setState({ isDeploying: true });
     const { releaseName, namespace, appValues } = this.state;
+
+    this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
     if (selected.version) {
       const deployed = await deployChart(selected.version, releaseName, namespace, appValues);
       if (deployed) {
@@ -197,6 +190,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleReleaseNameChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ releaseName: e.currentTarget.value });
   };
+
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
     this.props.push(
       `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${
@@ -204,9 +198,21 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       }`,
     );
   };
+
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
+
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
+  }
 }
 
 export default DeploymentForm;

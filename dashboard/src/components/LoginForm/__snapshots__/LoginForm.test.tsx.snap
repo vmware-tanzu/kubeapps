@@ -67,7 +67,6 @@ exports[`displays an error if the authentication error is passed 1`] = `
             <p>
               <button
                 className="button button-accent"
-                disabled={false}
                 type="submit"
               >
                 Login
@@ -141,7 +140,6 @@ exports[`renders a token login form 1`] = `
             <p>
               <button
                 className="button button-accent"
-                disabled={false}
                 type="submit"
               >
                 Login
@@ -153,4 +151,11 @@ exports[`renders a token login form 1`] = `
     </div>
   </div>
 </section>
+`;
+
+exports[`while authenticating loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
 `;

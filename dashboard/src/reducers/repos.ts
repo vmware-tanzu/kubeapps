@@ -1,4 +1,4 @@
-import { LOCATION_CHANGE, LocationChangeAction } from "react-router-redux";
+import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
@@ -46,41 +46,40 @@ const reposReducer = (
 ): IAppRepositoryState => {
   switch (action.type) {
     case getType(actions.repos.receiveRepos):
-      const { repos } = action;
-      return { ...state, isFetching: false, repos, errors: {} };
+      return { ...state, isFetching: false, repos: action.payload, errors: {} };
     case getType(actions.repos.receiveRepo):
-      const { repo } = action;
-      return { ...state, isFetching: false, repo, errors: {} };
+      return { ...state, isFetching: false, repo: action.payload, errors: {} };
     case getType(actions.repos.requestRepos):
       return { ...state, isFetching: true };
     case getType(actions.repos.addRepo):
       return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):
-      const { added } = action;
-      return { ...state, addingRepo: false, lastAdded: added, repos: [...state.repos, added] };
+      return {
+        ...state,
+        addingRepo: false,
+        lastAdded: action.payload,
+        repos: [...state.repos, action.payload],
+      };
     case getType(actions.repos.resetForm):
       return { ...state, form: { ...state.form, name: "", namespace: "", url: "" } };
-    case getType(actions.repos.updateForm):
-      const { values } = action;
-      return { ...state, form: { ...state.form, ...values } };
     case getType(actions.repos.showForm):
       return { ...state, form: { ...state.form, show: true } };
     case getType(actions.repos.hideForm):
       return { ...state, form: { ...state.form, show: false } };
     case getType(actions.repos.redirect):
-      return { ...state, redirectTo: action.path };
+      return { ...state, redirectTo: action.payload };
     case getType(actions.repos.redirected):
       return { ...state, redirectTo: undefined };
-    case getType(actions.repos.errorChart):
+    case getType(actions.charts.errorChart):
       return {
         ...state,
-        errors: { fetch: action.err },
+        errors: { fetch: action.payload },
       };
     case getType(actions.repos.errorRepos):
       return {
         ...state,
         // don't reset the fetch error
-        errors: { fetch: state.errors.fetch, [action.op]: action.err },
+        errors: { fetch: state.errors.fetch, [action.payload.op]: action.payload.err },
         isFetching: false,
       };
     case LOCATION_CHANGE:

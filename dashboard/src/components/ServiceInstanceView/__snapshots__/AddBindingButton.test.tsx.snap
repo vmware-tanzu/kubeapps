@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when the modal is open shows an error if is present 1`] = `
+<div
+  className="AddBindingButton"
+>
+  <button
+    className="button button-primary"
+    disabled={false}
+    onClick={[Function]}
+  >
+    Add Binding
+  </button>
+  <Modal
+    ariaHideApp={true}
+    bodyOpenClassName="ReactModal__Body--open"
+    closeTimeoutMS={0}
+    isOpen={true}
+    onRequestClose={[Function]}
+    parentSelector={[Function]}
+    portalClassName="ReactModalPortal"
+    role="dialog"
+    shouldCloseOnEsc={true}
+    shouldCloseOnOverlayClick={true}
+    shouldFocusAfterRender={true}
+    shouldReturnFocusAfterClose={true}
+  >
+    <ErrorSelector
+      action="create"
+      defaultRequiredRBACRoles={
+        Object {
+          "create": Array [
+            Object {
+              "apiGroup": "servicecatalog.k8s.io",
+              "resource": "servicebindings",
+              "verbs": Array [
+                "create",
+              ],
+            },
+          ],
+        }
+      }
+      error={[Error]}
+      namespace="default"
+      resource="Service Binding \\"my-class-binding\\""
+    />
+    <div
+      className="bind-form"
+    >
+      <h1>
+        Add Binding
+      </h1>
+      <SchemaForm
+        onSubmit={[Function]}
+        schema={
+          Object {
+            "properties": Object {
+              "Name": Object {
+                "default": "my-class-binding",
+                "description": "Name for ServiceBinding",
+                "type": "string",
+              },
+            },
+            "required": Array [
+              "Name",
+            ],
+            "type": "object",
+          }
+        }
+      >
+        <div>
+          <button
+            className="button button-primary"
+            type="submit"
+          >
+            Continue
+          </button>
+          <button
+            className="button"
+            onClick={[Function]}
+          >
+            Cancel
+          </button>
+        </div>
+      </SchemaForm>
+    </div>
+  </Modal>
+</div>
+`;

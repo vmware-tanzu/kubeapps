@@ -1,6 +1,6 @@
 import { JSONSchema6 } from "json-schema";
 import * as urls from "../shared/url";
-import { axios } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { IClusterServiceClass } from "./ClusterServiceClass";
 import { IServiceInstance } from "./ServiceInstance";
 import { IK8sList, IStatus } from "./types";
@@ -19,12 +19,12 @@ export class ServiceCatalog {
   }
 
   public static async deprovisionInstance(instance: IServiceInstance) {
-    const { data } = await axios.delete("/api/kube" + instance.metadata.selfLink);
+    const { data } = await axiosWithAuth.delete("api/kube" + instance.metadata.selfLink);
     return data;
   }
 
   public static async syncBroker(broker: IServiceBroker) {
-    const { data } = await axios.patch<IStatus>(
+    const { data } = await axiosWithAuth.patch<IStatus>(
       urls.api.clusterservicebrokers.sync(broker),
       {
         spec: {
@@ -41,7 +41,7 @@ export class ServiceCatalog {
 
   public static async isCatalogInstalled(): Promise<boolean> {
     try {
-      const { status } = await axios.get(this.endpoint);
+      const { status } = await axiosWithAuth.get(this.endpoint);
       return status === 200;
     } catch (err) {
       return false;
@@ -49,14 +49,14 @@ export class ServiceCatalog {
   }
 
   public static async getItems<T>(resource: string, namespace?: string): Promise<T[]> {
-    const response = await axios.get<IK8sList<T, {}>>(
+    const response = await axiosWithAuth.get<IK8sList<T, {}>>(
       this.endpoint + (namespace ? `/namespaces/${namespace}` : "") + `/${resource}`,
     );
     const json = response.data;
     return json.items;
   }
 
-  private static endpoint: string = "/api/kube/apis/servicecatalog.k8s.io/v1beta1";
+  private static endpoint: string = "api/kube/apis/servicecatalog.k8s.io/v1beta1";
 }
 export interface IK8sApiListResponse<T> {
   kind: string;

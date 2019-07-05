@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when readme is not present loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;

@@ -17,13 +17,19 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
+	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/urfave/negroni"
@@ -33,21 +39,12 @@ import (
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
-
-	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
-)
-
-const (
-	defaultTimeoutSeconds = 180
 )
 
 var (
 	settings    environment.EnvSettings
 	proxy       *tillerProxy.Proxy
 	kubeClient  kubernetes.Interface
-	netClient   *http.Client
 	disableAuth bool
 	listLimit   int
 
@@ -72,10 +69,7 @@ func init() {
 	pflag.BoolVar(&tlsEnable, "tls", false, "enable TLS for request")
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
-
-	netClient = &http.Client{
-		Timeout: time.Second * defaultTimeoutSeconds,
-	}
+	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 }
 
 func main() {
@@ -125,7 +119,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
-	chartutils := chartUtils.NewChart(kubeClient, netClient, helmChartUtil.LoadArchive)
+	chartutils := chartUtils.NewChart(kubeClient, helmChartUtil.LoadArchive, userAgent())
 
 	r := mux.NewRouter()
 
@@ -178,9 +172,34 @@ func main() {
 		port = "8080"
 	}
 	addr := ":" + port
-	log.WithFields(log.Fields{"addr": addr}).Info("Started Tiller Proxy")
-	err = http.ListenAndServe(addr, n)
-	if err != nil {
-		log.Fatalf("Unable to start the server: %v", err)
+
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: n,
 	}
+
+	go func() {
+		log.WithFields(log.Fields{"addr": addr}).Info("Started Tiller Proxy")
+		err = srv.ListenAndServe()
+		if err != nil {
+			log.Info(err)
+		}
+	}()
+
+	// Catch SIGINT and SIGTERM
+	// Set up channel on which to send signal notifications.
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	log.Debug("Set system to get notified on signals")
+	s := <-c
+	log.Infof("Received signal: %v. Waiting for existing requests to finish", s)
+	// Set a timeout value high enough to let k8s terminationGracePeriodSeconds to act
+	// accordingly and send a SIGKILL if needed
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3600)
+	defer cancel()
+	// Doesn't block if no connections, but will otherwise wait
+	// until the timeout deadline.
+	srv.Shutdown(ctx)
+	log.Info("All requests have been served. Exiting")
+	os.Exit(0)
 }

@@ -1,0 +1,153 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders information about the binding with a secret 1`] = `
+<tr>
+  <td>
+    foo
+  </td>
+  <td>
+    <code>
+      none
+    </code>
+  </td>
+  <td>
+    <button
+      className="button button-small"
+      onClick={[Function]}
+    >
+      Show message
+    </button>
+    <TerminalModal
+      closeModal={[Function]}
+      message="everything okay here"
+      modalIsOpen={false}
+      title="Status Message"
+    />
+  </td>
+  <td>
+    <BindingDetails
+      binding={
+        Object {
+          "metadata": Object {
+            "creationTimestamp": "",
+            "finalizers": Array [],
+            "generation": 1,
+            "name": "foo",
+            "namespace": "default",
+            "resourceVersion": "",
+            "selfLink": "",
+            "uid": "",
+          },
+          "spec": Object {
+            "externalID": "",
+            "instanceRef": Object {
+              "name": "foo",
+            },
+            "secretName": "bar",
+          },
+          "status": Object {
+            "asyncOpInProgress": false,
+            "conditions": Array [
+              Object {
+                "lastTransitionTime": "1",
+                "message": "everything okay here",
+                "reason": "none",
+                "status": "good",
+                "type": "a type",
+              },
+            ],
+            "currentOperation": "",
+            "externalProperties": Object {},
+            "operationStartTime": "",
+            "orphanMitigationInProgress": false,
+            "reconciledGeneration": 1,
+            "unbindStatus": "",
+          },
+        }
+      }
+      secret={
+        Object {
+          "apiVersion": "",
+          "data": Object {
+            "mySecret": "Y29udGVudAo=",
+          },
+          "kind": "",
+          "metadata": Object {
+            "creationTimestamp": "",
+            "finalizers": Array [],
+            "generation": 1,
+            "name": "bar",
+            "namespace": "default",
+            "resourceVersion": "",
+            "selfLink": "",
+            "uid": "",
+          },
+        }
+      }
+    />
+  </td>
+  <td>
+    <RemoveBindingButton
+      bindingWithSecret={
+        Object {
+          "binding": Object {
+            "metadata": Object {
+              "creationTimestamp": "",
+              "finalizers": Array [],
+              "generation": 1,
+              "name": "foo",
+              "namespace": "default",
+              "resourceVersion": "",
+              "selfLink": "",
+              "uid": "",
+            },
+            "spec": Object {
+              "externalID": "",
+              "instanceRef": Object {
+                "name": "foo",
+              },
+              "secretName": "bar",
+            },
+            "status": Object {
+              "asyncOpInProgress": false,
+              "conditions": Array [
+                Object {
+                  "lastTransitionTime": "1",
+                  "message": "everything okay here",
+                  "reason": "none",
+                  "status": "good",
+                  "type": "a type",
+                },
+              ],
+              "currentOperation": "",
+              "externalProperties": Object {},
+              "operationStartTime": "",
+              "orphanMitigationInProgress": false,
+              "reconciledGeneration": 1,
+              "unbindStatus": "",
+            },
+          },
+          "secret": Object {
+            "apiVersion": "",
+            "data": Object {
+              "mySecret": "Y29udGVudAo=",
+            },
+            "kind": "",
+            "metadata": Object {
+              "creationTimestamp": "",
+              "finalizers": Array [],
+              "generation": 1,
+              "name": "bar",
+              "namespace": "default",
+              "resourceVersion": "",
+              "selfLink": "",
+              "uid": "",
+            },
+          },
+        }
+      }
+      removeBinding={[Function]}
+    />
+  </td>
+</tr>
+`;

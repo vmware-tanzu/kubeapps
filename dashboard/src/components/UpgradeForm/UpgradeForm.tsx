@@ -1,19 +1,17 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import AceEditor from "react-ace";
-import { RouterAction } from "react-router-redux";
 
-import { IServiceBindingWithSecret } from "../../shared/ServiceBinding";
-import { IChartState, IChartVersion } from "../../shared/types";
-import DeploymentBinding from "../DeploymentForm/DeploymentBinding";
-import DeploymentErrors from "../DeploymentForm/DeploymentErrors";
+import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
+import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
+import { ErrorSelector } from "../ErrorAlert";
 
 interface IDeploymentFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
-  bindingsWithSecrets: IServiceBindingWithSecret[];
   chartName: string;
   kubeappsNamespace: string;
   namespace: string;
@@ -28,11 +26,11 @@ interface IDeploymentFormProps {
     values?: string,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (id: string) => Promise<{}>;
-  getBindings: (ns: string) => Promise<IServiceBindingWithSecret[]>;
-  getChartVersion: (id: string, chartVersion: string) => Promise<void>;
-  getChartValues: (id: string, chartVersion: string) => Promise<any>;
-  clearRepo: () => any;
+  goBack: () => RouterAction;
+  fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
+  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartValues: (id: string, chartVersion: string) => void;
+  clearRepo: () => void;
 }
 
 interface IDeploymentFormState {
@@ -51,19 +49,10 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   };
 
   public componentDidMount() {
-    const {
-      appCurrentVersion,
-      chartName,
-      fetchChartVersions,
-      getBindings,
-      getChartVersion,
-      namespace,
-      repo,
-    } = this.props;
+    const { appCurrentVersion, chartName, fetchChartVersions, getChartVersion, repo } = this.props;
     const chartID = `${repo}/${chartName}`;
     fetchChartVersions(chartID);
     getChartVersion(chartID, appCurrentVersion);
-    getBindings(namespace);
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {
@@ -96,24 +85,27 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   }
 
   public render() {
-    const { selected, bindingsWithSecrets, appCurrentVersion } = this.props;
+    const { selected, namespace, releaseName, goBack } = this.props;
     const { version, versions } = selected;
     const { appValues } = this.state;
     if (this.props.error) {
-      return <DeploymentErrors {...this.props} version={appCurrentVersion} />;
+      return (
+        <ErrorSelector
+          error={this.props.error}
+          namespace={namespace}
+          defaultRequiredRBACRoles={{ update: this.requiredRBACRoles() }}
+          action="update"
+          resource={`Application ${releaseName}`}
+        />
+      );
     }
     if (!version || !versions || !versions.length || this.state.isDeploying) {
-      return <div> Loading </div>;
+      return <LoadingWrapper />;
     }
     return (
       <div>
         <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
           <div className="row">
-            <div className="col-8">
-              {this.props.error && (
-                <DeploymentErrors {...this.props} version={version.attributes.version} />
-              )}
-            </div>
             <div className="col-12">
               <h2>
                 {this.props.releaseName} ({this.props.chartName})
@@ -153,15 +145,10 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
                 <button className="button button-primary" type="submit">
                   Submit
                 </button>
-                <button className="button" onClick={this.handleReselectChartRepo}>
+                <button className="button" type="button" onClick={goBack}>
                   Back
                 </button>
               </div>
-            </div>
-            <div className="col-4">
-              {bindingsWithSecrets.length > 0 && (
-                <DeploymentBinding bindingsWithSecrets={bindingsWithSecrets} />
-              )}
             </div>
           </div>
         </form>
@@ -198,9 +185,16 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
     this.setState({ appValues: value, valuesModified: true });
   };
 
-  public handleReselectChartRepo = () => {
-    this.props.clearRepo();
-  };
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
+  }
 }
 
 export default UpgradeForm;

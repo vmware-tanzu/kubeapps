@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when name or namespace do not exist loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;
+
+exports[`when name or namespace do not exist loading spinner matches the snapshot 2`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;

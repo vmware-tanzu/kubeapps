@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render an item 1`] = `
+<InfoCard
+  description={
+    <div
+      className="ListItem__content__description"
+    />
+  }
+  icon="api/chartsvc/icon.png"
+  info="1.0.0"
+  key="[object Object]/foo"
+  link="/charts/foo"
+  tag1Content={
+    <Link
+      className="ListItem__content__info_tag_link"
+      replace={false}
+      to="/catalog/undefined"
+    />
+  }
+  title="foo"
+/>
+`;

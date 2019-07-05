@@ -1,61 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders an error if it exists 1`] = `
-<DeploymentErrors
-  app={Object {}}
-  bindingsWithSecrets={Array []}
-  chartName=""
-  checkChart={[MockFunction]}
-  clearRepo={[MockFunction]}
-  error={[Error: foo doesn't exists]}
-  fetchChartVersions={[MockFunction]}
-  fetchRepositories={
-    [MockFunction] {
-      "calls": Array [
-        Array [],
-        Array [],
-        Array [],
-      ],
-    }
-  }
-  getApp={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-        Array [
-          "foo",
-          "default",
-        ],
-      ],
-    }
-  }
-  getBindings={[MockFunction]}
-  getChartValues={[MockFunction]}
-  getChartVersion={[MockFunction]}
-  kubeappsNamespace="kubeapps"
-  namespace="default"
-  push={[MockFunction]}
-  releaseName="foo"
-  repo="stable"
-  repos={
-    Array [
-      Object {
-        "metadata": Object {
-          "name": "stable",
-        },
-      },
-    ]
-  }
-  selected={Object {}}
-  upgradeApp={[MockFunction]}
-  version="1.0.0"
+exports[`loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
 />
 `;
 
@@ -73,39 +21,19 @@ exports[`renders the repo selection form if not introduced 1`] = `
         "name": "foo",
       }
     }
-    bindingsWithSecrets={Array []}
     chartName="bar"
-    checkChart={[MockFunction]}
-    clearRepo={[MockFunction]}
-    fetchChartVersions={[MockFunction]}
-    fetchRepositories={
-      [MockFunction] {
-        "calls": Array [
-          Array [],
-          Array [],
-        ],
-      }
-    }
-    getApp={
-      [MockFunction] {
-        "calls": Array [
-          Array [
-            "foo",
-            "default",
-          ],
-          Array [
-            "foo",
-            "default",
-          ],
-        ],
-      }
-    }
-    getBindings={[MockFunction]}
-    getChartValues={[MockFunction]}
-    getChartVersion={[MockFunction]}
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getAppWithUpdateInfo={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    goBack={[Function]}
+    isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"
-    push={[MockFunction]}
+    push={[Function]}
     releaseName="foo"
     repo={Object {}}
     repos={
@@ -118,7 +46,7 @@ exports[`renders the repo selection form if not introduced 1`] = `
       ]
     }
     selected={Object {}}
-    upgradeApp={[MockFunction]}
+    upgradeApp={[Function]}
     version="1.0.0"
   />
 </div>
@@ -140,49 +68,19 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     }
     appCurrentValues=""
     appCurrentVersion="1.0.0"
-    bindingsWithSecrets={Array []}
     chartName="bar"
-    checkChart={[MockFunction]}
-    clearRepo={[MockFunction]}
-    fetchChartVersions={[MockFunction]}
-    fetchRepositories={
-      [MockFunction] {
-        "calls": Array [
-          Array [],
-          Array [],
-          Array [],
-          Array [],
-        ],
-      }
-    }
-    getApp={
-      [MockFunction] {
-        "calls": Array [
-          Array [
-            "foo",
-            "default",
-          ],
-          Array [
-            "foo",
-            "default",
-          ],
-          Array [
-            "foo",
-            "default",
-          ],
-          Array [
-            "foo",
-            "default",
-          ],
-        ],
-      }
-    }
-    getBindings={[MockFunction]}
-    getChartValues={[MockFunction]}
-    getChartVersion={[MockFunction]}
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getAppWithUpdateInfo={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    goBack={[Function]}
+    isFetching={false}
     kubeappsNamespace="kubeapps"
     namespace="default"
-    push={[MockFunction]}
+    push={[Function]}
     releaseName="foo"
     repo="stable"
     repos={
@@ -195,8 +93,87 @@ exports[`renders the upgrade form when the repo is available 1`] = `
       ]
     }
     selected={Object {}}
-    upgradeApp={[MockFunction]}
+    upgradeApp={[Function]}
     version="1.0.0"
   />
 </div>
+`;
+
+exports[`skips the repo selection form if the app contains upgrade info 1`] = `
+<div>
+  <UpgradeForm
+    app={
+      Object {
+        "chart": Object {
+          "metadata": Object {
+            "name": "bar",
+            "version": "1.0.0",
+          },
+        },
+        "name": "foo",
+        "updateInfo": Object {
+          "appLatestVersion": "1.1.0",
+          "chartLatestVersion": "1.1.0",
+          "repository": Object {
+            "name": "stable",
+            "url": "",
+          },
+          "upToDate": true,
+        },
+      }
+    }
+    appCurrentValues=""
+    appCurrentVersion="1.0.0"
+    chartName="bar"
+    checkChart={[Function]}
+    clearRepo={[Function]}
+    fetchChartVersions={[Function]}
+    fetchRepositories={[Function]}
+    getAppWithUpdateInfo={[Function]}
+    getChartValues={[Function]}
+    getChartVersion={[Function]}
+    goBack={[Function]}
+    isFetching={false}
+    kubeappsNamespace="kubeapps"
+    namespace="default"
+    push={[Function]}
+    releaseName="foo"
+    repo="stable"
+    repos={
+      Array [
+        Object {
+          "metadata": Object {
+            "name": "stable",
+          },
+        },
+      ]
+    }
+    selected={Object {}}
+    upgradeApp={[Function]}
+    version="1.0.0"
+  />
+</div>
+`;
+
+exports[`when an error exists renders a generic error message 1`] = `
+<ErrorSelector
+  action="update"
+  defaultRequiredRBACRoles={
+    Object {
+      "update": Array [
+        Object {
+          "apiGroup": "kubeapps.com",
+          "namespace": "kubeapps",
+          "resource": "apprepositories",
+          "verbs": Array [
+            "get",
+          ],
+        },
+      ],
+    }
+  }
+  error={[Error: foo doesn't exists]}
+  namespace="default"
+  resource="foo"
+/>
 `;

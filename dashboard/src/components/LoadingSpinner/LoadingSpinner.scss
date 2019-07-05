@@ -1,0 +1,46 @@
+$spinner-color: #00437b;
+
+.spinner {
+  height: 40px;
+  margin: 100px auto;
+  position: relative;
+  width: 40px;
+
+  &__bounce1,
+  &__bounce2 {
+    animation: spinner-bounce 2s infinite ease-in-out;
+    background-color: $spinner-color;
+    border-radius: 50%;
+    height: 100%;
+    left: 0;
+    opacity: 0.6;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+
+  &__bounce2 {
+    animation-delay: -1s;
+  }
+
+  // Different styles/sizes
+  &--inline-small {
+    margin: 0 auto;
+    height: 15px;
+    width: 15px;
+    top: 2px;
+  }
+}
+
+@keyframes spinner-bounce {
+  0%,
+  100% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  }
+
+  50% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}

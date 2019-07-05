@@ -1,7 +1,9 @@
 import { shallow } from "enzyme";
 import { Location } from "history";
+import context from "jest-plugin-context";
 import * as React from "react";
 import { Redirect } from "react-router-dom";
+import itBehavesLike from "../../shared/specs";
 
 import LoginForm from "./LoginForm";
 
@@ -18,9 +20,25 @@ const defaultProps = {
   authenticating: false,
   authenticationError: undefined,
   location: emptyLocation,
+  tryToAuthenticateWithOIDC: jest.fn(),
 };
 
 const authenticationError = "it's a trap";
+
+describe("componentDidMount", () => {
+  it("should call tryToAuthenticateWithOIDC", () => {
+    const tryToAuthenticateWithOIDC = jest.fn();
+    shallow(<LoginForm {...defaultProps} tryToAuthenticateWithOIDC={tryToAuthenticateWithOIDC} />);
+    expect(tryToAuthenticateWithOIDC).toHaveBeenCalled();
+  });
+});
+
+context("while authenticating", () => {
+  itBehavesLike("aLoadingComponent", {
+    component: LoginForm,
+    props: { ...defaultProps, authenticating: true },
+  });
+});
 
 it("renders a token login form", () => {
   const wrapper = shallow(<LoginForm {...defaultProps} />);
@@ -77,12 +95,4 @@ it("displays an error if the authentication error is passed", () => {
 
   expect(wrapper.find(".alert-error").exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
-});
-
-it("disables the input if authenticating", () => {
-  const wrapper = shallow(<LoginForm {...defaultProps} />);
-
-  expect(wrapper.find(".button").props().disabled).toBe(false);
-  wrapper.setProps({ authenticating: true });
-  expect(wrapper.find(".button")).toBeDisabled();
 });

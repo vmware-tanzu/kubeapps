@@ -29,29 +29,23 @@ cd $KUBEAPPS_DIR
 Kubeapps consists of a number of in-cluster components. To build all these components in one go:
 
 ```bash
-make VERSION=myver all
+make IMAGE_TAG=myver all
 ```
 
 Or if you wish to build specific component(s):
 
 ```bash
 # to build the kubeapps binary
-make VERSION=myver kubeapps
+make IMAGE_TAG=myver kubeapps
 
 # to build the kubeapps/dashboard docker image
-make VERSION=myver kubeapps/dashboard
-
-# to build the kubeapps/chartsvc docker image
-make VERSION=myver kubeapps/chartsvc
-
-# to build the kubeapps/chart-repo docker image
-make VERSION=myver kubeapps/chart-repo
+make IMAGE_TAG=myver kubeapps/dashboard
 
 # to build the kubeapps/apprepository-controller docker image
-make VERSION=myver kubeapps/apprepository-controller
+make IMAGE_TAG=myver kubeapps/apprepository-controller
 
 # to build the kubeapps/tiller-proxy docker image
-make VERSION=myver kubeapps/tiller-proxy
+make IMAGE_TAG=myver kubeapps/tiller-proxy
 ```
 
 ## Running tests
@@ -70,12 +64,6 @@ make test-kubeapps
 
 # to test kubeapps/dashboard
 make test-dashboard
-
-# to test the cmd/chartsvc package
-make test-chartsvc
-
-# to test the cmd/chart-repo package
-make test-chart-repo
 
 # to test the cmd/apprepository-controller package
 make test-apprepository-controller

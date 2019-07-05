@@ -1,7 +1,8 @@
 import * as React from "react";
 
 import { IChartState, IChartVersion } from "../../shared/types";
-import ChartDeployButton from "./ChartDeployButton";
+import { ErrorSelector } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
 import ChartReadme from "./ChartReadme";
@@ -10,7 +11,7 @@ import "./ChartView.css";
 
 interface IChartViewProps {
   chartID: string;
-  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => Promise<{}>;
+  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => void;
   isFetching: boolean;
   selected: IChartState["selected"];
   selectChartVersion: (version: IChartVersion) => any;
@@ -44,10 +45,13 @@ class ChartView extends React.Component<IChartViewProps> {
   }
 
   public render() {
-    const { isFetching, getChartReadme, namespace } = this.props;
-    const { version, readme, readmeError, versions } = this.props.selected;
+    const { isFetching, getChartReadme, namespace, chartID } = this.props;
+    const { version, readme, error, readmeError, versions } = this.props.selected;
+    if (error) {
+      return <ErrorSelector error={error} resource={`Chart ${chartID}`} />;
+    }
     if (isFetching || !version) {
-      return <div>Loading</div>;
+      return <LoadingWrapper />;
     }
     const chartAttrs = version.relationships.chart.data;
     return (
@@ -57,7 +61,8 @@ class ChartView extends React.Component<IChartViewProps> {
           description={chartAttrs.description}
           icon={chartAttrs.icon}
           repo={chartAttrs.repo.name}
-          appVersion={version.attributes.app_version}
+          version={version}
+          namespace={namespace}
         />
         <main>
           <div className="container container-fluid">
@@ -72,10 +77,6 @@ class ChartView extends React.Component<IChartViewProps> {
               </div>
               <div className="col-3 ChartView__sidebar-container">
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
-                  <div className="ChartViewSidebar__section">
-                    <h2>Usage</h2>
-                    <ChartDeployButton version={version} namespace={namespace} />
-                  </div>
                   <div className="ChartViewSidebar__section">
                     <h2>Chart Versions</h2>
                     <ChartVersionsList selected={version} versions={versions} />

@@ -1,0 +1,494 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`if the service broker is not installed shows a warning message 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <h1>
+      Service Brokers
+    </h1>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <ServiceCatalogNotInstalledAlert />
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`when all the brokers are loaded shows a forbiden (fetch) error if it exists 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <h1>
+      Service Brokers
+    </h1>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <main>
+      <ErrorSelector
+        action="view"
+        defaultRequiredRBACRoles={
+          Object {
+            "resync": Array [
+              Object {
+                "apiGroup": "servicecatalog.k8s.io",
+                "clusterWide": true,
+                "resource": "clusterservicebrokers",
+                "verbs": Array [
+                  "patch",
+                ],
+              },
+            ],
+            "view": Array [
+              Object {
+                "apiGroup": "servicecatalog.k8s.io",
+                "clusterWide": true,
+                "resource": "clusterservicebrokers",
+                "verbs": Array [
+                  "list",
+                ],
+              },
+            ],
+          }
+        }
+        error={[Error]}
+        resource="Service Brokers"
+      />
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`when all the brokers are loaded shows a forbiden (resync) error if it exists 1`] = `
+<ServiceBrokerList
+  brokers={
+    Object {
+      "isFetching": false,
+      "list": Array [
+        Object {
+          "metadata": Object {
+            "name": "wall-street",
+            "uid": "1",
+          },
+          "spec": Object {
+            "url": "https://foo.bar",
+          },
+          "status": Object {
+            "lastCatalogRetrievalTime": "today",
+          },
+        },
+      ],
+    }
+  }
+  checkCatalogInstalled={[Function]}
+  errors={
+    Object {
+      "update": [Error],
+    }
+  }
+  getBrokers={[Function]}
+  isInstalled={true}
+  sync={[Function]}
+>
+  <section
+    className="AppList"
+  >
+    <PageHeader>
+      <header
+        className="PageHeader"
+      >
+        <div
+          className="row padding-t-big padding-b-small collapse-b-phone-land align-center"
+        >
+          <h1>
+            Service Brokers
+          </h1>
+        </div>
+      </header>
+    </PageHeader>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <main>
+        <ErrorSelector
+          action="resync"
+          defaultRequiredRBACRoles={
+            Object {
+              "resync": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "clusterWide": true,
+                  "resource": "clusterservicebrokers",
+                  "verbs": Array [
+                    "patch",
+                  ],
+                },
+              ],
+              "view": Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "clusterWide": true,
+                  "resource": "clusterservicebrokers",
+                  "verbs": Array [
+                    "list",
+                  ],
+                },
+              ],
+            }
+          }
+          error={[Error]}
+          resource="Service Brokers"
+        >
+          <PermissionsErrorPage
+            action="resync Service Brokers"
+            namespace=""
+            roles={
+              Array [
+                Object {
+                  "apiGroup": "servicecatalog.k8s.io",
+                  "clusterWide": true,
+                  "resource": "clusterservicebrokers",
+                  "verbs": Array [
+                    "patch",
+                  ],
+                },
+              ]
+            }
+          >
+            <UnexpectedErrorPage
+              icon={[Function]}
+              showGenericMessage={false}
+              title={
+                <span>
+                  You don't have sufficient permissions to 
+                  resync Service Brokers
+                   in 
+                  
+                </span>
+              }
+            >
+              <div
+                className="alert alert-error margin-v-bigger"
+              >
+                <ErrorPageHeader
+                  icon={[Function]}
+                >
+                  <header>
+                    <div
+                      className="margin-b-big"
+                    >
+                      <h5
+                        className="type-regular"
+                      >
+                        <span
+                          className="error__icon margin-r-small"
+                        >
+                          <Lock
+                            color="currentColor"
+                            size="24"
+                          >
+                            <svg
+                              fill="none"
+                              height="24"
+                              stroke="currentColor"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                              width="24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <rect
+                                height="11"
+                                rx="2"
+                                ry="2"
+                                width="18"
+                                x="3"
+                                y="11"
+                              />
+                              <path
+                                d="M7 11V7a5 5 0 0 1 10 0v4"
+                              />
+                            </svg>
+                          </Lock>
+                        </span>
+                        <span>
+                          You don't have sufficient permissions to 
+                          resync Service Brokers
+                           in 
+                        </span>
+                      </h5>
+                    </div>
+                  </header>
+                </ErrorPageHeader>
+                <div
+                  className="error__content margin-l-enormous"
+                >
+                  <div>
+                    <p>
+                      Ask your administrator for the following RBAC roles:
+                    </p>
+                    <ul
+                      className="error__permisions-list"
+                    >
+                      <PermissionsListItem
+                        key="0"
+                        namespace=""
+                        role={
+                          Object {
+                            "apiGroup": "servicecatalog.k8s.io",
+                            "clusterWide": true,
+                            "resource": "clusterservicebrokers",
+                            "verbs": Array [
+                              "patch",
+                            ],
+                          }
+                        }
+                      >
+                        <li>
+                          patch
+                           
+                          <code>
+                            clusterservicebrokers
+                          </code>
+                           
+                          <span>
+                            (
+                            <code>
+                              servicecatalog.k8s.io
+                            </code>
+                            )
+                          </span>
+                           
+                          in 
+                          all namespaces
+                          .
+                        </li>
+                      </PermissionsListItem>
+                    </ul>
+                    <p>
+                      See the documentation for more info on
+                       
+                      <a
+                        href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+                        target="_blank"
+                      >
+                        access control in Kubeapps
+                      </a>
+                      .
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </UnexpectedErrorPage>
+          </PermissionsErrorPage>
+        </ErrorSelector>
+      </main>
+    </LoadingWrapper>
+  </section>
+</ServiceBrokerList>
+`;
+
+exports[`when all the brokers are loaded shows a warning to install no service broker is installed 1`] = `
+<ServiceBrokerList
+  brokers={
+    Object {
+      "isFetching": false,
+      "list": Array [],
+    }
+  }
+  checkCatalogInstalled={[Function]}
+  errors={Object {}}
+  getBrokers={[Function]}
+  isInstalled={true}
+  sync={[Function]}
+>
+  <section
+    className="AppList"
+  >
+    <PageHeader>
+      <header
+        className="PageHeader"
+      >
+        <div
+          className="row padding-t-big padding-b-small collapse-b-phone-land align-center"
+        >
+          <h1>
+            Service Brokers
+          </h1>
+        </div>
+      </header>
+    </PageHeader>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <main>
+        <ServiceBrokersNotFoundAlert>
+          <NotFoundErrorPage
+            header="No Service Brokers installed."
+          >
+            <div
+              className="alert alert-error margin-t-bigger"
+            >
+              <ErrorPageHeader
+                icon={[Function]}
+              >
+                <header>
+                  <div
+                    className="margin-b-big"
+                  >
+                    <h5
+                      className="type-regular"
+                    >
+                      <span
+                        className="error__icon margin-r-small"
+                      >
+                        <X
+                          color="currentColor"
+                          size="24"
+                        >
+                          <svg
+                            fill="none"
+                            height="24"
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <line
+                              x1="18"
+                              x2="6"
+                              y1="6"
+                              y2="18"
+                            />
+                            <line
+                              x1="6"
+                              x2="18"
+                              y1="6"
+                              y2="18"
+                            />
+                          </svg>
+                        </X>
+                      </span>
+                      No Service Brokers installed.
+                    </h5>
+                  </div>
+                </header>
+              </ErrorPageHeader>
+              <div
+                className="error__content margin-l-enormous"
+              >
+                <p>
+                  Ask an administrator to install a compatible
+                   
+                  <a
+                    href="https://github.com/osbkit/brokerlist"
+                    target="_blank"
+                  >
+                    Service Broker
+                  </a>
+                   
+                  to browse, provision and manage external services within Kubeapps.
+                </p>
+              </div>
+            </div>
+          </NotFoundErrorPage>
+        </ServiceBrokersNotFoundAlert>
+      </main>
+    </LoadingWrapper>
+  </section>
+</ServiceBrokerList>
+`;
+
+exports[`when all the brokers are loaded when there are no errors, renders the broker list 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <h1>
+      Service Brokers
+    </h1>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={true}
+    type={0}
+  >
+    <main>
+      <CardGrid
+        className="BrokerList"
+      >
+        <ServiceBrokerItem
+          broker={
+            Object {
+              "metadata": Object {
+                "name": "wall-street",
+                "uid": "1",
+              },
+              "spec": Object {
+                "url": "https://foo.bar",
+              },
+              "status": Object {
+                "lastCatalogRetrievalTime": "today",
+              },
+            }
+          }
+          key="1"
+          sync={[Function]}
+        />
+      </CardGrid>
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`while fetching brokers loading spinner matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <h1>
+      Service Brokers
+    </h1>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={false}
+    type={0}
+  >
+    <main>
+      <ServiceBrokersNotFoundAlert />
+    </main>
+  </LoadingWrapper>
+</section>
+`;
+
+exports[`while fetching brokers matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <h1>
+      Service Brokers
+    </h1>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={false}
+    type={0}
+  >
+    <main>
+      <ServiceBrokersNotFoundAlert />
+    </main>
+  </LoadingWrapper>
+</section>
+`;

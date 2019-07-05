@@ -1,0 +1,55 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when there is a valid Service renders a simple view without IP 1`] = `
+<Fragment>
+  <td
+    className="col-3"
+  >
+    foo
+  </td>
+  <td
+    className="col-3"
+  >
+    ClusterIP
+  </td>
+  <td
+    className="col-2"
+  />
+  <td
+    className="col-2"
+  >
+    None
+  </td>
+  <td
+    className="col-2"
+  />
+</Fragment>
+`;
+
+exports[`when there is a valid Service renders a view with IP 1`] = `
+<Fragment>
+  <td
+    className="col-3"
+  >
+    foo
+  </td>
+  <td
+    className="col-3"
+  >
+    LoadBalancer
+  </td>
+  <td
+    className="col-2"
+  />
+  <td
+    className="col-2"
+  >
+    1.2.3.4
+  </td>
+  <td
+    className="col-2"
+  >
+    80/TCP
+  </td>
+</Fragment>
+`;

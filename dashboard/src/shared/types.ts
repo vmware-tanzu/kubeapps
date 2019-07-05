@@ -1,7 +1,6 @@
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IConfigState } from "../reducers/config";
-import { IFunctionState } from "../reducers/functions";
 import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
@@ -22,9 +21,7 @@ export class UnauthorizedError extends CustomError {}
 
 export class NotFoundError extends CustomError {}
 
-export class MissingChart extends CustomError {}
-
-export class AppConflict extends CustomError {}
+export class ConflictError extends CustomError {}
 
 export class UnprocessableEntity extends CustomError {}
 
@@ -86,6 +83,14 @@ export interface IChartState {
   items: IChart[];
 }
 
+export interface IChartUpdateInfo {
+  upToDate: boolean;
+  chartLatestVersion: string;
+  appLatestVersion: string;
+  repository: IRepo;
+  error?: Error;
+}
+
 export interface IDeployment {
   metadata: {
     name: string;
@@ -101,7 +106,7 @@ export interface IServiceSpec {
 
 export interface IServiceStatus {
   loadBalancer: {
-    ingress?: Array<{ ip: string }>;
+    ingress?: Array<{ ip?: string; hostname?: string }>;
   };
 }
 
@@ -111,6 +116,26 @@ export interface IPort {
   protocol: string;
   targetPort: string;
   nodePort: string;
+}
+
+export interface IHTTPIngressPath {
+  path: string;
+}
+export interface IIngressHTTP {
+  paths: IHTTPIngressPath[];
+}
+export interface IIngressRule {
+  host: string;
+  http: IIngressHTTP;
+}
+
+export interface IIngressTLS {
+  hosts: string[];
+}
+
+export interface IIngressSpec {
+  rules: IIngressRule[];
+  tls?: IIngressTLS[];
 }
 
 export interface IResource {
@@ -139,8 +164,21 @@ export interface IOwnerReference {
   uid: string;
 }
 
-export interface ISecret extends IResource {
+export interface ISecret {
+  apiVersion: string;
+  kind: string;
+  type: string;
   data: { [s: string]: string };
+  metadata: {
+    name: string;
+    namespace: string;
+    annotations: string;
+    creationTimestamp: string;
+    selfLink: string;
+    resourceVersion: string;
+    deletionTimestamp?: string;
+    uid: string;
+  };
 }
 
 export interface IDeploymentStatus {
@@ -149,14 +187,19 @@ export interface IDeploymentStatus {
   availableReplicas: number;
 }
 
-export interface IFunction extends IResource {
-  spec: {
-    deps: string;
-    function: string;
-    handler: string;
-    runtime: string;
-    checksum: string;
-  };
+export interface IStatefulsetStatus {
+  replicas: number;
+  updatedReplicas: number;
+  readyReplicas: number;
+}
+
+export interface IDaemonsetStatus {
+  currentNumberScheduled: number;
+  numberReady: number;
+}
+
+export interface IRelease extends hapi.release.Release {
+  updateInfo?: IChartUpdateInfo;
 }
 
 export interface IAppState {
@@ -164,10 +207,10 @@ export interface IAppState {
   error?: Error;
   deleteError?: Error;
   // currently items are always Helm releases
-  items: hapi.release.Release[];
+  items: IRelease[];
   listingAll: boolean;
   listOverview?: IAppOverview[];
-  selected?: hapi.release.Release;
+  selected?: IRelease;
 }
 
 export interface IStoreState {
@@ -176,9 +219,8 @@ export interface IStoreState {
   auth: IAuthState;
   charts: IChartState;
   config: IConfigState;
+  kube: IKubeState;
   repos: IAppRepositoryState;
-  deployment: IDeployment;
-  functions: IFunctionState;
   namespace: INamespaceState;
 }
 
@@ -216,40 +258,38 @@ export interface IK8sList<I, M> extends IK8sResource {
 
 export interface IAppRepository
   extends IK8sObject<
-      {
-        clusterName: string;
-        creationTimestamp: string;
-        deletionGracePeriodSeconds: string | null;
-        deletionTimestamp: string | null;
-        resourceVersion: string;
-        selfLink: string;
-      },
-      {
-        type: string;
-        url: string;
-        auth: {
-          header: {
-            secretKeyRef: {
-              name: string;
-              key: string;
-            };
+    {
+      clusterName: string;
+      creationTimestamp: string;
+      deletionGracePeriodSeconds: string | null;
+      deletionTimestamp: string | null;
+      resourceVersion: string;
+      selfLink: string;
+    },
+    {
+      type: string;
+      url: string;
+      auth: {
+        header: {
+          secretKeyRef: {
+            name: string;
+            key: string;
           };
         };
-      },
-      undefined
-    > {}
+      };
+    },
+    undefined
+  > {}
 
 export interface IAppRepositoryList
   extends IK8sList<
-      IAppRepository,
-      {
-        continue: string;
-        resourceVersion: string;
-        selfLink: string;
-      }
-    > {}
-
-export interface IFunctionList extends IK8sList<IFunction, {}> {}
+    IAppRepository,
+    {
+      continue: string;
+      resourceVersion: string;
+      selfLink: string;
+    }
+  > {}
 
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
 export interface IStatus extends IK8sResource {
@@ -289,15 +329,6 @@ export interface IRouterPathname {
   };
 }
 
-export interface IKubelessConfigMap {
-  metadata: {
-    name: string;
-  };
-  data: {
-    "runtime-images": string;
-  };
-}
-
 export interface IRuntimeVersion {
   name: string;
   version: string;
@@ -326,4 +357,19 @@ export interface IAppOverview {
   version: string;
   icon?: string;
   status: string;
+  chart: string;
+  chartMetadata: hapi.chart.Metadata;
+  // UpdateInfo is internally populated
+  updateInfo?: IChartUpdateInfo;
+}
+
+export interface IKubeItem<T> {
+  isFetching: boolean;
+  item?: T;
+  error?: Error;
+}
+
+export interface IKubeState {
+  items: { [s: string]: IKubeItem<IResource> };
+  sockets: { [s: string]: WebSocket };
 }

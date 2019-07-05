@@ -92,7 +92,7 @@ r := render.New(render.Options{
     Funcs: []template.FuncMap{AppHelpers}, // Specify helper function maps for templates to access.
     Delims: render.Delims{"{[{", "}]}"}, // Sets delimiters to the specified strings.
     Charset: "UTF-8", // Sets encoding for content-types. Default is "UTF-8".
-    DisableCharset: true, // Prevents the charset from being appended to the content type header. 
+    DisableCharset: true, // Prevents the charset from being appended to the content type header.
     IndentJSON: true, // Output human readable JSON.
     IndentXML: true, // Output human readable XML.
     PrefixJSON: []byte(")]}',\n"), // Prefixes JSON responses with the given bytes.
@@ -144,9 +144,7 @@ r := render.New(render.Options{
 ~~~
 
 ### JSON vs Streaming JSON
-By default, Render does **not** stream JSON to the `http.ResponseWriter`. It instead marshalls your object into a byte array, and if no errors occurred, writes that byte array to the `http.ResponseWriter`. This is ideal as you can catch errors before sending any data.
-
-If however you have the need to stream your JSON response (ie: dealing with massive objects), you can set the `StreamingJSON` option to true. This will use the `json.Encoder` to stream the output to the `http.ResponseWriter`. If an error occurs, you will receive the error in your code, but the response will have already been sent. Also note that streaming is only implemented in `render.JSON` and not `render.JSONP`, and the `UnEscapeHTML` and `Indent` options are ignored when streaming.
+By default, Render does **not** stream JSON to the `http.ResponseWriter`. It instead marshalls your object into a byte array, and if no errors occurred, writes that byte array to the `http.ResponseWriter`. If you would like to use the built it in streaming functionality (`json.Encoder`), you can set the `StreamingJSON` setting to `true`. This will stream the output directly to the `http.ResponseWriter`. Also note that streaming is only implemented in `render.JSON` and not `render.JSONP`, and the `UnEscapeHTML` and `Indent` options are ignored when streaming.
 
 ### Loading Templates
 By default Render will attempt to load templates with a '.tmpl' extension from the "templates" directory. Templates are found by traversing the templates directory and are named by path and basename. For instance, the following directory structure:
@@ -393,7 +391,7 @@ func main() {
     e := echo.New()
 
     e.SetRenderer(r)
-    
+
     e.GET("/", func(c echo.Context) error {
         return c.Render(http.StatusOK, "TemplateName", "TemplateData")
     })

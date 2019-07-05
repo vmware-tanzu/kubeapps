@@ -11,6 +11,7 @@ export interface IConfigState extends IConfig {
 const initialState: IConfigState = {
   loaded: false,
   namespace: "",
+  appVersion: "",
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
@@ -20,7 +21,12 @@ const configReducer = (state: IConfigState = initialState, action: ConfigAction)
     case getType(actions.config.receiveConfig):
       return {
         loaded: true,
-        ...action.config,
+        ...action.payload,
+      };
+    case getType(actions.config.errorConfig):
+      return {
+        ...state,
+        error: action.payload,
       };
     default:
   }

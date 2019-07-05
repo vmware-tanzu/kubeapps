@@ -1,9 +1,9 @@
 import { AppRepository } from "./AppRepository";
-import { axios } from "./Auth";
+import { axiosWithAuth } from "./AxiosInstance";
 import { hapi } from "./hapi/release";
 import { IAppOverview, IChartVersion } from "./types";
 
-export const TILLER_PROXY_ROOT_URL = "/api/tiller-deploy/v1";
+export const TILLER_PROXY_ROOT_URL = "api/tiller-deploy/v1";
 
 export class App {
   public static getResourceURL(namespace?: string, name?: string, query?: string) {
@@ -32,7 +32,7 @@ export class App {
     const repo = await AppRepository.get(chartAttrs.repo.name, kubeappsNamespace);
     const auth = repo.spec.auth;
     const endpoint = App.getResourceURL(namespace);
-    const { data } = await axios.post(endpoint, {
+    const { data } = await axiosWithAuth.post(endpoint, {
       auth,
       chartName: chartAttrs.name,
       releaseName,
@@ -54,7 +54,7 @@ export class App {
     const repo = await AppRepository.get(chartAttrs.repo.name, kubeappsNamespace);
     const auth = repo.spec.auth;
     const endpoint = App.getResourceURL(namespace, releaseName);
-    const { data } = await axios.put(endpoint, {
+    const { data } = await axiosWithAuth.put(endpoint, {
       auth,
       chartName: chartAttrs.name,
       releaseName,
@@ -70,7 +70,9 @@ export class App {
     if (purge) {
       purgeQuery = "purge=true";
     }
-    const { data } = await axios.delete(App.getResourceURL(namespace, releaseName, purgeQuery));
+    const { data } = await axiosWithAuth.delete(
+      App.getResourceURL(namespace, releaseName, purgeQuery),
+    );
     return data;
   }
 
@@ -79,14 +81,14 @@ export class App {
     if (allStatuses) {
       query = "statuses=all";
     }
-    const { data } = await axios.get<{ data: IAppOverview[] }>(
+    const { data } = await axiosWithAuth.get<{ data: IAppOverview[] }>(
       App.getResourceURL(namespace, undefined, query),
     );
     return data.data;
   }
 
   public static async getRelease(namespace: string, name: string) {
-    const { data } = await axios.get<{ data: hapi.release.Release }>(
+    const { data } = await axiosWithAuth.get<{ data: hapi.release.Release }>(
       this.getResourceURL(namespace, name),
     );
     return data.data;

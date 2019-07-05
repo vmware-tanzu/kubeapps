@@ -7,11 +7,19 @@ metadata:
     chart: {{ template "kubeapps.chart" . }}
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
+{{- with .Values.frontend.service.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
 spec:
   type: {{ .Values.frontend.service.type }}
   ports:
   - port: {{ .Values.frontend.service.port }}
+  {{- if .Values.authProxy.enabled }}
+    targetPort: proxy
+  {{- else }}
     targetPort: http
+  {{- end }}
     protocol: TCP
     name: http
   selector:

@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a card with the service broker 1`] = `
+<InfoCard
+  info="Last updated today"
+  title="wall-street"
+>
+  <CardFooter
+    className="text-c"
+  >
+    <SyncButton
+      broker={
+        Object {
+          "metadata": Object {
+            "name": "wall-street",
+          },
+          "spec": Object {
+            "url": "https://foo.bar",
+          },
+          "status": Object {
+            "lastCatalogRetrievalTime": "today",
+          },
+        }
+      }
+      sync={[Function]}
+    />
+  </CardFooter>
+</InfoCard>
+`;

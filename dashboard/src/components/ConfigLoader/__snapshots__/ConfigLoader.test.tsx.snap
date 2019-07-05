@@ -1,0 +1,18 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when the config is not ready loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  getConfig={[Function]}
+  loaded={false}
+  type={0}
+/>
+`;
+
+exports[`when there is an error renders the error details 1`] = `
+<UnexpectedErrorPage
+  raw={true}
+  showGenericMessage={true}
+  text="Unable to load Kubeapps configuration: Wrong config!"
+  title="Sorry! Something went wrong."
+/>
+`;

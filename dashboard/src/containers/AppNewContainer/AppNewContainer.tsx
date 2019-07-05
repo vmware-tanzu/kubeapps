@@ -1,6 +1,7 @@
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
-import { push } from "react-router-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import DeploymentForm from "../../components/DeploymentForm";
@@ -17,11 +18,10 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { apps, catalog, charts, config, namespace }: IStoreState,
+  { apps, charts, config, namespace }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
-    bindingsWithSecrets: catalog.bindingsWithSecrets,
     chartID: `${params.repo}/${params.id}`,
     chartVersion: params.version,
     error: apps.error,
@@ -31,7 +31,7 @@ function mapStateToProps(
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     deployChart: (
       version: IChartVersion,
@@ -40,7 +40,6 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
       values?: string,
     ) => dispatch(actions.apps.deployChart(version, releaseName, namespace, values)),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
-    getBindings: (ns: string) => dispatch(actions.catalog.getBindings(ns)),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),
     getChartVersion: (id: string, version: string) =>
@@ -49,4 +48,7 @@ function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(DeploymentForm);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(DeploymentForm);

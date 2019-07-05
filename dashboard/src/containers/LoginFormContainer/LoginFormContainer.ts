@@ -1,5 +1,6 @@
 import { connect } from "react-redux";
-import { Dispatch } from "redux";
+import { Action } from "redux";
+import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import LoginForm from "../../components/LoginForm";
@@ -15,10 +16,14 @@ function mapStateToProps({
   };
 }
 
-function mapDispatchToProps(dispatch: Dispatch<IStoreState>) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    authenticate: (token: string) => dispatch(actions.auth.authenticate(token)),
+    authenticate: (token: string) => dispatch(actions.auth.authenticate(token, false)),
+    tryToAuthenticateWithOIDC: () => dispatch(actions.auth.tryToAuthenticateWithOIDC()),
   };
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(LoginForm);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(LoginForm);
