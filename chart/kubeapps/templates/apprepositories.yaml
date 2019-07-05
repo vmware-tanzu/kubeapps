@@ -28,7 +28,7 @@ spec:
   {{- if $.Values.securityContext.enabled }}
   syncJobPodTemplate:
     spec:
-    {{- if .Values.apprepository.proxy.enabled }}
+{{- if .Values.apprepository.proxy.enabled }}
       containers:
       - env:
           - name: https_proxy
@@ -37,7 +37,7 @@ spec:
             value: {{ .Values.apprepository.proxy.http_proxy }}
           - name: no_proxy
             value: {{ .Values.apprepository.proxy.no_proxy }}
-    {{- end }}
+{{- end }}
       securityContext:
         runAsUser: {{ $.Values.securityContext.runAsUser }}
   {{- end }}
