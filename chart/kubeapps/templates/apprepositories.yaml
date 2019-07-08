@@ -28,15 +28,15 @@ spec:
   {{- if $.Values.securityContext.enabled }}
   syncJobPodTemplate:
     spec:
-{{- if .Values.apprepository.proxy.enabled }}
+{{- if $.Values.apprepository.proxy.enabled }}
       containers:
       - env:
           - name: https_proxy
-            value: {{ .Values.apprepository.proxy.https_proxy }}
+            value: {{ $.Values.apprepository.proxy.https_proxy }}
           - name: http_proxy
-            value: {{ .Values.apprepository.proxy.http_proxy }}
+            value: {{ $.Values.apprepository.proxy.http_proxy }}
           - name: no_proxy
-            value: {{ .Values.apprepository.proxy.no_proxy }}
+            value: {{ $.Values.apprepository.proxy.no_proxy }}
 {{- end }}
       securityContext:
         runAsUser: {{ $.Values.securityContext.runAsUser }}
