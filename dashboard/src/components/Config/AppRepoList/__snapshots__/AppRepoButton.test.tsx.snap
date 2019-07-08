@@ -125,7 +125,7 @@ exports[`should open a modal with the repository form 1`] = `
                                   name="auth"
                                   value="Bearer"
                                 />
-                                Bearer
+                                Bearer Token
                                 <br />
                               </label>
                               <label>

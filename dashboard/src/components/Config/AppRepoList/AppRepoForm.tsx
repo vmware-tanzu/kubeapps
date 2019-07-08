@@ -102,7 +102,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                         value="Bearer"
                         onChange={this.handleAuthRadioButtonChange}
                       />
-                      Bearer
+                      Bearer Token
                       <br />
                     </label>
                     <label>
