@@ -38,6 +38,9 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     if (nextProps.filter !== this.state.filter) {
       this.setState({ filter: nextProps.filter });
     }
+    if (this.props.repo !== nextProps.repo) {
+      this.props.fetchCharts(nextProps.repo);
+    }
   }
 
   public render() {

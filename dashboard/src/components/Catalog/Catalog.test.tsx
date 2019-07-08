@@ -29,6 +29,14 @@ it("propagates the filter from the props", () => {
   expect(wrapper.state("filter")).toBe("foo");
 });
 
+it("reloads charts when the repo changes", () => {
+  const fetchCharts = jest.fn();
+  const wrapper = shallow(<Catalog {...defaultProps} fetchCharts={fetchCharts} />);
+  wrapper.setProps({ ...defaultProps, repo: "bitnami" });
+  expect(fetchCharts.mock.calls.length).toBe(2);
+  expect(fetchCharts.mock.calls[1]).toEqual(["bitnami"]);
+});
+
 describe("renderization", () => {
   context("when no charts", () => {
     it("should render an error", () => {
