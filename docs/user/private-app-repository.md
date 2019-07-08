@@ -3,6 +3,7 @@
 It is possible to use a private Helm repository to store your own Helm charts and deploy them using Kubeapps. In this guide we will show how you can do that with some of the solutions available right now:
 
 - [ChartMuseum](#chartmuseum)
+- [Harbor](#harbor)
 - [Artifactory](#artifactory) (Pro)
 
 ## ChartMuseum
@@ -56,6 +57,46 @@ It is possible to configure ChartMuseum to use authentication with two different
   - Specify the parameters `secret.AUTH_USER` and `secret.AUTH_PASS` when deploying the ChartMuseum.
   - Set as Authorization Header a `Basic` auth header using as value the base64 codification of the string `user:password`. For example, for the user "Aladdin" and password "open sesame", it would use the following header field: `Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==`
 - Using a [JWT token](https://github.com/chartmuseum/auth-server-example). Once you obtain a valid token you can set it in the Authorization Header field of the App Repository form. Note that in this case it will be prefixed with `Bearer`. For example: `Bearer UVd4aFpHUnBianB2Y0dWdUlIT=`.
+
+## Harbor
+
+[Harbor](https://github.com/goharbor/harbor) is an open source trusted cloud native registry project that stores, signs, and scans content, e.g. Docker images. Harbor is hosted by the [Cloud Native Computing Foundation](https://cncf.io/). Since version 1.6.0, Harbor is a composite cloud native registry which supports both container image management and Helm chart management. Harbor integrates [ChartMuseum](https://chartmuseum.com) to provide the Helm chart repository functionality. The access to Helm Charts in a Harbor Chart Repository can be controlled via Role-Based Access Control.
+
+To use Harbor with Kubeapps, first deploy Harbor using [Harbor offline installer](https://github.com/goharbor/harbor/blob/master/docs/installation_guide.md#downloading-the-installer) or the official [Harbor Helm Chart](https://github.com/goharbor/harbor-helm). Here are the minimum steps required for using the Harbor offline installer to deploy Harbor for serving as Helm Chart Repository on a Linux machine.
+```
+$ wget https://storage.googleapis.com/harbor-releases/release-1.8.0/harbor-offline-installer-v1.8.1.tgz
+$ tar xvf harbor-offline-installer-v1.8.1.tgz
+$ cd harbor
+$ sed -i 's/hostname: reg.mydomain.com/hostname: <Current-Machine-IP>/' harbor.yml
+$ sudo ./install.sh --with-chartmuseum
+```
+You will see the following message if Harbor is installed successfully.
+```console
+----Harbor has been installed and started successfully.----
+
+Now you should be able to visit the admin portal at http://<IP>. 
+For more details, please visit https://github.com/goharbor/harbor .
+```
+
+### Harbor: Upload a Chart
+
+* First login Harbor admin portal at `http://<IP>` as the default admin user configured in harbor.yml.
+* Create a new Project named 'my-helm-repo' with public access. Each project will serve as a Helm chart repository.
+  <img src="../img/harbor-new-project.png" width="300px">
+* Click the project name to view the project details page, then click 'Helm Charts' tab to list all helm charts.
+  <img src="../img/harbor-list-charts.png" width="600px">
+* Click 'UPLOAD' button to upload a Helm chart. You can also use helm command to upload charts.
+  <img src="../img/harbor-upload-chart.png" width="500px">
+
+Please refer to ['Manage Helm Charts in Harbor'](https://github.com/goharbor/harbor/blob/master/docs/user_guide.md#manage-helm-charts) for more details.
+
+### Harbor: Configure the repository in Kubeapps
+
+To add Harbor as the private chart repository, go to `Configuration > App Repositories` in Kubeapps and click on "Add App Repository" and use the Harbor helm repository URL `http://<IP>/chartrepo/my-helm-repo`.
+
+<img src="../img/harbor-add-repo.png" width="300px">
+
+Once you create the repository you can click on the link for the specific repository and you will be able to deploy your own applications using Kubeapps.
 
 ## Artifactory
 
