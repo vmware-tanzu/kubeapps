@@ -90,16 +90,107 @@ exports[`should open a modal with the repository form 1`] = `
                       <div>
                         <label>
                           <span>
-                            Authorization Header (optional):
+                            Authorization (optional):
                           </span>
-                          <input
-                            type="text"
-                            placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                            value=""
-                          />
+                          <div
+                            class="row"
+                          >
+                            <div
+                              class="col-3"
+                            >
+                              <label
+                                class="margin-l-big"
+                              >
+                                <input
+                                  type="radio"
+                                  name="auth"
+                                  value="None"
+                                  checked=""
+                                />
+                                None
+                                <br />
+                              </label>
+                              <label>
+                                <input
+                                  type="radio"
+                                  name="auth"
+                                  value="Basic"
+                                />
+                                Basic Auth
+                                <br />
+                              </label>
+                              <label>
+                                <input
+                                  type="radio"
+                                  name="auth"
+                                  value="Bearer"
+                                />
+                                Bearer
+                                <br />
+                              </label>
+                              <label>
+                                <input
+                                  type="radio"
+                                  name="auth"
+                                  value="HTTP Header"
+                                />
+                                Custom
+                                <br />
+                              </label>
+                            </div>
+                            <div
+                              class="col-9"
+                            >
+                              <div
+                                hidden=""
+                              >
+                                <span>
+                                  User
+                                </span>
+                                <br />
+                                <input
+                                  type="text"
+                                  placeholder="Username"
+                                  value=""
+                                />
+                                <span>
+                                  Password
+                                </span>
+                                <br />
+                                <input
+                                  type="password"
+                                  placeholder="Password"
+                                  value=""
+                                />
+                              </div>
+                              <div
+                                hidden=""
+                              >
+                                Token 
+                                <br />
+                                <input
+                                  type="text"
+                                  value=""
+                                />
+                              </div>
+                              <div
+                                hidden=""
+                              >
+                                Complete Authorization Header 
+                                <br />
+                                <input
+                                  type="text"
+                                  placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                                  value=""
+                                />
+                              </div>
+                            </div>
+                          </div>
                         </label>
                       </div>
-                      <div>
+                      <div
+                        class="margin-t-big"
+                      >
                         <label>
                           <span>
                             Custom CA Certificate (optional):
