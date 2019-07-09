@@ -60,133 +60,160 @@ exports[`should open a modal with the repository form 1`] = `
                         </h2>
                       </div>
                       <div>
-                        <label>
-                          <span>
-                            Name:
-                          </span>
-                          <input
-                            type="text"
-                            placeholder="example"
-                            required=""
-                            pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-                            title="Use lower case alphanumeric characters, '-' or '.'"
-                            value=""
-                          />
+                        <label
+                          for="kubeapps-repo-name"
+                        >
+                          Name:
                         </label>
+                        <input
+                          type="text"
+                          id="kubeapps-repo-name"
+                          placeholder="example"
+                          required=""
+                          pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                          title="Use lower case alphanumeric characters, '-' or '.'"
+                          value=""
+                        />
                       </div>
                       <div>
-                        <label>
-                          <span>
-                            URL:
-                          </span>
-                          <input
-                            type="url"
-                            placeholder="https://charts.example.com/stable"
-                            required=""
-                            value=""
-                          />
+                        <label
+                          for="kubeapps-repo-url"
+                        >
+                          URL:
                         </label>
+                        <input
+                          type="url"
+                          id="kubeapps-repo-url"
+                          placeholder="https://charts.example.com/stable"
+                          required=""
+                          value=""
+                        />
                       </div>
                       <div>
-                        <label>
-                          <span>
-                            Authorization (optional):
-                          </span>
+                        <span>
+                          Authorization (optional):
+                        </span>
+                        <div
+                          class="row"
+                        >
                           <div
-                            class="row"
+                            class="col-2"
+                          >
+                            <label
+                              class="margin-l-big"
+                              for="kubeapps-repo-auth-method-none"
+                            >
+                              <input
+                                type="radio"
+                                id="kubeapps-repo-auth-method-none"
+                                name="auth"
+                                value="none"
+                                checked=""
+                              />
+                              None
+                              <br />
+                            </label>
+                            <label
+                              for="kubeapps-repo-auth-method-basic"
+                            >
+                              <input
+                                type="radio"
+                                id="kubeapps-repo-auth-method-basic"
+                                name="auth"
+                                value="basic"
+                              />
+                              Basic Auth
+                              <br />
+                            </label>
+                            <label
+                              for="kubeapps-repo-auth-method-bearer"
+                            >
+                              <input
+                                type="radio"
+                                id="kubeapps-repo-auth-method-bearer"
+                                name="auth"
+                                value="bearer"
+                              />
+                              Bearer Token
+                              <br />
+                            </label>
+                            <label
+                              for="kubeapps-repo-auth-method-custom"
+                            >
+                              <input
+                                type="radio"
+                                id="kubeapps-repo-auth-method-custom"
+                                name="auth"
+                                value="custom"
+                              />
+                              Custom
+                              <br />
+                            </label>
+                          </div>
+                          <div
+                            class="col-10"
+                            aria-live="polite"
                           >
                             <div
-                              class="col-3"
+                              hidden=""
+                              class="secondary-input"
                             >
                               <label
-                                class="margin-l-big"
+                                for="kubeapps-repo-username"
                               >
-                                <input
-                                  type="radio"
-                                  name="auth"
-                                  value="None"
-                                  checked=""
-                                />
-                                None
-                                <br />
+                                Username
                               </label>
-                              <label>
-                                <input
-                                  type="radio"
-                                  name="auth"
-                                  value="Basic"
-                                />
-                                Basic Auth
-                                <br />
+                              <input
+                                type="text"
+                                id="kubeapps-repo-username"
+                                placeholder="Username"
+                                value=""
+                              />
+                              <label
+                                for="kubeapps-repo-password"
+                              >
+                                Password
                               </label>
-                              <label>
-                                <input
-                                  type="radio"
-                                  name="auth"
-                                  value="Bearer"
-                                />
-                                Bearer Token
-                                <br />
-                              </label>
-                              <label>
-                                <input
-                                  type="radio"
-                                  name="auth"
-                                  value="HTTP Header"
-                                />
-                                Custom
-                                <br />
-                              </label>
+                              <input
+                                type="password"
+                                id="kubeapps-repo-password"
+                                placeholder="Password"
+                                value=""
+                              />
                             </div>
                             <div
-                              class="col-9"
+                              hidden=""
+                              class="secondary-input"
                             >
-                              <div
-                                hidden=""
+                              <label
+                                for="kubeapps-repo-token"
                               >
-                                <span>
-                                  User
-                                </span>
-                                <br />
-                                <input
-                                  type="text"
-                                  placeholder="Username"
-                                  value=""
-                                />
-                                <span>
-                                  Password
-                                </span>
-                                <br />
-                                <input
-                                  type="password"
-                                  placeholder="Password"
-                                  value=""
-                                />
-                              </div>
-                              <div
-                                hidden=""
+                                Token
+                              </label>
+                              <input
+                                id="kubeapps-repo-token"
+                                type="text"
+                                value=""
+                              />
+                            </div>
+                            <div
+                              hidden=""
+                              class="secondary-input"
+                            >
+                              <label
+                                for="kubeapps-repo-custom-header"
                               >
-                                Token 
-                                <br />
-                                <input
-                                  type="text"
-                                  value=""
-                                />
-                              </div>
-                              <div
-                                hidden=""
-                              >
-                                Complete Authorization Header 
-                                <br />
-                                <input
-                                  type="text"
-                                  placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                                  value=""
-                                />
-                              </div>
+                                Complete Authorization Header
+                              </label>
+                              <input
+                                type="text"
+                                id="kubeapps-repo-custom-header"
+                                placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                                value=""
+                              />
                             </div>
                           </div>
-                        </label>
+                        </div>
                       </div>
                       <div
                         class="margin-t-big"

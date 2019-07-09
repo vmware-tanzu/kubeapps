@@ -26,7 +26,7 @@ it("should install a repository with a custom auth header", done => {
   wrapper.update();
   wrapper.find(AppRepoForm).setState({
     modalIsOpen: true,
-    useRawAuthHeader: true,
+    authMethod: "custom",
     name: "my-repo",
     url: "http://foo.bar",
     authHeader: "foo",
@@ -52,7 +52,7 @@ it("should install a repository with basic auth", done => {
   wrapper.update();
   wrapper.find(AppRepoForm).setState({
     modalIsOpen: true,
-    useBasicAuth: true,
+    authMethod: "basic",
     name: "my-repo",
     url: "http://foo.bar",
     user: "foo",
@@ -78,7 +78,7 @@ it("should install a repository with a bearer token", done => {
   wrapper.update();
   wrapper.find(AppRepoForm).setState({
     modalIsOpen: true,
-    useBearerToken: true,
+    authMethod: "bearer",
     name: "my-repo",
     url: "http://foo.bar",
     token: "foobar",

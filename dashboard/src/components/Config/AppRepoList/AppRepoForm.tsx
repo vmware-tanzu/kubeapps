@@ -9,23 +9,24 @@ interface IAppRepoFormProps {
 }
 
 interface IAppRepoFormState {
-  useRawAuthHeader: boolean;
-  useBasicAuth: boolean;
-  useBearerToken: boolean;
+  name: string;
+  url: string;
+  authMethod: string;
   user: string;
   password: string;
   authHeader: string;
   token: string;
-  name: string;
-  url: string;
   customCA: string;
 }
 
+const AUTH_METHOD_NONE = "none";
+const AUTH_METHOD_BASIC = "basic";
+const AUTH_METHOD_BEARER = "bearer";
+const AUTH_METHOD_CUSTOM = "custom";
+
 export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoFormState> {
   public state = {
-    useRawAuthHeader: false,
-    useBasicAuth: false,
-    useBearerToken: false,
+    authMethod: AUTH_METHOD_NONE,
     user: "",
     password: "",
     authHeader: "",
@@ -44,117 +45,130 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
               <h2>Add an App Repository</h2>
             </div>
             <div>
-              <label>
-                <span>Name:</span>
-                <input
-                  type="text"
-                  placeholder="example"
-                  value={this.state.name}
-                  onChange={this.handleNameChange}
-                  required={true}
-                  pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-                  title="Use lower case alphanumeric characters, '-' or '.'"
-                />
-              </label>
+              <label htmlFor="kubeapps-repo-name">Name:</label>
+              <input
+                type="text"
+                id="kubeapps-repo-name"
+                placeholder="example"
+                value={this.state.name}
+                onChange={this.handleNameChange}
+                required={true}
+                pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                title="Use lower case alphanumeric characters, '-' or '.'"
+              />
             </div>
             <div>
-              <label>
-                <span>URL:</span>
-                <input
-                  type="url"
-                  placeholder="https://charts.example.com/stable"
-                  value={this.state.url}
-                  onChange={this.handleURLChange}
-                  required={true}
-                />
-              </label>
+              <label htmlFor="kubeapps-repo-url">URL:</label>
+              <input
+                type="url"
+                id="kubeapps-repo-url"
+                placeholder="https://charts.example.com/stable"
+                value={this.state.url}
+                onChange={this.handleURLChange}
+                required={true}
+              />
             </div>
             <div>
-              <label>
-                <span>Authorization (optional):</span>
-                <div className="row">
-                  <div className="col-3">
-                    <label className="margin-l-big">
-                      <input
-                        type="radio"
-                        name="auth"
-                        value="None"
-                        defaultChecked={true}
-                        onChange={this.handleAuthRadioButtonChange}
-                      />
-                      None
-                      <br />
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="auth"
-                        value="Basic"
-                        onChange={this.handleAuthRadioButtonChange}
-                      />
-                      Basic Auth
-                      <br />
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="auth"
-                        value="Bearer"
-                        onChange={this.handleAuthRadioButtonChange}
-                      />
-                      Bearer Token
-                      <br />
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name="auth"
-                        value="HTTP Header"
-                        onChange={this.handleAuthRadioButtonChange}
-                      />
-                      Custom
-                      <br />
-                    </label>
+              <span>Authorization (optional):</span>
+              <div className="row">
+                <div className="col-2">
+                  <label className="margin-l-big" htmlFor="kubeapps-repo-auth-method-none">
+                    <input
+                      type="radio"
+                      id="kubeapps-repo-auth-method-none"
+                      name="auth"
+                      value={AUTH_METHOD_NONE}
+                      defaultChecked={true}
+                      onChange={this.handleAuthRadioButtonChange}
+                    />
+                    None
+                    <br />
+                  </label>
+                  <label htmlFor="kubeapps-repo-auth-method-basic">
+                    <input
+                      type="radio"
+                      id="kubeapps-repo-auth-method-basic"
+                      name="auth"
+                      value={AUTH_METHOD_BASIC}
+                      onChange={this.handleAuthRadioButtonChange}
+                    />
+                    Basic Auth
+                    <br />
+                  </label>
+                  <label htmlFor="kubeapps-repo-auth-method-bearer">
+                    <input
+                      type="radio"
+                      id="kubeapps-repo-auth-method-bearer"
+                      name="auth"
+                      value={AUTH_METHOD_BEARER}
+                      onChange={this.handleAuthRadioButtonChange}
+                    />
+                    Bearer Token
+                    <br />
+                  </label>
+                  <label htmlFor="kubeapps-repo-auth-method-custom">
+                    <input
+                      type="radio"
+                      id="kubeapps-repo-auth-method-custom"
+                      name="auth"
+                      value={AUTH_METHOD_CUSTOM}
+                      onChange={this.handleAuthRadioButtonChange}
+                    />
+                    Custom
+                    <br />
+                  </label>
+                </div>
+                <div className="col-10" aria-live="polite">
+                  <div
+                    hidden={this.state.authMethod !== AUTH_METHOD_BASIC}
+                    className="secondary-input"
+                  >
+                    <label htmlFor="kubeapps-repo-username">Username</label>
+                    <input
+                      type="text"
+                      id="kubeapps-repo-username"
+                      value={this.state.user}
+                      onChange={this.handleUserChange}
+                      placeholder="Username"
+                    />
+                    <label htmlFor="kubeapps-repo-password">Password</label>
+                    <input
+                      type="password"
+                      id="kubeapps-repo-password"
+                      value={this.state.password}
+                      onChange={this.handlePasswordChange}
+                      placeholder="Password"
+                    />
                   </div>
-                  <div className="col-9">
-                    <div hidden={!this.state.useBasicAuth}>
-                      <span>User</span>
-                      <br />
-                      <input
-                        type="text"
-                        value={this.state.user}
-                        onChange={this.handleUserChange}
-                        placeholder="Username"
-                      />
-                      <span>Password</span>
-                      <br />
-                      <input
-                        type="password"
-                        value={this.state.password}
-                        onChange={this.handlePasswordChange}
-                        placeholder="Password"
-                      />
-                    </div>
-                    <div hidden={!this.state.useBearerToken}>
-                      Token <br />
-                      <input
-                        type="text"
-                        value={this.state.token}
-                        onChange={this.handleAuthTokenChange}
-                      />
-                    </div>
-                    <div hidden={!this.state.useRawAuthHeader}>
-                      Complete Authorization Header <br />
-                      <input
-                        type="text"
-                        placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                        value={this.state.authHeader}
-                        onChange={this.handleAuthHeaderChange}
-                      />
-                    </div>
+                  <div
+                    hidden={this.state.authMethod !== AUTH_METHOD_BEARER}
+                    className="secondary-input"
+                  >
+                    <label htmlFor="kubeapps-repo-token">Token</label>
+                    <input
+                      id="kubeapps-repo-token"
+                      type="text"
+                      value={this.state.token}
+                      onChange={this.handleAuthTokenChange}
+                    />
+                  </div>
+                  <div
+                    hidden={this.state.authMethod !== AUTH_METHOD_CUSTOM}
+                    className="secondary-input"
+                  >
+                    <label htmlFor="kubeapps-repo-custom-header">
+                      Complete Authorization Header
+                    </label>
+                    <input
+                      type="text"
+                      id="kubeapps-repo-custom-header"
+                      placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                      value={this.state.authHeader}
+                      onChange={this.handleAuthHeaderChange}
+                    />
                   </div>
                 </div>
-              </label>
+              </div>
             </div>
             <div className="margin-t-big">
               <label>
@@ -186,28 +200,17 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   private handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     const { install, onAfterInstall } = this.props;
-    const {
-      name,
-      url,
-      authHeader,
-      useRawAuthHeader,
-      useBasicAuth,
-      useBearerToken,
-      token,
-      user,
-      password,
-      customCA,
-    } = this.state;
+    const { name, url, authHeader, authMethod, token, user, password, customCA } = this.state;
     e.preventDefault();
     let finalHeader = "";
-    switch (true) {
-      case useRawAuthHeader:
+    switch (authMethod) {
+      case AUTH_METHOD_CUSTOM:
         finalHeader = authHeader;
         break;
-      case useBasicAuth:
+      case AUTH_METHOD_BASIC:
         finalHeader = `Basic ${btoa(`${user}:${password}`)}`;
         break;
-      case useBearerToken:
+      case AUTH_METHOD_BEARER:
         finalHeader = `Bearer ${token}`;
         break;
     }
@@ -234,19 +237,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     this.setState({ customCA: e.target.value });
   };
   private handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    switch (e.target.value) {
-      case "Basic":
-        this.setState({ useBasicAuth: true, useRawAuthHeader: false, useBearerToken: false });
-        break;
-      case "HTTP Header":
-        this.setState({ useBasicAuth: false, useRawAuthHeader: true, useBearerToken: false });
-        break;
-      case "Bearer":
-        this.setState({ useBasicAuth: false, useRawAuthHeader: false, useBearerToken: true });
-        break;
-      default:
-        this.setState({ useBasicAuth: false, useRawAuthHeader: false, useBearerToken: false });
-    }
+    this.setState({ authMethod: e.target.value });
   };
 
   private handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
