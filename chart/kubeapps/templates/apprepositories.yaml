@@ -37,11 +37,9 @@ spec:
             value: {{ $.Values.apprepository.initialReposProxy.http_proxy }}
           - name: no_proxy
             value: {{ $.Values.apprepository.initialReposProxy.no_proxy }}
-  {{- end }}
+  {{- end }}
   {{- if $.Values.securityContext.enabled }}
-            value: {{ $.Values.apprepository.proxy.no_proxy }}
-{{- end }}
-      securityContext:
+        securityContext:
         runAsUser: {{ $.Values.securityContext.runAsUser }}
   {{- end }}
 {{- end }}
