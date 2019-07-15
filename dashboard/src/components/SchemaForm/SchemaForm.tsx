@@ -23,6 +23,7 @@ class SchemaForm extends React.Component<ISchemaFormProps> {
         FieldTemplate={FieldTemplate}
         ArrayFieldTemplate={ArrayFieldTemplate}
         fields={{ ObjectField: CustomObjectField }}
+        noValidate={true}
       >
         {this.props.children}
       </Form>
