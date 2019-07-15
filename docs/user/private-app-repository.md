@@ -101,6 +101,13 @@ To add Harbor as the private chart repository, go to `Configuration > App Reposi
 
 Once you create the repository you can click on the link for the specific repository and you will be able to deploy your own applications using Kubeapps.
 
+### Harbor: Authentication/Authorization
+
+It is possible to configure Harbor to use HTTP basic authentication:
+
+  - When creating a new project for serving as the helm chart repository in Harbor, set the `Access Level` of the project to non public. This enforces authentication to access the charts in the chart repository via Helm CLI or other clients.
+  - When `Adding App Repository` in Kubeapps, select `Basic Auth` for `Authorization` and specifiy the username and password for Harbor.
+
 ## Artifactory
 
 JFrog Artifactory is a Repository Manager supporting all major packaging formats, build tools and CI servers.
