@@ -1,0 +1,14 @@
+.extraClass {
+  pointer-events: auto !important;
+  text-align: center;
+  background: #1c2b39 !important;
+  &:hover {
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+  &:after {
+    border-top-color: #1c2b39 !important;
+    border-top-style: solid !important;
+    border-top-width: 6px !important;
+  }
+}

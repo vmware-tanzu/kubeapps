@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Redirect } from "react-router";
+import Hint from "../../../components/Hint";
 
 interface IAppRepoFormProps {
   message?: string;
@@ -17,6 +18,7 @@ interface IAppRepoFormState {
   authHeader: string;
   token: string;
   customCA: string;
+  syncJobPodTemplate: string;
 }
 
 const AUTH_METHOD_NONE = "none";
@@ -34,6 +36,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     name: "",
     url: "",
     customCA: "",
+    syncJobPodTemplate: "",
   };
 
   public render() {
@@ -173,9 +176,9 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
             <div className="margin-t-big">
               <label>
                 <span>Custom CA Certificate (optional):</span>
-                <pre className="CertContainer">
+                <pre className="CodeContainer">
                   <textarea
-                    className="CertContent"
+                    className="Code"
                     rows={4}
                     placeholder={
                       "-----BEGIN CERTIFICATE-----\n" + "...\n" + "-----END CERTIFICATE-----"
@@ -185,6 +188,38 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                   />
                 </pre>
               </label>
+            </div>
+            <div style={{ marginBottom: "1em" }}>
+              <label htmlFor="syncJobPodTemplate">Custom Sync Job Template (optional)</label>
+              <Hint reactTooltipOpts={{ delayHide: 1000 }}>
+                <span>
+                  It's possible to modify the default sync job.
+                  <br />
+                  More info{" "}
+                  <a
+                    target="_blank"
+                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
+                  >
+                    here
+                  </a>
+                </span>
+              </Hint>
+              <pre className="CodeContainer">
+                <textarea
+                  id="syncJobPodTemplate"
+                  className="Code"
+                  rows={4}
+                  placeholder={
+                    "spec:\n" +
+                    "  containers:\n" +
+                    "  - env:\n" +
+                    "    - name: FOO\n" +
+                    "      value: BAR\n"
+                  }
+                  value={this.state.syncJobPodTemplate}
+                  onChange={this.handleSyncJobPodTemplateChange}
+                />
+              </pre>
             </div>
             <div>
               <button className="button button-primary" type="submit">
@@ -246,5 +281,9 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   private handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ password: e.target.value });
+  };
+
+  private handleSyncJobPodTemplateChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    this.setState({ syncJobPodTemplate: e.target.value });
   };
 }
