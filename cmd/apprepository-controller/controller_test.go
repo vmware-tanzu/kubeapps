@@ -56,7 +56,7 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1beta1.CronJobSpec{
-					Schedule:          "0 * * * *",
+					Schedule:          "* * * * *",
 					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
@@ -136,7 +136,7 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1beta1.CronJobSpec{
-					Schedule:          "0 * * * *",
+					Schedule:          "* * * * *",
 					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
