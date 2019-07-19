@@ -36,11 +36,11 @@ Kubeapps is a Kubernetes-native application. To develop and test Kubeapps compon
 
 ```bash
 cd $MONOCULAR_DIR
-dep ensure
+go mod tidy
 make -C cmd/chart-repo docker-build
 ```
 
-This builds the `chart-repo` Docker image.
+This builds the `chart-repo` Docker image. Please refer to [Monocular Developers Guide](https://github.com/helm/monocular/blob/master/docs/development.md) for more details.
 
 ### Running in development
 
