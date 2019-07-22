@@ -277,6 +277,7 @@ export interface IAppRepository
           };
         };
       };
+      resyncRequests: number;
     },
     undefined
   > {}

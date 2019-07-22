@@ -5,9 +5,7 @@ exports[`should open a modal with the repository form 1`] = `
   install={[Function]}
   kubeappsNamespace="kubeapps"
 >
-  <div
-    className="AppRepoAddButton"
-  >
+  <span>
     <button
       className="button button-primary"
       onClick={[Function]}
@@ -300,6 +298,6 @@ exports[`should open a modal with the repository form 1`] = `
         />
       </Portal>
     </Modal>
-  </div>
+  </span>
 </AppRepoAddButton>
 `;

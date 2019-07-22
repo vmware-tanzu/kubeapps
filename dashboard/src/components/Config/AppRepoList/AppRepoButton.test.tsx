@@ -13,7 +13,7 @@ const defaultProps = {
 
 it("should open a modal with the repository form", () => {
   const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  ReactModal.setAppElement(document.createElement("span"));
   wrapper.setState({ modalIsOpen: true });
   expect(wrapper).toMatchSnapshot();
 });

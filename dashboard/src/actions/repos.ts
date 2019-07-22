@@ -101,6 +101,30 @@ export const resyncRepo = (
   };
 };
 
+export const resyncAllRepos = (): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
+    try {
+      const {
+        config: { namespace },
+      } = getState();
+      // TODO: Do something to show progress
+      const repos = await AppRepository.list(namespace);
+      if (repos.items.length > 0) {
+        repos.items.forEach(repo => {
+          if (repo && repo.spec) {
+            repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
+            repo.spec.resyncRequests++;
+            const name = repo.metadata.name;
+            AppRepository.update(name, namespace, repo);
+          }
+        });
+      }
+    } catch (e) {
+      dispatch(errorRepos(e, "update"));
+    }
+  };
+};
+
 export const fetchRepos = (): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     dispatch(requestRepos());
