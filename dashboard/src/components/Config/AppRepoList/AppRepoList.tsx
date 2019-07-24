@@ -17,7 +17,7 @@ export interface IAppRepoListProps {
   fetchRepos: () => void;
   deleteRepo: (name: string) => Promise<boolean>;
   resyncRepo: (name: string) => void;
-  resyncAllRepos: () => void;
+  resyncAllRepos: (names: string[]) => void;
   install: (name: string, url: string, authHeader: string, customCA: string) => Promise<boolean>;
   kubeappsNamespace: string;
 }
@@ -103,8 +103,8 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
           kubeappsNamespace={kubeappsNamespace}
         />
         <AppRepoRefreshAllButton
-          error={errors.update}
           resyncAllRepos={resyncAllRepos}
+          repos={repos}
           kubeappsNamespace={kubeappsNamespace}
         />
       </div>

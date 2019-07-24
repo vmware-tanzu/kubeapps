@@ -28,8 +28,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     resyncRepo: async (name: string) => {
       return dispatch(actions.repos.resyncRepo(name));
     },
-    resyncAllRepos: async () => {
-      return dispatch(actions.repos.resyncAllRepos());
+    resyncAllRepos: async (names: string[]) => {
+      return dispatch(actions.repos.resyncAllRepos(names));
     },
   };
 }
