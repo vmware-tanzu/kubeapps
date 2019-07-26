@@ -5,7 +5,7 @@
   "homepage": "./",
   "dependencies": {
     "@types/js-yaml": "^3.10.1",
-    "@types/json-schema": "^6.0.1",
+    "@types/json-schema": "^7.0.3",
     "@types/lodash": "^4.14.117",
     "@types/moxios": "^0.4.8",
     "@types/pako": "^1.0.0",
