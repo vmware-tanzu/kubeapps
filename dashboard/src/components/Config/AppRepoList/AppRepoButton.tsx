@@ -43,7 +43,7 @@ export class AppRepoAddButton extends React.Component<
   public render() {
     const { redirectTo } = this.props;
     return (
-      <div className="AppRepoAddButton">
+      <React.Fragment>
         <button className="button button-primary" onClick={this.openModal}>
           Add App Repository
         </button>
@@ -64,7 +64,7 @@ export class AppRepoAddButton extends React.Component<
           <AppRepoForm install={this.install} onAfterInstall={this.closeModal} />
         </Modal>
         {redirectTo && <Redirect to={redirectTo} />}
-      </div>
+      </React.Fragment>
     );
   }
 
