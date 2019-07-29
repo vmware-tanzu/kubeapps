@@ -14,6 +14,12 @@ branches:
 services:
   - docker
 
+addons:
+  snaps:
+    - name: helm
+      confinement: classic
+      channel: latest/stable
+
 env:
   global:
     - GO111MODULE=on
@@ -55,6 +61,8 @@ before_script:
 - gcloud --quiet config set compute/zone ${COMPUTE_ZONE}
 - gcloud --quiet container clusters get-credentials ${CLUSTER}
 - kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
+- helm init --client-only
+- helm plugin install https://github.com/chartmuseum/helm-push
 
 script:
   - |
