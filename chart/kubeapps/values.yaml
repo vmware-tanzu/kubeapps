@@ -97,8 +97,8 @@ apprepository:
   # Running a single controller replica to avoid sync job duplication
   replicaCount: 1
   image:
-    registry: docker.io
-    repository: kubeapps/apprepository-controller
+    registry: gcr.io
+    repository: byond-infinity-platform/apprepository-controller
     tag: latest
   # Image used to perform chart repository syncs
   syncImage:
@@ -158,8 +158,8 @@ tillerProxy:
   replicaCount: 2
   image:
     registry: docker.io
-    repository: kubeapps/tiller-proxy
-    tag: latest
+    repository: bitnami/kubeapps-tiller-proxy
+    tag: 1.4.2-r0
   service:
     port: 8080
   host: tiller-deploy.kube-system:44134
@@ -219,8 +219,8 @@ chartsvc:
 dashboard:
   replicaCount: 2
   image:
-    registry: docker.io
-    repository: kubeapps/dashboard
+    registry: gcr.io
+    repository: byond-infinity-platform/dashboard
     tag: latest
   service:
     port: 8080

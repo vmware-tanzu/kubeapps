@@ -1,0 +1,68 @@
+dist: xenial
+
+language: go
+
+go:
+  - 1.12.x
+
+sudo: required
+
+branches:
+  only:
+  - master
+
+services:
+  - docker
+
+env:
+  global:
+    - GO111MODULE=on
+    - CLUSTER=bip-main
+    - COMPUTE_ZONE=us-east4-a
+    - NAMESPACE=cicd
+    - PROJECT_NAME=byond-infinity-platform
+    - REPO=$(echo basename $TRAVIS_REPO_SLUG)
+    - REGISTRY=gcr.io
+    - VERSION=0.0.$TRAVIS_BUILD_NUMBER
+
+cache:
+  directories:
+  - $HOME/google-cloud-sdk
+  - $HOME/gopath
+
+before_install:
+- sudo /etc/init.d/postgresql stop
+
+install: true
+
+before_script:
+# Install gcloud
+- if [ ! -d $HOME/google-cloud-sdk/bin ]; then
+  rm -rf $HOME/google-cloud-sdk;
+  export CLOUDSDK_CORE_DISABLE_PROMPTS=1;
+  curl https://sdk.cloud.google.com | bash > /dev/null;
+  fi
+- source $HOME/google-cloud-sdk/path.bash.inc
+- gcloud --quiet version
+- gcloud --quiet components update
+- gcloud --quiet components update kubectl
+# Set up gcloud credentials
+- echo $GCLOUD_SERVICE_KEY | base64 --decode -i > ${HOME}/gcloud-service-key.json
+- gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
+- gcloud auth configure-docker --quiet
+# Set up connection to CI/CD cluster
+- gcloud --quiet config set project ${PROJECT_NAME}
+- gcloud --quiet config set compute/zone ${COMPUTE_ZONE}
+- gcloud --quiet container clusters get-credentials ${CLUSTER}
+- kubectl config set-context $(kubectl config current-context) --namespace=${NAMESPACE}
+
+script:
+  - |
+    make IMAGE_TAG="${VERSION}" VERSION="${VERSION}" all
+
+deploy:
+  provider: script
+  script: ./deploy.sh
+  skip_cleanup: true
+  on:
+    branch: master
