@@ -1,0 +1,10 @@
+version: '3.7'
+
+services:
+  dev-dashboard:
+    # Apparently VSCode overrides the default command if you specify a Dockerfile
+    # or docker image, but it doesn't appear to if you specify a docker-compose.
+    # So instead, ensure it's overridden when opening with VSCode so that the
+    # dev server can be started and stopped or alternativelry the telepresence console
+    # can be started.
+    command: /bin/sh -c "while sleep 1000; do :; done"

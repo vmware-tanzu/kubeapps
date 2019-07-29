@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  dev-dashboard:
+    build:
+      context: .
+    volumes:
+      - type: bind
+        source: "${HOME}${USERPROFILE}/.kube"
+        target: "/root/.kube"
+      - type: bind
+        source: ".."
+        target: "/app"
+    # /dev/fuse is required by telepresence (sshfs)
+    devices:
+      - "/dev/fuse"
+    # NET_ADMiin and NET_BIND_SERVICE are required by telepresence (iptables), and /dev/fuse is
+    # required by telepresences file mounts (as is MKNOD)
+    cap_add:
+      # - NET_ADMIN
+      # - NET_BIND_SERVICE
+      # - MKNOD
+      - ALL
+    ports:
+      - "3000:3000"
+    environment:
+      - SKIP_YARN_DEP_CHECK
+      - KUBEAPPS_NAMESPACE=${KUBEAPPS_NAMESPACE:-kubeapps}
+      - KUBEAPPS_DASHBOARD_DEPLOYMENT=${KUBEAPPS_DASHBOARD_DEPLOYLMENT:-kubeapps-internal-dashboard}

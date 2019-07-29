@@ -1,0 +1,10 @@
+// See https://aka.ms/vscode-remote/devcontainer.json for format details.
+{
+	"name": "KubeApps - Node.js 8, TypeScript and telepresence",
+	"dockerComposeFile": ["docker-compose.yml", "docker-compose.vscode.yml"],
+	"service": "dev-dashboard",
+	"extensions": [
+		"ms-vscode.vscode-typescript-tslint-plugin"
+	],
+	"workspaceFolder": "/app"
+}
