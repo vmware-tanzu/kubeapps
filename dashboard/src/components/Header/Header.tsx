@@ -71,7 +71,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     }`;
 
     return (
-      <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
+      <section className="infinity-background">
         <div className="container">
           <header className={header}>
             <div className="header__logo">
