@@ -16,16 +16,40 @@ describe("Auth", () => {
   });
 
   describe("when there is an error", () => {
-    it("should throw error for 401 error codes", async () => {
-      const mock = jest.fn(() => {
-        return Promise.reject({ response: { status: 401 } });
+    [
+      {
+        name: "should throw an invalid token error for 401 responses",
+        response: { status: 401, data: "ignored anyway" },
+        expectedError: new Error("invalid token"),
+      },
+      {
+        name: "should throw a standard error for a 404 response",
+        response: { status: 404, data: "Not found" },
+        expectedError: new Error("404: Not found"),
+      },
+      {
+        name: "should throw a standard error for a 500 response",
+        response: { status: 500, data: "Server exception" },
+        expectedError: new Error("500: Server exception"),
+      },
+    ].forEach(testCase => {
+      it(testCase.name, async () => {
+        const mock = jest.fn(() => {
+          return Promise.reject({ response: testCase.response });
+        });
+        Axios.get = mock;
+        // TODO(absoludity): tried using `expect(fn()).rejects.toThrow()` but it seems we need
+        // to upgrade jest for `toThrow()` to work with async.
+        let err;
+        try {
+          await Auth.validateToken("foo");
+        } catch (e) {
+          err = e;
+        } finally {
+          expect(err).not.toBe(undefined);
+          expect(err).toEqual(testCase.expectedError);
+        }
       });
-      Axios.get = mock;
-      try {
-        await Auth.validateToken("foo");
-      } catch (e) {
-        expect(e.message).toEqual("invalid token");
-      }
     });
   });
 

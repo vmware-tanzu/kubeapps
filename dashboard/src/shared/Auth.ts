@@ -1,6 +1,7 @@
 import Axios, { AxiosResponse } from "axios";
 const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
+import { APIBase } from "./Kube";
 
 export class Auth {
   public static getAuthToken() {
@@ -43,12 +44,13 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(token: string) {
     try {
-      await Axios.get("api/kube/", { headers: { Authorization: `Bearer ${token}` } });
+      await Axios.get(APIBase + "/", { headers: { Authorization: `Bearer ${token}` } });
     } catch (e) {
       const res = e.response as AxiosResponse;
       if (res.status === 401) {
         throw new Error("invalid token");
       }
+      throw new Error(`${res.status}: ${res.data}`);
     }
   }
 
