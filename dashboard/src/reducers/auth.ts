@@ -33,6 +33,7 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
       return {
         ...state,
         authenticationError: action.payload,
+        authenticating: false,
       };
     case getType(actions.auth.setSessionExpired):
       return {

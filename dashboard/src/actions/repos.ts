@@ -92,12 +92,19 @@ export const resyncRepo = (
       repo.spec.resyncRequests++;
       await AppRepository.update(name, namespace, repo);
       // TODO: Do something to show progress
-      dispatch(requestRepos());
-      const repos = await AppRepository.list(namespace);
-      dispatch(receiveRepos(repos.items));
     } catch (e) {
       dispatch(errorRepos(e, "update"));
     }
+  };
+};
+
+export const resyncAllRepos = (
+  repoNames: string[],
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
+    repoNames.forEach(name => {
+      dispatch(resyncRepo(name));
+    });
   };
 };
 

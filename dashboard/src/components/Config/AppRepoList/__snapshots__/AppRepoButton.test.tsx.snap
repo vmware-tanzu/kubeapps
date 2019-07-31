@@ -5,301 +5,297 @@ exports[`should open a modal with the repository form 1`] = `
   install={[Function]}
   kubeappsNamespace="kubeapps"
 >
-  <div
-    className="AppRepoAddButton"
+  <button
+    className="button button-primary"
+    onClick={[Function]}
   >
-    <button
-      className="button button-primary"
-      onClick={[Function]}
-    >
-      Add App Repository
-    </button>
-    <Modal
-      ariaHideApp={true}
-      bodyOpenClassName="ReactModal__Body--open"
-      closeTimeoutMS={0}
-      contentLabel="Modal"
-      isOpen={true}
-      onRequestClose={[Function]}
-      parentSelector={[Function]}
-      portalClassName="ReactModalPortal"
-      role="dialog"
-      shouldCloseOnEsc={true}
-      shouldCloseOnOverlayClick={true}
-      shouldFocusAfterRender={true}
-      shouldReturnFocusAfterClose={true}
-    >
-      <Portal
-        containerInfo={
+    Add App Repository
+  </button>
+  <Modal
+    ariaHideApp={true}
+    bodyOpenClassName="ReactModal__Body--open"
+    closeTimeoutMS={0}
+    contentLabel="Modal"
+    isOpen={true}
+    onRequestClose={[Function]}
+    parentSelector={[Function]}
+    portalClassName="ReactModalPortal"
+    role="dialog"
+    shouldCloseOnEsc={true}
+    shouldCloseOnOverlayClick={true}
+    shouldFocusAfterRender={true}
+    shouldReturnFocusAfterClose={true}
+  >
+    <Portal
+      containerInfo={
+        <div
+          class="ReactModalPortal"
+        >
           <div
-            class="ReactModalPortal"
+            class="ReactModal__Overlay ReactModal__Overlay--after-open"
+            style="position: fixed; top: 0px; left: 0px; right: 0px; bottom: 0px; background-color: rgba(255, 255, 255, 0.75);"
           >
             <div
-              class="ReactModal__Overlay ReactModal__Overlay--after-open"
-              style="position: fixed; top: 0px; left: 0px; right: 0px; bottom: 0px; background-color: rgba(255, 255, 255, 0.75);"
+              style="position: absolute; top: 40px; left: 40px; right: 40px; bottom: 40px; border: 1px solid #ccc; background: rgb(255, 255, 255); overflow: auto; border-radius: 4px; outline: none; padding: 20px;"
+              class="ReactModal__Content ReactModal__Content--after-open"
+              tabindex="-1"
+              role="dialog"
+              aria-label="Modal"
             >
-              <div
-                style="position: absolute; top: 40px; left: 40px; right: 40px; bottom: 40px; border: 1px solid #ccc; background: rgb(255, 255, 255); overflow: auto; border-radius: 4px; outline: none; padding: 20px;"
-                class="ReactModal__Content ReactModal__Content--after-open"
-                tabindex="-1"
-                role="dialog"
-                aria-label="Modal"
+              <form
+                class="container padding-b-bigger"
               >
-                <form
-                  class="container padding-b-bigger"
+                <div
+                  class="row"
                 >
                   <div
-                    class="row"
+                    class="col-12"
                   >
-                    <div
-                      class="col-12"
-                    >
-                      <div>
-                        <h2>
-                          Add an App Repository
-                        </h2>
-                      </div>
-                      <div>
-                        <label
-                          for="kubeapps-repo-name"
-                        >
-                          Name:
-                        </label>
-                        <input
-                          type="text"
-                          id="kubeapps-repo-name"
-                          placeholder="example"
-                          required=""
-                          pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
-                          title="Use lower case alphanumeric characters, '-' or '.'"
-                          value=""
-                        />
-                      </div>
-                      <div>
-                        <label
-                          for="kubeapps-repo-url"
-                        >
-                          URL:
-                        </label>
-                        <input
-                          type="url"
-                          id="kubeapps-repo-url"
-                          placeholder="https://charts.example.com/stable"
-                          required=""
-                          value=""
-                        />
-                      </div>
-                      <div>
-                        <span>
-                          Authorization (optional):
-                        </span>
+                    <div>
+                      <h2>
+                        Add an App Repository
+                      </h2>
+                    </div>
+                    <div>
+                      <label
+                        for="kubeapps-repo-name"
+                      >
+                        Name:
+                      </label>
+                      <input
+                        type="text"
+                        id="kubeapps-repo-name"
+                        placeholder="example"
+                        required=""
+                        pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+                        title="Use lower case alphanumeric characters, '-' or '.'"
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <label
+                        for="kubeapps-repo-url"
+                      >
+                        URL:
+                      </label>
+                      <input
+                        type="url"
+                        id="kubeapps-repo-url"
+                        placeholder="https://charts.example.com/stable"
+                        required=""
+                        value=""
+                      />
+                    </div>
+                    <div>
+                      <span>
+                        Authorization (optional):
+                      </span>
+                      <div
+                        class="row"
+                      >
                         <div
-                          class="row"
+                          class="col-2"
+                        >
+                          <label
+                            class="margin-l-big"
+                            for="kubeapps-repo-auth-method-none"
+                          >
+                            <input
+                              type="radio"
+                              id="kubeapps-repo-auth-method-none"
+                              name="auth"
+                              value="none"
+                              checked=""
+                            />
+                            None
+                            <br />
+                          </label>
+                          <label
+                            for="kubeapps-repo-auth-method-basic"
+                          >
+                            <input
+                              type="radio"
+                              id="kubeapps-repo-auth-method-basic"
+                              name="auth"
+                              value="basic"
+                            />
+                            Basic Auth
+                            <br />
+                          </label>
+                          <label
+                            for="kubeapps-repo-auth-method-bearer"
+                          >
+                            <input
+                              type="radio"
+                              id="kubeapps-repo-auth-method-bearer"
+                              name="auth"
+                              value="bearer"
+                            />
+                            Bearer Token
+                            <br />
+                          </label>
+                          <label
+                            for="kubeapps-repo-auth-method-custom"
+                          >
+                            <input
+                              type="radio"
+                              id="kubeapps-repo-auth-method-custom"
+                              name="auth"
+                              value="custom"
+                            />
+                            Custom
+                            <br />
+                          </label>
+                        </div>
+                        <div
+                          class="col-10"
+                          aria-live="polite"
                         >
                           <div
-                            class="col-2"
+                            hidden=""
+                            class="secondary-input"
                           >
                             <label
-                              class="margin-l-big"
-                              for="kubeapps-repo-auth-method-none"
+                              for="kubeapps-repo-username"
                             >
-                              <input
-                                type="radio"
-                                id="kubeapps-repo-auth-method-none"
-                                name="auth"
-                                value="none"
-                                checked=""
-                              />
-                              None
-                              <br />
+                              Username
                             </label>
+                            <input
+                              type="text"
+                              id="kubeapps-repo-username"
+                              placeholder="Username"
+                              value=""
+                            />
                             <label
-                              for="kubeapps-repo-auth-method-basic"
+                              for="kubeapps-repo-password"
                             >
-                              <input
-                                type="radio"
-                                id="kubeapps-repo-auth-method-basic"
-                                name="auth"
-                                value="basic"
-                              />
-                              Basic Auth
-                              <br />
+                              Password
                             </label>
-                            <label
-                              for="kubeapps-repo-auth-method-bearer"
-                            >
-                              <input
-                                type="radio"
-                                id="kubeapps-repo-auth-method-bearer"
-                                name="auth"
-                                value="bearer"
-                              />
-                              Bearer Token
-                              <br />
-                            </label>
-                            <label
-                              for="kubeapps-repo-auth-method-custom"
-                            >
-                              <input
-                                type="radio"
-                                id="kubeapps-repo-auth-method-custom"
-                                name="auth"
-                                value="custom"
-                              />
-                              Custom
-                              <br />
-                            </label>
+                            <input
+                              type="password"
+                              id="kubeapps-repo-password"
+                              placeholder="Password"
+                              value=""
+                            />
                           </div>
                           <div
-                            class="col-10"
-                            aria-live="polite"
+                            hidden=""
+                            class="secondary-input"
                           >
-                            <div
-                              hidden=""
-                              class="secondary-input"
+                            <label
+                              for="kubeapps-repo-token"
                             >
-                              <label
-                                for="kubeapps-repo-username"
-                              >
-                                Username
-                              </label>
-                              <input
-                                type="text"
-                                id="kubeapps-repo-username"
-                                placeholder="Username"
-                                value=""
-                              />
-                              <label
-                                for="kubeapps-repo-password"
-                              >
-                                Password
-                              </label>
-                              <input
-                                type="password"
-                                id="kubeapps-repo-password"
-                                placeholder="Password"
-                                value=""
-                              />
-                            </div>
-                            <div
-                              hidden=""
-                              class="secondary-input"
+                              Token
+                            </label>
+                            <input
+                              id="kubeapps-repo-token"
+                              type="text"
+                              value=""
+                            />
+                          </div>
+                          <div
+                            hidden=""
+                            class="secondary-input"
+                          >
+                            <label
+                              for="kubeapps-repo-custom-header"
                             >
-                              <label
-                                for="kubeapps-repo-token"
-                              >
-                                Token
-                              </label>
-                              <input
-                                id="kubeapps-repo-token"
-                                type="text"
-                                value=""
-                              />
-                            </div>
-                            <div
-                              hidden=""
-                              class="secondary-input"
-                            >
-                              <label
-                                for="kubeapps-repo-custom-header"
-                              >
-                                Complete Authorization Header
-                              </label>
-                              <input
-                                type="text"
-                                id="kubeapps-repo-custom-header"
-                                placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
-                                value=""
-                              />
-                            </div>
+                              Complete Authorization Header
+                            </label>
+                            <input
+                              type="text"
+                              id="kubeapps-repo-custom-header"
+                              placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                              value=""
+                            />
                           </div>
                         </div>
                       </div>
-                      <div
-                        class="margin-t-big"
-                      >
-                        <label>
-                          <span>
-                            Custom CA Certificate (optional):
-                          </span>
-                          <pre
-                            class="CertContainer"
-                          >
-                            <textarea
-                              class="CertContent"
-                              rows="4"
-                              placeholder="-----BEGIN CERTIFICATE-----
-                            ...
-                            -----END CERTIFICATE-----"
-                            />
-                          </pre>
-                        </label>
-                      </div>
-                      <div>
-                        <button
-                          class="button button-primary"
-                          type="submit"
+                    </div>
+                    <div
+                      class="margin-t-big"
+                    >
+                      <label>
+                        <span>
+                          Custom CA Certificate (optional):
+                        </span>
+                        <pre
+                          class="CertContainer"
                         >
-                          Install Repo
-                        </button>
-                      </div>
+                          <textarea
+                            class="CertContent"
+                            rows="4"
+                            placeholder="-----BEGIN CERTIFICATE-----
+                          ...
+                          -----END CERTIFICATE-----"
+                          />
+                        </pre>
+                      </label>
+                    </div>
+                    <div>
+                      <button
+                        class="button button-primary"
+                        type="submit"
+                      >
+                        Install Repo
+                      </button>
                     </div>
                   </div>
-                </form>
-              </div>
+                </div>
+              </form>
             </div>
           </div>
+        </div>
+      }
+    >
+      <ModalPortal
+        ariaHideApp={true}
+        bodyOpenClassName="ReactModal__Body--open"
+        closeTimeoutMS={0}
+        contentLabel="Modal"
+        defaultStyles={
+          Object {
+            "content": Object {
+              "WebkitOverflowScrolling": "touch",
+              "background": "#fff",
+              "border": "1px solid #ccc",
+              "borderRadius": "4px",
+              "bottom": "40px",
+              "left": "40px",
+              "outline": "none",
+              "overflow": "auto",
+              "padding": "20px",
+              "position": "absolute",
+              "right": "40px",
+              "top": "40px",
+            },
+            "overlay": Object {
+              "backgroundColor": "rgba(255, 255, 255, 0.75)",
+              "bottom": 0,
+              "left": 0,
+              "position": "fixed",
+              "right": 0,
+              "top": 0,
+            },
+          }
         }
-      >
-        <ModalPortal
-          ariaHideApp={true}
-          bodyOpenClassName="ReactModal__Body--open"
-          closeTimeoutMS={0}
-          contentLabel="Modal"
-          defaultStyles={
-            Object {
-              "content": Object {
-                "WebkitOverflowScrolling": "touch",
-                "background": "#fff",
-                "border": "1px solid #ccc",
-                "borderRadius": "4px",
-                "bottom": "40px",
-                "left": "40px",
-                "outline": "none",
-                "overflow": "auto",
-                "padding": "20px",
-                "position": "absolute",
-                "right": "40px",
-                "top": "40px",
-              },
-              "overlay": Object {
-                "backgroundColor": "rgba(255, 255, 255, 0.75)",
-                "bottom": 0,
-                "left": 0,
-                "position": "fixed",
-                "right": 0,
-                "top": 0,
-              },
-            }
+        isOpen={true}
+        onRequestClose={[Function]}
+        parentSelector={[Function]}
+        portalClassName="ReactModalPortal"
+        role="dialog"
+        shouldCloseOnEsc={true}
+        shouldCloseOnOverlayClick={true}
+        shouldFocusAfterRender={true}
+        shouldReturnFocusAfterClose={true}
+        style={
+          Object {
+            "content": Object {},
+            "overlay": Object {},
           }
-          isOpen={true}
-          onRequestClose={[Function]}
-          parentSelector={[Function]}
-          portalClassName="ReactModalPortal"
-          role="dialog"
-          shouldCloseOnEsc={true}
-          shouldCloseOnOverlayClick={true}
-          shouldFocusAfterRender={true}
-          shouldReturnFocusAfterClose={true}
-          style={
-            Object {
-              "content": Object {},
-              "overlay": Object {},
-            }
-          }
-        />
-      </Portal>
-    </Modal>
-  </div>
+        }
+      />
+    </Portal>
+  </Modal>
 </AppRepoAddButton>
 `;
