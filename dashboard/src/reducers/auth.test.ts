@@ -61,6 +61,15 @@ describe("authReducer", () => {
       ).toEqual({ ...initialState, authenticationError: errMessage });
     });
 
+    it(`sets authenticating to false if type ${actionTypes.authenticationError}`, () => {
+      expect(
+        authReducer(
+          { ...initialState, authenticating: true },
+          { type: actionTypes.authenticationError as any, payload: errMessage },
+        ),
+      ).toEqual({ ...initialState, authenticationError: errMessage });
+    });
+
     it("sets authenticated and oidcAuthenticated", () => {
       expect(
         authReducer(
