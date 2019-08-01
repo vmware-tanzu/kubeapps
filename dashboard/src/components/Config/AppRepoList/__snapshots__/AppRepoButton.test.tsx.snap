@@ -87,6 +87,19 @@ exports[`should open a modal with the repository form 1`] = `
                       />
                     </div>
                     <div>
+                      <label
+                        for="kubeapps-repo-httpProxy"
+                      >
+                        PROXY (optional):
+                      </label>
+                      <input
+                        type="url"
+                        id="kubeapps-repo-httpProxy"
+                        placeholder="http://my_proxy:8080"
+                        value=""
+                      />
+                    </div>
+                    <div>
                       <span>
                         Authorization (optional):
                       </span>
