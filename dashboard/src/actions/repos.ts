@@ -1,3 +1,4 @@
+import * as yaml from "js-yaml";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
@@ -121,6 +122,7 @@ export const installRepo = (
   repoURL: string,
   authHeader: string,
   customCA: string,
+  syncJobPodTemplate: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     try {
@@ -158,8 +160,18 @@ export const installRepo = (
           secrets["ca.crt"] = btoa(customCA);
         }
       }
+      let syncJobPodTemplateObj = {};
+      if (syncJobPodTemplate.length) {
+        syncJobPodTemplateObj = yaml.load(syncJobPodTemplate);
+      }
       dispatch(addRepo());
-      const apprepo = await AppRepository.create(name, namespace, repoURL, auth);
+      const apprepo = await AppRepository.create(
+        name,
+        namespace,
+        repoURL,
+        auth,
+        syncJobPodTemplateObj,
+      );
       dispatch(addedRepo(apprepo));
 
       if (authHeader.length || customCA.length) {

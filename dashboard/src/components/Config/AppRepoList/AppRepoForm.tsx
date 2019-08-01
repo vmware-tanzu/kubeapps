@@ -5,7 +5,13 @@ import Hint from "../../../components/Hint";
 interface IAppRepoFormProps {
   message?: string;
   redirectTo?: string;
-  install: (name: string, url: string, authHeader: string, customCA: string) => Promise<boolean>;
+  install: (
+    name: string,
+    url: string,
+    authHeader: string,
+    customCA: string,
+    syncJobPodTemplate: string,
+  ) => Promise<boolean>;
   onAfterInstall?: () => Promise<any>;
 }
 
@@ -235,7 +241,17 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   private handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     const { install, onAfterInstall } = this.props;
-    const { name, url, authHeader, authMethod, token, user, password, customCA } = this.state;
+    const {
+      name,
+      url,
+      authHeader,
+      authMethod,
+      token,
+      user,
+      password,
+      customCA,
+      syncJobPodTemplate,
+    } = this.state;
     e.preventDefault();
     let finalHeader = "";
     switch (authMethod) {
@@ -249,7 +265,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
         finalHeader = `Bearer ${token}`;
         break;
     }
-    const installed = await install(name, url, finalHeader, customCA);
+    const installed = await install(name, url, finalHeader, customCA, syncJobPodTemplate);
     if (installed && onAfterInstall) {
       await onAfterInstall();
     }
