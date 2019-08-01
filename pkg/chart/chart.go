@@ -312,6 +312,7 @@ func (c *Chart) InitNetClient(customCA *CustomCA) (HTTPClient, error) {
 		client: &http.Client{
 			Timeout: time.Second * defaultTimeoutSeconds,
 			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
 				TLSClientConfig: &tls.Config{
 					RootCAs: caCertPool,
 				},
