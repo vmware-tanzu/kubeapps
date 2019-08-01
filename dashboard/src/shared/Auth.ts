@@ -50,7 +50,14 @@ export class Auth {
       if (res.status === 401) {
         throw new Error("invalid token");
       }
-      throw new Error(`${res.status}: ${res.data}`);
+      // A 403 authorization error only occurs if the token resulted in
+      // successful authentication. We don't make any assumptions over RBAC
+      // for the root "/" nonResourceURL or other required authz permissions
+      // until operations on those resources are attempted (though we may
+      // want to revisit this in the future).
+      if (res.status !== 403) {
+        throw new Error(`${res.status}: ${res.data}`);
+      }
     }
   }
 

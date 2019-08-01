@@ -32,6 +32,11 @@ describe("Auth", () => {
         response: { status: 500, data: "Server exception" },
         expectedError: new Error("500: Server exception"),
       },
+      {
+        name: "should succeed for a 403 response",
+        response: { status: 403, data: "Not Allowed" },
+        expectedError: null,
+      },
     ].forEach(testCase => {
       it(testCase.name, async () => {
         const mock = jest.fn(() => {
@@ -40,13 +45,12 @@ describe("Auth", () => {
         Axios.get = mock;
         // TODO(absoludity): tried using `expect(fn()).rejects.toThrow()` but it seems we need
         // to upgrade jest for `toThrow()` to work with async.
-        let err;
+        let err = null;
         try {
           await Auth.validateToken("foo");
         } catch (e) {
           err = e;
         } finally {
-          expect(err).not.toBe(undefined);
           expect(err).toEqual(testCase.expectedError);
         }
       });
