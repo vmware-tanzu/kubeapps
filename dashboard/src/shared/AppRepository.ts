@@ -24,7 +24,7 @@ export class AppRepository {
     return data;
   }
 
-  public static async create(name: string, namespace: string, url: string, auth: any) {
+  public static async create(name: string, namespace: string, url: string, httpProxy: string, auth: any) {
     const { data } = await axiosWithAuth.post<IAppRepository>(
       AppRepository.getResourceLink(namespace),
       {
@@ -33,7 +33,9 @@ export class AppRepository {
         metadata: {
           name,
         },
-        spec: { auth, type: "helm", url },
+        spec: { auth, type: "helm", url, 
+                syncJobPodTemplate: {spec: {containers: [{env: [{name: "http_proxy", value: httpProxy && httpProxy.startsWith("http://") ? httpProxy : ""},{name: "https_proxy", value: httpProxy && httpProxy.startsWith("https://") ? httpProxy : ""}]}]}}
+              },
       },
     );
     return data;

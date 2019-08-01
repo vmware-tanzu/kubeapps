@@ -182,12 +182,13 @@ describe("fetchRepos", () => {
 });
 
 describe("installRepo", () => {
-  const installRepoCMD = repoActions.installRepo("my-repo", "http://foo.bar", "", "");
+  const installRepoCMD = repoActions.installRepo("my-repo", "http://foo.bar", "", "","");
 
   context("when authHeader provided", () => {
     const installRepoCMDAuth = repoActions.installRepo(
       "my-repo",
       "http://foo.bar",
+      "",
       "Bearer: abc",
       "",
     );
@@ -202,6 +203,7 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "",
         authStruct,
       );
     });
@@ -222,6 +224,7 @@ describe("installRepo", () => {
       "my-repo",
       "http://foo.bar",
       "",
+      "",
       "This is a cert!",
     );
 
@@ -235,6 +238,7 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "",
         authStruct,
       );
     });
@@ -257,6 +261,7 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        "",
         {},
       );
     });

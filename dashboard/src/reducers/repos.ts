@@ -21,6 +21,7 @@ export interface IAppRepositoryState {
     name: string;
     namespace: string;
     url: string;
+    httpProxy: string;
     show: boolean;
   };
   redirectTo?: string;
@@ -34,6 +35,7 @@ const initialState: IAppRepositoryState = {
     namespace: "",
     show: false,
     url: "",
+    httpProxy: "",
   },
   isFetching: false,
   repo: {} as IAppRepository,
@@ -61,7 +63,7 @@ const reposReducer = (
         repos: [...state.repos, action.payload],
       };
     case getType(actions.repos.resetForm):
-      return { ...state, form: { ...state.form, name: "", namespace: "", url: "" } };
+      return { ...state, form: { ...state.form, name: "", namespace: "", url: "", httpProxy: "" } };
     case getType(actions.repos.showForm):
       return { ...state, form: { ...state.form, show: true } };
     case getType(actions.repos.hideForm):

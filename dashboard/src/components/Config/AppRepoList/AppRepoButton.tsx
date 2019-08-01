@@ -22,7 +22,7 @@ const RequiredRBACRoles: IRBACRole[] = [
 
 interface IAppRepoAddButtonProps {
   error?: Error;
-  install: (name: string, url: string, authHeader: string, customCA: string) => Promise<boolean>;
+  install: (name: string, url: string, httpProxy: string, authHeader: string, customCA: string) => Promise<boolean>;
   redirectTo?: string;
   kubeappsNamespace: string;
 }
@@ -69,10 +69,10 @@ export class AppRepoAddButton extends React.Component<
   }
 
   private closeModal = async () => this.setState({ modalIsOpen: false });
-  private install = (name: string, url: string, authHeader: string, customCA: string) => {
+  private install = (name: string, url: string, httpProxy: string, authHeader: string, customCA: string) => {
     // Store last submitted name to show it in an error if needed
     this.setState({ lastSubmittedName: name });
-    return this.props.install(name, url, authHeader, customCA);
+    return this.props.install(name, url, httpProxy, authHeader, customCA);
   };
   private openModal = async () => this.setState({ modalIsOpen: true });
 }

@@ -4,13 +4,14 @@ import { Redirect } from "react-router";
 interface IAppRepoFormProps {
   message?: string;
   redirectTo?: string;
-  install: (name: string, url: string, authHeader: string, customCA: string) => Promise<boolean>;
+  install: (name: string, url: string,httpProxy: string, authHeader: string, customCA: string) => Promise<boolean>;
   onAfterInstall?: () => Promise<any>;
 }
 
 interface IAppRepoFormState {
   name: string;
   url: string;
+  httpProxy: string;
   authMethod: string;
   user: string;
   password: string;
@@ -33,6 +34,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     token: "",
     name: "",
     url: "",
+    httpProxy: "",
     customCA: "",
   };
 
@@ -66,6 +68,17 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 value={this.state.url}
                 onChange={this.handleURLChange}
                 required={true}
+              />
+            </div>
+            <div>
+              <label htmlFor="kubeapps-repo-httpProxy">PROXY (optional):</label>
+              <input
+                type="url"
+                id="kubeapps-repo-httpProxy"
+                placeholder="http://my_proxy:8080"
+                value={this.state.httpProxy}
+                onChange={this.handleProxyChange}
+                required={false}
               />
             </div>
             <div>
@@ -200,7 +213,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   private handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     const { install, onAfterInstall } = this.props;
-    const { name, url, authHeader, authMethod, token, user, password, customCA } = this.state;
+    const { name, url, httpProxy, authHeader, authMethod, token, user, password, customCA } = this.state;
     e.preventDefault();
     let finalHeader = "";
     switch (authMethod) {
@@ -214,7 +227,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
         finalHeader = `Bearer ${token}`;
         break;
     }
-    const installed = await install(name, url, finalHeader, customCA);
+    const installed = await install(name, url, httpProxy, finalHeader, customCA);
     if (installed && onAfterInstall) {
       await onAfterInstall();
     }
@@ -226,6 +239,9 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   private handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ url: e.target.value });
+  };
+  private handleProxyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ httpProxy: e.target.value });
   };
   private handleAuthHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ authHeader: e.target.value });

@@ -126,6 +126,7 @@ export const fetchRepos = (): ThunkAction<Promise<void>, IStoreState, null, AppR
 export const installRepo = (
   name: string,
   repoURL: string,
+  httpProxy: string,
   authHeader: string,
   customCA: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
@@ -166,7 +167,7 @@ export const installRepo = (
         }
       }
       dispatch(addRepo());
-      const apprepo = await AppRepository.create(name, namespace, repoURL, auth);
+      const apprepo = await AppRepository.create(name, namespace, repoURL, httpProxy, auth);
       dispatch(addedRepo(apprepo));
 
       if (authHeader.length || customCA.length) {
