@@ -207,6 +207,11 @@ func main() {
 		negroni.Wrap(http.StripPrefix(chartsvcPrefix, chartsvcProxy)),
 	))
 
+	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}/test").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(handler.WithParams(h.TestRelease)),
+	))
+
 	n := negroni.Classic()
 	n.UseHandler(r)
 
