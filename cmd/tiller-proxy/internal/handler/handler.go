@@ -223,6 +223,16 @@ func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, par
 	response.NewDataResponse(apps).Write(w)
 }
 
+// TestRelease in the namespace given as Param
+func (h *TillerProxy) TestRelease(w http.ResponseWriter, req *http.Request, params Params) {
+	testResult, err := h.ProxyClient.TestRelease(params["releaseName"], params["namespace"])
+	if err != nil {
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(testResult).Write(w)
+}
+
 // GetRelease returns the release info
 func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
