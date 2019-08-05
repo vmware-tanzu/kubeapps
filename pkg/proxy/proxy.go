@@ -343,6 +343,20 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 	return p.deleteRelease(name, namespace, purge)
 }
 
+// TestRelease runs tests for a release in a namespace
+func (p *Proxy) TestRelease(name, namespace string) (string, error) {
+	release, err := p.GetRelease(name, namespace)
+	if err != nil {
+		return "", fmt.Errorf("Unable to locate release: %v", err)
+	}
+	testResult, _ := p.helmClient.RunReleaseTest(release.GetName())
+	log.Println("Running Tests for ", name, " in namespace ", namespace)
+
+	val := <-testResult
+
+	return val.GetMsg(), nil
+}
+
 // extracted from https://github.com/helm/helm/blob/master/cmd/helm/helm.go#L227
 // prettyError unwraps or rewrites certain errors to make them more user-friendly.
 func prettyError(err error) error {
@@ -365,6 +379,7 @@ type TillerClient interface {
 	ResolveManifestFromRelease(releaseName string, revision int32) (string, error)
 	ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error)
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
+	TestRelease(relName, namespace string) (string, error)
 	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)
 	RollbackRelease(name, namespace string, revision int32) (*release.Release, error)
 	GetRelease(name, namespace string) (*release.Release, error)
