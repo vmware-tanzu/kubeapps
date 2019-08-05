@@ -17,6 +17,7 @@ limitations under the License.
 package proxy
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -345,16 +346,35 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 
 // TestRelease runs tests for a release in a namespace
 func (p *Proxy) TestRelease(name, namespace string) (string, error) {
+
+	// Validate that the release actually belongs to the namespace
 	release, err := p.GetRelease(name, namespace)
 	if err != nil {
 		return "", fmt.Errorf("Unable to locate release: %v", err)
 	}
-	testResult, _ := p.helmClient.RunReleaseTest(release.GetName())
+
+	// Request Tiller to run tests for the specified release
+	testResult, _ := p.helmClient.RunReleaseTest(release.GetName(), helm.ReleaseTestCleanup(true))
 	log.Println("Running Tests for ", name, " in namespace ", namespace)
 
-	val := <-testResult
+	// Parsing messages from Tiller into Json, see TestStatus
+	testStatus := TestStatus{}
+	for response := range testResult {
 
-	return val.GetMsg(), nil
+		// Sieving response messages from Tiller into three categories
+		message := response.GetMsg()
+		parts := strings.Split(message, ": ")
+		switch parts[0] {
+		case "RUNNING":
+			testStatus.Run = append(testStatus.Run, parts[1])
+		case "PASSED":
+			testStatus.Passed = append(testStatus.Passed, parts[1])
+		case "FAILED":
+			testStatus.Failed = append(testStatus.Failed, parts[1])
+		}
+	}
+	str, _ := json.Marshal(testStatus)
+	return string(str), nil
 }
 
 // extracted from https://github.com/helm/helm/blob/master/cmd/helm/helm.go#L227
@@ -370,6 +390,13 @@ func prettyError(err error) error {
 	}
 	// Else return the original error.
 	return err
+}
+
+// TestStatus represent information about tests for a release
+type TestStatus struct {
+	Run    []string `json:"run,omitempty"`
+	Passed []string `json:"passed,omitempty"`
+	Failed []string `json:"failed,omitempty"`
 }
 
 // TillerClient for exposed funcs
