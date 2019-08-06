@@ -37,7 +37,7 @@ To retrieve the token,
 ### On Linux/macOS:
 
 ```bash
-kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode
+kubectl get secret $(kubectl get serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o jsonpath='{.data.token}' | base64 --decode && echo
 ```
 
 ### On Windows:

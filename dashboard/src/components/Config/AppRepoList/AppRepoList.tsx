@@ -4,6 +4,7 @@ import { IAppRepository, IRBACRole } from "../../../shared/types";
 import ErrorSelector from "../../ErrorAlert/ErrorSelector";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoListItem } from "./AppRepoListItem";
+import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
 
 export interface IAppRepoListProps {
   errors: {
@@ -16,6 +17,7 @@ export interface IAppRepoListProps {
   fetchRepos: () => void;
   deleteRepo: (name: string) => Promise<boolean>;
   resyncRepo: (name: string) => void;
+  resyncAllRepos: (names: string[]) => void;
   install: (
     name: string,
     url: string,
@@ -67,7 +69,15 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
   }
 
   public render() {
-    const { errors, repos, install, deleteRepo, resyncRepo, kubeappsNamespace } = this.props;
+    const {
+      errors,
+      repos,
+      install,
+      deleteRepo,
+      resyncRepo,
+      resyncAllRepos,
+      kubeappsNamespace,
+    } = this.props;
     return (
       <div className="app-repo-list">
         <h1>App Repositories</h1>
@@ -96,6 +106,11 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
         <AppRepoAddButton
           error={errors.create}
           install={install}
+          kubeappsNamespace={kubeappsNamespace}
+        />
+        <AppRepoRefreshAllButton
+          resyncAllRepos={resyncAllRepos}
+          repos={repos}
           kubeappsNamespace={kubeappsNamespace}
         />
       </div>
