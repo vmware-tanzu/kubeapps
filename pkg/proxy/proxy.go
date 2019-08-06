@@ -363,6 +363,7 @@ func (p *Proxy) TestRelease(name, namespace string) (string, error) {
 
 		// Sieving response messages from Tiller into three categories
 		message := response.GetMsg()
+
 		parts := strings.Split(message, ": ")
 		switch parts[0] {
 		case "RUNNING":
@@ -371,10 +372,12 @@ func (p *Proxy) TestRelease(name, namespace string) (string, error) {
 			testStatus.Passed = append(testStatus.Passed, parts[1])
 		case "FAILED":
 			testStatus.Failed = append(testStatus.Failed, parts[1])
+		case "ERROR":
+			testStatus.Error = append(testStatus.Error, parts[1])
 		}
 	}
 	str, _ := json.Marshal(testStatus)
-	return string(str), nil
+	return string(str[:]), nil
 }
 
 // extracted from https://github.com/helm/helm/blob/master/cmd/helm/helm.go#L227
@@ -394,9 +397,17 @@ func prettyError(err error) error {
 
 // TestStatus represent information about tests for a release
 type TestStatus struct {
-	Run    []string `json:"run,omitempty"`
+	// List of run tests
+	Run []string `json:"run,omitempty"`
+
+	// List of tests that passed
 	Passed []string `json:"passed,omitempty"`
+
+	// List of tests that failed
 	Failed []string `json:"failed,omitempty"`
+
+	// List of tests that encountered an error
+	Error []string `json:"error,omitempty"`
 }
 
 // TillerClient for exposed funcs
