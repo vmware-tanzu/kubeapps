@@ -17,7 +17,6 @@ limitations under the License.
 package proxy
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -345,12 +344,12 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 }
 
 // TestRelease runs tests for a release in a namespace
-func (p *Proxy) TestRelease(name, namespace string) (string, error) {
+func (p *Proxy) TestRelease(name, namespace string) (*TestStatus, error) {
 
 	// Validate that the release actually belongs to the namespace
 	release, err := p.GetRelease(name, namespace)
 	if err != nil {
-		return "", fmt.Errorf("Unable to locate release: %v", err)
+		return nil, fmt.Errorf("Unable to locate release: %v", err)
 	}
 
 	// Request Tiller to run tests for the specified release
@@ -361,23 +360,15 @@ func (p *Proxy) TestRelease(name, namespace string) (string, error) {
 	testStatus := TestStatus{}
 	for response := range testResult {
 
-		// Sieving response messages from Tiller into three categories
+		// Sieving response messages from Tiller into categories depdening on their status
+
+		status := response.GetStatus().String()
 		message := response.GetMsg()
 
-		parts := strings.Split(message, ": ")
-		switch parts[0] {
-		case "RUNNING":
-			testStatus.Run = append(testStatus.Run, parts[1])
-		case "PASSED":
-			testStatus.Passed = append(testStatus.Passed, parts[1])
-		case "FAILED":
-			testStatus.Failed = append(testStatus.Failed, parts[1])
-		case "ERROR":
-			testStatus.Error = append(testStatus.Error, parts[1])
-		}
+		testStatus[status] = append(testStatus[status], message)
 	}
-	str, _ := json.Marshal(testStatus)
-	return string(str[:]), nil
+
+	return &testStatus, nil
 }
 
 // extracted from https://github.com/helm/helm/blob/master/cmd/helm/helm.go#L227
@@ -395,20 +386,10 @@ func prettyError(err error) error {
 	return err
 }
 
-// TestStatus represent information about tests for a release
-type TestStatus struct {
-	// List of run tests
-	Run []string `json:"run,omitempty"`
-
-	// List of tests that passed
-	Passed []string `json:"passed,omitempty"`
-
-	// List of tests that failed
-	Failed []string `json:"failed,omitempty"`
-
-	// List of tests that encountered an error
-	Error []string `json:"error,omitempty"`
-}
+// TestStatus is an alias for a mapping between a string to a list of strings
+// key is STATUS returned by Tiller
+// value is MESSAGE of status key
+type TestStatus = map[string][]string
 
 // TillerClient for exposed funcs
 type TillerClient interface {
@@ -417,7 +398,7 @@ type TillerClient interface {
 	ResolveManifestFromRelease(releaseName string, revision int32) (string, error)
 	ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error)
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
-	TestRelease(relName, namespace string) (string, error)
+	TestRelease(relName, namespace string) (*TestStatus, error)
 	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)
 	RollbackRelease(name, namespace string, revision int32) (*release.Release, error)
 	GetRelease(name, namespace string) (*release.Release, error)
