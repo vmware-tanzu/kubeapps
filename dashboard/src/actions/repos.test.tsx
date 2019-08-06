@@ -204,6 +204,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         authStruct,
+        {},
       );
     });
 
@@ -238,6 +239,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         authStruct,
+        {},
       );
     });
 
@@ -250,6 +252,27 @@ describe("installRepo", () => {
       const res = await store.dispatch(installRepoCMDAuth);
       expect(res).toBe(true);
     });
+
+    context("when a pod template is provided", () => {
+      const installRepoCMDPodTemplate = repoActions.installRepo(
+        "my-repo",
+        "http://foo.bar",
+        "",
+        "",
+        "foo: bar",
+      );
+
+      it("calls AppRepository create including a auth struct", async () => {
+        await store.dispatch(installRepoCMDPodTemplate);
+        expect(AppRepository.create).toHaveBeenCalledWith(
+          "my-repo",
+          "my-namespace",
+          "http://foo.bar",
+          {},
+          { foo: "bar" },
+        );
+      });
+    });
   });
 
   context("when authHeader and customCA are empty", () => {
@@ -259,6 +282,7 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        {},
         {},
       );
     });

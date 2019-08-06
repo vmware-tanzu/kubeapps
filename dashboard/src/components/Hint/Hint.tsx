@@ -5,7 +5,6 @@ import * as ReactTooltip from "react-tooltip";
 import "./Hint.css";
 
 interface IHintProps {
-  children?: React.ReactChildren | React.ReactNode | string;
   reactTooltipOpts?: any;
 }
 

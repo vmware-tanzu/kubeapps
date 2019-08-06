@@ -95,6 +95,31 @@ it("should install a repository with a bearer token", done => {
   }, 1);
 });
 
+it("should install a repository with a podSpecTemplate", done => {
+  const install = jest.fn(() => true);
+  const wrapper = mount(<AppRepoAddButton {...defaultProps} install={install} />);
+  ReactModal.setAppElement(document.createElement("div"));
+  wrapper.setState({ modalIsOpen: true });
+  wrapper.update();
+  wrapper.find(AppRepoForm).setState({
+    modalIsOpen: true,
+    authMethod: "bearer",
+    name: "my-repo",
+    url: "http://foo.bar",
+    syncJobPodTemplate: "foo: bar",
+  });
+
+  const button = wrapper.find(AppRepoForm).find(".button");
+  button.simulate("submit");
+
+  expect(install).toBeCalledWith("my-repo", "http://foo.bar", "Bearer ", "", "foo: bar");
+  // Wait for the Modal to be closed
+  setTimeout(() => {
+    expect(wrapper.state("modalIsOpen")).toBe(false);
+    done();
+  }, 1);
+});
+
 describe("render error", () => {
   it("renders a conflict error", () => {
     const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
