@@ -1,4 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
+import { APIBase } from "./Kube";
 import { definedNamespaces } from "./Namespace";
 import { IOwnerReference, ISecret } from "./types";
 
@@ -41,6 +42,6 @@ export default class Secret {
   }
 
   private static getLink(namespace: string, name?: string): string {
-    return `api/kube/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
+    return `${APIBase}/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
   }
 }

@@ -1,4 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
+import { APIBase } from "./Kube";
 import { ServiceCatalog } from "./ServiceCatalog";
 
 export interface IClusterServiceClass {
@@ -44,7 +45,7 @@ export class ClusterServiceClass {
   }
 
   private static getLink(namespace?: string, name?: string): string {
-    return `api/kube/apis/servicecatalog.k8s.io/v1beta1${
+    return `${APIBase}/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/clusterserviceclasses${name ? `/${name}` : ""}`;
   }

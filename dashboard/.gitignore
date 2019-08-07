@@ -18,6 +18,7 @@ src/**/*.css
 .env.test.local
 .env.production.local
 .vscode
+.devcontainer
 .idea
 
 npm-debug.log*
