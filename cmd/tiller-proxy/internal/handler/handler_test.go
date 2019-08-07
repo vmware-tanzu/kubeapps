@@ -445,6 +445,8 @@ func TestActions(t *testing.T) {
 			handler.ListReleases(response, req, test.Params)
 		case "listall":
 			handler.ListAllReleases(response, req)
+		case "test":
+			handler.TestRelease(response, req, test.Params)
 		default:
 			t.Errorf("Unexpected action %s", test.Action)
 		}
