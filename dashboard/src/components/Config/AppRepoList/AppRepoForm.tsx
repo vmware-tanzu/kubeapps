@@ -197,7 +197,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
             </div>
             <div style={{ marginBottom: "1em" }}>
               <label htmlFor="syncJobPodTemplate">Custom Sync Job Template (optional)</label>
-              <Hint reactTooltipOpts={{ delayHide: 1000 }}>
+              <Hint reactTooltipOpts={{ delayHide: 1000 }} id="syncJobHelp">
                 <span>
                   It's possible to modify the default sync job.
                   <br />

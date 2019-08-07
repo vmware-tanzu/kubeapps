@@ -3,7 +3,7 @@
 exports[`should render a Hint with additional props and children 1`] = `
 <Fragment>
   <a
-    data-for="syncJobHelp"
+    data-for="foobar"
     data-tip={true}
   >
     <HelpCircle
@@ -18,7 +18,7 @@ exports[`should render a Hint with additional props and children 1`] = `
     clickable={false}
     effect="solid"
     foo="bar"
-    id="syncJobHelp"
+    id="foobar"
     insecure={true}
     resizeHide={true}
     wrapper="div"

@@ -5,7 +5,7 @@ import Hint from ".";
 
 it("should render a Hint with additional props and children", () => {
   const wrapper = shallow(
-    <Hint reactTooltipOpts={{ foo: "bar" }}>
+    <Hint reactTooltipOpts={{ foo: "bar" }} id="foobar">
       <p>this is a test!</p>
     </Hint>,
   );

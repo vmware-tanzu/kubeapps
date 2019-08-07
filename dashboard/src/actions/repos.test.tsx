@@ -259,7 +259,11 @@ describe("installRepo", () => {
         "http://foo.bar",
         "",
         "",
-        "foo: bar",
+        "spec:\n" +
+          "  containers:\n" +
+          "    - env:\n" +
+          "      - name: FOO\n" +
+          "        value: BAR\n",
       );
 
       it("calls AppRepository create including a auth struct", async () => {
@@ -269,7 +273,7 @@ describe("installRepo", () => {
           "my-namespace",
           "http://foo.bar",
           {},
-          { foo: "bar" },
+          { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
         );
       });
     });
