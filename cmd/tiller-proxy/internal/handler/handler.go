@@ -215,6 +215,7 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 			return
 		}
 		userAuth := req.Context().Value(userKey).(auth.Checker)
+		// Using "upgrade" action since the concept is the same
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
