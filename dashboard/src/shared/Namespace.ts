@@ -1,4 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
+import { APIBase } from "./Kube";
 
 import { IK8sList, IResource } from "./types";
 
@@ -8,7 +9,7 @@ export default class Namespace {
     return data;
   }
 
-  private static APIBase: string = "api/kube";
+  private static APIBase: string = APIBase;
   private static APIEndpoint: string = `${Namespace.APIBase}/api/v1/namespaces`;
 }
 

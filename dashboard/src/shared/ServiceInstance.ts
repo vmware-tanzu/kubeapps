@@ -1,4 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
+import { APIBase } from "./Kube";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 import { IStatus } from "./types";
 
@@ -65,7 +66,7 @@ export class ServiceInstance {
   }
 
   private static getLink(namespace?: string, name?: string): string {
-    return `api/kube/apis/servicecatalog.k8s.io/v1beta1${
+    return `${APIBase}/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/serviceinstances${name ? `/${name}` : ""}`;
   }

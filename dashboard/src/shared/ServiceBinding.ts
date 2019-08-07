@@ -1,4 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
+import { APIBase } from "./Kube";
 import { definedNamespaces } from "./Namespace";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 
@@ -101,12 +102,12 @@ export class ServiceBinding {
   }
 
   private static getLink(namespace?: string, name?: string): string {
-    return `api/kube/apis/servicecatalog.k8s.io/v1beta1${
+    return `${APIBase}/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/servicebindings${name ? `/${name}` : ""}`;
   }
 
   private static secretEndpoint(namespace: string = definedNamespaces.default): string {
-    return `api/kube/api/v1/namespaces/${namespace}/secrets/`;
+    return `${APIBase}/api/v1/namespaces/${namespace}/secrets/`;
   }
 }

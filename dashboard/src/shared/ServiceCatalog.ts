@@ -2,6 +2,7 @@ import { JSONSchema6 } from "json-schema";
 import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { IClusterServiceClass } from "./ClusterServiceClass";
+import { APIBase } from "./Kube";
 import { IServiceInstance } from "./ServiceInstance";
 import { IK8sList, IStatus } from "./types";
 
@@ -19,7 +20,7 @@ export class ServiceCatalog {
   }
 
   public static async deprovisionInstance(instance: IServiceInstance) {
-    const { data } = await axiosWithAuth.delete("api/kube" + instance.metadata.selfLink);
+    const { data } = await axiosWithAuth.delete(`${APIBase}${instance.metadata.selfLink}`);
     return data;
   }
 
@@ -56,7 +57,7 @@ export class ServiceCatalog {
     return json.items;
   }
 
-  private static endpoint: string = "api/kube/apis/servicecatalog.k8s.io/v1beta1";
+  private static endpoint: string = `${APIBase}/apis/servicecatalog.k8s.io/v1beta1`;
 }
 export interface IK8sApiListResponse<T> {
   kind: string;

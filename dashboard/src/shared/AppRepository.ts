@@ -1,4 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
+import { APIBase } from "./Kube";
 import { IAppRepository, IAppRepositoryList } from "./types";
 
 export class AppRepository {
@@ -39,7 +40,7 @@ export class AppRepository {
     return data;
   }
 
-  private static APIBase: string = "api/kube";
+  private static APIBase: string = APIBase;
   private static APIEndpoint: string = `${AppRepository.APIBase}/apis/kubeapps.com/v1alpha1`;
   private static getResourceLink(namespace?: string): string {
     return `${AppRepository.APIEndpoint}/${
