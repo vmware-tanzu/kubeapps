@@ -275,7 +275,6 @@ func (p *Proxy) RollbackRelease(name, namespace string, version int32) (*release
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("Rolling back release %s", name)
 	res, err := p.helmClient.RollbackRelease(
 		name,
 		helm.RollbackVersion(version),
