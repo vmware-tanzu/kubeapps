@@ -82,6 +82,15 @@ func (f *FakeProxy) UpdateRelease(name, namespace string, values string, ch *cha
 	return nil, fmt.Errorf("Release %s not found", name)
 }
 
+func (f *FakeProxy) RollbackRelease(name, namespace string, version int32) (*release.Release, error) {
+	for _, r := range f.Releases {
+		if r.Name == name {
+			return &r, nil
+		}
+	}
+	return nil, fmt.Errorf("Release %s not found", name)
+}
+
 func (f *FakeProxy) GetRelease(name, namespace string) (*release.Release, error) {
 	for _, r := range f.Releases {
 		if r.Name == name {

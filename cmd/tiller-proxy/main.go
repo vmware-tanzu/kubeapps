@@ -159,6 +159,10 @@ func main() {
 		authGate,
 		negroni.Wrap(handler.WithParams(h.UpgradeRelease)),
 	))
+	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases/{releaseName}/versions/{releaseVersion}").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(handler.WithParams(h.RollbackRelease)),
+	))
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(handler.WithParams(h.DeleteRelease)),
