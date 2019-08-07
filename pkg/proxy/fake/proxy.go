@@ -123,3 +123,17 @@ func (f *FakeProxy) DeleteRelease(name, namespace string, purge bool) error {
 	}
 	return fmt.Errorf("Release %s not found", name)
 }
+
+func (f *FakeProxy) TestRelease(name, namespace string) (*proxy.TestStatus, error) {
+
+	_, err := f.GetRelease(name, namespace)
+
+	if err != nil {
+		return nil, fmt.Errorf("Unable to locate release: %v", err)
+	}
+
+	m := make(map[string][]string)
+	m["UNKNOWN"] = []string{"No Tests Found"}
+
+	return &m, nil
+}
