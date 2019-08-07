@@ -23,7 +23,7 @@ const SecretItem: React.SFC<ISecretItemRow> = props => {
   return (
     <React.Fragment>
       <td className="col-3">{resource.metadata.name}</td>
-      <td className="col-2">{resource.type}</td>
+      <td className="col-2 SecretType">{resource.type}</td>
       {isEmpty(resource.data) ? (
         <td className="col-7">
           <span>This Secret is empty</span>
