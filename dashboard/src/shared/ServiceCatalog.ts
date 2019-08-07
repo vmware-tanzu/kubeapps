@@ -1,8 +1,8 @@
 import { JSONSchema6 } from "json-schema";
 import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
-import { APIBase } from "./Kube";
 import { IClusterServiceClass } from "./ClusterServiceClass";
+import { APIBase } from "./Kube";
 import { IServiceInstance } from "./ServiceInstance";
 import { IK8sList, IStatus } from "./types";
 
