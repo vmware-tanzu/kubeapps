@@ -93,9 +93,15 @@ describe("App", () => {
     });
     it("throws an error if returns an error 404", async () => {
       moxios.stubRequest(/.*/, { status: 404 });
-      expect(App.delete("foo", "default", false)).rejects.toThrow(
-        "Request failed with status code 404",
-      );
+      let errored = false;
+      try {
+        await App.delete("foo", "default", false);
+      } catch (e) {
+        errored = true;
+        expect(e.message).toBe("Request failed with status code 404");
+      } finally {
+        expect(errored).toBe(true);
+      }
     });
   });
 });

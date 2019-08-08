@@ -25,7 +25,13 @@ export class AppRepository {
     return data;
   }
 
-  public static async create(name: string, namespace: string, url: string, auth: any) {
+  public static async create(
+    name: string,
+    namespace: string,
+    url: string,
+    auth: any,
+    syncJobPodTemplate: any,
+  ) {
     const { data } = await axiosWithAuth.post<IAppRepository>(
       AppRepository.getResourceLink(namespace),
       {
@@ -34,7 +40,7 @@ export class AppRepository {
         metadata: {
           name,
         },
-        spec: { auth, type: "helm", url },
+        spec: { auth, type: "helm", url, syncJobPodTemplate },
       },
     );
     return data;

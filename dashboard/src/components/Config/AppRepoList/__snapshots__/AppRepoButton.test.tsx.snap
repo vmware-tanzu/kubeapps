@@ -220,10 +220,10 @@ exports[`should open a modal with the repository form 1`] = `
                           Custom CA Certificate (optional):
                         </span>
                         <pre
-                          class="CertContainer"
+                          class="CodeContainer"
                         >
                           <textarea
-                            class="CertContent"
+                            class="Code"
                             rows="4"
                             placeholder="-----BEGIN CERTIFICATE-----
                           ...
@@ -231,6 +231,80 @@ exports[`should open a modal with the repository form 1`] = `
                           />
                         </pre>
                       </label>
+                    </div>
+                    <div
+                      style="margin-bottom: 1em;"
+                    >
+                      <label
+                        for="syncJobPodTemplate"
+                      >
+                        Custom Sync Job Template (optional)
+                      </label>
+                      <a
+                        data-tip="true"
+                        data-for="syncJobHelp"
+                        currentitem="false"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="#5F6369"
+                          stroke="white"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="icon"
+                        >
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="10"
+                          />
+                          <path
+                            d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"
+                          />
+                          <line
+                            x1="12"
+                            y1="17"
+                            x2="12"
+                            y2="17"
+                          />
+                        </svg>
+                      </a>
+                      <div
+                        class="__react_component_tooltip place-top type-dark "
+                        id="syncJobHelp"
+                        data-id="tooltip"
+                      >
+                        <span>
+                          It's possible to modify the default sync job.
+                          <br />
+                          More info
+                          <a
+                            target="_blank"
+                            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
+                          >
+                            here
+                          </a>
+                        </span>
+                      </div>
+                      <pre
+                        class="CodeContainer"
+                      >
+                        <textarea
+                          id="syncJobPodTemplate"
+                          class="Code"
+                          rows="4"
+                          placeholder="spec:
+                          containers:
+                          - env:
+                            - name: FOO
+                              value: BAR
+                        "
+                        />
+                      </pre>
                     </div>
                     <div>
                       <button
