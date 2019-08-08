@@ -254,20 +254,23 @@ describe("installRepo", () => {
     });
 
     context("when a pod template is provided", () => {
-      const installRepoCMDPodTemplate = repoActions.installRepo(
-        "my-repo",
-        "http://foo.bar",
-        "",
-        "",
-        "spec:\n" +
-          "  containers:\n" +
-          "    - env:\n" +
-          "      - name: FOO\n" +
-          "        value: BAR\n",
-      );
+      const safeYAMLTemplate = `
+spec:
+  containers:
+    - env:
+      - name: FOO
+        value: BAR
+`;
 
-      it("calls AppRepository create including a auth struct", async () => {
-        await store.dispatch(installRepoCMDPodTemplate);
+      it("calls AppRepository create including pod template", async () => {
+        await store.dispatch(repoActions.installRepo(
+          "my-repo",
+          "http://foo.bar",
+          "",
+          "",
+          safeYAMLTemplate,
+        ));
+
         expect(AppRepository.create).toHaveBeenCalledWith(
           "my-repo",
           "my-namespace",
@@ -275,6 +278,20 @@ describe("installRepo", () => {
           {},
           { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
         );
+      });
+
+      // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
+      const unsafeYAMLTemplate = '"toString": !<tag:yaml.org,2002:js/function> "function (){very_evil_thing();}"';
+
+      it("does not call AppRepository create with an unsafe pod template", async () => {
+        await store.dispatch(repoActions.installRepo(
+          "my-repo",
+          "http://foo.bar",
+          "",
+          "",
+          unsafeYAMLTemplate,
+        ));
+        expect(AppRepository.create).not.toHaveBeenCalled();
       });
     });
   });

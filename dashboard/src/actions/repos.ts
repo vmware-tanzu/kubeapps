@@ -169,7 +169,7 @@ export const installRepo = (
       }
       let syncJobPodTemplateObj = {};
       if (syncJobPodTemplate.length) {
-        syncJobPodTemplateObj = yaml.load(syncJobPodTemplate);
+        syncJobPodTemplateObj = yaml.safeLoad(syncJobPodTemplate);
       }
       dispatch(addRepo());
       const apprepo = await AppRepository.create(
