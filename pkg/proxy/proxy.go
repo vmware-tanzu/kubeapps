@@ -353,15 +353,15 @@ func (p *Proxy) TestRelease(name, namespace string) (*TestStatus, error) {
 	}
 
 	// Request Tiller to run tests for the specified release
-	testResult, _ := p.helmClient.RunReleaseTest(release.GetName(), helm.ReleaseTestCleanup(true))
+	// error channel (second return value) is ignored for now since all relevant "errors"
+	// are channeled into "testReleaseResponseChannel"
+	testReleaseResponseChannel, _ := p.helmClient.RunReleaseTest(release.GetName(), helm.ReleaseTestCleanup(true))
 	log.Println("Running Tests for ", name, " in namespace ", namespace)
 
-	// Parsing messages from Tiller into Json, see TestStatus
+	// Parsing messages from Tiller, see TestStatus
 	testStatus := TestStatus{}
-	for response := range testResult {
-
+	for response := range testReleaseResponseChannel {
 		// Sieving response messages from Tiller into categories depdening on their status
-
 		status := response.GetStatus().String()
 		message := response.GetMsg()
 
@@ -387,8 +387,8 @@ func prettyError(err error) error {
 }
 
 // TestStatus is an alias for a mapping between a string to a list of strings
-// key is STATUS returned by Tiller
-// value is MESSAGE of status key
+// key is "status" returned by Tiller
+// value is "message" of status key
 type TestStatus = map[string][]string
 
 // TillerClient for exposed funcs
