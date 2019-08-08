@@ -575,17 +575,17 @@ func TestTestRelease(t *testing.T) {
 		namespace string
 	}
 
-	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
-		Version: "1.0.0",
-		Icon:    "icon.png",
-		Name:    "wordpress",
-	}}
-
 	// create and populate scenarios to test against
 	scenarios := make(map[ScenarioParameter]ScenarioResult)
 	scenarios[ScenarioParameter{"foo", "my_ns"}] = ScenarioResult{&map[string][]string{}, nil}
 	scenarios[ScenarioParameter{"foo", "other_ns"}] = ScenarioResult{nil, errors.New("Unable to locate release: Release \"foo\" not found in namespace \"other_ns\"")}
 	scenarios[ScenarioParameter{"bar", "my_ns"}] = ScenarioResult{nil, errors.New("Unable to locate release: release: \"bar\" not found")}
+
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
 
 	// instantiating a fake proxy
 	proxy := newFakeProxy([]AppOverview{app})
