@@ -266,8 +266,8 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 	return res.GetRelease(), nil
 }
 
-// RollbackRelease upgrades a tiller release
-func (p *Proxy) RollbackRelease(name, namespace string, version int32) (*release.Release, error) {
+// RollbackRelease rolls back to a specific revision
+func (p *Proxy) RollbackRelease(name, namespace string, revision int32) (*release.Release, error) {
 	lock(name)
 	defer unlock(name)
 	// Check if the release already exists
@@ -277,7 +277,7 @@ func (p *Proxy) RollbackRelease(name, namespace string, version int32) (*release
 	}
 	res, err := p.helmClient.RollbackRelease(
 		name,
-		helm.RollbackVersion(version),
+		helm.RollbackVersion(revision),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to rollback the release: %v", err)
@@ -330,7 +330,7 @@ type TillerClient interface {
 	ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error)
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
 	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)
-	RollbackRelease(name, namespace string, version int32) (*release.Release, error)
+	RollbackRelease(name, namespace string, revision int32) (*release.Release, error)
 	GetRelease(name, namespace string) (*release.Release, error)
 	DeleteRelease(name, namespace string, purge bool) error
 }

@@ -216,9 +216,9 @@ func (h *TillerProxy) OperateRelease(w http.ResponseWriter, req *http.Request, p
 // RollbackRelease performs an action over a release
 func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, params Params) {
 	log.Printf("Rolling back %s", params["releaseName"])
-	version := req.FormValue("version")
-	if version == "" {
-		response.NewErrorResponse(http.StatusUnprocessableEntity, "Missing version to rollback in request").Write(w)
+	revision := req.FormValue("revision")
+	if revision == "" {
+		response.NewErrorResponse(http.StatusUnprocessableEntity, "Missing revision to rollback in request").Write(w)
 		return
 	}
 	if !h.DisableAuth {
@@ -244,17 +244,17 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 			return
 		}
 	}
-	versionInt, err := strconv.ParseInt(version, 10, 64)
+	revisionInt, err := strconv.ParseInt(revision, 10, 64)
 	if err != nil {
 		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 		return
 	}
-	rel, err := h.ProxyClient.RollbackRelease(params["releaseName"], params["namespace"], int32(versionInt))
+	rel, err := h.ProxyClient.RollbackRelease(params["releaseName"], params["namespace"], int32(revisionInt))
 	if err != nil {
 		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
 		return
 	}
-	log.Printf("Rollback release for %s to %d", rel.Name, versionInt)
+	log.Printf("Rollback release for %s to %d", rel.Name, revisionInt)
 	h.logStatus(rel.Name)
 	response.NewDataResponse(*rel).Write(w)
 }

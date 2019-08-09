@@ -388,7 +388,7 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foo",	"version": "1.0.0"}`,
-			RequestQuery: "?version=1",
+			RequestQuery: "?revision=1",
 			Action:       "rollback",
 			Params:       map[string]string{"namespace": "default", "releaseName": "foo"},
 			// Expected result
@@ -406,7 +406,7 @@ func TestActions(t *testing.T) {
 			ForbiddenActions: []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			RequestQuery: "?version=1",
+			RequestQuery: "?revision=1",
 			Action:       "rollback",
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
@@ -416,7 +416,7 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Rollback without a version",
+			Description:      "Rollback without a revision",
 			ExistingReleases: []release.Release{},
 			DisableAuth:      true,
 			ForbiddenActions: []auth.Action{},
