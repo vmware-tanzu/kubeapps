@@ -1,0 +1,31 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a Hint with additional props and children 1`] = `
+<Fragment>
+  <a
+    data-for="foobar"
+    data-tip={true}
+  >
+    <HelpCircle
+      className="icon"
+      color="white"
+      fill="#5F6369"
+      size="24"
+    />
+  </a>
+  <ReactTooltip
+    className="extraClass"
+    clickable={false}
+    effect="solid"
+    foo="bar"
+    id="foobar"
+    insecure={true}
+    resizeHide={true}
+    wrapper="div"
+  >
+    <p>
+      this is a test!
+    </p>
+  </ReactTooltip>
+</Fragment>
+`;

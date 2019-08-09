@@ -182,13 +182,14 @@ describe("fetchRepos", () => {
 });
 
 describe("installRepo", () => {
-  const installRepoCMD = repoActions.installRepo("my-repo", "http://foo.bar", "", "");
+  const installRepoCMD = repoActions.installRepo("my-repo", "http://foo.bar", "", "", "");
 
   context("when authHeader provided", () => {
     const installRepoCMDAuth = repoActions.installRepo(
       "my-repo",
       "http://foo.bar",
       "Bearer: abc",
+      "",
       "",
     );
 
@@ -203,6 +204,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         authStruct,
+        {},
       );
     });
 
@@ -223,6 +225,7 @@ describe("installRepo", () => {
       "http://foo.bar",
       "",
       "This is a cert!",
+      "",
     );
 
     const authStruct = {
@@ -236,6 +239,7 @@ describe("installRepo", () => {
         "my-namespace",
         "http://foo.bar",
         authStruct,
+        {},
       );
     });
 
@@ -248,6 +252,48 @@ describe("installRepo", () => {
       const res = await store.dispatch(installRepoCMDAuth);
       expect(res).toBe(true);
     });
+
+    context("when a pod template is provided", () => {
+      const safeYAMLTemplate = `
+spec:
+  containers:
+    - env:
+      - name: FOO
+        value: BAR
+`;
+
+      it("calls AppRepository create including pod template", async () => {
+        await store.dispatch(repoActions.installRepo(
+          "my-repo",
+          "http://foo.bar",
+          "",
+          "",
+          safeYAMLTemplate,
+        ));
+
+        expect(AppRepository.create).toHaveBeenCalledWith(
+          "my-repo",
+          "my-namespace",
+          "http://foo.bar",
+          {},
+          { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
+        );
+      });
+
+      // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
+      const unsafeYAMLTemplate = '"toString": !<tag:yaml.org,2002:js/function> "function (){very_evil_thing();}"';
+
+      it("does not call AppRepository create with an unsafe pod template", async () => {
+        await store.dispatch(repoActions.installRepo(
+          "my-repo",
+          "http://foo.bar",
+          "",
+          "",
+          unsafeYAMLTemplate,
+        ));
+        expect(AppRepository.create).not.toHaveBeenCalled();
+      });
+    });
   });
 
   context("when authHeader and customCA are empty", () => {
@@ -257,6 +303,7 @@ describe("installRepo", () => {
         "my-repo",
         "my-namespace",
         "http://foo.bar",
+        {},
         {},
       );
     });

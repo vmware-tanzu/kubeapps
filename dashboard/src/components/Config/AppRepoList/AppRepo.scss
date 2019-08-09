@@ -1,14 +1,15 @@
-.CertContainer {
+.CodeContainer {
   margin: 0;
   padding: 0;
   margin-left: 0.2em;
   background: inherit;
 }
 
-.CertContent {
+.Code {
   // Copied from <code> style
   font-family: "SFMono-Regular", Consolas, Liberation Mono, Menlo, Courier, monospace;
   font-size: 0.8em;
+  min-height: 90px;
 }
 
 .secondary-input {
