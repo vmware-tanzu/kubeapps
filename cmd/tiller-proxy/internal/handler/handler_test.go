@@ -378,6 +378,58 @@ func TestActions(t *testing.T) {
 			},
 			ResponseBody: `{"data":[{"releaseName":"foobar","version":"","namespace":"default","status":"DEPLOYED","chart":"","chartMetadata":{}}]}`,
 		},
+		{
+			// Scenario params
+			Description: "Rolls back a release",
+			ExistingReleases: []release.Release{
+				release.Release{Name: "foo", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DEPLOYED}}},
+			},
+			DisableAuth:      false,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody: `{"chartName": "foo", "releaseName": "foo",	"version": "1.0.0"}`,
+			RequestQuery: "?revision=1",
+			Action:       "rollback",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foo"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				release.Release{Name: "foo", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DEPLOYED}}},
+			},
+			ResponseBody: `{"data":{"name":"foo","info":{"status":{"code":1}},"namespace":"default"}}`,
+		},
+		{
+			// Scenario params
+			Description:      "Rollsback a missing release",
+			ExistingReleases: []release.Release{},
+			DisableAuth:      true,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestQuery: "?revision=1",
+			Action:       "rollback",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        404,
+			RemainingReleases: []release.Release{},
+			ResponseBody:      "",
+		},
+		{
+			// Scenario params
+			Description:      "Rollback without a revision",
+			ExistingReleases: []release.Release{},
+			DisableAuth:      true,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestQuery: "",
+			Action:       "rollback",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        422,
+			RemainingReleases: []release.Release{},
+			ResponseBody:      "",
+		},
 	}
 	for _, test := range tests {
 		// Prepare environment
@@ -410,6 +462,8 @@ func TestActions(t *testing.T) {
 			handler.DeleteRelease(response, req, test.Params)
 		case "get":
 			handler.GetRelease(response, req, test.Params)
+		case "rollback":
+			handler.RollbackRelease(response, req, test.Params)
 		case "list":
 			handler.ListReleases(response, req, test.Params)
 		case "listall":

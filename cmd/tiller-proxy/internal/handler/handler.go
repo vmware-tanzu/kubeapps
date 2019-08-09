@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -195,6 +196,65 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 		return
 	}
 	log.Printf("Installed release %s", rel.Name)
+	h.logStatus(rel.Name)
+	response.NewDataResponse(*rel).Write(w)
+}
+
+// OperateRelease decides which method to call depending in the "action" query param
+func (h *TillerProxy) OperateRelease(w http.ResponseWriter, req *http.Request, params Params) {
+	switch req.FormValue("action") {
+	case "upgrade":
+		h.UpgradeRelease(w, req, params)
+	case "rollback":
+		h.RollbackRelease(w, req, params)
+	default:
+		// By default, for maintaining compatibility, we call upgrade
+		h.UpgradeRelease(w, req, params)
+	}
+}
+
+// RollbackRelease performs an action over a release
+func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, params Params) {
+	log.Printf("Rolling back %s", params["releaseName"])
+	revision := req.FormValue("revision")
+	if revision == "" {
+		response.NewErrorResponse(http.StatusUnprocessableEntity, "Missing revision to rollback in request").Write(w)
+		return
+	}
+	if !h.DisableAuth {
+		chartDetails, ch, err := getChart(req, h.ChartClient)
+		if err != nil {
+			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			return
+		}
+		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
+		if err != nil {
+			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			return
+		}
+		userAuth := req.Context().Value(userKey).(auth.Checker)
+		// Using "upgrade" action since the concept is the same
+		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
+		if err != nil {
+			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+			return
+		}
+		if len(forbiddenActions) > 0 {
+			returnForbiddenActions(forbiddenActions, w)
+			return
+		}
+	}
+	revisionInt, err := strconv.ParseInt(revision, 10, 64)
+	if err != nil {
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		return
+	}
+	rel, err := h.ProxyClient.RollbackRelease(params["releaseName"], params["namespace"], int32(revisionInt))
+	if err != nil {
+		response.NewErrorResponse(errorCodeWithDefault(err, http.StatusUnprocessableEntity), err.Error()).Write(w)
+		return
+	}
+	log.Printf("Rollback release for %s to %d", rel.Name, revisionInt)
 	h.logStatus(rel.Name)
 	response.NewDataResponse(*rel).Write(w)
 }

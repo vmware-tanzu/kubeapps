@@ -353,6 +353,47 @@ func TestUpdateMissingHelmRelease(t *testing.T) {
 	}
 }
 
+func TestRollbackRelease(t *testing.T) {
+	ns := "myns"
+	rs := "foo"
+	version := "v1.0.0"
+
+	app := AppOverview{rs, version, ns, "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	proxy := newFakeProxy([]AppOverview{app})
+
+	_, err := proxy.RollbackRelease(rs, ns, 1)
+	if err != nil {
+		t.Errorf("Update should not fail %v", err)
+	}
+}
+
+func TestRollbackMissingRelease(t *testing.T) {
+	ns := "myns"
+	rs := "foo"
+	version := "v1.0.0"
+
+	ns2 := "other_ns"
+	rs2 := "not_foo"
+	app := AppOverview{rs2, version, ns2, "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	proxy := newFakeProxy([]AppOverview{app})
+
+	_, err := proxy.RollbackRelease(rs, ns, 1)
+	if err == nil {
+		t.Error("Update should fail, there is not a release in the namespace specified")
+	}
+	if !strings.Contains(err.Error(), fmt.Sprintf("release: \"%s\" not found", rs)) {
+		t.Errorf("Unexpected error %v", err)
+	}
+}
+
 func TestGetHelmRelease(t *testing.T) {
 	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
 		Version: "1.0.0",
