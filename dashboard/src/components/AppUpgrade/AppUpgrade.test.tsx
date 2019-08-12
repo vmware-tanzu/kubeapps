@@ -7,8 +7,8 @@ import itBehavesLike from "../../shared/specs";
 import { ForbiddenError, IAppRepository, IChartState, IRelease } from "../../shared/types";
 import { ErrorSelector, MessageAlert, PermissionsErrorAlert } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
+import SelectRepoForm from "../SelectRepoForm";
 import UpgradeForm from "../UpgradeForm";
-import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 import AppUpgrade from "./AppUpgrade";
 
 const defaultProps = {
