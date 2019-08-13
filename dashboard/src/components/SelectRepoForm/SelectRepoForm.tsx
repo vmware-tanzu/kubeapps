@@ -3,8 +3,6 @@ import * as React from "react";
 import { IAppRepository } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper";
 
-import "brace/mode/yaml";
-import "brace/theme/xcode";
 import { ErrorSelector } from "../ErrorAlert";
 
 interface ISelectRepoFormProps {
