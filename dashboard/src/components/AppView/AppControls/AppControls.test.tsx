@@ -3,6 +3,7 @@ import context from "jest-plugin-context";
 import * as React from "react";
 import * as ReactModal from "react-modal";
 import { Redirect } from "react-router";
+import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
 import { hapi } from "../../../shared/hapi/release";
 import itBehavesLike from "../../../shared/specs";
 import ConfirmDialog from "../../ConfirmDialog";
@@ -175,5 +176,36 @@ context("when the application is up to date", () => {
     const wrapper = shallow(<AppControls app={app} deleteApp={jest.fn()} push={jest.fn()} />);
 
     expect(wrapper.find(UpgradeButton).prop("updateVersion")).toBe(undefined);
+  });
+});
+
+context("Rollback button", () => {
+  it("should show the RollbackButton when there is more than one revision", () => {
+    const props = {
+      app: new hapi.release.Release({
+        name: "name",
+        namespace: "my-ns",
+        version: 2,
+        info: {},
+      }),
+      deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
+    };
+    const wrapper = shallow(<AppControls {...props} push={jest.fn()} />);
+    const button = wrapper.find(RollbackButtonContainer);
+    expect(button).toExist();
+  });
+  it("should not show the RollbackButton when there is only one revision", () => {
+    const props = {
+      app: new hapi.release.Release({
+        name: "name",
+        namespace: "my-ns",
+        version: 1,
+        info: {},
+      }),
+      deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
+    };
+    const wrapper = shallow(<AppControls {...props} push={jest.fn()} />);
+    const button = wrapper.find(RollbackButtonContainer);
+    expect(button).not.toExist();
   });
 });

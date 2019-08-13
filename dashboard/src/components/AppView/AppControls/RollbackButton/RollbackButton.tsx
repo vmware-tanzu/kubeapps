@@ -40,7 +40,8 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
   };
 
   public componentWillReceiveProps(nextProps: IRollbackButtonProps) {
-    if (nextProps.app) {
+    // Store the chart name and version in the state for convenience
+    if (nextProps.app && !this.state.chartName && !this.state.chartVersion) {
       if (
         nextProps.app.chart &&
         nextProps.app.chart.metadata &&
@@ -72,38 +73,45 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
               transform: "translate(-50%, -50%)",
             },
           }}
-          isOpen={this.state.modalIsOpen && !this.props.chart}
+          isOpen={this.state.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          <SelectRepoForm
-            repos={this.props.repos}
-            repo={this.props.repo}
-            kubeappsNamespace={this.props.kubeappsNamespace}
-            checkChart={this.checkChart}
-            error={this.props.error}
-            chartName={this.state.chartName}
-          />
+          {/* If we were not able to resolve the chart, ask for the repository */}
+          {this.props.chart ? (
+            <RollbackDialog
+              onConfirm={this.handleRollback}
+              loading={this.state.loading}
+              closeModal={this.closeModal}
+              revision={this.props.app.version}
+            />
+          ) : (
+            <SelectRepoForm
+              repos={this.props.repos}
+              repo={this.props.repo}
+              kubeappsNamespace={this.props.kubeappsNamespace}
+              checkChart={this.getChart}
+              error={this.props.error}
+              chartName={this.state.chartName}
+            />
+          )}
         </Modal>
-        <RollbackDialog
-          onConfirm={this.handleRollback}
-          modalIsOpen={this.state.modalIsOpen && !!this.props.chart}
-          loading={this.state.loading}
-          closeModal={this.closeModal}
-          revision={this.props.app.version}
-        />
         <button className="button" onClick={this.openModal}>
           Rollback
         </button>
       </React.Fragment>
     );
   }
+
   public openModal = () => {
     const { repos, fetchRepositories, chart, app, getChartVersion } = this.props;
+
     if (!chart && app.updateInfo) {
+      // If there is updateInfo we can retrieve the chart
       const chartID = `${app.updateInfo.repository.name}/${this.state.chartName}`;
       getChartVersion(chartID, this.state.chartVersion);
     } else {
+      // In other case we need to ask for the repository so we fecth the available ones
       if (repos.length === 0) {
         fetchRepositories();
       }
@@ -136,7 +144,7 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
     };
   };
 
-  private checkChart = async (repo: string, chartName: string) => {
+  private getChart = async (repo: string, chartName: string) => {
     const exists = await this.props.checkChart(repo, chartName);
     if (exists) {
       const chartID = `${repo}/${chartName}`;

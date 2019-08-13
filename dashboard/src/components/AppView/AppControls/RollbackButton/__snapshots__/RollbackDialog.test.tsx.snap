@@ -1,0 +1,64 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render the form if it is not loading 1`] = `
+<div>
+  <div
+    className="margin-b-normal"
+  >
+     Are you sure you want to rollback this release? 
+  </div>
+  <label>
+    Select the revision to rollback (current: 
+    2
+    )
+  </label>
+  <select
+    className="margin-t-normal"
+    onChange={[Function]}
+  >
+    <option
+      key="1"
+      value={1}
+    >
+      1
+    </option>
+  </select>
+  <div
+    className="margin-t-normal button-row"
+  >
+    <button
+      className="button"
+      onClick={[Function]}
+      type="button"
+    >
+      Cancel
+    </button>
+    <button
+      className="button button-primary button-danger"
+      type="submit"
+    >
+      Rollback
+    </button>
+  </div>
+</div>
+`;
+
+exports[`should render the loading view 1`] = `
+<div
+  className="row confirm-dialog-loading-info"
+>
+  <div
+    className="col-8 loading-legend"
+  >
+    Loading, please wait
+  </div>
+  <div
+    className="col-4"
+  >
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    />
+  </div>
+</div>
+`;
