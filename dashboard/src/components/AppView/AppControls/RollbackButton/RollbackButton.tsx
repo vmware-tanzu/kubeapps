@@ -137,8 +137,9 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
         this.props.app.namespace,
         (this.props.app.config && this.props.app.config.raw) || "",
       );
-      this.setState({ loading: false });
+      // If there is an error it's catched at AppView level
       if (success) {
+        this.setState({ loading: false });
         this.closeModal();
       }
     };
