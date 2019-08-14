@@ -32,32 +32,33 @@ interface IRollbackButtonState {
 }
 
 class RollbackButton extends React.Component<IRollbackButtonProps> {
+  public static getDerivedStateFromProps(props: IRollbackButtonProps) {
+    // Store the chart name and version in the state for convenience
+    if (props.app) {
+      if (
+        props.app.chart &&
+        props.app.chart.metadata &&
+        props.app.chart.metadata.name &&
+        props.app.chart.metadata.version
+      ) {
+        return {
+          chartName: props.app.chart.metadata.name,
+          chartVersion: props.app.chart.metadata.version,
+        };
+      } else {
+        // This should not be reached, unexpected error
+        throw new Error("The current app is missing its chart information");
+      }
+    }
+    return null;
+  }
+
   public state: IRollbackButtonState = {
     modalIsOpen: false,
     loading: false,
     chartName: "",
     chartVersion: "",
   };
-
-  public componentWillReceiveProps(nextProps: IRollbackButtonProps) {
-    // Store the chart name and version in the state for convenience
-    if (nextProps.app && !this.state.chartName && !this.state.chartVersion) {
-      if (
-        nextProps.app.chart &&
-        nextProps.app.chart.metadata &&
-        nextProps.app.chart.metadata.name &&
-        nextProps.app.chart.metadata.version
-      ) {
-        this.setState({
-          chartName: nextProps.app.chart.metadata.name,
-          chartVersion: nextProps.app.chart.metadata.version,
-        });
-      } else {
-        // This should not be reached, unexpected error
-        throw new Error("The current app is missing its chart information");
-      }
-    }
-  }
 
   public render() {
     return (

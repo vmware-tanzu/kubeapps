@@ -8,7 +8,14 @@ import SelectRepoForm from "../../../../components/SelectRepoForm";
 import RollbackDialog from "./RollbackDialog";
 
 const defaultProps = {
-  app: {} as IRelease,
+  app: {
+    chart: {
+      metadata: {
+        name: "foo",
+        version: "1.0.0",
+      },
+    },
+  } as IRelease,
   rollbackApp: jest.fn(),
   getChartVersion: jest.fn(),
   loading: false,
@@ -21,16 +28,6 @@ const defaultProps = {
 
 it("stores the chart name and version in the state", () => {
   const wrapper = shallow(<RollbackButton {...defaultProps} />);
-  wrapper.setProps({
-    app: {
-      chart: {
-        metadata: {
-          name: "foo",
-          version: "1.0.0",
-        },
-      },
-    } as IRelease,
-  });
 
   expect(wrapper.state()).toMatchObject({ chartName: "foo", chartVersion: "1.0.0" });
 });
@@ -69,6 +66,12 @@ context("when opening the Modal", () => {
     it("if the app has updateInfo, fetch the chart", () => {
       const getChartVersion = jest.fn();
       const app = {
+        chart: {
+          metadata: {
+            name: "bar",
+            version: "1.0.0",
+          },
+        },
         updateInfo: {
           repository: {
             name: "foo",
@@ -83,7 +86,6 @@ context("when opening the Modal", () => {
           app={app}
         />,
       );
-      wrapper.setState({ chartName: "bar", chartVersion: "1.0.0" });
 
       const button = wrapper.find(".button");
       expect(button).toExist();
@@ -129,7 +131,17 @@ context("when opening the Modal", () => {
     it("should perform the rollback", () => {
       const rollbackApp = jest.fn();
       const chart = { id: "foo" } as IChartVersion;
-      const app = { name: "bar", namespace: "default", config: { raw: "this: that" } } as IRelease;
+      const app = {
+        name: "bar",
+        namespace: "default",
+        config: { raw: "this: that" },
+        chart: {
+          metadata: {
+            name: "foo",
+            version: "1.0.0",
+          },
+        },
+      } as IRelease;
       const wrapper = shallow(
         <RollbackButton {...defaultProps} rollbackApp={rollbackApp} chart={chart} app={app} />,
       );
