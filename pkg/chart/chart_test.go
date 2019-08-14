@@ -22,9 +22,10 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"testing"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
 
 	"github.com/arschles/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -99,41 +100,145 @@ func TestFindChartInRepoIndex(t *testing.T) {
 }
 
 func TestParseDetails(t *testing.T) {
-	data := `{
-		"repoUrl": "foo.com",
-		"chartName": "test",
-		"releaseName": "foo",
-		"version": "1.0.0",
-		"values": "foo: bar",
-		"auth": {
-			"header": {
-				"secretKeyRef": {
-					"key": "bar"
-				}
-			}
-		}
-	}`
-	expectedDetails := Details{
-		RepoURL:     "foo.com",
-		ChartName:   "test",
-		ReleaseName: "foo",
-		Version:     "1.0.0",
-		Values:      "foo: bar",
-		Auth: Auth{
-			Header: &AuthHeader{
-				SecretKeyRef: corev1.SecretKeySelector{
-					Key: "bar",
+	testCases := []struct {
+		name     string
+		data     string
+		expected *Details
+		err      bool
+	}{
+		{
+			name: "parses repoUrl and auth",
+			data: `{
+	        	"repoUrl": "foo.com",
+	        	"chartName": "test",
+	        	"releaseName": "foo",
+	        	"version": "1.0.0",
+	        	"values": "foo: bar",
+	        	"auth": {
+	        		"header": {
+	        			"secretKeyRef": {
+	        				"key": "bar"
+	        			}
+	        		}
+	        	}
+	        }`,
+			expected: &Details{
+				RepoURL:     "foo.com",
+				ChartName:   "test",
+				ReleaseName: "foo",
+				Version:     "1.0.0",
+				Values:      "foo: bar",
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							Key: "bar",
+						},
+					},
 				},
 			},
 		},
+		{
+			name: "parses app repo resource",
+			data: `{
+				"appRepositoryResourceName": "my-chart-repo",
+	        	"chartName": "test",
+	        	"releaseName": "foo",
+	        	"version": "1.0.0",
+	        	"values": "foo: bar"
+	        }`,
+			expected: &Details{
+				AppRepositoryResourceName: "my-chart-repo",
+				ChartName:                 "test",
+				ReleaseName:               "foo",
+				Version:                   "1.0.0",
+				Values:                    "foo: bar",
+			},
+		},
+		{
+			name: "error returned if both resource and repo url specified",
+			data: `{
+	        	"repoUrl": "foo.com",
+				"appRepositoryResourceName": "my-chart-repo",
+	        	"chartName": "test",
+	        	"releaseName": "foo",
+	        	"version": "1.0.0",
+	        	"values": "foo: bar"
+			}`,
+			err: true,
+		},
+		{
+			name: "error returned if both resource and auth header specified",
+			data: `{
+				"appRepositoryResourceName": "my-chart-repo",
+	        	"chartName": "test",
+	        	"releaseName": "foo",
+	        	"version": "1.0.0",
+	        	"values": "foo: bar",
+	        	"auth": {
+	        		"header": {
+	        			"secretKeyRef": {
+	        				"key": "bar"
+	        			}
+	        		}
+	        	}
+			}`,
+			err: true,
+		},
+		{
+			name: "error returned if both resource and auth CA specified",
+			data: `{
+				"appRepositoryResourceName": "my-chart-repo",
+	        	"chartName": "test",
+	        	"releaseName": "foo",
+	        	"version": "1.0.0",
+	        	"values": "foo: bar",
+	        	"auth": {
+	        		"customCA": {
+	        			"secretKeyRef": {
+	        				"key": "bar"
+	        			}
+	        		}
+	        	}
+			}`,
+			err: true,
+		},
+		{
+			name: "specifying neither repoUrl nor app repo resource is valid",
+			data: `{
+	        	"chartName": "test",
+	        	"releaseName": "foo",
+	        	"version": "1.0.0",
+	        	"values": "foo: bar"
+			}`,
+			expected: &Details{
+				ChartName:   "test",
+				ReleaseName: "foo",
+				Version:     "1.0.0",
+				Values:      "foo: bar",
+			},
+		},
 	}
-	ch := Chart{}
-	details, err := ch.ParseDetails([]byte(data))
-	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
-	}
-	if !reflect.DeepEqual(expectedDetails, *details) {
-		t.Errorf("%v != %v", expectedDetails, *details)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ch := Chart{}
+			details, err := ch.ParseDetails([]byte(tc.data))
+
+			if tc.err {
+				if err == nil {
+					t.Fatalf("expected error")
+				} else {
+					return
+				}
+			}
+
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if !cmp.Equal(tc.expected, details) {
+				t.Errorf(cmp.Diff(tc.expected, details))
+			}
+		})
 	}
 }
 

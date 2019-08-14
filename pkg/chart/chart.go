@@ -61,6 +61,11 @@ func init() {
 type Details struct {
 	// RepoURL is the URL of the repository. Defaults to stable repo.
 	RepoURL string `json:"repoUrl,omitempty"`
+	// AppRepositoryResourceURL specifies an app repository resource to use
+	// for the request.
+	// TODO(absoludity): Intended to supercede RepoURL and Auth below. Remove
+	// RepoURL and Auth once #1110 complete.
+	AppRepositoryResourceName string `json:"appRepositoryResourceName,omitempty"`
 	// ChartName is the name of the chart within the repo.
 	ChartName string `json:"chartName"`
 	// ReleaseName is the Name of the release given to Tiller.
@@ -268,6 +273,10 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 	err := json.Unmarshal(data, details)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse request body: %v", err)
+	}
+
+	if (details.RepoURL != "" || details.Auth.Header != nil || details.Auth.CustomCA != nil) && details.AppRepositoryResourceName != "" {
+		return nil, fmt.Errorf("repoUrl or auth specified together with appRepositoryResourceName")
 	}
 	return details, nil
 }
