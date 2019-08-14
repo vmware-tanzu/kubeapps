@@ -61,7 +61,7 @@ func init() {
 type Details struct {
 	// RepoURL is the URL of the repository. Defaults to stable repo.
 	RepoURL string `json:"repoUrl,omitempty"`
-	// AppRepositoryResourceURL specifies an app repository resource to use
+	// AppRepositoryResourceName specifies an app repository resource to use
 	// for the request.
 	// TODO(absoludity): Intended to supercede RepoURL and Auth below. Remove
 	// RepoURL and Auth once #1110 complete.
