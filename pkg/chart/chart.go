@@ -309,7 +309,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 		namespace := os.Getenv("POD_NAMESPACE")
 		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(customCA.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
-			log.Fatalf("Unable to read the given CA cert: %v", err)
+			return nil, fmt.Errorf("unable to read secret %q: %v", customCA.SecretKeyRef.Name, err)
 		}
 
 		// Append our cert to the system pool

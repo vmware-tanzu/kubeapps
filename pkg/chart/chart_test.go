@@ -311,6 +311,22 @@ func TestInitNetClient(t *testing.T) {
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
 		},
 		{
+			name: "errors if secret for custom CA cannot be found",
+			details: &Details{
+				Auth: Auth{
+					CustomCA: &CustomCA{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"other-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			customCAData:  pem_cert,
+			errorExpected: true,
+		},
+		{
 			name: "errors if custom CA cannot be found in secret",
 			details: &Details{
 				Auth: Auth{
