@@ -278,7 +278,7 @@ describe("rollbackApp", () => {
     "my-version" as any,
     "my-release",
     1,
-    definedNamespaces.all,
+    definedNamespaces.default,
     "my-values",
   );
 
@@ -295,7 +295,7 @@ describe("rollbackApp", () => {
     expect(store.getActions()).toEqual(expectedActions);
     expect(App.rollback).toHaveBeenCalledWith(
       "my-release",
-      definedNamespaces.all,
+      definedNamespaces.default,
       1,
       "kubeapps-ns",
       "my-version" as any,

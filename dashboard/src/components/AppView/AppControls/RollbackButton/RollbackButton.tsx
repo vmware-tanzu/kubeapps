@@ -13,7 +13,7 @@ interface IRollbackButtonProps {
     namespace: string,
     values?: string,
   ) => Promise<boolean>;
-  chart?: IChartVersion;
+  chartVersion?: IChartVersion;
   getChartVersion: (id: string, version: string) => Promise<void>;
   loading: boolean;
   repos: IAppRepository[];
@@ -32,32 +32,19 @@ interface IRollbackButtonState {
 }
 
 class RollbackButton extends React.Component<IRollbackButtonProps> {
-  public static getDerivedStateFromProps(props: IRollbackButtonProps) {
-    // Store the chart name and version in the state for convenience
-    if (props.app) {
-      if (
-        props.app.chart &&
-        props.app.chart.metadata &&
-        props.app.chart.metadata.name &&
-        props.app.chart.metadata.version
-      ) {
-        return {
-          chartName: props.app.chart.metadata.name,
-          chartVersion: props.app.chart.metadata.version,
-        };
-      } else {
-        // This should not be reached, unexpected error
-        throw new Error("The current app is missing its chart information");
-      }
-    }
-    return null;
-  }
-
   public state: IRollbackButtonState = {
     modalIsOpen: false,
     loading: false,
-    chartName: "",
-    chartVersion: "",
+    chartName:
+      (this.props.app.chart &&
+        this.props.app.chart.metadata &&
+        this.props.app.chart.metadata.name) ||
+      "",
+    chartVersion:
+      (this.props.app.chart &&
+        this.props.app.chart.metadata &&
+        this.props.app.chart.metadata.version) ||
+      "",
   };
 
   public render() {
@@ -79,12 +66,12 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
           contentLabel="Modal"
         >
           {/* If we were not able to resolve the chart, ask for the repository */}
-          {this.props.chart ? (
+          {this.props.chartVersion ? (
             <RollbackDialog
               onConfirm={this.handleRollback}
               loading={this.state.loading}
               closeModal={this.closeModal}
-              revision={this.props.app.version}
+              currentRevision={this.props.app.version}
             />
           ) : (
             <SelectRepoForm
@@ -105,9 +92,16 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
   }
 
   public openModal = () => {
-    const { repos, fetchRepositories, chart, app, getChartVersion } = this.props;
+    // Only when the rollback button is clicked do we ensure the required state is available, fetching
+    // the chart version or repositories, if the repo is not known.
+    const { repos, fetchRepositories, chartVersion, app, getChartVersion } = this.props;
 
-    if (!chart && app.updateInfo) {
+    if (!this.state.chartName || !this.state.chartVersion) {
+      // This should not be reached, unexpected error
+      throw new Error("The current app is missing its chart information");
+    }
+
+    if (!chartVersion && app.updateInfo) {
       // If there is updateInfo we can retrieve the chart
       const chartID = `${app.updateInfo.repository.name}/${this.state.chartName}`;
       getChartVersion(chartID, this.state.chartVersion);
@@ -128,22 +122,20 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
     });
   };
 
-  private handleRollback = (revision: number) => {
-    return async () => {
-      this.setState({ loading: true });
-      const success = await this.props.rollbackApp(
-        this.props.chart!, // Chart should be defined to reach this point
-        this.props.app.name,
-        revision,
-        this.props.app.namespace,
-        (this.props.app.config && this.props.app.config.raw) || "",
-      );
-      // If there is an error it's catched at AppView level
-      if (success) {
-        this.setState({ loading: false });
-        this.closeModal();
-      }
-    };
+  private handleRollback = async (revision: number) => {
+    this.setState({ loading: true });
+    const success = await this.props.rollbackApp(
+      this.props.chartVersion!, // Chart should be defined to reach this point
+      this.props.app.name,
+      revision,
+      this.props.app.namespace,
+      (this.props.app.config && this.props.app.config.raw) || "",
+    );
+    // If there is an error it's catched at AppView level
+    if (success) {
+      this.setState({ loading: false });
+      this.closeModal();
+    }
   };
 
   private getChart = async (repo: string, chartName: string) => {

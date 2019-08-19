@@ -17,7 +17,7 @@ function mapStateToProps({ apps, charts, repos, config }: IStoreState, props: IB
     error: apps.error || repos.errors.fetch,
     namespace: props.namespace,
     releaseName: props.releaseName,
-    chart: charts.selected.version,
+    chartVersion: charts.selected.version,
     loading: charts.isFetching || apps.isFetching || repos.isFetching,
     repo: repos.repo,
     repoError: repos.errors.fetch,

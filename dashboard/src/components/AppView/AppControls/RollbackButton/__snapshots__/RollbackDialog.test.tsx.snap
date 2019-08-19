@@ -2,13 +2,8 @@
 
 exports[`should render the form if it is not loading 1`] = `
 <div>
-  <div
-    className="margin-b-normal"
-  >
-     Are you sure you want to rollback this release? 
-  </div>
   <label>
-    Select the revision to rollback (current: 
+    Select the revision to which you want to rollback (current: 
     2
     )
   </label>
@@ -35,6 +30,7 @@ exports[`should render the form if it is not loading 1`] = `
     </button>
     <button
       className="button button-primary button-danger"
+      onClick={[Function]}
       type="submit"
     >
       Rollback

@@ -5,7 +5,7 @@ import RollbackDialog from "./RollbackDialog";
 
 const defaultProps = {
   loading: false,
-  revision: 2,
+  currentRevision: 2,
   onConfirm: jest.fn(),
   closeModal: jest.fn(),
 };
@@ -26,6 +26,9 @@ it("should render the form if it is not loading", () => {
 it("should submit the current revision", () => {
   const onConfirm = jest.fn();
   const wrapper = shallow(<RollbackDialog {...defaultProps} onConfirm={onConfirm} />);
-  wrapper.setState({ revision: 4 });
-  expect(onConfirm).toBeCalledWith(4);
+  wrapper.setState({ revision: 1 });
+  const submit = wrapper.find(".button-danger");
+  expect(submit).toExist();
+  submit.simulate("click");
+  expect(onConfirm).toBeCalledWith(1);
 });

@@ -5,24 +5,24 @@ import "./RollbackDialog.css";
 
 interface IRollbackDialogProps {
   loading: boolean;
-  revision: number;
-  onConfirm: (revision: number) => () => Promise<any>;
+  currentRevision: number;
+  onConfirm: (revision: number) => Promise<any>;
   closeModal: () => Promise<any>;
 }
 
 interface IRollbackDialogState {
-  revision: number;
+  targetRevision: number;
 }
 
 class RollbackDialog extends React.Component<IRollbackDialogProps, IRollbackDialogState> {
   public state: IRollbackDialogState = {
-    revision: this.props.revision - 1,
+    targetRevision: this.props.currentRevision - 1,
   };
 
   public render() {
     const options = [];
     // Use as options the number of versions without the latest
-    for (let i = this.props.revision - 1; i > 0; i--) {
+    for (let i = this.props.currentRevision - 1; i > 0; i--) {
       options.push(i);
     }
     return this.props.loading === true ? (
@@ -34,8 +34,9 @@ class RollbackDialog extends React.Component<IRollbackDialogProps, IRollbackDial
       </div>
     ) : (
       <div>
-        <div className="margin-b-normal"> Are you sure you want to rollback this release? </div>
-        <label>Select the revision to rollback (current: {this.props.revision})</label>
+        <label>
+          Select the revision to which you want to rollback (current: {this.props.currentRevision})
+        </label>
         <select className="margin-t-normal" onChange={this.selectRevision}>
           {options.map(o => (
             <option key={o} value={o}>
@@ -50,7 +51,7 @@ class RollbackDialog extends React.Component<IRollbackDialogProps, IRollbackDial
           <button
             className="button button-primary button-danger"
             type="submit"
-            onClick={this.props.onConfirm(this.state.revision)}
+            onClick={this.onConfirm}
           >
             Rollback
           </button>
@@ -60,7 +61,11 @@ class RollbackDialog extends React.Component<IRollbackDialogProps, IRollbackDial
   }
 
   private selectRevision = (e: React.FormEvent<HTMLSelectElement>) => {
-    this.setState({ revision: Number(e.currentTarget.value) });
+    this.setState({ targetRevision: Number(e.currentTarget.value) });
+  };
+
+  private onConfirm = () => {
+    this.props.onConfirm(this.state.targetRevision);
   };
 }
 

@@ -1,4 +1,4 @@
-import { shallow, ShallowWrapper } from "enzyme";
+import { mount, shallow, ShallowWrapper } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 import * as ReactModal from "react-modal";
@@ -41,7 +41,7 @@ function openModal(wrapper: ShallowWrapper) {
 context("when opening the Modal", () => {
   context("when there is no info about the chart", () => {
     it("should render the SelectRepoForm", () => {
-      const wrapper = shallow(<RollbackButton {...defaultProps} chart={undefined} />);
+      const wrapper = shallow(<RollbackButton {...defaultProps} chartVersion={undefined} />);
       openModal(wrapper);
 
       expect(wrapper.find(SelectRepoForm)).toExist();
@@ -53,7 +53,7 @@ context("when opening the Modal", () => {
       const wrapper = shallow(
         <RollbackButton
           {...defaultProps}
-          chart={undefined}
+          chartVersion={undefined}
           fetchRepositories={fetchRepositories}
         />,
       );
@@ -78,10 +78,10 @@ context("when opening the Modal", () => {
           },
         },
       } as IRelease;
-      const wrapper = shallow(
+      const wrapper = mount(
         <RollbackButton
           {...defaultProps}
-          chart={undefined}
+          chartVersion={undefined}
           getChartVersion={getChartVersion}
           app={app}
         />,
@@ -99,7 +99,7 @@ context("when opening the Modal", () => {
       const wrapper = shallow(
         <RollbackButton
           {...defaultProps}
-          chart={undefined}
+          chartVersion={undefined}
           checkChart={checkChart}
           getChartVersion={getChartVersion}
         />,
@@ -121,14 +121,16 @@ context("when opening the Modal", () => {
 
   context("when there is info about the chart", () => {
     it("should render the RollbackDialog", () => {
-      const wrapper = shallow(<RollbackButton {...defaultProps} chart={{} as IChartVersion} />);
+      const wrapper = shallow(
+        <RollbackButton {...defaultProps} chartVersion={{} as IChartVersion} />,
+      );
       openModal(wrapper);
 
       expect(wrapper.find(SelectRepoForm)).not.toExist();
       expect(wrapper.find(RollbackDialog)).toExist();
     });
 
-    it("should perform the rollback", () => {
+    it("should perform the rollback", async () => {
       const rollbackApp = jest.fn();
       const chart = { id: "foo" } as IChartVersion;
       const app = {
@@ -143,15 +145,19 @@ context("when opening the Modal", () => {
         },
       } as IRelease;
       const wrapper = shallow(
-        <RollbackButton {...defaultProps} rollbackApp={rollbackApp} chart={chart} app={app} />,
+        <RollbackButton
+          {...defaultProps}
+          rollbackApp={rollbackApp}
+          chartVersion={chart}
+          app={app}
+        />,
       );
       openModal(wrapper);
 
       const dialog = wrapper.find(RollbackDialog);
       expect(dialog).toExist();
-      const onConfirm = dialog.prop("onConfirm") as (revision: number) => () => Promise<any>;
-      const handleRollback = onConfirm(1);
-      handleRollback();
+      const onConfirm = dialog.prop("onConfirm") as (revision: number) => Promise<any>;
+      await onConfirm(1);
       expect(rollbackApp).toBeCalledWith(chart, app.name, 1, app.namespace, app.config!.raw);
     });
   });
