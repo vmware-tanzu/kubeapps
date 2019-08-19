@@ -127,7 +127,7 @@ func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *
 	if err != nil {
 		return nil, nil, err
 	}
-	netClient, err := cu.InitNetClient(chartDetails.Auth.CustomCA)
+	netClient, err := cu.InitNetClient(chartDetails)
 	if err != nil {
 		return nil, nil, err
 	}
