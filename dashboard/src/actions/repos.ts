@@ -206,7 +206,7 @@ export const installRepo = (
 export function checkChart(
   repo: string,
   chartName: string,
-): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async (dispatch, getState) => {
     const {
       config: { namespace },
@@ -216,10 +216,12 @@ export function checkChart(
     try {
       await axios.get(url.api.charts.listVersions(`${repo}/${chartName}`));
       dispatch(receiveRepo(appRepository));
+      return true;
     } catch (e) {
       dispatch(
         errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
+      return false;
     }
   };
 }

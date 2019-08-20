@@ -3,6 +3,7 @@ import * as React from "react";
 import { Redirect } from "react-router";
 
 import { IRelease } from "shared/types";
+import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
 import ConfirmDialog from "../../ConfirmDialog";
 import LoadingWrapper from "../../LoadingWrapper";
 import "./AppControls.css";
@@ -44,12 +45,18 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
       <div className="AppControls">
         {/* If the app has been deleted hide the upgrade button */}
         {!deleted && (
-          <UpgradeButton
-            newVersion={app.updateInfo && !app.updateInfo.upToDate}
-            releaseName={name}
-            releaseNamespace={namespace}
-            push={push}
-          />
+          <React.Fragment>
+            <UpgradeButton
+              newVersion={app.updateInfo && !app.updateInfo.upToDate}
+              releaseName={name}
+              releaseNamespace={namespace}
+              push={push}
+            />
+            {/* We only show the rollback button if there are versions to rollback */}
+            {app.version > 1 && (
+              <RollbackButtonContainer releaseName={name} namespace={namespace} />
+            )}
+          </React.Fragment>
         )}
         <button className="button button-danger" onClick={this.openModel}>
           {deleted ? "Purge" : "Delete"}

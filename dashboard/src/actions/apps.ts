@@ -257,3 +257,25 @@ export function upgradeApp(
     }
   };
 }
+
+export function rollbackApp(
+  chartVersion: IChartVersion,
+  releaseName: string,
+  revision: number,
+  namespace: string,
+  values: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
+  return async (dispatch, getState) => {
+    try {
+      const {
+        config: { namespace: kubeappsNamespace },
+      } = getState();
+      await App.rollback(releaseName, namespace, revision, kubeappsNamespace, chartVersion, values);
+      dispatch(getAppWithUpdateInfo(releaseName, namespace));
+      return true;
+    } catch (e) {
+      dispatch(errorApps(e));
+      return false;
+    }
+  };
+}

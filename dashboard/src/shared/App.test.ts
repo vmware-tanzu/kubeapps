@@ -1,7 +1,8 @@
 import * as moxios from "moxios";
 import { App, TILLER_PROXY_ROOT_URL } from "./App";
+import { AppRepository } from "./AppRepository";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IAppOverview } from "./types";
+import { IAppOverview, IChartVersion } from "./types";
 
 describe("App", () => {
   beforeEach(() => {
@@ -10,6 +11,7 @@ describe("App", () => {
   });
   afterEach(() => {
     moxios.uninstall(axiosWithAuth as any);
+    jest.resetAllMocks();
   });
   describe("getResourceURL", () => {
     [
@@ -102,6 +104,30 @@ describe("App", () => {
       } finally {
         expect(errored).toBe(true);
       }
+    });
+  });
+
+  describe("rollback", () => {
+    it("should rollback an application", async () => {
+      AppRepository.get = jest.fn().mockReturnValue({ spec: { auth: {} } });
+      axiosWithAuth.put = jest.fn().mockReturnValue({ data: "ok" });
+      const c = {
+        attributes: { version: "1.0.0" },
+        relationships: { chart: { data: { name: "foo", repo: { name: "bar", url: "test.com" } } } },
+      } as IChartVersion;
+      expect(await App.rollback("foo", "default", 1, "kubeapps", c, "foo: bar")).toBe("ok");
+      expect(axiosWithAuth.put).toBeCalledWith(
+        "api/tiller-deploy/v1/namespaces/default/releases/foo",
+        {
+          auth: {},
+          chartName: "foo",
+          releaseName: "foo",
+          repoUrl: "test.com",
+          values: "foo: bar",
+          version: "1.0.0",
+        },
+        { params: { action: "rollback", revision: 1 } },
+      );
     });
   });
 });

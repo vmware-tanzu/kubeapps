@@ -11,8 +11,8 @@ import {
 } from "../../shared/types";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
+import SelectRepoForm from "../SelectRepoForm";
 import UpgradeForm from "../UpgradeForm";
-import SelectRepoForm from "../UpgradeForm/SelectRepoForm";
 
 interface IAppUpgradeProps {
   app: IRelease;
