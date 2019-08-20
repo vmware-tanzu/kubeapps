@@ -409,9 +409,13 @@ type fakeHTTPClient struct {
 	chartURLs []string
 	index     *repo.IndexFile
 	userAgent string
+	// TODO(absoludity): perhaps switch to use httptest instead of our own fake?
+	requests []*http.Request
 }
 
 func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
+	// Record the request for later test assertions.
+	f.requests = append(f.requests, h)
 	if f.userAgent != "" && h.Header.Get("User-Agent") != f.userAgent {
 		return nil, fmt.Errorf("Wrong user agent: %s", h.Header.Get("User-Agent"))
 	}
@@ -427,8 +431,6 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 	}
 	for _, chartURL := range f.chartURLs {
 		if h.URL.String() == chartURL {
-			// Simulate download time
-			time.Sleep(100 * time.Millisecond)
 			// Fake chart response
 			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte{}))}, nil
 		}
@@ -453,9 +455,22 @@ func newHTTPClient(charts []Details, userAgent string) HTTPClient {
 	}
 	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
 	return &clientWithDefaultUserAgent{
-		client:    &fakeHTTPClient{repoURLs, chartURLs, index, userAgent},
+		client:    &fakeHTTPClient{repoURLs, chartURLs, index, userAgent, nil},
 		userAgent: userAgent,
 	}
+}
+
+// getFakeClientRequests returns the requests which were issued to the fake test client.
+func getFakeClientRequests(t *testing.T, c HTTPClient) []*http.Request {
+	clientWithDefaultUA, ok := c.(*clientWithDefaultUserAgent)
+	if !ok {
+		t.Fatalf("client was not a clientWithDefaultUA")
+	}
+	fakeClient, ok := clientWithDefaultUA.client.(*fakeHTTPClient)
+	if !ok {
+		t.Fatalf("client was not a fakeHTTPClient")
+	}
+	return fakeClient.requests
 }
 
 func TestGetChart(t *testing.T) {
@@ -465,43 +480,58 @@ func TestGetChart(t *testing.T) {
 		ReleaseName: "foo",
 		Version:     "1.0.0",
 	}
-	httpClient := newHTTPClient([]Details{target}, "")
-	kubeClient := fake.NewSimpleClientset()
-	chUtils := Chart{
-		kubeClient: kubeClient,
-		load:       fakeLoadChart,
-	}
-	ch, err := chUtils.GetChart(&target, httpClient)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	if ch == nil {
-		t.Errorf("It should return a Chart")
-	}
-}
-
-func TestGetChartWithCustomUserAgent(t *testing.T) {
-	target := Details{
-		RepoURL:     "http://foo.com/",
-		ChartName:   "test",
-		ReleaseName: "foo",
-		Version:     "1.0.0",
+	testCases := []struct {
+		name      string
+		userAgent string
+	}{
+		{
+			name:      "GetChart without user agent",
+			userAgent: "",
+		},
+		{
+			name:      "GetChart with user agent",
+			userAgent: "tiller-proxy/devel",
+		},
 	}
 
-	httpClient := newHTTPClient([]Details{target}, "tiller-proxy/devel")
-	kubeClient := fake.NewSimpleClientset()
-	chUtils := Chart{
-		kubeClient: kubeClient,
-		load:       fakeLoadChart,
-		userAgent:  "tiller-proxy/devel",
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			httpClient := newHTTPClient([]Details{target}, "")
+			kubeClient := fake.NewSimpleClientset()
+			chUtils := Chart{
+				kubeClient: kubeClient,
+				load:       fakeLoadChart,
+				userAgent:  tc.userAgent,
+			}
+			ch, err := chUtils.GetChart(&target, httpClient)
 
-	ch, err := chUtils.GetChart(&target, httpClient)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	if ch == nil {
-		t.Errorf("It should return a Chart")
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			// Currently tests return an empty chart object.
+			if got, want := ch, &(chart.Chart{}); !cmp.Equal(got, want) {
+				t.Errorf("got: %v, want: %v", got, want)
+			}
+
+			requests := getFakeClientRequests(t, httpClient)
+			// We expect one request for the index and one for the chart.
+			if got, want := len(requests), 2; got != want {
+				t.Fatalf("got: %d, want %d", got, want)
+			}
+
+			for i, url := range []string{
+				target.RepoURL + "index.yaml",
+				fmt.Sprintf("%s%s-%s.tgz", target.RepoURL, target.ChartName, target.Version),
+			} {
+				if got, want := requests[i].URL.String(), url; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
+				if got, want := requests[i].Header.Get("User-Agent"), tc.userAgent; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
+			}
+
+		})
 	}
 }
 
