@@ -313,22 +313,6 @@ func TestInitNetClient(t *testing.T) {
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
 		},
 		{
-			name: "authorization header added when present in auth",
-			details: &Details{
-				Auth: Auth{
-					Header: &AuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"custom-secret-name"},
-							"custom-secret-key",
-							nil,
-						},
-					},
-				},
-			},
-			secretData:       authHeaderSecret,
-			numCertsExpected: len(systemCertPool.Subjects()),
-		},
-		{
 			name: "errors if secret for custom CA cannot be found",
 			details: &Details{
 				Auth: Auth{
@@ -373,7 +357,39 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			secretData:    "not valid data",
+			secretData:    "not a valid cert",
+			errorExpected: true,
+		},
+		{
+			name: "authorization header added when present in auth",
+			details: &Details{
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"custom-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			secretData:       authHeaderSecret,
+			numCertsExpected: len(systemCertPool.Subjects()),
+		},
+		{
+			name: "errors if auth secret cannot be found",
+			details: &Details{
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"other-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			secretData:    authHeaderSecret,
 			errorExpected: true,
 		},
 	}
