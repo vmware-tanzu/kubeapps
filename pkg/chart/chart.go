@@ -281,16 +281,22 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
-// clientWithDefaultUserAgent implements chart.HTTPClient interface
-// and includes an override of the Do method which injects an User-Agent
-type clientWithDefaultUserAgent struct {
-	client    HTTPClient
-	userAgent string
+// clientWithDefaultHeaders implements chart.HTTPClient interface
+// and includes an override of the Do method which injects our default
+// headers - User-Agent and Authorization (when present)
+type clientWithDefaultHeaders struct {
+	client         HTTPClient
+	defaultHeaders http.Header
 }
 
 // Do HTTP request
-func (c *clientWithDefaultUserAgent) Do(req *http.Request) (*http.Response, error) {
-	req.Header.Set("User-Agent", c.userAgent)
+func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error) {
+	for k, v := range c.defaultHeaders {
+		// Only add the default header if it's not already set in the request.
+		if _, ok := req.Header[k]; !ok {
+			req.Header[k] = v
+		}
+	}
 	return c.client.Do(req)
 }
 
@@ -323,7 +329,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 	}
 
 	// Return Transport for testing purposes
-	return &clientWithDefaultUserAgent{
+	return &clientWithDefaultHeaders{
 		client: &http.Client{
 			Timeout: time.Second * defaultTimeoutSeconds,
 			Transport: &http.Transport{
@@ -333,7 +339,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 				},
 			},
 		},
-		userAgent: c.userAgent,
+		defaultHeaders: http.Header{"User-Agent": []string{c.userAgent}},
 	}, nil
 }
 
