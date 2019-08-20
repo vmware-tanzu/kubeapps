@@ -61,6 +61,11 @@ func init() {
 type Details struct {
 	// RepoURL is the URL of the repository. Defaults to stable repo.
 	RepoURL string `json:"repoUrl,omitempty"`
+	// AppRepositoryResourceName specifies an app repository resource to use
+	// for the request.
+	// TODO(absoludity): Intended to supercede RepoURL and Auth below. Remove
+	// RepoURL and Auth once #1110 complete.
+	AppRepositoryResourceName string `json:"appRepositoryResourceName,omitempty"`
 	// ChartName is the name of the chart within the repo.
 	ChartName string `json:"chartName"`
 	// ReleaseName is the Name of the release given to Tiller.
@@ -105,7 +110,7 @@ type LoadChart func(in io.Reader) (*chart.Chart, error)
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
 	GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error)
-	InitNetClient(customCA *CustomCA) (HTTPClient, error)
+	InitNetClient(details *Details) (HTTPClient, error)
 }
 
 // Chart struct contains the clients required to retrieve charts info
@@ -269,6 +274,10 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to parse request body: %v", err)
 	}
+
+	if (details.RepoURL != "" || details.Auth.Header != nil || details.Auth.CustomCA != nil) && details.AppRepositoryResourceName != "" {
+		return nil, fmt.Errorf("repoUrl or auth specified together with appRepositoryResourceName")
+	}
 	return details, nil
 }
 
@@ -285,8 +294,9 @@ func (c *clientWithDefaultUserAgent) Do(req *http.Request) (*http.Response, erro
 	return c.client.Do(req)
 }
 
-// InitNetClient returns an HTTP client loading a custom CA if provided (as a secret)
-func (c *Chart) InitNetClient(customCA *CustomCA) (HTTPClient, error) {
+// InitNetClient returns an HTTP client based on the chart details loading a
+// custom CA if provided (as a secret)
+func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 	// Get the SystemCertPool, continue with an empty pool on error
 	caCertPool, _ := x509.SystemCertPool()
 	if caCertPool == nil {
@@ -294,15 +304,20 @@ func (c *Chart) InitNetClient(customCA *CustomCA) (HTTPClient, error) {
 	}
 
 	// If additionalCA is set, load it
+	customCA := details.Auth.CustomCA
 	if customCA != nil {
 		namespace := os.Getenv("POD_NAMESPACE")
 		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(customCA.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
-			log.Fatalf("Unable to read the given CA cert: %v", err)
+			return nil, fmt.Errorf("unable to read secret %q: %v", customCA.SecretKeyRef.Name, err)
 		}
 
 		// Append our cert to the system pool
-		if ok := caCertPool.AppendCertsFromPEM(caCertSecret.Data[customCA.SecretKeyRef.Key]); !ok {
+		customData, ok := caCertSecret.Data[customCA.SecretKeyRef.Key]
+		if !ok {
+			return nil, fmt.Errorf("secret %q did not contain key %q", customCA.SecretKeyRef.Name, customCA.SecretKeyRef.Key)
+		}
+		if ok := caCertPool.AppendCertsFromPEM(customData); !ok {
 			return nil, fmt.Errorf("Failed to append %s to RootCAs", customCA.SecretKeyRef.Name)
 		}
 	}
