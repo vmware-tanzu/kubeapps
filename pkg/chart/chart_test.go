@@ -424,7 +424,7 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 			// Return fake chart index (not customizable per repo)
 			body, err := json.Marshal(*f.index)
 			if err != nil {
-				fmt.Printf("Error! %v", err)
+				return nil, err
 			}
 			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
 		}
@@ -455,7 +455,12 @@ func newHTTPClient(charts []Details, userAgent string) HTTPClient {
 	}
 	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
 	return &clientWithDefaultUserAgent{
-		client:    &fakeHTTPClient{repoURLs, chartURLs, index, userAgent, nil},
+		client: &fakeHTTPClient{
+			repoURLs:  repoURLs,
+			chartURLs: chartURLs,
+			index:     index,
+			userAgent: userAgent,
+		},
 		userAgent: userAgent,
 	}
 }
@@ -496,7 +501,7 @@ func TestGetChart(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			httpClient := newHTTPClient([]Details{target}, "")
+			httpClient := newHTTPClient([]Details{target}, tc.userAgent)
 			kubeClient := fake.NewSimpleClientset()
 			chUtils := Chart{
 				kubeClient: kubeClient,
