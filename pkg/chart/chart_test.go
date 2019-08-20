@@ -280,10 +280,12 @@ func TestInitNetClient(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
+	const authHeaderSecret = "really-secret-stuff"
+
 	testCases := []struct {
 		name             string
 		details          *Details
-		customCAData     string
+		secretData       string
 		errorExpected    bool
 		numCertsExpected int
 	}{
@@ -307,8 +309,24 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:     pem_cert,
+			secretData:       pem_cert,
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
+		},
+		{
+			name: "authorization header added when present in auth",
+			details: &Details{
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"custom-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			secretData:       authHeaderSecret,
+			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
 			name: "errors if secret for custom CA cannot be found",
@@ -323,7 +341,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  pem_cert,
+			secretData:    pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -339,7 +357,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  pem_cert,
+			secretData:    pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -355,7 +373,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  "not valid data",
+			secretData:    "not valid data",
 			errorExpected: true,
 		},
 	}
@@ -367,7 +385,7 @@ func TestInitNetClient(t *testing.T) {
 				Name: "custom-secret-name",
 			},
 			Data: map[string][]byte{
-				"custom-secret-key": []byte(tc.customCAData),
+				"custom-secret-key": []byte(tc.secretData),
 			},
 		})
 		chUtils := Chart{
@@ -385,11 +403,11 @@ func TestInitNetClient(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			clientWithUserAgent, ok := httpClient.(*clientWithDefaultHeaders)
+			clientWithDefaultHeaders, ok := httpClient.(*clientWithDefaultHeaders)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
-			client, ok := clientWithUserAgent.client.(*http.Client)
+			client, ok := clientWithDefaultHeaders.client.(*http.Client)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
@@ -398,6 +416,18 @@ func TestInitNetClient(t *testing.T) {
 
 			if got, want := len(certPool.Subjects()), tc.numCertsExpected; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
+			}
+
+			// If the Auth header was set, the default Authorization header should be set
+			// from the secret.
+			if tc.details.Auth.Header != nil {
+				_, ok := clientWithDefaultHeaders.defaultHeaders["Authorization"]
+				if !ok {
+					t.Fatalf("expected Authorization header but found none")
+				}
+				if got, want := clientWithDefaultHeaders.defaultHeaders.Get("Authorization"), authHeaderSecret; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
 			}
 		})
 	}
