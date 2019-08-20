@@ -7,17 +7,19 @@ exports[`should render the form if it is not loading 1`] = `
     2
     )
   </label>
-  <select
-    className="margin-t-normal"
-    onChange={[Function]}
-  >
-    <option
-      key="1"
-      value={1}
+  <div>
+    <select
+      className="margin-t-normal"
+      onChange={[Function]}
     >
-      1
-    </option>
-  </select>
+      <option
+        key="1"
+        value={1}
+      >
+        1
+      </option>
+    </select>
+  </div>
   <div
     className="margin-t-normal button-row"
   >
