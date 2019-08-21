@@ -7,6 +7,7 @@ exports[`when loading is true loading spinner matches the snapshot 1`] = `
   <Modal
     ariaHideApp={true}
     bodyOpenClassName="ReactModal__Body--open"
+    className="centered-modal"
     closeTimeoutMS={0}
     contentLabel="Modal"
     isOpen={false}
@@ -18,18 +19,6 @@ exports[`when loading is true loading spinner matches the snapshot 1`] = `
     shouldCloseOnOverlayClick={true}
     shouldFocusAfterRender={true}
     shouldReturnFocusAfterClose={true}
-    style={
-      Object {
-        "content": Object {
-          "bottom": "auto",
-          "left": "50%",
-          "marginRight": "-50%",
-          "right": "auto",
-          "top": "50%",
-          "transform": "translate(-50%, -50%)",
-        },
-      }
-    }
   >
     <div
       className="row confirm-dialog-loading-info"
