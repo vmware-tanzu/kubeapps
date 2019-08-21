@@ -398,7 +398,8 @@ func TestInitNetClient(t *testing.T) {
 		// Create the client with the test case data.
 		kubeClient := fake.NewSimpleClientset(&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "custom-secret-name",
+				Name:      "custom-secret-name",
+				Namespace: metav1.NamespaceSystem,
 			},
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(tc.secretData),

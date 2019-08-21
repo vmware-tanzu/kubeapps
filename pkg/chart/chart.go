@@ -308,8 +308,11 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 
 	// If additionalCA is set, load it
 	customCA := details.Auth.CustomCA
+	namespace := os.Getenv("POD_NAMESPACE")
+	if namespace == "" {
+		namespace = defaultNamespace
+	}
 	if customCA != nil {
-		namespace := os.Getenv("POD_NAMESPACE")
 		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(customCA.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("unable to read secret %q: %v", customCA.SecretKeyRef.Name, err)
@@ -327,13 +330,6 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 
 	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
 	if details.Auth.Header != nil {
-		namespace := os.Getenv("POD_NAMESPACE")
-		// TODO: Check with Andres: why are we relying on the defaultNamespace here for
-		// Auth, but not above for the customCA? Should both or neither?
-		// if namespace == "" {
-		// 	namespace = defaultNamespace
-		// }
-
 		secret, err := c.kubeClient.Core().Secrets(namespace).Get(details.Auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
