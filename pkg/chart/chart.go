@@ -129,7 +129,7 @@ func NewChart(kubeClient kubernetes.Interface, load LoadChart, userAgent string)
 	}
 }
 
-func getReq(rawURL, authHeader string) (*http.Request, error) {
+func getReq(rawURL string) (*http.Request, error) {
 	parsedURL, err := url.ParseRequestURI(rawURL)
 	if err != nil {
 		return nil, err
@@ -140,9 +140,6 @@ func getReq(rawURL, authHeader string) (*http.Request, error) {
 		return nil, err
 	}
 
-	if len(authHeader) > 0 {
-		req.Header.Set("Authorization", authHeader)
-	}
 	return req, nil
 }
 
@@ -194,8 +191,8 @@ func parseIndex(data []byte) (*repo.IndexFile, error) {
 }
 
 // fetchRepoIndex returns a Helm repository
-func fetchRepoIndex(netClient *HTTPClient, repoURL string, authHeader string) (*repo.IndexFile, error) {
-	req, err := getReq(repoURL, authHeader)
+func fetchRepoIndex(netClient *HTTPClient, repoURL string) (*repo.IndexFile, error) {
+	req, err := getReq(repoURL)
 	if err != nil {
 		return nil, err
 	}
@@ -249,9 +246,9 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 	return resolveChartURL(repoURL, cv.URLs[0])
 }
 
-// fetchChart returns the Chart content given an URL and the auth header if needed
-func fetchChart(netClient *HTTPClient, chartURL, authHeader string, load LoadChart) (*chart.Chart, error) {
-	req, err := getReq(chartURL, authHeader)
+// fetchChart returns the Chart content given an URL
+func fetchChart(netClient *HTTPClient, chartURL string, load LoadChart) (*chart.Chart, error) {
+	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
 	}
@@ -311,8 +308,11 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 
 	// If additionalCA is set, load it
 	customCA := details.Auth.CustomCA
+	namespace := os.Getenv("POD_NAMESPACE")
+	if namespace == "" {
+		namespace = defaultNamespace
+	}
 	if customCA != nil {
-		namespace := os.Getenv("POD_NAMESPACE")
 		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(customCA.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("unable to read secret %q: %v", customCA.SecretKeyRef.Name, err)
@@ -328,6 +328,15 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 		}
 	}
 
+	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
+	if details.Auth.Header != nil {
+		secret, err := c.kubeClient.Core().Secrets(namespace).Get(details.Auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
+		if err != nil {
+			return nil, err
+		}
+		defaultHeaders.Set("Authorization", string(secret.Data[details.Auth.Header.SecretKeyRef.Key]))
+	}
+
 	// Return Transport for testing purposes
 	return &clientWithDefaultHeaders{
 		client: &http.Client{
@@ -339,7 +348,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 				},
 			},
 		},
-		defaultHeaders: http.Header{"User-Agent": []string{c.userAgent}},
+		defaultHeaders: defaultHeaders,
 	}, nil
 }
 
@@ -352,22 +361,8 @@ func (c *Chart) GetChart(details *Details, netClient HTTPClient) (*chart.Chart, 
 	}
 	repoURL = strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
 
-	authHeader := ""
-	if details.Auth.Header != nil {
-		namespace := os.Getenv("POD_NAMESPACE")
-		if namespace == "" {
-			namespace = defaultNamespace
-		}
-
-		secret, err := c.kubeClient.Core().Secrets(namespace).Get(details.Auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		authHeader = string(secret.Data[details.Auth.Header.SecretKeyRef.Key])
-	}
-
 	log.Printf("Downloading repo %s index...", repoURL)
-	repoIndex, err := fetchRepoIndex(&netClient, repoURL, authHeader)
+	repoIndex, err := fetchRepoIndex(&netClient, repoURL)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +373,7 @@ func (c *Chart) GetChart(details *Details, netClient HTTPClient) (*chart.Chart, 
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chartRequested, err := fetchChart(&netClient, chartURL, authHeader, c.load)
+	chartRequested, err := fetchChart(&netClient, chartURL, c.load)
 	if err != nil {
 		return nil, err
 	}

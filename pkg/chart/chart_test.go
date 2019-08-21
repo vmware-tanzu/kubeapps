@@ -280,10 +280,12 @@ func TestInitNetClient(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
+	const authHeaderSecret = "really-secret-stuff"
+
 	testCases := []struct {
 		name             string
 		details          *Details
-		customCAData     string
+		secretData       string
 		errorExpected    bool
 		numCertsExpected int
 	}{
@@ -307,7 +309,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:     pem_cert,
+			secretData:       pem_cert,
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
 		},
 		{
@@ -323,7 +325,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  pem_cert,
+			secretData:    pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -339,7 +341,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  pem_cert,
+			secretData:    pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -355,7 +357,39 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  "not valid data",
+			secretData:    "not a valid cert",
+			errorExpected: true,
+		},
+		{
+			name: "authorization header added when present in auth",
+			details: &Details{
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"custom-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			secretData:       authHeaderSecret,
+			numCertsExpected: len(systemCertPool.Subjects()),
+		},
+		{
+			name: "errors if auth secret cannot be found",
+			details: &Details{
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"other-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			secretData:    authHeaderSecret,
 			errorExpected: true,
 		},
 	}
@@ -364,10 +398,11 @@ func TestInitNetClient(t *testing.T) {
 		// Create the client with the test case data.
 		kubeClient := fake.NewSimpleClientset(&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "custom-secret-name",
+				Name:      "custom-secret-name",
+				Namespace: metav1.NamespaceSystem,
 			},
 			Data: map[string][]byte{
-				"custom-secret-key": []byte(tc.customCAData),
+				"custom-secret-key": []byte(tc.secretData),
 			},
 		})
 		chUtils := Chart{
@@ -385,11 +420,11 @@ func TestInitNetClient(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			clientWithUserAgent, ok := httpClient.(*clientWithDefaultHeaders)
+			clientWithDefaultHeaders, ok := httpClient.(*clientWithDefaultHeaders)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
-			client, ok := clientWithUserAgent.client.(*http.Client)
+			client, ok := clientWithDefaultHeaders.client.(*http.Client)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
@@ -398,6 +433,18 @@ func TestInitNetClient(t *testing.T) {
 
 			if got, want := len(certPool.Subjects()), tc.numCertsExpected; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
+			}
+
+			// If the Auth header was set, the default Authorization header should be set
+			// from the secret.
+			if tc.details.Auth.Header != nil {
+				_, ok := clientWithDefaultHeaders.defaultHeaders["Authorization"]
+				if !ok {
+					t.Fatalf("expected Authorization header but found none")
+				}
+				if got, want := clientWithDefaultHeaders.defaultHeaders.Get("Authorization"), authHeaderSecret; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
 			}
 		})
 	}
