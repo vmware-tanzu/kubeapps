@@ -385,7 +385,7 @@ func TestInitNetClient(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			clientWithUserAgent, ok := httpClient.(*clientWithDefaultUserAgent)
+			clientWithUserAgent, ok := httpClient.(*clientWithDefaultHeaders)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
@@ -454,20 +454,20 @@ func newHTTPClient(charts []Details, userAgent string) HTTPClient {
 		entries[ch.ChartName] = chartVersions
 	}
 	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
-	return &clientWithDefaultUserAgent{
+	return &clientWithDefaultHeaders{
 		client: &fakeHTTPClient{
 			repoURLs:  repoURLs,
 			chartURLs: chartURLs,
 			index:     index,
 			userAgent: userAgent,
 		},
-		userAgent: userAgent,
+		defaultHeaders: http.Header{"User-Agent": []string{userAgent}},
 	}
 }
 
 // getFakeClientRequests returns the requests which were issued to the fake test client.
 func getFakeClientRequests(t *testing.T, c HTTPClient) []*http.Request {
-	clientWithDefaultUA, ok := c.(*clientWithDefaultUserAgent)
+	clientWithDefaultUA, ok := c.(*clientWithDefaultHeaders)
 	if !ok {
 		t.Fatalf("client was not a clientWithDefaultUA")
 	}
@@ -552,5 +552,91 @@ func TestGetIndexFromCache(t *testing.T) {
 	index, _ = getIndexFromCache(repoURL, data)
 	if index != fakeIndex {
 		t.Error("It should return the stored index")
+	}
+}
+
+func TestClientWithDefaultHeaders(t *testing.T) {
+	testCases := []struct {
+		name            string
+		requestHeaders  http.Header
+		defaultHeaders  http.Header
+		expectedHeaders http.Header
+	}{
+		{
+			name:            "no headers added when none set",
+			defaultHeaders:  http.Header{},
+			expectedHeaders: http.Header{},
+		},
+		{
+			name:            "existing headers in the request remain present",
+			requestHeaders:  http.Header{"Some-Other": []string{"value"}},
+			defaultHeaders:  http.Header{},
+			expectedHeaders: http.Header{"Some-Other": []string{"value"}},
+		},
+		{
+			name: "headers are set when present",
+			defaultHeaders: http.Header{
+				"User-Agent":    []string{"foo/devel"},
+				"Authorization": []string{"some-token"},
+			},
+			expectedHeaders: http.Header{
+				"User-Agent":    []string{"foo/devel"},
+				"Authorization": []string{"some-token"},
+			},
+		},
+		{
+			name: "headers can have multiple values",
+			defaultHeaders: http.Header{
+				"Authorization": []string{"some-token", "some-other-token"},
+			},
+			expectedHeaders: http.Header{
+				"Authorization": []string{"some-token", "some-other-token"},
+			},
+		},
+		{
+			name: "default headers do not overwrite request headers",
+			requestHeaders: http.Header{
+				"Authorization":        []string{"request-auth-token"},
+				"Other-Request-Header": []string{"other-request-header"},
+			},
+			defaultHeaders: http.Header{
+				"Authorization":        []string{"default-auth-token"},
+				"Other-Default-Header": []string{"other-default-header"},
+			},
+			expectedHeaders: http.Header{
+				"Authorization":        []string{"request-auth-token"},
+				"Other-Request-Header": []string{"other-request-header"},
+				"Other-Default-Header": []string{"other-default-header"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &clientWithDefaultHeaders{
+				client:         &fakeHTTPClient{},
+				defaultHeaders: tc.defaultHeaders,
+			}
+
+			request, err := http.NewRequest("GET", "http://example.com/foo", nil)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			for k, v := range tc.requestHeaders {
+				request.Header[k] = v
+			}
+			client.Do(request)
+
+			requestsWithHeaders := getFakeClientRequests(t, client)
+			if got, want := len(requestsWithHeaders), 1; got != want {
+				t.Fatalf("got: %d, want: %d", got, want)
+			}
+
+			requestWithHeader := requestsWithHeaders[0]
+
+			if got, want := requestWithHeader.Header, tc.expectedHeaders; !cmp.Equal(got, want) {
+				t.Errorf(cmp.Diff(want, got))
+			}
+		})
 	}
 }
