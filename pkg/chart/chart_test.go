@@ -280,10 +280,12 @@ func TestInitNetClient(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
+	const authHeaderSecret = "really-secret-stuff"
+
 	testCases := []struct {
 		name             string
 		details          *Details
-		customCAData     string
+		secretData       string
 		errorExpected    bool
 		numCertsExpected int
 	}{
@@ -307,7 +309,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:     pem_cert,
+			secretData:       pem_cert,
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
 		},
 		{
@@ -323,7 +325,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  pem_cert,
+			secretData:    pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -339,7 +341,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  pem_cert,
+			secretData:    pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -355,7 +357,39 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			customCAData:  "not valid data",
+			secretData:    "not a valid cert",
+			errorExpected: true,
+		},
+		{
+			name: "authorization header added when present in auth",
+			details: &Details{
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"custom-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			secretData:       authHeaderSecret,
+			numCertsExpected: len(systemCertPool.Subjects()),
+		},
+		{
+			name: "errors if auth secret cannot be found",
+			details: &Details{
+				Auth: Auth{
+					Header: &AuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"other-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			secretData:    authHeaderSecret,
 			errorExpected: true,
 		},
 	}
@@ -364,10 +398,11 @@ func TestInitNetClient(t *testing.T) {
 		// Create the client with the test case data.
 		kubeClient := fake.NewSimpleClientset(&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "custom-secret-name",
+				Name:      "custom-secret-name",
+				Namespace: metav1.NamespaceSystem,
 			},
 			Data: map[string][]byte{
-				"custom-secret-key": []byte(tc.customCAData),
+				"custom-secret-key": []byte(tc.secretData),
 			},
 		})
 		chUtils := Chart{
@@ -385,11 +420,11 @@ func TestInitNetClient(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			clientWithUserAgent, ok := httpClient.(*clientWithDefaultUserAgent)
+			clientWithDefaultHeaders, ok := httpClient.(*clientWithDefaultHeaders)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
-			client, ok := clientWithUserAgent.client.(*http.Client)
+			client, ok := clientWithDefaultHeaders.client.(*http.Client)
 			if !ok {
 				t.Fatalf("unable to assert expected type")
 			}
@@ -398,6 +433,18 @@ func TestInitNetClient(t *testing.T) {
 
 			if got, want := len(certPool.Subjects()), tc.numCertsExpected; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
+			}
+
+			// If the Auth header was set, the default Authorization header should be set
+			// from the secret.
+			if tc.details.Auth.Header != nil {
+				_, ok := clientWithDefaultHeaders.defaultHeaders["Authorization"]
+				if !ok {
+					t.Fatalf("expected Authorization header but found none")
+				}
+				if got, want := clientWithDefaultHeaders.defaultHeaders.Get("Authorization"), authHeaderSecret; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
 			}
 		})
 	}
@@ -409,9 +456,13 @@ type fakeHTTPClient struct {
 	chartURLs []string
 	index     *repo.IndexFile
 	userAgent string
+	// TODO(absoludity): perhaps switch to use httptest instead of our own fake?
+	requests []*http.Request
 }
 
 func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
+	// Record the request for later test assertions.
+	f.requests = append(f.requests, h)
 	if f.userAgent != "" && h.Header.Get("User-Agent") != f.userAgent {
 		return nil, fmt.Errorf("Wrong user agent: %s", h.Header.Get("User-Agent"))
 	}
@@ -420,15 +471,13 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 			// Return fake chart index (not customizable per repo)
 			body, err := json.Marshal(*f.index)
 			if err != nil {
-				fmt.Printf("Error! %v", err)
+				return nil, err
 			}
 			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
 		}
 	}
 	for _, chartURL := range f.chartURLs {
 		if h.URL.String() == chartURL {
-			// Simulate download time
-			time.Sleep(100 * time.Millisecond)
 			// Fake chart response
 			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte{}))}, nil
 		}
@@ -452,10 +501,28 @@ func newHTTPClient(charts []Details, userAgent string) HTTPClient {
 		entries[ch.ChartName] = chartVersions
 	}
 	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
-	return &clientWithDefaultUserAgent{
-		client:    &fakeHTTPClient{repoURLs, chartURLs, index, userAgent},
-		userAgent: userAgent,
+	return &clientWithDefaultHeaders{
+		client: &fakeHTTPClient{
+			repoURLs:  repoURLs,
+			chartURLs: chartURLs,
+			index:     index,
+			userAgent: userAgent,
+		},
+		defaultHeaders: http.Header{"User-Agent": []string{userAgent}},
 	}
+}
+
+// getFakeClientRequests returns the requests which were issued to the fake test client.
+func getFakeClientRequests(t *testing.T, c HTTPClient) []*http.Request {
+	clientWithDefaultUA, ok := c.(*clientWithDefaultHeaders)
+	if !ok {
+		t.Fatalf("client was not a clientWithDefaultUA")
+	}
+	fakeClient, ok := clientWithDefaultUA.client.(*fakeHTTPClient)
+	if !ok {
+		t.Fatalf("client was not a fakeHTTPClient")
+	}
+	return fakeClient.requests
 }
 
 func TestGetChart(t *testing.T) {
@@ -465,43 +532,58 @@ func TestGetChart(t *testing.T) {
 		ReleaseName: "foo",
 		Version:     "1.0.0",
 	}
-	httpClient := newHTTPClient([]Details{target}, "")
-	kubeClient := fake.NewSimpleClientset()
-	chUtils := Chart{
-		kubeClient: kubeClient,
-		load:       fakeLoadChart,
-	}
-	ch, err := chUtils.GetChart(&target, httpClient)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	if ch == nil {
-		t.Errorf("It should return a Chart")
-	}
-}
-
-func TestGetChartWithCustomUserAgent(t *testing.T) {
-	target := Details{
-		RepoURL:     "http://foo.com/",
-		ChartName:   "test",
-		ReleaseName: "foo",
-		Version:     "1.0.0",
+	testCases := []struct {
+		name      string
+		userAgent string
+	}{
+		{
+			name:      "GetChart without user agent",
+			userAgent: "",
+		},
+		{
+			name:      "GetChart with user agent",
+			userAgent: "tiller-proxy/devel",
+		},
 	}
 
-	httpClient := newHTTPClient([]Details{target}, "tiller-proxy/devel")
-	kubeClient := fake.NewSimpleClientset()
-	chUtils := Chart{
-		kubeClient: kubeClient,
-		load:       fakeLoadChart,
-		userAgent:  "tiller-proxy/devel",
-	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			httpClient := newHTTPClient([]Details{target}, tc.userAgent)
+			kubeClient := fake.NewSimpleClientset()
+			chUtils := Chart{
+				kubeClient: kubeClient,
+				load:       fakeLoadChart,
+				userAgent:  tc.userAgent,
+			}
+			ch, err := chUtils.GetChart(&target, httpClient)
 
-	ch, err := chUtils.GetChart(&target, httpClient)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	if ch == nil {
-		t.Errorf("It should return a Chart")
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			// Currently tests return an empty chart object.
+			if got, want := ch, &(chart.Chart{}); !cmp.Equal(got, want) {
+				t.Errorf("got: %v, want: %v", got, want)
+			}
+
+			requests := getFakeClientRequests(t, httpClient)
+			// We expect one request for the index and one for the chart.
+			if got, want := len(requests), 2; got != want {
+				t.Fatalf("got: %d, want %d", got, want)
+			}
+
+			for i, url := range []string{
+				target.RepoURL + "index.yaml",
+				fmt.Sprintf("%s%s-%s.tgz", target.RepoURL, target.ChartName, target.Version),
+			} {
+				if got, want := requests[i].URL.String(), url; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
+				if got, want := requests[i].Header.Get("User-Agent"), tc.userAgent; got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
+			}
+
+		})
 	}
 }
 
@@ -517,5 +599,91 @@ func TestGetIndexFromCache(t *testing.T) {
 	index, _ = getIndexFromCache(repoURL, data)
 	if index != fakeIndex {
 		t.Error("It should return the stored index")
+	}
+}
+
+func TestClientWithDefaultHeaders(t *testing.T) {
+	testCases := []struct {
+		name            string
+		requestHeaders  http.Header
+		defaultHeaders  http.Header
+		expectedHeaders http.Header
+	}{
+		{
+			name:            "no headers added when none set",
+			defaultHeaders:  http.Header{},
+			expectedHeaders: http.Header{},
+		},
+		{
+			name:            "existing headers in the request remain present",
+			requestHeaders:  http.Header{"Some-Other": []string{"value"}},
+			defaultHeaders:  http.Header{},
+			expectedHeaders: http.Header{"Some-Other": []string{"value"}},
+		},
+		{
+			name: "headers are set when present",
+			defaultHeaders: http.Header{
+				"User-Agent":    []string{"foo/devel"},
+				"Authorization": []string{"some-token"},
+			},
+			expectedHeaders: http.Header{
+				"User-Agent":    []string{"foo/devel"},
+				"Authorization": []string{"some-token"},
+			},
+		},
+		{
+			name: "headers can have multiple values",
+			defaultHeaders: http.Header{
+				"Authorization": []string{"some-token", "some-other-token"},
+			},
+			expectedHeaders: http.Header{
+				"Authorization": []string{"some-token", "some-other-token"},
+			},
+		},
+		{
+			name: "default headers do not overwrite request headers",
+			requestHeaders: http.Header{
+				"Authorization":        []string{"request-auth-token"},
+				"Other-Request-Header": []string{"other-request-header"},
+			},
+			defaultHeaders: http.Header{
+				"Authorization":        []string{"default-auth-token"},
+				"Other-Default-Header": []string{"other-default-header"},
+			},
+			expectedHeaders: http.Header{
+				"Authorization":        []string{"request-auth-token"},
+				"Other-Request-Header": []string{"other-request-header"},
+				"Other-Default-Header": []string{"other-default-header"},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &clientWithDefaultHeaders{
+				client:         &fakeHTTPClient{},
+				defaultHeaders: tc.defaultHeaders,
+			}
+
+			request, err := http.NewRequest("GET", "http://example.com/foo", nil)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			for k, v := range tc.requestHeaders {
+				request.Header[k] = v
+			}
+			client.Do(request)
+
+			requestsWithHeaders := getFakeClientRequests(t, client)
+			if got, want := len(requestsWithHeaders), 1; got != want {
+				t.Fatalf("got: %d, want: %d", got, want)
+			}
+
+			requestWithHeader := requestsWithHeaders[0]
+
+			if got, want := requestWithHeader.Header, tc.expectedHeaders; !cmp.Equal(got, want) {
+				t.Errorf(cmp.Diff(want, got))
+			}
+		})
 	}
 }
