@@ -65,28 +65,11 @@ export class App {
     return data;
   }
 
-  public static async rollback(
-    releaseName: string,
-    namespace: string,
-    revision: number,
-    kubeappsNamespace: string,
-    chartVersion: IChartVersion,
-    values: string,
-  ) {
-    const chartAttrs = chartVersion.relationships.chart.data;
-    const repo = await AppRepository.get(chartAttrs.repo.name, kubeappsNamespace);
-    const auth = repo.spec.auth;
+  public static async rollback(releaseName: string, namespace: string, revision: number) {
     const endpoint = App.getResourceURL(namespace, releaseName);
     const { data } = await axiosWithAuth.put(
       endpoint,
-      {
-        auth,
-        chartName: chartAttrs.name,
-        releaseName,
-        repoUrl: chartAttrs.repo.url,
-        values,
-        version: chartVersion.attributes.version,
-      },
+      {},
       {
         params: {
           action: "rollback",
