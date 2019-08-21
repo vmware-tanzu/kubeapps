@@ -272,3 +272,50 @@ describe("upgradeApp", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("rollbackApp", () => {
+  const provisionCMD = actions.apps.rollbackApp(
+    "my-version" as any,
+    "my-release",
+    1,
+    definedNamespaces.default,
+    "my-values",
+  );
+
+  it("success and re-request apps info", async () => {
+    App.rollback = jest.fn().mockImplementationOnce(() => true);
+    const res = await store.dispatch(provisionCMD);
+    expect(res).toBe(true);
+
+    const expectedActions = [
+      { type: getType(actions.apps.requestApps) },
+      // requestApps is triggered twice when requesting updateInfo
+      { type: getType(actions.apps.requestApps) },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(App.rollback).toHaveBeenCalledWith(
+      "my-release",
+      definedNamespaces.default,
+      1,
+      "kubeapps-ns",
+      "my-version" as any,
+      "my-values",
+    );
+  });
+
+  it("dispatches an error", async () => {
+    App.rollback = jest.fn().mockImplementationOnce(() => {
+      throw new Error("Boom!");
+    });
+
+    const expectedActions = [
+      {
+        type: getType(actions.apps.errorApps),
+        payload: new Error("Boom!"),
+      },
+    ];
+
+    await store.dispatch(provisionCMD);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
