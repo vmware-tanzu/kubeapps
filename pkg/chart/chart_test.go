@@ -23,6 +23,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -281,11 +282,12 @@ func TestInitNetClient(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name             string
-		details          *Details
-		customCAData     string
-		errorExpected    bool
-		numCertsExpected int
+		name                string
+		details             *Details
+		customCAData        string
+		errorExpected       bool
+		numCertsExpected    int
+		enableEmptyCertPool bool
 	}{
 		{
 			name: "default cert pool without auth",
@@ -293,6 +295,47 @@ func TestInitNetClient(t *testing.T) {
 				Auth: Auth{},
 			},
 			numCertsExpected: len(systemCertPool.Subjects()),
+		},
+		{
+			name: "zero system certs if allowing empty system certs",
+			details: &Details{
+				Auth: Auth{},
+			},
+			enableEmptyCertPool: true,
+			numCertsExpected:    0,
+		},
+		{
+			name: "cert added when present in auth",
+			details: &Details{
+				Auth: Auth{
+					CustomCA: &CustomCA{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"custom-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			customCAData:     pem_cert,
+			numCertsExpected: len(systemCertPool.Subjects()) + 1,
+		},
+		{
+			name: "cert added (and it is the only cert when no system certs) when present in auth",
+			details: &Details{
+				Auth: Auth{
+					CustomCA: &CustomCA{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{"custom-secret-name"},
+							"custom-secret-key",
+							nil,
+						},
+					},
+				},
+			},
+			customCAData:        pem_cert,
+			enableEmptyCertPool: true,
+			numCertsExpected:    1,
 		},
 		{
 			name: "cert added when present in auth",
@@ -376,6 +419,10 @@ func TestInitNetClient(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.enableEmptyCertPool {
+				os.Setenv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL", "true")
+				defer os.Unsetenv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL")
+			}
 			httpClient, err := chUtils.InitNetClient(tc.details)
 
 			if err != nil {
