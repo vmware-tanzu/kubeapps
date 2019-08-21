@@ -14,6 +14,7 @@ exports[`when the modal is open shows an error if is present 1`] = `
   <Modal
     ariaHideApp={true}
     bodyOpenClassName="ReactModal__Body--open"
+    className="centered-modal"
     closeTimeoutMS={0}
     contentLabel="Modal"
     isOpen={true}
@@ -25,18 +26,6 @@ exports[`when the modal is open shows an error if is present 1`] = `
     shouldCloseOnOverlayClick={true}
     shouldFocusAfterRender={true}
     shouldReturnFocusAfterClose={true}
-    style={
-      Object {
-        "content": Object {
-          "bottom": "auto",
-          "left": "50%",
-          "marginRight": "-50%",
-          "right": "auto",
-          "top": "50%",
-          "transform": "translate(-50%, -50%)",
-        },
-      }
-    }
   >
     <ErrorSelector
       action="provision"

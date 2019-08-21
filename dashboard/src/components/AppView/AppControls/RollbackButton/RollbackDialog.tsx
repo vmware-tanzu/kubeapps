@@ -37,13 +37,15 @@ class RollbackDialog extends React.Component<IRollbackDialogProps, IRollbackDial
         <label>
           Select the revision to which you want to rollback (current: {this.props.currentRevision})
         </label>
-        <select className="margin-t-normal" onChange={this.selectRevision}>
-          {options.map(o => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
+        <div>
+          <select className="margin-t-normal" onChange={this.selectRevision}>
+            {options.map(o => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="margin-t-normal button-row">
           <button className="button" type="button" onClick={this.props.closeModal}>
             Cancel
