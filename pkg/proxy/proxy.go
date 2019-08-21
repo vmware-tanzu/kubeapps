@@ -125,6 +125,21 @@ func (p *Proxy) ResolveManifest(namespace, values string, ch *chart.Chart) (stri
 	return strings.TrimLeft(resDry.Release.Manifest, "\n"), nil
 }
 
+// ResolveManifestFromRelease returns a manifest given the release name and revision
+func (p *Proxy) ResolveManifestFromRelease(releaseName string, revision int32) (string, error) {
+	// We use the release returned after running a dry-run to know the components of the release
+	resDry, err := p.helmClient.RollbackRelease(
+		releaseName,
+		helm.RollbackVersion(revision),
+		helm.RollbackDryRun(true),
+	)
+	if err != nil {
+		return "", err
+	}
+	// The manifest returned has some extra new lines at the beginning
+	return strings.TrimLeft(resDry.Release.Manifest, "\n"), nil
+}
+
 // Apply the same filtering than helm CLI
 // Ref: https://github.com/helm/helm/blob/d3b69c1fc1ac62f1cc40f93fcd0cba275c0596de/cmd/helm/list.go#L173
 func filterList(rels []*release.Release) []*release.Release {
@@ -327,6 +342,7 @@ func prettyError(err error) error {
 type TillerClient interface {
 	GetReleaseStatus(relName string) (release.Status_Code, error)
 	ResolveManifest(namespace, values string, ch *chart.Chart) (string, error)
+	ResolveManifestFromRelease(releaseName string, revision int32) (string, error)
 	ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error)
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
 	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)

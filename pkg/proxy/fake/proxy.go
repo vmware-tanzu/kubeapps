@@ -37,6 +37,10 @@ func (f *FakeProxy) ResolveManifest(namespace, values string, ch *chart.Chart) (
 	return "", nil
 }
 
+func (f *FakeProxy) ResolveManifestFromRelease(releaseName string, revision int32) (string, error) {
+	return "", nil
+}
+
 func (f *FakeProxy) ListReleases(namespace string, releaseListLimit int, status string) ([]proxy.AppOverview, error) {
 	res := []proxy.AppOverview{}
 	for _, r := range f.Releases {

@@ -221,13 +221,13 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 		response.NewErrorResponse(http.StatusUnprocessableEntity, "Missing revision to rollback in request").Write(w)
 		return
 	}
+	revisionInt, err := strconv.ParseInt(revision, 10, 64)
+	if err != nil {
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		return
+	}
 	if !h.DisableAuth {
-		chartDetails, ch, err := getChart(req, h.ChartClient)
-		if err != nil {
-			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
-			return
-		}
-		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
+		manifest, err := h.ProxyClient.ResolveManifestFromRelease(params["releaseName"], int32(revisionInt))
 		if err != nil {
 			response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
 			return
@@ -243,11 +243,6 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 			returnForbiddenActions(forbiddenActions, w)
 			return
 		}
-	}
-	revisionInt, err := strconv.ParseInt(revision, 10, 64)
-	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
-		return
 	}
 	rel, err := h.ProxyClient.RollbackRelease(params["releaseName"], params["namespace"], int32(revisionInt))
 	if err != nil {
