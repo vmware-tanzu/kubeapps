@@ -29,7 +29,12 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/release"
 )
 
-func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
+type AppOverviewTest struct {
+	AppOverview
+	Manifest string
+}
+
+func newFakeProxyWithManifest(existingTillerReleases []AppOverviewTest) *Proxy {
 	helmClient := helm.FakeClient{}
 	// Populate Fake helm client with releases
 	for _, r := range existingTillerReleases {
@@ -63,10 +68,19 @@ func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
 					Code: status,
 				},
 			},
+			Manifest: r.Manifest,
 		})
 	}
 	kubeClient := fake.NewSimpleClientset()
 	return NewProxy(kubeClient, &helmClient)
+}
+
+func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
+	releasesWithManifest := []AppOverviewTest{}
+	for _, r := range existingTillerReleases {
+		releasesWithManifest = append(releasesWithManifest, AppOverviewTest{r, ""})
+	}
+	return newFakeProxyWithManifest(releasesWithManifest)
 }
 
 func TestListAllReleases(t *testing.T) {
@@ -238,6 +252,71 @@ func TestResolveManifest(t *testing.T) {
 	}
 	if strings.HasPrefix(manifest, "\n") {
 		t.Error("The manifest should not contain new lines at the beginning")
+	}
+}
+
+func TestResolveManifestFromRelease(t *testing.T) {
+	app1 := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	app2 := AppOverview{"bar", "1.0.0", "other_ns", "icon2.png", "DELETED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon2.png",
+		Name:    "wordpress",
+	}}
+	type testStruct struct {
+		description      string
+		existingApps     []AppOverviewTest
+		releaseName      string
+		shouldFail       bool
+		expectedManifest string
+	}
+	tests := []testStruct{
+		{
+			"should return the right manifest",
+			[]AppOverviewTest{{app1, "foo: bar"}, {app2, "bar: foo"}},
+			app2.ReleaseName,
+			false,
+			"bar: foo",
+		},
+		{
+			"should trim initial empty lines",
+			[]AppOverviewTest{{app1, "\nfoo: bar"}, {app2, "bar: foo"}},
+			app1.ReleaseName,
+			false,
+			"foo: bar",
+		},
+		{
+			"should fail if the app doesn't exists",
+			[]AppOverviewTest{{app1, "foo: bar"}, {app2, "bar: foo"}},
+			"foobar",
+			true,
+			"",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			proxy := newFakeProxyWithManifest(test.existingApps)
+
+			manifest, err := proxy.ResolveManifestFromRelease(test.releaseName, 1)
+			if test.shouldFail {
+				if err == nil {
+					t.Error("Test should have failed")
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("Unexpected error %v", err)
+				}
+				if test.expectedManifest != manifest {
+					t.Errorf("manifest doesn't match. Want %s got %s", test.expectedManifest, manifest)
+				}
+				if strings.HasPrefix(manifest, "\n") {
+					t.Error("The manifest should not contain new lines at the beginning")
+				}
+			}
+		})
 	}
 }
 

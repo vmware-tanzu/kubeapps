@@ -128,16 +128,15 @@ func (p *Proxy) ResolveManifest(namespace, values string, ch *chart.Chart) (stri
 // ResolveManifestFromRelease returns a manifest given the release name and revision
 func (p *Proxy) ResolveManifestFromRelease(releaseName string, revision int32) (string, error) {
 	// We use the release returned after running a dry-run to know the components of the release
-	resDry, err := p.helmClient.RollbackRelease(
+	res, err := p.helmClient.ReleaseContent(
 		releaseName,
-		helm.RollbackVersion(revision),
-		helm.RollbackDryRun(true),
+		helm.ContentReleaseVersion(revision),
 	)
 	if err != nil {
 		return "", err
 	}
 	// The manifest returned has some extra new lines at the beginning
-	return strings.TrimLeft(resDry.Release.Manifest, "\n"), nil
+	return strings.TrimLeft(res.Release.Manifest, "\n"), nil
 }
 
 // Apply the same filtering than helm CLI

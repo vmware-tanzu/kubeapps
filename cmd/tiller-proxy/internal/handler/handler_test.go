@@ -387,7 +387,7 @@ func TestActions(t *testing.T) {
 			DisableAuth:      false,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: `{"chartName": "foo", "releaseName": "foo",	"version": "1.0.0"}`,
+			RequestBody:  "",
 			RequestQuery: "?revision=1",
 			Action:       "rollback",
 			Params:       map[string]string{"namespace": "default", "releaseName": "foo"},
@@ -405,7 +405,7 @@ func TestActions(t *testing.T) {
 			DisableAuth:      true,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestBody:  "",
 			RequestQuery: "?revision=1",
 			Action:       "rollback",
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
@@ -421,7 +421,7 @@ func TestActions(t *testing.T) {
 			DisableAuth:      true,
 			ForbiddenActions: []auth.Action{},
 			// Request params
-			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestBody:  "",
 			RequestQuery: "",
 			Action:       "rollback",
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
