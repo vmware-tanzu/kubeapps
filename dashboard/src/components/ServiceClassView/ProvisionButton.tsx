@@ -41,17 +41,6 @@ const RequiredRBACRoles: IRBACRole[] = [
   },
 ];
 
-const smallModalStyle = {
-  content: {
-    bottom: "auto",
-    left: "50%",
-    marginRight: "-50%",
-    right: "auto",
-    top: "50%",
-    transform: "translate(-50%, -50%)",
-  },
-};
-
 class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionButtonState> {
   public state: IProvisionButtonState = {
     displayNameForm: true,
@@ -89,7 +78,7 @@ class ProvisionButton extends React.Component<IProvisionButtonProps, IProvisionB
           isOpen={this.state.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"
-          style={this.state.displayNameForm ? smallModalStyle : {}}
+          className={this.state.displayNameForm ? "centered-modal" : ""}
         >
           {error && (
             <ErrorSelector
