@@ -297,14 +297,13 @@ func (c *clientWithDefaultUserAgent) Do(req *http.Request) (*http.Response, erro
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
 func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
-	caCertPool := x509.NewCertPool()
-	// Get the SystemCertPool unless the env var is explicitly set.
-	if _, ok := os.LookupEnv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL"); !ok {
-		var err error
-		caCertPool, err = x509.SystemCertPool()
-		if err != nil {
+	// Require the SystemCertPool unless the env var is explicitly set.
+	caCertPool, err := x509.SystemCertPool()
+	if err != nil {
+		if _, ok := os.LookupEnv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL"); !ok {
 			return nil, err
 		}
+		caCertPool = x509.NewCertPool()
 	}
 
 	// If additionalCA is set, load it
