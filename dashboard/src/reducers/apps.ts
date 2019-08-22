@@ -32,6 +32,22 @@ const appsReducer = (
       return { ...state, isFetching: false, listOverview: action.payload };
     case getType(actions.apps.requestAppUpdateInfo):
       return { ...state, isFetching: true };
+    case getType(actions.apps.requestDeleteApp):
+      return { ...state, isFetching: true };
+    case getType(actions.apps.receiveDeleteApp):
+      return { ...state, isFetching: false };
+    case getType(actions.apps.requestDeployApp):
+      return { ...state, isFetching: true };
+    case getType(actions.apps.receiveDeployApp):
+      return { ...state, isFetching: false };
+    case getType(actions.apps.requestUpgradeApp):
+      return { ...state, isFetching: true };
+    case getType(actions.apps.receiveUpgradeApp):
+      return { ...state, isFetching: false };
+    case getType(actions.apps.requestRollbackApp):
+      return { ...state, isFetching: true };
+    case getType(actions.apps.receiveRollbackApp):
+      return { ...state, isFetching: false };
     case getType(actions.apps.receiveAppUpdateInfo):
       let listOverview;
       if (state.listOverview) {

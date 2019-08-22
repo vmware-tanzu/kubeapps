@@ -272,9 +272,6 @@ YrvYQHgOtHsqCB/hFHWfZp1lg2Sx
 `
 
 func TestInitNetClient(t *testing.T) {
-	// TODO(mnelson): currently the InitNetClient swallows any error during
-	// call to SystemCertPool, silently creating an empty cert pool. If that
-	// path is taken on the test system, this test will fail. Find out why.
 	systemCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		t.Fatalf("%+v", err)

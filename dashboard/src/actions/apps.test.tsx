@@ -184,17 +184,28 @@ describe("delete applications", () => {
   });
   it("delete an application", async () => {
     await store.dispatch(actions.apps.deleteApp("foo", "default", false));
-    expect(store.getActions()).toEqual([]);
+    const expectedActions = [
+      { type: getType(actions.apps.requestDeleteApp) },
+      { type: getType(actions.apps.receiveDeleteApp) },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
     expect(deleteAppMock.mock.calls[0]).toEqual(["foo", "default", false]);
   });
   it("delete and purge an application", async () => {
     await store.dispatch(actions.apps.deleteApp("foo", "default", true));
-    expect(store.getActions()).toEqual([]);
+    const expectedActions = [
+      { type: getType(actions.apps.requestDeleteApp) },
+      { type: getType(actions.apps.receiveDeleteApp) },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
     expect(deleteAppMock.mock.calls[0]).toEqual(["foo", "default", true]);
   });
   it("delete and throw an error", async () => {
     const error = new Error("something went wrong!");
-    const expectedActions = [{ type: getType(actions.apps.errorDeleteApp), payload: error }];
+    const expectedActions = [
+      { type: getType(actions.apps.requestDeleteApp) },
+      { type: getType(actions.apps.errorDeleteApp), payload: error },
+    ];
     deleteAppMock.mockImplementation(() => {
       throw error;
     });
@@ -220,7 +231,11 @@ describe("deploy chart", () => {
       "my-version",
       undefined,
     );
-    expect(store.getActions().length).toBe(0);
+    const expectedActions = [
+      { type: getType(actions.apps.requestDeployApp) },
+      { type: getType(actions.apps.receiveDeployApp) },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
   });
 
   it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
@@ -228,9 +243,16 @@ describe("deploy chart", () => {
       actions.apps.deployChart("my-version" as any, "my-release", definedNamespaces.all),
     );
     expect(res).toBe(false);
-    expect(store.getActions().length).toBe(1);
-    expect(store.getActions()[0].type).toEqual(getType(actions.apps.errorApps));
-    expect(store.getActions()[0].payload.constructor).toBe(UnprocessableEntity);
+    const expectedActions = [
+      { type: getType(actions.apps.requestDeployApp) },
+      {
+        type: getType(actions.apps.errorApps),
+        payload: new UnprocessableEntity(
+          "Namespace not selected. Please select a namespace using the selector in the top right corner.",
+        ),
+      },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
@@ -246,7 +268,11 @@ describe("upgradeApp", () => {
     const res = await store.dispatch(provisionCMD);
     expect(res).toBe(true);
 
-    expect(store.getActions().length).toBe(0);
+    const expectedActions = [
+      { type: getType(actions.apps.requestUpgradeApp) },
+      { type: getType(actions.apps.receiveUpgradeApp) },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
     expect(App.upgrade).toHaveBeenCalledWith(
       "my-release",
       definedNamespaces.all,
@@ -262,6 +288,7 @@ describe("upgradeApp", () => {
     });
 
     const expectedActions = [
+      { type: getType(actions.apps.requestUpgradeApp) },
       {
         type: getType(actions.apps.errorApps),
         payload: new Error("Boom!"),
@@ -282,8 +309,8 @@ describe("rollbackApp", () => {
     expect(res).toBe(true);
 
     const expectedActions = [
-      { type: getType(actions.apps.requestApps) },
-      // requestApps is triggered twice when requesting updateInfo
+      { type: getType(actions.apps.requestRollbackApp) },
+      { type: getType(actions.apps.receiveRollbackApp) },
       { type: getType(actions.apps.requestApps) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
@@ -296,6 +323,7 @@ describe("rollbackApp", () => {
     });
 
     const expectedActions = [
+      { type: getType(actions.apps.requestRollbackApp) },
       {
         type: getType(actions.apps.errorApps),
         payload: new Error("Boom!"),
