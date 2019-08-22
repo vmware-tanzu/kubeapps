@@ -51,16 +51,7 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
     return (
       <React.Fragment>
         <Modal
-          style={{
-            content: {
-              bottom: "auto",
-              left: "50%",
-              marginRight: "-50%",
-              right: "auto",
-              top: "50%",
-              transform: "translate(-50%, -50%)",
-            },
-          }}
+          className="centered-modal"
           isOpen={this.state.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"

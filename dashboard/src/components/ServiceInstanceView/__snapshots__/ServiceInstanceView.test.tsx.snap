@@ -567,6 +567,7 @@ exports[`when all the components are loaded when an instance is available should
                           <Modal
                             ariaHideApp={true}
                             bodyOpenClassName="ReactModal__Body--open"
+                            className="centered-modal"
                             closeTimeoutMS={0}
                             contentLabel="Modal"
                             isOpen={false}
@@ -578,18 +579,6 @@ exports[`when all the components are loaded when an instance is available should
                             shouldCloseOnOverlayClick={true}
                             shouldFocusAfterRender={true}
                             shouldReturnFocusAfterClose={true}
-                            style={
-                              Object {
-                                "content": Object {
-                                  "bottom": "auto",
-                                  "left": "50%",
-                                  "marginRight": "-50%",
-                                  "right": "auto",
-                                  "top": "50%",
-                                  "transform": "translate(-50%, -50%)",
-                                },
-                              }
-                            }
                           >
                             <Portal
                               containerInfo={
@@ -601,6 +590,7 @@ exports[`when all the components are loaded when an instance is available should
                               <ModalPortal
                                 ariaHideApp={true}
                                 bodyOpenClassName="ReactModal__Body--open"
+                                className="centered-modal"
                                 closeTimeoutMS={0}
                                 contentLabel="Modal"
                                 defaultStyles={
@@ -640,14 +630,8 @@ exports[`when all the components are loaded when an instance is available should
                                 shouldReturnFocusAfterClose={true}
                                 style={
                                   Object {
-                                    "content": Object {
-                                      "bottom": "auto",
-                                      "left": "50%",
-                                      "marginRight": "-50%",
-                                      "right": "auto",
-                                      "top": "50%",
-                                      "transform": "translate(-50%, -50%)",
-                                    },
+                                    "content": Object {},
+                                    "overlay": Object {},
                                   }
                                 }
                               />

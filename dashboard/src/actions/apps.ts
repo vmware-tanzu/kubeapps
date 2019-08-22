@@ -34,6 +34,22 @@ export const receiveAppUpdateInfo = createAction("RECEIVE_APP_UPDATE_INFO", reso
   return (payload: { releaseName: string; updateInfo: IChartUpdateInfo }) => resolve(payload);
 });
 
+export const requestDeleteApp = createAction("REQUEST_DELETE_APP");
+
+export const receiveDeleteApp = createAction("RECEIVE_DELETE_APP_CONFIRMATION");
+
+export const requestDeployApp = createAction("REQUEST_DEPLOY_APP");
+
+export const receiveDeployApp = createAction("RECEIVE_DEPLOY_APP_CONFIRMATION");
+
+export const requestUpgradeApp = createAction("REQUEST_UPGRADE_APP");
+
+export const receiveUpgradeApp = createAction("RECEIVE_UPGRADE_APP_CONFIRMATION");
+
+export const requestRollbackApp = createAction("REQUEST_ROLLBACK_APP");
+
+export const receiveRollbackApp = createAction("RECEIVE_ROLLBACK_APP_CONFIRMATION");
+
 export const errorApps = createAction("ERROR_APPS", resolve => {
   return (err: Error) => resolve(err);
 });
@@ -53,6 +69,14 @@ const allActions = [
   receiveAppList,
   requestAppUpdateInfo,
   receiveAppUpdateInfo,
+  requestDeleteApp,
+  receiveDeleteApp,
+  requestDeployApp,
+  receiveDeployApp,
+  requestUpgradeApp,
+  receiveUpgradeApp,
+  requestRollbackApp,
+  receiveRollbackApp,
   errorApps,
   errorDeleteApp,
   selectApp,
@@ -129,7 +153,6 @@ export function getAppWithUpdateInfo(
   namespace: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    dispatch(requestApps());
     try {
       const app = await dispatch(getApp(releaseName, namespace));
       if (
@@ -161,8 +184,10 @@ export function deleteApp(
   purge: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
+    dispatch(requestDeleteApp());
     try {
       await App.delete(releaseName, namespace, purge);
+      dispatch(receiveDeleteApp());
       return true;
     } catch (e) {
       dispatch(errorDeleteApp(e));
@@ -218,6 +243,7 @@ export function deployChart(
   values?: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
+    dispatch(requestDeployApp());
     try {
       // You can not deploy applications unless the namespace is set
       if (namespace === definedNamespaces.all) {
@@ -230,6 +256,7 @@ export function deployChart(
         config: { namespace: kubeappsNamespace },
       } = getState();
       await App.create(releaseName, namespace, kubeappsNamespace, chartVersion, values);
+      dispatch(receiveDeployApp());
       return true;
     } catch (e) {
       dispatch(errorApps(e));
@@ -245,11 +272,13 @@ export function upgradeApp(
   values?: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
+    dispatch(requestUpgradeApp());
     try {
       const {
         config: { namespace: kubeappsNamespace },
       } = getState();
       await App.upgrade(releaseName, namespace, kubeappsNamespace, chartVersion, values);
+      dispatch(receiveUpgradeApp());
       return true;
     } catch (e) {
       dispatch(errorApps(e));
@@ -266,11 +295,13 @@ export function rollbackApp(
   values: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
+    dispatch(requestRollbackApp());
     try {
       const {
         config: { namespace: kubeappsNamespace },
       } = getState();
       await App.rollback(releaseName, namespace, revision, kubeappsNamespace, chartVersion, values);
+      dispatch(receiveRollbackApp());
       dispatch(getAppWithUpdateInfo(releaseName, namespace));
       return true;
     } catch (e) {

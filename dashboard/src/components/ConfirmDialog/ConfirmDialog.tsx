@@ -26,16 +26,7 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
     return (
       <div className="ConfirmDialog">
         <Modal
-          style={{
-            content: {
-              bottom: "auto",
-              left: "50%",
-              marginRight: "-50%",
-              right: "auto",
-              top: "50%",
-              transform: "translate(-50%, -50%)",
-            },
-          }}
+          className="centered-modal"
           isOpen={this.props.modalIsOpen}
           onRequestClose={this.closeModal}
           contentLabel="Modal"
