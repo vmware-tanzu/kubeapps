@@ -301,13 +301,7 @@ describe("upgradeApp", () => {
 });
 
 describe("rollbackApp", () => {
-  const provisionCMD = actions.apps.rollbackApp(
-    "my-version" as any,
-    "my-release",
-    1,
-    definedNamespaces.default,
-    "my-values",
-  );
+  const provisionCMD = actions.apps.rollbackApp("my-release", definedNamespaces.default, 1);
 
   it("success and re-request apps info", async () => {
     App.rollback = jest.fn().mockImplementationOnce(() => true);
@@ -320,14 +314,7 @@ describe("rollbackApp", () => {
       { type: getType(actions.apps.requestApps) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.rollback).toHaveBeenCalledWith(
-      "my-release",
-      definedNamespaces.default,
-      1,
-      "kubeapps-ns",
-      "my-version" as any,
-      "my-values",
-    );
+    expect(App.rollback).toHaveBeenCalledWith("my-release", definedNamespaces.default, 1);
   });
 
   it("dispatches an error", async () => {

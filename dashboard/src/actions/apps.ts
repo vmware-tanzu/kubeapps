@@ -288,19 +288,14 @@ export function upgradeApp(
 }
 
 export function rollbackApp(
-  chartVersion: IChartVersion,
   releaseName: string,
-  revision: number,
   namespace: string,
-  values: string,
+  revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
     dispatch(requestRollbackApp());
     try {
-      const {
-        config: { namespace: kubeappsNamespace },
-      } = getState();
-      await App.rollback(releaseName, namespace, revision, kubeappsNamespace, chartVersion, values);
+      await App.rollback(releaseName, namespace, revision);
       dispatch(receiveRollbackApp());
       dispatch(getAppWithUpdateInfo(releaseName, namespace));
       return true;

@@ -54,7 +54,11 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
             />
             {/* We only show the rollback button if there are versions to rollback */}
             {app.version > 1 && (
-              <RollbackButtonContainer releaseName={name} namespace={namespace} />
+              <RollbackButtonContainer
+                releaseName={name}
+                namespace={namespace}
+                revision={app.version}
+              />
             )}
           </React.Fragment>
         )}
