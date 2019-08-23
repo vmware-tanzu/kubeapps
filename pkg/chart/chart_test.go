@@ -29,9 +29,11 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/arschles/assert"
+	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	fakeAppRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
+	fakeK8s "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
@@ -277,12 +279,18 @@ func TestInitNetClient(t *testing.T) {
 		t.Fatalf("%+v", err)
 	}
 
-	const authHeaderSecret = "really-secret-stuff"
+	const (
+		authHeaderSecretName = "auth-header-secret-name"
+		authHeaderSecretData = "really-secret-stuff"
+		customCASecretName   = "custom-ca-secret-name"
+		appRepoName          = "custom-repo"
+	)
 
 	testCases := []struct {
 		name             string
 		details          *Details
-		secretData       string
+		authHeader       string
+		customCAData     string
 		errorExpected    bool
 		numCertsExpected int
 	}{
@@ -299,14 +307,14 @@ func TestInitNetClient(t *testing.T) {
 				Auth: Auth{
 					CustomCA: &CustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"custom-secret-name"},
+							corev1.LocalObjectReference{customCASecretName},
 							"custom-secret-key",
 							nil,
 						},
 					},
 				},
 			},
-			secretData:       pem_cert,
+			customCAData:     pem_cert,
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
 		},
 		{
@@ -322,7 +330,7 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			secretData:    pem_cert,
+			customCAData:  pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -331,14 +339,14 @@ func TestInitNetClient(t *testing.T) {
 				Auth: Auth{
 					CustomCA: &CustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"custom-secret-name"},
+							corev1.LocalObjectReference{customCASecretName},
 							"some-other-secret-key",
 							nil,
 						},
 					},
 				},
 			},
-			secretData:    pem_cert,
+			customCAData:  pem_cert,
 			errorExpected: true,
 		},
 		{
@@ -347,14 +355,14 @@ func TestInitNetClient(t *testing.T) {
 				Auth: Auth{
 					CustomCA: &CustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"custom-secret-name"},
+							corev1.LocalObjectReference{customCASecretName},
 							"custom-secret-key",
 							nil,
 						},
 					},
 				},
 			},
-			secretData:    "not a valid cert",
+			customCAData:  "not a valid cert",
 			errorExpected: true,
 		},
 		{
@@ -363,14 +371,14 @@ func TestInitNetClient(t *testing.T) {
 				Auth: Auth{
 					Header: &AuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{"custom-secret-name"},
+							corev1.LocalObjectReference{authHeaderSecretName},
 							"custom-secret-key",
 							nil,
 						},
 					},
 				},
 			},
-			secretData:       authHeaderSecret,
+			authHeader:       authHeaderSecretData,
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
@@ -386,25 +394,88 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			secretData:    authHeaderSecret,
+			authHeader:    authHeaderSecretData,
 			errorExpected: true,
+		},
+		{
+			name: "authorization header added when passed an AppRepository CRD",
+			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			authHeader:       authHeaderSecretData,
+			numCertsExpected: len(systemCertPool.Subjects()),
+		},
+		{
+			name: "custom CA added when passed an AppRepository CRD",
+			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			customCAData:     pem_cert,
+			numCertsExpected: len(systemCertPool.Subjects()) + 1,
+		},
+		{
+			name: "errors if the app repo can't be found",
+			details: &Details{
+				AppRepositoryResourceName: "some other name",
+			},
+			authHeader:       authHeaderSecretData,
+			numCertsExpected: len(systemCertPool.Subjects()),
+			errorExpected:    true,
 		},
 	}
 
 	for _, tc := range testCases {
-		// Create the client with the test case data.
-		kubeClient := fake.NewSimpleClientset(&corev1.Secret{
+		kubeClient := fakeK8s.NewSimpleClientset(&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "custom-secret-name",
+				Name:      customCASecretName,
 				Namespace: metav1.NamespaceSystem,
 			},
 			Data: map[string][]byte{
-				"custom-secret-key": []byte(tc.secretData),
+				"custom-secret-key": []byte(tc.customCAData),
+			},
+		}, &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      authHeaderSecretName,
+				Namespace: metav1.NamespaceSystem,
+			},
+			Data: map[string][]byte{
+				"custom-secret-key": []byte(tc.authHeader),
+			},
+		})
+
+		// Setup the appRepoClient fake to have an app repository ready for consumption.
+		var customCA *appRepov1.AppRepositoryCustomCA
+		if tc.customCAData != "" {
+			customCA = &appRepov1.AppRepositoryCustomCA{
+				SecretKeyRef: corev1.SecretKeySelector{
+					corev1.LocalObjectReference{customCASecretName},
+					"custom-secret-key",
+					nil,
+				},
+			}
+		}
+		appRepoClient := fakeAppRepo.NewSimpleClientset(&appRepov1.AppRepository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      tc.details.AppRepositoryResourceName,
+				Namespace: metav1.NamespaceSystem,
+			},
+			Spec: appRepov1.AppRepositorySpec{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
+						SecretKeyRef: corev1.SecretKeySelector{
+							corev1.LocalObjectReference{authHeaderSecretName},
+							"custom-secret-key",
+							nil,
+						},
+					},
+					CustomCA: customCA,
+				},
 			},
 		})
 		chUtils := Chart{
-			kubeClient: kubeClient,
-			load:       fakeLoadChart,
+			kubeClient:    kubeClient,
+			appRepoClient: appRepoClient,
+			load:          fakeLoadChart,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -434,12 +505,12 @@ func TestInitNetClient(t *testing.T) {
 
 			// If the Auth header was set, the default Authorization header should be set
 			// from the secret.
-			if tc.details.Auth.Header != nil {
+			if tc.authHeader != "" {
 				_, ok := clientWithDefaultHeaders.defaultHeaders["Authorization"]
 				if !ok {
 					t.Fatalf("expected Authorization header but found none")
 				}
-				if got, want := clientWithDefaultHeaders.defaultHeaders.Get("Authorization"), authHeaderSecret; got != want {
+				if got, want := clientWithDefaultHeaders.defaultHeaders.Get("Authorization"), authHeaderSecretData; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
 			}
@@ -546,7 +617,7 @@ func TestGetChart(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient([]Details{target}, tc.userAgent)
-			kubeClient := fake.NewSimpleClientset()
+			kubeClient := fakeK8s.NewSimpleClientset()
 			chUtils := Chart{
 				kubeClient: kubeClient,
 				load:       fakeLoadChart,
