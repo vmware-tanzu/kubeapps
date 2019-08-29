@@ -125,7 +125,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
-	chartutils := chartUtils.NewChart(kubeClient, helmChartUtil.LoadArchive, userAgent())
+	chartutils := chartUtils.NewChart(kubeClient, appRepoClient, helmChartUtil.LoadArchive, userAgent())
 
 	r := mux.NewRouter()
 
