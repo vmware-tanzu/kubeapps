@@ -29,6 +29,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"github.com/arschles/assert"
+	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes/fake"
@@ -130,8 +131,8 @@ func TestParseDetails(t *testing.T) {
 				ReleaseName: "foo",
 				Version:     "1.0.0",
 				Values:      "foo: bar",
-				Auth: Auth{
-					Header: &AuthHeader{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
 							Key: "bar",
 						},
@@ -289,15 +290,15 @@ func TestInitNetClient(t *testing.T) {
 		{
 			name: "default cert pool without auth",
 			details: &Details{
-				Auth: Auth{},
+				Auth: appRepov1.AppRepositoryAuth{},
 			},
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
 			name: "cert added when present in auth",
 			details: &Details{
-				Auth: Auth{
-					CustomCA: &CustomCA{
+				Auth: appRepov1.AppRepositoryAuth{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							corev1.LocalObjectReference{"custom-secret-name"},
 							"custom-secret-key",
@@ -312,8 +313,8 @@ func TestInitNetClient(t *testing.T) {
 		{
 			name: "errors if secret for custom CA cannot be found",
 			details: &Details{
-				Auth: Auth{
-					CustomCA: &CustomCA{
+				Auth: appRepov1.AppRepositoryAuth{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							corev1.LocalObjectReference{"other-secret-name"},
 							"custom-secret-key",
@@ -328,8 +329,8 @@ func TestInitNetClient(t *testing.T) {
 		{
 			name: "errors if custom CA cannot be found in secret",
 			details: &Details{
-				Auth: Auth{
-					CustomCA: &CustomCA{
+				Auth: appRepov1.AppRepositoryAuth{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							corev1.LocalObjectReference{"custom-secret-name"},
 							"some-other-secret-key",
@@ -344,8 +345,8 @@ func TestInitNetClient(t *testing.T) {
 		{
 			name: "errors if custom CA cannot be parsed",
 			details: &Details{
-				Auth: Auth{
-					CustomCA: &CustomCA{
+				Auth: appRepov1.AppRepositoryAuth{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							corev1.LocalObjectReference{"custom-secret-name"},
 							"custom-secret-key",
@@ -360,8 +361,8 @@ func TestInitNetClient(t *testing.T) {
 		{
 			name: "authorization header added when present in auth",
 			details: &Details{
-				Auth: Auth{
-					Header: &AuthHeader{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
 							corev1.LocalObjectReference{"custom-secret-name"},
 							"custom-secret-key",
@@ -376,8 +377,8 @@ func TestInitNetClient(t *testing.T) {
 		{
 			name: "errors if auth secret cannot be found",
 			details: &Details{
-				Auth: Auth{
-					Header: &AuthHeader{
+				Auth: appRepov1.AppRepositoryAuth{
+					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
 							corev1.LocalObjectReference{"other-secret-name"},
 							"custom-secret-key",
