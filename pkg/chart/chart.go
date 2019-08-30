@@ -326,7 +326,6 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 	// key refs.
 	var customCASecretRef *corev1.SecretKeySelector
 	var authHeaderSecretRef *corev1.SecretKeySelector
-	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
 	if details.AppRepositoryResourceName != "" {
 		appRepo, err := c.appRepoClient.KubeappsV1alpha1().AppRepositories(namespace).Get(details.AppRepositoryResourceName, metav1.GetOptions{})
 		if err != nil {
@@ -364,6 +363,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 		}
 	}
 
+	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
 	if authHeaderSecretRef != nil {
 		secret, err := c.kubeClient.Core().Secrets(namespace).Get(authHeaderSecretRef.Name, metav1.GetOptions{})
 		if err != nil {
