@@ -33,9 +33,8 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
-	corev1 "k8s.io/api/core/v1"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -301,56 +300,40 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 	// If the app repo url is specified then we'll grab the customCA and
 	// defaultHeaders from there, otherwise default to the current details.Auth
 	// (until that path is removed).
-	// TODO(absoludity): Check whether there is a reason that Details.Auth is a different type
-	// to appRepo.Spec.Auth (though they have identical fields). The following would be simpler
-	// if they were the same types, as we could just find the Auth struct, rather than secret
-	// key refs.
-	var customCASecretRef *corev1.SecretKeySelector
-	var authHeaderSecretRef *corev1.SecretKeySelector
+	var auth *appRepov1.AppRepositoryAuth
 	if details.AppRepositoryResourceName != "" {
 		appRepo, err := c.appRepoClient.KubeappsV1alpha1().AppRepositories(namespace).Get(details.AppRepositoryResourceName, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 		}
-		if appRepo.Spec.Auth.CustomCA != nil {
-			customCASecretRef = &appRepo.Spec.Auth.CustomCA.SecretKeyRef
-		}
-		if appRepo.Spec.Auth.Header != nil {
-			authHeaderSecretRef = &appRepo.Spec.Auth.Header.SecretKeyRef
-		}
-
+		auth = &appRepo.Spec.Auth
 	} else {
-		if details.Auth.CustomCA != nil {
-			customCASecretRef = &details.Auth.CustomCA.SecretKeyRef
-		}
-		if details.Auth.Header != nil {
-			authHeaderSecretRef = &details.Auth.Header.SecretKeyRef
-		}
+		auth = &details.Auth
 	}
 
-	if customCASecretRef != nil {
-		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(customCASecretRef.Name, metav1.GetOptions{})
+	if auth.CustomCA != nil {
+		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(auth.CustomCA.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("unable to read secret %q: %v", customCASecretRef.Name, err)
+			return nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
 
 		// Append our cert to the system pool
-		customData, ok := caCertSecret.Data[customCASecretRef.Key]
+		customData, ok := caCertSecret.Data[auth.CustomCA.SecretKeyRef.Key]
 		if !ok {
-			return nil, fmt.Errorf("secret %q did not contain key %q", customCASecretRef.Name, customCASecretRef.Key)
+			return nil, fmt.Errorf("secret %q did not contain key %q", auth.CustomCA.SecretKeyRef.Name, auth.CustomCA.SecretKeyRef.Key)
 		}
 		if ok := caCertPool.AppendCertsFromPEM(customData); !ok {
-			return nil, fmt.Errorf("Failed to append %s to RootCAs", customCASecretRef.Name)
+			return nil, fmt.Errorf("Failed to append %s to RootCAs", auth.CustomCA.SecretKeyRef.Name)
 		}
 	}
 
 	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
-	if authHeaderSecretRef != nil {
-		secret, err := c.kubeClient.Core().Secrets(namespace).Get(authHeaderSecretRef.Name, metav1.GetOptions{})
+	if auth.Header != nil {
+		secret, err := c.kubeClient.Core().Secrets(namespace).Get(auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
-		defaultHeaders.Set("Authorization", string(secret.Data[authHeaderSecretRef.Key]))
+		defaultHeaders.Set("Authorization", string(secret.Data[auth.Header.SecretKeyRef.Key]))
 	}
 
 	// Return Transport for testing purposes
