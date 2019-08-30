@@ -33,8 +33,9 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
-	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	corev1 "k8s.io/api/core/v1"
+	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/helm/pkg/proto/hapi/chart"
@@ -74,29 +75,9 @@ type Details struct {
 	// Version is the chart version.
 	Version string `json:"version"`
 	// Auth is the authentication.
-	Auth Auth `json:"auth,omitempty"`
+	Auth appRepov1.AppRepositoryAuth `json:"auth,omitempty"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
-}
-
-// Auth contains the information to authenticate against a private registry
-type Auth struct {
-	// Header is header based Authorization
-	Header *AuthHeader `json:"header,omitempty"`
-	// CustomCA is an additional CA
-	CustomCA *CustomCA `json:"customCA,omitempty"`
-}
-
-// AuthHeader contains the secret information for authenticate
-type CustomCA struct {
-	// Selects a key of a secret in the pod's namespace
-	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
-}
-
-// AuthHeader contains the secret information for authenticate
-type AuthHeader struct {
-	// Selects a key of a secret in the pod's namespace
-	SecretKeyRef corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // HTTPClient Interface to perform HTTP requests
@@ -117,13 +98,13 @@ type Resolver interface {
 // Chart struct contains the clients required to retrieve charts info
 type Chart struct {
 	kubeClient    kubernetes.Interface
-	appRepoClient appRepo.Interface
+	appRepoClient appRepoClientSet.Interface
 	load          LoadChart
 	userAgent     string
 }
 
 // NewChart returns a new Chart
-func NewChart(kubeClient kubernetes.Interface, appRepoClient appRepo.Interface, load LoadChart, userAgent string) *Chart {
+func NewChart(kubeClient kubernetes.Interface, appRepoClient appRepoClientSet.Interface, load LoadChart, userAgent string) *Chart {
 	return &Chart{
 		kubeClient,
 		appRepoClient,
