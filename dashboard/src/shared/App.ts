@@ -29,11 +29,9 @@ export class App {
     values?: string,
   ) {
     const chartAttrs = chartVersion.relationships.chart.data;
-    const repo = await AppRepository.get(chartAttrs.repo.name, kubeappsNamespace);
-    const auth = repo.spec.auth;
     const endpoint = App.getResourceURL(namespace);
     const { data } = await axiosWithAuth.post(endpoint, {
-      auth,
+      appRepositoryResourceName: chartAttrs.repo.name,
       chartName: chartAttrs.name,
       releaseName,
       repoUrl: chartAttrs.repo.url,
