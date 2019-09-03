@@ -27,6 +27,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
+	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
@@ -80,12 +81,17 @@ func main() {
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		log.Fatalf("Unable to get cluter config: %v", err)
+		log.Fatalf("Unable to get cluster config: %v", err)
 	}
 
 	kubeClient, err = kubernetes.NewForConfig(config)
 	if err != nil {
 		log.Fatalf("Unable to create a kubernetes client: %v", err)
+	}
+
+	appRepoClient, err := appRepo.NewForConfig(config)
+	if err != nil {
+		log.Fatalf("Unable to create an app repository client: %v", err)
 	}
 
 	log.Printf("Using tiller host: %s", settings.TillerHost)
@@ -119,7 +125,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
-	chartutils := chartUtils.NewChart(kubeClient, helmChartUtil.LoadArchive, userAgent())
+	chartutils := chartUtils.NewChart(kubeClient, appRepoClient, helmChartUtil.LoadArchive, userAgent())
 
 	r := mux.NewRouter()
 
