@@ -255,8 +255,8 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 		return nil, fmt.Errorf("Unable to parse request body: %v", err)
 	}
 
-	if (details.RepoURL != "" || details.Auth.Header != nil || details.Auth.CustomCA != nil) && details.AppRepositoryResourceName != "" {
-		return nil, fmt.Errorf("repoUrl or auth specified together with appRepositoryResourceName")
+	if (details.Auth.Header != nil || details.Auth.CustomCA != nil) && details.AppRepositoryResourceName != "" {
+		return nil, fmt.Errorf("auth specified together with appRepositoryResourceName")
 	}
 	return details, nil
 }

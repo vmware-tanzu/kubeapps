@@ -159,18 +159,6 @@ func TestParseDetails(t *testing.T) {
 			},
 		},
 		{
-			name: "error returned if both resource and repo url specified",
-			data: `{
-	        	"repoUrl": "foo.com",
-				"appRepositoryResourceName": "my-chart-repo",
-	        	"chartName": "test",
-	        	"releaseName": "foo",
-	        	"version": "1.0.0",
-	        	"values": "foo: bar"
-			}`,
-			err: true,
-		},
-		{
 			name: "error returned if both resource and auth header specified",
 			data: `{
 				"appRepositoryResourceName": "my-chart-repo",

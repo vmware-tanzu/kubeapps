@@ -1,7 +1,7 @@
 import * as moxios from "moxios";
 import { App, TILLER_PROXY_ROOT_URL } from "./App";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IAppOverview } from "./types";
+import { IAppOverview, IChartVersion } from "./types";
 
 describe("App", () => {
   beforeEach(() => {
@@ -73,6 +73,42 @@ describe("App", () => {
       });
     });
   });
+
+  describe("create", () => {
+    const expectedURL = `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases`;
+    const testChartVersion: IChartVersion = {
+      attributes: {
+        version: "1.2.3",
+      },
+      relationships: {
+        chart: {
+          data: {
+            name: "test",
+            repo: {
+              name: "testrepo",
+              url: "http://example.com/charts",
+            },
+          },
+        },
+      },
+    } as IChartVersion;
+    it("creates an app in a namespace", async () => {
+      moxios.stubRequest(/.*/, { response: "ok", status: 200 });
+      expect(await App.create("absent-ant", "default", "kubeapps", testChartVersion)).toBe("ok");
+      const request = moxios.requests.mostRecent();
+      expect(request.url).toBe(expectedURL);
+      expect(request.config.data).toEqual(
+        JSON.stringify({
+          appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
+          chartName: testChartVersion.relationships.chart.data.name,
+          releaseName: "absent-ant",
+          repoUrl: testChartVersion.relationships.chart.data.repo.url,
+          version: testChartVersion.attributes.version,
+        }),
+      );
+    });
+  });
+
   describe("delete", () => {
     [
       {
