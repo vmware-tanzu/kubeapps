@@ -97,4 +97,20 @@ echo "All deployments ready. PODs:"
 kubectl get pods -n kubeapps -o wide
 
 # Run helm tests
-helm test ${HELM_CLIENT_TLS_FLAGS} --cleanup kubeapps-ci
+set +e
+
+helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
+code=$?
+
+set -e
+
+if [[ "$code" != 0 ]]; then
+  echo "LOGS for chartsvc tests --------"
+  kubectl logs kubeapps-ci-chartsvc-test --namespace kubeapps
+  echo "LOGS for tiller-proxy tests --------"
+  kubectl logs kubeapps-ci-tiller-proxy-test --namespace kubeapps
+  echo "LOGS for dashboard tests --------"
+  kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
+fi
+
+exit $code
