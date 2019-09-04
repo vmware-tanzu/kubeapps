@@ -442,7 +442,7 @@ func TestInitNetClient(t *testing.T) {
 				},
 			}
 		}
-		appRepoClient := fakeAppRepo.NewSimpleClientset(&appRepov1.AppRepository{
+		expectedAppRepo := &appRepov1.AppRepository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tc.details.AppRepositoryResourceName,
 				Namespace: metav1.NamespaceSystem,
@@ -459,7 +459,8 @@ func TestInitNetClient(t *testing.T) {
 					CustomCA: customCA,
 				},
 			},
-		})
+		}
+		appRepoClient := fakeAppRepo.NewSimpleClientset(expectedAppRepo)
 		chUtils := Chart{
 			kubeClient:    kubeClient,
 			appRepoClient: appRepoClient,
@@ -502,13 +503,20 @@ func TestInitNetClient(t *testing.T) {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
 			}
+
+			// If an app repo name was sent, the client is initialized with the expected app repo
+			if tc.details.AppRepositoryResourceName != "" {
+				if got, want := chUtils.appRepo, expectedAppRepo; !cmp.Equal(got, want) {
+					t.Errorf(cmp.Diff(got, want))
+				}
+			}
 		})
 	}
 }
 
 // Fake server for repositories and charts
 type fakeHTTPClient struct {
-	repoURLs  []string
+	repoURL   string
 	chartURLs []string
 	index     *repo.IndexFile
 	userAgent string
@@ -522,15 +530,13 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 	if f.userAgent != "" && h.Header.Get("User-Agent") != f.userAgent {
 		return nil, fmt.Errorf("Wrong user agent: %s", h.Header.Get("User-Agent"))
 	}
-	for _, repoURL := range f.repoURLs {
-		if h.URL.String() == fmt.Sprintf("%sindex.yaml", repoURL) {
-			// Return fake chart index (not customizable per repo)
-			body, err := json.Marshal(*f.index)
-			if err != nil {
-				return nil, err
-			}
-			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
+	if h.URL.String() == fmt.Sprintf("%sindex.yaml", f.repoURL) {
+		// Return fake chart index
+		body, err := json.Marshal(*f.index)
+		if err != nil {
+			return nil, err
 		}
+		return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
 	}
 	for _, chartURL := range f.chartURLs {
 		if h.URL.String() == chartURL {
@@ -539,18 +545,16 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 		}
 	}
 	// Unexpected path
-	return &http.Response{StatusCode: 404}, fmt.Errorf("Unexpected path")
+	return &http.Response{StatusCode: 404}, fmt.Errorf("Unexpected path %q for chartURLs %+v", h.URL.String(), f.chartURLs)
 }
 
-func newHTTPClient(charts []Details, userAgent string) HTTPClient {
-	var repoURLs []string
+func newHTTPClient(repoURL string, charts []Details, userAgent string) HTTPClient {
 	var chartURLs []string
 	entries := map[string]repo.ChartVersions{}
 	// Populate Chart registry with content of the given helmReleases
 	for _, ch := range charts {
-		repoURLs = append(repoURLs, ch.RepoURL)
 		chartMeta := chart.Metadata{Name: ch.ChartName, Version: ch.Version}
-		chartURL := fmt.Sprintf("%s%s-%s.tgz", ch.RepoURL, ch.ChartName, ch.Version)
+		chartURL := fmt.Sprintf("%s%s-%s.tgz", repoURL, ch.ChartName, ch.Version)
 		chartURLs = append(chartURLs, chartURL)
 		chartVersion := repo.ChartVersion{Metadata: &chartMeta, URLs: []string{chartURL}}
 		chartVersions := []*repo.ChartVersion{&chartVersion}
@@ -559,7 +563,7 @@ func newHTTPClient(charts []Details, userAgent string) HTTPClient {
 	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
 	return &clientWithDefaultHeaders{
 		client: &fakeHTTPClient{
-			repoURLs:  repoURLs,
+			repoURL:   repoURL,
 			chartURLs: chartURLs,
 			index:     index,
 			userAgent: userAgent,
@@ -583,10 +587,10 @@ func getFakeClientRequests(t *testing.T, c HTTPClient) []*http.Request {
 
 func TestGetChart(t *testing.T) {
 	target := Details{
-		RepoURL:     "http://foo.com/",
-		ChartName:   "test",
-		ReleaseName: "foo",
-		Version:     "1.0.0",
+		AppRepositoryResourceName: "foo-repo",
+		ChartName:                 "test",
+		ReleaseName:               "foo",
+		Version:                   "1.0.0",
 	}
 	testCases := []struct {
 		name      string
@@ -602,19 +606,29 @@ func TestGetChart(t *testing.T) {
 		},
 	}
 
+	const repoURL = "http://foo.com/"
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			httpClient := newHTTPClient([]Details{target}, tc.userAgent)
+			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
 			kubeClient := fakeK8s.NewSimpleClientset()
 			chUtils := Chart{
 				kubeClient: kubeClient,
 				load:       fakeLoadChart,
 				userAgent:  tc.userAgent,
+				appRepo: &appRepov1.AppRepository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "foo-repo",
+						Namespace: metav1.NamespaceSystem,
+					},
+					Spec: appRepov1.AppRepositorySpec{
+						URL: repoURL,
+					},
+				},
 			}
 			ch, err := chUtils.GetChart(&target, httpClient)
 
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			// Currently tests return an empty chart object.
 			if got, want := ch, &(chart.Chart{}); !cmp.Equal(got, want) {
@@ -628,8 +642,8 @@ func TestGetChart(t *testing.T) {
 			}
 
 			for i, url := range []string{
-				target.RepoURL + "index.yaml",
-				fmt.Sprintf("%s%s-%s.tgz", target.RepoURL, target.ChartName, target.Version),
+				chUtils.appRepo.Spec.URL + "index.yaml",
+				fmt.Sprintf("%s%s-%s.tgz", chUtils.appRepo.Spec.URL, target.ChartName, target.Version),
 			} {
 				if got, want := requests[i].URL.String(), url; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
