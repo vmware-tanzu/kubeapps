@@ -16,5 +16,5 @@ spec:
     command:
     - sh
     - -c
-    - curl -v -o output $CHARTSVC_HOST:$CHARTSVC_PORT/v1/charts && cat output && cat output | grep wordpress
+    - curl -v -o /tmp/output $CHARTSVC_HOST:$CHARTSVC_PORT/v1/charts && cat /tmp/output && cat /tmp/output | grep wordpress
   restartPolicy: Never
