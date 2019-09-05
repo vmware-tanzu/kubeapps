@@ -586,8 +586,9 @@ func getFakeClientRequests(t *testing.T, c HTTPClient) []*http.Request {
 }
 
 func TestGetChart(t *testing.T) {
+	const repoName = "foo-repo"
 	target := Details{
-		AppRepositoryResourceName: "foo-repo",
+		AppRepositoryResourceName: repoName,
 		ChartName:                 "test",
 		ReleaseName:               "foo",
 		Version:                   "1.0.0",
@@ -617,7 +618,7 @@ func TestGetChart(t *testing.T) {
 				userAgent:  tc.userAgent,
 				appRepo: &appRepov1.AppRepository{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "foo-repo",
+						Name:      repoName,
 						Namespace: metav1.NamespaceSystem,
 					},
 					Spec: appRepov1.AppRepositorySpec{
