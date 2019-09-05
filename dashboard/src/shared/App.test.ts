@@ -126,7 +126,7 @@ describe("App", () => {
         },
       },
     } as IChartVersion;
-    it("creates an app in a namespace", async () => {
+    it("upgrades an app in a namespace", async () => {
       moxios.stubRequest(/.*/, { response: "ok", status: 200 });
       expect(await App.upgrade("absent-ant", "default", "kubeapps", testChartVersion)).toBe("ok");
       const request = moxios.requests.mostRecent();
