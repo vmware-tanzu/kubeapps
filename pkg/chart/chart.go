@@ -100,15 +100,16 @@ type Chart struct {
 	appRepoClient appRepoClientSet.Interface
 	load          LoadChart
 	userAgent     string
+	appRepo       *appRepov1.AppRepository
 }
 
 // NewChart returns a new Chart
 func NewChart(kubeClient kubernetes.Interface, appRepoClient appRepoClientSet.Interface, load LoadChart, userAgent string) *Chart {
 	return &Chart{
-		kubeClient,
-		appRepoClient,
-		load,
-		userAgent,
+		kubeClient:    kubeClient,
+		appRepoClient: appRepoClient,
+		load:          load,
+		userAgent:     userAgent,
 	}
 }
 
@@ -306,6 +307,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 		}
+		c.appRepo = appRepo
 		auth = &appRepo.Spec.Auth
 	} else {
 		auth = &details.Auth
@@ -353,7 +355,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 
 // GetChart retrieves and loads a Chart from a registry
 func (c *Chart) GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error) {
-	repoURL := details.RepoURL
+	repoURL := c.appRepo.Spec.URL
 	if repoURL == "" {
 		// FIXME: Make configurable
 		repoURL = defaultRepoURL
