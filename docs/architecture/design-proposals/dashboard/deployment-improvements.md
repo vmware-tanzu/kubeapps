@@ -30,11 +30,13 @@ If the user decides to select the advanced version of the form, we should repres
 
 ## Basic Parameters Definition
 
-The basic parameters that an application supports should be defined per chart. Along with the different files of the application, we should include the information of these parameters as a different file. The proposed approach is to use the file: `values.schema.json`. This file will be a [JSON Schema](https://json-schema.org/). We have chosen this approach since it's also used by Helm v3 to validate the `values.yaml` of a chart ([link](https://github.com/helm/helm/pull/5350/)). Also, it's possible to autogenerate a form from a JSON schema as we do for the  service catalog instances. In any case, for well known parameters, we won't autogenerate the form to give a better experience.
+The basic parameters that an application supports should be defined per chart. Along with the different files of the application, we should include the information of these parameters as a different file. The proposed approach is to use the file: `values.schema.json`. This file will be a [JSON Schema](https://json-schema.org/). We have chosen this approach since it's also used by Helm v3 to validate the `values.yaml` of a chart ([link](https://github.com/helm/helm/pull/5350/)). Also, it's possible to autogenerate a form from a JSON schema as we do for the service catalog instances. We won't do so for the moment because we cannot be sure that if a `values.schema.json` exists, it represent all the relevants fields of a `values.yaml`. In any case, we won't autogenerate the form to give a better experience.
+
+This JSON Schema allows us to know the structure of the `values.yaml` file but, to know which parameters should be represented in the basic form, we need more information. In particular we need to map well known parameters, like "Disk size", to parameters in the `values.yaml`. For doing so, we can include a new file: `values.form.json`. Having those two pieces of information we are able to deliver the desired experience. See the next section for an example.
 
 ### Supported Applications and Parameters for v1
 
-We should decide the first subset of applications and parameters that we want to support in order to deliver the first version of this feature. Based on the popularity of the charts managed by Bitnami that are installed through Kubeapps we have selected:
+We should decide the first subset of applications and parameters that we want to support in order to deliver the first version of this feature. Based on the popularity of the charts managed by Bitnami that are installed through Kubeapps, we have selected:
 
 1.	bitnami/wordpress
 2.	bitnami/apache
@@ -135,40 +137,42 @@ Based on the above parameters, this may be an example of a JSON Schema for WordP
   },
 
   "required": ["wordpressUsername", "wordpressEmail", "persistence", "resources"],
-
-  "kubeapps": {
-    "username": "wordpressUsername",
-    "password": "wordpressPassword",
-    "email": "wordpressEmail",
-    "enableExternalDatabase": "mariadb.enabled",
-    "externalDatabase": "externalDatabase",
-    "disk": "persistence.size",
-    "resources": "resources",
-    "enableMetrics": "enableMetrics",
-    "replicas": "replicas"
-  }
 }
 ```
 
 This `values.schema.json` is a valid JSON schema for the `values.yaml` of WordPress. It can be more complete since it's possible to include every single parameter of the values.yaml file.
 
-In order to be able to provide a richer presentation of the form we are including the key `kubeapps`. This allows us to know which parameters we need to represent in the form and how to map them to valid values. In case there is a parameter that is not known we should be able to parse it as a generic input.
+In order to be able to provide a richer presentation of the form we are including the file `values.form.json`. This allows us to know which parameters we need to represent in the form and how to map them to valid values. In case there is a parameter that is not known we should be able to parse it as a generic input.
+
+```json
+{
+  "username": "wordpressUsername",
+  "password": "wordpressPassword",
+  "email": "wordpressEmail",
+  "enableExternalDatabase": "mariadb.enabled",
+  "externalDatabase": "externalDatabase",
+  "disk": "persistence.size",
+  "resources": "resources",
+  "enableMetrics": "enableMetrics",
+  "replicas": "replicas"
+}
+```
 
 ## Deployment Workflow
 
 This section defines how the deployment logic will work based on the JSON Schema definition above.
 
-1. The deployment component loads the details of the Chart. If the chart doesn't contain the file `values.schema.json`, continue as today; Only the advanced deployment is allowed. In other case, go to the next step.
-2. Load the `values.schema.json`. If it doesn't contain the `kubeapps` key, auto-generate the form using the tool `react-jsonschema-form`. From this point, two different tabs will be shown to the user. If the user changes tab from `basic` to `advanced` the new form will be shown but the values won't be ported. If the `kubeapps` key is defined go to the next step.
-3. Kubeapps will support ceratin types of parameters (like `username` or `resources`). If those parameters are present, we will render the rich view of the parameter, for example card-choice instead of a text-box. For parameters not supported, we should be able to fallback to the automatic generation. This may not be possible so in that case the parameter will be ignored (with an error for the developer console). If a parameter has a `title` or a `description`, those should be used in the form.
-4. Once the user clicks on "submit", we can use the `kubeapps` mapping to generate a JSON object. We can also use the JSON schema to validate the the processed object complies with the definition.
+1. The deployment component loads the details of the Chart. If the chart doesn't contain the file `values.schema.json` or the file `values.form.json`, continue as today; Only the advanced deployment is allowed. In other case, go to the next step.
+2. Load the `values.schema.json` and `values.form.json`. From this point, two different tabs will be shown to the user. If the user changes tab from `basic` to `advanced` the new form will be shown but the values won't be ported.
+3. Kubeapps will support certain types of parameters (like `username` or `resources`). If those parameters are present, we will render the rich view of the parameter, for example a card-choice instead of a text-box. For parameters not supported, we should be able to fallback to the automatic generation. This may not be possible, so in that case, the parameter will be ignored (with an error for the developer console). If a parameter has a `title` or a `description`, those should be used in the form.
+4. Once the user clicks on "submit", we can use the `values.form.json` mapping to generate a JSON object. We will also use the JSON schema to validate that the processed object complies with the definition.
 
 ## Upgrade Workflow
 
 The upgrade workflow will be similar to the deployment with some caveats:
 
-1. If the application to be upgraded doesn't contain a `values.schema.json`, behave as today. In case the current version contains the file, it should be included in new versions. If that's the case, go to the next step.
-2. If the schema contains the `kubeapps` key, use the current `values` to pre-populate the information of the form. If the schema doesn't contain that key, the renderization gets done by the automatic form generator so we may not be able to pre-fill the app information.
+1. If the application to be upgraded doesn't contain a `values.schema.json` or `values.form.json`, behave as today. In case the current version contains those files, we assume it will be included in new versions. If that's the case, go to the next step.
+2. Use the current `values` (from the old version) to pre-populate the information of the form.
 3. Once the user selects a new version, the new `schema` gets loaded. For parameters existing in the previous version, re-fill the form with the previous values. In case there is a new parameter in the form, leave it empty (or use its default value). If a parameter is no longer used, ignore it.
 4. The logic to generate the final object and validate it is the same than for the deployment.
 
@@ -186,11 +190,11 @@ This is the list of tasks that we foresee for this feature. This list may vary d
   - PostgreSQL
 - Create a test step to ensure that if the `values.schema.json` exists, the default `values.yaml` complies with it.
 - Create the feature flag.
-- Allow to automatically convert the `values.schema.json` to a form (ignoring the `kubeapps` key).
-- Design and create the components for the rich view, using the `kubeapps` definition.
-- Design and create generic components in case `kubeapps` is defined with unknown parameters.
-- Adapt the DeploymentForm to render the `kubeapps` form.
-- Adapt the UpgradeForm to render the `kubeapps` form.
+- Use the file `values.schema.json` to verify the content of the values.yaml to submit.
+- Design and create the components for the rich view, using the `values.form.json` definition.
+- Design and create generic components in case `values.form.json` is defined with unknown parameters.
+- Adapt the DeploymentForm to render the `values.form.json` form.
+- Adapt the UpgradeForm to render the `values.form.json` form.
 
 ## Known limitations
 
