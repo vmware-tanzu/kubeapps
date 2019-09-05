@@ -60,12 +60,8 @@ func init() {
 
 // Details contains the information to retrieve a Chart
 type Details struct {
-	// RepoURL is the URL of the repository. Defaults to stable repo.
-	RepoURL string `json:"repoUrl,omitempty"`
 	// AppRepositoryResourceName specifies an app repository resource to use
 	// for the request.
-	// TODO(absoludity): Intended to supercede RepoURL and Auth below. Remove
-	// RepoURL and Auth once #1110 complete.
 	AppRepositoryResourceName string `json:"appRepositoryResourceName,omitempty"`
 	// ChartName is the name of the chart within the repo.
 	ChartName string `json:"chartName"`
@@ -73,8 +69,6 @@ type Details struct {
 	ReleaseName string `json:"releaseName"`
 	// Version is the chart version.
 	Version string `json:"version"`
-	// Auth is the authentication.
-	Auth appRepov1.AppRepositoryAuth `json:"auth,omitempty"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
 }
@@ -256,9 +250,10 @@ func (c *Chart) ParseDetails(data []byte) (*Details, error) {
 		return nil, fmt.Errorf("Unable to parse request body: %v", err)
 	}
 
-	if (details.Auth.Header != nil || details.Auth.CustomCA != nil) && details.AppRepositoryResourceName != "" {
-		return nil, fmt.Errorf("auth specified together with appRepositoryResourceName")
+	if details.AppRepositoryResourceName == "" {
+		return nil, fmt.Errorf("an AppRepositoryResourceName is required")
 	}
+
 	return details, nil
 }
 
@@ -298,20 +293,14 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 		namespace = defaultNamespace
 	}
 
-	// If the app repo url is specified then we'll grab the customCA and
-	// defaultHeaders from there, otherwise default to the current details.Auth
-	// (until that path is removed).
-	var auth *appRepov1.AppRepositoryAuth
-	if details.AppRepositoryResourceName != "" {
-		appRepo, err := c.appRepoClient.KubeappsV1alpha1().AppRepositories(namespace).Get(details.AppRepositoryResourceName, metav1.GetOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
-		}
-		c.appRepo = appRepo
-		auth = &appRepo.Spec.Auth
-	} else {
-		auth = &details.Auth
+	// We grab the specified app repository (for later access to the repo URL, as well as any specified
+	// auth).
+	appRepo, err := c.appRepoClient.KubeappsV1alpha1().AppRepositories(namespace).Get(details.AppRepositoryResourceName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
+	c.appRepo = appRepo
+	auth := appRepo.Spec.Auth
 
 	if auth.CustomCA != nil {
 		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(auth.CustomCA.SecretKeyRef.Name, metav1.GetOptions{})
