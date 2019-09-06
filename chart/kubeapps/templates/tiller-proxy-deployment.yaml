@@ -49,6 +49,12 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        {{- if .Values.tillerProxy.env }}
+        {{- range $i, $env := .Values.tillerProxy.env }}
+        - name: {{ $env.name }}
+          value: {{ $env.value | quote }}
+        {{- end }}
+        {{- end }}
         {{- if .Values.tillerProxy.tls }}
         - name: HELM_HOME
           value: /etc/certs

@@ -180,6 +180,11 @@ tillerProxy:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  # It's possible to modify the default timeout for install/upgrade/rollback/delete apps
+  # (Default: 300s)
+  # env:
+  # - name: INSTALL_TIMEOUT
+  #   value: 600
 
 # Chartsvc is used to serve chart metadata over a REST API.
 chartsvc:
