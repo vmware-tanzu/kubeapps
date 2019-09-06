@@ -102,13 +102,45 @@ describe("App", () => {
           appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
           chartName: testChartVersion.relationships.chart.data.name,
           releaseName: "absent-ant",
-          repoUrl: testChartVersion.relationships.chart.data.repo.url,
           version: testChartVersion.attributes.version,
         }),
       );
     });
   });
 
+  describe("upgrade", () => {
+    const expectedURL = `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/absent-ant`;
+    const testChartVersion: IChartVersion = {
+      attributes: {
+        version: "1.2.3",
+      },
+      relationships: {
+        chart: {
+          data: {
+            name: "test",
+            repo: {
+              name: "testrepo",
+              url: "http://example.com/charts",
+            },
+          },
+        },
+      },
+    } as IChartVersion;
+    it("upgrades an app in a namespace", async () => {
+      moxios.stubRequest(/.*/, { response: "ok", status: 200 });
+      expect(await App.upgrade("absent-ant", "default", "kubeapps", testChartVersion)).toBe("ok");
+      const request = moxios.requests.mostRecent();
+      expect(request.url).toBe(expectedURL);
+      expect(request.config.data).toEqual(
+        JSON.stringify({
+          appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
+          chartName: testChartVersion.relationships.chart.data.name,
+          releaseName: "absent-ant",
+          version: testChartVersion.attributes.version,
+        }),
+      );
+    });
+  });
   describe("delete", () => {
     [
       {

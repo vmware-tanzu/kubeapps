@@ -3,7 +3,7 @@ import * as Moniker from "moniker-native";
 import * as React from "react";
 import AceEditor from "react-ace";
 
-import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
+import { IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
@@ -110,7 +110,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             <ErrorSelector
               error={this.props.error}
               namespace={namespace}
-              defaultRequiredRBACRoles={{ create: this.requiredRBACRoles() }}
               action="create"
               resource={latestSubmittedReleaseName}
             />
@@ -202,17 +201,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
-
-  private requiredRBACRoles(): IRBACRole[] {
-    return [
-      {
-        apiGroup: "kubeapps.com",
-        namespace: this.props.kubeappsNamespace,
-        resource: "apprepositories",
-        verbs: ["get"],
-      },
-    ];
-  }
 }
 
 export default DeploymentForm;

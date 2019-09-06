@@ -111,38 +111,7 @@ func TestParseDetails(t *testing.T) {
 		err      bool
 	}{
 		{
-			name: "parses repoUrl and auth",
-			data: `{
-	        	"repoUrl": "foo.com",
-	        	"chartName": "test",
-	        	"releaseName": "foo",
-	        	"version": "1.0.0",
-	        	"values": "foo: bar",
-	        	"auth": {
-	        		"header": {
-	        			"secretKeyRef": {
-	        				"key": "bar"
-	        			}
-	        		}
-	        	}
-	        }`,
-			expected: &Details{
-				RepoURL:     "foo.com",
-				ChartName:   "test",
-				ReleaseName: "foo",
-				Version:     "1.0.0",
-				Values:      "foo: bar",
-				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepositoryAuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							Key: "bar",
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "parses app repo resource",
+			name: "parses request including app repo resource",
 			data: `{
 				"appRepositoryResourceName": "my-chart-repo",
 	        	"chartName": "test",
@@ -159,55 +128,25 @@ func TestParseDetails(t *testing.T) {
 			},
 		},
 		{
-			name: "error returned if both resource and auth header specified",
+			name: "errors if appRepositoryResourceName is not present",
 			data: `{
-				"appRepositoryResourceName": "my-chart-repo",
-	        	"chartName": "test",
-	        	"releaseName": "foo",
-	        	"version": "1.0.0",
-	        	"values": "foo: bar",
-	        	"auth": {
-	        		"header": {
-	        			"secretKeyRef": {
-	        				"key": "bar"
-	        			}
-	        		}
-	        	}
+				"chartName": "test",
+				"releaseName": "foo",
+				"version": "1.0.0",
+				"values": "foo: bar"
 			}`,
 			err: true,
 		},
 		{
-			name: "error returned if both resource and auth CA specified",
+			name: "errors if appRepositoryResourceName is empty",
 			data: `{
-				"appRepositoryResourceName": "my-chart-repo",
-	        	"chartName": "test",
-	        	"releaseName": "foo",
-	        	"version": "1.0.0",
-	        	"values": "foo: bar",
-	        	"auth": {
-	        		"customCA": {
-	        			"secretKeyRef": {
-	        				"key": "bar"
-	        			}
-	        		}
-	        	}
+				"appRepositoryResourceName": "",
+				"chartName": "test",
+				"releaseName": "foo",
+				"version": "1.0.0",
+				"values": "foo: bar"
 			}`,
 			err: true,
-		},
-		{
-			name: "specifying neither repoUrl nor app repo resource is valid",
-			data: `{
-	        	"chartName": "test",
-	        	"releaseName": "foo",
-	        	"version": "1.0.0",
-	        	"values": "foo: bar"
-			}`,
-			expected: &Details{
-				ChartName:   "test",
-				ReleaseName: "foo",
-				Version:     "1.0.0",
-				Values:      "foo: bar",
-			},
 		},
 	}
 
@@ -277,21 +216,24 @@ func TestInitNetClient(t *testing.T) {
 	testCases := []struct {
 		name             string
 		details          *Details
-		authHeader       string
 		customCAData     string
+		appRepoSpec      appRepov1.AppRepositorySpec
 		errorExpected    bool
 		numCertsExpected int
 	}{
 		{
 			name: "default cert pool without auth",
 			details: &Details{
-				Auth: appRepov1.AppRepositoryAuth{},
+				AppRepositoryResourceName: appRepoName,
 			},
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
-			name: "cert added when present in auth",
+			name: "custom CA added when passed an AppRepository CRD",
 			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
@@ -306,8 +248,11 @@ func TestInitNetClient(t *testing.T) {
 			numCertsExpected: len(systemCertPool.Subjects()) + 1,
 		},
 		{
-			name: "errors if secret for custom CA cannot be found",
+			name: "errors if secret for custom CA secret cannot be found",
 			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
@@ -322,8 +267,11 @@ func TestInitNetClient(t *testing.T) {
 			errorExpected: true,
 		},
 		{
-			name: "errors if custom CA cannot be found in secret",
+			name: "errors if custom CA key cannot be found in secret",
 			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
@@ -340,6 +288,9 @@ func TestInitNetClient(t *testing.T) {
 		{
 			name: "errors if custom CA cannot be parsed",
 			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
 					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
@@ -354,8 +305,11 @@ func TestInitNetClient(t *testing.T) {
 			errorExpected: true,
 		},
 		{
-			name: "authorization header added when present in auth",
+			name: "authorization header added when passed an AppRepository CRD",
 			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
 					Header: &appRepov1.AppRepositoryAuthHeader{
 						SecretKeyRef: corev1.SecretKeySelector{
@@ -366,14 +320,16 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			authHeader:       authHeaderSecretData,
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
 			name: "errors if auth secret cannot be found",
 			details: &Details{
+				AppRepositoryResourceName: appRepoName,
+			},
+			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepositoryAuthHeader{
+					CustomCA: &appRepov1.AppRepositoryCustomCA{
 						SecretKeyRef: corev1.SecretKeySelector{
 							corev1.LocalObjectReference{"other-secret-name"},
 							"custom-secret-key",
@@ -382,37 +338,12 @@ func TestInitNetClient(t *testing.T) {
 					},
 				},
 			},
-			authHeader:    authHeaderSecretData,
 			errorExpected: true,
-		},
-		{
-			name: "authorization header added when passed an AppRepository CRD",
-			details: &Details{
-				AppRepositoryResourceName: appRepoName,
-			},
-			authHeader:       authHeaderSecretData,
-			numCertsExpected: len(systemCertPool.Subjects()),
-		},
-		{
-			name: "custom CA added when passed an AppRepository CRD",
-			details: &Details{
-				AppRepositoryResourceName: appRepoName,
-			},
-			customCAData:     pem_cert,
-			numCertsExpected: len(systemCertPool.Subjects()) + 1,
-		},
-		{
-			name: "errors if the app repo can't be found",
-			details: &Details{
-				AppRepositoryResourceName: "some other name",
-			},
-			authHeader:       authHeaderSecretData,
-			numCertsExpected: len(systemCertPool.Subjects()),
-			errorExpected:    true,
 		},
 	}
 
 	for _, tc := range testCases {
+		// The fake k8s client will contain secret for the CA and header respectively.
 		kubeClient := fakeK8s.NewSimpleClientset(&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      customCASecretName,
@@ -427,39 +358,21 @@ func TestInitNetClient(t *testing.T) {
 				Namespace: metav1.NamespaceSystem,
 			},
 			Data: map[string][]byte{
-				"custom-secret-key": []byte(tc.authHeader),
+				"custom-secret-key": []byte(authHeaderSecretData),
 			},
 		})
 
-		// Setup the appRepoClient fake to have an app repository ready for consumption.
-		var customCA *appRepov1.AppRepositoryCustomCA
-		if tc.customCAData != "" {
-			customCA = &appRepov1.AppRepositoryCustomCA{
-				SecretKeyRef: corev1.SecretKeySelector{
-					corev1.LocalObjectReference{customCASecretName},
-					"custom-secret-key",
-					nil,
-				},
-			}
-		}
-		appRepoClient := fakeAppRepo.NewSimpleClientset(&appRepov1.AppRepository{
+		// Setup the appRepoClient fake to have an app repository with the provided
+		// app repo spec.
+		expectedAppRepo := &appRepov1.AppRepository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tc.details.AppRepositoryResourceName,
 				Namespace: metav1.NamespaceSystem,
 			},
-			Spec: appRepov1.AppRepositorySpec{
-				Auth: appRepov1.AppRepositoryAuth{
-					Header: &appRepov1.AppRepositoryAuthHeader{
-						SecretKeyRef: corev1.SecretKeySelector{
-							corev1.LocalObjectReference{authHeaderSecretName},
-							"custom-secret-key",
-							nil,
-						},
-					},
-					CustomCA: customCA,
-				},
-			},
-		})
+			Spec: tc.appRepoSpec,
+		}
+		appRepoClient := fakeAppRepo.NewSimpleClientset(expectedAppRepo)
+
 		chUtils := Chart{
 			kubeClient:    kubeClient,
 			appRepoClient: appRepoClient,
@@ -474,6 +387,10 @@ func TestInitNetClient(t *testing.T) {
 					return
 				}
 				t.Fatalf("%+v", err)
+			} else {
+				if tc.errorExpected {
+					t.Fatalf("got: nil, want: error")
+				}
 			}
 
 			clientWithDefaultHeaders, ok := httpClient.(*clientWithDefaultHeaders)
@@ -493,7 +410,7 @@ func TestInitNetClient(t *testing.T) {
 
 			// If the Auth header was set, the default Authorization header should be set
 			// from the secret.
-			if tc.authHeader != "" {
+			if tc.appRepoSpec.Auth.Header != nil {
 				_, ok := clientWithDefaultHeaders.defaultHeaders["Authorization"]
 				if !ok {
 					t.Fatalf("expected Authorization header but found none")
@@ -502,13 +419,18 @@ func TestInitNetClient(t *testing.T) {
 					t.Errorf("got: %q, want: %q", got, want)
 				}
 			}
+
+			// The client holds a reference to the appRepo.
+			if got, want := chUtils.appRepo, expectedAppRepo; !cmp.Equal(got, want) {
+				t.Errorf(cmp.Diff(got, want))
+			}
 		})
 	}
 }
 
 // Fake server for repositories and charts
 type fakeHTTPClient struct {
-	repoURLs  []string
+	repoURL   string
 	chartURLs []string
 	index     *repo.IndexFile
 	userAgent string
@@ -522,15 +444,13 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 	if f.userAgent != "" && h.Header.Get("User-Agent") != f.userAgent {
 		return nil, fmt.Errorf("Wrong user agent: %s", h.Header.Get("User-Agent"))
 	}
-	for _, repoURL := range f.repoURLs {
-		if h.URL.String() == fmt.Sprintf("%sindex.yaml", repoURL) {
-			// Return fake chart index (not customizable per repo)
-			body, err := json.Marshal(*f.index)
-			if err != nil {
-				return nil, err
-			}
-			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
+	if h.URL.String() == fmt.Sprintf("%sindex.yaml", f.repoURL) {
+		// Return fake chart index
+		body, err := json.Marshal(*f.index)
+		if err != nil {
+			return nil, err
 		}
+		return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader(body))}, nil
 	}
 	for _, chartURL := range f.chartURLs {
 		if h.URL.String() == chartURL {
@@ -539,18 +459,16 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 		}
 	}
 	// Unexpected path
-	return &http.Response{StatusCode: 404}, fmt.Errorf("Unexpected path")
+	return &http.Response{StatusCode: 404}, fmt.Errorf("Unexpected path %q for chartURLs %+v", h.URL.String(), f.chartURLs)
 }
 
-func newHTTPClient(charts []Details, userAgent string) HTTPClient {
-	var repoURLs []string
+func newHTTPClient(repoURL string, charts []Details, userAgent string) HTTPClient {
 	var chartURLs []string
 	entries := map[string]repo.ChartVersions{}
 	// Populate Chart registry with content of the given helmReleases
 	for _, ch := range charts {
-		repoURLs = append(repoURLs, ch.RepoURL)
 		chartMeta := chart.Metadata{Name: ch.ChartName, Version: ch.Version}
-		chartURL := fmt.Sprintf("%s%s-%s.tgz", ch.RepoURL, ch.ChartName, ch.Version)
+		chartURL := fmt.Sprintf("%s%s-%s.tgz", repoURL, ch.ChartName, ch.Version)
 		chartURLs = append(chartURLs, chartURL)
 		chartVersion := repo.ChartVersion{Metadata: &chartMeta, URLs: []string{chartURL}}
 		chartVersions := []*repo.ChartVersion{&chartVersion}
@@ -559,7 +477,7 @@ func newHTTPClient(charts []Details, userAgent string) HTTPClient {
 	index := &repo.IndexFile{APIVersion: "v1", Generated: time.Now(), Entries: entries}
 	return &clientWithDefaultHeaders{
 		client: &fakeHTTPClient{
-			repoURLs:  repoURLs,
+			repoURL:   repoURL,
 			chartURLs: chartURLs,
 			index:     index,
 			userAgent: userAgent,
@@ -582,11 +500,12 @@ func getFakeClientRequests(t *testing.T, c HTTPClient) []*http.Request {
 }
 
 func TestGetChart(t *testing.T) {
+	const repoName = "foo-repo"
 	target := Details{
-		RepoURL:     "http://foo.com/",
-		ChartName:   "test",
-		ReleaseName: "foo",
-		Version:     "1.0.0",
+		AppRepositoryResourceName: repoName,
+		ChartName:                 "test",
+		ReleaseName:               "foo",
+		Version:                   "1.0.0",
 	}
 	testCases := []struct {
 		name      string
@@ -602,19 +521,29 @@ func TestGetChart(t *testing.T) {
 		},
 	}
 
+	const repoURL = "http://foo.com/"
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			httpClient := newHTTPClient([]Details{target}, tc.userAgent)
+			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
 			kubeClient := fakeK8s.NewSimpleClientset()
 			chUtils := Chart{
 				kubeClient: kubeClient,
 				load:       fakeLoadChart,
 				userAgent:  tc.userAgent,
+				appRepo: &appRepov1.AppRepository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      repoName,
+						Namespace: metav1.NamespaceSystem,
+					},
+					Spec: appRepov1.AppRepositorySpec{
+						URL: repoURL,
+					},
+				},
 			}
 			ch, err := chUtils.GetChart(&target, httpClient)
 
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			// Currently tests return an empty chart object.
 			if got, want := ch, &(chart.Chart{}); !cmp.Equal(got, want) {
@@ -628,8 +557,8 @@ func TestGetChart(t *testing.T) {
 			}
 
 			for i, url := range []string{
-				target.RepoURL + "index.yaml",
-				fmt.Sprintf("%s%s-%s.tgz", target.RepoURL, target.ChartName, target.Version),
+				chUtils.appRepo.Spec.URL + "index.yaml",
+				fmt.Sprintf("%s%s-%s.tgz", chUtils.appRepo.Spec.URL, target.ChartName, target.Version),
 			} {
 				if got, want := requests[i].URL.String(), url; got != want {
 					t.Errorf("got: %q, want: %q", got, want)
