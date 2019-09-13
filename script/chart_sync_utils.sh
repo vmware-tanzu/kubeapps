@@ -50,8 +50,8 @@ replaceImage() {
     local targetImageEscaped="bitnami\/kubeapps-${service}"
 
     local header=""
-    if [[ $TOKEN != "" ]]; then
-        header="-H 'Authorization: token ${TOKEN}'"
+    if [[ $ACCESS_TOKEN != "" ]]; then
+        header="-H 'Authorization: token ${ACCESS_TOKEN}'"
     fi
 
     # Get the latest tag from the bitnami repository
