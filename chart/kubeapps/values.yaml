@@ -97,7 +97,7 @@ frontend:
 apprepository:
   # Running a single controller replica to avoid sync job duplication
   replicaCount: 1
-  # Schedule for apprepository
+  # Schedule for syncing apprepositories
   crontab: "*/10 * * * *"
   image:
     registry: docker.io
