@@ -42,6 +42,32 @@ configUser() {
     cd -
 }
 
+replaceImage() {
+    local service=${1:?}
+    local file=${2:?}
+    local repoName="bitnami-docker-kubeapps-${service}"
+    local currentImageEscaped="kubeapps\/${service}"
+    local targetImageEscaped="bitnami\/kubeapps-${service}"
+
+    local header=""
+    if [[ $ACCESS_TOKEN != "" ]]; then
+        header="-H 'Authorization: token ${ACCESS_TOKEN}'"
+    fi
+
+    # Get the latest tag from the bitnami repository
+    local tag=`curl ${header} https://api.github.com/repos/bitnami/${repoName}/tags | jq -r '.[0].name'`
+    if [[ $tag == "" ]]; then
+        echo "ERROR: Unable to obtain latest tag for ${repoName}. Aborting"
+        exit 1
+    fi
+
+    # Replace image and tag from the values.yaml
+    sed -i.bk -e '1h;2,$H;$!d;g' -re \
+      's/repository: '${currentImageEscaped}'\n    tag: latest/repository: '${targetImageEscaped}'\n    tag: '${tag}'/g' \
+      ${file}
+    rm "${file}.bk"
+}
+
 updateRepo() {
     local targetRepo=${1:?}
     local targetTag=${2:?}
@@ -56,12 +82,10 @@ updateRepo() {
     # Update Chart.yaml with new version
     sed -i.bk 's/appVersion: DEVEL/appVersion: '"${targetTag}"'/g' "${chartYaml}"
     rm "${targetChartPath}/Chart.yaml.bk"
-    # DANGER: This replaces any tag marked as latest in the values.yaml
-    local tagWithoutV=$(echo $targetTag | tr -d v)
-    sed -i.bk 's/tag: latest/tag: '"${tagWithoutV}"'-r0/g' "${targetChartPath}/values.yaml"
-    # Use bitnami images
-    sed -i.bk 's/repository: kubeapps\/\(.*\)/repository: bitnami\/kubeapps-\1/g' "${targetChartPath}/values.yaml"
-    rm "${targetChartPath}/values.yaml.bk"
+    # Replace images for the latest available
+    replaceImage dashboard "${targetChartPath}/values.yaml"
+    replaceImage tiller-proxy "${targetChartPath}/values.yaml"
+    replaceImage apprepository-controller "${targetChartPath}/values.yaml"
 }
 
 commitAndPushChanges() {
