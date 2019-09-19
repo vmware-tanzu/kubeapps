@@ -14,6 +14,7 @@ const makeStore = (
   authenticating: boolean,
   oidcAuthenticated: boolean,
   authenticationError: string,
+  defaultNamespace: string,
 ) => {
   const state: IAuthState = {
     sessionExpired,
@@ -21,6 +22,7 @@ const makeStore = (
     authenticating,
     oidcAuthenticated,
     authenticationError,
+    defaultNamespace,
   };
   return mockStore({ auth: state });
 };
@@ -34,7 +36,7 @@ const emptyLocation: Location = {
 
 describe("LoginFormContainer props", () => {
   it("maps authentication redux states to props", () => {
-    const store = makeStore(true, true, true, true, "It's a trap");
+    const store = makeStore(true, true, true, true, "It's a trap", "");
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
     const form = wrapper.find("LoginForm");
     expect(form).toHaveProp({

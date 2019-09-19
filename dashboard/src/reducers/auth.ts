@@ -9,6 +9,7 @@ export interface IAuthState {
   authenticating: boolean;
   oidcAuthenticated: boolean;
   authenticationError?: string;
+  defaultNamespace: string;
 }
 
 const initialState: IAuthState = {
@@ -16,6 +17,7 @@ const initialState: IAuthState = {
   authenticated: !(localStorage.getItem("kubeapps_auth_token") === null),
   authenticating: false,
   oidcAuthenticated: localStorage.getItem("kubeapps_auth_token_oidc") === "true",
+  defaultNamespace: "",
 };
 
 const authReducer = (state: IAuthState = initialState, action: AuthAction): IAuthState => {
@@ -26,6 +28,7 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
         authenticated: action.payload.authenticated,
         oidcAuthenticated: action.payload.oidc,
         authenticating: false,
+        defaultNamespace: action.payload.defaultNamespace,
       };
     case getType(actions.auth.authenticating):
       return { ...state, authenticated: false, authenticating: true };
