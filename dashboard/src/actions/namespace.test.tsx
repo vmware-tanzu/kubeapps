@@ -2,7 +2,7 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
 import Namespace from "../shared/Namespace";
-import { fetchNamespaces, receiveNamespaces, setNamespace } from "./namespace";
+import { errorNamespaces, fetchNamespaces, receiveNamespaces, setNamespace } from "./namespace";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -61,9 +61,18 @@ describe("fetchNamespaces", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  // TODO(miguel) Improve error handling in this case.
-  it("dispatches nothing if error", async () => {
+  it("dispatches errorNamespace if error listing namespaces", async () => {
+    const err = new Error("Bang!");
+    Namespace.list = jest.fn().mockImplementationOnce(() => Promise.reject(err));
+    const expectedActions = [
+      {
+        type: getType(errorNamespaces),
+        payload: { err, op: "list" },
+      },
+    ];
+
     await store.dispatch(fetchNamespaces());
-    expect(store.getActions().length).toEqual(0);
+
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });

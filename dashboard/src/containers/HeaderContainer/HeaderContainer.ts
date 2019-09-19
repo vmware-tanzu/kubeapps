@@ -13,7 +13,7 @@ interface IState extends IStoreState {
 }
 
 function mapStateToProps({
-  auth: { authenticated, oidcAuthenticated },
+  auth: { authenticated, oidcAuthenticated, defaultNamespace },
   namespace,
   router: {
     location: { pathname },
@@ -22,6 +22,7 @@ function mapStateToProps({
   return {
     authenticated,
     namespace,
+    defaultNamespace,
     pathname,
     // If oidcAuthenticated it's not yet supported to logout
     // Some IdP like Keycloak allows to hit an endpoint to logout:
