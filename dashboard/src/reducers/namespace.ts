@@ -7,11 +7,12 @@ import { NamespaceAction } from "../actions/namespace";
 export interface INamespaceState {
   current: string;
   namespaces: string[];
+  error?: Error;
 }
 
 const initialState: INamespaceState = {
-  current: localStorage.getItem("kubeapps_namespace") || "default",
-  namespaces: ["default"],
+  current: "",
+  namespaces: [],
 };
 
 const namespaceReducer = (
@@ -23,6 +24,8 @@ const namespaceReducer = (
       return { ...state, namespaces: action.payload };
     case getType(actions.namespace.setNamespace):
       return { ...state, current: action.payload };
+    case getType(actions.namespace.errorNamespaces):
+      return { ...state, error: action.payload.err };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
       // looks for /ns/:namespace in URL

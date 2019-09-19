@@ -1,33 +1,54 @@
 import { LOCATION_CHANGE, RouterActionType } from "connected-react-router";
 import context from "jest-plugin-context";
+import { getType } from "typesafe-actions";
+
+import actions from "../actions";
 import namespaceReducer from "./namespace";
 
 describe("namespaceReducer", () => {
-  const location = {
-    hash: "",
-    search: "",
-    state: "",
+  const initialState = {
+    current: "initial-current",
+    namespaces: ["default", "initial-current"],
   };
-  const initialState = namespaceReducer(undefined, {} as any);
-
   context("when LOCATION CHANGE", () => {
-    it("changes the current stored namespace if it is in the URL", () => {
+    const location = {
+      hash: "",
+      search: "",
+      state: "",
+    };
+
+    describe("changes the current stored namespace if it is in the URL", () => {
       const testCases = [
         { path: "/ns/cyberdyne/apps", current: "cyberdyne" },
-        { path: "/cyberdyne/apps", current: "default" },
+        { path: "/cyberdyne/apps", current: "initial-current" },
         { path: "/ns/T-600/charts", current: "T-600" },
       ];
       testCases.forEach(tc => {
-        expect(
-          namespaceReducer(undefined, {
-            type: LOCATION_CHANGE,
-            payload: {
-              location: { ...location, pathname: tc.path },
-              action: "PUSH" as RouterActionType,
-            },
-          }),
-        ).toEqual({ ...initialState, current: tc.current });
+        it(tc.path, () =>
+          expect(
+            namespaceReducer(initialState, {
+              type: LOCATION_CHANGE,
+              payload: {
+                location: { ...location, pathname: tc.path },
+                action: "PUSH" as RouterActionType,
+              },
+            }),
+          ).toEqual({ ...initialState, current: tc.current }),
+        );
       });
+    });
+  });
+
+  context("when ERROR_NAMESPACE", () => {
+    const err = new Error("Bang!");
+
+    it("leaves namespaces intact and sets error", () => {
+      expect(
+        namespaceReducer(initialState, {
+          type: getType(actions.namespace.errorNamespaces),
+          payload: { err, op: "list" },
+        }),
+      ).toEqual({ ...initialState, error: err });
     });
   });
 });
