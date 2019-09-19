@@ -19,6 +19,7 @@ const makeStore = (authenticated: boolean, oidcAuthenticated: boolean) => {
     authenticated,
     oidcAuthenticated,
     authenticating: false,
+    defaultNamespace: "",
   };
   return mockStore({ auth: state, router: { location: emptyLocation } });
 };

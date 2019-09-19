@@ -1,7 +1,10 @@
 import Axios, { AxiosResponse } from "axios";
+import * as jwt from "jsonwebtoken";
 const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 import { APIBase } from "./Kube";
+
+export const DEFAULT_NAMESPACE = "default";
 
 export class Auth {
   public static getAuthToken() {
@@ -76,5 +79,19 @@ export class Auth {
       // Unable to retrieve token
     }
     return null;
+  }
+
+  // defaultNamespaceFromToken decodes a jwt token to return the k8s service
+  // account namespace.
+  // TODO(mnelson): until we call jwt.verify on the token during validateToken above
+  // we use a default namespace for both invalid tokens and tokens without the expected
+  // key.
+  public static defaultNamespaceFromToken(token: string) {
+    const payload = jwt.decode(token);
+    const namespaceKey = "kubernetes.io/serviceaccount/namespace";
+    if (!payload || !payload[namespaceKey]) {
+      return DEFAULT_NAMESPACE;
+    }
+    return payload[namespaceKey];
   }
 }
