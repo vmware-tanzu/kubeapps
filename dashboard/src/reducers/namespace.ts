@@ -7,7 +7,7 @@ import { NamespaceAction } from "../actions/namespace";
 export interface INamespaceState {
   current: string;
   namespaces: string[];
-  error?: Error;
+  errorMsg?: string;
 }
 
 const initialState: INamespaceState = {
@@ -25,7 +25,7 @@ const namespaceReducer = (
     case getType(actions.namespace.setNamespace):
       return { ...state, current: action.payload };
     case getType(actions.namespace.errorNamespaces):
-      return { ...state, error: action.payload.err };
+      return { ...state, errorMsg: action.payload.err.message };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
       // looks for /ns/:namespace in URL

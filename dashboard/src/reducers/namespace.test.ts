@@ -48,7 +48,7 @@ describe("namespaceReducer", () => {
           type: getType(actions.namespace.errorNamespaces),
           payload: { err, op: "list" },
         }),
-      ).toEqual({ ...initialState, error: err });
+      ).toEqual({ ...initialState, errorMsg: err.message });
     });
   });
 });
