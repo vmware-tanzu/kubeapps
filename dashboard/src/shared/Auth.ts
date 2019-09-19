@@ -92,6 +92,6 @@ export class Auth {
     if (!payload || !payload[namespaceKey]) {
       return DEFAULT_NAMESPACE;
     }
-    return payload[namespaceKey] || DEFAULT_NAMESPACE;
+    return payload[namespaceKey];
   }
 }
