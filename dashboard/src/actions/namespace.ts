@@ -17,7 +17,11 @@ export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
   return (err: Error, op: "list") => resolve({ err, op });
 });
 
-const allActions = [setNamespace, receiveNamespaces, errorNamespaces];
+export const clearNamespaces = createAction("CLEAR_NAMESPACES", resolve => {
+  return () => resolve();
+});
+
+const allActions = [setNamespace, receiveNamespaces, errorNamespaces, clearNamespaces];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
 
 export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {

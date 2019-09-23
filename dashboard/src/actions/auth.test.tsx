@@ -130,6 +130,9 @@ describe("OIDC authentication", () => {
         payload: { authenticated: false, oidc: false, defaultNamespace: "" },
         type: getType(actions.auth.setAuthenticated),
       },
+      {
+        type: getType(actions.namespace.clearNamespaces),
+      },
     ];
 
     return store.dispatch(actions.auth.expireSession()).then(() => {
