@@ -389,8 +389,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository) *batchv1beta1.CronJob {
 			},
 		},
 		Spec: batchv1beta1.CronJobSpec{
-			// TODO: make schedule customisable
-			Schedule: "*/10 * * * *",
+			Schedule: crontab,
 			// Set to replace as short-circuit in k8s <1.12
 			// TODO re-evaluate ConcurrentPolicy when 1.12+ is mainstream (i.e 1.14)
 			// https://github.com/kubernetes/kubernetes/issues/54870
