@@ -18,8 +18,6 @@ package proxy
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -29,11 +27,6 @@ import (
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/proto/hapi/release"
-)
-
-const (
-	// From https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
-	defaultTimeoutSeconds = 300
 )
 
 var (
@@ -62,13 +55,15 @@ type Proxy struct {
 	kubeClient kubernetes.Interface
 	helmClient helm.Interface
 	listLimit  int
+	timeout    int64
 }
 
 // NewProxy creates a Proxy
-func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface) *Proxy {
+func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface, timeout int64) *Proxy {
 	return &Proxy{
 		kubeClient: kubeClient,
 		helmClient: helmClient,
+		timeout:    timeout,
 	}
 }
 
@@ -243,21 +238,6 @@ func unlock(name string) {
 	appMutex[name].Unlock()
 }
 
-// Returns a timeout based on the value of a environment variable.
-// defaults to 300s (5min)
-func getTimeout(envVar string) int64 {
-	timeout := defaultTimeoutSeconds
-	var err error
-	if envTimeout := os.Getenv(envVar); envTimeout != "" {
-		timeout, err = strconv.Atoi(envTimeout)
-		if err != nil {
-			log.Errorf("Unable to use custom timeout. Failed to parse %s as int: %v", envVar, err)
-			timeout = defaultTimeoutSeconds
-		}
-	}
-	return int64(timeout)
-}
-
 // CreateRelease creates a tiller release
 func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error) {
 	lock(name)
@@ -268,7 +248,7 @@ func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (
 		namespace,
 		helm.ValueOverrides([]byte(values)),
 		helm.ReleaseName(name),
-		helm.InstallTimeout(getTimeout("INSTALL_TIMEOUT")),
+		helm.InstallTimeout(p.timeout),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create the release: %v", err)
@@ -292,7 +272,7 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 		ch,
 		helm.UpdateValueOverrides([]byte(values)),
 		//helm.UpgradeForce(true), ?
-		helm.UpgradeTimeout(getTimeout("UPDATE_TIMEOUT")),
+		helm.UpgradeTimeout(p.timeout),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to update the release: %v", err)
@@ -312,7 +292,7 @@ func (p *Proxy) RollbackRelease(name, namespace string, revision int32) (*releas
 	res, err := p.helmClient.RollbackRelease(
 		name,
 		helm.RollbackVersion(revision),
-		helm.RollbackTimeout(getTimeout("ROLLBACK_TIMEOUT")),
+		helm.RollbackTimeout(p.timeout),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to rollback the release: %v", err)
@@ -339,7 +319,7 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 	_, err = p.helmClient.DeleteRelease(
 		name,
 		helm.DeletePurge(purge),
-		helm.DeleteTimeout(getTimeout("DELETE_TIMEOUT")),
+		helm.DeleteTimeout(p.timeout),
 	)
 	if err != nil {
 		return fmt.Errorf("Unable to delete the release: %v", err)

@@ -18,7 +18,6 @@ package proxy
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -73,7 +72,7 @@ func newFakeProxyWithManifest(existingTillerReleases []AppOverviewTest) *Proxy {
 		})
 	}
 	kubeClient := fake.NewSimpleClientset()
-	return NewProxy(kubeClient, &helmClient)
+	return NewProxy(kubeClient, &helmClient, 300)
 }
 
 func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
@@ -608,25 +607,4 @@ func TestEnsureThreadSafety(t *testing.T) {
 		time.Sleep(1 * time.Millisecond)
 	}
 	<-finish
-}
-
-func TestGetTimeout(t *testing.T) {
-	type test struct {
-		envVar          string
-		envVarValue     string
-		expectedTimeout int64
-	}
-	tests := []test{
-		{"k_test_timeout", "10", 10},
-		{"k_test_timeout", "foo", defaultTimeoutSeconds},
-		{"k_test_timeout", "", defaultTimeoutSeconds},
-	}
-	for _, tt := range tests {
-		os.Setenv(tt.envVar, tt.envVarValue)
-		res := getTimeout(tt.envVar)
-		os.Unsetenv(tt.envVar)
-		if res != tt.expectedTimeout {
-			t.Errorf("Expecting %v, received %v", tt.expectedTimeout, res)
-		}
-	}
 }
