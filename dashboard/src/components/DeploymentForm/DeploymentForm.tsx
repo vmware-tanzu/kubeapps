@@ -39,6 +39,7 @@ export interface IDeploymentFormState {
   latestSubmittedReleaseName: string;
   namespace: string;
   appValues?: string;
+  valuesModified: boolean;
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
@@ -48,6 +49,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     namespace: this.props.namespace,
     releaseName: Moniker.choose(),
     latestSubmittedReleaseName: "",
+    valuesModified: false,
   };
 
   public componentDidMount() {
@@ -82,8 +84,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       return;
     }
 
-    const valuesModified = selected.values !== this.state.appValues;
-    if (!this.state.appValues || !valuesModified) {
+    if (!this.state.valuesModified) {
       if (version) {
         this.setState({ appValues: nextProps.selected.values });
       }
@@ -198,7 +199,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public handleValuesChange = (value: string) => {
-    this.setState({ appValues: value });
+    this.setState({ appValues: value, valuesModified: true });
   };
 }
 
