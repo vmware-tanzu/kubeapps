@@ -7,6 +7,7 @@ import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
+import LoadingWrapper from "../LoadingWrapper";
 import DeploymentForm from "./DeploymentForm";
 
 const defaultProps = {
@@ -131,6 +132,14 @@ it("renders a release name by default, relying in Monickers output", () => {
 });
 
 it("renders the basic form if enabled", () => {
-  const wrapper = shallow(<DeploymentForm {...defaultProps} enableBasicForm={true} />);
+  const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+  const wrapper = shallow(
+    <DeploymentForm
+      {...defaultProps}
+      enableBasicForm={true}
+      selected={{ versions, version: versions[0] }}
+    />,
+  );
+  expect(wrapper.find(LoadingWrapper)).not.toExist();
   expect(wrapper.find(AceEditor)).not.toExist();
 });
