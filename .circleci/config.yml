@@ -11,9 +11,8 @@ build_on_master: &build_on_master
   filters:
     tags:
       only: /^v.*/
-    # TESTING: Re-enable
-    # branches:
-    #   only: master
+    branches:
+      only: master
 # Build only in tags (release)
 build_on_tag: &build_on_tag
   filters:
