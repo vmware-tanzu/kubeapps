@@ -51,4 +51,19 @@ describe("namespaceReducer", () => {
       ).toEqual({ ...initialState, errorMsg: err.message });
     });
   });
+
+  context("when CLEAR_NAMESPACES", () => {
+    const clearedState = {
+      current: "",
+      namespaces: [],
+    };
+
+    it("clears any namespaces state", () => {
+      expect(
+        namespaceReducer(initialState, {
+          type: getType(actions.namespace.clearNamespaces),
+        }),
+      ).toEqual(clearedState);
+    });
+  });
 });
