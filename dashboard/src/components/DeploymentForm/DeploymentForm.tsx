@@ -42,7 +42,7 @@ interface IDeploymentFormState {
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
-  advancedForm: boolean;
+  showBasicForm: boolean;
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
@@ -53,8 +53,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     releaseName: Moniker.choose(),
     latestSubmittedReleaseName: "",
     valuesModified: false,
-    // Enable the advanced form by default if the basic form is not supported
-    advancedForm: this.props.enableBasicForm ? false : true,
+    // Use the basic form by default if supported
+    showBasicForm: this.props.enableBasicForm,
   };
 
   public componentDidMount() {
@@ -152,19 +152,23 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               </div>
               <div className="margin-t-big" hidden={!this.props.enableBasicForm}>
                 <div className="Tabs">
-                  <div className={`Tabs__Tab ${this.state.advancedForm ? "" : "Tabs__Tab-active"}`}>
-                    <button type="button" onClick={this.setAdvancedForm(false)}>
+                  <div
+                    className={`Tabs__Tab ${this.state.showBasicForm ? "Tabs__Tab-active" : ""}`}
+                  >
+                    <button type="button" onClick={this.setBasicForm(true)}>
                       Basic
                     </button>
                   </div>
-                  <div className={`Tabs__Tab ${this.state.advancedForm ? "Tabs__Tab-active" : ""}`}>
-                    <button type="button" onClick={this.setAdvancedForm(true)}>
+                  <div
+                    className={`Tabs__Tab ${this.state.showBasicForm ? "" : "Tabs__Tab-active"}`}
+                  >
+                    <button type="button" onClick={this.setBasicForm(false)}>
                       Advanced
                     </button>
                   </div>
                 </div>
               </div>
-              {this.state.advancedForm ? this.renderAdvancedForm() : this.renderBasicForm()}
+              {this.state.showBasicForm ? this.renderBasicForm() : this.renderAdvancedForm()}
               <div>
                 <button className="button button-primary margin-t-big" type="submit">
                   Submit
@@ -231,10 +235,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     );
   };
 
-  private setAdvancedForm = (advForm: boolean) => {
+  private setBasicForm = (enable: boolean) => {
     // OnClick requires to return a function
     return () => {
-      this.setState({ advancedForm: advForm });
+      this.setState({ showBasicForm: enable });
     };
   };
 }
