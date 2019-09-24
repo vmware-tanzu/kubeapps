@@ -136,6 +136,9 @@ describe("createAxiosInterceptorWithAuth", () => {
         payload: { authenticated: false, oidc: false, defaultNamespace: "" },
         type: "SET_AUTHENTICATED",
       },
+      {
+        type: "CLEAR_NAMESPACES",
+      },
     ];
 
     moxios.stubRequest(testPath, {

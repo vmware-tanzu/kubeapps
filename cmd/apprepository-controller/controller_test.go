@@ -20,6 +20,7 @@ func Test_newCronJob(t *testing.T) {
 		apprepo          *apprepov1alpha1.AppRepository
 		expected         batchv1beta1.CronJob
 		userAgentComment string
+		crontab          string
 	}{
 		{
 			"my-charts",
@@ -96,9 +97,10 @@ func Test_newCronJob(t *testing.T) {
 				},
 			},
 			"",
+			"",
 		},
 		{
-			"my-charts with auth and userAgent comment",
+			"my-charts with auth, userAgent and crontab configuration",
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
@@ -136,7 +138,7 @@ func Test_newCronJob(t *testing.T) {
 					},
 				},
 				Spec: batchv1beta1.CronJobSpec{
-					Schedule:          "*/10 * * * *",
+					Schedule:          "*/20 * * * *",
 					ConcurrencyPolicy: "Replace",
 					JobTemplate: batchv1beta1.JobTemplateSpec{
 						Spec: batchv1.JobSpec{
@@ -182,6 +184,7 @@ func Test_newCronJob(t *testing.T) {
 				},
 			},
 			"kubeapps/v2.3",
+			"*/20 * * * *",
 		},
 	}
 
@@ -190,6 +193,10 @@ func Test_newCronJob(t *testing.T) {
 			if tt.userAgentComment != "" {
 				userAgentComment = tt.userAgentComment
 				defer func() { userAgentComment = "" }()
+			}
+			if tt.crontab != "" {
+				crontab = tt.crontab
+				defer func() { crontab = "" }()
 			}
 			result := newCronJob(tt.apprepo)
 			if diff := deep.Equal(tt.expected, *result); diff != nil {

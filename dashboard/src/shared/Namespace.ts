@@ -10,7 +10,7 @@ export default class Namespace {
   }
 
   private static APIBase: string = APIBase;
-  private static APIEndpoint: string = `${Namespace.APIBase}/api/v1/namespaces`;
+  private static APIEndpoint: string = `${Namespace.APIBase}/api/v1/namespaces/`;
 }
 
 // Set of namespaces used accross the applications as default and "all ns" placeholders
