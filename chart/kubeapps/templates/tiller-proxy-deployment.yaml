@@ -37,6 +37,9 @@ spec:
         {{- if .Values.tillerProxy.tls.verify }}
         - --tls-verify
         {{- end }}
+        {{- if .Values.tillerProxy.timeout }}
+        - --timeout={{ .Values.tillerProxy.timeout }}
+        {{- end }}
         volumeMounts:
         - name: tiller-certs
           mountPath: /etc/certs

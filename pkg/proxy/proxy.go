@@ -29,10 +29,6 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/release"
 )
 
-const (
-	defaultTimeoutSeconds = 180
-)
-
 var (
 	appMutex           map[string]*sync.Mutex
 	allReleaseStatuses []release.Status_Code
@@ -59,13 +55,15 @@ type Proxy struct {
 	kubeClient kubernetes.Interface
 	helmClient helm.Interface
 	listLimit  int
+	timeout    int64
 }
 
 // NewProxy creates a Proxy
-func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface) *Proxy {
+func NewProxy(kubeClient kubernetes.Interface, helmClient helm.Interface, timeout int64) *Proxy {
 	return &Proxy{
 		kubeClient: kubeClient,
 		helmClient: helmClient,
+		timeout:    timeout,
 	}
 }
 
@@ -250,6 +248,7 @@ func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (
 		namespace,
 		helm.ValueOverrides([]byte(values)),
 		helm.ReleaseName(name),
+		helm.InstallTimeout(p.timeout),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create the release: %v", err)
@@ -273,6 +272,7 @@ func (p *Proxy) UpdateRelease(name, namespace string, values string, ch *chart.C
 		ch,
 		helm.UpdateValueOverrides([]byte(values)),
 		//helm.UpgradeForce(true), ?
+		helm.UpgradeTimeout(p.timeout),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to update the release: %v", err)
@@ -292,6 +292,7 @@ func (p *Proxy) RollbackRelease(name, namespace string, revision int32) (*releas
 	res, err := p.helmClient.RollbackRelease(
 		name,
 		helm.RollbackVersion(revision),
+		helm.RollbackTimeout(p.timeout),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to rollback the release: %v", err)
@@ -315,7 +316,11 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 	if err != nil {
 		return err
 	}
-	_, err = p.helmClient.DeleteRelease(name, helm.DeletePurge(purge))
+	_, err = p.helmClient.DeleteRelease(
+		name,
+		helm.DeletePurge(purge),
+		helm.DeleteTimeout(p.timeout),
+	)
 	if err != nil {
 		return fmt.Errorf("Unable to delete the release: %v", err)
 	}
