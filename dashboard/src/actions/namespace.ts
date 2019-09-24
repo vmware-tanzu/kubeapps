@@ -17,9 +17,7 @@ export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
   return (err: Error, op: "list") => resolve({ err, op });
 });
 
-export const clearNamespaces = createAction("CLEAR_NAMESPACES", resolve => {
-  return () => resolve();
-});
+export const clearNamespaces = createAction("CLEAR_NAMESPACES");
 
 const allActions = [setNamespace, receiveNamespaces, errorNamespaces, clearNamespaces];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
