@@ -25,6 +25,7 @@ describe("createAxiosInterceptorWithAuth", () => {
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
+      defaultNamespace: "",
     };
 
     store = mockStore({
@@ -132,8 +133,11 @@ describe("createAxiosInterceptorWithAuth", () => {
         type: "AUTHENTICATION_ERROR",
       },
       {
-        payload: { authenticated: false, oidc: false },
+        payload: { authenticated: false, oidc: false, defaultNamespace: "" },
         type: "SET_AUTHENTICATED",
+      },
+      {
+        type: "CLEAR_NAMESPACES",
       },
     ];
 

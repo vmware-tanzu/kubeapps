@@ -13,7 +13,13 @@ export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", resolve => {
   return (namespaces: string[]) => resolve(namespaces);
 });
 
-const allActions = [setNamespace, receiveNamespaces];
+export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
+  return (err: Error, op: "list") => resolve({ err, op });
+});
+
+export const clearNamespaces = createAction("CLEAR_NAMESPACES");
+
+const allActions = [setNamespace, receiveNamespaces, errorNamespaces, clearNamespaces];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
 
 export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
@@ -23,7 +29,7 @@ export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null,
       const namespaceStrings = namespaces.items.map((n: IResource) => n.metadata.name);
       dispatch(receiveNamespaces(namespaceStrings));
     } catch (e) {
-      // TODO: handle namespace call error
+      dispatch(errorNamespaces(e, "list"));
       return;
     }
   };
