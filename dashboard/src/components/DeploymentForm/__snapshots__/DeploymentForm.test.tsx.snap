@@ -62,12 +62,35 @@ exports[`renders the full DeploymentForm 1`] = `
           </select>
         </div>
         <div
-          style={
-            Object {
-              "marginBottom": "1em",
-            }
-          }
+          className="margin-t-big"
+          hidden={true}
         >
+          <div
+            className="Tabs"
+          >
+            <div
+              className="Tabs__Tab "
+            >
+              <button
+                onClick={[Function]}
+                type="button"
+              >
+                Basic
+              </button>
+            </div>
+            <div
+              className="Tabs__Tab Tabs__Tab-active"
+            >
+              <button
+                onClick={[Function]}
+                type="button"
+              >
+                Advanced
+              </button>
+            </div>
+          </div>
+        </div>
+        <div>
           <label
             htmlFor="values"
           >
@@ -120,7 +143,7 @@ exports[`renders the full DeploymentForm 1`] = `
         </div>
         <div>
           <button
-            className="button button-primary"
+            className="button button-primary margin-t-big"
             type="submit"
           >
             Submit

@@ -1,0 +1,40 @@
+.Tabs {
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+  margin-bottom: 10px;
+
+  &:after {
+    position: absolute;
+    content: "";
+    border-bottom: 1px solid#C7C9C8;
+    bottom: 1px;
+    z-index: -1;
+    width: 100%;
+  }
+
+  &__Tab {
+    text-align: center;
+    width: 6em;
+
+    button {
+      background: none;
+      border: 0;
+      cursor: pointer;
+      outline: none;
+      color: #1598cb;
+      font-size: 1em;
+    }
+
+    &-active {
+      border: 1px solid #c7c9c8;
+      border-bottom: 2px solid white;
+      border-radius: 5px 5px 0 0;
+
+      button {
+        outline: none;
+        color: black;
+      }
+    }
+  }
+}

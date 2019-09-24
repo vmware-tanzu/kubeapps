@@ -131,15 +131,38 @@ it("renders a release name by default, relying in Monickers output", () => {
   expect(name2).toBe("bar");
 });
 
-it("renders the basic form if enabled", () => {
-  const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
-  const wrapper = shallow(
-    <DeploymentForm
-      {...defaultProps}
-      enableBasicForm={true}
-      selected={{ versions, version: versions[0] }}
-    />,
-  );
-  expect(wrapper.find(LoadingWrapper)).not.toExist();
-  expect(wrapper.find(AceEditor)).not.toExist();
+describe("when the basic for is enabled", () => {
+  it("renders the basic form", () => {
+    const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+    const wrapper = shallow(
+      <DeploymentForm
+        {...defaultProps}
+        enableBasicForm={true}
+        selected={{ versions, version: versions[0] }}
+      />,
+    );
+    expect(wrapper.state("advancedForm")).toBe(false);
+    expect(wrapper.find(LoadingWrapper)).not.toExist();
+    expect(wrapper.find(AceEditor)).not.toExist();
+  });
+
+  it("should show the advanced form when clicking", () => {
+    const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+    const wrapper = shallow(
+      <DeploymentForm
+        {...defaultProps}
+        enableBasicForm={true}
+        selected={{ versions, version: versions[0] }}
+      />,
+    );
+    expect(wrapper.state("advancedForm")).toBe(false);
+    expect(wrapper.find(LoadingWrapper)).not.toExist();
+    expect(wrapper.find(AceEditor)).not.toExist();
+
+    const advancedTab = wrapper.find("button").filterWhere(t => t.text() === "Advanced");
+    expect(advancedTab).toExist();
+    advancedTab.simulate("click");
+    expect(wrapper.state("advancedForm")).toBe(true);
+    expect(wrapper.find(AceEditor)).toExist();
+  });
 });

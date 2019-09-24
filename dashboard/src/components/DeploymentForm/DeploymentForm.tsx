@@ -9,6 +9,7 @@ import LoadingWrapper from "../LoadingWrapper";
 
 import "brace/mode/yaml";
 import "brace/theme/xcode";
+import "./DeploymentForm.css";
 
 interface IDeploymentFormProps {
   kubeappsNamespace: string;
@@ -41,6 +42,7 @@ interface IDeploymentFormState {
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
+  advancedForm: boolean;
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
@@ -51,6 +53,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     releaseName: Moniker.choose(),
     latestSubmittedReleaseName: "",
     valuesModified: false,
+    // Enable the advanced form by default if the basic form is not supported
+    advancedForm: this.props.enableBasicForm ? false : true,
   };
 
   public componentDidMount() {
@@ -146,9 +150,23 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              {this.props.enableBasicForm ? this.renderBasicForm() : this.renderAdvancedForm()}
+              <div className="margin-t-big" hidden={!this.props.enableBasicForm}>
+                <div className="Tabs">
+                  <div className={`Tabs__Tab ${this.state.advancedForm ? "" : "Tabs__Tab-active"}`}>
+                    <button type="button" onClick={this.setAdvancedForm(false)}>
+                      Basic
+                    </button>
+                  </div>
+                  <div className={`Tabs__Tab ${this.state.advancedForm ? "Tabs__Tab-active" : ""}`}>
+                    <button type="button" onClick={this.setAdvancedForm(true)}>
+                      Advanced
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {this.state.advancedForm ? this.renderAdvancedForm() : this.renderBasicForm()}
               <div>
-                <button className="button button-primary" type="submit">
+                <button className="button button-primary margin-t-big" type="submit">
                   Submit
                 </button>
               </div>
@@ -197,7 +215,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   private renderAdvancedForm = () => {
     return (
-      <div style={{ marginBottom: "1em" }}>
+      <div>
         <label htmlFor="values">Values (YAML)</label>
         <AceEditor
           mode="yaml"
@@ -211,6 +229,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         />
       </div>
     );
+  };
+
+  private setAdvancedForm = (advForm: boolean) => {
+    // OnClick requires to return a function
+    return () => {
+      this.setState({ advancedForm: advForm });
+    };
   };
 }
 
