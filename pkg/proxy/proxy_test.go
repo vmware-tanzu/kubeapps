@@ -72,7 +72,7 @@ func newFakeProxyWithManifest(existingTillerReleases []AppOverviewTest) *Proxy {
 		})
 	}
 	kubeClient := fake.NewSimpleClientset()
-	return NewProxy(kubeClient, &helmClient)
+	return NewProxy(kubeClient, &helmClient, 300)
 }
 
 func newFakeProxy(existingTillerReleases []AppOverview) *Proxy {
