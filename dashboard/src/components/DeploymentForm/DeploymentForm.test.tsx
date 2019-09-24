@@ -1,6 +1,7 @@
 import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
+import AceEditor from "react-ace";
 
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
@@ -20,6 +21,7 @@ const defaultProps = {
   getChartVersion: jest.fn(),
   getChartValues: jest.fn(),
   namespace: "default",
+  enableBasicForm: false,
 };
 let monikerChooseMock: jest.Mock;
 
@@ -126,4 +128,9 @@ it("renders a release name by default, relying in Monickers output", () => {
   );
   const name2 = wrapper.state("releaseName") as string;
   expect(name2).toBe("bar");
+});
+
+it("renders the basic form if enabled", () => {
+  const wrapper = shallow(<DeploymentForm {...defaultProps} enableBasicForm={true} />);
+  expect(wrapper.find(AceEditor)).not.toExist();
 });
