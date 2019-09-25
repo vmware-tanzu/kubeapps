@@ -10,7 +10,7 @@ import LoadingWrapper from "../LoadingWrapper";
 import "brace/mode/yaml";
 import "brace/theme/xcode";
 
-interface IDeploymentFormProps {
+export interface IDeploymentFormProps {
   kubeappsNamespace: string;
   chartID: string;
   chartVersion: string;
@@ -30,7 +30,7 @@ interface IDeploymentFormProps {
   enableBasicForm: boolean;
 }
 
-interface IDeploymentFormState {
+export interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
