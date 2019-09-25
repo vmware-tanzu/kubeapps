@@ -30,6 +30,11 @@ describe("Config", () => {
     expect(await Config.getConfig()).toEqual({ ...defaultJSON, namespace: "magic-playground" });
   });
 
+  it("returns the basic form feature flag", async () => {
+    process.env.REACT_APP_KUBEAPPS_ENABLE_BASIC_FORM = "true";
+    expect(await Config.getConfig()).toEqual({ ...defaultJSON, enableBasicForm: true });
+  });
+
   it("does not returns the overriden namespace if NODE_ENV=production", async () => {
     process.env.NODE_ENV = "production";
     process.env.REACT_APP_KUBEAPPS_NS = "magic-playground";

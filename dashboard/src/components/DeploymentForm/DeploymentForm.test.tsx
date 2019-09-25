@@ -1,11 +1,13 @@
 import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
+import AceEditor from "react-ace";
 
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
+import LoadingWrapper from "../LoadingWrapper";
 import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
 const defaultProps = {
@@ -20,6 +22,7 @@ const defaultProps = {
   getChartVersion: jest.fn(),
   getChartValues: jest.fn(),
   namespace: "default",
+  enableBasicForm: false,
 };
 let monikerChooseMock: jest.Mock;
 
@@ -128,37 +131,36 @@ it("renders a release name by default, relying in Monickers output", () => {
   expect(name2).toBe("bar");
 });
 
-describe("stores modified values locally", () => {
-  const initialValues = "some yaml text";
-  const chartVersion = {
-    id: "foo",
-    attributes: { version: "1.0", app_version: "1.0", created: "1" },
-    relationships: {
-      chart: {
-        data: {
-          name: "chart",
-          description: "chart-description",
-          keywords: [],
-          maintainers: [],
-          repo: {
-            name: "repo",
-            url: "http://example.com",
-          },
-          sources: [],
+const initialValues = "some yaml text";
+const chartVersion = {
+  id: "foo",
+  attributes: { version: "1.0", app_version: "1.0", created: "1" },
+  relationships: {
+    chart: {
+      data: {
+        name: "chart",
+        description: "chart-description",
+        keywords: [],
+        maintainers: [],
+        repo: {
+          name: "repo",
+          url: "http://example.com",
         },
+        sources: [],
       },
     },
-  };
-  const props: IDeploymentFormProps = {
-    ...defaultProps,
-    selected: {
-      ...defaultProps.selected,
-      versions: [chartVersion],
-      version: chartVersion,
-      values: initialValues,
-    },
-  };
-
+  },
+};
+const props: IDeploymentFormProps = {
+  ...defaultProps,
+  selected: {
+    ...defaultProps.selected,
+    versions: [chartVersion],
+    version: chartVersion,
+    values: initialValues,
+  },
+};
+describe("stores modified values locally", () => {
   it("initializes the local values from props when props set", () => {
     const wrapper = shallow(<DeploymentForm {...props} />);
 
@@ -203,4 +205,10 @@ describe("stores modified values locally", () => {
     expect(localState.appValues).not.toEqual(updatedValuesFromProps);
     expect(localState.appValues).toEqual(modifiedValues);
   });
+});
+
+it("renders the basic form if enabled", () => {
+  const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
+  expect(wrapper.find(LoadingWrapper)).not.toExist();
+  expect(wrapper.find(AceEditor)).not.toExist();
 });
