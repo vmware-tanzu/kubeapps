@@ -96,7 +96,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public render() {
     const { selected, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
-    const { latestSubmittedReleaseName } = this.state;
+    const { latestSubmittedReleaseName, appValues } = this.state;
     if (selected.error) {
       return (
         <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
@@ -151,7 +151,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 this.renderTabs()
               ) : (
                 <AdvancedDeploymentForm
-                  appValues={this.state.appValues}
+                  appValues={appValues}
                   handleValuesChange={this.handleValuesChange}
                 />
               )}
@@ -204,9 +204,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       <div className="margin-t-normal">
         <Tabs
           tabs={[
-            { title: "Basic", content: <BasicDeploymentForm /> },
+            { header: "Basic", content: <BasicDeploymentForm /> },
             {
-              title: "Advanced",
+              header: "Advanced",
               content: (
                 <AdvancedDeploymentForm
                   appValues={this.state.appValues}

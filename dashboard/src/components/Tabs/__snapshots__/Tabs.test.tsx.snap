@@ -8,15 +8,15 @@ exports[`renders a set of tabs 1`] = `
   >
     <Tab
       active={true}
+      header="Foo"
       key="tab-0"
       onClick={[Function]}
-      title="Foo"
     />
     <Tab
       active={false}
+      header="Bar"
       key="tab-1"
       onClick={[Function]}
-      title="Bar"
     />
   </div>
   <div>

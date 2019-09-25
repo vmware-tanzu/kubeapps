@@ -2,7 +2,7 @@ import * as React from "react";
 import Tab from "./Tab";
 
 export interface ITab {
-  title: string;
+  header: string;
   content: JSX.Element;
 }
 
@@ -29,7 +29,7 @@ class Tabs extends React.Component<ITabsProps, ITabsState> {
             return (
               <Tab
                 key={`tab-${i}`}
-                title={tab.title}
+                header={tab.header}
                 active={i === tabActive}
                 onClick={this.activeTab(i)}
               />
