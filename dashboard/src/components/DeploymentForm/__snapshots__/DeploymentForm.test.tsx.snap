@@ -61,63 +61,9 @@ exports[`renders the full DeploymentForm 1`] = `
             </option>
           </select>
         </div>
-        <div
-          style={
-            Object {
-              "marginBottom": "1em",
-            }
-          }
-        >
-          <label
-            htmlFor="values"
-          >
-            Values (YAML)
-          </label>
-          <ReactAce
-            cursorStart={1}
-            editorProps={
-              Object {
-                "$blockScrolling": Infinity,
-              }
-            }
-            enableBasicAutocompletion={false}
-            enableLiveAutocompletion={false}
-            focus={false}
-            fontSize={12}
-            height="500px"
-            highlightActiveLine={true}
-            maxLines={null}
-            minLines={null}
-            mode="yaml"
-            name="values"
-            onChange={[Function]}
-            onLoad={null}
-            onPaste={null}
-            onScroll={null}
-            readOnly={false}
-            scrollMargin={
-              Array [
-                0,
-                0,
-                0,
-                0,
-              ]
-            }
-            setOptions={
-              Object {
-                "showPrintMargin": false,
-              }
-            }
-            showGutter={true}
-            showPrintMargin={true}
-            style={Object {}}
-            tabSize={4}
-            theme="xcode"
-            value=""
-            width="100%"
-            wrapEnabled={false}
-          />
-        </div>
+        <AdvancedDeploymentForm
+          handleValuesChange={[Function]}
+        />
         <div>
           <button
             className="button button-primary"
