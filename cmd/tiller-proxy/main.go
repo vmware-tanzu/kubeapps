@@ -48,6 +48,7 @@ var (
 	kubeClient  kubernetes.Interface
 	disableAuth bool
 	listLimit   int
+	timeout     int64
 
 	tlsCaCertFile string // path to TLS CA certificate file
 	tlsCertFile   string // path to TLS certificate file
@@ -71,6 +72,8 @@ func init() {
 	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
+	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
+	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 }
 
 func main() {
@@ -124,7 +127,7 @@ func main() {
 		log.Fatalf("Unable to connect to Tiller: %v", err)
 	}
 
-	proxy = tillerProxy.NewProxy(kubeClient, helmClient)
+	proxy = tillerProxy.NewProxy(kubeClient, helmClient, timeout)
 	chartutils := chartUtils.NewChart(kubeClient, appRepoClient, helmChartUtil.LoadArchive, userAgent())
 
 	r := mux.NewRouter()
