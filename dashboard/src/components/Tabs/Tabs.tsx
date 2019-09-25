@@ -1,6 +1,8 @@
 import * as React from "react";
 import Tab from "./Tab";
 
+import "./Tabs.css";
+
 export interface ITab {
   header: string;
   content: JSX.Element;

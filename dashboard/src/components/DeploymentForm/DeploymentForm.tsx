@@ -9,7 +9,6 @@ import LoadingWrapper from "../LoadingWrapper";
 import Tabs from "../Tabs/Tabs";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
-import "./DeploymentForm.css";
 
 export interface IDeploymentFormProps {
   kubeappsNamespace: string;
