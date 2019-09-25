@@ -7,8 +7,8 @@ import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
+import Tabs from "../Tabs/Tabs";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
-import BasicDeploymentForm from "./BasicDeploymentForm";
 import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
 const defaultProps = {
@@ -217,31 +217,15 @@ describe("when the basic form is not enabled", () => {
   it("should not show the basic/advanced tabs", () => {
     const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={false} />);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
-    expect(wrapper.find(".Tabs")).not.toExist();
+    expect(wrapper.find(Tabs)).not.toExist();
   });
 });
 
 describe("when the basic form is enabled", () => {
-  it("renders the basic form by default", () => {
+  it("renders the different tabs", () => {
     const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
-    expect(wrapper.state("showBasicForm")).toBe(true);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(AdvancedDeploymentForm)).not.toExist();
-    expect(wrapper.find(BasicDeploymentForm)).toExist();
-  });
-
-  it("should show the advanced form when clicking", () => {
-    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
-    expect(wrapper.state("showBasicForm")).toBe(true);
-    expect(wrapper.find(LoadingWrapper)).not.toExist();
-    expect(wrapper.find(AdvancedDeploymentForm)).not.toExist();
-    expect(wrapper.find(BasicDeploymentForm)).toExist();
-
-    const advancedTab = wrapper.find("button").filterWhere(t => t.text() === "Advanced");
-    expect(advancedTab).toExist();
-    advancedTab.simulate("click");
-    expect(wrapper.state("showBasicForm")).toBe(false);
-    expect(wrapper.find(AdvancedDeploymentForm)).toExist();
-    expect(wrapper.find(BasicDeploymentForm)).not.toExist();
+    expect(wrapper.find(Tabs)).toExist();
   });
 });

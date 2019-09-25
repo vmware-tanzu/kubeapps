@@ -6,6 +6,7 @@ import { IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
+import Tabs from "../Tabs/Tabs";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import "./DeploymentForm.css";
@@ -41,7 +42,6 @@ export interface IDeploymentFormState {
   namespace: string;
   appValues?: string;
   valuesModified: boolean;
-  showBasicForm: boolean;
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
@@ -52,8 +52,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     releaseName: Moniker.choose(),
     latestSubmittedReleaseName: "",
     valuesModified: false,
-    // Use the basic form by default if supported
-    showBasicForm: this.props.enableBasicForm,
   };
 
   public componentDidMount() {
@@ -98,7 +96,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public render() {
     const { selected, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
-    const { latestSubmittedReleaseName, appValues } = this.state;
+    const { latestSubmittedReleaseName } = this.state;
     if (selected.error) {
       return (
         <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
@@ -149,12 +147,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              {this.props.enableBasicForm && this.renderTabs()}
-              {this.state.showBasicForm ? (
-                <BasicDeploymentForm />
+              {this.props.enableBasicForm ? (
+                this.renderTabs()
               ) : (
                 <AdvancedDeploymentForm
-                  appValues={appValues}
+                  appValues={this.state.appValues}
                   handleValuesChange={this.handleValuesChange}
                 />
               )}
@@ -202,28 +199,23 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ appValues: value, valuesModified: true });
   };
 
-  private setBasicForm = (enable: boolean) => {
-    // OnClick requires to return a function
-    return () => {
-      this.setState({ showBasicForm: enable });
-    };
-  };
-
   private renderTabs = () => {
     return (
       <div className="margin-t-normal">
-        <div className="Tabs">
-          <div className={`Tabs__Tab ${this.state.showBasicForm ? "Tabs__Tab-active" : ""}`}>
-            <button type="button" onClick={this.setBasicForm(true)}>
-              Basic
-            </button>
-          </div>
-          <div className={`Tabs__Tab ${this.state.showBasicForm ? "" : "Tabs__Tab-active"}`}>
-            <button type="button" onClick={this.setBasicForm(false)}>
-              Advanced
-            </button>
-          </div>
-        </div>
+        <Tabs
+          tabs={[
+            { title: "Basic", content: <BasicDeploymentForm /> },
+            {
+              title: "Advanced",
+              content: (
+                <AdvancedDeploymentForm
+                  appValues={this.state.appValues}
+                  handleValuesChange={this.handleValuesChange}
+                />
+              ),
+            },
+          ]}
+        />
       </div>
     );
   };

@@ -1,0 +1,47 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a set of tabs 1`] = `
+<Fragment>
+  <div
+    className="Tabs"
+    role="tablist"
+  >
+    <Tab
+      active={true}
+      key="tab-0"
+      onClick={[Function]}
+      title="Foo"
+    />
+    <Tab
+      active={false}
+      key="tab-1"
+      onClick={[Function]}
+      title="Bar"
+    />
+  </div>
+  <div>
+    <div
+      aria-expanded={true}
+      hidden={false}
+      id="tab-0-content"
+      key="tab-0-content"
+      role="tabpanel"
+    >
+      <div>
+        foo
+      </div>
+    </div>
+    <div
+      aria-expanded={false}
+      hidden={true}
+      id="tab-1-content"
+      key="tab-1-content"
+      role="tabpanel"
+    >
+      <div>
+        bar
+      </div>
+    </div>
+  </div>
+</Fragment>
+`;
