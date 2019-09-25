@@ -8,7 +8,7 @@ import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
-import DeploymentForm from "./DeploymentForm";
+import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
 const defaultProps = {
   kubeappsNamespace: "kubeapps",
@@ -25,13 +25,6 @@ const defaultProps = {
   enableBasicForm: false,
 };
 const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
-const defaultPropsWithVersion = {
-  ...defaultProps,
-  selected: {
-    versions,
-    version: versions[0],
-  },
-};
 let monikerChooseMock: jest.Mock;
 
 itBehavesLike("aLoadingComponent", { component: DeploymentForm, props: defaultProps });
@@ -137,19 +130,91 @@ it("renders a release name by default, relying in Monickers output", () => {
   expect(name2).toBe("bar");
 });
 
+const initialValues = "some yaml text";
+const chartVersion = {
+  id: "foo",
+  attributes: { version: "1.0", app_version: "1.0", created: "1" },
+  relationships: {
+    chart: {
+      data: {
+        name: "chart",
+        description: "chart-description",
+        keywords: [],
+        maintainers: [],
+        repo: {
+          name: "repo",
+          url: "http://example.com",
+        },
+        sources: [],
+      },
+    },
+  },
+};
+const props: IDeploymentFormProps = {
+  ...defaultProps,
+  selected: {
+    ...defaultProps.selected,
+    versions: [chartVersion],
+    version: chartVersion,
+    values: initialValues,
+  },
+};
+describe("stores modified values locally", () => {
+  it("initializes the local values from props when props set", () => {
+    const wrapper = shallow(<DeploymentForm {...props} />);
+
+    wrapper.setProps(props);
+
+    const localState: IDeploymentFormState = wrapper.instance().state as IDeploymentFormState;
+    expect(localState.appValues).toEqual(initialValues);
+  });
+
+  it("updates initial values from props if not modified", () => {
+    const wrapper = shallow(<DeploymentForm {...props} />);
+
+    const updatedValuesFromProps = "some other yaml";
+    wrapper.setProps({
+      ...props,
+      selected: {
+        ...props.selected,
+        values: updatedValuesFromProps,
+      },
+    });
+
+    const localState: IDeploymentFormState = wrapper.instance().state as IDeploymentFormState;
+    expect(localState.appValues).toEqual(updatedValuesFromProps);
+  });
+
+  it("does not update values from props if they have been modified in local state", () => {
+    const wrapper = shallow(<DeploymentForm {...props} />);
+    const modifiedValues = "user-modified values.yaml";
+    const form: DeploymentForm = wrapper.instance() as DeploymentForm;
+    form.handleValuesChange(modifiedValues);
+
+    const updatedValuesFromProps = "some other yaml";
+    wrapper.setProps({
+      ...props,
+      selected: {
+        ...props.selected,
+        values: updatedValuesFromProps,
+      },
+    });
+
+    const localState: IDeploymentFormState = wrapper.instance().state as IDeploymentFormState;
+    expect(localState.appValues).not.toEqual(updatedValuesFromProps);
+    expect(localState.appValues).toEqual(modifiedValues);
+  });
+});
+
 describe("when the basic form is not enabled", () => {
   it("the advanced editor should be shown", () => {
-    const wrapper = shallow(
-      <DeploymentForm {...defaultPropsWithVersion} enableBasicForm={false} />,
-    );
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={false} />);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(AceEditor)).toExist();
   });
 
   it("should not show the basic/advanced tabs", () => {
-    const wrapper = shallow(
-      <DeploymentForm {...defaultPropsWithVersion} enableBasicForm={false} />,
-    );
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={false} />);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(".Tabs")).not.toExist();
   });
@@ -157,14 +222,14 @@ describe("when the basic form is not enabled", () => {
 
 describe("when the basic form is enabled", () => {
   it("renders the basic form by default", () => {
-    const wrapper = shallow(<DeploymentForm {...defaultPropsWithVersion} enableBasicForm={true} />);
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
     expect(wrapper.state("showBasicForm")).toBe(true);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(AceEditor)).not.toExist();
   });
 
   it("should show the advanced form when clicking", () => {
-    const wrapper = shallow(<DeploymentForm {...defaultPropsWithVersion} enableBasicForm={true} />);
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
     expect(wrapper.state("showBasicForm")).toBe(true);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(AceEditor)).not.toExist();

@@ -11,7 +11,7 @@ import "brace/mode/yaml";
 import "brace/theme/xcode";
 import "./DeploymentForm.css";
 
-interface IDeploymentFormProps {
+export interface IDeploymentFormProps {
   kubeappsNamespace: string;
   chartID: string;
   chartVersion: string;
@@ -31,7 +31,7 @@ interface IDeploymentFormProps {
   enableBasicForm: boolean;
 }
 
-interface IDeploymentFormState {
+export interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
