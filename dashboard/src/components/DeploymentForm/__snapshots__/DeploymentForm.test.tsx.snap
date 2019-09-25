@@ -61,35 +61,6 @@ exports[`renders the full DeploymentForm 1`] = `
             </option>
           </select>
         </div>
-        <div
-          className="margin-t-big"
-          hidden={true}
-        >
-          <div
-            className="Tabs"
-          >
-            <div
-              className="Tabs__Tab "
-            >
-              <button
-                onClick={[Function]}
-                type="button"
-              >
-                Basic
-              </button>
-            </div>
-            <div
-              className="Tabs__Tab Tabs__Tab-active"
-            >
-              <button
-                onClick={[Function]}
-                type="button"
-              >
-                Advanced
-              </button>
-            </div>
-          </div>
-        </div>
         <div>
           <label
             htmlFor="values"

@@ -150,24 +150,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              <div className="margin-t-big" hidden={!this.props.enableBasicForm}>
-                <div className="Tabs">
-                  <div
-                    className={`Tabs__Tab ${this.state.showBasicForm ? "Tabs__Tab-active" : ""}`}
-                  >
-                    <button type="button" onClick={this.setBasicForm(true)}>
-                      Basic
-                    </button>
-                  </div>
-                  <div
-                    className={`Tabs__Tab ${this.state.showBasicForm ? "" : "Tabs__Tab-active"}`}
-                  >
-                    <button type="button" onClick={this.setBasicForm(false)}>
-                      Advanced
-                    </button>
-                  </div>
-                </div>
-              </div>
+              {this.props.enableBasicForm && this.renderTabs()}
               {this.state.showBasicForm ? this.renderBasicForm() : this.renderAdvancedForm()}
               <div>
                 <button className="button button-primary margin-t-big" type="submit">
@@ -240,6 +223,25 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     return () => {
       this.setState({ showBasicForm: enable });
     };
+  };
+
+  private renderTabs = () => {
+    return (
+      <div className="margin-t-normal">
+        <div className="Tabs">
+          <div className={`Tabs__Tab ${this.state.showBasicForm ? "Tabs__Tab-active" : ""}`}>
+            <button type="button" onClick={this.setBasicForm(true)}>
+              Basic
+            </button>
+          </div>
+          <div className={`Tabs__Tab ${this.state.showBasicForm ? "" : "Tabs__Tab-active"}`}>
+            <button type="button" onClick={this.setBasicForm(false)}>
+              Advanced
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 }
 
