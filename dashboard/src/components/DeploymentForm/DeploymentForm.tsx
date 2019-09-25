@@ -1,14 +1,13 @@
 import { RouterAction } from "connected-react-router";
 import * as Moniker from "moniker-native";
 import * as React from "react";
-import AceEditor from "react-ace";
 
 import { IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
-import "brace/mode/yaml";
-import "brace/theme/xcode";
+import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
+import BasicDeploymentForm from "./BasicDeploymentForm";
 import "./DeploymentForm.css";
 
 export interface IDeploymentFormProps {
@@ -99,7 +98,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public render() {
     const { selected, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
-    const { latestSubmittedReleaseName } = this.state;
+    const { latestSubmittedReleaseName, appValues } = this.state;
     if (selected.error) {
       return (
         <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
@@ -151,7 +150,14 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 </select>
               </div>
               {this.props.enableBasicForm && this.renderTabs()}
-              {this.state.showBasicForm ? this.renderBasicForm() : this.renderAdvancedForm()}
+              {this.state.showBasicForm ? (
+                <BasicDeploymentForm />
+              ) : (
+                <AdvancedDeploymentForm
+                  appValues={appValues}
+                  handleValuesChange={this.handleValuesChange}
+                />
+              )}
               <div>
                 <button className="button button-primary margin-t-big" type="submit">
                   Submit
@@ -194,28 +200,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
-  };
-
-  private renderBasicForm = () => {
-    return <div>Basic Form!</div>;
-  };
-
-  private renderAdvancedForm = () => {
-    return (
-      <div>
-        <label htmlFor="values">Values (YAML)</label>
-        <AceEditor
-          mode="yaml"
-          theme="xcode"
-          name="values"
-          width="100%"
-          onChange={this.handleValuesChange}
-          setOptions={{ showPrintMargin: false }}
-          editorProps={{ $blockScrolling: Infinity }}
-          value={this.state.appValues}
-        />
-      </div>
-    );
   };
 
   private setBasicForm = (enable: boolean) => {
