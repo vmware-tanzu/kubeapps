@@ -70,8 +70,12 @@ class Routes extends React.Component<IRoutesProps> {
       </Switch>
     );
   }
-  private rootNamespacedRedirect = (props: any) => {
-    return <Redirect to={`/apps/ns/${this.props.namespace}`} />;
+  private rootNamespacedRedirect = () => {
+    if (this.props.namespace) {
+      return <Redirect to={`/apps/ns/${this.props.namespace}`} />;
+    }
+    // There is not a default namespace, redirect to login page
+    return <Redirect to={"/login"} />;
   };
 }
 

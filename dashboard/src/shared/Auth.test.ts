@@ -1,4 +1,5 @@
 import Axios from "axios";
+import * as jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
 
 describe("Auth", () => {
@@ -80,5 +81,44 @@ describe("Auth", () => {
     });
     const token = await Auth.fetchOIDCToken();
     expect(token).toEqual(null);
+  });
+
+  describe("defaultNamespaceFromToken", () => {
+    const customNamespace = "kubeapps-user";
+
+    it("should return the k8s namespace from the jwt token", () => {
+      const token = jwt.sign(
+        {
+          iss: "kubernetes/serviceaccount",
+          "kubernetes.io/serviceaccount/namespace": customNamespace,
+        },
+        "secret",
+      );
+
+      const defaultNamespace = Auth.defaultNamespaceFromToken(token);
+
+      expect(defaultNamespace).toEqual(customNamespace);
+    });
+
+    it("should return default if the namespace is not present", () => {
+      const token = jwt.sign(
+        {
+          iss: "kubernetes/serviceaccount",
+        },
+        "secret",
+      );
+
+      const defaultNamespace = Auth.defaultNamespaceFromToken(token);
+
+      expect(defaultNamespace).toEqual("default");
+    });
+
+    it("should return default if the token cannot be decoded", () => {
+      const token = "not a jwt token";
+
+      const defaultNamespace = Auth.defaultNamespaceFromToken(token);
+
+      expect(defaultNamespace).toEqual("default");
+    });
   });
 });

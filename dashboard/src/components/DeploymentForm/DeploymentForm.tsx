@@ -1,16 +1,15 @@
 import { RouterAction } from "connected-react-router";
 import * as Moniker from "moniker-native";
 import * as React from "react";
-import AceEditor from "react-ace";
 
-import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
+import { IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
-import "brace/mode/yaml";
-import "brace/theme/xcode";
+import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
+import BasicDeploymentForm from "./BasicDeploymentForm";
 
-interface IDeploymentFormProps {
+export interface IDeploymentFormProps {
   kubeappsNamespace: string;
   chartID: string;
   chartVersion: string;
@@ -27,9 +26,10 @@ interface IDeploymentFormProps {
   getChartVersion: (id: string, chartVersion: string) => void;
   getChartValues: (id: string, chartVersion: string) => void;
   namespace: string;
+  enableBasicForm: boolean;
 }
 
-interface IDeploymentFormState {
+export interface IDeploymentFormState {
   isDeploying: boolean;
   // deployment options
   releaseName: string;
@@ -94,7 +94,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public render() {
     const { selected, chartID, chartVersion, namespace } = this.props;
     const { version, versions } = selected;
-    const { appValues, latestSubmittedReleaseName } = this.state;
+    const { latestSubmittedReleaseName, appValues } = this.state;
     if (selected.error) {
       return (
         <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
@@ -110,7 +110,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             <ErrorSelector
               error={this.props.error}
               namespace={namespace}
-              defaultRequiredRBACRoles={{ create: this.requiredRBACRoles() }}
               action="create"
               resource={latestSubmittedReleaseName}
             />
@@ -146,19 +145,14 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              <div style={{ marginBottom: "1em" }}>
-                <label htmlFor="values">Values (YAML)</label>
-                <AceEditor
-                  mode="yaml"
-                  theme="xcode"
-                  name="values"
-                  width="100%"
-                  onChange={this.handleValuesChange}
-                  setOptions={{ showPrintMargin: false }}
-                  editorProps={{ $blockScrolling: Infinity }}
-                  value={appValues}
+              {this.props.enableBasicForm ? (
+                <BasicDeploymentForm />
+              ) : (
+                <AdvancedDeploymentForm
+                  appValues={appValues}
+                  handleValuesChange={this.handleValuesChange}
                 />
-              </div>
+              )}
               <div>
                 <button className="button button-primary" type="submit">
                   Submit
@@ -202,17 +196,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
   };
-
-  private requiredRBACRoles(): IRBACRole[] {
-    return [
-      {
-        apiGroup: "kubeapps.com",
-        namespace: this.props.kubeappsNamespace,
-        resource: "apprepositories",
-        verbs: ["get"],
-      },
-    ];
-  }
 }
 
 export default DeploymentForm;

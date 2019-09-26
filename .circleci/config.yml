@@ -42,14 +42,14 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_11_MASTER:
+      - GKE_1_13_MASTER:
           <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_11_LATEST_RELEASE:
+      - GKE_1_13_LATEST_RELEASE:
           <<: *build_on_master
           requires:
             - test_go
@@ -73,22 +73,22 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
-            - GKE_1_11_MASTER
-            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_13_MASTER
+            - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
             - GKE_1_12_LATEST_RELEASE
       - push_images:
           <<: *build_always
           requires:
-            - GKE_1_11_MASTER
-            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_13_MASTER
+            - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
             - GKE_1_12_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
-            - GKE_1_11_MASTER
-            - GKE_1_11_LATEST_RELEASE
+            - GKE_1_13_MASTER
+            - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
             - GKE_1_12_LATEST_RELEASE
 
@@ -266,14 +266,14 @@ jobs:
           at: /tmp/images
       - run: for image in /tmp/images/*; do kind load image-archive "$image"; done
       - <<: *run_e2e_tests
-  GKE_1_11_MASTER:
+  GKE_1_13_MASTER:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.11"
-  GKE_1_11_LATEST_RELEASE:
+      GKE_BRANCH: "1.13"
+  GKE_1_13_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.11"
+      GKE_BRANCH: "1.13"
       TEST_LATEST_RELEASE: 1
   GKE_1_12_MASTER:
     <<: *gke_test

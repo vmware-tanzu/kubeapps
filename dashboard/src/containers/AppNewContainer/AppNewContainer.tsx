@@ -26,6 +26,7 @@ function mapStateToProps(
     chartVersion: params.version,
     error: apps.error,
     kubeappsNamespace: config.namespace,
+    enableBasicForm: config.enableBasicForm,
     namespace: namespace.current,
     selected: charts.selected,
   };

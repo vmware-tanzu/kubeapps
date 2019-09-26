@@ -1,4 +1,3 @@
-import { AppRepository } from "./AppRepository";
 import { axiosWithAuth } from "./AxiosInstance";
 import { hapi } from "./hapi/release";
 import { IAppOverview, IChartVersion } from "./types";
@@ -34,7 +33,6 @@ export class App {
       appRepositoryResourceName: chartAttrs.repo.name,
       chartName: chartAttrs.name,
       releaseName,
-      repoUrl: chartAttrs.repo.url,
       values,
       version: chartVersion.attributes.version,
     });
@@ -49,14 +47,11 @@ export class App {
     values?: string,
   ) {
     const chartAttrs = chartVersion.relationships.chart.data;
-    const repo = await AppRepository.get(chartAttrs.repo.name, kubeappsNamespace);
-    const auth = repo.spec.auth;
     const endpoint = App.getResourceURL(namespace, releaseName);
     const { data } = await axiosWithAuth.put(endpoint, {
-      auth,
+      appRepositoryResourceName: chartAttrs.repo.name,
       chartName: chartAttrs.name,
       releaseName,
-      repoUrl: chartAttrs.repo.url,
       values,
       version: chartVersion.attributes.version,
     });
