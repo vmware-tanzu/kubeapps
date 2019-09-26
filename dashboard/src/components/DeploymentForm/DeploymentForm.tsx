@@ -1,14 +1,17 @@
 import { RouterAction } from "connected-react-router";
 import * as Moniker from "moniker-native";
 import * as React from "react";
+import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 import { IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
-import Tabs from "../Tabs/Tabs";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
+
+import "react-tabs/style/react-tabs.css";
+import "./Tabs.css";
 
 export interface IDeploymentFormProps {
   kubeappsNamespace: string;
@@ -201,20 +204,21 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   private renderTabs = () => {
     return (
       <div className="margin-t-normal">
-        <Tabs
-          tabs={[
-            { header: "Basic", content: <BasicDeploymentForm /> },
-            {
-              header: "Advanced",
-              content: (
-                <AdvancedDeploymentForm
-                  appValues={this.state.appValues}
-                  handleValuesChange={this.handleValuesChange}
-                />
-              ),
-            },
-          ]}
-        />
+        <Tabs>
+          <TabList>
+            <Tab>Basic</Tab>
+            <Tab>Advanced</Tab>
+          </TabList>
+          <TabPanel>
+            <BasicDeploymentForm />
+          </TabPanel>
+          <TabPanel>
+            <AdvancedDeploymentForm
+              appValues={this.state.appValues}
+              handleValuesChange={this.handleValuesChange}
+            />
+          </TabPanel>
+        </Tabs>
       </div>
     );
   };

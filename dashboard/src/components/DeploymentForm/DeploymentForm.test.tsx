@@ -2,12 +2,12 @@ import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 
+import { Tabs } from "react-tabs";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
-import Tabs from "../Tabs/Tabs";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
