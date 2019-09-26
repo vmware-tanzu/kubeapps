@@ -1,0 +1,8 @@
+.react-tabs {
+  &__tab {
+    color: black;
+    &--selected {
+      color: #1598cb;
+    }
+  }
+}

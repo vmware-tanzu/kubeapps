@@ -66,7 +66,7 @@ exports[`renders the full DeploymentForm 1`] = `
         />
         <div>
           <button
-            className="button button-primary"
+            className="button button-primary margin-t-big"
             type="submit"
           >
             Submit

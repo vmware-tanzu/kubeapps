@@ -1,13 +1,14 @@
 import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
-import AceEditor from "react-ace";
 
+import { Tabs } from "react-tabs";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
+import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
 const defaultProps = {
@@ -24,6 +25,7 @@ const defaultProps = {
   namespace: "default",
   enableBasicForm: false,
 };
+const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 let monikerChooseMock: jest.Mock;
 
 itBehavesLike("aLoadingComponent", { component: DeploymentForm, props: defaultProps });
@@ -106,7 +108,6 @@ describe("renders an error", () => {
 });
 
 it("renders the full DeploymentForm", () => {
-  const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
   const wrapper = shallow(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
@@ -114,7 +115,6 @@ it("renders the full DeploymentForm", () => {
 });
 
 it("renders a release name by default, relying in Monickers output", () => {
-  const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
   monikerChooseMock.mockImplementationOnce(() => "foo").mockImplementationOnce(() => "bar");
 
   let wrapper = shallow(
@@ -207,8 +207,24 @@ describe("stores modified values locally", () => {
   });
 });
 
-it("renders the basic form if enabled", () => {
-  const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
-  expect(wrapper.find(LoadingWrapper)).not.toExist();
-  expect(wrapper.find(AceEditor)).not.toExist();
+describe("when the basic form is not enabled", () => {
+  it("the advanced editor should be shown", () => {
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={false} />);
+    expect(wrapper.find(LoadingWrapper)).not.toExist();
+    expect(wrapper.find(AdvancedDeploymentForm)).toExist();
+  });
+
+  it("should not show the basic/advanced tabs", () => {
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={false} />);
+    expect(wrapper.find(LoadingWrapper)).not.toExist();
+    expect(wrapper.find(Tabs)).not.toExist();
+  });
+});
+
+describe("when the basic form is enabled", () => {
+  it("renders the different tabs", () => {
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
+    expect(wrapper.find(LoadingWrapper)).not.toExist();
+    expect(wrapper.find(Tabs)).toExist();
+  });
 });

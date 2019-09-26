@@ -1,6 +1,7 @@
 import { RouterAction } from "connected-react-router";
 import * as Moniker from "moniker-native";
 import * as React from "react";
+import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 import { IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
@@ -8,6 +9,9 @@ import LoadingWrapper from "../LoadingWrapper";
 
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
+
+import "react-tabs/style/react-tabs.css";
+import "./Tabs.css";
 
 export interface IDeploymentFormProps {
   kubeappsNamespace: string;
@@ -146,7 +150,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 </select>
               </div>
               {this.props.enableBasicForm ? (
-                <BasicDeploymentForm />
+                this.renderTabs()
               ) : (
                 <AdvancedDeploymentForm
                   appValues={appValues}
@@ -154,7 +158,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                 />
               )}
               <div>
-                <button className="button button-primary" type="submit">
+                <button className="button button-primary margin-t-big" type="submit">
                   Submit
                 </button>
               </div>
@@ -195,6 +199,28 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
+  };
+
+  private renderTabs = () => {
+    return (
+      <div className="margin-t-normal">
+        <Tabs>
+          <TabList>
+            <Tab>Basic</Tab>
+            <Tab>Advanced</Tab>
+          </TabList>
+          <TabPanel>
+            <BasicDeploymentForm />
+          </TabPanel>
+          <TabPanel>
+            <AdvancedDeploymentForm
+              appValues={this.state.appValues}
+              handleValuesChange={this.handleValuesChange}
+            />
+          </TabPanel>
+        </Tabs>
+      </div>
+    );
   };
 }
 
