@@ -379,7 +379,7 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 // ProxyChartSVC reverse-proxy requests to the chartsvc
 func (h *TillerProxy) ProxyChartSVC(w http.ResponseWriter, req *http.Request) {
 	// Remove root /chartsvc from the actual path
-	path := strings.Replace(req.URL.EscapedPath(), "/chartsvc", "", -1)
+	path := strings.Replace(req.URL.String(), "/chartsvc", "", -1)
 	var err error
 	req.URL, err = url.Parse(path)
 	if err != nil {
