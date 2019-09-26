@@ -225,7 +225,6 @@ describe("when the basic form is enabled", () => {
   it("renders the different tabs", () => {
     const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
-    expect(wrapper.find(AdvancedDeploymentForm)).not.toExist();
     expect(wrapper.find(Tabs)).toExist();
   });
 });
