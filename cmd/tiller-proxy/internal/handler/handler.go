@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -150,10 +152,11 @@ func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWrite
 
 // TillerProxy client and configuration
 type TillerProxy struct {
-	DisableAuth bool
-	ListLimit   int
-	ChartClient chartUtils.Resolver
-	ProxyClient proxy.TillerClient
+	DisableAuth   bool
+	ListLimit     int
+	ChartClient   chartUtils.Resolver
+	ProxyClient   proxy.TillerClient
+	ChartsvcProxy *httputil.ReverseProxy
 }
 
 func (h *TillerProxy) logStatus(name string) {
@@ -371,4 +374,18 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 	}
 	w.Header().Set("Status-Code", "200")
 	w.Write([]byte("OK"))
+}
+
+// ProxyChartSVC reverse-proxy requests to the chartsvc
+func (h *TillerProxy) ProxyChartSVC(w http.ResponseWriter, req *http.Request) {
+	// Remove root /chartsvc from the actual path
+	path := strings.Replace(req.URL.EscapedPath(), "/chartsvc", "", -1)
+	var err error
+	req.URL, err = url.Parse(path)
+	if err != nil {
+		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
+		return
+	}
+
+	h.ChartsvcProxy.ServeHTTP(w, req)
 }

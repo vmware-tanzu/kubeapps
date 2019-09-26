@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -59,6 +61,8 @@ var (
 	tlsCaCertDefault = fmt.Sprintf("%s/ca.crt", os.Getenv("HELM_HOME"))
 	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
+
+	chartsvcURL string
 )
 
 func init() {
@@ -74,6 +78,7 @@ func init() {
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
+	pflag.StringVar(&chartsvcURL, "chartsvc-url", "http://kubeapps-internal-chartsvc:8080", "URL to the internal chartsvc")
 }
 
 func main() {
@@ -130,6 +135,12 @@ func main() {
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient, timeout)
 	chartutils := chartUtils.NewChart(kubeClient, appRepoClient, helmChartUtil.LoadArchive, userAgent())
 
+	parsedChartsvcURL, err := url.Parse(chartsvcURL)
+	if err != nil {
+		log.Fatalf("Unable to parse the chartsvc URL: %v", err)
+	}
+	chartsvcProxy := httputil.NewSingleHostReverseProxy(parsedChartsvcURL)
+
 	r := mux.NewRouter()
 
 	// Healthcheck
@@ -141,11 +152,13 @@ func main() {
 
 	// HTTP Handler
 	h := handler.TillerProxy{
-		DisableAuth: disableAuth,
-		ListLimit:   listLimit,
-		ChartClient: chartutils,
-		ProxyClient: proxy,
+		DisableAuth:   disableAuth,
+		ListLimit:     listLimit,
+		ChartClient:   chartutils,
+		ProxyClient:   proxy,
+		ChartsvcProxy: chartsvcProxy,
 	}
+
 	// Routes
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
@@ -171,6 +184,11 @@ func main() {
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(handler.WithParams(h.DeleteRelease)),
+	))
+	// Chartsvc reverse proxy
+	r.PathPrefix("/chartsvc").Methods("GET").Handler(negroni.New(
+		authGate,
+		negroni.Wrap(handler.WithoutParams(h.ProxyChartSVC)),
 	))
 
 	n := negroni.Classic()
