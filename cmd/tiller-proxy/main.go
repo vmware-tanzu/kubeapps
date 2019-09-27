@@ -135,12 +135,6 @@ func main() {
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient, timeout)
 	chartutils := chartUtils.NewChart(kubeClient, appRepoClient, helmChartUtil.LoadArchive, userAgent())
 
-	parsedChartsvcURL, err := url.Parse(chartsvcURL)
-	if err != nil {
-		log.Fatalf("Unable to parse the chartsvc URL: %v", err)
-	}
-	chartsvcProxy := httputil.NewSingleHostReverseProxy(parsedChartsvcURL)
-
 	r := mux.NewRouter()
 
 	// Healthcheck
@@ -152,11 +146,10 @@ func main() {
 
 	// HTTP Handler
 	h := handler.TillerProxy{
-		DisableAuth:   disableAuth,
-		ListLimit:     listLimit,
-		ChartClient:   chartutils,
-		ProxyClient:   proxy,
-		ChartsvcProxy: chartsvcProxy,
+		DisableAuth: disableAuth,
+		ListLimit:   listLimit,
+		ChartClient: chartutils,
+		ProxyClient: proxy,
 	}
 
 	// Routes
@@ -187,15 +180,20 @@ func main() {
 	))
 
 	// Chartsvc reverse proxy
+	parsedChartsvcURL, err := url.Parse(chartsvcURL)
+	if err != nil {
+		log.Fatalf("Unable to parse the chartsvc URL: %v", err)
+	}
+	chartsvcProxy := httputil.NewSingleHostReverseProxy(parsedChartsvcURL)
 	chartsvcPrefix := "/chartsvc"
 	chartsvcRouter := r.PathPrefix(chartsvcPrefix).Subrouter()
 	// Logos don't require authentication so bypass that step
 	chartsvcRouter.Methods("GET").Path("/v1/assets/{repo}/{id}/logo").Handler(negroni.New(
-		negroni.Wrap(http.StripPrefix(chartsvcPrefix, h.ChartsvcProxy)),
+		negroni.Wrap(http.StripPrefix(chartsvcPrefix, chartsvcProxy)),
 	))
 	chartsvcRouter.Methods("GET").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(http.StripPrefix(chartsvcPrefix, h.ChartsvcProxy)),
+		negroni.Wrap(http.StripPrefix(chartsvcPrefix, chartsvcProxy)),
 	))
 
 	n := negroni.Classic()

@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"regexp"
 	"strconv"
 	"strings"
@@ -151,11 +150,10 @@ func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWrite
 
 // TillerProxy client and configuration
 type TillerProxy struct {
-	DisableAuth   bool
-	ListLimit     int
-	ChartClient   chartUtils.Resolver
-	ProxyClient   proxy.TillerClient
-	ChartsvcProxy *httputil.ReverseProxy
+	DisableAuth bool
+	ListLimit   int
+	ChartClient chartUtils.Resolver
+	ProxyClient proxy.TillerClient
 }
 
 func (h *TillerProxy) logStatus(name string) {
