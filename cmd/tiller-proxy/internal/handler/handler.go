@@ -22,7 +22,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -374,18 +373,4 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 	}
 	w.Header().Set("Status-Code", "200")
 	w.Write([]byte("OK"))
-}
-
-// ProxyChartSVC reverse-proxy requests to the chartsvc
-func (h *TillerProxy) ProxyChartSVC(w http.ResponseWriter, req *http.Request) {
-	// Remove root /chartsvc from the actual path
-	path := strings.Replace(req.URL.String(), "/chartsvc", "", -1)
-	var err error
-	req.URL, err = url.Parse(path)
-	if err != nil {
-		response.NewErrorResponse(errorCode(err), err.Error()).Write(w)
-		return
-	}
-
-	h.ChartsvcProxy.ServeHTTP(w, req)
 }

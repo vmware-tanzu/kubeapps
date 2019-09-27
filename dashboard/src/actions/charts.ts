@@ -77,7 +77,7 @@ export function fetchCharts(
 
 export function fetchChartVersions(
   id: string,
-): ThunkAction<Promise<IChartVersion[] | null>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<IChartVersion[] | undefined>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
@@ -88,8 +88,8 @@ export function fetchChartVersions(
       return versions;
     } catch (e) {
       dispatchError(dispatch, e);
+      return;
     }
-    return null;
   };
 }
 

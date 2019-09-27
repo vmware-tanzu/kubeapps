@@ -187,14 +187,15 @@ func main() {
 	))
 
 	// Chartsvc reverse proxy
-	chartsvc := r.PathPrefix("/chartsvc").Subrouter()
+	chartsvcPrefix := "/chartsvc"
+	chartsvcRouter := r.PathPrefix(chartsvcPrefix).Subrouter()
 	// Logos don't require authentication so bypass that step
-	chartsvc.Methods("GET").Path("/v1/assets/{repo}/{id}/logo").Handler(negroni.New(
-		negroni.Wrap(handler.WithoutParams(h.ProxyChartSVC)),
+	chartsvcRouter.Methods("GET").Path("/v1/assets/{repo}/{id}/logo").Handler(negroni.New(
+		negroni.Wrap(http.StripPrefix(chartsvcPrefix, h.ChartsvcProxy)),
 	))
-	chartsvc.Methods("GET").Handler(negroni.New(
+	chartsvcRouter.Methods("GET").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithoutParams(h.ProxyChartSVC)),
+		negroni.Wrap(http.StripPrefix(chartsvcPrefix, h.ChartsvcProxy)),
 	))
 
 	n := negroni.Classic()
