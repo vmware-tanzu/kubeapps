@@ -2,6 +2,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
+import { DEFAULT_NAMESPACE } from "../shared/Auth";
 
 export interface IAuthState {
   sessionExpired: boolean;
@@ -17,7 +18,7 @@ const initialState: IAuthState = {
   authenticated: !(localStorage.getItem("kubeapps_auth_token") === null),
   authenticating: false,
   oidcAuthenticated: localStorage.getItem("kubeapps_auth_token_oidc") === "true",
-  defaultNamespace: "",
+  defaultNamespace: DEFAULT_NAMESPACE,
 };
 
 const authReducer = (state: IAuthState = initialState, action: AuthAction): IAuthState => {
@@ -28,7 +29,7 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
         authenticated: action.payload.authenticated,
         oidcAuthenticated: action.payload.oidc,
         authenticating: false,
-        defaultNamespace: action.payload.defaultNamespace,
+        defaultNamespace: action.payload.defaultNamespace || DEFAULT_NAMESPACE,
       };
     case getType(actions.auth.authenticating):
       return { ...state, authenticated: false, authenticating: true };
