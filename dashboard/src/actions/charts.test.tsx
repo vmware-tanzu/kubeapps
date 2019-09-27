@@ -1,7 +1,7 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
-import { axios } from "../shared/AxiosInstance";
+import { axiosWithAuth } from "../shared/AxiosInstance";
 
 import actions from ".";
 import { NotFoundError } from "../shared/types";
@@ -22,7 +22,7 @@ beforeEach(() => {
       },
     };
   });
-  axios.get = axiosGetMock;
+  axiosWithAuth.get = axiosGetMock;
 });
 
 afterEach(() => {
@@ -44,16 +44,15 @@ describe("fetchCharts", () => {
   it("returns a 404 error", async () => {
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.errorChart), payload: new NotFoundError("not found") },
+      {
+        type: getType(actions.charts.errorChart),
+        payload: new NotFoundError("could not find chart"),
+      },
     ];
     axiosGetMock = jest.fn(() => {
-      return {
-        ok: false,
-        status: 404,
-        data: "not found",
-      };
+      throw new Error("could not find chart");
     });
-    axios.get = axiosGetMock;
+    axiosWithAuth.get = axiosGetMock;
     await store.dispatch(actions.charts.fetchCharts("foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -64,13 +63,9 @@ describe("fetchCharts", () => {
       { type: getType(actions.charts.errorChart), payload: new Error("something went wrong") },
     ];
     axiosGetMock = jest.fn(() => {
-      return {
-        ok: false,
-        status: 500,
-        data: "something went wrong",
-      };
+      throw new Error("something went wrong");
     });
-    axios.get = axiosGetMock;
+    axiosWithAuth.get = axiosGetMock;
     await store.dispatch(actions.charts.fetchCharts("foo"));
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -119,16 +114,15 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     response = [{ id: "foo", attributes: { version: "1.0.0" } }];
     const expectedActions = [
       { type: getType(actions.charts.requestCharts) },
-      { type: getType(actions.charts.errorChart), payload: new NotFoundError("not found") },
+      {
+        type: getType(actions.charts.errorChart),
+        payload: new NotFoundError("could not find chart"),
+      },
     ];
     axiosGetMock = jest.fn(() => {
-      return {
-        ok: false,
-        status: 404,
-        data: "not found",
-      };
+      throw new Error("could not find chart");
     });
-    axios.get = axiosGetMock;
+    axiosWithAuth.get = axiosGetMock;
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");

@@ -2,10 +2,8 @@ import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
-import { axios } from "../shared/AxiosInstance";
 import Chart from "../shared/Chart";
 import { IChart, IChartVersion, IStoreState, NotFoundError } from "../shared/types";
-import * as url from "../shared/url";
 
 export const requestCharts = createAction("REQUEST_CHARTS");
 
@@ -53,22 +51,11 @@ const allActions = [
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
 
-async function httpGet(dispatch: Dispatch, targetURL: string): Promise<any> {
-  try {
-    const response = await axios.get(targetURL);
-    // If non-2XX response (not ok)
-    if (response.status < 200 || response.status > 299) {
-      const error = response.data || response.statusText;
-      if (response.status === 404) {
-        dispatch(errorChart(new NotFoundError(error)));
-      } else {
-        dispatch(errorChart(new Error(error)));
-      }
-    } else {
-      return response.data.data;
-    }
-  } catch (e) {
-    dispatch(errorChart(e));
+function dispatchError(dispatch: Dispatch, err: Error) {
+  if (err.message.match("could not find")) {
+    dispatch(errorChart(new NotFoundError(err.message)));
+  } else {
+    dispatch(errorChart(err));
   }
 }
 
@@ -77,23 +64,32 @@ export function fetchCharts(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
-    const response = await httpGet(dispatch, url.api.charts.list(repo));
-    if (response) {
-      dispatch(receiveCharts(response));
+    try {
+      const charts = await Chart.fetchCharts(repo);
+      if (charts) {
+        dispatch(receiveCharts(charts));
+      }
+    } catch (e) {
+      dispatchError(dispatch, e);
     }
   };
 }
 
 export function fetchChartVersions(
   id: string,
-): ThunkAction<Promise<IChartVersion[]>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<IChartVersion[] | undefined>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
-    const response = await httpGet(dispatch, url.api.charts.listVersions(id));
-    if (response) {
-      dispatch(receiveChartVersions(response));
+    try {
+      const versions = await Chart.fetchChartVersions(id);
+      if (versions) {
+        dispatch(receiveChartVersions(versions));
+      }
+      return versions;
+    } catch (e) {
+      dispatchError(dispatch, e);
+      return;
     }
-    return response;
   };
 }
 
@@ -103,9 +99,13 @@ export function getChartVersion(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
-    const response = await httpGet(dispatch, url.api.charts.getVersion(id, version));
-    if (response) {
-      dispatch(selectChartVersion(response));
+    try {
+      const chartVersion = await Chart.getChartVersion(id, version);
+      if (chartVersion) {
+        dispatch(selectChartVersion(chartVersion));
+      }
+    } catch (e) {
+      dispatchError(dispatch, e);
     }
   };
 }
