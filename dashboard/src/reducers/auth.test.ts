@@ -19,7 +19,7 @@ describe("authReducer", () => {
       authenticated: false,
       authenticating: false,
       oidcAuthenticated: false,
-      defaultNamespace: "",
+      defaultNamespace: "default",
     };
   });
 
