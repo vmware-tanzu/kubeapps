@@ -54,11 +54,11 @@ describe("namespaceReducer", () => {
 
   context("when CLEAR_NAMESPACES", () => {
     const clearedState = {
-      current: "",
+      current: "default",
       namespaces: [],
     };
 
-    it("clears any namespaces state", () => {
+    it("returns to the default namespace", () => {
       expect(
         namespaceReducer(initialState, {
           type: getType(actions.namespace.clearNamespaces),
