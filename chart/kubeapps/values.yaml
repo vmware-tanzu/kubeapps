@@ -299,7 +299,7 @@ testImage:
   # Image used for the tests. The only requirement is to include curl
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.16.0-r99
+  tag: 1.16.1-debian-9-r49
 
 # Auth Proxy for OIDC support
 # ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md
