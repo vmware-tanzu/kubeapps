@@ -119,7 +119,7 @@ const actionTestCases: ITestCase[] = [
 actionTestCases.forEach(tc => {
   describe(tc.name, () => {
     it("has expected structure", () => {
-      const actionResult = tc.action.call(null, ...tc.args);
+      const actionResult = tc.args ? tc.action.call(null, ...tc.args) : tc.action.call(null);
       expect(actionResult).toEqual({
         type: getType(tc.action),
         payload: tc.payload,

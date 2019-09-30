@@ -26,7 +26,7 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
 it("invalid path should show a 404 error", () => {
   const wrapper = mount(
     <StaticRouter location="/random" context={{}}>
-      <Routes {...emptyRouteComponentProps} namespace={"default"} />
+      <Routes {...emptyRouteComponentProps} namespace={"default"} authenticated={true} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).toExist();
@@ -36,7 +36,7 @@ it("invalid path should show a 404 error", () => {
 it("should render a redirect to the default namespace", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} namespace={"default"} />
+      <Routes {...emptyRouteComponentProps} namespace={"default"} authenticated={true} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
@@ -46,7 +46,17 @@ it("should render a redirect to the default namespace", () => {
 it("should render a redirect to the login page", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} namespace={""} />
+      <Routes {...emptyRouteComponentProps} namespace={""} authenticated={true} />
+    </StaticRouter>,
+  );
+  expect(wrapper.find(NotFound)).not.toExist();
+  expect(wrapper.find(Redirect).props().to).toEqual("/login");
+});
+
+it("should render a redirect to the login page (when not authenticated)", () => {
+  const wrapper = mount(
+    <StaticRouter location="/" context={{}}>
+      <Routes {...emptyRouteComponentProps} namespace={"default"} authenticated={false} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();

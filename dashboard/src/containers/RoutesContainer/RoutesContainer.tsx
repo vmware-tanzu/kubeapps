@@ -5,7 +5,10 @@ import { IStoreState } from "../../shared/types";
 import Routes from "./Routes";
 
 function mapStateToProps({ auth, namespace }: IStoreState) {
-  return { namespace: namespace.current || auth.defaultNamespace };
+  return {
+    namespace: namespace.current || auth.defaultNamespace,
+    authenticated: auth.authenticated,
+  };
 }
 
 export default withRouter(connect(mapStateToProps)(Routes));
