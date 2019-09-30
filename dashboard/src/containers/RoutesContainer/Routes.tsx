@@ -47,6 +47,7 @@ const routes: {
 
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   namespace: string;
+  authenticated: boolean;
 }
 
 class Routes extends React.Component<IRoutesProps> {
@@ -71,7 +72,7 @@ class Routes extends React.Component<IRoutesProps> {
     );
   }
   private rootNamespacedRedirect = () => {
-    if (this.props.namespace) {
+    if (this.props.namespace && this.props.authenticated) {
       return <Redirect to={`/apps/ns/${this.props.namespace}`} />;
     }
     // There is not a default namespace, redirect to login page
