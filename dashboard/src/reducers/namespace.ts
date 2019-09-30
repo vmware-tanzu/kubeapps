@@ -3,6 +3,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
+import { Auth } from "../shared/Auth";
 
 export interface INamespaceState {
   current: string;
@@ -10,10 +11,14 @@ export interface INamespaceState {
   errorMsg?: string;
 }
 
-const initialState: INamespaceState = {
-  current: "",
-  namespaces: [],
+const getInitialState: () => INamespaceState = (): INamespaceState => {
+  const token = Auth.getAuthToken() || "";
+  return {
+    current: Auth.defaultNamespaceFromToken(token),
+    namespaces: [],
+  };
 };
+const initialState: INamespaceState = getInitialState();
 
 const namespaceReducer = (
   state: INamespaceState = initialState,
