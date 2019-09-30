@@ -62,7 +62,7 @@ frontend:
   image:
     registry: docker.io
     repository: bitnami/nginx
-    tag: 1.16.1-r25
+    tag: 1.16.1-debian-9-r52
   service:
     port: 80
     type: ClusterIP
@@ -299,7 +299,7 @@ testImage:
   # Image used for the tests. The only requirement is to include curl
   registry: docker.io
   repository: bitnami/nginx
-  tag: 1.16.1-debian-9-r49
+  tag: 1.16.1-debian-9-r52
 
 # Auth Proxy for OIDC support
 # ref: https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md
