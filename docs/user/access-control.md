@@ -25,7 +25,7 @@ kubectl create -n default serviceaccount example
 To get the API token for this Service Account, run the following:
 
 ```bash
-kubectl get -n default secret $(kubectl get -n default serviceaccount example -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}'
+kubectl get -n default secret $(kubectl get -n default serviceaccount example -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo
 ```
 
 ## Assigning Kubeapps User Roles
