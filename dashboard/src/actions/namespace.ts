@@ -9,6 +9,10 @@ export const setNamespace = createAction("SET_NAMESPACE", resolve => {
   return (namespace: string) => resolve(namespace);
 });
 
+export const setDefaultNamespace = createAction("SET_DEFAULT_NAMESPACE", resolve => {
+  return (namespace: string) => resolve(namespace);
+});
+
 export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", resolve => {
   return (namespaces: string[]) => resolve(namespaces);
 });
@@ -19,7 +23,13 @@ export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
 
 export const clearNamespaces = createAction("CLEAR_NAMESPACES");
 
-const allActions = [setNamespace, receiveNamespaces, errorNamespaces, clearNamespaces];
+const allActions = [
+  setNamespace,
+  receiveNamespaces,
+  errorNamespaces,
+  clearNamespaces,
+  setDefaultNamespace,
+];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
 
 export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
