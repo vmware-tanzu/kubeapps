@@ -53,9 +53,9 @@ describe("namespaceReducer", () => {
   });
 
   context("when CLEAR_NAMESPACES", () => {
-    it("returns to the default namespace, maintaining the current namespace", () => {
+    it("returns to the default namespace", () => {
       const clearedState = {
-        current: initialState.current,
+        current: "",
         namespaces: [],
       };
       expect(
@@ -64,5 +64,33 @@ describe("namespaceReducer", () => {
         }),
       ).toEqual(clearedState);
     });
+  });
+});
+
+context("when SET_DEFAULT_NAMESPACE", () => {
+  it("set current namespace if it's empty", () => {
+    const initialState = {
+      current: "",
+      namespaces: [],
+    };
+    expect(
+      namespaceReducer(initialState, {
+        type: getType(actions.namespace.namespaceReceived),
+        payload: "not-default",
+      }),
+    ).toEqual({ ...initialState, current: "not-default" });
+  });
+
+  it("does not set the current namespace if it is not empty", () => {
+    const initialState = {
+      current: "default",
+      namespaces: [],
+    };
+    expect(
+      namespaceReducer(initialState, {
+        type: getType(actions.namespace.namespaceReceived),
+        payload: "not-default",
+      }),
+    ).toEqual({ ...initialState, current: "default" });
   });
 });
