@@ -99,8 +99,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       }
     }
 
-    if (nextProps.selected.schema) {
-      this.setState({ basicFormParameters: retrieveBasicFormParams(nextProps.selected.schema) });
+    if (nextProps.selected.schema && nextProps.selected.values) {
+      this.setState({
+        basicFormParameters: retrieveBasicFormParams(
+          nextProps.selected.values,
+          nextProps.selected.schema,
+        ),
+      });
     }
   }
 
