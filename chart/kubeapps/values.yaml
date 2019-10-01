@@ -66,6 +66,10 @@ frontend:
   service:
     port: 80
     type: ClusterIP
+    # Set type to LoadBalancer and enable
+    # the parameter below with a value
+    # to have a static load balancer IP
+    #loadBalancerIP:
     annotations: {}
   livenessProbe:
     httpGet:
