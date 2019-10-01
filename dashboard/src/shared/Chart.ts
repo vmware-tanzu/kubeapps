@@ -32,6 +32,11 @@ export default class Chart {
     return data;
   }
 
+  public static async getSchema(id: string, version: string) {
+    const { data } = await axiosWithAuth.get<string>(URL.api.charts.getSchema(id, version));
+    return data;
+  }
+
   public static async exists(id: string, version: string, repo: string) {
     try {
       await axiosWithAuth.get(URL.api.charts.getVersion(`${repo}/${id}`, version));
@@ -42,9 +47,7 @@ export default class Chart {
   }
 
   public static async listWithFilters(name: string, version: string, appVersion: string) {
-    const url = `${
-      Chart.APIEndpoint
-    }/charts?name=${name}&version=${version}&appversion=${appVersion}`;
+    const url = `${Chart.APIEndpoint}/charts?name=${name}&version=${version}&appversion=${appVersion}`;
     const { data } = await axiosWithAuth.get<{ data: IChart[] }>(url);
     return data.data;
   }

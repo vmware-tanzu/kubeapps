@@ -128,3 +128,26 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     expect(axiosGetMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");
   });
 });
+
+describe("getChartSchema", () => {
+  it("gets a chart schema", async () => {
+    response = [{ properties: "foo" }];
+    const expectedActions = [
+      { type: getType(actions.charts.selectSchema), payload: { data: response } },
+    ];
+    await store.dispatch(actions.charts.getChartSchema("foo", "1.0.0"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      "api/chartsvc/v1/assets/foo/versions/1.0.0/values.schema.json",
+    );
+  });
+
+  it("returns an empty schema if not found", async () => {
+    axiosWithAuth.get = jest.fn(() => {
+      throw new Error();
+    });
+    const expectedActions = [{ type: getType(actions.charts.selectSchema), payload: {} }];
+    await store.dispatch(actions.charts.getChartSchema("foo", "1.0.0"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

@@ -6,9 +6,7 @@ import { IChartVersion } from "./types";
 export const app = {
   charts: {
     version: (cv: IChartVersion) =>
-      `/charts/${cv.relationships.chart.data.repo.name}/${
-        cv.relationships.chart.data.name
-      }/versions/${cv.attributes.version}`,
+      `/charts/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${cv.attributes.version}`,
   },
 };
 
@@ -26,6 +24,8 @@ export const api = {
       `${api.charts.base}/assets/${id}/versions/${version}/README.md`,
     getValues: (id: string, version: string) =>
       `${api.charts.base}/assets/${id}/versions/${version}/values.yaml`,
+    getSchema: (id: string, version: string) =>
+      `${api.charts.base}/assets/${id}/versions/${version}/values.schema.json`,
     getVersion: (id: string, version: string) =>
       `${api.charts.base}/charts/${id}/versions/${version}`,
     list: (repo?: string) => `${api.charts.base}/charts${repo ? `/${repo}` : ""}`,

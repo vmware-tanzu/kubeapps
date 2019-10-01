@@ -24,6 +24,7 @@ const chartsSelectedReducer = (
         readme: undefined,
         readmeError: undefined,
         values: undefined,
+        schema: undefined,
         version: action.payload,
       };
     case getType(actions.charts.receiveChartVersions):
@@ -40,6 +41,8 @@ const chartsSelectedReducer = (
       return { ...state, readmeError: action.payload };
     case getType(actions.charts.selectValues):
       return { ...state, values: action.payload };
+    case getType(actions.charts.selectSchema):
+      return { ...state, schema: action.payload };
     case getType(actions.charts.resetChartVersion):
       return initialState.selected;
     default:
@@ -74,6 +77,8 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
     case getType(actions.charts.errorChart):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectValues):
+      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
+    case getType(actions.charts.selectSchema):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     default:
   }

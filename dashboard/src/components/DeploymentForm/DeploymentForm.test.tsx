@@ -9,6 +9,7 @@ import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
+import BasicDeploymentForm from "./BasicDeploymentForm";
 import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
 const defaultProps = {
@@ -22,6 +23,7 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
   getChartValues: jest.fn(),
+  getChartSchema: jest.fn(),
   namespace: "default",
   enableBasicForm: false,
 };
@@ -226,5 +228,31 @@ describe("when the basic form is enabled", () => {
     const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(Tabs)).toExist();
+  });
+
+  it("changes the parameter value", () => {
+    const basicFormParameters = {
+      username: {
+        name: "username",
+        path: "wordpressUsername",
+        value: "user",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
+    wrapper.setState({ basicFormParameters });
+    wrapper.update();
+
+    // Fake onChange
+    const input = wrapper.find(BasicDeploymentForm).find("input");
+    const onChange = input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void;
+    onChange({ currentTarget: { value: "foo" } } as React.FormEvent<HTMLInputElement>);
+
+    expect(wrapper.state("basicFormParameters")).toEqual({
+      username: {
+        name: "username",
+        path: "wordpressUsername",
+        value: "foo",
+      },
+    });
   });
 });
