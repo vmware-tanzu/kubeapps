@@ -31,7 +31,7 @@ const namespaceReducer = (
       return { ...state, errorMsg: action.payload.err.message };
     case getType(actions.namespace.clearNamespaces):
       return { ...initialState };
-    case getType(actions.namespace.setDefaultNamespace):
+    case getType(actions.namespace.namespaceReceived):
       const currentNamespace = state.current === "" ? action.payload : state.current;
       return { ...initialState, current: currentNamespace };
     case LOCATION_CHANGE:

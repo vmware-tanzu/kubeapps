@@ -75,7 +75,7 @@ context("when SET_DEFAULT_NAMESPACE", () => {
     };
     expect(
       namespaceReducer(initialState, {
-        type: getType(actions.namespace.setDefaultNamespace),
+        type: getType(actions.namespace.namespaceReceived),
         payload: "not-default",
       }),
     ).toEqual({ ...initialState, current: "not-default" });
@@ -88,7 +88,7 @@ context("when SET_DEFAULT_NAMESPACE", () => {
     };
     expect(
       namespaceReducer(initialState, {
-        type: getType(actions.namespace.setDefaultNamespace),
+        type: getType(actions.namespace.namespaceReceived),
         payload: "not-default",
       }),
     ).toEqual({ ...initialState, current: "default" });

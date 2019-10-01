@@ -67,7 +67,7 @@ describe("authenticate", () => {
       },
       {
         payload: "default",
-        type: getType(actions.namespace.setDefaultNamespace),
+        type: getType(actions.namespace.namespaceReceived),
       },
     ];
 
@@ -114,7 +114,7 @@ describe("OIDC authentication", () => {
       },
       {
         payload: "default",
-        type: getType(actions.namespace.setDefaultNamespace),
+        type: getType(actions.namespace.namespaceReceived),
       },
       {
         payload: { sessionExpired: false },

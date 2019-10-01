@@ -3,7 +3,7 @@ import { ActionType, createAction } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
-import { clearNamespaces, NamespaceAction, setDefaultNamespace } from "./namespace";
+import { clearNamespaces, NamespaceAction, namespaceReceived } from "./namespace";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
   return (authenticated: boolean, oidc: boolean, defaultNamespace: string) =>
@@ -35,7 +35,7 @@ export function authenticate(
       Auth.setAuthToken(token, oidc);
       const defaultNamespace = Auth.defaultNamespaceFromToken(token);
       dispatch(setAuthenticated(true, oidc, defaultNamespace));
-      dispatch(setDefaultNamespace(defaultNamespace));
+      dispatch(namespaceReceived(defaultNamespace));
       if (oidc) {
         dispatch(setSessionExpired(false));
       }
