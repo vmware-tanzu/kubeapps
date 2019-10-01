@@ -66,6 +66,7 @@ frontend:
   service:
     port: 80
     type: ClusterIP
+    loadBalancerIP:
     annotations: {}
   livenessProbe:
     httpGet:
