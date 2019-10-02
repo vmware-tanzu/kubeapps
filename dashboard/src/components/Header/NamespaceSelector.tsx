@@ -11,11 +11,13 @@ interface INamespaceSelectorProps {
   defaultNamespace: string;
   onChange: (ns: string) => any;
   fetchNamespaces: () => void;
+  setDefaultNamespace: () => void;
 }
 
 class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
   public componentDidMount() {
     this.props.fetchNamespaces();
+    this.props.setDefaultNamespace();
   }
 
   public render() {

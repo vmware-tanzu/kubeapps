@@ -6,6 +6,7 @@ import NamespaceSelector from "./NamespaceSelector";
 
 const defaultProps = {
   fetchNamespaces: jest.fn(),
+  setDefaultNamespace: jest.fn(),
   namespace: {
     current: "namespace-two",
     namespaces: ["namespace-one", "namespace-two"],

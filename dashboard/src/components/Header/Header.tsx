@@ -15,6 +15,7 @@ import "./Header.css";
 interface IHeaderProps {
   authenticated: boolean;
   fetchNamespaces: () => void;
+  setDefaultNamespace: () => void;
   logout: () => void;
   namespace: INamespaceState;
   defaultNamespace: string;
@@ -71,6 +72,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       defaultNamespace,
       authenticated: showNav,
       hideLogoutLink,
+      setDefaultNamespace,
     } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
@@ -115,6 +117,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                   defaultNamespace={defaultNamespace}
                   onChange={this.handleNamespaceChange}
                   fetchNamespaces={fetchNamespaces}
+                  setDefaultNamespace={setDefaultNamespace}
                 />
                 <ul className="header__nav__menu" role="menubar">
                   <li

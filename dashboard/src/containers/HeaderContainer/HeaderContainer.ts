@@ -34,6 +34,7 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
+    setDefaultNamespace: () => dispatch(actions.namespace.setDefaultNamespace()),
     logout: () => dispatch(actions.auth.logout()),
     push: (path: string) => dispatch(push(path)),
     setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),

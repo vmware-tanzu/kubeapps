@@ -2,6 +2,7 @@ import { ThunkAction } from "redux-thunk";
 
 import { ActionType, createAction } from "typesafe-actions";
 
+import { Auth } from "../shared/Auth";
 import Namespace from "../shared/Namespace";
 import { IResource, IStoreState } from "../shared/types";
 
@@ -42,5 +43,17 @@ export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null,
       dispatch(errorNamespaces(e, "list"));
       return;
     }
+  };
+}
+
+export function setDefaultNamespace(): ThunkAction<
+  Promise<void>,
+  IStoreState,
+  null,
+  NamespaceAction
+> {
+  return async dispatch => {
+    const token = Auth.getAuthToken() || "";
+    dispatch(namespaceReceived(Auth.defaultNamespaceFromToken(token)));
   };
 }

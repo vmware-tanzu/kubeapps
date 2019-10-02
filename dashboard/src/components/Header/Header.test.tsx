@@ -8,6 +8,7 @@ import Header from "./Header";
 const defaultProps = {
   authenticated: true,
   fetchNamespaces: jest.fn(),
+  setDefaultNamespace: jest.fn(),
   logout: jest.fn(),
   namespace: {
     current: "",

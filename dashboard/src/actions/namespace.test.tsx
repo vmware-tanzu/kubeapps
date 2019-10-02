@@ -1,8 +1,16 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
+import { Auth } from "../shared/Auth";
 import Namespace from "../shared/Namespace";
-import { errorNamespaces, fetchNamespaces, receiveNamespaces, setNamespace } from "./namespace";
+import {
+  errorNamespaces,
+  fetchNamespaces,
+  namespaceReceived,
+  receiveNamespaces,
+  setDefaultNamespace,
+  setNamespace,
+} from "./namespace";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -73,6 +81,25 @@ describe("fetchNamespaces", () => {
 
     await store.dispatch(fetchNamespaces());
 
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+// Async action creators
+describe("setDefaultNamespace", () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+  it("dispatches namespaceReceived based on the received token", async () => {
+    Auth.getAuthToken = jest.fn(() => "token");
+    Auth.defaultNamespaceFromToken = jest.fn(() => "my-ns");
+    const expectedActions = [
+      {
+        type: getType(namespaceReceived),
+        payload: "my-ns",
+      },
+    ];
+    await store.dispatch(setDefaultNamespace());
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
