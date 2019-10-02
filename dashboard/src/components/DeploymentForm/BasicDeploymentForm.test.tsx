@@ -11,7 +11,6 @@ const defaultProps = {
 
 describe("username", () => {
   const param = {
-    name: "username",
     path: "wordpressUsername",
     value: "user",
   } as IBasicFormParam;
@@ -22,12 +21,12 @@ describe("username", () => {
     const wrapper = shallow(
       <BasicDeploymentForm
         {...defaultProps}
-        params={[param]}
+        params={{ username: param }}
         handleBasicFormParamChange={handleBasicFormParamChange}
       />,
     );
-    wrapper.find("input").simulate("change");
-    expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual(param);
+    wrapper.find("input#username").simulate("change");
+    expect(handleBasicFormParamChange.mock.calls[0]).toEqual(["username", param]);
     expect(onChange.mock.calls.length).toBe(1);
   });
 });

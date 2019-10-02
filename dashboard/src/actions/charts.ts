@@ -172,7 +172,13 @@ export function getChartSchema(
       const schema = await Chart.getSchema(id, version);
       dispatch(selectSchema(schema));
     } catch (e) {
-      dispatch(selectSchema({}));
+      if (e.constructor === NotFoundError) {
+        // Schema not found
+        dispatch(selectSchema({}));
+      } else {
+        // Unexpecter error
+        dispatch(errorChart(e));
+      }
     }
   };
 }
