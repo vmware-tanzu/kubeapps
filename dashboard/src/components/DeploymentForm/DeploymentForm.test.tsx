@@ -233,7 +233,6 @@ describe("when the basic form is enabled", () => {
   it("changes the parameter value", () => {
     const basicFormParameters = {
       username: {
-        name: "username",
         path: "wordpressUsername",
         value: "user",
       },
@@ -249,7 +248,6 @@ describe("when the basic form is enabled", () => {
 
     expect(wrapper.state("basicFormParameters")).toEqual({
       username: {
-        name: "username",
         path: "wordpressUsername",
         value: "foo",
       },

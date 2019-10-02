@@ -205,7 +205,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
     this.props.push(
-      `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
+      `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${
+        e.currentTarget.value
+      }`,
     );
   };
 
@@ -223,7 +225,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
           </TabList>
           <TabPanel>
             <BasicDeploymentForm
-              params={Object.values(this.state.basicFormParameters)}
+              params={this.state.basicFormParameters}
               handleBasicFormParamChange={this.handleBasicFormParamChange}
             />
           </TabPanel>
@@ -238,7 +240,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     );
   };
 
-  private handleBasicFormParamChange = (param: IBasicFormParam) => {
+  private handleBasicFormParamChange = (name: string, param: IBasicFormParam) => {
     return (e: React.FormEvent<HTMLInputElement>) => {
       // Change raw values
       this.handleValuesChange(setValue(this.state.appValues, param.path, e.currentTarget.value));
@@ -246,8 +248,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       this.setState({
         basicFormParameters: {
           ...this.state.basicFormParameters,
-          [param.name]: {
-            name: param.name,
+          [name]: {
             path: param.path,
             value: e.currentTarget.value,
           },

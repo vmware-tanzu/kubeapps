@@ -377,7 +377,6 @@ export interface IKubeState {
 }
 
 export interface IBasicFormParam {
-  name: string;
   path: string;
   value?: any;
 }

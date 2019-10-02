@@ -144,9 +144,20 @@ describe("getChartSchema", () => {
 
   it("returns an empty schema if not found", async () => {
     axiosWithAuth.get = jest.fn(() => {
-      throw new Error();
+      throw new NotFoundError();
     });
     const expectedActions = [{ type: getType(actions.charts.selectSchema), payload: {} }];
+    await store.dispatch(actions.charts.getChartSchema("foo", "1.0.0"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error if it's unexpected", async () => {
+    axiosWithAuth.get = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      { type: getType(actions.charts.errorChart), payload: new Error("Boom!") },
+    ];
     await store.dispatch(actions.charts.getChartSchema("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
   });

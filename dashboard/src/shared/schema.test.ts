@@ -10,7 +10,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user: andres",
       schema: { properties: { user: { type: "string", form: "username" } } },
       result: {
-        username: { name: "username", path: "user", value: "andres" } as IBasicFormParam,
+        username: { path: "user", value: "andres" } as IBasicFormParam,
       },
     },
     {
@@ -18,7 +18,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user:",
       schema: { properties: { user: { type: "string", form: "username" } } },
       result: {
-        username: { name: "username", path: "user" } as IBasicFormParam,
+        username: { path: "user" } as IBasicFormParam,
       },
     },
     {
@@ -26,7 +26,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user:",
       schema: { properties: { user: { type: "string", form: "username", default: "michael" } } },
       result: {
-        username: { name: "username", path: "user", value: "michael" } as IBasicFormParam,
+        username: { path: "user", value: "michael" } as IBasicFormParam,
       },
     },
     {
@@ -34,7 +34,7 @@ describe("retrieveBasicFormParams", () => {
       values: "user: foo",
       schema: { properties: { user: { type: "string", form: "username", default: "bar" } } },
       result: {
-        username: { name: "username", path: "user", value: "foo" } as IBasicFormParam,
+        username: { path: "user", value: "foo" } as IBasicFormParam,
       },
     },
     {
@@ -42,7 +42,7 @@ describe("retrieveBasicFormParams", () => {
       values: "foo: bar",
       schema: { properties: { user: { type: "string", form: "username", default: "andres" } } },
       result: {
-        username: { name: "username", path: "user", value: "andres" } as IBasicFormParam,
+        username: { path: "user", value: "andres" } as IBasicFormParam,
       },
     },
     {
@@ -58,7 +58,6 @@ describe("retrieveBasicFormParams", () => {
       },
       result: {
         username: {
-          name: "username",
           path: "credentials.user",
           value: "andres",
         } as IBasicFormParam,
@@ -99,17 +98,14 @@ service: ClusterIP
       },
       result: {
         username: {
-          name: "username",
           path: "credentials.admin.user",
           value: "andres",
         } as IBasicFormParam,
         password: {
-          name: "password",
           path: "credentials.admin.pass",
           value: "myPassword",
         } as IBasicFormParam,
         replicas: {
-          name: "replicas",
           path: "replicas",
           value: 1,
         } as IBasicFormParam,

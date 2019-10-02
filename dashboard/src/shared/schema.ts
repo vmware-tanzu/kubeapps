@@ -13,14 +13,10 @@ export function retrieveBasicFormParams(
   defaultValues: string,
   schema: any,
 ): { [key: string]: IBasicFormParam } {
-  const basicFormParameters = {};
   if (schema && schema.properties) {
-    const params = lookForFormParams(defaultValues, schema.properties);
-    if (params) {
-      params.forEach(p => (basicFormParameters[p.name] = p));
-    }
+    return lookForFormParams(defaultValues, schema.properties);
   }
-  return basicFormParameters;
+  return {};
 }
 
 // getDocumentElem returns the YAML element given a root element
@@ -80,21 +76,22 @@ function lookForFormParams(
   defaultValues: string,
   schemaProperties: {},
   parentPath?: string,
-  params?: IBasicFormParam[],
+  params?: { [name: string]: IBasicFormParam },
 ) {
+  if (!params) {
+    params = {};
+  }
   Object.keys(schemaProperties).map(propertyKey => {
     // The param path is its parent path + the object key
     const itemPath = `${parentPath || ""}${propertyKey}`;
     // If the property has the key "form", it's a basic parameter
     if (schemaProperties[propertyKey].form) {
-      const newParam = {
-        // The name of the param is identified by the form key
-        name: schemaProperties[propertyKey].form,
+      // The key of the param is the value of the form tag
+      params![schemaProperties[propertyKey].form] = {
         path: itemPath,
         // Use the default value either from the JSON schema or the default values
         value: getDefaultValue(defaultValues, itemPath) || schemaProperties[propertyKey].default,
       };
-      params = params ? params.concat(newParam) : [newParam];
     }
     // If the property is an object, iterate recursively
     if (schemaProperties[propertyKey].type === "object") {

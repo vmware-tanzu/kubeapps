@@ -69,14 +69,11 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
         selected: chartsSelectedReducer(state.selected, action),
       };
     case getType(actions.charts.resetChartVersion):
-      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectReadme):
-      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.errorReadme):
-      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.errorChart):
-      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectValues):
+    case getType(actions.charts.selectSchema):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     case getType(actions.charts.selectSchema):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
