@@ -37,6 +37,10 @@ export const selectValues = createAction("SELECT_VALUES", resolve => {
   return (values: string) => resolve(values);
 });
 
+export const selectSchema = createAction("SELECT_SCHEMA", resolve => {
+  return (schema: {}) => resolve(schema);
+});
+
 const allActions = [
   requestCharts,
   errorChart,
@@ -47,6 +51,7 @@ const allActions = [
   selectReadme,
   errorReadme,
   selectValues,
+  selectSchema,
 ];
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
@@ -154,6 +159,26 @@ export function getChartValues(
       dispatch(selectValues(values));
     } catch (e) {
       dispatch(selectValues(""));
+    }
+  };
+}
+
+export function getChartSchema(
+  id: string,
+  version: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
+    try {
+      const schema = await Chart.getSchema(id, version);
+      dispatch(selectSchema(schema));
+    } catch (e) {
+      if (e.constructor === NotFoundError) {
+        // Schema not found
+        dispatch(selectSchema({}));
+      } else {
+        // Unexpecter error
+        dispatch(errorChart(e));
+      }
     }
   };
 }
