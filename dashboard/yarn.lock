@@ -299,10 +299,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.14.8.tgz#fe444203ecef1162348cd6deb76c62477b2cc6e9"
   integrity sha512-I4+DbJEhLEg4/vIy/2gkWDvXBOOtPKV9EnLhYjMoqxcRW+TTZtUftkHktz/a8suoD5mUL7m6ReLrkPvSsCQQmw==
 
-"@types/node@^9.3.0":
-  version "9.6.49"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-9.6.49.tgz#ab4df6e505db088882c8ce5417ae0bc8cbb7a8a6"
-  integrity sha512-YY0Okyn4QXC4ugJI+Kng5iWjK8A6eIHiQVaGIhJkyn0YL6Iqo0E0tBC8BuhvYcBK87vykBijM5FtMnCqaa5anA==
+"@types/node@^12.7.9":
+  version "12.7.9"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.7.9.tgz#da0210f91096aa67138cf5afd04c4d629f8a406a"
+  integrity sha512-P57oKTJ/vYivL2BCfxCC5tQjlS8qW31pbOL6qt99Yrjm95YdHgNZwjrTTjMBh+C2/y6PXIX4oz253+jUzxKKfQ==
 
 "@types/pako@^1.0.0":
   version "1.0.1"
@@ -451,6 +451,11 @@
   dependencies:
     "@types/events" "*"
     "@types/node" "*"
+
+"@types/yaml@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@types/yaml/-/yaml-1.0.2.tgz#bba080d64714c6ef3eaa023e235dacd2cfa3c938"
+  integrity sha512-rS1VJFjyGKNHk8H97COnPIK+oeLnc0J9G0ES63o/Ky+WlJCeaFGiGCTGhV/GEVKua7ZWIV1JIDopYUwrfvTo7A==
 
 abab@^1.0.3:
   version "1.0.4"
@@ -6081,6 +6086,11 @@ json-schema@0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/json-schema/-/json-schema-0.2.3.tgz#b480c892e59a2f05954ce727bd3f2a4e882f9e13"
   integrity sha1-tIDIkuWaLwWVTOcnvT8qTogvnhM=
+
+json-schema@^0.2.5:
+  version "0.2.5"
+  resolved "https://registry.yarnpkg.com/json-schema/-/json-schema-0.2.5.tgz#97997f50972dd0500214e208c407efa4b5d7063b"
+  integrity sha512-gWJOWYFrhQ8j7pVm0EM8Slr+EPVq1Phf6lvzvD/WCeqkrx/f2xBI0xOsRRS9xCn3I4vKtP519dvs3TP09r24wQ==
 
 json-stable-stringify@^1.0.1:
   version "1.0.1"

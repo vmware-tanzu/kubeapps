@@ -1,6 +1,6 @@
-import * as YAML from "yaml";
+import { JSONSchema4 } from "json-schema";
 
-import { getDefaultValue, getDocumentElem, retrieveBasicFormParams, setValue } from "./schema";
+import { getValue, retrieveBasicFormParams, setValue } from "./schema";
 import { IBasicFormParam } from "./types";
 
 describe("retrieveBasicFormParams", () => {
@@ -8,7 +8,7 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param",
       values: "user: andres",
-      schema: { properties: { user: { type: "string", form: "username" } } },
+      schema: { properties: { user: { type: "string", form: "username" } } } as JSONSchema4,
       result: {
         username: { path: "user", value: "andres" } as IBasicFormParam,
       },
@@ -16,7 +16,7 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param without default value",
       values: "user:",
-      schema: { properties: { user: { type: "string", form: "username" } } },
+      schema: { properties: { user: { type: "string", form: "username" } } } as JSONSchema4,
       result: {
         username: { path: "user" } as IBasicFormParam,
       },
@@ -24,15 +24,19 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param with default value in the schema",
       values: "user:",
-      schema: { properties: { user: { type: "string", form: "username", default: "michael" } } },
+      schema: {
+        properties: { user: { type: "string", form: "username", default: "michael" } },
+      } as JSONSchema4,
       result: {
         username: { path: "user", value: "michael" } as IBasicFormParam,
       },
     },
     {
-      description: "default values from values should prevail",
+      description: "values prevail over default values",
       values: "user: foo",
-      schema: { properties: { user: { type: "string", form: "username", default: "bar" } } },
+      schema: {
+        properties: { user: { type: "string", form: "username", default: "bar" } },
+      } as JSONSchema4,
       result: {
         username: { path: "user", value: "foo" } as IBasicFormParam,
       },
@@ -40,7 +44,9 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "it should return params even if the values don't include it",
       values: "foo: bar",
-      schema: { properties: { user: { type: "string", form: "username", default: "andres" } } },
+      schema: {
+        properties: { user: { type: "string", form: "username", default: "andres" } },
+      } as JSONSchema4,
       result: {
         username: { path: "user", value: "andres" } as IBasicFormParam,
       },
@@ -55,7 +61,7 @@ describe("retrieveBasicFormParams", () => {
             properties: { user: { type: "string", form: "username" } },
           },
         },
-      },
+      } as JSONSchema4,
       result: {
         username: {
           path: "credentials.user",
@@ -95,7 +101,7 @@ service: ClusterIP
           replicas: { type: "number", form: "replicas" },
           service: { type: "string" },
         },
-      },
+      } as JSONSchema4,
       result: {
         username: {
           path: "credentials.admin.user",
@@ -118,55 +124,7 @@ service: ClusterIP
   });
 });
 
-describe("getDocumentElem", () => {
-  [
-    {
-      description: "should get the root elem",
-      values: "foo: bar",
-      path: "foo",
-      result: "bar",
-    },
-    {
-      description: "should return a nested value",
-      values: "foo:\n  bar: foobar",
-      path: "foo.bar",
-      result: "foobar",
-    },
-    {
-      description: "should return a deeply nested value",
-      values: "foo:\n  bar:\n    foobar: barfoo",
-      path: "foo.bar.foobar",
-      result: "barfoo",
-    },
-    {
-      description: "should return a deeply nested value as an object",
-      values: "foo:\n  bar:\n    foobar: 1",
-      path: "foo.bar",
-      result: YAML.parseDocument("foo:\n  bar:\n    foobar: 1")
-        .get("foo")
-        .get("bar"),
-    },
-    {
-      description: "should ignore an invalid value",
-      values: "foo:\n  bar:\n    foobar: 1",
-      path: "nope",
-      result: undefined,
-    },
-    {
-      description: "should ignore an invalid value (nested)",
-      values: "foo:\n  bar:\n    foobar: 1",
-      path: "not.exists",
-      result: undefined,
-    },
-  ].forEach(t => {
-    it(t.description, () => {
-      const doc = YAML.parseDocument(t.values);
-      expect(getDocumentElem(doc, t.path)).toEqual(t.result);
-    });
-  });
-});
-
-describe("getDefaultValue", () => {
+describe("getValue", () => {
   [
     {
       description: "should return a value",
@@ -187,20 +145,27 @@ describe("getDefaultValue", () => {
       result: "barfoo",
     },
     {
-      description: "should ignore an invalid value",
+      description: "should ignore an invalid path",
       values: "foo:\n  bar:\n    foobar: barfoo",
       path: "nope",
       result: undefined,
     },
     {
-      description: "should ignore an invalid value (nested)",
+      description: "should ignore an invalid path (nested)",
       values: "foo:\n  bar:\n    foobar: barfoo",
       path: "not.exists",
       result: undefined,
     },
+    {
+      description: "should return the default value if the path is not valid",
+      values: "foo: bar",
+      path: "foobar",
+      default: "BAR",
+      result: "BAR",
+    },
   ].forEach(t => {
     it(t.description, () => {
-      expect(getDefaultValue(t.values, t.path)).toEqual(t.result);
+      expect(getValue(t.values, t.path, t.default)).toEqual(t.result);
     });
   });
 });
