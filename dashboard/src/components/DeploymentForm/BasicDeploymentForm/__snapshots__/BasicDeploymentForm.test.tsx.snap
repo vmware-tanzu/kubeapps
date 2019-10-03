@@ -1,0 +1,298 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a basic deployment with a email 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "email": Object {
+        "path": "wordpressEmail",
+        "value": "user@example.com",
+      },
+    }
+  }
+>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="email-0"
+    key="email-0"
+    label="Email"
+    name="email"
+    param={
+      Object {
+        "path": "wordpressEmail",
+        "value": "user@example.com",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="email-0"
+      >
+        Email
+        <input
+          id="email-0"
+          onChange={[Function]}
+          value="user@example.com"
+        />
+      </label>
+    </div>
+  </StringParam>
+</BasicDeploymentForm>
+`;
+
+exports[`renders a basic deployment with a generic string 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "blogName": Object {
+        "path": "blogName",
+        "type": "string",
+        "value": "my-blog",
+      },
+    }
+  }
+>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="blogName-0"
+    key="blogName-0"
+    label=""
+    name="blogName"
+    param={
+      Object {
+        "path": "blogName",
+        "type": "string",
+        "value": "my-blog",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="blogName-0"
+      >
+        <input
+          id="blogName-0"
+          onChange={[Function]}
+          value="my-blog"
+        />
+      </label>
+    </div>
+  </StringParam>
+</BasicDeploymentForm>
+`;
+
+exports[`renders a basic deployment with a password 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "password": Object {
+        "path": "wordpressPassword",
+        "value": "sserpdrow",
+      },
+    }
+  }
+>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="password-0"
+    key="password-0"
+    label="Password"
+    name="password"
+    param={
+      Object {
+        "path": "wordpressPassword",
+        "value": "sserpdrow",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="password-0"
+      >
+        Password
+        <input
+          id="password-0"
+          onChange={[Function]}
+          value="sserpdrow"
+        />
+      </label>
+    </div>
+  </StringParam>
+</BasicDeploymentForm>
+`;
+
+exports[`renders a basic deployment with a username 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "username": Object {
+        "path": "wordpressUsername",
+        "value": "user",
+      },
+    }
+  }
+>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="username-0"
+    key="username-0"
+    label="Username"
+    name="username"
+    param={
+      Object {
+        "path": "wordpressUsername",
+        "value": "user",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="username-0"
+      >
+        Username
+        <input
+          id="username-0"
+          onChange={[Function]}
+          value="user"
+        />
+      </label>
+    </div>
+  </StringParam>
+</BasicDeploymentForm>
+`;
+
+exports[`renders a basic deployment with username, password, email and a generic string 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "blogName": Object {
+        "path": "blogName",
+        "type": "string",
+        "value": "my-blog",
+      },
+      "email": Object {
+        "path": "wordpressEmail",
+        "value": "user@example.com",
+      },
+      "password": Object {
+        "path": "wordpressPassword",
+        "value": "sserpdrow",
+      },
+      "username": Object {
+        "path": "wordpressUsername",
+        "value": "user",
+      },
+    }
+  }
+>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="username-0"
+    key="username-0"
+    label="Username"
+    name="username"
+    param={
+      Object {
+        "path": "wordpressUsername",
+        "value": "user",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="username-0"
+      >
+        Username
+        <input
+          id="username-0"
+          onChange={[Function]}
+          value="user"
+        />
+      </label>
+    </div>
+  </StringParam>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="password-1"
+    key="password-1"
+    label="Password"
+    name="password"
+    param={
+      Object {
+        "path": "wordpressPassword",
+        "value": "sserpdrow",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="password-1"
+      >
+        Password
+        <input
+          id="password-1"
+          onChange={[Function]}
+          value="sserpdrow"
+        />
+      </label>
+    </div>
+  </StringParam>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="email-2"
+    key="email-2"
+    label="Email"
+    name="email"
+    param={
+      Object {
+        "path": "wordpressEmail",
+        "value": "user@example.com",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="email-2"
+      >
+        Email
+        <input
+          id="email-2"
+          onChange={[Function]}
+          value="user@example.com"
+        />
+      </label>
+    </div>
+  </StringParam>
+  <StringParam
+    handleBasicFormParamChange={[Function]}
+    id="blogName-3"
+    key="blogName-3"
+    label=""
+    name="blogName"
+    param={
+      Object {
+        "path": "blogName",
+        "type": "string",
+        "value": "my-blog",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="blogName-3"
+      >
+        <input
+          id="blogName-3"
+          onChange={[Function]}
+          value="my-blog"
+        />
+      </label>
+    </div>
+  </StringParam>
+</BasicDeploymentForm>
+`;

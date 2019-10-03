@@ -117,9 +117,32 @@ service: ClusterIP
         } as IBasicFormParam,
       },
     },
+    {
+      description: "should retrieve a param with title and description",
+      values: "blogName: myBlog",
+      schema: {
+        properties: {
+          blogName: {
+            type: "string",
+            form: "blogName",
+            title: "Blog Name",
+            description: "Title of the blog",
+          },
+        },
+      } as JSONSchema4,
+      result: {
+        blogName: {
+          path: "blogName",
+          type: "string",
+          value: "myBlog",
+          title: "Blog Name",
+          description: "Title of the blog",
+        } as IBasicFormParam,
+      },
+    },
   ].forEach(t => {
     it(t.description, () => {
-      expect(retrieveBasicFormParams(t.values, t.schema)).toEqual(t.result);
+      expect(retrieveBasicFormParams(t.values, t.schema)).toMatchObject(t.result);
     });
   });
 });
