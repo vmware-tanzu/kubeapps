@@ -3,10 +3,10 @@ import * as Moniker from "moniker-native";
 import * as React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
-import { IChartState, IChartVersion } from "../../shared/types";
+import { retrieveBasicFormParams, setValue } from "../../shared/schema";
+import { IBasicFormParam, IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
-
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 
@@ -29,6 +29,7 @@ export interface IDeploymentFormProps {
   fetchChartVersions: (id: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   getChartValues: (id: string, chartVersion: string) => void;
+  getChartSchema: (id: string, chartVersion: string) => void;
   namespace: string;
   enableBasicForm: boolean;
 }
@@ -42,18 +43,20 @@ export interface IDeploymentFormState {
   // and we do not want to use releaseName since it is controller by the form field.
   latestSubmittedReleaseName: string;
   namespace: string;
-  appValues?: string;
+  appValues: string;
   valuesModified: boolean;
+  basicFormParameters: { [key: string]: IBasicFormParam };
 }
 
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
-    appValues: undefined,
+    appValues: "",
     isDeploying: false,
     namespace: this.props.namespace,
     releaseName: Moniker.choose(),
     latestSubmittedReleaseName: "",
     valuesModified: false,
+    basicFormParameters: {},
   };
 
   public componentDidMount() {
@@ -67,6 +70,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       chartID,
       chartVersion,
       getChartValues,
+      getChartSchema,
       getChartVersion,
       namespace,
       selected,
@@ -85,13 +89,18 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
     if (nextProps.selected.version && nextProps.selected.version !== this.props.selected.version) {
       getChartValues(chartID, nextProps.selected.version.attributes.version);
+      getChartSchema(chartID, nextProps.selected.version.attributes.version);
       return;
     }
 
     if (!this.state.valuesModified) {
       if (version) {
-        this.setState({ appValues: nextProps.selected.values });
+        this.setState({ appValues: nextProps.selected.values || "" });
       }
+    }
+
+    if (nextProps.selected.schema) {
+      this.setState({ basicFormParameters: retrieveBasicFormParams(nextProps.selected.schema) });
     }
   }
 
@@ -210,7 +219,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             <Tab>Advanced</Tab>
           </TabList>
           <TabPanel>
-            <BasicDeploymentForm />
+            <BasicDeploymentForm
+              params={this.state.basicFormParameters}
+              handleBasicFormParamChange={this.handleBasicFormParamChange}
+            />
           </TabPanel>
           <TabPanel>
             <AdvancedDeploymentForm
@@ -221,6 +233,23 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         </Tabs>
       </div>
     );
+  };
+
+  private handleBasicFormParamChange = (name: string, param: IBasicFormParam) => {
+    return (e: React.FormEvent<HTMLInputElement>) => {
+      // Change raw values
+      this.handleValuesChange(setValue(this.state.appValues, param.path, e.currentTarget.value));
+      // Change param definition
+      this.setState({
+        basicFormParameters: {
+          ...this.state.basicFormParameters,
+          [name]: {
+            path: param.path,
+            value: e.currentTarget.value,
+          },
+        },
+      });
+    };
   };
 }
 

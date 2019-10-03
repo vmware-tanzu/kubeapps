@@ -32,6 +32,11 @@ export default class Chart {
     return data;
   }
 
+  public static async getSchema(id: string, version: string) {
+    const { data } = await axiosWithAuth.get<string>(URL.api.charts.getSchema(id, version));
+    return data;
+  }
+
   public static async exists(id: string, version: string, repo: string) {
     try {
       await axiosWithAuth.get(URL.api.charts.getVersion(`${repo}/${id}`, version));
