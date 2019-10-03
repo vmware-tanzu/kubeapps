@@ -75,6 +75,8 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
     case getType(actions.charts.selectValues):
     case getType(actions.charts.selectSchema):
       return { ...state, selected: chartsSelectedReducer(state.selected, action) };
+    case getType(actions.charts.selectSchema):
+      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
     default:
   }
   return state;
