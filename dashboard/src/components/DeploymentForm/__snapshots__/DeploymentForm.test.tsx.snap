@@ -62,6 +62,7 @@ exports[`renders the full DeploymentForm 1`] = `
           </select>
         </div>
         <AdvancedDeploymentForm
+          appValues=""
           handleValuesChange={[Function]}
         />
         <div>
