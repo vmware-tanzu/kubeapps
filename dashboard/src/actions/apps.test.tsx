@@ -254,6 +254,28 @@ describe("deploy chart", () => {
     ];
     expect(store.getActions()).toEqual(expectedActions);
   });
+  it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
+    const res = await store.dispatch(
+      actions.apps.deployChart(
+        "my-version" as any,
+        "my-release",
+        definedNamespaces.default,
+        "foo: 1",
+        { properties: { foo: { type: "string" } } },
+      ),
+    );
+    expect(res).toBe(false);
+    const expectedActions = [
+      { type: getType(actions.apps.requestDeployApp) },
+      {
+        type: getType(actions.apps.errorApps),
+        payload: new UnprocessableEntity(
+          "The given values don't complain with the given schema. Found the following errors:\n  - .foo: should be string",
+        ),
+      },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
+  });
 });
 
 describe("upgradeApp", () => {

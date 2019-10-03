@@ -1,6 +1,6 @@
 import { JSONSchema4 } from "json-schema";
 
-import { getValue, retrieveBasicFormParams, setValue } from "./schema";
+import { getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
 import { IBasicFormParam } from "./types";
 
 describe("retrieveBasicFormParams", () => {
@@ -217,6 +217,41 @@ describe("setValue", () => {
         expect(t.error).toBe(true);
       }
       expect(res).toEqual(t.result);
+    });
+  });
+});
+
+describe("validate", () => {
+  [
+    {
+      description: "Should validate a valid object",
+      values: "foo: bar\n",
+      schema: { properties: { foo: { type: "string" } } } as JSONSchema4,
+      valid: true,
+      errors: null,
+    },
+    {
+      description: "Should validate an invalid object",
+      values: "foo: bar\n",
+      schema: { properties: { foo: { type: "integer" } } } as JSONSchema4,
+      valid: false,
+      errors: [
+        {
+          keyword: "type",
+          dataPath: ".foo",
+          schemaPath: "#/properties/foo/type",
+          params: {
+            type: "integer",
+          },
+          message: "should be integer",
+        },
+      ],
+    },
+  ].forEach(t => {
+    it(t.description, () => {
+      const res = validate(t.values, t.schema);
+      expect(res.valid).toBe(t.valid);
+      expect(res.errors).toEqual(t.errors);
     });
   });
 });

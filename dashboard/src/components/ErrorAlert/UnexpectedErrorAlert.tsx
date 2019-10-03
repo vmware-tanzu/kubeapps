@@ -43,7 +43,7 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
       if (this.props.raw) {
         customMessage = (
           <div className="error__content">
-            <section className="Terminal terminal__error elevation-1 type-color-white">
+            <section className="Terminal terminal__error elevation-1 type-color-white error__text">
               {this.props.text}
             </section>
           </div>
