@@ -38,11 +38,7 @@ export function retrieveBasicFormParams(
       if (schema.properties![propertyKey].type === "object") {
         params = {
           ...params,
-          ...retrieveBasicFormParams(
-            defaultValues,
-            schema.properties![propertyKey],
-            `${itemPath}.`,
-          ),
+          ...retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
         };
       }
     });
