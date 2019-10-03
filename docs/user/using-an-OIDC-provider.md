@@ -71,9 +71,9 @@ The next sections explain how you can deploy this proxy either using the Kubeapp
 
 Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar container if you specify the necessary flags. In a nutshell you need to enable the feature and set the client ID, secret and the IdP URL. The following examples use Google as the Identity Provider, modify the flags below to adapt them:
 
-**Example 1: Using Google OpenIDConnect**
+**Example 1: Using the OIDC provider**
 
-Note that the issuer url is passed as an additional flag here, together with an option to enable the cookie being set over an insecure connection for local development only:
+This example uses `oauth2-proxy`'s generic OIDC provider with Google, but is applicable to any OIDC provider. Note that the issuer url is passed as an additional flag here, together with an option to enable the cookie being set over an insecure connection for local development only:
 
 ```
 helm install bitnami/kubeapps \
@@ -86,9 +86,11 @@ helm install bitnami/kubeapps \
   --set authProxy.additionalFlags="{-cookie-secure=false,-oidc-issuer-url=https://accounts.google.com}" \
 ```
 
-**Example 2: Using Google OAuth2**
+**Example 2: Using a custom provider**
 
-This setup is identical to the one above for the user:
+Some of the specific providers that come with `oauth2-proxy` are using OpenIDConnect to obtain the required IDToken and can be used instead of the generic oidc provider. Currently these include the GitLab, Google and LoginGov providers. The user authentication flow is the same as above, with some small UI differences, such as the default login button is customized to the provider (rather than "Login with OpenID Connect"), or improved presentation when accepting the requested scopes (as is the case with Google, but only visible if you request extra scopes).
+
+Here we no longer need to provide the issuer -url as an additional flag:
 ```
 helm install bitnami/kubeapps \
   --namespace kubeapps --name kubeapps \
@@ -100,14 +102,15 @@ helm install bitnami/kubeapps \
   --set authProxy.additionalFlags="{-cookie-secure=false}"
 ```
 
-**Example 3: Using Google OAuth2 for Kubeapps on a GKE cluster**
+**Example 3: Authentication for Kubeapps on a GKE cluster**
 
-When deploying Kubeapps on GKE we need to ensure that
+Google Kubernetes Engine does not allow an OIDC IDToken to be used to authenticate requests to the managed API server, instead requiring the standard OAuth2 access token.
+For this reason, when deploying Kubeapps on GKE we need to ensure that
 
-* The scope required by the user to interact with cloud platform is included, and
+* The scopes required by the user to interact with cloud platform are included, and
 * The Kubeapps frontend uses the OAuth2 `access_key` as the bearer token when communicating with the managed Kubernetes API
 
-Note that using the `google` oauth2 provider here enables google to prompt the user for consent for the specific permissions requested in the scopes below, in a user-friendly way. You can also use the `oidc` provider but in this case the user is not prompted for the extra contsent:
+Note that using the custom `google` provider here enables google to prompt the user for consent for the specific permissions requested in the scopes below, in a user-friendly way. You can also use the `oidc` provider but in this case the user is not prompted for the extra contsent:
 
 ```
 helm install bitnami/kubeapps \
