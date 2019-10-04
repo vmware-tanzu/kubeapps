@@ -1,6 +1,7 @@
 // WARN: yaml doesn't have updated definitions for TypeScript
 // In particular, it doesn't contain definitions for `get` and `set`
 // that are used in this package
+import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
 import * as YAML from "yaml";
 import { IBasicFormParam } from "./types";
@@ -67,4 +68,13 @@ export function getValue(values: string, path: string, defaultValue?: any) {
   const doc = YAML.parseDocument(values);
   const splittedPath = path.split(".");
   return (doc as any).getIn(splittedPath) || defaultValue;
+}
+
+export function validate(
+  values: string,
+  schema: jsonSchema.JSONSchema4,
+): { valid: boolean; errors: AJV.ErrorObject[] | null | undefined } {
+  const ajv = new AJV();
+  const valid = ajv.validate(schema, YAML.parse(values));
+  return { valid: !!valid, errors: ajv.errors };
 }

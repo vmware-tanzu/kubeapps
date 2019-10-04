@@ -1,3 +1,4 @@
+import { JSONSchema4 } from "json-schema";
 import { ThunkAction } from "redux-thunk";
 import * as semver from "semver";
 import { ActionType, createAction } from "typesafe-actions";
@@ -5,6 +6,7 @@ import { App } from "../shared/App";
 import Chart from "../shared/Chart";
 import { hapi } from "../shared/hapi/release";
 import { definedNamespaces } from "../shared/Namespace";
+import { validate } from "../shared/schema";
 import {
   IAppOverview,
   IChartUpdateInfo,
@@ -241,6 +243,7 @@ export function deployChart(
   releaseName: string,
   namespace: string,
   values?: string,
+  schema?: JSONSchema4,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
     dispatch(requestDeployApp());
@@ -251,7 +254,17 @@ export function deployChart(
           "Namespace not selected. Please select a namespace using the selector in the top right corner.",
         );
       }
-
+      if (values && schema) {
+        const validation = validate(values, schema);
+        if (!validation.valid) {
+          const errorText =
+            validation.errors &&
+            validation.errors.map(e => `  - ${e.dataPath}: ${e.message}`).join("\n");
+          throw new UnprocessableEntity(
+            `The given values don't match the required format. The following errors were found:\n${errorText}`,
+          );
+        }
+      }
       const {
         config: { namespace: kubeappsNamespace },
       } = getState();
