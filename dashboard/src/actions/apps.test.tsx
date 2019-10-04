@@ -270,7 +270,7 @@ describe("deploy chart", () => {
       {
         type: getType(actions.apps.errorApps),
         payload: new UnprocessableEntity(
-          "The given values don't complain with the given schema. Found the following errors:\n  - .foo: should be string",
+          "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
         ),
       },
     ];

@@ -261,7 +261,7 @@ export function deployChart(
             validation.errors &&
             validation.errors.map(e => `  - ${e.dataPath}: ${e.message}`).join("\n");
           throw new UnprocessableEntity(
-            `The given values don't complain with the given schema. Found the following errors:\n${errorText}`,
+            `The given values don't match the required format. The following errors were found:\n${errorText}`,
           );
         }
       }
