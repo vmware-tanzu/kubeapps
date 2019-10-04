@@ -249,7 +249,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         basicFormParameters: {
           ...this.state.basicFormParameters,
           [name]: {
-            path: param.path,
+            ...param,
             value: e.currentTarget.value,
           },
         },

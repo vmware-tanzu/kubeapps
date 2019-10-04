@@ -24,14 +24,22 @@ export function retrieveBasicFormParams(
     Object.keys(properties).map(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
+      const { type, title, description, form } = properties[propertyKey];
       // If the property has the key "form", it's a basic parameter
-      if (properties[propertyKey].form) {
+      if (form) {
         // Use the default value either from the JSON schema or the default values
         const value = getValue(defaultValues, itemPath, properties[propertyKey].default);
+        const param: IBasicFormParam = {
+          path: itemPath,
+          type: String(type),
+          value,
+          title,
+          description,
+        };
         params = {
           ...params,
           // The key of the param is the value of the form tag
-          [properties[propertyKey].form]: { path: itemPath, value },
+          [form]: param,
         };
       }
       // If the property is an object, iterate recursively
