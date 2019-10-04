@@ -3,6 +3,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
+import { Auth } from "../shared/Auth";
 
 export interface INamespaceState {
   current: string;
@@ -11,8 +12,9 @@ export interface INamespaceState {
 }
 
 const getInitialState: () => INamespaceState = (): INamespaceState => {
+  const token = Auth.getAuthToken() || "";
   return {
-    current: "",
+    current: Auth.defaultNamespaceFromToken(token),
     namespaces: [],
   };
 };
@@ -30,10 +32,8 @@ const namespaceReducer = (
     case getType(actions.namespace.errorNamespaces):
       return { ...state, errorMsg: action.payload.err.message };
     case getType(actions.namespace.clearNamespaces):
-      return { ...initialState };
-    case getType(actions.namespace.namespaceReceived):
-      const currentNamespace = state.current === "" ? action.payload : state.current;
-      return { ...initialState, current: currentNamespace };
+      // Clear namespaces info but keep "current" to avoid unexpected redirections
+      return { ...initialState, current: state.current };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
       // looks for /ns/:namespace in URL
