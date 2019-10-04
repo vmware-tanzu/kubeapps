@@ -53,16 +53,16 @@ describe("namespaceReducer", () => {
   });
 
   context("when CLEAR_NAMESPACES", () => {
-    it("returns to the default namespace, maintaining the current namespace", () => {
-      const clearedState = {
-        current: initialState.current,
-        namespaces: [],
+    it("returns to the initial state", () => {
+      const dirtyState = {
+        current: "some-other-namespace",
+        namespaces: ["namespace-one", "namespace-two"],
       };
       expect(
-        namespaceReducer(initialState, {
+        namespaceReducer(dirtyState, {
           type: getType(actions.namespace.clearNamespaces),
         }),
-      ).toEqual(clearedState);
+      ).toEqual({ current: "default", namespaces: [] });
     });
   });
 });

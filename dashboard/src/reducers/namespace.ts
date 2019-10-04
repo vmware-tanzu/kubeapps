@@ -32,8 +32,7 @@ const namespaceReducer = (
     case getType(actions.namespace.errorNamespaces):
       return { ...state, errorMsg: action.payload.err.message };
     case getType(actions.namespace.clearNamespaces):
-      // Clear namespaces info but keep "current" to avoid unexpected redirections
-      return { ...initialState, current: state.current };
+      return { ...initialState };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
       // looks for /ns/:namespace in URL
