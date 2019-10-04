@@ -3,6 +3,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
+import { AuthAction } from "../actions/auth";
 import { Auth } from "../shared/Auth";
 
 export interface INamespaceState {
@@ -22,7 +23,7 @@ const initialState: INamespaceState = getInitialState();
 
 const namespaceReducer = (
   state: INamespaceState = initialState,
-  action: NamespaceAction | LocationChangeAction,
+  action: NamespaceAction | LocationChangeAction | AuthAction,
 ): INamespaceState => {
   switch (action.type) {
     case getType(actions.namespace.receiveNamespaces):
@@ -39,6 +40,12 @@ const namespaceReducer = (
       const matches = pathname.match(/\/ns\/([^/]*)/);
       if (matches) {
         return { ...state, current: matches[1] };
+      }
+    case getType(actions.auth.setAuthenticated):
+      // Only when a user is authenticated to we set the current namespace from
+      // the auth default namespace.
+      if (action.payload.authenticated) {
+        return { ...state, current: action.payload.defaultNamespace }
       }
     default:
   }

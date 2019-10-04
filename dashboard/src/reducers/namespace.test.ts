@@ -65,4 +65,15 @@ describe("namespaceReducer", () => {
       ).toEqual({ current: "default", namespaces: [] });
     });
   });
+
+  context("when SET_AUTHENTICATED", () => {
+    it("sets the current namespace to the users default", () => {
+      expect(
+        namespaceReducer({ current: "default", namespaces: [] }, {
+            type: getType(actions.auth.setAuthenticated),
+            payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" }
+        }),
+      ).toEqual({ current: "foo-bar", namespaces: [] });
+    });
+  });
 });
