@@ -31,6 +31,12 @@ const defaultProps = {
     },
   },
   {
+    description: "renders a basic deployment with a disk size",
+    params: {
+      diskSize: { path: "size", value: "10Gi", type: "string" } as IBasicFormParam,
+    },
+  },
+  {
     description: "renders a basic deployment with username, password, email and a generic string",
     params: {
       username: { path: "wordpressUsername", value: "user" } as IBasicFormParam,
