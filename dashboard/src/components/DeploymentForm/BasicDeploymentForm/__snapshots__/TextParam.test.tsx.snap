@@ -1,0 +1,30 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a text param with title and description 1`] = `
+<TextParam
+  handleBasicFormParamChange={[Function]}
+  id="foo"
+  label="Username"
+  name="username"
+  param={
+    Object {
+      "path": "username",
+      "type": "string",
+      "value": "user",
+    }
+  }
+>
+  <div>
+    <label
+      htmlFor="foo"
+    >
+      Username
+      <input
+        defaultValue="user"
+        id="foo"
+        type="text"
+      />
+    </label>
+  </div>
+</TextParam>
+`;

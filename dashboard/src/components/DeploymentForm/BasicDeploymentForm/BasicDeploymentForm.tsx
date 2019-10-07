@@ -1,8 +1,9 @@
 import * as React from "react";
 import { IBasicFormParam } from "shared/types";
-import StringParam from "./StringParam";
+import TextParam from "./TextParam";
 
 import "./BasicDeploymentForm.css";
+import BooleanParam from "./BooleanParam";
 
 export interface IBasicDeploymentFormProps {
   params: { [name: string]: IBasicFormParam };
@@ -24,7 +25,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
     switch (name) {
       case "username":
         return (
-          <StringParam
+          <TextParam
             label="Username"
             handleBasicFormParamChange={this.props.handleBasicFormParamChange}
             key={id}
@@ -35,7 +36,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         );
       case "password":
         return (
-          <StringParam
+          <TextParam
             label="Password"
             handleBasicFormParamChange={this.props.handleBasicFormParamChange}
             key={id}
@@ -46,7 +47,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         );
       case "email":
         return (
-          <StringParam
+          <TextParam
             label="Email"
             handleBasicFormParamChange={this.props.handleBasicFormParamChange}
             key={id}
@@ -56,20 +57,45 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
           />
         );
       default:
-        if (param.type === "string") {
-          return (
-            <StringParam
-              label={param.title || ""}
-              handleBasicFormParamChange={this.props.handleBasicFormParamChange}
-              key={id}
-              id={id}
-              name={name}
-              param={param}
-            />
-          );
+        switch (param.type) {
+          case "string":
+            return (
+              <TextParam
+                label={param.title || ""}
+                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+                key={id}
+                id={id}
+                name={name}
+                param={param}
+              />
+            );
+          case "integer":
+            return (
+              <TextParam
+                label={param.title || ""}
+                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+                key={id}
+                id={id}
+                name={name}
+                param={param}
+                inputType="number"
+              />
+            );
+          case "boolean":
+            return (
+              <BooleanParam
+                label={param.title || ""}
+                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+                key={id}
+                id={id}
+                name={name}
+                param={param}
+              />
+            );
+          default:
+          // TODO(andres): This should return an error once we add support for all the parameters that we expect
+          // throw new Error(`Param ${name} with type ${param.type} is not supported`);
         }
-      // TODO(andres): This should return an error once we add support for all the parameters that we expect
-      // throw new Error(`Param ${name} with type ${param.type} is not supported`);
     }
     return null;
   }

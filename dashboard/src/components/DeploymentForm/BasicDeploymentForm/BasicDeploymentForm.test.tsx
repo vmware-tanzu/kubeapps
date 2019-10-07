@@ -39,6 +39,18 @@ const defaultProps = {
       blogName: { path: "blogName", value: "my-blog", type: "string" } as IBasicFormParam,
     },
   },
+  {
+    description: "renders a basic deployment with a generic boolean",
+    params: {
+      enableMetrics: { path: "enableMetrics", value: true, type: "boolean" } as IBasicFormParam,
+    },
+  },
+  {
+    description: "renders a basic deployment with a generic number",
+    params: {
+      replicas: { path: "replicas", value: 1, type: "integer" } as IBasicFormParam,
+    },
+  },
 ].forEach(t => {
   it(t.description, () => {
     const onChange = jest.fn();

@@ -12,7 +12,7 @@ exports[`renders a basic deployment with a email 1`] = `
     }
   }
 >
-  <StringParam
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="email-0"
     key="email-0"
@@ -31,13 +31,312 @@ exports[`renders a basic deployment with a email 1`] = `
       >
         Email
         <input
+          defaultValue="user@example.com"
           id="email-0"
           onChange={[Function]}
-          value="user@example.com"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
+  </TextParam>
+</BasicDeploymentForm>
+`;
+
+exports[`renders a basic deployment with a generic boolean 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "enableMetrics": Object {
+        "path": "enableMetrics",
+        "type": "boolean",
+        "value": true,
+      },
+    }
+  }
+>
+  <BooleanParam
+    handleBasicFormParamChange={[Function]}
+    id="enableMetrics-0"
+    key="enableMetrics-0"
+    label=""
+    name="enableMetrics"
+    param={
+      Object {
+        "path": "enableMetrics",
+        "type": "boolean",
+        "value": true,
+      }
+    }
+  >
+    <label
+      htmlFor="enableMetrics-0"
+    >
+      <div
+        className="margin-b-normal"
+      >
+        <span />
+        <ReactSwitch
+          activeBoxShadow="0 0 2px 3px #3bf"
+          boxShadow={null}
+          checked={true}
+          checkedIcon={
+            <svg
+              height="100%"
+              style={
+                Object {
+                  "position": "absolute",
+                  "top": 0,
+                }
+              }
+              viewBox="-2 -5 17 21"
+              width="100%"
+            >
+              <path
+                d="M11.264 0L5.26 6.004 2.103 2.847 0 4.95l5.26 5.26 8.108-8.107L11.264 0"
+                fill="#fff"
+                fillRule="evenodd"
+              />
+            </svg>
+          }
+          className="react-switch"
+          disabled={false}
+          height={28}
+          id="enableMetrics-0"
+          offColor="#888"
+          offHandleColor="#fff"
+          onChange={[Function]}
+          onColor="#080"
+          onHandleColor="#fff"
+          uncheckedIcon={
+            <svg
+              height="100%"
+              style={
+                Object {
+                  "position": "absolute",
+                  "top": 0,
+                }
+              }
+              viewBox="-2 -5 14 20"
+              width="100%"
+            >
+              <path
+                d="M9.9 2.12L7.78 0 4.95 2.828 2.12 0 0 2.12l2.83 2.83L0 7.776 2.123 9.9 4.95 7.07 7.78 9.9 9.9 7.776 7.072 4.95 9.9 2.12"
+                fill="#fff"
+                fillRule="evenodd"
+              />
+            </svg>
+          }
+          width={56}
+        >
+          <div
+            className="react-switch"
+            style={
+              Object {
+                "MozTransition": "opacity 0.25s",
+                "MozUserSelect": "none",
+                "WebkitTapHighlightColor": "rgba(0, 0, 0, 0)",
+                "WebkitTransition": "opacity 0.25s",
+                "WebkitUserSelect": "none",
+                "borderRadius": 14,
+                "direction": "ltr",
+                "display": "inline-block",
+                "msUserSelect": "none",
+                "opacity": 1,
+                "position": "relative",
+                "textAlign": "left",
+                "touchAction": "none",
+                "transition": "opacity 0.25s",
+                "userSelect": "none",
+              }
+            }
+          >
+            <div
+              className="react-switch-bg"
+              onClick={[Function]}
+              onMouseDown={[Function]}
+              style={
+                Object {
+                  "MozTransition": "background 0.25s",
+                  "WebkitTransition": "background 0.25s",
+                  "background": "#008800",
+                  "borderRadius": 14,
+                  "cursor": "pointer",
+                  "height": 28,
+                  "margin": 0,
+                  "position": "relative",
+                  "transition": "background 0.25s",
+                  "width": 56,
+                }
+              }
+            >
+              <div
+                style={
+                  Object {
+                    "MozTransition": "opacity 0.25s",
+                    "WebkitTransition": "opacity 0.25s",
+                    "height": 28,
+                    "opacity": 1,
+                    "pointerEvents": "none",
+                    "position": "relative",
+                    "transition": "opacity 0.25s",
+                    "width": 30,
+                  }
+                }
+              >
+                <svg
+                  height="100%"
+                  style={
+                    Object {
+                      "position": "absolute",
+                      "top": 0,
+                    }
+                  }
+                  viewBox="-2 -5 17 21"
+                  width="100%"
+                >
+                  <path
+                    d="M11.264 0L5.26 6.004 2.103 2.847 0 4.95l5.26 5.26 8.108-8.107L11.264 0"
+                    fill="#fff"
+                    fillRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div
+                style={
+                  Object {
+                    "MozTransition": "opacity 0.25s",
+                    "WebkitTransition": "opacity 0.25s",
+                    "height": 28,
+                    "opacity": 0,
+                    "pointerEvents": "none",
+                    "position": "absolute",
+                    "right": 0,
+                    "top": 0,
+                    "transition": "opacity 0.25s",
+                    "width": 30,
+                  }
+                }
+              >
+                <svg
+                  height="100%"
+                  style={
+                    Object {
+                      "position": "absolute",
+                      "top": 0,
+                    }
+                  }
+                  viewBox="-2 -5 14 20"
+                  width="100%"
+                >
+                  <path
+                    d="M9.9 2.12L7.78 0 4.95 2.828 2.12 0 0 2.12l2.83 2.83L0 7.776 2.123 9.9 4.95 7.07 7.78 9.9 9.9 7.776 7.072 4.95 9.9 2.12"
+                    fill="#fff"
+                    fillRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div
+              className="react-switch-handle"
+              onClick={[Function]}
+              onMouseDown={[Function]}
+              onTouchCancel={[Function]}
+              onTouchEnd={[Function]}
+              onTouchMove={[Function]}
+              onTouchStart={[Function]}
+              style={
+                Object {
+                  "MozTransition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
+                  "WebkitTransition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
+                  "background": "#ffffff",
+                  "border": 0,
+                  "borderRadius": "50%",
+                  "boxShadow": null,
+                  "cursor": "pointer",
+                  "display": "inline-block",
+                  "height": 26,
+                  "outline": 0,
+                  "position": "absolute",
+                  "top": 1,
+                  "transform": "translateX(29px)",
+                  "transition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
+                  "width": 26,
+                }
+              }
+            />
+            <input
+              checked={true}
+              disabled={false}
+              id="enableMetrics-0"
+              onBlur={[Function]}
+              onChange={[Function]}
+              onFocus={[Function]}
+              onKeyUp={[Function]}
+              role="switch"
+              style={
+                Object {
+                  "border": 0,
+                  "clip": "rect(0 0 0 0)",
+                  "height": 1,
+                  "margin": -1,
+                  "overflow": "hidden",
+                  "padding": 0,
+                  "position": "absolute",
+                  "width": 1,
+                }
+              }
+              type="checkbox"
+            />
+          </div>
+        </ReactSwitch>
+      </div>
+    </label>
+  </BooleanParam>
+</BasicDeploymentForm>
+`;
+
+exports[`renders a basic deployment with a generic number 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "replicas": Object {
+        "path": "replicas",
+        "type": "integer",
+        "value": 1,
+      },
+    }
+  }
+>
+  <TextParam
+    handleBasicFormParamChange={[Function]}
+    id="replicas-0"
+    inputType="number"
+    key="replicas-0"
+    label=""
+    name="replicas"
+    param={
+      Object {
+        "path": "replicas",
+        "type": "integer",
+        "value": 1,
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="replicas-0"
+      >
+        <input
+          defaultValue={1}
+          id="replicas-0"
+          onChange={[Function]}
+          type="number"
+        />
+      </label>
+    </div>
+  </TextParam>
 </BasicDeploymentForm>
 `;
 
@@ -54,7 +353,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
     }
   }
 >
-  <StringParam
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="blogName-0"
     key="blogName-0"
@@ -73,13 +372,14 @@ exports[`renders a basic deployment with a generic string 1`] = `
         htmlFor="blogName-0"
       >
         <input
+          defaultValue="my-blog"
           id="blogName-0"
           onChange={[Function]}
-          value="my-blog"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
+  </TextParam>
 </BasicDeploymentForm>
 `;
 
@@ -95,7 +395,7 @@ exports[`renders a basic deployment with a password 1`] = `
     }
   }
 >
-  <StringParam
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="password-0"
     key="password-0"
@@ -114,13 +414,14 @@ exports[`renders a basic deployment with a password 1`] = `
       >
         Password
         <input
+          defaultValue="sserpdrow"
           id="password-0"
           onChange={[Function]}
-          value="sserpdrow"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
+  </TextParam>
 </BasicDeploymentForm>
 `;
 
@@ -136,7 +437,7 @@ exports[`renders a basic deployment with a username 1`] = `
     }
   }
 >
-  <StringParam
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="username-0"
     key="username-0"
@@ -155,13 +456,14 @@ exports[`renders a basic deployment with a username 1`] = `
       >
         Username
         <input
+          defaultValue="user"
           id="username-0"
           onChange={[Function]}
-          value="user"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
+  </TextParam>
 </BasicDeploymentForm>
 `;
 
@@ -190,7 +492,7 @@ exports[`renders a basic deployment with username, password, email and a generic
     }
   }
 >
-  <StringParam
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="username-0"
     key="username-0"
@@ -209,14 +511,15 @@ exports[`renders a basic deployment with username, password, email and a generic
       >
         Username
         <input
+          defaultValue="user"
           id="username-0"
           onChange={[Function]}
-          value="user"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
-  <StringParam
+  </TextParam>
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="password-1"
     key="password-1"
@@ -235,14 +538,15 @@ exports[`renders a basic deployment with username, password, email and a generic
       >
         Password
         <input
+          defaultValue="sserpdrow"
           id="password-1"
           onChange={[Function]}
-          value="sserpdrow"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
-  <StringParam
+  </TextParam>
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="email-2"
     key="email-2"
@@ -261,14 +565,15 @@ exports[`renders a basic deployment with username, password, email and a generic
       >
         Email
         <input
+          defaultValue="user@example.com"
           id="email-2"
           onChange={[Function]}
-          value="user@example.com"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
-  <StringParam
+  </TextParam>
+  <TextParam
     handleBasicFormParamChange={[Function]}
     id="blogName-3"
     key="blogName-3"
@@ -287,12 +592,13 @@ exports[`renders a basic deployment with username, password, email and a generic
         htmlFor="blogName-3"
       >
         <input
+          defaultValue="my-blog"
           id="blogName-3"
           onChange={[Function]}
-          value="my-blog"
+          type="text"
         />
       </label>
     </div>
-  </StringParam>
+  </TextParam>
 </BasicDeploymentForm>
 `;

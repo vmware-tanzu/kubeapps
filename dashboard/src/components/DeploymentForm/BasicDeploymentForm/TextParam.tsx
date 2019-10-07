@@ -5,6 +5,7 @@ export interface IStringParamProps {
   id: string;
   name: string;
   label: string;
+  inputType?: string;
   param: IBasicFormParam;
   handleBasicFormParamChange: (
     name: string,
@@ -12,9 +13,9 @@ export interface IStringParamProps {
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
 
-class StringParam extends React.Component<IStringParamProps> {
+class TextParam extends React.Component<IStringParamProps> {
   public render() {
-    const { id, name, param, label } = this.props;
+    const { id, name, param, label, inputType } = this.props;
     return (
       <div>
         <label htmlFor={id}>
@@ -28,7 +29,8 @@ class StringParam extends React.Component<IStringParamProps> {
           <input
             id={id}
             onChange={this.props.handleBasicFormParamChange(name, param)}
-            value={param.value}
+            defaultValue={param.value}
+            type={inputType ? inputType : "text"}
           />
         </label>
       </div>
@@ -36,4 +38,4 @@ class StringParam extends React.Component<IStringParamProps> {
   }
 }
 
-export default StringParam;
+export default TextParam;

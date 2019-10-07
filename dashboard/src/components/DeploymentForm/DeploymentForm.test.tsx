@@ -254,4 +254,62 @@ describe("when the basic form is enabled", () => {
     });
     expect(wrapper.state("appValues")).toBe("wordpressUsername: foo\n");
   });
+
+  it("handles a parameter as a number", () => {
+    const basicFormParameters = {
+      replicas: {
+        path: "replicas",
+        value: 1,
+        type: "integer",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "replicas: 1", basicFormParameters });
+    wrapper.update();
+
+    // Fake onChange
+    const input = wrapper.find(BasicDeploymentForm).find("input");
+    const onChange = input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void;
+    onChange({ currentTarget: { value: "2", valueAsNumber: 2, type: "number" } } as React.FormEvent<
+      HTMLInputElement
+    >);
+
+    expect(wrapper.state("basicFormParameters")).toEqual({
+      replicas: {
+        path: "replicas",
+        value: 2,
+        type: "integer",
+      },
+    });
+    expect(wrapper.state("appValues")).toBe("replicas: 2\n");
+  });
+
+  it("handles a parameter as a boolean", () => {
+    const basicFormParameters = {
+      enableMetrics: {
+        path: "enableMetrics",
+        value: false,
+        type: "boolean",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "enableMetrics: false", basicFormParameters });
+    wrapper.update();
+
+    // Fake onChange
+    const input = wrapper.find(BasicDeploymentForm).find("input");
+    const onChange = input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void;
+    onChange({
+      currentTarget: { value: "true", checked: true, type: "checkbox" },
+    } as React.FormEvent<HTMLInputElement>);
+
+    expect(wrapper.state("basicFormParameters")).toEqual({
+      enableMetrics: {
+        path: "enableMetrics",
+        value: true,
+        type: "boolean",
+      },
+    });
+    expect(wrapper.state("appValues")).toBe("enableMetrics: true\n");
+  });
 });
