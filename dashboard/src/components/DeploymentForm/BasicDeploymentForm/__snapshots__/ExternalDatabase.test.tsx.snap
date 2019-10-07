@@ -1,0 +1,104 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a external database section 1`] = `
+<div
+  className="subsection margin-v-normal"
+>
+  <BooleanParam
+    handleBasicFormParamChange={[Function]}
+    id="enable-self-hosted-db"
+    label="Use a Self Hosted Database"
+    name="useSelfHostedDatabase"
+    param={
+      Object {
+        "path": "mariadb.enabled",
+        "type": "boolean",
+        "value": true,
+      }
+    }
+  />
+  <div
+    className="margin-t-normal"
+    hidden={true}
+  >
+    <span>
+      Enable an external database
+    </span>
+    <TextParam
+      handleBasicFormParamChange={[Function]}
+      id="externalDatabase-0"
+      inputType="text"
+      key="externalDatabase-0"
+      label=""
+      name="externalDatabase"
+      param={
+        Object {
+          "path": "edbs",
+          "type": "object",
+          "value": Object {},
+        }
+      }
+    />
+    <TextParam
+      handleBasicFormParamChange={[Function]}
+      id="externalDatabaseHost-1"
+      inputType="text"
+      key="externalDatabaseHost-1"
+      label="Host"
+      name="externalDatabaseHost"
+      param={
+        Object {
+          "path": "edbs.host",
+          "type": "string",
+          "value": "localhost",
+        }
+      }
+    />
+    <TextParam
+      handleBasicFormParamChange={[Function]}
+      id="externalDatabaseUser-2"
+      inputType="text"
+      key="externalDatabaseUser-2"
+      label="User"
+      name="externalDatabaseUser"
+      param={
+        Object {
+          "path": "edbs.user",
+          "type": "string",
+          "value": "user",
+        }
+      }
+    />
+    <TextParam
+      handleBasicFormParamChange={[Function]}
+      id="externalDatabasePassword-3"
+      inputType="text"
+      key="externalDatabasePassword-3"
+      label="Password"
+      name="externalDatabasePassword"
+      param={
+        Object {
+          "path": "edbs.pass",
+          "type": "string",
+          "value": "pass123",
+        }
+      }
+    />
+    <TextParam
+      handleBasicFormParamChange={[Function]}
+      id="externalDatabasePort-4"
+      inputType="number"
+      key="externalDatabasePort-4"
+      label="Port"
+      name="externalDatabasePort"
+      param={
+        Object {
+          "path": "edbs.port",
+          "type": "integer",
+          "value": 1234,
+        }
+      }
+    />
+  </div>
+</div>
+`;

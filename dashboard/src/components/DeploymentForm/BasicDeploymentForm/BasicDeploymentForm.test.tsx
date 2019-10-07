@@ -3,6 +3,14 @@ import * as React from "react";
 import { mount } from "enzyme";
 import { IBasicFormParam } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
+import ExternalDatabaseSection, {
+  EXTERNAL_DB_HOST_PARAM_NAME,
+  EXTERNAL_DB_PARAM_NAME,
+  EXTERNAL_DB_PASSWORD_PARAM_NAME,
+  EXTERNAL_DB_PORT_PARAM_NAME,
+  EXTERNAL_DB_USER_PARAM_NAME,
+  USE_SELF_HOSTED_DB_PARAM_NAME,
+} from "./ExternalDatabase";
 
 const defaultProps = {
   params: [],
@@ -70,4 +78,22 @@ const defaultProps = {
       expect(onChange.mock.calls.length).toBe(i + 1);
     });
   });
+});
+
+it("should render an external database section", () => {
+  const params = {
+    [EXTERNAL_DB_PARAM_NAME]: { path: "edbs", value: {}, type: "object" },
+    [EXTERNAL_DB_HOST_PARAM_NAME]: { path: "edbs.host", value: "localhost", type: "string" },
+    [EXTERNAL_DB_USER_PARAM_NAME]: { path: "edbs.user", value: "user", type: "string" },
+    [EXTERNAL_DB_PASSWORD_PARAM_NAME]: { path: "edbs.pass", value: "pass123", type: "string" },
+    [EXTERNAL_DB_PORT_PARAM_NAME]: { path: "edbs.port", value: 1234, type: "integer" },
+    [USE_SELF_HOSTED_DB_PARAM_NAME]: { path: "mariadb.enabled", value: true, type: "boolean" },
+  };
+  const wrapper = mount(<BasicDeploymentForm {...defaultProps} params={params} />);
+
+  const dbsec = wrapper.find(ExternalDatabaseSection);
+  expect(dbsec).toExist();
+  // remove the parent param since it is not forwarded
+  delete params[EXTERNAL_DB_PARAM_NAME];
+  expect(dbsec.prop("externalDatabaseParams")).toMatchObject(params);
 });
