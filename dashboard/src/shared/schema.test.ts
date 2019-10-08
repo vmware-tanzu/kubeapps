@@ -140,6 +140,42 @@ service: ClusterIP
         } as IBasicFormParam,
       },
     },
+    {
+      description: "should retrieve a param with children params",
+      values: `
+externalDatabase:
+  name: "foo"
+  port: 3306
+`,
+      schema: {
+        properties: {
+          externalDatabase: {
+            type: "object",
+            form: "externalDatabase",
+            properties: {
+              name: { type: "string", form: "externalDatabaseName" },
+              port: { type: "integer", form: "externalDatabasePort" },
+            },
+          },
+        },
+      } as JSONSchema4,
+      result: {
+        externalDatabase: {
+          path: "externalDatabase",
+          type: "object",
+          children: {
+            externalDatabaseName: {
+              path: "externalDatabase.name",
+              type: "string",
+            },
+            externalDatabasePort: {
+              path: "externalDatabase.port",
+              type: "integer",
+            },
+          },
+        } as IBasicFormParam,
+      },
+    },
   ].forEach(t => {
     it(t.description, () => {
       expect(retrieveBasicFormParams(t.values, t.schema)).toMatchObject(t.result);

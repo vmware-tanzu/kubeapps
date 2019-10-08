@@ -382,4 +382,5 @@ export interface IBasicFormParam {
   value?: any;
   title?: string;
   description?: string;
+  children?: { [name: string]: IBasicFormParam };
 }

@@ -8,10 +8,11 @@ exports[`should render a external database section 1`] = `
     handleBasicFormParamChange={[Function]}
     id="enable-self-hosted-db"
     label="Use a Self Hosted Database"
-    name="useSelfHostedDatabase"
+    name="disableExternalDB"
     param={
       Object {
         "path": "mariadb.enabled",
+        "title": "Enable External Database",
         "type": "boolean",
         "value": true,
       }
@@ -26,16 +27,16 @@ exports[`should render a external database section 1`] = `
     </span>
     <TextParam
       handleBasicFormParamChange={[Function]}
-      id="externalDatabase-0"
+      id="externalDatabaseDB-0"
       inputType="text"
-      key="externalDatabase-0"
+      key="externalDatabaseDB-0"
       label=""
-      name="externalDatabase"
+      name="externalDatabaseDB"
       param={
         Object {
-          "path": "edbs",
-          "type": "object",
-          "value": Object {},
+          "path": "externalDatabase.database",
+          "type": "string",
+          "value": "bitnami_wordpress",
         }
       }
     />
@@ -48,7 +49,7 @@ exports[`should render a external database section 1`] = `
       name="externalDatabaseHost"
       param={
         Object {
-          "path": "edbs.host",
+          "path": "externalDatabase.host",
           "type": "string",
           "value": "localhost",
         }
@@ -56,46 +57,45 @@ exports[`should render a external database section 1`] = `
     />
     <TextParam
       handleBasicFormParamChange={[Function]}
-      id="externalDatabaseUser-2"
+      id="externalDatabasePassword-2"
       inputType="text"
-      key="externalDatabaseUser-2"
-      label="User"
-      name="externalDatabaseUser"
-      param={
-        Object {
-          "path": "edbs.user",
-          "type": "string",
-          "value": "user",
-        }
-      }
-    />
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="externalDatabasePassword-3"
-      inputType="text"
-      key="externalDatabasePassword-3"
+      key="externalDatabasePassword-2"
       label="Password"
       name="externalDatabasePassword"
       param={
         Object {
-          "path": "edbs.pass",
+          "path": "externalDatabase.password",
           "type": "string",
-          "value": "pass123",
         }
       }
     />
     <TextParam
       handleBasicFormParamChange={[Function]}
-      id="externalDatabasePort-4"
+      id="externalDatabasePort-3"
       inputType="number"
-      key="externalDatabasePort-4"
+      key="externalDatabasePort-3"
       label="Port"
       name="externalDatabasePort"
       param={
         Object {
-          "path": "edbs.port",
+          "path": "externalDatabase.port",
           "type": "integer",
-          "value": 1234,
+          "value": 3306,
+        }
+      }
+    />
+    <TextParam
+      handleBasicFormParamChange={[Function]}
+      id="externalDatabaseUser-4"
+      inputType="text"
+      key="externalDatabaseUser-4"
+      label="User"
+      name="externalDatabaseUser"
+      param={
+        Object {
+          "path": "externalDatabase.user",
+          "type": "string",
+          "value": "bn_wordpress",
         }
       }
     />

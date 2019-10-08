@@ -4,16 +4,8 @@ import TextParam from "./TextParam";
 
 import "./BasicDeploymentForm.css";
 import BooleanParam from "./BooleanParam";
+import DatabaseSection from "./DatabaseSection";
 import DiskSizeParam from "./DiskSizeParam";
-import ExternalDatabaseSection, {
-  EXTERNAL_DB_HOST_PARAM_NAME,
-  EXTERNAL_DB_NAME_PARAM_NAME,
-  EXTERNAL_DB_PARAM_NAME,
-  EXTERNAL_DB_PASSWORD_PARAM_NAME,
-  EXTERNAL_DB_PORT_PARAM_NAME,
-  EXTERNAL_DB_USER_PARAM_NAME,
-  USE_SELF_HOSTED_DB_PARAM_NAME,
-} from "./ExternalDatabase";
 
 export interface IBasicDeploymentFormProps {
   params: { [name: string]: IBasicFormParam };
@@ -22,6 +14,8 @@ export interface IBasicDeploymentFormProps {
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
+
+const USE_SELF_HOSTED_DB_PARAM_NAME = "useSelfHostedDatabase";
 
 class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   public render() {
@@ -66,20 +60,17 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             param={param}
           />
         );
-      case EXTERNAL_DB_PARAM_NAME:
+      case "externalDatabase":
         return (
-          <ExternalDatabaseSection
+          <DatabaseSection
             label="External Database Details"
             handleBasicFormParamChange={this.props.handleBasicFormParamChange}
             key={id}
-            externalDatabaseParams={this.filterDatabaseParams()}
+            param={param}
+            disableExternalDBParamName={USE_SELF_HOSTED_DB_PARAM_NAME}
+            disableExternalDBParam={this.props.params[USE_SELF_HOSTED_DB_PARAM_NAME]}
           />
         );
-      case EXTERNAL_DB_HOST_PARAM_NAME:
-      case EXTERNAL_DB_USER_PARAM_NAME:
-      case EXTERNAL_DB_PASSWORD_PARAM_NAME:
-      case EXTERNAL_DB_NAME_PARAM_NAME:
-      case EXTERNAL_DB_PORT_PARAM_NAME:
       case USE_SELF_HOSTED_DB_PARAM_NAME:
         // Handled within ExternalDabataseSection
         break;
@@ -136,25 +127,6 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         }
     }
     return null;
-  }
-
-  private filterDatabaseParams() {
-    let databaseParams = {};
-    Object.keys(this.props.params).map(paramName => {
-      switch (paramName) {
-        case EXTERNAL_DB_HOST_PARAM_NAME:
-        case EXTERNAL_DB_USER_PARAM_NAME:
-        case EXTERNAL_DB_PASSWORD_PARAM_NAME:
-        case EXTERNAL_DB_NAME_PARAM_NAME:
-        case EXTERNAL_DB_PORT_PARAM_NAME:
-        case USE_SELF_HOSTED_DB_PARAM_NAME:
-          databaseParams = {
-            ...databaseParams,
-            [paramName]: this.props.params[paramName],
-          };
-      }
-    });
-    return databaseParams;
   }
 }
 

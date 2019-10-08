@@ -36,19 +36,24 @@ export function retrieveBasicFormParams(
           value,
           title,
           description,
+          children:
+            properties[propertyKey].type === "object"
+              ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
+              : undefined,
         };
         params = {
           ...params,
           // The key of the param is the value of the form tag
           [form]: param,
         };
-      }
-      // If the property is an object, iterate recursively
-      if (schema.properties![propertyKey].type === "object") {
-        params = {
-          ...params,
-          ...retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
-        };
+      } else {
+        // If the property is an object, iterate recursively
+        if (schema.properties![propertyKey].type === "object") {
+          params = {
+            ...params,
+            ...retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
+          };
+        }
       }
     });
   }
