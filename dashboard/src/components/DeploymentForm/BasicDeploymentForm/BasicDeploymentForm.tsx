@@ -13,6 +13,8 @@ export interface IBasicDeploymentFormProps {
     name: string,
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
+  handleValuesChange: (value: string) => void;
+  appValues: string;
 }
 
 const USE_SELF_HOSTED_DB_PARAM_NAME = "useSelfHostedDatabase";
@@ -65,6 +67,8 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
           <DatabaseSection
             label="External Database Details"
             handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+            handleValuesChange={this.props.handleValuesChange}
+            appValues={this.props.appValues}
             key={id}
             param={param}
             disableExternalDBParamName={USE_SELF_HOSTED_DB_PARAM_NAME}

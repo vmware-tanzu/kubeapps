@@ -1,8 +1,9 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import * as React from "react";
 
 import { IBasicFormParam } from "shared/types";
 import DatabaseSection, { IDatabaseSectionProps } from "./DatabaseSection"; // , {
+import TextParam from "./TextParam";
 
 const defaultProps = {
   label: "Enable an external database",
@@ -34,6 +35,8 @@ const defaultProps = {
   } as IBasicFormParam,
   disableExternalDBParamName: "disableExternalDB",
   handleBasicFormParamChange: jest.fn(),
+  appValues: "externalDatabase: {}",
+  handleValuesChange: jest.fn(),
 } as IDatabaseSectionProps;
 
 it("should render a external database section", () => {
@@ -52,4 +55,16 @@ it("should hide/show the database params if the self-hosted database is enabled/
   });
   wrapper.update();
   expect(wrapper.find(".margin-t-normal").prop("hidden")).toBe(false);
+});
+
+it("should change the parent parameter when a children is modified", () => {
+  const wrapper = mount(<DatabaseSection {...defaultProps} />);
+
+  const hostParam = wrapper.find(TextParam).findWhere(t => t.prop("label") === "Host");
+  (hostParam.prop("handleBasicFormParamChange") as any)(
+    "externalDatabaseHost",
+    defaultProps.param.children!.externalDatabaseHost,
+  )({ currentTarget: { value: "foo" } });
+
+  expect(defaultProps.param.children!.externalDatabaseHost.value).toBe("foo");
 });

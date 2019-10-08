@@ -8,6 +8,8 @@ import DatabaseSection from "./DatabaseSection";
 const defaultProps = {
   params: [],
   handleBasicFormParamChange: jest.fn(() => jest.fn()),
+  appValues: "",
+  handleValuesChange: jest.fn(),
 };
 
 [
