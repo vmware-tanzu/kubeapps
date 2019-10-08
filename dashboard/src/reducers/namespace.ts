@@ -2,8 +2,8 @@ import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
-import { NamespaceAction } from "../actions/namespace";
 import { AuthAction } from "../actions/auth";
+import { NamespaceAction } from "../actions/namespace";
 import { Auth } from "../shared/Auth";
 
 export interface INamespaceState {
@@ -41,11 +41,12 @@ const namespaceReducer = (
       if (matches) {
         return { ...state, current: matches[1] };
       }
+      break;
     case getType(actions.auth.setAuthenticated):
       // Only when a user is authenticated to we set the current namespace from
       // the auth default namespace.
       if (action.payload.authenticated) {
-        return { ...state, current: action.payload.defaultNamespace }
+        return { ...state, current: action.payload.defaultNamespace };
       }
     default:
   }
