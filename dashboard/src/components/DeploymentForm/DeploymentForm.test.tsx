@@ -225,9 +225,23 @@ describe("when the basic form is not enabled", () => {
 
 describe("when the basic form is enabled", () => {
   it("renders the different tabs", () => {
-    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
+    const basicFormParameters = {
+      username: {
+        path: "wordpressUsername",
+        value: "user",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "wordpressUsername: user", basicFormParameters });
+    wrapper.update();
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(Tabs)).toExist();
+  });
+
+  it("should not renders the tabs if there are no basic parameters", () => {
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
+    expect(wrapper.find(LoadingWrapper)).not.toExist();
+    expect(wrapper.find(Tabs)).not.toExist();
   });
 
   it("changes the parameter value", () => {
@@ -253,5 +267,35 @@ describe("when the basic form is enabled", () => {
       },
     });
     expect(wrapper.state("appValues")).toBe("wordpressUsername: foo\n");
+  });
+
+  it("should update params if a raw value is changed", () => {
+    const testProps = {
+      ...props,
+      selected: {
+        ...props.selected,
+        schema: { properties: { wordpressUsername: { type: "string", form: "username" } } },
+      },
+    };
+    const basicFormParameters = {
+      username: {
+        path: "wordpressUsername",
+        value: "user",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...testProps} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "wordpressUsername: user", basicFormParameters });
+    wrapper.update();
+
+    // Fake onChange
+    (wrapper.instance() as any).handleValuesChange("wordpressUsername: foo");
+    wrapper.update();
+
+    expect(wrapper.state("basicFormParameters")).toMatchObject({
+      username: {
+        path: "wordpressUsername",
+        value: "foo",
+      },
+    });
   });
 });

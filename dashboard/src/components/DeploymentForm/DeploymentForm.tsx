@@ -165,7 +165,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              {this.props.enableBasicForm ? (
+              {this.shouldRenderBasicForm() ? (
                 this.renderTabs()
               ) : (
                 <AdvancedDeploymentForm
@@ -221,6 +221,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
+    if (this.shouldRenderBasicForm()) {
+      this.setState({
+        basicFormParameters: retrieveBasicFormParams(value, this.props.selected.schema),
+      });
+    }
   };
 
   private renderTabs = () => {
@@ -263,6 +268,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         },
       });
     };
+  };
+
+  // The basic form should be rendered both if it's enabled and if there are params to show
+  private shouldRenderBasicForm = () => {
+    return this.props.enableBasicForm && Object.keys(this.state.basicFormParameters).length > 0;
   };
 }
 
