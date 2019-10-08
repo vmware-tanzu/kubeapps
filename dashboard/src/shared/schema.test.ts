@@ -1,6 +1,6 @@
 import { JSONSchema4 } from "json-schema";
 
-import { getValue, retrieveBasicFormParams, setValue } from "./schema";
+import { getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
 import { IBasicFormParam } from "./types";
 
 describe("retrieveBasicFormParams", () => {
@@ -117,9 +117,32 @@ service: ClusterIP
         } as IBasicFormParam,
       },
     },
+    {
+      description: "should retrieve a param with title and description",
+      values: "blogName: myBlog",
+      schema: {
+        properties: {
+          blogName: {
+            type: "string",
+            form: "blogName",
+            title: "Blog Name",
+            description: "Title of the blog",
+          },
+        },
+      } as JSONSchema4,
+      result: {
+        blogName: {
+          path: "blogName",
+          type: "string",
+          value: "myBlog",
+          title: "Blog Name",
+          description: "Title of the blog",
+        } as IBasicFormParam,
+      },
+    },
   ].forEach(t => {
     it(t.description, () => {
-      expect(retrieveBasicFormParams(t.values, t.schema)).toEqual(t.result);
+      expect(retrieveBasicFormParams(t.values, t.schema)).toMatchObject(t.result);
     });
   });
 });
@@ -217,6 +240,41 @@ describe("setValue", () => {
         expect(t.error).toBe(true);
       }
       expect(res).toEqual(t.result);
+    });
+  });
+});
+
+describe("validate", () => {
+  [
+    {
+      description: "Should validate a valid object",
+      values: "foo: bar\n",
+      schema: { properties: { foo: { type: "string" } } } as JSONSchema4,
+      valid: true,
+      errors: null,
+    },
+    {
+      description: "Should validate an invalid object",
+      values: "foo: bar\n",
+      schema: { properties: { foo: { type: "integer" } } } as JSONSchema4,
+      valid: false,
+      errors: [
+        {
+          keyword: "type",
+          dataPath: ".foo",
+          schemaPath: "#/properties/foo/type",
+          params: {
+            type: "integer",
+          },
+          message: "should be integer",
+        },
+      ],
+    },
+  ].forEach(t => {
+    it(t.description, () => {
+      const res = validate(t.values, t.schema);
+      expect(res.valid).toBe(t.valid);
+      expect(res.errors).toEqual(t.errors);
     });
   });
 });

@@ -9,7 +9,7 @@ import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
-import BasicDeploymentForm from "./BasicDeploymentForm";
+import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm";
 import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
 const defaultProps = {
