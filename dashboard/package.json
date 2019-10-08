@@ -34,6 +34,7 @@
     "raf": "^3.4.0",
     "react": "^16.2.0",
     "react-ace": "^5.9.0",
+    "react-compound-slider": "^2.3.0",
     "react-dom": "^16.2.0",
     "react-feather": "^1.0.8",
     "react-jsonschema-form": "^1.0.3",
