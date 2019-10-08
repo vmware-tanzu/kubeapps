@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
+import { JSONSchema4 } from "json-schema";
 import actions from "../../actions";
 import DeploymentForm from "../../components/DeploymentForm";
 import { IChartVersion, IStoreState } from "../../shared/types";
@@ -39,7 +40,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       releaseName: string,
       namespace: string,
       values?: string,
-    ) => dispatch(actions.apps.deployChart(version, releaseName, namespace, values)),
+      schema?: JSONSchema4,
+    ) => dispatch(actions.apps.deployChart(version, releaseName, namespace, values, schema)),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
     getChartValues: (id: string, version: string) =>
       dispatch(actions.charts.getChartValues(id, version)),

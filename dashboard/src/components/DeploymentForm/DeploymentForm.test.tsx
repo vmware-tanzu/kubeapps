@@ -9,7 +9,7 @@ import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
-import BasicDeploymentForm from "./BasicDeploymentForm";
+import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm";
 import DeploymentForm, { IDeploymentFormProps, IDeploymentFormState } from "./DeploymentForm";
 
 const defaultProps = {
@@ -238,7 +238,7 @@ describe("when the basic form is enabled", () => {
       },
     };
     const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
-    wrapper.setState({ basicFormParameters });
+    wrapper.setState({ appValues: "wordpressUsername: user", basicFormParameters });
     wrapper.update();
 
     // Fake onChange
@@ -252,5 +252,6 @@ describe("when the basic form is enabled", () => {
         value: "foo",
       },
     });
+    expect(wrapper.state("appValues")).toBe("wordpressUsername: foo\n");
   });
 });

@@ -3,6 +3,7 @@ import * as Moniker from "moniker-native";
 import * as React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
+import { JSONSchema4 } from "json-schema";
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState, IChartVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
@@ -24,6 +25,7 @@ export interface IDeploymentFormProps {
     releaseName: string,
     namespace: string,
     values?: string,
+    schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => void;
@@ -99,8 +101,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       }
     }
 
-    if (nextProps.selected.schema) {
-      this.setState({ basicFormParameters: retrieveBasicFormParams(nextProps.selected.schema) });
+    if (nextProps.selected.schema && nextProps.selected.values) {
+      this.setState({
+        basicFormParameters: retrieveBasicFormParams(
+          nextProps.selected.values,
+          nextProps.selected.schema,
+        ),
+      });
     }
   }
 
@@ -185,7 +192,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
     this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
     if (selected.version) {
-      const deployed = await deployChart(selected.version, releaseName, namespace, appValues);
+      const deployed = await deployChart(
+        selected.version,
+        releaseName,
+        namespace,
+        appValues,
+        selected.schema,
+      );
       if (deployed) {
         push(`/apps/ns/${namespace}/${releaseName}`);
       } else {
@@ -244,7 +257,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         basicFormParameters: {
           ...this.state.basicFormParameters,
           [name]: {
-            path: param.path,
+            ...param,
             value: e.currentTarget.value,
           },
         },
