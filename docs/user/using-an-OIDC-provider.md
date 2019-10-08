@@ -73,7 +73,7 @@ Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar
 
 **Example 1: Using the OIDC provider**
 
-This example uses `oauth2-proxy`'s generic OIDC provider with Google, but is applicable to any OIDC provider. Note that the issuer url is passed as an additional flag here, together with an option to enable the cookie being set over an insecure connection for local development only:
+This example uses `oauth2-proxy`'s generic OIDC provider with Google, but is applicable to any OIDC provider such as Keycloak, Dex, Okta or Azure Active Directory etc. Note that the issuer url is passed as an additional flag here, together with an option to enable the cookie being set over an insecure connection for local development only:
 
 ```
 helm install bitnami/kubeapps \
