@@ -53,44 +53,30 @@ describe("namespaceReducer", () => {
   });
 
   context("when CLEAR_NAMESPACES", () => {
-    it("returns to the default namespace", () => {
-      const clearedState = {
-        current: "",
-        namespaces: [],
+    it("returns to the initial state", () => {
+      const dirtyState = {
+        current: "some-other-namespace",
+        namespaces: ["namespace-one", "namespace-two"],
       };
       expect(
-        namespaceReducer(initialState, {
+        namespaceReducer(dirtyState, {
           type: getType(actions.namespace.clearNamespaces),
         }),
-      ).toEqual(clearedState);
+      ).toEqual({ current: "default", namespaces: [] });
     });
   });
-});
 
-context("when SET_DEFAULT_NAMESPACE", () => {
-  it("set current namespace if it's empty", () => {
-    const initialState = {
-      current: "",
-      namespaces: [],
-    };
-    expect(
-      namespaceReducer(initialState, {
-        type: getType(actions.namespace.namespaceReceived),
-        payload: "not-default",
-      }),
-    ).toEqual({ ...initialState, current: "not-default" });
-  });
-
-  it("does not set the current namespace if it is not empty", () => {
-    const initialState = {
-      current: "default",
-      namespaces: [],
-    };
-    expect(
-      namespaceReducer(initialState, {
-        type: getType(actions.namespace.namespaceReceived),
-        payload: "not-default",
-      }),
-    ).toEqual({ ...initialState, current: "default" });
+  context("when SET_AUTHENTICATED", () => {
+    it("sets the current namespace to the users default", () => {
+      expect(
+        namespaceReducer(
+          { current: "default", namespaces: [] },
+          {
+            type: getType(actions.auth.setAuthenticated),
+            payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
+          },
+        ),
+      ).toEqual({ current: "foo-bar", namespaces: [] });
+    });
   });
 });

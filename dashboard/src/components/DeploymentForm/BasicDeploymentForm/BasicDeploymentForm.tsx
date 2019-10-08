@@ -4,6 +4,7 @@ import TextParam from "./TextParam";
 
 import "./BasicDeploymentForm.css";
 import BooleanParam from "./BooleanParam";
+import DiskSizeParam from "./DiskSizeParam";
 import ExternalDatabaseSection, {
   EXTERNAL_DB_HOST_PARAM_NAME,
   EXTERNAL_DB_NAME_PARAM_NAME,
@@ -82,6 +83,17 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
       case USE_SELF_HOSTED_DB_PARAM_NAME:
         // Handled within ExternalDabataseSection
         break;
+      case "diskSize":
+        return (
+          <DiskSizeParam
+            label="Disk Size"
+            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+            key={id}
+            id={id}
+            name={name}
+            param={param}
+          />
+        );
       default:
         switch (param.type) {
           case "string":

@@ -1,5 +1,313 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`renders a basic deployment with a disk size 1`] = `
+<BasicDeploymentForm
+  handleBasicFormParamChange={[Function]}
+  params={
+    Object {
+      "diskSize": Object {
+        "path": "size",
+        "type": "string",
+        "value": "10Gi",
+      },
+    }
+  }
+>
+  <DiskSizeParam
+    handleBasicFormParamChange={[Function]}
+    id="diskSize-0"
+    key="diskSize-0"
+    label="Disk Size"
+    name="diskSize"
+    param={
+      Object {
+        "path": "size",
+        "type": "string",
+        "value": "10Gi",
+      }
+    }
+  >
+    <div>
+      <label
+        htmlFor="diskSize-0"
+      >
+        Disk Size
+        <div
+          className="row"
+        >
+          <div
+            className="col-10"
+          >
+            <Slider
+              default={10}
+              max={100}
+              min={1}
+              onChange={[Function]}
+              onUpdate={[Function]}
+              values={10}
+            >
+              <Slider
+                component="div"
+                disabled={false}
+                domain={
+                  Array [
+                    1,
+                    100,
+                  ]
+                }
+                flatten={false}
+                mode={1}
+                onChange={[Function]}
+                onSlideEnd={[Function]}
+                onSlideStart={[Function]}
+                onUpdate={[Function]}
+                reversed={false}
+                rootProps={Object {}}
+                rootStyle={
+                  Object {
+                    "margin": "1em",
+                    "position": "relative",
+                    "width": "90%",
+                  }
+                }
+                step={1}
+                values={
+                  Array [
+                    10,
+                  ]
+                }
+                vertical={false}
+                warnOnChanges={false}
+              >
+                <div
+                  style={
+                    Object {
+                      "margin": "1em",
+                      "position": "relative",
+                      "width": "90%",
+                    }
+                  }
+                >
+                  <Rail
+                    activeHandleID={null}
+                    emitKeyboard={[Function]}
+                    emitMouse={[Function]}
+                    emitTouch={[Function]}
+                    getEventData={[Function]}
+                    handles={
+                      Array [
+                        Object {
+                          "id": "$$-0",
+                          "percent": 9.090909090909092,
+                          "value": 10,
+                        },
+                      ]
+                    }
+                    key=".0"
+                    scale={
+                      LinearScale {
+                        "domain": Array [
+                          1,
+                          100,
+                        ],
+                        "interpolator": [Function],
+                        "range": Array [
+                          0,
+                          100,
+                        ],
+                      }
+                    }
+                  >
+                    <div
+                      onMouseDown={[Function]}
+                      onTouchStart={[Function]}
+                      style={
+                        Object {
+                          "backgroundColor": "rgb(155,155,155)",
+                          "borderRadius": 7,
+                          "cursor": "pointer",
+                          "height": 14,
+                          "position": "absolute",
+                          "width": "100%",
+                        }
+                      }
+                    />
+                  </Rail>
+                  <Handles
+                    activeHandleID={null}
+                    emitKeyboard={[Function]}
+                    emitMouse={[Function]}
+                    emitTouch={[Function]}
+                    getEventData={[Function]}
+                    handles={
+                      Array [
+                        Object {
+                          "id": "$$-0",
+                          "percent": 9.090909090909092,
+                          "value": 10,
+                        },
+                      ]
+                    }
+                    key=".1"
+                    scale={
+                      LinearScale {
+                        "domain": Array [
+                          1,
+                          100,
+                        ],
+                        "interpolator": [Function],
+                        "range": Array [
+                          0,
+                          100,
+                        ],
+                      }
+                    }
+                  >
+                    <div
+                      className="slider-handles"
+                    >
+                      <Component
+                        domain={
+                          Array [
+                            1,
+                            100,
+                          ]
+                        }
+                        getHandleProps={[Function]}
+                        handle={
+                          Object {
+                            "id": "$$-0",
+                            "percent": 9.090909090909092,
+                            "value": 10,
+                          }
+                        }
+                        key="$$-0"
+                      >
+                        <div
+                          aria-valuemax={100}
+                          aria-valuemin={1}
+                          aria-valuenow={10}
+                          onKeyDown={[Function]}
+                          onMouseDown={[Function]}
+                          onTouchStart={[Function]}
+                          role="slider"
+                          style={
+                            Object {
+                              "backgroundColor": "#34568f",
+                              "borderRadius": "50%",
+                              "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
+                              "cursor": "pointer",
+                              "height": 24,
+                              "left": "9.090909090909092%",
+                              "marginLeft": "-11px",
+                              "marginTop": "-6px",
+                              "position": "absolute",
+                              "width": 24,
+                              "zIndex": 2,
+                            }
+                          }
+                        />
+                      </Component>
+                    </div>
+                  </Handles>
+                  <Tracks
+                    activeHandleID={null}
+                    emitKeyboard={[Function]}
+                    emitMouse={[Function]}
+                    emitTouch={[Function]}
+                    getEventData={[Function]}
+                    handles={
+                      Array [
+                        Object {
+                          "id": "$$-0",
+                          "percent": 9.090909090909092,
+                          "value": 10,
+                        },
+                      ]
+                    }
+                    key=".2"
+                    left={true}
+                    right={false}
+                    scale={
+                      LinearScale {
+                        "domain": Array [
+                          1,
+                          100,
+                        ],
+                        "interpolator": [Function],
+                        "range": Array [
+                          0,
+                          100,
+                        ],
+                      }
+                    }
+                  >
+                    <div
+                      className="slider-tracks"
+                    >
+                      <Component
+                        getTrackProps={[Function]}
+                        key="$-$$-0"
+                        source={
+                          Object {
+                            "id": "$",
+                            "percent": 0,
+                            "value": 1,
+                          }
+                        }
+                        target={
+                          Object {
+                            "id": "$$-0",
+                            "percent": 9.090909090909092,
+                            "value": 10,
+                          }
+                        }
+                      >
+                        <div
+                          onMouseDown={[Function]}
+                          onTouchStart={[Function]}
+                          style={
+                            Object {
+                              "backgroundColor": "#7aa0c4",
+                              "borderRadius": 7,
+                              "cursor": "pointer",
+                              "height": 14,
+                              "left": "0%",
+                              "position": "absolute",
+                              "width": "9.090909090909092%",
+                              "zIndex": 1,
+                            }
+                          }
+                        />
+                      </Component>
+                    </div>
+                  </Tracks>
+                </div>
+              </Slider>
+            </Slider>
+          </div>
+          <div
+            className="col-2"
+          >
+            <input
+              className="disk_size_input"
+              id="diskSize-0"
+              onChange={[Function]}
+              value={10}
+            />
+            <span
+              className="margin-l-normal"
+            >
+              Gi
+            </span>
+          </div>
+        </div>
+      </label>
+    </div>
+  </DiskSizeParam>
+</BasicDeploymentForm>
+`;
+
 exports[`renders a basic deployment with a email 1`] = `
 <BasicDeploymentForm
   handleBasicFormParamChange={[Function]}

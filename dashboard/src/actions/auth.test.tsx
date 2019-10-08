@@ -65,10 +65,6 @@ describe("authenticate", () => {
         payload: { authenticated: true, oidc: false, defaultNamespace: "default" },
         type: getType(actions.auth.setAuthenticated),
       },
-      {
-        payload: "default",
-        type: getType(actions.namespace.namespaceReceived),
-      },
     ];
 
     return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
@@ -111,10 +107,6 @@ describe("OIDC authentication", () => {
       {
         payload: { authenticated: true, oidc: true, defaultNamespace: "default" },
         type: getType(actions.auth.setAuthenticated),
-      },
-      {
-        payload: "default",
-        type: getType(actions.namespace.namespaceReceived),
       },
       {
         payload: { sessionExpired: false },
