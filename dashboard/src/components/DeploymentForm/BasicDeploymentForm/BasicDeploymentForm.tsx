@@ -3,6 +3,7 @@ import { IBasicFormParam } from "shared/types";
 import StringParam from "./StringParam";
 
 import "./BasicDeploymentForm.css";
+import DiskSizeParam from "./DiskSizeParam";
 
 export interface IBasicDeploymentFormProps {
   params: { [name: string]: IBasicFormParam };
@@ -48,6 +49,17 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         return (
           <StringParam
             label="Email"
+            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+            key={id}
+            id={id}
+            name={name}
+            param={param}
+          />
+        );
+      case "diskSize":
+        return (
+          <DiskSizeParam
+            label="Disk Size"
             handleBasicFormParamChange={this.props.handleBasicFormParamChange}
             key={id}
             id={id}
