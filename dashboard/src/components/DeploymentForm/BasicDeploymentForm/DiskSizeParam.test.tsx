@@ -52,7 +52,7 @@ it("changes the value of the param when the slider changes", () => {
   ]);
 });
 
-it("changes only the value of the state when the slider is being updated", () => {
+it("updates state but does not change param value during slider update (only when dropped in a point)", () => {
   const handleBasicFormParamChange = jest.fn();
   const wrapper = shallow(
     <DiskSizeParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
@@ -97,6 +97,22 @@ describe("when changing the value in the input", () => {
 
     expect(wrapper.state("Gi")).toBe(20);
     expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20Gi" } }]);
+  });
+
+  it("accept decimal values", () => {
+    const valueChange = jest.fn();
+    const handleBasicFormParamChange = jest.fn(() => valueChange);
+    const wrapper = shallow(
+      <DiskSizeParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+    );
+    expect(wrapper.state("Gi")).toBe(10);
+
+    const input = wrapper.find("input#disk");
+    const event = { currentTarget: { value: "20.5" } } as React.FormEvent<HTMLInputElement>;
+    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+
+    expect(wrapper.state("Gi")).toBe(20.5);
+    expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20.5Gi" } }]);
   });
 
   it("modifies the max value of the slider if the input is bigger than 100", () => {

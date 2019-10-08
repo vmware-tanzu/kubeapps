@@ -19,7 +19,7 @@ export interface IDiskSizeParamState {
 
 function toNumber(value: string) {
   // Force to return a Number from a string removing any character that is not a digit
-  return Number(value.replace(/[^\d]/g, ""));
+  return Number(value.replace(/[^\d\.]/g, ""));
 }
 
 class DiskSizeParam extends React.Component<IDiskSizeParamProps, IDiskSizeParamState> {
