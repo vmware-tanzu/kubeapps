@@ -238,7 +238,7 @@ describe("when the basic form is enabled", () => {
     expect(wrapper.find(Tabs)).toExist();
   });
 
-  it("should not renders the tabs if there are no basic parameters", () => {
+  it("should not render the tabs if there are no basic parameters", () => {
     const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(Tabs)).not.toExist();
@@ -269,7 +269,7 @@ describe("when the basic form is enabled", () => {
     expect(wrapper.state("appValues")).toBe("wordpressUsername: foo\n");
   });
 
-  it("should update params if a raw value is changed", () => {
+  it("should update existing params if the app values change", () => {
     const testProps = {
       ...props,
       selected: {
