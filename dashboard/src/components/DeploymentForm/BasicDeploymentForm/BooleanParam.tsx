@@ -23,7 +23,7 @@ class BooleanParam extends React.Component<IStringParamProps> {
           <Switch
             id={id}
             onChange={this.handleChange}
-            checked={param.value}
+            checked={!!param.value}
             className="react-switch"
           />
         </div>

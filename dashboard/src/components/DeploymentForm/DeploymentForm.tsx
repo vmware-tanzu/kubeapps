@@ -6,6 +6,7 @@ import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import { JSONSchema4 } from "json-schema";
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState, IChartVersion } from "../../shared/types";
+import { getValueFromEvent } from "../../shared/utils";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
@@ -244,6 +245,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             <BasicDeploymentForm
               params={this.state.basicFormParameters}
               handleBasicFormParamChange={this.handleBasicFormParamChange}
+              appValues={this.state.appValues}
+              handleValuesChange={this.handleValuesChange}
             />
           </TabPanel>
           <TabPanel>
@@ -259,17 +262,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   private handleBasicFormParamChange = (name: string, param: IBasicFormParam) => {
     return (e: React.FormEvent<HTMLInputElement>) => {
-      let value: any = e.currentTarget.value;
-      switch (e.currentTarget.type) {
-        case "checkbox":
-          // value is a boolean
-          value = e.currentTarget.checked;
-          break;
-        case "number":
-          // value is a number
-          value = e.currentTarget.valueAsNumber;
-          break;
-      }
+      const value = getValueFromEvent(e);
       // Change param definition
       this.setState({
         // Change raw values

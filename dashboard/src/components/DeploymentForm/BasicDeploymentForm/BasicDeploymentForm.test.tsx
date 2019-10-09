@@ -3,10 +3,13 @@ import * as React from "react";
 import { mount } from "enzyme";
 import { IBasicFormParam } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
+import DatabaseSection from "./DatabaseSection";
 
 const defaultProps = {
   params: [],
   handleBasicFormParamChange: jest.fn(() => jest.fn()),
+  appValues: "",
+  handleValuesChange: jest.fn(),
 };
 
 [
@@ -76,4 +79,21 @@ const defaultProps = {
       expect(onChange.mock.calls.length).toBe(i + 1);
     });
   });
+});
+
+it("should render an external database section", () => {
+  const params = {
+    externalDatabase: {
+      path: "edbs",
+      value: {},
+      type: "object",
+      children: {
+        useSelfHostedDatabase: { path: "mariadb.enabled", value: {}, type: "boolean" },
+      },
+    },
+  };
+  const wrapper = mount(<BasicDeploymentForm {...defaultProps} params={params} />);
+
+  const dbsec = wrapper.find(DatabaseSection);
+  expect(dbsec).toExist();
 });

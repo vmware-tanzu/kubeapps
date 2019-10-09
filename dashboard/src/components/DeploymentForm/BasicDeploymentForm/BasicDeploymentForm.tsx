@@ -4,6 +4,7 @@ import TextParam from "./TextParam";
 
 import "./BasicDeploymentForm.css";
 import BooleanParam from "./BooleanParam";
+import DatabaseSection from "./DatabaseSection";
 import DiskSizeParam from "./DiskSizeParam";
 
 export interface IBasicDeploymentFormProps {
@@ -12,6 +13,8 @@ export interface IBasicDeploymentFormProps {
     name: string,
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
+  handleValuesChange: (value: string) => void;
+  appValues: string;
 }
 
 class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
@@ -54,6 +57,16 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             key={id}
             id={id}
             name={name}
+            param={param}
+          />
+        );
+      case "externalDatabase":
+        return (
+          <DatabaseSection
+            label="External Database Details"
+            handleValuesChange={this.props.handleValuesChange}
+            appValues={this.props.appValues}
+            key={id}
             param={param}
           />
         );
