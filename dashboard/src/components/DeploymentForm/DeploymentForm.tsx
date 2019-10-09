@@ -165,7 +165,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              {this.props.enableBasicForm ? (
+              {this.shouldRenderBasicForm() ? (
                 this.renderTabs()
               ) : (
                 <AdvancedDeploymentForm
@@ -223,12 +223,21 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ appValues: value, valuesModified: true });
   };
 
+  private refreshBasicParameters = () => {
+    this.setState({
+      basicFormParameters: retrieveBasicFormParams(
+        this.state.appValues,
+        this.props.selected.schema,
+      ),
+    });
+  };
+
   private renderTabs = () => {
     return (
       <div className="margin-t-normal">
         <Tabs>
           <TabList>
-            <Tab>Basic</Tab>
+            <Tab onClick={this.refreshBasicParameters}>Basic</Tab>
             <Tab>Advanced</Tab>
           </TabList>
           <TabPanel>
@@ -261,10 +270,12 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
           value = e.currentTarget.valueAsNumber;
           break;
       }
-      // Change raw values
-      this.handleValuesChange(setValue(this.state.appValues, param.path, value));
       // Change param definition
       this.setState({
+        // Change raw values
+        appValues: setValue(this.state.appValues, param.path, value),
+        valuesModified: true,
+        // Change param definition
         basicFormParameters: {
           ...this.state.basicFormParameters,
           [name]: {
@@ -274,6 +285,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
         },
       });
     };
+  };
+
+  // The basic form should be rendered both if it's enabled and if there are params to show
+  private shouldRenderBasicForm = () => {
+    return this.props.enableBasicForm && Object.keys(this.state.basicFormParameters).length > 0;
   };
 }
 

@@ -1,0 +1,91 @@
+import * as React from "react";
+import { setValue } from "../../../shared/schema";
+import { IBasicFormParam } from "../../../shared/types";
+import { getValueFromEvent } from "../../../shared/utils";
+import BooleanParam from "./BooleanParam";
+import TextParam from "./TextParam";
+
+export interface IIngressSectionProps {
+  label: string;
+  param: IBasicFormParam;
+  handleBasicFormParamChange: (
+    name: string,
+    p: IBasicFormParam,
+  ) => (e: React.FormEvent<HTMLInputElement>) => void;
+  handleValuesChange: (value: string) => void;
+  appValues: string;
+}
+
+const ENABLE_INGRESS_PARAM = "enableIngress";
+const ENABLE_CERT_MANAGER_PARAM = "enableCertManager";
+
+class IngressSection extends React.Component<IIngressSectionProps> {
+  public render() {
+    const { label, param } = this.props;
+    console.log("children ? ", param.children!);
+    return (
+      <div className="subsection margin-v-normal">
+        <BooleanParam
+          label="Use a Custom Domain"
+          handleBasicFormParamChange={this.handleChildrenParamChange}
+          id={"enable-ingress"}
+          // TODO: remove !
+          name={ENABLE_INGRESS_PARAM}
+          param={param.children![ENABLE_INGRESS_PARAM]}
+        />
+        <div hidden={!param.children![ENABLE_INGRESS_PARAM].value} className="margin-t-normal">
+          {/* TODO: Make this work with the hostname */}
+          <TextParam
+            label="Hostname"
+            handleBasicFormParamChange={this.handleHostnameChange}
+            key={"f"}
+            id={"F"}
+            name={name}
+            param={param.children!.hosts.children![0]}
+          />
+          <BooleanParam
+            label="Enable TLS with cert-manager"
+            handleBasicFormParamChange={this.handleChildrenParamChange}
+            id={"enable-ingress"}
+            // TODO: remove !
+            name={ENABLE_CERT_MANAGER_PARAM}
+            param={param.children![ENABLE_CERT_MANAGER_PARAM]}
+          />
+
+          {/* 
+          {param.children &&
+            Object.keys(param.children).map((paramName, i) => {
+              return this.renderParam(paramName, param.children![paramName], i);
+            })} */}
+        </div>
+      </div>
+    );
+  }
+
+  private handleChildrenParamChange = (name: string, param: IBasicFormParam) => {
+    return (e: React.FormEvent<HTMLInputElement>) => {
+      const value = getValueFromEvent(e);
+      this.props.handleValuesChange(setValue(this.props.appValues, param.path, value));
+      this.props.param.children![name] = { ...this.props.param.children![name], value };
+    };
+  };
+
+  // private renderParam(name: string, param: IBasicFormParam, index: number) {
+  //   const id = `${name}-${index}`;
+  //   const label = name;
+  //   const type = "text";
+  //   return (
+  //     <TextParam
+  //       label={label}
+  //       handleBasicFormParamChange={this.handleChildrenParamChange}
+  //       key={id}
+  //       id={id}
+  //       name={name}
+  //       param={param}
+  //       inputType={type}
+  //     />
+  //   );
+  // }
+}
+
+export default IngressSection;
