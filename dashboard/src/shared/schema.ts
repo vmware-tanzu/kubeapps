@@ -93,7 +93,7 @@ export function getValue(values: string, path: string, defaultValue?: any) {
   const doc = YAML.parseDocument(values);
   const splittedPath = path.split(".");
   const value = (doc as any).getIn(splittedPath);
-  return value === undefined ? defaultValue : value;
+  return value === undefined || value === null ? defaultValue : value;
 }
 
 export function validate(

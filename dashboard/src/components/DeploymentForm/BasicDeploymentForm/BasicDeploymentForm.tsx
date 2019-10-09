@@ -57,19 +57,6 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         );
       default:
         switch (param.type) {
-          case "string":
-          case "integer":
-            return (
-              <TextParam
-                label={param.title || name}
-                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
-                key={id}
-                id={id}
-                name={name}
-                param={param}
-                inputType={param.type === "string" ? "string" : "number"}
-              />
-            );
           case "boolean":
             return (
               <BooleanParam
@@ -82,8 +69,17 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
               />
             );
           default:
-          // TODO(andres): This should return an error once we add support for all the parameters that we expect
-          // throw new Error(`Param ${name} with type ${param.type} is not supported`);
+            return (
+              <TextParam
+                label={param.title || name}
+                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+                key={id}
+                id={id}
+                name={name}
+                param={param}
+                inputType={param.type === "integer" ? "number" : "string"}
+              />
+            );
         }
     }
     return null;

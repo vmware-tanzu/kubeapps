@@ -6,8 +6,8 @@ exports[`should render a external database section 1`] = `
 >
   <BooleanParam
     handleBasicFormParamChange={[Function]}
-    id="enable-self-hosted-db"
-    label="Use a Self Hosted Database"
+    id="externalDatabase-useSelfHostedDatabase"
+    label="Enable External Database"
     name="useSelfHostedDatabase"
     param={
       Object {
@@ -19,18 +19,19 @@ exports[`should render a external database section 1`] = `
     }
   />
   <div
-    className="margin-t-normal"
     hidden={true}
   >
-    <span>
+    <div
+      className="margin-v-normal"
+    >
       Enable an external database
-    </span>
+    </div>
     <TextParam
       handleBasicFormParamChange={[Function]}
       id="externalDatabaseDB-0"
       inputType="text"
       key="externalDatabaseDB-0"
-      label=""
+      label="externalDatabaseDB"
       name="externalDatabaseDB"
       param={
         Object {
@@ -45,7 +46,7 @@ exports[`should render a external database section 1`] = `
       id="externalDatabaseHost-1"
       inputType="text"
       key="externalDatabaseHost-1"
-      label="Host"
+      label="externalDatabaseHost"
       name="externalDatabaseHost"
       param={
         Object {
@@ -60,7 +61,7 @@ exports[`should render a external database section 1`] = `
       id="externalDatabasePassword-2"
       inputType="text"
       key="externalDatabasePassword-2"
-      label="Password"
+      label="externalDatabasePassword"
       name="externalDatabasePassword"
       param={
         Object {
@@ -74,7 +75,7 @@ exports[`should render a external database section 1`] = `
       id="externalDatabasePort-3"
       inputType="number"
       key="externalDatabasePort-3"
-      label="Port"
+      label="externalDatabasePort"
       name="externalDatabasePort"
       param={
         Object {
@@ -89,7 +90,7 @@ exports[`should render a external database section 1`] = `
       id="externalDatabaseUser-4"
       inputType="text"
       key="externalDatabaseUser-4"
-      label="User"
+      label="externalDatabaseUser"
       name="externalDatabaseUser"
       param={
         Object {

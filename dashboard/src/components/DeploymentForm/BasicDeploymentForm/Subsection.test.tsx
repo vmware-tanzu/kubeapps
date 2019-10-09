@@ -49,7 +49,7 @@ it("should render a external database section", () => {
 it("should hide/show the database params if the self-hosted database is enabled/disabled", () => {
   const wrapper = shallow(<Subsection {...defaultProps} />);
   expect(defaultProps.param.children!.useSelfHostedDatabase.value).toBe(true);
-  expect(wrapper.find(".margin-t-normal").prop("hidden")).toBe(true);
+  expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).toExist();
 
   wrapper.setProps({
     ...defaultProps,
@@ -62,13 +62,15 @@ it("should hide/show the database params if the self-hosted database is enabled/
     },
   });
   wrapper.update();
-  expect(wrapper.find(".margin-t-normal").prop("hidden")).toBe(false);
+  expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).not.toExist();
 });
 
 it("should change the parent parameter when a children is modified", () => {
   const wrapper = mount(<Subsection {...defaultProps} />);
 
-  const hostParam = wrapper.find(TextParam).findWhere(t => t.prop("label") === "Host");
+  const hostParam = wrapper
+    .find(TextParam)
+    .findWhere(t => t.prop("label") === "externalDatabaseHost");
   (hostParam.prop("handleBasicFormParamChange") as any)(
     "externalDatabaseHost",
     defaultProps.param.children!.externalDatabaseHost,
