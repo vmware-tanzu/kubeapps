@@ -250,15 +250,26 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   private handleBasicFormParamChange = (name: string, param: IBasicFormParam) => {
     return (e: React.FormEvent<HTMLInputElement>) => {
+      let value: any = e.currentTarget.value;
+      switch (e.currentTarget.type) {
+        case "checkbox":
+          // value is a boolean
+          value = e.currentTarget.checked;
+          break;
+        case "number":
+          // value is a number
+          value = e.currentTarget.valueAsNumber;
+          break;
+      }
       // Change raw values
-      this.handleValuesChange(setValue(this.state.appValues, param.path, e.currentTarget.value));
+      this.handleValuesChange(setValue(this.state.appValues, param.path, value));
       // Change param definition
       this.setState({
         basicFormParameters: {
           ...this.state.basicFormParameters,
           [name]: {
             ...param,
-            value: e.currentTarget.value,
+            value,
           },
         },
       });
