@@ -8,7 +8,7 @@ exports[`should render a external database section 1`] = `
     handleBasicFormParamChange={[Function]}
     id="enable-self-hosted-db"
     label="Use a Self Hosted Database"
-    name="disableExternalDB"
+    name="useSelfHostedDatabase"
     param={
       Object {
         "path": "mariadb.enabled",

@@ -83,8 +83,14 @@ const defaultProps = {
 
 it("should render an external database section", () => {
   const params = {
-    externalDatabase: { path: "edbs", value: {}, type: "object" },
-    useSelfHostedDatabase: { path: "mariadb.enabled", value: {}, type: "boolean" },
+    externalDatabase: {
+      path: "edbs",
+      value: {},
+      type: "object",
+      children: {
+        useSelfHostedDatabase: { path: "mariadb.enabled", value: {}, type: "boolean" },
+      },
+    },
   };
   const wrapper = mount(<BasicDeploymentForm {...defaultProps} params={params} />);
 

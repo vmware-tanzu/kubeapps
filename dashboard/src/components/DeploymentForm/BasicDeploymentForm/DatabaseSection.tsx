@@ -1,5 +1,5 @@
 import * as React from "react";
-import { setValue } from "../../../shared/schema";
+import { setValue, USE_SELF_HOSTED_DB } from "../../../shared/schema";
 import { IBasicFormParam } from "../../../shared/types";
 import { getValueFromEvent } from "../../../shared/utils";
 import BooleanParam from "./BooleanParam";
@@ -8,34 +8,30 @@ import TextParam from "./TextParam";
 export interface IDatabaseSectionProps {
   label: string;
   param: IBasicFormParam;
-  disableExternalDBParamName: string;
-  disableExternalDBParam: IBasicFormParam;
   handleValuesChange: (value: string) => void;
   appValues: string;
-  handleBasicFormParamChange: (
-    name: string,
-    p: IBasicFormParam,
-  ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
 
 class DatabaseSection extends React.Component<IDatabaseSectionProps> {
   public render() {
-    const { label, param, disableExternalDBParam, disableExternalDBParamName } = this.props;
+    const { label, param } = this.props;
     return (
       <div className="subsection margin-v-normal">
         <BooleanParam
           label="Use a Self Hosted Database"
-          handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+          handleBasicFormParamChange={this.handleChildrenParamChange}
           id={"enable-self-hosted-db"}
-          name={disableExternalDBParamName}
-          param={disableExternalDBParam}
+          name={USE_SELF_HOSTED_DB}
+          param={param.children![USE_SELF_HOSTED_DB]}
         />
-        <div hidden={disableExternalDBParam.value} className="margin-t-normal">
+        <div hidden={param.children![USE_SELF_HOSTED_DB].value} className="margin-t-normal">
           <span>{label}</span>
           {param.children &&
-            Object.keys(param.children).map((paramName, i) => {
-              return this.renderParam(paramName, param.children![paramName], i);
-            })}
+            Object.keys(param.children)
+              .filter(p => p !== USE_SELF_HOSTED_DB)
+              .map((paramName, i) => {
+                return this.renderParam(paramName, param.children![paramName], i);
+              })}
         </div>
       </div>
     );

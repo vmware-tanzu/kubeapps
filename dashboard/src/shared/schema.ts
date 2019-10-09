@@ -11,6 +11,11 @@ import { IBasicFormParam } from "./types";
 const { nullOptions } = require("yaml/types");
 nullOptions.nullStr = "";
 
+// TODO(andres): Migrate all the existing keys here
+// TODO(andres): Reduce the number of keys listed here to the minimum necessary
+export const EXTERNAL_DB = "externalDatabase";
+export const USE_SELF_HOSTED_DB = "useSelfHostedDatabase";
+
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.
 // It returns a key:value map for easier handling.
@@ -56,6 +61,19 @@ export function retrieveBasicFormParams(
         }
       }
     });
+  }
+  return orderParams(params);
+}
+
+// orderParams conveniently structure the parameters to satisfy a parent-children relationship even if
+// those parameters doesn't have that relation in the source
+function orderParams(params: {
+  [key: string]: IBasicFormParam;
+}): { [key: string]: IBasicFormParam } {
+  // Move useSelfHostedDatabase to externalDatabase since it enable/disable that section
+  if (params[EXTERNAL_DB] && params[EXTERNAL_DB].children && params[USE_SELF_HOSTED_DB]) {
+    params[EXTERNAL_DB].children![USE_SELF_HOSTED_DB] = params[USE_SELF_HOSTED_DB];
+    delete params[USE_SELF_HOSTED_DB];
   }
   return params;
 }

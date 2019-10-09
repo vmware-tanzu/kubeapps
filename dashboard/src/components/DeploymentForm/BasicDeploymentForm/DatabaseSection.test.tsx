@@ -22,18 +22,17 @@ const defaultProps = {
         type: "string",
         value: "bn_wordpress",
       },
+      useSelfHostedDatabase: {
+        path: "mariadb.enabled",
+        title: "Enable External Database",
+        type: "boolean",
+        value: true,
+      } as IBasicFormParam,
     },
     path: "externalDatabase",
     title: "External Database Details",
     type: "object",
   } as IBasicFormParam,
-  disableExternalDBParam: {
-    path: "mariadb.enabled",
-    title: "Enable External Database",
-    type: "boolean",
-    value: true,
-  } as IBasicFormParam,
-  disableExternalDBParamName: "disableExternalDB",
   handleBasicFormParamChange: jest.fn(),
   appValues: "externalDatabase: {}",
   handleValuesChange: jest.fn(),
@@ -46,12 +45,18 @@ it("should render a external database section", () => {
 
 it("should hide/show the database params if the self-hosted database is enabled/disabled", () => {
   const wrapper = shallow(<DatabaseSection {...defaultProps} />);
-  expect(defaultProps.disableExternalDBParam.value).toBe(true);
+  expect(defaultProps.param.children!.useSelfHostedDatabase.value).toBe(true);
   expect(wrapper.find(".margin-t-normal").prop("hidden")).toBe(true);
 
   wrapper.setProps({
     ...defaultProps,
-    disableExternalDBParam: { path: "mariadb.enabled", value: false, type: "boolean" },
+    param: {
+      ...defaultProps.param,
+      children: {
+        ...defaultProps.param.children,
+        useSelfHostedDatabase: { path: "mariadb.enabled", value: false, type: "boolean" },
+      },
+    },
   });
   wrapper.update();
   expect(wrapper.find(".margin-t-normal").prop("hidden")).toBe(false);

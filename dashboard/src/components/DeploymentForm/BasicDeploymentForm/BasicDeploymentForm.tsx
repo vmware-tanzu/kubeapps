@@ -17,8 +17,6 @@ export interface IBasicDeploymentFormProps {
   appValues: string;
 }
 
-const USE_SELF_HOSTED_DB_PARAM_NAME = "useSelfHostedDatabase";
-
 class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   public render() {
     return Object.keys(this.props.params).map((paramName, i) => {
@@ -66,18 +64,12 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         return (
           <DatabaseSection
             label="External Database Details"
-            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
             handleValuesChange={this.props.handleValuesChange}
             appValues={this.props.appValues}
             key={id}
             param={param}
-            disableExternalDBParamName={USE_SELF_HOSTED_DB_PARAM_NAME}
-            disableExternalDBParam={this.props.params[USE_SELF_HOSTED_DB_PARAM_NAME]}
           />
         );
-      case USE_SELF_HOSTED_DB_PARAM_NAME:
-        // Handled within ExternalDabataseSection
-        break;
       case "diskSize":
         return (
           <DiskSizeParam
