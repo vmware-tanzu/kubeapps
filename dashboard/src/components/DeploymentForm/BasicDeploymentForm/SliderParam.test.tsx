@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 import { IBasicFormParam } from "shared/types";
 import Slider from "../../../components/Slider";
-import DiskSizeParam from "./DiskSizeParam";
+import SliderParam from "./SliderParam";
 
 const defaultProps = {
   id: "disk",
@@ -14,10 +14,13 @@ const defaultProps = {
     path: "disk",
   } as IBasicFormParam,
   handleBasicFormParamChange: jest.fn(),
+  min: 1,
+  max: 100,
+  unit: "Gi",
 };
 
 it("renders a disk size param with a default value", () => {
-  const wrapper = shallow(<DiskSizeParam {...defaultProps} />);
+  const wrapper = shallow(<SliderParam {...defaultProps} />);
   expect(wrapper.state("Gi")).toBe(10);
   expect(wrapper).toMatchSnapshot();
 });
@@ -34,7 +37,7 @@ it("changes the value of the param when the slider changes", () => {
   });
 
   const wrapper = shallow(
-    <DiskSizeParam
+    <SliderParam
       {...defaultProps}
       param={param}
       handleBasicFormParamChange={handleBasicFormParamChange}
@@ -55,7 +58,7 @@ it("changes the value of the param when the slider changes", () => {
 it("updates state but does not change param value during slider update (only when dropped in a point)", () => {
   const handleBasicFormParamChange = jest.fn();
   const wrapper = shallow(
-    <DiskSizeParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+    <SliderParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
   );
   expect(wrapper.state("Gi")).toBe(10);
 
@@ -71,7 +74,7 @@ describe("when changing the value in the input", () => {
     const valueChange = jest.fn();
     const handleBasicFormParamChange = jest.fn(() => valueChange);
     const wrapper = shallow(
-      <DiskSizeParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+      <SliderParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
     );
     expect(wrapper.state("Gi")).toBe(10);
 
@@ -87,7 +90,7 @@ describe("when changing the value in the input", () => {
     const valueChange = jest.fn();
     const handleBasicFormParamChange = jest.fn(() => valueChange);
     const wrapper = shallow(
-      <DiskSizeParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+      <SliderParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
     );
     expect(wrapper.state("Gi")).toBe(10);
 
@@ -103,7 +106,7 @@ describe("when changing the value in the input", () => {
     const valueChange = jest.fn();
     const handleBasicFormParamChange = jest.fn(() => valueChange);
     const wrapper = shallow(
-      <DiskSizeParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+      <SliderParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
     );
     expect(wrapper.state("Gi")).toBe(10);
 
@@ -119,7 +122,7 @@ describe("when changing the value in the input", () => {
     const valueChange = jest.fn();
     const handleBasicFormParamChange = jest.fn(() => valueChange);
     const wrapper = shallow(
-      <DiskSizeParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+      <SliderParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
     );
     expect(wrapper.state("Gi")).toBe(10);
 
