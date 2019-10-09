@@ -43,6 +43,7 @@
     "react-redux": "^5.0.6",
     "react-router-dom": "^4.2.2",
     "react-select": "^1.2.1",
+    "react-switch": "^5.0.1",
     "react-tabs": "^3.0.0",
     "react-test-renderer": "^16.2.0",
     "react-tooltip": "^3.10.0",
