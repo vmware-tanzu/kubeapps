@@ -7,7 +7,7 @@ This guide will explain how you can use an existing OAuth2 provider, including O
 
 ## Pre-requisites
 
-For this guide we assume that you have a Kubernetes cluster that is properly configured to use an Identity Provider (IdP) to handle the authorization of your cluster. You can find more information about how Kubernetes uses OIDC tokens [here](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This means that the Kubernetes API server should be configured to use that OIDC provider.
+For this guide we assume that you have a Kubernetes cluster that is properly configured to use an Identity Provider (IdP) to handle the authentication to your cluster. You can find more information about how Kubernetes uses OIDC tokens [here](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens). This means that the Kubernetes API server should be configured to use that OIDC provider.
 
 There are several Identity Providers (IdP) that can be used in a Kubernetes cluster. The steps of this guide have been validated using the following providers:
 
@@ -86,9 +86,9 @@ helm install bitnami/kubeapps \
   --set authProxy.additionalFlags="{-cookie-secure=false,-oidc-issuer-url=https://accounts.google.com}" \
 ```
 
-**Example 2: Using a custom provider**
+**Example 2: Using a custom oauth2-proxy provider**
 
-Some of the specific providers that come with `oauth2-proxy` are using OpenIDConnect to obtain the required IDToken and can be used instead of the generic oidc provider. Currently these include the GitLab, Google and LoginGov providers. The user authentication flow is the same as above, with some small UI differences, such as the default login button is customized to the provider (rather than "Login with OpenID Connect"), or improved presentation when accepting the requested scopes (as is the case with Google, but only visible if you request extra scopes).
+Some of the specific providers that come with `oauth2-proxy` are using OpenIDConnect to obtain the required IDToken and can be used instead of the generic oidc provider. Currently this includes only the GitLab, Google and LoginGov providers (see [OAuth2_Proxy's provider configuration](https://pusher.github.io/oauth2_proxy/auth-configuration) for the full list of OAuth2 providers). The user authentication flow is the same as above, with some small UI differences, such as the default login button is customized to the provider (rather than "Login with OpenID Connect"), or improved presentation when accepting the requested scopes (as is the case with Google, but only visible if you request extra scopes).
 
 Here we no longer need to provide the issuer -url as an additional flag:
 ```
@@ -110,7 +110,7 @@ For this reason, when deploying Kubeapps on GKE we need to ensure that
 * The scopes required by the user to interact with cloud platform are included, and
 * The Kubeapps frontend uses the OAuth2 `access_key` as the bearer token when communicating with the managed Kubernetes API
 
-Note that using the custom `google` provider here enables google to prompt the user for consent for the specific permissions requested in the scopes below, in a user-friendly way. You can also use the `oidc` provider but in this case the user is not prompted for the extra contsent:
+Note that using the custom `google` provider here enables google to prompt the user for consent for the specific permissions requested in the scopes below, in a user-friendly way. You can also use the `oidc` provider but in this case the user is not prompted for the extra consent:
 
 ```
 helm install bitnami/kubeapps \
