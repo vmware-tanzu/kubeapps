@@ -2,7 +2,9 @@
 
 exports[`renders a basic deployment with a disk size 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "diskSize": Object {
@@ -310,7 +312,9 @@ exports[`renders a basic deployment with a disk size 1`] = `
 
 exports[`renders a basic deployment with a email 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "email": Object {
@@ -352,7 +356,9 @@ exports[`renders a basic deployment with a email 1`] = `
 
 exports[`renders a basic deployment with a generic boolean 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "enableMetrics": Object {
@@ -606,7 +612,9 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
 
 exports[`renders a basic deployment with a generic number 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "replicas": Object {
@@ -650,7 +658,9 @@ exports[`renders a basic deployment with a generic number 1`] = `
 
 exports[`renders a basic deployment with a generic string 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "blogName": Object {
@@ -693,7 +703,9 @@ exports[`renders a basic deployment with a generic string 1`] = `
 
 exports[`renders a basic deployment with a password 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "password": Object {
@@ -735,7 +747,9 @@ exports[`renders a basic deployment with a password 1`] = `
 
 exports[`renders a basic deployment with a username 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "username": Object {
@@ -777,7 +791,9 @@ exports[`renders a basic deployment with a username 1`] = `
 
 exports[`renders a basic deployment with username, password, email and a generic string 1`] = `
 <BasicDeploymentForm
+  appValues=""
   handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
   params={
     Object {
       "blogName": Object {
