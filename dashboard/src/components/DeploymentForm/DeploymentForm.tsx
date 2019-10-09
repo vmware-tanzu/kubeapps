@@ -221,11 +221,15 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleValuesChange = (value: string) => {
     this.setState({ appValues: value, valuesModified: true });
-    if (this.shouldRenderBasicForm()) {
-      this.setState({
-        basicFormParameters: retrieveBasicFormParams(value, this.props.selected.schema),
-      });
-    }
+  };
+
+  private refreshBasicParameters = () => {
+    this.setState({
+      basicFormParameters: retrieveBasicFormParams(
+        this.state.appValues,
+        this.props.selected.schema,
+      ),
+    });
   };
 
   private renderTabs = () => {
@@ -233,7 +237,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       <div className="margin-t-normal">
         <Tabs>
           <TabList>
-            <Tab>Basic</Tab>
+            <Tab onClick={this.refreshBasicParameters}>Basic</Tab>
             <Tab>Advanced</Tab>
           </TabList>
           <TabPanel>
@@ -255,10 +259,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   private handleBasicFormParamChange = (name: string, param: IBasicFormParam) => {
     return (e: React.FormEvent<HTMLInputElement>) => {
-      // Change raw values
-      this.handleValuesChange(setValue(this.state.appValues, param.path, e.currentTarget.value));
-      // Change param definition
       this.setState({
+        // Change raw values
+        appValues: setValue(this.state.appValues, param.path, e.currentTarget.value),
+        valuesModified: true,
+        // Change param definition
         basicFormParameters: {
           ...this.state.basicFormParameters,
           [name]: {

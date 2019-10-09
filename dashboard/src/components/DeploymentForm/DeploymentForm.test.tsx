@@ -2,7 +2,7 @@ import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 
-import { Tabs } from "react-tabs";
+import { Tab, Tabs } from "react-tabs";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
@@ -269,7 +269,7 @@ describe("when the basic form is enabled", () => {
     expect(wrapper.state("appValues")).toBe("wordpressUsername: foo\n");
   });
 
-  it("should update existing params if the app values change", () => {
+  it("should update existing params if the app values change and the user clicks on the Basic tab", () => {
     const testProps = {
       ...props,
       selected: {
@@ -290,6 +290,12 @@ describe("when the basic form is enabled", () => {
     // Fake onChange
     (wrapper.instance() as any).handleValuesChange("wordpressUsername: foo");
     wrapper.update();
+
+    const tab = wrapper
+      .find(Tab)
+      .findWhere(t => t.text() === "Basic")
+      .first();
+    tab.simulate("click");
 
     expect(wrapper.state("basicFormParameters")).toMatchObject({
       username: {
