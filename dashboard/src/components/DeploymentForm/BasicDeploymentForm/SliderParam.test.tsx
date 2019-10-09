@@ -135,3 +135,19 @@ describe("when changing the value in the input", () => {
     expect(slider.prop("max")).toBe(200);
   });
 });
+
+it("uses the param minimum and maximum if defined", () => {
+  const param = {
+    value: "10Gi",
+    type: "string",
+    path: "disk",
+    minimum: 5,
+    maximum: 50,
+  } as IBasicFormParam;
+
+  const wrapper = shallow(<SliderParam {...defaultProps} param={param} />);
+
+  const slider = wrapper.find(Slider);
+  expect(slider.prop("min")).toBe(5);
+  expect(slider.prop("max")).toBe(50);
+});

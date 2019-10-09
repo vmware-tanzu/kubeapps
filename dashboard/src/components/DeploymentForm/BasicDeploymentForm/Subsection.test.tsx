@@ -2,6 +2,7 @@ import { mount, shallow } from "enzyme";
 import * as React from "react";
 
 import { IBasicFormParam } from "shared/types";
+import BooleanParam from "./BooleanParam";
 import Subsection, { ISubsectionProps } from "./Subsection";
 import TextParam from "./TextParam";
 
@@ -77,4 +78,19 @@ it("should change the parent parameter when a children is modified", () => {
   )({ currentTarget: { value: "foo" } });
 
   expect(defaultProps.param.children!.externalDatabaseHost.value).toBe("foo");
+});
+
+it("should omit the enabler param if it doesn't exist", () => {
+  const props = {
+    ...defaultProps,
+    param: {
+      ...defaultProps.param,
+      children: {
+        ...defaultProps.param.children,
+        useSelfHostedDatabase: {} as IBasicFormParam,
+      },
+    },
+  };
+  const wrapper = mount(<Subsection {...props} enablerChildrenParam="foo" />);
+  expect(wrapper.find(BooleanParam)).not.toExist();
 });

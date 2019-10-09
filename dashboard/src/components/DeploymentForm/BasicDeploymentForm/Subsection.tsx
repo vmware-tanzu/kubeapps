@@ -30,7 +30,11 @@ class Subsection extends React.Component<ISubsectionProps> {
           />
         )}
         <div
-          hidden={param.children && param.children[enablerChildrenParam].value !== enablerCondition}
+          hidden={
+            param.children &&
+            param.children[enablerChildrenParam] &&
+            param.children[enablerChildrenParam].value !== enablerCondition
+          }
         >
           <div className="margin-v-normal">{label}</div>
           {param.children &&
