@@ -176,6 +176,18 @@ externalDatabase:
         } as IBasicFormParam,
       },
     },
+    {
+      description: "should retrieve a false param",
+      values: "foo: false",
+      schema: {
+        properties: {
+          foo: { type: "boolean", form: "foo" },
+        },
+      } as JSONSchema4,
+      result: {
+        foo: { path: "foo", type: "boolean", value: false } as IBasicFormParam,
+      },
+    },
   ].forEach(t => {
     it(t.description, () => {
       expect(retrieveBasicFormParams(t.values, t.schema)).toMatchObject(t.result);

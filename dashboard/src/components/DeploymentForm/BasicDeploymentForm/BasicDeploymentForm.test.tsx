@@ -3,7 +3,7 @@ import * as React from "react";
 import { mount } from "enzyme";
 import { IBasicFormParam } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
-import DatabaseSection from "./DatabaseSection";
+import Subsection from "./Subsection";
 
 const defaultProps = {
   params: [],
@@ -94,6 +94,6 @@ it("should render an external database section", () => {
   };
   const wrapper = mount(<BasicDeploymentForm {...defaultProps} params={params} />);
 
-  const dbsec = wrapper.find(DatabaseSection);
+  const dbsec = wrapper.find(Subsection);
   expect(dbsec).toExist();
 });
