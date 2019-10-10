@@ -2,10 +2,11 @@ import * as React from "react";
 import { IBasicFormParam } from "shared/types";
 import TextParam from "./TextParam";
 
+import { DISK_SIZE, EXTERNAL_DB, USE_SELF_HOSTED_DB } from "../../../shared/schema";
 import "./BasicDeploymentForm.css";
 import BooleanParam from "./BooleanParam";
-import DatabaseSection from "./DatabaseSection";
-import DiskSizeParam from "./DiskSizeParam";
+import SliderParam from "./SliderParam";
+import Subsection from "./Subsection";
 
 export interface IBasicDeploymentFormProps {
   params: { [name: string]: IBasicFormParam };
@@ -20,97 +21,61 @@ export interface IBasicDeploymentFormProps {
 class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   public render() {
     return Object.keys(this.props.params).map((paramName, i) => {
-      return this.renderParam(paramName, this.props.params[paramName], i);
+      return this.renderParam(
+        paramName,
+        this.props.params[paramName],
+        i,
+        this.props.handleBasicFormParamChange,
+      );
     });
   }
 
-  private renderParam(name: string, param: IBasicFormParam, index: number) {
+  private renderParam(
+    name: string,
+    param: IBasicFormParam,
+    index: number,
+    handleBasicFormParamChange: (
+      name: string,
+      p: IBasicFormParam,
+    ) => (e: React.FormEvent<HTMLInputElement>) => void,
+  ) {
     const id = `${name}-${index}`;
     switch (name) {
-      case "username":
+      case EXTERNAL_DB:
         return (
-          <TextParam
-            label="Username"
-            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-          />
-        );
-      case "password":
-        return (
-          <TextParam
-            label="Password"
-            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-          />
-        );
-      case "email":
-        return (
-          <TextParam
-            label="Email"
-            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-          />
-        );
-      case "externalDatabase":
-        return (
-          <DatabaseSection
-            label="External Database Details"
+          <Subsection
+            label={param.title || "External Database Details"}
             handleValuesChange={this.props.handleValuesChange}
             appValues={this.props.appValues}
+            renderParam={this.renderParam}
             key={id}
+            name={name}
             param={param}
+            enablerChildrenParam={USE_SELF_HOSTED_DB}
+            enablerCondition={false}
           />
         );
-      case "diskSize":
+      case DISK_SIZE:
         return (
-          <DiskSizeParam
-            label="Disk Size"
-            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+          <SliderParam
+            label={param.title || "Disk Size"}
+            handleBasicFormParamChange={handleBasicFormParamChange}
             key={id}
             id={id}
             name={name}
             param={param}
+            min={1}
+            max={100}
+            unit="Gi"
           />
         );
       default:
         switch (param.type) {
-          case "string":
-            return (
-              <TextParam
-                label={param.title || ""}
-                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
-                key={id}
-                id={id}
-                name={name}
-                param={param}
-              />
-            );
-          case "integer":
-            return (
-              <TextParam
-                label={param.title || ""}
-                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
-                key={id}
-                id={id}
-                name={name}
-                param={param}
-                inputType="number"
-              />
-            );
           case "boolean":
             return (
               <BooleanParam
-                label={param.title || ""}
-                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+                label={param.title || name}
+                handleBasicFormParamChange={handleBasicFormParamChange}
                 key={id}
                 id={id}
                 name={name}
@@ -118,8 +83,17 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
               />
             );
           default:
-          // TODO(andres): This should return an error once we add support for all the parameters that we expect
-          // throw new Error(`Param ${name} with type ${param.type} is not supported`);
+            return (
+              <TextParam
+                label={param.title || name}
+                handleBasicFormParamChange={handleBasicFormParamChange}
+                key={id}
+                id={id}
+                name={name}
+                param={param}
+                inputType={param.type === "integer" ? "number" : "string"}
+              />
+            );
         }
     }
     return null;

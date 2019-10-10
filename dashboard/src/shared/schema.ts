@@ -11,10 +11,10 @@ import { IBasicFormParam } from "./types";
 const { nullOptions } = require("yaml/types");
 nullOptions.nullStr = "";
 
-// TODO(andres): Migrate all the existing keys here
-// TODO(andres): Reduce the number of keys listed here to the minimum necessary
+// Form keys that require pre-definition. This list should be kept as small as possible
 export const EXTERNAL_DB = "externalDatabase";
 export const USE_SELF_HOSTED_DB = "useSelfHostedDatabase";
+export const DISK_SIZE = "diskSize";
 
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.
@@ -30,7 +30,7 @@ export function retrieveBasicFormParams(
     Object.keys(properties).map(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
-      const { type, title, description, form } = properties[propertyKey];
+      const { type, title, description, form, minimum, maximum } = properties[propertyKey];
       // If the property has the key "form", it's a basic parameter
       if (form) {
         // Use the default value either from the JSON schema or the default values
@@ -41,6 +41,8 @@ export function retrieveBasicFormParams(
           value,
           title,
           description,
+          minimum,
+          maximum,
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
@@ -90,7 +92,8 @@ export function setValue(values: string, path: string, newValue: any) {
 export function getValue(values: string, path: string, defaultValue?: any) {
   const doc = YAML.parseDocument(values);
   const splittedPath = path.split(".");
-  return (doc as any).getIn(splittedPath) || defaultValue;
+  const value = (doc as any).getIn(splittedPath);
+  return value === undefined || value === null ? defaultValue : value;
 }
 
 export function validate(
