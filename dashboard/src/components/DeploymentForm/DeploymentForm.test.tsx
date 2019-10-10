@@ -2,7 +2,7 @@ import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 
-import { Tabs } from "react-tabs";
+import { Tab, Tabs } from "react-tabs";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
@@ -225,9 +225,23 @@ describe("when the basic form is not enabled", () => {
 
 describe("when the basic form is enabled", () => {
   it("renders the different tabs", () => {
-    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
+    const basicFormParameters = {
+      username: {
+        path: "wordpressUsername",
+        value: "user",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "wordpressUsername: user", basicFormParameters });
+    wrapper.update();
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(Tabs)).toExist();
+  });
+
+  it("should not render the tabs if there are no basic parameters", () => {
+    const wrapper = shallow(<DeploymentForm {...props} enableBasicForm={true} />);
+    expect(wrapper.find(LoadingWrapper)).not.toExist();
+    expect(wrapper.find(Tabs)).not.toExist();
   });
 
   it("changes the parameter value", () => {
@@ -253,5 +267,99 @@ describe("when the basic form is enabled", () => {
       },
     });
     expect(wrapper.state("appValues")).toBe("wordpressUsername: foo\n");
+  });
+
+  it("should update existing params if the app values change and the user clicks on the Basic tab", () => {
+    const testProps = {
+      ...props,
+      selected: {
+        ...props.selected,
+        schema: { properties: { wordpressUsername: { type: "string", form: "username" } } },
+      },
+    };
+    const basicFormParameters = {
+      username: {
+        path: "wordpressUsername",
+        value: "user",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...testProps} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "wordpressUsername: user", basicFormParameters });
+    wrapper.update();
+
+    // Fake onChange
+    (wrapper.instance() as any).handleValuesChange("wordpressUsername: foo");
+    wrapper.update();
+
+    const tab = wrapper
+      .find(Tab)
+      .findWhere(t => t.text() === "Basic")
+      .first();
+    tab.simulate("click");
+
+    expect(wrapper.state("basicFormParameters")).toMatchObject({
+      username: {
+        path: "wordpressUsername",
+        value: "foo",
+      },
+    });
+  });
+
+  it("handles a parameter as a number", () => {
+    const basicFormParameters = {
+      replicas: {
+        path: "replicas",
+        value: 1,
+        type: "integer",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "replicas: 1", basicFormParameters });
+    wrapper.update();
+
+    // Fake onChange
+    const input = wrapper.find(BasicDeploymentForm).find("input");
+    const onChange = input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void;
+    onChange({ currentTarget: { value: "2", valueAsNumber: 2, type: "number" } } as React.FormEvent<
+      HTMLInputElement
+    >);
+
+    expect(wrapper.state("basicFormParameters")).toEqual({
+      replicas: {
+        path: "replicas",
+        value: 2,
+        type: "integer",
+      },
+    });
+    expect(wrapper.state("appValues")).toBe("replicas: 2\n");
+  });
+
+  it("handles a parameter as a boolean", () => {
+    const basicFormParameters = {
+      enableMetrics: {
+        path: "enableMetrics",
+        value: false,
+        type: "boolean",
+      },
+    };
+    const wrapper = mount(<DeploymentForm {...props} enableBasicForm={true} />);
+    wrapper.setState({ appValues: "enableMetrics: false", basicFormParameters });
+    wrapper.update();
+
+    // Fake onChange
+    const input = wrapper.find(BasicDeploymentForm).find("input");
+    const onChange = input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void;
+    onChange({
+      currentTarget: { value: "true", checked: true, type: "checkbox" },
+    } as React.FormEvent<HTMLInputElement>);
+
+    expect(wrapper.state("basicFormParameters")).toEqual({
+      enableMetrics: {
+        path: "enableMetrics",
+        value: true,
+        type: "boolean",
+      },
+    });
+    expect(wrapper.state("appValues")).toBe("enableMetrics: true\n");
   });
 });

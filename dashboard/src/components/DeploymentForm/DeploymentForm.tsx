@@ -6,6 +6,7 @@ import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import { JSONSchema4 } from "json-schema";
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState, IChartVersion } from "../../shared/types";
+import { getValueFromEvent } from "../../shared/utils";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
@@ -165,7 +166,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
                   ))}
                 </select>
               </div>
-              {this.props.enableBasicForm ? (
+              {this.shouldRenderBasicForm() ? (
                 this.renderTabs()
               ) : (
                 <AdvancedDeploymentForm
@@ -223,18 +224,29 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ appValues: value, valuesModified: true });
   };
 
+  private refreshBasicParameters = () => {
+    this.setState({
+      basicFormParameters: retrieveBasicFormParams(
+        this.state.appValues,
+        this.props.selected.schema,
+      ),
+    });
+  };
+
   private renderTabs = () => {
     return (
       <div className="margin-t-normal">
         <Tabs>
           <TabList>
-            <Tab>Basic</Tab>
+            <Tab onClick={this.refreshBasicParameters}>Basic</Tab>
             <Tab>Advanced</Tab>
           </TabList>
           <TabPanel>
             <BasicDeploymentForm
               params={this.state.basicFormParameters}
               handleBasicFormParamChange={this.handleBasicFormParamChange}
+              appValues={this.state.appValues}
+              handleValuesChange={this.handleValuesChange}
             />
           </TabPanel>
           <TabPanel>
@@ -250,19 +262,27 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   private handleBasicFormParamChange = (name: string, param: IBasicFormParam) => {
     return (e: React.FormEvent<HTMLInputElement>) => {
-      // Change raw values
-      this.handleValuesChange(setValue(this.state.appValues, param.path, e.currentTarget.value));
+      const value = getValueFromEvent(e);
       // Change param definition
       this.setState({
+        // Change raw values
+        appValues: setValue(this.state.appValues, param.path, value),
+        valuesModified: true,
+        // Change param definition
         basicFormParameters: {
           ...this.state.basicFormParameters,
           [name]: {
             ...param,
-            value: e.currentTarget.value,
+            value,
           },
         },
       });
     };
+  };
+
+  // The basic form should be rendered both if it's enabled and if there are params to show
+  private shouldRenderBasicForm = () => {
+    return this.props.enableBasicForm && Object.keys(this.state.basicFormParameters).length > 0;
   };
 }
 

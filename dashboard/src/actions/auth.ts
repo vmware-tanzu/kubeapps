@@ -3,7 +3,7 @@ import { ActionType, createAction } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
-import { clearNamespaces, NamespaceAction, namespaceReceived } from "./namespace";
+import { clearNamespaces, NamespaceAction } from "./namespace";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
   return (authenticated: boolean, oidc: boolean, defaultNamespace: string) =>
@@ -27,15 +27,13 @@ export type AuthAction = ActionType<typeof allActions[number]>;
 export function authenticate(
   token: string,
   oidc: boolean,
-): ThunkAction<Promise<void>, IStoreState, null, AuthAction | NamespaceAction> {
+): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     dispatch(authenticating());
     try {
       await Auth.validateToken(token);
       Auth.setAuthToken(token, oidc);
-      const defaultNamespace = Auth.defaultNamespaceFromToken(token);
-      dispatch(setAuthenticated(true, oidc, defaultNamespace));
-      dispatch(namespaceReceived(defaultNamespace));
+      dispatch(setAuthenticated(true, oidc, Auth.defaultNamespaceFromToken(token)));
       if (oidc) {
         dispatch(setSessionExpired(false));
       }
