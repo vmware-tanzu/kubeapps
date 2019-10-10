@@ -4,7 +4,6 @@ import * as React from "react";
 import { IBasicFormParam } from "shared/types";
 import BooleanParam from "./BooleanParam";
 import Subsection, { ISubsectionProps } from "./Subsection";
-import TextParam from "./TextParam";
 
 const defaultProps = {
   label: "Enable an external database",
@@ -65,20 +64,6 @@ it("should hide/show the database params if the self-hosted database is enabled/
   });
   wrapper.update();
   expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).not.toExist();
-});
-
-it("should change the parent parameter when a children is modified", () => {
-  const wrapper = mount(<Subsection {...defaultProps} />);
-
-  const hostParam = wrapper
-    .find(TextParam)
-    .findWhere(t => t.prop("label") === "externalDatabaseHost");
-  (hostParam.prop("handleBasicFormParamChange") as any)(
-    "externalDatabaseHost",
-    defaultProps.param.children!.externalDatabaseHost,
-  )({ currentTarget: { value: "foo" } });
-
-  expect(defaultProps.param.children!.externalDatabaseHost.value).toBe("foo");
 });
 
 it("should omit the enabler param if it doesn't exist", () => {
