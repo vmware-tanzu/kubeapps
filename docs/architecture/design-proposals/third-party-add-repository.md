@@ -56,10 +56,16 @@ Kubeapps provides an api endpoint for app repositories:
      }
    }
    ```
-   - Success response: 201 Created
+   - Success response: 201 Created with the following data:
    ```
    message CreateAppRepositoryResponse {
      string repository_prefix = 1; // e.g. "/#/charts/<repository-name>/"
+   }
+   ```
+   or JSON equivalent
+   ```
+   {
+     repositoryPrefix: "/#/charts/my-repo/"
    }
    ```
    - Error responses
