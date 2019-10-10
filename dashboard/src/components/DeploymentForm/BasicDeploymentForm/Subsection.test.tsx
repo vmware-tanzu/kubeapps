@@ -40,6 +40,7 @@ const defaultProps = {
   handleValuesChange: jest.fn(),
   enablerChildrenParam: "useSelfHostedDatabase",
   enablerCondition: false,
+  renderParam: jest.fn(),
 } as ISubsectionProps;
 
 it("should render a external database section", () => {

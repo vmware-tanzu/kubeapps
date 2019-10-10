@@ -17,7 +17,7 @@ export interface ISliderParamProps {
 }
 
 export interface ISliderParamState {
-  amount: number;
+  value: number;
 }
 
 function toNumber(value: string) {
@@ -27,7 +27,7 @@ function toNumber(value: string) {
 
 class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> {
   public state: ISliderParamState = {
-    amount: toNumber(this.props.param.value) || this.props.min,
+    value: toNumber(this.props.param.value) || this.props.min,
   };
 
   // onChangeSlider is executed when the slider is dropped at one point
@@ -39,12 +39,12 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
   // onUpdateSlider is executed when dragging the slider
   // we just update the state here for a faster response
   public onUpdateSlider = (values: number[]) => {
-    this.setState({ amount: values[0] });
+    this.setState({ value: values[0] });
   };
 
   public onChangeInput = (e: React.FormEvent<HTMLInputElement>) => {
     const value = toNumber(e.currentTarget.value);
-    this.setState({ amount: value });
+    this.setState({ value });
     this.handleParamChange(value);
   };
 
@@ -65,11 +65,11 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
               <Slider
                 // If the parameter defines a minimum or maximum, maintain those
                 min={param.minimum || min}
-                max={param.maximum || Math.max(max, this.state.amount)}
-                default={this.state.amount}
+                max={param.maximum || Math.max(max, this.state.value)}
+                default={this.state.value}
                 onChange={this.onChangeSlider}
                 onUpdate={this.onUpdateSlider}
-                values={this.state.amount}
+                values={this.state.value}
               />
             </div>
             <div className="col-2">
@@ -77,7 +77,7 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
                 className="disk_size_input"
                 id={this.props.id}
                 onChange={this.onChangeInput}
-                value={this.state.amount}
+                value={this.state.value}
               />
               <span className="margin-l-normal">{this.props.unit}</span>
             </div>

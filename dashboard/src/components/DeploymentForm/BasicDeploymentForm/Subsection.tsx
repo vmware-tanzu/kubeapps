@@ -3,7 +3,6 @@ import { setValue } from "../../../shared/schema";
 import { IBasicFormParam } from "../../../shared/types";
 import { getValueFromEvent } from "../../../shared/utils";
 import BooleanParam from "./BooleanParam";
-import TextParam from "./TextParam";
 
 export interface ISubsectionProps {
   label: string;
@@ -12,6 +11,15 @@ export interface ISubsectionProps {
   enablerChildrenParam: string;
   enablerCondition: boolean;
   handleValuesChange: (value: string) => void;
+  renderParam: (
+    name: string,
+    param: IBasicFormParam,
+    index: number,
+    handleBasicFormParamChange: (
+      name: string,
+      p: IBasicFormParam,
+    ) => (e: React.FormEvent<HTMLInputElement>) => void,
+  ) => JSX.Element | null;
   appValues: string;
 }
 
@@ -41,7 +49,12 @@ class Subsection extends React.Component<ISubsectionProps> {
             Object.keys(param.children)
               .filter(p => p !== enablerChildrenParam)
               .map((paramName, i) => {
-                return this.renderParam(paramName, param.children![paramName], i);
+                return this.props.renderParam(
+                  paramName,
+                  param.children![paramName],
+                  i,
+                  this.handleChildrenParamChange,
+                );
               })}
         </div>
       </div>
@@ -55,35 +68,6 @@ class Subsection extends React.Component<ISubsectionProps> {
       this.props.handleValuesChange(setValue(this.props.appValues, param.path, value));
     };
   };
-
-  private renderParam(name: string, param: IBasicFormParam, index: number) {
-    const id = `${name}-${index}`;
-    switch (param.type) {
-      case "boolean":
-        return (
-          <BooleanParam
-            label={param.title || name}
-            handleBasicFormParamChange={this.handleChildrenParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-          />
-        );
-      default:
-        return (
-          <TextParam
-            label={param.title || name}
-            handleBasicFormParamChange={this.handleChildrenParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-            inputType={param.type === "integer" ? "number" : "text"}
-          />
-        );
-    }
-  }
 }
 
 export default Subsection;

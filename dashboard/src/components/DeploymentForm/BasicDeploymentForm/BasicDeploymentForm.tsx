@@ -21,11 +21,24 @@ export interface IBasicDeploymentFormProps {
 class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   public render() {
     return Object.keys(this.props.params).map((paramName, i) => {
-      return this.renderParam(paramName, this.props.params[paramName], i);
+      return this.renderParam(
+        paramName,
+        this.props.params[paramName],
+        i,
+        this.props.handleBasicFormParamChange,
+      );
     });
   }
 
-  private renderParam(name: string, param: IBasicFormParam, index: number) {
+  private renderParam(
+    name: string,
+    param: IBasicFormParam,
+    index: number,
+    handleBasicFormParamChange: (
+      name: string,
+      p: IBasicFormParam,
+    ) => (e: React.FormEvent<HTMLInputElement>) => void,
+  ) {
     const id = `${name}-${index}`;
     switch (name) {
       case EXTERNAL_DB:
@@ -34,6 +47,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             label={param.title || "External Database Details"}
             handleValuesChange={this.props.handleValuesChange}
             appValues={this.props.appValues}
+            renderParam={this.renderParam}
             key={id}
             name={name}
             param={param}
@@ -45,7 +59,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         return (
           <SliderParam
             label={param.title || "Disk Size"}
-            handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+            handleBasicFormParamChange={handleBasicFormParamChange}
             key={id}
             id={id}
             name={name}
@@ -61,7 +75,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             return (
               <BooleanParam
                 label={param.title || name}
-                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+                handleBasicFormParamChange={handleBasicFormParamChange}
                 key={id}
                 id={id}
                 name={name}
@@ -72,7 +86,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             return (
               <TextParam
                 label={param.title || name}
-                handleBasicFormParamChange={this.props.handleBasicFormParamChange}
+                handleBasicFormParamChange={handleBasicFormParamChange}
                 key={id}
                 id={id}
                 name={name}
