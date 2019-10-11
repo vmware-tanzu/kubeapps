@@ -30,9 +30,7 @@ export interface IDeploymentFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => void;
-  getChartVersion: (id: string, chartVersion: string) => void;
-  getChartValues: (id: string, chartVersion: string) => void;
-  getChartSchema: (id: string, chartVersion: string) => void;
+  getChartVersionWithValuesAndSchema: (id: string, chartVersion: string) => void;
   namespace: string;
   enableBasicForm: boolean;
 }
@@ -63,18 +61,21 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public componentDidMount() {
-    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
+    const {
+      chartID,
+      fetchChartVersions,
+      getChartVersionWithValuesAndSchema,
+      chartVersion,
+    } = this.props;
     fetchChartVersions(chartID);
-    getChartVersion(chartID, chartVersion);
+    getChartVersionWithValuesAndSchema(chartID, chartVersion);
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     const {
       chartID,
       chartVersion,
-      getChartValues,
-      getChartSchema,
-      getChartVersion,
+      getChartVersionWithValuesAndSchema,
       namespace,
       selected,
     } = this.props;
@@ -86,13 +87,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     }
 
     if (chartVersion !== nextProps.chartVersion) {
-      getChartVersion(chartID, nextProps.chartVersion);
-      return;
-    }
-
-    if (nextProps.selected.version && nextProps.selected.version !== this.props.selected.version) {
-      getChartValues(chartID, nextProps.selected.version.attributes.version);
-      getChartSchema(chartID, nextProps.selected.version.attributes.version);
+      getChartVersionWithValuesAndSchema(chartID, nextProps.chartVersion);
       return;
     }
 

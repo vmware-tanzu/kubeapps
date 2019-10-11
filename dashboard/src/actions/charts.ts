@@ -1,3 +1,4 @@
+import { JSONSchema4 } from "json-schema";
 import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
@@ -20,7 +21,8 @@ export const errorChart = createAction("ERROR_CHART", resolve => {
 });
 
 export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve => {
-  return (chartVersion: IChartVersion) => resolve(chartVersion);
+  return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
+    resolve({ chartVersion, values, schema });
 });
 
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
@@ -33,14 +35,6 @@ export const errorReadme = createAction("ERROR_README", resolve => {
   return (message: string) => resolve(message);
 });
 
-export const selectValues = createAction("SELECT_VALUES", resolve => {
-  return (values: string) => resolve(values);
-});
-
-export const selectSchema = createAction("SELECT_SCHEMA", resolve => {
-  return (schema: {}) => resolve(schema);
-});
-
 const allActions = [
   requestCharts,
   errorChart,
@@ -50,8 +44,6 @@ const allActions = [
   resetChartVersion,
   selectReadme,
   errorReadme,
-  selectValues,
-  selectSchema,
 ];
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
@@ -149,36 +141,43 @@ export function getChartReadme(
   };
 }
 
-export function getChartValues(
+export function getChartVersionWithValuesAndSchema(
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     try {
-      const values = await Chart.getValues(id, version);
-      dispatch(selectValues(values));
-    } catch (e) {
-      dispatch(selectValues(""));
-    }
-  };
-}
-
-export function getChartSchema(
-  id: string,
-  version: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async dispatch => {
-    try {
-      const schema = await Chart.getSchema(id, version);
-      dispatch(selectSchema(schema));
-    } catch (e) {
-      if (e.constructor === NotFoundError) {
-        // Schema not found
-        dispatch(selectSchema({}));
-      } else {
-        // Unexpecter error
-        dispatch(errorChart(e));
+      dispatch(requestCharts());
+      const chartVersion = await Chart.getChartVersion(id, version);
+      if (chartVersion) {
+        let values = "";
+        let schema = {};
+        try {
+          values = await Chart.getValues(id, version);
+        } catch (e) {
+          if (e.constructor === NotFoundError) {
+            // Values not found
+          } else {
+            // Unexpecter error
+            dispatch(errorChart(e));
+            return;
+          }
+        }
+        try {
+          schema = await Chart.getSchema(id, version);
+        } catch (e) {
+          if (e.constructor === NotFoundError) {
+            // Schema not found
+          } else {
+            // Unexpecter error
+            dispatch(errorChart(e));
+            return;
+          }
+        }
+        dispatch(selectChartVersion(chartVersion, values, schema));
       }
+    } catch (e) {
+      dispatchError(dispatch, e);
     }
   };
 }
