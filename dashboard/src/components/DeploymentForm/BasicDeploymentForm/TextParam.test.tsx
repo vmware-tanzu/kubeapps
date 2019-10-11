@@ -39,3 +39,17 @@ it("should forward the proper value", () => {
   expect(handleBasicFormParamChange.mock.calls[0][0]).toBe("username");
   expect(handler.mock.calls[0][0]).toMatchObject(event);
 });
+
+it("should set the input value as empty if the param value is not defined", () => {
+  const tparam = { path: "username", type: "string" };
+  const tprops = {
+    id: "foo",
+    name: "username",
+    label: "Username",
+    param: tparam,
+    handleBasicFormParamChange: jest.fn(),
+  };
+  const wrapper = mount(<TextParam {...tprops} />);
+  const input = wrapper.find("input");
+  expect(input.prop("value")).toBe("");
+});
