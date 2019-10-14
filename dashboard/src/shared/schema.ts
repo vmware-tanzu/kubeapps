@@ -15,6 +15,9 @@ nullOptions.nullStr = "";
 export const EXTERNAL_DB = "externalDatabase";
 export const USE_SELF_HOSTED_DB = "useSelfHostedDatabase";
 export const DISK_SIZE = "diskSize";
+export const MEMORY_REQUEST = "memoryRequest";
+export const CPU_REQUEST = "cpuRequest";
+export const RESOURCES = "resources";
 
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.

@@ -27,7 +27,7 @@ function toNumber(value: string) {
 
 class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> {
   public state: ISliderParamState = {
-    value: toNumber(this.props.param.value) || this.props.min,
+    value: (this.props.param.value && toNumber(this.props.param.value)) || this.props.min,
   };
 
   // onChangeSlider is executed when the slider is dropped at one point
