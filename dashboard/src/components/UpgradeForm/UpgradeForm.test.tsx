@@ -1,53 +1,103 @@
-import { shallow } from "enzyme";
-import context from "jest-plugin-context";
+import { mount, shallow } from "enzyme";
 import * as React from "react";
-import itBehavesLike from "../../shared/specs";
-import { IChartState, IChartVersion } from "../../shared/types";
-import UpgradeForm from "./UpgradeForm";
 
-const version: IChartVersion = {
-  id: "123",
-  attributes: "lol" as any,
-  relationships: "abc" as any,
-};
+import { IChartState, IChartVersion, UnprocessableEntity } from "../../shared/types";
+import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
+import { ErrorSelector } from "../ErrorAlert";
+import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
 
-const defaultProps: any = {
+const defaultProps = {
+  appCurrentVersion: "1.0.0",
+  appCurrentValues: "foo: bar",
+  chartName: "my-chart",
+  namespace: "default",
+  releaseName: "my-release",
+  repo: "my-repo",
+  selected: {} as IChartState["selected"],
+  upgradeApp: jest.fn(),
+  push: jest.fn(),
+  goBack: jest.fn(),
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
-  selected: {} as IChartState["selected"],
-  goBack: jest.fn(),
-  upgradeApp: jest.fn(),
-};
+  enableBasicForm: false,
+  error: undefined,
+} as IUpgradeFormProps;
 
-describe("render", () => {
-  context("when no version selected", () => {
-    itBehavesLike("aLoadingComponent", { component: UpgradeForm, props: defaultProps });
-  });
+const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 
-  context("when versions but deploying", () => {
-    itBehavesLike("aLoadingComponent", {
-      component: UpgradeForm,
-      props: { ...defaultProps, selected: { versions: [version], version } },
-      state: { isDeploying: true },
-    });
+describe("renders an error", () => {
+  it("renders a custom error if the deployment failed", () => {
+    const wrapper = shallow(
+      <UpgradeForm
+        {...defaultProps}
+        selected={
+          {
+            version: { attributes: {} },
+            versions: [{ id: "foo", attributes: {} }],
+          } as IChartState["selected"]
+        }
+        error={new UnprocessableEntity("wrong format!")}
+      />,
+    );
+    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
+    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
+    expect(wrapper.find(ErrorSelector).html()).toContain(
+      "Sorry! Something went wrong processing my-release",
+    );
+    expect(wrapper.find(ErrorSelector).html()).toContain("wrong format!");
   });
 });
 
-it("goes back when clicking in the Back button", () => {
-  const goBack = jest.fn();
-  const upgradeApp = jest.fn();
-  const selected = {
-    version,
-    versions: [version],
-  } as IChartState["selected"];
+it("renders the full UpgradeForm", () => {
   const wrapper = shallow(
-    <UpgradeForm {...defaultProps} goBack={goBack} upgradeApp={upgradeApp} selected={selected} />,
+    <UpgradeForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
   );
-  const backButton = wrapper.find(".button").filterWhere(i => i.text() === "Back");
-  expect(backButton).toExist();
-  // Avoid empty or submit type
-  expect(backButton.prop("type")).toBe("button");
-  backButton.simulate("click");
-  expect(goBack).toBeCalled();
-  expect(upgradeApp).not.toBeCalled();
+  expect(wrapper).toMatchSnapshot();
+});
+
+it("forwards the appValues when modified", () => {
+  const wrapper = shallow(<UpgradeForm {...defaultProps} />);
+  const handleValuesChange: (v: string) => void = wrapper
+    .find(DeploymentFormBody)
+    .prop("setValues");
+  handleValuesChange("foo: bar");
+
+  expect(wrapper.state("appValues")).toBe("foo: bar");
+  expect(wrapper.find(DeploymentFormBody).prop("appValues")).toBe("foo: bar");
+});
+
+it("forwards the valuesModifed property", () => {
+  const wrapper = shallow(<UpgradeForm {...defaultProps} />);
+  const handleValuesModified: (v: string) => void = wrapper
+    .find(DeploymentFormBody)
+    .prop("setValuesModified");
+  handleValuesModified("foo: bar");
+
+  expect(wrapper.state("valuesModified")).toBe(true);
+  expect(wrapper.find(DeploymentFormBody).prop("valuesModified")).toBe(true);
+});
+
+it("triggers an upgrade when submitting the form", done => {
+  const releaseName = "my-release";
+  const namespace = "default";
+  const appValues = "foo: bar";
+  const schema = { properties: { foo: { type: "string" } } };
+  const upgradeApp = jest.fn(() => true);
+  const push = jest.fn();
+  const wrapper = mount(
+    <UpgradeForm
+      {...defaultProps}
+      selected={{ versions, version: versions[0], schema }}
+      upgradeApp={upgradeApp}
+      push={push}
+      namespace={namespace}
+    />,
+  );
+  wrapper.setState({ releaseName, appValues });
+  wrapper.find("form").simulate("submit");
+  expect(upgradeApp).toHaveBeenCalledWith(versions[0], releaseName, namespace, appValues, schema);
+  setTimeout(() => {
+    expect(push).toHaveBeenCalledWith("/apps/ns/default/my-release");
+    done();
+  }, 1);
 });

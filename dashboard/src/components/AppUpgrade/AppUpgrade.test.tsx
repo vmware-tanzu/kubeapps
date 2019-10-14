@@ -32,6 +32,7 @@ const defaultProps = {
   selected: {} as IChartState["selected"],
   upgradeApp: jest.fn(),
   version: "1.0.0",
+  enableBasicForm: false,
 };
 
 beforeEach(() => {

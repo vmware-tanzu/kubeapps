@@ -1,6 +1,6 @@
 import * as React from "react";
 import { IBasicFormParam } from "shared/types";
-import Slider from "../../../components/Slider";
+import Slider from "../../Slider";
 
 export interface ISliderParamProps {
   id: string;

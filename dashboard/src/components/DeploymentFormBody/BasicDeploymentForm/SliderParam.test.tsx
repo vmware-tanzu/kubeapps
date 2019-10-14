@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import { IBasicFormParam } from "shared/types";
-import Slider from "../../../components/Slider";
+import Slider from "../../Slider";
 import SliderParam from "./SliderParam";
 
 const defaultProps = {
