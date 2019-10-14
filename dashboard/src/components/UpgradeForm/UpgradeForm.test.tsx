@@ -13,7 +13,7 @@ const version: IChartVersion = {
 
 const defaultProps: any = {
   fetchChartVersions: jest.fn(),
-  getChartVersionWithValuesAndSchema: jest.fn(),
+  getChartVersion: jest.fn(),
   selected: {} as IChartState["selected"],
   goBack: jest.fn(),
   upgradeApp: jest.fn(),

@@ -28,7 +28,7 @@ interface IDeploymentFormProps {
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
-  getChartVersionWithValuesAndSchema: (id: string, chartVersion: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
   clearRepo: () => void;
 }
 
@@ -48,16 +48,10 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   };
 
   public componentDidMount() {
-    const {
-      appCurrentVersion,
-      chartName,
-      fetchChartVersions,
-      getChartVersionWithValuesAndSchema,
-      repo,
-    } = this.props;
+    const { appCurrentVersion, chartName, fetchChartVersions, getChartVersion, repo } = this.props;
     const chartID = `${repo}/${chartName}`;
     fetchChartVersions(chartID);
-    getChartVersionWithValuesAndSchema(chartID, appCurrentVersion);
+    getChartVersion(chartID, appCurrentVersion);
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {
@@ -176,10 +170,10 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   };
 
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { repo, chartName, getChartVersionWithValuesAndSchema } = this.props;
+    const { repo, chartName, getChartVersion } = this.props;
     const chartID = `${repo}/${chartName}`;
     this.setState({ version: e.currentTarget.value });
-    getChartVersionWithValuesAndSchema(chartID, e.currentTarget.value);
+    getChartVersion(chartID, e.currentTarget.value);
   };
 
   public handleValuesChange = (value: string) => {

@@ -30,7 +30,7 @@ export interface IDeploymentFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => void;
-  getChartVersionWithValuesAndSchema: (id: string, chartVersion: string) => void;
+  getChartVersion: (id: string, chartVersion: string) => void;
   namespace: string;
   enableBasicForm: boolean;
 }
@@ -61,24 +61,13 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public componentDidMount() {
-    const {
-      chartID,
-      fetchChartVersions,
-      getChartVersionWithValuesAndSchema,
-      chartVersion,
-    } = this.props;
+    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
     fetchChartVersions(chartID);
-    getChartVersionWithValuesAndSchema(chartID, chartVersion);
+    getChartVersion(chartID, chartVersion);
   }
 
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
-    const {
-      chartID,
-      chartVersion,
-      getChartVersionWithValuesAndSchema,
-      namespace,
-      selected,
-    } = this.props;
+    const { chartID, chartVersion, getChartVersion, namespace, selected } = this.props;
     const { version } = selected;
 
     if (nextProps.namespace !== namespace) {
@@ -87,7 +76,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     }
 
     if (chartVersion !== nextProps.chartVersion) {
-      getChartVersionWithValuesAndSchema(chartID, nextProps.chartVersion);
+      getChartVersion(chartID, nextProps.chartVersion);
       return;
     }
 

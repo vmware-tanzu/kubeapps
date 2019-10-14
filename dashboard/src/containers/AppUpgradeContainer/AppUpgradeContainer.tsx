@@ -46,8 +46,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchRepositories: () => dispatch(actions.repos.fetchRepos()),
     getAppWithUpdateInfo: (releaseName: string, ns: string) =>
       dispatch(actions.apps.getAppWithUpdateInfo(releaseName, ns)),
-    getChartVersionWithValuesAndSchema: (id: string, version: string) =>
-      dispatch(actions.charts.getChartVersionWithValuesAndSchema(id, version)),
+    getChartVersion: (id: string, version: string) =>
+      dispatch(actions.charts.getChartVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
     goBack: () => dispatch(goBack()),
     upgradeApp: (

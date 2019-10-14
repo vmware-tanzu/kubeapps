@@ -20,7 +20,7 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   fetchRepositories: jest.fn(),
   getAppWithUpdateInfo: jest.fn(),
-  getChartVersionWithValuesAndSchema: jest.fn(),
+  getChartVersion: jest.fn(),
   kubeappsNamespace: "kubeapps",
   namespace: "default",
   push: jest.fn(),

@@ -90,16 +90,38 @@ export function fetchChartVersions(
   };
 }
 
+function handleError(e: Error, dispatch: Dispatch): boolean {
+  if (e.constructor === NotFoundError) {
+    // Item not found, it's not mandatory so skip it
+    return true;
+  } else {
+    // Unexpecter error
+    dispatch(errorChart(e));
+    return false;
+  }
+}
+
 export function getChartVersion(
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestCharts());
     try {
+      dispatch(requestCharts());
       const chartVersion = await Chart.getChartVersion(id, version);
       if (chartVersion) {
-        dispatch(selectChartVersion(chartVersion));
+        let values = "";
+        let schema = {};
+        try {
+          values = await Chart.getValues(id, version);
+          schema = await Chart.getSchema(id, version);
+        } catch (e) {
+          const valid = handleError(e, dispatch);
+          if (!valid) {
+            return;
+          }
+        }
+        dispatch(selectChartVersion(chartVersion, values, schema));
       }
     } catch (e) {
       dispatchError(dispatch, e);
@@ -137,47 +159,6 @@ export function getChartReadme(
       dispatch(selectReadme(readme));
     } catch (e) {
       dispatch(errorReadme(e.toString()));
-    }
-  };
-}
-
-export function getChartVersionWithValuesAndSchema(
-  id: string,
-  version: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async dispatch => {
-    try {
-      dispatch(requestCharts());
-      const chartVersion = await Chart.getChartVersion(id, version);
-      if (chartVersion) {
-        let values = "";
-        let schema = {};
-        try {
-          values = await Chart.getValues(id, version);
-        } catch (e) {
-          if (e.constructor === NotFoundError) {
-            // Values not found
-          } else {
-            // Unexpecter error
-            dispatch(errorChart(e));
-            return;
-          }
-        }
-        try {
-          schema = await Chart.getSchema(id, version);
-        } catch (e) {
-          if (e.constructor === NotFoundError) {
-            // Schema not found
-          } else {
-            // Unexpecter error
-            dispatch(errorChart(e));
-            return;
-          }
-        }
-        dispatch(selectChartVersion(chartVersion, values, schema));
-      }
-    } catch (e) {
-      dispatchError(dispatch, e);
     }
   };
 }

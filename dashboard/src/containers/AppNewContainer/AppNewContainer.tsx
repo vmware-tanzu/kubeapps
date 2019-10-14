@@ -43,8 +43,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       schema?: JSONSchema4,
     ) => dispatch(actions.apps.deployChart(version, releaseName, namespace, values, schema)),
     fetchChartVersions: (id: string) => dispatch(actions.charts.fetchChartVersions(id)),
-    getChartVersionWithValuesAndSchema: (id: string, version: string) =>
-      dispatch(actions.charts.getChartVersionWithValuesAndSchema(id, version)),
+    getChartVersion: (id: string, version: string) =>
+      dispatch(actions.charts.getChartVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
   };
 }

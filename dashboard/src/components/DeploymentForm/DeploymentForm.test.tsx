@@ -21,7 +21,7 @@ const defaultProps = {
   deployChart: jest.fn(),
   push: jest.fn(),
   fetchChartVersions: jest.fn(),
-  getChartVersionWithValuesAndSchema: jest.fn(),
+  getChartVersion: jest.fn(),
   namespace: "default",
   enableBasicForm: false,
 };
