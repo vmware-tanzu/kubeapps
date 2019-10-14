@@ -32,6 +32,7 @@ const defaultProps = {
     },
     path: "externalDatabase",
     title: "External Database Details",
+    description: "description of the param",
     type: "object",
   } as IBasicFormParam,
   handleBasicFormParamChange: jest.fn(),
@@ -61,6 +62,8 @@ it("should hide/show the database params if the self-hosted database is enabled/
         useSelfHostedDatabase: { path: "mariadb.enabled", value: false, type: "boolean" },
       },
     },
+    enablerChildrenParam: "useSelfHostedDatabase",
+    enablerCondition: false,
   });
   wrapper.update();
   expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).not.toExist();
