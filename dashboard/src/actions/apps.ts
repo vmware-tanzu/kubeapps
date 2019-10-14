@@ -283,6 +283,7 @@ export function upgradeApp(
   releaseName: string,
   namespace: string,
   values?: string,
+  schema?: JSONSchema4,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
     dispatch(requestUpgradeApp());
@@ -290,6 +291,17 @@ export function upgradeApp(
       const {
         config: { namespace: kubeappsNamespace },
       } = getState();
+      if (values && schema) {
+        const validation = validate(values, schema);
+        if (!validation.valid) {
+          const errorText =
+            validation.errors &&
+            validation.errors.map(e => `  - ${e.dataPath}: ${e.message}`).join("\n");
+          throw new UnprocessableEntity(
+            `The given values don't match the required format. The following errors were found:\n${errorText}`,
+          );
+        }
+      }
       await App.upgrade(releaseName, namespace, kubeappsNamespace, chartVersion, values);
       dispatch(receiveUpgradeApp());
       return true;
