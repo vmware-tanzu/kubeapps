@@ -151,3 +151,14 @@ it("uses the param minimum and maximum if defined", () => {
   expect(slider.prop("min")).toBe(5);
   expect(slider.prop("max")).toBe(50);
 });
+
+it("defaults to the min if the value is undefined", () => {
+  const param = {
+    type: "string",
+    path: "disk",
+  } as IBasicFormParam;
+
+  const wrapper = shallow(<SliderParam {...defaultProps} param={param} min={5} />);
+
+  expect(wrapper.state("value")).toBe(5);
+});
