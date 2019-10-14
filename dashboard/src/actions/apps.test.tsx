@@ -320,6 +320,30 @@ describe("upgradeApp", () => {
     await store.dispatch(provisionCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
+    const res = await store.dispatch(
+      actions.apps.upgradeApp(
+        "my-version" as any,
+        "my-release",
+        definedNamespaces.default,
+        "foo: 1",
+        { properties: { foo: { type: "string" } } },
+      ),
+    );
+
+    expect(res).toBe(false);
+    const expectedActions = [
+      { type: getType(actions.apps.requestUpgradeApp) },
+      {
+        type: getType(actions.apps.errorApps),
+        payload: new UnprocessableEntity(
+          "The given values don't match the required format. The following errors were found:\n  - .foo: should be string",
+        ),
+      },
+    ];
+    expect(store.getActions()).toEqual(expectedActions);
+  });
 });
 
 describe("rollbackApp", () => {
