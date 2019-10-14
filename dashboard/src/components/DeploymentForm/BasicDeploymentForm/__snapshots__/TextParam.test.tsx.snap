@@ -20,9 +20,10 @@ exports[`should render a text param with title and description 1`] = `
     >
       Username
       <input
-        defaultValue="user"
         id="foo"
+        onChange={[Function]}
         type="text"
+        value="user"
       />
     </label>
   </div>

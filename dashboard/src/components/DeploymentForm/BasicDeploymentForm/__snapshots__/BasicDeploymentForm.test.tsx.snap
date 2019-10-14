@@ -347,10 +347,10 @@ exports[`renders a basic deployment with a email 1`] = `
       >
         email
         <input
-          defaultValue="user@example.com"
           id="email-0"
           onChange={[Function]}
           type="string"
+          value="user@example.com"
         />
       </label>
     </div>
@@ -652,10 +652,10 @@ exports[`renders a basic deployment with a generic number 1`] = `
       >
         replicas
         <input
-          defaultValue={1}
           id="replicas-0"
           onChange={[Function]}
           type="number"
+          value={1}
         />
       </label>
     </div>
@@ -699,10 +699,10 @@ exports[`renders a basic deployment with a generic string 1`] = `
       >
         blogName
         <input
-          defaultValue="my-blog"
           id="blogName-0"
           onChange={[Function]}
           type="string"
+          value="my-blog"
         />
       </label>
     </div>
@@ -744,10 +744,10 @@ exports[`renders a basic deployment with a password 1`] = `
       >
         password
         <input
-          defaultValue="sserpdrow"
           id="password-0"
           onChange={[Function]}
           type="string"
+          value="sserpdrow"
         />
       </label>
     </div>
@@ -789,10 +789,10 @@ exports[`renders a basic deployment with a username 1`] = `
       >
         username
         <input
-          defaultValue="user"
           id="username-0"
           onChange={[Function]}
           type="string"
+          value="user"
         />
       </label>
     </div>
@@ -847,10 +847,10 @@ exports[`renders a basic deployment with username, password, email and a generic
       >
         username
         <input
-          defaultValue="user"
           id="username-0"
           onChange={[Function]}
           type="string"
+          value="user"
         />
       </label>
     </div>
@@ -875,10 +875,10 @@ exports[`renders a basic deployment with username, password, email and a generic
       >
         password
         <input
-          defaultValue="sserpdrow"
           id="password-1"
           onChange={[Function]}
           type="string"
+          value="sserpdrow"
         />
       </label>
     </div>
@@ -903,10 +903,10 @@ exports[`renders a basic deployment with username, password, email and a generic
       >
         email
         <input
-          defaultValue="user@example.com"
           id="email-2"
           onChange={[Function]}
           type="string"
+          value="user@example.com"
         />
       </label>
     </div>
@@ -932,10 +932,10 @@ exports[`renders a basic deployment with username, password, email and a generic
       >
         blogName
         <input
-          defaultValue="my-blog"
           id="blogName-3"
           onChange={[Function]}
           type="string"
+          value="my-blog"
         />
       </label>
     </div>

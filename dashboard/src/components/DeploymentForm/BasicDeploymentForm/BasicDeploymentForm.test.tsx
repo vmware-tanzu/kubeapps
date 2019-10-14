@@ -72,6 +72,7 @@ const defaultProps = {
       />,
     );
     expect(wrapper).toMatchSnapshot();
+
     Object.keys(t.params).map((param, i) => {
       wrapper.find(`input#${param}-${i}`).simulate("change");
       const mockCalls = handleBasicFormParamChange.mock.calls;

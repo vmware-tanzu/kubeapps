@@ -9,13 +9,13 @@ const defaultProps = {
   name: "username",
   label: "Username",
   param,
-  handleBasicFormParamChange: jest.fn(),
+  handleBasicFormParamChange: jest.fn(() => jest.fn()),
 };
 
 it("should render a text param with title and description", () => {
   const wrapper = mount(<TextParam {...defaultProps} />);
   const input = wrapper.find("input");
-  expect(input.prop("defaultValue")).toBe(defaultProps.param.value);
+  expect(input.prop("value")).toBe(defaultProps.param.value);
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -47,7 +47,7 @@ it("should set the input value as empty if the param value is not defined", () =
     name: "username",
     label: "Username",
     param: tparam,
-    handleBasicFormParamChange: jest.fn(),
+    handleBasicFormParamChange: jest.fn(() => jest.fn()),
   };
   const wrapper = mount(<TextParam {...tprops} />);
   const input = wrapper.find("input");

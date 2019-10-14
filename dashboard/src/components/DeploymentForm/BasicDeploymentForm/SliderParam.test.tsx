@@ -156,10 +156,9 @@ it("defaults to the min if the value is undefined", () => {
   const param = {
     type: "string",
     path: "disk",
-    minimum: 5,
-    maximum: 50,
   } as IBasicFormParam;
 
-  const wrapper = shallow(<SliderParam {...defaultProps} param={param} />);
+  const wrapper = shallow(<SliderParam {...defaultProps} param={param} min={5} />);
+
   expect(wrapper.state("value")).toBe(5);
 });
