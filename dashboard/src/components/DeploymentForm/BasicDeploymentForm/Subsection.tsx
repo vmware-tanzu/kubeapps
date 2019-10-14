@@ -8,8 +8,8 @@ export interface ISubsectionProps {
   label: string;
   param: IBasicFormParam;
   name: string;
-  enablerChildrenParam: string;
-  enablerCondition: boolean;
+  enablerChildrenParam?: string;
+  enablerCondition?: boolean;
   handleValuesChange: (value: string) => void;
   renderParam: (
     name: string,
@@ -28,7 +28,7 @@ class Subsection extends React.Component<ISubsectionProps> {
     const { label, param, name, enablerChildrenParam, enablerCondition } = this.props;
     return (
       <div className="subsection margin-v-normal">
-        {param.children && param.children[enablerChildrenParam] && (
+        {param.children && enablerChildrenParam && param.children[enablerChildrenParam] && (
           <BooleanParam
             label={param.children[enablerChildrenParam].title || enablerChildrenParam}
             handleBasicFormParamChange={this.handleChildrenParamChange}
@@ -40,11 +40,21 @@ class Subsection extends React.Component<ISubsectionProps> {
         <div
           hidden={
             param.children &&
+            !!enablerChildrenParam &&
             param.children[enablerChildrenParam] &&
             param.children[enablerChildrenParam].value !== enablerCondition
           }
         >
-          <div className="margin-v-normal">{label}</div>
+          <div className="margin-v-normal">
+            {label}
+            {param.description && (
+              <>
+                <br />
+                <span className="description">{param.description}</span>
+              </>
+            )}
+          </div>
+
           {param.children &&
             Object.keys(param.children)
               .filter(p => p !== enablerChildrenParam)
