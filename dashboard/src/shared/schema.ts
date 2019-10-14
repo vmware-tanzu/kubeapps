@@ -18,6 +18,8 @@ export const DISK_SIZE = "diskSize";
 export const MEMORY_REQUEST = "memoryRequest";
 export const CPU_REQUEST = "cpuRequest";
 export const RESOURCES = "resources";
+export const INGRESS = "ingress";
+export const ENABLE_INGRESS = "enableIngress";
 
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.
