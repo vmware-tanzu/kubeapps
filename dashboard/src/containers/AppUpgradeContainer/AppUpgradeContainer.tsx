@@ -5,6 +5,7 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 
+import { JSONSchema4 } from "json-schema";
 import AppUpgrade from "../../components/AppUpgrade";
 import { IChartVersion, IStoreState } from "../../shared/types";
 
@@ -32,6 +33,7 @@ function mapStateToProps(
     repoError: repos.errors.fetch,
     repos: repos.repos,
     selected: charts.selected,
+    enableBasicForm: config.enableBasicForm,
   };
 }
 
@@ -44,14 +46,17 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchRepositories: () => dispatch(actions.repos.fetchRepos()),
     getAppWithUpdateInfo: (releaseName: string, ns: string) =>
       dispatch(actions.apps.getAppWithUpdateInfo(releaseName, ns)),
-    getChartValues: (id: string, version: string) =>
-      dispatch(actions.charts.getChartValues(id, version)),
     getChartVersion: (id: string, version: string) =>
       dispatch(actions.charts.getChartVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
     goBack: () => dispatch(goBack()),
-    upgradeApp: (version: IChartVersion, releaseName: string, namespace: string, values?: string) =>
-      dispatch(actions.apps.upgradeApp(version, releaseName, namespace, values)),
+    upgradeApp: (
+      version: IChartVersion,
+      releaseName: string,
+      namespace: string,
+      values?: string,
+      schema?: JSONSchema4,
+    ) => dispatch(actions.apps.upgradeApp(version, releaseName, namespace, values)),
   };
 }
 

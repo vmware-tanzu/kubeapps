@@ -29,7 +29,6 @@ interface IDeploymentFormProps {
   goBack: () => RouterAction;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getChartVersion: (id: string, chartVersion: string) => void;
-  getChartValues: (id: string, chartVersion: string) => void;
   clearRepo: () => void;
 }
 
@@ -171,14 +170,10 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
   };
 
   public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { repo, chartName, getChartVersion, getChartValues } = this.props;
+    const { repo, chartName, getChartVersion } = this.props;
     const chartID = `${repo}/${chartName}`;
     this.setState({ version: e.currentTarget.value });
     getChartVersion(chartID, e.currentTarget.value);
-    if (!this.state.valuesModified) {
-      // Only update the default values if the user has not modify them
-      getChartValues(chartID, e.currentTarget.value);
-    }
   };
 
   public handleValuesChange = (value: string) => {
