@@ -18,318 +18,322 @@ exports[`renders a basic deployment with a disk size 1`] = `
   <div
     className="margin-t-normal"
   >
-    <SliderParam
-      handleBasicFormParamChange={[Function]}
-      id="diskSize-0"
+    <div
       key="diskSize-0"
-      label="Disk Size"
-      max={100}
-      min={1}
-      name="diskSize"
-      param={
-        Object {
-          "path": "size",
-          "type": "string",
-          "value": "10Gi",
-        }
-      }
-      unit="Gi"
     >
-      <div>
-        <label
-          htmlFor="diskSize-0"
-        >
-          <div
-            className="row"
+      <SliderParam
+        handleBasicFormParamChange={[Function]}
+        id="diskSize-0"
+        key="diskSize-0"
+        label="Disk Size"
+        max={100}
+        min={1}
+        name="diskSize"
+        param={
+          Object {
+            "path": "size",
+            "type": "string",
+            "value": "10Gi",
+          }
+        }
+        unit="Gi"
+      >
+        <div>
+          <label
+            htmlFor="diskSize-0"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
-              >
-                Disk Size
-              </div>
-            </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <div
-                className="row"
+                className="col-3 block"
               >
                 <div
-                  className="col-9"
+                  className="centered"
                 >
-                  <Slider
-                    default={10}
-                    max={100}
-                    min={1}
-                    onChange={[Function]}
-                    onUpdate={[Function]}
-                    values={10}
+                  Disk Size
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <div
+                  className="row"
+                >
+                  <div
+                    className="col-9"
                   >
                     <Slider
-                      component="div"
-                      disabled={false}
-                      domain={
-                        Array [
-                          1,
-                          100,
-                        ]
-                      }
-                      flatten={false}
-                      mode={1}
+                      default={10}
+                      max={100}
+                      min={1}
                       onChange={[Function]}
-                      onSlideEnd={[Function]}
-                      onSlideStart={[Function]}
                       onUpdate={[Function]}
-                      reversed={false}
-                      rootProps={Object {}}
-                      rootStyle={
-                        Object {
-                          "margin": "1.2em",
-                          "position": "relative",
-                          "width": "90%",
-                        }
-                      }
-                      step={1}
-                      values={
-                        Array [
-                          10,
-                        ]
-                      }
-                      vertical={false}
-                      warnOnChanges={false}
+                      values={10}
                     >
-                      <div
-                        style={
+                      <Slider
+                        component="div"
+                        disabled={false}
+                        domain={
+                          Array [
+                            1,
+                            100,
+                          ]
+                        }
+                        flatten={false}
+                        mode={1}
+                        onChange={[Function]}
+                        onSlideEnd={[Function]}
+                        onSlideStart={[Function]}
+                        onUpdate={[Function]}
+                        reversed={false}
+                        rootProps={Object {}}
+                        rootStyle={
                           Object {
                             "margin": "1.2em",
                             "position": "relative",
                             "width": "90%",
                           }
                         }
+                        step={1}
+                        values={
+                          Array [
+                            10,
+                          ]
+                        }
+                        vertical={false}
+                        warnOnChanges={false}
                       >
-                        <Rail
-                          activeHandleID={null}
-                          emitKeyboard={[Function]}
-                          emitMouse={[Function]}
-                          emitTouch={[Function]}
-                          getEventData={[Function]}
-                          handles={
-                            Array [
-                              Object {
-                                "id": "$$-0",
-                                "percent": 9.090909090909092,
-                                "value": 10,
-                              },
-                            ]
-                          }
-                          key=".0"
-                          scale={
-                            LinearScale {
-                              "domain": Array [
-                                1,
-                                100,
-                              ],
-                              "interpolator": [Function],
-                              "range": Array [
-                                0,
-                                100,
-                              ],
+                        <div
+                          style={
+                            Object {
+                              "margin": "1.2em",
+                              "position": "relative",
+                              "width": "90%",
                             }
                           }
                         >
-                          <div
-                            onMouseDown={[Function]}
-                            onTouchStart={[Function]}
-                            style={
-                              Object {
-                                "backgroundColor": "rgb(155,155,155)",
-                                "borderRadius": 7,
-                                "cursor": "pointer",
-                                "height": 14,
-                                "position": "absolute",
-                                "width": "100%",
-                              }
+                          <Rail
+                            activeHandleID={null}
+                            emitKeyboard={[Function]}
+                            emitMouse={[Function]}
+                            emitTouch={[Function]}
+                            getEventData={[Function]}
+                            handles={
+                              Array [
+                                Object {
+                                  "id": "$$-0",
+                                  "percent": 9.090909090909092,
+                                  "value": 10,
+                                },
+                              ]
                             }
-                          />
-                        </Rail>
-                        <Handles
-                          activeHandleID={null}
-                          emitKeyboard={[Function]}
-                          emitMouse={[Function]}
-                          emitTouch={[Function]}
-                          getEventData={[Function]}
-                          handles={
-                            Array [
-                              Object {
-                                "id": "$$-0",
-                                "percent": 9.090909090909092,
-                                "value": 10,
-                              },
-                            ]
-                          }
-                          key=".1"
-                          scale={
-                            LinearScale {
-                              "domain": Array [
-                                1,
-                                100,
-                              ],
-                              "interpolator": [Function],
-                              "range": Array [
-                                0,
-                                100,
-                              ],
-                            }
-                          }
-                        >
-                          <div
-                            className="slider-handles"
-                          >
-                            <Component
-                              domain={
-                                Array [
+                            key=".0"
+                            scale={
+                              LinearScale {
+                                "domain": Array [
                                   1,
                                   100,
-                                ]
+                                ],
+                                "interpolator": [Function],
+                                "range": Array [
+                                  0,
+                                  100,
+                                ],
                               }
-                              getHandleProps={[Function]}
-                              handle={
-                                Object {
-                                  "id": "$$-0",
-                                  "percent": 9.090909090909092,
-                                  "value": 10,
-                                }
-                              }
-                              key="$$-0"
-                            >
-                              <div
-                                aria-valuemax={100}
-                                aria-valuemin={1}
-                                aria-valuenow={10}
-                                onKeyDown={[Function]}
-                                onMouseDown={[Function]}
-                                onTouchStart={[Function]}
-                                role="slider"
-                                style={
-                                  Object {
-                                    "backgroundColor": "#34568f",
-                                    "borderRadius": "50%",
-                                    "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
-                                    "cursor": "pointer",
-                                    "height": 24,
-                                    "left": "9.090909090909092%",
-                                    "marginLeft": "-11px",
-                                    "marginTop": "-6px",
-                                    "position": "absolute",
-                                    "width": 24,
-                                    "zIndex": 2,
-                                  }
-                                }
-                              />
-                            </Component>
-                          </div>
-                        </Handles>
-                        <Tracks
-                          activeHandleID={null}
-                          emitKeyboard={[Function]}
-                          emitMouse={[Function]}
-                          emitTouch={[Function]}
-                          getEventData={[Function]}
-                          handles={
-                            Array [
-                              Object {
-                                "id": "$$-0",
-                                "percent": 9.090909090909092,
-                                "value": 10,
-                              },
-                            ]
-                          }
-                          key=".2"
-                          left={true}
-                          right={false}
-                          scale={
-                            LinearScale {
-                              "domain": Array [
-                                1,
-                                100,
-                              ],
-                              "interpolator": [Function],
-                              "range": Array [
-                                0,
-                                100,
-                              ],
                             }
-                          }
-                        >
-                          <div
-                            className="slider-tracks"
                           >
-                            <Component
-                              getTrackProps={[Function]}
-                              key="$-$$-0"
-                              source={
+                            <div
+                              onMouseDown={[Function]}
+                              onTouchStart={[Function]}
+                              style={
                                 Object {
-                                  "id": "$",
-                                  "percent": 0,
-                                  "value": 1,
+                                  "backgroundColor": "rgb(155,155,155)",
+                                  "borderRadius": 7,
+                                  "cursor": "pointer",
+                                  "height": 14,
+                                  "position": "absolute",
+                                  "width": "100%",
                                 }
                               }
-                              target={
+                            />
+                          </Rail>
+                          <Handles
+                            activeHandleID={null}
+                            emitKeyboard={[Function]}
+                            emitMouse={[Function]}
+                            emitTouch={[Function]}
+                            getEventData={[Function]}
+                            handles={
+                              Array [
                                 Object {
                                   "id": "$$-0",
                                   "percent": 9.090909090909092,
                                   "value": 10,
-                                }
+                                },
+                              ]
+                            }
+                            key=".1"
+                            scale={
+                              LinearScale {
+                                "domain": Array [
+                                  1,
+                                  100,
+                                ],
+                                "interpolator": [Function],
+                                "range": Array [
+                                  0,
+                                  100,
+                                ],
                               }
+                            }
+                          >
+                            <div
+                              className="slider-handles"
                             >
-                              <div
-                                onMouseDown={[Function]}
-                                onTouchStart={[Function]}
-                                style={
+                              <Component
+                                domain={
+                                  Array [
+                                    1,
+                                    100,
+                                  ]
+                                }
+                                getHandleProps={[Function]}
+                                handle={
                                   Object {
-                                    "backgroundColor": "#7aa0c4",
-                                    "borderRadius": 7,
-                                    "cursor": "pointer",
-                                    "height": 14,
-                                    "left": "0%",
-                                    "position": "absolute",
-                                    "width": "9.090909090909092%",
-                                    "zIndex": 1,
+                                    "id": "$$-0",
+                                    "percent": 9.090909090909092,
+                                    "value": 10,
                                   }
                                 }
-                              />
-                            </Component>
-                          </div>
-                        </Tracks>
-                      </div>
+                                key="$$-0"
+                              >
+                                <div
+                                  aria-valuemax={100}
+                                  aria-valuemin={1}
+                                  aria-valuenow={10}
+                                  onKeyDown={[Function]}
+                                  onMouseDown={[Function]}
+                                  onTouchStart={[Function]}
+                                  role="slider"
+                                  style={
+                                    Object {
+                                      "backgroundColor": "#34568f",
+                                      "borderRadius": "50%",
+                                      "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
+                                      "cursor": "pointer",
+                                      "height": 24,
+                                      "left": "9.090909090909092%",
+                                      "marginLeft": "-11px",
+                                      "marginTop": "-6px",
+                                      "position": "absolute",
+                                      "width": 24,
+                                      "zIndex": 2,
+                                    }
+                                  }
+                                />
+                              </Component>
+                            </div>
+                          </Handles>
+                          <Tracks
+                            activeHandleID={null}
+                            emitKeyboard={[Function]}
+                            emitMouse={[Function]}
+                            emitTouch={[Function]}
+                            getEventData={[Function]}
+                            handles={
+                              Array [
+                                Object {
+                                  "id": "$$-0",
+                                  "percent": 9.090909090909092,
+                                  "value": 10,
+                                },
+                              ]
+                            }
+                            key=".2"
+                            left={true}
+                            right={false}
+                            scale={
+                              LinearScale {
+                                "domain": Array [
+                                  1,
+                                  100,
+                                ],
+                                "interpolator": [Function],
+                                "range": Array [
+                                  0,
+                                  100,
+                                ],
+                              }
+                            }
+                          >
+                            <div
+                              className="slider-tracks"
+                            >
+                              <Component
+                                getTrackProps={[Function]}
+                                key="$-$$-0"
+                                source={
+                                  Object {
+                                    "id": "$",
+                                    "percent": 0,
+                                    "value": 1,
+                                  }
+                                }
+                                target={
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 9.090909090909092,
+                                    "value": 10,
+                                  }
+                                }
+                              >
+                                <div
+                                  onMouseDown={[Function]}
+                                  onTouchStart={[Function]}
+                                  style={
+                                    Object {
+                                      "backgroundColor": "#7aa0c4",
+                                      "borderRadius": 7,
+                                      "cursor": "pointer",
+                                      "height": 14,
+                                      "left": "0%",
+                                      "position": "absolute",
+                                      "width": "9.090909090909092%",
+                                      "zIndex": 1,
+                                    }
+                                  }
+                                />
+                              </Component>
+                            </div>
+                          </Tracks>
+                        </div>
+                      </Slider>
                     </Slider>
-                  </Slider>
-                </div>
-                <div
-                  className="col-3"
-                >
-                  <input
-                    className="disk_size_input"
-                    id="diskSize-0"
-                    onChange={[Function]}
-                    value={10}
-                  />
-                  <span
-                    className="margin-l-normal"
+                  </div>
+                  <div
+                    className="col-3"
                   >
-                    Gi
-                  </span>
+                    <input
+                      className="disk_size_input"
+                      id="diskSize-0"
+                      onChange={[Function]}
+                      value={10}
+                    />
+                    <span
+                      className="margin-l-normal"
+                    >
+                      Gi
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </label>
-      </div>
-    </SliderParam>
-    <hr />
+          </label>
+        </div>
+      </SliderParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;
@@ -351,51 +355,55 @@ exports[`renders a basic deployment with a email 1`] = `
   <div
     className="margin-t-normal"
   >
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="email-0"
-      inputType="string"
+    <div
       key="email-0"
-      label="email"
-      name="email"
-      param={
-        Object {
-          "path": "wordpressEmail",
-          "value": "user@example.com",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="email-0"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="email-0"
+        inputType="string"
+        key="email-0"
+        label="email"
+        name="email"
+        param={
+          Object {
+            "path": "wordpressEmail",
+            "value": "user@example.com",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="email-0"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                email
+                <div
+                  className="centered"
+                >
+                  email
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="email-0"
+                  onChange={[Function]}
+                  type="string"
+                  value="user@example.com"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="email-0"
-                onChange={[Function]}
-                type="string"
-                value="user@example.com"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;
@@ -418,247 +426,251 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
   <div
     className="margin-t-normal"
   >
-    <BooleanParam
-      handleBasicFormParamChange={[Function]}
-      id="enableMetrics-0"
+    <div
       key="enableMetrics-0"
-      label="enableMetrics"
-      name="enableMetrics"
-      param={
-        Object {
-          "path": "enableMetrics",
-          "type": "boolean",
-          "value": true,
-        }
-      }
     >
-      <label
-        htmlFor="enableMetrics-0"
+      <BooleanParam
+        handleBasicFormParamChange={[Function]}
+        id="enableMetrics-0"
+        key="enableMetrics-0"
+        label="enableMetrics"
+        name="enableMetrics"
+        param={
+          Object {
+            "path": "enableMetrics",
+            "type": "boolean",
+            "value": true,
+          }
+        }
       >
-        <div
-          className="margin-b-normal"
+        <label
+          htmlFor="enableMetrics-0"
         >
-          <span>
-            enableMetrics
-          </span>
-          <ReactSwitch
-            activeBoxShadow="0 0 2px 3px #3bf"
-            boxShadow={null}
-            checked={true}
-            checkedIcon={
-              <svg
-                height="100%"
-                style={
-                  Object {
-                    "position": "absolute",
-                    "top": 0,
-                  }
-                }
-                viewBox="-2 -5 17 21"
-                width="100%"
-              >
-                <path
-                  d="M11.264 0L5.26 6.004 2.103 2.847 0 4.95l5.26 5.26 8.108-8.107L11.264 0"
-                  fill="#fff"
-                  fillRule="evenodd"
-                />
-              </svg>
-            }
-            className="react-switch"
-            disabled={false}
-            height={28}
-            id="enableMetrics-0"
-            offColor="#888"
-            offHandleColor="#fff"
-            onChange={[Function]}
-            onColor="#080"
-            onHandleColor="#fff"
-            uncheckedIcon={
-              <svg
-                height="100%"
-                style={
-                  Object {
-                    "position": "absolute",
-                    "top": 0,
-                  }
-                }
-                viewBox="-2 -5 14 20"
-                width="100%"
-              >
-                <path
-                  d="M9.9 2.12L7.78 0 4.95 2.828 2.12 0 0 2.12l2.83 2.83L0 7.776 2.123 9.9 4.95 7.07 7.78 9.9 9.9 7.776 7.072 4.95 9.9 2.12"
-                  fill="#fff"
-                  fillRule="evenodd"
-                />
-              </svg>
-            }
-            width={56}
+          <div
+            className="margin-b-normal"
           >
-            <div
-              className="react-switch"
-              style={
-                Object {
-                  "MozTransition": "opacity 0.25s",
-                  "MozUserSelect": "none",
-                  "WebkitTapHighlightColor": "rgba(0, 0, 0, 0)",
-                  "WebkitTransition": "opacity 0.25s",
-                  "WebkitUserSelect": "none",
-                  "borderRadius": 14,
-                  "direction": "ltr",
-                  "display": "inline-block",
-                  "msUserSelect": "none",
-                  "opacity": 1,
-                  "position": "relative",
-                  "textAlign": "left",
-                  "touchAction": "none",
-                  "transition": "opacity 0.25s",
-                  "userSelect": "none",
-                }
+            <span>
+              enableMetrics
+            </span>
+            <ReactSwitch
+              activeBoxShadow="0 0 2px 3px #3bf"
+              boxShadow={null}
+              checked={true}
+              checkedIcon={
+                <svg
+                  height="100%"
+                  style={
+                    Object {
+                      "position": "absolute",
+                      "top": 0,
+                    }
+                  }
+                  viewBox="-2 -5 17 21"
+                  width="100%"
+                >
+                  <path
+                    d="M11.264 0L5.26 6.004 2.103 2.847 0 4.95l5.26 5.26 8.108-8.107L11.264 0"
+                    fill="#fff"
+                    fillRule="evenodd"
+                  />
+                </svg>
               }
+              className="react-switch"
+              disabled={false}
+              height={28}
+              id="enableMetrics-0"
+              offColor="#888"
+              offHandleColor="#fff"
+              onChange={[Function]}
+              onColor="#080"
+              onHandleColor="#fff"
+              uncheckedIcon={
+                <svg
+                  height="100%"
+                  style={
+                    Object {
+                      "position": "absolute",
+                      "top": 0,
+                    }
+                  }
+                  viewBox="-2 -5 14 20"
+                  width="100%"
+                >
+                  <path
+                    d="M9.9 2.12L7.78 0 4.95 2.828 2.12 0 0 2.12l2.83 2.83L0 7.776 2.123 9.9 4.95 7.07 7.78 9.9 9.9 7.776 7.072 4.95 9.9 2.12"
+                    fill="#fff"
+                    fillRule="evenodd"
+                  />
+                </svg>
+              }
+              width={56}
             >
               <div
-                className="react-switch-bg"
-                onClick={[Function]}
-                onMouseDown={[Function]}
+                className="react-switch"
                 style={
                   Object {
-                    "MozTransition": "background 0.25s",
-                    "WebkitTransition": "background 0.25s",
-                    "background": "#008800",
+                    "MozTransition": "opacity 0.25s",
+                    "MozUserSelect": "none",
+                    "WebkitTapHighlightColor": "rgba(0, 0, 0, 0)",
+                    "WebkitTransition": "opacity 0.25s",
+                    "WebkitUserSelect": "none",
                     "borderRadius": 14,
-                    "cursor": "pointer",
-                    "height": 28,
-                    "margin": 0,
+                    "direction": "ltr",
+                    "display": "inline-block",
+                    "msUserSelect": "none",
+                    "opacity": 1,
                     "position": "relative",
-                    "transition": "background 0.25s",
-                    "width": 56,
+                    "textAlign": "left",
+                    "touchAction": "none",
+                    "transition": "opacity 0.25s",
+                    "userSelect": "none",
                   }
                 }
               >
                 <div
+                  className="react-switch-bg"
+                  onClick={[Function]}
+                  onMouseDown={[Function]}
                   style={
                     Object {
-                      "MozTransition": "opacity 0.25s",
-                      "WebkitTransition": "opacity 0.25s",
+                      "MozTransition": "background 0.25s",
+                      "WebkitTransition": "background 0.25s",
+                      "background": "#008800",
+                      "borderRadius": 14,
+                      "cursor": "pointer",
                       "height": 28,
-                      "opacity": 1,
-                      "pointerEvents": "none",
+                      "margin": 0,
                       "position": "relative",
-                      "transition": "opacity 0.25s",
-                      "width": 30,
+                      "transition": "background 0.25s",
+                      "width": 56,
                     }
                   }
                 >
-                  <svg
-                    height="100%"
+                  <div
                     style={
                       Object {
-                        "position": "absolute",
-                        "top": 0,
+                        "MozTransition": "opacity 0.25s",
+                        "WebkitTransition": "opacity 0.25s",
+                        "height": 28,
+                        "opacity": 1,
+                        "pointerEvents": "none",
+                        "position": "relative",
+                        "transition": "opacity 0.25s",
+                        "width": 30,
                       }
                     }
-                    viewBox="-2 -5 17 21"
-                    width="100%"
                   >
-                    <path
-                      d="M11.264 0L5.26 6.004 2.103 2.847 0 4.95l5.26 5.26 8.108-8.107L11.264 0"
-                      fill="#fff"
-                      fillRule="evenodd"
-                    />
-                  </svg>
+                    <svg
+                      height="100%"
+                      style={
+                        Object {
+                          "position": "absolute",
+                          "top": 0,
+                        }
+                      }
+                      viewBox="-2 -5 17 21"
+                      width="100%"
+                    >
+                      <path
+                        d="M11.264 0L5.26 6.004 2.103 2.847 0 4.95l5.26 5.26 8.108-8.107L11.264 0"
+                        fill="#fff"
+                        fillRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div
+                    style={
+                      Object {
+                        "MozTransition": "opacity 0.25s",
+                        "WebkitTransition": "opacity 0.25s",
+                        "height": 28,
+                        "opacity": 0,
+                        "pointerEvents": "none",
+                        "position": "absolute",
+                        "right": 0,
+                        "top": 0,
+                        "transition": "opacity 0.25s",
+                        "width": 30,
+                      }
+                    }
+                  >
+                    <svg
+                      height="100%"
+                      style={
+                        Object {
+                          "position": "absolute",
+                          "top": 0,
+                        }
+                      }
+                      viewBox="-2 -5 14 20"
+                      width="100%"
+                    >
+                      <path
+                        d="M9.9 2.12L7.78 0 4.95 2.828 2.12 0 0 2.12l2.83 2.83L0 7.776 2.123 9.9 4.95 7.07 7.78 9.9 9.9 7.776 7.072 4.95 9.9 2.12"
+                        fill="#fff"
+                        fillRule="evenodd"
+                      />
+                    </svg>
+                  </div>
                 </div>
                 <div
+                  className="react-switch-handle"
+                  onClick={[Function]}
+                  onMouseDown={[Function]}
+                  onTouchCancel={[Function]}
+                  onTouchEnd={[Function]}
+                  onTouchMove={[Function]}
+                  onTouchStart={[Function]}
                   style={
                     Object {
-                      "MozTransition": "opacity 0.25s",
-                      "WebkitTransition": "opacity 0.25s",
-                      "height": 28,
-                      "opacity": 0,
-                      "pointerEvents": "none",
+                      "MozTransition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
+                      "WebkitTransition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
+                      "background": "#ffffff",
+                      "border": 0,
+                      "borderRadius": "50%",
+                      "boxShadow": null,
+                      "cursor": "pointer",
+                      "display": "inline-block",
+                      "height": 26,
+                      "outline": 0,
                       "position": "absolute",
-                      "right": 0,
-                      "top": 0,
-                      "transition": "opacity 0.25s",
-                      "width": 30,
+                      "top": 1,
+                      "transform": "translateX(29px)",
+                      "transition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
+                      "width": 26,
                     }
                   }
-                >
-                  <svg
-                    height="100%"
-                    style={
-                      Object {
-                        "position": "absolute",
-                        "top": 0,
-                      }
+                />
+                <input
+                  checked={true}
+                  disabled={false}
+                  id="enableMetrics-0"
+                  onBlur={[Function]}
+                  onChange={[Function]}
+                  onFocus={[Function]}
+                  onKeyUp={[Function]}
+                  role="switch"
+                  style={
+                    Object {
+                      "border": 0,
+                      "clip": "rect(0 0 0 0)",
+                      "height": 1,
+                      "margin": -1,
+                      "overflow": "hidden",
+                      "padding": 0,
+                      "position": "absolute",
+                      "width": 1,
                     }
-                    viewBox="-2 -5 14 20"
-                    width="100%"
-                  >
-                    <path
-                      d="M9.9 2.12L7.78 0 4.95 2.828 2.12 0 0 2.12l2.83 2.83L0 7.776 2.123 9.9 4.95 7.07 7.78 9.9 9.9 7.776 7.072 4.95 9.9 2.12"
-                      fill="#fff"
-                      fillRule="evenodd"
-                    />
-                  </svg>
-                </div>
+                  }
+                  type="checkbox"
+                />
               </div>
-              <div
-                className="react-switch-handle"
-                onClick={[Function]}
-                onMouseDown={[Function]}
-                onTouchCancel={[Function]}
-                onTouchEnd={[Function]}
-                onTouchMove={[Function]}
-                onTouchStart={[Function]}
-                style={
-                  Object {
-                    "MozTransition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
-                    "WebkitTransition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
-                    "background": "#ffffff",
-                    "border": 0,
-                    "borderRadius": "50%",
-                    "boxShadow": null,
-                    "cursor": "pointer",
-                    "display": "inline-block",
-                    "height": 26,
-                    "outline": 0,
-                    "position": "absolute",
-                    "top": 1,
-                    "transform": "translateX(29px)",
-                    "transition": "background-color 0.25s, transform 0.25s, box-shadow 0.15s",
-                    "width": 26,
-                  }
-                }
-              />
-              <input
-                checked={true}
-                disabled={false}
-                id="enableMetrics-0"
-                onBlur={[Function]}
-                onChange={[Function]}
-                onFocus={[Function]}
-                onKeyUp={[Function]}
-                role="switch"
-                style={
-                  Object {
-                    "border": 0,
-                    "clip": "rect(0 0 0 0)",
-                    "height": 1,
-                    "margin": -1,
-                    "overflow": "hidden",
-                    "padding": 0,
-                    "position": "absolute",
-                    "width": 1,
-                  }
-                }
-                type="checkbox"
-              />
-            </div>
-          </ReactSwitch>
-        </div>
-      </label>
-    </BooleanParam>
-    <hr />
+            </ReactSwitch>
+          </div>
+        </label>
+      </BooleanParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;
@@ -681,52 +693,56 @@ exports[`renders a basic deployment with a generic number 1`] = `
   <div
     className="margin-t-normal"
   >
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="replicas-0"
-      inputType="number"
+    <div
       key="replicas-0"
-      label="replicas"
-      name="replicas"
-      param={
-        Object {
-          "path": "replicas",
-          "type": "integer",
-          "value": 1,
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="replicas-0"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="replicas-0"
+        inputType="number"
+        key="replicas-0"
+        label="replicas"
+        name="replicas"
+        param={
+          Object {
+            "path": "replicas",
+            "type": "integer",
+            "value": 1,
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="replicas-0"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                replicas
+                <div
+                  className="centered"
+                >
+                  replicas
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="replicas-0"
+                  onChange={[Function]}
+                  type="number"
+                  value={1}
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="replicas-0"
-                onChange={[Function]}
-                type="number"
-                value={1}
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;
@@ -749,52 +765,56 @@ exports[`renders a basic deployment with a generic string 1`] = `
   <div
     className="margin-t-normal"
   >
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="blogName-0"
-      inputType="string"
+    <div
       key="blogName-0"
-      label="blogName"
-      name="blogName"
-      param={
-        Object {
-          "path": "blogName",
-          "type": "string",
-          "value": "my-blog",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="blogName-0"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="blogName-0"
+        inputType="string"
+        key="blogName-0"
+        label="blogName"
+        name="blogName"
+        param={
+          Object {
+            "path": "blogName",
+            "type": "string",
+            "value": "my-blog",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="blogName-0"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                blogName
+                <div
+                  className="centered"
+                >
+                  blogName
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="blogName-0"
+                  onChange={[Function]}
+                  type="string"
+                  value="my-blog"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="blogName-0"
-                onChange={[Function]}
-                type="string"
-                value="my-blog"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;
@@ -816,51 +836,55 @@ exports[`renders a basic deployment with a password 1`] = `
   <div
     className="margin-t-normal"
   >
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="password-0"
-      inputType="string"
+    <div
       key="password-0"
-      label="password"
-      name="password"
-      param={
-        Object {
-          "path": "wordpressPassword",
-          "value": "sserpdrow",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="password-0"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="password-0"
+        inputType="string"
+        key="password-0"
+        label="password"
+        name="password"
+        param={
+          Object {
+            "path": "wordpressPassword",
+            "value": "sserpdrow",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="password-0"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                password
+                <div
+                  className="centered"
+                >
+                  password
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="password-0"
+                  onChange={[Function]}
+                  type="string"
+                  value="sserpdrow"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="password-0"
-                onChange={[Function]}
-                type="string"
-                value="sserpdrow"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;
@@ -882,51 +906,55 @@ exports[`renders a basic deployment with a username 1`] = `
   <div
     className="margin-t-normal"
   >
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="username-0"
-      inputType="string"
+    <div
       key="username-0"
-      label="username"
-      name="username"
-      param={
-        Object {
-          "path": "wordpressUsername",
-          "value": "user",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="username-0"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="username-0"
+        inputType="string"
+        key="username-0"
+        label="username"
+        name="username"
+        param={
+          Object {
+            "path": "wordpressUsername",
+            "value": "user",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="username-0"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                username
+                <div
+                  className="centered"
+                >
+                  username
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="username-0"
+                  onChange={[Function]}
+                  type="string"
+                  value="user"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="username-0"
-                onChange={[Function]}
-                type="string"
-                value="user"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;
@@ -961,187 +989,203 @@ exports[`renders a basic deployment with username, password, email and a generic
   <div
     className="margin-t-normal"
   >
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="username-0"
-      inputType="string"
+    <div
       key="username-0"
-      label="username"
-      name="username"
-      param={
-        Object {
-          "path": "wordpressUsername",
-          "value": "user",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="username-0"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="username-0"
+        inputType="string"
+        key="username-0"
+        label="username"
+        name="username"
+        param={
+          Object {
+            "path": "wordpressUsername",
+            "value": "user",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="username-0"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                username
+                <div
+                  className="centered"
+                >
+                  username
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="username-0"
+                  onChange={[Function]}
+                  type="string"
+                  value="user"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="username-0"
-                onChange={[Function]}
-                type="string"
-                value="user"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="password-1"
-      inputType="string"
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
+    <div
       key="password-1"
-      label="password"
-      name="password"
-      param={
-        Object {
-          "path": "wordpressPassword",
-          "value": "sserpdrow",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="password-1"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="password-1"
+        inputType="string"
+        key="password-1"
+        label="password"
+        name="password"
+        param={
+          Object {
+            "path": "wordpressPassword",
+            "value": "sserpdrow",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="password-1"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                password
+                <div
+                  className="centered"
+                >
+                  password
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="password-1"
+                  onChange={[Function]}
+                  type="string"
+                  value="sserpdrow"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="password-1"
-                onChange={[Function]}
-                type="string"
-                value="sserpdrow"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="email-2"
-      inputType="string"
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
+    <div
       key="email-2"
-      label="email"
-      name="email"
-      param={
-        Object {
-          "path": "wordpressEmail",
-          "value": "user@example.com",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="email-2"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="email-2"
+        inputType="string"
+        key="email-2"
+        label="email"
+        name="email"
+        param={
+          Object {
+            "path": "wordpressEmail",
+            "value": "user@example.com",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="email-2"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                email
+                <div
+                  className="centered"
+                >
+                  email
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="email-2"
+                  onChange={[Function]}
+                  type="string"
+                  value="user@example.com"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="email-2"
-                onChange={[Function]}
-                type="string"
-                value="user@example.com"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
-    <TextParam
-      handleBasicFormParamChange={[Function]}
-      id="blogName-3"
-      inputType="string"
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
+    <div
       key="blogName-3"
-      label="blogName"
-      name="blogName"
-      param={
-        Object {
-          "path": "blogName",
-          "type": "string",
-          "value": "my-blog",
-        }
-      }
     >
-      <div>
-        <label
-          htmlFor="blogName-3"
-        >
-          <div
-            className="row"
+      <TextParam
+        handleBasicFormParamChange={[Function]}
+        id="blogName-3"
+        inputType="string"
+        key="blogName-3"
+        label="blogName"
+        name="blogName"
+        param={
+          Object {
+            "path": "blogName",
+            "type": "string",
+            "value": "my-blog",
+          }
+        }
+      >
+        <div>
+          <label
+            htmlFor="blogName-3"
           >
             <div
-              className="col-3 block"
+              className="row"
             >
               <div
-                className="centered"
+                className="col-3 block"
               >
-                blogName
+                <div
+                  className="centered"
+                >
+                  blogName
+                </div>
+              </div>
+              <div
+                className="col-9 margin-t-small"
+              >
+                <input
+                  id="blogName-3"
+                  onChange={[Function]}
+                  type="string"
+                  value="my-blog"
+                />
               </div>
             </div>
-            <div
-              className="col-9 margin-t-small"
-            >
-              <input
-                id="blogName-3"
-                onChange={[Function]}
-                type="string"
-                value="my-blog"
-              />
-            </div>
-          </div>
-        </label>
-      </div>
-    </TextParam>
-    <hr />
+          </label>
+        </div>
+      </TextParam>
+      <hr />
+    </div>
   </div>
 </BasicDeploymentForm>
 `;

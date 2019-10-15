@@ -62,8 +62,8 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
                 <div className="col-9">
                   <Slider
                     // If the parameter defines a minimum or maximum, maintain those
-                    min={param.minimum || min}
-                    max={param.maximum || Math.max(max, this.state.value)}
+                    min={Math.min(param.minimum || min, this.state.value)}
+                    max={Math.max(param.maximum || max, this.state.value)}
                     default={this.state.value}
                     onChange={this.onChangeSlider}
                     onUpdate={this.onUpdateSlider}
