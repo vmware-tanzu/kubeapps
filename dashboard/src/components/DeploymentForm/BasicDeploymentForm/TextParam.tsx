@@ -29,7 +29,7 @@ class TextParam extends React.Component<IStringParamProps> {
           <input
             id={id}
             onChange={this.props.handleBasicFormParamChange(name, param)}
-            defaultValue={param.value}
+            value={param.value === undefined ? "" : param.value}
             type={inputType ? inputType : "text"}
           />
         </label>

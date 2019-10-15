@@ -1,3 +1,4 @@
+import { JSONSchema4 } from "json-schema";
 import { axiosWithAuth } from "./AxiosInstance";
 import { IChart, IChartVersion } from "./types";
 import * as URL from "./url";
@@ -33,7 +34,7 @@ export default class Chart {
   }
 
   public static async getSchema(id: string, version: string) {
-    const { data } = await axiosWithAuth.get<string>(URL.api.charts.getSchema(id, version));
+    const { data } = await axiosWithAuth.get<JSONSchema4>(URL.api.charts.getSchema(id, version));
     return data;
   }
 

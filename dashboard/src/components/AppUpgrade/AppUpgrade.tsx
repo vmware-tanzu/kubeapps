@@ -37,7 +37,6 @@ interface IAppUpgradeProps {
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
-  getChartValues: (id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
   fetchRepositories: () => void;
