@@ -5,7 +5,9 @@ import TextParam from "./TextParam";
 import {
   CPU_REQUEST,
   DISK_SIZE,
+  ENABLE_INGRESS,
   EXTERNAL_DB,
+  INGRESS,
   MEMORY_REQUEST,
   RESOURCES,
   USE_SELF_HOSTED_DB,
@@ -114,6 +116,20 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             min={10}
             max={2000}
             unit="m"
+          />
+        );
+      case INGRESS:
+        return (
+          <Subsection
+            label={param.title || "Ingress details"}
+            handleValuesChange={this.props.handleValuesChange}
+            appValues={this.props.appValues}
+            renderParam={this.renderParam}
+            key={id}
+            name={name}
+            param={param}
+            enablerChildrenParam={ENABLE_INGRESS}
+            enablerCondition={true}
           />
         );
       default:

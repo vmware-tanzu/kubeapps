@@ -15,7 +15,6 @@ import DeploymentFormBody, {
 } from "./DeploymentFormBody";
 
 const defaultProps = {
-  kubeappsNamespace: "kubeapps",
   chartID: "foo",
   chartVersion: "1.0.0",
   error: undefined,
