@@ -14,9 +14,6 @@ nullOptions.nullStr = "";
 // Form keys that require pre-definition. This list should be kept as small as possible
 export const EXTERNAL_DB = "externalDatabase";
 export const USE_SELF_HOSTED_DB = "useSelfHostedDatabase";
-export const DISK_SIZE = "diskSize";
-export const MEMORY_REQUEST = "memoryRequest";
-export const CPU_REQUEST = "cpuRequest";
 export const RESOURCES = "resources";
 export const INGRESS = "ingress";
 export const ENABLE_INGRESS = "enableIngress";
@@ -35,19 +32,16 @@ export function retrieveBasicFormParams(
     Object.keys(properties).map(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
-      const { type, title, description, form, minimum, maximum } = properties[propertyKey];
+      const { type, form } = properties[propertyKey];
       // If the property has the key "form", it's a basic parameter
       if (form) {
         // Use the default value either from the JSON schema or the default values
         const value = getValue(defaultValues, itemPath, properties[propertyKey].default);
         const param: IBasicFormParam = {
+          ...properties[propertyKey],
           path: itemPath,
           type: String(type),
           value,
-          title,
-          description,
-          minimum,
-          maximum,
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
