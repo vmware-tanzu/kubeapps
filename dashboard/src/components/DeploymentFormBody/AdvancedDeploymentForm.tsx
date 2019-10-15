@@ -12,7 +12,7 @@ export interface IAdvancedDeploymentForm {
 class AdvancedDeploymentForm extends React.Component<IAdvancedDeploymentForm> {
   public render() {
     return (
-      <div>
+      <div className="margin-t-normal">
         <label htmlFor="values">Values (YAML)</label>
         <AceEditor
           mode="yaml"

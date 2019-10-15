@@ -29,14 +29,23 @@ export interface IBasicDeploymentFormProps {
 
 class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   public render() {
-    return Object.keys(this.props.params).map((paramName, i) => {
-      return this.renderParam(
-        paramName,
-        this.props.params[paramName],
-        i,
-        this.props.handleBasicFormParamChange,
-      );
-    });
+    return (
+      <div className="margin-t-normal">
+        {Object.keys(this.props.params).map((paramName, i) => {
+          return (
+            <>
+              {this.renderParam(
+                paramName,
+                this.props.params[paramName],
+                i,
+                this.props.handleBasicFormParamChange,
+              )}
+              <hr />
+            </>
+          );
+        })}
+      </div>
+    );
   }
 
   private renderParam(
