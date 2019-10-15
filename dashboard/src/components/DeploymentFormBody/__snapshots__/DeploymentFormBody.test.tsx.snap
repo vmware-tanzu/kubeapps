@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;
+
+exports[`renders the full DeploymentFormBody 1`] = `
+<div>
+  <div>
+    <label
+      htmlFor="chartVersion"
+    >
+      Version
+    </label>
+    <select
+      id="chartVersion"
+      onChange={[Function]}
+      required={true}
+      value="1.2.3"
+    >
+      <option
+        key="foo"
+        value="1.2.3"
+      >
+        1.2.3
+         
+      </option>
+    </select>
+  </div>
+  <AdvancedDeploymentForm
+    appValues="foo: bar"
+    handleValuesChange={[Function]}
+  />
+  <div>
+    <button
+      className="button button-primary margin-t-big"
+      type="submit"
+    >
+      Submit
+    </button>
+  </div>
+</div>
+`;

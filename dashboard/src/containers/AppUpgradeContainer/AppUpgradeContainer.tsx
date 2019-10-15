@@ -56,7 +56,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       namespace: string,
       values?: string,
       schema?: JSONSchema4,
-    ) => dispatch(actions.apps.upgradeApp(version, releaseName, namespace, values)),
+    ) => dispatch(actions.apps.upgradeApp(version, releaseName, namespace, values, schema)),
   };
 }
 

@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { RouterAction } from "connected-react-router";
+import { JSONSchema4 } from "json-schema";
 import { Link } from "react-router-dom";
 import {
   IAppRepository,
@@ -31,6 +32,7 @@ interface IAppUpgradeProps {
     releaseName: string,
     namespace: string,
     values?: string,
+    schema?: JSONSchema4,
   ) => Promise<boolean>;
   clearRepo: () => void;
   checkChart: (repo: string, chartName: string) => void;
@@ -40,6 +42,7 @@ interface IAppUpgradeProps {
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
   fetchRepositories: () => void;
+  enableBasicForm: boolean;
 }
 
 interface IAppUpgradeState {
