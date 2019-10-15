@@ -8,8 +8,6 @@ export interface ISubsectionProps {
   label: string;
   param: IBasicFormParam;
   name: string;
-  enablerChildrenParam?: string;
-  enablerCondition?: boolean;
   handleValuesChange: (value: string) => void;
   renderParam: (
     name: string,
@@ -23,9 +21,34 @@ export interface ISubsectionProps {
   appValues: string;
 }
 
+export interface ISubsectionState {
+  enablerChildrenParam: string;
+  enablerCondition: boolean;
+}
+
+function findEnabler(name: string, param: IBasicFormParam) {
+  let result = { enablerChildrenParam: "", enablerCondition: false };
+  const children = param.children;
+  if (children) {
+    Object.keys(children).forEach(p => {
+      if (children[p].type === "boolean") {
+        if (children[p].enable === name) {
+          result = { enablerChildrenParam: p, enablerCondition: true };
+        } else if (children[p].disable === name) {
+          result = { enablerChildrenParam: p, enablerCondition: false };
+        }
+      }
+    });
+  }
+  return result;
+}
+
 class Subsection extends React.Component<ISubsectionProps> {
+  public state: ISubsectionState = findEnabler(this.props.name, this.props.param);
+
   public render() {
-    const { label, param, name, enablerChildrenParam, enablerCondition } = this.props;
+    const { label, param, name } = this.props;
+    const { enablerChildrenParam, enablerCondition } = this.state;
     return (
       <div className="subsection margin-v-normal">
         {param.children && enablerChildrenParam && param.children[enablerChildrenParam] && (
