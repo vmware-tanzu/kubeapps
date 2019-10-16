@@ -297,7 +297,7 @@ describe("when the basic form is enabled", () => {
 
     const tab = wrapper
       .find(Tab)
-      .findWhere(t => t.text() === "Basic")
+      .findWhere(t => !!t.text().match("Basic"))
       .first();
     tab.simulate("click");
 
