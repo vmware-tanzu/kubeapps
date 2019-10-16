@@ -206,7 +206,7 @@ mariadb:
           mariadb: {
             type: "object",
             properties: {
-              enabled: { type: "boolean", form: "enableMariadb", disable: "externalDatabase" },
+              enabled: { type: "boolean", form: "enableMariadb", disables: "externalDatabase" },
             },
           },
         },
@@ -220,7 +220,7 @@ mariadb:
             enableMariadb: {
               path: "mariadb.enabled",
               type: "boolean",
-              disable: "externalDatabase",
+              disables: "externalDatabase",
             },
           },
         } as IBasicFormParam,
@@ -244,7 +244,7 @@ external:
           external: {
             type: "object",
             properties: {
-              database: { type: "boolean", form: "enableDB", enable: "externalDatabase" },
+              database: { type: "boolean", form: "enableDB", enables: "externalDatabase" },
             },
           },
         },
@@ -258,7 +258,7 @@ external:
             enableDB: {
               path: "external.database",
               type: "boolean",
-              enable: "externalDatabase",
+              enables: "externalDatabase",
             },
           },
         } as IBasicFormParam,

@@ -60,15 +60,15 @@ export function retrieveBasicFormParams(
 }
 
 // orderParams conveniently structure the parameters to satisfy a parent-children relationship even if
-// those parameters doesn't have that relation in the source. This is only used when a parameter
+// those parameters don't have that relation in the source. This is only used when a parameter
 // enables/disables another.
 // CAVEAT: It only works with one level of depth
 function orderParams(params: {
   [key: string]: IBasicFormParam;
 }): { [key: string]: IBasicFormParam } {
   Object.keys(params).forEach(p => {
-    if (params[p].disable || params[p].enable) {
-      const relatedParam = params[p].disable || params[p].enable;
+    if (params[p].disables || params[p].enables) {
+      const relatedParam = params[p].disables || params[p].enables;
       if (relatedParam && params[relatedParam]) {
         params[relatedParam].children = {
           ...params[relatedParam].children,

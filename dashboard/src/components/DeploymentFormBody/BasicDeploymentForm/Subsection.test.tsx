@@ -28,7 +28,7 @@ const defaultProps = {
         title: "Enable External Database",
         type: "boolean",
         value: true,
-        disable: "externalDatabase",
+        disables: "externalDatabase",
       } as IBasicFormParam,
     },
     path: "externalDatabase",

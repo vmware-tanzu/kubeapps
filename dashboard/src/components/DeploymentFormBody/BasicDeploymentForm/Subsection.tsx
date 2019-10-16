@@ -32,9 +32,9 @@ function findEnabler(name: string, param: IBasicFormParam) {
   if (children) {
     Object.keys(children).forEach(p => {
       if (children[p].type === "boolean") {
-        if (children[p].enable === name) {
+        if (children[p].enables === name) {
           result = { enablerChildrenParam: p, enablerCondition: true };
-        } else if (children[p].disable === name) {
+        } else if (children[p].disables === name) {
           result = { enablerChildrenParam: p, enablerCondition: false };
         }
       }
