@@ -387,6 +387,8 @@ export interface IBasicFormParam {
   sliderMin?: number;
   sliderMax?: number;
   sliderUnit?: string;
+  disables?: string;
+  enables?: string;
   description?: string;
   children?: { [name: string]: IBasicFormParam };
 }

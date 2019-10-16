@@ -2,13 +2,6 @@ import * as React from "react";
 import { IBasicFormParam } from "shared/types";
 import TextParam from "./TextParam";
 
-import {
-  ENABLE_INGRESS,
-  EXTERNAL_DB,
-  INGRESS,
-  RESOURCES,
-  USE_SELF_HOSTED_DB,
-} from "../../../shared/schema";
 import "./BasicDeploymentForm.css";
 import BooleanParam from "./BooleanParam";
 import SliderParam from "./SliderParam";
@@ -56,46 +49,6 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
     ) => (e: React.FormEvent<HTMLInputElement>) => void,
   ) {
     switch (name) {
-      case EXTERNAL_DB:
-        return (
-          <Subsection
-            label={param.title || "External Database Details"}
-            handleValuesChange={this.props.handleValuesChange}
-            appValues={this.props.appValues}
-            renderParam={this.renderParam}
-            key={id}
-            name={name}
-            param={param}
-            enablerChildrenParam={USE_SELF_HOSTED_DB}
-            enablerCondition={false}
-          />
-        );
-      case RESOURCES:
-        return (
-          <Subsection
-            label={param.title || "Application resources"}
-            handleValuesChange={this.props.handleValuesChange}
-            appValues={this.props.appValues}
-            renderParam={this.renderParam}
-            key={id}
-            name={name}
-            param={param}
-          />
-        );
-      case INGRESS:
-        return (
-          <Subsection
-            label={param.title || "Ingress details"}
-            handleValuesChange={this.props.handleValuesChange}
-            appValues={this.props.appValues}
-            renderParam={this.renderParam}
-            key={id}
-            name={name}
-            param={param}
-            enablerChildrenParam={ENABLE_INGRESS}
-            enablerCondition={true}
-          />
-        );
       default:
         switch (param.type) {
           case "boolean":
@@ -109,6 +62,19 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
                 param={param}
               />
             );
+          case "object": {
+            return (
+              <Subsection
+                label={param.title || name}
+                handleValuesChange={this.props.handleValuesChange}
+                appValues={this.props.appValues}
+                renderParam={this.renderParam}
+                key={id}
+                name={name}
+                param={param}
+              />
+            );
+          }
           case "string": {
             if (param.render === "slider") {
               return (

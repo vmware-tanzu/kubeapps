@@ -11,13 +11,6 @@ import { IBasicFormParam } from "./types";
 const { nullOptions } = require("yaml/types");
 nullOptions.nullStr = "";
 
-// Form keys that require pre-definition. This list should be kept as small as possible
-export const EXTERNAL_DB = "externalDatabase";
-export const USE_SELF_HOSTED_DB = "useSelfHostedDatabase";
-export const RESOURCES = "resources";
-export const INGRESS = "ingress";
-export const ENABLE_INGRESS = "enableIngress";
-
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.
 // It returns a key:value map for easier handling.
@@ -67,15 +60,24 @@ export function retrieveBasicFormParams(
 }
 
 // orderParams conveniently structure the parameters to satisfy a parent-children relationship even if
-// those parameters doesn't have that relation in the source
+// those parameters don't have that relation in the source. This is only used when a parameter
+// enables/disables another.
+// CAVEAT: It only works with one level of depth
 function orderParams(params: {
   [key: string]: IBasicFormParam;
 }): { [key: string]: IBasicFormParam } {
-  // Move useSelfHostedDatabase to externalDatabase since it enable/disable that section
-  if (params[EXTERNAL_DB] && params[EXTERNAL_DB].children && params[USE_SELF_HOSTED_DB]) {
-    params[EXTERNAL_DB].children![USE_SELF_HOSTED_DB] = params[USE_SELF_HOSTED_DB];
-    delete params[USE_SELF_HOSTED_DB];
-  }
+  Object.keys(params).forEach(p => {
+    if (params[p].disables || params[p].enables) {
+      const relatedParam = params[p].disables || params[p].enables;
+      if (relatedParam && params[relatedParam]) {
+        params[relatedParam].children = {
+          ...params[relatedParam].children,
+          [p]: params[p],
+        };
+        delete params[p];
+      }
+    }
+  });
   return params;
 }
 
