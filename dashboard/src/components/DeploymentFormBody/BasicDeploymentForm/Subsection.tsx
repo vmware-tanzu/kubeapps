@@ -12,7 +12,7 @@ export interface ISubsectionProps {
   renderParam: (
     name: string,
     param: IBasicFormParam,
-    index: number,
+    id: string,
     handleBasicFormParamChange: (
       name: string,
       p: IBasicFormParam,
@@ -85,7 +85,7 @@ class Subsection extends React.Component<ISubsectionProps> {
                 return this.props.renderParam(
                   paramName,
                   param.children![paramName],
-                  i,
+                  `${paramName}-${i}`,
                   this.handleChildrenParamChange,
                 );
               })}
