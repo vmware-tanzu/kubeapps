@@ -18,13 +18,29 @@ exports[`should render a text param with title and description 1`] = `
     <label
       htmlFor="foo"
     >
-      Username
-      <input
-        id="foo"
-        onChange={[Function]}
-        type="text"
-        value="user"
-      />
+      <div
+        className="row"
+      >
+        <div
+          className="col-3 block"
+        >
+          <div
+            className="centered"
+          >
+            Username
+          </div>
+        </div>
+        <div
+          className="col-9 margin-t-small"
+        >
+          <input
+            id="foo"
+            onChange={[Function]}
+            type="text"
+            value="user"
+          />
+        </div>
+      </div>
     </label>
   </div>
 </TextParam>
