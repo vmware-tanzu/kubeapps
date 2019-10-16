@@ -26,26 +26,35 @@ export interface IBasicDeploymentFormProps {
 
 class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   public render() {
-    return Object.keys(this.props.params).map((paramName, i) => {
-      return this.renderParam(
-        paramName,
-        this.props.params[paramName],
-        i,
-        this.props.handleBasicFormParamChange,
-      );
-    });
+    return (
+      <div className="margin-t-normal">
+        {Object.keys(this.props.params).map((paramName, i) => {
+          const id = `${paramName}-${i}`;
+          return (
+            <div key={id}>
+              {this.renderParam(
+                paramName,
+                this.props.params[paramName],
+                id,
+                this.props.handleBasicFormParamChange,
+              )}
+              <hr />
+            </div>
+          );
+        })}
+      </div>
+    );
   }
 
   private renderParam(
     name: string,
     param: IBasicFormParam,
-    index: number,
+    id: string,
     handleBasicFormParamChange: (
       name: string,
       p: IBasicFormParam,
     ) => (e: React.FormEvent<HTMLInputElement>) => void,
   ) {
-    const id = `${name}-${index}`;
     switch (name) {
       case EXTERNAL_DB:
         return (

@@ -53,33 +53,34 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
     return (
       <div>
         <label htmlFor={this.props.id}>
-          {label}
-          {param.description && (
-            <>
-              <br />
-              <span className="description">{param.description}</span>
-            </>
-          )}
           <div className="row">
-            <div className="col-10">
-              <Slider
-                // If the parameter defines a minimum or maximum, maintain those
-                min={param.minimum || min}
-                max={param.maximum || Math.max(max, this.state.value)}
-                default={this.state.value}
-                onChange={this.onChangeSlider}
-                onUpdate={this.onUpdateSlider}
-                values={this.state.value}
-              />
+            <div className="col-3 block">
+              <div className="centered">{label}</div>
             </div>
-            <div className="col-2">
-              <input
-                className="disk_size_input"
-                id={this.props.id}
-                onChange={this.onChangeInput}
-                value={this.state.value}
-              />
-              <span className="margin-l-normal">{this.props.unit}</span>
+            <div className="col-9 margin-t-small">
+              <div className="row">
+                <div className="col-9">
+                  <Slider
+                    // If the parameter defines a minimum or maximum, maintain those
+                    min={Math.min(param.minimum || min, this.state.value)}
+                    max={Math.max(param.maximum || max, this.state.value)}
+                    default={this.state.value}
+                    onChange={this.onChangeSlider}
+                    onUpdate={this.onUpdateSlider}
+                    values={this.state.value}
+                  />
+                </div>
+                <div className="col-3">
+                  <input
+                    className="disk_size_input"
+                    id={this.props.id}
+                    onChange={this.onChangeInput}
+                    value={this.state.value}
+                  />
+                  <span className="margin-l-normal">{this.props.unit}</span>
+                </div>
+              </div>
+              {param.description && <span className="description">{param.description}</span>}
             </div>
           </div>
         </label>
