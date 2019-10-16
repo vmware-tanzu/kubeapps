@@ -9,6 +9,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
     Object {
       "diskSize": Object {
         "path": "size",
+        "render": "slider",
         "type": "string",
         "value": "10Gi",
       },
@@ -25,18 +26,19 @@ exports[`renders a basic deployment with a disk size 1`] = `
         handleBasicFormParamChange={[Function]}
         id="diskSize-0"
         key="diskSize-0"
-        label="Disk Size"
-        max={100}
+        label="diskSize"
+        max={1000}
         min={1}
         name="diskSize"
         param={
           Object {
             "path": "size",
+            "render": "slider",
             "type": "string",
             "value": "10Gi",
           }
         }
-        unit="Gi"
+        unit=""
       >
         <div>
           <label
@@ -51,7 +53,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                 <div
                   className="centered"
                 >
-                  Disk Size
+                  diskSize
                 </div>
               </div>
               <div
@@ -65,7 +67,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                   >
                     <Slider
                       default={10}
-                      max={100}
+                      max={1000}
                       min={1}
                       onChange={[Function]}
                       onUpdate={[Function]}
@@ -77,7 +79,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                         domain={
                           Array [
                             1,
-                            100,
+                            1000,
                           ]
                         }
                         flatten={false}
@@ -123,7 +125,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               Array [
                                 Object {
                                   "id": "$$-0",
-                                  "percent": 9.090909090909092,
+                                  "percent": 0.9009009009009009,
                                   "value": 10,
                                 },
                               ]
@@ -133,7 +135,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               LinearScale {
                                 "domain": Array [
                                   1,
-                                  100,
+                                  1000,
                                 ],
                                 "interpolator": [Function],
                                 "range": Array [
@@ -168,7 +170,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               Array [
                                 Object {
                                   "id": "$$-0",
-                                  "percent": 9.090909090909092,
+                                  "percent": 0.9009009009009009,
                                   "value": 10,
                                 },
                               ]
@@ -178,7 +180,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               LinearScale {
                                 "domain": Array [
                                   1,
-                                  100,
+                                  1000,
                                 ],
                                 "interpolator": [Function],
                                 "range": Array [
@@ -195,21 +197,21 @@ exports[`renders a basic deployment with a disk size 1`] = `
                                 domain={
                                   Array [
                                     1,
-                                    100,
+                                    1000,
                                   ]
                                 }
                                 getHandleProps={[Function]}
                                 handle={
                                   Object {
                                     "id": "$$-0",
-                                    "percent": 9.090909090909092,
+                                    "percent": 0.9009009009009009,
                                     "value": 10,
                                   }
                                 }
                                 key="$$-0"
                               >
                                 <div
-                                  aria-valuemax={100}
+                                  aria-valuemax={1000}
                                   aria-valuemin={1}
                                   aria-valuenow={10}
                                   onKeyDown={[Function]}
@@ -223,7 +225,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                                       "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
                                       "cursor": "pointer",
                                       "height": 24,
-                                      "left": "9.090909090909092%",
+                                      "left": "0.9009009009009009%",
                                       "marginLeft": "-11px",
                                       "marginTop": "-6px",
                                       "position": "absolute",
@@ -245,7 +247,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               Array [
                                 Object {
                                   "id": "$$-0",
-                                  "percent": 9.090909090909092,
+                                  "percent": 0.9009009009009009,
                                   "value": 10,
                                 },
                               ]
@@ -257,7 +259,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               LinearScale {
                                 "domain": Array [
                                   1,
-                                  100,
+                                  1000,
                                 ],
                                 "interpolator": [Function],
                                 "range": Array [
@@ -283,7 +285,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                                 target={
                                   Object {
                                     "id": "$$-0",
-                                    "percent": 9.090909090909092,
+                                    "percent": 0.9009009009009009,
                                     "value": 10,
                                   }
                                 }
@@ -299,7 +301,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                                       "height": 14,
                                       "left": "0%",
                                       "position": "absolute",
-                                      "width": "9.090909090909092%",
+                                      "width": "0.9009009009009009%",
                                       "zIndex": 1,
                                     }
                                   }
@@ -322,9 +324,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                     />
                     <span
                       className="margin-l-normal"
-                    >
-                      Gi
-                    </span>
+                    />
                   </div>
                 </div>
               </div>

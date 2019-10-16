@@ -107,6 +107,7 @@ describe("when there are changes in the selected version", () => {
       .state as IDeploymentFormBodyState;
     const basicFormParameters = {
       foo: {
+        form: "foo",
         path: "foo",
         value: "bar",
         type: "string",
@@ -130,6 +131,7 @@ describe("when there are changes in the selected version", () => {
       });
       const basicFormParameters = {
         foo: {
+          form: "foo",
           path: "foo",
           value: "notBar",
           type: "string",
@@ -154,6 +156,7 @@ describe("when there are changes in the selected version", () => {
       });
       const basicFormParameters = {
         foo: {
+          form: "foo",
           path: "foo",
           value: "notBar",
           type: "string",
@@ -188,6 +191,7 @@ describe("when there are changes in the selected version", () => {
       });
       const basicFormParameters = {
         foo: {
+          form: "foo",
           path: "foo",
           value: "notBar",
           type: "string",

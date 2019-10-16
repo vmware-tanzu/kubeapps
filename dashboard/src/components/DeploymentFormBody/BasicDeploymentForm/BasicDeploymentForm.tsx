@@ -3,12 +3,9 @@ import { IBasicFormParam } from "shared/types";
 import TextParam from "./TextParam";
 
 import {
-  CPU_REQUEST,
-  DISK_SIZE,
   ENABLE_INGRESS,
   EXTERNAL_DB,
   INGRESS,
-  MEMORY_REQUEST,
   RESOURCES,
   USE_SELF_HOSTED_DB,
 } from "../../../shared/schema";
@@ -73,20 +70,6 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             enablerCondition={false}
           />
         );
-      case DISK_SIZE:
-        return (
-          <SliderParam
-            label={param.title || "Disk Size"}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-            min={1}
-            max={100}
-            unit="Gi"
-          />
-        );
       case RESOURCES:
         return (
           <Subsection
@@ -97,34 +80,6 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             key={id}
             name={name}
             param={param}
-          />
-        );
-      case MEMORY_REQUEST:
-        return (
-          <SliderParam
-            label={param.title || "Memory Request"}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-            min={10}
-            max={2048}
-            unit="Mi"
-          />
-        );
-      case CPU_REQUEST:
-        return (
-          <SliderParam
-            label={param.title || "CPU Request"}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-            key={id}
-            id={id}
-            name={name}
-            param={param}
-            min={10}
-            max={2000}
-            unit="m"
           />
         );
       case INGRESS:
@@ -154,6 +109,23 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
                 param={param}
               />
             );
+          case "string": {
+            if (param.render === "slider") {
+              return (
+                <SliderParam
+                  label={param.title || name}
+                  handleBasicFormParamChange={handleBasicFormParamChange}
+                  key={id}
+                  id={id}
+                  name={name}
+                  param={param}
+                  min={param.sliderMin || 1}
+                  max={param.sliderMax || 1000}
+                  unit={param.sliderUnit || ""}
+                />
+              );
+            }
+          }
           default:
             return (
               <TextParam
