@@ -29,7 +29,6 @@ devel/openshift-tiller-with-apprepository-rbac.yaml: devel/openshift-tiller-with
 # Openshift requires you to have a project selected when referencing roles, otherwise the following error results:
 # Error from server: invalid origin role binding tiller-apprepositories: attempts to reference
 # role in namespace "kubeapps" instead of current namespace "tiller"
-# TODO: Need to ensure we wait for tiller to be ready before continuing
 openshift-install-tiller: devel/openshift-tiller-with-crd-rbac.yaml devel/openshift-tiller-with-apprepository-rbac.yaml devel/openshift-kubeapps-project-created
 	$(shell minishift oc-env) && \
 		oc login -u system:admin && \
@@ -37,6 +36,7 @@ openshift-install-tiller: devel/openshift-tiller-with-crd-rbac.yaml devel/opensh
 		oc apply -f devel/openshift-tiller-with-crd-rbac.yaml --wait=true && \
 		oc project ${KUBEAPPS_NAMESPACE} && \
 		oc apply -f devel/openshift-tiller-with-apprepository-rbac.yaml && \
+		helm init --tiller-namespace ${TILLER_NAMESPACE} --service-account tiller --wait && \
 		oc login -u developer
 
 devel/openshift-kubeapps-project-created: devel/openshift-tiller-project-created
