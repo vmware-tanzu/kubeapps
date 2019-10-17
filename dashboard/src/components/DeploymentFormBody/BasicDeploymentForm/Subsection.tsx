@@ -1,6 +1,6 @@
 import * as React from "react";
 import { setValue } from "../../../shared/schema";
-import { IBasicFormParam } from "../../../shared/types";
+import { IBasicFormEnablerParam, IBasicFormParam } from "../../../shared/types";
 import { getValueFromEvent } from "../../../shared/utils";
 import BooleanParam from "./BooleanParam";
 
@@ -32,9 +32,10 @@ function findEnabler(name: string, param: IBasicFormParam) {
   if (children) {
     Object.keys(children).forEach(p => {
       if (children[p].type === "boolean") {
-        if (children[p].enables === name) {
+        const childrenParam = children[p] as IBasicFormEnablerParam;
+        if (childrenParam.enables === name) {
           result = { enablerChildrenParam: p, enablerCondition: true };
-        } else if (children[p].disables === name) {
+        } else if (childrenParam.disables === name) {
           result = { enablerChildrenParam: p, enablerCondition: false };
         }
       }
