@@ -1,5 +1,5 @@
 import * as React from "react";
-import { IBasicFormParam } from "shared/types";
+import { IBasicFormParam, IBasicFormSliderParam } from "shared/types";
 import TextParam from "./TextParam";
 
 import "./BasicDeploymentForm.css";
@@ -77,6 +77,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
           }
           case "string": {
             if (param.render === "slider") {
+              const p = param as IBasicFormSliderParam;
               return (
                 <SliderParam
                   label={param.title || name}
@@ -85,9 +86,9 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
                   id={id}
                   name={name}
                   param={param}
-                  min={param.sliderMin || 1}
-                  max={param.sliderMax || 1000}
-                  unit={param.sliderUnit || ""}
+                  min={p.sliderMin || 1}
+                  max={p.sliderMax || 1000}
+                  unit={p.sliderUnit || ""}
                 />
               );
             }
