@@ -46,13 +46,30 @@ devel/openshift-kubeapps-project-created: devel/openshift-tiller-project-created
 		oc policy add-role-to-user edit "system:serviceaccount:${TILLER_NAMESPACE}:tiller" && \
 		touch $@
 
-devel/openshift-kubeapps-installed: openshift-install-tiller
+chart/kubeapps/charts/mongodb-%.tgz:
+	helm dep update ./chart/kubeapps
+
+devel/openshift-kubeapps-installed: openshift-install-tiller chart/kubeapps/charts/mongodb-%.tgz
 	@$(shell minishift oc-env) && \
 		oc project ${KUBEAPPS_NAMESPACE} && \
-		helm --tiller-namespace=${TILLER_NAMESPACE} install ./chart/kubeapps -n ${KUBEAPPS_NAMESPACE} --set tillerProxy.host=tiller-deploy.tiller:44134
+		helm --tiller-namespace=${TILLER_NAMESPACE} install ./chart/kubeapps -n ${KUBEAPPS_NAMESPACE} \
+			--set tillerProxy.host=tiller-deploy.tiller:44134 \
+			--values ./docs/user/manifests/kubeapps-local-dev-values.yaml
+
+# Due to openshift having multiple secrets for the service account, the code is slightly different from
+# that at https://github.com/kubeapps/kubeapps/blob/master/docs/user/getting-started.md#on-linuxmacos
+# TODO: potentially update the docs to use this. Note kubectl jsonpath support
+# does not yet support regex filtering, hence the separate grep
+# https://github.com/kubernetes/kubernetes/issues/61406
+openshift-tiller-token:
+	@kubectl get secret -n "${TILLER_NAMESPACE}" \
+		$(shell kubectl get serviceaccount -n "${TILLER_NAMESPACE}" tiller -o jsonpath='{range .secrets[*]}{.name}{"\n"}{end}' | grep tiller-token) \
+		-o go-template='{{.data.token | base64decode}}' && echo
 
 openshift-kubeapps: devel/openshift-kubeapps-installed
 
+# TODO: Update so all steps carried out even when others fail (otherwise
+# resetting an incomplete install will fail.
 openshift-kubeapps-reset:
 	$(shell minishift oc-env) && \
 		oc login -u system:admin && \
