@@ -1,0 +1,8 @@
+frontend:
+  replicaCount: 1
+tillerProxy:
+  replicaCount: 1
+chartsvc:
+  replicaCount: 1
+dashboard:
+  replicaCount: 1 
