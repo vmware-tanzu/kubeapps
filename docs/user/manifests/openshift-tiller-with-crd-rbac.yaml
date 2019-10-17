@@ -1,0 +1,106 @@
+kind: Template
+apiVersion: v1
+objects:
+- kind: ServiceAccount
+  apiVersion: v1
+  metadata:
+    name: tiller
+    namespace: ${TILLER_NAMESPACE}
+
+# TODO: Remove cluster-admin binding for tiller and get working with the individual roles below.
+- kind: ClusterRoleBinding
+  apiVersion: v1
+  metadata:
+    name: temporary-tiller-cluster-admin
+  roleRef:
+    kind: ClusterRole
+    name: cluster-admin
+  subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: ${TILLER_NAMESPACE}
+
+- kind: Role
+  apiVersion: v1
+  metadata:
+    name: tiller
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs: ["*"]
+  - apiGroups:
+    - ""
+    resources:
+    - namespaces
+    verbs:
+    - get
+
+- kind: RoleBinding
+  apiVersion: v1
+  metadata:
+    name: tiller
+  roleRef:
+    name: tiller
+    namespace: ${TILLER_NAMESPACE}
+  subjects:
+  - kind: ServiceAccount
+    name: tiller
+
+# The crd-manager role needs to be bound to the tiller service account by the openshift system:admin 
+- kind: ClusterRole
+  apiVersion: v1
+  metadata:
+    name: crd-manager
+  rules:
+  - apiGroups:
+    - "apiextensions.k8s.io"
+    resources:
+    - customresourcedefinitions
+    verbs: ["*"]
+
+- kind: ClusterRoleBinding
+  apiVersion: v1
+  metadata:
+    name: tiller-kubeapps-crds
+  roleRef:
+    kind: ClusterRole
+    name: crd-manager
+  subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: ${TILLER_NAMESPACE}
+
+# On OpenShift, the developer who 'helm install's a chart needs certain access to pods in the tiller namespace.
+- kind: Role
+  apiVersion: v1
+  metadata:
+    name: helm-user
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    - pods/portforward
+    verbs:
+    - get
+    - list
+    - create
+- kind: RoleBinding
+  apiVersion: v1
+  metadata:
+    name: helm-user
+  roleRef:
+    name: helm-user
+    namespace: ${TILLER_NAMESPACE}
+  subjects:
+  - kind: User
+    name: developer
+
+parameters:
+- name: HELM_VERSION
+  value: v2.6.1
+  required: true
+- name: TILLER_NAMESPACE
+  required: true
