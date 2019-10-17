@@ -2,12 +2,12 @@
 
 **NOTE:** This feature is under heavy development. Some of the described below may change in the future.
 
-Since Kubeapps 1.6.0, it's possible to attach a chart with a JSON schema that defines the structure of the `values.yaml` file. This JSON schema is used with two goals:
+Since Kubeapps 1.6.0, it's possible to include a JSON schema with a chart that defines the structure of the `values.yaml` file. This JSON schema is used with two goals:
 
- - Validate that the given values satisfy the schema defined. In case the submitted values are not valid, the installation or upgrade will fail.
- - Present the user with a simple (basic) form so the chart is easier to deploy and configure.
+ - Validate that the given values satisfy the schema defined. In case the submitted values are not valid, the installation or upgrade will fail. This has been introduced with Helm v3.
+ - Present the user with a simpler so the chart is easier to deploy and configure.
 
-The goal of the basic form is to define the most common parameters that users typically modify before deploying a chart (like username and password) so they are able to modify them with a more user-friendly form.
+The goal of this feature is to present the user with the most common parameters which are typically modified before deploying a chart (like username and password) in a more user-friendly form.
 
 This document specifies what's needed to be defined in order to present this basic form to the users of a chart.
 
@@ -19,9 +19,9 @@ This file can define some or every possible value of the chart. Once it's writte
 
 ## Additional annotations used to identify basic parameters
 
-In order to identify, among all the values specified in the schema, the values that should be presented in the form, it's necessary to include some special tags.
+In order to identify which values should be presented in the form, it's necessary to include some special tags.
 
-First of all, it's necessary to specify the tag `form`. This field should be unique and it should identify the parameter. All the properties marked with this key in the schema will be represented in the form. For example:
+First of all, it's necessary to specify the tag `form`. The value of the `form` tag should be unique and it should identify the parameter. All the properties marked with this tag in the schema will be represented in the form. For example:
 
 ```
     "wordpressUsername": {
@@ -30,15 +30,15 @@ First of all, it's necessary to specify the tag `form`. This field should be uni
     },
 ```
 
-With the definition above, we are marking the value `wordpressUsername` as a value to be represented in the form (with the ID `username`). Note that we are also specifying the `type` that will be used to render the proper HTML components to represent the input in the form:
+With the definition above, we are marking the value `wordpressUsername` as a value to be represented in the form (with the ID `username`). Note that the `type` tag, apart than for validating that the submitted value has the correct type, it will be used to render the proper HTML components to represent the input in the form:
 
 ![username-input](../img/username-input.png)
 
 In addition to the `type`, there are other tags that can be used to customize the way the parameter is represented:
 
- - `title` is used to render the title of the parameter. If it's not specified, Kubeapps will use the ID of the component.
+ - `title` is used to render the title of the parameter. If it's not specified, Kubeapps will use the ID of the component (ie. the value of the `form` field).
  - `description` is used to include additional information of the parameter.
- - `default` is used to set a default value. If it's not set, the default value from the `values.yaml` file will be used.
+ - `default` is used to set a default value. Note that this field will only be used if the `values.yaml` file doesn't have already a default value for the parameter.
 
 ### Custom type: Slider
 
@@ -49,10 +49,10 @@ It's possible to render a component as a slider, users can then drag and drop th
 In order to render a slider, there are some requirements and additional tags that you may need to set:
 
  - The only supported `type` for the moment is a string. Other types like `integer` will be transformed to a string.
- - It's necessary to specify the key `render` and set it to `slider`.
- - The key `sliderMin` identifies the minimum value the slider allows (this can be bypassed writting a smaller value in the input).
- - The key `sliderMax` identifies the maximum value the slider allows (this can be bypassed writting a bigger value in the input).
- - The key `sliderUnit` specifies the unit of the value to set. For example `Gi`.
+ - It's necessary to specify the tag `render` and set it to `slider`.
+ - The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writting a smaller value in the input).
+ - The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writting a bigger value in the input).
+ - The tag `sliderUnit` specifies the unit of the value to set. For example `Gi`.
 
  This is an example of a slider param:
 
