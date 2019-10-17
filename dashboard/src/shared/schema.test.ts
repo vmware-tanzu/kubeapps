@@ -188,6 +188,82 @@ externalDatabase:
         foo: { path: "foo", type: "boolean", value: false } as IBasicFormParam,
       },
     },
+    {
+      description: "should replace a parameter based on the element it disables",
+      values: `
+externalDatabase:
+  host: foo
+mariadb:
+  enabled: true
+`,
+      schema: {
+        properties: {
+          externalDatabase: {
+            type: "object",
+            form: "externalDatabase",
+            properties: { host: { type: "string", form: "foo" } },
+          },
+          mariadb: {
+            type: "object",
+            properties: {
+              enabled: { type: "boolean", form: "enableMariadb", disables: "externalDatabase" },
+            },
+          },
+        },
+      } as JSONSchema4,
+      result: {
+        externalDatabase: {
+          path: "externalDatabase",
+          type: "object",
+          children: {
+            foo: { path: "externalDatabase.host", type: "string" },
+            enableMariadb: {
+              path: "mariadb.enabled",
+              type: "boolean",
+              disables: "externalDatabase",
+            },
+          },
+        } as IBasicFormParam,
+      },
+    },
+    {
+      description: "should replace a parameter based on the element it enables",
+      values: `
+externalDatabase:
+  host: foo
+external:
+  database: true
+`,
+      schema: {
+        properties: {
+          externalDatabase: {
+            type: "object",
+            form: "externalDatabase",
+            properties: { host: { type: "string", form: "foo" } },
+          },
+          external: {
+            type: "object",
+            properties: {
+              database: { type: "boolean", form: "enableDB", enables: "externalDatabase" },
+            },
+          },
+        },
+      } as JSONSchema4,
+      result: {
+        externalDatabase: {
+          path: "externalDatabase",
+          type: "object",
+          children: {
+            foo: { path: "externalDatabase.host", type: "string" },
+            enableDB: {
+              path: "external.database",
+              type: "boolean",
+              enables: "externalDatabase",
+            },
+          },
+        } as IBasicFormParam,
+      },
+    },
   ].forEach(t => {
     it(t.description, () => {
       expect(retrieveBasicFormParams(t.values, t.schema)).toMatchObject(t.result);

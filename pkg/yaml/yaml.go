@@ -67,9 +67,9 @@ func ParseObjects(manifest string) ([]*unstructured.Unstructured, error) {
 			return nil, err
 		}
 
-		// It is also possible that the provided yaml file is empty from the point of view
-		// of the toJSON parser. For example if the yaml only contain comments.
-		// In which case the returned  will be "null"
+		// It is also possible that the provided YAML file is empty from the point of view
+		// of the ToJSON parser (for example if the YAML only contains comments),
+		// in which case the returned value will be "null".
 		if bytes.Equal(jsondata, nullResult) {
 			continue
 		}

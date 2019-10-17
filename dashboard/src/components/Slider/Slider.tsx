@@ -4,7 +4,7 @@ import { Handles, Rail, Slider as ReactSlider, Tracks } from "react-compound-sli
 import { Handle, Track } from "./components"; // example render components
 
 const sliderStyle: React.CSSProperties = {
-  margin: "1em",
+  margin: "1.2em",
   position: "relative",
   width: "90%",
 };

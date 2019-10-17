@@ -36,7 +36,12 @@ const defaultProps = {
   {
     description: "renders a basic deployment with a disk size",
     params: {
-      diskSize: { path: "size", value: "10Gi", type: "string" } as IBasicFormParam,
+      diskSize: {
+        path: "size",
+        value: "10Gi",
+        type: "string",
+        render: "slider",
+      } as IBasicFormParam,
     },
   },
   {

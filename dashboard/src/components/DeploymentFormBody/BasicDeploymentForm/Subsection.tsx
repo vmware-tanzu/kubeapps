@@ -8,13 +8,11 @@ export interface ISubsectionProps {
   label: string;
   param: IBasicFormParam;
   name: string;
-  enablerChildrenParam?: string;
-  enablerCondition?: boolean;
   handleValuesChange: (value: string) => void;
   renderParam: (
     name: string,
     param: IBasicFormParam,
-    index: number,
+    id: string,
     handleBasicFormParamChange: (
       name: string,
       p: IBasicFormParam,
@@ -23,9 +21,34 @@ export interface ISubsectionProps {
   appValues: string;
 }
 
+export interface ISubsectionState {
+  enablerChildrenParam: string;
+  enablerCondition: boolean;
+}
+
+function findEnabler(name: string, param: IBasicFormParam) {
+  let result = { enablerChildrenParam: "", enablerCondition: false };
+  const children = param.children;
+  if (children) {
+    Object.keys(children).forEach(p => {
+      if (children[p].type === "boolean") {
+        if (children[p].enables === name) {
+          result = { enablerChildrenParam: p, enablerCondition: true };
+        } else if (children[p].disables === name) {
+          result = { enablerChildrenParam: p, enablerCondition: false };
+        }
+      }
+    });
+  }
+  return result;
+}
+
 class Subsection extends React.Component<ISubsectionProps> {
+  public state: ISubsectionState = findEnabler(this.props.name, this.props.param);
+
   public render() {
-    const { label, param, name, enablerChildrenParam, enablerCondition } = this.props;
+    const { label, param, name } = this.props;
+    const { enablerChildrenParam, enablerCondition } = this.state;
     return (
       <div className="subsection margin-v-normal">
         {param.children && enablerChildrenParam && param.children[enablerChildrenParam] && (
@@ -62,7 +85,7 @@ class Subsection extends React.Component<ISubsectionProps> {
                 return this.props.renderParam(
                   paramName,
                   param.children![paramName],
-                  i,
+                  `${paramName}-${i}`,
                   this.handleChildrenParamChange,
                 );
               })}
