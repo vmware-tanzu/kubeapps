@@ -4,7 +4,7 @@
 import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
 import * as YAML from "yaml";
-import { IBasicFormParam } from "./types";
+import { IBasicFormEnablerParam, IBasicFormParam } from "./types";
 
 // Avoid to explicitly add "null" when an element is not defined
 // tslint:disable-next-line
@@ -64,11 +64,12 @@ export function retrieveBasicFormParams(
 // enables/disables another.
 // CAVEAT: It only works with one level of depth
 function orderParams(params: {
-  [key: string]: IBasicFormParam;
+  [key: string]: IBasicFormParam | IBasicFormEnablerParam;
 }): { [key: string]: IBasicFormParam } {
   Object.keys(params).forEach(p => {
-    if (params[p].disables || params[p].enables) {
-      const relatedParam = params[p].disables || params[p].enables;
+    const param = params[p] as IBasicFormEnablerParam;
+    if (param.disables || param.enables) {
+      const relatedParam = param.disables || param.enables;
       if (relatedParam && params[relatedParam]) {
         params[relatedParam].children = {
           ...params[relatedParam].children,

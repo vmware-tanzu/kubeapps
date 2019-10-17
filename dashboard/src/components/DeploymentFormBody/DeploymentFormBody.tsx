@@ -6,6 +6,7 @@ import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
 import { ErrorSelector } from "../ErrorAlert";
+import Hint from "../Hint";
 import LoadingWrapper from "../LoadingWrapper";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
@@ -178,7 +179,19 @@ class DeploymentFormBody extends React.Component<
       <div className="margin-t-normal">
         <Tabs>
           <TabList>
-            <Tab onClick={this.refreshBasicParameters}>Basic</Tab>
+            <Tab onClick={this.refreshBasicParameters}>
+              Basic{" "}
+              <Hint reactTooltipOpts={{ delayHide: 100 }} id="basicFormHelp">
+                <span>
+                  This form has been automatically generated based on the chart schema.
+                  <br />
+                  This feature is currently in a beta state. If you find an issue please report it{" "}
+                  <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues/new">
+                    here.
+                  </a>
+                </span>
+              </Hint>
+            </Tab>
             <Tab>Advanced</Tab>
           </TabList>
           <TabPanel>
