@@ -21,8 +21,7 @@ export class Auth {
   }
 
   public static usingOIDCToken() {
-    const oidc = localStorage.getItem(AuthTokenOIDCKey);
-    return oidc === "true" ? true : false;
+    return localStorage.getItem(AuthTokenOIDCKey) === "true";
   }
 
   public static wsProtocols() {
