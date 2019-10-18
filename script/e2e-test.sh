@@ -118,6 +118,28 @@ if [[ "$code" != 0 ]]; then
   kubectl logs kubeapps-ci-tiller-proxy-test --namespace kubeapps
   echo "LOGS for dashboard tests --------"
   kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
+
+  exit $code
+fi
+
+# Browser tests
+cd $ROOT_DIR/integration
+kubectl apply -f manifests/executor.yaml
+k8s_wait_for_deployment default integration
+pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
+## Copy latest tests
+kubectl cp ./use-cases ${pod}:/app/
+## Make default user admin
+kubectl create clusterrolebinding default-admin --clusterrole=admin --serviceaccount default:default
+## Run tests
+set +e
+kubectl exec -it ${pod} -- /bin/sh -c 'INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps LOGIN_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) yarn start'
+code=$?
+set -e
+if [[ "$code" != 0 ]]; then
+  ### Browser tests failed, get report screenshot
+  echo "PODS status on failure"
+  kubectl cp ${pod}:/app/reports ./reports
 fi
 
 exit $code

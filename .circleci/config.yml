@@ -154,7 +154,13 @@ run_e2e_tests: &run_e2e_tests
       DEV_TAG=$(latestReleaseTag)
       IMG_MODIFIER=""
     fi
-    ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER
+    if ./script/e2e-test.sh $DEV_TAG $IMG_MODIFIER; then
+      # Test success
+      echo "export TEST_RESULT=$?" >> $BASH_ENV
+    else
+      # Test failed
+      echo "export TEST_RESULT=$?" >> $BASH_ENV
+    fi
 gke_test: &gke_test
   docker:
     - image: circleci/golang:1.11
@@ -193,6 +199,9 @@ gke_test: &gke_test
     # Install helm
     - <<: *install_helm_cli
     - <<: *run_e2e_tests
+    - store_artifacts:
+        path: integration/reports
+    - run: exit $TEST_RESULT
     - run:
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
@@ -266,6 +275,9 @@ jobs:
           at: /tmp/images
       - run: for image in /tmp/images/*; do kind load image-archive "$image"; done
       - <<: *run_e2e_tests
+      - store_artifacts:
+          path: integration/reports
+      - run: exit $TEST_RESULT
   GKE_1_13_MASTER:
     <<: *gke_test
     environment:
