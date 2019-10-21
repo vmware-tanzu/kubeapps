@@ -7,7 +7,6 @@ import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
-import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm";
 import DeploymentFormBody, {
   IDeploymentFormBodyProps,
@@ -25,7 +24,6 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
   namespace: "default",
-  enableBasicForm: false,
   appValues: "foo: bar",
   valuesModified: false,
   setValues: jest.fn(),
@@ -205,20 +203,6 @@ describe("when there are changes in the selected version", () => {
   });
 });
 
-describe("when the basic form is not enabled", () => {
-  it("the advanced editor should be shown", () => {
-    const wrapper = shallow(<DeploymentFormBody {...props} enableBasicForm={false} />);
-    expect(wrapper.find(LoadingWrapper)).not.toExist();
-    expect(wrapper.find(AdvancedDeploymentForm)).toExist();
-  });
-
-  it("should not show the basic/advanced tabs", () => {
-    const wrapper = shallow(<DeploymentFormBody {...props} enableBasicForm={false} />);
-    expect(wrapper.find(LoadingWrapper)).not.toExist();
-    expect(wrapper.find(Tabs)).not.toExist();
-  });
-});
-
 describe("when the basic form is enabled", () => {
   it("renders the different tabs", () => {
     const basicFormParameters = {
@@ -227,7 +211,7 @@ describe("when the basic form is enabled", () => {
         value: "user",
       },
     };
-    const wrapper = mount(<DeploymentFormBody {...props} enableBasicForm={true} />);
+    const wrapper = mount(<DeploymentFormBody {...props} />);
     wrapper.setState({ appValues: "wordpressUsername: user", basicFormParameters });
     wrapper.update();
     expect(wrapper.find(LoadingWrapper)).not.toExist();
@@ -235,7 +219,7 @@ describe("when the basic form is enabled", () => {
   });
 
   it("should not render the tabs if there are no basic parameters", () => {
-    const wrapper = shallow(<DeploymentFormBody {...props} enableBasicForm={true} />);
+    const wrapper = shallow(<DeploymentFormBody {...props} />);
     expect(wrapper.find(LoadingWrapper)).not.toExist();
     expect(wrapper.find(Tabs)).not.toExist();
   });
@@ -252,7 +236,6 @@ describe("when the basic form is enabled", () => {
     const wrapper = mount(
       <DeploymentFormBody
         {...props}
-        enableBasicForm={true}
         appValues="wordpressUsername: user"
         setValues={setValues}
         setValuesModified={setValuesModified}
@@ -290,7 +273,7 @@ describe("when the basic form is enabled", () => {
         value: "user",
       },
     };
-    const wrapper = mount(<DeploymentFormBody {...testProps} enableBasicForm={true} />);
+    const wrapper = mount(<DeploymentFormBody {...testProps} />);
     wrapper.setState({ basicFormParameters });
     wrapper.setProps({ appValues: "wordpressUsername: foo" });
     wrapper.update();
@@ -318,9 +301,7 @@ describe("when the basic form is enabled", () => {
         type: "integer",
       },
     };
-    const wrapper = mount(
-      <DeploymentFormBody {...props} enableBasicForm={true} setValues={setValues} />,
-    );
+    const wrapper = mount(<DeploymentFormBody {...props} setValues={setValues} />);
     wrapper.setState({ basicFormParameters });
     wrapper.setProps({ appValues: "replicas: 1" });
     wrapper.update();
@@ -351,9 +332,7 @@ describe("when the basic form is enabled", () => {
         type: "boolean",
       },
     };
-    const wrapper = mount(
-      <DeploymentFormBody {...props} enableBasicForm={true} setValues={setValues} />,
-    );
+    const wrapper = mount(<DeploymentFormBody {...props} setValues={setValues} />);
     wrapper.setState({ basicFormParameters });
     wrapper.setProps({ appValues: "enableMetrics: false" });
     wrapper.update();

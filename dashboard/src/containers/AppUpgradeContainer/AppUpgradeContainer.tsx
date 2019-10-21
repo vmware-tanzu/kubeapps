@@ -33,7 +33,6 @@ function mapStateToProps(
     repoError: repos.errors.fetch,
     repos: repos.repos,
     selected: charts.selected,
-    enableBasicForm: config.enableBasicForm,
   };
 }
 

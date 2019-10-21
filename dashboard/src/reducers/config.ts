@@ -12,7 +12,6 @@ const initialState: IConfigState = {
   loaded: false,
   namespace: "",
   appVersion: "",
-  enableBasicForm: false,
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

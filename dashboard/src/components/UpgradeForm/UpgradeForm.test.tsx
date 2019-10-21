@@ -19,7 +19,6 @@ const defaultProps = {
   goBack: jest.fn(),
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
-  enableBasicForm: false,
   error: undefined,
 } as IUpgradeFormProps;
 
