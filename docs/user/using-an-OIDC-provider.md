@@ -162,7 +162,6 @@ spec:
         - -client-secret=$AUTH_PROXY_CLIENT_SECRET
         - -oidc-issuer-url=$AUTH_PROXY_DISCOVERY_URL
         - -cookie-secret=$AUTH_PROXY_COOKIE_SECRET
-        - -cookie-name=kc-access
         - -upstream=http://localhost:8080/
         - -http-address=0.0.0.0:3000
         - -email-domain="*"

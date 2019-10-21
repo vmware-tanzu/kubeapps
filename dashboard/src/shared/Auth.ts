@@ -26,7 +26,9 @@ export class Auth {
 
   public static wsProtocols() {
     const token = this.getAuthToken();
-    if (!token) {
+    // If we're using OIDC for auth, then let the auth proxy handle
+    // injecting the ws creds.
+    if (!token || this.usingOIDCToken()) {
       return [];
     }
     return [
