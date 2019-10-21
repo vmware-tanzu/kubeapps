@@ -1,3 +1,4 @@
+import { JSONSchema4 } from "json-schema";
 import { Dispatch } from "redux";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
@@ -20,7 +21,8 @@ export const errorChart = createAction("ERROR_CHART", resolve => {
 });
 
 export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve => {
-  return (chartVersion: IChartVersion) => resolve(chartVersion);
+  return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
+    resolve({ chartVersion, values, schema });
 });
 
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
@@ -33,14 +35,6 @@ export const errorReadme = createAction("ERROR_README", resolve => {
   return (message: string) => resolve(message);
 });
 
-export const selectValues = createAction("SELECT_VALUES", resolve => {
-  return (values: string) => resolve(values);
-});
-
-export const selectSchema = createAction("SELECT_SCHEMA", resolve => {
-  return (schema: {}) => resolve(schema);
-});
-
 const allActions = [
   requestCharts,
   errorChart,
@@ -50,8 +44,6 @@ const allActions = [
   resetChartVersion,
   selectReadme,
   errorReadme,
-  selectValues,
-  selectSchema,
 ];
 
 export type ChartsAction = ActionType<typeof allActions[number]>;
@@ -98,16 +90,38 @@ export function fetchChartVersions(
   };
 }
 
+function handleError(e: Error, dispatch: Dispatch): boolean {
+  if (e.constructor === NotFoundError) {
+    // Item not found, it's not mandatory so skip it
+    return true;
+  } else {
+    // Unexpecter error
+    dispatch(errorChart(e));
+    return false;
+  }
+}
+
 export function getChartVersion(
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestCharts());
     try {
+      dispatch(requestCharts());
       const chartVersion = await Chart.getChartVersion(id, version);
       if (chartVersion) {
-        dispatch(selectChartVersion(chartVersion));
+        let values = "";
+        let schema = {};
+        try {
+          values = await Chart.getValues(id, version);
+          schema = await Chart.getSchema(id, version);
+        } catch (e) {
+          const valid = handleError(e, dispatch);
+          if (!valid) {
+            return;
+          }
+        }
+        dispatch(selectChartVersion(chartVersion, values, schema));
       }
     } catch (e) {
       dispatchError(dispatch, e);
@@ -145,40 +159,6 @@ export function getChartReadme(
       dispatch(selectReadme(readme));
     } catch (e) {
       dispatch(errorReadme(e.toString()));
-    }
-  };
-}
-
-export function getChartValues(
-  id: string,
-  version: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async dispatch => {
-    try {
-      const values = await Chart.getValues(id, version);
-      dispatch(selectValues(values));
-    } catch (e) {
-      dispatch(selectValues(""));
-    }
-  };
-}
-
-export function getChartSchema(
-  id: string,
-  version: string,
-): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async dispatch => {
-    try {
-      const schema = await Chart.getSchema(id, version);
-      dispatch(selectSchema(schema));
-    } catch (e) {
-      if (e.constructor === NotFoundError) {
-        // Schema not found
-        dispatch(selectSchema({}));
-      } else {
-        // Unexpecter error
-        dispatch(errorChart(e));
-      }
     }
   };
 }

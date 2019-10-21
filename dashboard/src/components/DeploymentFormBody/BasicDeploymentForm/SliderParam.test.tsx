@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import { IBasicFormParam } from "shared/types";
-import Slider from "../../../components/Slider";
+import Slider from "../../Slider";
 import SliderParam from "./SliderParam";
 
 const defaultProps = {
@@ -150,4 +150,15 @@ it("uses the param minimum and maximum if defined", () => {
   const slider = wrapper.find(Slider);
   expect(slider.prop("min")).toBe(5);
   expect(slider.prop("max")).toBe(50);
+});
+
+it("defaults to the min if the value is undefined", () => {
+  const param = {
+    type: "string",
+    path: "disk",
+  } as IBasicFormParam;
+
+  const wrapper = shallow(<SliderParam {...defaultProps} param={param} min={5} />);
+
+  expect(wrapper.state("value")).toBe(5);
 });

@@ -20,7 +20,6 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   fetchRepositories: jest.fn(),
   getAppWithUpdateInfo: jest.fn(),
-  getChartValues: jest.fn(),
   getChartVersion: jest.fn(),
   kubeappsNamespace: "kubeapps",
   namespace: "default",
@@ -33,6 +32,7 @@ const defaultProps = {
   selected: {} as IChartState["selected"],
   upgradeApp: jest.fn(),
   version: "1.0.0",
+  enableBasicForm: false,
 };
 
 beforeEach(() => {

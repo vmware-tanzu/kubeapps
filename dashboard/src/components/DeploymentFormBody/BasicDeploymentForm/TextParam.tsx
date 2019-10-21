@@ -19,19 +19,20 @@ class TextParam extends React.Component<IStringParamProps> {
     return (
       <div>
         <label htmlFor={id}>
-          {label}
-          {param.description && (
-            <>
-              <br />
-              <span className="description">{param.description}</span>
-            </>
-          )}
-          <input
-            id={id}
-            onChange={this.props.handleBasicFormParamChange(name, param)}
-            defaultValue={param.value}
-            type={inputType ? inputType : "text"}
-          />
+          <div className="row">
+            <div className="col-3 block">
+              <div className="centered">{label}</div>
+            </div>
+            <div className="col-9 margin-t-small">
+              <input
+                id={id}
+                onChange={this.props.handleBasicFormParamChange(name, param)}
+                value={param.value === undefined ? "" : param.value}
+                type={inputType ? inputType : "text"}
+              />
+              {param.description && <span className="description">{param.description}</span>}
+            </div>
+          </div>
         </label>
       </div>
     );

@@ -28,10 +28,12 @@ const defaultProps = {
         title: "Enable External Database",
         type: "boolean",
         value: true,
+        disables: "externalDatabase",
       } as IBasicFormParam,
     },
     path: "externalDatabase",
     title: "External Database Details",
+    description: "description of the param",
     type: "object",
   } as IBasicFormParam,
   handleBasicFormParamChange: jest.fn(),
@@ -77,6 +79,7 @@ it("should omit the enabler param if it doesn't exist", () => {
       },
     },
   };
-  const wrapper = mount(<Subsection {...props} enablerChildrenParam="foo" />);
+  const wrapper = mount(<Subsection {...props} />);
   expect(wrapper.find(BooleanParam)).not.toExist();
+  expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).not.toExist();
 });

@@ -4,17 +4,12 @@
 import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
 import * as YAML from "yaml";
-import { IBasicFormParam } from "./types";
+import { IBasicFormEnablerParam, IBasicFormParam } from "./types";
 
 // Avoid to explicitly add "null" when an element is not defined
 // tslint:disable-next-line
 const { nullOptions } = require("yaml/types");
 nullOptions.nullStr = "";
-
-// Form keys that require pre-definition. This list should be kept as small as possible
-export const EXTERNAL_DB = "externalDatabase";
-export const USE_SELF_HOSTED_DB = "useSelfHostedDatabase";
-export const DISK_SIZE = "diskSize";
 
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.
@@ -30,19 +25,16 @@ export function retrieveBasicFormParams(
     Object.keys(properties).map(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
-      const { type, title, description, form, minimum, maximum } = properties[propertyKey];
+      const { type, form } = properties[propertyKey];
       // If the property has the key "form", it's a basic parameter
       if (form) {
         // Use the default value either from the JSON schema or the default values
         const value = getValue(defaultValues, itemPath, properties[propertyKey].default);
         const param: IBasicFormParam = {
+          ...properties[propertyKey],
           path: itemPath,
           type: String(type),
           value,
-          title,
-          description,
-          minimum,
-          maximum,
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
@@ -68,15 +60,25 @@ export function retrieveBasicFormParams(
 }
 
 // orderParams conveniently structure the parameters to satisfy a parent-children relationship even if
-// those parameters doesn't have that relation in the source
+// those parameters don't have that relation in the source. This is only used when a parameter
+// enables/disables another.
+// CAVEAT: It only works with one level of depth
 function orderParams(params: {
-  [key: string]: IBasicFormParam;
+  [key: string]: IBasicFormParam | IBasicFormEnablerParam;
 }): { [key: string]: IBasicFormParam } {
-  // Move useSelfHostedDatabase to externalDatabase since it enable/disable that section
-  if (params[EXTERNAL_DB] && params[EXTERNAL_DB].children && params[USE_SELF_HOSTED_DB]) {
-    params[EXTERNAL_DB].children![USE_SELF_HOSTED_DB] = params[USE_SELF_HOSTED_DB];
-    delete params[USE_SELF_HOSTED_DB];
-  }
+  Object.keys(params).forEach(p => {
+    const param = params[p] as IBasicFormEnablerParam;
+    if (param.disables || param.enables) {
+      const relatedParam = param.disables || param.enables;
+      if (relatedParam && params[relatedParam]) {
+        params[relatedParam].children = {
+          ...params[relatedParam].children,
+          [p]: params[p],
+        };
+        delete params[p];
+      }
+    }
+  });
   return params;
 }
 

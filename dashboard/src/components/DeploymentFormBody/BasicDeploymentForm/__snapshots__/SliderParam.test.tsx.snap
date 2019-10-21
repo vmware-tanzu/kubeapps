@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a disk size param with a default value 1`] = `
+<div>
+  <label
+    htmlFor="disk"
+  >
+    <div
+      className="row"
+    >
+      <div
+        className="col-3 block"
+      >
+        <div
+          className="centered"
+        >
+          Disk Size
+        </div>
+      </div>
+      <div
+        className="col-9 margin-t-small"
+      >
+        <div
+          className="row"
+        >
+          <div
+            className="col-9"
+          >
+            <Slider
+              default={10}
+              max={100}
+              min={1}
+              onChange={[Function]}
+              onUpdate={[Function]}
+              values={10}
+            />
+          </div>
+          <div
+            className="col-3"
+          >
+            <input
+              className="disk_size_input"
+              id="disk"
+              onChange={[Function]}
+              value={10}
+            />
+            <span
+              className="margin-l-normal"
+            >
+              Gi
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </label>
+</div>
+`;

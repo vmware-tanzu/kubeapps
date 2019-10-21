@@ -11,6 +11,7 @@ exports[`should render a external database section 1`] = `
     name="useSelfHostedDatabase"
     param={
       Object {
+        "disables": "externalDatabase",
         "path": "mariadb.enabled",
         "title": "Enable External Database",
         "type": "boolean",
@@ -25,6 +26,12 @@ exports[`should render a external database section 1`] = `
       className="margin-v-normal"
     >
       Enable an external database
+      <br />
+      <span
+        className="description"
+      >
+        description of the param
+      </span>
     </div>
   </div>
 </div>

@@ -25,6 +25,7 @@ rules:
   - list
   - update
   - watch
+  - delete
 - apiGroups:
   - batch
   resources:
@@ -35,6 +36,7 @@ rules:
   - kubeapps.com
   resources:
   - apprepositories
+  - apprepositories/finalizers
   verbs:
   - get
   - list
