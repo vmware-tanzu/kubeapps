@@ -6,7 +6,7 @@ By default, when first visiting Kubeapps, a login form is shown for the user to 
 
 The goal of the login form is to identify the user and associate it with a Kubernetes service account. This identity information will be used by Kubeapps to authenticate the user against the Kubernetes API. You can find more information about access control in Kubeapps in this [document](./access-control.md).
 
-However, it's possible to disable the form or delegate the authentication to an OIDC provider so users don't need to introduce a token in the login form.
+However, it's possible to disable the form or delegate the authentication to an OAuth2/OIDC provider so users don't need to introduce a token in the login form.
 
 ## Bypassing authentication
 
@@ -31,6 +31,6 @@ ingress:
 
 You just need to substitute TOKEN with the actual value of the token. The above assumes an Nginx [Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-controllers), in case a different controller is being used that annotation will need to be adapted.
 
-# Using an OIDC provider
+# Using an OAuth2/OIDC provider
 
-In case you want to use OpenID Connect to authenticate Kubeapps users, and your Kubernetes API server is configured to use the same OIDC provider, follow this [guide](./using-an-OIDC-provider.md).
+In case you want to use OpenID Connect to authenticate Kubeapps users, and your Kubernetes API server is configured to use the same OAuth2/OIDC provider, follow this [guide](./using-an-OIDC-provider.md).
