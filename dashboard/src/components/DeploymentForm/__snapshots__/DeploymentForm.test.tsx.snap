@@ -36,7 +36,6 @@ exports[`renders the full DeploymentForm 1`] = `
         appValues=""
         chartID="foo"
         chartVersion="1.0.0"
-        enableBasicForm={false}
         fetchChartVersions={[Function]}
         getChartVersion={[Function]}
         namespace="default"

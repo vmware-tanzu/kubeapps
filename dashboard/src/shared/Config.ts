@@ -5,7 +5,6 @@ export interface IConfig {
   namespace: string;
   appVersion: string;
   error?: Error;
-  enableBasicForm: boolean;
 }
 
 export default class Config {
@@ -21,9 +20,6 @@ export default class Config {
       data.appVersion = "DEVEL";
       if (process.env.REACT_APP_KUBEAPPS_NS) {
         data.namespace = process.env.REACT_APP_KUBEAPPS_NS;
-      }
-      if (process.env.REACT_APP_KUBEAPPS_ENABLE_BASIC_FORM === "true") {
-        data.enableBasicForm = true;
       }
     }
 
