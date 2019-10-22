@@ -27,7 +27,6 @@ export interface IDeploymentFormProps {
   fetchChartVersions: (id: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   namespace: string;
-  enableBasicForm: boolean;
 }
 
 export interface IDeploymentFormState {
@@ -91,7 +90,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               push={this.props.push}
               fetchChartVersions={this.props.fetchChartVersions}
               getChartVersion={this.props.getChartVersion}
-              enableBasicForm={this.props.enableBasicForm}
               setValues={this.handleValuesChange}
               appValues={this.state.appValues}
               valuesModified={this.state.valuesModified}

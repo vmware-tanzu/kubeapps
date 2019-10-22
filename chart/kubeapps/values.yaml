@@ -94,6 +94,7 @@ frontend:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  proxypassAccessTokenAsBearer: false
 
 # AppRepository Controller is the controller used to manage the repositories to
 # sync. Set apprepository.initialRepos to configure the initial set of
@@ -313,16 +314,20 @@ authProxy:
   # Image used for the proxy
   image:
     registry: docker.io
-    repository: bitnami/keycloak-gatekeeper
-    tag: 2.3.0-r1
-  # Mandatory parametes
-  discoveryURL:
+    repository: bitnami/oauth2-proxy
+    tag: 4.0.0-r32
+  # Mandatory parameters
+  provider:
   clientID:
   clientSecret:
-  # Additional flags for Keycloak-Gatekeeper
+  cookieSecret:
+  emailDomain: "*"
+  # Additional flags for oauth2-proxy
   additionalFlags:
-    # - --skip-openid-provider-tls-verify
-    # - --secure-cookie=false
+    # - -ssl-insecure-skip-verify
+    # - -cookie-secure=false
+    # - -scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform
+    # - -oidc-issuer-url=https://accounts.google.com # Only needed if provider is oidc
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   resources:
     limits:
