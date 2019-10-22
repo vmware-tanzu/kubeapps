@@ -4,7 +4,7 @@ import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
 import actions from ".";
 import { AppRepository } from "../shared/AppRepository";
-import { axios } from "../shared/AxiosInstance";
+import Chart from "../shared/Chart";
 import Secret from "../shared/Secret";
 import { IAppRepository, NotFoundError } from "../shared/types";
 
@@ -13,7 +13,6 @@ const mockStore = configureMockStore([thunk]);
 
 let store: any;
 const appRepo = { spec: { resyncRequests: 10000 } };
-axios.get = jest.fn();
 
 beforeEach(() => {
   store = mockStore({ config: { namespace: "my-namespace" } });
@@ -361,6 +360,7 @@ spec:
 
 describe("checkChart", () => {
   it("dispatches requestRepo and receivedRepo if no error", async () => {
+    Chart.fetchChartVersions = jest.fn();
     const expectedActions = [
       {
         type: getType(repoActions.requestRepo),
@@ -376,7 +376,7 @@ describe("checkChart", () => {
   });
 
   it("dispatches requestRepo and errorChart if error fetching", async () => {
-    axios.get = jest.fn(() => {
+    Chart.fetchChartVersions = jest.fn(() => {
       throw new Error();
     });
 
