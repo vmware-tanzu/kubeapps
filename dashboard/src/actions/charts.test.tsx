@@ -99,6 +99,22 @@ describe("getChartVersion", () => {
     expect(axiosGetMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions/1.0.0");
   });
 
+  it("gets a chart version with tag", async () => {
+    response = { id: "foo" };
+    const expectedActions = [
+      { type: getType(actions.charts.requestCharts) },
+      {
+        type: getType(actions.charts.selectChartVersion),
+        payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
+      },
+    ];
+    await store.dispatch(actions.charts.getChartVersion("foo", "1.0.0-alpha+1.2.3-beta2"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      "api/chartsvc/v1/charts/foo/versions/1.0.0-alpha%2B1.2.3-beta2",
+    );
+  });
+
   it("gets a chart version with values and schema", async () => {
     // Call to get the chart version
     axiosGetMock.mockImplementationOnce(() => {
