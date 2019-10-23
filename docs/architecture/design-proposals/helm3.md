@@ -13,6 +13,12 @@ v1 to v2, to clearly distinguish between the old and the new subsystems. That
 will hopefully help with compatibility later on in case the architecture changes
 more.
 
+**Current situation:**
+![Current situation](https://user-images.githubusercontent.com/7773090/67413010-ac044e00-f5c0-11e9-93e9-f3cdd1eeaca8.PNG)
+
+**With the new additions:**
+![With the new additions](https://user-images.githubusercontent.com/7773090/67413025-b45c8900-f5c0-11e9-8961-67377bc8faad.PNG)
+
 ## Authentication
 
 Since helm 2 built on tiller, all authentication to the k8s cluster happened
