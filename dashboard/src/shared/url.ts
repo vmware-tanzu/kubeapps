@@ -23,13 +23,13 @@ export const api = {
     base: "api/chartsvc/v1",
     get: (id: string) => `${api.charts.base}/charts/${id}`,
     getReadme: (id: string, version: string) =>
-      `${api.charts.base}/assets/${id}/versions/${version}/README.md`,
+      `${api.charts.base}/assets/${id}/versions/${encodeURIComponent(version)}/README.md`,
     getValues: (id: string, version: string) =>
-      `${api.charts.base}/assets/${id}/versions/${version}/values.yaml`,
+      `${api.charts.base}/assets/${id}/versions/${encodeURIComponent(version)}/values.yaml`,
     getSchema: (id: string, version: string) =>
-      `${api.charts.base}/assets/${id}/versions/${version}/values.schema.json`,
+      `${api.charts.base}/assets/${id}/versions/${encodeURIComponent(version)}/values.schema.json`,
     getVersion: (id: string, version: string) =>
-      `${api.charts.base}/charts/${id}/versions/${version}`,
+      `${api.charts.base}/charts/${id}/versions/${encodeURIComponent(version)}`,
     list: (repo?: string) => `${api.charts.base}/charts${repo ? `/${repo}` : ""}`,
     listVersions: (id: string) => `${api.charts.get(id)}/versions`,
   },
