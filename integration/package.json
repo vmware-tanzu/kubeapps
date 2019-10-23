@@ -1,7 +1,7 @@
 {
-  "name": "becs-integration",
+  "name": "kubeapps-integration",
   "version": "1.0.0",
-  "description": "BECS integration tests",
+  "description": "Kubeapps integration tests",
   "main": "index.js",
   "private": true,
   "scripts": {
