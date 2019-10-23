@@ -61,11 +61,7 @@ Finally, launch the dashboard within the telepresence shell
 yarn run start
 ```
 
-You can now access the local development server simply by accessing the dashboard as you usually would:
-
-```bash
-kubeapps dashboard --port=5000
-```
+You can now access the local development server simply by accessing the dashboard as you usually would (e.g. doing a port-forward or accesing the Ingress URL).
 
 #### Troubleshooting
 
