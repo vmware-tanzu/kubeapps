@@ -73,28 +73,17 @@ $ helm install --name kubeapps --namespace kubeapps -f custom-values.yaml bitnam
 
 ### Configuring Initial Repositories
 
-By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts) and the [Kubernetes Service Catalog charts](https://github.com/kubernetes-incubator/service-catalog). To change these defaults, override the `apprepository.initialRepos` object and install the chart using this custom file:
-
-```console
-$ cat > custom-values.yaml <<EOF
-apprepository:
-  initialRepos:
-  - name: example
-    url: https://charts.example.com
-EOF
-```
+By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts) and the [Kubernetes Service Catalog charts](https://github.com/kubernetes-incubator/service-catalog). To change these defaults, override with your desired parameters the `apprepository.initialRepos` object present in the [values.yaml](values.yaml) file.
 
 ### Configuring connection to a custom namespace Tiller instance
 
 By default, Kubeapps connects to the Tiller Service in the `kube-system` namespace, the default install location for Helm.
 
-If your instance of Tiller is running in a different namespace or you want to have different instances of Kubeapps connected to different Tiller instances, you can achieve it by setting the `tillerProxy.host` paramater. For example: `tillerProxy.host=tiller-deploy.my-custom-namespace:44134`
+If your instance of Tiller is running in a different namespace or you want to have different instances of Kubeapps connected to different Tiller instances, you can achieve it by setting the `tillerProxy.host` paramater. For example, you can set `tillerProxy.host=tiller-deploy.my-custom-namespace:44134`
 
 ### Configuring connection to a secure Tiller instance
 
 In production, we strongly recommend setting up a [secure installation of Tiller](https://docs.helm.sh/using_helm/#using-ssl-between-helm-and-tiller), the Helm server side component.
-
-For a full list of configuration parameters related to configuring TLS can see the [values.yaml](values.yaml) file.
 
 Learn more about how to secure your Kubeapps installation [here](https://github.com/kubeapps/kubeapps/blob/master/docs/user/securing-kubeapps.md).
 
