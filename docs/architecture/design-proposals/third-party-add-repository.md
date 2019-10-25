@@ -19,7 +19,22 @@ Enabling these projects to integrate with Kubeapps enables users to move seamles
 
 ## Assumptions
  - The same OpenID Connect identity provider must be used for both the 3rd party (such as Harbor) and Kubeapps (and by implication, the Kubernetes cluster).
- - RBAC policies in the cluster enable users to deploy apps and for relevant admins, to create AppRepository custom resource definitions (this is part of the Kubeapps installation process).
+ - RBAC policies in the cluster enable users to deploy apps in specific namespaces to which they have access.
+ - RBAC policies in the cluster enable admins to create AppRepository custom resources which populate the Kubeapps catalog.
+
+### A note regarding RBAC and Kubeapps user access to charts
+
+A single Kubeapps installation does allow users with different RBAC permissions and it is their assigned Kubernetes RBAC which determines what they can do in Kubeapps. This can be used to limit users to specific kubernetes resources such as namespaces (ie. so a user can only access a single namespace) or app repositories (ie. so only an admin can create or view app repositories). But importantly in this current context, it **does not** currently limit access to available charts within the Kubeapps application catalogue once the index of a repository has been imported. A single Kubeapps installation has *one* catalog which all users of that installation can access. Just like the helm cli which Kubeapps emulates, this catalog is the union of all apps for the configured repositories.
+
+This is a concern from the Harbor dev's: they would like different repositories within a single Kubeapps installation to be available only to those users who have access to the specific project repository in Harbor.
+
+Currently this is not possible with Kubeapps because:
+ * the catalog provided by Kubeapps is not per namespace, but rather is the union of all configured app repositories, just like the helm CLI it emulates, and
+ * Kubeapps does not maintain a mapping of user privileges or internal RBAC - it relies on the Kubernetes cluster RBAC alone.
+ 
+As we move toward Helm 3 by default, we could potentially resolve this by ensuring that AppRepositories, and the charts they reference, are per-namespace, so that the charts available can be limited to the repos in the namespaces to which the user has access. This would then mean that access to a project in Harbor would be equivalent to access to the Kubernetes namespace and could be controlled easily with oauth2 groups or otherwise configured, but this is outside the scope of this document.
+
+Given the current constraints, if an external application, such as harbor, enables a chart repository for a Kubeapps installation the charts of that repository will form part of the single app catalog available to all users of that installation. Although it is less than ideal, external applications could target different Kubeapps installations for different repos, but until Helm 3 is default and we have a chance to limit app repositories to namespaces, this may be the best option given the constraints. The important thing is that users of any integration understand that by enabling the repository in Kubeapps, it will currently mean that all Kubeapps users have access to the charts of the repository.
 
 ## User stories
 
