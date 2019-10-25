@@ -3,6 +3,7 @@
 // that are used in this package
 import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
+import { set } from "lodash";
 import * as YAML from "yaml";
 import { IBasicFormEnablerParam, IBasicFormParam } from "./types";
 
@@ -82,10 +83,40 @@ function orderParams(params: {
   return params;
 }
 
+function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document) {
+  let currentPath: string[] = [];
+  let foundUndefined = false;
+  allElementsButTheLast.forEach(p => {
+    // Iterate over the path until finding an element that is not defined
+    if (!foundUndefined) {
+      const pathToEvaluate = currentPath.concat(p);
+      const elem = (doc as any).getIn(pathToEvaluate);
+      if (elem === undefined || elem === null) {
+        foundUndefined = true;
+      } else {
+        currentPath = pathToEvaluate;
+      }
+    }
+  });
+  return currentPath;
+}
+
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
   const doc = YAML.parseDocument(values);
-  const splittedPath = path.split(".");
+  let splittedPath = path.split(".");
+  // If the path is not defined (the parent nodes are undefined)
+  // We need to change the path and the value to set to avoid accessing
+  // the undefined node. For example, if a.b is undefined:
+  // path: a.b.c, value: 1 ==> path: a.b, value: {c: 1}
+  const allElementsButTheLast = splittedPath.slice(0, splittedPath.length - 1);
+  const parentNode = (doc as any).getIn(allElementsButTheLast);
+  if (parentNode === undefined) {
+    const definedPath = getDefinedPath(allElementsButTheLast, doc);
+    const remainingPath = splittedPath.slice(definedPath.length + 1);
+    newValue = set({}, remainingPath.join("."), newValue);
+    splittedPath = splittedPath.slice(0, definedPath.length + 1);
+  }
   (doc as any).setIn(splittedPath, newValue);
   return doc.toString();
 }
