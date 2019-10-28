@@ -1,11 +1,12 @@
 import { Kube } from "./Kube";
+import { ResourceKind } from "./ResourceKinds";
 import { IResource } from "./types";
 
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
 class ResourceRef {
   public apiVersion: string;
-  public kind: string;
+  public kind: ResourceKind;
   public name: string;
   public namespace: string;
 
