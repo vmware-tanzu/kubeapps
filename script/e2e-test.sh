@@ -129,11 +129,13 @@ k8s_wait_for_deployment default integration
 pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 ## Copy latest tests
 kubectl cp ./use-cases ${pod}:/app/
-## Make default user admin
-kubectl create clusterrolebinding default-admin --clusterrole=admin --serviceaccount default:default
+## Create admin user
+kubectl create serviceaccount kubeapps-operator -n kubeapps
+kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=admin --serviceaccount kubeapps:kubeapps-operator
+admin_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
 ## Run tests
 set +e
-kubectl exec -it ${pod} -- /bin/sh -c 'INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps LOGIN_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token) yarn start'
+kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} yarn start"
 code=$?
 set -e
 if [[ "$code" != 0 ]]; then
