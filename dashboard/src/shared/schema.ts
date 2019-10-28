@@ -109,6 +109,8 @@ export function setValue(values: string, path: string, newValue: any) {
   // We need to change the path and the value to set to avoid accessing
   // the undefined node. For example, if a.b is undefined:
   // path: a.b.c, value: 1 ==> path: a.b, value: {c: 1}
+  // TODO(andresmgot): In the future, this may be implemented in the YAML library itself
+  // https://github.com/eemeli/yaml/issues/131
   const allElementsButTheLast = splittedPath.slice(0, splittedPath.length - 1);
   const parentNode = (doc as any).getIn(allElementsButTheLast);
   if (parentNode === undefined) {
