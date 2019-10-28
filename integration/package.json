@@ -1,0 +1,19 @@
+{
+  "name": "kubeapps-integration",
+  "version": "1.0.0",
+  "description": "Kubeapps integration tests",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "start": "jest",
+    "start:window": "HEADLESS=false jest"
+  },
+  "dependencies": {
+    "expect-puppeteer": "^4.3.0",
+    "jest": "^24.9.0",
+    "jest-circus": "^24.9.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.20.0",
+    "wait-on": "^3.3.0"
+  }
+}
