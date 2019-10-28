@@ -2,9 +2,8 @@ import * as yaml from "js-yaml";
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
-import { axios } from "../shared/AxiosInstance";
+import Chart from "../shared/Chart";
 import Secret from "../shared/Secret";
-import * as url from "../shared/url";
 import { errorChart } from "./charts";
 
 import { IAppRepository, IOwnerReference, IStoreState, NotFoundError } from "../shared/types";
@@ -214,7 +213,7 @@ export function checkChart(
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(repo, namespace);
     try {
-      await axios.get(url.api.charts.listVersions(`${repo}/${chartName}`));
+      await Chart.fetchChartVersions(`${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));
       return true;
     } catch (e) {

@@ -26,7 +26,6 @@ export interface IUpgradeFormProps {
   goBack: () => RouterAction;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getChartVersion: (id: string, chartVersion: string) => void;
-  enableBasicForm: boolean;
 }
 
 interface IUpgradeFormState {
@@ -69,7 +68,6 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
               goBack={this.props.goBack}
               fetchChartVersions={this.props.fetchChartVersions}
               getChartVersion={this.props.getChartVersion}
-              enableBasicForm={this.props.enableBasicForm}
               setValues={this.handleValuesChange}
               appValues={this.state.appValues}
               valuesModified={this.state.valuesModified}

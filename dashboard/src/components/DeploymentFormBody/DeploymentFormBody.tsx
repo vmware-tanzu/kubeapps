@@ -29,7 +29,6 @@ export interface IDeploymentFormBodyProps {
   getChartVersion: (id: string, chartVersion: string) => void;
   setValues: (values: string) => void;
   setValuesModified: () => void;
-  enableBasicForm: boolean;
 }
 
 export interface IDeploymentFormBodyState {
@@ -232,9 +231,9 @@ class DeploymentFormBody extends React.Component<
     };
   };
 
-  // The basic form should be rendered both if it's enabled and if there are params to show
+  // The basic form should be rendered if there are params to show
   private shouldRenderBasicForm = () => {
-    return this.props.enableBasicForm && Object.keys(this.state.basicFormParameters).length > 0;
+    return Object.keys(this.state.basicFormParameters).length > 0;
   };
 }
 
