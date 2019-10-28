@@ -5,7 +5,7 @@ import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
 import { set } from "lodash";
 import * as YAML from "yaml";
-import { IBasicFormEnablerParam, IBasicFormParam } from "./types";
+import { IBasicFormParam } from "./types";
 
 // Avoid to explicitly add "null" when an element is not defined
 // tslint:disable-next-line
@@ -57,29 +57,6 @@ export function retrieveBasicFormParams(
       }
     });
   }
-  return orderParams(params);
-}
-
-// orderParams conveniently structure the parameters to satisfy a parent-children relationship even if
-// those parameters don't have that relation in the source. This is only used when a parameter
-// enables/disables another.
-// CAVEAT: It only works with one level of depth
-function orderParams(params: {
-  [key: string]: IBasicFormParam | IBasicFormEnablerParam;
-}): { [key: string]: IBasicFormParam } {
-  Object.keys(params).forEach(p => {
-    const param = params[p] as IBasicFormEnablerParam;
-    if (param.disables || param.enables) {
-      const relatedParam = param.disables || param.enables;
-      if (relatedParam && params[relatedParam]) {
-        params[relatedParam].children = {
-          ...params[relatedParam].children,
-          [p]: params[p],
-        };
-        delete params[p];
-      }
-    }
-  });
   return params;
 }
 

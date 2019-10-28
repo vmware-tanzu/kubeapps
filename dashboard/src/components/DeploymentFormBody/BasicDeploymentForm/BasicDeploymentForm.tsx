@@ -2,6 +2,7 @@ import * as React from "react";
 import { IBasicFormParam, IBasicFormSliderParam } from "shared/types";
 import TextParam from "./TextParam";
 
+import { getValue } from "../../../shared/schema";
 import "./BasicDeploymentForm.css";
 import BooleanParam from "./BooleanParam";
 import SliderParam from "./SliderParam";
@@ -39,7 +40,21 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
     );
   }
 
-  private renderParam(
+  private isHidden = (param: IBasicFormParam) => {
+    const hidden = param.hidden;
+    switch (typeof hidden) {
+      case "string":
+        // If hidden is a string, it points to the value that should be true
+        return getValue(this.props.appValues, hidden) === true;
+      case "object":
+        // If hidden is an object, inspect the value it points to
+        return getValue(this.props.appValues, hidden.value) === hidden.condition;
+      case "undefined":
+        return false;
+    }
+  };
+
+  private renderParam = (
     name: string,
     param: IBasicFormParam,
     id: string,
@@ -47,42 +62,42 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
       name: string,
       p: IBasicFormParam,
     ) => (e: React.FormEvent<HTMLInputElement>) => void,
-  ) {
+  ) => {
+    let paramComponent: JSX.Element = <></>;
     switch (name) {
       default:
         switch (param.type) {
           case "boolean":
-            return (
+            paramComponent = (
               <BooleanParam
                 label={param.title || name}
                 handleBasicFormParamChange={handleBasicFormParamChange}
-                key={id}
                 id={id}
                 name={name}
                 param={param}
               />
             );
+            break;
           case "object": {
-            return (
+            paramComponent = (
               <Subsection
                 label={param.title || name}
                 handleValuesChange={this.props.handleValuesChange}
                 appValues={this.props.appValues}
                 renderParam={this.renderParam}
-                key={id}
                 name={name}
                 param={param}
               />
             );
+            break;
           }
           case "string": {
             if (param.render === "slider") {
               const p = param as IBasicFormSliderParam;
-              return (
+              paramComponent = (
                 <SliderParam
                   label={param.title || name}
                   handleBasicFormParamChange={handleBasicFormParamChange}
-                  key={id}
                   id={id}
                   name={name}
                   param={param}
@@ -91,14 +106,14 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
                   unit={p.sliderUnit || ""}
                 />
               );
+              break;
             }
           }
           default:
-            return (
+            paramComponent = (
               <TextParam
                 label={param.title || name}
                 handleBasicFormParamChange={handleBasicFormParamChange}
-                key={id}
                 id={id}
                 name={name}
                 param={param}
@@ -107,8 +122,12 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             );
         }
     }
-    return null;
-  }
+    return (
+      <div key={id} hidden={this.isHidden(param)}>
+        {paramComponent}
+      </div>
+    );
+  };
 }
 
 export default BasicDeploymentForm;
