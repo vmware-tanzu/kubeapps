@@ -50,6 +50,10 @@ until helm version ${HELM_CLIENT_TLS_FLAGS} --tiller-connection-timeout 1; do
   sleep 1
 done
 
+# DEBUG
+kubectl get ep kube-dns --namespace=kube-system
+kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
+
 # Add admin permissions to default user in kube-system namespace
 kubectl get clusterrolebinding kube-dns-admin >& /dev/null || \
     kubectl create clusterrolebinding kube-dns-admin --serviceaccount=kube-system:default --clusterrole=cluster-admin 
@@ -75,6 +79,10 @@ k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 
+# DEBUG
+kubectl get ep kube-dns --namespace=kube-system
+kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
+
 # Wait for Kubeapps Pods
 deployments=(
   kubeapps-ci
@@ -89,6 +97,12 @@ for dep in ${deployments[@]}; do
   echo "Deployment ${dep} ready"
 done
 
+# Wait for DNS to be ready
+k8s_wait_for_deployment kube-system coredns
+# DEBUG
+kubectl get ep kube-dns --namespace=kube-system
+kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
+
 # Wait for Kubeapps Jobs
 k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
 echo "Job apprepositories.kubeapps.com/repo-name=stable ready"
@@ -98,6 +112,10 @@ kubectl get pods -n kubeapps -o wide
 
 # Run helm tests
 set +e
+
+# DEBUG
+kubectl get ep kube-dns --namespace=kube-system
+kubectl get pods --namespace=kube-system -l k8s-app=kube-dns
 
 helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
 code=$?
