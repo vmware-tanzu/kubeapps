@@ -43,8 +43,7 @@ export function retrieveBasicFormParams(
         };
         params = {
           ...params,
-          // The key of the param is the value of the form tag
-          [form]: param,
+          [itemPath]: param,
         };
       } else {
         // If the property is an object, iterate recursively

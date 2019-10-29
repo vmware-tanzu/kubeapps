@@ -66,7 +66,7 @@ it("renders the full DeploymentFormBody", () => {
 });
 
 const initialValues = "foo: bar";
-const initialSchema = { properties: { foo: { type: "string", form: "foo" } } };
+const initialSchema = { properties: { foo: { type: "string", form: true } } };
 const chartVersion = {
   id: "foo",
   attributes: { version: "1.0.0", app_version: "1.0", created: "1" },
@@ -105,7 +105,7 @@ describe("when there are changes in the selected version", () => {
       .state as IDeploymentFormBodyState;
     const basicFormParameters = {
       foo: {
-        form: "foo",
+        form: true,
         path: "foo",
         value: "bar",
         type: "string",
@@ -129,7 +129,7 @@ describe("when there are changes in the selected version", () => {
       });
       const basicFormParameters = {
         foo: {
-          form: "foo",
+          form: true,
           path: "foo",
           value: "notBar",
           type: "string",
@@ -154,7 +154,7 @@ describe("when there are changes in the selected version", () => {
       });
       const basicFormParameters = {
         foo: {
-          form: "foo",
+          form: true,
           path: "foo",
           value: "notBar",
           type: "string",
@@ -189,7 +189,7 @@ describe("when there are changes in the selected version", () => {
       });
       const basicFormParameters = {
         foo: {
-          form: "foo",
+          form: true,
           path: "foo",
           value: "notBar",
           type: "string",
@@ -264,11 +264,11 @@ describe("when the basic form is enabled", () => {
       ...props,
       selected: {
         ...props.selected,
-        schema: { properties: { wordpressUsername: { type: "string", form: "username" } } },
+        schema: { properties: { wordpressUsername: { type: "string", form: true } } },
       },
     };
     const basicFormParameters = {
-      username: {
+      wordpressUsername: {
         path: "wordpressUsername",
         value: "user",
       },
@@ -285,7 +285,7 @@ describe("when the basic form is enabled", () => {
     tab.simulate("click");
 
     expect(wrapper.state("basicFormParameters")).toMatchObject({
-      username: {
+      wordpressUsername: {
         path: "wordpressUsername",
         value: "foo",
       },

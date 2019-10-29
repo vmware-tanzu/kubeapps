@@ -8,47 +8,47 @@ describe("retrieveBasicFormParams", () => {
     {
       description: "should retrieve a param",
       values: "user: andres",
-      schema: { properties: { user: { type: "string", form: "username" } } } as JSONSchema4,
+      schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
       result: {
-        username: { path: "user", value: "andres" } as IBasicFormParam,
+        user: { path: "user", value: "andres" } as IBasicFormParam,
       },
     },
     {
       description: "should retrieve a param without default value",
       values: "user:",
-      schema: { properties: { user: { type: "string", form: "username" } } } as JSONSchema4,
+      schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
       result: {
-        username: { path: "user" } as IBasicFormParam,
+        user: { path: "user" } as IBasicFormParam,
       },
     },
     {
       description: "should retrieve a param with default value in the schema",
       values: "user:",
       schema: {
-        properties: { user: { type: "string", form: "username", default: "michael" } },
+        properties: { user: { type: "string", form: true, default: "michael" } },
       } as JSONSchema4,
       result: {
-        username: { path: "user", value: "michael" } as IBasicFormParam,
+        user: { path: "user", value: "michael" } as IBasicFormParam,
       },
     },
     {
       description: "values prevail over default values",
       values: "user: foo",
       schema: {
-        properties: { user: { type: "string", form: "username", default: "bar" } },
+        properties: { user: { type: "string", form: true, default: "bar" } },
       } as JSONSchema4,
       result: {
-        username: { path: "user", value: "foo" } as IBasicFormParam,
+        user: { path: "user", value: "foo" } as IBasicFormParam,
       },
     },
     {
       description: "it should return params even if the values don't include it",
       values: "foo: bar",
       schema: {
-        properties: { user: { type: "string", form: "username", default: "andres" } },
+        properties: { user: { type: "string", form: true, default: "andres" } },
       } as JSONSchema4,
       result: {
-        username: { path: "user", value: "andres" } as IBasicFormParam,
+        user: { path: "user", value: "andres" } as IBasicFormParam,
       },
     },
     {
@@ -58,12 +58,12 @@ describe("retrieveBasicFormParams", () => {
         properties: {
           credentials: {
             type: "object",
-            properties: { user: { type: "string", form: "username" } },
+            properties: { user: { type: "string", form: true } },
           },
         },
       } as JSONSchema4,
       result: {
-        username: {
+        "credentials.user": {
           path: "credentials.user",
           value: "andres",
         } as IBasicFormParam,
@@ -92,22 +92,22 @@ service: ClusterIP
               admin: {
                 type: "object",
                 properties: {
-                  user: { type: "string", form: "username" },
-                  pass: { type: "string", form: "password" },
+                  user: { type: "string", form: true },
+                  pass: { type: "string", form: true },
                 },
               },
             },
           },
-          replicas: { type: "number", form: "replicas" },
+          replicas: { type: "number", form: true },
           service: { type: "string" },
         },
       } as JSONSchema4,
       result: {
-        username: {
+        "credentials.admin.user": {
           path: "credentials.admin.user",
           value: "andres",
         } as IBasicFormParam,
-        password: {
+        "credentials.admin.pass": {
           path: "credentials.admin.pass",
           value: "myPassword",
         } as IBasicFormParam,
@@ -124,7 +124,7 @@ service: ClusterIP
         properties: {
           blogName: {
             type: "string",
-            form: "blogName",
+            form: true,
             title: "Blog Name",
             description: "Title of the blog",
           },
@@ -151,10 +151,10 @@ externalDatabase:
         properties: {
           externalDatabase: {
             type: "object",
-            form: "externalDatabase",
+            form: true,
             properties: {
-              name: { type: "string", form: "externalDatabaseName" },
-              port: { type: "integer", form: "externalDatabasePort" },
+              name: { type: "string", form: true },
+              port: { type: "integer", form: true },
             },
           },
         },
@@ -164,11 +164,11 @@ externalDatabase:
           path: "externalDatabase",
           type: "object",
           children: {
-            externalDatabaseName: {
+            "externalDatabase.name": {
               path: "externalDatabase.name",
               type: "string",
             },
-            externalDatabasePort: {
+            "externalDatabase.port": {
               path: "externalDatabase.port",
               type: "integer",
             },
@@ -181,7 +181,7 @@ externalDatabase:
       values: "foo: false",
       schema: {
         properties: {
-          foo: { type: "boolean", form: "foo" },
+          foo: { type: "boolean", form: true },
         },
       } as JSONSchema4,
       result: {
