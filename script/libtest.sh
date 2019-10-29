@@ -30,6 +30,37 @@ k8s_wait_for_deployment() {
     return $res
 }
 
+## k8s specific Helper functions
+k8s_wait_for_endpoint() {
+    namespace=${1:?}
+    svc=${2:?}
+    number_of_endpoints=${3:?}
+
+    local -i retryTimeSeconds=${TEST_MAX_WAIT_SEC:?}
+    local -i retryTimeStepSeconds=5
+
+    echo "Waiting for the endpoints of ${svc} to be at least ${number_of_endpoints}"
+
+    while [ "$retryTimeSeconds" -gt 0 ]; do
+        # Avoid to exit the function if the job is not completed yet
+        set +e
+        kubectl get ep -n kubeapps kubeapps-ci -o jsonpath="{.subsets[0].addresses[$(expr $number_of_endpoints - 1)]}"
+        res=$?
+        set -e
+        # There is a job that finished
+        if [[ "$res" -eq "0" ]]; then
+            echo "Endpoint ready"
+            return 0
+        fi
+        # It did not finished so we reduce the remaining time and wait for next retry cycle
+        echo "Waiting for endpoing ${svc} to be completed, will retry in $retryTimeStepSeconds seconds ... "
+        retryTimeSeconds=retryTimeSeconds-$retryTimeStepSeconds
+        sleep $retryTimeStepSeconds
+    done
+
+    return $res
+}
+
 k8s_ensure_image() {
     namespace=${1:?}
     deployment=${2:?}
