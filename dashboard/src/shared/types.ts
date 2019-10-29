@@ -386,15 +386,16 @@ export interface IBasicFormParam {
   maximum?: number;
   render?: string;
   description?: string;
+  hidden?:
+    | {
+        condition: any;
+        value: string;
+      }
+    | string;
   children?: { [name: string]: IBasicFormParam };
 }
 export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMin?: number;
   sliderMax?: number;
   sliderUnit?: string;
-}
-
-export interface IBasicFormEnablerParam extends IBasicFormParam {
-  disables?: string;
-  enables?: string;
 }
