@@ -5,7 +5,6 @@ exports[`should render a boolean param with title and description 1`] = `
   handleBasicFormParamChange={[Function]}
   id="foo"
   label="Enable Metrics"
-  name="enableMetrics"
   param={
     Object {
       "path": "enableMetrics",

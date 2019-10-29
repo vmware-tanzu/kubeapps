@@ -32,7 +32,7 @@ export interface IDeploymentFormBodyProps {
 }
 
 export interface IDeploymentFormBodyState {
-  basicFormParameters: { [key: string]: IBasicFormParam };
+  basicFormParameters: IBasicFormParam[];
 }
 
 class DeploymentFormBody extends React.Component<
@@ -40,7 +40,7 @@ class DeploymentFormBody extends React.Component<
   IDeploymentFormBodyState
 > {
   public state: IDeploymentFormBodyState = {
-    basicFormParameters: {},
+    basicFormParameters: [],
   };
 
   public componentDidMount() {
@@ -212,19 +212,15 @@ class DeploymentFormBody extends React.Component<
     );
   };
 
-  private handleBasicFormParamChange = (name: string, param: IBasicFormParam) => {
+  private handleBasicFormParamChange = (param: IBasicFormParam) => {
     return (e: React.FormEvent<HTMLInputElement>) => {
       this.props.setValuesModified();
       const value = getValueFromEvent(e);
       this.setState({
         // Change param definition
-        basicFormParameters: {
-          ...this.state.basicFormParameters,
-          [name]: {
-            ...param,
-            value,
-          },
-        },
+        basicFormParameters: this.state.basicFormParameters.map(p =>
+          p.path === param.path ? { ...param, value } : p,
+        ),
       });
       // Change raw values
       this.props.setValues(setValue(this.props.appValues, param.path, value));

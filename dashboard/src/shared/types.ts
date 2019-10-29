@@ -392,7 +392,7 @@ export interface IBasicFormParam {
         value: string;
       }
     | string;
-  children?: { [name: string]: IBasicFormParam };
+  children?: IBasicFormParam[];
 }
 export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMin?: number;

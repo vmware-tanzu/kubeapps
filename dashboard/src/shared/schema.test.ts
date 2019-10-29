@@ -9,17 +9,22 @@ describe("retrieveBasicFormParams", () => {
       description: "should retrieve a param",
       values: "user: andres",
       schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
-      result: {
-        user: { path: "user", value: "andres" } as IBasicFormParam,
-      },
+      result: [
+        {
+          path: "user",
+          value: "andres",
+        } as IBasicFormParam,
+      ],
     },
     {
       description: "should retrieve a param without default value",
       values: "user:",
       schema: { properties: { user: { type: "string", form: true } } } as JSONSchema4,
-      result: {
-        user: { path: "user" } as IBasicFormParam,
-      },
+      result: [
+        {
+          path: "user",
+        } as IBasicFormParam,
+      ],
     },
     {
       description: "should retrieve a param with default value in the schema",
@@ -27,9 +32,12 @@ describe("retrieveBasicFormParams", () => {
       schema: {
         properties: { user: { type: "string", form: true, default: "michael" } },
       } as JSONSchema4,
-      result: {
-        user: { path: "user", value: "michael" } as IBasicFormParam,
-      },
+      result: [
+        {
+          path: "user",
+          value: "michael",
+        } as IBasicFormParam,
+      ],
     },
     {
       description: "values prevail over default values",
@@ -37,9 +45,12 @@ describe("retrieveBasicFormParams", () => {
       schema: {
         properties: { user: { type: "string", form: true, default: "bar" } },
       } as JSONSchema4,
-      result: {
-        user: { path: "user", value: "foo" } as IBasicFormParam,
-      },
+      result: [
+        {
+          path: "user",
+          value: "foo",
+        } as IBasicFormParam,
+      ],
     },
     {
       description: "it should return params even if the values don't include it",
@@ -47,9 +58,12 @@ describe("retrieveBasicFormParams", () => {
       schema: {
         properties: { user: { type: "string", form: true, default: "andres" } },
       } as JSONSchema4,
-      result: {
-        user: { path: "user", value: "andres" } as IBasicFormParam,
-      },
+      result: [
+        {
+          path: "user",
+          value: "andres",
+        } as IBasicFormParam,
+      ],
     },
     {
       description: "should retrieve a nested param",
@@ -62,12 +76,12 @@ describe("retrieveBasicFormParams", () => {
           },
         },
       } as JSONSchema4,
-      result: {
-        "credentials.user": {
+      result: [
+        {
           path: "credentials.user",
           value: "andres",
         } as IBasicFormParam,
-      },
+      ],
     },
     {
       description: "should retrieve several params and ignore the ones not marked",
@@ -102,20 +116,20 @@ service: ClusterIP
           service: { type: "string" },
         },
       } as JSONSchema4,
-      result: {
-        "credentials.admin.user": {
+      result: [
+        {
           path: "credentials.admin.user",
           value: "andres",
         } as IBasicFormParam,
-        "credentials.admin.pass": {
+        {
           path: "credentials.admin.pass",
           value: "myPassword",
         } as IBasicFormParam,
-        replicas: {
+        {
           path: "replicas",
           value: 1,
         } as IBasicFormParam,
-      },
+      ],
     },
     {
       description: "should retrieve a param with title and description",
@@ -130,15 +144,15 @@ service: ClusterIP
           },
         },
       } as JSONSchema4,
-      result: {
-        blogName: {
+      result: [
+        {
           path: "blogName",
           type: "string",
           value: "myBlog",
           title: "Blog Name",
           description: "Title of the blog",
         } as IBasicFormParam,
-      },
+      ],
     },
     {
       description: "should retrieve a param with children params",
@@ -159,22 +173,22 @@ externalDatabase:
           },
         },
       } as JSONSchema4,
-      result: {
-        externalDatabase: {
+      result: [
+        {
           path: "externalDatabase",
           type: "object",
-          children: {
-            "externalDatabase.name": {
+          children: [
+            {
               path: "externalDatabase.name",
               type: "string",
             },
-            "externalDatabase.port": {
+            {
               path: "externalDatabase.port",
               type: "integer",
             },
-          },
+          ],
         } as IBasicFormParam,
-      },
+      ],
     },
     {
       description: "should retrieve a false param",
@@ -184,9 +198,7 @@ externalDatabase:
           foo: { type: "boolean", form: true },
         },
       } as JSONSchema4,
-      result: {
-        foo: { path: "foo", type: "boolean", value: false } as IBasicFormParam,
-      },
+      result: [{ path: "foo", type: "boolean", value: false } as IBasicFormParam],
     },
   ].forEach(t => {
     it(t.description, () => {

@@ -103,14 +103,14 @@ describe("when there are changes in the selected version", () => {
     wrapper.setProps({ selected: props.selected });
     const localState: IDeploymentFormBodyState = wrapper.instance()
       .state as IDeploymentFormBodyState;
-    const basicFormParameters = {
-      foo: {
+    const basicFormParameters = [
+      {
         form: true,
         path: "foo",
         value: "bar",
         type: "string",
       },
-    };
+    ];
     expect(localState.basicFormParameters).toEqual(basicFormParameters);
   });
 
@@ -127,14 +127,14 @@ describe("when there are changes in the selected version", () => {
           values: "foo: ignored-value",
         },
       });
-      const basicFormParameters = {
-        foo: {
+      const basicFormParameters = [
+        {
           form: true,
           path: "foo",
           value: "notBar",
           type: "string",
         },
-      };
+      ];
       const localState: IDeploymentFormBodyState = wrapper.instance()
         .state as IDeploymentFormBodyState;
       expect(localState.basicFormParameters).toEqual(basicFormParameters);
@@ -152,14 +152,14 @@ describe("when there are changes in the selected version", () => {
           values: "foo: notBar",
         },
       });
-      const basicFormParameters = {
-        foo: {
+      const basicFormParameters = [
+        {
           form: true,
           path: "foo",
           value: "notBar",
           type: "string",
         },
-      };
+      ];
       const localState: IDeploymentFormBodyState = wrapper.instance()
         .state as IDeploymentFormBodyState;
       expect(localState.basicFormParameters).toEqual(basicFormParameters);
@@ -187,14 +187,14 @@ describe("when there are changes in the selected version", () => {
           values: "foo: another-ignored-value",
         },
       });
-      const basicFormParameters = {
-        foo: {
+      const basicFormParameters = [
+        {
           form: true,
           path: "foo",
           value: "notBar",
           type: "string",
         },
-      };
+      ];
       const localState: IDeploymentFormBodyState = wrapper.instance()
         .state as IDeploymentFormBodyState;
       expect(localState.basicFormParameters).toEqual(basicFormParameters);
@@ -205,12 +205,12 @@ describe("when there are changes in the selected version", () => {
 
 describe("when the basic form is enabled", () => {
   it("renders the different tabs", () => {
-    const basicFormParameters = {
-      username: {
+    const basicFormParameters = [
+      {
         path: "wordpressUsername",
         value: "user",
       },
-    };
+    ];
     const wrapper = mount(<DeploymentFormBody {...props} />);
     wrapper.setState({ appValues: "wordpressUsername: user", basicFormParameters });
     wrapper.update();
@@ -225,12 +225,12 @@ describe("when the basic form is enabled", () => {
   });
 
   it("changes the parameter value", () => {
-    const basicFormParameters = {
-      username: {
+    const basicFormParameters = [
+      {
         path: "wordpressUsername",
         value: "user",
       },
-    };
+    ];
     const setValuesModified = jest.fn();
     const setValues = jest.fn();
     const wrapper = mount(
@@ -249,12 +249,9 @@ describe("when the basic form is enabled", () => {
     const onChange = input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void;
     onChange({ currentTarget: { value: "foo" } } as React.FormEvent<HTMLInputElement>);
 
-    expect(wrapper.state("basicFormParameters")).toEqual({
-      username: {
-        path: "wordpressUsername",
-        value: "foo",
-      },
-    });
+    expect(wrapper.state("basicFormParameters")).toEqual([
+      { path: "wordpressUsername", value: "foo" },
+    ]);
     expect(setValuesModified).toHaveBeenCalled();
     expect(setValues).toHaveBeenCalledWith("wordpressUsername: foo\n");
   });
@@ -267,12 +264,12 @@ describe("when the basic form is enabled", () => {
         schema: { properties: { wordpressUsername: { type: "string", form: true } } },
       },
     };
-    const basicFormParameters = {
-      wordpressUsername: {
+    const basicFormParameters = [
+      {
         path: "wordpressUsername",
         value: "user",
       },
-    };
+    ];
     const wrapper = mount(<DeploymentFormBody {...testProps} />);
     wrapper.setState({ basicFormParameters });
     wrapper.setProps({ appValues: "wordpressUsername: foo" });
@@ -284,23 +281,23 @@ describe("when the basic form is enabled", () => {
       .first();
     tab.simulate("click");
 
-    expect(wrapper.state("basicFormParameters")).toMatchObject({
-      wordpressUsername: {
+    expect(wrapper.state("basicFormParameters")).toMatchObject([
+      {
         path: "wordpressUsername",
         value: "foo",
       },
-    });
+    ]);
   });
 
   it("handles a parameter as a number", () => {
     const setValues = jest.fn();
-    const basicFormParameters = {
-      replicas: {
+    const basicFormParameters = [
+      {
         path: "replicas",
         value: 1,
         type: "integer",
       },
-    };
+    ];
     const wrapper = mount(<DeploymentFormBody {...props} setValues={setValues} />);
     wrapper.setState({ basicFormParameters });
     wrapper.setProps({ appValues: "replicas: 1" });
@@ -313,25 +310,25 @@ describe("when the basic form is enabled", () => {
       HTMLInputElement
     >);
 
-    expect(wrapper.state("basicFormParameters")).toEqual({
-      replicas: {
+    expect(wrapper.state("basicFormParameters")).toEqual([
+      {
         path: "replicas",
         value: 2,
         type: "integer",
       },
-    });
+    ]);
     expect(setValues).toHaveBeenCalledWith("replicas: 2\n");
   });
 
   it("handles a parameter as a boolean", () => {
     const setValues = jest.fn();
-    const basicFormParameters = {
-      enableMetrics: {
+    const basicFormParameters = [
+      {
         path: "enableMetrics",
         value: false,
         type: "boolean",
       },
-    };
+    ];
     const wrapper = mount(<DeploymentFormBody {...props} setValues={setValues} />);
     wrapper.setState({ basicFormParameters });
     wrapper.setProps({ appValues: "enableMetrics: false" });
@@ -344,13 +341,13 @@ describe("when the basic form is enabled", () => {
       currentTarget: { value: "true", checked: true, type: "checkbox" },
     } as React.FormEvent<HTMLInputElement>);
 
-    expect(wrapper.state("basicFormParameters")).toEqual({
-      enableMetrics: {
+    expect(wrapper.state("basicFormParameters")).toEqual([
+      {
         path: "enableMetrics",
         value: true,
         type: "boolean",
       },
-    });
+    ]);
     expect(setValues).toHaveBeenCalledWith("enableMetrics: true\n");
   });
 });

@@ -6,7 +6,6 @@ import SliderParam from "./SliderParam";
 
 const defaultProps = {
   id: "disk",
-  name: "diskSize",
   label: "Disk Size",
   param: {
     value: "10Gi",
@@ -50,7 +49,6 @@ it("changes the value of the param when the slider changes", () => {
 
   expect(param.value).toBe("20Gi");
   expect(handleBasicFormParamChange.mock.calls[0]).toEqual([
-    "diskSize",
     { value: "20Gi", type: "string", path: "disk" },
   ]);
 });

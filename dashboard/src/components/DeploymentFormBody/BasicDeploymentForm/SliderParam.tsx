@@ -4,14 +4,12 @@ import Slider from "../../Slider";
 
 export interface ISliderParamProps {
   id: string;
-  name: string;
   label: string;
   param: IBasicFormParam;
   unit: string;
   min: number;
   max: number;
   handleBasicFormParamChange: (
-    name: string,
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
@@ -89,7 +87,7 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
   }
 
   private handleParamChange = (value: number) => {
-    this.props.handleBasicFormParamChange(this.props.name, this.props.param)({
+    this.props.handleBasicFormParamChange(this.props.param)({
       currentTarget: { value: `${value}${this.props.unit}` },
     } as React.FormEvent<HTMLInputElement>);
   };
