@@ -30,9 +30,7 @@ test("Deploys an application with the values by default", async () => {
       await expect(page).toMatch("gitlab", { timeout: 2000 });
       break;
     } catch (e) {
-      // TODO: Remove
-      console.log(e);
-      // Refresh
+      // Refresh since the chart will get a bit of time to populate
       await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
     } finally {
       retries--;
