@@ -44,7 +44,7 @@ k8s_wait_for_endpoint() {
     while [ "$retryTimeSeconds" -gt 0 ]; do
         # Avoid to exit the function if the job is not completed yet
         set +e
-        kubectl get ep -n kubeapps kubeapps-ci -o jsonpath="{.subsets[0].addresses[$(expr $number_of_endpoints - 1)]}"
+        kubectl get ep -n kubeapps kubeapps-ci -o jsonpath="{.subsets[0].addresses[$(expr $number_of_endpoints - 1)]}" > /dev/null
         res=$?
         set -e
         # There is a job that finished

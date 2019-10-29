@@ -99,9 +99,6 @@ echo "Job apprepositories.kubeapps.com/repo-name=stable ready"
 echo "All deployments ready. PODs:"
 kubectl get pods -n kubeapps -o wide
 
-# Run helm tests
-set +e
-
 # DEBUG
 kubectl get ep --namespace=kubeapps
 svcs=(
@@ -115,8 +112,18 @@ for svc in ${svcs[@]}; do
   echo "Endpoints for ${svc} available"
 done
 
-helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
+# Run helm tests
+set +e
+
+helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci --cleanup
 code=$?
+
+if [[ "$code" != 0 ]]; then
+  echo "Helm test failed, retrying..."
+  # Avoid temporary issues, retry
+  helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci --cleanup
+  code=$?
+fi
 
 set -e
 
