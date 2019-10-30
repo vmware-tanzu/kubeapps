@@ -1,7 +1,6 @@
 jest.setTimeout(120000);
 
 test("Deploys an application with the values by default", async () => {
-  page.setDefaultTimeout(4000);
   await page.goto(getUrl("/#/login"));
 
   await expect(page).toFillForm("form", {
