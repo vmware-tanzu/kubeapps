@@ -1,3 +1,5 @@
+jest.setTimeout(120000);
+
 test("Fails to deploy an application due to missing permissions", async () => {
   await page.goto(getUrl("/#/login"));
 

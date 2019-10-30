@@ -3,8 +3,6 @@ const { setDefaultOptions } = require("expect-puppeteer");
 
 setDefaultOptions({ timeout: 4000 });
 
-jest.setTimeout(120000);
-
 // endpoint argument is mandatory
 if (endpoint == null || endpoint == "") {
   console.error("The INTEGRATION_ENDPOINT environment variable is mandatory");
