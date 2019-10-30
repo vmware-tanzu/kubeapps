@@ -49,6 +49,12 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
     await this.generateScreenshotsFolder();
     await this.waitOnService();
     await super.setup();
+    await this.global.page.setViewport({
+      width: 1200,
+      height: 780,
+      deviceScaleFactor: 1
+    });
+    await this.global.page.setDefaultTimeout(8000);
   }
 
   async teardown() {
