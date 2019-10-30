@@ -89,6 +89,9 @@ for dep in ${deployments[@]}; do
   echo "Deployment ${dep} ready"
 done
 
+# Wait for DNS to be ready
+k8s_wait_for_deployment kube-system coredns
+
 # Wait for Kubeapps Jobs
 k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
 echo "Job apprepositories.kubeapps.com/repo-name=stable ready"
@@ -96,11 +99,31 @@ echo "Job apprepositories.kubeapps.com/repo-name=stable ready"
 echo "All deployments ready. PODs:"
 kubectl get pods -n kubeapps -o wide
 
+# Wait for all the endpoints to be ready
+kubectl get ep --namespace=kubeapps
+svcs=(
+  kubeapps-ci
+  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-tiller-proxy
+  kubeapps-ci-internal-dashboard
+)
+for svc in ${svcs[@]}; do
+  k8s_wait_for_endpoint kubeapps ${svc} 2
+  echo "Endpoints for ${svc} available"
+done
+
 # Run helm tests
 set +e
 
-helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
+helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci --cleanup
 code=$?
+
+if [[ "$code" != 0 ]]; then
+  echo "Helm test failed, retrying..."
+  # Avoid temporary issues, retry
+  helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
+  code=$?
+fi
 
 set -e
 
