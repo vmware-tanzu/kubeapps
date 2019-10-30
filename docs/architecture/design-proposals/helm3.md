@@ -1,4 +1,4 @@
-﻿# Kubeapps Helm 3 support
+# Kubeapps Helm 3 support
 
 We believe that the transition to Helm 3 can be done in such a fashion that both the old tiller-proxy and the new Helm 3 components can coexist, and that the Dashboard does not need to be modified.
 The choice between Helm 2 support and Helm 3 support should be made at deploy time in Helm (e.g. by setting `helm3=true` in Values).
