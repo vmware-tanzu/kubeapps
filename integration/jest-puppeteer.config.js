@@ -4,5 +4,6 @@ module.exports = {
   launch: {
     headless,
     args: ["--no-sandbox"]
-  }
+  },
+  browserContext: "incognito"
 };
