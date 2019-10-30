@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "jest",
-    "start:window": "HEADLESS=false jest"
+    "start:window": "INTEGRATION_HEADLESS=false jest"
   },
   "dependencies": {
     "expect-puppeteer": "^4.3.0",
