@@ -89,9 +89,6 @@ for dep in ${deployments[@]}; do
   echo "Deployment ${dep} ready"
 done
 
-# Wait for DNS to be ready
-k8s_wait_for_deployment kube-system coredns
-
 # Wait for Kubeapps Jobs
 k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
 echo "Job apprepositories.kubeapps.com/repo-name=stable ready"
