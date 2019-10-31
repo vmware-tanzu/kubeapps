@@ -4,6 +4,7 @@ import { IConfigState } from "../reducers/config";
 import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
+import { ResourceKind } from "./ResourceKinds";
 
 // Allow defining multiple error classes
 // tslint:disable:max-classes-per-file
@@ -141,7 +142,7 @@ export interface IIngressSpec {
 
 export interface IResource {
   apiVersion: string;
-  kind: string;
+  kind: ResourceKind;
   type: string;
   spec: any;
   status: any;
@@ -385,15 +386,16 @@ export interface IBasicFormParam {
   maximum?: number;
   render?: string;
   description?: string;
+  hidden?:
+    | {
+        condition: any;
+        value: string;
+      }
+    | string;
   children?: { [name: string]: IBasicFormParam };
 }
 export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMin?: number;
   sliderMax?: number;
   sliderUnit?: string;
-}
-
-export interface IBasicFormEnablerParam extends IBasicFormParam {
-  disables?: string;
-  enables?: string;
 }

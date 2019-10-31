@@ -28,7 +28,6 @@ const defaultProps = {
         title: "Enable External Database",
         type: "boolean",
         value: true,
-        disables: "externalDatabase",
       } as IBasicFormParam,
     },
     path: "externalDatabase",
@@ -47,25 +46,6 @@ const defaultProps = {
 it("should render a external database section", () => {
   const wrapper = shallow(<Subsection {...defaultProps} />);
   expect(wrapper).toMatchSnapshot();
-});
-
-it("should hide/show the database params if the self-hosted database is enabled/disabled", () => {
-  const wrapper = shallow(<Subsection {...defaultProps} />);
-  expect(defaultProps.param.children!.useSelfHostedDatabase.value).toBe(true);
-  expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).toExist();
-
-  wrapper.setProps({
-    ...defaultProps,
-    param: {
-      ...defaultProps.param,
-      children: {
-        ...defaultProps.param.children,
-        useSelfHostedDatabase: { path: "mariadb.enabled", value: false, type: "boolean" },
-      },
-    },
-  });
-  wrapper.update();
-  expect(wrapper.find("div").findWhere(d => d.prop("hidden"))).not.toExist();
 });
 
 it("should omit the enabler param if it doesn't exist", () => {

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { mount } from "enzyme";
+import { mount, shallow } from "enzyme";
 import { IBasicFormParam } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import Subsection from "./Subsection";
@@ -102,4 +102,49 @@ it("should render an external database section", () => {
 
   const dbsec = wrapper.find(Subsection);
   expect(dbsec).toExist();
+});
+
+it("should hide an element if it depends on a param (string)", () => {
+  const params = {
+    foo: {
+      path: "foo",
+      type: "string",
+      hidden: "bar",
+    },
+    bar: {
+      path: "bar",
+      type: "boolean",
+    },
+  };
+  const appValues = "foo: 1\nbar: true";
+  const wrapper = shallow(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+});
+
+it("should hide an element if it depends on a param (object)", () => {
+  const params = {
+    foo: {
+      path: "foo",
+      type: "string",
+      hidden: {
+        value: "bar",
+        condition: "enabled",
+      },
+    },
+    bar: {
+      path: "bar",
+      type: "string",
+    },
+  };
+  const appValues = "foo: 1\nbar: enabled";
+  const wrapper = shallow(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
 });
