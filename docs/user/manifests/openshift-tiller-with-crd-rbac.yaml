@@ -7,19 +7,6 @@ objects:
     name: tiller
     namespace: ${TILLER_NAMESPACE}
 
-# TODO: Remove cluster-admin binding for tiller and get working with the individual roles below.
-- kind: ClusterRoleBinding
-  apiVersion: v1
-  metadata:
-    name: temporary-tiller-cluster-admin
-  roleRef:
-    kind: ClusterRole
-    name: cluster-admin
-  subjects:
-  - kind: ServiceAccount
-    name: tiller
-    namespace: ${TILLER_NAMESPACE}
-
 - kind: Role
   apiVersion: v1
   metadata:
@@ -72,35 +59,6 @@ objects:
     name: tiller
     namespace: ${TILLER_NAMESPACE}
 
-# On OpenShift, the developer who 'helm install's a chart needs certain access to pods in the tiller namespace.
-- kind: Role
-  apiVersion: v1
-  metadata:
-    name: helm-user
-  rules:
-  - apiGroups:
-    - ""
-    resources:
-    - pods
-    - pods/portforward
-    verbs:
-    - get
-    - list
-    - create
-- kind: RoleBinding
-  apiVersion: v1
-  metadata:
-    name: helm-user
-  roleRef:
-    name: helm-user
-    namespace: ${TILLER_NAMESPACE}
-  subjects:
-  - kind: User
-    name: developer
-
 parameters:
-- name: HELM_VERSION
-  value: v2.6.1
-  required: true
 - name: TILLER_NAMESPACE
   required: true
