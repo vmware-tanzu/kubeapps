@@ -9,9 +9,8 @@ import SliderParam from "./SliderParam";
 import Subsection from "./Subsection";
 
 export interface IBasicDeploymentFormProps {
-  params: { [name: string]: IBasicFormParam };
+  params: IBasicFormParam[];
   handleBasicFormParamChange: (
-    name: string,
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
   handleValuesChange: (value: string) => void;
@@ -22,16 +21,11 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   public render() {
     return (
       <div className="margin-t-normal">
-        {Object.keys(this.props.params).map((paramName, i) => {
-          const id = `${paramName}-${i}`;
+        {this.props.params.map((param, i) => {
+          const id = `${param.path}-${i}`;
           return (
             <div key={id}>
-              {this.renderParam(
-                paramName,
-                this.props.params[paramName],
-                id,
-                this.props.handleBasicFormParamChange,
-              )}
+              {this.renderParam(param, id, this.props.handleBasicFormParamChange)}
               <hr />
             </div>
           );
@@ -55,72 +49,63 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
   };
 
   private renderParam = (
-    name: string,
     param: IBasicFormParam,
     id: string,
     handleBasicFormParamChange: (
-      name: string,
       p: IBasicFormParam,
     ) => (e: React.FormEvent<HTMLInputElement>) => void,
   ) => {
     let paramComponent: JSX.Element = <></>;
-    switch (name) {
-      default:
-        switch (param.type) {
-          case "boolean":
-            paramComponent = (
-              <BooleanParam
-                label={param.title || name}
-                handleBasicFormParamChange={handleBasicFormParamChange}
-                id={id}
-                name={name}
-                param={param}
-              />
-            );
-            break;
-          case "object": {
-            paramComponent = (
-              <Subsection
-                label={param.title || name}
-                handleValuesChange={this.props.handleValuesChange}
-                appValues={this.props.appValues}
-                renderParam={this.renderParam}
-                name={name}
-                param={param}
-              />
-            );
-            break;
-          }
-          case "string": {
-            if (param.render === "slider") {
-              const p = param as IBasicFormSliderParam;
-              paramComponent = (
-                <SliderParam
-                  label={param.title || name}
-                  handleBasicFormParamChange={handleBasicFormParamChange}
-                  id={id}
-                  name={name}
-                  param={param}
-                  min={p.sliderMin || 1}
-                  max={p.sliderMax || 1000}
-                  unit={p.sliderUnit || ""}
-                />
-              );
-              break;
-            }
-          }
-          default:
-            paramComponent = (
-              <TextParam
-                label={param.title || name}
-                handleBasicFormParamChange={handleBasicFormParamChange}
-                id={id}
-                name={name}
-                param={param}
-                inputType={param.type === "integer" ? "number" : "string"}
-              />
-            );
+    switch (param.type) {
+      case "boolean":
+        paramComponent = (
+          <BooleanParam
+            label={param.title || param.path}
+            handleBasicFormParamChange={handleBasicFormParamChange}
+            id={id}
+            param={param}
+          />
+        );
+        break;
+      case "object": {
+        paramComponent = (
+          <Subsection
+            label={param.title || param.path}
+            handleValuesChange={this.props.handleValuesChange}
+            appValues={this.props.appValues}
+            renderParam={this.renderParam}
+            param={param}
+          />
+        );
+        break;
+      }
+      case "string": {
+        if (param.render === "slider") {
+          const p = param as IBasicFormSliderParam;
+          paramComponent = (
+            <SliderParam
+              label={param.title || param.path}
+              handleBasicFormParamChange={handleBasicFormParamChange}
+              id={id}
+              param={param}
+              min={p.sliderMin || 1}
+              max={p.sliderMax || 1000}
+              unit={p.sliderUnit || ""}
+            />
+          );
+          break;
         }
+      }
+      default:
+        paramComponent = (
+          <TextParam
+            label={param.title || name}
+            handleBasicFormParamChange={handleBasicFormParamChange}
+            id={id}
+            param={param}
+            inputType={param.type === "integer" ? "number" : "string"}
+          />
+        );
     }
     return (
       <div key={id} hidden={this.isHidden(param)}>

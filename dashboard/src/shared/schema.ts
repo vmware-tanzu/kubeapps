@@ -19,8 +19,8 @@ export function retrieveBasicFormParams(
   defaultValues: string,
   schema?: jsonSchema.JSONSchema4,
   parentPath?: string,
-): { [key: string]: IBasicFormParam } {
-  let params = {};
+): IBasicFormParam[] {
+  let params: IBasicFormParam[] = [];
   if (schema && schema.properties) {
     const properties = schema.properties!;
     Object.keys(properties).map(propertyKey => {
@@ -41,18 +41,13 @@ export function retrieveBasicFormParams(
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
               : undefined,
         };
-        params = {
-          ...params,
-          // The key of the param is the value of the form tag
-          [form]: param,
-        };
+        params = params.concat(param);
       } else {
         // If the property is an object, iterate recursively
         if (schema.properties![propertyKey].type === "object") {
-          params = {
-            ...params,
-            ...retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
-          };
+          params = params.concat(
+            retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
+          );
         }
       }
     });

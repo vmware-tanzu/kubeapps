@@ -6,7 +6,6 @@ import BooleanParam from "./BooleanParam";
 const param = { path: "enableMetrics", value: true, type: "boolean" };
 const defaultProps = {
   id: "foo",
-  name: "enableMetrics",
   label: "Enable Metrics",
   param,
   handleBasicFormParamChange: jest.fn(),
@@ -29,7 +28,11 @@ it("should send a checkbox event to handleBasicFormParamChange", () => {
 
   (s.prop("onChange") as any)(false);
 
-  expect(handleBasicFormParamChange.mock.calls[0][0]).toBe("enableMetrics");
+  expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual({
+    path: "enableMetrics",
+    type: "boolean",
+    value: true,
+  });
   expect(handler.mock.calls[0][0]).toMatchObject({
     currentTarget: { value: "false", type: "checkbox", checked: false },
   });

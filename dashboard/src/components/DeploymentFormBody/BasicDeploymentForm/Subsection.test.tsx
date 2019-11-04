@@ -7,29 +7,28 @@ import Subsection, { ISubsectionProps } from "./Subsection";
 
 const defaultProps = {
   label: "Enable an external database",
-  name: "externalDatabase",
   param: {
-    children: {
-      externalDatabaseDB: {
+    children: [
+      {
         path: "externalDatabase.database",
         type: "string",
         value: "bitnami_wordpress",
       },
-      externalDatabaseHost: { path: "externalDatabase.host", type: "string", value: "localhost" },
-      externalDatabasePassword: { path: "externalDatabase.password", type: "string" },
-      externalDatabasePort: { path: "externalDatabase.port", type: "integer", value: 3306 },
-      externalDatabaseUser: {
+      { path: "externalDatabase.host", type: "string", value: "localhost" },
+      { path: "externalDatabase.password", type: "string" },
+      { path: "externalDatabase.port", type: "integer", value: 3306 },
+      {
         path: "externalDatabase.user",
         type: "string",
         value: "bn_wordpress",
       },
-      useSelfHostedDatabase: {
+      {
         path: "mariadb.enabled",
         title: "Enable External Database",
         type: "boolean",
         value: true,
       } as IBasicFormParam,
-    },
+    ],
     path: "externalDatabase",
     title: "External Database Details",
     description: "description of the param",
@@ -53,10 +52,7 @@ it("should omit the enabler param if it doesn't exist", () => {
     ...defaultProps,
     param: {
       ...defaultProps.param,
-      children: {
-        ...defaultProps.param.children,
-        useSelfHostedDatabase: {} as IBasicFormParam,
-      },
+      children: defaultProps.param.children!.concat({} as IBasicFormParam),
     },
   };
   const wrapper = mount(<Subsection {...props} />);

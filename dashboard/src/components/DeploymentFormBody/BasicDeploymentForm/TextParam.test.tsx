@@ -6,7 +6,6 @@ import TextParam from "./TextParam";
 const param = { path: "username", value: "user", type: "string" };
 const defaultProps = {
   id: "foo",
-  name: "username",
   label: "Username",
   param,
   handleBasicFormParamChange: jest.fn(() => jest.fn()),
@@ -36,7 +35,11 @@ it("should forward the proper value", () => {
   const event = { currentTarget: {} } as React.FormEvent<HTMLInputElement>;
   (input.prop("onChange") as any)(event);
 
-  expect(handleBasicFormParamChange.mock.calls[0][0]).toBe("username");
+  expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual({
+    path: "username",
+    type: "string",
+    value: "user",
+  });
   expect(handler.mock.calls[0][0]).toMatchObject(event);
 });
 

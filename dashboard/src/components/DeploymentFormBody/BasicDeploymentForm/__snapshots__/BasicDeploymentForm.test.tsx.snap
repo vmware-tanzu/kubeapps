@@ -6,33 +6,32 @@ exports[`renders a basic deployment with a disk size 1`] = `
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "diskSize": Object {
+    Array [
+      Object {
         "path": "size",
         "render": "slider",
         "type": "string",
         "value": "10Gi",
       },
-    }
+    ]
   }
 >
   <div
     className="margin-t-normal"
   >
     <div
-      key="diskSize-0"
+      key="size-0"
     >
       <div
         hidden={false}
-        key="diskSize-0"
+        key="size-0"
       >
         <SliderParam
           handleBasicFormParamChange={[Function]}
-          id="diskSize-0"
-          label="diskSize"
+          id="size-0"
+          label="size"
           max={1000}
           min={1}
-          name="diskSize"
           param={
             Object {
               "path": "size",
@@ -45,7 +44,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
         >
           <div>
             <label
-              htmlFor="diskSize-0"
+              htmlFor="size-0"
             >
               <div
                 className="row"
@@ -56,7 +55,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                   <div
                     className="centered"
                   >
-                    diskSize
+                    size
                   </div>
                 </div>
                 <div
@@ -321,7 +320,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                     >
                       <input
                         className="disk_size_input"
-                        id="diskSize-0"
+                        id="size-0"
                         onChange={[Function]}
                         value={10}
                       />
@@ -348,30 +347,29 @@ exports[`renders a basic deployment with a email 1`] = `
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "email": Object {
+    Array [
+      Object {
         "path": "wordpressEmail",
         "value": "user@example.com",
       },
-    }
+    ]
   }
 >
   <div
     className="margin-t-normal"
   >
     <div
-      key="email-0"
+      key="wordpressEmail-0"
     >
       <div
         hidden={false}
-        key="email-0"
+        key="wordpressEmail-0"
       >
         <TextParam
           handleBasicFormParamChange={[Function]}
-          id="email-0"
+          id="wordpressEmail-0"
           inputType="string"
-          label="email"
-          name="email"
+          label="nodejs"
           param={
             Object {
               "path": "wordpressEmail",
@@ -381,7 +379,7 @@ exports[`renders a basic deployment with a email 1`] = `
         >
           <div>
             <label
-              htmlFor="email-0"
+              htmlFor="wordpressEmail-0"
             >
               <div
                 className="row"
@@ -392,14 +390,14 @@ exports[`renders a basic deployment with a email 1`] = `
                   <div
                     className="centered"
                   >
-                    email
+                    nodejs
                   </div>
                 </div>
                 <div
                   className="col-9 margin-t-small"
                 >
                   <input
-                    id="email-0"
+                    id="wordpressEmail-0"
                     onChange={[Function]}
                     type="string"
                     value="user@example.com"
@@ -422,13 +420,13 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "enableMetrics": Object {
+    Array [
+      Object {
         "path": "enableMetrics",
         "type": "boolean",
         "value": true,
       },
-    }
+    ]
   }
 >
   <div
@@ -445,7 +443,6 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
           handleBasicFormParamChange={[Function]}
           id="enableMetrics-0"
           label="enableMetrics"
-          name="enableMetrics"
           param={
             Object {
               "path": "enableMetrics",
@@ -693,13 +690,13 @@ exports[`renders a basic deployment with a generic number 1`] = `
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "replicas": Object {
+    Array [
+      Object {
         "path": "replicas",
         "type": "integer",
         "value": 1,
       },
-    }
+    ]
   }
 >
   <div
@@ -716,8 +713,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
           handleBasicFormParamChange={[Function]}
           id="replicas-0"
           inputType="number"
-          label="replicas"
-          name="replicas"
+          label="nodejs"
           param={
             Object {
               "path": "replicas",
@@ -739,7 +735,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
                   <div
                     className="centered"
                   >
-                    replicas
+                    nodejs
                   </div>
                 </div>
                 <div
@@ -769,13 +765,13 @@ exports[`renders a basic deployment with a generic string 1`] = `
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "blogName": Object {
+    Array [
+      Object {
         "path": "blogName",
         "type": "string",
         "value": "my-blog",
       },
-    }
+    ]
   }
 >
   <div
@@ -792,8 +788,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
           handleBasicFormParamChange={[Function]}
           id="blogName-0"
           inputType="string"
-          label="blogName"
-          name="blogName"
+          label="nodejs"
           param={
             Object {
               "path": "blogName",
@@ -815,7 +810,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
                   <div
                     className="centered"
                   >
-                    blogName
+                    nodejs
                   </div>
                 </div>
                 <div
@@ -845,30 +840,29 @@ exports[`renders a basic deployment with a password 1`] = `
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "password": Object {
+    Array [
+      Object {
         "path": "wordpressPassword",
         "value": "sserpdrow",
       },
-    }
+    ]
   }
 >
   <div
     className="margin-t-normal"
   >
     <div
-      key="password-0"
+      key="wordpressPassword-0"
     >
       <div
         hidden={false}
-        key="password-0"
+        key="wordpressPassword-0"
       >
         <TextParam
           handleBasicFormParamChange={[Function]}
-          id="password-0"
+          id="wordpressPassword-0"
           inputType="string"
-          label="password"
-          name="password"
+          label="nodejs"
           param={
             Object {
               "path": "wordpressPassword",
@@ -878,7 +872,7 @@ exports[`renders a basic deployment with a password 1`] = `
         >
           <div>
             <label
-              htmlFor="password-0"
+              htmlFor="wordpressPassword-0"
             >
               <div
                 className="row"
@@ -889,14 +883,14 @@ exports[`renders a basic deployment with a password 1`] = `
                   <div
                     className="centered"
                   >
-                    password
+                    nodejs
                   </div>
                 </div>
                 <div
                   className="col-9 margin-t-small"
                 >
                   <input
-                    id="password-0"
+                    id="wordpressPassword-0"
                     onChange={[Function]}
                     type="string"
                     value="sserpdrow"
@@ -919,30 +913,29 @@ exports[`renders a basic deployment with a username 1`] = `
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "username": Object {
+    Array [
+      Object {
         "path": "wordpressUsername",
         "value": "user",
       },
-    }
+    ]
   }
 >
   <div
     className="margin-t-normal"
   >
     <div
-      key="username-0"
+      key="wordpressUsername-0"
     >
       <div
         hidden={false}
-        key="username-0"
+        key="wordpressUsername-0"
       >
         <TextParam
           handleBasicFormParamChange={[Function]}
-          id="username-0"
+          id="wordpressUsername-0"
           inputType="string"
-          label="username"
-          name="username"
+          label="nodejs"
           param={
             Object {
               "path": "wordpressUsername",
@@ -952,7 +945,7 @@ exports[`renders a basic deployment with a username 1`] = `
         >
           <div>
             <label
-              htmlFor="username-0"
+              htmlFor="wordpressUsername-0"
             >
               <div
                 className="row"
@@ -963,14 +956,14 @@ exports[`renders a basic deployment with a username 1`] = `
                   <div
                     className="centered"
                   >
-                    username
+                    nodejs
                   </div>
                 </div>
                 <div
                   className="col-9 margin-t-small"
                 >
                   <input
-                    id="username-0"
+                    id="wordpressUsername-0"
                     onChange={[Function]}
                     type="string"
                     value="user"
@@ -993,43 +986,42 @@ exports[`renders a basic deployment with username, password, email and a generic
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
-    Object {
-      "blogName": Object {
+    Array [
+      Object {
+        "path": "wordpressUsername",
+        "value": "user",
+      },
+      Object {
+        "path": "wordpressPassword",
+        "value": "sserpdrow",
+      },
+      Object {
+        "path": "wordpressEmail",
+        "value": "user@example.com",
+      },
+      Object {
         "path": "blogName",
         "type": "string",
         "value": "my-blog",
       },
-      "email": Object {
-        "path": "wordpressEmail",
-        "value": "user@example.com",
-      },
-      "password": Object {
-        "path": "wordpressPassword",
-        "value": "sserpdrow",
-      },
-      "username": Object {
-        "path": "wordpressUsername",
-        "value": "user",
-      },
-    }
+    ]
   }
 >
   <div
     className="margin-t-normal"
   >
     <div
-      key="username-0"
+      key="wordpressUsername-0"
     >
       <div
         hidden={false}
-        key="username-0"
+        key="wordpressUsername-0"
       >
         <TextParam
           handleBasicFormParamChange={[Function]}
-          id="username-0"
+          id="wordpressUsername-0"
           inputType="string"
-          label="username"
-          name="username"
+          label="nodejs"
           param={
             Object {
               "path": "wordpressUsername",
@@ -1039,7 +1031,7 @@ exports[`renders a basic deployment with username, password, email and a generic
         >
           <div>
             <label
-              htmlFor="username-0"
+              htmlFor="wordpressUsername-0"
             >
               <div
                 className="row"
@@ -1050,14 +1042,14 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    username
+                    nodejs
                   </div>
                 </div>
                 <div
                   className="col-9 margin-t-small"
                 >
                   <input
-                    id="username-0"
+                    id="wordpressUsername-0"
                     onChange={[Function]}
                     type="string"
                     value="user"
@@ -1071,18 +1063,17 @@ exports[`renders a basic deployment with username, password, email and a generic
       <hr />
     </div>
     <div
-      key="password-1"
+      key="wordpressPassword-1"
     >
       <div
         hidden={false}
-        key="password-1"
+        key="wordpressPassword-1"
       >
         <TextParam
           handleBasicFormParamChange={[Function]}
-          id="password-1"
+          id="wordpressPassword-1"
           inputType="string"
-          label="password"
-          name="password"
+          label="nodejs"
           param={
             Object {
               "path": "wordpressPassword",
@@ -1092,7 +1083,7 @@ exports[`renders a basic deployment with username, password, email and a generic
         >
           <div>
             <label
-              htmlFor="password-1"
+              htmlFor="wordpressPassword-1"
             >
               <div
                 className="row"
@@ -1103,14 +1094,14 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    password
+                    nodejs
                   </div>
                 </div>
                 <div
                   className="col-9 margin-t-small"
                 >
                   <input
-                    id="password-1"
+                    id="wordpressPassword-1"
                     onChange={[Function]}
                     type="string"
                     value="sserpdrow"
@@ -1124,18 +1115,17 @@ exports[`renders a basic deployment with username, password, email and a generic
       <hr />
     </div>
     <div
-      key="email-2"
+      key="wordpressEmail-2"
     >
       <div
         hidden={false}
-        key="email-2"
+        key="wordpressEmail-2"
       >
         <TextParam
           handleBasicFormParamChange={[Function]}
-          id="email-2"
+          id="wordpressEmail-2"
           inputType="string"
-          label="email"
-          name="email"
+          label="nodejs"
           param={
             Object {
               "path": "wordpressEmail",
@@ -1145,7 +1135,7 @@ exports[`renders a basic deployment with username, password, email and a generic
         >
           <div>
             <label
-              htmlFor="email-2"
+              htmlFor="wordpressEmail-2"
             >
               <div
                 className="row"
@@ -1156,14 +1146,14 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    email
+                    nodejs
                   </div>
                 </div>
                 <div
                   className="col-9 margin-t-small"
                 >
                   <input
-                    id="email-2"
+                    id="wordpressEmail-2"
                     onChange={[Function]}
                     type="string"
                     value="user@example.com"
@@ -1187,8 +1177,7 @@ exports[`renders a basic deployment with username, password, email and a generic
           handleBasicFormParamChange={[Function]}
           id="blogName-3"
           inputType="string"
-          label="blogName"
-          name="blogName"
+          label="nodejs"
           param={
             Object {
               "path": "blogName",
@@ -1210,7 +1199,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    blogName
+                    nodejs
                   </div>
                 </div>
                 <div
