@@ -5,8 +5,8 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "jest",
-    "start:window": "HEADLESS=false jest"
+    "start": "jest --runInBand",
+    "start:window": "INTEGRATION_HEADLESS=false jest --runInBand"
   },
   "dependencies": {
     "expect-puppeteer": "^4.3.0",

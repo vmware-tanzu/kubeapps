@@ -1,5 +1,7 @@
-require("expect-puppeteer");
 const { endpoint } = require("./args");
+const { setDefaultOptions } = require("expect-puppeteer");
+
+setDefaultOptions({ timeout: 4000 });
 
 // endpoint argument is mandatory
 if (endpoint == null || endpoint == "") {
