@@ -1,19 +1,17 @@
+const { setDefaultOptions } = require("expect-puppeteer");
+
+setDefaultOptions({ timeout: 8000 });
 jest.setTimeout(120000);
 
-test("Deploys an application with the values by default", async () => {
-  await page.goto(getUrl("/#/login"));
+test("Creates a registry", async () => {
+  page.setDefaultTimeout(8000);
+  await page.goto(getUrl("/#/config/repos"));
 
   await expect(page).toFillForm("form", {
     token: process.env.ADMIN_TOKEN
   });
 
   await expect(page).toClick("button", { text: "Login" });
-
-  // Double click to show configuration
-  await expect(page).toClick("a", { text: "Configuration" });
-  await expect(page).toClick("a", { text: "Configuration" });
-
-  await expect(page).toClick("a", { text: "App Repositories" });
 
   await expect(page).toClick("button", { text: "Add App Repository" });
 
