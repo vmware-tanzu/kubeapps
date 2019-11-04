@@ -1,3 +1,6 @@
+const { setDefaultOptions } = require("expect-puppeteer");
+
+setDefaultOptions({ timeout: 8000 });
 jest.setTimeout(120000);
 
 test("Deploys an application with the values by default", async () => {
