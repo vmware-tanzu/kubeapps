@@ -1,9 +1,10 @@
 import * as React from "react";
 
 import { mount } from "enzyme";
+import { IBasicFormParam } from "shared/types";
 import TextParam from "./TextParam";
 
-const param = { path: "username", value: "user", type: "string" };
+const param = { path: "username", value: "user", type: "string" } as IBasicFormParam;
 const defaultProps = {
   id: "foo",
   label: "Username",
@@ -44,7 +45,7 @@ it("should forward the proper value", () => {
 });
 
 it("should set the input value as empty if the param value is not defined", () => {
-  const tparam = { path: "username", type: "string" };
+  const tparam = { path: "username", type: "string" } as IBasicFormParam;
   const tprops = {
     id: "foo",
     name: "username",

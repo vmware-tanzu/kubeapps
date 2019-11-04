@@ -64,7 +64,7 @@ const defaultProps = {
     const wrapper = mount(
       <BasicDeploymentForm
         {...defaultProps}
-        params={t.params as any}
+        params={t.params}
         handleBasicFormParamChange={handleBasicFormParamChange}
       />,
     );
@@ -86,7 +86,7 @@ it("should render an external database section", () => {
       value: {},
       type: "object",
       children: [{ path: "mariadb.enabled", value: {}, type: "boolean" }],
-    },
+    } as IBasicFormParam,
   ];
   const wrapper = mount(<BasicDeploymentForm {...defaultProps} params={params} />);
 
@@ -105,7 +105,7 @@ it("should hide an element if it depends on a param (string)", () => {
       path: "bar",
       type: "boolean",
     },
-  ];
+  ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: true";
   const wrapper = shallow(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
@@ -129,7 +129,7 @@ it("should hide an element if it depends on a param (object)", () => {
       path: "bar",
       type: "string",
     },
-  ];
+  ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: enabled";
   const wrapper = shallow(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,

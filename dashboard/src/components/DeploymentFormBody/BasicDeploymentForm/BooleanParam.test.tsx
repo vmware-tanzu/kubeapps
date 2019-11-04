@@ -1,9 +1,10 @@
 import * as React from "react";
 
 import { mount } from "enzyme";
+import { IBasicFormParam } from "shared/types";
 import BooleanParam from "./BooleanParam";
 
-const param = { path: "enableMetrics", value: true, type: "boolean" };
+const param = { path: "enableMetrics", value: true, type: "boolean" } as IBasicFormParam;
 const defaultProps = {
   id: "foo",
   label: "Enable Metrics",
