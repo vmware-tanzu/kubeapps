@@ -4,11 +4,9 @@ import { IBasicFormParam } from "shared/types";
 
 export interface IStringParamProps {
   id: string;
-  name: string;
   label: string;
   param: IBasicFormParam;
   handleBasicFormParamChange: (
-    name: string,
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
@@ -34,11 +32,11 @@ class BooleanParam extends React.Component<IStringParamProps> {
 
   // handleChange transform the event received by the Switch component to a checkbox event
   public handleChange = (checked: boolean) => {
-    const { name, param } = this.props;
+    const { param } = this.props;
     const event = {
       currentTarget: { value: String(checked), type: "checkbox", checked },
     } as React.FormEvent<HTMLInputElement>;
-    this.props.handleBasicFormParamChange(name, param)(event);
+    this.props.handleBasicFormParamChange(param)(event);
   };
 }
 

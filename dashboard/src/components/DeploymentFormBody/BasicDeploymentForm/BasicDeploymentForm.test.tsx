@@ -15,55 +15,47 @@ const defaultProps = {
 [
   {
     description: "renders a basic deployment with a username",
-    params: { username: { path: "wordpressUsername", value: "user" } as IBasicFormParam },
+    params: [{ path: "wordpressUsername", value: "user" } as IBasicFormParam],
   },
   {
     description: "renders a basic deployment with a password",
-    params: {
-      password: { path: "wordpressPassword", value: "sserpdrow" } as IBasicFormParam,
-    },
+    params: [{ path: "wordpressPassword", value: "sserpdrow" } as IBasicFormParam],
   },
   {
     description: "renders a basic deployment with a email",
-    params: { email: { path: "wordpressEmail", value: "user@example.com" } as IBasicFormParam },
+    params: [{ path: "wordpressEmail", value: "user@example.com" } as IBasicFormParam],
   },
   {
     description: "renders a basic deployment with a generic string",
-    params: {
-      blogName: { path: "blogName", value: "my-blog", type: "string" } as IBasicFormParam,
-    },
+    params: [{ path: "blogName", value: "my-blog", type: "string" } as IBasicFormParam],
   },
   {
     description: "renders a basic deployment with a disk size",
-    params: {
-      diskSize: {
+    params: [
+      {
         path: "size",
         value: "10Gi",
         type: "string",
         render: "slider",
       } as IBasicFormParam,
-    },
+    ],
   },
   {
     description: "renders a basic deployment with username, password, email and a generic string",
-    params: {
-      username: { path: "wordpressUsername", value: "user" } as IBasicFormParam,
-      password: { path: "wordpressPassword", value: "sserpdrow" } as IBasicFormParam,
-      email: { path: "wordpressEmail", value: "user@example.com" } as IBasicFormParam,
-      blogName: { path: "blogName", value: "my-blog", type: "string" } as IBasicFormParam,
-    },
+    params: [
+      { path: "wordpressUsername", value: "user" } as IBasicFormParam,
+      { path: "wordpressPassword", value: "sserpdrow" } as IBasicFormParam,
+      { path: "wordpressEmail", value: "user@example.com" } as IBasicFormParam,
+      { path: "blogName", value: "my-blog", type: "string" } as IBasicFormParam,
+    ],
   },
   {
     description: "renders a basic deployment with a generic boolean",
-    params: {
-      enableMetrics: { path: "enableMetrics", value: true, type: "boolean" } as IBasicFormParam,
-    },
+    params: [{ path: "enableMetrics", value: true, type: "boolean" } as IBasicFormParam],
   },
   {
     description: "renders a basic deployment with a generic number",
-    params: {
-      replicas: { path: "replicas", value: 1, type: "integer" } as IBasicFormParam,
-    },
+    params: [{ path: "replicas", value: 1, type: "integer" } as IBasicFormParam],
   },
 ].forEach(t => {
   it(t.description, () => {
@@ -78,26 +70,24 @@ const defaultProps = {
     );
     expect(wrapper).toMatchSnapshot();
 
-    Object.keys(t.params).map((param, i) => {
-      wrapper.find(`input#${param}-${i}`).simulate("change");
+    t.params.map((param, i) => {
+      wrapper.find(`input#${param.path}-${i}`).simulate("change");
       const mockCalls = handleBasicFormParamChange.mock.calls;
-      expect(mockCalls[i]).toEqual([param, t.params[param]]);
+      expect(mockCalls[i]).toEqual([param]);
       expect(onChange.mock.calls.length).toBe(i + 1);
     });
   });
 });
 
 it("should render an external database section", () => {
-  const params = {
-    externalDatabase: {
+  const params = [
+    {
       path: "edbs",
       value: {},
       type: "object",
-      children: {
-        useSelfHostedDatabase: { path: "mariadb.enabled", value: {}, type: "boolean" },
-      },
+      children: [{ path: "mariadb.enabled", value: {}, type: "boolean" }],
     },
-  };
+  ];
   const wrapper = mount(<BasicDeploymentForm {...defaultProps} params={params} />);
 
   const dbsec = wrapper.find(Subsection);
@@ -105,17 +95,17 @@ it("should render an external database section", () => {
 });
 
 it("should hide an element if it depends on a param (string)", () => {
-  const params = {
-    foo: {
+  const params = [
+    {
       path: "foo",
       type: "string",
       hidden: "bar",
     },
-    bar: {
+    {
       path: "bar",
       type: "boolean",
     },
-  };
+  ];
   const appValues = "foo: 1\nbar: true";
   const wrapper = shallow(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
@@ -126,8 +116,8 @@ it("should hide an element if it depends on a param (string)", () => {
 });
 
 it("should hide an element if it depends on a param (object)", () => {
-  const params = {
-    foo: {
+  const params = [
+    {
       path: "foo",
       type: "string",
       hidden: {
@@ -135,11 +125,11 @@ it("should hide an element if it depends on a param (object)", () => {
         condition: "enabled",
       },
     },
-    bar: {
+    {
       path: "bar",
       type: "string",
     },
-  };
+  ];
   const appValues = "foo: 1\nbar: enabled";
   const wrapper = shallow(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
