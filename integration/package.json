@@ -5,7 +5,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
-    "start": "jest --runInBand",
+    "start": "jest --runInBand --ci --colors",
     "start:window": "INTEGRATION_HEADLESS=false jest --runInBand"
   },
   "dependencies": {
