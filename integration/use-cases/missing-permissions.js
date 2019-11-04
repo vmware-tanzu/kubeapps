@@ -1,6 +1,7 @@
 jest.setTimeout(120000);
 
 test("Fails to deploy an application due to missing permissions", async () => {
+  page.setDefaultTimeout(8000);
   await page.goto(getUrl("/#/login"));
 
   await expect(page).toFillForm("form", {
