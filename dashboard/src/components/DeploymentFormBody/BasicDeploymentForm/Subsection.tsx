@@ -6,14 +6,11 @@ import { getValueFromEvent } from "../../../shared/utils";
 export interface ISubsectionProps {
   label: string;
   param: IBasicFormParam;
-  name: string;
   handleValuesChange: (value: string) => void;
   renderParam: (
-    name: string,
     param: IBasicFormParam,
     id: string,
     handleBasicFormParamChange: (
-      name: string,
       p: IBasicFormParam,
     ) => (e: React.FormEvent<HTMLInputElement>) => void,
   ) => JSX.Element | null;
@@ -35,11 +32,10 @@ class Subsection extends React.Component<ISubsectionProps> {
           )}
         </div>
         {param.children &&
-          Object.keys(param.children).map((paramName, i) => {
+          param.children.map((childrenParam, i) => {
             return this.props.renderParam(
-              paramName,
-              param.children![paramName],
-              `${paramName}-${i}`,
+              childrenParam,
+              `${childrenParam.path}-${i}`,
               this.handleChildrenParamChange,
             );
           })}
@@ -47,10 +43,12 @@ class Subsection extends React.Component<ISubsectionProps> {
     );
   }
 
-  private handleChildrenParamChange = (name: string, param: IBasicFormParam) => {
+  private handleChildrenParamChange = (param: IBasicFormParam) => {
     return (e: React.FormEvent<HTMLInputElement>) => {
       const value = getValueFromEvent(e);
-      this.props.param.children![name] = { ...this.props.param.children![name], value };
+      this.props.param.children = this.props.param.children!.map(p =>
+        p.path === param.path ? { ...param, value } : p,
+      );
       this.props.handleValuesChange(setValue(this.props.appValues, param.path, value));
     };
   };
