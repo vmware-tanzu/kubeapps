@@ -34,9 +34,11 @@ exports[`renders the full DeploymentFormBody 1`] = `
     appValues="foo: bar"
     handleValuesChange={[Function]}
   />
-  <div>
+  <div
+    className="margin-t-big"
+  >
     <button
-      className="button button-primary margin-t-big"
+      className="button button-primary"
       type="submit"
     >
       Submit
