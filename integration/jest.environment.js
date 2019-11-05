@@ -54,6 +54,7 @@ class ScreenshotOnFailureEnvironment extends PuppeteerEnvironment {
       height: 780,
       deviceScaleFactor: 1
     });
+    await this.global.page.setDefaultTimeout(8000);
   }
 
   async teardown() {
