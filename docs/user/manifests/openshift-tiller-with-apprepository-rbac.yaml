@@ -11,12 +11,19 @@ objects:
     - "kubeapps.com"
     resources:
     - apprepositories
+    - apprepositories/finalizers
     verbs: ["*"]
   - apiGroups:
     - "rbac.authorization.k8s.io"
     resources:
     - roles
+    - rolebindings
     verbs: ["*"]
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs: ["create"]
 - kind: RoleBinding
   apiVersion: v1
   metadata:
