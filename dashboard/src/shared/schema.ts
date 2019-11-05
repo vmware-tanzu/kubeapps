@@ -34,7 +34,7 @@ export function retrieveBasicFormParams(
         const param: IBasicFormParam = {
           ...properties[propertyKey],
           path: itemPath,
-          type,
+          type: type || "null",
           value,
           children:
             properties[propertyKey].type === "object"

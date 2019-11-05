@@ -380,7 +380,7 @@ export interface IKubeState {
 
 export interface IBasicFormParam {
   path: string;
-  type: jsonSchema.JSONSchema4TypeName | jsonSchema.JSONSchema4TypeName[] | undefined;
+  type: jsonSchema.JSONSchema4TypeName | jsonSchema.JSONSchema4TypeName[];
   value?: any;
   title?: string;
   minimum?: number;
