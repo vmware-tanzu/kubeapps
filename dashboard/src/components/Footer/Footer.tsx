@@ -30,7 +30,7 @@ const Footer: React.SFC<IFooterProps> = props => {
             </p>
           </div>
           <div className="col-6 text-r">
-            <a href="https://twitter.com/kubeapps" className="socialIcon margin-small">
+            <a href="https://twitter.com/search?q=(kubeapps%20OR%20%23kubeapps)" className="socialIcon margin-small">
               <svg
                 role="img"
                 aria-label="Kubeapps on Twitter"
