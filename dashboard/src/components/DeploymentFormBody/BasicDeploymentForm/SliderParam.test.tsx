@@ -12,7 +12,7 @@ const defaultProps = {
     type: "string",
     path: "disk",
   } as IBasicFormParam,
-  handleBasicFormParamChange: jest.fn(),
+  handleBasicFormParamChange: jest.fn(() => jest.fn()),
   min: 1,
   max: 100,
   unit: "Gi",
@@ -159,4 +159,12 @@ it("defaults to the min if the value is undefined", () => {
   const wrapper = shallow(<SliderParam {...defaultProps} param={param} min={5} />);
 
   expect(wrapper.state("value")).toBe(5);
+});
+
+it("updates the state when receiving new props", () => {
+  const wrapper = shallow(<SliderParam {...defaultProps} />);
+  expect(wrapper.state("value")).toBe(10);
+
+  wrapper.setProps({ param: { value: "20Gi" } });
+  expect(wrapper.state("value")).toBe(20);
 });

@@ -4,6 +4,7 @@ import * as React from "react";
 import { Tab, Tabs } from "react-tabs";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
+import ConfirmDialog from "../ConfirmDialog";
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import LoadingWrapper from "../LoadingWrapper";
@@ -361,4 +362,23 @@ it("goes back when clicking in the Back button", () => {
   expect(backButton.prop("type")).toBe("button");
   backButton.simulate("click");
   expect(goBack).toBeCalled();
+});
+
+it("restores the default chart values when clicking on the button", () => {
+  const setValues = jest.fn();
+  const wrapper = shallow(
+    <DeploymentFormBody
+      {...props}
+      setValues={setValues}
+      selected={{
+        ...props.selected,
+        values: "foo: value",
+      }}
+    />,
+  );
+
+  // bypass modal
+  wrapper.find(ConfirmDialog).prop("onConfirm")();
+
+  expect(setValues).toHaveBeenCalledWith("foo: value");
 });

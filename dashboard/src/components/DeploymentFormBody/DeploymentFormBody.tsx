@@ -5,6 +5,7 @@ import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
+import ConfirmDialog from "../ConfirmDialog";
 import { ErrorSelector } from "../ErrorAlert";
 import Hint from "../Hint";
 import LoadingWrapper from "../LoadingWrapper";
@@ -33,6 +34,7 @@ export interface IDeploymentFormBodyProps {
 
 export interface IDeploymentFormBodyState {
   basicFormParameters: IBasicFormParam[];
+  restoreDefaultValuesModalIsOpen: boolean;
 }
 
 class DeploymentFormBody extends React.Component<
@@ -41,6 +43,7 @@ class DeploymentFormBody extends React.Component<
 > {
   public state: IDeploymentFormBodyState = {
     basicFormParameters: [],
+    restoreDefaultValuesModalIsOpen: false,
   };
 
   public componentDidMount() {
@@ -101,6 +104,14 @@ class DeploymentFormBody extends React.Component<
     }
     return (
       <div>
+        <ConfirmDialog
+          modalIsOpen={this.state.restoreDefaultValuesModalIsOpen}
+          loading={false}
+          confirmationText={"Are you sure you want to restore the default chart values?"}
+          confirmationButtonText={"Restore"}
+          onConfirm={this.restoreDefaultValues}
+          closeModal={this.closeRestoreDefaultValuesModal}
+        />
         <div>
           <label htmlFor="chartVersion">Version</label>
           <select
@@ -130,6 +141,9 @@ class DeploymentFormBody extends React.Component<
         <div className="margin-t-big">
           <button className="button button-primary" type="submit">
             Submit
+          </button>
+          <button className="button" type="button" onClick={this.openRestoreDefaultValuesModal}>
+            Restore Defaults Values
           </button>
           {goBack && (
             <button className="button" type="button" onClick={goBack}>
@@ -230,6 +244,27 @@ class DeploymentFormBody extends React.Component<
   // The basic form should be rendered if there are params to show
   private shouldRenderBasicForm = () => {
     return Object.keys(this.state.basicFormParameters).length > 0;
+  };
+
+  private closeRestoreDefaultValuesModal = () => {
+    this.setState({ restoreDefaultValuesModalIsOpen: false });
+  };
+
+  private openRestoreDefaultValuesModal = () => {
+    this.setState({ restoreDefaultValuesModalIsOpen: true });
+  };
+
+  private restoreDefaultValues = () => {
+    if (this.props.selected.values) {
+      this.props.setValues(this.props.selected.values);
+      this.setState({
+        basicFormParameters: retrieveBasicFormParams(
+          this.props.selected.values,
+          this.props.selected.schema,
+        ),
+      });
+    }
+    this.setState({ restoreDefaultValuesModalIsOpen: false });
   };
 }
 

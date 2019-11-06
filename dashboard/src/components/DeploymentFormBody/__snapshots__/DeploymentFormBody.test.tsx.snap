@@ -9,6 +9,14 @@ exports[`loading spinner matches the snapshot 1`] = `
 
 exports[`renders the full DeploymentFormBody 1`] = `
 <div>
+  <ConfirmDialog
+    closeModal={[Function]}
+    confirmationButtonText="Restore"
+    confirmationText="Are you sure you want to restore the default chart values?"
+    loading={false}
+    modalIsOpen={false}
+    onConfirm={[Function]}
+  />
   <div>
     <label
       htmlFor="chartVersion"
@@ -42,6 +50,13 @@ exports[`renders the full DeploymentFormBody 1`] = `
       type="submit"
     >
       Submit
+    </button>
+    <button
+      className="button"
+      onClick={[Function]}
+      type="button"
+    >
+      Restore Defaults Values
     </button>
   </div>
 </div>
