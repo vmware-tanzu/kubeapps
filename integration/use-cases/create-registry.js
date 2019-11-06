@@ -1,10 +1,4 @@
-const { setDefaultOptions } = require("expect-puppeteer");
-
-setDefaultOptions({ timeout: 8000 });
-jest.setTimeout(120000);
-
 test("Creates a registry", async () => {
-  page.setDefaultTimeout(8000);
   await page.goto(getUrl("/#/config/repos"));
 
   await expect(page).toFillForm("form", {

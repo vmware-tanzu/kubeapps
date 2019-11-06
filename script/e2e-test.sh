@@ -147,7 +147,8 @@ cd $ROOT_DIR/integration
 kubectl apply -f manifests/executor.yaml
 k8s_wait_for_deployment default integration
 pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
-## Copy latest tests
+## Copy config and latest tests
+for f in `ls *.js`; do kubectl cp ./${f} ${pod}:/app/; done
 kubectl cp ./use-cases ${pod}:/app/
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
