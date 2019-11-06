@@ -127,8 +127,8 @@ class DeploymentFormBody extends React.Component<
             handleValuesChange={this.handleValuesChange}
           />
         )}
-        <div>
-          <button className="button button-primary margin-t-big" type="submit">
+        <div className="margin-t-big">
+          <button className="button button-primary" type="submit">
             Submit
           </button>
           {goBack && (
