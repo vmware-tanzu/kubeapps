@@ -1,3 +1,4 @@
+import { isArray } from "lodash";
 import * as React from "react";
 import { IBasicFormParam, IBasicFormSliderParam } from "shared/types";
 import TextParam from "./TextParam";
@@ -56,7 +57,9 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
     ) => (e: React.FormEvent<HTMLInputElement>) => void,
   ) => {
     let paramComponent: JSX.Element = <></>;
-    switch (param.type) {
+    // If the type of the param is an array, represent it as its first type
+    const type = isArray(param.type) ? param.type[0] : param.type;
+    switch (type) {
       case "boolean":
         paramComponent = (
           <BooleanParam
@@ -103,7 +106,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             handleBasicFormParamChange={handleBasicFormParamChange}
             id={id}
             param={param}
-            inputType={param.type === "integer" ? "number" : "string"}
+            inputType={type === "integer" ? "number" : "string"}
           />
         );
     }

@@ -1,3 +1,4 @@
+import * as jsonSchema from "json-schema";
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IConfigState } from "../reducers/config";
@@ -379,7 +380,7 @@ export interface IKubeState {
 
 export interface IBasicFormParam {
   path: string;
-  type: string;
+  type?: jsonSchema.JSONSchema4TypeName | jsonSchema.JSONSchema4TypeName[];
   value?: any;
   title?: string;
   minimum?: number;
