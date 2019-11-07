@@ -56,7 +56,7 @@ exports[`renders the full DeploymentFormBody 1`] = `
       onClick={[Function]}
       type="button"
     >
-      Restore Defaults Values
+      Restore Chart Defaults
     </button>
   </div>
 </div>
