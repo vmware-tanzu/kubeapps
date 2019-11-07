@@ -361,6 +361,12 @@ describe("deleteValue", () => {
       path: "foo",
       result: "\n",
     },
+    {
+      description: "noop when trying to delete a missing property",
+      values: "foo: bar\nbar: foo\n",
+      path: "var",
+      result: "foo: bar\nbar: foo\n",
+    },
   ].forEach(t => {
     it(t.description, () => {
       expect(deleteValue(t.values, t.path)).toEqual(t.result);

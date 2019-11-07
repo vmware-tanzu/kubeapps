@@ -108,7 +108,9 @@ export function deleteValue(values: string, path: string) {
   const doc = YAML.parseDocument(values);
   const { splittedPath } = parsePathAndValue(doc, path);
   (doc as any).deleteIn(splittedPath);
-  return (doc.contents as any).items.length > 0 ? doc.toString() : "\n";
+  // If the document is empty after the deletion instead of returning {}
+  // we return an empty line "\n"
+  return doc.contents && !isEmpty((doc.contents as any).items) ? doc.toString() : "\n";
 }
 
 // getValue returns the current value of an object based on YAML text and its path
