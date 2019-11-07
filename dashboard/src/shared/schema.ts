@@ -73,7 +73,7 @@ function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document)
   return currentPath;
 }
 
-function getSplittedPath(doc: YAML.ast.Document, path: string, value?: any) {
+function parsePathAndValue(doc: YAML.ast.Document, path: string, value?: any) {
   if (isEmpty(doc.contents)) {
     // If the doc is empty we have an special case
     return { value: set({}, path, value), splittedPath: [] };
@@ -99,14 +99,14 @@ function getSplittedPath(doc: YAML.ast.Document, path: string, value?: any) {
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
   const doc = YAML.parseDocument(values);
-  const { splittedPath, value } = getSplittedPath(doc, path, newValue);
+  const { splittedPath, value } = parsePathAndValue(doc, path, newValue);
   (doc as any).setIn(splittedPath, value);
   return doc.toString();
 }
 
 export function deleteValue(values: string, path: string) {
   const doc = YAML.parseDocument(values);
-  const { splittedPath } = getSplittedPath(doc, path);
+  const { splittedPath } = parsePathAndValue(doc, path);
   (doc as any).deleteIn(splittedPath);
   return (doc.contents as any).items.length > 0 ? doc.toString() : "\n";
 }
