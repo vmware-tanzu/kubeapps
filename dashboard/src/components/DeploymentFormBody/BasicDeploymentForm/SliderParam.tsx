@@ -23,11 +23,22 @@ function toNumber(value: string) {
   return Number(value.replace(/[^\d\.]/g, ""));
 }
 
+function getDefaultValue(min: number, value?: string) {
+  return (value && toNumber(value)) || min;
+}
+
 class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> {
   public state: ISliderParamState = {
-    value: (this.props.param.value && toNumber(this.props.param.value)) || this.props.min,
+    value: getDefaultValue(this.props.min, this.props.param.value),
   };
 
+  public componentWillReceiveProps = (props: ISliderParamProps) => {
+    const value = getDefaultValue(this.props.min, props.param.value);
+    if (value !== this.state.value) {
+      this.handleParamChange(value);
+      this.setState({ value });
+    }
+  };
   // onChangeSlider is executed when the slider is dropped at one point
   // at that point we update the parameter
   public onChangeSlider = (values: number[]) => {
