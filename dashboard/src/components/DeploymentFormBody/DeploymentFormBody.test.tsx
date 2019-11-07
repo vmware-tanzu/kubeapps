@@ -453,6 +453,13 @@ it("restores the default chart values when clicking on the button", () => {
   },
 ].forEach(t => {
   it(t.description, () => {
+    const selected = {
+      ...defaultProps.selected,
+      versions: [chartVersion],
+      version: chartVersion,
+      values: t.defaultValues,
+      schema: initialSchema,
+    };
     const newSelected = {
       ...defaultProps.selected,
       versions: [chartVersion],
@@ -466,7 +473,7 @@ it("restores the default chart values when clicking on the button", () => {
         {...props}
         deployedValues={t.deployedValues}
         setValues={setValues}
-        selected={{ versions: [] }}
+        selected={selected}
       />,
     );
     // Store the modifications
