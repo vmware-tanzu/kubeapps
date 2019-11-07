@@ -1,6 +1,6 @@
 import { JSONSchema4 } from "json-schema";
 
-import { getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
+import { deleteValue, getValue, retrieveBasicFormParams, setValue, validate } from "./schema";
 import { IBasicFormParam } from "./types";
 
 describe("retrieveBasicFormParams", () => {
@@ -315,6 +315,14 @@ describe("setValue", () => {
       result: "foo: bar\nthis: { new: { value: 1 } }\n",
       error: false,
     },
+    {
+      description: "Adding a value in an empty doc",
+      values: "",
+      path: "foo",
+      newValue: "bar",
+      result: "foo: bar\n",
+      error: false,
+    },
   ].forEach(t => {
     it(t.description, () => {
       let res: any;
@@ -324,6 +332,38 @@ describe("setValue", () => {
         expect(t.error).toBe(true);
       }
       expect(res).toEqual(t.result);
+    });
+  });
+});
+
+describe("deleteValue", () => {
+  [
+    {
+      description: "should delete a value",
+      values: "foo: bar\nbar: foo\n",
+      path: "bar",
+      result: "foo: bar\n",
+    },
+    {
+      description: "should delete a value from an array",
+      values: `foo:
+  - bar
+  - foobar
+`,
+      path: "foo.0",
+      result: `foo:
+  - foobar
+`,
+    },
+    {
+      description: "should leave the document emtpy",
+      values: "foo: bar",
+      path: "foo",
+      result: "\n",
+    },
+  ].forEach(t => {
+    it(t.description, () => {
+      expect(deleteValue(t.values, t.path)).toEqual(t.result);
     });
   });
 });

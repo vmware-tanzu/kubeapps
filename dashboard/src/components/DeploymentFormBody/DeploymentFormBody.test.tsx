@@ -29,7 +29,7 @@ const defaultProps = {
   valuesModified: false,
   setValues: jest.fn(),
   setValuesModified: jest.fn(),
-  originalValues: undefined,
+  deployedValues: undefined,
 } as IDeploymentFormBodyProps;
 const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 
@@ -118,9 +118,9 @@ describe("when there are changes in the selected version", () => {
   describe("when the user has not modified any value", () => {
     it("selects the original values if the version doesn't change", () => {
       const setValues = jest.fn();
-      const originalValues = "foo: notBar";
+      const deployedValues = "foo: notBar";
       const wrapper = shallow(
-        <DeploymentFormBody {...props} setValues={setValues} originalValues={originalValues} />,
+        <DeploymentFormBody {...props} setValues={setValues} deployedValues={deployedValues} />,
       );
       wrapper.setProps({
         selected: {
@@ -139,13 +139,13 @@ describe("when there are changes in the selected version", () => {
       const localState: IDeploymentFormBodyState = wrapper.instance()
         .state as IDeploymentFormBodyState;
       expect(localState.basicFormParameters).toEqual(basicFormParameters);
-      expect(setValues).toHaveBeenCalledWith("foo: notBar");
+      expect(setValues).toHaveBeenCalledWith("foo: notBar\n");
     });
 
     it("uses the chart default values when original values are not defined", () => {
       const setValues = jest.fn();
       const wrapper = shallow(
-        <DeploymentFormBody {...props} setValues={setValues} originalValues={undefined} />,
+        <DeploymentFormBody {...props} setValues={setValues} deployedValues={undefined} />,
       );
       wrapper.setProps({
         selected: {
@@ -171,13 +171,13 @@ describe("when there are changes in the selected version", () => {
   describe("when the user has modified the values", () => {
     it("will ignore original or default values", () => {
       const setValues = jest.fn();
-      const originalValues = "foo: ignored-value";
+      const deployedValues = "foo: ignored-value";
       const modifiedValues = "foo: notBar";
       const wrapper = shallow(
         <DeploymentFormBody
           {...props}
           setValues={setValues}
-          originalValues={originalValues}
+          deployedValues={deployedValues}
           valuesModified={true}
           appValues={modifiedValues}
         />,
@@ -381,4 +381,100 @@ it("restores the default chart values when clicking on the button", () => {
   wrapper.find(ConfirmDialog).prop("onConfirm")();
 
   expect(setValues).toHaveBeenCalledWith("foo: value");
+});
+
+[
+  {
+    description: "should merge modifications from the values and the new version defaults",
+    defaultValues: "foo: bar\n",
+    deployedValues: "foo: bar\nmy: var\n",
+    newDefaultValues: "notFoo: bar",
+    result: "notFoo: bar\nmy: var\n",
+  },
+  {
+    description: "should modify the default values",
+    defaultValues: "foo: bar\n",
+    deployedValues: "foo: BAR\nmy: var\n",
+    newDefaultValues: "foo: bar",
+    result: "foo: BAR\nmy: var\n",
+  },
+  {
+    description: "should delete an element in the defaults",
+    defaultValues: "foo: bar\n",
+    deployedValues: "my: var\n",
+    newDefaultValues: "foo: bar\n",
+    result: "my: var\n",
+  },
+  {
+    description: "should add an element in an array",
+    defaultValues: `foo:
+  - foo1:
+    bar1: value1
+`,
+    deployedValues: `foo:
+  - foo1: 
+    bar1: value1
+  - foo2: 
+    bar2: value2
+`,
+    newDefaultValues: `foo:
+    - foo1:
+      bar1: value1
+`,
+    result: `foo:
+  - foo1: 
+    bar1: value1
+  - foo2: 
+    bar2: value2
+`,
+  },
+  {
+    description: "should delete an element in an array",
+    defaultValues: `foo:
+  - foo1:
+    bar1: value1
+  - foo2:
+    bar2: value2
+`,
+    deployedValues: `foo:
+  - foo2: 
+    bar2: value2
+`,
+    newDefaultValues: `foo:
+  - foo1:
+    bar1: value1
+  - foo2:
+    bar2: value2
+`,
+    result: `foo:
+  - foo2: 
+    bar2: value2
+`,
+  },
+].forEach(t => {
+  it(t.description, () => {
+    const newSelected = {
+      ...defaultProps.selected,
+      versions: [chartVersion],
+      version: chartVersion,
+      values: t.newDefaultValues,
+      schema: initialSchema,
+    };
+    const setValues = jest.fn();
+    const wrapper = shallow(
+      <DeploymentFormBody
+        {...props}
+        deployedValues={t.deployedValues}
+        setValues={setValues}
+        selected={{ versions: [] }}
+      />,
+    );
+    // Store the modifications
+    wrapper.setProps({ selected: props.selected });
+    expect(setValues).toHaveBeenCalledWith(t.deployedValues);
+
+    // Apply new version
+    wrapper.setProps({ selected: newSelected });
+    expect(setValues).toHaveBeenCalledWith(t.result);
+  });
 });

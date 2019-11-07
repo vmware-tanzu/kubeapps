@@ -3,7 +3,7 @@
 // that are used in this package
 import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
-import { set } from "lodash";
+import { isEmpty, set } from "lodash";
 import * as YAML from "yaml";
 import { IBasicFormParam } from "./types";
 
@@ -73,9 +73,11 @@ function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document)
   return currentPath;
 }
 
-// setValue modifies the current values (text) based on a path
-export function setValue(values: string, path: string, newValue: any) {
-  const doc = YAML.parseDocument(values);
+function getSplittedPath(doc: YAML.ast.Document, path: string, value?: any) {
+  if (isEmpty(doc.contents)) {
+    // If the doc is empty we have an special case
+    return { value: set({}, path, value), splittedPath: [] };
+  }
   let splittedPath = path.split(".");
   // If the path is not defined (the parent nodes are undefined)
   // We need to change the path and the value to set to avoid accessing
@@ -88,11 +90,25 @@ export function setValue(values: string, path: string, newValue: any) {
   if (parentNode === undefined) {
     const definedPath = getDefinedPath(allElementsButTheLast, doc);
     const remainingPath = splittedPath.slice(definedPath.length + 1);
-    newValue = set({}, remainingPath.join("."), newValue);
+    value = set({}, remainingPath.join("."), value);
     splittedPath = splittedPath.slice(0, definedPath.length + 1);
   }
-  (doc as any).setIn(splittedPath, newValue);
+  return { splittedPath, value };
+}
+
+// setValue modifies the current values (text) based on a path
+export function setValue(values: string, path: string, newValue: any) {
+  const doc = YAML.parseDocument(values);
+  const { splittedPath, value } = getSplittedPath(doc, path, newValue);
+  (doc as any).setIn(splittedPath, value);
   return doc.toString();
+}
+
+export function deleteValue(values: string, path: string) {
+  const doc = YAML.parseDocument(values);
+  const { splittedPath } = getSplittedPath(doc, path);
+  (doc as any).deleteIn(splittedPath);
+  return (doc.contents as any).items.length > 0 ? doc.toString() : "\n";
 }
 
 // getValue returns the current value of an object based on YAML text and its path
