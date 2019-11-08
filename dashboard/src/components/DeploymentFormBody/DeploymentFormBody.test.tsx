@@ -476,8 +476,6 @@ it("restores the default chart values when clicking on the button", () => {
         selected={selected}
       />,
     );
-    // Store the modifications
-    wrapper.setProps({ selected: props.selected });
     expect(setValues).toHaveBeenCalledWith(t.deployedValues);
 
     // Apply new version
