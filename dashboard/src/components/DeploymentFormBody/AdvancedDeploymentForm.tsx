@@ -23,6 +23,7 @@ class AdvancedDeploymentForm extends React.Component<IAdvancedDeploymentForm> {
           setOptions={{ showPrintMargin: false }}
           editorProps={{ $blockScrolling: Infinity }}
           value={this.props.appValues}
+          className="editor"
         />
       </div>
     );
