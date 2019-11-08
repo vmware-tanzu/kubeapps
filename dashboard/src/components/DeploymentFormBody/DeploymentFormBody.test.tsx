@@ -437,8 +437,8 @@ it("restores the default chart values when clicking on the button", () => {
     bar2: value2
 `,
     deployedValues: `foo:
-  - foo2: 
-    bar2: value2
+  - foo1: 
+    bar1: value1
 `,
     newDefaultValues: `foo:
   - foo1:
@@ -447,8 +447,8 @@ it("restores the default chart values when clicking on the button", () => {
     bar2: value2
 `,
     result: `foo:
-  - foo2: 
-    bar2: value2
+  - foo1: 
+    bar1: value1
 `,
   },
 ].forEach(t => {
@@ -473,9 +473,11 @@ it("restores the default chart values when clicking on the button", () => {
         {...props}
         deployedValues={t.deployedValues}
         setValues={setValues}
-        selected={selected}
+        selected={{ versions: [] }}
       />,
     );
+    // Store the modifications
+    wrapper.setProps({ selected });
     expect(setValues).toHaveBeenCalledWith(t.deployedValues);
 
     // Apply new version
