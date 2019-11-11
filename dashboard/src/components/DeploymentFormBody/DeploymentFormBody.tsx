@@ -69,6 +69,11 @@ class DeploymentFormBody extends React.Component<
       let values = "";
       // Get the original modification to the values if exists
       let modifications = this.state.modifications;
+      // TODO(andresmgot): Right now, are taking advantage of the fact that when first
+      // loaded this component (in the upgrade scenario) the "selected" version is the
+      // currently deployed version. We should change that to be the latest version available
+      // so the current approach won't be possible. We should also try to avoid to modify
+      // the behavior of this component depending on the scenario (install/upgrade).
       if (nextProps.selected.values && this.props.deployedValues && !modifications) {
         const defaultValuesObj = YAML.parse(nextProps.selected.values);
         const deployedValuesObj = YAML.parse(this.props.deployedValues);
