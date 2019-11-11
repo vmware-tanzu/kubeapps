@@ -7,6 +7,7 @@ import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector } from "../ErrorAlert";
 import DeploymentForm from "./DeploymentForm";
 
+const releaseName = "my-release";
 const defaultProps = {
   kubeappsNamespace: "kubeapps",
   chartID: "foo",
@@ -23,7 +24,7 @@ const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVers
 let monikerChooseMock: jest.Mock;
 
 beforeEach(() => {
-  monikerChooseMock = jest.fn();
+  monikerChooseMock = jest.fn(() => releaseName);
   Moniker.choose = monikerChooseMock;
 });
 
@@ -124,10 +125,9 @@ it("forwards the valuesModifed property", () => {
 });
 
 it("triggers a deployment when submitting the form", done => {
-  const releaseName = "my-release";
   const namespace = "default";
   const appValues = "foo: bar";
-  const schema = { properties: { foo: { type: "string", form: "foo" } } };
+  const schema = { properties: { foo: { type: "string", form: true } } };
   const deployChart = jest.fn(() => true);
   const push = jest.fn();
   const wrapper = mount(
@@ -139,7 +139,7 @@ it("triggers a deployment when submitting the form", done => {
       namespace={namespace}
     />,
   );
-  wrapper.setState({ releaseName, appValues });
+  wrapper.setState({ appValues });
   wrapper.find("form").simulate("submit");
   expect(deployChart).toHaveBeenCalledWith(versions[0], releaseName, namespace, appValues, schema);
   setTimeout(() => {
