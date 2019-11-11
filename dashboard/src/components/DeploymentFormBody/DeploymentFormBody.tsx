@@ -1,8 +1,10 @@
 import { RouterAction } from "connected-react-router";
+import * as jsonpatch from "fast-json-patch";
 import * as React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
+import * as YAML from "yaml";
 
-import { retrieveBasicFormParams, setValue } from "../../shared/schema";
+import { deleteValue, retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog";
@@ -18,7 +20,7 @@ import "./Tabs.css";
 export interface IDeploymentFormBodyProps {
   chartID: string;
   chartVersion: string;
-  originalValues?: string;
+  deployedValues?: string;
   namespace: string;
   releaseName?: string;
   selected: IChartState["selected"];
@@ -35,6 +37,7 @@ export interface IDeploymentFormBodyProps {
 export interface IDeploymentFormBodyState {
   basicFormParameters: IBasicFormParam[];
   restoreDefaultValuesModalIsOpen: boolean;
+  modifications?: jsonpatch.Operation[];
 }
 
 class DeploymentFormBody extends React.Component<
@@ -64,18 +67,37 @@ class DeploymentFormBody extends React.Component<
     if (nextProps.selected !== this.props.selected) {
       // The values or the schema has changed
       let values = "";
+      // Get the original modification to the values if exists
+      let modifications = this.state.modifications;
+      // TODO(andresmgot): Right now, are taking advantage of the fact that when first
+      // loaded this component (in the upgrade scenario) the "selected" version is the
+      // currently deployed version. We should change that to be the latest version available
+      // so the current approach won't be possible. We should also try to avoid to modify
+      // the behavior of this component depending on the scenario (install/upgrade).
+      if (nextProps.selected.values && this.props.deployedValues && !modifications) {
+        const defaultValuesObj = YAML.parse(nextProps.selected.values);
+        const deployedValuesObj = YAML.parse(this.props.deployedValues);
+        modifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
+        this.setState({ modifications });
+      }
+
       if (!this.props.valuesModified) {
-        // If the version is the current one, reuse original params
-        // (this only applies to the upgrade form that has originalValues defined)
-        if (
-          nextProps.selected.version &&
-          nextProps.selected.version.attributes.version === this.props.chartVersion &&
-          this.props.originalValues
-        ) {
-          values = this.props.originalValues || "";
-        } else {
-          // In other case, use the default values for the selected version
-          values = nextProps.selected.values || "";
+        // In other case, use the default values for the selected version
+        values = nextProps.selected.values || "";
+        // And we add any possible change made to the original version
+        if (modifications) {
+          modifications.forEach(modification => {
+            // Transform the JSON Path to the format expected by setValue
+            // /a/b/c => a.b.c
+            const path = modification.path.replace(/^\//, "").replace(/\//g, ".");
+            if (modification.op === "remove") {
+              values = deleteValue(values, path);
+            } else {
+              // Transform the modification as a ReplaceOperation to read its value
+              const value = (modification as jsonpatch.ReplaceOperation<any>).value;
+              values = setValue(values, path, value);
+            }
+          });
         }
         this.props.setValues(values);
       } else {
