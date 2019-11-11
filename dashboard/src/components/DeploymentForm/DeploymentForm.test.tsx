@@ -121,7 +121,6 @@ it("forwards the valuesModifed property", () => {
   handleValuesModified("foo: bar");
 
   expect(wrapper.state("valuesModified")).toBe(true);
-  expect(wrapper.find(DeploymentFormBody).prop("valuesModified")).toBe(true);
 });
 
 it("triggers a deployment when submitting the form", done => {

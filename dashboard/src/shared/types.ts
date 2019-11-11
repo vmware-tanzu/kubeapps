@@ -83,6 +83,12 @@ export interface IChartState {
     values?: string;
     schema?: any;
   };
+  deployed: {
+    chartVersion?: IChartVersion;
+    values?: string;
+    schema?: jsonSchema.JSONSchema4;
+    requested: boolean;
+  };
   items: IChart[];
 }
 

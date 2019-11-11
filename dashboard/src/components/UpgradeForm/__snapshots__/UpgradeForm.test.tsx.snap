@@ -22,7 +22,6 @@ exports[`renders the full UpgradeForm 1`] = `
         appValues="foo: bar"
         chartID="my-repo/my-chart"
         chartVersion="1.0.0"
-        deployedValues="foo: bar"
         fetchChartVersions={[Function]}
         getChartVersion={[Function]}
         goBack={[Function]}
@@ -49,7 +48,6 @@ exports[`renders the full UpgradeForm 1`] = `
         }
         setValues={[Function]}
         setValuesModified={[Function]}
-        valuesModified={false}
       />
     </div>
   </div>
