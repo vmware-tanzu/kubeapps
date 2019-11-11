@@ -15,7 +15,7 @@ The `chart-repo` component is tool that scans a Helm chart repository and popula
 ## Environment
 
 ```bash
-export GOPATH=~/gopath/
+export GOPATH=~/gopath
 export PATH=$GOPATH/bin:$PATH
 export MONOCULAR_DIR=$GOPATH
 ```
