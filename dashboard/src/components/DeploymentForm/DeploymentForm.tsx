@@ -49,6 +49,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     valuesModified: false,
   };
 
+  public componentDidMount() {
+    this.props.fetchChartVersions(this.props.chartID);
+  }
+
   public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
     if (nextProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
       this.setState({ appValues: nextProps.selected.values || "" });
@@ -94,7 +98,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               namespace={this.props.namespace}
               selected={this.props.selected}
               push={this.props.push}
-              fetchChartVersions={this.props.fetchChartVersions}
               getChartVersion={this.props.getChartVersion}
               setValues={this.handleValuesChange}
               appValues={this.state.appValues}
