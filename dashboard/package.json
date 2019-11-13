@@ -39,7 +39,6 @@
     "react": "^16.2.0",
     "react-ace": "^5.9.0",
     "react-compound-slider": "^2.3.0",
-    "react-diff-viewer": "2.0.0-alpha.4",
     "react-dom": "^16.2.0",
     "react-feather": "^1.0.8",
     "react-jsonschema-form": "^1.0.3",
