@@ -19,6 +19,7 @@ ${CLUSTER_CONFIG}: devel/local-dev-apiserver-config.json
 cluster-kind: ${CLUSTER_CONFIG}
 
 delete-cluster-kind:
-	kind delete cluster --name ${CLUSTER_NAME}
+	kind delete cluster --name ${CLUSTER_NAME} || true
+	rm devel/local-dev-apiserver-config.json || true
 
 .PHONY: cluster-kind cluster-kind-delete
