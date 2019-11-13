@@ -13,9 +13,6 @@ deploy-dex: deploy-helm
 	kubectl -n dex create secret tls dex-web-server-tls \
 		--key ./script/test-certs/dex.key.pem \
 		--cert ./script/test-certs/dex.cert.pem
-	kubectl create clusterrolebinding kubeapps-operator \
-		--clusterrole=cluster-admin \
-		--user=oidc:kubeapps-operator@example.com
 	helm install stable/dex --namespace dex --name dex --version 2.4.0 \
 		--values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
@@ -31,6 +28,7 @@ deploy-dev: deploy-dex kind-update-apiserver-etc-hosts
 	helm install ./chart/kubeapps --namespace kubeapps --name kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml
+	kubectl apply -n default -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	@echo "\nEnsure you have the entry '127.0.0.1 dex.dex' in your /etc/hosts, then run\n"
 	@echo "kubectl -n dex port-forward svc/dex 32000\n"
 	@echo "and in another terminal using the same cluster,\n"
@@ -43,11 +41,9 @@ deploy-dev: deploy-dex kind-update-apiserver-etc-hosts
 reset-dev:
 	helm delete --purge kubeapps || true
 	helm delete --purge dex || true
+	kubectl delete namespace dex kubeapps || true
 	helm reset || true
 	kubectl delete -n kube-system -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml || true
-	# TODO: Move the following to a file :/
-	kubectl delete namespace dex || true
-	kubectl delete clusterrolebinding kubeapps-operator || true
-
+	kubectl delete -n default -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 
 .PHONY: deploy-dex deploy-dev reset-dev kind-update-apiserver-etc-hosts
