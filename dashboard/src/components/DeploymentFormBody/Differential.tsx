@@ -1,7 +1,6 @@
 import * as jsdiff from "diff";
 import { Diff2Html } from "diff2html";
 import * as React from "react";
-// import ReactDiffViewer from "react-diff-viewer";
 
 import "diff2html/dist/diff2html.css";
 
