@@ -100,6 +100,7 @@ describe("when receiving new props", () => {
     wrapper.setProps({ deployed: { values: defaultValues } });
 
     expect(wrapper.state("modifications")).toEqual(expectedModifications);
+    expect(wrapper.state("appValues")).toEqual(currentValues);
   });
 
   it("should apply modifications if a new version is selected", () => {

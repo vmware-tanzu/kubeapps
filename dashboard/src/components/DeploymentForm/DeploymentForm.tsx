@@ -49,9 +49,9 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     valuesModified: false,
   };
 
-  public componentWillReceiveProps(nextProps: IDeploymentFormProps) {
-    if (nextProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
-      this.setState({ appValues: nextProps.selected.values || "" });
+  public componentDidUpdate(prevProps: IDeploymentFormProps) {
+    if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
+      this.setState({ appValues: this.props.selected.values || "" });
     }
   }
 

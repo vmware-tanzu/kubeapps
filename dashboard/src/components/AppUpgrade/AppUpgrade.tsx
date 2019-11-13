@@ -59,12 +59,12 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
     fetchRepositories();
   }
 
-  public componentWillReceiveProps(nextProps: IAppUpgradeProps) {
-    const { repos, app } = nextProps;
+  public componentDidUpdate(prevProps: IAppUpgradeProps) {
+    const { repos, app } = this.props;
     let repo = this.state.repo;
     // Retrieve the current repo
     if (!repo) {
-      repo = nextProps.repo;
+      repo = this.props.repo;
       if (repo && repo.metadata) {
         // If the repository comes from the properties, use it
         this.setState({ repo });
@@ -94,7 +94,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         repo &&
         repo.metadata &&
         repo.metadata.name &&
-        !nextProps.deployed.requested
+        prevProps.app !== app
       ) {
         const chartID = `${repo.metadata.name}/${chart.metadata.name}`;
         this.props.getDeployedChartVersion(chartID, chart.metadata.version);
