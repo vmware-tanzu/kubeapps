@@ -20,11 +20,14 @@ deploy-dex: deploy-helm
 # dex is normally required to be available on an external host. Short-circuit
 # that requirement by ensuring dex.dex resolves to the internal IP address on
 # the apiserver so that it can initialise the oidc plugin.
-kind-update-apiserver-etc-hosts:
+update-apiserver-etc-hosts:
+	while ! kubectl -n kube-system get po kube-apiserver-kubeapps-control-plane; do \
+		echo "Waiting for api server" && sleep 1; \
+	done
 	kubectl -n kube-system exec kube-apiserver-kubeapps-control-plane -- \
 		sh -c "echo '$(shell kubectl -n dex get svc -o=jsonpath='{.items[0].spec.clusterIP}') dex.dex' >> /etc/hosts"
 
-deploy-dev: deploy-dex kind-update-apiserver-etc-hosts
+deploy-dev: deploy-dex update-apiserver-etc-hosts
 	helm install ./chart/kubeapps --namespace kubeapps --name kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml
@@ -46,4 +49,4 @@ reset-dev:
 	kubectl delete -n kube-system -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml || true
 	kubectl delete -n default -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 
-.PHONY: deploy-dex deploy-dev reset-dev kind-update-apiserver-etc-hosts
+.PHONY: deploy-dex deploy-dev reset-dev update-apiserver-etc-hosts
