@@ -10,12 +10,6 @@
           "hostPath": "./script/test-certs/dex.cert.pem",
           "containerPath": "/etc/ssl/certs/dex.cert.pem"
         }
-      ],
-      "extraPortMappings": [
-        {
-          "containerPort": 6443,
-          "hostPort": 6443
-        }
       ]
     }
   ],

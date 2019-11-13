@@ -5,7 +5,7 @@
 # that has been setup with OIDC support (see ./cluster-kind.mk)
 
 deploy-helm:
-	kubectl apply -n kube-system -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml
+	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml
 	helm init --service-account tiller --wait
 
 deploy-dex: deploy-helm
@@ -31,11 +31,11 @@ deploy-dev: deploy-dex update-apiserver-etc-hosts
 	helm install ./chart/kubeapps --namespace kubeapps --name kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml
-	kubectl apply -n default -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	@echo "\nEnsure you have the entry '127.0.0.1 dex.dex' in your /etc/hosts, then run\n"
 	@echo "kubectl -n dex port-forward svc/dex 32000\n"
 	@echo "and in another terminal using the same cluster,\n"
-	@echo "kubectl -n kubeappps port-forward svc/kubeapps 3000:80\n"
+	@echo "kubectl -n kubeapps port-forward svc/kubeapps 3000:80\n"
 	@echo "You can then open http://localhost:3000 and login as either of"
 	@echo "  kubeapps-operator@example.com:password"
 	@echo "  kubeapps-user@example.com:password"
@@ -46,7 +46,7 @@ reset-dev:
 	helm delete --purge dex || true
 	kubectl delete namespace dex kubeapps || true
 	helm reset || true
-	kubectl delete -n kube-system -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml || true
-	kubectl delete -n default -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl delete -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml || true
+	kubectl delete -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 
 .PHONY: deploy-dex deploy-dev reset-dev update-apiserver-etc-hosts
