@@ -89,7 +89,7 @@ exports[`renders the full DeploymentFormBody 1`] = `
         selectedClassName="react-tabs__tab-panel--selected"
       >
         <Differential
-          emptyDiffText="No changes detected from chart defaults"
+          emptyDiffText="No changes detected from chart defaults."
           newValues="foo: bar"
           oldValues=""
           title="Difference from chart defaults"

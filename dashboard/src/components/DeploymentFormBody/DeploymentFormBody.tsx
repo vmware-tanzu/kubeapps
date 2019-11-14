@@ -297,14 +297,14 @@ class DeploymentFormBody extends React.Component<
       // If there are already some deployed values (upgrade scenario)
       // We compare the values from the old release and the new one
       oldValues = this.props.deployedValues;
-      title = "New values to submit";
-      emptyDiffText = "Values for the new release are identical";
+      title = "Difference from deployed version";
+      emptyDiffText = "The values for the new release are identical to the deployed version.";
     } else {
       // If it's a new deployment, we show the different from the default
       // values for the selected version
       oldValues = this.props.selected.values || "";
       title = "Difference from chart defaults";
-      emptyDiffText = "No changes detected from chart defaults";
+      emptyDiffText = "No changes detected from chart defaults.";
     }
     return (
       <Differential

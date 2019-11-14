@@ -497,7 +497,7 @@ describe("Changes tab", () => {
 
     const Diff = wrapper.find(Differential);
     expect(Diff.props()).toMatchObject({
-      emptyDiffText: "No changes detected from chart defaults",
+      emptyDiffText: "No changes detected from chart defaults.",
       newValues: "bar: foo",
       oldValues: "foo: bar",
       title: "Difference from chart defaults",
@@ -525,10 +525,10 @@ describe("Changes tab", () => {
 
     const Diff = wrapper.find(Differential);
     expect(Diff.props()).toMatchObject({
-      emptyDiffText: "Values for the new release are identical",
+      emptyDiffText: "The values for the new release are identical to the deployed version.",
       newValues: "bar: foo",
       oldValues: "a: b",
-      title: "New values to submit",
+      title: "Difference from deployed version",
     });
   });
 });
