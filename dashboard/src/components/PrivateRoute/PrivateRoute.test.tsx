@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import { createMemoryHistory } from "history";
 import * as React from "react";
-import { Redirect, RouteComponentProps } from "react-router-dom";
+import { Redirect, RouteComponentProps } from "react-router";
 
 import PrivateRoute from "./PrivateRoute";
 
@@ -37,7 +37,6 @@ it("redirects to the /login route if not authenticated", () => {
   const wrapper2 = shallow(<RenderMethod {...emptyRouteComponentProps} />);
   expect(wrapper2.find(Redirect).exists()).toBe(true);
   expect(wrapper2.find(Redirect).props()).toMatchObject({
-    push: false,
     to: { pathname: "/login" },
   } as any);
 });

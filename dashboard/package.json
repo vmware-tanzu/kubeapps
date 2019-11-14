@@ -49,6 +49,7 @@
     "react-markdown": "^4.2.2",
     "react-modal": "^3.1.11",
     "react-redux": "^5.0.6",
+    "react-router": "^5.1.2",
     "react-router-dom": "^4.2.2",
     "react-select": "^1.2.1",
     "react-switch": "^5.0.1",

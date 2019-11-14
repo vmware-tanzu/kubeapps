@@ -38,13 +38,8 @@ it("calls delete function when clicking the button", done => {
   // Wait for the async action to finish
   setTimeout(() => {
     wrapper.update();
-    const redirect = wrapper
-      .find(".AppControls")
-      .children()
-      .find(Redirect);
-    expect(redirect.exists()).toBe(true);
+    const redirect = wrapper.find(Redirect);
     expect(redirect.props()).toMatchObject({
-      push: false,
       to: `/apps/ns/${namespace}`,
     } as any);
     done();
