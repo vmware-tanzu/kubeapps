@@ -78,7 +78,6 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
           if (repoWithLatest) {
             this.setState({ repo: repoWithLatest });
             repo = repoWithLatest;
-            this.setState({ repo });
           }
         }
       }
