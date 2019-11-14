@@ -20,12 +20,11 @@ export interface IDeploymentFormBodyProps {
   chartID: string;
   chartVersion: string;
   namespace: string;
-  releaseName?: string;
+  releaseVersion?: string;
   selected: IChartState["selected"];
   appValues: string;
   push: (location: string) => RouterAction;
   goBack?: () => RouterAction;
-  fetchChartVersions: (id: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   setValues: (values: string) => void;
   setValuesModified: () => void;
@@ -47,8 +46,7 @@ class DeploymentFormBody extends React.Component<
   };
 
   public componentDidMount() {
-    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
-    fetchChartVersions(chartID);
+    const { chartID, getChartVersion, chartVersion } = this.props;
     getChartVersion(chartID, chartVersion);
   }
 
@@ -106,7 +104,7 @@ class DeploymentFormBody extends React.Component<
             {versions.map(v => (
               <option key={v.id} value={v.attributes.version}>
                 {v.attributes.version}{" "}
-                {this.props.releaseName && v.attributes.version === this.props.chartVersion
+                {this.props.releaseVersion && v.attributes.version === this.props.releaseVersion
                   ? "(current)"
                   : ""}
               </option>
@@ -142,7 +140,7 @@ class DeploymentFormBody extends React.Component<
     // TODO(andres): This requires refactoring. Currently, the deploy and upgrade
     // forms behave differently. In the deployment form, a change in the version
     // changes the route but in the case of the upgrade it only changes the state
-    const isUpgradeForm = !!this.props.releaseName;
+    const isUpgradeForm = !!this.props.releaseVersion;
 
     if (isUpgradeForm) {
       const { chartID, getChartVersion } = this.props;
