@@ -27,7 +27,11 @@ update-apiserver-etc-hosts:
 	kubectl -n kube-system exec kube-apiserver-kubeapps-control-plane -- \
 		sh -c "echo '$(shell kubectl -n dex get svc -o=jsonpath='{.items[0].spec.clusterIP}') dex.dex' >> /etc/hosts"
 
-deploy-dev: deploy-dex update-apiserver-etc-hosts
+deploy-openldap:
+	helm install stable/openldap --name ldap --namespace ldap \
+		--values ./docs/user/manifests/kubeapps-local-dev-openldap-values.yaml
+
+deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
 	helm install ./chart/kubeapps --namespace kubeapps --name kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml
@@ -36,17 +40,21 @@ deploy-dev: deploy-dex update-apiserver-etc-hosts
 	@echo "kubectl -n dex port-forward svc/dex 32000\n"
 	@echo "and in another terminal using the same cluster,\n"
 	@echo "kubectl -n kubeapps port-forward svc/kubeapps 3000:80\n"
-	@echo "You can then open http://localhost:3000 and login as either of"
+	@echo "You can then open http://localhost:3000 and login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"
 	@echo "  kubeapps-user@example.com:password"
+	@echo "or with LDAP as either of"
+	@echo "  kubeapps-operator-ldap@example.org:password"
+	@echo "  kubeapps-user-ldap@example.org:password"
 	@echo "to authenticate with the corresponding permissions."
 
 reset-dev:
 	helm delete --purge kubeapps || true
 	helm delete --purge dex || true
-	kubectl delete namespace dex kubeapps || true
-	helm reset || true
-	kubectl delete -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml || true
-	kubectl delete -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
+	helm delete --purge ldap || true
+	kubectl delete namespace --wait dex ldap kubeapps || true
+	helm reset --force --tiller-connection-timeout 5 || true
+	kubectl delete --wait -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml || true
+	kubectl delete --wait -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml || true
 
-.PHONY: deploy-dex deploy-dev reset-dev update-apiserver-etc-hosts
+.PHONY: deploy-dex deploy-dev deploy-openldap reset-dev update-apiserver-etc-hosts
