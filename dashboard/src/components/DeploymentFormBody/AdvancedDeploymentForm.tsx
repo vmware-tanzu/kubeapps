@@ -13,11 +13,9 @@ class AdvancedDeploymentForm extends React.Component<IAdvancedDeploymentForm> {
   public render() {
     return (
       <div className="margin-t-normal">
-        <label htmlFor="values">Values (YAML)</label>
         <AceEditor
           mode="yaml"
           theme="xcode"
-          name="values"
           width="100%"
           onChange={this.props.handleValuesChange}
           setOptions={{ showPrintMargin: false }}

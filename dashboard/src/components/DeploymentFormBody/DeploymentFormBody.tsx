@@ -2,9 +2,8 @@ import { RouterAction } from "connected-react-router";
 import * as jsonpatch from "fast-json-patch";
 import * as React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
-import * as YAML from "yaml";
 
-import { deleteValue, retrieveBasicFormParams, setValue } from "../../shared/schema";
+import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog";
@@ -15,6 +14,7 @@ import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 
 import "react-tabs/style/react-tabs.css";
+import Differential from "./Differential";
 import "./Tabs.css";
 
 export interface IDeploymentFormBodyProps {
@@ -22,13 +22,11 @@ export interface IDeploymentFormBodyProps {
   chartVersion: string;
   deployedValues?: string;
   namespace: string;
-  releaseName?: string;
+  releaseVersion?: string;
   selected: IChartState["selected"];
   appValues: string;
-  valuesModified: boolean;
   push: (location: string) => RouterAction;
   goBack?: () => RouterAction;
-  fetchChartVersions: (id: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   setValues: (values: string) => void;
   setValuesModified: () => void;
@@ -50,8 +48,7 @@ class DeploymentFormBody extends React.Component<
   };
 
   public componentDidMount() {
-    const { chartID, fetchChartVersions, getChartVersion, chartVersion } = this.props;
-    fetchChartVersions(chartID);
+    const { chartID, getChartVersion, chartVersion } = this.props;
     getChartVersion(chartID, chartVersion);
   }
 
@@ -64,57 +61,21 @@ class DeploymentFormBody extends React.Component<
       return;
     }
 
-    if (nextProps.selected !== this.props.selected) {
-      // The values or the schema has changed
-      let values = "";
-      // Get the original modification to the values if exists
-      let modifications = this.state.modifications;
-      // TODO(andresmgot): Right now, are taking advantage of the fact that when first
-      // loaded this component (in the upgrade scenario) the "selected" version is the
-      // currently deployed version. We should change that to be the latest version available
-      // so the current approach won't be possible. We should also try to avoid to modify
-      // the behavior of this component depending on the scenario (install/upgrade).
-      if (nextProps.selected.values && this.props.deployedValues && !modifications) {
-        const defaultValuesObj = YAML.parse(nextProps.selected.values);
-        const deployedValuesObj = YAML.parse(this.props.deployedValues);
-        modifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
-        this.setState({ modifications });
-      }
-
-      if (!this.props.valuesModified) {
-        // In other case, use the default values for the selected version
-        values = nextProps.selected.values || "";
-        // And we add any possible change made to the original version
-        if (modifications) {
-          modifications.forEach(modification => {
-            // Transform the JSON Path to the format expected by setValue
-            // /a/b/c => a.b.c
-            const path = modification.path.replace(/^\//, "").replace(/\//g, ".");
-            if (modification.op === "remove") {
-              values = deleteValue(values, path);
-            } else {
-              // Transform the modification as a ReplaceOperation to read its value
-              const value = (modification as jsonpatch.ReplaceOperation<any>).value;
-              values = setValue(values, path, value);
-            }
-          });
-        }
-        this.props.setValues(values);
-      } else {
-        // If the user has modified the values, use the ones defined
-        values = this.props.appValues;
-      }
-      if (nextProps.selected.schema) {
-        this.setState({
-          basicFormParameters: retrieveBasicFormParams(values, nextProps.selected.schema),
-        });
-      }
-      return;
+    if (
+      nextProps.selected.schema !== this.props.selected.schema ||
+      nextProps.appValues !== this.props.appValues
+    ) {
+      this.setState({
+        basicFormParameters: retrieveBasicFormParams(
+          nextProps.appValues,
+          nextProps.selected.schema,
+        ),
+      });
     }
   };
 
   public render() {
-    const { selected, chartID, chartVersion, goBack, appValues } = this.props;
+    const { selected, chartID, chartVersion, goBack } = this.props;
     const { version, versions } = selected;
     if (selected.error) {
       return (
@@ -145,21 +106,14 @@ class DeploymentFormBody extends React.Component<
             {versions.map(v => (
               <option key={v.id} value={v.attributes.version}>
                 {v.attributes.version}{" "}
-                {this.props.releaseName && v.attributes.version === this.props.chartVersion
+                {this.props.releaseVersion && v.attributes.version === this.props.releaseVersion
                   ? "(current)"
                   : ""}
               </option>
             ))}
           </select>
         </div>
-        {this.shouldRenderBasicForm() ? (
-          this.renderTabs()
-        ) : (
-          <AdvancedDeploymentForm
-            appValues={appValues}
-            handleValuesChange={this.handleValuesChange}
-          />
-        )}
+        {this.renderTabs()}
         <div className="margin-t-big">
           <button className="button button-primary" type="submit">
             Submit
@@ -181,7 +135,7 @@ class DeploymentFormBody extends React.Component<
     // TODO(andres): This requires refactoring. Currently, the deploy and upgrade
     // forms behave differently. In the deployment form, a change in the version
     // changes the route but in the case of the upgrade it only changes the state
-    const isUpgradeForm = !!this.props.releaseName;
+    const isUpgradeForm = !!this.props.releaseVersion;
 
     if (isUpgradeForm) {
       const { chartID, getChartVersion } = this.props;
@@ -214,35 +168,41 @@ class DeploymentFormBody extends React.Component<
       <div className="margin-t-normal">
         <Tabs>
           <TabList>
-            <Tab onClick={this.refreshBasicParameters}>
-              Basic{" "}
-              <Hint reactTooltipOpts={{ delayHide: 100 }} id="basicFormHelp">
-                <span>
-                  This form has been automatically generated based on the chart schema.
-                  <br />
-                  This feature is currently in a beta state. If you find an issue please report it{" "}
-                  <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues/new">
-                    here.
-                  </a>
-                </span>
-              </Hint>
-            </Tab>
-            <Tab>Advanced</Tab>
+            {this.shouldRenderBasicForm() && (
+              <Tab onClick={this.refreshBasicParameters}>
+                Form{" "}
+                <Hint reactTooltipOpts={{ delayHide: 100 }} id="basicFormHelp">
+                  <span>
+                    This form has been automatically generated based on the chart schema.
+                    <br />
+                    This feature is currently in a beta state. If you find an issue please report it{" "}
+                    <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues/new">
+                      here.
+                    </a>
+                  </span>
+                </Hint>
+              </Tab>
+            )}
+            <Tab>Values (YAML)</Tab>
+            <Tab>Changes</Tab>
           </TabList>
-          <TabPanel>
-            <BasicDeploymentForm
-              params={this.state.basicFormParameters}
-              handleBasicFormParamChange={this.handleBasicFormParamChange}
-              appValues={this.props.appValues}
-              handleValuesChange={this.handleValuesChange}
-            />
-          </TabPanel>
+          {this.shouldRenderBasicForm() && (
+            <TabPanel>
+              <BasicDeploymentForm
+                params={this.state.basicFormParameters}
+                handleBasicFormParamChange={this.handleBasicFormParamChange}
+                appValues={this.props.appValues}
+                handleValuesChange={this.handleValuesChange}
+              />
+            </TabPanel>
+          )}
           <TabPanel>
             <AdvancedDeploymentForm
               appValues={this.props.appValues}
               handleValuesChange={this.handleValuesChange}
             />
           </TabPanel>
+          <TabPanel>{this.renderDiff()}</TabPanel>
         </Tabs>
       </div>
     );
@@ -287,6 +247,33 @@ class DeploymentFormBody extends React.Component<
       });
     }
     this.setState({ restoreDefaultValuesModalIsOpen: false });
+  };
+
+  private renderDiff = () => {
+    let oldValues = "";
+    let title = "";
+    let emptyDiffText = "";
+    if (this.props.deployedValues) {
+      // If there are already some deployed values (upgrade scenario)
+      // We compare the values from the old release and the new one
+      oldValues = this.props.deployedValues;
+      title = "Difference from deployed version";
+      emptyDiffText = "The values for the new release are identical to the deployed version.";
+    } else {
+      // If it's a new deployment, we show the different from the default
+      // values for the selected version
+      oldValues = this.props.selected.values || "";
+      title = "Difference from chart defaults";
+      emptyDiffText = "No changes detected from chart defaults.";
+    }
+    return (
+      <Differential
+        title={title}
+        oldValues={oldValues}
+        newValues={this.props.appValues}
+        emptyDiffText={emptyDiffText}
+      />
+    );
   };
 }
 

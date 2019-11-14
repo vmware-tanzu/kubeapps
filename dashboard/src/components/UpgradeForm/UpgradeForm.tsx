@@ -1,10 +1,14 @@
 import { RouterAction } from "connected-react-router";
+import * as jsonpatch from "fast-json-patch";
 import { JSONSchema4 } from "json-schema";
 import * as React from "react";
+import * as YAML from "yaml";
 
+import { deleteValue, setValue } from "../../shared/schema";
 import { IChartState, IChartVersion } from "../../shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
@@ -15,6 +19,7 @@ export interface IUpgradeFormProps {
   repo: string;
   error: Error | undefined;
   selected: IChartState["selected"];
+  deployed: IChartState["deployed"];
   upgradeApp: (
     version: IChartVersion,
     releaseName: string,
@@ -32,6 +37,7 @@ interface IUpgradeFormState {
   appValues: string;
   valuesModified: boolean;
   isDeploying: boolean;
+  modifications?: jsonpatch.Operation[];
 }
 
 class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> {
@@ -41,14 +47,41 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
     valuesModified: false,
   };
 
+  public componentDidMount() {
+    const chartID = `${this.props.repo}/${this.props.chartName}`;
+    this.props.fetchChartVersions(chartID);
+  }
+
+  public componentDidUpdate = (prevProps: IUpgradeFormProps) => {
+    let modifications = this.state.modifications;
+    if (this.props.deployed.values && !modifications) {
+      // Calculate modifications from the default values
+      const defaultValuesObj = YAML.parse(this.props.deployed.values);
+      const deployedValuesObj = YAML.parse(this.props.appCurrentValues || "");
+      modifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
+      this.setState({ modifications });
+      this.setState({ appValues: this.applyModifications(modifications, this.state.appValues) });
+    }
+
+    if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
+      // Apply modifications to the new selected version
+      const appValues = modifications
+        ? this.applyModifications(modifications, this.props.selected.values || "")
+        : this.props.selected.values || "";
+      this.setState({ appValues });
+    }
+  };
+
   public render() {
-    const { namespace, releaseName, error } = this.props;
+    const { namespace, releaseName, error, selected } = this.props;
     if (error) {
       return (
         <ErrorSelector error={error} namespace={namespace} action="update" resource={releaseName} />
       );
     }
-
+    if (selected.versions.length === 0) {
+      return <LoadingWrapper />;
+    }
     const chartID = `${this.props.repo}/${this.props.chartName}`;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
@@ -59,18 +92,16 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
           <div className="col-8">
             <DeploymentFormBody
               chartID={chartID}
-              chartVersion={this.props.appCurrentVersion}
-              deployedValues={this.props.appCurrentValues}
+              chartVersion={this.props.selected.versions[0].attributes.version}
+              deployedValues={this.props.appCurrentValues || ""}
               namespace={this.props.namespace}
-              releaseName={this.props.releaseName}
+              releaseVersion={this.props.appCurrentVersion}
               selected={this.props.selected}
               push={this.props.push}
               goBack={this.props.goBack}
-              fetchChartVersions={this.props.fetchChartVersions}
               getChartVersion={this.props.getChartVersion}
               setValues={this.handleValuesChange}
               appValues={this.state.appValues}
-              valuesModified={this.state.valuesModified}
               setValuesModified={this.setValuesModified}
             />
           </div>
@@ -107,6 +138,25 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
       }
     }
   };
+
+  private applyModifications(modifications: jsonpatch.Operation[], appValues: string) {
+    // And we add any possible change made to the original version
+    if (modifications.length) {
+      modifications.forEach(modification => {
+        // Transform the JSON Path to the format expected by setValue
+        // /a/b/c => a.b.c
+        const path = modification.path.replace(/^\//, "").replace(/\//g, ".");
+        if (modification.op === "remove") {
+          appValues = deleteValue(appValues, path);
+        } else {
+          // Transform the modification as a ReplaceOperation to read its value
+          const value = (modification as jsonpatch.ReplaceOperation<any>).value;
+          appValues = setValue(appValues, path, value);
+        }
+      });
+    }
+    return appValues;
+  }
 }
 
 export default UpgradeForm;

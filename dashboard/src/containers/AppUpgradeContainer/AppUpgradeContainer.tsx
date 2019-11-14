@@ -33,6 +33,7 @@ function mapStateToProps(
     repoError: repos.errors.fetch,
     repos: repos.repos,
     selected: charts.selected,
+    deployed: charts.deployed,
   };
 }
 
@@ -56,6 +57,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       values?: string,
       schema?: JSONSchema4,
     ) => dispatch(actions.apps.upgradeApp(version, releaseName, namespace, values, schema)),
+    getDeployedChartVersion: (id: string, version: string) =>
+      dispatch(actions.charts.getDeployedChartVersion(id, version)),
   };
 }
 

@@ -32,6 +32,12 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
+it("fetches the available versions", () => {
+  const fetchChartVersions = jest.fn();
+  shallow(<DeploymentForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
+  expect(fetchChartVersions).toHaveBeenCalledWith(defaultProps.chartID);
+});
+
 describe("renders an error", () => {
   it("renders a custom error if the deployment failed", () => {
     const wrapper = shallow(
@@ -121,7 +127,6 @@ it("forwards the valuesModifed property", () => {
   handleValuesModified("foo: bar");
 
   expect(wrapper.state("valuesModified")).toBe(true);
-  expect(wrapper.find(DeploymentFormBody).prop("valuesModified")).toBe(true);
 });
 
 it("triggers a deployment when submitting the form", done => {
