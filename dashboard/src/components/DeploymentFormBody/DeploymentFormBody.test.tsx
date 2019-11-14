@@ -13,6 +13,7 @@ import DeploymentFormBody, {
   IDeploymentFormBodyProps,
   IDeploymentFormBodyState,
 } from "./DeploymentFormBody";
+import Differential from "./Differential";
 
 const defaultProps = {
   chartID: "foo",
@@ -141,12 +142,6 @@ describe("when the basic form is enabled", () => {
     expect(wrapper.find(Tabs)).toExist();
   });
 
-  it("should not render the tabs if there are no basic parameters", () => {
-    const wrapper = shallow(<DeploymentFormBody {...props} />);
-    expect(wrapper.find(LoadingWrapper)).not.toExist();
-    expect(wrapper.find(Tabs)).not.toExist();
-  });
-
   it("changes the parameter value", () => {
     const basicFormParameters = [
       {
@@ -200,7 +195,7 @@ describe("when the basic form is enabled", () => {
 
     const tab = wrapper
       .find(Tab)
-      .findWhere(t => !!t.text().match("Basic"))
+      .findWhere(t => !!t.text().match("Form"))
       .first();
     tab.simulate("click");
 
@@ -321,4 +316,56 @@ it("restores the default chart values when clicking on the button", () => {
   wrapper.find(ConfirmDialog).prop("onConfirm")();
 
   expect(setValues).toHaveBeenCalledWith("foo: value");
+});
+
+describe("Changes tab", () => {
+  it("should show the differences between the default chart values when deploying", () => {
+    const selected = {
+      ...defaultProps.selected,
+      versions: [chartVersion],
+      version: chartVersion,
+      values: "foo: bar",
+      schema: initialSchema,
+    };
+    const appValues = "bar: foo";
+    const wrapper = shallow(
+      <DeploymentFormBody {...props} selected={selected} appValues={appValues} />,
+    );
+
+    const Diff = wrapper.find(Differential);
+    expect(Diff.props()).toMatchObject({
+      emptyDiffText: "No changes detected from chart defaults.",
+      newValues: "bar: foo",
+      oldValues: "foo: bar",
+      title: "Difference from chart defaults",
+    });
+  });
+
+  it("should show the differences between the current release and the new one when upgrading", () => {
+    const selected = {
+      ...defaultProps.selected,
+      versions: [chartVersion],
+      version: chartVersion,
+      values: "foo: bar",
+      schema: initialSchema,
+    };
+    const deployedValues = "a: b";
+    const appValues = "bar: foo";
+    const wrapper = shallow(
+      <DeploymentFormBody
+        {...props}
+        selected={selected}
+        appValues={appValues}
+        deployedValues={deployedValues}
+      />,
+    );
+
+    const Diff = wrapper.find(Differential);
+    expect(Diff.props()).toMatchObject({
+      emptyDiffText: "The values for the new release are identical to the deployed version.",
+      newValues: "bar: foo",
+      oldValues: "a: b",
+      title: "Difference from deployed version",
+    });
+  });
 });

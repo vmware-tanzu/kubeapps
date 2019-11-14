@@ -4,6 +4,7 @@
   "private": true,
   "homepage": "./",
   "dependencies": {
+    "@types/diff": "^4.0.2",
     "@types/js-yaml": "^3.10.1",
     "@types/json-schema": "^7.0.3",
     "@types/jsonwebtoken": "^8.3.4",
@@ -21,6 +22,8 @@
     "ajv": "^6.10.2",
     "axios": "^0.19.0",
     "connected-react-router": "^4.5.0",
+    "diff": "^4.0.1",
+    "diff2html": "^2.12.1",
     "enzyme-adapter-react-16": "^1.1.1",
     "fast-json-patch": "^3.0.0-1",
     "fstream": "^1.0.12",
