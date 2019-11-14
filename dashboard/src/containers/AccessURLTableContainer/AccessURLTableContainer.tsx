@@ -35,7 +35,4 @@ function mapDispatchToProps(
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(AccessURLTable);
+export default connect(mapStateToProps, mapDispatchToProps)(AccessURLTable);

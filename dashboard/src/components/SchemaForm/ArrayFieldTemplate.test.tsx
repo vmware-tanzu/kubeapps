@@ -5,7 +5,7 @@ import { ArrayFieldTemplateProps } from "react-jsonschema-form";
 import ArrayFieldTemplate from "./ArrayFieldTemplate";
 
 it("renders a label for the title", () => {
-  const wrapper = shallow(<ArrayFieldTemplate {...{} as ArrayFieldTemplateProps} title="Test" />);
+  const wrapper = shallow(<ArrayFieldTemplate {...({} as ArrayFieldTemplateProps)} title="Test" />);
   expect(wrapper.find("label").text()).toBe("Test");
 });
 
@@ -36,7 +36,9 @@ it("renders each element in the array", () => {
       },
     },
   ] as ArrayFieldTemplateProps["items"];
-  const wrapper = shallow(<ArrayFieldTemplate {...{} as ArrayFieldTemplateProps} items={items} />);
+  const wrapper = shallow(
+    <ArrayFieldTemplate {...({} as ArrayFieldTemplateProps)} items={items} />,
+  );
   expect(wrapper.find(".test1").exists()).toBe(true);
   expect(wrapper.find(".test2").exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
@@ -45,7 +47,11 @@ it("renders each element in the array", () => {
 it("renders the add item button if enabled", () => {
   const onAddClick = jest.fn();
   const wrapper = shallow(
-    <ArrayFieldTemplate {...{} as ArrayFieldTemplateProps} canAdd={true} onAddClick={onAddClick} />,
+    <ArrayFieldTemplate
+      {...({} as ArrayFieldTemplateProps)}
+      canAdd={true}
+      onAddClick={onAddClick}
+    />,
   );
   const button = wrapper.find("button.button-primary");
   expect(button.exists()).toBe(true);

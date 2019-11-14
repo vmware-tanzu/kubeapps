@@ -68,7 +68,6 @@ class ServiceInstanceList extends React.PureComponent<
     this.setState({ filter: this.props.filter });
   }
 
-  // tslint:disable:variable-name
   public UNSAFE_componentWillReceiveProps(nextProps: IServiceInstanceListProps) {
     const { error, filter, getInstances, isServiceCatalogInstalled, namespace } = this.props;
     // refetch if new namespace or error removed due to location change

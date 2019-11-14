@@ -78,7 +78,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "20" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(20);
     expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20Gi" } }]);
@@ -94,7 +94,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "foo20*#@$" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(20);
     expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20Gi" } }]);
@@ -110,7 +110,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "20.5" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(20.5);
     expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20.5Gi" } }]);
@@ -126,7 +126,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "200" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(200);
     const slider = wrapper.find(Slider);

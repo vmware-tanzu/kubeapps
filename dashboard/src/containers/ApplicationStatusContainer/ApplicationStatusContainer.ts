@@ -44,7 +44,4 @@ function mapDispatchToProps(
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(ApplicationStatus);
+export default connect(mapStateToProps, mapDispatchToProps)(ApplicationStatus);

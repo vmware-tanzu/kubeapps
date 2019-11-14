@@ -35,9 +35,7 @@ const ServiceInstanceCardList: React.SFC<IServiceInstanceCardListProps> = props 
                 svcClass.spec.externalMetadata.imageUrl;
               const link =
                 broker &&
-                `/services/brokers/${broker}/instances/ns/${instance.metadata.namespace}/${
-                  instance.metadata.name
-                }`;
+                `/services/brokers/${broker}/instances/ns/${instance.metadata.namespace}/${instance.metadata.name}`;
 
               return (
                 <ServiceInstanceCard

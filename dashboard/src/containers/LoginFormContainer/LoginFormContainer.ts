@@ -23,7 +23,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(LoginForm);
+export default connect(mapStateToProps, mapDispatchToProps)(LoginForm);

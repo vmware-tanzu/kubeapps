@@ -52,7 +52,7 @@ class DeploymentFormBody extends React.Component<
     getChartVersion(chartID, chartVersion);
   }
 
-  // tslint:disable:variable-name
+  // tslint:disable-next-line:variable-name
   public UNSAFE_componentWillReceiveProps = (nextProps: IDeploymentFormBodyProps) => {
     const { chartID, chartVersion, getChartVersion } = this.props;
 

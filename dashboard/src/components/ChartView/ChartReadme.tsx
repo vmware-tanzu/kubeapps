@@ -20,7 +20,6 @@ class ChartReadme extends React.Component<IChartReadmeProps> {
     getChartReadme(version);
   }
 
-  // tslint:disable:variable-name
   public UNSAFE_componentWillReceiveProps(nextProps: IChartReadmeProps) {
     const { getChartReadme, version } = nextProps;
     if (version !== this.props.version) {

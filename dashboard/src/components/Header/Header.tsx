@@ -58,7 +58,6 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     };
   }
 
-  // tslint:disable:variable-name
   public UNSAFE_componentWillReceiveProps(newProps: IHeaderProps) {
     if (newProps.pathname !== this.props.pathname) {
       this.setState({

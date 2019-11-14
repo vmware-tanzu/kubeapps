@@ -30,7 +30,6 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     this.setState({ filter });
   }
 
-  // tslint:disable:variable-name
   public UNSAFE_componentWillReceiveProps(nextProps: IAppListProps) {
     const {
       apps: { error, listingAll },

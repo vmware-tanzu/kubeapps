@@ -27,7 +27,6 @@ class ChartView extends React.Component<IChartViewProps> {
     fetchChartVersionsAndSelectVersion(chartID, version);
   }
 
-  // tslint:disable:variable-name
   public UNSAFE_componentWillReceiveProps(nextProps: IChartViewProps) {
     const { selectChartVersion, version } = this.props;
     const { versions } = this.props.selected;

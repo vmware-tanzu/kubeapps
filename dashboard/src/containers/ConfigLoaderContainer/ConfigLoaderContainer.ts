@@ -19,7 +19,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, ConfigAct
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(ConfigLoader);
+export default connect(mapStateToProps, mapDispatchToProps)(ConfigLoader);
