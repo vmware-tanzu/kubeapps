@@ -8,6 +8,7 @@ import { deleteValue, setValue } from "../../shared/schema";
 import { IChartState, IChartVersion } from "../../shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector } from "../ErrorAlert";
+import LoadingWrapper from "../LoadingWrapper";
 
 export interface IUpgradeFormProps {
   appCurrentVersion: string;
@@ -46,6 +47,11 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
     valuesModified: false,
   };
 
+  public componentDidMount() {
+    const chartID = `${this.props.repo}/${this.props.chartName}`;
+    this.props.fetchChartVersions(chartID);
+  }
+
   public componentDidUpdate = (prevProps: IUpgradeFormProps) => {
     let modifications = this.state.modifications;
     if (this.props.deployed.values && !modifications) {
@@ -67,13 +73,15 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
   };
 
   public render() {
-    const { namespace, releaseName, error } = this.props;
+    const { namespace, releaseName, error, selected } = this.props;
     if (error) {
       return (
         <ErrorSelector error={error} namespace={namespace} action="update" resource={releaseName} />
       );
     }
-
+    if (selected.versions.length === 0) {
+      return <LoadingWrapper />;
+    }
     const chartID = `${this.props.repo}/${this.props.chartName}`;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
@@ -84,14 +92,13 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
           <div className="col-8">
             <DeploymentFormBody
               chartID={chartID}
-              chartVersion={this.props.appCurrentVersion}
+              chartVersion={this.props.selected.versions[0].attributes.version}
               deployedValues={this.props.appCurrentValues || ""}
               namespace={this.props.namespace}
-              releaseName={this.props.releaseName}
+              releaseVersion={this.props.appCurrentVersion}
               selected={this.props.selected}
               push={this.props.push}
               goBack={this.props.goBack}
-              fetchChartVersions={this.props.fetchChartVersions}
               getChartVersion={this.props.getChartVersion}
               setValues={this.handleValuesChange}
               appValues={this.state.appValues}

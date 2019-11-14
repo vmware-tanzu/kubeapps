@@ -1,10 +1,13 @@
 import { mount, shallow } from "enzyme";
 import * as React from "react";
+import itBehavesLike from "../../shared/specs";
 
 import { IChartState, IChartVersion, UnprocessableEntity } from "../../shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector } from "../ErrorAlert";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
+
+const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 
 const defaultProps = {
   appCurrentVersion: "1.0.0",
@@ -13,7 +16,7 @@ const defaultProps = {
   namespace: "default",
   releaseName: "my-release",
   repo: "my-repo",
-  selected: {} as IChartState["selected"],
+  selected: { versions } as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   upgradeApp: jest.fn(),
   push: jest.fn(),
@@ -23,7 +26,16 @@ const defaultProps = {
   error: undefined,
 } as IUpgradeFormProps;
 
-const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
+itBehavesLike("aLoadingComponent", {
+  component: UpgradeForm,
+  props: { ...defaultProps, selected: { versions: [] } },
+});
+
+it("fetches the available versions", () => {
+  const fetchChartVersions = jest.fn();
+  shallow(<UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
+  expect(fetchChartVersions).toHaveBeenCalledWith(`${defaultProps.repo}/${defaultProps.chartName}`);
+});
 
 describe("renders an error", () => {
   it("renders a custom error if the deployment failed", () => {
@@ -108,7 +120,7 @@ describe("when receiving new props", () => {
     const modifications = [{ op: "add", path: "/c", value: "d" }];
     const wrapper = shallow(<UpgradeForm {...defaultProps} />);
     wrapper.setState({ modifications });
-    wrapper.setProps({ selected: { version: {}, values: defaultValues } });
+    wrapper.setProps({ selected: { versions: [], version: {}, values: defaultValues } });
 
     expect(wrapper.state("appValues")).toEqual("a: b\nc: d\n");
   });
@@ -118,7 +130,7 @@ describe("when receiving new props", () => {
     const modifications = [{ op: "add", path: "/c", value: "d" }];
     const wrapper = shallow(<UpgradeForm {...defaultProps} />);
     wrapper.setState({ modifications, valuesModified: true, appValues: userValues });
-    wrapper.setProps({ selected: { version: {} } });
+    wrapper.setProps({ selected: { versions: [], version: {} } });
 
     expect(wrapper.state("appValues")).toEqual(userValues);
   });

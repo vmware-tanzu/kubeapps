@@ -66,6 +66,17 @@ it("renders the full DeploymentFormBody", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
+it("marks the current version", () => {
+  const wrapper = shallow(
+    <DeploymentFormBody
+      {...defaultProps}
+      releaseVersion={versions[0].attributes.version}
+      selected={{ versions, version: versions[0] }}
+    />,
+  );
+  expect(wrapper.find("select").text()).toMatch("1.2.3 (current)");
+});
+
 const initialValues = "foo: bar";
 const initialSchema = { properties: { foo: { type: "string", form: true } } };
 const chartVersion = {
