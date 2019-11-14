@@ -14,6 +14,7 @@ exports[`match snapshot with values 1`] = `
     }
     enableBasicAutocompletion={false}
     enableLiveAutocompletion={false}
+    enableSnippets={false}
     focus={false}
     fontSize={12}
     height="500px"
@@ -22,10 +23,12 @@ exports[`match snapshot with values 1`] = `
     minLines={null}
     mode="yaml"
     name="values"
+    navigateToFileEnd={true}
     onChange={null}
     onLoad={null}
     onPaste={null}
     onScroll={null}
+    placeholder={null}
     readOnly={true}
     scrollMargin={
       Array [

@@ -1,8 +1,8 @@
 import * as React from "react";
 import AceEditor from "react-ace";
 
-import "brace/mode/yaml";
-import "brace/theme/xcode";
+import "ace-builds/src-noconflict/mode-yaml";
+import "ace-builds/src-noconflict/theme-xcode";
 
 export interface IAdvancedDeploymentForm {
   appValues?: string;
