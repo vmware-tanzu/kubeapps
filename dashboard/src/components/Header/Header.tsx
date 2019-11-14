@@ -58,9 +58,13 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     };
   }
 
-  public componentWillReceiveProps(newProps: IHeaderProps) {
+  // tslint:disable:variable-name
+  public UNSAFE_componentWillReceiveProps(newProps: IHeaderProps) {
     if (newProps.pathname !== this.props.pathname) {
-      this.setState({ configOpen: false, mobileOpen: false });
+      this.setState({
+        configOpen: false,
+        mobileOpen: false,
+      });
     }
   }
 

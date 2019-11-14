@@ -89,7 +89,8 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
     this.props.getPlans();
   }
 
-  public componentWillReceiveProps(nextProps: IServiceInstanceViewProps) {
+  // tslint:disable:variable-name
+  public UNSAFE_componentWillReceiveProps(nextProps: IServiceInstanceViewProps) {
     const { getInstances, getBindings, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
       getInstances(nextProps.namespace);

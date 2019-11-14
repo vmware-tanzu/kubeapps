@@ -82,7 +82,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   // componentWillReceiveProps is deprecated use componentDidUpdate instead
-  public componentWillReceiveProps(nextProps: IAppViewProps) {
+  public UNSAFE_componentWillReceiveProps(nextProps: IAppViewProps) {
     const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
     if (nextProps.namespace !== namespace) {
       getAppWithUpdateInfo(releaseName, nextProps.namespace);

@@ -57,7 +57,8 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
     this.props.fetchRepos();
   }
 
-  public componentWillReceiveProps(nextProps: IAppRepoListProps) {
+  // tslint:disable:variable-name
+  public UNSAFE_componentWillReceiveProps(nextProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,

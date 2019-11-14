@@ -52,7 +52,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
     // If update is not set yet we cannot know if there is
     // an update available or not
     if (app.updateInfo) {
-      let updateContent = null;
+      let updateContent: JSX.Element | null = null;
       if (app.updateInfo.error) {
         updateContent = (
           <React.Fragment>
