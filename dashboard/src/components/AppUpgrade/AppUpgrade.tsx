@@ -27,6 +27,7 @@ interface IAppUpgradeProps {
   repos: IAppRepository[];
   repo: IAppRepository;
   selected: IChartState["selected"];
+  deployed: IChartState["deployed"];
   upgradeApp: (
     version: IChartVersion,
     releaseName: string,
@@ -39,26 +40,70 @@ interface IAppUpgradeProps {
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
+  getDeployedChartVersion: (id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
   fetchRepositories: () => void;
-  enableBasicForm: boolean;
 }
 
 interface IAppUpgradeState {
-  selectRepoForm: JSX.Element;
+  repo?: IAppRepository;
 }
 
 class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
+  public state: IAppUpgradeState = {};
+
   public componentDidMount() {
     const { releaseName, getAppWithUpdateInfo, namespace, fetchRepositories } = this.props;
     getAppWithUpdateInfo(releaseName, namespace);
     fetchRepositories();
   }
 
+  public componentDidUpdate(prevProps: IAppUpgradeProps) {
+    const { repos, app } = this.props;
+    let repo = this.state.repo;
+    // Retrieve the current repo
+    if (!repo) {
+      repo = this.props.repo;
+      if (repo && repo.metadata) {
+        // If the repository comes from the properties, use it
+        this.setState({ repo });
+      } else {
+        // If there is update info about the app we can automatically chose the repository
+        // with the latest version
+        if (app && app.updateInfo) {
+          const repoWithLatest = repos.find(
+            r => r.metadata.name === (app.updateInfo && app.updateInfo.repository.name),
+          );
+          if (repoWithLatest) {
+            this.setState({ repo: repoWithLatest });
+            repo = repoWithLatest;
+          }
+        }
+      }
+    }
+
+    if (app) {
+      const { chart } = app;
+      if (
+        chart &&
+        chart.metadata &&
+        chart.metadata.name &&
+        chart.metadata.version &&
+        repo &&
+        repo.metadata &&
+        repo.metadata.name &&
+        prevProps.app !== app
+      ) {
+        const chartID = `${repo.metadata.name}/${chart.metadata.name}`;
+        this.props.getDeployedChartVersion(chartID, chart.metadata.version);
+      }
+    }
+  }
+
   public render() {
     const { app, repos, error, namespace, releaseName, repoError, isFetching } = this.props;
-    let { repo } = this.props;
+    const { repo } = this.state;
     if (isFetching) {
       return <LoadingWrapper />;
     }
@@ -113,17 +158,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         );
       }
     }
-    // If there is update info about the app we can automatically chose the repository
-    // with the latest version
-    if (app.updateInfo) {
-      const repoWithLatest = repos.find(
-        r => r.metadata.name === (app.updateInfo && app.updateInfo.repository.name),
-      );
-      if (repoWithLatest) {
-        repo = repoWithLatest;
-      }
-    }
-    if (!repo.metadata) {
+    if (!repo || !repo.metadata) {
       return (
         <div>
           <SelectRepoForm

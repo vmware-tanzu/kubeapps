@@ -49,7 +49,6 @@ exports[`renders the full UpgradeForm 1`] = `
         }
         setValues={[Function]}
         setValuesModified={[Function]}
-        valuesModified={false}
       />
     </div>
   </div>

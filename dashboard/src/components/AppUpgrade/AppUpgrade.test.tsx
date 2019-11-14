@@ -21,6 +21,8 @@ const defaultProps = {
   fetchRepositories: jest.fn(),
   getAppWithUpdateInfo: jest.fn(),
   getChartVersion: jest.fn(),
+  deployed: {} as IChartState["deployed"],
+  getDeployedChartVersion: jest.fn(),
   kubeappsNamespace: "kubeapps",
   namespace: "default",
   push: jest.fn(),
@@ -32,7 +34,6 @@ const defaultProps = {
   selected: {} as IChartState["selected"],
   upgradeApp: jest.fn(),
   version: "1.0.0",
-  enableBasicForm: false,
 };
 
 beforeEach(() => {
@@ -205,9 +206,9 @@ it("renders the upgrade form when the repo is available", () => {
         } as IRelease
       }
       repos={[repo]}
-      repo={repo}
     />,
   );
+  wrapper.setProps({ repo });
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(ErrorSelector)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
@@ -218,32 +219,81 @@ it("skips the repo selection form if the app contains upgrade info", () => {
   const repo = {
     metadata: { name: "stable" },
   } as IAppRepository;
-  const wrapper = shallow(
-    <AppUpgrade
-      {...defaultProps}
-      app={
-        {
-          chart: {
-            metadata: {
-              name: "bar",
-              version: "1.0.0",
-            },
-          },
-          name: "foo",
-          updateInfo: {
-            upToDate: true,
-            chartLatestVersion: "1.1.0",
-            appLatestVersion: "1.1.0",
-            repository: { name: "stable", url: "" },
-          },
-        } as IRelease
-      }
-      repos={[repo]}
-      repo={repo}
-    />,
-  );
+  const app = {
+    chart: {
+      metadata: {
+        name: "bar",
+        version: "1.0.0",
+      },
+    },
+    name: "foo",
+    updateInfo: {
+      upToDate: true,
+      chartLatestVersion: "1.1.0",
+      appLatestVersion: "1.1.0",
+      repository: { name: "stable", url: "" },
+    },
+  } as IRelease;
+  const wrapper = shallow(<AppUpgrade {...defaultProps} repos={[repo]} />);
+  wrapper.setProps({ app });
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(ErrorSelector)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
   expect(wrapper).toMatchSnapshot();
+});
+
+describe("when receiving new props", () => {
+  it("should set the source repository in the state if present as a property", () => {
+    const repo = { metadata: { name: "stable" } };
+    const wrapper = shallow(<AppUpgrade {...defaultProps} />);
+    wrapper.setProps({ repo });
+    expect(wrapper.state("repo")).toEqual(repo);
+  });
+
+  it("should request the deployed chart when the app and repo are populated", () => {
+    const repo = { metadata: { name: "stable" } };
+    const app = {
+      chart: {
+        metadata: {
+          name: "bar",
+          version: "1.0.0",
+        },
+      },
+    } as IRelease;
+    const getDeployedChartVersion = jest.fn();
+    const wrapper = shallow(
+      <AppUpgrade {...defaultProps} getDeployedChartVersion={getDeployedChartVersion} />,
+    );
+    wrapper.setProps({ repo, app });
+    expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/bar", "1.0.0");
+  });
+
+  it("a new app should re-trigger the deployed chart retrieval", () => {
+    const repo = { metadata: { name: "stable" } };
+    const app = {
+      chart: {
+        metadata: {
+          name: "bar",
+          version: "1.0.0",
+        },
+      },
+    } as IRelease;
+    const getDeployedChartVersion = jest.fn();
+    const wrapper = shallow(
+      <AppUpgrade {...defaultProps} getDeployedChartVersion={getDeployedChartVersion} />,
+    );
+    wrapper.setProps({ repo, app });
+    expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/bar", "1.0.0");
+
+    const app2 = {
+      chart: {
+        metadata: {
+          name: "foobar",
+          version: "1.0.0",
+        },
+      },
+    } as IRelease;
+    wrapper.setProps({ app: app2 });
+    expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/foobar", "1.0.0");
+  });
 });

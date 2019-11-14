@@ -43,11 +43,17 @@ export interface IDeploymentFormState {
 class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
   public state: IDeploymentFormState = {
     releaseName: Moniker.choose(),
-    appValues: "",
+    appValues: this.props.selected.values || "",
     isDeploying: false,
     latestSubmittedReleaseName: "",
     valuesModified: false,
   };
+
+  public componentDidUpdate(prevProps: IDeploymentFormProps) {
+    if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
+      this.setState({ appValues: this.props.selected.values || "" });
+    }
+  }
 
   public render() {
     const { namespace } = this.props;
@@ -92,7 +98,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               getChartVersion={this.props.getChartVersion}
               setValues={this.handleValuesChange}
               appValues={this.state.appValues}
-              valuesModified={this.state.valuesModified}
               setValuesModified={this.setValuesModified}
             />
           </div>

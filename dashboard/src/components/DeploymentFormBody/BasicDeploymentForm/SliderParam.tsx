@@ -35,7 +35,6 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
   public componentWillReceiveProps = (props: ISliderParamProps) => {
     const value = getDefaultValue(this.props.min, props.param.value);
     if (value !== this.state.value) {
-      this.handleParamChange(value);
       this.setState({ value });
     }
   };
