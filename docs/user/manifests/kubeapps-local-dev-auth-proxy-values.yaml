@@ -1,0 +1,10 @@
+authProxy:
+  enabled: true
+  provider: oidc
+  clientID: kubeapps
+  clientSecret: ZXhhbXBsZS1hcHAtc2VjcmV0
+  cookieSecret: bm90LWdvb2Qtc2VjcmV0Cg==
+  additionalFlags:
+    - -cookie-secure=false
+    - -oidc-issuer-url=https://dex.dex:32000
+    - -ssl-insecure-skip-verify=true

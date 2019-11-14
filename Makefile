@@ -6,6 +6,7 @@ VERSION ?= $$(git rev-parse HEAD)
 
 include ./script/cluster-kind.mk
 include ./script/cluster-openshift.mk
+include ./script/deploy-dev.mk
 
 IMG_MODIFIER ?= 
 

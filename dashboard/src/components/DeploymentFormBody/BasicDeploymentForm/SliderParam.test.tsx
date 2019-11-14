@@ -162,9 +162,13 @@ it("defaults to the min if the value is undefined", () => {
 });
 
 it("updates the state when receiving new props", () => {
-  const wrapper = shallow(<SliderParam {...defaultProps} />);
+  const handleBasicFormParamChange = jest.fn();
+  const wrapper = shallow(
+    <SliderParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+  );
   expect(wrapper.state("value")).toBe(10);
 
   wrapper.setProps({ param: { value: "20Gi" } });
   expect(wrapper.state("value")).toBe(20);
+  expect(handleBasicFormParamChange).not.toHaveBeenCalled();
 });

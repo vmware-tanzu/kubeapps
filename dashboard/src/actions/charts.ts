@@ -25,12 +25,15 @@ export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve =
     resolve({ chartVersion, values, schema });
 });
 
-export const requestedDeployedChartversion = createAction("SELECTED_DEPLOYED_CHART_VERSION");
+export const requestDeployedChartVersion = createAction("REQUEST_DEPLOYED_CHART_VERSION");
 
-export const selectDeployedChartVersion = createAction("SELECT_DEPLOYED_CHART_VERSION", resolve => {
-  return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
-    resolve({ chartVersion, values, schema });
-});
+export const receiveDeployedChartVersion = createAction(
+  "RECEIVE_DEPLOYED_CHART_VERSION",
+  resolve => {
+    return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
+      resolve({ chartVersion, values, schema });
+  },
+);
 
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
 
@@ -48,8 +51,8 @@ const allActions = [
   receiveCharts,
   receiveChartVersions,
   selectChartVersion,
-  requestedDeployedChartversion,
-  selectDeployedChartVersion,
+  requestDeployedChartVersion,
+  receiveDeployedChartVersion,
   resetChartVersion,
   selectReadme,
   errorReadme,
@@ -145,10 +148,10 @@ export function getDeployedChartVersion(
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    dispatch(requestedDeployedChartversion());
+    dispatch(requestDeployedChartVersion());
     const { chartVersion, values, schema } = await dispatch(getChartVersion(id, version));
     if (chartVersion) {
-      dispatch(selectDeployedChartVersion(chartVersion, values, schema));
+      dispatch(receiveDeployedChartVersion(chartVersion, values, schema));
     }
   };
 }

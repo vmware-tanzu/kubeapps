@@ -52,27 +52,25 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
     this.props.fetchChartVersions(chartID);
   }
 
-  public componentWillReceiveProps(nextProps: IUpgradeFormProps) {
+  public componentDidUpdate = (prevProps: IUpgradeFormProps) => {
     let modifications = this.state.modifications;
-    if (nextProps.deployed.values && !modifications) {
+    if (this.props.deployed.values && !modifications) {
       // Calculate modifications from the default values
-      const defaultValuesObj = YAML.parse(nextProps.deployed.values);
+      const defaultValuesObj = YAML.parse(this.props.deployed.values);
       const deployedValuesObj = YAML.parse(this.props.appCurrentValues || "");
       modifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
       this.setState({ modifications });
+      this.setState({ appValues: this.applyModifications(modifications, this.state.appValues) });
     }
 
-    if (
-      nextProps.selected.version !== this.props.selected.version &&
-      !this.state.valuesModified &&
-      modifications
-    ) {
+    if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
       // Apply modifications to the new selected version
-      this.setState({
-        appValues: this.applyModifications(modifications, nextProps.selected.values || ""),
-      });
+      const appValues = modifications
+        ? this.applyModifications(modifications, this.props.selected.values || "")
+        : this.props.selected.values || "";
+      this.setState({ appValues });
     }
-  }
+  };
 
   public render() {
     const { namespace, releaseName, error, selected } = this.props;
