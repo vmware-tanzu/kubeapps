@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a external database section 1`] = `
+<div
+  className="subsection margin-v-normal"
+>
+  <div
+    className="margin-v-normal"
+  >
+    Enable an external database
+    <br />
+    <span
+      className="description"
+    >
+      description of the param
+    </span>
+  </div>
+</div>
+`;

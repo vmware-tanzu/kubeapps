@@ -1,0 +1,118 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;
+
+exports[`renders the full DeploymentFormBody 1`] = `
+<div>
+  <ConfirmDialog
+    closeModal={[Function]}
+    confirmationButtonText="Restore"
+    confirmationText="Are you sure you want to restore the default chart values?"
+    loading={false}
+    modalIsOpen={false}
+    onConfirm={[Function]}
+  />
+  <div>
+    <label
+      htmlFor="chartVersion"
+    >
+      Version
+    </label>
+    <select
+      id="chartVersion"
+      onChange={[Function]}
+      required={true}
+      value="1.2.3"
+    >
+      <option
+        key="foo"
+        value="1.2.3"
+      >
+        1.2.3
+         
+      </option>
+    </select>
+  </div>
+  <div
+    className="margin-t-normal"
+  >
+    <Tabs
+      defaultFocus={false}
+      defaultIndex={null}
+      forceRenderTabPanel={false}
+      selectedIndex={null}
+    >
+      <TabList
+        className="react-tabs__tab-list"
+      >
+        <Tab
+          className="react-tabs__tab"
+          disabledClassName="react-tabs__tab--disabled"
+          focus={false}
+          id={null}
+          panelId={null}
+          selected={false}
+          selectedClassName="react-tabs__tab--selected"
+        >
+          Values (YAML)
+        </Tab>
+        <Tab
+          className="react-tabs__tab"
+          disabledClassName="react-tabs__tab--disabled"
+          focus={false}
+          id={null}
+          panelId={null}
+          selected={false}
+          selectedClassName="react-tabs__tab--selected"
+        >
+          Changes
+        </Tab>
+      </TabList>
+      <TabPanel
+        className="react-tabs__tab-panel"
+        forceRender={false}
+        selectedClassName="react-tabs__tab-panel--selected"
+      >
+        <AdvancedDeploymentForm
+          appValues="foo: bar"
+          handleValuesChange={[Function]}
+        />
+      </TabPanel>
+      <TabPanel
+        className="react-tabs__tab-panel"
+        forceRender={false}
+        selectedClassName="react-tabs__tab-panel--selected"
+      >
+        <Differential
+          emptyDiffText="No changes detected from chart defaults."
+          newValues="foo: bar"
+          oldValues=""
+          title="Difference from chart defaults"
+        />
+      </TabPanel>
+    </Tabs>
+  </div>
+  <div
+    className="margin-t-big"
+  >
+    <button
+      className="button button-primary"
+      type="submit"
+    >
+      Submit
+    </button>
+    <button
+      className="button"
+      onClick={[Function]}
+      type="button"
+    >
+      Restore Chart Defaults
+    </button>
+  </div>
+</div>
+`;

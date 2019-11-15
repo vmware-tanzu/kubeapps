@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    run: integration
+  name: integration
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: integration
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        run: integration
+    spec:
+      containers:
+      - args:
+        - tail
+        - -f
+        - /dev/null
+        image: kubeapps/integration-tests:latest
+        name: integration
+        resources: {}
+status: {}

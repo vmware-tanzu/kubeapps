@@ -14,7 +14,7 @@ The `tiller-proxy` component is a micro-service that creates a API endpoint for 
 ## Environment
 
 ```bash
-export GOPATH=~/gopath/
+export GOPATH=~/gopath
 export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```

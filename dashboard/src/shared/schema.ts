@@ -3,6 +3,7 @@
 // that are used in this package
 import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
+import { isEmpty, set } from "lodash";
 import * as YAML from "yaml";
 import { IBasicFormParam } from "./types";
 
@@ -11,14 +12,6 @@ import { IBasicFormParam } from "./types";
 const { nullOptions } = require("yaml/types");
 nullOptions.nullStr = "";
 
-// Form keys that require pre-definition. This list should be kept as small as possible
-export const EXTERNAL_DB = "externalDatabase";
-export const USE_SELF_HOSTED_DB = "useSelfHostedDatabase";
-export const DISK_SIZE = "diskSize";
-export const MEMORY_REQUEST = "memoryRequest";
-export const CPU_REQUEST = "cpuRequest";
-export const RESOURCES = "resources";
-
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
 // It uses the raw yaml to setup default values.
 // It returns a key:value map for easier handling.
@@ -26,69 +19,98 @@ export function retrieveBasicFormParams(
   defaultValues: string,
   schema?: jsonSchema.JSONSchema4,
   parentPath?: string,
-): { [key: string]: IBasicFormParam } {
-  let params = {};
+): IBasicFormParam[] {
+  let params: IBasicFormParam[] = [];
   if (schema && schema.properties) {
     const properties = schema.properties!;
     Object.keys(properties).map(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
-      const { type, title, description, form, minimum, maximum } = properties[propertyKey];
+      const { type, form } = properties[propertyKey];
       // If the property has the key "form", it's a basic parameter
       if (form) {
         // Use the default value either from the JSON schema or the default values
         const value = getValue(defaultValues, itemPath, properties[propertyKey].default);
         const param: IBasicFormParam = {
+          ...properties[propertyKey],
           path: itemPath,
-          type: String(type),
+          type,
           value,
-          title,
-          description,
-          minimum,
-          maximum,
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
               : undefined,
         };
-        params = {
-          ...params,
-          // The key of the param is the value of the form tag
-          [form]: param,
-        };
+        params = params.concat(param);
       } else {
         // If the property is an object, iterate recursively
         if (schema.properties![propertyKey].type === "object") {
-          params = {
-            ...params,
-            ...retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
-          };
+          params = params.concat(
+            retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
+          );
         }
       }
     });
   }
-  return orderParams(params);
+  return params;
 }
 
-// orderParams conveniently structure the parameters to satisfy a parent-children relationship even if
-// those parameters doesn't have that relation in the source
-function orderParams(params: {
-  [key: string]: IBasicFormParam;
-}): { [key: string]: IBasicFormParam } {
-  // Move useSelfHostedDatabase to externalDatabase since it enable/disable that section
-  if (params[EXTERNAL_DB] && params[EXTERNAL_DB].children && params[USE_SELF_HOSTED_DB]) {
-    params[EXTERNAL_DB].children![USE_SELF_HOSTED_DB] = params[USE_SELF_HOSTED_DB];
-    delete params[USE_SELF_HOSTED_DB];
+function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document) {
+  let currentPath: string[] = [];
+  let foundUndefined = false;
+  allElementsButTheLast.forEach(p => {
+    // Iterate over the path until finding an element that is not defined
+    if (!foundUndefined) {
+      const pathToEvaluate = currentPath.concat(p);
+      const elem = (doc as any).getIn(pathToEvaluate);
+      if (elem === undefined || elem === null) {
+        foundUndefined = true;
+      } else {
+        currentPath = pathToEvaluate;
+      }
+    }
+  });
+  return currentPath;
+}
+
+function parsePathAndValue(doc: YAML.ast.Document, path: string, value?: any) {
+  if (isEmpty(doc.contents)) {
+    // If the doc is empty we have an special case
+    return { value: set({}, path, value), splittedPath: [] };
   }
-  return params;
+  let splittedPath = path.split(".");
+  // If the path is not defined (the parent nodes are undefined)
+  // We need to change the path and the value to set to avoid accessing
+  // the undefined node. For example, if a.b is undefined:
+  // path: a.b.c, value: 1 ==> path: a.b, value: {c: 1}
+  // TODO(andresmgot): In the future, this may be implemented in the YAML library itself
+  // https://github.com/eemeli/yaml/issues/131
+  const allElementsButTheLast = splittedPath.slice(0, splittedPath.length - 1);
+  const parentNode = (doc as any).getIn(allElementsButTheLast);
+  if (parentNode === undefined) {
+    const definedPath = getDefinedPath(allElementsButTheLast, doc);
+    const remainingPath = splittedPath.slice(definedPath.length + 1);
+    value = set({}, remainingPath.join("."), value);
+    splittedPath = splittedPath.slice(0, definedPath.length + 1);
+  }
+  return { splittedPath, value };
 }
 
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
   const doc = YAML.parseDocument(values);
-  const splittedPath = path.split(".");
-  (doc as any).setIn(splittedPath, newValue);
+  const { splittedPath, value } = parsePathAndValue(doc, path, newValue);
+  (doc as any).setIn(splittedPath, value);
   return doc.toString();
+}
+
+export function deleteValue(values: string, path: string) {
+  const doc = YAML.parseDocument(values);
+  const { splittedPath } = parsePathAndValue(doc, path);
+  (doc as any).deleteIn(splittedPath);
+  // If the document is empty after the deletion instead of returning {}
+  // we return an empty line "\n"
+  return doc.contents && !isEmpty((doc.contents as any).items) ? doc.toString() : "\n";
 }
 
 // getValue returns the current value of an object based on YAML text and its path

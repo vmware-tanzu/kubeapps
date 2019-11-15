@@ -1,0 +1,43 @@
+# Tiller needs to be able to create apprepositories in the kubeapps namespace.
+kind: Template
+apiVersion: v1
+objects:
+- kind: Role
+  apiVersion: v1
+  metadata:
+    name: apprepositories-manager
+  rules:
+  - apiGroups:
+    - "kubeapps.com"
+    resources:
+    - apprepositories
+    - apprepositories/finalizers
+    verbs: ["*"]
+  - apiGroups:
+    - "rbac.authorization.k8s.io"
+    resources:
+    - roles
+    - rolebindings
+    verbs: ["*"]
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs: ["create"]
+- kind: RoleBinding
+  apiVersion: v1
+  metadata:
+    name: tiller-apprepositories
+  roleRef:
+    name: apprepositories-manager
+    namespace: ${KUBEAPPS_NAMESPACE}
+  subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: ${TILLER_NAMESPACE}
+
+parameters:
+- name: KUBEAPPS_NAMESPACE
+  required: true
+- name: TILLER_NAMESPACE
+  required: true

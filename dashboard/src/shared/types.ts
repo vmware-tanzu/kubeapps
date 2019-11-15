@@ -1,9 +1,11 @@
+import * as jsonSchema from "json-schema";
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IConfigState } from "../reducers/config";
 import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
+import { ResourceKind } from "./ResourceKinds";
 
 // Allow defining multiple error classes
 // tslint:disable:max-classes-per-file
@@ -81,6 +83,11 @@ export interface IChartState {
     values?: string;
     schema?: any;
   };
+  deployed: {
+    chartVersion?: IChartVersion;
+    values?: string;
+    schema?: jsonSchema.JSONSchema4;
+  };
   items: IChart[];
 }
 
@@ -141,7 +148,7 @@ export interface IIngressSpec {
 
 export interface IResource {
   apiVersion: string;
-  kind: string;
+  kind: ResourceKind;
   type: string;
   spec: any;
   status: any;
@@ -378,11 +385,23 @@ export interface IKubeState {
 
 export interface IBasicFormParam {
   path: string;
-  type: string;
+  type?: jsonSchema.JSONSchema4TypeName | jsonSchema.JSONSchema4TypeName[];
   value?: any;
   title?: string;
   minimum?: number;
   maximum?: number;
+  render?: string;
   description?: string;
-  children?: { [name: string]: IBasicFormParam };
+  hidden?:
+    | {
+        condition: any;
+        value: string;
+      }
+    | string;
+  children?: IBasicFormParam[];
+}
+export interface IBasicFormSliderParam extends IBasicFormParam {
+  sliderMin?: number;
+  sliderMax?: number;
+  sliderUnit?: string;
 }

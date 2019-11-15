@@ -1,15 +1,62 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`render when no version selected loading spinner matches the snapshot 1`] = `
+exports[`loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
   loaded={false}
   type={0}
 />
 `;
 
-exports[`render when versions but deploying loading spinner matches the snapshot 1`] = `
-<LoadingWrapper
-  loaded={false}
-  type={0}
-/>
+exports[`renders the full UpgradeForm 1`] = `
+<form
+  className="container padding-b-bigger"
+  onSubmit={[Function]}
+>
+  <div
+    className="row"
+  >
+    <div
+      className="col-12"
+    >
+      <h2>
+        my-release (my-repo/my-chart)
+      </h2>
+    </div>
+    <div
+      className="col-8"
+    >
+      <DeploymentFormBody
+        appValues="foo: bar"
+        chartID="my-repo/my-chart"
+        chartVersion="1.2.3"
+        deployedValues="foo: bar"
+        getChartVersion={[Function]}
+        goBack={[Function]}
+        namespace="default"
+        push={[Function]}
+        releaseVersion="1.0.0"
+        selected={
+          Object {
+            "version": Object {
+              "attributes": Object {
+                "version": "1.2.3",
+              },
+              "id": "foo",
+            },
+            "versions": Array [
+              Object {
+                "attributes": Object {
+                  "version": "1.2.3",
+                },
+                "id": "foo",
+              },
+            ],
+          }
+        }
+        setValues={[Function]}
+        setValuesModified={[Function]}
+      />
+    </div>
+  </div>
+</form>
 `;

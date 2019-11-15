@@ -1,0 +1,37 @@
+.react-tabs {
+  &__tab {
+    color: black;
+    &--selected {
+      color: #1598cb;
+    }
+  }
+}
+
+.editor {
+  z-index: 0;
+}
+
+.diff {
+  height: 500px;
+  overflow: auto;
+}
+
+.diff pre {
+  background-color: inherit;
+  padding: 0;
+  font: 12px / normal "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
+  line-height: 12px;
+}
+
+.diff table td {
+  padding: 0;
+}
+
+.diff table td[class*="linenumber"] {
+  position: inherit;
+}
+
+.diff table td div[class*="code-line"] {
+  padding: 0 0.3em;
+  min-width: 58em;
+}

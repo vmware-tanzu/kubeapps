@@ -19,9 +19,7 @@ import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewCo
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
-const privateRoutes: {
-  [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
-} = {
+const privateRoutes = {
   "/apps/ns/:namespace": AppListContainer,
   "/apps/ns/:namespace/:releaseName": AppViewContainer,
   "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNewContainer,
@@ -36,14 +34,12 @@ const privateRoutes: {
   "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": ServiceInstanceViewContainer,
   "/services/classes": ServiceClassListContainer,
   "/services/instances/ns/:namespace": ServiceInstanceListContainer,
-};
+} as const;
 
 // Public routes that don't require authentication
-const routes: {
-  [route: string]: React.ComponentType<RouteComponentProps<any>> | React.ComponentType<any>;
-} = {
+const routes = {
   "/login": LoginFormContainer,
-};
+} as const;
 
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   namespace: string;
@@ -55,16 +51,11 @@ class Routes extends React.Component<IRoutesProps> {
     return (
       <Switch>
         <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
-        {Object.keys(routes).map(route => (
-          <Route key={route} exact={true} path={route} component={routes[route]} />
+        {Object.entries(routes).map(([route, component]) => (
+          <Route key={route} exact={true} path={route} component={component} />
         ))}
-        {Object.keys(privateRoutes).map(route => (
-          <PrivateRouteContainer
-            key={route}
-            exact={true}
-            path={route}
-            component={privateRoutes[route]}
-          />
+        {Object.entries(privateRoutes).map(([route, component]) => (
+          <PrivateRouteContainer key={route} exact={true} path={route} component={component} />
         ))}
         {/* If the route doesn't match any expected path redirect to a 404 page  */}
         <Route component={NotFound} />

@@ -15,7 +15,7 @@ The `chartsvc` component is a micro-service that creates an API endpoint for acc
 ## Environment
 
 ```bash
-export GOPATH=~/gopath/
+export GOPATH=~/gopath
 export PATH=$GOPATH/bin:$PATH
 export MONOCULAR_DIR=$GOPATH
 ```

@@ -13,7 +13,7 @@ This guide explains how to build Kubeapps.
 ## Environment setup
 
 ```bash
-export GOPATH=~/gopath/
+export GOPATH=~/gopath
 export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```

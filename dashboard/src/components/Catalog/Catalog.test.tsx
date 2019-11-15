@@ -13,6 +13,7 @@ import Catalog from "./Catalog";
 const defaultChartState = {
   isFetching: false,
   selected: {} as IChartState["selected"],
+  deployed: {} as IChartState["deployed"],
   items: [],
   updatesInfo: {},
 } as IChartState;

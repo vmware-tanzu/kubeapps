@@ -17,7 +17,7 @@ The dashboard is the main UI component of the Kubeapps project. Written in Javas
 ## Environment
 
 ```bash
-export GOPATH=~/gopath/
+export GOPATH=~/gopath
 export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```
@@ -61,11 +61,7 @@ Finally, launch the dashboard within the telepresence shell
 yarn run start
 ```
 
-You can now access the local development server simply by accessing the dashboard as you usually would:
-
-```bash
-kubeapps dashboard --port=5000
-```
+You can now access the local development server simply by accessing the dashboard as you usually would (e.g. doing a port-forward or accesing the Ingress URL).
 
 #### Troubleshooting
 

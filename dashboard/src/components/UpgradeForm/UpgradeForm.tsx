@@ -1,167 +1,137 @@
 import { RouterAction } from "connected-react-router";
+import * as jsonpatch from "fast-json-patch";
+import { JSONSchema4 } from "json-schema";
 import * as React from "react";
-import AceEditor from "react-ace";
+import * as YAML from "yaml";
 
-import { IChartState, IChartVersion, IRBACRole } from "../../shared/types";
+import { deleteValue, setValue } from "../../shared/schema";
+import { IChartState, IChartVersion } from "../../shared/types";
+import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
+import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
-import "brace/mode/yaml";
-import "brace/theme/xcode";
-import { ErrorSelector } from "../ErrorAlert";
-
-interface IDeploymentFormProps {
+export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
   chartName: string;
-  kubeappsNamespace: string;
   namespace: string;
   releaseName: string;
   repo: string;
   error: Error | undefined;
   selected: IChartState["selected"];
+  deployed: IChartState["deployed"];
   upgradeApp: (
     version: IChartVersion,
     releaseName: string,
     namespace: string,
     values?: string,
+    schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getChartVersion: (id: string, chartVersion: string) => void;
-  clearRepo: () => void;
 }
 
-interface IDeploymentFormState {
-  appValues?: string;
-  isDeploying: boolean;
+interface IUpgradeFormState {
+  appValues: string;
   valuesModified: boolean;
-  version: string;
+  isDeploying: boolean;
+  modifications?: jsonpatch.Operation[];
 }
 
-class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormState> {
-  public state: IDeploymentFormState = {
-    appValues: this.props.appCurrentValues,
+class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> {
+  public state: IUpgradeFormState = {
+    appValues: this.props.appCurrentValues || "",
     isDeploying: false,
     valuesModified: false,
-    version: this.props.appCurrentVersion,
   };
 
   public componentDidMount() {
-    const { appCurrentVersion, chartName, fetchChartVersions, getChartVersion, repo } = this.props;
-    const chartID = `${repo}/${chartName}`;
-    fetchChartVersions(chartID);
-    getChartVersion(chartID, appCurrentVersion);
+    const chartID = `${this.props.repo}/${this.props.chartName}`;
+    this.props.fetchChartVersions(chartID);
   }
 
-  public componentDidUpdate(prevProps: IDeploymentFormProps) {
-    const { selected, appCurrentVersion, appCurrentValues } = this.props;
-    if (
-      selected.version &&
-      prevProps.selected.version &&
-      selected.version !== prevProps.selected.version
-    ) {
-      // Version has changed
-      if (selected.version.attributes.version === appCurrentVersion) {
-        // The user has selected back the original version, use the current values
-        if (!this.state.valuesModified) {
-          // Only update the default values if the user has not modify them
-          this.setState({ appValues: appCurrentValues });
-        }
-      }
+  public componentDidUpdate = (prevProps: IUpgradeFormProps) => {
+    let modifications = this.state.modifications;
+    if (this.props.deployed.values && !modifications) {
+      // Calculate modifications from the default values
+      const defaultValuesObj = YAML.parse(this.props.deployed.values);
+      const deployedValuesObj = YAML.parse(this.props.appCurrentValues || "");
+      modifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
+      this.setState({ modifications });
+      this.setState({ appValues: this.applyModifications(modifications, this.state.appValues) });
     }
-    if (selected.values && this.state.appValues && selected.values !== this.state.appValues) {
-      // Values has been modified either because the user has edit them
-      // or because the selected version is now different
-      if (!this.state.valuesModified) {
-        // Only update the default values if the user has not modify them
-        if (this.state.version !== appCurrentVersion) {
-          // Only use the default values if the version is not the original one
-          this.setState({ appValues: selected.values });
-        }
-      }
+
+    if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
+      // Apply modifications to the new selected version
+      const appValues = modifications
+        ? this.applyModifications(modifications, this.props.selected.values || "")
+        : this.props.selected.values || "";
+      this.setState({ appValues });
     }
-  }
+  };
 
   public render() {
-    const { selected, namespace, releaseName, goBack } = this.props;
-    const { version, versions } = selected;
-    const { appValues } = this.state;
-    if (this.props.error) {
+    const { namespace, releaseName, error, selected } = this.props;
+    if (error) {
       return (
-        <ErrorSelector
-          error={this.props.error}
-          namespace={namespace}
-          defaultRequiredRBACRoles={{ update: this.requiredRBACRoles() }}
-          action="update"
-          resource={`Application ${releaseName}`}
-        />
+        <ErrorSelector error={error} namespace={namespace} action="update" resource={releaseName} />
       );
     }
-    if (!version || !versions || !versions.length || this.state.isDeploying) {
+    if (selected.versions.length === 0) {
       return <LoadingWrapper />;
     }
+    const chartID = `${this.props.repo}/${this.props.chartName}`;
     return (
-      <div>
-        <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
-          <div className="row">
-            <div className="col-12">
-              <h2>
-                {this.props.releaseName} ({this.props.chartName})
-              </h2>
-            </div>
-            <div className="col-8">
-              <div>
-                <label htmlFor="chartVersion">Version</label>
-                <select
-                  id="chartVersion"
-                  onChange={this.handleChartVersionChange}
-                  value={version.attributes.version}
-                  required={true}
-                >
-                  {versions.map(v => (
-                    <option key={v.id} value={v.attributes.version}>
-                      {v.attributes.version}{" "}
-                      {v.attributes.version === this.props.appCurrentVersion ? "(current)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div style={{ marginBottom: "1em" }}>
-                <label htmlFor="values">Values (YAML)</label>
-                <AceEditor
-                  mode="yaml"
-                  theme="xcode"
-                  name="values"
-                  width="100%"
-                  onChange={this.handleValuesChange}
-                  setOptions={{ showPrintMargin: false }}
-                  editorProps={{ $blockScrolling: Infinity }}
-                  value={appValues}
-                />
-              </div>
-              <div>
-                <button className="button button-primary" type="submit">
-                  Submit
-                </button>
-                <button className="button" type="button" onClick={goBack}>
-                  Back
-                </button>
-              </div>
-            </div>
+      <form className="container padding-b-bigger" onSubmit={this.handleDeploy}>
+        <div className="row">
+          <div className="col-12">
+            <h2>{`${this.props.releaseName} (${chartID})`}</h2>
           </div>
-        </form>
-      </div>
+          <div className="col-8">
+            <DeploymentFormBody
+              chartID={chartID}
+              chartVersion={this.props.selected.versions[0].attributes.version}
+              deployedValues={this.props.appCurrentValues || ""}
+              namespace={this.props.namespace}
+              releaseVersion={this.props.appCurrentVersion}
+              selected={this.props.selected}
+              push={this.props.push}
+              goBack={this.props.goBack}
+              getChartVersion={this.props.getChartVersion}
+              setValues={this.handleValuesChange}
+              appValues={this.state.appValues}
+              setValuesModified={this.setValuesModified}
+            />
+          </div>
+        </div>
+      </form>
     );
   }
 
+  public setValuesModified = () => {
+    this.setState({ valuesModified: true });
+  };
+
+  public handleValuesChange = (value: string) => {
+    this.setState({ appValues: value });
+  };
+
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { releaseName, namespace, selected, upgradeApp, push } = this.props;
-    this.setState({ isDeploying: true });
+    const { selected, push, upgradeApp, releaseName, namespace } = this.props;
     const { appValues } = this.state;
+
+    this.setState({ isDeploying: true });
     if (selected.version) {
-      const deployed = await upgradeApp(selected.version, releaseName, namespace, appValues);
+      const deployed = await upgradeApp(
+        selected.version,
+        releaseName,
+        namespace,
+        appValues,
+        selected.schema,
+      );
       this.setState({ isDeploying: false });
       if (deployed) {
         push(`/apps/ns/${namespace}/${releaseName}`);
@@ -169,26 +139,23 @@ class UpgradeForm extends React.Component<IDeploymentFormProps, IDeploymentFormS
     }
   };
 
-  public handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
-    const { repo, chartName, getChartVersion } = this.props;
-    const chartID = `${repo}/${chartName}`;
-    this.setState({ version: e.currentTarget.value });
-    getChartVersion(chartID, e.currentTarget.value);
-  };
-
-  public handleValuesChange = (value: string) => {
-    this.setState({ appValues: value, valuesModified: true });
-  };
-
-  private requiredRBACRoles(): IRBACRole[] {
-    return [
-      {
-        apiGroup: "kubeapps.com",
-        namespace: this.props.kubeappsNamespace,
-        resource: "apprepositories",
-        verbs: ["get"],
-      },
-    ];
+  private applyModifications(modifications: jsonpatch.Operation[], appValues: string) {
+    // And we add any possible change made to the original version
+    if (modifications.length) {
+      modifications.forEach(modification => {
+        // Transform the JSON Path to the format expected by setValue
+        // /a/b/c => a.b.c
+        const path = modification.path.replace(/^\//, "").replace(/\//g, ".");
+        if (modification.op === "remove") {
+          appValues = deleteValue(appValues, path);
+        } else {
+          // Transform the modification as a ReplaceOperation to read its value
+          const value = (modification as jsonpatch.ReplaceOperation<any>).value;
+          appValues = setValue(appValues, path, value);
+        }
+      });
+    }
+    return appValues;
   }
 }
 

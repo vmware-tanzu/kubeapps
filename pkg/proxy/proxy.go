@@ -36,7 +36,7 @@ var (
 
 func init() {
 	appMutex = make(map[string]*sync.Mutex)
-	// List of posible statuses obtained from:
+	// List of possible statuses obtained from:
 	// https://github.com/helm/helm/blob/master/cmd/helm/list.go#L214
 	allReleaseStatuses = []release.Status_Code{
 		release.Status_UNKNOWN,
@@ -85,8 +85,8 @@ func (p *Proxy) getRelease(name, namespace string) (*release.Release, error) {
 	}
 
 	// We check that the release found is from the provided namespace.
-	// If `namespace` is an empty string we do not do that check
-	// This check check is to prevent users of for example updating releases that might be
+	// If `namespace` is an empty string we do not perform that check.
+	// This check is to prevent users from for example updating releases that might be
 	// in namespaces that they do not have access to.
 	if namespace != "" && release.Release.Namespace != namespace {
 		return nil, fmt.Errorf("Release %q not found in namespace %q", name, namespace)
@@ -95,7 +95,7 @@ func (p *Proxy) getRelease(name, namespace string) (*release.Release, error) {
 	return release.Release, nil
 }
 
-// GetReleaseStatus prints the status of the given release if exists
+// GetReleaseStatus returns the status of the given release if it exists
 func (p *Proxy) GetReleaseStatus(relName string) (release.Status_Code, error) {
 	status, err := p.helmClient.ReleaseStatus(relName)
 	if err == nil {
@@ -137,7 +137,7 @@ func (p *Proxy) ResolveManifestFromRelease(releaseName string, revision int32) (
 	return strings.TrimLeft(res.Release.Manifest, "\n"), nil
 }
 
-// Apply the same filtering than helm CLI
+// Apply the same filtering as helm CLI
 // Ref: https://github.com/helm/helm/blob/d3b69c1fc1ac62f1cc40f93fcd0cba275c0596de/cmd/helm/list.go#L173
 func filterList(rels []*release.Release) []*release.Release {
 	idx := map[string]int32{}
@@ -162,7 +162,7 @@ func filterList(rels []*release.Release) []*release.Release {
 	return uniq
 }
 
-// getStatuses follows the same approach than helm CLI:
+// getStatuses follows the same approach as helm CLI:
 // https://github.com/helm/helm/blob/8761bb009f4eb4bcbbe7d20e434047e22b2046ad/cmd/helm/list.go#L212
 func getStatuses(statusQuery string) []release.Status_Code {
 	if statusQuery == "" {
@@ -197,7 +197,7 @@ func getStatuses(statusQuery string) []release.Status_Code {
 	}
 }
 
-// ListReleases list releases in a specific namespace if given
+// ListReleases lists releases in a specific namespace if given
 func (p *Proxy) ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error) {
 	list, err := p.helmClient.ListReleases(
 		helm.ReleaseListLimit(releaseListLimit),
