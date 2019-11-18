@@ -21,7 +21,7 @@ interface IHeaderProps {
   pathname: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
-  hideLogoutLink: boolean;
+  logoutUrl: string;
 }
 
 interface IHeaderState {
@@ -70,12 +70,24 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       namespace,
       defaultNamespace,
       authenticated: showNav,
-      hideLogoutLink,
+      logoutUrl,
     } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
     }`;
+    const logoutButton = (
+      <>
+        <LogOut size={16} className="icon margin-r-tiny" /> Logout
+      </>
+    );
+    const logoutLink = logoutUrl ? (
+      <a href={logoutUrl}> {logoutButton} </a>
+    ) : (
+      <NavLink to="#" onClick={this.handleLogout}>
+        {logoutButton}
+      </NavLink>
+    );
 
     return (
       <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
@@ -134,13 +146,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                     </ul>
                   </li>
-                  {!hideLogoutLink && (
-                    <li>
-                      <NavLink to="#" onClick={this.handleLogout}>
-                        <LogOut size={16} className="icon margin-r-tiny" /> Logout
-                      </NavLink>
-                    </li>
-                  )}
+                  <li>{logoutLink}</li>
                 </ul>
               </div>
             )}

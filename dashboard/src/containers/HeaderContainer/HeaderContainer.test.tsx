@@ -25,13 +25,22 @@ const makeStore = (authenticated: boolean, oidcAuthenticated: boolean) => {
 };
 
 describe("LoginFormContainer props", () => {
-  it("maps authentication redux states to props", () => {
+  it("passes logoutUrl when authenticated with oidc", () => {
     const store = makeStore(true, true);
     const wrapper = shallow(<Header store={store} />);
     const form = wrapper.find("Header");
     expect(form).toHaveProp({
       authenticated: true,
-      hideLogoutLink: true,
+      logoutUrl: "/oauth2/sign_out",
+    });
+  });
+  it("does not pass logoutUrl when authenticated without oidc", () => {
+    const store = makeStore(true, false);
+    const wrapper = shallow(<Header store={store} />);
+    const form = wrapper.find("Header");
+    expect(form).toHaveProp({
+      authenticated: true,
+      logoutUrl: "",
     });
   });
 });
