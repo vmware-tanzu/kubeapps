@@ -20,7 +20,7 @@ class RollbackDialog extends React.Component<IRollbackDialogProps, IRollbackDial
   };
 
   public render() {
-    const options = [];
+    const options: number[] = [];
     // Use as options the number of versions without the latest
     for (let i = this.props.currentRevision - 1; i > 0; i--) {
       options.push(i);

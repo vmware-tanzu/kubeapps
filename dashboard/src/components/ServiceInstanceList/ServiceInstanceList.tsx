@@ -68,7 +68,7 @@ class ServiceInstanceList extends React.PureComponent<
     this.setState({ filter: this.props.filter });
   }
 
-  public componentWillReceiveProps(nextProps: IServiceInstanceListProps) {
+  public UNSAFE_componentWillReceiveProps(nextProps: IServiceInstanceListProps) {
     const { error, filter, getInstances, isServiceCatalogInstalled, namespace } = this.props;
     // refetch if new namespace or error removed due to location change
     if (

@@ -34,7 +34,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     fetchCharts(repo);
   }
 
-  public componentWillReceiveProps(nextProps: ICatalogProps) {
+  public UNSAFE_componentWillReceiveProps(nextProps: ICatalogProps) {
     if (nextProps.filter !== this.state.filter) {
       this.setState({ filter: nextProps.filter });
     }

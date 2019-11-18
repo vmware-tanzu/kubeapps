@@ -15,12 +15,12 @@ interface IChartReadmeProps {
 }
 
 class ChartReadme extends React.Component<IChartReadmeProps> {
-  public componentWillMount() {
+  public UNSAFE_componentWillMount() {
     const { getChartReadme, version } = this.props;
     getChartReadme(version);
   }
 
-  public componentWillReceiveProps(nextProps: IChartReadmeProps) {
+  public UNSAFE_componentWillReceiveProps(nextProps: IChartReadmeProps) {
     const { getChartReadme, version } = nextProps;
     if (version !== this.props.version) {
       getChartReadme(version);

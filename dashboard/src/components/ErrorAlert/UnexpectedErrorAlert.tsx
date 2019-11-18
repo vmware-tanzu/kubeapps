@@ -38,7 +38,7 @@ class UnexpectedErrorPage extends React.Component<IUnexpectedErrorPage> {
     showGenericMessage: false,
   };
   public render() {
-    let customMessage = null;
+    let customMessage: JSX.Element | null = null;
     if (this.props.text) {
       if (this.props.raw) {
         customMessage = (

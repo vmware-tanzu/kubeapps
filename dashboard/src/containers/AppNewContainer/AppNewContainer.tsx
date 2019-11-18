@@ -48,7 +48,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(DeploymentForm);
+export default connect(mapStateToProps, mapDispatchToProps)(DeploymentForm);

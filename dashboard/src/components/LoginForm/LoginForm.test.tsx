@@ -2,7 +2,7 @@ import { shallow } from "enzyme";
 import { Location } from "history";
 import context from "jest-plugin-context";
 import * as React from "react";
-import { Redirect } from "react-router-dom";
+import { Redirect } from "react-router";
 import itBehavesLike from "../../shared/specs";
 
 import LoginForm from "./LoginForm";
@@ -65,8 +65,7 @@ describe("redirect if authenticated", () => {
   it("redirects to / if no current location", () => {
     const wrapper = shallow(<LoginForm {...defaultProps} authenticated={true} />);
     const redirect = wrapper.find(Redirect);
-    expect(redirect.exists()).toBe(true);
-    expect(redirect.props()).toEqual({ push: false, to: { pathname: "/" } });
+    expect(redirect.props()).toEqual({ to: { pathname: "/" } });
   });
 
   it("redirects to previous location", () => {
@@ -76,8 +75,7 @@ describe("redirect if authenticated", () => {
       <LoginForm {...defaultProps} authenticated={true} location={location} />,
     );
     const redirect = wrapper.find(Redirect);
-    expect(redirect.exists()).toBe(true);
-    expect(redirect.props()).toEqual({ push: false, to: "/test" });
+    expect(redirect.props()).toEqual({ to: "/test" });
   });
 });
 

@@ -28,7 +28,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(RollbackButton);
+export default connect(mapStateToProps, mapDispatchToProps)(RollbackButton);

@@ -57,7 +57,7 @@ const catalogReducer = (
   action: ServiceCatalogAction | LocationChangeAction | NamespaceAction,
 ): IServiceCatalogState => {
   const { catalog } = actions;
-  let list = [];
+  let list: any = [];
   switch (action.type) {
     case getType(catalog.installed):
       return { ...state, isChecking: false, isServiceCatalogInstalled: true };

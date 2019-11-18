@@ -30,7 +30,4 @@ function mapDispatchToProps(
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(ResourceTableItem);
+export default connect(mapStateToProps, mapDispatchToProps)(ResourceTableItem);

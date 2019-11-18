@@ -57,7 +57,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
     this.props.fetchRepos();
   }
 
-  public componentWillReceiveProps(nextProps: IAppRepoListProps) {
+  public UNSAFE_componentWillReceiveProps(nextProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,

@@ -52,7 +52,8 @@ class DeploymentFormBody extends React.Component<
     getChartVersion(chartID, chartVersion);
   }
 
-  public componentWillReceiveProps = (nextProps: IDeploymentFormBodyProps) => {
+  // tslint:disable-next-line:variable-name
+  public UNSAFE_componentWillReceiveProps = (nextProps: IDeploymentFormBodyProps) => {
     const { chartID, chartVersion, getChartVersion } = this.props;
 
     if (chartVersion !== nextProps.chartVersion) {
@@ -142,9 +143,7 @@ class DeploymentFormBody extends React.Component<
       getChartVersion(chartID, e.currentTarget.value);
     } else {
       this.props.push(
-        `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${
-          e.currentTarget.value
-        }`,
+        `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
       );
     }
   };
