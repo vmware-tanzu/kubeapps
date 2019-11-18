@@ -12,9 +12,8 @@ exports[`should render an item 1`] = `
   key="[object Object]/foo"
   link="/charts/foo"
   tag1Content={
-    <Link
+    <Unknown
       className="ListItem__content__info_tag_link"
-      replace={false}
       to="/catalog/undefined"
     />
   }

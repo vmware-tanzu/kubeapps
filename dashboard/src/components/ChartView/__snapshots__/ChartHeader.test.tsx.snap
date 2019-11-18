@@ -29,7 +29,6 @@ exports[`renders a header for the chart 1`] = `
              - 
           </span>
           <Link
-            replace={false}
             to="/catalog/testrepo"
           >
             testrepo

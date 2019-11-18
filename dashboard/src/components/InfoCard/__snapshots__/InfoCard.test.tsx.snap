@@ -7,7 +7,6 @@ exports[`should render a Card 1`] = `
 >
   <Link
     className="ListItem__header"
-    replace={false}
     title="foo"
     to="/a/link/somewhere"
   >
@@ -20,7 +19,6 @@ exports[`should render a Card 1`] = `
       className="ListItem__content"
     >
       <Link
-        replace={false}
         title="foo"
         to="/a/link/somewhere"
       >

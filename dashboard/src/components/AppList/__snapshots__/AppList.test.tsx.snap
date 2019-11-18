@@ -40,7 +40,6 @@ exports[`when apps available matches the snapshot 1`] = `
       className="col-3 text-r align-center"
     >
       <Link
-        replace={false}
         to="/catalog"
       >
         <button
@@ -190,7 +189,6 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
       className="col-3 text-r align-center"
     >
       <Link
-        replace={false}
         to="/catalog"
       >
         <button
@@ -262,7 +260,6 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
       className="col-3 text-r align-center"
     >
       <Link
-        replace={false}
         to="/catalog"
       >
         <button
@@ -324,7 +321,6 @@ exports[`while fetching apps matches the snapshot 1`] = `
       className="col-3 text-r align-center"
     >
       <Link
-        replace={false}
         to="/catalog"
       >
         <button

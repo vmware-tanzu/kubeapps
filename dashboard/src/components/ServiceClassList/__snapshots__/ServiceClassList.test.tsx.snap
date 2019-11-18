@@ -73,7 +73,6 @@ exports[`when there are classes available should show a Card item per class 1`] 
           >
             <Link
               className="button button-accent"
-              replace={false}
               to="/services/brokers/gcp/classes/bar"
             >
               Select a plan
@@ -99,7 +98,6 @@ exports[`when there are classes available should show a Card item per class 1`] 
           >
             <Link
               className="button button-accent"
-              replace={false}
               to="/services/brokers/azure/classes/foo"
             >
               Select a plan
