@@ -11,6 +11,9 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
   name: oidc:kubeapps-operator@example.com
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kubeapps-operator-ldap@example.org
 # kubeapps-user has access only to the kubeapps-user-namespace namespace
 ---
 kind: Namespace
@@ -31,4 +34,7 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
   name: oidc:kubeapps-user@example.com
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kubeapps-user-ldap@example.org
 
