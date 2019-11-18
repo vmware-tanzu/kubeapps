@@ -31,7 +31,9 @@ export function authenticate(
   return async dispatch => {
     dispatch(authenticating());
     try {
-      await Auth.validateToken(token);
+      if (!oidc) {
+        await Auth.validateToken(token);
+      }
       Auth.setAuthToken(token, oidc);
       dispatch(setAuthenticated(true, oidc, Auth.defaultNamespaceFromToken(token)));
       if (oidc) {
@@ -65,17 +67,16 @@ export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, A
   };
 }
 
-export function tryToAuthenticateWithOIDC(): ThunkAction<
+export function checkCookieAuthentication(): ThunkAction<
   Promise<void>,
   IStoreState,
   null,
   AuthAction
 > {
   return async dispatch => {
-    dispatch(authenticating());
-    const token = await Auth.fetchOIDCToken();
-    if (token) {
-      dispatch(authenticate(token, true));
+    const isAuthed = await Auth.isAuthenticatedWithCookie();
+    if (isAuthed) {
+      dispatch(authenticate("", true));
     } else {
       dispatch(setAuthenticated(false, false, ""));
     }

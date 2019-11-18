@@ -19,7 +19,7 @@ function mapStateToProps({
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
     authenticate: (token: string) => dispatch(actions.auth.authenticate(token, false)),
-    tryToAuthenticateWithOIDC: () => dispatch(actions.auth.tryToAuthenticateWithOIDC()),
+    checkCookieAuthentication: () => dispatch(actions.auth.checkCookieAuthentication()),
   };
 }
 
