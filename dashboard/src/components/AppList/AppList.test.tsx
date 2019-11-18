@@ -22,6 +22,23 @@ const defaultProps: any = {
   fetchAppsWithUpdateInfo: jest.fn(),
 };
 
+context("when changing props", () => {
+  it("should fetch apps in the new namespace", () => {
+    const fetchAppsWithUpdateInfo = jest.fn();
+    const wrapper = shallow(
+      <AppList {...defaultProps} fetchAppsWithUpdateInfo={fetchAppsWithUpdateInfo} />,
+    );
+    wrapper.setProps({ namespace: "foo" });
+    expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("foo", undefined);
+  });
+
+  it("should update the filter", () => {
+    const wrapper = shallow(<AppList {...defaultProps} />);
+    wrapper.setProps({ filter: "foo" });
+    expect(wrapper.state("filter")).toEqual("foo");
+  });
+});
+
 context("while fetching apps", () => {
   props = { ...defaultProps, apps: { isFetching: true } };
 
