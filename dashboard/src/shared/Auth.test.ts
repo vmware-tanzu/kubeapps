@@ -61,23 +61,35 @@ describe("Auth", () => {
 
   describe("isAuthenticatedWithCookie", () => {
     it("returns true if request to API root succeeds", async () => {
-      Axios.head = jest.fn(path => {
+      Axios.get = jest.fn(path => {
         return { headers: { status: 200 } };
       });
       const isAuthed = await Auth.isAuthenticatedWithCookie();
 
-      expect(Axios.head).toBeCalledWith(APIBase + "/");
+      expect(Axios.get).toBeCalledWith(APIBase + "/");
       expect(isAuthed).toBe(true);
     });
-    it("should return true if the request to api root results in a 403", async () => {
-      Axios.head = jest.fn(() => {
+    it("returns false if the request to api root results in a 403 for an anonymous request", async () => {
+      Axios.get = jest.fn(() => {
+        return Promise.reject({
+          response: {
+            status: 403,
+            data: { message: "Something with system:anonymous in there" },
+          },
+        });
+      });
+      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      expect(isAuthed).toBe(false);
+    });
+    it("returns true if the request to api root results in a 403 (but not anonymous)", async () => {
+      Axios.get = jest.fn(() => {
         return Promise.reject({ response: { status: 403 } });
       });
       const isAuthed = await Auth.isAuthenticatedWithCookie();
       expect(isAuthed).toBe(true);
     });
-    it("should return fals if the request results in a 401", async () => {
-      Axios.head = jest.fn(() => {
+    it("should return false if the request results in a 401", async () => {
+      Axios.get = jest.fn(() => {
         return Promise.reject({ response: { status: 401 } });
       });
       const isAuthed = await Auth.isAuthenticatedWithCookie();

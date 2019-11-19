@@ -69,13 +69,20 @@ export class Auth {
   }
 
   // isAuthenticatedWithCookie() does a HEAD request (without any token obviously)
-  // to determine if the request is authenticated (ie. not a 401)
+  // to determine if the request is authenticated (ie. not a 401). Unfortunately
+  // Kubernetes defaulting to allow anonymous requests means that this will be a 403
+  // even if there are no credentials, so we additionally check the message and assume
+  // we are authenticated with a cookie if a 403 is not for an anon user.
   public static async isAuthenticatedWithCookie(): Promise<boolean> {
     try {
-      await Axios.head(APIBase + "/");
+      await Axios.get(APIBase + "/");
     } catch (e) {
       const response = e.response as AxiosResponse;
-      return response.status === 403;
+      const isAnon =
+        response.data &&
+        response.data.message &&
+        response.data.message.includes("system:anonymous");
+      return response.status === 403 && !isAnon;
     }
     return true;
   }
