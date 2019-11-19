@@ -58,8 +58,8 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     };
   }
 
-  public UNSAFE_componentWillReceiveProps(newProps: IHeaderProps) {
-    if (newProps.pathname !== this.props.pathname) {
+  public componentDidUpdate(prevProps: IHeaderProps) {
+    if (prevProps.pathname !== this.props.pathname) {
       this.setState({
         configOpen: false,
         mobileOpen: false,

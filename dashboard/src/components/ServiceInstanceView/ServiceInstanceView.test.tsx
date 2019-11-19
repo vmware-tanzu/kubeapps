@@ -45,6 +45,23 @@ context("while fetching components", () => {
   });
 });
 
+context("when changing props", () => {
+  it("should fetch services in the new namespace", () => {
+    const getInstances = jest.fn();
+    const getBindings = jest.fn();
+    const wrapper = shallow(
+      <ServiceInstanceView
+        {...defaultProps}
+        getInstances={getInstances}
+        getBindings={getBindings}
+      />,
+    );
+    wrapper.setProps({ namespace: "foo" });
+    expect(getInstances).toHaveBeenCalledWith("foo");
+    expect(getBindings).toHaveBeenCalledWith("foo");
+  });
+});
+
 context("when all the components are loaded", () => {
   it("shows an error if the requested instance doesn't exist", () => {
     const wrapper = shallow(

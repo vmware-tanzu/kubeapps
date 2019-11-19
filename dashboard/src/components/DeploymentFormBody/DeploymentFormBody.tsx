@@ -52,25 +52,18 @@ class DeploymentFormBody extends React.Component<
     getChartVersion(chartID, chartVersion);
   }
 
-  // tslint:disable-next-line:variable-name
-  public UNSAFE_componentWillReceiveProps = (nextProps: IDeploymentFormBodyProps) => {
-    const { chartID, chartVersion, getChartVersion } = this.props;
+  public componentDidUpdate = (prevProps: IDeploymentFormBodyProps) => {
+    const { chartID, chartVersion, getChartVersion, selected, appValues } = this.props;
 
-    if (chartVersion !== nextProps.chartVersion) {
+    if (chartVersion !== prevProps.chartVersion) {
       // New version detected
-      getChartVersion(chartID, nextProps.chartVersion);
+      getChartVersion(chartID, chartVersion);
       return;
     }
 
-    if (
-      nextProps.selected.schema !== this.props.selected.schema ||
-      nextProps.appValues !== this.props.appValues
-    ) {
+    if (prevProps.selected.schema !== selected.schema || prevProps.appValues !== appValues) {
       this.setState({
-        basicFormParameters: retrieveBasicFormParams(
-          nextProps.appValues,
-          nextProps.selected.schema,
-        ),
+        basicFormParameters: retrieveBasicFormParams(appValues, selected.schema),
       });
     }
   };
