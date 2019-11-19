@@ -62,7 +62,7 @@ describe("Auth", () => {
   describe("isAuthenticatedWithCookie", () => {
     it("returns true if request to API root succeeds", async () => {
       Axios.get = jest.fn(path => {
-        return { headers: { status: 200 } };
+        return Promise.resolve({ headers: { status: 200 } });
       });
       const isAuthed = await Auth.isAuthenticatedWithCookie();
 
