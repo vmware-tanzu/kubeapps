@@ -93,17 +93,14 @@ export class Auth {
       // A non json 403 error response means we did not get through to the API server but
       // instead were rejected by the auth proxy (ie. no http-only cookie).
       // TODO(mnelson): Check why doesn't the auth proxy return a 401 for a request without auth?
-      if (response.headers && response.headers["content-type"] !== "application/json") {
+      if (!response.data || !response.data.message) {
         return false;
       }
       // Finally, the k8s api server nowadays defaults to allowing anonymous
       // requests, so that rather than returning a 401, a 403 is returned if
       // RBAC does not allow the anonymous user access. An http-only cookie
       // will not result in an anonymous request, so...
-      const isAnon =
-        response.data &&
-        response.data.message &&
-        response.data.message.includes("system:anonymous");
+      const isAnon = response.data.message.includes("system:anonymous");
       return !isAnon;
     }
     return true;

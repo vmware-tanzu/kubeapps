@@ -81,12 +81,11 @@ describe("Auth", () => {
       const isAuthed = await Auth.isAuthenticatedWithCookie();
       expect(isAuthed).toBe(false);
     });
-    it("returns false if the request to api root results in a text/html 403", async () => {
+    it("returns false if the request to api root results in a non-json response (ie. without data.message)", async () => {
       Axios.get = jest.fn(() => {
         return Promise.reject({
           response: {
             status: 403,
-            headers: { "content-type": "text/html" },
           },
         });
       });
@@ -95,7 +94,12 @@ describe("Auth", () => {
     });
     it("returns true if the request to api root results in a 403 (but not anonymous)", async () => {
       Axios.get = jest.fn(() => {
-        return Promise.reject({ response: { status: 403 } });
+        return Promise.reject({
+          response: {
+            status: 403,
+            data: { message: "some message for other-user" },
+          },
+        });
       });
       const isAuthed = await Auth.isAuthenticatedWithCookie();
       expect(isAuthed).toBe(true);
