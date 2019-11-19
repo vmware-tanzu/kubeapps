@@ -29,6 +29,9 @@ beforeEach(() => {
     auth: {
       state,
     },
+    config: {
+      logoutURI: "/log/out",
+    },
   });
 });
 
@@ -120,24 +123,20 @@ describe("OIDC authentication", () => {
   });
 
   it("expires the session and logs out ", () => {
-    // TODO(mnelson): this is not currently logging out.
     Auth.usingOIDCToken = jest.fn(() => true);
+    localStorage.removeItem = jest.fn();
+    document.location.assign = jest.fn();
     const expectedActions = [
       {
         payload: { sessionExpired: true },
         type: getType(actions.auth.setSessionExpired),
       },
-      {
-        payload: { authenticated: false, oidc: false, defaultNamespace: "" },
-        type: getType(actions.auth.setAuthenticated),
-      },
-      {
-        type: getType(actions.namespace.clearNamespaces),
-      },
     ];
 
     return store.dispatch(actions.auth.expireSession()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
+      expect(localStorage.removeItem).toBeCalled();
+      expect(document.location.assign).toBeCalledWith("/log/out");
     });
   });
 });

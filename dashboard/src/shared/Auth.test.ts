@@ -135,4 +135,24 @@ describe("Auth", () => {
       expect(defaultNamespace).toEqual("default");
     });
   });
+
+  describe("unsetAuthCookie", () => {
+    let mockedAssign: jest.Mocked<(url: string) => void>;
+    let mockedLocalStorageRemove: jest.Mocked<(url: string) => void>;
+    beforeEach(() => {
+      mockedAssign = jest.fn();
+      document.location.assign = mockedAssign;
+      mockedLocalStorageRemove = jest.fn();
+      localStorage.removeItem = mockedLocalStorageRemove;
+    });
+
+    it("uses the config to redirect to a logout URL", () => {
+      const logoutURI = "/example/logout";
+
+      Auth.unsetAuthCookie({ logoutURI, namespace: "ns", appVersion: "2" });
+
+      expect(mockedAssign).toBeCalledWith(logoutURI);
+      expect(mockedLocalStorageRemove).toBeCalled();
+    });
+  });
 });

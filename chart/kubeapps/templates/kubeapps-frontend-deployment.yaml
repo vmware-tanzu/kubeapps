@@ -50,6 +50,8 @@ spec:
         - -pass-basic-auth=false
         - -pass-access-token=true
         - -pass-authorization-header=true
+        - -skip-auth-regex=^\/config\.json$
+        - -skip-auth-regex=^\/favicon.*\.png$
         {{- range .Values.authProxy.additionalFlags }}
         - {{ . }}
         {{- end }}

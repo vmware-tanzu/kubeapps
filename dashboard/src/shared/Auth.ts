@@ -2,6 +2,7 @@ import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
+import { IConfig } from "./Config";
 import { APIBase } from "./Kube";
 
 export const DEFAULT_NAMESPACE = "default";
@@ -20,7 +21,14 @@ export class Auth {
 
   public static unsetAuthToken() {
     localStorage.removeItem(AuthTokenKey);
+  }
+
+  public static unsetAuthCookie(config: IConfig) {
+    // http cookies cannot be deleted (or modified or read) from client-side
+    // JS, so force browser to load the sign-out URI (which expires the
+    // session cookie).
     localStorage.removeItem(AuthTokenOIDCKey);
+    document.location.assign(config.logoutURI);
   }
 
   public static usingOIDCToken() {

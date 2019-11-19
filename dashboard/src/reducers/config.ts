@@ -12,6 +12,7 @@ const initialState: IConfigState = {
   loaded: false,
   namespace: "",
   appVersion: "",
+  logoutURI: "",
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
