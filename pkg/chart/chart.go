@@ -320,7 +320,7 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 
 	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
 	if auth.Header != nil {
-		secret, err := c.kubeClient.Core().Secrets(namespace).Get(auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
+		secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
 		if err != nil {
 			return nil, err
 		}
