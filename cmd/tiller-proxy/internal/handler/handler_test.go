@@ -31,6 +31,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	authFake "github.com/kubeapps/kubeapps/pkg/auth/fake"
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
+	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	proxyFake "github.com/kubeapps/kubeapps/pkg/proxy/fake"
 )
 
@@ -49,7 +50,7 @@ func TestErrorCodeWithDefault(t *testing.T) {
 		{fmt.Errorf("This is an unexpected error"), http.StatusUnprocessableEntity, http.StatusUnprocessableEntity},
 	}
 	for _, s := range tests {
-		code := errorCodeWithDefault(s.err, s.defaultCode)
+		code := handlerutil.ErrorCodeWithDefault(s.err, s.defaultCode)
 		if code != s.expectedCode {
 			t.Errorf("Expected '%v' to return code %v got %v", s.err, s.expectedCode, code)
 		}
