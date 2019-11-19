@@ -26,4 +26,5 @@ require (
 	k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
 	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
 	k8s.io/helm v2.16.0+incompatible
+	k8s.io/klog v1.0.0
 )
