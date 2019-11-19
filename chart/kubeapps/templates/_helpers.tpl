@@ -151,6 +151,13 @@ Create name for the tiller-proxy based on the fullname
 {{- end -}}
 
 {{/*
+Create name for helmer based on the fullname
+*/}}
+{{- define "kubeapps.helmer.fullname" -}}
+{{ template "kubeapps.fullname" . }}-internal-helmer
+{{- end -}}
+
+{{/*
 Create name for the secrets related to an app repository
 */}}
 {{- define "kubeapps.apprepository-secret.name" -}}

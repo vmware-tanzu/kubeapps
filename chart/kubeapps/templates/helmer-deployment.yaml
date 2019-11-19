@@ -1,0 +1,64 @@
+{{- if not .Values.useHelm2 -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "kubeapps.helmer.fullname" . }}
+  labels:
+    app: {{ template "kubeapps.helmer.fullname" . }}
+    chart: {{ template "kubeapps.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.helmer.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "kubeapps.helmer.fullname" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "kubeapps.helmer.fullname" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ template "kubeapps.helmer.fullname" . }}
+      # Increase termination timeout to let remaining operations to finish before killing the pods
+      # This is because new releases/upgrades/deletions are synchronous operations
+      terminationGracePeriodSeconds: 300
+{{- include "kubeapps.imagePullSecrets" . | indent 6 }}
+      containers:
+      - name: agent
+        image: {{ template "kubeapps.image" (list .Values.helmer.image .Values.global) }}
+        command:
+        - /agent
+        args:
+        - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
+        - --chartsvc-url=http://{{ template "kubeapps.chartsvc.fullname" . }}:{{ .Values.chartsvc.service.port }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.helmer.service.port }}
+        env:
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+{{ toYaml .Values.helmer.resources | indent 12 }}
+    {{- with .Values.helmer.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
+      {{- end }}
+    {{- with .Values.helmer.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.helmer.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+
+{{- end }} # matches useHelm2
