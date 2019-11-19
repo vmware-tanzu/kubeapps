@@ -76,21 +76,35 @@ export class Auth {
     }
   }
 
-  // isAuthenticatedWithCookie() does a HEAD request (without any token obviously)
-  // to determine if the request is authenticated (ie. not a 401). Unfortunately
-  // Kubernetes defaulting to allow anonymous requests means that this will be a 403
-  // even if there are no credentials, so we additionally check the message and assume
-  // we are authenticated with a cookie if a 403 is not for an anon user.
+  // isAuthenticatedWithCookie() does an anonymous GET request to determine if
+  // the request is authenticated with an http-only cookie (there is, by design,
+  // no way to determine via client JS whether an http-only cookie is present).
   public static async isAuthenticatedWithCookie(): Promise<boolean> {
     try {
       await Axios.get(APIBase + "/");
     } catch (e) {
       const response = e.response as AxiosResponse;
+      // The only error response which can possibly mean we did authenticate is
+      // a 403 from the k8s api server (ie. we got through to k8s api server
+      // but RBAC doesn't authorize us).
+      if (response.status !== 403) {
+        return false;
+      }
+      // A non json 403 error response means we did not get through to the API server but
+      // instead were rejected by the auth proxy (ie. no http-only cookie).
+      // TODO(mnelson): Check why doesn't the auth proxy return a 401 for a request without auth?
+      if (response.headers && response.headers["content-type"] !== "application/json") {
+        return false;
+      }
+      // Finally, the k8s api server nowadays defaults to allowing anonymous
+      // requests, so that rather than returning a 401, a 403 is returned if
+      // RBAC does not allow the anonymous user access. An http-only cookie
+      // will not result in an anonymous request, so...
       const isAnon =
         response.data &&
         response.data.message &&
         response.data.message.includes("system:anonymous");
-      return response.status === 403 && !isAnon;
+      return !isAnon;
     }
     return true;
   }

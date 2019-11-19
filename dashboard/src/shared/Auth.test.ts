@@ -81,6 +81,18 @@ describe("Auth", () => {
       const isAuthed = await Auth.isAuthenticatedWithCookie();
       expect(isAuthed).toBe(false);
     });
+    it("returns false if the request to api root results in a text/html 403", async () => {
+      Axios.get = jest.fn(() => {
+        return Promise.reject({
+          response: {
+            status: 403,
+            headers: { "content-type": "text/html" },
+          },
+        });
+      });
+      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      expect(isAuthed).toBe(false);
+    });
     it("returns true if the request to api root results in a 403 (but not anonymous)", async () => {
       Axios.get = jest.fn(() => {
         return Promise.reject({ response: { status: 403 } });
