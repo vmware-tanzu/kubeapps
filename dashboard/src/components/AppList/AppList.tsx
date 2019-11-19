@@ -30,7 +30,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     this.setState({ filter });
   }
 
-  public UNSAFE_componentWillReceiveProps(nextProps: IAppListProps) {
+  public componentDidUpdate(prevProps: IAppListProps) {
     const {
       apps: { error, listingAll },
       fetchAppsWithUpdateInfo,
@@ -38,11 +38,11 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
       namespace,
     } = this.props;
     // refetch if new namespace or error removed due to location change
-    if (nextProps.namespace !== namespace || (error && !nextProps.apps.error)) {
-      fetchAppsWithUpdateInfo(nextProps.namespace, listingAll);
+    if (prevProps.namespace !== namespace || (!error && prevProps.apps.error)) {
+      fetchAppsWithUpdateInfo(namespace, listingAll);
     }
-    if (nextProps.filter !== filter) {
-      this.setState({ filter: nextProps.filter });
+    if (prevProps.filter !== filter) {
+      this.setState({ filter });
     }
   }
 

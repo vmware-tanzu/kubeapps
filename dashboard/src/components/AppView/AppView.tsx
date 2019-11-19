@@ -81,18 +81,13 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     getAppWithUpdateInfo(releaseName, namespace);
   }
 
-  // componentWillReceiveProps is deprecated use componentDidUpdate instead
-  public UNSAFE_componentWillReceiveProps(nextProps: IAppViewProps) {
-    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
-    if (nextProps.namespace !== namespace) {
-      getAppWithUpdateInfo(releaseName, nextProps.namespace);
+  public componentDidUpdate(prevProps: IAppViewProps) {
+    const { releaseName, getAppWithUpdateInfo, namespace, error, app } = this.props;
+    if (prevProps.namespace !== namespace) {
+      getAppWithUpdateInfo(releaseName, namespace);
       return;
     }
-    if (nextProps.error) {
-      return;
-    }
-    const newApp = nextProps.app;
-    if (!newApp) {
+    if (error || !app) {
       return;
     }
 
@@ -100,7 +95,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     // manifest is pre-parsed by Helm and Kubernetes. Look into switching back
     // to safeLoadAll once https://github.com/nodeca/js-yaml/issues/456 is
     // resolved.
-    let manifest: IResource[] = yaml.loadAll(newApp.manifest, undefined, { json: true });
+    let manifest: IResource[] = yaml.loadAll(app.manifest, undefined, { json: true });
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
@@ -111,7 +106,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     }
 
     // Iterate over the current manifest to populate the initial state
-    this.setState(this.parseResources(manifest, newApp.namespace));
+    this.setState(this.parseResources(manifest, app.namespace));
   }
 
   public render() {

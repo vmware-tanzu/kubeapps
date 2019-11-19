@@ -34,6 +34,13 @@ it("renders the header links and titles", () => {
   });
 });
 
+it("updates state when the path changes", () => {
+  const wrapper = shallow(<Header {...defaultProps} />);
+  wrapper.setState({ configOpen: true, mobileOpne: true });
+  wrapper.setProps({ pathname: "foo" });
+  expect(wrapper.state()).toMatchObject({ configOpen: false, mobileOpen: false });
+});
+
 it("renders the namespace switcher", () => {
   const wrapper = shallow(<Header {...defaultProps} />);
 

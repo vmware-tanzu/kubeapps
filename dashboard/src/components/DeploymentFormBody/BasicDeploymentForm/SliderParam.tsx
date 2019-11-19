@@ -32,13 +32,15 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
     value: getDefaultValue(this.props.min, this.props.param.value),
   };
 
-  // tslint:disable-next-line:variable-name
-  public UNSAFE_componentWillReceiveProps = (props: ISliderParamProps) => {
-    const value = getDefaultValue(this.props.min, props.param.value);
-    if (value !== this.state.value) {
-      this.setState({ value });
+  public componentDidUpdate = (prevProps: ISliderParamProps) => {
+    if (prevProps.param.value !== this.props.param.value) {
+      const value = getDefaultValue(this.props.min, this.props.param.value);
+      if (value !== this.state.value) {
+        this.setState({ value });
+      }
     }
   };
+
   // onChangeSlider is executed when the slider is dropped at one point
   // at that point we update the parameter
   public onChangeSlider = (values: number[]) => {
