@@ -13,11 +13,14 @@ export class Auth {
 
   public static setAuthToken(token: string, oidc: boolean) {
     localStorage.setItem(AuthTokenOIDCKey, oidc.toString());
-    return localStorage.setItem(AuthTokenKey, token);
+    if (token) {
+      localStorage.setItem(AuthTokenKey, token);
+    }
   }
 
   public static unsetAuthToken() {
-    return localStorage.removeItem(AuthTokenKey);
+    localStorage.removeItem(AuthTokenKey);
+    localStorage.removeItem(AuthTokenOIDCKey);
   }
 
   public static usingOIDCToken() {
@@ -65,21 +68,23 @@ export class Auth {
     }
   }
 
-  // fetchOIDCToken does a HEAD request to collect the Bearer token
-  // from the authorization header if exists
-  public static async fetchOIDCToken(): Promise<string | null> {
+  // isAuthenticatedWithCookie() does a HEAD request (without any token obviously)
+  // to determine if the request is authenticated (ie. not a 401). Unfortunately
+  // Kubernetes defaulting to allow anonymous requests means that this will be a 403
+  // even if there are no credentials, so we additionally check the message and assume
+  // we are authenticated with a cookie if a 403 is not for an anon user.
+  public static async isAuthenticatedWithCookie(): Promise<boolean> {
     try {
-      const { headers } = await Axios.head("");
-      if (headers && headers.authorization) {
-        const tokenMatch = (headers.authorization as string).match(/Bearer\s(.*)/);
-        if (tokenMatch) {
-          return tokenMatch[1];
-        }
-      }
+      await Axios.get(APIBase + "/");
     } catch (e) {
-      // Unable to retrieve token
+      const response = e.response as AxiosResponse;
+      const isAnon =
+        response.data &&
+        response.data.message &&
+        response.data.message.includes("system:anonymous");
+      return response.status === 403 && !isAnon;
     }
-    return null;
+    return true;
   }
 
   // defaultNamespaceFromToken decodes a jwt token to return the k8s service

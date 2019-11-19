@@ -1,6 +1,7 @@
 import Axios from "axios";
 import * as jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
+import { APIBase } from "./Kube";
 
 describe("Auth", () => {
   beforeEach(() => {
@@ -58,29 +59,42 @@ describe("Auth", () => {
     });
   });
 
-  describe("fetchOIDCToken", () => {
-    it("should fetch a token", async () => {
-      Axios.head = jest.fn(path => {
-        expect(path).toEqual("");
-        return { headers: { authorization: "Bearer foo" } };
+  describe("isAuthenticatedWithCookie", () => {
+    it("returns true if request to API root succeeds", async () => {
+      Axios.get = jest.fn(path => {
+        return Promise.resolve({ headers: { status: 200 } });
       });
-      const token = await Auth.fetchOIDCToken();
-      expect(token).toEqual("foo");
+      const isAuthed = await Auth.isAuthenticatedWithCookie();
+
+      expect(Axios.get).toBeCalledWith(APIBase + "/");
+      expect(isAuthed).toBe(true);
     });
-  });
-  it("should not return a token if the info is not present", async () => {
-    Axios.head = jest.fn(() => {
-      return {};
+    it("returns false if the request to api root results in a 403 for an anonymous request", async () => {
+      Axios.get = jest.fn(() => {
+        return Promise.reject({
+          response: {
+            status: 403,
+            data: { message: "Something with system:anonymous in there" },
+          },
+        });
+      });
+      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      expect(isAuthed).toBe(false);
     });
-    const token = await Auth.fetchOIDCToken();
-    expect(token).toEqual(null);
-  });
-  it("should not return a token if the call fails", async () => {
-    Axios.head = jest.fn(() => {
-      throw new Error();
+    it("returns true if the request to api root results in a 403 (but not anonymous)", async () => {
+      Axios.get = jest.fn(() => {
+        return Promise.reject({ response: { status: 403 } });
+      });
+      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      expect(isAuthed).toBe(true);
     });
-    const token = await Auth.fetchOIDCToken();
-    expect(token).toEqual(null);
+    it("should return false if the request results in a 401", async () => {
+      Axios.get = jest.fn(() => {
+        return Promise.reject({ response: { status: 401 } });
+      });
+      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      expect(isAuthed).toBe(false);
+    });
   });
 
   describe("defaultNamespaceFromToken", () => {
