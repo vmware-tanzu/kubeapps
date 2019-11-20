@@ -207,6 +207,96 @@ describe("when the basic form is enabled", () => {
     ]);
   });
 
+  it("should update existing params when receiving new values", () => {
+    const testProps = {
+      ...props,
+      selected: {
+        ...props.selected,
+        schema: { properties: { wordpressUsername: { type: "string", form: true } } },
+      },
+      appValues: "",
+    };
+    const basicFormParameters = [
+      {
+        path: "wordpressUsername",
+        value: "user",
+      },
+    ];
+    const wrapper = mount(<DeploymentFormBody {...testProps} />);
+    wrapper.setState({ basicFormParameters });
+    wrapper.setProps({ appValues: "wordpressUsername: foo" });
+    wrapper.update();
+    expect(wrapper.state("basicFormParameters")).toMatchObject([
+      {
+        path: "wordpressUsername",
+        value: "foo",
+      },
+    ]);
+  });
+
+  it("should update existing params when receiving new values (for a new version)", () => {
+    const testProps = {
+      ...props,
+      selected: {
+        ...props.selected,
+        schema: { properties: { wordpressUsername: { type: "string", form: true } } },
+        values: "wordpressUsername: foo",
+      },
+    };
+    const basicFormParameters = [
+      {
+        path: "wordpressUsername",
+        value: "user",
+      },
+    ];
+    const wrapper = mount(<DeploymentFormBody {...testProps} />);
+    wrapper.setState({ basicFormParameters });
+    const updatedProps = {
+      selected: {
+        ...props.selected,
+        schema: { properties: { wordpressUsername: { type: "string", form: true } } },
+        values: "wordpressUsername: bar",
+      },
+      appValues: "wordpressUsername: bar",
+    };
+
+    wrapper.setProps(updatedProps);
+    wrapper.update();
+    expect(wrapper.state("basicFormParameters")).toMatchObject([
+      {
+        path: "wordpressUsername",
+        value: "bar",
+      },
+    ]);
+  });
+
+  it("should not re-render the basic params if appValues changes (because it's handled by the parameter itself)", () => {
+    const testProps = {
+      ...props,
+      selected: {
+        ...props.selected,
+        schema: { properties: { wordpressUsername: { type: "string", form: true } } },
+      },
+      appValues: "wordpressUsername: foo",
+    };
+    const basicFormParameters = [
+      {
+        path: "wordpressUsername",
+        value: "foo",
+      },
+    ];
+    const wrapper = mount(<DeploymentFormBody {...testProps} />);
+    wrapper.setState({ basicFormParameters });
+    wrapper.setProps({ appValues: "wordpressUsername: bar" });
+    wrapper.update();
+    expect(wrapper.state("basicFormParameters")).toMatchObject([
+      {
+        path: "wordpressUsername",
+        value: "foo",
+      },
+    ]);
+  });
+
   it("handles a parameter as a number", () => {
     const setValues = jest.fn();
     const testProps = {
