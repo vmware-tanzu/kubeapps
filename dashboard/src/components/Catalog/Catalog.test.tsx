@@ -44,6 +44,13 @@ it("updates the filter from props", () => {
   expect(wrapper.state("filter")).toBe("foo");
 });
 
+it("keeps the filter from the state", () => {
+  const wrapper = shallow(<Catalog {...defaultProps} />);
+  expect(wrapper.state("filter")).toBe("");
+  wrapper.setState({ filter: "foo" });
+  expect(wrapper.state("filter")).toBe("foo");
+});
+
 describe("renderization", () => {
   context("when no charts", () => {
     it("should render an error", () => {
