@@ -20,16 +20,16 @@ const defaultProps = {
   authenticating: false,
   authenticationError: undefined,
   location: emptyLocation,
-  tryToAuthenticateWithOIDC: jest.fn(),
+  checkCookieAuthentication: jest.fn(),
 };
 
 const authenticationError = "it's a trap";
 
 describe("componentDidMount", () => {
-  it("should call tryToAuthenticateWithOIDC", () => {
-    const tryToAuthenticateWithOIDC = jest.fn();
-    shallow(<LoginForm {...defaultProps} tryToAuthenticateWithOIDC={tryToAuthenticateWithOIDC} />);
-    expect(tryToAuthenticateWithOIDC).toHaveBeenCalled();
+  it("should call checkCookieAuthentication", () => {
+    const checkCookieAuthentication = jest.fn();
+    shallow(<LoginForm {...defaultProps} checkCookieAuthentication={checkCookieAuthentication} />);
+    expect(checkCookieAuthentication).toHaveBeenCalled();
   });
 });
 

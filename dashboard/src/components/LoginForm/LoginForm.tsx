@@ -11,7 +11,7 @@ interface ILoginFormProps {
   authenticating: boolean;
   authenticationError: string | undefined;
   authenticate: (token: string) => any;
-  tryToAuthenticateWithOIDC: () => void;
+  checkCookieAuthentication: () => void;
   location: Location;
 }
 
@@ -23,7 +23,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
   public state: ILoginFormState = { token: "" };
 
   public componentDidMount() {
-    this.props.tryToAuthenticateWithOIDC();
+    this.props.checkCookieAuthentication();
   }
 
   public render() {

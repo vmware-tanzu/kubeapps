@@ -31,7 +31,9 @@ export function authenticate(
   return async dispatch => {
     dispatch(authenticating());
     try {
-      await Auth.validateToken(token);
+      if (!oidc) {
+        await Auth.validateToken(token);
+      }
       Auth.setAuthToken(token, oidc);
       dispatch(setAuthenticated(true, oidc, Auth.defaultNamespaceFromToken(token)));
       if (oidc) {
@@ -49,10 +51,17 @@ export function logout(): ThunkAction<
   null,
   AuthAction | NamespaceAction
 > {
-  return async dispatch => {
-    Auth.unsetAuthToken();
-    dispatch(setAuthenticated(false, false, ""));
-    dispatch(clearNamespaces());
+  return async (dispatch, getState) => {
+    // We can't do anything before calling unsetAuthCookie as otherwise the
+    // state changes and the redirect to the logout URI is lost.
+    if (Auth.usingOIDCToken()) {
+      const { config } = getState();
+      Auth.unsetAuthCookie(config);
+    } else {
+      Auth.unsetAuthToken();
+      dispatch(setAuthenticated(false, false, ""));
+      dispatch(clearNamespaces());
+    }
   };
 }
 
@@ -65,17 +74,16 @@ export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, A
   };
 }
 
-export function tryToAuthenticateWithOIDC(): ThunkAction<
+export function checkCookieAuthentication(): ThunkAction<
   Promise<void>,
   IStoreState,
   null,
   AuthAction
 > {
   return async dispatch => {
-    dispatch(authenticating());
-    const token = await Auth.fetchOIDCToken();
-    if (token) {
-      dispatch(authenticate(token, true));
+    const isAuthed = await Auth.isAuthenticatedWithCookie();
+    if (isAuthed) {
+      dispatch(authenticate("", true));
     } else {
       dispatch(setAuthenticated(false, false, ""));
     }
