@@ -31,6 +31,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
@@ -143,7 +144,7 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := handler.AuthGate()
+	authGate := auth.AuthGate()
 
 	// HTTP Handler
 	h := handler.TillerProxy{

@@ -17,12 +17,10 @@ limitations under the License.
 package handler
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/kubeapps/common/response"
 	"github.com/kubeapps/kubeapps/pkg/auth"
@@ -30,38 +28,8 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	proxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
-	"github.com/urfave/negroni"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
-
-// Context key type for request contexts
-type contextKey int
-
-// userKey is the context key for the User data in the request context
-const userKey contextKey = 0
-
-// AuthGate implements middleware to check if the user is logged in before continuing
-func AuthGate() negroni.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-		authHeader := strings.Split(req.Header.Get("Authorization"), "Bearer ")
-		if len(authHeader) != 2 {
-			response.NewErrorResponse(http.StatusUnauthorized, "Unauthorized").Write(w)
-			return
-		}
-		userAuth, err := auth.NewAuth(authHeader[1])
-		if err != nil {
-			response.NewErrorResponse(http.StatusInternalServerError, err.Error()).Write(w)
-			return
-		}
-		err = userAuth.Validate()
-		if err != nil {
-			response.NewErrorResponse(http.StatusUnauthorized, err.Error()).Write(w)
-			return
-		}
-		ctx := context.WithValue(req.Context(), userKey, userAuth)
-		next(w, req.WithContext(ctx))
-	}
-}
 
 func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *chart.Chart, error) {
 	defer req.Body.Close()
@@ -125,7 +93,7 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Checker)
+		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -178,7 +146,7 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Checker)
+		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
 		// Using "upgrade" action since the concept is the same
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
@@ -214,7 +182,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Checker)
+		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -268,7 +236,7 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Checker)
+		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "get", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -295,7 +263,7 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(userKey).(auth.Checker)
+		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "delete", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
