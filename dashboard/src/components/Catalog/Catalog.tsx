@@ -35,7 +35,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
   }
 
   public componentDidUpdate(prevProps: ICatalogProps) {
-    if (this.props.filter !== this.state.filter) {
+    if (this.props.filter !== prevProps.filter) {
       this.setState({ filter: this.props.filter });
     }
     if (this.props.repo !== prevProps.repo) {
