@@ -81,9 +81,25 @@ describe("Auth", () => {
       const isAuthed = await Auth.isAuthenticatedWithCookie();
       expect(isAuthed).toBe(false);
     });
+    it("returns false if the request to api root results in a non-json response (ie. without data.message)", async () => {
+      Axios.get = jest.fn(() => {
+        return Promise.reject({
+          response: {
+            status: 403,
+          },
+        });
+      });
+      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      expect(isAuthed).toBe(false);
+    });
     it("returns true if the request to api root results in a 403 (but not anonymous)", async () => {
       Axios.get = jest.fn(() => {
-        return Promise.reject({ response: { status: 403 } });
+        return Promise.reject({
+          response: {
+            status: 403,
+            data: { message: "some message for other-user" },
+          },
+        });
       });
       const isAuthed = await Auth.isAuthenticatedWithCookie();
       expect(isAuthed).toBe(true);
@@ -133,6 +149,26 @@ describe("Auth", () => {
       const defaultNamespace = Auth.defaultNamespaceFromToken(token);
 
       expect(defaultNamespace).toEqual("default");
+    });
+  });
+
+  describe("unsetAuthCookie", () => {
+    let mockedAssign: jest.Mocked<(url: string) => void>;
+    let mockedLocalStorageRemove: jest.Mocked<(url: string) => void>;
+    beforeEach(() => {
+      mockedAssign = jest.fn();
+      document.location.assign = mockedAssign;
+      mockedLocalStorageRemove = jest.fn();
+      localStorage.removeItem = mockedLocalStorageRemove;
+    });
+
+    it("uses the config to redirect to a logout URL", () => {
+      const logoutURI = "/example/logout";
+
+      Auth.unsetAuthCookie({ logoutURI, namespace: "ns", appVersion: "2" });
+
+      expect(mockedAssign).toBeCalledWith(logoutURI);
+      expect(mockedLocalStorageRemove).toBeCalled();
     });
   });
 });

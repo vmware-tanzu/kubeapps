@@ -51,10 +51,17 @@ export function logout(): ThunkAction<
   null,
   AuthAction | NamespaceAction
 > {
-  return async dispatch => {
-    Auth.unsetAuthToken();
-    dispatch(setAuthenticated(false, false, ""));
-    dispatch(clearNamespaces());
+  return async (dispatch, getState) => {
+    // We can't do anything before calling unsetAuthCookie as otherwise the
+    // state changes and the redirect to the logout URI is lost.
+    if (Auth.usingOIDCToken()) {
+      const { config } = getState();
+      Auth.unsetAuthCookie(config);
+    } else {
+      Auth.unsetAuthToken();
+      dispatch(setAuthenticated(false, false, ""));
+      dispatch(clearNamespaces());
+    }
   };
 }
 
