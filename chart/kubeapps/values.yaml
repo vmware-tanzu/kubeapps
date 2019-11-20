@@ -248,6 +248,7 @@ hooks:
 ##
 tillerProxy:
   replicaCount: 2
+
   ## Bitnami Kubeapps Tiller Proxy image
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-tiller-proxy/tags/
   ##
@@ -255,6 +256,7 @@ tillerProxy:
     registry: docker.io
     repository: kubeapps/tiller-proxy
     tag: latest
+
   ## Tiller Proxy service parameters
   ##
   service:
@@ -262,15 +264,19 @@ tillerProxy:
     ##
     port: 8080
   host: tiller-deploy.kube-system:44134
+
   ## TLS parameters
+  ##
   tls: {}
   #  ca:
   #  cert:
   #  key:
   #  verify: false
+
   ## It's possible to modify the default timeout for install/upgrade/rollback/delete apps
   ## (Default: 300s)
   # timeout: 300
+
   ## Tiller Proxy containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
@@ -284,6 +290,7 @@ tillerProxy:
     requests:
       cpu: 25m
       memory: 32Mi
+
   ## Affinity for Tiller Proxy pods assignment
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
