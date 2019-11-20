@@ -448,7 +448,7 @@ func TestActions(t *testing.T) {
 			fauth := &authFake.FakeAuth{
 				ForbiddenActions: test.ForbiddenActions,
 			}
-			ctx := context.WithValue(req.Context(), userKey, fauth)
+			ctx := context.WithValue(req.Context(), auth.UserKey, fauth)
 			req = req.WithContext(ctx)
 		}
 		response := httptest.NewRecorder()
