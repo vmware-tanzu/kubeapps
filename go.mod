@@ -21,7 +21,7 @@ require (
 	github.com/urfave/negroni v1.0.0
 	google.golang.org/grpc v1.25.1
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
-	helm.sh/helm/v3 v3.0.0-rc.3
+	helm.sh/helm/v3 v3.0.0
 	k8s.io/api v0.0.0-20191016110408-35e52d86657a
 	k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
 	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
