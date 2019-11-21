@@ -242,11 +242,6 @@ describe("getDeployedChartVersion", () => {
     response = { id: "foo" };
     const expectedActions = [
       { type: getType(actions.charts.requestDeployedChartVersion) },
-      { type: getType(actions.charts.requestCharts) },
-      {
-        type: getType(actions.charts.selectChartVersion),
-        payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
-      },
       {
         type: getType(actions.charts.receiveDeployedChartVersion),
         payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
