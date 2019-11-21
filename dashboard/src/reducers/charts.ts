@@ -24,8 +24,8 @@ const chartsSelectedReducer = (
         error: undefined,
         readmeError: undefined,
         version: action.payload.chartVersion,
-        values: action.payload.values ? action.payload.values : state.values,
-        schema: action.payload.schema ? action.payload.schema : state.schema,
+        values: action.payload.values,
+        schema: action.payload.schema,
       };
     case getType(actions.charts.receiveChartVersions):
       return {
