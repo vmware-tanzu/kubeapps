@@ -61,7 +61,15 @@ class DeploymentFormBody extends React.Component<
       return;
     }
 
-    if (prevProps.selected.schema !== selected.schema || prevProps.appValues !== appValues) {
+    if (
+      // If the selected schema changes
+      prevProps.selected.schema !== selected.schema ||
+      // or the selected values (because it's a different version)
+      prevProps.selected.values !== selected.values ||
+      // or the current values (and we hadn't process those values yet)
+      (prevProps.appValues !== appValues && prevProps.appValues.length === 0)
+    ) {
+      // Parse the basic parameters
       this.setState({
         basicFormParameters: retrieveBasicFormParams(appValues, selected.schema),
       });
