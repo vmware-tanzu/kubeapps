@@ -23,17 +23,17 @@ type Options struct {
 	Timeout   int64
 }
 
-type Context struct {
+type Config struct {
 	ActionConfig *action.Configuration
 	AgentOptions Options
 }
 
-func ListReleases(context Context, namespace string, status string) ([]proxy.AppOverview, error) {
-	cmd := action.NewList(context.ActionConfig)
+func ListReleases(config Config, namespace string, status string) ([]proxy.AppOverview, error) {
+	cmd := action.NewList(config.ActionConfig)
 	if namespace == "" {
 		cmd.AllNamespaces = true
 	}
-	cmd.Limit = context.AgentOptions.ListLimit
+	cmd.Limit = config.AgentOptions.ListLimit
 	releases, err := cmd.Run()
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func ListReleases(context Context, namespace string, status string) ([]proxy.App
 	return appOverviews, nil
 }
 
-func NewConfig(token, namespace string) *action.Configuration {
+func NewActionConfig(token, namespace string) *action.Configuration {
 	actionConfig := new(action.Configuration)
 	config, err := rest.InClusterConfig()
 	if err != nil {

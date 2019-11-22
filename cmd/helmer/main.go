@@ -47,16 +47,16 @@ func main() {
 	}
 
 	r := mux.NewRouter()
-	withAgentContext := handler.WithAgentContext(options)
+	withAgentConfig := handler.WithAgentConfig(options)
 
 	// Routes
 	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
-		negroni.Wrap(withAgentContext(handler.ListAllReleases)),
+		negroni.Wrap(withAgentConfig(handler.ListAllReleases)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
-		negroni.Wrap(withAgentContext(handler.ListReleases)),
+		negroni.Wrap(withAgentConfig(handler.ListReleases)),
 	))
 
 	// Chartsvc reverse proxy
