@@ -1,4 +1,4 @@
-{{- if .Values.useHelm2 -}}
+{{- if not .Values.useHelm3 -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -18,4 +18,4 @@ spec:
   selector:
     app: {{ template "kubeapps.tiller-proxy.fullname" . }}
     release: {{ .Release.Name }}
-{{- end }} # matches useHelm2
+{{- end }} # matches useHelm3

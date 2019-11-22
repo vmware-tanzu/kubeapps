@@ -8,8 +8,8 @@
 #     - myRegistryKeySecretName
 #   storageClass: myStorageClass
 
-# true = Helm 2/Tiller Proxy; false = Helm 3/Helmer:
-useHelm2: true
+# true = Helm 3/Helmer; false = Helm 2/Tiller Proxy:
+useHelm3: false
 
 ## The frontend service is the main reverse proxy used to access the Kubeapps UI
 ## To expose Kubeapps externally either configure the ingress object below or
@@ -246,7 +246,7 @@ hooks:
   tolerations: {}
 
 # Helmer is an interface between the Kubeapps Dashboard and Helm 3. Set
-# useHelm2 to false to use Helmer instead of Tiller Proxy.
+# useHelm3 to true to use Helmer instead of Tiller Proxy.
 helmer:
   replicaCount: 2
   image:

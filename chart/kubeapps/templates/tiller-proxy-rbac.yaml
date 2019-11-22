@@ -1,4 +1,4 @@
-{{- if .Values.useHelm2 -}}
+{{- if not .Values.useHelm3 -}}
 {{- if .Values.rbac.create -}}
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: Role
@@ -41,4 +41,4 @@ subjects:
     name: {{ template "kubeapps.tiller-proxy.fullname" . }}
     namespace: {{ .Release.Namespace }}
 {{- end -}}
-{{- end }} # matches useHelm2
+{{- end }} # matches useHelm3

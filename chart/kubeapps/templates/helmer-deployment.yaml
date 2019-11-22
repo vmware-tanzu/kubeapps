@@ -1,4 +1,4 @@
-{{- if not .Values.useHelm2 -}}
+{{- if .Values.useHelm3 -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -61,4 +61,4 @@ spec:
 {{ toYaml . | indent 8 }}
     {{- end }}
 
-{{- end }} # matches useHelm2
+{{- end }} # matches useHelm3
