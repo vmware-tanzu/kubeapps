@@ -170,5 +170,11 @@ describe("Auth", () => {
       expect(mockedAssign).toBeCalledWith(logoutURI);
       expect(mockedLocalStorageRemove).toBeCalled();
     });
+
+    it("defaults to the oauth2-proxy logout URI", () => {
+      Auth.unsetAuthCookie({ logoutURI: "", namespace: "ns", appVersion: "2" });
+
+      expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");
+    });
   });
 });
