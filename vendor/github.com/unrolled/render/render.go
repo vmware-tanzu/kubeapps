@@ -123,9 +123,7 @@ type Render struct {
 // New constructs a new Render instance with the supplied options.
 func New(options ...Options) *Render {
 	var o Options
-	if len(options) == 0 {
-		o = Options{}
-	} else {
+	if len(options) > 0 {
 		o = options[0]
 	}
 

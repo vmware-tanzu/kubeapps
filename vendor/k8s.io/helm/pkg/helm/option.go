@@ -227,6 +227,27 @@ func ReleaseTestCleanup(cleanup bool) ReleaseTestOption {
 	}
 }
 
+// ReleaseTestParallel is a boolean value representing whether to run test pods in parallel
+func ReleaseTestParallel(parallel bool) ReleaseTestOption {
+	return func(opts *options) {
+		opts.testReq.Parallel = parallel
+	}
+}
+
+// ReleaseTestMaxParallel specifies the maximum number of test pods to run in parallel
+func ReleaseTestMaxParallel(max uint32) ReleaseTestOption {
+	return func(opts *options) {
+		opts.testReq.MaxParallel = max
+	}
+}
+
+// ReleaseTestLogs is a boolean value representing whether to dump the logs from test pods
+func ReleaseTestLogs(logs bool) ReleaseTestOption {
+	return func(opts *options) {
+		opts.testReq.Logs = logs
+	}
+}
+
 // RollbackTimeout specifies the number of seconds before kubernetes calls timeout
 func RollbackTimeout(timeout int64) RollbackOption {
 	return func(opts *options) {
@@ -290,6 +311,20 @@ func DeleteDescription(description string) DeleteOption {
 	}
 }
 
+// UpgradeCleanupOnFail allows deletion of new resources created in this upgrade when upgrade failed
+func UpgradeCleanupOnFail(cleanupOnFail bool) UpdateOption {
+	return func(opts *options) {
+		opts.updateReq.CleanupOnFail = cleanupOnFail
+	}
+}
+
+// RollbackCleanupOnFail allows deletion of new resources created in this rollback when rollback failed
+func RollbackCleanupOnFail(cleanupOnFail bool) RollbackOption {
+	return func(opts *options) {
+		opts.rollbackReq.CleanupOnFail = cleanupOnFail
+	}
+}
+
 // DeleteDisableHooks will disable hooks for a deletion operation.
 func DeleteDisableHooks(disable bool) DeleteOption {
 	return func(opts *options) {
@@ -336,6 +371,20 @@ func InstallDisableCRDHook(disable bool) InstallOption {
 func InstallReuseName(reuse bool) InstallOption {
 	return func(opts *options) {
 		opts.reuseName = reuse
+	}
+}
+
+// InstallSubNotes will (if true) instruct Tiller to render SubChart Notes
+func InstallSubNotes(enable bool) InstallOption {
+	return func(opts *options) {
+		opts.instReq.SubNotes = enable
+	}
+}
+
+// UpgradeSubNotes will (if true) instruct Tiller to render SubChart Notes
+func UpgradeSubNotes(enable bool) UpdateOption {
+	return func(opts *options) {
+		opts.updateReq.SubNotes = enable
 	}
 }
 
@@ -453,7 +502,7 @@ type VersionOption func(*options)
 // the defaults used when running the `helm upgrade` command.
 type UpdateOption func(*options)
 
-// RollbackOption allows specififying various settings configurable
+// RollbackOption allows specifying various settings configurable
 // by the helm client user for overriding the defaults used when
 // running the `helm rollback` command.
 type RollbackOption func(*options)
@@ -472,8 +521,13 @@ func WithMaxHistory(max int32) HistoryOption {
 
 // NewContext creates a versioned context.
 func NewContext() context.Context {
+	return FromContext(context.TODO())
+}
+
+// FromContext returns a versioned context from a parent context
+func FromContext(ctx context.Context) context.Context {
 	md := metadata.Pairs("x-helm-api-client", version.GetVersion())
-	return metadata.NewOutgoingContext(context.TODO(), md)
+	return metadata.NewOutgoingContext(ctx, md)
 }
 
 // ReleaseTestOption allows configuring optional request data for

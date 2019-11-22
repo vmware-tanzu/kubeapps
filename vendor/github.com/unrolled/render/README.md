@@ -373,7 +373,6 @@ import (
     "net/http"
 
     "github.com/labstack/echo"
-    "github.com/labstack/echo/engine/standard"
     "github.com/unrolled/render"  // or "gopkg.in/unrolled/render.v1"
 )
 
@@ -390,13 +389,13 @@ func main() {
 
     e := echo.New()
 
-    e.SetRenderer(r)
+    e.Renderer = r
 
     e.GET("/", func(c echo.Context) error {
         return c.Render(http.StatusOK, "TemplateName", "TemplateData")
     })
 
-    e.Run(standard.New(":1323"))
+    e.Logger.Fatal(e.Start(":1323"))
 }
 ~~~
 

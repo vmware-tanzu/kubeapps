@@ -63,11 +63,17 @@ If resource data is an array of objects, the data key will be an array:
 type DataResponse struct {
 	Code int         `json:"-"`
 	Data interface{} `json:"data"`
+	Meta interface{} `json:"meta,omitempty"`
 }
 
 // NewDataResponse returns a new DataResponse
 func NewDataResponse(resources interface{}) DataResponse {
-	return DataResponse{http.StatusOK, resources}
+	return DataResponse{http.StatusOK, resources, nil}
+}
+
+// NewDataResponseWithMeta returns a new DataResponse
+func NewDataResponseWithMeta(resources, meta interface{}) DataResponse {
+	return DataResponse{http.StatusOK, resources, meta}
 }
 
 // WithCode sets the code for the response and returns the DataResponse

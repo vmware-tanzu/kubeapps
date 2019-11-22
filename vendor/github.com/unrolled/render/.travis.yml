@@ -1,16 +1,15 @@
 language: go
 
 go:
-  - 1.7.x
-  - 1.8.x
-  - 1.9.x
-  - 1.10.x
   - 1.11.x
+  - 1.12.x
   - tip
 
+env:
+  - GO111MODULE=on
+
 install:
-  - go get github.com/eknkc/amber
+  - go mod download 
 
 script:
   - go test -v -race -tags=integration
-
