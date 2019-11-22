@@ -253,7 +253,7 @@ helmer:
     # NB: These values are for development only!
     registry: kubeapps
     repository: helmer
-    tag: dev
+    tag: latest
   service:
     port: 8080
   resources:
