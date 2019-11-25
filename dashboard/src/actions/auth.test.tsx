@@ -108,6 +108,9 @@ describe("OIDC authentication", () => {
         type: getType(actions.auth.authenticating),
       },
       {
+        type: getType(actions.auth.authenticating),
+      },
+      {
         payload: { authenticated: true, oidc: true, defaultNamespace: "default" },
         type: getType(actions.auth.setAuthenticated),
       },

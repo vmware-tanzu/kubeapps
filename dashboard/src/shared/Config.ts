@@ -4,6 +4,8 @@ import axios from "axios";
 export interface IConfig {
   namespace: string;
   appVersion: string;
+  authProxyEnabled: boolean;
+  loginURI: string;
   logoutURI: string;
   error?: Error;
 }
