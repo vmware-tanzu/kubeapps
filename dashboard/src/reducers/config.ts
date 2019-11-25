@@ -12,6 +12,8 @@ const initialState: IConfigState = {
   loaded: false,
   namespace: "",
   appVersion: "",
+  authProxyEnabled: false,
+  loginURI: "",
   logoutURI: "",
 };
 
