@@ -17,7 +17,15 @@ const defaultProps = {
   getResource: jest.fn(),
 };
 
-describe("componentDidUpdate", () => {
+describe("when receiving ingresses", () => {
+  it("fetches new ingresses", () => {
+    const mock = jest.fn();
+    shallow(
+      <AccessURLTable {...defaultProps} ingressRefs={[{} as ResourceRef]} getResource={mock} />,
+    );
+    expect(mock).toHaveBeenCalled();
+  });
+
   it("fetches new ingresses", () => {
     const mock = jest.fn();
     const wrapper = shallow(<AccessURLTable {...defaultProps} getResource={mock} />);

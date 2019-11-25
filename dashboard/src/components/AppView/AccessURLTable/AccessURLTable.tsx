@@ -16,11 +16,13 @@ interface IAccessURLTableProps {
 }
 
 class AccessURLTable extends React.Component<IAccessURLTableProps> {
+  public componentDidMount() {
+    this.fetchIngresses();
+  }
+
   public componentDidUpdate(prevProps: IAccessURLTableProps) {
-    // Fetch all related Ingress resources. We don't need to fetch Services as
-    // they are expected to be watched by the ServiceTable.
     if (prevProps.ingressRefs.length !== this.props.ingressRefs.length) {
-      this.props.ingressRefs.forEach(r => this.props.getResource(r));
+      this.fetchIngresses();
     }
   }
 
@@ -93,6 +95,12 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
       return <AccessURLItem key={`accessURL/${i.item.metadata.name}`} URLItem={urlItem} />;
     }
     return;
+  }
+
+  private fetchIngresses() {
+    // Fetch all related Ingress resources. We don't need to fetch Services as
+    // they are expected to be watched by the ServiceTable.
+    this.props.ingressRefs.forEach(r => this.props.getResource(r));
   }
 }
 
