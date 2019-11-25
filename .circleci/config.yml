@@ -163,7 +163,7 @@ run_e2e_tests: &run_e2e_tests
     fi
 gke_test: &gke_test
   docker:
-    - image: circleci/golang:1.11
+    - image: circleci/golang:1.13
   steps:
     - checkout
     - run: |
@@ -214,7 +214,7 @@ jobs:
     environment:
       CGO_ENABLED: "0"
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
     steps:
       - checkout
       - <<: *exports
@@ -229,7 +229,7 @@ jobs:
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
   test_chart_render:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
     steps:
       - <<: *exports
       - checkout
@@ -238,7 +238,7 @@ jobs:
       - run: ./script/chart-template-test.sh
   build_go_images:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: /home/circleci/.go_workspace
@@ -246,13 +246,13 @@ jobs:
     <<: *build_images
   build_dashboard:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
     environment:
       IMAGES: "dashboard"
     <<: *build_images
   release:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
@@ -298,7 +298,7 @@ jobs:
       TEST_LATEST_RELEASE: 1
   sync_chart:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
     steps:
       - checkout
       - add_ssh_keys:
@@ -313,7 +313,7 @@ jobs:
           ./script/chart_sync.sh kubernetes-bitnami kubernetes@bitnami.com
   push_images:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
     steps:
       - setup_remote_docker
       - <<: *exports
