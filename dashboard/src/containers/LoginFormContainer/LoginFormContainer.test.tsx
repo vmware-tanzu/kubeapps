@@ -17,7 +17,7 @@ const makeStore = (
   authenticationError: string,
   defaultNamespace: string,
   authProxyEnabled: boolean,
-  loginURI: string,
+  oauthLoginURI: string,
 ) => {
   const auth: IAuthState = {
     sessionExpired,
@@ -29,11 +29,11 @@ const makeStore = (
   };
   const config: IConfigState = {
     authProxyEnabled,
-    loginURI,
+    oauthLoginURI,
     loaded: true,
     namespace: "",
     appVersion: "",
-    logoutURI: "",
+    oauthLogoutURI: "",
   };
   return mockStore({ auth, config });
 };
@@ -64,11 +64,11 @@ describe("LoginFormContainer props", () => {
       authenticated: true,
       authenticating: true,
       authenticationError: "It's a trap",
-      loginURI: "/myoauth/start",
+      oauthLoginURI: "/myoauth/start",
     });
   });
 
-  it("does not receive loginURI if authProxyEnabled is false", () => {
+  it("does not receive oauthLoginURI if authProxyEnabled is false", () => {
     const authProxyEnabled = false;
     const store = makeStore(
       true,
@@ -86,7 +86,7 @@ describe("LoginFormContainer props", () => {
       authenticated: true,
       authenticating: true,
       authenticationError: "It's a trap",
-      loginURI: "",
+      oauthLoginURI: "",
     });
   });
 });
