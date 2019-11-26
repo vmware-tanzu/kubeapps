@@ -19,18 +19,18 @@ const defaultProps = {
 
 describe("when receiving ingresses", () => {
   it("fetches ingresses at mount time", () => {
+    const ingress = { name: "ing" } as ResourceRef;
     const mock = jest.fn();
-    shallow(
-      <AccessURLTable {...defaultProps} ingressRefs={[{} as ResourceRef]} getResource={mock} />,
-    );
-    expect(mock).toHaveBeenCalled();
+    shallow(<AccessURLTable {...defaultProps} ingressRefs={[ingress]} getResource={mock} />);
+    expect(mock).toHaveBeenCalledWith(ingress);
   });
 
-  it("fetches new ingresses when received", () => {
+  it("fetches when new ingress refs received", () => {
+    const ingress = { name: "ing" } as ResourceRef;
     const mock = jest.fn();
     const wrapper = shallow(<AccessURLTable {...defaultProps} getResource={mock} />);
-    wrapper.setProps({ ingressRefs: [{} as ResourceRef] });
-    expect(mock).toHaveBeenCalled();
+    wrapper.setProps({ ingressRefs: [ingress] });
+    expect(mock).toHaveBeenCalledWith(ingress);
   });
 });
 
