@@ -163,25 +163,25 @@ describe("Auth", () => {
     });
 
     it("uses the config to redirect to a logout URL", () => {
-      const logoutURI = "/example/logout";
+      const oauthLogoutURI = "/example/logout";
 
       Auth.unsetAuthCookie({
-        loginURI: "",
+        oauthLoginURI: "",
         authProxyEnabled: true,
-        logoutURI,
+        oauthLogoutURI,
         namespace: "ns",
         appVersion: "2",
       });
 
-      expect(mockedAssign).toBeCalledWith(logoutURI);
+      expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
       expect(mockedLocalStorageRemove).toBeCalled();
     });
 
     it("defaults to the oauth2-proxy logout URI", () => {
       Auth.unsetAuthCookie({
-        loginURI: "",
+        oauthLoginURI: "",
         authProxyEnabled: true,
-        logoutURI: "",
+        oauthLogoutURI: "",
         namespace: "ns",
         appVersion: "2",
       });

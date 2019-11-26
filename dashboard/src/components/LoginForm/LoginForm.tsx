@@ -10,7 +10,7 @@ interface ILoginFormProps {
   authenticated: boolean;
   authenticating: boolean;
   authenticationError: string | undefined;
-  loginURI: string;
+  oauthLoginURI: string;
   authenticate: (token: string) => any;
   checkCookieAuthentication: () => void;
   location: Location;
@@ -24,7 +24,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
   public state: ILoginFormState = { token: "" };
 
   public componentDidMount() {
-    if (this.props.loginURI) {
+    if (this.props.oauthLoginURI) {
       this.props.checkCookieAuthentication();
     }
   }
@@ -54,7 +54,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
               <h2>
                 <Lock /> Login
               </h2>
-              {this.props.loginURI ? this.oauthLogin() : this.tokenLogin()}
+              {this.props.oauthLoginURI ? this.oauthLogin() : this.tokenLogin()}
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
           </a>{" "}
           for more info about using authentication providers with Kubeapps.
         </p>
-        <a href={this.props.loginURI} className="button button-accent">
+        <a href={this.props.oauthLoginURI} className="button button-accent">
           Login
         </a>
       </>
