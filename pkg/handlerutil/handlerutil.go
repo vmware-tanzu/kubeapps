@@ -19,13 +19,6 @@ func (h WithParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h(w, req, vars)
 }
 
-// WithoutParams can be used to wrap handlers that doesn't take params
-type WithoutParams func(http.ResponseWriter, *http.Request)
-
-func (h WithoutParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	h(w, req)
-}
-
 func isNotFound(err error) bool {
 	return strings.Contains(err.Error(), "not found")
 }

@@ -236,7 +236,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 }
 
 // ListAllReleases list all releases that Tiller stores
-func (h *TillerProxy) ListAllReleases(w http.ResponseWriter, req *http.Request) {
+func (h *TillerProxy) ListAllReleases(w http.ResponseWriter, req *http.Request, _ handlerutil.Params) {
 	apps, err := h.ProxyClient.ListReleases("", h.ListLimit, req.URL.Query().Get("statuses"))
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)

@@ -157,7 +157,7 @@ func main() {
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handlerutil.WithoutParams(h.ListAllReleases)),
+		negroni.Wrap(handlerutil.WithParams(h.ListAllReleases)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,

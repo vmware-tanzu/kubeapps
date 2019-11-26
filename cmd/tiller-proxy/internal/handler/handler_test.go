@@ -30,6 +30,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	authFake "github.com/kubeapps/kubeapps/pkg/auth/fake"
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
+	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	proxyFake "github.com/kubeapps/kubeapps/pkg/proxy/fake"
 )
 
@@ -444,7 +445,7 @@ func TestActions(t *testing.T) {
 		case "list":
 			handler.ListReleases(response, req, test.Params)
 		case "listall":
-			handler.ListAllReleases(response, req)
+			handler.ListAllReleases(response, req, make(handlerutil.Params))
 		default:
 			t.Errorf("Unexpected action %s", test.Action)
 		}
