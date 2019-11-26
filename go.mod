@@ -1,6 +1,6 @@
 module github.com/kubeapps/kubeapps
 
-go 1.12
+go 1.13
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
@@ -53,6 +53,7 @@ require (
 	google.golang.org/appengine v1.2.0 // indirect
 	google.golang.org/genproto v0.0.0-20181016170114-94acd270e44e // indirect
 	google.golang.org/grpc v1.16.0
+	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.0.0-20181005203742-357ec6384fa7
 	k8s.io/apimachinery v0.0.0-20180913025736-6dd46049f395
