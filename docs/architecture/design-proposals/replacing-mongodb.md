@@ -97,3 +97,18 @@ Cons:
 [FoundationDB Document Layer](https://github.com/FoundationDB/fdb-document-layer) is an open source (Apache2 licensed)  stateless microserver that exposes a document-oriented database API. It claims to be compatible with MongoDB API but using FoundationDB Key-Value store as the backend.
 
 This would mean that we could potentially maintain the same API but there is not an offial helm chart and the official image is not maintained (last updated 6 month ago) so we can discard this option.
+
+## Proposal
+
+From the options listed above, the option that seems to fit our use case best with minimal impact is the point 3. Using PostgreSQL. Taking that into account, this is the list of task we would need to perform:
+
+ - Rename the `chartsvc` to something more generic: `assetsvc`. Move the code to this repository.
+ - Rename the `chart-repo` to something more generig: `asset-syncer`. Move the code to this repository.
+ - Adapt the CI to build and use those services.
+  - Adapt the chart to use those images instead.
+ - Isolate the actions that require a database connection and make them an interface.
+ - Implement that interface using PostgreSQL.
+ - Add the database choice in the chart.
+ - Update documentation.
+
+To avoid breaking changes, we should default to use MongoDB. Once we release a new major version, we can swith the default to PostgreSQL. To avoid maintaining the two approaches we may decide to remove support for MongoDB at that point.
