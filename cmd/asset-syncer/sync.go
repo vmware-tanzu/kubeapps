@@ -61,7 +61,9 @@ var syncCmd = &cobra.Command{
 		}
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
-		if err = syncRepo(dbSession, args[0], args[1], authorizationHeader); err != nil {
+
+		mongoManager := mongodbAssetManager{dbSession}
+		if err = mongoManager.Sync(args[0], args[1], authorizationHeader); err != nil {
 			logrus.Fatalf("Can't add chart repository to database: %v", err)
 		}
 
