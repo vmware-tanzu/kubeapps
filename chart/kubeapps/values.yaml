@@ -154,14 +154,14 @@ apprepository:
     registry: docker.io
     repository: kubeapps/apprepository-controller
     tag: latest
-  ## Bitnami Kubeapps Charts Repo image
+  ## Kubeapps assets synchronization tool
   ## Image used to perform chart repository syncs
-  ## ref: https://hub.docker.com/r/bitnami/kubeapps-chart-repo/tags/
+  ## ref: https://hub.docker.com/r/bitnami/kubeapps-asset-syncer/tags/
   ##
   syncImage:
     registry: docker.io
-    repository: bitnami/kubeapps-chart-repo
-    tag: 1.9.0-r2
+    repository: kubeapps/asset-syncer
+    tag: latest
   ## Initial charts repo proxies to configure
   ##
   initialReposProxy:
