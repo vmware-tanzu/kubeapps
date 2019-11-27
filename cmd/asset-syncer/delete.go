@@ -58,7 +58,9 @@ var deleteCmd = &cobra.Command{
 		if err != nil {
 			logrus.Fatalf("Can't connect to mongoDB: %v", err)
 		}
-		if err = deleteRepo(dbSession, args[0]); err != nil {
+
+		mongoManager := mongodbAssetManager{dbSession}
+		if err = mongoManager.Delete(args[0]); err != nil {
 			logrus.Fatalf("Can't delete chart repository %s from database: %v", args[0], err)
 		}
 

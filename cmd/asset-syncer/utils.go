@@ -77,6 +77,15 @@ func init() {
 	}
 }
 
+type assetManager interface {
+	Delete(repo string) error
+	Sync(repo, url, authorizationHeader string) error
+}
+
+type mongodbAssetManager struct {
+	DBSession datastore.Session
+}
+
 // Syncing is performed in the following steps:
 // 1. Update database to match chart metadata from index
 // 2. Concurrently process icons for charts (concurrently)
@@ -86,7 +95,7 @@ func init() {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func syncRepo(dbSession datastore.Session, repoName, repoURL string, authorizationHeader string) error {
+func (m *mongodbAssetManager) Sync(repoName, repoURL string, authorizationHeader string) error {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -105,7 +114,7 @@ func syncRepo(dbSession datastore.Session, repoName, repoURL string, authorizati
 	}
 
 	// Check if the repo has been already processed
-	if repoAlreadyProcessed(dbSession, repoName, repoChecksum) {
+	if repoAlreadyProcessed(m.DBSession, repoName, repoChecksum) {
 		log.WithFields(log.Fields{"url": repoURL}).Info("Skipping repository since there are no updates")
 		return nil
 	}
@@ -119,7 +128,7 @@ func syncRepo(dbSession datastore.Session, repoName, repoURL string, authorizati
 	if len(charts) == 0 {
 		return errors.New("no charts in repository index")
 	}
-	err = importCharts(dbSession, charts)
+	err = importCharts(m.DBSession, charts)
 	if err != nil {
 		return err
 	}
@@ -133,7 +142,7 @@ func syncRepo(dbSession datastore.Session, repoName, repoURL string, authorizati
 	log.Debugf("starting %d workers", numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go importWorker(dbSession, &wg, iconJobs, chartFilesJobs)
+		go importWorker(m.DBSession, &wg, iconJobs, chartFilesJobs)
 	}
 
 	// Enqueue jobs to process chart icons
@@ -167,7 +176,7 @@ func syncRepo(dbSession datastore.Session, repoName, repoURL string, authorizati
 	wg.Wait()
 
 	// Update cache in the database
-	if err = updateLastCheck(dbSession, repoName, repoChecksum, time.Now()); err != nil {
+	if err = updateLastCheck(m.DBSession, repoName, repoChecksum, time.Now()); err != nil {
 		return err
 	}
 	log.WithFields(log.Fields{"url": repoURL}).Info("Stored repository update in cache")
@@ -199,8 +208,8 @@ func updateLastCheck(dbSession datastore.Session, repoName string, checksum stri
 	return err
 }
 
-func deleteRepo(dbSession datastore.Session, repoName string) error {
-	db, closer := dbSession.DB()
+func (m *mongodbAssetManager) Delete(repoName string) error {
+	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(chartCollection).RemoveAll(bson.M{
 		"repo.name": repoName,

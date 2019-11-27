@@ -183,7 +183,8 @@ func Test_syncURLInvalidity(t *testing.T) {
 	dbSession := mockstore.NewMockSession(&m)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := syncRepo(dbSession, "test", tt.repoURL, "")
+			mongoManager := mongodbAssetManager{dbSession}
+			err := mongoManager.Sync("test", tt.repoURL, "")
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}
@@ -341,7 +342,8 @@ func Test_DeleteRepo(t *testing.T) {
 	})
 	dbSession := mockstore.NewMockSession(m)
 
-	err := deleteRepo(dbSession, "test")
+	mongoManager := mongodbAssetManager{dbSession}
+	err := mongoManager.Delete("test")
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}
@@ -622,7 +624,8 @@ func Test_emptyChartRepo(t *testing.T) {
 	m := mock.Mock{}
 	m.On("One", &repoCheck{}).Return(nil)
 	dbSession := mockstore.NewMockSession(&m)
-	err := syncRepo(dbSession, "testRepo", "https://my.examplerepo.com", "")
+	mongoManager := mongodbAssetManager{dbSession}
+	err := mongoManager.Sync("testRepo", "https://my.examplerepo.com", "")
 	assert.ExistsErr(t, err, "Failed Request")
 }
 
