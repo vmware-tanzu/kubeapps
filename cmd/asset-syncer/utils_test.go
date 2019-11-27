@@ -229,9 +229,9 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 		userAgentComment  string
 		expectedUserAgent string
 	}{
-		{"default user agent", "", "", "chart-repo/devel"},
-		{"custom version no app", "1.0", "", "chart-repo/1.0"},
-		{"custom version and app", "1.0", "monocular/1.2", "chart-repo/1.0 (monocular/1.2)"},
+		{"default user agent", "", "", "asset-syncer/devel"},
+		{"custom version no app", "1.0", "", "asset-syncer/1.0"},
+		{"custom version and app", "1.0", "monocular/1.2", "asset-syncer/1.0 (monocular/1.2)"},
 	}
 
 	for _, tt := range tests {
