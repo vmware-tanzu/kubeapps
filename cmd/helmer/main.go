@@ -20,9 +20,13 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 )
 
+const driverEnvVar = "HELM_DRIVER"
+const defaultHelmDriver agent.DriverType = agent.Memory
+
 var (
 	settings         environment.EnvSettings
 	chartsvcURL      string
+	helmDriverArg    string
 	userAgentComment string
 	listLimit        int
 	timeout          int64
@@ -31,6 +35,7 @@ var (
 func init() {
 	settings.AddFlags(pflag.CommandLine) // necessary???
 	pflag.StringVar(&chartsvcURL, "chartsvc-url", "https://kubeapps-internal-chartsvc:8080", "URL to the internal chartsvc")
+	pflag.StringVar(&helmDriverArg, "helm-driver", "", "which Helm driver type to use")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests") // necessary???
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
@@ -46,8 +51,19 @@ func main() {
 		Timeout:   timeout,
 	}
 
+	// Will panic below if an invalid driver type is provided.
+	driverType := defaultHelmDriver
+	if helmDriverArg != "" {
+		driverType = agent.ParseDriverType(helmDriverArg)
+	} else {
+		// CLI argument was not provided; check environment variable.
+		helmDriverEnv := os.Getenv(driverEnvVar)
+		if helmDriverEnv != "" {
+			driverType = agent.ParseDriverType(helmDriverEnv)
+		}
+	}
+	withAgentConfig := handler.WithAgentConfig(driverType, options)
 	r := mux.NewRouter()
-	withAgentConfig := handler.WithAgentConfig(options)
 
 	// Routes
 	// Auth not necessary here with Helm 3 because it's done by Kubernetes.

@@ -1,8 +1,6 @@
 package agent
 
 import (
-	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/kubeapps/kubeapps/pkg/proxy"
@@ -16,7 +14,13 @@ import (
 	"k8s.io/klog"
 )
 
-const driverEnvVar = "HELM_DRIVER"
+type DriverType string
+
+const (
+	Secret    DriverType = "SECRET"
+	ConfigMap DriverType = "CONFIGMAP"
+	Memory    DriverType = "MEMORY"
+)
 
 type Options struct {
 	ListLimit int
@@ -45,7 +49,7 @@ func ListReleases(config Config, namespace string, status string) ([]proxy.AppOv
 	return appOverviews, nil
 }
 
-func NewActionConfig(token, namespace string) *action.Configuration {
+func NewActionConfig(driver DriverType, token, namespace string) *action.Configuration {
 	actionConfig := new(action.Configuration)
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -54,7 +58,7 @@ func NewActionConfig(token, namespace string) *action.Configuration {
 	config.BearerToken = token
 	config.BearerTokenFile = ""
 	clientset, err := kubernetes.NewForConfig(config)
-	store := createStorage(os.Getenv(driverEnvVar), namespace, clientset)
+	store := createStorage(driver, namespace, clientset)
 	actionConfig.RESTClientGetter = nil
 	actionConfig.KubeClient = kube.New(nil)
 	actionConfig.Releases = store
@@ -62,25 +66,38 @@ func NewActionConfig(token, namespace string) *action.Configuration {
 	return actionConfig
 }
 
-func createStorage(driverType, namespace string, clientset *kubernetes.Clientset) *storage.Storage {
+func createStorage(driverType DriverType, namespace string, clientset *kubernetes.Clientset) *storage.Storage {
 	var store *storage.Storage
 	switch driverType {
-	case "", "secret", "secrets":
+	case Secret:
 		d := driver.NewSecrets(clientset.CoreV1().Secrets(namespace))
 		d.Log = klog.Infof
 		store = storage.Init(d)
-	case "configmap", "configmaps":
+	case ConfigMap:
 		d := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(namespace))
 		d.Log = klog.Infof
 		store = storage.Init(d)
-	case "memory":
+	case Memory:
 		d := driver.NewMemory()
 		store = storage.Init(d)
 	default:
-		// Not sure what to do here.
-		panic(fmt.Sprintf("Unknown value of environment variable %s: %s", driverEnvVar, driverType))
+		// No (real) enums/ADTs in Go, so no static guarantee against this case.
+		panic("Invalid Helm driver type: " + driverType)
 	}
 	return store
+}
+
+func ParseDriverType(raw string) DriverType {
+	switch raw {
+	case "secret", "secrets":
+		return Secret
+	case "configmap", "configmaps":
+		return ConfigMap
+	case "memory":
+		return Memory
+	default:
+		panic("Invalid Helm driver type: " + raw)
+	}
 }
 
 func appOverviewFromRelease(r *release.Release) proxy.AppOverview {

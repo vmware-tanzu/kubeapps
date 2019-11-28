@@ -24,14 +24,14 @@ type dependentHandler func(cfg agent.Config, w http.ResponseWriter, req *http.Re
 // WithAgentConfig takes a dependentHandler and creates a regular (WithParams) handler that,
 // for every request, will create an agent config for itself.
 // Written in a curried fashion for convenient usage; see cmd/helmer/main.go.
-func WithAgentConfig(options agent.Options) func(f dependentHandler) handlerutil.WithParams {
+func WithAgentConfig(driverType agent.DriverType, options agent.Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 			namespace := params[namespaceParam]
 			token := extractToken(req.Header.Get(authHeader))
 			cfg := agent.Config{
 				AgentOptions: options,
-				ActionConfig: agent.NewActionConfig(token, namespace),
+				ActionConfig: agent.NewActionConfig(driverType, token, namespace),
 			}
 			f(cfg, w, req, params)
 		}
