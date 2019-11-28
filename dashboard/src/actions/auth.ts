@@ -81,6 +81,10 @@ export function checkCookieAuthentication(): ThunkAction<
   AuthAction
 > {
   return async dispatch => {
+    // The call to authenticate below will also dispatch authenticating,
+    // but we dispatch it early so that the login screen is shown as
+    // loading while we query isAuthenticatedWithCookie().
+    dispatch(authenticating());
     const isAuthed = await Auth.isAuthenticatedWithCookie();
     if (isAuthed) {
       dispatch(authenticate("", true));

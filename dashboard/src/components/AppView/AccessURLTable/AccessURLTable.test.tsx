@@ -4,16 +4,33 @@ import * as React from "react";
 
 import itBehavesLike from "../../../shared/specs";
 
+import ResourceRef from "shared/ResourceRef";
 import LoadingWrapper from "../../../components/LoadingWrapper";
 import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
 import AccessURLItem from "./AccessURLItem";
 import AccessURLTable from "./AccessURLTable";
 
-describe("componentDidMount", () => {
-  it("fetches ingresses", () => {
+const defaultProps = {
+  services: [],
+  ingresses: [],
+  ingressRefs: [],
+  getResource: jest.fn(),
+};
+
+describe("when receiving ingresses", () => {
+  it("fetches ingresses at mount time", () => {
+    const ingress = { name: "ing" } as ResourceRef;
     const mock = jest.fn();
-    shallow(<AccessURLTable services={[]} ingresses={[]} fetchIngresses={mock} />);
-    expect(mock).toHaveBeenCalled();
+    shallow(<AccessURLTable {...defaultProps} ingressRefs={[ingress]} getResource={mock} />);
+    expect(mock).toHaveBeenCalledWith(ingress);
+  });
+
+  it("fetches when new ingress refs received", () => {
+    const ingress = { name: "ing" } as ResourceRef;
+    const mock = jest.fn();
+    const wrapper = shallow(<AccessURLTable {...defaultProps} getResource={mock} />);
+    wrapper.setProps({ ingressRefs: [ingress] });
+    expect(mock).toHaveBeenCalledWith(ingress);
   });
 });
 
@@ -21,29 +38,21 @@ context("when fetching ingresses or services", () => {
   itBehavesLike("aLoadingComponent", {
     component: AccessURLTable,
     props: {
+      ...defaultProps,
       ingresses: [{ isFetching: true }],
-      services: [],
-      fetchIngresses: jest.fn(),
-      watchServices: jest.fn(),
-      closeWatches: jest.fn(),
     },
   });
   itBehavesLike("aLoadingComponent", {
     component: AccessURLTable,
     props: {
-      ingresses: [],
+      ...defaultProps,
       services: [{ isFetching: true }],
-      fetchIngresses: jest.fn(),
-      watchServices: jest.fn(),
-      closeWatches: jest.fn(),
     },
   });
 });
 
 it("renders a message if there are no services or ingresses", () => {
-  const wrapper = shallow(
-    <AccessURLTable services={[]} ingresses={[]} fetchIngresses={jest.fn()} />,
-  );
+  const wrapper = shallow(<AccessURLTable {...defaultProps} />);
   expect(
     wrapper
       .find(LoadingWrapper)
@@ -74,9 +83,7 @@ context("when the app contains services", () => {
       } as IServiceStatus,
     } as IResource;
     const services = [{ isFetching: false, item: service }];
-    const wrapper = shallow(
-      <AccessURLTable services={services} ingresses={[]} fetchIngresses={jest.fn()} />,
-    );
+    const wrapper = shallow(<AccessURLTable {...defaultProps} services={services} />);
     expect(
       wrapper
         .find(LoadingWrapper)
@@ -100,9 +107,7 @@ context("when the app contains services", () => {
       } as IServiceStatus,
     } as IResource;
     const services = [{ isFetching: false, item: service }];
-    const wrapper = shallow(
-      <AccessURLTable services={services} ingresses={[]} fetchIngresses={jest.fn()} />,
-    );
+    const wrapper = shallow(<AccessURLTable {...defaultProps} services={services} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
@@ -127,9 +132,7 @@ context("when the app contains ingresses", () => {
       } as IIngressSpec,
     } as IResource;
     const ingresses = [{ isFetching: false, item: ingress }];
-    const wrapper = shallow(
-      <AccessURLTable services={[]} ingresses={ingresses} fetchIngresses={jest.fn()} />,
-    );
+    const wrapper = shallow(<AccessURLTable {...defaultProps} ingresses={ingresses} />);
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
@@ -169,7 +172,7 @@ context("when the app contains services and ingresses", () => {
     } as IResource;
     const ingresses = [{ isFetching: false, item: ingress }];
     const wrapper = shallow(
-      <AccessURLTable services={services} ingresses={ingresses} fetchIngresses={jest.fn()} />,
+      <AccessURLTable {...defaultProps} services={services} ingresses={ingresses} />,
     );
     expect(wrapper.find(AccessURLItem)).toExist();
     expect(wrapper).toMatchSnapshot();
@@ -181,7 +184,7 @@ context("when the app contains resources with errors", () => {
     const services = [{ isFetching: false, error: new Error("could not find Service") }];
     const ingresses = [{ isFetching: false, error: new Error("could not find Ingress") }];
     const wrapper = shallow(
-      <AccessURLTable services={services} ingresses={ingresses} fetchIngresses={jest.fn()} />,
+      <AccessURLTable {...defaultProps} services={services} ingresses={ingresses} />,
     );
 
     // The Service error is not shown, as it is filtered out because without the

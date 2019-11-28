@@ -1,5 +1,7 @@
 {
   "namespace": "default",
   "appVersion": "DEVEL",
-  "logoutURI": "/oauth2/sign_out"
+  "authProxyEnabled": false,
+  "oauthLoginURI": "/oauth2/start",
+  "oauthLogoutURI": "/oauth2/sign_out"
 }

@@ -30,7 +30,7 @@ beforeEach(() => {
       state,
     },
     config: {
-      logoutURI: "/log/out",
+      oauthLogoutURI: "/log/out",
     },
   });
 });
@@ -104,6 +104,9 @@ describe("OIDC authentication", () => {
   it("dispatches authenticating and auth ok if valid", () => {
     Auth.isAuthenticatedWithCookie = jest.fn(() => true);
     const expectedActions = [
+      {
+        type: getType(actions.auth.authenticating),
+      },
       {
         type: getType(actions.auth.authenticating),
       },
