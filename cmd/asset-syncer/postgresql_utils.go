@@ -19,7 +19,6 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -55,63 +54,25 @@ type postgresAssetManager struct {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *postgresAssetManager) Sync(repoName, repoURL string, authorizationHeader string) error {
-	url, err := parseRepoURL(repoURL)
-	if err != nil {
-		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
-		return err
-	}
-
-	r := repo{Name: repoName, URL: url.String(), AuthorizationHeader: authorizationHeader}
-	repoBytes, err := fetchRepoIndex(r)
-	if err != nil {
-		return err
-	}
-
-	repoChecksum, err := getSha256(repoBytes)
-	if err != nil {
-		return err
-	}
-
-	// Check if the repo has been already processed
-	if m.repoAlreadyProcessed(repoName, repoChecksum) {
-		log.WithFields(log.Fields{"url": repoURL}).Info("Skipping repository since there are no updates")
-		return nil
-	}
-
-	index, err := parseRepoIndex(repoBytes)
-	if err != nil {
-		return err
-	}
-
-	charts := chartsFromIndex(index, r)
-	if len(charts) == 0 {
-		return errors.New("no charts in repository index")
-	}
-	err = m.importCharts(charts)
+func (m *postgresAssetManager) Sync(charts []chart) error {
+	err := m.importCharts(charts)
 	if err != nil {
 		return err
 	}
 
 	// TODO(andresmgot): Fetch and store chart icons
 
-	// Update cache in the database
-	if err = m.updateLastCheck(repoName, repoChecksum, time.Now()); err != nil {
-		return err
-	}
-	log.WithFields(log.Fields{"url": repoURL}).Info("Stored repository update in cache")
-
 	return nil
 }
 
-func (m *postgresAssetManager) repoAlreadyProcessed(repoName, repoChecksum string) bool {
+func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum string) bool {
 	var lastChecksum string
 	row := m.db.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = '%s'", repositoryTable, repoName))
 	err := row.Scan(&lastChecksum)
 	return err == nil && lastChecksum == repoChecksum
 }
 
-func (m *postgresAssetManager) updateLastCheck(repoName, checksum string, now time.Time) error {
+func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now time.Time) error {
 	query := fmt.Sprintf(`INSERT INTO %s (name, checksum, last_update)
 	VALUES ('%s', '%s', '%s')
 	ON CONFLICT (name) 

@@ -30,25 +30,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func Test_syncURLInvalidity(t *testing.T) {
-	tests := []struct {
-		name    string
-		repoURL string
-	}{
-		{"invalid URL", "not-a-url"},
-		{"invalid URL", "https//google.com"},
-	}
-	m := mock.Mock{}
-	dbSession := mockstore.NewMockSession(&m)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mongoManager := mongodbAssetManager{dbSession}
-			err := mongoManager.Sync("test", tt.repoURL, "")
-			assert.ExistsErr(t, err, tt.name)
-		})
-	}
-}
-
 func Test_importCharts(t *testing.T) {
 	m := &mock.Mock{}
 	// Ensure Upsert func is called with some arguments
@@ -56,8 +37,9 @@ func Test_importCharts(t *testing.T) {
 	m.On("RemoveAll", mock.Anything)
 	dbSession := mockstore.NewMockSession(m)
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
-	importCharts(dbSession, charts)
+	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com"})
+	manager := mongodbAssetManager{DBSession: dbSession}
+	manager.importCharts(charts)
 
 	m.AssertExpectations(t)
 	// The Bulk Upsert method takes an array that consists of a selector followed by an interface to upsert.
@@ -94,18 +76,20 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		m := mock.Mock{}
 		dbSession := mockstore.NewMockSession(&m)
 		c := chart{ID: "test/acs-engine-autoscaler"}
-		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
+		manager := mongodbAssetManager{DBSession: dbSession}
+		assert.NoErr(t, manager.fetchAndImportIcon(c))
 	})
 
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
+	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com"})
 
 	t.Run("failed download", func(t *testing.T) {
 		netClient = &badHTTPClient{}
 		c := charts[0]
 		m := mock.Mock{}
 		dbSession := mockstore.NewMockSession(&m)
-		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fetchAndImportIcon(dbSession, c))
+		manager := mongodbAssetManager{DBSession: dbSession}
+		assert.Err(t, fmt.Errorf("500 %s", c.Icon), manager.fetchAndImportIcon(c))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
@@ -113,7 +97,8 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		c := charts[0]
 		m := mock.Mock{}
 		dbSession := mockstore.NewMockSession(&m)
-		assert.Err(t, image.ErrFormat, fetchAndImportIcon(dbSession, c))
+		manager := mongodbAssetManager{DBSession: dbSession}
+		assert.Err(t, image.ErrFormat, manager.fetchAndImportIcon(c))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
@@ -122,7 +107,8 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		m := mock.Mock{}
 		dbSession := mockstore.NewMockSession(&m)
 		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": iconBytes(), "icon_content_type": "image/png"}}).Return(nil)
-		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
+		manager := mongodbAssetManager{DBSession: dbSession}
+		assert.NoErr(t, manager.fetchAndImportIcon(c))
 		m.AssertExpectations(t)
 	})
 
@@ -131,19 +117,20 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		c := chart{
 			ID:   "foo",
 			Icon: "https://foo/bar/logo.svg",
-			Repo: repo{},
+			Repo: &repo{},
 		}
 		m := mock.Mock{}
 		dbSession := mockstore.NewMockSession(&m)
 		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": []byte("foo"), "icon_content_type": "image/svg"}}).Return(nil)
-		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
+		manager := mongodbAssetManager{DBSession: dbSession}
+		assert.NoErr(t, manager.fetchAndImportIcon(c))
 		m.AssertExpectations(t)
 	})
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient1s"})
+	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient1s"})
 	cv := charts[0].ChartVersions[0]
 
 	t.Run("http error", func(t *testing.T) {
@@ -151,7 +138,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if readme already exists to force fetching"))
 		dbSession := mockstore.NewMockSession(&m)
 		netClient = &badHTTPClient{}
-		assert.Err(t, io.EOF, fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv))
+		manager := mongodbAssetManager{DBSession: dbSession}
+		assert.Err(t, io.EOF, manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -161,7 +149,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
 		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, "", "", "", charts[0].Repo, cv.Digest})
 		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
+		manager := mongodbAssetManager{DBSession: dbSession}
+		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -173,7 +162,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
 		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
 		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
+		manager := mongodbAssetManager{DBSession: dbSession}
+		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -185,7 +175,8 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
 		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
 		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
+		manager := mongodbAssetManager{DBSession: dbSession}
+		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -195,20 +186,19 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		// don't return an error when checking if files already exists
 		m.On("One", mock.Anything).Return(nil)
 		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
+		manager := mongodbAssetManager{DBSession: dbSession}
+		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
 		assert.NoErr(t, err)
 		m.AssertNotCalled(t, "UpsertId", mock.Anything, mock.Anything)
 	})
 }
 
 func Test_emptyChartRepo(t *testing.T) {
-	netClient = &emptyChartRepoHTTPClient{}
-	m := mock.Mock{}
-	m.On("One", &repoCheck{}).Return(nil)
-	dbSession := mockstore.NewMockSession(&m)
-	mongoManager := mongodbAssetManager{dbSession}
-	err := mongoManager.Sync("testRepo", "https://my.examplerepo.com", "")
-	assert.ExistsErr(t, err, "Failed Request")
+	r := &repo{Name: "testRepo", URL: "https://my.examplerepo.com", Checksum: "123", Content: emptyRepoIndexYAMLBytes}
+	i, err := parseRepoIndex(emptyRepoIndexYAMLBytes)
+	assert.NoErr(t, err)
+	charts := chartsFromIndex(i, r)
+	assert.Equal(t, len(charts), 0, "charts")
 }
 
 func Test_repoAlreadyProcessed(t *testing.T) {
@@ -230,7 +220,8 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 				*args.Get(0).(*repoCheck) = tt.mockedLastCheck
 			}).Return(nil)
 			dbSession := mockstore.NewMockSession(&m)
-			res := repoAlreadyProcessed(dbSession, "", tt.checksum)
+			manager := mongodbAssetManager{DBSession: dbSession}
+			res := manager.RepoAlreadyProcessed("", tt.checksum)
 			if res != tt.processed {
 				t.Errorf("Expected alreadyProcessed to be %v got %v", tt.processed, res)
 			}
@@ -245,7 +236,8 @@ func Test_updateLastCheck(t *testing.T) {
 	now := time.Now()
 	m.On("UpsertId", repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
 	dbSession := mockstore.NewMockSession(&m)
-	err := updateLastCheck(dbSession, repoName, checksum, now)
+	manager := mongodbAssetManager{DBSession: dbSession}
+	err := manager.UpdateLastCheck(repoName, checksum, now)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}

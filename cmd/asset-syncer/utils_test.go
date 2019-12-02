@@ -164,35 +164,51 @@ func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, erro
 	return w.Result(), nil
 }
 
+func Test_syncURLInvalidity(t *testing.T) {
+	tests := []struct {
+		name    string
+		repoURL string
+	}{
+		{"invalid URL", "not-a-url"},
+		{"invalid URL", "https//google.com"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := getRepo("test", tt.repoURL, "")
+			assert.ExistsErr(t, err, tt.name)
+		})
+	}
+}
+
 func Test_fetchRepoIndex(t *testing.T) {
 	tests := []struct {
 		name string
-		r    repo
+		url  string
 	}{
-		{"valid HTTP URL", repo{URL: "http://my.examplerepo.com"}},
-		{"valid HTTPS URL", repo{URL: "https://my.examplerepo.com"}},
-		{"valid trailing URL", repo{URL: "https://my.examplerepo.com/"}},
-		{"valid subpath URL", repo{URL: "https://subpath.test/subpath/"}},
-		{"valid URL with trailing spaces", repo{URL: "https://subpath.test/subpath/  "}},
-		{"valid URL with leading spaces", repo{URL: "  https://subpath.test/subpath/"}},
+		{"valid HTTP URL", "http://my.examplerepo.com"},
+		{"valid HTTPS URL", "https://my.examplerepo.com"},
+		{"valid trailing URL", "https://my.examplerepo.com/"},
+		{"valid subpath URL", "https://subpath.test/subpath/"},
+		{"valid URL with trailing spaces", "https://subpath.test/subpath/  "},
+		{"valid URL with leading spaces", "  https://subpath.test/subpath/"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			netClient = &goodHTTPClient{}
-			_, err := fetchRepoIndex(tt.r)
+			_, err := fetchRepoIndex(tt.url, "")
 			assert.NoErr(t, err)
 		})
 	}
 
 	t.Run("authenticated request", func(t *testing.T) {
 		netClient = &authenticatedHTTPClient{}
-		_, err := fetchRepoIndex(repo{URL: "https://my.examplerepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"})
+		_, err := fetchRepoIndex("https://my.examplerepo.com", "Bearer ThisSecretAccessTokenAuthenticatesTheClient")
 		assert.NoErr(t, err)
 	})
 
 	t.Run("failed request", func(t *testing.T) {
 		netClient = &badHTTPClient{}
-		_, err := fetchRepoIndex(repo{URL: "https://my.examplerepo.com"})
+		_, err := fetchRepoIndex("https://my.examplerepo.com", "")
 		assert.ExistsErr(t, err, "failed request")
 	})
 }
@@ -229,7 +245,7 @@ func Test_fetchRepoIndexUserAgent(t *testing.T) {
 
 			netClient = server.Client()
 
-			_, err := fetchRepoIndex(repo{URL: server.URL})
+			_, err := fetchRepoIndex(server.URL, "")
 			assert.NoErr(t, err)
 		})
 	}
@@ -258,7 +274,7 @@ func Test_parseRepoIndex(t *testing.T) {
 }
 
 func Test_chartsFromIndex(t *testing.T) {
-	r := repo{Name: "test", URL: "http://testrepo.com"}
+	r := &repo{Name: "test", URL: "http://testrepo.com"}
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	charts := chartsFromIndex(index, r)
 	assert.Equal(t, len(charts), 2, "number of charts")
@@ -274,7 +290,7 @@ func Test_chartsFromIndex(t *testing.T) {
 }
 
 func Test_newChart(t *testing.T) {
-	r := repo{Name: "test", URL: "http://testrepo.com"}
+	r := &repo{Name: "test", URL: "http://testrepo.com"}
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	c := newChart(index.Entries["wordpress"], r)
 	assert.Equal(t, c.Name, "wordpress", "correctly built")
@@ -285,7 +301,7 @@ func Test_newChart(t *testing.T) {
 }
 
 func Test_chartTarballURL(t *testing.T) {
-	r := repo{Name: "test", URL: "http://testrepo.com"}
+	r := &repo{Name: "test", URL: "http://testrepo.com"}
 	tests := []struct {
 		name   string
 		cv     chartVersion

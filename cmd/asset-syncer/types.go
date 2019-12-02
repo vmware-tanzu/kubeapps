@@ -24,6 +24,8 @@ type repo struct {
 	Name                string
 	URL                 string
 	AuthorizationHeader string `bson:"-"`
+	Checksum            string
+	Content             []byte
 }
 
 type maintainer struct {
@@ -34,7 +36,7 @@ type maintainer struct {
 type chart struct {
 	ID            string `bson:"_id"`
 	Name          string
-	Repo          repo
+	Repo          *repo
 	Description   string
 	Home          string
 	Keywords      []string
@@ -57,7 +59,7 @@ type chartFiles struct {
 	Readme string
 	Values string
 	Schema string
-	Repo   repo
+	Repo   *repo
 	Digest string
 }
 
