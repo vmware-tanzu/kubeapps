@@ -85,6 +85,8 @@ github.com/kubeapps/common v0.0.0-20180208112310-707d33bc9333 h1:RRLxBMt+t732hFT
 github.com/kubeapps/common v0.0.0-20180208112310-707d33bc9333/go.mod h1:TsgmjeDpbftqhwPKInJ3v+l+xbHs4goiB6DFb2WqY9c=
 github.com/kubeapps/common v0.0.0-20190307100129-fcd6537ca4e3 h1:KgYtsAFQPknkG9eZoQ5VsH7kPQV9nUvYaWnIO0SSyOE=
 github.com/kubeapps/common v0.0.0-20190307100129-fcd6537ca4e3/go.mod h1:TsgmjeDpbftqhwPKInJ3v+l+xbHs4goiB6DFb2WqY9c=
+github.com/lib/pq v1.2.0 h1:LXpIM/LZ5xGFhOpXAQUIMM1HdyqzVYM13zNdjCEEcA0=
+github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/magiconair/properties v1.8.0/go.mod h1:PppfXfuXeibc/6YijjN8zIbojt8czPbwD3XqdrwzmxQ=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=

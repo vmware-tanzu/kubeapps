@@ -17,7 +17,10 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
 	"os"
+
+	"database/sql"
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/sirupsen/logrus"
@@ -33,19 +36,6 @@ var deleteCmd = &cobra.Command{
 			cmd.Help()
 			return
 		}
-		mongoURL, err := cmd.Flags().GetString("mongo-url")
-		if err != nil {
-			logrus.Fatal(err)
-		}
-		mongoDB, err := cmd.Flags().GetString("mongo-database")
-		if err != nil {
-			logrus.Fatal(err)
-		}
-		mongoUser, err := cmd.Flags().GetString("mongo-user")
-		if err != nil {
-			logrus.Fatal(err)
-		}
-		mongoPW := os.Getenv("MONGO_PASSWORD")
 		debug, err := cmd.Flags().GetBool("debug")
 		if err != nil {
 			logrus.Fatal(err)
@@ -53,14 +43,62 @@ var deleteCmd = &cobra.Command{
 		if debug {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
-		mongoConfig := datastore.Config{URL: mongoURL, Database: mongoDB, Username: mongoUser, Password: mongoPW}
-		dbSession, err := datastore.NewSession(mongoConfig)
-		if err != nil {
-			logrus.Fatalf("Can't connect to mongoDB: %v", err)
+		database, err := cmd.Flags().GetString("database-type")
+		var manager assetManager
+		if database == "mongodb" {
+			mongoURL, err := cmd.Flags().GetString("mongo-url")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			mongoDB, err := cmd.Flags().GetString("mongo-database")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			mongoUser, err := cmd.Flags().GetString("mongo-user")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			mongoPW := os.Getenv("MONGO_PASSWORD")
+			mongoConfig := datastore.Config{URL: mongoURL, Database: mongoDB, Username: mongoUser, Password: mongoPW}
+			dbSession, err := datastore.NewSession(mongoConfig)
+			if err != nil {
+				logrus.Fatalf("Can't connect to mongoDB: %v", err)
+			}
+			manager = &mongodbAssetManager{dbSession}
+		} else if database == "postgresql" {
+			pgHost, err := cmd.Flags().GetString("pg-host")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			pgPort, err := cmd.Flags().GetString("pg-port")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			pgDB, err := cmd.Flags().GetString("pg-database")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			pgUser, err := cmd.Flags().GetString("pg-user")
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			pgPW := os.Getenv("POSTGRESQL_PASSWORD")
+
+			connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", pgHost, pgPort, pgUser, pgPW, pgDB)
+			// TODO(andresmgot): Open the DB connection only when needed.
+			// We are opening the connection now to be able to test the Delete method
+			// but ideally this method should be mocked.
+			db, err := sql.Open("postgres", connStr)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			defer db.Close()
+			manager = &postgresAssetManager{db}
+		} else {
+			logrus.Fatalf("Unsupported database type %s", database)
 		}
 
-		mongoManager := mongodbAssetManager{dbSession}
-		if err = mongoManager.Delete(args[0]); err != nil {
+		if err = manager.Delete(args[0]); err != nil {
 			logrus.Fatalf("Can't delete chart repository %s from database: %v", args[0], err)
 		}
 

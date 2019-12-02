@@ -21,9 +21,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/rand"
-	"errors"
-	"fmt"
-	"image"
 	"image/color"
 	"io"
 	"io/ioutil"
@@ -33,14 +30,10 @@ import (
 	"path"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/arschles/assert"
 	"github.com/disintegration/imaging"
-	"github.com/globalsign/mgo/bson"
-	"github.com/kubeapps/common/datastore/mockstore"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/mock"
 )
 
 var validRepoIndexYAMLBytes, _ = ioutil.ReadFile("testdata/valid-index.yaml")
@@ -171,25 +164,6 @@ func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, erro
 	return w.Result(), nil
 }
 
-func Test_syncURLInvalidity(t *testing.T) {
-	tests := []struct {
-		name    string
-		repoURL string
-	}{
-		{"invalid URL", "not-a-url"},
-		{"invalid URL", "https//google.com"},
-	}
-	m := mock.Mock{}
-	dbSession := mockstore.NewMockSession(&m)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mongoManager := mongodbAssetManager{dbSession}
-			err := mongoManager.Sync("test", tt.repoURL, "")
-			assert.ExistsErr(t, err, tt.name)
-		})
-	}
-}
-
 func Test_fetchRepoIndex(t *testing.T) {
 	tests := []struct {
 		name string
@@ -308,158 +282,6 @@ func Test_newChart(t *testing.T) {
 	assert.Equal(t, c.Description, "new description!", "takes chart fields from latest entry")
 	assert.Equal(t, c.Repo, r, "repo set")
 	assert.Equal(t, c.ID, "test/wordpress", "id set")
-}
-
-func Test_importCharts(t *testing.T) {
-	m := &mock.Mock{}
-	// Ensure Upsert func is called with some arguments
-	m.On("Upsert", mock.Anything)
-	m.On("RemoveAll", mock.Anything)
-	dbSession := mockstore.NewMockSession(m)
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
-	importCharts(dbSession, charts)
-
-	m.AssertExpectations(t)
-	// The Bulk Upsert method takes an array that consists of a selector followed by an interface to upsert.
-	// So for x charts to upsert, there should be x*2 elements (each chart has it's own selector)
-	// e.g. [selector1, chart1, selector2, chart2, ...]
-	args := m.Calls[0].Arguments.Get(0).([]interface{})
-	assert.Equal(t, len(args), len(charts)*2, "number of selector, chart pairs to upsert")
-	for i := 0; i < len(args); i += 2 {
-		c := args[i+1].(chart)
-		assert.Equal(t, args[i], bson.M{"_id": "test/" + c.Name}, "selector")
-	}
-}
-
-func Test_DeleteRepo(t *testing.T) {
-	m := &mock.Mock{}
-	m.On("RemoveAll", bson.M{
-		"repo.name": "test",
-	})
-	m.On("RemoveAll", bson.M{
-		"_id": "test",
-	})
-	dbSession := mockstore.NewMockSession(m)
-
-	mongoManager := mongodbAssetManager{dbSession}
-	err := mongoManager.Delete("test")
-	if err != nil {
-		t.Errorf("failed to delete chart repo test: %v", err)
-	}
-	m.AssertExpectations(t)
-}
-
-func Test_fetchAndImportIcon(t *testing.T) {
-	t.Run("no icon", func(t *testing.T) {
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		c := chart{ID: "test/acs-engine-autoscaler"}
-		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
-	})
-
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com"})
-
-	t.Run("failed download", func(t *testing.T) {
-		netClient = &badHTTPClient{}
-		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fetchAndImportIcon(dbSession, c))
-	})
-
-	t.Run("bad icon", func(t *testing.T) {
-		netClient = &badIconClient{}
-		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		assert.Err(t, image.ErrFormat, fetchAndImportIcon(dbSession, c))
-	})
-
-	t.Run("valid icon", func(t *testing.T) {
-		netClient = &goodIconClient{}
-		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": iconBytes(), "icon_content_type": "image/png"}}).Return(nil)
-		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
-		m.AssertExpectations(t)
-	})
-
-	t.Run("valid SVG icon", func(t *testing.T) {
-		netClient = &svgIconClient{}
-		c := chart{
-			ID:   "foo",
-			Icon: "https://foo/bar/logo.svg",
-			Repo: repo{},
-		}
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": []byte("foo"), "icon_content_type": "image/svg"}}).Return(nil)
-		assert.NoErr(t, fetchAndImportIcon(dbSession, c))
-		m.AssertExpectations(t)
-	})
-}
-
-func Test_fetchAndImportFiles(t *testing.T) {
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient1s"})
-	cv := charts[0].ChartVersions[0]
-
-	t.Run("http error", func(t *testing.T) {
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if readme already exists to force fetching"))
-		dbSession := mockstore.NewMockSession(&m)
-		netClient = &badHTTPClient{}
-		assert.Err(t, io.EOF, fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv))
-	})
-
-	t.Run("file not found", func(t *testing.T) {
-		netClient = &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, "", "", "", charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("authenticated request", func(t *testing.T) {
-		netClient = &authenticatedTarballClient{c: charts[0]}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("valid tarball", func(t *testing.T) {
-		netClient = &goodTarballClient{c: charts[0]}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("file exists", func(t *testing.T) {
-		m := mock.Mock{}
-		// don't return an error when checking if files already exists
-		m.On("One", mock.Anything).Return(nil)
-		dbSession := mockstore.NewMockSession(&m)
-		err := fetchAndImportFiles(dbSession, charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertNotCalled(t, "UpsertId", mock.Anything, mock.Anything)
-	})
 }
 
 func Test_chartTarballURL(t *testing.T) {
@@ -619,61 +441,8 @@ func (h *emptyChartRepoHTTPClient) Do(req *http.Request) (*http.Response, error)
 	return w.Result(), nil
 }
 
-func Test_emptyChartRepo(t *testing.T) {
-	netClient = &emptyChartRepoHTTPClient{}
-	m := mock.Mock{}
-	m.On("One", &repoCheck{}).Return(nil)
-	dbSession := mockstore.NewMockSession(&m)
-	mongoManager := mongodbAssetManager{dbSession}
-	err := mongoManager.Sync("testRepo", "https://my.examplerepo.com", "")
-	assert.ExistsErr(t, err, "Failed Request")
-}
-
 func Test_getSha256(t *testing.T) {
 	sha, err := getSha256([]byte("this is a test"))
 	assert.Equal(t, err, nil, "Unable to get sha")
 	assert.Equal(t, sha, "2e99758548972a8e8822ad47fa1017ff72f06f3ff6a016851f45c398732bc50c", "Unable to get sha")
-}
-
-func Test_repoAlreadyProcessed(t *testing.T) {
-	tests := []struct {
-		name            string
-		checksum        string
-		mockedLastCheck repoCheck
-		processed       bool
-	}{
-		{"not processed yet", "bar", repoCheck{}, false},
-		{"already processed", "bar", repoCheck{Checksum: "bar"}, true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := mock.Mock{}
-			repo := &repoCheck{}
-			m.On("One", repo).Run(func(args mock.Arguments) {
-				*args.Get(0).(*repoCheck) = tt.mockedLastCheck
-			}).Return(nil)
-			dbSession := mockstore.NewMockSession(&m)
-			res := repoAlreadyProcessed(dbSession, "", tt.checksum)
-			if res != tt.processed {
-				t.Errorf("Expected alreadyProcessed to be %v got %v", tt.processed, res)
-			}
-		})
-	}
-}
-
-func Test_updateLastCheck(t *testing.T) {
-	m := mock.Mock{}
-	repoName := "foo"
-	checksum := "bar"
-	now := time.Now()
-	m.On("UpsertId", repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
-	dbSession := mockstore.NewMockSession(&m)
-	err := updateLastCheck(dbSession, repoName, checksum, now)
-	if err != nil {
-		t.Errorf("Unexpected error %v", err)
-	}
-	if len(m.Calls) != 1 {
-		t.Errorf("Expected one call got %d", len(m.Calls))
-	}
 }
