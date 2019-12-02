@@ -1,0 +1,84 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "frontend": {
+      "type": "object",
+      "title": "Frontend configuration",
+      "form": true,
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "title": "Number of replicas",
+          "form": true
+        }
+      }
+    },
+    "apprepository": {
+      "type": "object",
+      "title": "Chart repositories configuration",
+      "form": true,
+      "properties": {
+        "initialRepos": {
+          "type": "array",
+          "title": "Initial chart repositories",
+          "description": "Initial chart repositories to configure on Kubeapps",
+          "form": true
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "form": true,
+      "title": "Ingress Details",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "form": true,
+          "title": "Use a custom hostname",
+          "description": "Enable the ingress resource that allows you to access the Kubeapps dashboard."
+        },
+        "hostname": {
+          "type": "string",
+          "form": true,
+          "title": "Hostname",
+          "hidden": {
+            "condition": false,
+            "value": "ingress.enabled"
+          }
+        }
+      }
+    },
+    "mongodb": {
+      "type": "object",
+      "title": "MongoDB Details",
+      "form": true,
+      "properties": {
+        "persistence": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "form": true,
+              "title": "Enable persistence",
+              "description": "Enable persistence using Persistent Volume Claims"
+            },
+            "size": {
+              "type": "string",
+              "title": "Volume Size",
+              "form": true,
+              "render": "slider",
+              "sliderMin": 1,
+              "sliderMax": 100,
+              "sliderUnit": "Gi",
+              "hidden": {
+                "condition": false,
+                "value": "mongodb.persistence.enabled"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

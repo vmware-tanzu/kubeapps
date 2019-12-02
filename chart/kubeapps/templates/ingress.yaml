@@ -13,6 +13,15 @@ metadata:
     {{- end }}
 spec:
   rules:
+    {{- if .Values.ingress.hostname }}
+    - host: {{ .Values.ingress.hostname }}
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: {{ template "kubeapps.fullname" . }}
+            servicePort: http
+    {{- end }}
     {{- range .Values.ingress.hosts }}
     - host: {{ .name }}
       http:
@@ -22,12 +31,7 @@ spec:
             serviceName: {{ template "kubeapps.fullname" $ }}
             servicePort: http
     {{- end }}
-  tls:
-  {{- range .Values.ingress.hosts }}
-    {{- if .tls }}
-    - hosts:
-        - {{ .name }}
-      secretName: {{ .tlsSecret }}
-    {{- end }}
+  {{- if .Values.ingress.tls }}
+  tls: {{- toYaml .Values.ingress.tls | nindent 4 }}
   {{- end }}
 {{- end }}
