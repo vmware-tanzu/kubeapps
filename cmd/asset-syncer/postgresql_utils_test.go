@@ -17,6 +17,16 @@ func (d *mockDB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	return nil, nil
 }
 
+func (d *mockDB) Begin() (*sql.Tx, error) {
+	d.Called()
+	return nil, nil
+}
+
+func (d *mockDB) QueryRow(query string, args ...interface{}) *sql.Row {
+	d.Called(query, args)
+	return nil
+}
+
 func Test_DeletePGRepo(t *testing.T) {
 	repoName := "test"
 	m := &mockDB{&mock.Mock{}}
@@ -34,3 +44,5 @@ func Test_DeletePGRepo(t *testing.T) {
 	}
 	m.AssertExpectations(t)
 }
+
+// TODO(andresmgot): Write tests for Sync method
