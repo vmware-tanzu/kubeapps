@@ -174,7 +174,7 @@ func Test_syncURLInvalidity(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := getRepo("test", tt.repoURL, "")
+			_, _, err := getRepo("test", tt.repoURL, "")
 			assert.ExistsErr(t, err, tt.name)
 		})
 	}

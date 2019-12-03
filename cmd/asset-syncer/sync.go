@@ -101,7 +101,7 @@ var syncCmd = &cobra.Command{
 		}
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
-		r, err := getRepo(args[0], args[1], authorizationHeader)
+		r, repoContent, err := getRepo(args[0], args[1], authorizationHeader)
 		if err != nil {
 			logrus.Fatal(err)
 		}
@@ -112,7 +112,7 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		index, err := parseRepoIndex(r.Content)
+		index, err := parseRepoIndex(repoContent)
 		if err != nil {
 			logrus.Fatal(err)
 		}

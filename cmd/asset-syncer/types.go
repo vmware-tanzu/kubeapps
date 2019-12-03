@@ -25,7 +25,6 @@ type repo struct {
 	URL                 string
 	AuthorizationHeader string `bson:"-"`
 	Checksum            string
-	Content             []byte
 }
 
 type maintainer struct {
