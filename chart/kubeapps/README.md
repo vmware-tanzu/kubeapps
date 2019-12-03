@@ -109,7 +109,7 @@ To enable ingress integration, please set `ingress.enabled` to `true`
 
 ##### Hosts
 
-Most likely you will only want to have one hostname that maps to this Kubeapps installation (use the `ingress.hostname` parameter to set the hostname), however, it is possible to have more than one host. To facilitate this, the `ingress.hosts` object is an array.
+Most likely you will only want to have one hostname that maps to this Kubeapps installation (use the `ingress.hostname` parameter to set the hostname), however, it is possible to have more than one host. To facilitate this, the `ingress.extraHosts` object is an array.
 
 ##### Annotations
 
@@ -117,7 +117,9 @@ For annotations, please see [this document](https://github.com/kubernetes/ingres
 
 ##### TLS
 
-TLS can be configured using setting the `ingress.tls` array, you can choose the TLS secret name for each host setting `ingress.tls[].hosts` and `ingress.tls[].secretName` parameters. Please see [this example](https://github.com/kubernetes/contrib/tree/master/ingress/controllers/nginx/examples/tls) for more information.
+To enable TLS, please set `ingress.tls` to `true`. When enabling this parameter, the TLS certificates will be retrieved from a TLS secret with name *INGRESS_HOSTNAME-tls* (where *INGRESS_HOSTNAME* is a placeholder to be replaced with the hostname you set using the `ingress.hostname` parameter).
+
+You can use the `ingress.extraTls` to provide the TLS configuration for the extra hosts you set using the `ingress.extraHosts` array. Please see [this example](https://kubernetes.github.io/ingress-nginx/examples/tls-termination/) for more information.
 
 You can provide your own certificates using the `ingress.secrets` object. If your cluster has a [cert-manager](https://github.com/jetstack/cert-manager) add-on to automate the management and issuance of TLS certificates, set `ingress.certManager` boolean to true to enable the corresponding annotations for cert-manager. For a full list of configuration parameters related to configuring TLS can see the [values.yaml](values.yaml) file.
 

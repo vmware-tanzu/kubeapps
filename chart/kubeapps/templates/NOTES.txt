@@ -25,7 +25,7 @@ To access Kubeapps from outside your K8s cluster, follow the steps below:
 1. Get the Kubeapps URL and associate Kubeapps hostname to your cluster external IP:
 
    export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
-   echo "Kubeapps URL: http://{{ .Values.ingress.hostname }}/"
+   echo "Kubeapps URL: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.hostname }}/"
    echo "$CLUSTER_IP  {{ .Values.ingress.hostname }}" | sudo tee -a /etc/hosts
 
 {{- else }}

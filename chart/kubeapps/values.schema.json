@@ -14,15 +14,38 @@
         }
       }
     },
-    "apprepository": {
+    "dashboard": {
       "type": "object",
-      "title": "Chart repositories configuration",
+      "title": "Dashboard configuration",
       "form": true,
       "properties": {
-        "initialRepos": {
-          "type": "array",
-          "title": "Initial chart repositories",
-          "description": "Initial chart repositories to configure on Kubeapps",
+        "replicaCount": {
+          "type": "integer",
+          "title": "Number of replicas",
+          "form": true
+        }
+      }
+    },
+    "chartsvc": {
+      "type": "object",
+      "title": "Chartsvc configuration",
+      "form": true,
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "title": "Number of replicas",
+          "form": true
+        }
+      }
+    },
+    "tillerProxy": {
+      "type": "object",
+      "title": "Tiller Proxy configuration",
+      "form": true,
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "title": "Number of replicas",
           "form": true
         }
       }
@@ -30,7 +53,7 @@
     "ingress": {
       "type": "object",
       "form": true,
-      "title": "Ingress Details",
+      "title": "Ingress configuration",
       "properties": {
         "enabled": {
           "type": "boolean",
@@ -46,12 +69,63 @@
             "condition": false,
             "value": "ingress.enabled"
           }
+        },
+        "tls": {
+          "type": "boolean",
+          "form": true,
+          "title": "Enable TLS configuration",
+          "hidden": {
+            "condition": false,
+            "value": "ingress.enabled"
+          }
+        }
+      }
+    },
+    "authProxy": {
+      "type": "object",
+      "title": "OIDC Proxy configuration",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "form": true,
+          "title": "Enable OIDC proxy",
+          "description": "Use an OIDC provider in order to manage accounts, groups and roles with a single application"
+        },
+        "provider": {
+          "type": "string",
+          "form": true,
+          "title": "Identity Provider name",
+          "description": "See https://pusher.github.io/oauth2_proxy/auth-configuration to find available providers",
+          "hidden": {
+            "condition": false,
+            "value": "authProxy.enabled"
+          }
+        },
+        "clientID": {
+          "type": "string",
+          "form": true,
+          "title": "Client ID:",
+          "description": "Client ID of the Identity Provider",
+          "hidden": {
+            "condition": false,
+            "value": "authProxy.enabled"
+          }
+        },
+        "clientSecret": {
+          "type": "string",
+          "form": true,
+          "title": "Client Secret",
+          "description": "Secret used to validate the Client ID",
+          "hidden": {
+            "condition": false,
+            "value": "authProxy.enabled"
+          }
         }
       }
     },
     "mongodb": {
       "type": "object",
-      "title": "MongoDB Details",
+      "title": "MongoDB configuration",
       "form": true,
       "properties": {
         "persistence": {
