@@ -39,10 +39,25 @@ type postgresDB interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	Begin() (*sql.Tx, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
+	Close() error
 }
 
 type postgresAssetManager struct {
-	db postgresDB
+	connStr string
+	db      postgresDB
+}
+
+func (m *postgresAssetManager) Init() error {
+	db, err := sql.Open("postgres", m.connStr)
+	if err != nil {
+		return err
+	}
+	m.db = db
+	return nil
+}
+
+func (m *postgresAssetManager) Close() error {
+	return m.db.Close()
 }
 
 // Syncing is performed in the following steps:

@@ -22,6 +22,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	databaseType     string
+	databaseURL      string
+	databaseName     string
+	databaseUser     string
+	databasePassword string
+	debug            bool
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "asset-syncer",
 	Short: "Asset Synchronization utility",
@@ -38,21 +47,19 @@ func main() {
 }
 
 func init() {
-	cmds := []*cobra.Command{syncCmd, deleteCmd}
+	rootCmd.PersistentFlags().StringVar(&databaseType, "database-type", "mongodb", "Database to use. Choice: mongodb, postgresql")
+	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost", "MongoDB URL (see https://godoc.org/github.com/globalsign/mgo#Dial for format)")
+	rootCmd.PersistentFlags().StringVar(&databaseName, "database-name", "charts", "MongoDB database")
+	rootCmd.PersistentFlags().StringVar(&databaseUser, "database-user", "", "MongoDB user")
+	// see version.go
+	rootCmd.PersistentFlags().StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
 
+	databasePassword = os.Getenv("DB_PASSWORD")
+
+	cmds := []*cobra.Command{syncCmd, deleteCmd}
 	for _, cmd := range cmds {
 		rootCmd.AddCommand(cmd)
-		cmd.Flags().String("database-type", "mongodb", "Database to use. Choice: mongodb, postgresql")
-		cmd.Flags().String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/github.com/globalsign/mgo#Dial for format)")
-		cmd.Flags().String("mongo-database", "charts", "MongoDB database")
-		cmd.Flags().String("mongo-user", "", "MongoDB user")
-		cmd.Flags().String("pg-host", "localhost", "PostgreSQL Hostname")
-		cmd.Flags().String("pg-port", "5432", "PostgreSQL Port")
-		cmd.Flags().String("pg-database", "assets", "PostgreSQL database")
-		cmd.Flags().String("pg-user", "", "PostgreSQL user")
-		// see version.go
-		cmd.Flags().StringVarP(&userAgentComment, "user-agent-comment", "", "", "UserAgent comment used during outbound requests")
-		cmd.Flags().Bool("debug", false, "verbose logging")
 	}
 	rootCmd.AddCommand(versionCmd)
 }

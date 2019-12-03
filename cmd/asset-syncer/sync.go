@@ -17,13 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
-	"database/sql"
-
-	"github.com/kubeapps/common/datastore"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -38,67 +34,16 @@ var syncCmd = &cobra.Command{
 			return
 		}
 
-		debug, err := cmd.Flags().GetBool("debug")
-		if err != nil {
-			logrus.Fatal(err)
-		}
 		if debug {
 			logrus.SetLevel(logrus.DebugLevel)
 		}
-		database, err := cmd.Flags().GetString("database-type")
-		var manager assetManager
-		if database == "mongodb" {
-			mongoURL, err := cmd.Flags().GetString("mongo-url")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			mongoDB, err := cmd.Flags().GetString("mongo-database")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			mongoUser, err := cmd.Flags().GetString("mongo-user")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			mongoPW := os.Getenv("MONGO_PASSWORD")
-			mongoConfig := datastore.Config{URL: mongoURL, Database: mongoDB, Username: mongoUser, Password: mongoPW}
-			dbSession, err := datastore.NewSession(mongoConfig)
-			if err != nil {
-				logrus.Fatalf("Can't connect to mongoDB: %v", err)
-			}
-			manager = &mongodbAssetManager{dbSession}
-		} else if database == "postgresql" {
-			pgHost, err := cmd.Flags().GetString("pg-host")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			pgPort, err := cmd.Flags().GetString("pg-port")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			pgDB, err := cmd.Flags().GetString("pg-database")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			pgUser, err := cmd.Flags().GetString("pg-user")
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			pgPW := os.Getenv("POSTGRESQL_PASSWORD")
 
-			connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", pgHost, pgPort, pgUser, pgPW, pgDB)
-			// TODO(andresmgot): Open the DB connection only when needed.
-			// We are opening the connection now to be able to test the Delete method
-			// but ideally this method should be mocked.
-			db, err := sql.Open("postgres", connStr)
-			if err != nil {
-				logrus.Fatal(err)
-			}
-			defer db.Close()
-			manager = &postgresAssetManager{db}
-		} else {
-			logrus.Fatalf("Unsupported database type %s", database)
+		manager, err := newManager(databaseType, databaseURL, databaseName, databaseUser, databasePassword)
+		if err != nil {
+			logrus.Fatal(err)
 		}
+		manager.Init()
+		defer manager.Close()
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
 		r, err := getRepo(args[0], args[1], authorizationHeader)
