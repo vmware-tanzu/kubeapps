@@ -1,4 +1,4 @@
-import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from "axios";
+import Axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 import { Action, Store } from "redux";
 import { ThunkDispatch } from "redux-thunk";
@@ -42,14 +42,24 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
       if (err.response && err.response.data.message) {
         message = err.response.data.message;
       }
-      switch (err.response && err.response.status) {
+
+      const dispatchErrorAndLogout = (m: string) => {
+        // Global action dispatch to log the user out
+        dispatch(actions.auth.authenticationError(m));
+        // Expire the session if we are using OIDC tokens and
+        // logout either way.
+        dispatch(actions.auth.expireSession());
+      };
+      const response = err.response as AxiosResponse;
+      switch (response && response.status) {
         case 401:
-          // Global action dispatch to log the user out
-          // Expire the session if we are using OIDC tokens
-          dispatch(actions.auth.authenticationError(message));
-          dispatch(actions.auth.expireSession());
+          dispatchErrorAndLogout(message);
           return Promise.reject(new UnauthorizedError(message));
         case 403:
+          // A 403 directly from the auth proxy requires reauthentication.
+          if (Auth.is403FromAuthProxy(response)) {
+            dispatchErrorAndLogout(message);
+          }
           return Promise.reject(new ForbiddenError(message));
         case 404:
           return Promise.reject(new NotFoundError(message));
