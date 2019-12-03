@@ -60,6 +60,9 @@ func (m *postgresAssetManager) Sync(charts []chart) error {
 		return err
 	}
 
+	// Remove charts no longer existing in index
+	m.removeMissingCharts(charts)
+
 	// TODO(andresmgot): Fetch and store chart icons
 
 	return nil
@@ -68,8 +71,11 @@ func (m *postgresAssetManager) Sync(charts []chart) error {
 func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum string) bool {
 	var lastChecksum string
 	row := m.db.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = '%s'", repositoryTable, repoName))
-	err := row.Scan(&lastChecksum)
-	return err == nil && lastChecksum == repoChecksum
+	if row != nil {
+		err := row.Scan(&lastChecksum)
+		return err == nil && lastChecksum == repoChecksum
+	}
+	return false
 }
 
 func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now time.Time) error {
@@ -83,7 +89,6 @@ func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now ti
 }
 
 func (m *postgresAssetManager) importCharts(charts []chart) error {
-	var chartIDs []string
 	txn, err := m.db.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -95,7 +100,6 @@ func (m *postgresAssetManager) importCharts(charts []chart) error {
 	}
 
 	for _, chart := range charts {
-		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
 		d, err := json.Marshal(chart)
 		if err != nil {
 			return err
@@ -116,14 +120,16 @@ func (m *postgresAssetManager) importCharts(charts []chart) error {
 		return err
 	}
 
-	err = txn.Commit()
-	if err != nil {
-		return err
-	}
+	return txn.Commit()
+}
 
-	// Remove charts no longer existing in index
+func (m *postgresAssetManager) removeMissingCharts(charts []chart) error {
+	var chartIDs []string
+	for _, chart := range charts {
+		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
+	}
 	chartIDsString := strings.Join(chartIDs, ", ")
-	_, err = m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s)", chartTable, chartIDsString))
+	_, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s)", chartTable, chartIDsString))
 	return err
 }
 

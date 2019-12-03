@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 )
@@ -45,4 +46,35 @@ func Test_DeletePGRepo(t *testing.T) {
 	m.AssertExpectations(t)
 }
 
-// TODO(andresmgot): Write tests for Sync method
+func Test_PGRepoAlreadyPropcessed(t *testing.T) {
+	m := &mockDB{&mock.Mock{}}
+	pgManager := &postgresAssetManager{m}
+	m.On("QueryRow", "SELECT checksum FROM repos WHERE name = 'foo'", []interface{}(nil))
+	pgManager.RepoAlreadyProcessed("foo", "123")
+	m.AssertExpectations(t)
+}
+
+func Test_PGUpdateLastCheck(t *testing.T) {
+	m := &mockDB{&mock.Mock{}}
+	repoName := "foo"
+	checksum := "bar"
+	now := time.Now()
+	pgManager := &postgresAssetManager{m}
+	expectedQuery := fmt.Sprintf(`INSERT INTO %s (name, checksum, last_update)
+	VALUES ('%s', '%s', '%s')
+	ON CONFLICT (name) 
+	DO UPDATE SET last_update = '%s', checksum = '%s'
+	`, repositoryTable, repoName, checksum, now.String(), now.String(), checksum)
+	m.On("Query", expectedQuery, []interface{}(nil))
+	pgManager.UpdateLastCheck(repoName, checksum, now)
+	m.AssertExpectations(t)
+}
+
+func Test_PGremoveMissingCharts(t *testing.T) {
+	charts := []chart{{ID: "foo"}, {ID: "bar"}}
+	m := &mockDB{&mock.Mock{}}
+	pgManager := &postgresAssetManager{m}
+	m.On("Query", "DELETE FROM charts WHERE info ->> 'ID' NOT IN ('foo', 'bar')", []interface{}(nil))
+	pgManager.removeMissingCharts(charts)
+	m.AssertExpectations(t)
+}
