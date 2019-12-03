@@ -33,6 +33,7 @@ var (
 	masterURL        string
 	kubeconfig       string
 	repoSyncImage    string
+	repoSyncCommand  string
 	namespace        string
 	mongoURL         string
 	mongoSecretName  string
@@ -78,6 +79,7 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&repoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
+	flag.StringVar(&repoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
 	flag.StringVar(&mongoURL, "mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
 	flag.StringVar(&mongoSecretName, "mongo-secret-name", "mongodb", "Kubernetes secret name for MongoDB credentials")

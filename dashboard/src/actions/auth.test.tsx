@@ -30,7 +30,7 @@ beforeEach(() => {
       state,
     },
     config: {
-      logoutURI: "/log/out",
+      oauthLogoutURI: "/log/out",
     },
   });
 });

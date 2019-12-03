@@ -21,23 +21,23 @@ const defaultProps = {
   authenticationError: undefined,
   location: emptyLocation,
   checkCookieAuthentication: jest.fn(),
-  loginURI: "",
+  oauthLoginURI: "",
 };
 
 const authenticationError = "it's a trap";
 
 describe("componentDidMount", () => {
-  it("calls checkCookieAuthentication when loginURI provided", () => {
+  it("calls checkCookieAuthentication when oauthLoginURI provided", () => {
     const props = {
       ...defaultProps,
-      loginURI: "/sign/in",
+      oauthLoginURI: "/sign/in",
     };
     const checkCookieAuthentication = jest.fn();
     shallow(<LoginForm {...props} checkCookieAuthentication={checkCookieAuthentication} />);
     expect(checkCookieAuthentication).toHaveBeenCalled();
   });
 
-  it("does not call checkCookieAuthentication when loginURI not provided", () => {
+  it("does not call checkCookieAuthentication when oauthLoginURI not provided", () => {
     const checkCookieAuthentication = jest.fn();
     shallow(<LoginForm {...defaultProps} checkCookieAuthentication={checkCookieAuthentication} />);
     expect(checkCookieAuthentication).not.toHaveBeenCalled();
@@ -107,10 +107,10 @@ describe("token login form", () => {
     expect(wrapper).toMatchSnapshot();
   });
 
-  it("does not display the oauth login if loginURI provided", () => {
+  it("does not display the oauth login if oauthLoginURI provided", () => {
     const props = {
       ...defaultProps,
-      loginURI: "",
+      oauthLoginURI: "",
     };
 
     const wrapper = shallow(<LoginForm {...props} />);
@@ -122,15 +122,15 @@ describe("token login form", () => {
 describe("oauth login form", () => {
   const props = {
     ...defaultProps,
-    loginURI: "/sign/in",
+    oauthLoginURI: "/sign/in",
   };
-  it("does not display the token login if loginURI provided", () => {
+  it("does not display the token login if oauthLoginURI provided", () => {
     const wrapper = shallow(<LoginForm {...props} />);
 
     expect(wrapper.find("input#token").exists()).toBe(false);
   });
 
-  it("displays the oauth login if loginURI provided", () => {
+  it("displays the oauth login if oauthLoginURI provided", () => {
     const wrapper = shallow(<LoginForm {...props} />);
 
     expect(wrapper.find("a.button").exists()).toBe(true);

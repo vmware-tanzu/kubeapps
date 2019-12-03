@@ -19,7 +19,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
@@ -33,28 +32,6 @@ import (
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
 	proxyFake "github.com/kubeapps/kubeapps/pkg/proxy/fake"
 )
-
-func TestErrorCodeWithDefault(t *testing.T) {
-	type test struct {
-		err          error
-		defaultCode  int
-		expectedCode int
-	}
-	tests := []test{
-		{fmt.Errorf("a release named foo already exists"), http.StatusInternalServerError, http.StatusConflict},
-		{fmt.Errorf("release foo not found"), http.StatusInternalServerError, http.StatusNotFound},
-		{fmt.Errorf("Unauthorized to get release foo"), http.StatusInternalServerError, http.StatusForbidden},
-		{fmt.Errorf("release \"Foo \" failed"), http.StatusInternalServerError, http.StatusUnprocessableEntity},
-		{fmt.Errorf("This is an unexpected error"), http.StatusInternalServerError, http.StatusInternalServerError},
-		{fmt.Errorf("This is an unexpected error"), http.StatusUnprocessableEntity, http.StatusUnprocessableEntity},
-	}
-	for _, s := range tests {
-		code := errorCodeWithDefault(s.err, s.defaultCode)
-		if code != s.expectedCode {
-			t.Errorf("Expected '%v' to return code %v got %v", s.err, s.expectedCode, code)
-		}
-	}
-}
 
 func TestActions(t *testing.T) {
 	type testScenario struct {
@@ -447,7 +424,7 @@ func TestActions(t *testing.T) {
 			fauth := &authFake.FakeAuth{
 				ForbiddenActions: test.ForbiddenActions,
 			}
-			ctx := context.WithValue(req.Context(), userKey, fauth)
+			ctx := context.WithValue(req.Context(), auth.UserKey, fauth)
 			req = req.WithContext(ctx)
 		}
 		response := httptest.NewRecorder()

@@ -31,7 +31,9 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -142,7 +144,7 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := handler.AuthGate()
+	authGate := auth.AuthGate()
 
 	// HTTP Handler
 	h := handler.TillerProxy{
@@ -156,27 +158,27 @@ func main() {
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithoutParams(h.ListAllReleases)),
+		negroni.Wrap(handlerutil.WithoutParams(h.ListAllReleases)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.ListReleases)),
+		negroni.Wrap(handlerutil.WithParams(h.ListReleases)),
 	))
 	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.CreateRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.CreateRelease)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.GetRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.GetRelease)),
 	))
 	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.OperateRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.OperateRelease)),
 	))
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.DeleteRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.DeleteRelease)),
 	))
 
 	// Chartsvc reverse proxy
