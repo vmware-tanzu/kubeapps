@@ -260,9 +260,9 @@ func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (
 	if err != nil {
 		errDelete := p.deleteRelease(name, namespace, true)
 		if errDelete != nil {
-			return nil, fmt.Errorf("Unable to create the release: %v and unable to uninstall it: %v", err, errDelete)
+			return nil, fmt.Errorf("Release %q failed: %v. Unable to purge failed release: %v", name, err, errDelete)
 		}
-		return nil, fmt.Errorf("Unable to create the release and has been uninstalled: %v", err)
+		return nil, fmt.Errorf("Release %q failed and has been uninstalled: %v", name, err)
 	}
 
 	log.Printf("%s successfully installed in %s", name, namespace)
