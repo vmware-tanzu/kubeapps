@@ -364,7 +364,31 @@ func TestCreateConflictingHelmRelease(t *testing.T) {
 	if err == nil {
 		t.Error("Release should fail, an existing release in a different namespace already exists")
 	}
-	if !strings.Contains(err.Error(), "name that is still in use") {
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("Unexpected error %v", err)
+	}
+}
+
+func TestCreateExistingHelmRelease(t *testing.T) {
+	ns := "myns"
+	rs := "foo"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
+	}
+	app := AppOverview{rs, version, ns, "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	proxy := newFakeProxy([]AppOverview{app})
+
+	_, err := proxy.CreateRelease(rs, ns, "", ch)
+	if err == nil {
+		t.Error("Release should fail, an existing release in a different namespace already exists")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
 		t.Errorf("Unexpected error %v", err)
 	}
 }
