@@ -19,6 +19,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"database/sql"
 
@@ -100,10 +101,36 @@ var syncCmd = &cobra.Command{
 		}
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
+		r, err := getRepo(args[0], args[1], authorizationHeader)
+		if err != nil {
+			logrus.Fatal(err)
+		}
 
-		if err = manager.Sync(args[0], args[1], authorizationHeader); err != nil {
+		// Check if the repo has been already processed
+		if manager.RepoAlreadyProcessed(r.Name, r.Checksum) {
+			logrus.WithFields(logrus.Fields{"url": r.URL}).Info("Skipping repository since there are no updates")
+			return
+		}
+
+		index, err := parseRepoIndex(r.Content)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+
+		charts := chartsFromIndex(index, r)
+		if len(charts) == 0 {
+			logrus.Fatal("no charts in repository index")
+		}
+
+		if err = manager.Sync(charts); err != nil {
 			logrus.Fatalf("Can't add chart repository to database: %v", err)
 		}
+
+		// Update cache in the database
+		if err = manager.UpdateLastCheck(r.Name, r.Checksum, time.Now()); err != nil {
+			logrus.Fatal(err)
+		}
+		logrus.WithFields(logrus.Fields{"url": r.URL}).Info("Stored repository update in cache")
 
 		logrus.Infof("Successfully added the chart repository %s to database", args[0])
 	},

@@ -46,7 +46,7 @@ const (
 
 type importChartFilesJob struct {
 	Name         string
-	Repo         repo
+	Repo         *repo
 	ChartVersion chartVersion
 }
 
@@ -71,7 +71,9 @@ func init() {
 
 type assetManager interface {
 	Delete(repo string) error
-	Sync(repo, url, authorizationHeader string) error
+	Sync(charts []chart) error
+	RepoAlreadyProcessed(repoName, checksum string) bool
+	UpdateLastCheck(repoName, checksum string, now time.Time) error
 }
 
 func getSha256(src []byte) (string, error) {
@@ -83,10 +85,30 @@ func getSha256(src []byte) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func fetchRepoIndex(r repo) ([]byte, error) {
-	indexURL, err := parseRepoURL(r.URL)
+func getRepo(name, repoURL, authorizationHeader string) (*repo, error) {
+	url, err := parseRepoURL(repoURL)
 	if err != nil {
-		log.WithFields(log.Fields{"url": r.URL}).WithError(err).Error("failed to parse URL")
+		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
+		return nil, err
+	}
+
+	repoBytes, err := fetchRepoIndex(url.String(), authorizationHeader)
+	if err != nil {
+		return nil, err
+	}
+
+	repoChecksum, err := getSha256(repoBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &repo{Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader, Checksum: repoChecksum, Content: repoBytes}, nil
+}
+
+func fetchRepoIndex(url, authHeader string) ([]byte, error) {
+	indexURL, err := parseRepoURL(url)
+	if err != nil {
+		log.WithFields(log.Fields{"url": url}).WithError(err).Error("failed to parse URL")
 		return nil, err
 	}
 	indexURL.Path = path.Join(indexURL.Path, "index.yaml")
@@ -97,8 +119,8 @@ func fetchRepoIndex(r repo) ([]byte, error) {
 	}
 
 	req.Header.Set("User-Agent", userAgent())
-	if len(r.AuthorizationHeader) > 0 {
-		req.Header.Set("Authorization", r.AuthorizationHeader)
+	if len(authHeader) > 0 {
+		req.Header.Set("Authorization", authHeader)
 	}
 
 	res, err := netClient.Do(req)
@@ -132,7 +154,7 @@ func parseRepoIndex(body []byte) (*helmrepo.IndexFile, error) {
 	return &index, nil
 }
 
-func chartsFromIndex(index *helmrepo.IndexFile, r repo) []chart {
+func chartsFromIndex(index *helmrepo.IndexFile, r *repo) []chart {
 	var charts []chart
 	for _, entry := range index.Entries {
 		if entry[0].GetDeprecated() {
@@ -146,7 +168,7 @@ func chartsFromIndex(index *helmrepo.IndexFile, r repo) []chart {
 
 // Takes an entry from the index and constructs a database representation of the
 // object.
-func newChart(entry helmrepo.ChartVersions, r repo) chart {
+func newChart(entry helmrepo.ChartVersions, r *repo) chart {
 	var c chart
 	copier.Copy(&c, entry[0])
 	copier.Copy(&c.ChartVersions, entry)
@@ -178,7 +200,7 @@ func extractFilesFromTarball(filenames []string, tarf *tar.Reader) (map[string]s
 	return ret, nil
 }
 
-func chartTarballURL(r repo, cv chartVersion) string {
+func chartTarballURL(r *repo, cv chartVersion) string {
 	source := cv.URLs[0]
 	if _, err := parseRepoURL(source); err != nil {
 		// If the chart URL is not absolute, join with repo URL. It's fine if the

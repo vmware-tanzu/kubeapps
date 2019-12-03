@@ -20,7 +20,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -53,44 +52,16 @@ type mongodbAssetManager struct {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *mongodbAssetManager) Sync(repoName, repoURL string, authorizationHeader string) error {
-	url, err := parseRepoURL(repoURL)
-	if err != nil {
-		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
-		return err
-	}
-
-	r := repo{Name: repoName, URL: url.String(), AuthorizationHeader: authorizationHeader}
-	repoBytes, err := fetchRepoIndex(r)
+func (m *mongodbAssetManager) Sync(charts []chart) error {
+	err := m.importCharts(charts)
 	if err != nil {
 		return err
 	}
+	m.fetchFiles(charts)
+	return nil
+}
 
-	repoChecksum, err := getSha256(repoBytes)
-	if err != nil {
-		return err
-	}
-
-	// Check if the repo has been already processed
-	if repoAlreadyProcessed(m.DBSession, repoName, repoChecksum) {
-		log.WithFields(log.Fields{"url": repoURL}).Info("Skipping repository since there are no updates")
-		return nil
-	}
-
-	index, err := parseRepoIndex(repoBytes)
-	if err != nil {
-		return err
-	}
-
-	charts := chartsFromIndex(index, r)
-	if len(charts) == 0 {
-		return errors.New("no charts in repository index")
-	}
-	err = importCharts(m.DBSession, charts)
-	if err != nil {
-		return err
-	}
-
+func (m *mongodbAssetManager) fetchFiles(charts []chart) {
 	// Process 10 charts at a time
 	numWorkers := 10
 	iconJobs := make(chan chart, numWorkers)
@@ -100,7 +71,7 @@ func (m *mongodbAssetManager) Sync(repoName, repoURL string, authorizationHeader
 	log.Debugf("starting %d workers", numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go importWorker(m.DBSession, &wg, iconJobs, chartFilesJobs)
+		go m.importWorker(&wg, iconJobs, chartFilesJobs)
 	}
 
 	// Enqueue jobs to process chart icons
@@ -132,26 +103,18 @@ func (m *mongodbAssetManager) Sync(repoName, repoURL string, authorizationHeader
 
 	// Wait for the worker pools to finish processing
 	wg.Wait()
-
-	// Update cache in the database
-	if err = updateLastCheck(m.DBSession, repoName, repoChecksum, time.Now()); err != nil {
-		return err
-	}
-	log.WithFields(log.Fields{"url": repoURL}).Info("Stored repository update in cache")
-
-	return nil
 }
 
-func repoAlreadyProcessed(dbSession datastore.Session, repoName string, checksum string) bool {
-	db, closer := dbSession.DB()
+func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum string) bool {
+	db, closer := m.DBSession.DB()
 	defer closer()
 	lastCheck := &repoCheck{}
 	err := db.C(repositoryCollection).Find(bson.M{"_id": repoName}).One(lastCheck)
 	return err == nil && checksum == lastCheck.Checksum
 }
 
-func updateLastCheck(dbSession datastore.Session, repoName string, checksum string, now time.Time) error {
-	db, closer := dbSession.DB()
+func (m *mongodbAssetManager) UpdateLastCheck(repoName string, checksum string, now time.Time) error {
+	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(repositoryCollection).UpsertId(repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}})
 	return err
@@ -180,7 +143,7 @@ func (m *mongodbAssetManager) Delete(repoName string) error {
 	return err
 }
 
-func importCharts(dbSession datastore.Session, charts []chart) error {
+func (m *mongodbAssetManager) importCharts(charts []chart) error {
 	var pairs []interface{}
 	var chartIDs []string
 	for _, c := range charts {
@@ -189,7 +152,7 @@ func importCharts(dbSession datastore.Session, charts []chart) error {
 		pairs = append(pairs, bson.M{"_id": c.ID}, c)
 	}
 
-	db, closer := dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	bulk := db.C(chartCollection).Bulk()
 
@@ -208,23 +171,23 @@ func importCharts(dbSession datastore.Session, charts []chart) error {
 	return err
 }
 
-func importWorker(dbSession datastore.Session, wg *sync.WaitGroup, icons <-chan chart, chartFiles <-chan importChartFilesJob) {
+func (m *mongodbAssetManager) importWorker(wg *sync.WaitGroup, icons <-chan chart, chartFiles <-chan importChartFilesJob) {
 	defer wg.Done()
 	for c := range icons {
 		log.WithFields(log.Fields{"name": c.Name}).Debug("importing icon")
-		if err := fetchAndImportIcon(dbSession, c); err != nil {
+		if err := m.fetchAndImportIcon(c); err != nil {
 			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to import icon")
 		}
 	}
 	for j := range chartFiles {
 		log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
-		if err := fetchAndImportFiles(dbSession, j.Name, j.Repo, j.ChartVersion); err != nil {
+		if err := m.fetchAndImportFiles(j.Name, j.Repo, j.ChartVersion); err != nil {
 			log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
 		}
 	}
 }
 
-func fetchAndImportIcon(dbSession datastore.Session, c chart) error {
+func (m *mongodbAssetManager) fetchAndImportIcon(c chart) error {
 	if c.Icon == "" {
 		log.WithFields(log.Fields{"name": c.Name}).Info("icon not found")
 		return nil
@@ -277,14 +240,14 @@ func fetchAndImportIcon(dbSession datastore.Session, c chart) error {
 		contentType = "image/png"
 	}
 
-	db, closer := dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	return db.C(chartCollection).UpdateId(c.ID, bson.M{"$set": bson.M{"raw_icon": b, "icon_content_type": contentType}})
 }
 
-func fetchAndImportFiles(dbSession datastore.Session, name string, r repo, cv chartVersion) error {
+func (m *mongodbAssetManager) fetchAndImportFiles(name string, r *repo, cv chartVersion) error {
 	chartFilesID := fmt.Sprintf("%s/%s-%s", r.Name, name, cv.Version)
-	db, closer := dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 
 	// Check if we already have indexed files for this chart version and digest
