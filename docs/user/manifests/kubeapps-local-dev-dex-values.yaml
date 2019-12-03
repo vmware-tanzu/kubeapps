@@ -62,6 +62,4 @@ config:
 
         # The group name should be the "cn" value.
         nameAttr: cn
-  expiry:
-    idTokens: "2m"
 grpc: false

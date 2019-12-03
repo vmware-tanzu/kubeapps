@@ -83,7 +83,8 @@ export class Auth {
   // auth proxy, rather than rely on the fact that the 403 response sent by
   // the auth proxy is (by default) an html page (rather than the json
   // upstream result). Hence encapsulating this ugliness here so we can fix
-  // it in the one spot.
+  // it in the one spot. We may need to query `/oauth2/info` to avoid potential
+  // false positives.
   public static is403FromAuthProxy(r: AxiosResponse): boolean {
     return r.status === 403 && (!r.data || !r.data.message);
   }
