@@ -242,6 +242,13 @@ func unlock(name string) {
 func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error) {
 	lock(name)
 	defer unlock(name)
+
+	// Validate if the release already exists
+	_, err := p.helmClient.ReleaseContent(name)
+	if err == nil {
+		return nil, fmt.Errorf("Release %s already exists", name)
+	}
+
 	log.Printf("Installing release %s into namespace %s", name, namespace)
 	res, err := p.helmClient.InstallReleaseFromChart(
 		ch,
@@ -251,8 +258,13 @@ func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (
 		helm.InstallTimeout(p.timeout),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create the release: %v", err)
+		errDelete := p.deleteRelease(name, namespace, true)
+		if errDelete != nil {
+			return nil, fmt.Errorf("Release %q failed: %v. Unable to purge failed release: %v", name, err, errDelete)
+		}
+		return nil, fmt.Errorf("Release %q failed and has been uninstalled: %v", name, err)
 	}
+
 	log.Printf("%s successfully installed in %s", name, namespace)
 	return res.GetRelease(), nil
 }
@@ -307,10 +319,7 @@ func (p *Proxy) GetRelease(name, namespace string) (*release.Release, error) {
 	return p.getRelease(name, namespace)
 }
 
-// DeleteRelease deletes a release
-func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
-	lock(name)
-	defer unlock(name)
+func (p *Proxy) deleteRelease(name, namespace string, purge bool) error {
 	// Validate that the release actually belongs to the namespace
 	_, err := p.getRelease(name, namespace)
 	if err != nil {
@@ -325,6 +334,13 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 		return fmt.Errorf("Unable to delete the release: %v", err)
 	}
 	return nil
+}
+
+// DeleteRelease deletes a release
+func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
+	lock(name)
+	defer unlock(name)
+	return p.deleteRelease(name, namespace, purge)
 }
 
 // extracted from https://github.com/helm/helm/blob/master/cmd/helm/helm.go#L227

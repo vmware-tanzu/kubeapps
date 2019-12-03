@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import ResourceRef from "shared/ResourceRef";
 import LoadingWrapper, { LoaderType } from "../../../components/LoadingWrapper";
 import { IKubeItem, IResource, IServiceSpec } from "../../../shared/types";
 import isSomeResourceLoading from "../helpers";
@@ -10,14 +11,19 @@ import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 interface IAccessURLTableProps {
   services: Array<IKubeItem<IResource>>;
   ingresses: Array<IKubeItem<IResource>>;
-  fetchIngresses: () => void;
+  ingressRefs: ResourceRef[];
+  getResource: (r: ResourceRef) => void;
 }
 
 class AccessURLTable extends React.Component<IAccessURLTableProps> {
   public componentDidMount() {
-    // Fetch all related Ingress resources. We don't need to fetch Services as
-    // they are expected to be watched by the ServiceTable.
-    this.props.fetchIngresses();
+    this.fetchIngresses();
+  }
+
+  public componentDidUpdate(prevProps: IAccessURLTableProps) {
+    if (prevProps.ingressRefs.length !== this.props.ingressRefs.length) {
+      this.fetchIngresses();
+    }
   }
 
   public render() {
@@ -89,6 +95,12 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
       return <AccessURLItem key={`accessURL/${i.item.metadata.name}`} URLItem={urlItem} />;
     }
     return;
+  }
+
+  private fetchIngresses() {
+    // Fetch all related Ingress resources. We don't need to fetch Services as
+    // they are expected to be watched by the ServiceTable.
+    this.props.ingressRefs.forEach(r => this.props.getResource(r));
   }
 }
 

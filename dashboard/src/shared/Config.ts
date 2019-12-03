@@ -5,8 +5,8 @@ export interface IConfig {
   namespace: string;
   appVersion: string;
   authProxyEnabled: boolean;
-  loginURI: string;
-  logoutURI: string;
+  oauthLoginURI: string;
+  oauthLogoutURI: string;
   error?: Error;
 }
 
