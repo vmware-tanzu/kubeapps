@@ -194,7 +194,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 }
 
 func Test_emptyChartRepo(t *testing.T) {
-	r := &repo{Name: "testRepo", URL: "https://my.examplerepo.com", Checksum: "123", Content: emptyRepoIndexYAMLBytes}
+	r := &repo{Name: "testRepo", URL: "https://my.examplerepo.com", Checksum: "123"}
 	i, err := parseRepoIndex(emptyRepoIndexYAMLBytes)
 	assert.NoErr(t, err)
 	charts := chartsFromIndex(i, r)

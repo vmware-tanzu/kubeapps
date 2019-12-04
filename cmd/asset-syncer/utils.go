@@ -85,24 +85,24 @@ func getSha256(src []byte) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func getRepo(name, repoURL, authorizationHeader string) (*repo, error) {
+func getRepo(name, repoURL, authorizationHeader string) (*repo, []byte, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
-		return nil, err
+		return nil, []byte{}, err
 	}
 
 	repoBytes, err := fetchRepoIndex(url.String(), authorizationHeader)
 	if err != nil {
-		return nil, err
+		return nil, []byte{}, err
 	}
 
 	repoChecksum, err := getSha256(repoBytes)
 	if err != nil {
-		return nil, err
+		return nil, []byte{}, err
 	}
 
-	return &repo{Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader, Checksum: repoChecksum, Content: repoBytes}, nil
+	return &repo{Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader, Checksum: repoChecksum}, repoBytes, nil
 }
 
 func fetchRepoIndex(url, authHeader string) ([]byte, error) {
