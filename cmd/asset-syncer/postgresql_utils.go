@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubeapps/common/datastore"
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,10 +40,37 @@ type postgresDB interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	Begin() (*sql.Tx, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
+	Close() error
 }
 
 type postgresAssetManager struct {
-	db postgresDB
+	connStr string
+	db      postgresDB
+}
+
+func newPGManager(config datastore.Config) (assetManager, error) {
+	url := strings.Split(config.URL, ":")
+	if len(url) != 2 {
+		return nil, fmt.Errorf("Can't parse database URL: %s", config.URL)
+	}
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		url[0], url[1], config.Username, config.Password, config.Database,
+	)
+	return &postgresAssetManager{connStr, nil}, nil
+}
+
+func (m *postgresAssetManager) Init() error {
+	db, err := sql.Open("postgres", m.connStr)
+	if err != nil {
+		return err
+	}
+	m.db = db
+	return nil
+}
+
+func (m *postgresAssetManager) Close() error {
+	return m.db.Close()
 }
 
 // Syncing is performed in the following steps:

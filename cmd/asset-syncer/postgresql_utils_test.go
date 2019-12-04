@@ -28,6 +28,10 @@ func (d *mockDB) QueryRow(query string, args ...interface{}) *sql.Row {
 	return nil
 }
 
+func (d *mockDB) Close() error {
+	return nil
+}
+
 func Test_DeletePGRepo(t *testing.T) {
 	repoName := "test"
 	m := &mockDB{&mock.Mock{}}
@@ -38,7 +42,7 @@ func Test_DeletePGRepo(t *testing.T) {
 		m.On("Query", q, []interface{}(nil))
 	}
 
-	pgManager := &postgresAssetManager{m}
+	pgManager := &postgresAssetManager{"", m}
 	err := pgManager.Delete(repoName)
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)

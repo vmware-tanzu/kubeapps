@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/rand"
+	"fmt"
 	"image/color"
 	"io"
 	"io/ioutil"
@@ -33,6 +34,7 @@ import (
 
 	"github.com/arschles/assert"
 	"github.com/disintegration/imaging"
+	"github.com/kubeapps/common/datastore"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -461,4 +463,29 @@ func Test_getSha256(t *testing.T) {
 	sha, err := getSha256([]byte("this is a test"))
 	assert.Equal(t, err, nil, "Unable to get sha")
 	assert.Equal(t, sha, "2e99758548972a8e8822ad47fa1017ff72f06f3ff6a016851f45c398732bc50c", "Unable to get sha")
+}
+
+func Test_newManager(t *testing.T) {
+	tests := []struct {
+		name            string
+		database        string
+		dbName          string
+		dbURL           string
+		dbUser          string
+		dbPass          string
+		expectedManager string
+	}{
+		{"mongodb database", "mongodb", "charts", "example.com", "admin", "root", "&{{example.com charts admin root 0} <nil>}"},
+		{"postgresql database", "postgresql", "assets", "example.com:44124", "postgres", "root", "&{host=example.com port=44124 user=postgres password=root dbname=assets sslmode=disable <nil>}"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := datastore.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
+			manager, err := newManager(tt.database, config)
+			m := fmt.Sprintf("%v", manager)
+			assert.NoErr(t, err)
+			assert.Equal(t, m, tt.expectedManager, "manager")
+		})
+	}
+
 }

@@ -35,6 +35,7 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
+	"github.com/kubeapps/common/datastore"
 	log "github.com/sirupsen/logrus"
 	helmrepo "k8s.io/helm/pkg/repo"
 )
@@ -74,6 +75,18 @@ type assetManager interface {
 	Sync(charts []chart) error
 	RepoAlreadyProcessed(repoName, checksum string) bool
 	UpdateLastCheck(repoName, checksum string, now time.Time) error
+	Init() error
+	Close() error
+}
+
+func newManager(databaseType string, config datastore.Config) (assetManager, error) {
+	if databaseType == "mongodb" {
+		return newMongoDBManager(config), nil
+	} else if databaseType == "postgresql" {
+		return newPGManager(config)
+	} else {
+		return nil, fmt.Errorf("Unsupported database type %s", databaseType)
+	}
 }
 
 func getSha256(src []byte) (string, error) {

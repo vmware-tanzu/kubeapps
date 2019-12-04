@@ -40,7 +40,25 @@ const (
 )
 
 type mongodbAssetManager struct {
-	DBSession datastore.Session
+	mongoConfig datastore.Config
+	dbSession   datastore.Session
+}
+
+func newMongoDBManager(config datastore.Config) assetManager {
+	return &mongodbAssetManager{config, nil}
+}
+
+func (m *mongodbAssetManager) Init() error {
+	dbSession, err := datastore.NewSession(m.mongoConfig)
+	if err != nil {
+		return fmt.Errorf("Can't connect to mongoDB: %v", err)
+	}
+	m.dbSession = dbSession
+	return nil
+}
+
+func (m *mongodbAssetManager) Close() error {
+	return nil
 }
 
 // Syncing is performed in the following steps:
@@ -106,7 +124,7 @@ func (m *mongodbAssetManager) fetchFiles(charts []chart) {
 }
 
 func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum string) bool {
-	db, closer := m.DBSession.DB()
+	db, closer := m.dbSession.DB()
 	defer closer()
 	lastCheck := &repoCheck{}
 	err := db.C(repositoryCollection).Find(bson.M{"_id": repoName}).One(lastCheck)
@@ -114,14 +132,14 @@ func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum str
 }
 
 func (m *mongodbAssetManager) UpdateLastCheck(repoName string, checksum string, now time.Time) error {
-	db, closer := m.DBSession.DB()
+	db, closer := m.dbSession.DB()
 	defer closer()
 	_, err := db.C(repositoryCollection).UpsertId(repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}})
 	return err
 }
 
 func (m *mongodbAssetManager) Delete(repoName string) error {
-	db, closer := m.DBSession.DB()
+	db, closer := m.dbSession.DB()
 	defer closer()
 	_, err := db.C(chartCollection).RemoveAll(bson.M{
 		"repo.name": repoName,
@@ -152,7 +170,7 @@ func (m *mongodbAssetManager) importCharts(charts []chart) error {
 		pairs = append(pairs, bson.M{"_id": c.ID}, c)
 	}
 
-	db, closer := m.DBSession.DB()
+	db, closer := m.dbSession.DB()
 	defer closer()
 	bulk := db.C(chartCollection).Bulk()
 
@@ -240,14 +258,14 @@ func (m *mongodbAssetManager) fetchAndImportIcon(c chart) error {
 		contentType = "image/png"
 	}
 
-	db, closer := m.DBSession.DB()
+	db, closer := m.dbSession.DB()
 	defer closer()
 	return db.C(chartCollection).UpdateId(c.ID, bson.M{"$set": bson.M{"raw_icon": b, "icon_content_type": contentType}})
 }
 
 func (m *mongodbAssetManager) fetchAndImportFiles(name string, r *repo, cv chartVersion) error {
 	chartFilesID := fmt.Sprintf("%s/%s-%s", r.Name, name, cv.Version)
-	db, closer := m.DBSession.DB()
+	db, closer := m.dbSession.DB()
 	defer closer()
 
 	// Check if we already have indexed files for this chart version and digest
