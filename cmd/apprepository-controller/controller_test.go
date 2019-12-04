@@ -13,8 +13,10 @@ import (
 )
 
 func Test_newCronJob(t *testing.T) {
-	mongoURL = "mongodb.kubeapps"
-	mongoSecretName = "mongodb"
+	dbURL = "mongodb.kubeapps"
+	dbName = "assets"
+	dbUser = "admin"
+	dbSecretName = "mongodb"
 	tests := []struct {
 		name             string
 		apprepo          *apprepov1alpha1.AppRepository
@@ -74,14 +76,16 @@ func Test_newCronJob(t *testing.T) {
 											Command: []string{"/chart-repo"},
 											Args: []string{
 												"sync",
-												"--mongo-url=mongodb.kubeapps",
-												"--mongo-user=root",
+												"--database-type=mongodb",
+												"--database-url=mongodb.kubeapps",
+												"--database-user=admin",
+												"--database-name=assets",
 												"my-charts",
 												"https://charts.acme.com/my-charts",
 											},
 											Env: []corev1.EnvVar{
 												{
-													Name: "MONGO_PASSWORD",
+													Name: "DB_PASSWORD",
 													ValueFrom: &corev1.EnvVarSource{
 														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 												},
@@ -155,15 +159,17 @@ func Test_newCronJob(t *testing.T) {
 											Command: []string{"/chart-repo"},
 											Args: []string{
 												"sync",
-												"--mongo-url=mongodb.kubeapps",
-												"--mongo-user=root",
+												"--database-type=mongodb",
+												"--database-url=mongodb.kubeapps",
+												"--database-user=admin",
+												"--database-name=assets",
 												"--user-agent-comment=kubeapps/v2.3",
 												"my-charts",
 												"https://charts.acme.com/my-charts",
 											},
 											Env: []corev1.EnvVar{
 												{
-													Name: "MONGO_PASSWORD",
+													Name: "DB_PASSWORD",
 													ValueFrom: &corev1.EnvVarSource{
 														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 												},
@@ -207,8 +213,10 @@ func Test_newCronJob(t *testing.T) {
 }
 
 func Test_newSyncJob(t *testing.T) {
-	mongoURL = "mongodb.kubeapps"
-	mongoSecretName = "mongodb"
+	dbURL = "mongodb.kubeapps"
+	dbName = "assets"
+	dbUser = "admin"
+	dbSecretName = "mongodb"
 	tests := []struct {
 		name             string
 		apprepo          *apprepov1alpha1.AppRepository
@@ -264,14 +272,16 @@ func Test_newSyncJob(t *testing.T) {
 									Command: []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--mongo-url=mongodb.kubeapps",
-										"--mongo-user=root",
+										"--database-type=mongodb",
+										"--database-url=mongodb.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
 									},
 									Env: []corev1.EnvVar{
 										{
-											Name: "MONGO_PASSWORD",
+											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
@@ -339,15 +349,17 @@ func Test_newSyncJob(t *testing.T) {
 									Command: []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--mongo-url=mongodb.kubeapps",
-										"--mongo-user=root",
+										"--database-type=mongodb",
+										"--database-url=mongodb.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
 										"--user-agent-comment=kubeapps/v2.3",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
 									},
 									Env: []corev1.EnvVar{
 										{
-											Name: "MONGO_PASSWORD",
+											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
@@ -421,14 +433,16 @@ func Test_newSyncJob(t *testing.T) {
 									Command: []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--mongo-url=mongodb.kubeapps",
-										"--mongo-user=root",
+										"--database-type=mongodb",
+										"--database-url=mongodb.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
 									},
 									Env: []corev1.EnvVar{
 										{
-											Name: "MONGO_PASSWORD",
+											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
@@ -514,14 +528,16 @@ func Test_newSyncJob(t *testing.T) {
 									Command: []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--mongo-url=mongodb.kubeapps",
-										"--mongo-user=root",
+										"--database-type=mongodb",
+										"--database-url=mongodb.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
 									},
 									Env: []corev1.EnvVar{
 										{
-											Name: "MONGO_PASSWORD",
+											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
@@ -627,15 +643,17 @@ func Test_newSyncJob(t *testing.T) {
 									Command: []string{"/chart-repo"},
 									Args: []string{
 										"sync",
-										"--mongo-url=mongodb.kubeapps",
-										"--mongo-user=root",
+										"--database-type=mongodb",
+										"--database-url=mongodb.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
 										"my-charts",
 										"https://charts.acme.com/my-charts",
 									},
 									Env: []corev1.EnvVar{
 										{Name: "FOO", Value: "BAR"},
 										{
-											Name: "MONGO_PASSWORD",
+											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
@@ -668,8 +686,10 @@ func Test_newSyncJob(t *testing.T) {
 }
 
 func Test_newCleanupJob(t *testing.T) {
-	mongoURL = "mongodb.kubeapps"
-	mongoSecretName = "mongodb"
+	dbURL = "mongodb.kubeapps"
+	dbName = "assets"
+	dbUser = "admin"
+	dbSecretName = "mongodb"
 	tests := []struct {
 		name      string
 		repoName  string
@@ -697,12 +717,14 @@ func Test_newCleanupJob(t *testing.T) {
 									Args: []string{
 										"delete",
 										"my-charts",
-										"--mongo-url=mongodb.kubeapps",
-										"--mongo-user=root",
+										"--database-type=mongodb",
+										"--database-url=mongodb.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
 									},
 									Env: []corev1.EnvVar{
 										{
-											Name: "MONGO_PASSWORD",
+											Name: "DB_PASSWORD",
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
 										},
