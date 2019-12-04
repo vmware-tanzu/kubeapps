@@ -20,6 +20,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/kubeapps/common/datastore"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -38,11 +39,15 @@ var syncCmd = &cobra.Command{
 			logrus.SetLevel(logrus.DebugLevel)
 		}
 
-		manager, err := newManager(databaseType, databaseURL, databaseName, databaseUser, databasePassword)
+		dbConfig := datastore.Config{URL: databaseURL, Database: databaseName, Username: databaseUser, Password: databasePassword}
+		manager, err := newManager(databaseType, dbConfig)
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		manager.Init()
+		err = manager.Init()
+		if err != nil {
+			logrus.Fatal(err)
+		}
 		defer manager.Close()
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")

@@ -79,20 +79,11 @@ type assetManager interface {
 	Close() error
 }
 
-func newManager(databaseType, databaseURL, databaseName, databaseUser, databasePassword string) (assetManager, error) {
+func newManager(databaseType string, config datastore.Config) (assetManager, error) {
 	if databaseType == "mongodb" {
-		mongoConfig := datastore.Config{URL: databaseURL, Database: databaseName, Username: databaseUser, Password: databasePassword}
-		return &mongodbAssetManager{mongoConfig, nil}, nil
+		return newMongoDBManager(config), nil
 	} else if databaseType == "postgresql" {
-		url := strings.Split(databaseURL, ":")
-		if len(url) != 2 {
-			return nil, fmt.Errorf("Can't parse database URL: %s", databaseURL)
-		}
-		connStr := fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			url[0], url[1], databaseUser, databasePassword, databaseName,
-		)
-		return &postgresAssetManager{connStr, nil}, nil
+		return newPGManager(config)
 	} else {
 		return nil, fmt.Errorf("Unsupported database type %s", databaseType)
 	}

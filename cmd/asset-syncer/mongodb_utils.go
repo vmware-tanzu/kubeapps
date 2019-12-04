@@ -44,6 +44,10 @@ type mongodbAssetManager struct {
 	dbSession   datastore.Session
 }
 
+func newMongoDBManager(config datastore.Config) assetManager {
+	return &mongodbAssetManager{config, nil}
+}
+
 func (m *mongodbAssetManager) Init() error {
 	dbSession, err := datastore.NewSession(m.mongoConfig)
 	if err != nil {

@@ -34,6 +34,7 @@ import (
 
 	"github.com/arschles/assert"
 	"github.com/disintegration/imaging"
+	"github.com/kubeapps/common/datastore"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -479,7 +480,8 @@ func Test_newManager(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			manager, err := newManager(tt.database, tt.dbURL, tt.dbName, tt.dbUser, tt.dbPass)
+			config := datastore.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
+			manager, err := newManager(tt.database, config)
 			m := fmt.Sprintf("%v", manager)
 			assert.NoErr(t, err)
 			assert.Equal(t, m, tt.expectedManager, "manager")

@@ -23,6 +23,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kubeapps/common/datastore"
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
@@ -45,6 +46,18 @@ type postgresDB interface {
 type postgresAssetManager struct {
 	connStr string
 	db      postgresDB
+}
+
+func newPGManager(config datastore.Config) (assetManager, error) {
+	url := strings.Split(config.URL, ":")
+	if len(url) != 2 {
+		return nil, fmt.Errorf("Can't parse database URL: %s", config.URL)
+	}
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		url[0], url[1], config.Username, config.Password, config.Database,
+	)
+	return &postgresAssetManager{connStr, nil}, nil
 }
 
 func (m *postgresAssetManager) Init() error {

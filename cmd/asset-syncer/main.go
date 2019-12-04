@@ -48,10 +48,10 @@ func main() {
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&databaseType, "database-type", "mongodb", "Database to use. Choice: mongodb, postgresql")
-	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost", "MongoDB URL (see https://godoc.org/github.com/globalsign/mgo#Dial for format)")
-	rootCmd.PersistentFlags().StringVar(&databaseName, "database-name", "charts", "MongoDB database")
-	rootCmd.PersistentFlags().StringVar(&databaseUser, "database-user", "", "MongoDB user")
-	// see version.go
+	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost", "Database URL")
+	rootCmd.PersistentFlags().StringVar(&databaseName, "database-name", "charts", "Name of the database to use")
+	rootCmd.PersistentFlags().StringVar(&databaseUser, "database-user", "", "Database user")
+	// User agent configuration can be found in version.go. Check that file for more details
 	rootCmd.PersistentFlags().StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")
 
