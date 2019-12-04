@@ -19,10 +19,7 @@ This is an example of the values that you can configure in the Kubeapps chart in
 ```yaml
 ingress:
   enabled: true
-  hosts:
-    - name: kubeapps.local
-      path: /
-      tls: false
+  hostname: kubeapps.local
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/configuration-snippet: |
