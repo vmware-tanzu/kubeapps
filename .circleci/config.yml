@@ -120,7 +120,8 @@ exports: &exports
     echo "export HELM_VERSION=v2.14.0" >> $BASH_ENV
 build_images: &build_images
   steps:
-    - setup_remote_docker
+    - setup_remote_docker:
+        version: 18.09.3
     - checkout
     - <<: *exports
     - run: |
