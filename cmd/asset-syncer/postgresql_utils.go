@@ -98,7 +98,7 @@ func (m *postgresAssetManager) Sync(charts []chart) error {
 
 func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum string) bool {
 	var lastChecksum string
-	row := m.db.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = '%s'", repositoryTable, repoName))
+	row := m.db.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1", repositoryTable), repoName)
 	if row != nil {
 		err := row.Scan(&lastChecksum)
 		return err == nil && lastChecksum == repoChecksum
@@ -108,11 +108,11 @@ func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum strin
 
 func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now time.Time) error {
 	query := fmt.Sprintf(`INSERT INTO %s (name, checksum, last_update)
-	VALUES ('%s', '%s', '%s')
+	VALUES ($1, $2, $3)
 	ON CONFLICT (name) 
-	DO UPDATE SET last_update = '%s', checksum = '%s'
-	`, repositoryTable, repoName, checksum, now.String(), now.String(), checksum)
-	_, err := m.db.Query(query)
+	DO UPDATE SET last_update = $3, checksum = $2
+	`, repositoryTable)
+	_, err := m.db.Query(query, repoName, checksum, now.String())
 	return err
 }
 
@@ -162,12 +162,16 @@ func (m *postgresAssetManager) removeMissingCharts(charts []chart) error {
 }
 
 func (m *postgresAssetManager) Delete(repoName string) error {
-	tables := []string{chartTable, repositoryTable, chartFilesTable}
+	tables := []string{chartTable, chartFilesTable}
 	for _, table := range tables {
-		_, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = '%s'", table, repoName))
+		_, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table), repoName)
 		if err != nil {
 			return err
 		}
+	}
+	_, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE name = $1", repositoryTable), repoName)
+	if err != nil {
+		return err
 	}
 	return nil
 }
