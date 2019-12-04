@@ -78,6 +78,16 @@
             "condition": false,
             "value": "ingress.enabled"
           }
+        },
+        "certManager": {
+          "type": "boolean",
+          "form": true,
+          "title": "Use cert-manager to auto-generate the TLS certificate",
+          "description": "Add the corresponding annotations for cert-manager to auto-generate the TLS certificate",
+          "hidden": {
+            "condition": false,
+            "value": "ingress.enabled"
+          }
         }
       }
     },
@@ -116,6 +126,16 @@
           "form": true,
           "title": "Client Secret",
           "description": "Secret used to validate the Client ID",
+          "hidden": {
+            "condition": false,
+            "value": "authProxy.enabled"
+          }
+        },
+        "cookieSecret": {
+          "type": "string",
+          "form": true,
+          "title": "Cookie Secret",
+          "description": "Used by OAuth2 Proxy to encrypt any credentials",
           "hidden": {
             "condition": false,
             "value": "authProxy.enabled"
