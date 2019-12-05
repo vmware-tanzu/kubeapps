@@ -79,6 +79,18 @@ data:
         {{- end }}
       }
 
+      location ~* /api/backend {
+        rewrite /api/backend/(.*) /backend/$1 break;
+        rewrite /api/backend /backend break;
+
+        {{- if .Values.frontend.proxypassAccessTokenAsBearer }}
+        # Google Kubernetes Engine requires the access_token as the Bearer when talking to the k8s api server.
+        proxy_set_header Authorization "Bearer $http_x_forwarded_access_token";
+        {{- end }}
+
+        proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};
+      }
+
       location / {
         # Add the Authorization header if exists
         add_header Authorization $http_authorization;
