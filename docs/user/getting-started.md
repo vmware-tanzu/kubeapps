@@ -79,6 +79,12 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 ![Dashboard main page](../img/dashboard-home.png)
 
+***Note:*** If you can't access the dashboard via http://127.0.0.1:8080/ (for example, you don't have a browser in your localhost environment),you can use the following command to change the type of the kubeapps svc to nodePort or other types: 
+
+```bash
+kubectl  edit svc kubeapps -n kubeapps
+``` 
+
 ## Step 4: Deploy WordPress
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
