@@ -18,8 +18,8 @@ Use the Helm chart to install the latest version of Kubeapps:
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
-```
-
+``` 
+***Note:*** We are actively working on adding support for Helm 3. More info can be found [here](https://github.com/kubeapps/kubeapps/issues/1056).
 For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](docs/user/getting-started.md).
 
 ## Developer Documentation
