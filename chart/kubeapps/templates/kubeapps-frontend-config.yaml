@@ -62,10 +62,10 @@ data:
         proxy_set_header Authorization "Bearer $http_x_forwarded_access_token";
         {{- end }}
 
-        {{- if not .Values.useHelm3 }}
-        proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};
-        {{- else }}
+        {{- if .Values.useHelm3 }}
         # TODO proxy_pass for Helm 3
+        {{- else }}
+        proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};
         {{- end }}
       }
 
@@ -75,10 +75,10 @@ data:
         proxy_read_timeout 10m;
         rewrite /api/tiller-deploy/(.*) /$1 break;
         rewrite /api/tiller-deploy / break;
-        {{- if not .Values.useHelm3 }}
-        proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};
-        {{- else }}
+        {{- if .Values.useHelm3 }}
         # TODO proxy_pass for Helm 3
+        {{- else }}
+        proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};
         {{- end }}
 
         {{- if .Values.frontend.proxypassAccessTokenAsBearer }}
