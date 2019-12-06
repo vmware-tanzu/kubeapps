@@ -81,4 +81,4 @@ spec:
           secret:
             secretName: {{ template "kubeapps.tiller-proxy.fullname" . }}
       {{- end }}
-{{- end }} # matches useHelm3
+{{- end }}{{/* matches useHelm3 */}}

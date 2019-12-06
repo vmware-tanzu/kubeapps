@@ -41,4 +41,4 @@ subjects:
     name: {{ template "kubeapps.tiller-proxy.fullname" . }}
     namespace: {{ .Release.Namespace }}
 {{- end -}}
-{{- end }} # matches useHelm3
+{{- end }}{{/* matches useHelm3 */}}

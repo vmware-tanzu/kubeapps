@@ -18,4 +18,4 @@ spec:
   selector:
     app: {{ template "kubeapps.tiller-proxy.fullname" . }}
     release: {{ .Release.Name }}
-{{- end }} # matches useHelm3
+{{- end }}{{/* matches useHelm3 */}}
