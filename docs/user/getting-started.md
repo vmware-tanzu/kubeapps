@@ -77,13 +77,7 @@ This will start an HTTP proxy for secure access to the Kubeapps Dashboard. Visit
 
 Paste the token generated in the previous step to authenticate and access the Kubeapps dashboard for Kubernetes.
 
-![Dashboard main page](../img/dashboard-home.png)
-
-***Note:*** If you can't access the dashboard via http://127.0.0.1:8080/ (for example, you don't have a browser in your localhost environment),you can use the following command to change the type of the kubeapps svc to nodePort or other types: 
-
-```bash
-kubectl  edit svc kubeapps -n kubeapps
-``` 
+***Note:*** If you are setting up Kubeapps for other people to access, you will want to use a different service type or setup Ingress rather than using the above `kubectl port-forward`. For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md). 
 
 ## Step 4: Deploy WordPress
 
