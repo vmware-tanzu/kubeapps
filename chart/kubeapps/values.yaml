@@ -314,6 +314,21 @@ tillerProxy:
     requests:
       cpu: 25m
       memory: 32Mi
+  ## Tiller Proxy containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+  ##
+  livenessProbe:
+    httpGet:
+      path: /live
+      port: 8080
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 0
+    timeoutSeconds: 5
 
   ## Affinity for Tiller Proxy pods assignment
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
