@@ -1,3 +1,4 @@
+{{- if not .Values.useHelm3 -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -86,3 +87,4 @@ spec:
           secret:
             secretName: {{ template "kubeapps.tiller-proxy.fullname" . }}
       {{- end }}
+{{- end }}{{/* matches useHelm3 */}}
