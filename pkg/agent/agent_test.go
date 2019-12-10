@@ -113,7 +113,21 @@ func TestListReleases(t *testing.T) {
 				},
 			},
 		},
-		// TODO: Add test case for ListLimit option
+		{
+			name:      "returns at most listLimit apps",
+			namespace: "default",
+			listLimit: 1,
+			releases: []releaseStub{
+				releaseStub{"wordpress", "default", 1},
+				releaseStub{"airwatch", "default", 1},
+				releaseStub{"not-in-namespace", "other", 1},
+			},
+			expectedApps: []proxy.AppOverview{
+				proxy.AppOverview{
+					ReleaseName: "airwatch",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
