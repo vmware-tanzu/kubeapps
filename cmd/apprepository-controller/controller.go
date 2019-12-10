@@ -500,11 +500,14 @@ func cleanupJobSpec(repoName string) batchv1.JobSpec {
 						Args:    apprepoCleanupJobArgs(repoName),
 						Env: []corev1.EnvVar{
 							{
-								Name: "MONGO_PASSWORD",
+								Name: "DB_PASSWORD",
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
-										LocalObjectReference: corev1.LocalObjectReference{Name: mongoSecretName},
-										Key:                  "mongodb-root-password",
+										LocalObjectReference: corev1.LocalObjectReference{Name: dbSecretName},
+										// TODO(andresmgot): Replace for something not mongodb-specific
+										// but that will be a breaking change since the secret is created in the first
+										// installation
+										Key: "mongodb-root-password",
 									},
 								},
 							},
@@ -535,11 +538,7 @@ func deleteJobName(reponame string) string {
 
 // apprepoSyncJobArgs returns a list of args for the sync container
 func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
-	args := []string{
-		"sync",
-		"--mongo-url=" + mongoURL,
-		"--mongo-user=root",
-	}
+	args := append([]string{"sync"}, dbFlags()...)
 
 	if userAgentComment != "" {
 		args = append(args, "--user-agent-comment="+userAgentComment)
@@ -552,11 +551,14 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvVar {
 	var envVars []corev1.EnvVar
 	envVars = append(envVars, corev1.EnvVar{
-		Name: "MONGO_PASSWORD",
+		Name: "DB_PASSWORD",
 		ValueFrom: &corev1.EnvVarSource{
 			SecretKeyRef: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{Name: mongoSecretName},
-				Key:                  "mongodb-root-password",
+				LocalObjectReference: corev1.LocalObjectReference{Name: dbSecretName},
+				// TODO(andresmgot): Replace for something not mongodb-specific
+				// but that will be a breaking change since the secret is created in the first
+				// installation
+				Key: "mongodb-root-password",
 			},
 		},
 	})
@@ -573,10 +575,17 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvV
 
 // apprepoCleanupJobArgs returns a list of args for the repo cleanup container
 func apprepoCleanupJobArgs(repoName string) []string {
-	return []string{
+	return append([]string{
 		"delete",
 		repoName,
-		"--mongo-url=" + mongoURL,
-		"--mongo-user=root",
+	}, dbFlags()...)
+}
+
+func dbFlags() []string {
+	return []string{
+		"--database-type=" + dbType,
+		"--database-url=" + dbURL,
+		"--database-user=" + dbUser,
+		"--database-name=" + dbName,
 	}
 }
