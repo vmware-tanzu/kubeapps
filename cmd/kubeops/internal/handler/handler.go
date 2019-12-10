@@ -38,7 +38,7 @@ func WithAgentConfig(driverType agent.DriverType, options agent.Options) func(f 
 }
 
 func ListReleases(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	apps, err := agent.ListReleases(cfg, params[namespaceParam], req.URL.Query().Get("statuses"))
+	apps, err := agent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.AgentOptions.ListLimit, req.URL.Query().Get("statuses"))
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return

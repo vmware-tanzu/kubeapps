@@ -32,13 +32,13 @@ type Config struct {
 	AgentOptions Options
 }
 
-func ListReleases(config Config, namespace string, status string) ([]proxy.AppOverview, error) {
+func ListReleases(actionConfig *action.Configuration, namespace string, listLimit int, status string) ([]proxy.AppOverview, error) {
 	allNamespaces := namespace == ""
-	cmd := action.NewList(config.ActionConfig)
+	cmd := action.NewList(actionConfig)
 	if allNamespaces {
 		cmd.AllNamespaces = true
 	}
-	cmd.Limit = config.AgentOptions.ListLimit
+	cmd.Limit = listLimit
 	releases, err := cmd.Run()
 	if err != nil {
 		return nil, err

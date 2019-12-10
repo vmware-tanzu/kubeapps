@@ -15,6 +15,8 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
+const defaultListLimit = 256
+
 // newConfigFixture returns an agent.Config with fake clients
 // and memory storage.
 func newConfigFixture(t *testing.T) *Config {
@@ -68,12 +70,14 @@ func TestListReleases(t *testing.T) {
 	testCases := []struct {
 		name         string
 		namespace    string
+		listLimit    int
 		releases     []releaseStub
 		expectedApps []proxy.AppOverview
 	}{
 		{
 			name:      "returns all apps across namespaces",
 			namespace: "",
+			listLimit: defaultListLimit,
 			releases: []releaseStub{
 				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
@@ -94,6 +98,7 @@ func TestListReleases(t *testing.T) {
 		{
 			name:      "returns apps for the given namespace",
 			namespace: "default",
+			listLimit: defaultListLimit,
 			releases: []releaseStub{
 				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
@@ -108,8 +113,7 @@ func TestListReleases(t *testing.T) {
 				},
 			},
 		},
-		// TODO: Add test case for ListLimit option (also, why are some options in
-		// a AgentOptions (like ListLimit) while others in the fn args (like namespace)?
+		// TODO: Add test case for ListLimit option
 	}
 
 	for _, tc := range testCases {
@@ -117,7 +121,7 @@ func TestListReleases(t *testing.T) {
 			config := newConfigFixture(t)
 			makeReleases(t, config, tc.releases)
 
-			apps, err := ListReleases(*config, tc.namespace, "ignored?")
+			apps, err := ListReleases(config.ActionConfig, tc.namespace, tc.listLimit, "ignored?")
 			if err != nil {
 				t.Errorf("%v", err)
 			}
