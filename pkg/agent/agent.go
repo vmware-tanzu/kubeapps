@@ -33,8 +33,9 @@ type Config struct {
 }
 
 func ListReleases(config Config, namespace string, status string) ([]proxy.AppOverview, error) {
+	allNamespaces := namespace == ""
 	cmd := action.NewList(config.ActionConfig)
-	if namespace == "" {
+	if allNamespaces {
 		cmd.AllNamespaces = true
 	}
 	cmd.Limit = config.AgentOptions.ListLimit
@@ -42,9 +43,11 @@ func ListReleases(config Config, namespace string, status string) ([]proxy.AppOv
 	if err != nil {
 		return nil, err
 	}
-	appOverviews := make([]proxy.AppOverview, len(releases))
-	for i, r := range releases {
-		appOverviews[i] = appOverviewFromRelease(r)
+	appOverviews := make([]proxy.AppOverview, 0)
+	for _, r := range releases {
+		if allNamespaces || r.Namespace == namespace {
+			appOverviews = append(appOverviews, appOverviewFromRelease(r))
+		}
 	}
 	return appOverviews, nil
 }

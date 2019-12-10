@@ -92,7 +92,6 @@ func TestListReleases(t *testing.T) {
 			},
 		},
 		{
-			// Test currently fails because the implementation does not filter by namespace.
 			name:      "returns apps for the given namespace",
 			namespace: "default",
 			releases: []releaseStub{
