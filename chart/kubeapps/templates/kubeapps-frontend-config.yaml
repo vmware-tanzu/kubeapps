@@ -87,9 +87,10 @@ data:
         {{- end }}
       }
 
-      location ~* /api/backend {
-        rewrite /api/backend/(.*) /backend/$1 break;
-        rewrite /api/backend /backend break;
+      # The route for the Kubeapps backend API is not prefixed.
+      location ~* /api/ {
+        rewrite /api/(.*) /backend/$1 break;
+        rewrite /api/ /backend break;
 
         {{- if .Values.frontend.proxypassAccessTokenAsBearer }}
         # Google Kubernetes Engine requires the access_token as the Bearer when talking to the k8s api server.

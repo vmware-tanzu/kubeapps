@@ -187,7 +187,6 @@ func main() {
 	appreposHandler := handler.AppRepositories{}
 	backendAPIv1 := r.PathPrefix("/backend/v1").Subrouter()
 	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
-		authGate,
 		negroni.WrapFunc(appreposHandler.Create),
 	))
 
