@@ -105,6 +105,7 @@ func NewAuth(token string) (*UserAuth, error) {
 	}
 	// Overwrite default token
 	config.BearerToken = token
+	config.BearerTokenFile = "" // https://github.com/kubeapps/kubeapps/pull/1359#issuecomment-564077326
 	kubeClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err

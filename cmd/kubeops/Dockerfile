@@ -6,13 +6,14 @@ COPY go.mod go.sum ./
 COPY vendor vendor
 COPY pkg pkg
 COPY cmd cmd
+ARG VERSION
 # With the trick below, Go's build cache is kept between builds.
 # https://github.com/golang/go/issues/27719#issuecomment-514747274
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -installsuffix cgo ./cmd/apprepository-controller
+    CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-X main.version=$VERSION" ./cmd/kubeops
 
 FROM scratch
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /go/src/github.com/kubeapps/kubeapps/apprepository-controller /apprepository-controller
-CMD ["/apprepository-controller"]
+COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeops /kubeops
+EXPOSE 8080
+CMD ["/kubeops"]

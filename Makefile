@@ -15,7 +15,7 @@ GO_PACKAGES = ./...
 
 default: all
 
-all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/tiller-proxy
+all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/tiller-proxy kubeapps/kubeops
 
 # TODO(miguel) Create Makefiles per component
 kubeapps/%:
