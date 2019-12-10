@@ -14,6 +14,6 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     CGO_ENABLED=0 go build -installsuffix cgo -ldflags "-X main.version=$VERSION" ./cmd/kubeops
 
 FROM scratch
-COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeops /agent
+COPY --from=builder /go/src/github.com/kubeapps/kubeapps/kubeops /kubeops
 EXPOSE 8080
-CMD ["/agent"]
+CMD ["/kubeops"]

@@ -26,10 +26,10 @@ spec:
       terminationGracePeriodSeconds: 300
 {{- include "kubeapps.imagePullSecrets" . | indent 6 }}
       containers:
-      - name: agent
+      - name: kubeops
         image: {{ template "kubeapps.image" (list .Values.kubeops.image .Values.global) }}
         command:
-        - /agent
+        - /kubeops
         args:
         - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
         - --chartsvc-url=http://{{ template "kubeapps.chartsvc.fullname" . }}:{{ .Values.chartsvc.service.port }}
