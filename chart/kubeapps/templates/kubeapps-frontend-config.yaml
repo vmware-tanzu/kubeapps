@@ -63,7 +63,7 @@ data:
         {{- end }}
 
         {{- if .Values.useHelm3 }}
-        # TODO proxy_pass for Helm 3
+        proxy_pass http://{{ template "kubeapps.kubeops.fullname" . }}:{{ .Values.kubeops.service.port }};
         {{- else }}
         proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};
         {{- end }}
@@ -76,7 +76,7 @@ data:
         rewrite /api/tiller-deploy/(.*) /$1 break;
         rewrite /api/tiller-deploy / break;
         {{- if .Values.useHelm3 }}
-        # TODO proxy_pass for Helm 3
+        proxy_pass http://{{ template "kubeapps.kubeops.fullname" . }}:{{ .Values.kubeops.service.port }};
         {{- else }}
         proxy_pass http://{{ template "kubeapps.tiller-proxy.fullname" . }}:{{ .Values.tillerProxy.service.port }};
         {{- end }}

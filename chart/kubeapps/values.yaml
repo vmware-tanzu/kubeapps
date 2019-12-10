@@ -269,6 +269,27 @@ hooks:
   ##
   tolerations: {}
 
+# Kubeops is an interface between the Kubeapps Dashboard and Helm 3/Kubernetes.
+# Set useHelm3 to true to use Kubeops instead of Tiller Proxy.
+kubeops:
+  replicaCount: 2
+  image:
+    registry: docker.io
+    repository: kubeapps/kubeops
+    tag: latest
+  service:
+    port: 8080
+  resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 25m
+      memory: 32Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
 ## Tiller Proxy is a secure REST API on top of Helm's Tiller component used to
 ## manage Helm chart releases in the cluster from Kubeapps. Set tillerProxy.host
 ## to configure a different Tiller host to use.
