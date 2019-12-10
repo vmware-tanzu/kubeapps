@@ -20,7 +20,6 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 )
 
-const driverEnvVar = "HELM_DRIVER"
 const defaultHelmDriver agent.DriverType = agent.Secret
 
 var (
@@ -55,12 +54,6 @@ func main() {
 	driverType := defaultHelmDriver
 	if helmDriverArg != "" {
 		driverType = agent.ParseDriverType(helmDriverArg)
-	} else {
-		// CLI argument was not provided; check environment variable.
-		helmDriverEnv := os.Getenv(driverEnvVar)
-		if helmDriverEnv != "" {
-			driverType = agent.ParseDriverType(helmDriverEnv)
-		}
 	}
 	withAgentConfig := handler.WithAgentConfig(driverType, options)
 	r := mux.NewRouter()
