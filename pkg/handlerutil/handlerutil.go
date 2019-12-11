@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 // Params a key-value map of path params
@@ -64,7 +63,7 @@ func ErrorCodeWithDefault(err error, defaultCode int) int {
 	return errCode
 }
 
-func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *chart.Chart, error) {
+func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver, requireV1Support bool) (*chartUtils.Details, *chartUtils.ChartMultiVersion, error) {
 	defer req.Body.Close()
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -78,10 +77,9 @@ func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.De
 	if err != nil {
 		return nil, nil, err
 	}
-	requireV1Support := true
 	ch, err := cu.GetChart(chartDetails, netClient, requireV1Support)
 	if err != nil {
 		return nil, nil, err
 	}
-	return chartDetails, ch.Helm2Chart, nil
+	return chartDetails, ch, nil
 }
