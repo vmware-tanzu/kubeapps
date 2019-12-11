@@ -83,3 +83,59 @@ func Test_PGremoveMissingCharts(t *testing.T) {
 	pgManager.removeMissingCharts(charts)
 	m.AssertExpectations(t)
 }
+
+func Test_PGupdateIcon(t *testing.T) {
+	data := []byte("foo")
+	contentType := "image/png"
+	id := "stable/wordpress"
+	m := &mockDB{&mock.Mock{}}
+	pgManager := &postgresAssetManager{"", m}
+	m.On(
+		"Query",
+		`UPDATE charts SET info = info || '{"raw_icon": "Zm9v", "icon_content_type": "image/png"}'  WHERE info ->> 'ID' = 'stable/wordpress'`,
+		[]interface{}(nil),
+	)
+	err := pgManager.updateIcon(data, contentType, id)
+	if err != nil {
+		t.Errorf("Failed to update icon")
+	}
+	m.AssertExpectations(t)
+}
+
+func Test_PGfilesExist(t *testing.T) {
+	id := "stable/wordpress"
+	digest := "foo"
+	m := &mockDB{&mock.Mock{}}
+	pgManager := &postgresAssetManager{"", m}
+	m.On(
+		"Query",
+		`SELECT * FROM files WHERE info -> 'ID' = $1 AND info -> 'digest' = $2`,
+		[]interface{}{id, digest},
+	)
+	exists := pgManager.filesExist(id, digest)
+	if exists != true {
+		t.Errorf("Failed to check if file exists")
+	}
+	m.AssertExpectations(t)
+}
+
+func Test_PGinsertFiles(t *testing.T) {
+	id := "stable/wordpress"
+	files := chartFiles{ID: id, Readme: "foo", Values: "bar"}
+	m := &mockDB{&mock.Mock{}}
+	pgManager := &postgresAssetManager{"", m}
+	m.On(
+		"Query",
+		`INSERT INTO files (chart_files_ID, info)
+	VALUES ($1, $2)
+	ON CONFLICT (chart_files_ID) 
+	DO UPDATE SET info = $2
+	`,
+		[]interface{}{id, files},
+	)
+	err := pgManager.insertFiles(id, files)
+	if err != nil {
+		t.Errorf("Failed to insert files")
+	}
+	m.AssertExpectations(t)
+}

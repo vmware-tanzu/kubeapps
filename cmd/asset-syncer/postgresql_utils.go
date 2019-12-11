@@ -18,6 +18,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -29,10 +30,11 @@ import (
 )
 
 const (
-	// create table charts (ID serial NOT NULL PRIMARY KEY, info json NOT NULL);
+	// create table charts (ID serial NOT NULL PRIMARY KEY, info jsonb NOT NULL);
 	chartTable = "charts"
 	// create table repos (ID serial NOT NULL PRIMARY KEY, name varchar unique, checksum varchar, last_update varchar);
 	repositoryTable = "repos"
+	// create table files (ID serial NOT NULL PRIMARY KEY, chart_files_ID varchar unique, info jsonb NOT NULL);
 	chartFilesTable = "files"
 )
 
@@ -89,11 +91,7 @@ func (m *postgresAssetManager) Sync(charts []chart) error {
 	}
 
 	// Remove charts no longer existing in index
-	m.removeMissingCharts(charts)
-
-	// TODO(andresmgot): Fetch and store chart icons
-
-	return nil
+	return m.removeMissingCharts(charts)
 }
 
 func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum string) bool {
@@ -112,7 +110,10 @@ func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now ti
 	ON CONFLICT (name) 
 	DO UPDATE SET last_update = $3, checksum = $2
 	`, repositoryTable)
-	_, err := m.db.Query(query, repoName, checksum, now.String())
+	rows, err := m.db.Query(query, repoName, checksum, now.String())
+	if rows != nil {
+		defer rows.Close()
+	}
 	return err
 }
 
@@ -157,21 +158,59 @@ func (m *postgresAssetManager) removeMissingCharts(charts []chart) error {
 		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
 	}
 	chartIDsString := strings.Join(chartIDs, ", ")
-	_, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s)", chartTable, chartIDsString))
+	rows, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s)", chartTable, chartIDsString))
+	if rows != nil {
+		defer rows.Close()
+	}
 	return err
 }
 
 func (m *postgresAssetManager) Delete(repoName string) error {
 	tables := []string{chartTable, chartFilesTable}
 	for _, table := range tables {
-		_, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table), repoName)
+		rows, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table), repoName)
+		if rows != nil {
+			defer rows.Close()
+		}
 		if err != nil {
 			return err
 		}
 	}
-	_, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE name = $1", repositoryTable), repoName)
-	if err != nil {
-		return err
+	rows, err := m.db.Query(fmt.Sprintf("DELETE FROM %s WHERE name = $1", repositoryTable), repoName)
+	if rows != nil {
+		defer rows.Close()
 	}
-	return nil
+	return err
+}
+
+func (m *postgresAssetManager) updateIcon(data []byte, contentType, ID string) error {
+	rows, err := m.db.Query(fmt.Sprintf(
+		`UPDATE charts SET info = info || '{"raw_icon": "%s", "icon_content_type": "%s"}'  WHERE info ->> 'ID' = '%s'`,
+		base64.StdEncoding.EncodeToString(data), contentType, ID,
+	))
+	if rows != nil {
+		rows.Close()
+	}
+	return err
+}
+
+func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
+	rows, err := m.db.Query("SELECT * FROM files WHERE info -> 'ID' = $1 AND info -> 'digest' = $2", chartFilesID, digest)
+	if rows != nil {
+		defer rows.Close()
+	}
+	return err == nil
+}
+
+func (m *postgresAssetManager) insertFiles(chartFilesID string, files chartFiles) error {
+	query := fmt.Sprintf(`INSERT INTO %s (chart_files_ID, info)
+	VALUES ($1, $2)
+	ON CONFLICT (chart_files_ID) 
+	DO UPDATE SET info = $2
+	`, chartFilesTable)
+	rows, err := m.db.Query(query, chartFilesID, files)
+	if rows != nil {
+		defer rows.Close()
+	}
+	return err
 }

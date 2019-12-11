@@ -17,10 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"errors"
-	"fmt"
-	"image"
-	"io"
 	"testing"
 	"time"
 
@@ -70,128 +66,6 @@ func Test_DeleteRepo(t *testing.T) {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}
 	m.AssertExpectations(t)
-}
-
-func Test_fetchAndImportIcon(t *testing.T) {
-	t.Run("no icon", func(t *testing.T) {
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		c := chart{ID: "test/acs-engine-autoscaler"}
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		assert.NoErr(t, manager.fetchAndImportIcon(c))
-	})
-
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com"})
-
-	t.Run("failed download", func(t *testing.T) {
-		netClient = &badHTTPClient{}
-		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		assert.Err(t, fmt.Errorf("500 %s", c.Icon), manager.fetchAndImportIcon(c))
-	})
-
-	t.Run("bad icon", func(t *testing.T) {
-		netClient = &badIconClient{}
-		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		assert.Err(t, image.ErrFormat, manager.fetchAndImportIcon(c))
-	})
-
-	t.Run("valid icon", func(t *testing.T) {
-		netClient = &goodIconClient{}
-		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": iconBytes(), "icon_content_type": "image/png"}}).Return(nil)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		assert.NoErr(t, manager.fetchAndImportIcon(c))
-		m.AssertExpectations(t)
-	})
-
-	t.Run("valid SVG icon", func(t *testing.T) {
-		netClient = &svgIconClient{}
-		c := chart{
-			ID:   "foo",
-			Icon: "https://foo/bar/logo.svg",
-			Repo: &repo{},
-		}
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": []byte("foo"), "icon_content_type": "image/svg"}}).Return(nil)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		assert.NoErr(t, manager.fetchAndImportIcon(c))
-		m.AssertExpectations(t)
-	})
-}
-
-func Test_fetchAndImportFiles(t *testing.T) {
-	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient1s"})
-	cv := charts[0].ChartVersions[0]
-
-	t.Run("http error", func(t *testing.T) {
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if readme already exists to force fetching"))
-		dbSession := mockstore.NewMockSession(&m)
-		netClient = &badHTTPClient{}
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		assert.Err(t, io.EOF, manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv))
-	})
-
-	t.Run("file not found", func(t *testing.T) {
-		netClient = &goodTarballClient{c: charts[0], skipValues: true, skipReadme: true, skipSchema: true}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, "", "", "", charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("authenticated request", func(t *testing.T) {
-		netClient = &authenticatedTarballClient{c: charts[0]}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("valid tarball", func(t *testing.T) {
-		netClient = &goodTarballClient{c: charts[0]}
-		m := mock.Mock{}
-		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
-		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertExpectations(t)
-	})
-
-	t.Run("file exists", func(t *testing.T) {
-		m := mock.Mock{}
-		// don't return an error when checking if files already exists
-		m.On("One", mock.Anything).Return(nil)
-		dbSession := mockstore.NewMockSession(&m)
-		manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-		err := manager.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
-		assert.NoErr(t, err)
-		m.AssertNotCalled(t, "UpsertId", mock.Anything, mock.Anything)
-	})
 }
 
 func Test_emptyChartRepo(t *testing.T) {

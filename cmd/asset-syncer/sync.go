@@ -76,6 +76,10 @@ var syncCmd = &cobra.Command{
 			logrus.Fatalf("Can't add chart repository to database: %v", err)
 		}
 
+		// Fetch and store chart icons
+		fImporter := fileImporter{manager}
+		fImporter.fetchFiles(charts)
+
 		// Update cache in the database
 		if err = manager.UpdateLastCheck(r.Name, r.Checksum, time.Now()); err != nil {
 			logrus.Fatal(err)
