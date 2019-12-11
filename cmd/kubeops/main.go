@@ -54,7 +54,7 @@ func main() {
 	if helmDriverArg != "" {
 		d, err := agent.ParseDriverType(helmDriverArg)
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 		driverType = d // Necessary detour to please typechecker.
 	}
