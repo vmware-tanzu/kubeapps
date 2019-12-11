@@ -50,10 +50,13 @@ func main() {
 		Timeout:   timeout,
 	}
 
-	// Will panic below if an invalid driver type is provided.
 	driverType := defaultHelmDriver
 	if helmDriverArg != "" {
-		driverType = agent.ParseDriverType(helmDriverArg)
+		d, err := agent.ParseDriverType(helmDriverArg)
+		if err != nil {
+			panic(err.Error())
+		}
+		driverType = d // Necessary detour to please typechecker.
 	}
 	withAgentConfig := handler.WithAgentConfig(driverType, options)
 	r := mux.NewRouter()
