@@ -49,7 +49,7 @@ func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *
 	if err != nil {
 		return nil, nil, err
 	}
-	return chartDetails, ch, nil
+	return chartDetails, ch.V2, nil
 }
 
 func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {

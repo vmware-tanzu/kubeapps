@@ -40,7 +40,6 @@ import (
 	"github.com/urfave/negroni"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	helmChartUtil "k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
@@ -135,7 +134,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient, timeout)
-	chartutils := chartUtils.NewChart(kubeClient, appRepoClient, helmChartUtil.LoadArchive, userAgent())
+	chartClient := chartUtils.NewChartClient(kubeClient, appRepoClient, userAgent())
 
 	r := mux.NewRouter()
 
@@ -150,7 +149,7 @@ func main() {
 	h := handler.TillerProxy{
 		DisableAuth: disableAuth,
 		ListLimit:   listLimit,
-		ChartClient: chartutils,
+		ChartClient: chartClient,
 		ProxyClient: proxy,
 	}
 

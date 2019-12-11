@@ -32,13 +32,15 @@ func (f *FakeChart) ParseDetails(data []byte) (*chartUtils.Details, error) {
 	return details, err
 }
 
-func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.HTTPClient) (*chart.Chart, error) {
-	return &chart.Chart{
-		Metadata: &chart.Metadata{
-			Name: details.ChartName,
-		},
-		Values: &chart.Config{
-			Raw: details.Values,
+func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.HTTPClient) (*chartUtils.ChartMultiVersion, error) {
+	return &chartUtils.ChartMultiVersion{
+		V2: &chart.Chart{
+			Metadata: &chart.Metadata{
+				Name: details.ChartName,
+			},
+			Values: &chart.Config{
+				Raw: details.Values,
+			},
 		},
 	}, nil
 }

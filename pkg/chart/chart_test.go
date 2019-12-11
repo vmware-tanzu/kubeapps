@@ -23,6 +23,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -34,9 +35,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	fakeK8s "k8s.io/client-go/kubernetes/fake"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
+
+const testChartArchive = "./testdata/nginx-helm2pkg-5.1.1.tgz"
 
 func Test_resolveChartURL(t *testing.T) {
 	tests := []struct {
@@ -86,7 +89,7 @@ func TestFindChartInRepoIndex(t *testing.T) {
 	repoURL := "http://charts.example.com/repo/"
 	expectedURL := fmt.Sprintf("%s%s", repoURL, chartURL)
 
-	chartMeta := chart.Metadata{Name: name, Version: version}
+	chartMeta := chartv2.Metadata{Name: name, Version: version}
 	chartVersion := repo.ChartVersion{URLs: []string{chartURL}}
 	chartVersion.Metadata = &chartMeta
 	chartVersions := []*repo.ChartVersion{&chartVersion}
@@ -152,7 +155,7 @@ func TestParseDetails(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ch := Chart{}
+			ch := ChartClient{}
 			details, err := ch.ParseDetails([]byte(tc.data))
 
 			if tc.err {
@@ -173,9 +176,9 @@ func TestParseDetails(t *testing.T) {
 	}
 }
 
-// fakeLoadChart implements LoadChart interface.
-func fakeLoadChart(in io.Reader) (*chart.Chart, error) {
-	return &chart.Chart{}, nil
+// fakeLoadChartV2 implements LoadChartV2 interface.
+func fakeLoadChartV2(in io.Reader) (*chartv2.Chart, error) {
+	return &chartv2.Chart{}, nil
 }
 
 const pem_cert = `
@@ -373,10 +376,9 @@ func TestInitNetClient(t *testing.T) {
 		}
 		appRepoClient := fakeAppRepo.NewSimpleClientset(expectedAppRepo)
 
-		chUtils := Chart{
+		chUtils := ChartClient{
 			kubeClient:    kubeClient,
 			appRepoClient: appRepoClient,
-			load:          fakeLoadChart,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -455,7 +457,11 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 	for _, chartURL := range f.chartURLs {
 		if h.URL.String() == chartURL {
 			// Fake chart response
-			return &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte{}))}, nil
+			f, err := os.Open(testChartArchive)
+			if err != nil {
+				return nil, fmt.Errorf("unable to open test chart archive: %q", testChartArchive)
+			}
+			return &http.Response{StatusCode: 200, Body: f}, nil
 		}
 	}
 	// Unexpected path
@@ -467,7 +473,7 @@ func newHTTPClient(repoURL string, charts []Details, userAgent string) HTTPClien
 	entries := map[string]repo.ChartVersions{}
 	// Populate Chart registry with content of the given helmReleases
 	for _, ch := range charts {
-		chartMeta := chart.Metadata{Name: ch.ChartName, Version: ch.Version}
+		chartMeta := chartv2.Metadata{Name: ch.ChartName, Version: ch.Version}
 		chartURL := fmt.Sprintf("%s%s-%s.tgz", repoURL, ch.ChartName, ch.Version)
 		chartURLs = append(chartURLs, chartURL)
 		chartVersion := repo.ChartVersion{Metadata: &chartMeta, URLs: []string{chartURL}}
@@ -521,14 +527,13 @@ func TestGetChart(t *testing.T) {
 		},
 	}
 
-	const repoURL = "http://foo.com/"
+	const repoURL = "http://example.com/"
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
 			kubeClient := fakeK8s.NewSimpleClientset()
-			chUtils := Chart{
+			chUtils := ChartClient{
 				kubeClient: kubeClient,
-				load:       fakeLoadChart,
 				userAgent:  tc.userAgent,
 				appRepo: &appRepov1.AppRepository{
 					ObjectMeta: metav1.ObjectMeta{
@@ -543,11 +548,18 @@ func TestGetChart(t *testing.T) {
 			ch, err := chUtils.GetChart(&target, httpClient)
 
 			if err != nil {
+				t.Errorf("requests were %v", httpClient.(*clientWithDefaultHeaders).client.(*fakeHTTPClient).requests[1])
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			// Currently tests return an empty chart object.
-			if got, want := ch, &(chart.Chart{}); !cmp.Equal(got, want) {
-				t.Errorf("got: %v, want: %v", got, want)
+			// Currently tests return an nginx chart from ./testdata
+			// We need to ensure it got loaded in both version formats.
+			if got, want := ch.V2.GetMetadata().GetName(), "nginx"; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+			if ch.V3 == nil {
+				t.Errorf("got: nil, want: non-nil")
+			} else if got, want := ch.V3.Name(), "nginx"; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
 			}
 
 			requests := getFakeClientRequests(t, httpClient)
