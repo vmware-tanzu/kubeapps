@@ -180,6 +180,15 @@ func main() {
 		negroni.Wrap(handlerutil.WithParams(h.DeleteRelease)),
 	))
 
+	// Backend routes unrelated to tiller-proxy functionality.
+	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
+	// reconsider where these endpoints live.
+	appreposHandler := handler.AppRepositories{}
+	backendAPIv1 := r.PathPrefix("/backend/v1").Subrouter()
+	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
+		negroni.WrapFunc(appreposHandler.Create),
+	))
+
 	// Chartsvc reverse proxy
 	parsedChartsvcURL, err := url.Parse(chartsvcURL)
 	if err != nil {
