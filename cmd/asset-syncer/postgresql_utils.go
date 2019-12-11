@@ -195,7 +195,11 @@ func (m *postgresAssetManager) updateIcon(data []byte, contentType, ID string) e
 }
 
 func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
-	rows, err := m.db.Query("SELECT * FROM files WHERE info -> 'ID' = $1 AND info -> 'digest' = $2", chartFilesID, digest)
+	rows, err := m.db.Query(
+		fmt.Sprintf("SELECT * FROM %s WHERE info -> 'ID' = $1 AND info -> 'digest' = $2", chartFilesTable),
+		chartFilesID,
+		digest,
+	)
 	if rows != nil {
 		defer rows.Close()
 	}
