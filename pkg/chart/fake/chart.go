@@ -34,7 +34,7 @@ func (f *FakeChart) ParseDetails(data []byte) (*chartUtils.Details, error) {
 
 func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.HTTPClient) (*chartUtils.ChartMultiVersion, error) {
 	return &chartUtils.ChartMultiVersion{
-		V2: &chart.Chart{
+		Helm2Chart: &chart.Chart{
 			Metadata: &chart.Metadata{
 				Name: details.ChartName,
 			},

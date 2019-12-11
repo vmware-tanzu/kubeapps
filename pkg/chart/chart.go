@@ -35,12 +35,12 @@ import (
 	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
-	chartv3 "helm.sh/helm/v3/pkg/chart"
+	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	helm2loader "k8s.io/helm/pkg/chartutil"
-	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
+	helm2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
 
@@ -82,15 +82,15 @@ type HTTPClient interface {
 }
 
 type ChartMultiVersion struct {
-	V2 *chartv2.Chart
-	V3 *chartv3.Chart
+	Helm2Chart *helm2chart.Chart
+	Helm3Chart *helm3chart.Chart
 }
 
-// LoadChartV2 should return a V2 Chart struct from an IOReader
-type LoadChartV2 func(in io.Reader) (*chartv2.Chart, error)
+// LoadHelm2Chart should return a helm2 Chart struct from an IOReader
+type LoadHelm2Chart func(in io.Reader) (*helm2chart.Chart, error)
 
-// LoadChartV3 returns a V3 Chart struct from an IOReader
-type LoadChartV3 func(in io.Reader) (*chartv3.Chart, error)
+// LoadHelm3Chart returns a helm3 Chart struct from an IOReader
+type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
 
 // Resolver for exposed funcs
 type Resolver interface {
@@ -248,15 +248,15 @@ func fetchChart(netClient *HTTPClient, chartURL string) (*ChartMultiVersion, err
 	if err != nil {
 		return nil, err
 	}
-	chartV2, err := helm2loader.LoadArchive(bytes.NewReader(data))
+	helm2Chart, err := helm2loader.LoadArchive(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
-	chartV3, err := helm3loader.LoadArchive(bytes.NewReader(data))
+	helm3Chart, err := helm3loader.LoadArchive(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
 	}
-	return &ChartMultiVersion{V2: chartV2, V3: chartV3}, nil
+	return &ChartMultiVersion{Helm2Chart: helm2Chart, Helm3Chart: helm3Chart}, nil
 }
 
 // ParseDetails return Chart details

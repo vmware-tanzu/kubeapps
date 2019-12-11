@@ -553,12 +553,12 @@ func TestGetChart(t *testing.T) {
 			}
 			// Currently tests return an nginx chart from ./testdata
 			// We need to ensure it got loaded in both version formats.
-			if got, want := ch.V2.GetMetadata().GetName(), "nginx"; got != want {
+			if got, want := ch.Helm2Chart.GetMetadata().GetName(), "nginx"; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
-			if ch.V3 == nil {
+			if ch.Helm3Chart == nil {
 				t.Errorf("got: nil, want: non-nil")
-			} else if got, want := ch.V3.Name(), "nginx"; got != want {
+			} else if got, want := ch.Helm3Chart.Name(), "nginx"; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 
