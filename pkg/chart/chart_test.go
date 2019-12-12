@@ -24,6 +24,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -39,7 +40,7 @@ import (
 	"k8s.io/helm/pkg/repo"
 )
 
-const testChartArchive = "./testdata/nginx-helm2pkg-5.1.1.tgz"
+const testChartArchive = "./testdata/nginx-apiVersion-v1-5.1.1.tgz"
 
 func Test_resolveChartURL(t *testing.T) {
 	tests := []struct {
@@ -440,6 +441,8 @@ type fakeHTTPClient struct {
 	requests []*http.Request
 }
 
+// Do for this fake client will return a chart if it exists in the
+// index *and* the corresponding chart exists in the testdata directory.
 func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 	// Record the request for later test assertions.
 	f.requests = append(f.requests, h)
@@ -457,9 +460,10 @@ func (f *fakeHTTPClient) Do(h *http.Request) (*http.Response, error) {
 	for _, chartURL := range f.chartURLs {
 		if h.URL.String() == chartURL {
 			// Fake chart response
-			f, err := os.Open(testChartArchive)
+			testChartPath := path.Join(".", "testdata", h.URL.Path)
+			f, err := os.Open(testChartPath)
 			if err != nil {
-				return nil, fmt.Errorf("unable to open test chart archive: %q", testChartArchive)
+				return &http.Response{StatusCode: 404}, fmt.Errorf("unable to open test chart archive: %q", testChartPath)
 			}
 			return &http.Response{StatusCode: 200, Body: f}, nil
 		}
@@ -507,28 +511,44 @@ func getFakeClientRequests(t *testing.T, c HTTPClient) []*http.Request {
 
 func TestGetChart(t *testing.T) {
 	const repoName = "foo-repo"
-	target := Details{
-		AppRepositoryResourceName: repoName,
-		ChartName:                 "test",
-		ReleaseName:               "foo",
-		Version:                   "1.0.0",
-	}
 	testCases := []struct {
-		name      string
-		userAgent string
+		name             string
+		chartVersion     string
+		userAgent        string
+		requireV1Support bool
+		errorExpected    bool
 	}{
 		{
-			name:      "GetChart without user agent",
-			userAgent: "",
+			name:         "gets the chart without a user agent",
+			chartVersion: "5.1.1-apiVersionV1",
+			userAgent:    "",
 		},
 		{
-			name:      "GetChart with user agent",
-			userAgent: "tiller-proxy/devel",
+			name:         "gets the chart with a user agent",
+			chartVersion: "5.1.1-apiVersionV1",
+			userAgent:    "tiller-proxy/devel",
+		},
+		{
+			name:             "gets a v2 chart without error when v1 support not required",
+			chartVersion:     "5.1.1-apiVersionV2",
+			requireV1Support: false,
+		},
+		{
+			name:             "returns an error for a v2 chart if v1 support required",
+			chartVersion:     "5.1.1-apiVersionV2",
+			requireV1Support: true,
+			errorExpected:    true,
 		},
 	}
 
 	const repoURL = "http://example.com/"
 	for _, tc := range testCases {
+		target := Details{
+			AppRepositoryResourceName: repoName,
+			ChartName:                 "nginx",
+			ReleaseName:               "foo",
+			Version:                   tc.chartVersion,
+		}
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
 			kubeClient := fakeK8s.NewSimpleClientset()
@@ -545,10 +565,17 @@ func TestGetChart(t *testing.T) {
 					},
 				},
 			}
-			ch, err := chUtils.GetChart(&target, httpClient)
+			ch, err := chUtils.GetChart(&target, httpClient, tc.requireV1Support)
 
 			if err != nil {
-				t.Errorf("requests were %v", httpClient.(*clientWithDefaultHeaders).client.(*fakeHTTPClient).requests[1])
+				if tc.errorExpected {
+					if got, want := err.Error(), "apiVersion 'v2' is not valid. The value must be \"v1\""; got != want {
+						t.Fatalf("got: %q, want: %q", got, want)
+					} else {
+						// Continue to the next test.
+						return
+					}
+				}
 				t.Fatalf("Unexpected error: %v", err)
 			}
 			// Currently tests return an nginx chart from ./testdata

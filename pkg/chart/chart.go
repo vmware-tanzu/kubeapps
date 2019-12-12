@@ -95,7 +95,7 @@ type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
 // Resolver for exposed funcs
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
-	GetChart(details *Details, netClient HTTPClient) (*ChartMultiVersion, error)
+	GetChart(details *Details, netClient HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
 	InitNetClient(details *Details) (HTTPClient, error)
 }
 
@@ -234,7 +234,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *HTTPClient, chartURL string) (*ChartMultiVersion, error) {
+func fetchChart(netClient *HTTPClient, chartURL string, requireV1Support bool) (*ChartMultiVersion, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -248,8 +248,11 @@ func fetchChart(netClient *HTTPClient, chartURL string) (*ChartMultiVersion, err
 	if err != nil {
 		return nil, err
 	}
+	// We only return an error when loading using the helm2loader (ie. chart v1)
+	// if we require v1 support, otherwise we continue to load using the
+	// helm3 v2 loader.
 	helm2Chart, err := helm2loader.LoadArchive(bytes.NewReader(data))
-	if err != nil {
+	if err != nil && requireV1Support {
 		return nil, err
 	}
 	helm3Chart, err := helm3loader.LoadArchive(bytes.NewReader(data))
@@ -361,7 +364,7 @@ func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *ChartClient) GetChart(details *Details, netClient HTTPClient) (*ChartMultiVersion, error) {
+func (c *ChartClient) GetChart(details *Details, netClient HTTPClient, requireV1Support bool) (*ChartMultiVersion, error) {
 	repoURL := c.appRepo.Spec.URL
 	if repoURL == "" {
 		// FIXME: Make configurable
@@ -381,7 +384,7 @@ func (c *ChartClient) GetChart(details *Details, netClient HTTPClient) (*ChartMu
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chart, err := fetchChart(&netClient, chartURL)
+	chart, err := fetchChart(&netClient, chartURL, requireV1Support)
 	if err != nil {
 		return nil, err
 	}
