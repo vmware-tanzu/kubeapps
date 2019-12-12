@@ -81,7 +81,7 @@ k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 deployments=(
   kubeapps-ci
   kubeapps-ci-internal-apprepository-controller
-  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-assetsvc
   kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
   kubeapps-ci-mongodb
@@ -102,7 +102,7 @@ kubectl get pods -n kubeapps -o wide
 kubectl get ep --namespace=kubeapps
 svcs=(
   kubeapps-ci
-  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-assetsvc
   kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
 )
@@ -134,8 +134,8 @@ if [[ "$code" != 0 ]]; then
     kubectl logs -n kubeapps $pod
   done;
   echo 
-  echo "LOGS for chartsvc tests --------"
-  kubectl logs kubeapps-ci-chartsvc-test --namespace kubeapps
+  echo "LOGS for assetsvc tests --------"
+  kubectl logs kubeapps-ci-assetsvc-test --namespace kubeapps
   echo "LOGS for tiller-proxy tests --------"
   kubectl logs kubeapps-ci-tiller-proxy-test --namespace kubeapps
   echo "LOGS for dashboard tests --------"

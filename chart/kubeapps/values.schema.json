@@ -26,9 +26,9 @@
         }
       }
     },
-    "chartsvc": {
+    "assetsvc": {
       "type": "object",
-      "title": "Chartsvc configuration",
+      "title": "Assetsvc configuration",
       "form": true,
       "properties": {
         "replicaCount": {
