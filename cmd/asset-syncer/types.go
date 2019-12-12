@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"database/sql/driver"
+	"encoding/json"
 	"time"
 )
 
@@ -60,6 +62,11 @@ type chartFiles struct {
 	Schema string
 	Repo   *repo
 	Digest string
+}
+
+// Allow to convert chartFiles to a sql JSON
+func (a chartFiles) Value() (driver.Value, error) {
+	return json.Marshal(a)
 }
 
 type repoCheck struct {
