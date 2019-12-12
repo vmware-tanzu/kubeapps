@@ -10,9 +10,9 @@ spec:
       image: {{ .Values.testImage.repository }}:{{ .Values.testImage.tag }}
       env:
         - name: ASSETSVC_HOST
-          value: {{ template "kubeapps.chartsvc.fullname" . }}.{{ .Release.Namespace }}
+          value: {{ template "kubeapps.assetsvc.fullname" . }}.{{ .Release.Namespace }}
         - name: ASSETSVC_PORT
-          value: "{{ .Values.chartsvc.service.port }}"
+          value: "{{ .Values.assetsvc.service.port }}"
       command:
         - sh
         - -c
