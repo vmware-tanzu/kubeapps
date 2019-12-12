@@ -31,6 +31,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
@@ -143,7 +144,7 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := handler.AuthGate()
+	authGate := auth.AuthGate()
 
 	// HTTP Handler
 	h := handler.TillerProxy{
@@ -178,6 +179,15 @@ func main() {
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(handlerutil.WithParams(h.DeleteRelease)),
+	))
+
+	// Backend routes unrelated to tiller-proxy functionality.
+	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
+	// reconsider where these endpoints live.
+	appreposHandler := handler.AppRepositories{}
+	backendAPIv1 := r.PathPrefix("/backend/v1").Subrouter()
+	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
+		negroni.WrapFunc(appreposHandler.Create),
 	))
 
 	// Chartsvc reverse proxy

@@ -15,11 +15,11 @@ GO_PACKAGES = ./...
 
 default: all
 
-all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/tiller-proxy
+all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/tiller-proxy kubeapps/kubeops
 
 # TODO(miguel) Create Makefiles per component
 kubeapps/%:
-	docker build -t kubeapps/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
+	DOCKER_BUILDKIT=1 docker build -t kubeapps/$*$(IMG_MODIFIER):$(IMAGE_TAG) --build-arg "VERSION=${VERSION}" -f cmd/$*/Dockerfile .
 
 kubeapps/dashboard:
 	docker build -t kubeapps/dashboard$(IMG_MODIFIER):$(IMAGE_TAG) -f dashboard/Dockerfile dashboard/

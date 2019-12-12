@@ -126,18 +126,17 @@ describe("createAxiosInterceptorWithAuth", () => {
     }
   });
 
-  it("dispatches auth error if 401", async () => {
+  it("dispatches auth error and logout if 401 with auth proxy", async () => {
+    Auth.usingOIDCToken = jest.fn(() => true);
+    Auth.unsetAuthCookie = jest.fn();
     const expectedActions = [
       {
         payload: "Boom!",
         type: "AUTHENTICATION_ERROR",
       },
       {
-        payload: { authenticated: false, oidc: false, defaultNamespace: "" },
-        type: "SET_AUTHENTICATED",
-      },
-      {
-        type: "CLEAR_NAMESPACES",
+        payload: { sessionExpired: true },
+        type: "SET_AUTHENTICATION_SESSION_EXPIRED",
       },
     ];
 
@@ -151,5 +150,33 @@ describe("createAxiosInterceptorWithAuth", () => {
     } catch (error) {
       expect(store.getActions()).toEqual(expectedActions);
     }
+    expect(Auth.unsetAuthCookie).toHaveBeenCalled();
+  });
+
+  it("dispatches auth error and logout if 403 with auth proxy", async () => {
+    Auth.usingOIDCToken = jest.fn(() => true);
+    Auth.unsetAuthCookie = jest.fn();
+    const expectedActions = [
+      {
+        payload: "Request failed with status code 401",
+        type: "AUTHENTICATION_ERROR",
+      },
+      {
+        payload: { sessionExpired: true },
+        type: "SET_AUTHENTICATION_SESSION_EXPIRED",
+      },
+    ];
+
+    moxios.stubRequest(testPath, {
+      responseText: "not ajson paylod",
+      status: 401,
+    });
+
+    try {
+      await axios.get(testPath);
+    } catch (error) {
+      expect(store.getActions()).toEqual(expectedActions);
+    }
+    expect(Auth.unsetAuthCookie).toHaveBeenCalled();
   });
 });
