@@ -15,6 +15,7 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/kubeapps/common v0.0.0-20190508164739-10b110436c1a
+	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/pflag v1.0.5
 	github.com/unrolled/render v1.0.1 // indirect
