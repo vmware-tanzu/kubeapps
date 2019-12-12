@@ -146,3 +146,50 @@ func TestListReleases(t *testing.T) {
 		})
 	}
 }
+
+func TestParseDriverType(t *testing.T) {
+	validTestCases := []struct {
+		input  string
+		output DriverType
+	}{
+		{
+			input:  "secret",
+			output: Secret,
+		},
+		{
+			input:  "secrets",
+			output: Secret,
+		},
+		{
+			input:  "configmap",
+			output: ConfigMap,
+		},
+		{
+			input:  "configmaps",
+			output: ConfigMap,
+		},
+		{
+			input:  "memory",
+			output: Memory,
+		},
+	}
+
+	for _, tc := range validTestCases {
+		t.Run(tc.input, func(t *testing.T) {
+			driverType, err := ParseDriverType(tc.input)
+			if err != nil {
+				t.Errorf("%v", err)
+			} else if driverType != tc.output {
+				t.Errorf("expected: %s, actual: %s", tc.output, driverType)
+			}
+		})
+	}
+
+	invalidTestCase := "andresmgot"
+	t.Run(invalidTestCase, func(t *testing.T) {
+		driverType, err := ParseDriverType(invalidTestCase)
+		if err == nil {
+			t.Errorf("Expected \"%s\" to be an invalid driver type, but it was parsed as %v", invalidTestCase, driverType)
+		}
+	})
+}

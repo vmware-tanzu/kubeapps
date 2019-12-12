@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/kubeapps/kubeapps/pkg/proxy"
@@ -90,16 +91,16 @@ func createStorage(driverType DriverType, namespace string, clientset *kubernete
 	return store
 }
 
-func ParseDriverType(raw string) DriverType {
+func ParseDriverType(raw string) (DriverType, error) {
 	switch raw {
 	case "secret", "secrets":
-		return Secret
+		return Secret, nil
 	case "configmap", "configmaps":
-		return ConfigMap
+		return ConfigMap, nil
 	case "memory":
-		return Memory
+		return Memory, nil
 	default:
-		panic("Invalid Helm driver type: " + raw)
+		return Memory, errors.New("Invalid Helm driver type: " + raw)
 	}
 }
 
