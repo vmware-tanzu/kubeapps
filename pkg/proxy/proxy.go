@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/kubernetes"
@@ -355,7 +356,7 @@ func (p *Proxy) TestRelease(name, namespace string) (*TestStatus, error) {
 	// Request Tiller to run tests for the specified release
 	// error channel (second return value) is ignored for now since all relevant "errors"
 	// are channeled into "testReleaseResponseChannel"
-	testReleaseResponseChannel, _ := p.helmClient.RunReleaseTest(release.GetName(), helm.ReleaseTestCleanup(true))
+	testReleaseResponseChannel, errChan := p.helmClient.RunReleaseTest(release.GetName(), helm.ReleaseTestCleanup(true))
 	log.Println("Running Tests for ", name, " in namespace ", namespace)
 
 	// Parsing messages from Tiller, see TestStatus
@@ -366,6 +367,16 @@ func (p *Proxy) TestRelease(name, namespace string) (*TestStatus, error) {
 		message := response.GetMsg()
 
 		testStatus[status] = append(testStatus[status], message)
+	}
+
+	//Aggregate all errors from the chan into one
+	var errs error
+	for err := range errChan {
+		errs = errors.Wrapf(errs, "%v\n", err)
+	}
+
+	if errs != nil {
+		return &testStatus, errs
 	}
 
 	return &testStatus, nil
