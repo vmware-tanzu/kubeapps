@@ -2,6 +2,7 @@ package agent
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/kubeapps/kubeapps/pkg/proxy"
@@ -53,24 +54,27 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	return appOverviews, nil
 }
 
-func NewActionConfig(driver DriverType, token, namespace string) *action.Configuration {
+func NewActionConfig(driver DriverType, token, namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 	config.BearerToken = token
 	config.BearerTokenFile = ""
 	clientset, err := kubernetes.NewForConfig(config)
-	store := createStorage(driver, namespace, clientset)
+	store, err := createStorage(driver, namespace, clientset)
+	if err != nil {
+		return nil, err
+	}
 	actionConfig.RESTClientGetter = nil     // TODO replace nil with meaningful value
 	actionConfig.KubeClient = kube.New(nil) // TODO replace nil with meaningful value
 	actionConfig.Releases = store
 	actionConfig.Log = klog.Infof
-	return actionConfig
+	return actionConfig, nil
 }
 
-func createStorage(driverType DriverType, namespace string, clientset *kubernetes.Clientset) *storage.Storage {
+func createStorage(driverType DriverType, namespace string, clientset *kubernetes.Clientset) (*storage.Storage, error) {
 	var store *storage.Storage
 	switch driverType {
 	case Secret:
@@ -85,10 +89,9 @@ func createStorage(driverType DriverType, namespace string, clientset *kubernete
 		d := driver.NewMemory()
 		store = storage.Init(d)
 	default:
-		// No (real) enums/ADTs in Go, so no static guarantee against this case.
-		panic("Invalid Helm driver type: " + driverType)
+		return nil, fmt.Errorf("Invalid Helm drive type: %q", driverType)
 	}
-	return store
+	return store, nil
 }
 
 func ParseDriverType(raw string) (DriverType, error) {
