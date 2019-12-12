@@ -87,6 +87,6 @@ func main() {
 		port = "8080"
 	}
 	addr := ":" + port
-	log.WithFields(log.Fields{"addr": addr}).Info("Started chartsvc")
+	log.WithFields(log.Fields{"addr": addr}).Info("Started assetsvc")
 	http.ListenAndServe(addr, n)
 }

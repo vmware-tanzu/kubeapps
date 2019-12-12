@@ -64,7 +64,7 @@ var (
 	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 
-	chartsvcURL string
+	assetsvcURL string
 )
 
 func init() {
@@ -80,7 +80,7 @@ func init() {
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
-	pflag.StringVar(&chartsvcURL, "chartsvc-url", "http://kubeapps-internal-chartsvc:8080", "URL to the internal chartsvc")
+	pflag.StringVar(&assetsvcURL, "assetsvc-url", "http://kubeapps-internal-assetsvc:8080", "URL to the internal assetsvc")
 }
 
 func main() {
@@ -190,21 +190,21 @@ func main() {
 		negroni.WrapFunc(appreposHandler.Create),
 	))
 
-	// Chartsvc reverse proxy
-	parsedChartsvcURL, err := url.Parse(chartsvcURL)
+	// assetsvc reverse proxy
+	parsedAssetsvcURL, err := url.Parse(assetsvcURL)
 	if err != nil {
-		log.Fatalf("Unable to parse the chartsvc URL: %v", err)
+		log.Fatalf("Unable to parse the assetsvc URL: %v", err)
 	}
-	chartsvcProxy := httputil.NewSingleHostReverseProxy(parsedChartsvcURL)
-	chartsvcPrefix := "/chartsvc"
-	chartsvcRouter := r.PathPrefix(chartsvcPrefix).Subrouter()
+	assetsvcProxy := httputil.NewSingleHostReverseProxy(parsedAssetsvcURL)
+	assetsvcPrefix := "/assetsvc"
+	assetsvcRouter := r.PathPrefix(assetsvcPrefix).Subrouter()
 	// Logos don't require authentication so bypass that step
-	chartsvcRouter.Methods("GET").Path("/v1/assets/{repo}/{id}/logo").Handler(negroni.New(
-		negroni.Wrap(http.StripPrefix(chartsvcPrefix, chartsvcProxy)),
+	assetsvcRouter.Methods("GET").Path("/v1/assets/{repo}/{id}/logo").Handler(negroni.New(
+		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
-	chartsvcRouter.Methods("GET").Handler(negroni.New(
+	assetsvcRouter.Methods("GET").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(http.StripPrefix(chartsvcPrefix, chartsvcProxy)),
+		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
 
 	n := negroni.Classic()

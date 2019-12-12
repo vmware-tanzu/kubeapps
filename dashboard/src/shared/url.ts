@@ -18,7 +18,7 @@ export const api = {
   },
 
   charts: {
-    base: "api/chartsvc/v1",
+    base: "api/assetsvc/v1",
     get: (id: string) => `${api.charts.base}/charts/${id}`,
     getReadme: (id: string, version: string) =>
       `${api.charts.base}/assets/${id}/versions/${encodeURIComponent(version)}/README.md`,
