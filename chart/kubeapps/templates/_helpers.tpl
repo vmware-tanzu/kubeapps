@@ -116,10 +116,10 @@ Create name for the kubeapps upgrade job
 {{- end -}}
 
 {{/*
-Create name for the chartsvc based on the fullname
+Create name for the assetsvc based on the fullname
 */}}
-{{- define "kubeapps.chartsvc.fullname" -}}
-{{ template "kubeapps.fullname" . }}-internal-chartsvc
+{{- define "kubeapps.assetsvc.fullname" -}}
+{{ template "kubeapps.fullname" . }}-internal-assetsvc
 {{- end -}}
 
 {{/*
