@@ -12,6 +12,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/client-go/kubernetes"
 
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 )
@@ -208,38 +209,40 @@ func TestListReleases(t *testing.T) {
 
 func TestParseDriverType(t *testing.T) {
 	validTestCases := []struct {
-		input  string
-		output DriverType
+		input      string
+		driverName string
 	}{
 		{
-			input:  "secret",
-			output: Secret,
+			input:      "secret",
+			driverName: "Secret",
 		},
 		{
-			input:  "secrets",
-			output: Secret,
+			input:      "secrets",
+			driverName: "Secret",
 		},
 		{
-			input:  "configmap",
-			output: ConfigMap,
+			input:      "configmap",
+			driverName: "ConfigMap",
 		},
 		{
-			input:  "configmaps",
-			output: ConfigMap,
+			input:      "configmaps",
+			driverName: "ConfigMap",
 		},
 		{
-			input:  "memory",
-			output: Memory,
+			input:      "memory",
+			driverName: "Memory",
 		},
 	}
 
 	for _, tc := range validTestCases {
 		t.Run(tc.input, func(t *testing.T) {
-			driverType, err := ParseDriverType(tc.input)
+			storageForDriver, err := ParseDriverType(tc.input)
 			if err != nil {
-				t.Errorf("%v", err)
-			} else if driverType != tc.output {
-				t.Errorf("expected: %s, actual: %s", tc.output, driverType)
+				t.Fatalf("%v", err)
+			}
+			storage := storageForDriver("default", &kubernetes.Clientset{})
+			if got, want := storage.Name(), tc.driverName; got != want {
+				t.Errorf("expected: %s, actual: %s", want, got)
 			}
 		})
 	}
