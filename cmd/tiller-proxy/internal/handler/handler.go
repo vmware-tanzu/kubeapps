@@ -122,6 +122,8 @@ func (h *TillerProxy) OperateRelease(w http.ResponseWriter, req *http.Request, p
 		h.UpgradeRelease(w, req, params)
 	case "rollback":
 		h.RollbackRelease(w, req, params)
+	case "test":
+		h.TestRelease(w, req, params)
 	default:
 		// By default, for maintaining compatibility, we call upgrade
 		h.UpgradeRelease(w, req, params)
@@ -222,6 +224,32 @@ func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, par
 		return
 	}
 	response.NewDataResponse(apps).Write(w)
+}
+
+// TestRelease in the namespace given as Param
+func (h *TillerProxy) TestRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+
+	if !h.DisableAuth {
+		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		// helm tests only create pods so we only need to check that
+		manifest := "apiVersion: v1\nkind: Pod"
+		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
+		if len(forbiddenActions) > 0 {
+			returnForbiddenActions(forbiddenActions, w)
+			return
+		}
+	}
+
+	testResult, err := h.ProxyClient.TestRelease(params["releaseName"], params["namespace"])
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(testResult).Write(w)
 }
 
 // GetRelease returns the release info
