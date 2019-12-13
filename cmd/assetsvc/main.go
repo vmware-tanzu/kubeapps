@@ -30,7 +30,7 @@ import (
 
 const pathPrefix = "/v1"
 
-var dbSession datastore.Session
+var manager assetManager
 
 func setupRoutes() http.Handler {
 	r := mux.NewRouter()
@@ -67,18 +67,24 @@ func setupRoutes() http.Handler {
 }
 
 func main() {
-	dbURL := flag.String("mongo-url", "localhost", "MongoDB URL (see https://godoc.org/github.com/globalsign/mgo#Dial for format)")
-	dbName := flag.String("mongo-database", "charts", "MongoDB database")
-	dbUsername := flag.String("mongo-user", "", "MongoDB user")
-	dbPassword := os.Getenv("MONGO_PASSWORD")
+	dbURL := flag.String("database-url", "localhost", "Database URL")
+	dbName := flag.String("database-name", "charts", "Database database")
+	dbUsername := flag.String("database-user", "", "Database user")
+	dbType := flag.String("database-type", "mongodb", "Database type")
+	dbPassword := os.Getenv("DB_PASSWORD")
 	flag.Parse()
 
-	mongoConfig := datastore.Config{URL: *dbURL, Database: *dbName, Username: *dbUsername, Password: dbPassword}
+	dbConfig := datastore.Config{URL: *dbURL, Database: *dbName, Username: *dbUsername, Password: dbPassword}
 	var err error
-	dbSession, err = datastore.NewSession(mongoConfig)
+	manager, err = newManager(*dbType, dbConfig)
 	if err != nil {
-		log.WithFields(log.Fields{"host": *dbURL}).Fatal(err)
+		log.Fatal(err)
 	}
+	err = manager.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer manager.Close()
 
 	n := setupRoutes()
 

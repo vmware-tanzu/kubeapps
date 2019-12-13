@@ -18,11 +18,9 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"net/http"
 	"strconv"
 
-	"github.com/globalsign/mgo/bson"
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
@@ -116,59 +114,8 @@ func uniqChartList(charts []*models.Chart) []*models.Chart {
 }
 
 func getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) (apiListResponse, interface{}, error) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var charts []*models.Chart
-
-	c := db.C(chartCollection)
-	pipeline := []bson.M{}
-	if repo != "" {
-		pipeline = append(pipeline, bson.M{"$match": bson.M{"repo.name": repo}})
-	}
-
-	if !showDuplicates {
-		// We should query unique charts
-		pipeline = append(pipeline,
-			// Add a new field to store the latest version
-			bson.M{"$addFields": bson.M{"firstChartVersion": bson.M{"$arrayElemAt": []interface{}{"$chartversions", 0}}}},
-			// Group by unique digest for the latest version (remove duplicates)
-			bson.M{"$group": bson.M{"_id": "$firstChartVersion.digest", "chart": bson.M{"$first": "$$ROOT"}}},
-			// Restore original object struct
-			bson.M{"$replaceRoot": bson.M{"newRoot": "$chart"}},
-		)
-	}
-
-	// Order by name
-	pipeline = append(pipeline, bson.M{"$sort": bson.M{"name": 1}})
-
-	totalPages := 1
-	if pageSize != 0 {
-		// If a pageSize is given, returns only the the specified number of charts and
-		// the number of pages
-		countPipeline := append(pipeline, bson.M{"$count": "count"})
-		cc := count{}
-		err := c.Pipe(countPipeline).One(&cc)
-		if err != nil {
-			return apiListResponse{}, 0, err
-		}
-		totalPages = int(math.Ceil(float64(cc.Count) / float64(pageSize)))
-
-		// If the page number is out of range, return the last one
-		if pageNumber > totalPages {
-			pageNumber = totalPages
-		}
-
-		pipeline = append(pipeline,
-			bson.M{"$skip": pageSize * (pageNumber - 1)},
-			bson.M{"$limit": pageSize},
-		)
-	}
-	err := c.Pipe(pipeline).All(&charts)
-	if err != nil {
-		return apiListResponse{}, 0, err
-	}
-
-	return newChartListResponse(charts), meta{totalPages}, nil
+	charts, totalPages, err := manager.getPaginatedChartList(repo, pageNumber, pageSize, showDuplicates)
+	return newChartListResponse(charts), meta{totalPages}, err
 }
 
 // listCharts returns a list of charts
@@ -197,11 +144,9 @@ func listRepoCharts(w http.ResponseWriter, req *http.Request, params Params) {
 
 // getChart returns the chart from the given repo
 func getChart(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	if err := db.C(chartCollection).FindId(chartID).One(&chart); err != nil {
+	chart, err := manager.getChart(chartID)
+	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
 		return
@@ -213,11 +158,9 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 
 // listChartVersions returns a list of chart versions for the given chart
 func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	if err := db.C(chartCollection).FindId(chartID).One(&chart); err != nil {
+	chart, err := manager.getChart(chartID)
+	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
 		return
@@ -229,17 +172,9 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 
 // getChartVersion returns the given chart version
 func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	if err := db.C(chartCollection).Find(bson.M{
-		"_id":           chartID,
-		"chartversions": bson.M{"$elemMatch": bson.M{"version": params["version"]}},
-	}).Select(bson.M{
-		"name": 1, "repo": 1, "description": 1, "home": 1, "keywords": 1, "maintainers": 1, "sources": 1,
-		"chartversions.$": 1,
-	}).One(&chart); err != nil {
+	chart, err := manager.getChartVersion(chartID, params["version"])
+	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart version").Write(w)
 		return
@@ -251,11 +186,9 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 
 // getChartIcon returns the icon for a given chart
 func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var chart models.Chart
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	if err := db.C(chartCollection).FindId(chartID).One(&chart); err != nil {
+	chart, err := manager.getChart(chartID)
+	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		http.NotFound(w, req)
 		return
@@ -277,11 +210,9 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 
 // getChartVersionReadme returns the README for a given chart
 func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var files models.ChartFiles
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	if err := db.C(filesCollection).FindId(fileID).One(&files); err != nil {
+	files, err := manager.getChartFiles(fileID)
+	if err != nil {
 		log.WithError(err).Errorf("could not find files with id %s", fileID)
 		http.NotFound(w, req)
 		return
@@ -297,11 +228,9 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 
 // getChartVersionValues returns the values.yaml for a given chart
 func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var files models.ChartFiles
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	if err := db.C(filesCollection).FindId(fileID).One(&files); err != nil {
+	files, err := manager.getChartFiles(fileID)
+	if err != nil {
 		log.WithError(err).Errorf("could not find values.yaml with id %s", fileID)
 		http.NotFound(w, req)
 		return
@@ -312,11 +241,9 @@ func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Para
 
 // getChartVersionSchema returns the values.schema.json for a given chart
 func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-	var files models.ChartFiles
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	if err := db.C(filesCollection).FindId(fileID).One(&files); err != nil {
+	files, err := manager.getChartFiles(fileID)
+	if err != nil {
 		log.WithError(err).Errorf("could not find values.schema.json with id %s", fileID)
 		http.NotFound(w, req)
 		return
@@ -327,18 +254,8 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 
 // listChartsWithFilters returns the list of repos that contains the given chart and the latest version found
 func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-
-	var charts []*models.Chart
-	if err := db.C(chartCollection).Find(bson.M{
-		"name": params["chartName"],
-		"chartversions": bson.M{
-			"$elemMatch": bson.M{"version": req.FormValue("version"), "appversion": req.FormValue("appversion")},
-		}}).Select(bson.M{
-		"name": 1, "repo": 1,
-		"chartversions": bson.M{"$slice": 1},
-	}).All(&charts); err != nil {
+	charts, err := manager.getChartsWithFiltes(params["chartName"], req.FormValue("version"), req.FormValue("appversion"))
+	if err != nil {
 		log.WithError(err).Errorf(
 			"could not find charts with the given name %s, version %s and appversion %s",
 			params["chartName"], req.FormValue("version"), req.FormValue("appversion"),
@@ -362,25 +279,10 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 //  - any source
 //  - any maintainer name
 func searchCharts(w http.ResponseWriter, req *http.Request, params Params) {
-	db, closer := dbSession.DB()
-	defer closer()
-
 	query := req.FormValue("q")
-	var charts []*models.Chart
-	conditions := bson.M{
-		"$or": []bson.M{
-			{"name": bson.M{"$regex": query}},
-			{"description": bson.M{"$regex": query}},
-			{"repo.name": bson.M{"$regex": query}},
-			{"keywords": bson.M{"$elemMatch": bson.M{"$regex": query}}},
-			{"sources": bson.M{"$elemMatch": bson.M{"$regex": query}}},
-			{"maintainers": bson.M{"$elemMatch": bson.M{"name": bson.M{"$regex": query}}}},
-		},
-	}
-	if params["repo"] != "" {
-		conditions["repo.name"] = params["repo"]
-	}
-	if err := db.C(chartCollection).Find(conditions).All(&charts); err != nil {
+	repo := params["repo"]
+	charts, err := manager.searchCharts(query, repo)
+	if err != nil {
 		log.WithError(err).Errorf(
 			"could not find charts with the given query %s",
 			query,
