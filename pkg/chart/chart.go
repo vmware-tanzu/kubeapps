@@ -35,9 +35,12 @@ import (
 	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	helm3chart "helm.sh/helm/v3/pkg/chart"
+	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	helm2loader "k8s.io/helm/pkg/chartutil"
+	helm2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
 
@@ -78,31 +81,37 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// LoadChart should return a Chart struct from an IOReader
-type LoadChart func(in io.Reader) (*chart.Chart, error)
+type ChartMultiVersion struct {
+	Helm2Chart *helm2chart.Chart
+	Helm3Chart *helm3chart.Chart
+}
+
+// LoadHelm2Chart should return a helm2 Chart struct from an IOReader
+type LoadHelm2Chart func(in io.Reader) (*helm2chart.Chart, error)
+
+// LoadHelm3Chart returns a helm3 Chart struct from an IOReader
+type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
 
 // Resolver for exposed funcs
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
-	GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error)
+	GetChart(details *Details, netClient HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
 	InitNetClient(details *Details) (HTTPClient, error)
 }
 
-// Chart struct contains the clients required to retrieve charts info
-type Chart struct {
+// ChartClient struct contains the clients required to retrieve charts info
+type ChartClient struct {
 	kubeClient    kubernetes.Interface
 	appRepoClient appRepoClientSet.Interface
-	load          LoadChart
 	userAgent     string
 	appRepo       *appRepov1.AppRepository
 }
 
-// NewChart returns a new Chart
-func NewChart(kubeClient kubernetes.Interface, appRepoClient appRepoClientSet.Interface, load LoadChart, userAgent string) *Chart {
-	return &Chart{
+// NewChartClient returns a new ChartClient
+func NewChartClient(kubeClient kubernetes.Interface, appRepoClient appRepoClientSet.Interface, userAgent string) *ChartClient {
+	return &ChartClient{
 		kubeClient:    kubeClient,
 		appRepoClient: appRepoClient,
-		load:          load,
 		userAgent:     userAgent,
 	}
 }
@@ -225,7 +234,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *HTTPClient, chartURL string, load LoadChart) (*chart.Chart, error) {
+func fetchChart(netClient *HTTPClient, chartURL string, requireV1Support bool) (*ChartMultiVersion, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -239,11 +248,22 @@ func fetchChart(netClient *HTTPClient, chartURL string, load LoadChart) (*chart.
 	if err != nil {
 		return nil, err
 	}
-	return load(bytes.NewReader(data))
+	// We only return an error when loading using the helm2loader (ie. chart v1)
+	// if we require v1 support, otherwise we continue to load using the
+	// helm3 v2 loader.
+	helm2Chart, err := helm2loader.LoadArchive(bytes.NewReader(data))
+	if err != nil && requireV1Support {
+		return nil, err
+	}
+	helm3Chart, err := helm3loader.LoadArchive(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	return &ChartMultiVersion{Helm2Chart: helm2Chart, Helm3Chart: helm3Chart}, nil
 }
 
 // ParseDetails return Chart details
-func (c *Chart) ParseDetails(data []byte) (*Details, error) {
+func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 	details := &Details{}
 	err := json.Unmarshal(data, details)
 	if err != nil {
@@ -278,7 +298,7 @@ func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error)
 
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
+func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 	// Require the SystemCertPool unless the env var is explicitly set.
 	caCertPool, err := x509.SystemCertPool()
 	if err != nil {
@@ -342,8 +362,9 @@ func (c *Chart) InitNetClient(details *Details) (HTTPClient, error) {
 	}, nil
 }
 
-// GetChart retrieves and loads a Chart from a registry
-func (c *Chart) GetChart(details *Details, netClient HTTPClient) (*chart.Chart, error) {
+// GetChart retrieves and loads a Chart from a registry in both
+// v2 and v3 formats.
+func (c *ChartClient) GetChart(details *Details, netClient HTTPClient, requireV1Support bool) (*ChartMultiVersion, error) {
 	repoURL := c.appRepo.Spec.URL
 	if repoURL == "" {
 		// FIXME: Make configurable
@@ -363,9 +384,10 @@ func (c *Chart) GetChart(details *Details, netClient HTTPClient) (*chart.Chart, 
 	}
 
 	log.Printf("Downloading %s ...", chartURL)
-	chartRequested, err := fetchChart(&netClient, chartURL, c.load)
+	chart, err := fetchChart(&netClient, chartURL, requireV1Support)
 	if err != nil {
 		return nil, err
 	}
-	return chartRequested, nil
+
+	return chart, nil
 }
