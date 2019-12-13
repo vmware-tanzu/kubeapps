@@ -55,8 +55,8 @@ REM Get the Base64 encoded token
 kubectl get secret %ks% -o jsonpath={.data.token} > b64.txt
 
 REM Decode The Token
-DEL token.txt
 certutil -decode b64.txt token.txt
+DEL b64.txt
 ```
 
 Open a command prompt and run the `GetDashToken.cmd` Your token can be found in the `token.txt` file.
