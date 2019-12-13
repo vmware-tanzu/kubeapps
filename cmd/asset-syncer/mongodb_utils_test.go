@@ -24,6 +24,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/common/datastore/mockstore"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -35,7 +36,9 @@ func Test_importCharts(t *testing.T) {
 	dbSession := mockstore.NewMockSession(m)
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com"})
-	manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+	man := dbutils.NewMongoDBManager(datastore.Config{})
+	man.DBSession = dbSession
+	manager := &mongodbAssetManager{man}
 	manager.importCharts(charts)
 
 	m.AssertExpectations(t)
@@ -60,8 +63,10 @@ func Test_DeleteRepo(t *testing.T) {
 	})
 	dbSession := mockstore.NewMockSession(m)
 
-	mongoManager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
-	err := mongoManager.Delete("test")
+	man := dbutils.NewMongoDBManager(datastore.Config{})
+	man.DBSession = dbSession
+	manager := &mongodbAssetManager{man}
+	err := manager.Delete("test")
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}
@@ -95,7 +100,9 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 				*args.Get(0).(*repoCheck) = tt.mockedLastCheck
 			}).Return(nil)
 			dbSession := mockstore.NewMockSession(&m)
-			manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			man := dbutils.NewMongoDBManager(datastore.Config{})
+			man.DBSession = dbSession
+			manager := &mongodbAssetManager{man}
 			res := manager.RepoAlreadyProcessed("", tt.checksum)
 			if res != tt.processed {
 				t.Errorf("Expected alreadyProcessed to be %v got %v", tt.processed, res)
@@ -111,7 +118,9 @@ func Test_updateLastCheck(t *testing.T) {
 	now := time.Now()
 	m.On("UpsertId", repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
 	dbSession := mockstore.NewMockSession(&m)
-	manager := mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+	man := dbutils.NewMongoDBManager(datastore.Config{})
+	man.DBSession = dbSession
+	manager := &mongodbAssetManager{man}
 	err := manager.UpdateLastCheck(repoName, checksum, now)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
