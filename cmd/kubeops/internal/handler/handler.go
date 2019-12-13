@@ -28,9 +28,15 @@ func WithAgentConfig(driverType agent.DriverType, options agent.Options) func(f 
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 			namespace := params[namespaceParam]
 			token := auth.ExtractToken(req.Header.Get(authHeader))
+			actionConfig, err := agent.NewActionConfig(driverType, token, namespace)
+			if err != nil {
+				// TODO log details rather than return potentially sensitive details in error.
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			cfg := agent.Config{
 				AgentOptions: options,
-				ActionConfig: agent.NewActionConfig(driverType, token, namespace),
+				ActionConfig: actionConfig,
 			}
 			f(cfg, w, req, params)
 		}
