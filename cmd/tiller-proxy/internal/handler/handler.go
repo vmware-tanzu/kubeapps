@@ -45,11 +45,12 @@ func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *
 	if err != nil {
 		return nil, nil, err
 	}
-	ch, err := cu.GetChart(chartDetails, netClient)
+	requireV1Support := true
+	ch, err := cu.GetChart(chartDetails, netClient, requireV1Support)
 	if err != nil {
 		return nil, nil, err
 	}
-	return chartDetails, ch, nil
+	return chartDetails, ch.Helm2Chart, nil
 }
 
 func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {

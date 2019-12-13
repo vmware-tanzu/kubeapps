@@ -2,6 +2,7 @@ package agent
 
 import (
 	"io/ioutil"
+	"strconv"
 	"testing"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -66,6 +67,15 @@ func makeReleases(t *testing.T, config *Config, rels []releaseStub) {
 	}
 }
 
+func strtoi(str string) int {
+	i, err := strconv.Atoi(str)
+	if err != nil {
+		return 0
+	}
+
+	return i
+}
+
 func TestListReleases(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -86,12 +96,18 @@ func TestListReleases(t *testing.T) {
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "airwatch",
+					Namespace:   "default",
+					Version:     "1",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
 				},
 				proxy.AppOverview{
 					ReleaseName: "not-in-default-namespace",
+					Namespace:   "other",
+					Version:     "1",
 				},
 			},
 		},
@@ -107,9 +123,13 @@ func TestListReleases(t *testing.T) {
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "airwatch",
+					Namespace:   "default",
+					Version:     "1",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
 				},
 			},
 		},
@@ -125,6 +145,29 @@ func TestListReleases(t *testing.T) {
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "airwatch",
+					Namespace:   "default",
+					Version:     "1",
+				},
+			},
+		},
+		{
+			name:      "returns two apps with same name but different namespaces and versions",
+			namespace: "",
+			listLimit: defaultListLimit,
+			releases: []releaseStub{
+				releaseStub{"wordpress", "default", 1},
+				releaseStub{"wordpress", "dev", 2},
+			},
+			expectedApps: []proxy.AppOverview{
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "dev",
+					Version:     "2",
+				},
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
 				},
 			},
 		},
@@ -140,9 +183,25 @@ func TestListReleases(t *testing.T) {
 				t.Errorf("%v", err)
 			}
 
+			// Check for size of returned apps
 			if got, want := len(apps), len(tc.expectedApps); got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
+
+			//Check if expected and returned contain the same releases, given they have same size
+			m := make(map[releaseStub]bool)
+
+			for _, eapp := range tc.expectedApps {
+				m[releaseStub{eapp.ReleaseName, eapp.Namespace, strtoi(eapp.Version)}] = true
+			}
+
+			for _, app := range apps {
+				rs := releaseStub{app.ReleaseName, app.Namespace, strtoi(app.Version)}
+				if _, ok := m[rs]; !ok {
+					t.Errorf("got: %v, want: %v", rs, "None")
+				}
+			}
+
 		})
 	}
 }
