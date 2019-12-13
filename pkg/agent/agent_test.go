@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
@@ -98,16 +100,22 @@ func TestListReleases(t *testing.T) {
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "not-in-default-namespace",
 					Namespace:   "other",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -125,11 +133,15 @@ func TestListReleases(t *testing.T) {
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -147,6 +159,8 @@ func TestListReleases(t *testing.T) {
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -163,11 +177,15 @@ func TestListReleases(t *testing.T) {
 					ReleaseName: "wordpress",
 					Namespace:   "dev",
 					Version:     "2",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -188,22 +206,31 @@ func TestListReleases(t *testing.T) {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 
-			//Check if expected and returned contain the same releases, given they have same size
-			m := make(map[releaseStub]bool)
+			// Map a unique identifier to ptr to AppOverview
+			m := make(map[string]*proxy.AppOverview)
 
-			for _, eapp := range tc.expectedApps {
-				m[releaseStub{eapp.ReleaseName, eapp.Namespace, strtoi(eapp.Version)}] = true
+			for i, eapp := range tc.expectedApps {
+				m[getAppIdentity(eapp)] = &tc.expectedApps[i]
 			}
 
+			// All attained apps, must have a unique id that is already in the map
+			// Attained app and its mapping should be equal in structure not only identifier
 			for _, app := range apps {
-				rs := releaseStub{app.ReleaseName, app.Namespace, strtoi(app.Version)}
-				if _, ok := m[rs]; !ok {
-					t.Errorf("got: %v, want: %v", rs, "None")
+				appIdentity := getAppIdentity(app)
+				if expectedApp, ok := m[appIdentity]; !ok {
+					t.Errorf("got: %v, want: %v", &app, "None")
+				} else if !cmp.Equal(*expectedApp, app) {
+					t.Errorf(cmp.Diff(*expectedApp, app))
 				}
 			}
 
 		})
 	}
+}
+
+// getAppIdentity concatenates the release name and namespace of an app
+func getAppIdentity(app proxy.AppOverview) string {
+	return fmt.Sprintf("%v %v", app.ReleaseName, app.Namespace)
 }
 
 func TestParseDriverType(t *testing.T) {
