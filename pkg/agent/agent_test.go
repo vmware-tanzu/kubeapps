@@ -91,20 +91,13 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-default-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "airwatch",
-					Namespace:   "default",
-					Version:     "1",
-					Status:      "deployed",
-					Icon:        "https://example.com/icon.png",
-				},
-				proxy.AppOverview{
-					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1",
 					Status:      "deployed",
@@ -117,6 +110,13 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 				},
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
+				},
 			},
 		},
 		{
@@ -124,8 +124,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
@@ -150,8 +150,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: 1,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
@@ -175,15 +175,15 @@ func TestListReleases(t *testing.T) {
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
-					Namespace:   "dev",
-					Version:     "2",
+					Namespace:   "default",
+					Version:     "1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
-					Namespace:   "default",
-					Version:     "1",
+					Namespace:   "dev",
+					Version:     "2",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 				},
@@ -206,21 +206,10 @@ func TestListReleases(t *testing.T) {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 
-			// Map a unique identifier to ptr to AppOverview
-			m := make(map[string]*proxy.AppOverview)
-
-			for i, eapp := range tc.expectedApps {
-				m[getAppIdentity(eapp)] = &tc.expectedApps[i]
-			}
-
-			// All attained apps, must have a unique id that is already in the map
-			// Attained app and its mapping should be equal in structure not only identifier
-			for _, app := range apps {
-				appIdentity := getAppIdentity(app)
-				if expectedApp, ok := m[appIdentity]; !ok {
-					t.Errorf("got: %v, want: %v", &app, "None")
-				} else if !cmp.Equal(*expectedApp, app) {
-					t.Errorf(cmp.Diff(*expectedApp, app))
+			//Deep equality check of expected aginst attained result
+			for i := 0; i < len(apps); i++ {
+				if !cmp.Equal(apps[i], tc.expectedApps[i]) {
+					t.Errorf(cmp.Diff(apps[i], tc.expectedApps[i]))
 				}
 			}
 
