@@ -97,7 +97,7 @@ func (f *FakeProxy) RollbackRelease(name, namespace string, revision int32) (*re
 
 func (f *FakeProxy) GetRelease(name, namespace string) (*release.Release, error) {
 	for _, r := range f.Releases {
-		if r.Name == name {
+		if r.Name == name && r.Namespace == namespace {
 			return &r, nil
 		}
 	}
@@ -122,4 +122,18 @@ func (f *FakeProxy) DeleteRelease(name, namespace string, purge bool) error {
 		}
 	}
 	return fmt.Errorf("Release %s not found", name)
+}
+
+func (f *FakeProxy) TestRelease(name, namespace string) (*proxy.TestStatus, error) {
+
+	_, err := f.GetRelease(name, namespace)
+
+	if err != nil {
+		return nil, fmt.Errorf("Unable to locate release: %v", err)
+	}
+
+	m := make(map[string][]string)
+	m["UNKNOWN"] = []string{"No Tests Found"}
+
+	return &m, nil
 }
