@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
+
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
@@ -36,30 +38,30 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 
 func (m *postgresAssetManager) getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
 	// TODO: Implement this!
-	return nil, 0, nil
+	return nil, 0, fmt.Errorf("Unimplemented")
 }
 
 func (m *postgresAssetManager) getChart(chartID string) (models.Chart, error) {
 	// TODO: Implement this!
-	return models.Chart{}, nil
+	return models.Chart{}, fmt.Errorf("Unimplemented")
 }
 
 func (m *postgresAssetManager) getChartVersion(chartID, version string) (models.Chart, error) {
 	// TODO: Implement this!
-	return models.Chart{}, nil
+	return models.Chart{}, fmt.Errorf("Unimplemented")
 }
 
 func (m *postgresAssetManager) getChartFiles(filesID string) (models.ChartFiles, error) {
 	// TODO: Implement this!
-	return models.ChartFiles{}, nil
+	return models.ChartFiles{}, fmt.Errorf("Unimplemented")
 }
 
 func (m *postgresAssetManager) getChartsWithFiltes(name, version, appVersion string) ([]*models.Chart, error) {
 	// TODO: Implement this!
-	return nil, nil
+	return nil, fmt.Errorf("Unimplemented")
 }
 
 func (m *postgresAssetManager) searchCharts(query, repo string) ([]*models.Chart, error) {
 	// TODO: Implement this!
-	return nil, nil
+	return nil, fmt.Errorf("Unimplemented")
 }
