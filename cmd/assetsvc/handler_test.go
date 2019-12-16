@@ -27,8 +27,10 @@ import (
 	"testing"
 
 	"github.com/disintegration/imaging"
+	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/common/datastore/mockstore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -54,6 +56,13 @@ func iconBytes() []byte {
 	img := imaging.New(1, 1, color.White)
 	imaging.Encode(&b, img, imaging.PNG)
 	return b.Bytes()
+}
+
+func getMockManager(m *mock.Mock) *mongodbAssetManager {
+	dbSession := mockstore.NewMockSession(m)
+	man := dbutils.NewMongoDBManager(datastore.Config{})
+	man.DBSession = dbSession
+	return &mongodbAssetManager{man}
 }
 
 func Test_chartAttributes(t *testing.T) {
@@ -244,8 +253,7 @@ func Test_listCharts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
-
+			manager = getMockManager(&m)
 			m.On("All", &chartsList).Run(func(args mock.Arguments) {
 				*args.Get(0).(*[]*models.Chart) = tt.charts
 			})
@@ -307,7 +315,7 @@ func Test_listRepoCharts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			m.On("All", &chartsList).Run(func(args mock.Arguments) {
 				*args.Get(0).(*[]*models.Chart) = tt.charts
@@ -373,7 +381,7 @@ func Test_getChart(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
@@ -437,7 +445,7 @@ func Test_listChartVersions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
@@ -503,7 +511,7 @@ func Test_getChartVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
@@ -573,7 +581,7 @@ func Test_getChartIcon(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
@@ -637,7 +645,7 @@ func Test_getChartVersionReadme(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
@@ -701,7 +709,7 @@ func Test_getChartVersionValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
@@ -765,7 +773,7 @@ func Test_getChartVersionSchema(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession = mockstore.NewMockSession(&m)
+			manager = getMockManager(&m)
 
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
@@ -811,7 +819,7 @@ func Test_findLatestChart(t *testing.T) {
 		reqAppVersion := "0.1.0"
 
 		var m mock.Mock
-		dbSession = mockstore.NewMockSession(&m)
+		manager = getMockManager(&m)
 		m.On("All", &chartsList).Run(func(args mock.Arguments) {
 			*args.Get(0).(*[]*models.Chart) = charts
 		})
@@ -846,7 +854,7 @@ func Test_findLatestChart(t *testing.T) {
 		reqAppVersion := "0.1.0"
 
 		var m mock.Mock
-		dbSession = mockstore.NewMockSession(&m)
+		manager = getMockManager(&m)
 		m.On("All", &chartsList).Run(func(args mock.Arguments) {
 			*args.Get(0).(*[]*models.Chart) = charts
 		})
@@ -882,7 +890,7 @@ func Test_findLatestChart(t *testing.T) {
 		reqAppVersion := "0.1.0"
 
 		var m mock.Mock
-		dbSession = mockstore.NewMockSession(&m)
+		manager = getMockManager(&m)
 		m.On("All", &chartsList).Run(func(args mock.Arguments) {
 			*args.Get(0).(*[]*models.Chart) = charts
 		})

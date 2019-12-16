@@ -40,10 +40,11 @@ spec:
           command:
             - /assetsvc
           args:
-            - --mongo-user=root
-            - --mongo-url={{ template "kubeapps.mongodb.fullname" . }}
+            - --database-type=mongodb
+            - --database-user=root
+            - --database-url={{ template "kubeapps.mongodb.fullname" . }}
           env:
-            - name: MONGO_PASSWORD
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: {{ .Values.mongodb.existingSecret }}
