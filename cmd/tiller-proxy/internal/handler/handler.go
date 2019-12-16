@@ -29,6 +29,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const requireV1Support = true
+
 func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	body, err := json.Marshal(forbiddenActions)
@@ -59,7 +61,8 @@ func (h *TillerProxy) logStatus(name string) {
 // CreateRelease creates a new release in the namespace given as Param
 func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Creating Helm Release")
-	chartDetails, ch, err := handlerutil.ParseAndGetChart(req, h.ChartClient)
+	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, h.ChartClient, requireV1Support)
+	ch := chartMulti.Helm2Chart
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -150,7 +153,8 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 // UpgradeRelease upgrades a release in the namespace given as Param
 func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Upgrading Helm Release")
-	chartDetails, ch, err := handlerutil.ParseAndGetChart(req, h.ChartClient)
+	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, h.ChartClient, requireV1Support)
+	ch := chartMulti.Helm2Chart
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
