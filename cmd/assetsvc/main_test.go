@@ -23,8 +23,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/common/datastore/mockstore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,8 +31,7 @@ import (
 // tests the GET /live endpoint
 func Test_GetLive(t *testing.T) {
 	var m mock.Mock
-	dbSession := mockstore.NewMockSession(&m)
-	manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+	manager = getMockManager(&m)
 
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -48,8 +45,7 @@ func Test_GetLive(t *testing.T) {
 // tests the GET /ready endpoint
 func Test_GetReady(t *testing.T) {
 	var m mock.Mock
-	dbSession := mockstore.NewMockSession(&m)
-	manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+	manager = getMockManager(&m)
 
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -82,8 +78,7 @@ func Test_GetCharts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			m.On("All", &chartsList).Run(func(args mock.Arguments) {
 				*args.Get(0).(*[]*models.Chart) = tt.charts
 			})
@@ -125,8 +120,7 @@ func Test_GetChartsInRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			m.On("All", &chartsList).Run(func(args mock.Arguments) {
 				*args.Get(0).(*[]*models.Chart) = tt.charts
 			})
@@ -179,8 +173,7 @@ func Test_GetChartInRepo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
 			} else {
@@ -233,8 +226,7 @@ func Test_ListChartVersions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
 			} else {
@@ -287,8 +279,7 @@ func Test_GetChartVersion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
 			} else {
@@ -341,8 +332,7 @@ func Test_GetChartIcon(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
 			} else {
@@ -399,8 +389,7 @@ func Test_GetChartReadme(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
 			} else {
@@ -457,8 +446,7 @@ func Test_GetChartValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
 			} else {
@@ -515,8 +503,7 @@ func Test_GetChartSchema(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var m mock.Mock
-			dbSession := mockstore.NewMockSession(&m)
-			manager = &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+			manager = getMockManager(&m)
 			if tt.err != nil {
 				m.On("One", mock.Anything).Return(tt.err)
 			} else {

@@ -17,49 +17,21 @@ limitations under the License.
 package main
 
 import (
-	"database/sql"
-	"fmt"
-	"strings"
-
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
-type postgresDB interface {
-	Query(query string, args ...interface{}) (*sql.Rows, error)
-	Begin() (*sql.Tx, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-	Close() error
-}
-
 type postgresAssetManager struct {
-	connStr string
-	db      postgresDB
+	*dbutils.PostgresAssetManager
 }
 
 func newPGManager(config datastore.Config) (assetManager, error) {
-	url := strings.Split(config.URL, ":")
-	if len(url) != 2 {
-		return nil, fmt.Errorf("Can't parse database URL: %s", config.URL)
-	}
-	connStr := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		url[0], url[1], config.Username, config.Password, config.Database,
-	)
-	return &postgresAssetManager{connStr, nil}, nil
-}
-
-func (m *postgresAssetManager) Init() error {
-	db, err := sql.Open("postgres", m.connStr)
+	m, err := dbutils.NewPGManager(config)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	m.db = db
-	return nil
-}
-
-func (m *postgresAssetManager) Close() error {
-	return m.db.Close()
+	return &postgresAssetManager{m}, nil
 }
 
 func (m *postgresAssetManager) getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {

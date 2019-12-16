@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -43,7 +45,9 @@ func Test_DeletePGRepo(t *testing.T) {
 	}
 	m.On("Query", "DELETE FROM repos WHERE name = $1", []interface{}{repoName})
 
-	pgManager := &postgresAssetManager{"", m}
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man.DB = m
+	pgManager := &postgresAssetManager{man}
 	err := pgManager.Delete(repoName)
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
@@ -53,7 +57,9 @@ func Test_DeletePGRepo(t *testing.T) {
 
 func Test_PGRepoAlreadyPropcessed(t *testing.T) {
 	m := &mockDB{&mock.Mock{}}
-	pgManager := &postgresAssetManager{"", m}
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man.DB = m
+	pgManager := &postgresAssetManager{man}
 	m.On("QueryRow", "SELECT checksum FROM repos WHERE name = $1", []interface{}{"foo"})
 	pgManager.RepoAlreadyProcessed("foo", "123")
 	m.AssertExpectations(t)
@@ -64,7 +70,9 @@ func Test_PGUpdateLastCheck(t *testing.T) {
 	repoName := "foo"
 	checksum := "bar"
 	now := time.Now()
-	pgManager := &postgresAssetManager{"", m}
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man.DB = m
+	pgManager := &postgresAssetManager{man}
 	expectedQuery := `INSERT INTO repos (name, checksum, last_update)
 	VALUES ($1, $2, $3)
 	ON CONFLICT (name) 
@@ -78,7 +86,9 @@ func Test_PGUpdateLastCheck(t *testing.T) {
 func Test_PGremoveMissingCharts(t *testing.T) {
 	charts := []chart{{ID: "foo"}, {ID: "bar"}}
 	m := &mockDB{&mock.Mock{}}
-	pgManager := &postgresAssetManager{"", m}
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man.DB = m
+	pgManager := &postgresAssetManager{man}
 	m.On("Query", "DELETE FROM charts WHERE info ->> 'ID' NOT IN ('foo', 'bar')", []interface{}(nil))
 	pgManager.removeMissingCharts(charts)
 	m.AssertExpectations(t)
@@ -89,7 +99,9 @@ func Test_PGupdateIcon(t *testing.T) {
 	contentType := "image/png"
 	id := "stable/wordpress"
 	m := &mockDB{&mock.Mock{}}
-	pgManager := &postgresAssetManager{"", m}
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man.DB = m
+	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
 		`UPDATE charts SET info = info || '{"raw_icon": "Zm9v", "icon_content_type": "image/png"}'  WHERE info ->> 'ID' = 'stable/wordpress'`,
@@ -106,7 +118,9 @@ func Test_PGfilesExist(t *testing.T) {
 	id := "stable/wordpress"
 	digest := "foo"
 	m := &mockDB{&mock.Mock{}}
-	pgManager := &postgresAssetManager{"", m}
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man.DB = m
+	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
 		`SELECT * FROM files WHERE info -> 'ID' = $1 AND info -> 'digest' = $2`,
@@ -123,7 +137,9 @@ func Test_PGinsertFiles(t *testing.T) {
 	id := "stable/wordpress"
 	files := chartFiles{ID: id, Readme: "foo", Values: "bar"}
 	m := &mockDB{&mock.Mock{}}
-	pgManager := &postgresAssetManager{"", m}
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man.DB = m
+	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
 		`INSERT INTO files (chart_files_ID, info)

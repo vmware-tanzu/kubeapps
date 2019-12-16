@@ -17,38 +17,25 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"math"
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
 type mongodbAssetManager struct {
-	mongoConfig datastore.Config
-	dbSession   datastore.Session
+	*dbutils.MongodbAssetManager
 }
 
 func newMongoDBManager(config datastore.Config) assetManager {
-	return &mongodbAssetManager{config, nil}
-}
-
-func (m *mongodbAssetManager) Init() error {
-	dbSession, err := datastore.NewSession(m.mongoConfig)
-	if err != nil {
-		return fmt.Errorf("Can't connect to mongoDB: %v", err)
-	}
-	m.dbSession = dbSession
-	return nil
-}
-
-func (m *mongodbAssetManager) Close() error {
-	return nil
+	m := dbutils.NewMongoDBManager(config)
+	return &mongodbAssetManager{m}
 }
 
 func (m *mongodbAssetManager) getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
 
@@ -104,7 +91,7 @@ func (m *mongodbAssetManager) getPaginatedChartList(repo string, pageNumber, pag
 }
 
 func (m *mongodbAssetManager) getChart(chartID string) (models.Chart, error) {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	var chart models.Chart
 	err := db.C(chartCollection).FindId(chartID).One(&chart)
@@ -112,7 +99,7 @@ func (m *mongodbAssetManager) getChart(chartID string) (models.Chart, error) {
 }
 
 func (m *mongodbAssetManager) getChartVersion(chartID, version string) (models.Chart, error) {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	var chart models.Chart
 	err := db.C(chartCollection).Find(bson.M{
@@ -126,7 +113,7 @@ func (m *mongodbAssetManager) getChartVersion(chartID, version string) (models.C
 }
 
 func (m *mongodbAssetManager) getChartFiles(filesID string) (models.ChartFiles, error) {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	var files models.ChartFiles
 	err := db.C(filesCollection).FindId(filesID).One(&files)
@@ -134,7 +121,7 @@ func (m *mongodbAssetManager) getChartFiles(filesID string) (models.ChartFiles, 
 }
 
 func (m *mongodbAssetManager) getChartsWithFiltes(name, version, appVersion string) ([]*models.Chart, error) {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
 	err := db.C(chartCollection).Find(bson.M{
@@ -149,7 +136,7 @@ func (m *mongodbAssetManager) getChartsWithFiltes(name, version, appVersion stri
 }
 
 func (m *mongodbAssetManager) searchCharts(query, repo string) ([]*models.Chart, error) {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
 	conditions := bson.M{
