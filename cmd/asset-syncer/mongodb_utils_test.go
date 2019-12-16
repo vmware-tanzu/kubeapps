@@ -28,17 +28,21 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func getMockManager(m *mock.Mock) *mongodbAssetManager {
+	dbSession := mockstore.NewMockSession(m)
+	man := dbutils.NewMongoDBManager(datastore.Config{})
+	man.DBSession = dbSession
+	return &mongodbAssetManager{man}
+}
+
 func Test_importCharts(t *testing.T) {
 	m := &mock.Mock{}
 	// Ensure Upsert func is called with some arguments
 	m.On("Upsert", mock.Anything)
 	m.On("RemoveAll", mock.Anything)
-	dbSession := mockstore.NewMockSession(m)
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com"})
-	man := dbutils.NewMongoDBManager(datastore.Config{})
-	man.DBSession = dbSession
-	manager := &mongodbAssetManager{man}
+	manager := getMockManager(m)
 	manager.importCharts(charts)
 
 	m.AssertExpectations(t)
@@ -61,11 +65,7 @@ func Test_DeleteRepo(t *testing.T) {
 	m.On("RemoveAll", bson.M{
 		"_id": "test",
 	})
-	dbSession := mockstore.NewMockSession(m)
-
-	man := dbutils.NewMongoDBManager(datastore.Config{})
-	man.DBSession = dbSession
-	manager := &mongodbAssetManager{man}
+	manager := getMockManager(m)
 	err := manager.Delete("test")
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
@@ -94,15 +94,12 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := mock.Mock{}
+			m := &mock.Mock{}
 			repo := &repoCheck{}
 			m.On("One", repo).Run(func(args mock.Arguments) {
 				*args.Get(0).(*repoCheck) = tt.mockedLastCheck
 			}).Return(nil)
-			dbSession := mockstore.NewMockSession(&m)
-			man := dbutils.NewMongoDBManager(datastore.Config{})
-			man.DBSession = dbSession
-			manager := &mongodbAssetManager{man}
+			manager := getMockManager(m)
 			res := manager.RepoAlreadyProcessed("", tt.checksum)
 			if res != tt.processed {
 				t.Errorf("Expected alreadyProcessed to be %v got %v", tt.processed, res)
@@ -112,15 +109,12 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 }
 
 func Test_updateLastCheck(t *testing.T) {
-	m := mock.Mock{}
+	m := &mock.Mock{}
 	repoName := "foo"
 	checksum := "bar"
 	now := time.Now()
 	m.On("UpsertId", repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
-	dbSession := mockstore.NewMockSession(&m)
-	man := dbutils.NewMongoDBManager(datastore.Config{})
-	man.DBSession = dbSession
-	manager := &mongodbAssetManager{man}
+	manager := getMockManager(m)
 	err := manager.UpdateLastCheck(repoName, checksum, now)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
