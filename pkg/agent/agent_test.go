@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"fmt"
 	"io/ioutil"
 	"strconv"
 	"testing"
@@ -215,11 +214,6 @@ func TestListReleases(t *testing.T) {
 
 		})
 	}
-}
-
-// getAppIdentity concatenates the release name and namespace of an app
-func getAppIdentity(app proxy.AppOverview) string {
-	return fmt.Sprintf("%v %v", app.ReleaseName, app.Namespace)
 }
 
 func TestParseDriverType(t *testing.T) {
