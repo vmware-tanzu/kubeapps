@@ -581,6 +581,7 @@ authProxy:
       cpu: 25m
       memory: 32Mi
 
-# true for Helm 3; false for Helm 2:
-useHelm3: false # DOES NOT WORK YET; will act as a feature flag later on when we have Helm 3 support.
+## The useHelm3 feature flag is currently only for developing the in-progress (and incomplete) Helm3 support.
+## If you set it to true, Kubeapps will not work at present.
+useHelm3: false
 
