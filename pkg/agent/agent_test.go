@@ -249,9 +249,12 @@ func TestParseDriverType(t *testing.T) {
 
 	invalidTestCase := "andresmgot"
 	t.Run(invalidTestCase, func(t *testing.T) {
-		driverType, err := ParseDriverType(invalidTestCase)
+		storageForDriver, err := ParseDriverType(invalidTestCase)
 		if err == nil {
-			t.Errorf("Expected \"%s\" to be an invalid driver type, but it was parsed as %v", invalidTestCase, driverType)
+			t.Errorf("Expected \"%s\" to be an invalid driver type, but it was parsed as %v", invalidTestCase, storageForDriver)
+		}
+		if storageForDriver != nil {
+			t.Errorf("got: %#v, want: nil", storageForDriver)
 		}
 	})
 }

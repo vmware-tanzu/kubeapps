@@ -94,7 +94,7 @@ func ParseDriverType(raw string) (StorageForDriver, error) {
 	case "memory":
 		return StorageForMemory, nil
 	default:
-		return StorageForMemory, errors.New("Invalid Helm driver type: " + raw)
+		return nil, errors.New("Invalid Helm driver type: " + raw)
 	}
 }
 
