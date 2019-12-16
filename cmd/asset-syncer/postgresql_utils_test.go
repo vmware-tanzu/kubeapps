@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/mock"
 )
@@ -84,7 +85,7 @@ func Test_PGUpdateLastCheck(t *testing.T) {
 }
 
 func Test_PGremoveMissingCharts(t *testing.T) {
-	charts := []chart{{ID: "foo"}, {ID: "bar"}}
+	charts := []models.Chart{{ID: "foo"}, {ID: "bar"}}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
@@ -123,7 +124,7 @@ func Test_PGfilesExist(t *testing.T) {
 	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
-		`SELECT * FROM files WHERE info -> 'ID' = $1 AND info -> 'digest' = $2`,
+		`SELECT * FROM files WHERE info ->> 'ID' = $1 AND info ->> 'digest' = $2`,
 		[]interface{}{id, digest},
 	)
 	exists := pgManager.filesExist(id, digest)
@@ -135,7 +136,7 @@ func Test_PGfilesExist(t *testing.T) {
 
 func Test_PGinsertFiles(t *testing.T) {
 	id := "stable/wordpress"
-	files := chartFiles{ID: id, Readme: "foo", Values: "bar"}
+	files := models.ChartFiles{ID: id, Readme: "foo", Values: "bar"}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m

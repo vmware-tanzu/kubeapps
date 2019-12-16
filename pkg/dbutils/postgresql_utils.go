@@ -22,6 +22,16 @@ import (
 	"strings"
 
 	"github.com/kubeapps/common/datastore"
+	_ "github.com/lib/pq"
+)
+
+const (
+	// ChartTable `create table charts (ID serial NOT NULL PRIMARY KEY, info jsonb NOT NULL);`
+	ChartTable = "charts"
+	// RepositoryTable `create table repos (ID serial NOT NULL PRIMARY KEY, name varchar unique, checksum varchar, last_update varchar);`
+	RepositoryTable = "repos"
+	// ChartFilesTable `create table files (ID serial NOT NULL PRIMARY KEY, chart_files_ID varchar unique, info jsonb NOT NULL);`
+	ChartFilesTable = "files"
 )
 
 type postgresDB interface {
