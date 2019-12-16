@@ -18,7 +18,6 @@ package handler
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -28,30 +27,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	proxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/helm/pkg/proto/hapi/chart"
 )
-
-func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *chart.Chart, error) {
-	defer req.Body.Close()
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-	chartDetails, err := cu.ParseDetails(body)
-	if err != nil {
-		return nil, nil, err
-	}
-	netClient, err := cu.InitNetClient(chartDetails)
-	if err != nil {
-		return nil, nil, err
-	}
-	requireV1Support := true
-	ch, err := cu.GetChart(chartDetails, netClient, requireV1Support)
-	if err != nil {
-		return nil, nil, err
-	}
-	return chartDetails, ch.Helm2Chart, nil
-}
 
 func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
@@ -83,7 +59,7 @@ func (h *TillerProxy) logStatus(name string) {
 // CreateRelease creates a new release in the namespace given as Param
 func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Creating Helm Release")
-	chartDetails, ch, err := getChart(req, h.ChartClient)
+	chartDetails, ch, err := handlerutil.ParseAndGetChart(req, h.ChartClient)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -174,7 +150,7 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 // UpgradeRelease upgrades a release in the namespace given as Param
 func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Upgrading Helm Release")
-	chartDetails, ch, err := getChart(req, h.ChartClient)
+	chartDetails, ch, err := handlerutil.ParseAndGetChart(req, h.ChartClient)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
