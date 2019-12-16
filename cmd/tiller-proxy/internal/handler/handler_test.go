@@ -407,6 +407,38 @@ func TestActions(t *testing.T) {
 			RemainingReleases: []release.Release{},
 			ResponseBody:      "",
 		},
+		{
+			// Scenario params
+			Description:      "Test a release successfully",
+			ExistingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			DisableAuth:      true,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "test",
+			Params:       map[string]string{"namespace": "kubeapps-ns", "releaseName": "kubeapps"},
+			// Expected result
+			StatusCode:        200,
+			RemainingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			ResponseBody:      `{"data":{"UNKNOWN":["No Tests Found"]}}`,
+		},
+		{
+			// Scenario params
+			Description:      "Fail to test a release",
+			ExistingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			DisableAuth:      true,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "test",
+			Params:       map[string]string{"namespace": "default", "releaseName": "kubeapps"},
+			// Expected result
+			StatusCode:        404,
+			RemainingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			ResponseBody:      `{"code":404,"message":"Unable to locate release: Release kubeapps not found"}`,
+		},
 	}
 	for _, test := range tests {
 		// Prepare environment
@@ -445,6 +477,8 @@ func TestActions(t *testing.T) {
 			handler.ListReleases(response, req, test.Params)
 		case "listall":
 			handler.ListAllReleases(response, req)
+		case "test":
+			handler.TestRelease(response, req, test.Params)
 		default:
 			t.Errorf("Unexpected action %s", test.Action)
 		}
