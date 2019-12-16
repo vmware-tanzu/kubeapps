@@ -23,12 +23,12 @@ type dependentHandler func(cfg agent.Config, w http.ResponseWriter, req *http.Re
 // WithAgentConfig takes a dependentHandler and creates a regular (WithParams) handler that,
 // for every request, will create an agent config for itself.
 // Written in a curried fashion for convenient usage; see cmd/kubeops/main.go.
-func WithAgentConfig(driverType agent.DriverType, options agent.Options) func(f dependentHandler) handlerutil.WithParams {
+func WithAgentConfig(storageForDriver agent.StorageForDriver, options agent.Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 			namespace := params[namespaceParam]
 			token := auth.ExtractToken(req.Header.Get(authHeader))
-			actionConfig, err := agent.NewActionConfig(driverType, token, namespace)
+			actionConfig, err := agent.NewActionConfig(storageForDriver, token, namespace)
 			if err != nil {
 				// TODO log details rather than return potentially sensitive details in error.
 				http.Error(w, err.Error(), http.StatusInternalServerError)
