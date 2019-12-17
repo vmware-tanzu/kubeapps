@@ -42,6 +42,14 @@ type postgresDB interface {
 	Close() error
 }
 
+// PostgresAssetManagerIface represents the methods of the PG asset manager
+type PostgresAssetManagerIface interface {
+	Init() error
+	Close() error
+	QueryOne(target interface{}, query string, args ...interface{}) error
+	QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error)
+}
+
 // PostgresAssetManager asset manager for postgres
 type PostgresAssetManager struct {
 	connStr string
