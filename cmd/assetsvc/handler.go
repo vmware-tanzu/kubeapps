@@ -23,7 +23,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
 )
 

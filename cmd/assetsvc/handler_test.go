@@ -29,7 +29,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/common/datastore/mockstore"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -808,7 +808,7 @@ func Test_findLatestChart(t *testing.T) {
 		chart := &models.Chart{
 			Name: "foo",
 			ID:   "foo",
-			Repo: models.Repo{Name: "bar"},
+			Repo: &models.Repo{Name: "bar"},
 			ChartVersions: []models.ChartVersion{
 				models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0"},
 				models.ChartVersion{Version: "0.0.1", AppVersion: "0.1.0"},
@@ -847,8 +847,8 @@ func Test_findLatestChart(t *testing.T) {
 	})
 	t.Run("ignores duplicated chart", func(t *testing.T) {
 		charts := []*models.Chart{
-			{Name: "foo", ID: "stable/foo", Repo: models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-			{Name: "foo", ID: "bitnami/foo", Repo: models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
+			{Name: "foo", ID: "stable/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
+			{Name: "foo", ID: "bitnami/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
 		}
 		reqVersion := "1.0.0"
 		reqAppVersion := "0.1.0"
@@ -883,8 +883,8 @@ func Test_findLatestChart(t *testing.T) {
 	})
 	t.Run("includes duplicated charts when showDuplicates param set", func(t *testing.T) {
 		charts := []*models.Chart{
-			{Name: "foo", ID: "stable/foo", Repo: models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
-			{Name: "foo", ID: "bitnami/foo", Repo: models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
+			{Name: "foo", ID: "stable/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
+			{Name: "foo", ID: "bitnami/foo", Repo: &models.Repo{Name: "bar"}, ChartVersions: []models.ChartVersion{models.ChartVersion{Version: "1.0.0", AppVersion: "0.1.0", Digest: "123"}}},
 		}
 		reqVersion := "1.0.0"
 		reqAppVersion := "0.1.0"

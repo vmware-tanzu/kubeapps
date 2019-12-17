@@ -21,6 +21,7 @@ import (
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
@@ -48,14 +49,14 @@ func newMongoDBManager(config datastore.Config) assetManager {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *mongodbAssetManager) Sync(charts []chart) error {
+func (m *mongodbAssetManager) Sync(charts []models.Chart) error {
 	return m.importCharts(charts)
 }
 
 func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum string) bool {
 	db, closer := m.DBSession.DB()
 	defer closer()
-	lastCheck := &repoCheck{}
+	lastCheck := &models.RepoCheck{}
 	err := db.C(repositoryCollection).Find(bson.M{"_id": repoName}).One(lastCheck)
 	return err == nil && checksum == lastCheck.Checksum
 }
@@ -90,7 +91,7 @@ func (m *mongodbAssetManager) Delete(repoName string) error {
 	return err
 }
 
-func (m *mongodbAssetManager) importCharts(charts []chart) error {
+func (m *mongodbAssetManager) importCharts(charts []models.Chart) error {
 	var pairs []interface{}
 	var chartIDs []string
 	for _, c := range charts {
@@ -127,11 +128,11 @@ func (m *mongodbAssetManager) updateIcon(data []byte, contentType, ID string) er
 func (m *mongodbAssetManager) filesExist(chartFilesID, digest string) bool {
 	db, closer := m.DBSession.DB()
 	defer closer()
-	err := db.C(chartFilesCollection).Find(bson.M{"_id": chartFilesID, "digest": digest}).One(&chartFiles{})
+	err := db.C(chartFilesCollection).Find(bson.M{"_id": chartFilesID, "digest": digest}).One(&models.ChartFiles{})
 	return err == nil
 }
 
-func (m *mongodbAssetManager) insertFiles(chartFilesID string, files chartFiles) error {
+func (m *mongodbAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(chartFilesCollection).UpsertId(chartFilesID, files)

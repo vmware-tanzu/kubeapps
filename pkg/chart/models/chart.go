@@ -17,31 +17,41 @@ limitations under the License.
 package models
 
 import (
+	"encoding/json"
 	"time"
+
+	"database/sql/driver"
 
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
 // Repo holds the App repository details
 type Repo struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	Name                string `json:"name"`
+	URL                 string `json:"url"`
+	AuthorizationHeader string `bson:"-"`
+	Checksum            string
 }
 
 // Chart is a higher-level representation of a chart package
 type Chart struct {
-	ID              string             `json:"-" bson:"_id"`
+	ID              string             `json:"ID" bson:"_id"`
 	Name            string             `json:"name"`
-	Repo            Repo               `json:"repo"`
+	Repo            *Repo              `json:"repo"`
 	Description     string             `json:"description"`
 	Home            string             `json:"home"`
 	Keywords        []string           `json:"keywords"`
 	Maintainers     []chart.Maintainer `json:"maintainers"`
 	Sources         []string           `json:"sources"`
 	Icon            string             `json:"icon"`
-	RawIcon         []byte             `json:"-" bson:"raw_icon"`
-	IconContentType string             `json:"-" bson:"icon_content_type,omitempty"`
-	ChartVersions   []ChartVersion     `json:"-"`
+	RawIcon         []byte             `json:"raw_icon" bson:"raw_icon"`
+	IconContentType string             `json:"icon_content_type" bson:"icon_content_type,omitempty"`
+	ChartVersions   []ChartVersion     `json:"chartVersions"`
+}
+
+type ChartIconString struct {
+	Chart
+	RawIcon string
 }
 
 // ChartVersion is a representation of a specific version of a chart
@@ -62,4 +72,17 @@ type ChartFiles struct {
 	Readme string
 	Values string
 	Schema string
+	Repo   *Repo
+	Digest string
+}
+
+// Allow to convert ChartFiles to a sql JSON
+func (a ChartFiles) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
+
+type RepoCheck struct {
+	ID         string    `bson:"_id"`
+	LastUpdate time.Time `bson:"last_update"`
+	Checksum   string    `bson:"checksum"`
 }

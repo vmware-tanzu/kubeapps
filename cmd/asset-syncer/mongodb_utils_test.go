@@ -24,6 +24,7 @@ import (
 	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/common/datastore/mockstore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/stretchr/testify/mock"
 )
@@ -41,7 +42,7 @@ func Test_importCharts(t *testing.T) {
 	m.On("Upsert", mock.Anything)
 	m.On("RemoveAll", mock.Anything)
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com"})
+	charts := chartsFromIndex(index, &models.Repo{Name: "test", URL: "http://testrepo.com"})
 	manager := getMockManager(m)
 	manager.importCharts(charts)
 
@@ -52,7 +53,7 @@ func Test_importCharts(t *testing.T) {
 	args := m.Calls[0].Arguments.Get(0).([]interface{})
 	assert.Equal(t, len(args), len(charts)*2, "number of selector, chart pairs to upsert")
 	for i := 0; i < len(args); i += 2 {
-		c := args[i+1].(chart)
+		c := args[i+1].(models.Chart)
 		assert.Equal(t, args[i], bson.M{"_id": "test/" + c.Name}, "selector")
 	}
 }
@@ -74,7 +75,7 @@ func Test_DeleteRepo(t *testing.T) {
 }
 
 func Test_emptyChartRepo(t *testing.T) {
-	r := &repo{Name: "testRepo", URL: "https://my.examplerepo.com", Checksum: "123"}
+	r := &models.Repo{Name: "testRepo", URL: "https://my.examplerepo.com", Checksum: "123"}
 	i, err := parseRepoIndex(emptyRepoIndexYAMLBytes)
 	assert.NoErr(t, err)
 	charts := chartsFromIndex(i, r)
@@ -85,19 +86,19 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 	tests := []struct {
 		name            string
 		checksum        string
-		mockedLastCheck repoCheck
+		mockedLastCheck models.RepoCheck
 		processed       bool
 	}{
-		{"not processed yet", "bar", repoCheck{}, false},
-		{"already processed", "bar", repoCheck{Checksum: "bar"}, true},
+		{"not processed yet", "bar", models.RepoCheck{}, false},
+		{"already processed", "bar", models.RepoCheck{Checksum: "bar"}, true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := &mock.Mock{}
-			repo := &repoCheck{}
+			repo := &models.RepoCheck{}
 			m.On("One", repo).Run(func(args mock.Arguments) {
-				*args.Get(0).(*repoCheck) = tt.mockedLastCheck
+				*args.Get(0).(*models.RepoCheck) = tt.mockedLastCheck
 			}).Return(nil)
 			manager := getMockManager(m)
 			res := manager.RepoAlreadyProcessed("", tt.checksum)

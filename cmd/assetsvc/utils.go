@@ -20,7 +20,7 @@ import (
 	"fmt"
 
 	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 )
 
 type assetManager interface {

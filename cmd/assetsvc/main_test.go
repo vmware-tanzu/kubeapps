@@ -23,7 +23,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

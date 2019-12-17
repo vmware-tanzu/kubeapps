@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
@@ -59,7 +60,7 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *postgresAssetManager) Sync(charts []chart) error {
+func (m *postgresAssetManager) Sync(charts []models.Chart) error {
 	err := m.importCharts(charts)
 	if err != nil {
 		return err
@@ -92,7 +93,7 @@ func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now ti
 	return err
 }
 
-func (m *postgresAssetManager) importCharts(charts []chart) error {
+func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
 	txn, err := m.DB.Begin()
 	if err != nil {
 		log.Fatal(err)
@@ -127,7 +128,7 @@ func (m *postgresAssetManager) importCharts(charts []chart) error {
 	return txn.Commit()
 }
 
-func (m *postgresAssetManager) removeMissingCharts(charts []chart) error {
+func (m *postgresAssetManager) removeMissingCharts(charts []models.Chart) error {
 	var chartIDs []string
 	for _, chart := range charts {
 		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
@@ -171,7 +172,7 @@ func (m *postgresAssetManager) updateIcon(data []byte, contentType, ID string) e
 
 func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 	rows, err := m.DB.Query(
-		fmt.Sprintf("SELECT * FROM %s WHERE info -> 'ID' = $1 AND info -> 'digest' = $2", chartFilesTable),
+		fmt.Sprintf("SELECT * FROM %s WHERE info ->> 'ID' = $1 AND info ->> 'digest' = $2", chartFilesTable),
 		chartFilesID,
 		digest,
 	)
@@ -181,7 +182,7 @@ func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 	return err == nil
 }
 
-func (m *postgresAssetManager) insertFiles(chartFilesID string, files chartFiles) error {
+func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
 	query := fmt.Sprintf(`INSERT INTO %s (chart_files_ID, info)
 	VALUES ($1, $2)
 	ON CONFLICT (chart_files_ID) 

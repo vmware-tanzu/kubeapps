@@ -21,7 +21,7 @@ import (
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/kubeapps/cmd/assetsvc/models"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
