@@ -308,7 +308,7 @@ func Test_newChart(t *testing.T) {
 }
 
 func Test_chartTarballURL(t *testing.T) {
-	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
+	r := &models.RepoInternal{Name: "test", URL: "http://testrepo.com"}
 	tests := []struct {
 		name   string
 		cv     models.ChartVersion
@@ -494,12 +494,13 @@ func Test_newManager(t *testing.T) {
 }
 
 func Test_fetchAndImportIcon(t *testing.T) {
+	r := &models.RepoInternal{Name: "test"}
 	t.Run("no icon", func(t *testing.T) {
 		m := &mock.Mock{}
 		c := models.Chart{ID: "test/acs-engine-autoscaler"}
 		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
 	})
 
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
@@ -511,7 +512,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		m := &mock.Mock{}
 		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fImporter.fetchAndImportIcon(c))
+		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fImporter.fetchAndImportIcon(c, r))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
@@ -520,7 +521,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		m := &mock.Mock{}
 		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c))
+		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, r))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
@@ -530,7 +531,7 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": iconBytes(), "icon_content_type": "image/png"}}).Return(nil)
 		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
 		m.AssertExpectations(t)
 	})
 
@@ -545,14 +546,15 @@ func Test_fetchAndImportIcon(t *testing.T) {
 		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": []byte("foo"), "icon_content_type": "image/svg"}}).Return(nil)
 		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
 		m.AssertExpectations(t)
 	})
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &models.Repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient1s"})
+	repo := &models.RepoInternal{Name: "test", URL: "http://testrepo.com"}
+	charts := chartsFromIndex(index, &models.Repo{Name: repo.Name, URL: repo.URL})
 	cv := charts[0].ChartVersions[0]
 
 	t.Run("http error", func(t *testing.T) {
@@ -561,7 +563,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		netClient = &badHTTPClient{}
 		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv))
+		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, repo, cv))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -569,10 +571,17 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, models.ChartFiles{chartFilesID, "", "", "", charts[0].Repo, cv.Digest})
+		m.On("UpsertId", chartFilesID, models.ChartFiles{
+			ID:     chartFilesID,
+			Readme: "",
+			Values: "",
+			Schema: "",
+			Repo:   charts[0].Repo,
+			Digest: cv.Digest,
+		})
 		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -582,10 +591,18 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, models.ChartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
+		m.On("UpsertId", chartFilesID, models.ChartFiles{
+			ID:     chartFilesID,
+			Readme: testChartReadme,
+			Values: testChartValues,
+			Schema: testChartSchema,
+			Repo:   charts[0].Repo,
+			Digest: cv.Digest,
+		})
 		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		r := &models.RepoInternal{Name: repo.Name, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
+		err := fImporter.fetchAndImportFiles(charts[0].Name, r, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -595,10 +612,17 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, models.ChartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
+		m.On("UpsertId", chartFilesID, models.ChartFiles{
+			ID:     chartFilesID,
+			Readme: testChartReadme,
+			Values: testChartValues,
+			Schema: testChartSchema,
+			Repo:   charts[0].Repo,
+			Digest: cv.Digest,
+		})
 		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -609,7 +633,7 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m.On("One", mock.Anything).Return(nil)
 		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
 		assert.NoErr(t, err)
 		m.AssertNotCalled(t, "UpsertId", mock.Anything, mock.Anything)
 	})

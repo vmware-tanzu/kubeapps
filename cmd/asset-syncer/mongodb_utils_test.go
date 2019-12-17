@@ -75,7 +75,7 @@ func Test_DeleteRepo(t *testing.T) {
 }
 
 func Test_emptyChartRepo(t *testing.T) {
-	r := &models.Repo{Name: "testRepo", URL: "https://my.examplerepo.com", Checksum: "123"}
+	r := &models.Repo{Name: "testRepo", URL: "https://my.examplerepo.com"}
 	i, err := parseRepoIndex(emptyRepoIndexYAMLBytes)
 	assert.NoErr(t, err)
 	charts := chartsFromIndex(i, r)

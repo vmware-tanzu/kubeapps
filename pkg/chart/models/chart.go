@@ -25,8 +25,14 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-// Repo holds the App repository details
+// Repo holds the App repository basic details
 type Repo struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+// RepoInternal holds the App repository details including auth and checksum
+type RepoInternal struct {
 	Name                string `json:"name"`
 	URL                 string `json:"url"`
 	AuthorizationHeader string `bson:"-"`
@@ -49,9 +55,11 @@ type Chart struct {
 	ChartVersions   []ChartVersion     `json:"chartVersions"`
 }
 
+// ChartIconString is a higher-level representation of a chart package
+// TODO(andresmgot) Replace this type when the icon is stored as a binary
 type ChartIconString struct {
 	Chart
-	RawIcon string
+	RawIcon string `json:"raw_icon" bson:"raw_icon"`
 }
 
 // ChartVersion is a representation of a specific version of a chart
