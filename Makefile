@@ -4,16 +4,16 @@ GOFMT = /usr/bin/env gofmt
 IMAGE_TAG ?= dev-$(shell date +%FT%H-%M-%S-%Z)
 VERSION ?= $$(git rev-parse HEAD)
 
+default: all
+
 include ./script/cluster-kind.mk
 include ./script/cluster-openshift.mk
 include ./script/deploy-dev.mk
 
-IMG_MODIFIER ?= 
+IMG_MODIFIER ?=
 
 GO_PACKAGES = ./...
 # GO_FILES := $(shell find $(shell $(GO) list -f '{{.Dir}}' $(GO_PACKAGES)) -name \*.go)
-
-default: all
 
 all: kubeapps/dashboard kubeapps/apprepository-controller kubeapps/tiller-proxy kubeapps/kubeops
 
