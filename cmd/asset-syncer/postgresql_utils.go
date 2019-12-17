@@ -176,10 +176,12 @@ func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 		chartFilesID,
 		digest,
 	)
+	hasEntries := false
 	if rows != nil {
 		defer rows.Close()
+		hasEntries = rows.Next()
 	}
-	return err == nil && rows.Next()
+	return err == nil && hasEntries
 }
 
 func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {

@@ -124,11 +124,11 @@ func Test_PGfilesExist(t *testing.T) {
 	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
-		`SELECT * FROM files WHERE info ->> 'ID' = $1 AND info ->> 'digest' = $2`,
+		`SELECT * FROM files WHERE chart_files_id = $1 AND info ->> 'Digest' = $2`,
 		[]interface{}{id, digest},
 	)
 	exists := pgManager.filesExist(id, digest)
-	if exists != true {
+	if exists != false {
 		t.Errorf("Failed to check if file exists")
 	}
 	m.AssertExpectations(t)
