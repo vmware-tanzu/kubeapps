@@ -590,6 +590,19 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m.AssertExpectations(t)
 	})
 
+	t.Run("valid tarball", func(t *testing.T) {
+		netClient = &goodTarballClient{c: charts[0]}
+		m := mock.Mock{}
+		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
+		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
+		m.On("UpsertId", chartFilesID, models.ChartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
+		manager := getMockManager(&m)
+		fImporter := fileImporter{manager}
+		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		assert.NoErr(t, err)
+		m.AssertExpectations(t)
+	})
+
 	t.Run("file exists", func(t *testing.T) {
 		m := mock.Mock{}
 		// don't return an error when checking if files already exists
