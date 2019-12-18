@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
@@ -116,22 +117,24 @@ func Test_PGupdateIcon(t *testing.T) {
 }
 
 func Test_PGfilesExist(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	rows := sqlmock.NewRows([]string{"info"}).AddRow(`{"ID": "foo"}`)
+	mock.ExpectQuery(`^SELECT \* FROM files WHERE chart_files_id = \$1 AND info ->> 'Digest' = \$2$`).WillReturnRows(rows)
 	id := "stable/wordpress"
 	digest := "foo"
-	m := &mockDB{&mock.Mock{}}
-	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
-	man.DB = m
+	man := &dbutils.PostgresAssetManager{DB: db}
 	pgManager := &postgresAssetManager{man}
-	m.On(
-		"Query",
-		`SELECT * FROM files WHERE chart_files_id = $1 AND info ->> 'Digest' = $2`,
-		[]interface{}{id, digest},
-	)
 	exists := pgManager.filesExist(id, digest)
-	if exists != false {
+	if exists != true {
 		t.Errorf("Failed to check if file exists")
 	}
-	m.AssertExpectations(t)
+	err = mock.ExpectationsWereMet()
+	if err != nil {
+		t.Errorf("err %v", err)
+	}
 }
 
 func Test_PGinsertFiles(t *testing.T) {
