@@ -206,10 +206,8 @@ func TestListReleases(t *testing.T) {
 			}
 
 			//Deep equality check of expected aginst attained result
-			for i := 0; i < len(apps); i++ {
-				if !cmp.Equal(apps[i], tc.expectedApps[i]) {
-					t.Errorf(cmp.Diff(apps[i], tc.expectedApps[i]))
-				}
+			if !cmp.Equal(apps, tc.expectedApps) {
+				t.Errorf(cmp.Diff(apps, tc.expectedApps))
 			}
 
 		})
