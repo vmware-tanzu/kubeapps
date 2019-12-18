@@ -82,8 +82,9 @@ func NewAppRepositoriesHandler(kubeappsNamespace string) (*appRepositoriesHandle
 		return nil, err
 	}
 	return &appRepositoriesHandler{
-		config:             *config,
-		kubeappsNamespace:  kubeappsNamespace,
+		config:            *config,
+		kubeappsNamespace: kubeappsNamespace,
+		// See comment in the struct defn above.
 		clientsetForConfig: clientsetForConfig,
 	}, nil
 }
