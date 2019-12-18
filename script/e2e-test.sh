@@ -93,7 +93,6 @@ deployments=(
   kubeapps-ci-internal-assetsvc
   kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
-  kubeapps-ci-mongodb
 )
 for dep in ${deployments[@]}; do
   k8s_wait_for_deployment kubeapps ${dep}
