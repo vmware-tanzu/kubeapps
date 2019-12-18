@@ -71,6 +71,7 @@ Kubeapps provides an api endpoint for app repositories:
    - Error responses
      - 401 Unauthorized
      - 400 Bad Request
+     - 409 Conflict
      - Body of error responses to be defined.
 
 * Delete App Repository

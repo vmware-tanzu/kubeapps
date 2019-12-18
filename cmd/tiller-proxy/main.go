@@ -63,7 +63,8 @@ var (
 	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 
-	chartsvcURL string
+	chartsvcURL       string
+	kubeappsNamespace string
 )
 
 func init() {
@@ -80,6 +81,8 @@ func init() {
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&chartsvcURL, "chartsvc-url", "http://kubeapps-internal-chartsvc:8080", "URL to the internal chartsvc")
+	// kubeapps-namespace is required only for the app repository handler which may move in the future.
+	pflag.StringVar(&kubeappsNamespace, "kubeapps-namespace", "", "namespace in which Kubeapps is running")
 }
 
 func main() {
@@ -183,7 +186,10 @@ func main() {
 	// Backend routes unrelated to tiller-proxy functionality.
 	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
 	// reconsider where these endpoints live.
-	appreposHandler := handler.AppRepositories{}
+	appreposHandler, err := handler.NewAppRepositoriesHandler(kubeappsNamespace)
+	if err != nil {
+		log.Fatalf("Unable to create app repositories handler: %+v", err)
+	}
 	backendAPIv1 := r.PathPrefix("/backend/v1").Subrouter()
 	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
 		negroni.WrapFunc(appreposHandler.Create),
