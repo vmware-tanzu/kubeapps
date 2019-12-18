@@ -27,6 +27,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -151,7 +152,7 @@ func (m *postgresAssetManager) removeMissingCharts(charts []models.Chart) error 
 		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
 	}
 	chartIDsString := strings.Join(chartIDs, ", ")
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s)", dbutils.ChartTable, chartIDsString))
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s) AND info -> 'repo' ->> 'name' = $1", dbutils.ChartTable, chartIDsString), charts[0].Repo.Name)
 	if rows != nil {
 		defer rows.Close()
 	}

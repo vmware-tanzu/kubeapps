@@ -90,12 +90,12 @@ func Test_PGUpdateLastCheck(t *testing.T) {
 }
 
 func Test_PGremoveMissingCharts(t *testing.T) {
-	charts := []models.Chart{{ID: "foo"}, {ID: "bar"}}
+	charts := []models.Chart{{ID: "foo", Repo: &models.Repo{Name: "repo"}}, {ID: "bar"}}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
-	m.On("Query", "DELETE FROM charts WHERE info ->> 'ID' NOT IN ('foo', 'bar')", []interface{}(nil))
+	m.On("Query", "DELETE FROM charts WHERE info ->> 'ID' NOT IN ('foo', 'bar') AND info -> 'repo' ->> 'name' = $1", []interface{}{"repo"})
 	pgManager.removeMissingCharts(charts)
 	m.AssertExpectations(t)
 }
