@@ -43,9 +43,9 @@ type postgresDB interface {
 }
 
 // PostgresAssetManagerIface represents the methods of the PG asset manager
+// The interface is used by the tests to implement a fake PostgresAssetManagerIface
 type PostgresAssetManagerIface interface {
-	Init() error
-	Close() error
+	AssetManager
 	QueryOne(target interface{}, query string, args ...interface{}) error
 	QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error)
 }

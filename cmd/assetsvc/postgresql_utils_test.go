@@ -153,7 +153,7 @@ func Test_getChartWithFilters(t *testing.T) {
 	chartsResponse = []*models.Chart{&dbChart}
 	m.On("QueryAllCharts", "SELECT info FROM charts WHERE info ->> 'name' = $1", []interface{}{"foo"})
 
-	charts, err := pg.getChartsWithFiltes("foo", "1.0.0", "1.0.1")
+	charts, err := pg.getChartsWithFilters("foo", "1.0.0", "1.0.1")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}

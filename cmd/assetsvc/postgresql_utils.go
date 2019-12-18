@@ -135,7 +135,7 @@ func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, 
 	return models.ChartVersion{}, false
 }
 
-func (m *postgresAssetManager) getChartsWithFiltes(name, version, appVersion string) ([]*models.Chart, error) {
+func (m *postgresAssetManager) getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error) {
 	charts, err := m.QueryAllCharts(fmt.Sprintf("SELECT info FROM %s WHERE info ->> 'name' = $1", dbutils.ChartTable), name)
 	if err != nil {
 		return nil, err
