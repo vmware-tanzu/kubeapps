@@ -25,7 +25,9 @@ require (
 	helm.sh/helm/v3 v3.0.0
 	k8s.io/api v0.0.0-20191016110408-35e52d86657a
 	k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
+	k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
 	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
 	k8s.io/helm v2.16.0+incompatible
 	k8s.io/klog v1.0.0
+	sigs.k8s.io/yaml v1.1.0
 )
