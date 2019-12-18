@@ -172,14 +172,16 @@ func (m *postgresAssetManager) updateIcon(data []byte, contentType, ID string) e
 
 func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 	rows, err := m.DB.Query(
-		fmt.Sprintf("SELECT * FROM %s WHERE info ->> 'ID' = $1 AND info ->> 'digest' = $2", chartFilesTable),
+		fmt.Sprintf("SELECT * FROM %s WHERE chart_files_id = $1 AND info ->> 'Digest' = $2", chartFilesTable),
 		chartFilesID,
 		digest,
 	)
+	hasEntries := false
 	if rows != nil {
 		defer rows.Close()
+		hasEntries = rows.Next()
 	}
-	return err == nil
+	return err == nil && hasEntries
 }
 
 func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {

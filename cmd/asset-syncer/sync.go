@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -67,7 +68,7 @@ var syncCmd = &cobra.Command{
 			logrus.Fatal(err)
 		}
 
-		charts := chartsFromIndex(index, r)
+		charts := chartsFromIndex(index, &models.Repo{Name: r.Name, URL: r.URL})
 		if len(charts) == 0 {
 			logrus.Fatal("no charts in repository index")
 		}
@@ -78,7 +79,7 @@ var syncCmd = &cobra.Command{
 
 		// Fetch and store chart icons
 		fImporter := fileImporter{manager}
-		fImporter.fetchFiles(charts)
+		fImporter.fetchFiles(charts, r)
 
 		// Update cache in the database
 		if err = manager.UpdateLastCheck(r.Name, r.Checksum, time.Now()); err != nil {
