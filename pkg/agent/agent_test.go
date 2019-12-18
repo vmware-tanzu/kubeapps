@@ -14,6 +14,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
@@ -90,8 +91,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-default-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
@@ -99,16 +100,22 @@ func TestListReleases(t *testing.T) {
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1",
-				},
-				proxy.AppOverview{
-					ReleaseName: "wordpress",
-					Namespace:   "default",
-					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "not-in-default-namespace",
 					Namespace:   "other",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
+				},
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -117,8 +124,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
@@ -126,11 +133,15 @@ func TestListReleases(t *testing.T) {
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -139,8 +150,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: 1,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
@@ -148,6 +159,8 @@ func TestListReleases(t *testing.T) {
 					ReleaseName: "airwatch",
 					Namespace:   "default",
 					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -162,13 +175,17 @@ func TestListReleases(t *testing.T) {
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
-					Namespace:   "dev",
-					Version:     "2",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
-					Namespace:   "default",
-					Version:     "1",
+					Namespace:   "dev",
+					Version:     "2",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -189,18 +206,9 @@ func TestListReleases(t *testing.T) {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 
-			//Check if expected and returned contain the same releases, given they have same size
-			m := make(map[releaseStub]bool)
-
-			for _, eapp := range tc.expectedApps {
-				m[releaseStub{eapp.ReleaseName, eapp.Namespace, strtoi(eapp.Version)}] = true
-			}
-
-			for _, app := range apps {
-				rs := releaseStub{app.ReleaseName, app.Namespace, strtoi(app.Version)}
-				if _, ok := m[rs]; !ok {
-					t.Errorf("got: %v, want: %v", rs, "None")
-				}
+			//Deep equality check of expected aginst attained result
+			if !cmp.Equal(apps, tc.expectedApps) {
+				t.Errorf(cmp.Diff(apps, tc.expectedApps))
 			}
 
 		})
