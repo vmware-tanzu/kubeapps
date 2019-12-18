@@ -120,7 +120,7 @@ func (m *mongodbAssetManager) getChartFiles(filesID string) (models.ChartFiles, 
 	return files, err
 }
 
-func (m *mongodbAssetManager) getChartsWithFiltes(name, version, appVersion string) ([]*models.Chart, error) {
+func (m *mongodbAssetManager) getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
