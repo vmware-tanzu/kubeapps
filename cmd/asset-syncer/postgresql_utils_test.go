@@ -36,10 +36,14 @@ func (d *mockDB) Close() error {
 	return nil
 }
 
+func (d *mockDB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return nil, nil
+}
+
 func Test_DeletePGRepo(t *testing.T) {
 	repoName := "test"
 	m := &mockDB{&mock.Mock{}}
-	tables := []string{chartTable, chartFilesTable}
+	tables := []string{dbutils.ChartTable, dbutils.ChartFilesTable}
 	for _, table := range tables {
 		q := fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table)
 		// Since we are not specifying any argument, Query is called with []interface{}(nil)
