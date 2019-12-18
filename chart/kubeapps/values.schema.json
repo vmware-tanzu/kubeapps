@@ -142,37 +142,6 @@
           }
         }
       }
-    },
-    "mongodb": {
-      "type": "object",
-      "title": "MongoDB configuration",
-      "form": true,
-      "properties": {
-        "persistence": {
-          "type": "object",
-          "properties": {
-            "enabled": {
-              "type": "boolean",
-              "form": true,
-              "title": "Enable persistence",
-              "description": "Enable persistence using Persistent Volume Claims"
-            },
-            "size": {
-              "type": "string",
-              "title": "Volume Size",
-              "form": true,
-              "render": "slider",
-              "sliderMin": 1,
-              "sliderMax": 100,
-              "sliderUnit": "Gi",
-              "hidden": {
-                "condition": false,
-                "value": "mongodb.persistence.enabled"
-              }
-            }
-          }
-        }
-      }
     }
   }
 }

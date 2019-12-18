@@ -504,10 +504,7 @@ func cleanupJobSpec(repoName string) batchv1.JobSpec {
 								ValueFrom: &corev1.EnvVarSource{
 									SecretKeyRef: &corev1.SecretKeySelector{
 										LocalObjectReference: corev1.LocalObjectReference{Name: dbSecretName},
-										// TODO(andresmgot): Replace for something not mongodb-specific
-										// but that will be a breaking change since the secret is created in the first
-										// installation
-										Key: "mongodb-root-password",
+										Key:                  dbSecretKey,
 									},
 								},
 							},
@@ -555,10 +552,7 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvV
 		ValueFrom: &corev1.EnvVarSource{
 			SecretKeyRef: &corev1.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{Name: dbSecretName},
-				// TODO(andresmgot): Replace for something not mongodb-specific
-				// but that will be a breaking change since the secret is created in the first
-				// installation
-				Key: "mongodb-root-password",
+				Key:                  dbSecretKey,
 			},
 		},
 	})
