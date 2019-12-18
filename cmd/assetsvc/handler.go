@@ -254,7 +254,7 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 
 // listChartsWithFilters returns the list of repos that contains the given chart and the latest version found
 func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Params) {
-	charts, err := manager.getChartsWithFiltes(params["chartName"], req.FormValue("version"), req.FormValue("appversion"))
+	charts, err := manager.getChartsWithFilters(params["chartName"], req.FormValue("version"), req.FormValue("appversion"))
 	if err != nil {
 		log.WithError(err).Errorf(
 			"could not find charts with the given name %s, version %s and appversion %s",

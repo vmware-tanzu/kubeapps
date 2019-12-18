@@ -30,7 +30,7 @@ type assetManager interface {
 	getChart(chartID string) (models.Chart, error)
 	getChartVersion(chartID, version string) (models.Chart, error)
 	getChartFiles(filesID string) (models.ChartFiles, error)
-	getChartsWithFiltes(name, version, appVersion string) ([]*models.Chart, error)
+	getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error)
 	searchCharts(query, repo string) ([]*models.Chart, error)
 }
 

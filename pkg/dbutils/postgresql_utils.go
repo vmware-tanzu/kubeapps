@@ -18,11 +18,12 @@ package dbutils
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/kubeapps/common/datastore"
-	_ "github.com/lib/pq"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 )
 
 const (
@@ -39,6 +40,14 @@ type postgresDB interface {
 	Begin() (*sql.Tx, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Close() error
+}
+
+// PostgresAssetManagerIface represents the methods of the PG asset manager
+// The interface is used by the tests to implement a fake PostgresAssetManagerIface
+type PostgresAssetManagerIface interface {
+	AssetManager
+	QueryOne(target interface{}, query string, args ...interface{}) error
+	QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error)
 }
 
 // PostgresAssetManager asset manager for postgres
@@ -73,4 +82,41 @@ func (m *PostgresAssetManager) Init() error {
 // Close connection
 func (m *PostgresAssetManager) Close() error {
 	return m.DB.Close()
+}
+
+// QueryOne element and store it in the target
+func (m *PostgresAssetManager) QueryOne(target interface{}, query string, args ...interface{}) error {
+	var info string
+	row := m.DB.QueryRow(query, args...)
+	err := row.Scan(&info)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(info), target)
+}
+
+// QueryAllCharts perform the given query and return the list of charts
+func (m *PostgresAssetManager) QueryAllCharts(query string, args ...interface{}) ([]*models.Chart, error) {
+	rows, err := m.DB.Query(query, args...)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+	result := []*models.Chart{}
+	for rows.Next() {
+		var info string
+		err := rows.Scan(&info)
+		if err != nil {
+			return nil, err
+		}
+		var chart models.Chart
+		err = json.Unmarshal([]byte(info), &chart)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, &chart)
+	}
+	return result, nil
 }
