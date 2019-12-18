@@ -11,6 +11,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-test/deep v1.0.4
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/mux v1.7.3
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40

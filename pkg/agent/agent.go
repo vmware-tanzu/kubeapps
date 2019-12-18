@@ -89,6 +89,16 @@ func CreateRelease(config Config, name, namespace, valueString string, ch *chart
 	return release, nil
 }
 
+func GetRelease(actionConfig *action.Configuration, name string) (*release.Release, error) {
+	// Namespace is already known by the RESTClientGetter.
+	cmd := action.NewGet(actionConfig)
+	release, err := cmd.Run(name)
+	if err != nil {
+		return nil, err
+	}
+	return release, nil
+}
+
 func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, clientset *kubernetes.Clientset, namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 	store := storageForDriver(namespace, clientset)
