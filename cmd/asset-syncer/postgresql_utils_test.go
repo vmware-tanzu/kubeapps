@@ -36,10 +36,14 @@ func (d *mockDB) Close() error {
 	return nil
 }
 
+func (d *mockDB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return nil, nil
+}
+
 func Test_DeletePGRepo(t *testing.T) {
 	repoName := "test"
 	m := &mockDB{&mock.Mock{}}
-	tables := []string{chartTable, chartFilesTable}
+	tables := []string{dbutils.ChartTable, dbutils.ChartFilesTable}
 	for _, table := range tables {
 		q := fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table)
 		// Since we are not specifying any argument, Query is called with []interface{}(nil)
@@ -86,12 +90,12 @@ func Test_PGUpdateLastCheck(t *testing.T) {
 }
 
 func Test_PGremoveMissingCharts(t *testing.T) {
-	charts := []models.Chart{{ID: "foo"}, {ID: "bar"}}
+	charts := []models.Chart{{ID: "foo", Repo: &models.Repo{Name: "repo"}}, {ID: "bar"}}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
-	m.On("Query", "DELETE FROM charts WHERE info ->> 'ID' NOT IN ('foo', 'bar')", []interface{}(nil))
+	m.On("Query", "DELETE FROM charts WHERE info ->> 'ID' NOT IN ('foo', 'bar') AND info -> 'repo' ->> 'name' = $1", []interface{}{"repo"})
 	pgManager.removeMissingCharts(charts)
 	m.AssertExpectations(t)
 }

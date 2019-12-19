@@ -53,7 +53,6 @@ func (m *postgresAssetManager) getPaginatedChartList(repo string, pageNumber, pa
 		repoQuery = fmt.Sprintf("WHERE info -> 'repo' ->> 'name' = '%s'", repo)
 	}
 	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, repoQuery)
-	fmt.Println(dbQuery)
 	charts, err := m.QueryAllCharts(dbQuery)
 	if err != nil {
 		return nil, 0, nil

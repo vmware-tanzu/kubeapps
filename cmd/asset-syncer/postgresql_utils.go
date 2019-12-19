@@ -27,16 +27,8 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
-)
-
-const (
-	// create table charts (ID serial NOT NULL PRIMARY KEY, info jsonb NOT NULL);
-	chartTable = "charts"
-	// create table repos (ID serial NOT NULL PRIMARY KEY, name varchar unique, checksum varchar, last_update varchar);
-	repositoryTable = "repos"
-	// create table files (ID serial NOT NULL PRIMARY KEY, chart_files_ID varchar unique, info jsonb NOT NULL);
-	chartFilesTable = "files"
 )
 
 type postgresAssetManager struct {
@@ -61,6 +53,7 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
 func (m *postgresAssetManager) Sync(charts []models.Chart) error {
+	m.initTables()
 	err := m.importCharts(charts)
 	if err != nil {
 		return err
@@ -70,9 +63,34 @@ func (m *postgresAssetManager) Sync(charts []models.Chart) error {
 	return m.removeMissingCharts(charts)
 }
 
+func (m *postgresAssetManager) initTables() error {
+	_, err := m.DB.Exec(fmt.Sprintf(
+		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, info jsonb NOT NULL)",
+		dbutils.ChartTable,
+	))
+	if err != nil {
+		return err
+	}
+	_, err = m.DB.Exec(fmt.Sprintf(
+		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, name varchar unique, checksum varchar, last_update varchar)",
+		dbutils.RepositoryTable,
+	))
+	if err != nil {
+		return err
+	}
+	_, err = m.DB.Exec(fmt.Sprintf(
+		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, chart_files_ID varchar unique, info jsonb NOT NULL)",
+		dbutils.ChartFilesTable,
+	))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum string) bool {
 	var lastChecksum string
-	row := m.DB.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1", repositoryTable), repoName)
+	row := m.DB.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1", dbutils.RepositoryTable), repoName)
 	if row != nil {
 		err := row.Scan(&lastChecksum)
 		return err == nil && lastChecksum == repoChecksum
@@ -85,7 +103,7 @@ func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now ti
 	VALUES ($1, $2, $3)
 	ON CONFLICT (name) 
 	DO UPDATE SET last_update = $3, checksum = $2
-	`, repositoryTable)
+	`, dbutils.RepositoryTable)
 	rows, err := m.DB.Query(query, repoName, checksum, now.String())
 	if rows != nil {
 		defer rows.Close()
@@ -99,7 +117,7 @@ func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
 		log.Fatal(err)
 	}
 
-	stmt, err := txn.Prepare(pq.CopyIn(chartTable, "info"))
+	stmt, err := txn.Prepare(pq.CopyIn(dbutils.ChartTable, "info"))
 	if err != nil {
 		return err
 	}
@@ -134,7 +152,7 @@ func (m *postgresAssetManager) removeMissingCharts(charts []models.Chart) error 
 		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
 	}
 	chartIDsString := strings.Join(chartIDs, ", ")
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s)", chartTable, chartIDsString))
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s) AND info -> 'repo' ->> 'name' = $1", dbutils.ChartTable, chartIDsString), charts[0].Repo.Name)
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -142,7 +160,7 @@ func (m *postgresAssetManager) removeMissingCharts(charts []models.Chart) error 
 }
 
 func (m *postgresAssetManager) Delete(repoName string) error {
-	tables := []string{chartTable, chartFilesTable}
+	tables := []string{dbutils.ChartTable, dbutils.ChartFilesTable}
 	for _, table := range tables {
 		rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table), repoName)
 		if rows != nil {
@@ -152,7 +170,7 @@ func (m *postgresAssetManager) Delete(repoName string) error {
 			return err
 		}
 	}
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE name = $1", repositoryTable), repoName)
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE name = $1", dbutils.RepositoryTable), repoName)
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -172,7 +190,7 @@ func (m *postgresAssetManager) updateIcon(data []byte, contentType, ID string) e
 
 func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 	rows, err := m.DB.Query(
-		fmt.Sprintf("SELECT * FROM %s WHERE chart_files_id = $1 AND info ->> 'Digest' = $2", chartFilesTable),
+		fmt.Sprintf("SELECT * FROM %s WHERE chart_files_id = $1 AND info ->> 'Digest' = $2", dbutils.ChartFilesTable),
 		chartFilesID,
 		digest,
 	)
@@ -189,7 +207,7 @@ func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.Cha
 	VALUES ($1, $2)
 	ON CONFLICT (chart_files_ID) 
 	DO UPDATE SET info = $2
-	`, chartFilesTable)
+	`, dbutils.ChartFilesTable)
 	rows, err := m.DB.Query(query, chartFilesID, files)
 	if rows != nil {
 		defer rows.Close()
