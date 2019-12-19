@@ -489,6 +489,8 @@ dashboard:
 ## ref: https://github.com/helm/charts/blob/master/stable/mongodb/values.yaml
 ##
 mongodb:
+  ## Whether to deploy a mongodb server to satisfy the applications database requirements.
+  enabled: true
   ## Kubeapps uses MongoDB as a cache and persistence is not required
   ##
   persistence:
@@ -515,6 +517,35 @@ mongodb:
     requests:
       cpu: 50m
       memory: 256Mi
+
+## PostgreSQL chart configuration
+## ref: https://github.com/helm/charts/blob/master/stable/postgresql/values.yaml
+##
+postgresql:
+  ## Whether to deploy a postgresql server to satisfy the applications database requirements.
+  enabled: false
+  ## Create a database for Kubeapps on the first run
+  postgresqlDatabase: assets
+  ## Kubeapps uses PostgreSQL as a cache and persistence is not required
+  ##
+  persistence:
+    enabled: false
+    size: 8Gi
+  ## PostgreSQL credentials are handled by kubeapps to facilitate upgrades
+  ##
+  existingSecret: kubeapps-db
+  ## Pod Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ##
+  securityContext:
+    enabled: false
+  ## PostgreSQL containers' resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
 
 ## RBAC paramters
 ##
