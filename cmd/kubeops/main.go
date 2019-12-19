@@ -68,6 +68,9 @@ func main() {
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		negroni.Wrap(withAgentConfig(handler.ListReleases)),
 	))
+	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
+		negroni.Wrap(withAgentConfig(handler.CreateRelease)),
+	))
 
 	// Chartsvc reverse proxy
 	authGate := auth.AuthGate()
