@@ -54,6 +54,11 @@ done
 kubectl get clusterrolebinding kube-dns-admin >& /dev/null || \
     kubectl create clusterrolebinding kube-dns-admin --serviceaccount=kube-system:default --clusterrole=cluster-admin 
 
+dbFlags="--set mongodb.enabled=true --set postgresql.enabled=false"
+if [[ "${KUBEAPPS_DB}" == "postgresql" ]]; then
+  dbFlags="--set mongodb.enabled=false --set postgresql.enabled=true"
+fi
+
 # Install Kubeapps
 helm dep up $ROOT_DIR/chart/kubeapps/
 helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
@@ -72,7 +77,9 @@ helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
     --set dashboard.image.tag=$DEV_TAG \
     --set dashboard.image.repository=kubeapps/dashboard$IMG_MODIFIER \
     --set tillerProxy.image.tag=$DEV_TAG \
-    --set tillerProxy.image.repository=kubeapps/tiller-proxy$IMG_MODIFIER
+    --set tillerProxy.image.repository=kubeapps/tiller-proxy$IMG_MODIFIER \
+    `# Database choice flags` \
+    ${dbFlags}
 
 # Ensure that we are testing the correct image
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
@@ -86,7 +93,6 @@ deployments=(
   kubeapps-ci-internal-assetsvc
   kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
-  kubeapps-ci-mongodb
 )
 for dep in ${deployments[@]}; do
   k8s_wait_for_deployment kubeapps ${dep}
