@@ -283,6 +283,21 @@ kubeops:
     requests:
       cpu: 25m
       memory: 32Mi
+  ## Kubeops containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+  ##
+  livenessProbe:
+    httpGet:
+      path: /live
+      port: 8080
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 0
+    timeoutSeconds: 5
   nodeSelector: {}
   tolerations: []
   affinity: {}
