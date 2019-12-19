@@ -27,11 +27,11 @@ import (
 )
 
 const (
-	// ChartTable `create table charts (ID serial NOT NULL PRIMARY KEY, info jsonb NOT NULL);`
+	// ChartTable table containing Charts info
 	ChartTable = "charts"
-	// RepositoryTable `create table repos (ID serial NOT NULL PRIMARY KEY, name varchar unique, checksum varchar, last_update varchar);`
+	// RepositoryTable table containing repositories sync info
 	RepositoryTable = "repos"
-	// ChartFilesTable `create table files (ID serial NOT NULL PRIMARY KEY, chart_files_ID varchar unique, info jsonb NOT NULL);`
+	// ChartFilesTable table containing files related to other charts
 	ChartFilesTable = "files"
 )
 
@@ -40,6 +40,7 @@ type postgresDB interface {
 	Begin() (*sql.Tx, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
 	Close() error
+	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
 // PostgresAssetManagerIface represents the methods of the PG asset manager
