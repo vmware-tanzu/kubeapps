@@ -18,7 +18,6 @@ package handler
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -28,29 +27,9 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	proxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-func getChart(req *http.Request, cu chartUtils.Resolver) (*chartUtils.Details, *chart.Chart, error) {
-	defer req.Body.Close()
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return nil, nil, err
-	}
-	chartDetails, err := cu.ParseDetails(body)
-	if err != nil {
-		return nil, nil, err
-	}
-	netClient, err := cu.InitNetClient(chartDetails)
-	if err != nil {
-		return nil, nil, err
-	}
-	ch, err := cu.GetChart(chartDetails, netClient)
-	if err != nil {
-		return nil, nil, err
-	}
-	return chartDetails, ch, nil
-}
+const requireV1Support = true
 
 func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
@@ -82,7 +61,8 @@ func (h *TillerProxy) logStatus(name string) {
 // CreateRelease creates a new release in the namespace given as Param
 func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Creating Helm Release")
-	chartDetails, ch, err := getChart(req, h.ChartClient)
+	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, h.ChartClient, requireV1Support)
+	ch := chartMulti.Helm2Chart
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -121,6 +101,8 @@ func (h *TillerProxy) OperateRelease(w http.ResponseWriter, req *http.Request, p
 		h.UpgradeRelease(w, req, params)
 	case "rollback":
 		h.RollbackRelease(w, req, params)
+	case "test":
+		h.TestRelease(w, req, params)
 	default:
 		// By default, for maintaining compatibility, we call upgrade
 		h.UpgradeRelease(w, req, params)
@@ -171,7 +153,8 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 // UpgradeRelease upgrades a release in the namespace given as Param
 func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Upgrading Helm Release")
-	chartDetails, ch, err := getChart(req, h.ChartClient)
+	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, h.ChartClient, requireV1Support)
+	ch := chartMulti.Helm2Chart
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -221,6 +204,32 @@ func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, par
 		return
 	}
 	response.NewDataResponse(apps).Write(w)
+}
+
+// TestRelease in the namespace given as Param
+func (h *TillerProxy) TestRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+
+	if !h.DisableAuth {
+		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		// helm tests only create pods so we only need to check that
+		manifest := "apiVersion: v1\nkind: Pod"
+		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
+		if len(forbiddenActions) > 0 {
+			returnForbiddenActions(forbiddenActions, w)
+			return
+		}
+	}
+
+	testResult, err := h.ProxyClient.TestRelease(params["releaseName"], params["namespace"])
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(testResult).Write(w)
 }
 
 // GetRelease returns the release info

@@ -20,8 +20,6 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 )
 
-const defaultHelmDriver agent.DriverType = agent.Secret
-
 var (
 	settings         environment.EnvSettings
 	assetsvcURL      string
@@ -50,15 +48,15 @@ func main() {
 		Timeout:   timeout,
 	}
 
-	driverType := defaultHelmDriver
+	storageForDriver := agent.StorageForSecrets
 	if helmDriverArg != "" {
-		d, err := agent.ParseDriverType(helmDriverArg)
+		var err error
+		storageForDriver, err = agent.ParseDriverType(helmDriverArg)
 		if err != nil {
 			panic(err)
 		}
-		driverType = d // Necessary detour to please typechecker.
 	}
-	withAgentConfig := handler.WithAgentConfig(driverType, options)
+	withAgentConfig := handler.WithAgentConfig(storageForDriver, options)
 	r := mux.NewRouter()
 
 	// Routes

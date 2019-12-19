@@ -15,13 +15,28 @@ import (
 	"k8s.io/klog"
 )
 
-type DriverType string
+// StorageForDriver is a function type which returns a specific storage.
+type StorageForDriver func(namespace string, clientset *kubernetes.Clientset) *storage.Storage
 
-const (
-	Secret    DriverType = "SECRET"
-	ConfigMap DriverType = "CONFIGMAP"
-	Memory    DriverType = "MEMORY"
-)
+// StorageForSecrets returns a storage using the Secret driver.
+func StorageForSecrets(namespace string, clientset *kubernetes.Clientset) *storage.Storage {
+	d := driver.NewSecrets(clientset.CoreV1().Secrets(namespace))
+	d.Log = klog.Infof
+	return storage.Init(d)
+}
+
+// StorageForConfigMaps returns a storage using the ConfigMap driver.
+func StorageForConfigMaps(namespace string, clientset *kubernetes.Clientset) *storage.Storage {
+	d := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(namespace))
+	d.Log = klog.Infof
+	return storage.Init(d)
+}
+
+// StorageForMemory returns a storage using the Memory driver.
+func StorageForMemory(_ string, _ *kubernetes.Clientset) *storage.Storage {
+	d := driver.NewMemory()
+	return storage.Init(d)
+}
 
 type Options struct {
 	ListLimit int
@@ -53,54 +68,33 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	return appOverviews, nil
 }
 
-func NewActionConfig(driver DriverType, token, namespace string) *action.Configuration {
+func NewActionConfig(storageForDriver StorageForDriver, token, namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		panic(err.Error())
+		return nil, err
 	}
 	config.BearerToken = token
 	config.BearerTokenFile = ""
 	clientset, err := kubernetes.NewForConfig(config)
-	store := createStorage(driver, namespace, clientset)
+	store := storageForDriver(namespace, clientset)
 	actionConfig.RESTClientGetter = nil     // TODO replace nil with meaningful value
 	actionConfig.KubeClient = kube.New(nil) // TODO replace nil with meaningful value
 	actionConfig.Releases = store
 	actionConfig.Log = klog.Infof
-	return actionConfig
+	return actionConfig, nil
 }
 
-func createStorage(driverType DriverType, namespace string, clientset *kubernetes.Clientset) *storage.Storage {
-	var store *storage.Storage
-	switch driverType {
-	case Secret:
-		d := driver.NewSecrets(clientset.CoreV1().Secrets(namespace))
-		d.Log = klog.Infof
-		store = storage.Init(d)
-	case ConfigMap:
-		d := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(namespace))
-		d.Log = klog.Infof
-		store = storage.Init(d)
-	case Memory:
-		d := driver.NewMemory()
-		store = storage.Init(d)
-	default:
-		// No (real) enums/ADTs in Go, so no static guarantee against this case.
-		panic("Invalid Helm driver type: " + driverType)
-	}
-	return store
-}
-
-func ParseDriverType(raw string) (DriverType, error) {
+func ParseDriverType(raw string) (StorageForDriver, error) {
 	switch raw {
 	case "secret", "secrets":
-		return Secret, nil
+		return StorageForSecrets, nil
 	case "configmap", "configmaps":
-		return ConfigMap, nil
+		return StorageForConfigMaps, nil
 	case "memory":
-		return Memory, nil
+		return StorageForMemory, nil
 	default:
-		return Memory, errors.New("Invalid Helm driver type: " + raw)
+		return nil, errors.New("Invalid Helm driver type: " + raw)
 	}
 }
 

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"io/ioutil"
+	"sort"
 	"testing"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -11,7 +12,9 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	"k8s.io/client-go/kubernetes"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 )
 
@@ -79,19 +82,31 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-default-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "airwatch",
-				},
-				proxy.AppOverview{
-					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "not-in-default-namespace",
+					Namespace:   "other",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
+				},
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -100,16 +115,24 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "airwatch",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -118,13 +141,42 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: 1,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
 				releaseStub{"airwatch", "default", 1},
+				releaseStub{"wordpress", "default", 1},
 				releaseStub{"not-in-namespace", "other", 1},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
 					ReleaseName: "airwatch",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
+				},
+			},
+		},
+		{
+			name:      "returns two apps with same name but different namespaces and versions",
+			namespace: "",
+			listLimit: defaultListLimit,
+			releases: []releaseStub{
+				releaseStub{"wordpress", "default", 1},
+				releaseStub{"wordpress", "dev", 2},
+			},
+			expectedApps: []proxy.AppOverview{
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
+				},
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "dev",
+					Version:     "2",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
 				},
 			},
 		},
@@ -140,8 +192,19 @@ func TestListReleases(t *testing.T) {
 				t.Errorf("%v", err)
 			}
 
+			// Check for size of returned apps
 			if got, want := len(apps), len(tc.expectedApps); got != want {
 				t.Errorf("got: %d, want: %d", got, want)
+			}
+
+			// The Helm memory driver does not appear to have consistent ordering.
+			// See https://github.com/helm/helm/issues/7263
+			// Just sort by version which is good enough here.
+			sort.Slice(apps, func(i, j int) bool { return apps[i].Version < apps[j].Version })
+
+			//Deep equality check of expected against attained result
+			if !cmp.Equal(apps, tc.expectedApps) {
+				t.Errorf(cmp.Diff(apps, tc.expectedApps))
 			}
 		})
 	}
@@ -149,47 +212,52 @@ func TestListReleases(t *testing.T) {
 
 func TestParseDriverType(t *testing.T) {
 	validTestCases := []struct {
-		input  string
-		output DriverType
+		input      string
+		driverName string
 	}{
 		{
-			input:  "secret",
-			output: Secret,
+			input:      "secret",
+			driverName: "Secret",
 		},
 		{
-			input:  "secrets",
-			output: Secret,
+			input:      "secrets",
+			driverName: "Secret",
 		},
 		{
-			input:  "configmap",
-			output: ConfigMap,
+			input:      "configmap",
+			driverName: "ConfigMap",
 		},
 		{
-			input:  "configmaps",
-			output: ConfigMap,
+			input:      "configmaps",
+			driverName: "ConfigMap",
 		},
 		{
-			input:  "memory",
-			output: Memory,
+			input:      "memory",
+			driverName: "Memory",
 		},
 	}
 
 	for _, tc := range validTestCases {
 		t.Run(tc.input, func(t *testing.T) {
-			driverType, err := ParseDriverType(tc.input)
+			storageForDriver, err := ParseDriverType(tc.input)
 			if err != nil {
-				t.Errorf("%v", err)
-			} else if driverType != tc.output {
-				t.Errorf("expected: %s, actual: %s", tc.output, driverType)
+				t.Fatalf("%v", err)
+			}
+			storage := storageForDriver("default", &kubernetes.Clientset{})
+			if got, want := storage.Name(), tc.driverName; got != want {
+				t.Errorf("expected: %s, actual: %s", want, got)
 			}
 		})
 	}
 
 	invalidTestCase := "andresmgot"
 	t.Run(invalidTestCase, func(t *testing.T) {
-		driverType, err := ParseDriverType(invalidTestCase)
+		storageForDriver, err := ParseDriverType(invalidTestCase)
 		if err == nil {
-			t.Errorf("Expected \"%s\" to be an invalid driver type, but it was parsed as %v", invalidTestCase, driverType)
+			t.Errorf("Expected \"%s\" to be an invalid driver type, but it was parsed as %v", invalidTestCase, storageForDriver)
+		}
+		if storageForDriver != nil {
+			t.Errorf("got: %#v, want: nil", storageForDriver)
 		}
 	})
 }
