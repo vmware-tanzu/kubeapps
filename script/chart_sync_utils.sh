@@ -87,6 +87,7 @@ updateRepo() {
     replaceImage tiller-proxy "${targetChartPath}/values.yaml"
     replaceImage apprepository-controller "${targetChartPath}/values.yaml"
     replaceImage asset-syncer "${targetChartPath}/values.yaml"
+    replaceImage assetsvc "${targetChartPath}/values.yaml"
 }
 
 commitAndPushChanges() {

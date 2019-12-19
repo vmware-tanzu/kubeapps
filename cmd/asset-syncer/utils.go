@@ -39,6 +39,7 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/jinzhu/copier"
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
 	helmrepo "k8s.io/helm/pkg/repo"
 )
@@ -50,8 +51,8 @@ const (
 
 type importChartFilesJob struct {
 	Name         string
-	Repo         *repo
-	ChartVersion chartVersion
+	Repo         *models.Repo
+	ChartVersion models.ChartVersion
 }
 
 type httpClient interface {
@@ -75,14 +76,14 @@ func init() {
 
 type assetManager interface {
 	Delete(repo string) error
-	Sync(charts []chart) error
+	Sync(charts []models.Chart) error
 	RepoAlreadyProcessed(repoName, checksum string) bool
 	UpdateLastCheck(repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error
 	updateIcon(data []byte, contentType, ID string) error
 	filesExist(chartFilesID, digest string) bool
-	insertFiles(chartFilesID string, files chartFiles) error
+	insertFiles(chartFilesID string, files models.ChartFiles) error
 }
 
 func newManager(databaseType string, config datastore.Config) (assetManager, error) {
@@ -104,7 +105,7 @@ func getSha256(src []byte) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func getRepo(name, repoURL, authorizationHeader string) (*repo, []byte, error) {
+func getRepo(name, repoURL, authorizationHeader string) (*models.RepoInternal, []byte, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -121,7 +122,7 @@ func getRepo(name, repoURL, authorizationHeader string) (*repo, []byte, error) {
 		return nil, []byte{}, err
 	}
 
-	return &repo{Name: name, URL: url.String(), AuthorizationHeader: authorizationHeader, Checksum: repoChecksum}, repoBytes, nil
+	return &models.RepoInternal{Name: name, URL: url.String(), Checksum: repoChecksum, AuthorizationHeader: authorizationHeader}, repoBytes, nil
 }
 
 func fetchRepoIndex(url, authHeader string) ([]byte, error) {
@@ -173,8 +174,8 @@ func parseRepoIndex(body []byte) (*helmrepo.IndexFile, error) {
 	return &index, nil
 }
 
-func chartsFromIndex(index *helmrepo.IndexFile, r *repo) []chart {
-	var charts []chart
+func chartsFromIndex(index *helmrepo.IndexFile, r *models.Repo) []models.Chart {
+	var charts []models.Chart
 	for _, entry := range index.Entries {
 		if entry[0].GetDeprecated() {
 			log.WithFields(log.Fields{"name": entry[0].GetName()}).Info("skipping deprecated chart")
@@ -187,8 +188,8 @@ func chartsFromIndex(index *helmrepo.IndexFile, r *repo) []chart {
 
 // Takes an entry from the index and constructs a database representation of the
 // object.
-func newChart(entry helmrepo.ChartVersions, r *repo) chart {
-	var c chart
+func newChart(entry helmrepo.ChartVersions, r *models.Repo) models.Chart {
+	var c models.Chart
 	copier.Copy(&c, entry[0])
 	copier.Copy(&c.ChartVersions, entry)
 	c.Repo = r
@@ -219,7 +220,7 @@ func extractFilesFromTarball(filenames []string, tarf *tar.Reader) (map[string]s
 	return ret, nil
 }
 
-func chartTarballURL(r *repo, cv chartVersion) string {
+func chartTarballURL(r *models.RepoInternal, cv models.ChartVersion) string {
 	source := cv.URLs[0]
 	if _, err := parseRepoURL(source); err != nil {
 		// If the chart URL is not absolute, join with repo URL. It's fine if the
@@ -268,17 +269,17 @@ type fileImporter struct {
 	manager assetManager
 }
 
-func (f *fileImporter) fetchFiles(charts []chart) {
+func (f *fileImporter) fetchFiles(charts []models.Chart, r *models.RepoInternal) {
 	// Process 10 charts at a time
 	numWorkers := 10
-	iconJobs := make(chan chart, numWorkers)
+	iconJobs := make(chan models.Chart, numWorkers)
 	chartFilesJobs := make(chan importChartFilesJob, numWorkers)
 	var wg sync.WaitGroup
 
 	log.Debugf("starting %d workers", numWorkers)
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go f.importWorker(&wg, iconJobs, chartFilesJobs)
+		go f.importWorker(&wg, iconJobs, chartFilesJobs, r)
 	}
 
 	// Enqueue jobs to process chart icons
@@ -312,23 +313,23 @@ func (f *fileImporter) fetchFiles(charts []chart) {
 	wg.Wait()
 }
 
-func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan chart, chartFiles <-chan importChartFilesJob) {
+func (f *fileImporter) importWorker(wg *sync.WaitGroup, icons <-chan models.Chart, chartFiles <-chan importChartFilesJob, r *models.RepoInternal) {
 	defer wg.Done()
 	for c := range icons {
 		log.WithFields(log.Fields{"name": c.Name}).Debug("importing icon")
-		if err := f.fetchAndImportIcon(c); err != nil {
+		if err := f.fetchAndImportIcon(c, r); err != nil {
 			log.WithFields(log.Fields{"name": c.Name}).WithError(err).Error("failed to import icon")
 		}
 	}
 	for j := range chartFiles {
 		log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).Debug("importing readme and values")
-		if err := f.fetchAndImportFiles(j.Name, j.Repo, j.ChartVersion); err != nil {
+		if err := f.fetchAndImportFiles(j.Name, r, j.ChartVersion); err != nil {
 			log.WithFields(log.Fields{"name": j.Name, "version": j.ChartVersion.Version}).WithError(err).Error("failed to import files")
 		}
 	}
 }
 
-func (f *fileImporter) fetchAndImportIcon(c chart) error {
+func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal) error {
 	if c.Icon == "" {
 		log.WithFields(log.Fields{"name": c.Name}).Info("icon not found")
 		return nil
@@ -339,8 +340,8 @@ func (f *fileImporter) fetchAndImportIcon(c chart) error {
 		return err
 	}
 	req.Header.Set("User-Agent", userAgent())
-	if len(c.Repo.AuthorizationHeader) > 0 {
-		req.Header.Set("Authorization", c.Repo.AuthorizationHeader)
+	if len(r.AuthorizationHeader) > 0 {
+		req.Header.Set("Authorization", r.AuthorizationHeader)
 	}
 
 	res, err := netClient.Do(req)
@@ -384,7 +385,7 @@ func (f *fileImporter) fetchAndImportIcon(c chart) error {
 	return f.manager.updateIcon(b, contentType, c.ID)
 }
 
-func (f *fileImporter) fetchAndImportFiles(name string, r *repo, cv chartVersion) error {
+func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, cv models.ChartVersion) error {
 	chartFilesID := fmt.Sprintf("%s/%s-%s", r.Name, name, cv.Version)
 
 	// Check if we already have indexed files for this chart version and digest
@@ -431,7 +432,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *repo, cv chartVersion
 		return err
 	}
 
-	chartFiles := chartFiles{ID: chartFilesID, Repo: r, Digest: cv.Digest}
+	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, URL: r.URL}, Digest: cv.Digest}
 	if v, ok := files[readmeFileName]; ok {
 		chartFiles.Readme = v
 	} else {

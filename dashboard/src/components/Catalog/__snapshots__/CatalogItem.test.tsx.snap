@@ -7,7 +7,7 @@ exports[`should render an item 1`] = `
       className="ListItem__content__description"
     />
   }
-  icon="api/chartsvc/icon.png"
+  icon="api/assetsvc/icon.png"
   info="1.0.0"
   key="[object Object]/foo"
   link="/charts/foo"

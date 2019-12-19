@@ -10,7 +10,7 @@ interface IChartIconProps {
 class ChartIcon extends React.Component<IChartIconProps> {
   public render() {
     const { icon } = this.props;
-    const iconSrc = icon ? `api/chartsvc/${icon}` : placeholder;
+    const iconSrc = icon ? `api/assetsvc/${icon}` : placeholder;
 
     return (
       <div className="ChartIcon">

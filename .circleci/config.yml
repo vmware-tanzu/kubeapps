@@ -35,7 +35,14 @@ workflows:
           <<: *build_always
       - build_dashboard:
           <<: *build_always
-      - local_e2e_tests:
+      - local_e2e_tests_mongodb:
+          <<: *build_always
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - local_e2e_tests_postgresql:
           <<: *build_always
           requires:
             - test_go
@@ -73,6 +80,7 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
+            - local_e2e_tests_postgresql
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
@@ -80,6 +88,7 @@ workflows:
       - push_images:
           <<: *build_always
           requires:
+            - local_e2e_tests_postgresql
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
@@ -87,6 +96,7 @@ workflows:
       - release:
           <<: *build_on_tag
           requires:
+            - local_e2e_tests_postgresql
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
@@ -207,6 +217,27 @@ gke_test: &gke_test
         name: Cleanup GKE Cluster
         command: gcloud container clusters delete --async --zone $GKE_ZONE $ESCAPED_GKE_CLUSTER
         when: always
+local_e2e_steps: &local_e2e_steps
+  steps:
+    - checkout
+    - <<: *exports
+    # Install kind
+    - run: |
+        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/0.2.1/kind-linux-amd64
+        chmod +x kind-linux-amd64
+        sudo mv kind-linux-amd64 /usr/local/bin/kind
+    - run: kind create cluster
+    - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
+    - <<: *install_kubectl
+    - <<: *install_helm_cli
+    # Load images from other jobs
+    - attach_workspace:
+        at: /tmp/images
+    - run: for image in /tmp/images/*; do kind load image-archive "$image"; done
+    - <<: *run_e2e_tests
+    - store_artifacts:
+        path: integration/reports
+    - run: exit $TEST_RESULT
 ###
 
 jobs:
@@ -243,7 +274,7 @@ jobs:
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: /home/circleci/.go_workspace
-      IMAGES: "apprepository-controller tiller-proxy asset-syncer"
+      IMAGES: "apprepository-controller tiller-proxy asset-syncer assetsvc"
     <<: *build_images
   build_dashboard:
     docker:
@@ -257,28 +288,16 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  local_e2e_tests:
+  local_e2e_tests_mongodb:
     machine: true
-    steps:
-      - checkout
-      - <<: *exports
-      # Install kind
-      - run: |
-          curl -LO https://github.com/kubernetes-sigs/kind/releases/download/0.2.1/kind-linux-amd64
-          chmod +x kind-linux-amd64
-          sudo mv kind-linux-amd64 /usr/local/bin/kind
-      - run: kind create cluster
-      - run: echo "export KUBECONFIG=$(kind get kubeconfig-path --name=kind)" >> $BASH_ENV
-      - <<: *install_kubectl
-      - <<: *install_helm_cli
-      # Load images from other jobs
-      - attach_workspace:
-          at: /tmp/images
-      - run: for image in /tmp/images/*; do kind load image-archive "$image"; done
-      - <<: *run_e2e_tests
-      - store_artifacts:
-          path: integration/reports
-      - run: exit $TEST_RESULT
+    environment:
+      KUBEAPPS_DB: "mongodb"
+    <<: *local_e2e_steps
+  local_e2e_tests_postgresql:
+    machine: true
+    environment:
+      KUBEAPPS_DB: "postgresql"
+    <<: *local_e2e_steps
   GKE_1_13_MASTER:
     <<: *gke_test
     environment:

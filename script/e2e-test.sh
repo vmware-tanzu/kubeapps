@@ -54,6 +54,11 @@ done
 kubectl get clusterrolebinding kube-dns-admin >& /dev/null || \
     kubectl create clusterrolebinding kube-dns-admin --serviceaccount=kube-system:default --clusterrole=cluster-admin 
 
+dbFlags="--set mongodb.enabled=true --set postgresql.enabled=false"
+if [[ "${KUBEAPPS_DB}" == "postgresql" ]]; then
+  dbFlags="--set mongodb.enabled=false --set postgresql.enabled=true"
+fi
+
 # Install Kubeapps
 helm dep up $ROOT_DIR/chart/kubeapps/
 helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
@@ -67,10 +72,14 @@ helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
     --set apprepository.image.repository=kubeapps/apprepository-controller$IMG_MODIFIER \
     --set apprepository.syncImage.tag=$DEV_TAG \
     --set apprepository.syncImage.repository=kubeapps/asset-syncer$IMG_MODIFIER \
+    --set assetsvc.image.tag=$DEV_TAG \
+    --set assetsvc.image.repository=kubeapps/assetsvc$IMG_MODIFIER \
     --set dashboard.image.tag=$DEV_TAG \
     --set dashboard.image.repository=kubeapps/dashboard$IMG_MODIFIER \
     --set tillerProxy.image.tag=$DEV_TAG \
-    --set tillerProxy.image.repository=kubeapps/tiller-proxy$IMG_MODIFIER
+    --set tillerProxy.image.repository=kubeapps/tiller-proxy$IMG_MODIFIER \
+    `# Database choice flags` \
+    ${dbFlags}
 
 # Ensure that we are testing the correct image
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
@@ -81,10 +90,9 @@ k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
 deployments=(
   kubeapps-ci
   kubeapps-ci-internal-apprepository-controller
-  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-assetsvc
   kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
-  kubeapps-ci-mongodb
 )
 for dep in ${deployments[@]}; do
   k8s_wait_for_deployment kubeapps ${dep}
@@ -102,7 +110,7 @@ kubectl get pods -n kubeapps -o wide
 kubectl get ep --namespace=kubeapps
 svcs=(
   kubeapps-ci
-  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-assetsvc
   kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
 )
@@ -134,8 +142,8 @@ if [[ "$code" != 0 ]]; then
     kubectl logs -n kubeapps $pod
   done;
   echo 
-  echo "LOGS for chartsvc tests --------"
-  kubectl logs kubeapps-ci-chartsvc-test --namespace kubeapps
+  echo "LOGS for assetsvc tests --------"
+  kubectl logs kubeapps-ci-assetsvc-test --namespace kubeapps
   echo "LOGS for tiller-proxy tests --------"
   kubectl logs kubeapps-ci-tiller-proxy-test --namespace kubeapps
   echo "LOGS for dashboard tests --------"

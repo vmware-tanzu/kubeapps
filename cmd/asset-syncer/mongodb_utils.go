@@ -17,11 +17,12 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 )
 
 const (
@@ -31,25 +32,12 @@ const (
 )
 
 type mongodbAssetManager struct {
-	mongoConfig datastore.Config
-	dbSession   datastore.Session
+	*dbutils.MongodbAssetManager
 }
 
 func newMongoDBManager(config datastore.Config) assetManager {
-	return &mongodbAssetManager{config, nil}
-}
-
-func (m *mongodbAssetManager) Init() error {
-	dbSession, err := datastore.NewSession(m.mongoConfig)
-	if err != nil {
-		return fmt.Errorf("Can't connect to mongoDB: %v", err)
-	}
-	m.dbSession = dbSession
-	return nil
-}
-
-func (m *mongodbAssetManager) Close() error {
-	return nil
+	m := dbutils.NewMongoDBManager(config)
+	return &mongodbAssetManager{m}
 }
 
 // Syncing is performed in the following steps:
@@ -61,27 +49,27 @@ func (m *mongodbAssetManager) Close() error {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *mongodbAssetManager) Sync(charts []chart) error {
+func (m *mongodbAssetManager) Sync(charts []models.Chart) error {
 	return m.importCharts(charts)
 }
 
 func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum string) bool {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
-	lastCheck := &repoCheck{}
+	lastCheck := &models.RepoCheck{}
 	err := db.C(repositoryCollection).Find(bson.M{"_id": repoName}).One(lastCheck)
 	return err == nil && checksum == lastCheck.Checksum
 }
 
 func (m *mongodbAssetManager) UpdateLastCheck(repoName string, checksum string, now time.Time) error {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(repositoryCollection).UpsertId(repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}})
 	return err
 }
 
 func (m *mongodbAssetManager) Delete(repoName string) error {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(chartCollection).RemoveAll(bson.M{
 		"repo.name": repoName,
@@ -103,7 +91,7 @@ func (m *mongodbAssetManager) Delete(repoName string) error {
 	return err
 }
 
-func (m *mongodbAssetManager) importCharts(charts []chart) error {
+func (m *mongodbAssetManager) importCharts(charts []models.Chart) error {
 	var pairs []interface{}
 	var chartIDs []string
 	for _, c := range charts {
@@ -112,7 +100,7 @@ func (m *mongodbAssetManager) importCharts(charts []chart) error {
 		pairs = append(pairs, bson.M{"_id": c.ID}, c)
 	}
 
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	bulk := db.C(chartCollection).Bulk()
 
@@ -132,20 +120,20 @@ func (m *mongodbAssetManager) importCharts(charts []chart) error {
 }
 
 func (m *mongodbAssetManager) updateIcon(data []byte, contentType, ID string) error {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
 	return db.C(chartCollection).UpdateId(ID, bson.M{"$set": bson.M{"raw_icon": data, "icon_content_type": contentType}})
 }
 
 func (m *mongodbAssetManager) filesExist(chartFilesID, digest string) bool {
-	db, closer := m.dbSession.DB()
+	db, closer := m.DBSession.DB()
 	defer closer()
-	err := db.C(chartFilesCollection).Find(bson.M{"_id": chartFilesID, "digest": digest}).One(&chartFiles{})
+	err := db.C(chartFilesCollection).Find(bson.M{"_id": chartFilesID, "digest": digest}).One(&models.ChartFiles{})
 	return err == nil
 }
 
-func (m *mongodbAssetManager) insertFiles(chartFilesID string, files chartFiles) error {
-	db, closer := m.dbSession.DB()
+func (m *mongodbAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
+	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(chartFilesCollection).UpsertId(chartFilesID, files)
 	return err

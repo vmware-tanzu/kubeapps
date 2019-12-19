@@ -38,7 +38,7 @@ import (
 	"github.com/disintegration/imaging"
 	"github.com/globalsign/mgo/bson"
 	"github.com/kubeapps/common/datastore"
-	"github.com/kubeapps/common/datastore/mockstore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 )
@@ -121,7 +121,7 @@ func (h *svgIconClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 type goodTarballClient struct {
-	c          chart
+	c          models.Chart
 	skipReadme bool
 	skipValues bool
 	skipSchema bool
@@ -150,7 +150,7 @@ func (h *goodTarballClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 type authenticatedTarballClient struct {
-	c chart
+	c models.Chart
 }
 
 func (h *authenticatedTarballClient) Do(req *http.Request) (*http.Response, error) {
@@ -281,7 +281,7 @@ func Test_parseRepoIndex(t *testing.T) {
 }
 
 func Test_chartsFromIndex(t *testing.T) {
-	r := &repo{Name: "test", URL: "http://testrepo.com"}
+	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	charts := chartsFromIndex(index, r)
 	assert.Equal(t, len(charts), 2, "number of charts")
@@ -297,7 +297,7 @@ func Test_chartsFromIndex(t *testing.T) {
 }
 
 func Test_newChart(t *testing.T) {
-	r := &repo{Name: "test", URL: "http://testrepo.com"}
+	r := &models.Repo{Name: "test", URL: "http://testrepo.com"}
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	c := newChart(index.Entries["wordpress"], r)
 	assert.Equal(t, c.Name, "wordpress", "correctly built")
@@ -308,14 +308,14 @@ func Test_newChart(t *testing.T) {
 }
 
 func Test_chartTarballURL(t *testing.T) {
-	r := &repo{Name: "test", URL: "http://testrepo.com"}
+	r := &models.RepoInternal{Name: "test", URL: "http://testrepo.com"}
 	tests := []struct {
 		name   string
-		cv     chartVersion
+		cv     models.ChartVersion
 		wanted string
 	}{
-		{"absolute url", chartVersion{URLs: []string{"http://testrepo.com/wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
-		{"relative url", chartVersion{URLs: []string{"wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
+		{"absolute url", models.ChartVersion{URLs: []string{"http://testrepo.com/wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
+		{"relative url", models.ChartVersion{URLs: []string{"wordpress-0.1.0.tgz"}}, "http://testrepo.com/wordpress-0.1.0.tgz"},
 	}
 
 	for _, tt := range tests {
@@ -486,90 +486,84 @@ func Test_newManager(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := datastore.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
-			manager, err := newManager(tt.database, config)
-			m := fmt.Sprintf("%v", manager)
+			_, err := newManager(tt.database, config)
 			assert.NoErr(t, err)
-			assert.Equal(t, m, tt.expectedManager, "manager")
 		})
 	}
 
 }
 
 func Test_fetchAndImportIcon(t *testing.T) {
+	r := &models.RepoInternal{Name: "test"}
 	t.Run("no icon", func(t *testing.T) {
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		c := chart{ID: "test/acs-engine-autoscaler"}
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		m := &mock.Mock{}
+		c := models.Chart{ID: "test/acs-engine-autoscaler"}
+		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
 	})
 
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com"})
+	charts := chartsFromIndex(index, &models.Repo{Name: "test", URL: "http://testrepo.com"})
 
 	t.Run("failed download", func(t *testing.T) {
 		netClient = &badHTTPClient{}
 		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		m := &mock.Mock{}
+		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fImporter.fetchAndImportIcon(c))
+		assert.Err(t, fmt.Errorf("500 %s", c.Icon), fImporter.fetchAndImportIcon(c, r))
 	})
 
 	t.Run("bad icon", func(t *testing.T) {
 		netClient = &badIconClient{}
 		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		m := &mock.Mock{}
+		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c))
+		assert.Err(t, image.ErrFormat, fImporter.fetchAndImportIcon(c, r))
 	})
 
 	t.Run("valid icon", func(t *testing.T) {
 		netClient = &goodIconClient{}
 		c := charts[0]
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
+		m := &mock.Mock{}
 		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": iconBytes(), "icon_content_type": "image/png"}}).Return(nil)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
 		m.AssertExpectations(t)
 	})
 
 	t.Run("valid SVG icon", func(t *testing.T) {
 		netClient = &svgIconClient{}
-		c := chart{
+		c := models.Chart{
 			ID:   "foo",
 			Icon: "https://foo/bar/logo.svg",
-			Repo: &repo{},
+			Repo: &models.Repo{},
 		}
-		m := mock.Mock{}
-		dbSession := mockstore.NewMockSession(&m)
+		m := &mock.Mock{}
 		m.On("UpdateId", c.ID, bson.M{"$set": bson.M{"raw_icon": []byte("foo"), "icon_content_type": "image/svg"}}).Return(nil)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		manager := getMockManager(m)
 		fImporter := fileImporter{manager}
-		assert.NoErr(t, fImporter.fetchAndImportIcon(c))
+		assert.NoErr(t, fImporter.fetchAndImportIcon(c, r))
 		m.AssertExpectations(t)
 	})
 }
 
 func Test_fetchAndImportFiles(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &repo{Name: "test", URL: "http://testrepo.com", AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient1s"})
+	repo := &models.RepoInternal{Name: "test", URL: "http://testrepo.com"}
+	charts := chartsFromIndex(index, &models.Repo{Name: repo.Name, URL: repo.URL})
 	cv := charts[0].ChartVersions[0]
 
 	t.Run("http error", func(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if readme already exists to force fetching"))
-		dbSession := mockstore.NewMockSession(&m)
 		netClient = &badHTTPClient{}
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv))
+		assert.Err(t, io.EOF, fImporter.fetchAndImportFiles(charts[0].Name, repo, cv))
 	})
 
 	t.Run("file not found", func(t *testing.T) {
@@ -577,11 +571,17 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, "", "", "", charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		m.On("UpsertId", chartFilesID, models.ChartFiles{
+			ID:     chartFilesID,
+			Readme: "",
+			Values: "",
+			Schema: "",
+			Repo:   charts[0].Repo,
+			Digest: cv.Digest,
+		})
+		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -591,11 +591,18 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		m.On("UpsertId", chartFilesID, models.ChartFiles{
+			ID:     chartFilesID,
+			Readme: testChartReadme,
+			Values: testChartValues,
+			Schema: testChartSchema,
+			Repo:   charts[0].Repo,
+			Digest: cv.Digest,
+		})
+		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		r := &models.RepoInternal{Name: repo.Name, URL: repo.URL, AuthorizationHeader: "Bearer ThisSecretAccessTokenAuthenticatesTheClient"}
+		err := fImporter.fetchAndImportFiles(charts[0].Name, r, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -605,11 +612,17 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		m.On("One", mock.Anything).Return(errors.New("return an error when checking if files already exists to force fetching"))
 		chartFilesID := fmt.Sprintf("%s/%s-%s", charts[0].Repo.Name, charts[0].Name, cv.Version)
-		m.On("UpsertId", chartFilesID, chartFiles{chartFilesID, testChartReadme, testChartValues, testChartSchema, charts[0].Repo, cv.Digest})
-		dbSession := mockstore.NewMockSession(&m)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		m.On("UpsertId", chartFilesID, models.ChartFiles{
+			ID:     chartFilesID,
+			Readme: testChartReadme,
+			Values: testChartValues,
+			Schema: testChartSchema,
+			Repo:   charts[0].Repo,
+			Digest: cv.Digest,
+		})
+		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
 		assert.NoErr(t, err)
 		m.AssertExpectations(t)
 	})
@@ -618,10 +631,9 @@ func Test_fetchAndImportFiles(t *testing.T) {
 		m := mock.Mock{}
 		// don't return an error when checking if files already exists
 		m.On("One", mock.Anything).Return(nil)
-		dbSession := mockstore.NewMockSession(&m)
-		manager := &mongodbAssetManager{mongoConfig: datastore.Config{}, dbSession: dbSession}
+		manager := getMockManager(&m)
 		fImporter := fileImporter{manager}
-		err := fImporter.fetchAndImportFiles(charts[0].Name, charts[0].Repo, cv)
+		err := fImporter.fetchAndImportFiles(charts[0].Name, repo, cv)
 		assert.NoErr(t, err)
 		m.AssertNotCalled(t, "UpsertId", mock.Anything, mock.Anything)
 	})

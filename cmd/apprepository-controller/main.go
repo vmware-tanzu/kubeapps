@@ -40,6 +40,7 @@ var (
 	dbUser           string
 	dbName           string
 	dbSecretName     string
+	dbSecretKey      string
 	userAgentComment string
 	crontab          string
 )
@@ -89,6 +90,7 @@ func init() {
 	flag.StringVar(&dbUser, "database-user", "root", "Database user")
 	flag.StringVar(&dbName, "database-name", "charts", "Database name")
 	flag.StringVar(&dbSecretName, "database-secret-name", "mongodb", "Kubernetes secret name for database credentials")
+	flag.StringVar(&dbSecretKey, "database-secret-key", "mongodb-root-password", "Kubernetes secret key used for database credentials")
 	flag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	flag.StringVar(&crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
 }
