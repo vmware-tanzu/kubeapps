@@ -2,7 +2,7 @@ package agent
 
 import (
 	"io/ioutil"
-	"strconv"
+	"sort"
 	"testing"
 
 	"helm.sh/helm/v3/pkg/action"
@@ -67,15 +67,6 @@ func makeReleases(t *testing.T, config *Config, rels []releaseStub) {
 			t.Fatal(err)
 		}
 	}
-}
-
-func strtoi(str string) int {
-	i, err := strconv.Atoi(str)
-	if err != nil {
-		return 0
-	}
-
-	return i
 }
 
 func TestListReleases(t *testing.T) {
@@ -206,11 +197,15 @@ func TestListReleases(t *testing.T) {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 
-			//Deep equality check of expected aginst attained result
+			// The Helm memory driver does not appear to have consistent ordering.
+			// See https://github.com/helm/helm/issues/7263
+			// Just sort by version which is good enough here.
+			sort.Slice(apps, func(i, j int) bool { return apps[i].Version < apps[j].Version })
+
+			//Deep equality check of expected against attained result
 			if !cmp.Equal(apps, tc.expectedApps) {
 				t.Errorf(cmp.Diff(apps, tc.expectedApps))
 			}
-
 		})
 	}
 }
