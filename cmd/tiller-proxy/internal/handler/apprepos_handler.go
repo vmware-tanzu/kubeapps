@@ -155,7 +155,7 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	appRepo := appRepositoryForRequest(&appRepoRequest)
+	appRepo := appRepositoryForRequest(appRepoRequest)
 	// TODO(mnelson): validate both required data and request for index
 	// https://github.com/kubeapps/kubeapps/issues/1330
 
@@ -194,7 +194,7 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
-func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.AppRepository {
+func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppRepository {
 	appRepo := appRepoRequest.AppRepository
 
 	var auth v1alpha1.AppRepositoryAuth

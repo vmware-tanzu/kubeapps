@@ -147,7 +147,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 				}
 
 				// Ensure the expected AppRepository is stored
-				requestAppRepo := appRepositoryForRequest(&appRepoRequest)
+				requestAppRepo := appRepositoryForRequest(appRepoRequest)
 				requestAppRepo.ObjectMeta.Namespace = tc.kubeappsNamespace
 
 				responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(tc.kubeappsNamespace).Get(requestAppRepo.ObjectMeta.Name, metav1.GetOptions{})
@@ -321,7 +321,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := appRepositoryForRequest(&appRepositoryRequest{tc.request}), &tc.appRepo; !cmp.Equal(want, got) {
+			if got, want := appRepositoryForRequest(appRepositoryRequest{tc.request}), &tc.appRepo; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
