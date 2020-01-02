@@ -27,7 +27,11 @@ type dashboardCompatibleChart struct {
 	Files     []*any.Any                `json:"files,omitempty"`
 	Metadata  h3chart.Metadata          `json:"metadata,omitempty"`
 	Templates []*h2chart.Template       `json:"templates,omitempty"`
-	Values    dashboardCompatibleConfig `json:"values,omitempty"`
+	Values    dashboardCompatibleValues `json:"values,omitempty"`
+}
+
+type dashboardCompatibleValues struct {
+	Raw string `json:"raw,omitempty"`
 }
 
 type dashboardCompatibleConfig struct {
@@ -39,7 +43,7 @@ func newDashboardCompatibleRelease(h3r h3.Release) dashboardCompatibleRelease {
 		Name:      h3r.Name,
 		Info:      h2.Info{Status: compatibleStatus(*h3r.Info)},
 		Chart:     compatibleChart(*h3r.Chart),
-		Config:    compatibleConfig(*h3r.Chart),
+		Config:    compatibleConfig(h3r),
 		Manifest:  h3r.Manifest,
 		Version:   h3r.Version,
 		Namespace: h3r.Namespace,
@@ -51,7 +55,7 @@ func compatibleChart(h3c h3chart.Chart) dashboardCompatibleChart {
 		Files:     compatibleFiles(h3c.Files),
 		Metadata:  *h3c.Metadata,
 		Templates: compatibleTemplates(h3c.Templates),
-		Values:    compatibleConfig(h3c),
+		Values:    compatibleValues(h3c),
 	}
 }
 
@@ -77,7 +81,13 @@ func compatibleTemplates(h3templates []*h3chart.File) []*h2chart.Template {
 	return templates
 }
 
-func compatibleConfig(h3chart h3chart.Chart) dashboardCompatibleConfig {
+func compatibleValues(h3c h3chart.Chart) dashboardCompatibleValues {
+	return dashboardCompatibleValues{
+		Raw: "[TODO] NOT IMPLEMENTED",
+	}
+}
+
+func compatibleConfig(h3r h3.Release) dashboardCompatibleConfig {
 	return dashboardCompatibleConfig{
 		Raw: "[TODO] NOT IMPLEMENTED",
 	}
