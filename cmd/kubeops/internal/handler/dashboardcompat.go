@@ -7,11 +7,15 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/any"
+	"gopkg.in/yaml.v2"
 	h3chart "helm.sh/helm/v3/pkg/chart"
 	h3 "helm.sh/helm/v3/pkg/release"
 	h2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	h2 "k8s.io/helm/pkg/proto/hapi/release"
 )
+
+// generatedYamlHeader is prepended to YAML generated from the internal map[string]interface{} representation.
+const generatedYamlHeader = "# Not original YAML! Generated from parsed representation."
 
 type dashboardCompatibleRelease struct {
 	Name      string                    `json:"name,omitempty"`
@@ -83,14 +87,21 @@ func compatibleTemplates(h3templates []*h3chart.File) []*h2chart.Template {
 
 func compatibleValues(h3c h3chart.Chart) dashboardCompatibleValues {
 	return dashboardCompatibleValues{
-		Raw: "[TODO] NOT IMPLEMENTED",
+		Raw: valuesToYaml(h3c.Values),
 	}
 }
 
 func compatibleConfig(h3r h3.Release) dashboardCompatibleConfig {
 	return dashboardCompatibleConfig{
-		Raw: "[TODO] NOT IMPLEMENTED",
+		Raw: valuesToYaml(h3r.Config),
 	}
+}
+
+// valuesToYaml serializes to YAML and prepends an informative header.
+// It assumes that the serialization succeeds.
+func valuesToYaml(values map[string]interface{}) string {
+	marshaled, _ := yaml.Marshal(values)
+	return generatedYamlHeader + "\n" + string(marshaled)
 }
 
 func compatibleStatus(h3info h3.Info) *h2.Status {
