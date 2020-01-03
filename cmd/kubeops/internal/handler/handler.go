@@ -19,6 +19,8 @@ const (
 	nameParam      = "releaseName"
 )
 
+const requireV1Support = false
+
 // This type represents the fact that a regular handler cannot actually be created until we have access to the request,
 // because a valid action config (and hence agent config) cannot be created until then.
 // If the agent config were a "this" argument instead of an explicit argument, it would be easy to create a handler with a "zero" config.
@@ -91,7 +93,6 @@ func ListAllReleases(cfg agent.Config, w http.ResponseWriter, req *http.Request,
 }
 
 func CreateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	requireV1Support := false
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, requireV1Support)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -107,6 +108,34 @@ func CreateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, p
 		return
 	}
 	response.NewDataResponse(release).Write(w)
+}
+
+// OperateRelease decides which method to call depending on the "action" query param.
+func OperateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+	switch req.FormValue("action") {
+	case "upgrade":
+		upgradeRelease(cfg, w, req, params)
+	default:
+		// By default, for maintaining compatibility, we call upgrade.
+		upgradeRelease(cfg, w, req, params)
+	}
+}
+
+func upgradeRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+	releaseName := params[nameParam]
+	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, requireV1Support)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	ch := chartMulti.Helm3Chart
+	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(newDashboardCompatibleRelease(*rel)).Write(w)
+
 }
 
 func GetRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
