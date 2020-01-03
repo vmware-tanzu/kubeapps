@@ -283,10 +283,7 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 			return
 		}
 	}
-	purge := false
-	if req.URL.Query().Get("purge") == "1" || req.URL.Query().Get("purge") == "true" {
-		purge = true
-	}
+	purge := handlerutil.QueryParamIsTruthy("purge", req)
 	err := h.ProxyClient.DeleteRelease(params["releaseName"], params["namespace"], purge)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
