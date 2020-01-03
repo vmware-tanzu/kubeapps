@@ -99,6 +99,14 @@ func GetRelease(actionConfig *action.Configuration, name string) (*release.Relea
 	return release, nil
 }
 
+func DeleteRelease(actionConfig *action.Configuration, name string, keepHistory bool) error {
+	// Namespace is already known by the RESTClientGetter.
+	cmd := action.NewUninstall(actionConfig)
+	cmd.KeepHistory = keepHistory
+	_, err := cmd.Run(name)
+	return err
+}
+
 func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, clientset *kubernetes.Clientset, namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 	store := storageForDriver(namespace, clientset)
