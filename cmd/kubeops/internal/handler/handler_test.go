@@ -64,7 +64,61 @@ func TestActions(t *testing.T) {
 		ResponseBody      string //optional
 	}
 
-	tests := []testScenario{}
+	tests := []testScenario{
+		{
+			// Scenario params
+			Description:      "Create a simple release without auth",
+			ExistingReleases: []release.Release{},
+			DisableAuth:      true,
+			// Request params
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			},
+			ResponseBody: "",
+		},
+		{
+			// Scenario params
+			Description:      "Create a simple release with auth",
+			ExistingReleases: []release.Release{},
+			DisableAuth:      true,
+			// Request params
+			RequestBody:  `{"chartName":"foo","releaseName":"foobar","version":"1.0.0"}`,
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			},
+			ResponseBody: "",
+		},
+		{
+			// Scenario params
+			Description: "Create a conflicting release",
+			ExistingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			},
+			DisableAuth: false,
+			// Request params
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
+			// Expected result
+			StatusCode: 409,
+			RemainingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+			},
+			ResponseBody: "",
+		},
+	}
 
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
@@ -85,6 +139,8 @@ func TestActions(t *testing.T) {
 			}
 			// Perform request
 			switch test.Action {
+			case "create":
+				CreateRelease(*cfg, response, req, test.Params)
 			default:
 				t.Errorf("Unexpected action %s", test.Action)
 			}
