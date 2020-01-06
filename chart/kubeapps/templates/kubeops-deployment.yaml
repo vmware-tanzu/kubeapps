@@ -36,6 +36,12 @@ spec:
         ports:
         - name: http
           containerPort: {{ .Values.kubeops.service.port }}
+        {{- if .Values.kubeops.livenessProbe }}
+        livenessProbe: {{- toYaml .Values.kubeops.livenessProbe | nindent 12 }}
+        {{- end }}
+        {{- if .Values.kubeops.readinessProbe }}
+        readinessProbe: {{- toYaml .Values.kubeops.readinessProbe | nindent 12 }}
+        {{- end }}
         env:
         - name: POD_NAMESPACE
           valueFrom:

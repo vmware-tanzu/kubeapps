@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/heptiolabs/healthcheck"
 	"github.com/kubeapps/kubeapps/cmd/kubeops/internal/handler"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
@@ -58,6 +59,11 @@ func main() {
 	}
 	withAgentConfig := handler.WithAgentConfig(storageForDriver, options)
 	r := mux.NewRouter()
+
+	// Healthcheck
+	health := healthcheck.NewHandler()
+	r.Handle("/live", health)
+	r.Handle("/ready", health)
 
 	// Routes
 	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
