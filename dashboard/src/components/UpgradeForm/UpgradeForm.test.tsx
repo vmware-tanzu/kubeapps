@@ -67,6 +67,17 @@ it("renders the full UpgradeForm", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
+it("defaults the upgrade version to the current version", () => {
+  // helm upgrade is the only way to update the values.yaml, so upgrade is
+  // often used by users to update values only, so we can't default to the
+  // latest version on the assumption that they always want to upgrade.
+  const wrapper = shallow(
+    <UpgradeForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
+  );
+
+  expect(wrapper.find(DeploymentFormBody).prop("chartVersion")).toBe("1.0.0");
+});
+
 it("forwards the appValues when modified", () => {
   const wrapper = shallow(<UpgradeForm {...defaultProps} />);
   const handleValuesChange: (v: string) => void = wrapper

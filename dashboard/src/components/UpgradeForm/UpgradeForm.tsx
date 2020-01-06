@@ -92,7 +92,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
           <div className="col-8">
             <DeploymentFormBody
               chartID={chartID}
-              chartVersion={this.props.selected.versions[0].attributes.version}
+              chartVersion={this.props.appCurrentVersion}
               deployedValues={this.props.appCurrentValues || ""}
               namespace={this.props.namespace}
               releaseVersion={this.props.appCurrentVersion}
