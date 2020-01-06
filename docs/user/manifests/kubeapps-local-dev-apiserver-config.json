@@ -1,0 +1,24 @@
+{
+  "kind": "Cluster",
+  "apiVersion": "kind.sigs.k8s.io/v1alpha3",
+  "nodes": [
+    {
+      "role": "control-plane",
+      "extraMounts": [
+        {
+          "readOnly": true,
+          "hostPath": "./script/test-certs/dex.cert.pem",
+          "containerPath": "/etc/ssl/certs/dex.cert.pem"
+        }
+      ]
+    }
+  ],
+  "kubeadmConfigPatchesJson6902": [
+    {
+      "group": "kubeadm.k8s.io",
+      "version": "v1beta2",
+      "kind": "ClusterConfiguration",
+      "patch": "[{ \"op\": \"add\", \"path\": \"/apiServer/extraArgs\", \"value\": {}}, {\"op\": \"add\", \"path\": \"/apiServer/extraArgs/oidc-issuer-url\", \"value\": \"https://dex.dex:32000\"}, {\"op\": \"add\", \"path\": \"/apiServer/extraArgs/oidc-client-id\", \"value\": \"kubeapps\"}, {\"op\": \"add\", \"path\": \"/apiServer/extraArgs/oidc-ca-file\", \"value\": \"/etc/ssl/certs/dex.cert.pem\"}, {\"op\": \"add\", \"path\": \"/apiServer/extraArgs/oidc-username-claim\", \"value\": \"email\"}, {\"op\": \"add\", \"path\": \"/apiServer/extraArgs/oidc-username-prefix\",\"value\": \"oidc:\"}]"
+    }
+  ]
+}

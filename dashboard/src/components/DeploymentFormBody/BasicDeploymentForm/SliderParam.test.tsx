@@ -6,14 +6,13 @@ import SliderParam from "./SliderParam";
 
 const defaultProps = {
   id: "disk",
-  name: "diskSize",
   label: "Disk Size",
   param: {
     value: "10Gi",
     type: "string",
     path: "disk",
   } as IBasicFormParam,
-  handleBasicFormParamChange: jest.fn(),
+  handleBasicFormParamChange: jest.fn(() => jest.fn()),
   min: 1,
   max: 100,
   unit: "Gi",
@@ -50,7 +49,6 @@ it("changes the value of the param when the slider changes", () => {
 
   expect(param.value).toBe("20Gi");
   expect(handleBasicFormParamChange.mock.calls[0]).toEqual([
-    "diskSize",
     { value: "20Gi", type: "string", path: "disk" },
   ]);
 });
@@ -80,7 +78,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "20" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(20);
     expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20Gi" } }]);
@@ -96,7 +94,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "foo20*#@$" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(20);
     expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20Gi" } }]);
@@ -112,7 +110,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "20.5" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(20.5);
     expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: "20.5Gi" } }]);
@@ -128,7 +126,7 @@ describe("when changing the value in the input", () => {
 
     const input = wrapper.find("input#disk");
     const event = { currentTarget: { value: "200" } } as React.FormEvent<HTMLInputElement>;
-    (input.prop("onChange") as ((e: React.FormEvent<HTMLInputElement>) => void))(event);
+    (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
 
     expect(wrapper.state("value")).toBe(200);
     const slider = wrapper.find(Slider);
@@ -161,4 +159,16 @@ it("defaults to the min if the value is undefined", () => {
   const wrapper = shallow(<SliderParam {...defaultProps} param={param} min={5} />);
 
   expect(wrapper.state("value")).toBe(5);
+});
+
+it("updates the state when receiving new props", () => {
+  const handleBasicFormParamChange = jest.fn();
+  const wrapper = shallow(
+    <SliderParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
+  );
+  expect(wrapper.state("value")).toBe(10);
+
+  wrapper.setProps({ param: { value: "20Gi" } });
+  expect(wrapper.state("value")).toBe(20);
+  expect(handleBasicFormParamChange).not.toHaveBeenCalled();
 });

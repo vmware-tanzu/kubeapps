@@ -17,6 +17,7 @@ limitations under the License.
 package proxy
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -364,7 +365,31 @@ func TestCreateConflictingHelmRelease(t *testing.T) {
 	if err == nil {
 		t.Error("Release should fail, an existing release in a different namespace already exists")
 	}
-	if !strings.Contains(err.Error(), "name that is still in use") {
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("Unexpected error %v", err)
+	}
+}
+
+func TestCreateExistingHelmRelease(t *testing.T) {
+	ns := "myns"
+	rs := "foo"
+	chartName := "bar"
+	version := "v1.0.0"
+	ch := &chart.Chart{
+		Metadata: &chart.Metadata{Name: chartName, Version: version},
+	}
+	app := AppOverview{rs, version, ns, "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+	proxy := newFakeProxy([]AppOverview{app})
+
+	_, err := proxy.CreateRelease(rs, ns, "", ch)
+	if err == nil {
+		t.Error("Release should fail, an existing release in a different namespace already exists")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
 		t.Errorf("Unexpected error %v", err)
 	}
 }
@@ -533,6 +558,53 @@ func TestHelmReleaseDeleted(t *testing.T) {
 	}
 	if len(rels.Releases) != 0 {
 		t.Errorf("Unexpected amount of releases %d, it should be empty", len(rels.Releases))
+	}
+}
+
+func TestTestRelease(t *testing.T) {
+
+	// Represents expected result from a test scenario
+	type ScenarioResult struct {
+		testStatus *TestStatus
+		err        error
+	}
+
+	// Represents parameters of a scenario
+	type ScenarioParameter struct {
+		appname   string
+		namespace string
+	}
+
+	// create and populate scenarios to test against
+	scenarios := make(map[ScenarioParameter]ScenarioResult)
+	scenarios[ScenarioParameter{"foo", "my_ns"}] = ScenarioResult{&map[string][]string{}, nil}
+	scenarios[ScenarioParameter{"foo", "other_ns"}] = ScenarioResult{nil, errors.New("Unable to locate release: Release \"foo\" not found in namespace \"other_ns\"")}
+	scenarios[ScenarioParameter{"bar", "my_ns"}] = ScenarioResult{nil, errors.New("Unable to locate release: release: \"bar\" not found")}
+
+	app := AppOverview{"foo", "1.0.0", "my_ns", "icon.png", "DEPLOYED", "wordpress", chart.Metadata{
+		Version: "1.0.0",
+		Icon:    "icon.png",
+		Name:    "wordpress",
+	}}
+
+	// instantiating a fake proxy
+	proxy := newFakeProxy([]AppOverview{app})
+
+	// iterate over scenarios, and ensure expected return values match our expectation
+	for scenarioParameter, scenarioResult := range scenarios {
+		testStatus, err := proxy.TestRelease(scenarioParameter.appname, scenarioParameter.namespace)
+
+		if !reflect.DeepEqual(err, scenarioResult.err) {
+			t.Error("Error with scenario", scenarioParameter)
+			t.Error("want:", scenarioResult.err)
+			t.Error("have:", err)
+		}
+
+		if !reflect.DeepEqual(testStatus, scenarioResult.testStatus) {
+			t.Error("Error with scenario", scenarioParameter)
+			t.Error("want:", scenarioResult.testStatus)
+			t.Error("have:", testStatus)
+		}
 	}
 }
 

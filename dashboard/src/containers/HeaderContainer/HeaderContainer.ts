@@ -13,7 +13,7 @@ interface IState extends IStoreState {
 }
 
 function mapStateToProps({
-  auth: { authenticated, oidcAuthenticated, defaultNamespace },
+  auth: { authenticated, defaultNamespace },
   namespace,
   router: {
     location: { pathname },
@@ -24,10 +24,6 @@ function mapStateToProps({
     namespace,
     defaultNamespace,
     pathname,
-    // If oidcAuthenticated it's not yet supported to logout
-    // Some IdP like Keycloak allows to hit an endpoint to logout:
-    // https://www.keycloak.org/docs/latest/securing_apps/index.html#logout-endpoint
-    hideLogoutLink: oidcAuthenticated,
   };
 }
 
@@ -40,7 +36,4 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(Header);
+export default connect(mapStateToProps, mapDispatchToProps)(Header);

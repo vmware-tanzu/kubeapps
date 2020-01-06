@@ -461,7 +461,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 	}
 	podTemplateSpec.Spec.Containers[0].Name = "sync"
 	podTemplateSpec.Spec.Containers[0].Image = repoSyncImage
-	podTemplateSpec.Spec.Containers[0].Command = []string{"/chart-repo"}
+	podTemplateSpec.Spec.Containers[0].Command = []string{repoSyncCommand}
 	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo)
 	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo)...)
 	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
@@ -496,7 +496,7 @@ func cleanupJobSpec(repoName string) batchv1.JobSpec {
 					{
 						Name:    "delete",
 						Image:   repoSyncImage,
-						Command: []string{"/chart-repo"},
+						Command: []string{repoSyncCommand},
 						Args:    apprepoCleanupJobArgs(repoName),
 						Env: []corev1.EnvVar{
 							{

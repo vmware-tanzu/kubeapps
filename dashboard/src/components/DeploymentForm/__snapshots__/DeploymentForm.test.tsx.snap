@@ -30,13 +30,13 @@ exports[`renders the full DeploymentForm 1`] = `
           pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
           required={true}
           title="Use lower case alphanumeric characters, '-' or '.'"
+          value="my-release"
         />
       </div>
       <DeploymentFormBody
         appValues=""
         chartID="foo"
         chartVersion="1.0.0"
-        fetchChartVersions={[Function]}
         getChartVersion={[Function]}
         namespace="default"
         push={[Function]}
@@ -60,7 +60,6 @@ exports[`renders the full DeploymentForm 1`] = `
         }
         setValues={[Function]}
         setValuesModified={[Function]}
-        valuesModified={false}
       />
     </div>
   </div>

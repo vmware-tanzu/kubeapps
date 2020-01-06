@@ -3,8 +3,9 @@
 // that are used in this package
 import * as AJV from "ajv";
 import * as jsonSchema from "json-schema";
+import { isEmpty, set } from "lodash";
 import * as YAML from "yaml";
-import { IBasicFormEnablerParam, IBasicFormParam } from "./types";
+import { IBasicFormParam } from "./types";
 
 // Avoid to explicitly add "null" when an element is not defined
 // tslint:disable-next-line
@@ -18,8 +19,8 @@ export function retrieveBasicFormParams(
   defaultValues: string,
   schema?: jsonSchema.JSONSchema4,
   parentPath?: string,
-): { [key: string]: IBasicFormParam } {
-  let params = {};
+): IBasicFormParam[] {
+  let params: IBasicFormParam[] = [];
   if (schema && schema.properties) {
     const properties = schema.properties!;
     Object.keys(properties).map(propertyKey => {
@@ -33,61 +34,83 @@ export function retrieveBasicFormParams(
         const param: IBasicFormParam = {
           ...properties[propertyKey],
           path: itemPath,
-          type: String(type),
+          type,
           value,
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
               : undefined,
         };
-        params = {
-          ...params,
-          // The key of the param is the value of the form tag
-          [form]: param,
-        };
+        params = params.concat(param);
       } else {
         // If the property is an object, iterate recursively
         if (schema.properties![propertyKey].type === "object") {
-          params = {
-            ...params,
-            ...retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
-          };
+          params = params.concat(
+            retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
+          );
         }
       }
     });
   }
-  return orderParams(params);
+  return params;
 }
 
-// orderParams conveniently structure the parameters to satisfy a parent-children relationship even if
-// those parameters don't have that relation in the source. This is only used when a parameter
-// enables/disables another.
-// CAVEAT: It only works with one level of depth
-function orderParams(params: {
-  [key: string]: IBasicFormParam | IBasicFormEnablerParam;
-}): { [key: string]: IBasicFormParam } {
-  Object.keys(params).forEach(p => {
-    const param = params[p] as IBasicFormEnablerParam;
-    if (param.disables || param.enables) {
-      const relatedParam = param.disables || param.enables;
-      if (relatedParam && params[relatedParam]) {
-        params[relatedParam].children = {
-          ...params[relatedParam].children,
-          [p]: params[p],
-        };
-        delete params[p];
+function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document) {
+  let currentPath: string[] = [];
+  let foundUndefined = false;
+  allElementsButTheLast.forEach(p => {
+    // Iterate over the path until finding an element that is not defined
+    if (!foundUndefined) {
+      const pathToEvaluate = currentPath.concat(p);
+      const elem = (doc as any).getIn(pathToEvaluate);
+      if (elem === undefined || elem === null) {
+        foundUndefined = true;
+      } else {
+        currentPath = pathToEvaluate;
       }
     }
   });
-  return params;
+  return currentPath;
+}
+
+function parsePathAndValue(doc: YAML.ast.Document, path: string, value?: any) {
+  if (isEmpty(doc.contents)) {
+    // If the doc is empty we have an special case
+    return { value: set({}, path, value), splittedPath: [] };
+  }
+  let splittedPath = path.split(".");
+  // If the path is not defined (the parent nodes are undefined)
+  // We need to change the path and the value to set to avoid accessing
+  // the undefined node. For example, if a.b is undefined:
+  // path: a.b.c, value: 1 ==> path: a.b, value: {c: 1}
+  // TODO(andresmgot): In the future, this may be implemented in the YAML library itself
+  // https://github.com/eemeli/yaml/issues/131
+  const allElementsButTheLast = splittedPath.slice(0, splittedPath.length - 1);
+  const parentNode = (doc as any).getIn(allElementsButTheLast);
+  if (parentNode === undefined) {
+    const definedPath = getDefinedPath(allElementsButTheLast, doc);
+    const remainingPath = splittedPath.slice(definedPath.length + 1);
+    value = set({}, remainingPath.join("."), value);
+    splittedPath = splittedPath.slice(0, definedPath.length + 1);
+  }
+  return { splittedPath, value };
 }
 
 // setValue modifies the current values (text) based on a path
 export function setValue(values: string, path: string, newValue: any) {
   const doc = YAML.parseDocument(values);
-  const splittedPath = path.split(".");
-  (doc as any).setIn(splittedPath, newValue);
+  const { splittedPath, value } = parsePathAndValue(doc, path, newValue);
+  (doc as any).setIn(splittedPath, value);
   return doc.toString();
+}
+
+export function deleteValue(values: string, path: string) {
+  const doc = YAML.parseDocument(values);
+  const { splittedPath } = parsePathAndValue(doc, path);
+  (doc as any).deleteIn(splittedPath);
+  // If the document is empty after the deletion instead of returning {}
+  // we return an empty line "\n"
+  return doc.contents && !isEmpty((doc.contents as any).items) ? doc.toString() : "\n";
 }
 
 // getValue returns the current value of an object based on YAML text and its path

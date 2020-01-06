@@ -7,8 +7,10 @@ interface IConfirmDialogProps {
   modalIsOpen: boolean;
   loading: boolean;
   extraElem?: JSX.Element;
-  onConfirm: () => Promise<any>;
-  closeModal: () => Promise<any>;
+  confirmationText?: string;
+  confirmationButtonText?: string;
+  onConfirm: () => any;
+  closeModal: () => any;
 }
 
 interface IConfirmDialogState {
@@ -43,18 +45,22 @@ class ConfirmDialog extends React.Component<IConfirmDialogProps, IConfirmDialogS
             </div>
           ) : (
             <div>
-              <div className="margin-b-normal"> Are you sure you want to delete this? </div>
+              <div className="margin-b-normal">
+                {this.props.confirmationText || "Are you sure you want to delete this?"}
+              </div>
               {this.props.extraElem}
-              <button className="button" onClick={this.props.closeModal}>
-                Cancel
-              </button>
-              <button
-                className="button button-primary button-danger"
-                type="submit"
-                onClick={this.props.onConfirm}
-              >
-                Delete
-              </button>
+              <div className="margin-t-normal button-row">
+                <button className="button" onClick={this.props.closeModal}>
+                  Cancel
+                </button>
+                <button
+                  className="button button-primary button-danger"
+                  type="submit"
+                  onClick={this.props.onConfirm}
+                >
+                  {this.props.confirmationButtonText || "Delete"}
+                </button>
+              </div>
             </div>
           )}
         </Modal>

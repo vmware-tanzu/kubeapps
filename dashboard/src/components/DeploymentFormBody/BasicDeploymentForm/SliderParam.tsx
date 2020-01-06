@@ -4,14 +4,12 @@ import Slider from "../../Slider";
 
 export interface ISliderParamProps {
   id: string;
-  name: string;
   label: string;
   param: IBasicFormParam;
   unit: string;
   min: number;
   max: number;
   handleBasicFormParamChange: (
-    name: string,
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
 }
@@ -25,9 +23,22 @@ function toNumber(value: string) {
   return Number(value.replace(/[^\d\.]/g, ""));
 }
 
+function getDefaultValue(min: number, value?: string) {
+  return (value && toNumber(value)) || min;
+}
+
 class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> {
   public state: ISliderParamState = {
-    value: (this.props.param.value && toNumber(this.props.param.value)) || this.props.min,
+    value: getDefaultValue(this.props.min, this.props.param.value),
+  };
+
+  public componentDidUpdate = (prevProps: ISliderParamProps) => {
+    if (prevProps.param.value !== this.props.param.value) {
+      const value = getDefaultValue(this.props.min, this.props.param.value);
+      if (value !== this.state.value) {
+        this.setState({ value });
+      }
+    }
   };
 
   // onChangeSlider is executed when the slider is dropped at one point
@@ -89,7 +100,7 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
   }
 
   private handleParamChange = (value: number) => {
-    this.props.handleBasicFormParamChange(this.props.name, this.props.param)({
+    this.props.handleBasicFormParamChange(this.props.param)({
       currentTarget: { value: `${value}${this.props.unit}` },
     } as React.FormEvent<HTMLInputElement>);
   };

@@ -19,23 +19,14 @@ function mapStateToProps({ kube }: IStoreState, props: IAccessURLTableContainerP
   return {
     services: filterByResourceRefs(props.serviceRefs, kube.items),
     ingresses: filterByResourceRefs(props.ingressRefs, kube.items),
+    ingressRefs: props.ingressRefs,
   };
 }
 
-function mapDispatchToProps(
-  dispatch: ThunkDispatch<IStoreState, null, Action>,
-  props: IAccessURLTableContainerProps,
-) {
+function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    fetchIngresses: () => {
-      props.ingressRefs.forEach(r => {
-        dispatch(actions.kube.getResource(r));
-      });
-    },
+    getResource: (r: ResourceRef) => dispatch(actions.kube.getResource(r)),
   };
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(AccessURLTable);
+export default connect(mapStateToProps, mapDispatchToProps)(AccessURLTable);

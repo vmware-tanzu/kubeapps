@@ -57,13 +57,13 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
     this.props.fetchRepos();
   }
 
-  public componentWillReceiveProps(nextProps: IAppRepoListProps) {
+  public componentDidUpdate(prevProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,
     } = this.props;
     // refetch if error removed due to location change
-    if (fetch && !nextProps.errors.fetch) {
+    if (prevProps.errors.fetch && !fetch) {
       fetchRepos();
     }
   }

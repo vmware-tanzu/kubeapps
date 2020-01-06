@@ -96,11 +96,31 @@ echo "Job apprepositories.kubeapps.com/repo-name=stable ready"
 echo "All deployments ready. PODs:"
 kubectl get pods -n kubeapps -o wide
 
+# Wait for all the endpoints to be ready
+kubectl get ep --namespace=kubeapps
+svcs=(
+  kubeapps-ci
+  kubeapps-ci-internal-chartsvc
+  kubeapps-ci-internal-tiller-proxy
+  kubeapps-ci-internal-dashboard
+)
+for svc in ${svcs[@]}; do
+  k8s_wait_for_endpoint kubeapps ${svc} 2
+  echo "Endpoints for ${svc} available"
+done
+
 # Run helm tests
 set +e
 
-helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
+helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci --cleanup
 code=$?
+
+if [[ "$code" != 0 ]]; then
+  echo "Helm test failed, retrying..."
+  # Avoid temporary issues, retry
+  helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
+  code=$?
+fi
 
 set -e
 
@@ -118,6 +138,36 @@ if [[ "$code" != 0 ]]; then
   kubectl logs kubeapps-ci-tiller-proxy-test --namespace kubeapps
   echo "LOGS for dashboard tests --------"
   kubectl logs kubeapps-ci-dashboard-test --namespace kubeapps
+
+  exit $code
+fi
+
+# Browser tests
+cd $ROOT_DIR/integration
+kubectl apply -f manifests/executor.yaml
+k8s_wait_for_deployment default integration
+pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
+## Copy config and latest tests
+for f in `ls *.js`; do kubectl cp ./${f} ${pod}:/app/; done
+kubectl cp ./use-cases ${pod}:/app/
+## Create admin user
+kubectl create serviceaccount kubeapps-operator -n kubeapps
+kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=admin --serviceaccount kubeapps:kubeapps-operator
+kubectl create -n kubeapps rolebinding kubeapps-repositories-write --role=kubeapps-ci-repositories-write --serviceaccount kubeapps:kubeapps-operator
+admin_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
+## Create view user
+kubectl create serviceaccount kubeapps-view -n kubeapps
+kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
+view_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
+## Run tests
+set +e
+kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} yarn start"
+code=$?
+set -e
+if [[ "$code" != 0 ]]; then
+  ### Browser tests failed, get report screenshot
+  echo "PODS status on failure"
+  kubectl cp ${pod}:/app/reports ./reports
 fi
 
 exit $code

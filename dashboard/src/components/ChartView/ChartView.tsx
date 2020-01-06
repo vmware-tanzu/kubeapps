@@ -27,11 +27,11 @@ class ChartView extends React.Component<IChartViewProps> {
     fetchChartVersionsAndSelectVersion(chartID, version);
   }
 
-  public componentWillReceiveProps(nextProps: IChartViewProps) {
+  public componentDidUpdate(prevProps: IChartViewProps) {
     const { selectChartVersion, version } = this.props;
     const { versions } = this.props.selected;
-    if (nextProps.version !== version) {
-      const cv = versions.find(v => v.attributes.version === nextProps.version);
+    if (prevProps.version !== version) {
+      const cv = versions.find(v => v.attributes.version === version);
       if (cv) {
         selectChartVersion(cv);
       } else {

@@ -34,12 +34,12 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     fetchCharts(repo);
   }
 
-  public componentWillReceiveProps(nextProps: ICatalogProps) {
-    if (nextProps.filter !== this.state.filter) {
-      this.setState({ filter: nextProps.filter });
+  public componentDidUpdate(prevProps: ICatalogProps) {
+    if (this.props.filter !== prevProps.filter) {
+      this.setState({ filter: this.props.filter });
     }
-    if (this.props.repo !== nextProps.repo) {
-      this.props.fetchCharts(nextProps.repo);
+    if (this.props.repo !== prevProps.repo) {
+      this.props.fetchCharts(this.props.repo);
     }
   }
 

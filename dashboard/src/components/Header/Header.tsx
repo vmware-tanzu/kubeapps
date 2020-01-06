@@ -21,7 +21,6 @@ interface IHeaderProps {
   pathname: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
-  hideLogoutLink: boolean;
 }
 
 interface IHeaderState {
@@ -58,20 +57,17 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     };
   }
 
-  public componentWillReceiveProps(newProps: IHeaderProps) {
-    if (newProps.pathname !== this.props.pathname) {
-      this.setState({ configOpen: false, mobileOpen: false });
+  public componentDidUpdate(prevProps: IHeaderProps) {
+    if (prevProps.pathname !== this.props.pathname) {
+      this.setState({
+        configOpen: false,
+        mobileOpen: false,
+      });
     }
   }
 
   public render() {
-    const {
-      fetchNamespaces,
-      namespace,
-      defaultNamespace,
-      authenticated: showNav,
-      hideLogoutLink,
-    } = this.props;
+    const { fetchNamespaces, namespace, defaultNamespace, authenticated: showNav } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -134,13 +130,11 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                     </ul>
                   </li>
-                  {!hideLogoutLink && (
-                    <li>
-                      <NavLink to="#" onClick={this.handleLogout}>
-                        <LogOut size={16} className="icon margin-r-tiny" /> Logout
-                      </NavLink>
-                    </li>
-                  )}
+                  <li>
+                    <NavLink to="#" onClick={this.handleLogout}>
+                      <LogOut size={16} className="icon margin-r-tiny" /> Logout
+                    </NavLink>
+                  </li>
                 </ul>
               </div>
             )}

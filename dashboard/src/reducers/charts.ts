@@ -10,6 +10,7 @@ const initialState: IChartState = {
   selected: {
     versions: [],
   },
+  deployed: {},
 };
 
 const chartsSelectedReducer = (
@@ -23,8 +24,8 @@ const chartsSelectedReducer = (
         error: undefined,
         readmeError: undefined,
         version: action.payload.chartVersion,
-        values: action.payload.values ? action.payload.values : state.values,
-        schema: action.payload.schema ? action.payload.schema : state.schema,
+        values: action.payload.values,
+        schema: action.payload.schema,
       };
     case getType(actions.charts.receiveChartVersions):
       return {
@@ -62,6 +63,17 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
         ...state,
         isFetching: false,
         selected: chartsSelectedReducer(state.selected, action),
+      };
+    case getType(actions.charts.requestDeployedChartVersion):
+      return {
+        ...state,
+        deployed: {},
+      };
+    case getType(actions.charts.receiveDeployedChartVersion):
+      return {
+        ...state,
+        isFetching: false,
+        deployed: { ...state.deployed, ...action.payload },
       };
     case getType(actions.charts.resetChartVersion):
     case getType(actions.charts.selectReadme):

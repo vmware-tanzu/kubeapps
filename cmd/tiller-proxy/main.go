@@ -31,14 +31,15 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/urfave/negroni"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	helmChartUtil "k8s.io/helm/pkg/chartutil"
 	"k8s.io/helm/pkg/helm"
 	"k8s.io/helm/pkg/helm/environment"
 	"k8s.io/helm/pkg/tlsutil"
@@ -62,7 +63,8 @@ var (
 	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 
-	chartsvcURL string
+	chartsvcURL       string
+	kubeappsNamespace string
 )
 
 func init() {
@@ -79,6 +81,8 @@ func init() {
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&chartsvcURL, "chartsvc-url", "http://kubeapps-internal-chartsvc:8080", "URL to the internal chartsvc")
+	// kubeapps-namespace is required only for the app repository handler which may move in the future.
+	pflag.StringVar(&kubeappsNamespace, "kubeapps-namespace", "", "namespace in which Kubeapps is running")
 }
 
 func main() {
@@ -133,7 +137,7 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient, timeout)
-	chartutils := chartUtils.NewChart(kubeClient, appRepoClient, helmChartUtil.LoadArchive, userAgent())
+	chartClient := chartUtils.NewChartClient(kubeClient, appRepoClient, userAgent())
 
 	r := mux.NewRouter()
 
@@ -142,13 +146,13 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := handler.AuthGate()
+	authGate := auth.AuthGate()
 
 	// HTTP Handler
 	h := handler.TillerProxy{
 		DisableAuth: disableAuth,
 		ListLimit:   listLimit,
-		ChartClient: chartutils,
+		ChartClient: chartClient,
 		ProxyClient: proxy,
 	}
 
@@ -156,27 +160,39 @@ func main() {
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithoutParams(h.ListAllReleases)),
+		negroni.Wrap(handlerutil.WithoutParams(h.ListAllReleases)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.ListReleases)),
+		negroni.Wrap(handlerutil.WithParams(h.ListReleases)),
 	))
 	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.CreateRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.CreateRelease)),
 	))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.GetRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.GetRelease)),
 	))
 	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.OperateRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.OperateRelease)),
 	))
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		authGate,
-		negroni.Wrap(handler.WithParams(h.DeleteRelease)),
+		negroni.Wrap(handlerutil.WithParams(h.DeleteRelease)),
+	))
+
+	// Backend routes unrelated to tiller-proxy functionality.
+	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
+	// reconsider where these endpoints live.
+	appreposHandler, err := handler.NewAppRepositoriesHandler(kubeappsNamespace)
+	if err != nil {
+		log.Fatalf("Unable to create app repositories handler: %+v", err)
+	}
+	backendAPIv1 := r.PathPrefix("/backend/v1").Subrouter()
+	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
+		negroni.WrapFunc(appreposHandler.Create),
 	))
 
 	// Chartsvc reverse proxy

@@ -19,7 +19,7 @@ interface IResourceTableProps {
 class ResourceTable extends React.Component<IResourceTableProps> {
   public render() {
     const { resourceRefs } = this.props;
-    let section = null;
+    let section: JSX.Element | null = null;
     if (resourceRefs.length > 0) {
       section = (
         <React.Fragment>

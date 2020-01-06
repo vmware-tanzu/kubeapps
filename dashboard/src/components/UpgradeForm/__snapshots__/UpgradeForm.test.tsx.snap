@@ -1,5 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`loading spinner matches the snapshot 1`] = `
+<LoadingWrapper
+  loaded={false}
+  type={0}
+/>
+`;
+
 exports[`renders the full UpgradeForm 1`] = `
 <form
   className="container padding-b-bigger"
@@ -21,14 +28,13 @@ exports[`renders the full UpgradeForm 1`] = `
       <DeploymentFormBody
         appValues="foo: bar"
         chartID="my-repo/my-chart"
-        chartVersion="1.0.0"
-        fetchChartVersions={[Function]}
+        chartVersion="1.2.3"
+        deployedValues="foo: bar"
         getChartVersion={[Function]}
         goBack={[Function]}
         namespace="default"
-        originalValues="foo: bar"
         push={[Function]}
-        releaseName="my-release"
+        releaseVersion="1.0.0"
         selected={
           Object {
             "version": Object {
@@ -49,7 +55,6 @@ exports[`renders the full UpgradeForm 1`] = `
         }
         setValues={[Function]}
         setValuesModified={[Function]}
-        valuesModified={false}
       />
     </div>
   </div>

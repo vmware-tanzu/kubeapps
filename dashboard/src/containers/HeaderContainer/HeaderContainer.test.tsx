@@ -31,7 +31,6 @@ describe("LoginFormContainer props", () => {
     const form = wrapper.find("Header");
     expect(form).toHaveProp({
       authenticated: true,
-      hideLogoutLink: true,
     });
   });
 });

@@ -1,6 +1,10 @@
 .ChartIcon {
-  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
 }
 .ChartIcon__img {
   max-height: 64px;
+  max-width: 100%;
 }

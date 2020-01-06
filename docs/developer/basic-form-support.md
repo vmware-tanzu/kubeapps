@@ -21,22 +21,22 @@ This file can define some or every possible value of the chart. Once it's writte
 
 In order to identify which values should be presented in the form, it's necessary to include some special tags.
 
-First of all, it's necessary to specify the tag `form`. The value of the `form` tag should be unique and it should identify the parameter. All the properties marked with this tag in the schema will be represented in the form. For example:
+First of all, it's necessary to specify the tag `form` and set it to `true`. All the properties marked with this tag in the schema will be represented in the form. For example:
 
 ```
     "wordpressUsername": {
       "type": "string",
-      "form": "username"
+      "form": true
     },
 ```
 
-With the definition above, we are marking the value `wordpressUsername` as a value to be represented in the form (with the ID `username`). Note that the `type` tag, apart than for validating that the submitted value has the correct type, it will be used to render the proper HTML components to represent the input in the form:
+With the definition above, we are marking the value `wordpressUsername` as a value to be represented in the form. Note that the `type` tag, apart than for validating that the submitted value has the correct type, will be used to render the proper HTML components to represent the input in the form:
 
 ![username-input](../img/username-input.png)
 
 In addition to the `type`, there are other tags that can be used to customize the way the parameter is represented:
 
- - `title` is used to render the title of the parameter. If it's not specified, Kubeapps will use the ID of the component (ie. the value of the `form` field).
+ - `title` is used to render the title of the parameter. If it's not specified, Kubeapps will use the path of the value (i.e. `credentials.username`).
  - `description` is used to include additional information of the parameter.
  - `default` is used to set a default value. Note that this field will only be used if the `values.yaml` file doesn't have already a default value for the parameter.
 
@@ -60,7 +60,7 @@ In order to render a slider, there are some requirements and additional tags tha
     "size": {
       "type": "string",
       "title": "Disk Size",
-      "form": "diskSize",
+      "form": true,
       "render": "slider",
       "sliderMin": 1,
       "sliderMax": 100,
@@ -76,9 +76,9 @@ When a property of type `object` is set with a `form` identifier, it will be ren
 
 All the parameters within an `object` will be rendered in the subsection.
 
-Note that in some cases, a parameter is used to enable or disable the whole section. For example, setting `ingress.enabled` to `false` causes that the subsection for the `ingress` configuration gets disabled. That's achieved with another special tag. If a parameter uses the tag `enables` or `disables` pointing to a subsection, this parameter will be used to enable/disable those parameters in the form.
+Note that in some cases, a parameter cause that the rest of parameters are no longer relevant. For example, setting `ingress.enabled` to `false` makes the `ingress.hostname` irrelevant. To avoid confussion, you can hide that parameter setting the special tag `hidden`. The tag `hidden` can be a `string` pointing to the parameter that needs to be `true` to hide the element or an object to also set the value that the pointed value needs to match.
 
-This is an example for a subsection with a parameter used to enable it:
+This is an example for a subsection with a parameter that can be hidden:
 
 ```json
     "ingress": {
@@ -89,20 +89,23 @@ This is an example for a subsection with a parameter used to enable it:
         "enabled": {
           "type": "boolean",
           "form": "enableIngress",
-          "enables": "ingress",
           "title": "Use a custom hostname",
           "description": "Enable the ingress resource that allows you to access the WordPress installation."
         },
         "hostname": {
           "type": "string",
           "form": "hostname",
-          "title": "Hostname"
+          "title": "Hostname",
+          "hidden": {
+            "value": "ingress.enabled",
+            "condition": false
+          }
         }
       }
     },
 ```
 
-Note that the parameter that enables or disables a section doesn't need to be within the section itself. In this other example, `mariadb.enabled` is used to disable the section `externalDatabase`:
+Note that the parameter that hides another parameter doesn't need to be within the section itself. In this other example, `mariadb.enabled` is used to hide some parameters within `externalDatabase`:
 
 ```json
     "mariadb": {
@@ -112,7 +115,6 @@ Note that the parameter that enables or disables a section doesn't need to be wi
           "type": "boolean",
           "title": "Use a new MariaDB database hosted in the cluster",
           "form": "useSelfHostedDatabase",
-          "disables": "externalDatabase"
         }
       }
     },
@@ -124,7 +126,8 @@ Note that the parameter that enables or disables a section doesn't need to be wi
         "host": {
           "type": "string",
           "form": "externalDatabaseHost",
-          "title": "Database Host"
+          "title": "Database Host",
+          "hidden": "mariadb.enabled"
         },
       }
     },
@@ -132,157 +135,7 @@ Note that the parameter that enables or disables a section doesn't need to be wi
 
 ## Example
 
-This is a working example for the WordPress chart:
-
-```json
-{
-  "$schema": "http://json-schema.org/schema#",
-  "type": "object",
-  "properties": {
-    "wordpressUsername": {
-      "type": "string",
-      "title": "Username",
-      "form": "username"
-    },
-    "wordpressPassword": {
-      "type": "string",
-      "title": "Password",
-      "form": "password",
-      "description": "Defaults to a random 10-character alphanumeric string if not set"
-    },
-    "wordpressEmail": { "type": "string", "title": "Email", "form": "email" },
-    "wordpressBlogName": {
-      "type": "string",
-      "title": "Blog Name",
-      "form": "blogName"
-    },
-    "mariadb": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "title": "Use a new MariaDB database hosted in the cluster",
-          "form": "useSelfHostedDatabase",
-	        "disables": "externalDatabase",
-          "description": "Whether to deploy a mariadb server to satisfy the applications database requirements. To use an external database set this to false and configure the externalDatabase parameters"
-        }
-      }
-    },
-    "externalDatabase": {
-      "type": "object",
-      "title": "External Database Details",
-      "form": "externalDatabase",
-      "properties": {
-        "host": {
-          "type": "string",
-          "form": "externalDatabaseHost",
-          "title": "Database Host"
-        },
-        "user": {
-          "type": "string",
-          "form": "externalDatabaseUser",
-          "title": "Database Username"
-        },
-        "password": {
-          "type": "string",
-          "form": "externalDatabasePassword",
-          "title": "Database Password"
-        },
-        "database": {
-          "type": "string",
-          "form": "externalDatabaseName",
-          "title": "Database Name"
-        },
-        "port": {
-          "type": "integer",
-          "form": "externalDatabasePort",
-          "title": "Database Port"
-        }
-      }
-    },
-    "ingress": {
-      "type": "object",
-      "form": "ingress",
-      "title": "Ingress Details",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "form": "enableIngress",
-	        "enables": "ingress",
-          "title": "Use a custom hostname",
-          "description": "Enable the ingress resource that allows you to access the WordPress installation."
-        },
-        "certManager": {
-          "type": "boolean",
-          "form": "enableCertManager",
-          "title": "Enable TLS annotations via cert-manager",
-          "description": "Set this to true in order to add the corresponding annotations for cert-manager"
-        },
-        "hostname": {
-          "type": "string",
-          "form": "hostname",
-          "title": "Hostname"
-        }
-      }
-    },
-    "persistence": {
-      "type": "object",
-      "properties": {
-        "size": {
-          "type": "string",
-          "title": "Disk Size",
-	        "form": "diskSize",
-          "render": "slider",
-	        "sliderMin": 1,
-	        "sliderMax": 100,
-	        "sliderUnit": "Gi"
-        }
-      }
-    },
-    "resources": {
-      "type": "object",
-      "title": "Required Resources",
-      "description": "Deployment resource requests",
-      "form": "resources",
-      "properties": {
-        "requests": {
-          "type": "object",
-          "properties": {
-            "memory": {
-              "type": "string",
-	            "form": "memoryRequest",
-              "render": "slider",
-              "title": "Memory Request",
-              "sliderMin": 10,
-              "sliderMax": 2048,
-              "sliderUnit": "Mi"
-            },
-            "cpu": {
-              "type": "string",
-	            "form": "cpuRequest",
-              "render": "slider",
-	            "title": "CPU Request",
-              "sliderMin": 10,
-              "sliderMax": 2000,
-              "sliderUnit": "m"
-            }
-          }
-        }
-      }
-    },
-    "enableMetrics": {
-      "type": "boolean",
-      "title": "Enable Metrics",
-      "form": "enableMetrics"
-    },
-    "replicaCount": {
-      "type": "integer",
-      "title": "Number of Replicas",
-      "form": "replicas"
-    }
-  },
-}
-```
+This is a [working example for the WordPress chart](https://github.com/helm/charts/blob/master/stable/wordpress/values.schema.json)
 
 And the resulting form:
 

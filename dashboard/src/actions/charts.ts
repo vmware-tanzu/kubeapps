@@ -25,6 +25,16 @@ export const selectChartVersion = createAction("SELECT_CHART_VERSION", resolve =
     resolve({ chartVersion, values, schema });
 });
 
+export const requestDeployedChartVersion = createAction("REQUEST_DEPLOYED_CHART_VERSION");
+
+export const receiveDeployedChartVersion = createAction(
+  "RECEIVE_DEPLOYED_CHART_VERSION",
+  resolve => {
+    return (chartVersion: IChartVersion, values?: string, schema?: JSONSchema4) =>
+      resolve({ chartVersion, values, schema });
+  },
+);
+
 export const resetChartVersion = createAction("RESET_CHART_VERSION");
 
 export const selectReadme = createAction("SELECT_README", resolve => {
@@ -41,6 +51,8 @@ const allActions = [
   receiveCharts,
   receiveChartVersions,
   selectChartVersion,
+  requestDeployedChartVersion,
+  receiveDeployedChartVersion,
   resetChartVersion,
   selectReadme,
   errorReadme,
@@ -90,15 +102,21 @@ export function fetchChartVersions(
   };
 }
 
-function handleError(e: Error, dispatch: Dispatch): boolean {
-  if (e.constructor === NotFoundError) {
-    // Item not found, it's not mandatory so skip it
-    return true;
-  } else {
-    // Unexpecter error
-    dispatch(errorChart(e));
-    return false;
+async function getChart(id: string, version: string) {
+  let values = "";
+  let schema = {};
+  const chartVersion = await Chart.getChartVersion(id, version);
+  if (chartVersion) {
+    try {
+      values = await Chart.getValues(id, version);
+      schema = await Chart.getSchema(id, version);
+    } catch (e) {
+      if (e.constructor !== NotFoundError) {
+        throw e;
+      }
+    }
   }
+  return { chartVersion, values, schema };
 }
 
 export function getChartVersion(
@@ -108,20 +126,26 @@ export function getChartVersion(
   return async dispatch => {
     try {
       dispatch(requestCharts());
-      const chartVersion = await Chart.getChartVersion(id, version);
+      const { chartVersion, values, schema } = await getChart(id, version);
       if (chartVersion) {
-        let values = "";
-        let schema = {};
-        try {
-          values = await Chart.getValues(id, version);
-          schema = await Chart.getSchema(id, version);
-        } catch (e) {
-          const valid = handleError(e, dispatch);
-          if (!valid) {
-            return;
-          }
-        }
         dispatch(selectChartVersion(chartVersion, values, schema));
+      }
+    } catch (e) {
+      dispatchError(dispatch, e);
+    }
+  };
+}
+
+export function getDeployedChartVersion(
+  id: string,
+  version: string,
+): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
+  return async dispatch => {
+    try {
+      dispatch(requestDeployedChartVersion());
+      const { chartVersion, values, schema } = await getChart(id, version);
+      if (chartVersion) {
+        dispatch(receiveDeployedChartVersion(chartVersion, values, schema));
       }
     } catch (e) {
       dispatchError(dispatch, e);

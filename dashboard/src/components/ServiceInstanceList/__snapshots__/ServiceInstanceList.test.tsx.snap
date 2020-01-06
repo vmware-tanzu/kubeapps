@@ -27,7 +27,6 @@ exports[`when all the components are loaded shows a card list with the different
       className="col-4 text-r align-center"
     >
       <Link
-        replace={false}
         to="/services/classes"
       >
         <button
@@ -102,7 +101,6 @@ exports[`when all the components are loaded shows a forbiden error if it exists 
       className="col-4 text-r align-center"
     >
       <Link
-        replace={false}
         to="/services/classes"
       >
         <button
@@ -199,7 +197,6 @@ exports[`when all the components are loaded shows a warning to install no servic
       className="col-4 text-r align-center"
     >
       <Link
-        replace={false}
         to="/services/classes"
       >
         <button
@@ -263,7 +260,6 @@ exports[`when all the components are loaded shows a warning to install the Servi
       className="col-4 text-r align-center"
     >
       <Link
-        replace={false}
         to="/services/classes"
       >
         <button
@@ -327,7 +323,6 @@ exports[`when all the components are loaded shows information of how to deploy a
       className="col-4 text-r align-center"
     >
       <Link
-        replace={false}
         to="/services/classes"
       >
         <button
@@ -371,7 +366,6 @@ exports[`when all the components are loaded shows information of how to deploy a
             className="padding-t-normal padding-b-normal"
           >
             <Link
-              replace={false}
               to="/services/classes"
             >
               <button
@@ -415,7 +409,6 @@ exports[`while fetching components loading spinner matches the snapshot 1`] = `
       className="col-4 text-r align-center"
     >
       <Link
-        replace={false}
         to="/services/classes"
       >
         <button
@@ -479,7 +472,6 @@ exports[`while fetching components matches the snapshot 1`] = `
       className="col-4 text-r align-center"
     >
       <Link
-        replace={false}
         to="/services/classes"
       >
         <button

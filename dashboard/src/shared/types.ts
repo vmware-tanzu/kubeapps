@@ -1,3 +1,4 @@
+import * as jsonSchema from "json-schema";
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IConfigState } from "../reducers/config";
@@ -81,6 +82,11 @@ export interface IChartState {
     readmeError?: string;
     values?: string;
     schema?: any;
+  };
+  deployed: {
+    chartVersion?: IChartVersion;
+    values?: string;
+    schema?: jsonSchema.JSONSchema4;
   };
   items: IChart[];
 }
@@ -379,22 +385,23 @@ export interface IKubeState {
 
 export interface IBasicFormParam {
   path: string;
-  type: string;
+  type?: jsonSchema.JSONSchema4TypeName | jsonSchema.JSONSchema4TypeName[];
   value?: any;
   title?: string;
   minimum?: number;
   maximum?: number;
   render?: string;
   description?: string;
-  children?: { [name: string]: IBasicFormParam };
+  hidden?:
+    | {
+        condition: any;
+        value: string;
+      }
+    | string;
+  children?: IBasicFormParam[];
 }
 export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMin?: number;
   sliderMax?: number;
   sliderUnit?: string;
-}
-
-export interface IBasicFormEnablerParam extends IBasicFormParam {
-  disables?: string;
-  enables?: string;
 }

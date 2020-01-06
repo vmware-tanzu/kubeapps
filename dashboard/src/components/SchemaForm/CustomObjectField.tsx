@@ -3,8 +3,8 @@ import AceEditor from "react-ace";
 import { FieldProps } from "react-jsonschema-form";
 import ObjectField from "react-jsonschema-form/lib/components/fields/ObjectField";
 
-import "brace/mode/json";
-import "brace/theme/xcode";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-xcode";
 
 interface ICustomObjectFieldState {
   rawValue: string;

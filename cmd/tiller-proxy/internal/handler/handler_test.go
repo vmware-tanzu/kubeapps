@@ -19,7 +19,6 @@ package handler
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
@@ -33,28 +32,6 @@ import (
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
 	proxyFake "github.com/kubeapps/kubeapps/pkg/proxy/fake"
 )
-
-func TestErrorCodeWithDefault(t *testing.T) {
-	type test struct {
-		err          error
-		defaultCode  int
-		expectedCode int
-	}
-	tests := []test{
-		{fmt.Errorf("a release named foo already exists"), http.StatusInternalServerError, http.StatusConflict},
-		{fmt.Errorf("release foo not found"), http.StatusInternalServerError, http.StatusNotFound},
-		{fmt.Errorf("Unauthorized to get release foo"), http.StatusInternalServerError, http.StatusForbidden},
-		{fmt.Errorf("release \"Foo \" failed"), http.StatusInternalServerError, http.StatusUnprocessableEntity},
-		{fmt.Errorf("This is an unexpected error"), http.StatusInternalServerError, http.StatusInternalServerError},
-		{fmt.Errorf("This is an unexpected error"), http.StatusUnprocessableEntity, http.StatusUnprocessableEntity},
-	}
-	for _, s := range tests {
-		code := errorCodeWithDefault(s.err, s.defaultCode)
-		if code != s.expectedCode {
-			t.Errorf("Expected '%v' to return code %v got %v", s.err, s.expectedCode, code)
-		}
-	}
-}
 
 func TestActions(t *testing.T) {
 	type testScenario struct {
@@ -430,6 +407,38 @@ func TestActions(t *testing.T) {
 			RemainingReleases: []release.Release{},
 			ResponseBody:      "",
 		},
+		{
+			// Scenario params
+			Description:      "Test a release successfully",
+			ExistingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			DisableAuth:      true,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "test",
+			Params:       map[string]string{"namespace": "kubeapps-ns", "releaseName": "kubeapps"},
+			// Expected result
+			StatusCode:        200,
+			RemainingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			ResponseBody:      `{"data":{"UNKNOWN":["No Tests Found"]}}`,
+		},
+		{
+			// Scenario params
+			Description:      "Fail to test a release",
+			ExistingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			DisableAuth:      true,
+			ForbiddenActions: []auth.Action{},
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "test",
+			Params:       map[string]string{"namespace": "default", "releaseName": "kubeapps"},
+			// Expected result
+			StatusCode:        404,
+			RemainingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			ResponseBody:      `{"code":404,"message":"Unable to locate release: Release kubeapps not found"}`,
+		},
 	}
 	for _, test := range tests {
 		// Prepare environment
@@ -447,7 +456,7 @@ func TestActions(t *testing.T) {
 			fauth := &authFake.FakeAuth{
 				ForbiddenActions: test.ForbiddenActions,
 			}
-			ctx := context.WithValue(req.Context(), userKey, fauth)
+			ctx := context.WithValue(req.Context(), auth.UserKey, fauth)
 			req = req.WithContext(ctx)
 		}
 		response := httptest.NewRecorder()
@@ -468,6 +477,8 @@ func TestActions(t *testing.T) {
 			handler.ListReleases(response, req, test.Params)
 		case "listall":
 			handler.ListAllReleases(response, req)
+		case "test":
+			handler.TestRelease(response, req, test.Params)
 		default:
 			t.Errorf("Unexpected action %s", test.Action)
 		}

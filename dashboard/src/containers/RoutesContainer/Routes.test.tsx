@@ -1,8 +1,8 @@
 import { mount } from "enzyme";
 import { createMemoryHistory } from "history";
 import * as React from "react";
-import { StaticRouter } from "react-router";
-import { Redirect, RouteComponentProps } from "react-router-dom";
+import { Route, StaticRouter } from "react-router";
+import { RouteComponentProps } from "react-router-dom";
 
 import NotFound from "../../components/NotFound";
 import Routes from "./Routes";
@@ -40,7 +40,12 @@ it("should render a redirect to the default namespace", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).props().to).toEqual("/apps/ns/default");
+  expect(
+    wrapper
+      .find(Route)
+      .props()
+      .render().props.to,
+  ).toEqual("/apps/ns/default");
 });
 
 it("should render a redirect to the login page", () => {
@@ -50,7 +55,12 @@ it("should render a redirect to the login page", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).props().to).toEqual("/login");
+  expect(
+    wrapper
+      .find(Route)
+      .props()
+      .render().props.to,
+  ).toEqual("/login");
 });
 
 it("should render a redirect to the login page (when not authenticated)", () => {
@@ -60,5 +70,10 @@ it("should render a redirect to the login page (when not authenticated)", () => 
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).props().to).toEqual("/login");
+  expect(
+    wrapper
+      .find(Route)
+      .props()
+      .render().props.to,
+  ).toEqual("/login");
 });

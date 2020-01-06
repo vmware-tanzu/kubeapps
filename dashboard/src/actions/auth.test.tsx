@@ -21,13 +21,16 @@ beforeEach(() => {
   };
 
   Auth.validateToken = jest.fn();
-  Auth.fetchOIDCToken = jest.fn(() => "token");
+  Auth.isAuthenticatedWithCookie = jest.fn(() => "token");
   Auth.setAuthToken = jest.fn();
   Auth.unsetAuthToken = jest.fn();
 
   store = mockStore({
     auth: {
       state,
+    },
+    config: {
+      oauthLogoutURI: "/log/out",
     },
   });
 });
@@ -57,6 +60,7 @@ describe("authenticate", () => {
   });
 
   it("dispatches authenticating and auth ok if valid", () => {
+    Auth.validateToken = jest.fn();
     const expectedActions = [
       {
         type: getType(actions.auth.authenticating),
@@ -69,34 +73,36 @@ describe("authenticate", () => {
 
     return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
+      expect(Auth.validateToken).toHaveBeenCalledWith(token);
     });
   });
-});
 
-describe("OIDC authentication", () => {
-  it("dispatches authenticating and auth error if invalid", () => {
-    Auth.validateToken = jest.fn().mockImplementationOnce(() => {
-      throw new Error(validationErrorMsg);
-    });
+  it("does not validate a token if oidc is true", () => {
+    Auth.validateToken = jest.fn();
     const expectedActions = [
       {
         type: getType(actions.auth.authenticating),
       },
       {
-        type: getType(actions.auth.authenticating),
+        payload: { authenticated: true, oidc: true, defaultNamespace: "default" },
+        type: getType(actions.auth.setAuthenticated),
       },
       {
-        payload: `Error: ${validationErrorMsg}`,
-        type: getType(actions.auth.authenticationError),
+        payload: { sessionExpired: false },
+        type: getType(actions.auth.setSessionExpired),
       },
     ];
 
-    return store.dispatch(actions.auth.tryToAuthenticateWithOIDC()).then(() => {
+    return store.dispatch(actions.auth.authenticate("ignored", true)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
+      expect(Auth.validateToken).not.toHaveBeenCalled();
     });
   });
+});
 
+describe("OIDC authentication", () => {
   it("dispatches authenticating and auth ok if valid", () => {
+    Auth.isAuthenticatedWithCookie = jest.fn(() => true);
     const expectedActions = [
       {
         type: getType(actions.auth.authenticating),
@@ -114,29 +120,26 @@ describe("OIDC authentication", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.tryToAuthenticateWithOIDC()).then(() => {
+    return store.dispatch(actions.auth.checkCookieAuthentication()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
 
   it("expires the session and logs out ", () => {
     Auth.usingOIDCToken = jest.fn(() => true);
+    localStorage.removeItem = jest.fn();
+    document.location.assign = jest.fn();
     const expectedActions = [
       {
         payload: { sessionExpired: true },
         type: getType(actions.auth.setSessionExpired),
       },
-      {
-        payload: { authenticated: false, oidc: false, defaultNamespace: "" },
-        type: getType(actions.auth.setAuthenticated),
-      },
-      {
-        type: getType(actions.namespace.clearNamespaces),
-      },
     ];
 
     return store.dispatch(actions.auth.expireSession()).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
+      expect(localStorage.removeItem).toBeCalled();
+      expect(document.location.assign).toBeCalledWith("/log/out");
     });
   });
 });

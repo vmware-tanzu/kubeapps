@@ -5,13 +5,15 @@ import { FieldTemplateProps } from "react-jsonschema-form";
 import FieldTemplate from "./FieldTemplate";
 
 it("sets the classNames in the parent div", () => {
-  const wrapper = shallow(<FieldTemplate {...{} as FieldTemplateProps} classNames="test-class" />);
+  const wrapper = shallow(
+    <FieldTemplate {...({} as FieldTemplateProps)} classNames="test-class" />,
+  );
   expect(wrapper.props().className).toBe("test-class");
 });
 
 it("renders the label element with the right id and label", () => {
   const wrapper = shallow(
-    <FieldTemplate {...{} as FieldTemplateProps} id="test" label="Test" displayLabel={true} />,
+    <FieldTemplate {...({} as FieldTemplateProps)} id="test" label="Test" displayLabel={true} />,
   );
   const label = wrapper.find("label");
   expect(label.exists()).toBe(true);
@@ -21,7 +23,7 @@ it("renders the label element with the right id and label", () => {
 
 it("omits the label if displayLabel false", () => {
   const wrapper = shallow(
-    <FieldTemplate {...{} as FieldTemplateProps} id="test" label="Test" displayLabel={false} />,
+    <FieldTemplate {...({} as FieldTemplateProps)} id="test" label="Test" displayLabel={false} />,
   );
   const label = wrapper.find("label");
   expect(label.exists()).toBe(false);
@@ -29,7 +31,7 @@ it("omits the label if displayLabel false", () => {
 
 it("renders the child element", () => {
   const wrapper = shallow(
-    <FieldTemplate {...{} as FieldTemplateProps}>
+    <FieldTemplate {...({} as FieldTemplateProps)}>
       <input type="text" />
     </FieldTemplate>,
   );

@@ -45,7 +45,4 @@ function chartID(params: IRouteProps["match"]["params"]) {
   return `${params.repo}/${params.id}`;
 }
 
-export default connect(
-  mapStateToProps,
-  mapDispatchToProps,
-)(ChartView);
+export default connect(mapStateToProps, mapDispatchToProps)(ChartView);

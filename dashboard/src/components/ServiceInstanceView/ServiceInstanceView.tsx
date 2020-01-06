@@ -89,11 +89,11 @@ class ServiceInstanceView extends React.Component<IServiceInstanceViewProps> {
     this.props.getPlans();
   }
 
-  public componentWillReceiveProps(nextProps: IServiceInstanceViewProps) {
+  public componentDidUpdate(prevProps: IServiceInstanceViewProps) {
     const { getInstances, getBindings, namespace } = this.props;
-    if (nextProps.namespace !== namespace) {
-      getInstances(nextProps.namespace);
-      getBindings(nextProps.namespace);
+    if (prevProps.namespace !== namespace) {
+      getInstances(namespace);
+      getBindings(namespace);
     }
   }
 

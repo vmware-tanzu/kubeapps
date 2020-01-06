@@ -21,6 +21,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/status"
 	"k8s.io/client-go/kubernetes"
@@ -242,6 +243,13 @@ func unlock(name string) {
 func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error) {
 	lock(name)
 	defer unlock(name)
+
+	// Validate if the release already exists
+	_, err := p.helmClient.ReleaseContent(name)
+	if err == nil {
+		return nil, fmt.Errorf("Release %s already exists", name)
+	}
+
 	log.Printf("Installing release %s into namespace %s", name, namespace)
 	res, err := p.helmClient.InstallReleaseFromChart(
 		ch,
@@ -251,8 +259,13 @@ func (p *Proxy) CreateRelease(name, namespace, values string, ch *chart.Chart) (
 		helm.InstallTimeout(p.timeout),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create the release: %v", err)
+		errDelete := p.deleteRelease(name, namespace, true)
+		if errDelete != nil {
+			return nil, fmt.Errorf("Release %q failed: %v. Unable to purge failed release: %v", name, err, errDelete)
+		}
+		return nil, fmt.Errorf("Release %q failed and has been uninstalled: %v", name, err)
 	}
+
 	log.Printf("%s successfully installed in %s", name, namespace)
 	return res.GetRelease(), nil
 }
@@ -307,10 +320,7 @@ func (p *Proxy) GetRelease(name, namespace string) (*release.Release, error) {
 	return p.getRelease(name, namespace)
 }
 
-// DeleteRelease deletes a release
-func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
-	lock(name)
-	defer unlock(name)
+func (p *Proxy) deleteRelease(name, namespace string, purge bool) error {
 	// Validate that the release actually belongs to the namespace
 	_, err := p.getRelease(name, namespace)
 	if err != nil {
@@ -325,6 +335,51 @@ func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
 		return fmt.Errorf("Unable to delete the release: %v", err)
 	}
 	return nil
+}
+
+// DeleteRelease deletes a release
+func (p *Proxy) DeleteRelease(name, namespace string, purge bool) error {
+	lock(name)
+	defer unlock(name)
+	return p.deleteRelease(name, namespace, purge)
+}
+
+// TestRelease runs tests for a release in a namespace
+func (p *Proxy) TestRelease(name, namespace string) (*TestStatus, error) {
+
+	// Validate that the release actually belongs to the namespace
+	release, err := p.GetRelease(name, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to locate release: %v", err)
+	}
+
+	// Request Tiller to run tests for the specified release
+	// error channel (second return value) is ignored for now since all relevant "errors"
+	// are channeled into "testReleaseResponseChannel"
+	testReleaseResponseChannel, errChan := p.helmClient.RunReleaseTest(release.GetName(), helm.ReleaseTestCleanup(true))
+	log.Println("Running Tests for ", name, " in namespace ", namespace)
+
+	// Parsing messages from Tiller, see TestStatus
+	testStatus := TestStatus{}
+	for response := range testReleaseResponseChannel {
+		// Sieving response messages from Tiller into categories depdening on their status
+		status := response.GetStatus().String()
+		message := response.GetMsg()
+
+		testStatus[status] = append(testStatus[status], message)
+	}
+
+	//Aggregate all errors from the chan into one
+	var errs error
+	for err := range errChan {
+		errs = errors.Wrapf(errs, "%v\n", err)
+	}
+
+	if errs != nil {
+		return &testStatus, errs
+	}
+
+	return &testStatus, nil
 }
 
 // extracted from https://github.com/helm/helm/blob/master/cmd/helm/helm.go#L227
@@ -342,6 +397,11 @@ func prettyError(err error) error {
 	return err
 }
 
+// TestStatus is an alias for a mapping between a string to a list of strings
+// key is "status" returned by Tiller
+// value is "message" of status key
+type TestStatus = map[string][]string
+
 // TillerClient for exposed funcs
 type TillerClient interface {
 	GetReleaseStatus(relName string) (release.Status_Code, error)
@@ -349,6 +409,7 @@ type TillerClient interface {
 	ResolveManifestFromRelease(releaseName string, revision int32) (string, error)
 	ListReleases(namespace string, releaseListLimit int, status string) ([]AppOverview, error)
 	CreateRelease(name, namespace, values string, ch *chart.Chart) (*release.Release, error)
+	TestRelease(relName, namespace string) (*TestStatus, error)
 	UpdateRelease(name, namespace string, values string, ch *chart.Chart) (*release.Release, error)
 	RollbackRelease(name, namespace string, revision int32) (*release.Release, error)
 	GetRelease(name, namespace string) (*release.Release, error)

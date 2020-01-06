@@ -2,6 +2,7 @@ import { shallow } from "enzyme";
 import { Location } from "history";
 import * as React from "react";
 import { IAuthState } from "reducers/auth";
+import { IConfigState } from "reducers/config";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import LoginForm from "./LoginFormContainer";
@@ -15,8 +16,10 @@ const makeStore = (
   oidcAuthenticated: boolean,
   authenticationError: string,
   defaultNamespace: string,
+  authProxyEnabled: boolean,
+  oauthLoginURI: string,
 ) => {
-  const state: IAuthState = {
+  const auth: IAuthState = {
     sessionExpired,
     authenticated,
     authenticating,
@@ -24,7 +27,15 @@ const makeStore = (
     authenticationError,
     defaultNamespace,
   };
-  return mockStore({ auth: state });
+  const config: IConfigState = {
+    authProxyEnabled,
+    oauthLoginURI,
+    loaded: true,
+    namespace: "",
+    appVersion: "",
+    oauthLogoutURI: "",
+  };
+  return mockStore({ auth, config });
 };
 
 const emptyLocation: Location = {
@@ -36,13 +47,46 @@ const emptyLocation: Location = {
 
 describe("LoginFormContainer props", () => {
   it("maps authentication redux states to props", () => {
-    const store = makeStore(true, true, true, true, "It's a trap", "");
+    const authProxyEnabled = true;
+    const store = makeStore(
+      true,
+      true,
+      true,
+      true,
+      "It's a trap",
+      "",
+      authProxyEnabled,
+      "/myoauth/start",
+    );
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
     const form = wrapper.find("LoginForm");
     expect(form).toHaveProp({
       authenticated: true,
       authenticating: true,
       authenticationError: "It's a trap",
+      oauthLoginURI: "/myoauth/start",
+    });
+  });
+
+  it("does not receive oauthLoginURI if authProxyEnabled is false", () => {
+    const authProxyEnabled = false;
+    const store = makeStore(
+      true,
+      true,
+      true,
+      true,
+      "It's a trap",
+      "",
+      authProxyEnabled,
+      "/myoauth/start",
+    );
+    const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
+    const form = wrapper.find("LoginForm");
+    expect(form).toHaveProp({
+      authenticated: true,
+      authenticating: true,
+      authenticationError: "It's a trap",
+      oauthLoginURI: "",
     });
   });
 });

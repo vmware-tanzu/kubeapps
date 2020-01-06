@@ -236,3 +236,18 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     expect(axiosGetMock.mock.calls[0][0]).toBe("api/chartsvc/v1/charts/foo/versions");
   });
 });
+
+describe("getDeployedChartVersion", () => {
+  it("should request a deployed chart", async () => {
+    response = { id: "foo" };
+    const expectedActions = [
+      { type: getType(actions.charts.requestDeployedChartVersion) },
+      {
+        type: getType(actions.charts.receiveDeployedChartVersion),
+        payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
+      },
+    ];
+    await store.dispatch(actions.charts.getDeployedChartVersion("foo", "1.0.0"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

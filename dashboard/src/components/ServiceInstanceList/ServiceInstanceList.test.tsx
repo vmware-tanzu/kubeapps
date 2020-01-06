@@ -40,6 +40,21 @@ it("renders the warning for alpha feature", () => {
   ).toContain("Service Catalog integration is under heavy development");
 });
 
+context("when changing props", () => {
+  it("should fetch services in the new namespace", () => {
+    const getInstances = jest.fn();
+    const wrapper = shallow(<ServiceInstanceList {...defaultProps} getInstances={getInstances} />);
+    wrapper.setProps({ namespace: "foo" });
+    expect(getInstances).toHaveBeenCalledWith("foo");
+  });
+
+  it("should update the filter", () => {
+    const wrapper = shallow(<ServiceInstanceList {...defaultProps} />);
+    wrapper.setProps({ filter: "foo" });
+    expect(wrapper.state("filter")).toEqual("foo");
+  });
+});
+
 context("while fetching components", () => {
   const props = { ...defaultProps, classes: { isFetching: true, list: [] } };
 
