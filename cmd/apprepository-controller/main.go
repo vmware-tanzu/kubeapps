@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 
-	"github.com/golang/glog"
 	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/signals"
@@ -27,6 +26,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd" // Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -49,17 +49,17 @@ func main() {
 
 	cfg, err := clientcmd.BuildConfigFromFlags(masterURL, kubeconfig)
 	if err != nil {
-		glog.Fatalf("Error building kubeconfig: %s", err.Error())
+		log.Fatalf("Error building kubeconfig: %s", err.Error())
 	}
 
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		glog.Fatalf("Error building kubernetes clientset: %s", err.Error())
+		log.Fatalf("Error building kubernetes clientset: %s", err.Error())
 	}
 
 	apprepoClient, err := clientset.NewForConfig(cfg)
 	if err != nil {
-		glog.Fatalf("Error building apprepo clientset: %s", err.Error())
+		log.Fatalf("Error building apprepo clientset: %s", err.Error())
 	}
 
 	kubeInformerFactory := kubeinformers.NewFilteredSharedInformerFactory(kubeClient, 0, namespace, nil)
@@ -71,7 +71,7 @@ func main() {
 	go apprepoInformerFactory.Start(stopCh)
 
 	if err = controller.Run(2, stopCh); err != nil {
-		glog.Fatalf("Error running controller: %s", err.Error())
+		log.Fatalf("Error running controller: %s", err.Error())
 	}
 }
 

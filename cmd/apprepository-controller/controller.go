@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	clientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -102,9 +102,9 @@ func NewController(
 	// Add apprepository-controller types to the default Kubernetes Scheme so
 	// Events can be logged for apprepository-controller types.
 	appreposcheme.AddToScheme(scheme.Scheme)
-	glog.V(4).Info("Creating event broadcaster")
+	log.Info("Creating event broadcaster")
 	eventBroadcaster := record.NewBroadcaster()
-	eventBroadcaster.StartLogging(glog.Infof)
+	eventBroadcaster.StartLogging(log.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: kubeclientset.CoreV1().Events("")})
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 
@@ -119,7 +119,7 @@ func NewController(
 		recorder:         recorder,
 	}
 
-	glog.Info("Setting up event handlers")
+	log.Info("Setting up event handlers")
 	// Set up an event handler for when AppRepository resources change
 	apprepoInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueAppRepo,
@@ -161,23 +161,23 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	defer c.workqueue.ShutDown()
 
 	// Start the informer factories to begin populating the informer caches
-	glog.Info("Starting AppRepository controller")
+	log.Info("Starting AppRepository controller")
 
 	// Wait for the caches to be synced before starting workers
-	glog.Info("Waiting for informer caches to sync")
+	log.Info("Waiting for informer caches to sync")
 	if ok := cache.WaitForCacheSync(stopCh, c.cronjobsSynced, c.appreposSynced); !ok {
 		return fmt.Errorf("failed to wait for caches to sync")
 	}
 
-	glog.Info("Starting workers")
+	log.Info("Starting workers")
 	// Launch two workers to process AppRepository resources
 	for i := 0; i < threadiness; i++ {
 		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
-	glog.Info("Started workers")
+	log.Info("Started workers")
 	<-stopCh
-	glog.Info("Shutting down workers")
+	log.Info("Shutting down workers")
 
 	return nil
 }
@@ -231,7 +231,7 @@ func (c *Controller) processNextWorkItem() bool {
 		// Finally, if no error occurs we Forget this item so it does not
 		// get queued again until another change happens.
 		c.workqueue.Forget(obj)
-		glog.Infof("Successfully synced '%s'", key)
+		log.Infof("Successfully synced '%s'", key)
 		return nil
 	}(obj)
 
@@ -260,7 +260,7 @@ func (c *Controller) syncHandler(key string) error {
 		// The AppRepository resource may no longer exist, in which case we stop
 		// processing.
 		if errors.IsNotFound(err) {
-			glog.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
+			log.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
 			// Trigger a Job to perfrom the cleanup of the charts in the DB corresponding to deleted AppRepository
 			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(newCleanupJob(name, namespace))
 			return nil
@@ -273,7 +273,7 @@ func (c *Controller) syncHandler(key string) error {
 	cronjob, err := c.cronjobsLister.CronJobs(apprepo.Namespace).Get(cronjobName)
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
-		glog.V(4).Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
+		log.Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
 		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Create(newCronJob(apprepo))
 		if err != nil {
 			return err
@@ -283,7 +283,7 @@ func (c *Controller) syncHandler(key string) error {
 		_, err = c.kubeclientset.BatchV1().Jobs(apprepo.Namespace).Create(newSyncJob(apprepo))
 	} else if err == nil {
 		// If the resource already exists, we'll update it
-		glog.V(4).Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
+		log.Infof("Updating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
 		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(apprepo.Namespace).Update(newCronJob(apprepo))
 		if err != nil {
 			return err
@@ -351,9 +351,9 @@ func (c *Controller) handleObject(obj interface{}) {
 			runtime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
 			return
 		}
-		glog.V(4).Infof("Recovered deleted object '%s' from tombstone", object.GetName())
+		log.Infof("Recovered deleted object '%s' from tombstone", object.GetName())
 	}
-	glog.V(4).Infof("Processing object: %s", object.GetName())
+	log.Infof("Processing object: %s", object.GetName())
 	if ownerRef := metav1.GetControllerOf(object); ownerRef != nil {
 		// If this object is not owned by an AppRepository, we should not do
 		// anything more with it.
@@ -363,7 +363,7 @@ func (c *Controller) handleObject(obj interface{}) {
 
 		apprepo, err := c.appreposLister.AppRepositories(object.GetNamespace()).Get(ownerRef.Name)
 		if err != nil {
-			glog.V(4).Infof("ignoring orphaned object '%s' of AppRepository '%s'", object.GetSelfLink(), ownerRef.Name)
+			log.Infof("ignoring orphaned object '%s' of AppRepository '%s'", object.GetSelfLink(), ownerRef.Name)
 			return
 		}
 
