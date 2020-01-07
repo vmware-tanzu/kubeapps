@@ -61,6 +61,7 @@ func main() {
 	r := mux.NewRouter()
 
 	// Healthcheck
+	// TODO: add app specific health and readiness checks as per https://github.com/heptiolabs/healthcheck
 	health := healthcheck.NewHandler()
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
