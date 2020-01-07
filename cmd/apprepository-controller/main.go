@@ -35,8 +35,12 @@ var (
 	repoSyncImage    string
 	repoSyncCommand  string
 	namespace        string
-	mongoURL         string
-	mongoSecretName  string
+	dbType           string
+	dbURL            string
+	dbUser           string
+	dbName           string
+	dbSecretName     string
+	dbSecretKey      string
 	userAgentComment string
 	crontab          string
 )
@@ -81,8 +85,12 @@ func init() {
 	flag.StringVar(&repoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
 	flag.StringVar(&repoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
-	flag.StringVar(&mongoURL, "mongo-url", "localhost", "MongoDB URL (see https://godoc.org/labix.org/v2/mgo#Dial for format)")
-	flag.StringVar(&mongoSecretName, "mongo-secret-name", "mongodb", "Kubernetes secret name for MongoDB credentials")
+	flag.StringVar(&dbType, "database-type", "mongodb", "Database type. Allowed values: mongodb, postgresql")
+	flag.StringVar(&dbURL, "database-url", "localhost", "Database URL")
+	flag.StringVar(&dbUser, "database-user", "root", "Database user")
+	flag.StringVar(&dbName, "database-name", "charts", "Database name")
+	flag.StringVar(&dbSecretName, "database-secret-name", "mongodb", "Kubernetes secret name for database credentials")
+	flag.StringVar(&dbSecretKey, "database-secret-key", "mongodb-root-password", "Kubernetes secret key used for database credentials")
 	flag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	flag.StringVar(&crontab, "crontab", "*/10 * * * *", "CronTab to specify schedule")
 }

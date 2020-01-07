@@ -10,7 +10,7 @@ import store from "./store";
 
 // Now that the store has been initialized, initialize axios instances
 // One axios instance will be used for services that requires auth (those that use the K8s API)
-// and the other for services that don't (like the chartsvc)
+// and the other for services that don't (like the assetsvc)
 addErrorHandling(axios, store);
 addErrorHandling(axiosWithAuth, store);
 addAuthHeaders(axiosWithAuth);
