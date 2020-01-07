@@ -15,9 +15,6 @@ import (
 	h2 "k8s.io/helm/pkg/proto/hapi/release"
 )
 
-// generatedYamlHeader is prepended to YAML generated from the internal map[string]interface{} representation.
-const generatedYamlHeader = "# Not original YAML! Generated from parsed representation."
-
 func newDashboardCompatibleRelease(h3r h3.Release) h2.Release {
 	return h2.Release{
 		Name:      h3r.Name,
@@ -107,11 +104,10 @@ func compatibleConfig(h3r h3.Release) *h2chart.Config {
 	}
 }
 
-// valuesToYaml serializes to YAML and prepends an informative header.
-// It assumes that the serialization succeeds.
+// valuesToYaml serializes to YAML and assumes that the serialization succeeded.
 func valuesToYaml(values map[string]interface{}) string {
 	marshaled, _ := yaml.Marshal(values)
-	return generatedYamlHeader + "\n" + string(marshaled)
+	return string(marshaled)
 }
 
 func compatibleStatus(h3info h3.Info) *h2.Status {
