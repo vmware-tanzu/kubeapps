@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	authFake "github.com/kubeapps/kubeapps/pkg/auth/fake"
@@ -67,53 +67,60 @@ func TestActions(t *testing.T) {
 	tests := []testScenario{}
 
 	for _, test := range tests {
-		// Initialize environment for test
-		req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
-		if !test.DisableAuth {
-			fauth := &authFake.FakeAuth{}
-			ctx := context.WithValue(req.Context(), auth.UserKey, fauth)
-			req = req.WithContext(ctx)
-		}
-		response := httptest.NewRecorder()
-		cfg := newConfigFixture(t)
-		for i := range test.ExistingReleases {
-			err := cfg.ActionConfig.Releases.Create(&test.ExistingReleases[i])
-			if err != nil {
-				t.Errorf("Failed to initiate test: %v", err)
+		t.Run(test.Description, func(t *testing.T) {
+			// Initialize environment for test
+			req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
+			if !test.DisableAuth {
+				fauth := &authFake.FakeAuth{}
+				ctx := context.WithValue(req.Context(), auth.UserKey, fauth)
+				req = req.WithContext(ctx)
 			}
-		}
-		// Perform request
-		t.Log(test.Description)
-		switch test.Action {
-		default:
-			t.Errorf("Unexpected action %s", test.Action)
-		}
-		// Check result
-		if response.Code != test.StatusCode {
-			t.Errorf("Expecting a StatusCode %d, received %d", test.StatusCode, response.Code)
-		}
-		releases := extractReleases(cfg.ActionConfig.Releases)
-		if !reflect.DeepEqual(releases, test.RemainingReleases) {
-			t.Errorf("Unexpected remaining releases. Expecting %v, found %v", test.RemainingReleases, releases)
-		}
-		if test.ResponseBody != "" {
-			if test.ResponseBody != response.Body.String() {
-				t.Errorf("Unexpected body response. Expecting %s, found %s", test.ResponseBody, response.Body)
+			response := httptest.NewRecorder()
+			cfg := newConfigFixture(t)
+			for i := range test.ExistingReleases {
+				err := cfg.ActionConfig.Releases.Create(&test.ExistingReleases[i])
+				if err != nil {
+					t.Errorf("Failed to initiate test: %v", err)
+				}
 			}
-		}
+			// Perform request
+			switch test.Action {
+			default:
+				t.Errorf("Unexpected action %s", test.Action)
+			}
+			// Check result
+			if response.Code != test.StatusCode {
+				t.Errorf("Expecting a StatusCode %d, received %d", test.StatusCode, response.Code)
+			}
+			releases := derefReleases(cfg.ActionConfig.Releases)
+			rlsComparer := cmp.Comparer(func(x release.Release, y release.Release) bool {
+				return x.Name == y.Name &&
+					x.Version == y.Version &&
+					x.Namespace == y.Namespace &&
+					x.Info.Status == y.Info.Status &&
+					x.Chart.Name() == y.Chart.Name() &&
+					x.Manifest == y.Manifest &&
+					cmp.Equal(x.Config, y.Config) &&
+					cmp.Equal(x.Hooks, y.Hooks)
+			})
+			if !cmp.Equal(releases, test.RemainingReleases, rlsComparer) {
+				t.Errorf("Unexpected remaining releases. Diff %s", cmp.Diff(releases, test.RemainingReleases, rlsComparer))
+			}
+			if test.ResponseBody != "" {
+				if test.ResponseBody != response.Body.String() {
+					t.Errorf("Unexpected body response. Diff %s", cmp.Diff(test.ResponseBody, response.Body))
+				}
+			}
+		})
 	}
 }
 
-func extractReleases(storage *storage.Storage) []release.Release {
+// derefReleases derefrences the releases in sotrage into an array
+func derefReleases(storage *storage.Storage) []release.Release {
 	rls, _ := storage.ListReleases()
 	releases := make([]release.Release, len(rls))
-	//cleanup unused properties
 	for i := range rls {
-		//dereference element
 		releases[i] = *rls[i]
-		//save status information only by ignoring timestamps
-		releases[i].Info = &release.Info{}            //set all timestamps to zeroth value
-		releases[i].SetStatus(rls[i].Info.Status, "") //copy only relevant `status` information
 	}
 	return releases
 }

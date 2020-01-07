@@ -57,11 +57,8 @@ func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.H
 	}, nil
 }
 
-// Values is a type alias for values.yaml
-type Values map[string]interface{}
-
-func getValues(raw []byte) (Values, error) {
-	values := make(Values)
+func getValues(raw []byte) (map[string]interface{}, error) {
+	values := make(map[string]interface{})
 	err := yaml.Unmarshal(raw, &values)
 	if err != nil {
 		return nil, err
