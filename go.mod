@@ -27,6 +27,5 @@ require (
 	k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
 	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
 	k8s.io/helm v2.16.0+incompatible
-	k8s.io/klog v1.0.0
 	sigs.k8s.io/yaml v1.1.0
 )
