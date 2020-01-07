@@ -81,14 +81,16 @@ workflows:
           <<: *build_on_master
           requires:
             - local_e2e_tests_postgresql
+            - local_e2e_tests_mongodb
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
             - GKE_1_12_LATEST_RELEASE
       - push_images:
-          <<: *build_always
+          <<: *build_on_master
           requires:
             - local_e2e_tests_postgresql
+            - local_e2e_tests_mongodb
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
@@ -97,6 +99,7 @@ workflows:
           <<: *build_on_tag
           requires:
             - local_e2e_tests_postgresql
+            - local_e2e_tests_mongodb
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_12_MASTER
