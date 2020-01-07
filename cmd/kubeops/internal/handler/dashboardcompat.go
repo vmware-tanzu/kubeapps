@@ -1,5 +1,6 @@
 // The Dashboard doesn't understand the Helm 3 release format.
 // This file is a compatibility layer that translates Helm 3 releases to a Helm 2-similar format suitable for the Dashboard.
+// Note that h3.Release and h2.Release are not isomorphic, so it is impossible to map between them in general.
 
 package handler
 
@@ -17,50 +18,59 @@ import (
 // generatedYamlHeader is prepended to YAML generated from the internal map[string]interface{} representation.
 const generatedYamlHeader = "# Not original YAML! Generated from parsed representation."
 
-type dashboardCompatibleRelease struct {
-	Name      string                    `json:"name,omitempty"`
-	Info      h2.Info                   `json:"info,omitempty"`
-	Chart     dashboardCompatibleChart  `json:"chart,omitempty"`
-	Config    dashboardCompatibleConfig `json:"config,omitempty"`
-	Manifest  string                    `json:"manifest,omitempty"`
-	Version   int                       `json:"version,omitempty"`
-	Namespace string                    `json:"namespace,omitempty"`
-}
-
-type dashboardCompatibleChart struct {
-	Files     []*any.Any                `json:"files,omitempty"`
-	Metadata  h3chart.Metadata          `json:"metadata,omitempty"`
-	Templates []*h2chart.Template       `json:"templates,omitempty"`
-	Values    dashboardCompatibleValues `json:"values,omitempty"`
-}
-
-type dashboardCompatibleValues struct {
-	Raw string `json:"raw,omitempty"`
-}
-
-type dashboardCompatibleConfig struct {
-	Raw string `json:"raw,omitempty"`
-}
-
-func newDashboardCompatibleRelease(h3r h3.Release) dashboardCompatibleRelease {
-	return dashboardCompatibleRelease{
+func newDashboardCompatibleRelease(h3r h3.Release) h2.Release {
+	return h2.Release{
 		Name:      h3r.Name,
-		Info:      h2.Info{Status: compatibleStatus(*h3r.Info)},
+		Info:      &h2.Info{Status: compatibleStatus(*h3r.Info)},
 		Chart:     compatibleChart(*h3r.Chart),
 		Config:    compatibleConfig(h3r),
 		Manifest:  h3r.Manifest,
-		Version:   h3r.Version,
+		Version:   int32(h3r.Version),
 		Namespace: h3r.Namespace,
 	}
 }
 
-func compatibleChart(h3c h3chart.Chart) dashboardCompatibleChart {
-	return dashboardCompatibleChart{
+func compatibleChart(h3c h3chart.Chart) *h2chart.Chart {
+	return &h2chart.Chart{
 		Files:     compatibleFiles(h3c.Files),
-		Metadata:  *h3c.Metadata,
+		Metadata:  compatibleMetadata(*h3c.Metadata),
 		Templates: compatibleTemplates(h3c.Templates),
 		Values:    compatibleValues(h3c),
 	}
+}
+
+func compatibleMetadata(h3m h3chart.Metadata) *h2chart.Metadata {
+	return &h2chart.Metadata{
+		Annotations:   h3m.Annotations,
+		ApiVersion:    h3m.APIVersion,
+		AppVersion:    h3m.AppVersion,
+		Condition:     h3m.Condition,
+		Deprecated:    h3m.Deprecated,
+		Description:   h3m.Description,
+		Engine:        "",
+		Home:          h3m.Home,
+		Icon:          h3m.Icon,
+		Keywords:      h3m.Keywords,
+		KubeVersion:   h3m.KubeVersion,
+		Maintainers:   compatibleMaintainers(h3m.Maintainers),
+		Name:          h3m.Name,
+		Sources:       h3m.Sources,
+		Tags:          h3m.Tags,
+		TillerVersion: "",
+		Version:       h3m.Version,
+	}
+}
+
+func compatibleMaintainers(h3ms []*h3chart.Maintainer) []*h2chart.Maintainer {
+	h2ms := make([]*h2chart.Maintainer, len(h3ms))
+	for i, m := range h3ms {
+		h2ms[i] = &h2chart.Maintainer{
+			Name:  m.Name,
+			Email: m.Email,
+			Url:   m.URL,
+		}
+	}
+	return h2ms
 }
 
 func compatibleFiles(h3files []*h3chart.File) []*any.Any {
@@ -85,14 +95,14 @@ func compatibleTemplates(h3templates []*h3chart.File) []*h2chart.Template {
 	return templates
 }
 
-func compatibleValues(h3c h3chart.Chart) dashboardCompatibleValues {
-	return dashboardCompatibleValues{
+func compatibleValues(h3c h3chart.Chart) *h2chart.Config {
+	return &h2chart.Config{
 		Raw: valuesToYaml(h3c.Values),
 	}
 }
 
-func compatibleConfig(h3r h3.Release) dashboardCompatibleConfig {
-	return dashboardCompatibleConfig{
+func compatibleConfig(h3r h3.Release) *h2chart.Config {
+	return &h2chart.Config{
 		Raw: valuesToYaml(h3r.Config),
 	}
 }
