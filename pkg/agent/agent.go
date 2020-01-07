@@ -6,6 +6,7 @@ import (
 
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
+	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/kube"
@@ -15,7 +16,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog"
 	"sigs.k8s.io/yaml"
 )
 
@@ -25,14 +25,14 @@ type StorageForDriver func(namespace string, clientset *kubernetes.Clientset) *s
 // StorageForSecrets returns a storage using the Secret driver.
 func StorageForSecrets(namespace string, clientset *kubernetes.Clientset) *storage.Storage {
 	d := driver.NewSecrets(clientset.CoreV1().Secrets(namespace))
-	d.Log = klog.Infof
+	d.Log = log.Infof
 	return storage.Init(d)
 }
 
 // StorageForConfigMaps returns a storage using the ConfigMap driver.
 func StorageForConfigMaps(namespace string, clientset *kubernetes.Clientset) *storage.Storage {
 	d := driver.NewConfigMaps(clientset.CoreV1().ConfigMaps(namespace))
-	d.Log = klog.Infof
+	d.Log = log.Infof
 	return storage.Init(d)
 }
 
@@ -96,7 +96,7 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 	actionConfig.RESTClientGetter = restClientGetter
 	actionConfig.KubeClient = kube.New(restClientGetter)
 	actionConfig.Releases = store
-	actionConfig.Log = klog.Infof
+	actionConfig.Log = log.Infof
 	return actionConfig, nil
 }
 

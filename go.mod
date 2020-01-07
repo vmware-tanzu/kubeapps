@@ -13,7 +13,6 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-test/deep v1.0.4
-	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/mux v1.7.3
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
@@ -35,6 +34,5 @@ require (
 	k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
 	k8s.io/client-go v0.0.0-20191016111102-bec269661e48
 	k8s.io/helm v2.16.0+incompatible
-	k8s.io/klog v1.0.0
 	sigs.k8s.io/yaml v1.1.0
 )
