@@ -161,7 +161,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 
 				// When appropriate, ensure the expected secret is stored
 				if appRepoRequest.AppRepository.AuthHeader != "" {
-					requestSecret := secretForRequest(appRepoRequest, *responseAppRepo)
+					requestSecret := secretForRequest(appRepoRequest, responseAppRepo)
 					requestSecret.ObjectMeta.Namespace = tc.kubeappsNamespace
 
 					responseSecret, err := cs.CoreV1().Secrets(tc.kubeappsNamespace).Get(requestSecret.ObjectMeta.Name, metav1.GetOptions{})
@@ -403,7 +403,7 @@ func TestSecretForRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := secretForRequest(appRepositoryRequest{tc.request}, appRepo), tc.secret; !cmp.Equal(want, got) {
+			if got, want := secretForRequest(appRepositoryRequest{tc.request}, &appRepo), tc.secret; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})

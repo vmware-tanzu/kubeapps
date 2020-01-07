@@ -173,7 +173,7 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	secret := secretForRequest(appRepoRequest, *appRepo)
+	secret := secretForRequest(appRepoRequest, appRepo)
 	if secret != nil {
 		_, err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Create(secret)
 		if err != nil {
@@ -199,7 +199,7 @@ func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppR
 
 	var auth v1alpha1.AppRepositoryAuth
 	if appRepo.AuthHeader != "" || appRepo.CustomCA != "" {
-		secretName := fmt.Sprintf("apprepo-%s-secrets", appRepo.Name)
+		secretName := secretNameForRepo(appRepo.Name)
 		if appRepo.AuthHeader != "" {
 			auth.Header = &v1alpha1.AppRepositoryAuthHeader{
 				SecretKeyRef: corev1.SecretKeySelector{
@@ -237,7 +237,7 @@ func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppR
 }
 
 // secretForRequest takes care of parsing the request data into a secret for an AppRepository.
-func secretForRequest(appRepoRequest appRepositoryRequest, appRepo v1alpha1.AppRepository) *corev1.Secret {
+func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.AppRepository) *corev1.Secret {
 	appRepoDetails := appRepoRequest.AppRepository
 	secrets := map[string]string{}
 	if appRepoDetails.AuthHeader != "" {
@@ -253,7 +253,7 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo v1alpha1.AppR
 	blockOwnerDeletion := true
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("apprepo-%s-secrets", appRepoDetails.Name),
+			Name: secretNameForRepo(appRepo.Name),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion:         appRepo.TypeMeta.APIVersion,
@@ -267,4 +267,8 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo v1alpha1.AppR
 		StringData: secrets,
 	}
 	return nil
+}
+
+func secretNameForRepo(repoName string) string {
+	return fmt.Sprintf("apprepo-%s-secrets", repoName)
 }
