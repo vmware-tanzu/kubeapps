@@ -41,7 +41,6 @@ spec:
           command:
             - /apprepository-controller
           args:
-            - --logtostderr
             - --user-agent-comment=kubeapps/{{ .Chart.AppVersion }}
             - --repo-sync-image={{ template "kubeapps.image" (list .Values.apprepository.syncImage .Values.global) }}
             - --namespace={{ .Release.Namespace }}
