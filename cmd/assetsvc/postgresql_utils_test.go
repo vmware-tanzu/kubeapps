@@ -184,7 +184,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 		expectedTotalPages int
 	}{
 		{"one page with duplicates with repo", "bitnami", 1, 100, true, availableCharts, 1},
-		// TODO(andresmgot): one page without duplicates
+		{"one page withuot duplicates", "", 1, 100, false, []*models.Chart{availableCharts[0], availableCharts[1]}, 1},
 		// TODO(andresmgot): several pages
 	}
 	for _, tt := range tests {
