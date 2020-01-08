@@ -5,6 +5,8 @@ import (
 	"sort"
 	"testing"
 
+	kubechart "github.com/kubeapps/kubeapps/pkg/chart"
+	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -34,6 +36,10 @@ func newConfigFixture(t *testing.T) *Config {
 				t.Helper()
 				t.Logf(format, v...)
 			},
+		},
+		ChartClient: &chartFake.FakeChart{},
+		AgentOptions: Options{
+			ListLimit: defaultListLimit,
 		},
 	}
 }
@@ -66,6 +72,74 @@ func makeReleases(t *testing.T, config *Config, rels []releaseStub) {
 		if err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestCreateReleases(t *testing.T) {
+	testCases := []struct {
+		desc             string
+		releaseName      string
+		namespace        string
+		chartName        string
+		values           string
+		version          int
+		existingReleases []releaseStub
+		shouldFail       bool
+	}{
+		{
+			desc:      "install new release",
+			chartName: "mychart",
+			values:    "",
+			namespace: "default",
+			version:   1,
+			existingReleases: []releaseStub{
+				releaseStub{"otherchart", "default", 1},
+			},
+			shouldFail: false,
+		},
+		{
+			desc:      "install with an existing name",
+			chartName: "mychart",
+			values:    "",
+			namespace: "default",
+			version:   1,
+			existingReleases: []releaseStub{
+				releaseStub{"mychart", "default", 1},
+			},
+			shouldFail: true,
+		},
+		{
+			desc:      "install with same name different version",
+			chartName: "mychart",
+			values:    "",
+			namespace: "dev",
+			version:   1,
+			existingReleases: []releaseStub{
+				releaseStub{"mychart", "dev", 2},
+			},
+			shouldFail: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Initialize environment for test
+			config := newConfigFixture(t)
+			makeReleases(t, config, tc.existingReleases)
+			fakechart := chartFake.FakeChart{}
+			ch, _ := fakechart.GetChart(&kubechart.Details{
+				ChartName: tc.chartName,
+			}, nil, false)
+			// Perform test
+			rls, err := CreateRelease(*config, tc.chartName, tc.namespace, tc.values, ch.Helm3Chart)
+			// Check result
+			if tc.shouldFail && err == nil {
+				t.Errorf("Should fail with %v; instead got %s in %s", tc.desc, tc.releaseName, tc.namespace)
+			}
+			if !tc.shouldFail && rls == nil {
+				t.Errorf("Should succeed with %v; instead got error %v", tc.desc, err)
+			}
+		})
 	}
 }
 
