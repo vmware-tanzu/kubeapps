@@ -75,6 +75,12 @@ $ helm install --name kubeapps --namespace kubeapps -f custom-values.yaml bitnam
 
 By default, Kubeapps will track the [community Helm charts](https://github.com/helm/charts) and the [Kubernetes Service Catalog charts](https://github.com/kubernetes-incubator/service-catalog). To change these defaults, override with your desired parameters the `apprepository.initialRepos` object present in the [values.yaml](values.yaml) file.
 
+### Configuring the database to use
+
+Kubeapps supports two database types: MongoDB or PostgreSQL. By default MongoDB is installed. If you want to enable PostgreSQL instead set the following values when installing the application: `mongodb.enabled=false` and `postresql.enabled=true`.
+
+> **Note**: Changing the database type when upgrading is not supported.
+
 ### Configuring connection to a custom namespace Tiller instance
 
 By default, Kubeapps connects to the Tiller Service in the `kube-system` namespace, the default install location for Helm.
