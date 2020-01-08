@@ -178,14 +178,14 @@ apprepository:
     registry: docker.io
     repository: kubeapps/apprepository-controller
     tag: latest
-  ## Bitnami Kubeapps Charts Repo image
+  ## Kubeapps assets synchronization tool
   ## Image used to perform chart repository syncs
-  ## ref: https://hub.docker.com/r/bitnami/kubeapps-chart-repo/tags/
+  ## ref: https://hub.docker.com/r/bitnami/kubeapps-asset-syncer/tags/
   ##
   syncImage:
     registry: docker.io
-    repository: bitnami/kubeapps-chart-repo
-    tag: 1.9.0-r2
+    repository: kubeapps/asset-syncer
+    tag: latest
   ## Initial charts repo proxies to configure
   ##
   initialReposProxy:
@@ -283,6 +283,21 @@ kubeops:
     requests:
       cpu: 25m
       memory: 32Mi
+  ## Kubeops containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+  ##
+  livenessProbe:
+    httpGet:
+      path: /live
+      port: 8080
+    initialDelaySeconds: 60
+    timeoutSeconds: 5
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 8080
+    initialDelaySeconds: 0
+    timeoutSeconds: 5
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -364,24 +379,24 @@ tillerProxy:
   ##
   tolerations: {}
 
-## Chartsvc is used to serve chart metadata over a REST API.
+## Assetsvc is used to serve assets metadata over a REST API.
 ##
-chartsvc:
+assetsvc:
   replicaCount: 2
-  ## Bitnami Kubeapps Chartsvc image
-  ## ref: https://hub.docker.com/r/bitnami/kubeapps-chartsvc/tags/
+  ## Bitnami Kubeapps Assetsvc image
+  ## ref: https://hub.docker.com/r/bitnami/kubeapps-assetsvc/tags/
   ##
   image:
     registry: docker.io
-    repository: bitnami/kubeapps-chartsvc
-    tag: 1.9.0-r0
-  ## Chartsvc service parameters
+    repository: kubeapps/assetsvc
+    tag: latest
+  ## Assetsvc service parameters
   ##
   service:
     ## HTTP Port
     ##
     port: 8080
-  ## Chartsvc containers' resource requests and limits
+  ## Assetsvc containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
   resources:
@@ -394,7 +409,7 @@ chartsvc:
     requests:
       cpu: 25m
       memory: 32Mi
-  ## Chartsvc containers' liveness and readiness probes
+  ## Assetsvc containers' liveness and readiness probes
   ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
   ##
   livenessProbe:
@@ -409,15 +424,15 @@ chartsvc:
       port: 8080
     initialDelaySeconds: 0
     timeoutSeconds: 5
-  ## Affinity for Chartsvc pods assignment
+  ## Affinity for Assetsvc pods assignment
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
   affinity: {}
-  ## Node labels for Chartsvc pods assignment. Evaluated as a template.
+  ## Node labels for Assetsvc pods assignment. Evaluated as a template.
   ## Ref: https://kubernetes.io/docs/user-guide/node-selection/
   ##
   nodeSelector: {}
-  ## Tolerations for Chartsvc pods assignment. Evaluated as a template.
+  ## Tolerations for Assetsvc pods assignment. Evaluated as a template.
   ## Ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
   ##
   tolerations: {}
@@ -486,6 +501,8 @@ dashboard:
 ## ref: https://github.com/helm/charts/blob/master/stable/mongodb/values.yaml
 ##
 mongodb:
+  ## Whether to deploy a mongodb server to satisfy the applications database requirements.
+  enabled: true
   ## Kubeapps uses MongoDB as a cache and persistence is not required
   ##
   persistence:
@@ -512,6 +529,35 @@ mongodb:
     requests:
       cpu: 50m
       memory: 256Mi
+
+## PostgreSQL chart configuration
+## ref: https://github.com/helm/charts/blob/master/stable/postgresql/values.yaml
+##
+postgresql:
+  ## Whether to deploy a postgresql server to satisfy the applications database requirements.
+  enabled: false
+  ## Create a database for Kubeapps on the first run
+  postgresqlDatabase: assets
+  ## Kubeapps uses PostgreSQL as a cache and persistence is not required
+  ##
+  persistence:
+    enabled: false
+    size: 8Gi
+  ## PostgreSQL credentials are handled by kubeapps to facilitate upgrades
+  ##
+  existingSecret: kubeapps-db
+  ## Pod Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+  ##
+  securityContext:
+    enabled: false
+  ## PostgreSQL containers' resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ##
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 250m
 
 ## RBAC paramters
 ##

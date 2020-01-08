@@ -57,11 +57,11 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 
 ```console
 $ helm install --name kubeapps --namespace kubeapps \
-  --set chartsvc.service.port=9090 \
+  --set assetsvc.service.port=9090 \
     bitnami/kubeapps
 ```
 
-The above command sets the port for the chartsvc Service to 9090.
+The above command sets the port for the assetsvc Service to 9090.
 
 Alternatively, a YAML file that specifies the values for parameters can be provided while installing the chart. For example,
 

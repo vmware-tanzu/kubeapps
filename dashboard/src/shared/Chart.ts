@@ -55,5 +55,5 @@ export default class Chart {
     return data.data;
   }
 
-  private static APIEndpoint: string = "api/chartsvc/v1";
+  private static APIEndpoint: string = "api/assetsvc/v1";
 }

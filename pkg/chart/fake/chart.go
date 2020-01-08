@@ -21,7 +21,9 @@ import (
 	"net/http"
 
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
-	"k8s.io/helm/pkg/proto/hapi/chart"
+	chart3 "helm.sh/helm/v3/pkg/chart"
+	chart2 "k8s.io/helm/pkg/proto/hapi/chart"
+	"sigs.k8s.io/yaml"
 )
 
 type FakeChart struct{}
@@ -33,16 +35,35 @@ func (f *FakeChart) ParseDetails(data []byte) (*chartUtils.Details, error) {
 }
 
 func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.HTTPClient, requireV1Support bool) (*chartUtils.ChartMultiVersion, error) {
+	vals, err := getValues([]byte(details.Values))
+	if err != nil {
+		return nil, err
+	}
 	return &chartUtils.ChartMultiVersion{
-		Helm2Chart: &chart.Chart{
-			Metadata: &chart.Metadata{
+		Helm2Chart: &chart2.Chart{
+			Metadata: &chart2.Metadata{
 				Name: details.ChartName,
 			},
-			Values: &chart.Config{
+			Values: &chart2.Config{
 				Raw: details.Values,
 			},
 		},
+		Helm3Chart: &chart3.Chart{
+			Metadata: &chart3.Metadata{
+				Name: details.ChartName,
+			},
+			Values: vals,
+		},
 	}, nil
+}
+
+func getValues(raw []byte) (map[string]interface{}, error) {
+	values := make(map[string]interface{})
+	err := yaml.Unmarshal(raw, &values)
+	if err != nil {
+		return nil, err
+	}
+	return values, nil
 }
 
 func (f *FakeChart) InitNetClient(details *chartUtils.Details) (chartUtils.HTTPClient, error) {

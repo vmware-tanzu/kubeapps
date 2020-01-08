@@ -25,7 +25,7 @@ function trimDescription(desc: string): string {
 const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   const { chart } = props;
   const { icon, name, repo } = chart.attributes;
-  const iconSrc = icon ? `api/chartsvc/${icon}` : placeholder;
+  const iconSrc = icon ? `api/assetsvc/${icon}` : placeholder;
   const latestAppVersion = chart.relationships.latestChartVersion.data.app_version;
   const repoTag = (
     <Link className="ListItem__content__info_tag_link" to={`/catalog/${repo.name}`}>
