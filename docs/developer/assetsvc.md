@@ -1,6 +1,6 @@
 # Kubeapps assetsvc Developer Guide
 
-The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server. Its source is maintained in the [Monocular project repository](https://github.com/helm/monocular).
+The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server.
 
 ## Prerequisites
 
@@ -20,10 +20,10 @@ export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```
 
-## Download the Monocular source code
+## Download the Kubeapps source code
 
 ```bash
-git clone https://github.com/helm/monocular $KUBEAPPS_DIR
+git clone https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
 ```
 
 The `assetsvc` sources are located under the `cmd/assetsvc/` directory.
@@ -81,7 +81,7 @@ Note: If you using a cloud provider to develop the service you will need to reta
 
 ### Running tests
 
-You can run the assetsvc tests along with the tests for the Monocular project:
+You can run the assetsvc tests along with the tests for the Kubeapps project:
 
 ```bash
 go test -v ./...

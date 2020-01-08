@@ -1,6 +1,6 @@
 # Kubeapps asset-syncer Developer Guide
 
-The `chart-repo` component is a tool that scans a Helm chart repository and populates chart metadata in the database. This metadata is then served by the `asse-svc` component.
+The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in the database. This metadata is then served by the `assetsvc` component.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```
 
-## Download the Monocular source code
+## Download the Kubeapps source code
 
 ```bash
 git clone https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
@@ -32,7 +32,7 @@ The `asset-syncer` sources are located under the `cmd/asset-syncer/` directory.
 
 Kubeapps is a Kubernetes-native application. To develop and test Kubeapps components we need a Kubernetes cluster with Kubeapps already installed. Follow the [Kubeapps installation guide](../../chart/kubeapps/README.md) to install Kubeapps in your cluster.
 
-### Building the `chart-repo` image
+### Building the `asset-syncer` image
 
 ```bash
 cd $KUBEAPPS_DIR
@@ -57,11 +57,11 @@ export DB_PASSWORD=$(kubectl get secret --namespace kubeapps kubeapps-db -o go-t
 telepresence --namespace kubeapps --docker-run -e DB_PASSWORD=$DB_PASSWORD --rm -ti kubeapps/asset-syncer /asset-syncer sync --database-user=postgres --database-url=kubeapps-postgresql:5432 --database-type=postgresql --database-name=assets stable https://kubernetes-charts.storage.googleapis.com
 ```
 
-Note that the chart-repo should be rebuilt for new changes to take effect.
+Note that the asset-syncer should be rebuilt for new changes to take effect.
 
 ### Running tests
 
-You can run the chart-repo tests along with the tests for the Monocular project:
+You can run the asset-syncer tests along with the tests for the Kubeapps project:
 
 ```bash
 go test -v ./...
