@@ -264,6 +264,16 @@ export interface IK8sList<I, M> extends IK8sResource {
   } & M;
 }
 
+export interface ICreateAppRepositoryRequest {
+  appRepository: {
+    name: string;
+    repoURL: string;
+    authHeader: string;
+    customCA: string;
+    syncJobPodTemplate: string;
+  };
+}
+
 export interface IAppRepository
   extends IK8sObject<
     {

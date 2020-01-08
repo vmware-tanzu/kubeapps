@@ -195,24 +195,20 @@ describe("installRepo", () => {
       "",
     );
 
-    const authStruct = {
-      header: { secretKeyRef: { key: "authorizationHeader", name: "apprepo-my-repo-secrets" } },
-    };
-
     it("calls AppRepository create including a auth struct", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
         "my-repo",
-        "my-namespace",
         "http://foo.bar",
-        authStruct,
-        {},
+        "Bearer: abc",
+        "",
+        "",
       );
     });
 
-    it("creates the K8s secret", async () => {
+    it("does not create the K8s secret as API includes this", async () => {
       await store.dispatch(installRepoCMDAuth);
-      expect(Secret.create).toHaveBeenCalled();
+      expect(Secret.create).not.toHaveBeenCalled();
     });
 
     it("returns true", async () => {
@@ -230,24 +226,20 @@ describe("installRepo", () => {
       "",
     );
 
-    const authStruct = {
-      customCA: { secretKeyRef: { key: "ca.crt", name: "apprepo-my-repo-secrets" } },
-    };
-
     it("calls AppRepository create including a auth struct", async () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
         "my-repo",
-        "my-namespace",
         "http://foo.bar",
-        authStruct,
-        {},
+        "",
+        "This is a cert!",
+        "",
       );
     });
 
-    it("creates the K8s secret", async () => {
+    it("does not create the K8s secret as API includes this", async () => {
       await store.dispatch(installRepoCMDAuth);
-      expect(Secret.create).toHaveBeenCalled();
+      expect(Secret.create).not.toHaveBeenCalled();
     });
 
     it("returns true", async () => {
@@ -271,22 +263,11 @@ spec:
 
         expect(AppRepository.create).toHaveBeenCalledWith(
           "my-repo",
-          "my-namespace",
           "http://foo.bar",
-          {},
-          { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
+          "",
+          "",
+          safeYAMLTemplate,
         );
-      });
-
-      // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
-      const unsafeYAMLTemplate =
-        '"toString": !<tag:yaml.org,2002:js/function> "function (){very_evil_thing();}"';
-
-      it("does not call AppRepository create with an unsafe pod template", async () => {
-        await store.dispatch(
-          repoActions.installRepo("my-repo", "http://foo.bar", "", "", unsafeYAMLTemplate),
-        );
-        expect(AppRepository.create).not.toHaveBeenCalled();
       });
     });
   });
@@ -294,18 +275,7 @@ spec:
   context("when authHeader and customCA are empty", () => {
     it("calls AppRepository create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
-      expect(AppRepository.create).toHaveBeenCalledWith(
-        "my-repo",
-        "my-namespace",
-        "http://foo.bar",
-        {},
-        {},
-      );
-    });
-
-    it("does not create a K8s secret", async () => {
-      await store.dispatch(installRepoCMD);
-      expect(Secret.create).not.toHaveBeenCalled();
+      expect(AppRepository.create).toHaveBeenCalledWith("my-repo", "http://foo.bar", "", "", "");
     });
 
     it("returns true", async () => {

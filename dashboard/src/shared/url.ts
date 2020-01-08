@@ -10,6 +10,13 @@ export const app = {
   },
 };
 
+export const backend = {
+  apprepositories: {
+    base: "api/v1/apprepositories",
+    create: () => `${backend.apprepositories.base}`,
+  },
+};
+
 export const api = {
   apprepostories: {
     base: `${APIBase}/apis/kubeapps.com/v1alpha1`,
