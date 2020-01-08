@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/any"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	h3chart "helm.sh/helm/v3/pkg/chart"
 	h3 "helm.sh/helm/v3/pkg/release"
@@ -104,9 +105,12 @@ func compatibleConfig(h3r h3.Release) *h2chart.Config {
 	}
 }
 
-// valuesToYaml serializes to YAML and assumes that the serialization succeeded.
+// valuesToYaml serializes to YAML and assumes that the serialization succeeded, logging an error otherwise.
 func valuesToYaml(values map[string]interface{}) string {
-	marshaled, _ := yaml.Marshal(values)
+	marshaled, err := yaml.Marshal(values)
+	if err != nil {
+		log.Errorf("Failed to serialize values to YAML: %s", err.Error())
+	}
 	return string(marshaled)
 }
 
