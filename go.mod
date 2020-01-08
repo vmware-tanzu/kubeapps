@@ -13,6 +13,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8
 	github.com/go-test/deep v1.0.4
+	github.com/golang/protobuf v1.3.2
 	github.com/google/go-cmp v0.3.1
 	github.com/gorilla/mux v1.7.3
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
@@ -28,6 +29,7 @@ require (
 	github.com/urfave/negroni v1.0.0
 	google.golang.org/grpc v1.25.1
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
+	gopkg.in/yaml.v2 v2.2.4
 	helm.sh/helm/v3 v3.0.0
 	k8s.io/api v0.0.0-20191016110408-35e52d86657a
 	k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8

@@ -16,6 +16,7 @@ import (
 const (
 	authHeader     = "Authorization"
 	namespaceParam = "namespace"
+	nameParam      = "releaseName"
 )
 
 // This type represents the fact that a regular handler cannot actually be created until we have access to the request,
@@ -106,4 +107,15 @@ func CreateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, p
 		return
 	}
 	response.NewDataResponse(release).Write(w)
+}
+
+func GetRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+	// Namespace is already known by the RESTClientGetter.
+	releaseName := params[nameParam]
+	release, err := agent.GetRelease(cfg.ActionConfig, releaseName)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(newDashboardCompatibleRelease(*release)).Write(w)
 }
