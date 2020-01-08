@@ -76,7 +76,7 @@ type appRepositoryRequest struct {
 
 type appRepositoryRequestDetails struct {
 	Name               string                 `json:"name"`
-	RepoURL            string                 `json:"repoUrl"`
+	RepoURL            string                 `json:"repoURL"`
 	AuthHeader         string                 `json:"authHeader"`
 	CustomCA           string                 `json:"customCA"`
 	SyncJobPodTemplate corev1.PodTemplateSpec `json:"syncJobPodTemplate"`

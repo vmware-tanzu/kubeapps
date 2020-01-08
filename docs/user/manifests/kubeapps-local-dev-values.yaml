@@ -2,7 +2,7 @@ frontend:
   replicaCount: 1
 tillerProxy:
   replicaCount: 1
-chartsvc:
+assetsvc:
   replicaCount: 1
 dashboard:
-  replicaCount: 1 
+  replicaCount: 1

@@ -1,6 +1,7 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
 import { IAppRepository, IAppRepositoryList } from "./types";
+import * as url from "./url";
 
 export class AppRepository {
   public static async list(namespace: string) {
@@ -25,23 +26,19 @@ export class AppRepository {
     return data;
   }
 
+  // create uses the kubeapps backend API
+  // TODO(mnelson) Update other endpoints to similarly use the backend API, removing the need
+  // for direct k8s api access (for this resource, at least).
   public static async create(
     name: string,
-    namespace: string,
-    url: string,
-    auth: any,
+    repoURL: string,
+    authHeader: string,
+    customCA: string,
     syncJobPodTemplate: any,
   ) {
     const { data } = await axiosWithAuth.post<IAppRepository>(
-      AppRepository.getResourceLink(namespace),
-      {
-        apiVersion: "kubeapps.com/v1alpha1",
-        kind: "AppRepository",
-        metadata: {
-          name,
-        },
-        spec: { auth, type: "helm", url, syncJobPodTemplate },
-      },
+      url.backend.apprepositories.create(),
+      { appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate } },
     );
     return data;
   }
