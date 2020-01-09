@@ -115,6 +115,7 @@ func OperateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, 
 	switch req.FormValue("action") {
 	case "upgrade":
 		upgradeRelease(cfg, w, req, params)
+	// TODO: Add "rollback" and "test" cases here.
 	default:
 		// By default, for maintaining compatibility, we call upgrade.
 		upgradeRelease(cfg, w, req, params)
