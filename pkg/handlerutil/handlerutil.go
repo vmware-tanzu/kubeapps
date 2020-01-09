@@ -83,3 +83,8 @@ func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver, requireV1Suppor
 	}
 	return chartDetails, ch, nil
 }
+
+func QueryParamIsTruthy(param string, req *http.Request) bool {
+	value := req.URL.Query().Get(param)
+	return value == "1" || value == "true"
+}

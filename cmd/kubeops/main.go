@@ -84,6 +84,9 @@ func main() {
 	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		negroni.Wrap(withAgentConfig(handler.OperateRelease)),
 	))
+	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
+		negroni.Wrap(withAgentConfig(handler.DeleteRelease)),
+	))
 
 	// assetsvc reverse proxy
 	authGate := auth.AuthGate()

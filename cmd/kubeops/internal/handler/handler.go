@@ -148,3 +148,18 @@ func GetRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, para
 	}
 	response.NewDataResponse(newDashboardCompatibleRelease(*release)).Write(w)
 }
+
+func DeleteRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+	releaseName := params[nameParam]
+	purge := handlerutil.QueryParamIsTruthy("purge", req)
+	// Helm 3 has --purge by default; --keep-history in Helm 3 corresponds to omitting --purge in Helm 2.
+	// https://stackoverflow.com/a/59210923/2135002
+	keepHistory := !purge
+	err := agent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	w.Header().Set("Status-Code", "200")
+	w.Write([]byte("OK"))
+}
