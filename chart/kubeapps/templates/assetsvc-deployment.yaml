@@ -57,7 +57,7 @@ spec:
             - --database-type=postgresql
             - --database-user=postgres
             - --database-name=assets
-            - --database-url={{ template "kubeapps.postgresql.fullname" . }}:5432
+            - --database-url={{ template "kubeapps.postgresql.fullname" . }}-headless:5432
           env:
             - name: DB_PASSWORD
               valueFrom:

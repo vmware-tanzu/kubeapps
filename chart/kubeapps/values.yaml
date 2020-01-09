@@ -536,6 +536,9 @@ mongodb:
 postgresql:
   ## Whether to deploy a postgresql server to satisfy the applications database requirements.
   enabled: false
+  ## Enable replication for high availability
+  replication:
+    enabled: true
   ## Create a database for Kubeapps on the first run
   postgresqlDatabase: assets
   ## Kubeapps uses PostgreSQL as a cache and persistence is not required
