@@ -19,7 +19,7 @@ const (
 	nameParam      = "releaseName"
 )
 
-const requireV1Support = false
+const isV1SupportRequired = false
 
 // This type represents the fact that a regular handler cannot actually be created until we have access to the request,
 // because a valid action config (and hence agent config) cannot be created until then.
@@ -93,7 +93,7 @@ func ListAllReleases(cfg agent.Config, w http.ResponseWriter, req *http.Request,
 }
 
 func CreateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, requireV1Support)
+	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -123,7 +123,7 @@ func OperateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, 
 
 func upgradeRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
-	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, requireV1Support)
+	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
