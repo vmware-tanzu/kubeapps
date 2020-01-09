@@ -48,6 +48,7 @@ type releaseStub struct {
 	name      string
 	namespace string
 	version   int
+	status    release.Status
 }
 
 // makeReleases adds a slice of releases to the configured storage.
@@ -60,7 +61,7 @@ func makeReleases(t *testing.T, config *Config, rels []releaseStub) {
 			Namespace: r.namespace,
 			Version:   r.version,
 			Info: &release.Info{
-				Status: release.StatusDeployed,
+				Status: r.status,
 			},
 			Chart: &chart.Chart{
 				Metadata: &chart.Metadata{
@@ -93,7 +94,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "default",
 			version:   1,
 			existingReleases: []releaseStub{
-				releaseStub{"otherchart", "default", 1},
+				releaseStub{"otherchart", "default", 1, release.StatusDeployed},
 			},
 			shouldFail: false,
 		},
@@ -104,7 +105,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "default",
 			version:   1,
 			existingReleases: []releaseStub{
-				releaseStub{"mychart", "default", 1},
+				releaseStub{"mychart", "default", 1, release.StatusDeployed},
 			},
 			shouldFail: true,
 		},
@@ -115,7 +116,7 @@ func TestCreateReleases(t *testing.T) {
 			namespace: "dev",
 			version:   1,
 			existingReleases: []releaseStub{
-				releaseStub{"mychart", "dev", 2},
+				releaseStub{"mychart", "dev", 2, release.StatusDeployed},
 			},
 			shouldFail: true,
 		},
@@ -148,6 +149,7 @@ func TestListReleases(t *testing.T) {
 		name         string
 		namespace    string
 		listLimit    int
+		status       string
 		releases     []releaseStub
 		expectedApps []proxy.AppOverview
 	}{
@@ -156,9 +158,9 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1},
-				releaseStub{"wordpress", "default", 1},
-				releaseStub{"not-in-default-namespace", "other", 1},
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+				releaseStub{"wordpress", "default", 1, release.StatusDeployed},
+				releaseStub{"not-in-default-namespace", "other", 1, release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -189,9 +191,9 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1},
-				releaseStub{"wordpress", "default", 1},
-				releaseStub{"not-in-namespace", "other", 1},
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+				releaseStub{"wordpress", "default", 1, release.StatusDeployed},
+				releaseStub{"not-in-namespace", "other", 1, release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -215,9 +217,9 @@ func TestListReleases(t *testing.T) {
 			namespace: "default",
 			listLimit: 1,
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1},
-				releaseStub{"wordpress", "default", 1},
-				releaseStub{"not-in-namespace", "other", 1},
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+				releaseStub{"wordpress", "default", 1, release.StatusDeployed},
+				releaseStub{"not-in-namespace", "other", 1, release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -234,8 +236,8 @@ func TestListReleases(t *testing.T) {
 			namespace: "",
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
-				releaseStub{"wordpress", "default", 1},
-				releaseStub{"wordpress", "dev", 2},
+				releaseStub{"wordpress", "default", 1, release.StatusDeployed},
+				releaseStub{"wordpress", "dev", 2, release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -254,6 +256,50 @@ func TestListReleases(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:      "ignore uninstalled apps",
+			namespace: "",
+			listLimit: defaultListLimit,
+			releases: []releaseStub{
+				releaseStub{"wordpress", "default", 1, release.StatusDeployed},
+				releaseStub{"wordpress", "dev", 2, release.StatusUninstalled},
+			},
+			expectedApps: []proxy.AppOverview{
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
+				},
+			},
+		},
+		{
+			name:      "include uninstalled apps when requesting all statuses",
+			namespace: "",
+			status:    "all",
+			listLimit: defaultListLimit,
+			releases: []releaseStub{
+				releaseStub{"wordpress", "default", 1, release.StatusDeployed},
+				releaseStub{"wordpress", "dev", 2, release.StatusUninstalled},
+			},
+			expectedApps: []proxy.AppOverview{
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1",
+					Status:      "deployed",
+					Icon:        "https://example.com/icon.png",
+				},
+				proxy.AppOverview{
+					ReleaseName: "wordpress",
+					Namespace:   "dev",
+					Version:     "2",
+					Status:      "uninstalled",
+					Icon:        "https://example.com/icon.png",
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -261,7 +307,7 @@ func TestListReleases(t *testing.T) {
 			config := newConfigFixture(t)
 			makeReleases(t, config, tc.releases)
 
-			apps, err := ListReleases(config.ActionConfig, tc.namespace, tc.listLimit, "ignored?")
+			apps, err := ListReleases(config.ActionConfig, tc.namespace, tc.listLimit, tc.status)
 			if err != nil {
 				t.Errorf("%v", err)
 			}
