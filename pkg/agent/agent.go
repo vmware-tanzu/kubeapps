@@ -2,6 +2,7 @@ package agent
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
@@ -9,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/kube"
 	"helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage"
@@ -87,6 +89,25 @@ func CreateRelease(config Config, name, namespace, valueString string, ch *chart
 		return nil, err
 	}
 	return release, nil
+}
+
+func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string, ch *chart.Chart) (*release.Release, error) {
+	// Check if the release already exists:
+	_, err := GetRelease(actionConfig, name)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("Upgrading release %s", name)
+	cmd := action.NewUpgrade(actionConfig)
+	values, err := chartutil.ReadValues([]byte(valuesYaml))
+	if err != nil {
+		return nil, fmt.Errorf("Unable to upgrade the release because values could not be parsed: %v", err)
+	}
+	res, err := cmd.Run(name, ch, values)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to upgrade the release: %v", err)
+	}
+	return res, nil
 }
 
 func GetRelease(actionConfig *action.Configuration, name string) (*release.Release, error) {

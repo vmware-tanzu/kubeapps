@@ -81,6 +81,9 @@ func main() {
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		negroni.Wrap(withAgentConfig(handler.GetRelease)),
 	))
+	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
+		negroni.Wrap(withAgentConfig(handler.OperateRelease)),
+	))
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
 		negroni.Wrap(withAgentConfig(handler.DeleteRelease)),
 	))
