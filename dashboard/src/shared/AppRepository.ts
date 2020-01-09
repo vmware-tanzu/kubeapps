@@ -1,6 +1,6 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
-import { IAppRepository, IAppRepositoryList } from "./types";
+import { IAppRepository, IAppRepositoryList, ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
 export class AppRepository {
@@ -36,7 +36,7 @@ export class AppRepository {
     customCA: string,
     syncJobPodTemplate: any,
   ) {
-    const { data } = await axiosWithAuth.post<IAppRepository>(
+    const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(),
       { appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate } },
     );

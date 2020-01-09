@@ -25,7 +25,7 @@ beforeEach(() => {
   });
   AppRepository.update = jest.fn();
   AppRepository.create = jest.fn().mockImplementationOnce(() => {
-    return { metadata: { name: "repo-abc" } };
+    return { appRepository: { metadata: { name: "repo-abc" } } };
   });
   Secret.create = jest.fn();
 });
@@ -202,7 +202,7 @@ describe("installRepo", () => {
         "http://foo.bar",
         "Bearer: abc",
         "",
-        "",
+        {},
       );
     });
 
@@ -233,7 +233,7 @@ describe("installRepo", () => {
         "http://foo.bar",
         "",
         "This is a cert!",
-        "",
+        {},
       );
     });
 
@@ -261,13 +261,20 @@ spec:
           repoActions.installRepo("my-repo", "http://foo.bar", "", "", safeYAMLTemplate),
         );
 
-        expect(AppRepository.create).toHaveBeenCalledWith(
-          "my-repo",
-          "http://foo.bar",
-          "",
-          "",
-          safeYAMLTemplate,
+        expect(AppRepository.create).toHaveBeenCalledWith("my-repo", "http://foo.bar", "", "", {
+          spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
+        });
+      });
+
+      // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
+      const unsafeYAMLTemplate =
+        '"toString": !<tag:yaml.org,2002:js/function> "function (){very_evil_thing();}"';
+
+      it("does not call AppRepository create with an unsafe pod template", async () => {
+        await store.dispatch(
+          repoActions.installRepo("my-repo", "http://foo.bar", "", "", unsafeYAMLTemplate),
         );
+        expect(AppRepository.create).not.toHaveBeenCalled();
       });
     });
   });
@@ -275,7 +282,7 @@ spec:
   context("when authHeader and customCA are empty", () => {
     it("calls AppRepository create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
-      expect(AppRepository.create).toHaveBeenCalledWith("my-repo", "http://foo.bar", "", "", "");
+      expect(AppRepository.create).toHaveBeenCalledWith("my-repo", "http://foo.bar", "", "", {});
     });
 
     it("returns true", async () => {
