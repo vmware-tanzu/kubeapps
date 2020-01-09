@@ -59,6 +59,20 @@ if [[ "${KUBEAPPS_DB}" == "postgresql" ]]; then
   dbFlags="--set mongodb.enabled=false --set postgresql.enabled=true"
 fi
 
+# Use dev images or bitnami if testing the latest release
+apprepositoryControllerImage="kubeapps/apprepository-controller"
+assetSyncerImage="kubeapps/asset-syncer"
+assetsvcImage="kubeapps/assetsvc"
+dashboardImage="kubeapps/dashboard"
+tillerProxyImage="kubeapps/tiller-proxy"
+if [[ -n "$TEST_LATEST_RELEASE" ]]; then
+  apprepositoryControllerImage="bitnami/kubeapps-apprepository-controller"
+  assetSyncerImage="bitnami/kubeapps-asset-syncer"
+  assetsvcImage="bitnami/kubeapps-assetsvc"
+  dashboardImage="bitnami/kubeapps-dashboard"
+  tillerProxyImage="bitnami/kubeapps-tiller-proxy"
+fi
+
 # Install Kubeapps
 helm dep up $ROOT_DIR/chart/kubeapps/
 helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
@@ -68,16 +82,16 @@ helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
     --set tillerProxy.tls.key="$(cat ${CERTS_DIR}/helm.key.pem)" \
     --set tillerProxy.tls.cert="$(cat ${CERTS_DIR}/helm.cert.pem)" \
     `# Image flags` \
-    --set apprepository.image.tag=$DEV_TAG \
-    --set apprepository.image.repository=kubeapps/apprepository-controller$IMG_MODIFIER \
-    --set apprepository.syncImage.tag=$DEV_TAG \
-    --set apprepository.syncImage.repository=kubeapps/asset-syncer$IMG_MODIFIER \
-    --set assetsvc.image.tag=$DEV_TAG \
-    --set assetsvc.image.repository=kubeapps/assetsvc$IMG_MODIFIER \
-    --set dashboard.image.tag=$DEV_TAG \
-    --set dashboard.image.repository=kubeapps/dashboard$IMG_MODIFIER \
-    --set tillerProxy.image.tag=$DEV_TAG \
-    --set tillerProxy.image.repository=kubeapps/tiller-proxy$IMG_MODIFIER \
+    --set apprepository.image.tag=${DEV_TAG} \
+    --set apprepository.image.repository=${apprepositoryControllerImage}${IMG_MODIFIER} \
+    --set apprepository.syncImage.tag=${DEV_TAG} \
+    --set apprepository.syncImage.repository=${assetSyncerImage}$IMG_MODIFIER \
+    --set assetsvc.image.tag=${DEV_TAG} \
+    --set assetsvc.image.repository=${assetsvcImage}${IMG_MODIFIER} \
+    --set dashboard.image.tag=${DEV_TAG} \
+    --set dashboard.image.repository=${dashboardImage}${IMG_MODIFIER} \
+    --set tillerProxy.image.tag=${DEV_TAG} \
+    --set tillerProxy.image.repository=${tillerProxyImage}${IMG_MODIFIER} \
     `# Database choice flags` \
     ${dbFlags}
 
