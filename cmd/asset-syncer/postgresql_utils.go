@@ -26,9 +26,7 @@ import (
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/lib/pq"
 	_ "github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
 )
 
 type postgresAssetManager struct {
@@ -112,38 +110,22 @@ func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now ti
 }
 
 func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
-	txn, err := m.DB.Begin()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	stmt, err := txn.Prepare(pq.CopyIn(dbutils.ChartTable, "chart_id", "info"))
-	if err != nil {
-		return err
-	}
-
 	for _, chart := range charts {
 		d, err := json.Marshal(chart)
 		if err != nil {
 			return err
 		}
-		_, err = stmt.Exec(chart.ID, string(d))
+		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (chart_id, info)
+		VALUES ($1, $2)
+		ON CONFLICT (chart_id) 
+		DO UPDATE SET info = $2
+		`, dbutils.ChartTable), chart.ID, string(d))
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = stmt.Exec()
-	if err != nil {
-		return err
-	}
-
-	err = stmt.Close()
-	if err != nil {
-		return err
-	}
-
-	return txn.Commit()
+	return nil
 }
 
 func (m *postgresAssetManager) removeMissingCharts(charts []models.Chart) error {
