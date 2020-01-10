@@ -3,12 +3,14 @@ package handler
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
 	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
+	"github.com/urfave/negroni"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -76,6 +78,16 @@ func WithAgentConfig(storageForDriver agent.StorageForDriver, options agent.Opti
 			}
 			f(cfg, w, req, params)
 		}
+	}
+}
+
+// AddRouteWith makes it easier to define routes in main.go and avoids code repetition.
+func AddRouteWith(
+	r *mux.Router,
+	withAgentConfig func(dependentHandler) handlerutil.WithParams,
+) func(verb, path string, handler dependentHandler) {
+	return func(verb, path string, handler dependentHandler) {
+		r.Methods(verb).Path(path).Handler(negroni.New(negroni.Wrap(withAgentConfig(handler))))
 	}
 }
 

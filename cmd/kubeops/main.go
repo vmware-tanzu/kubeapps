@@ -68,25 +68,13 @@ func main() {
 
 	// Routes
 	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
-	apiv1 := r.PathPrefix("/v1").Subrouter()
-	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
-		negroni.Wrap(withAgentConfig(handler.ListAllReleases)),
-	))
-	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
-		negroni.Wrap(withAgentConfig(handler.ListReleases)),
-	))
-	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
-		negroni.Wrap(withAgentConfig(handler.CreateRelease)),
-	))
-	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
-		negroni.Wrap(withAgentConfig(handler.GetRelease)),
-	))
-	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
-		negroni.Wrap(withAgentConfig(handler.OperateRelease)),
-	))
-	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
-		negroni.Wrap(withAgentConfig(handler.DeleteRelease)),
-	))
+	addRoute := handler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withAgentConfig)
+	addRoute("GET", "/releases", handler.ListAllReleases)
+	addRoute("GET", "/namespaces/{namespace}/releases", handler.ListReleases)
+	addRoute("POST", "/namespaces/{namespace}/releases", handler.CreateRelease)
+	addRoute("GET", "/namespaces/{namespace}/releases/{releaseName}", handler.GetRelease)
+	addRoute("PUT", "/namespaces/{namespace}/releases/{releaseName}", handler.OperateRelease)
+	addRoute("DELETE", "/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// assetsvc reverse proxy
 	authGate := auth.AuthGate()
