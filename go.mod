@@ -30,7 +30,7 @@ require (
 	google.golang.org/grpc v1.25.1
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 	gopkg.in/yaml.v2 v2.2.4
-	helm.sh/helm/v3 v3.0.0
+	helm.sh/helm/v3 v3.0.2
 	k8s.io/api v0.0.0-20191016110408-35e52d86657a
 	k8s.io/apimachinery v0.0.0-20191004115801-a2eda9f80ab8
 	k8s.io/cli-runtime v0.0.0-20191016114015-74ad18325ed5
