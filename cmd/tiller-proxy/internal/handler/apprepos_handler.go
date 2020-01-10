@@ -76,11 +76,16 @@ type appRepositoryRequest struct {
 
 type appRepositoryRequestDetails struct {
 	Name               string                 `json:"name"`
-	RepoURL            string                 `json:"repoUrl"`
+	RepoURL            string                 `json:"repoURL"`
 	AuthHeader         string                 `json:"authHeader"`
 	CustomCA           string                 `json:"customCA"`
 	SyncJobPodTemplate corev1.PodTemplateSpec `json:"syncJobPodTemplate"`
 	ResyncRequests     uint                   `json:"resyncRequests"`
+}
+
+// appRepositoryResponse is used to marshal the JSON response
+type appRepositoryResponse struct {
+	AppRepository v1alpha1.AppRepository `json:"appRepository"`
 }
 
 // NewAppRepositoriesHandler returns an AppRepositories handler configured with
@@ -137,6 +142,7 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 	if a.kubeappsNamespace == "" {
 		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
 		http.Error(w, "kubeappsNamespace must be configured to enable app repository handler", http.StatusUnauthorized)
+		return
 	}
 
 	token := auth.ExtractToken(req.Header.Get("Authorization"))
@@ -190,7 +196,15 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("OK"))
+	response := appRepositoryResponse{
+		AppRepository: *appRepo,
+	}
+	responseBody, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBody)
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
@@ -256,8 +270,8 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 			Name: secretNameForRepo(appRepo.Name),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
-					APIVersion:         appRepo.TypeMeta.APIVersion,
-					Kind:               appRepo.TypeMeta.Kind,
+					APIVersion:         "kubeapps.com/v1alpha1",
+					Kind:               "AppRepository",
 					Name:               appRepo.ObjectMeta.Name,
 					UID:                appRepo.ObjectMeta.UID,
 					BlockOwnerDeletion: &blockOwnerDeletion,

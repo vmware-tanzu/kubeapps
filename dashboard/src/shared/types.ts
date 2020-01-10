@@ -290,6 +290,10 @@ export interface IAppRepository
     undefined
   > {}
 
+export interface ICreateAppRepositoryResponse {
+  appRepository: IAppRepository;
+}
+
 export interface IAppRepositoryList
   extends IK8sList<
     IAppRepository,

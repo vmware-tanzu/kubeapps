@@ -3,10 +3,9 @@ import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
 import Chart from "../shared/Chart";
-import Secret from "../shared/Secret";
 import { errorChart } from "./charts";
 
-import { IAppRepository, IOwnerReference, IStoreState, NotFoundError } from "../shared/types";
+import { IAppRepository, IStoreState, NotFoundError } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
@@ -131,69 +130,21 @@ export const installRepo = (
   syncJobPodTemplate: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
+    let syncJobPodTemplateObj = {};
     try {
-      const {
-        config: { namespace },
-      } = getState();
-      interface ISecretKeyRef {
-        key: string;
-        name: string;
-      }
-      const auth: {
-        header?: { secretKeyRef: ISecretKeyRef };
-        customCA?: { secretKeyRef: ISecretKeyRef };
-      } = {};
-      const secrets: { [s: string]: string } = {};
-      const secretName = `apprepo-${name}-secrets`;
-      if (authHeader.length || customCA.length) {
-        // ensure we can create secrets in the kubeapps namespace
-        if (authHeader.length) {
-          auth.header = {
-            secretKeyRef: {
-              key: "authorizationHeader",
-              name: secretName,
-            },
-          };
-          secrets.authorizationHeader = btoa(authHeader);
-        }
-        if (customCA.length) {
-          auth.customCA = {
-            secretKeyRef: {
-              key: "ca.crt",
-              name: secretName,
-            },
-          };
-          secrets["ca.crt"] = btoa(customCA);
-        }
-      }
-      let syncJobPodTemplateObj = {};
       if (syncJobPodTemplate.length) {
         syncJobPodTemplateObj = yaml.safeLoad(syncJobPodTemplate);
       }
       dispatch(addRepo());
-      const apprepo = await AppRepository.create(
+      const data = await AppRepository.create(
         name,
-        namespace,
         repoURL,
-        auth,
+        authHeader,
+        customCA,
         syncJobPodTemplateObj,
       );
-      dispatch(addedRepo(apprepo));
+      dispatch(addedRepo(data.appRepository));
 
-      if (authHeader.length || customCA.length) {
-        await Secret.create(
-          secretName,
-          secrets,
-          {
-            apiVersion: apprepo.apiVersion,
-            blockOwnerDeletion: true,
-            kind: apprepo.kind,
-            name: apprepo.metadata.name,
-            uid: apprepo.metadata.uid,
-          } as IOwnerReference,
-          namespace,
-        );
-      }
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "create"));

@@ -80,6 +80,12 @@ func TestAppRepositoryCreate(t *testing.T) {
 			expectedCode:      http.StatusCreated,
 		},
 		{
+			name:              "it creates an app repository with an empty template",
+			kubeappsNamespace: "kubeapps",
+			requestData:       `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "syncJobPodTemplate": {}}}`,
+			expectedCode:      http.StatusCreated,
+		},
+		{
 			name:              "it errors if the repo exists in the kubeapps ns already",
 			kubeappsNamespace: "kubeapps",
 			requestData:       `{"appRepository": {"name": "bitnami"}}`,
@@ -156,6 +162,17 @@ func TestAppRepositoryCreate(t *testing.T) {
 				}
 
 				if got, want := responseAppRepo, requestAppRepo; !cmp.Equal(want, got) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+				}
+
+				// Ensure the response contained the created app repository
+				var appRepoResponse appRepositoryResponse
+				err = json.NewDecoder(response.Body).Decode(&appRepoResponse)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				expectedResponse := appRepositoryResponse{AppRepository: *requestAppRepo}
+				if got, want := appRepoResponse, expectedResponse; !cmp.Equal(want, got) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
 
@@ -344,7 +361,7 @@ func TestSecretForRequest(t *testing.T) {
 	blockOwnerDeletion := true
 	ownerRefs := []metav1.OwnerReference{
 		metav1.OwnerReference{
-			APIVersion:         "v1",
+			APIVersion:         "kubeapps.com/v1alpha1",
 			Kind:               "AppRepository",
 			Name:               "test-repo",
 			UID:                "abcd1234",
