@@ -7,7 +7,9 @@ package handler
 import (
 	"strings"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	h3chart "helm.sh/helm/v3/pkg/chart"
@@ -17,9 +19,17 @@ import (
 )
 
 func newDashboardCompatibleRelease(h3r h3.Release) h2.Release {
+	var deleted *timestamp.Timestamp
+	if !h3r.Info.Deleted.IsZero() {
+		var err error
+		deleted, err = ptypes.TimestampProto(h3r.Info.Deleted.Time)
+		if err != nil {
+			log.Errorf("Failed to parse deletion time %v", err)
+		}
+	}
 	return h2.Release{
 		Name:      h3r.Name,
-		Info:      &h2.Info{Status: compatibleStatus(*h3r.Info)},
+		Info:      &h2.Info{Status: compatibleStatus(*h3r.Info), Deleted: deleted},
 		Chart:     compatibleChart(*h3r.Chart),
 		Config:    compatibleConfig(h3r),
 		Manifest:  h3r.Manifest,
