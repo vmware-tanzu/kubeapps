@@ -127,7 +127,7 @@ export const installRepo = (
   repoURL: string,
   authHeader: string,
   customCA: string,
-  syncJobPodTemplate: any,
+  syncJobPodTemplate: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     let syncJobPodTemplateObj = {};

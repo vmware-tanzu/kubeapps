@@ -63,8 +63,7 @@ var (
 	tlsCertDefault   = fmt.Sprintf("%s/tls.crt", os.Getenv("HELM_HOME"))
 	tlsKeyDefault    = fmt.Sprintf("%s/tls.key", os.Getenv("HELM_HOME"))
 
-	assetsvcURL       string
-	kubeappsNamespace string
+	assetsvcURL string
 )
 
 func init() {
@@ -81,8 +80,6 @@ func init() {
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
 	pflag.StringVar(&assetsvcURL, "assetsvc-url", "http://kubeapps-internal-assetsvc:8080", "URL to the internal assetsvc")
-	// kubeapps-namespace is required only for the app repository handler which may move in the future.
-	pflag.StringVar(&kubeappsNamespace, "kubeapps-namespace", "", "namespace in which Kubeapps is running")
 }
 
 func main() {
@@ -186,7 +183,7 @@ func main() {
 	// Backend routes unrelated to tiller-proxy functionality.
 	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
 	// reconsider where these endpoints live.
-	appreposHandler, err := handler.NewAppRepositoriesHandler(kubeappsNamespace)
+	appreposHandler, err := handler.NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
 	if err != nil {
 		log.Fatalf("Unable to create app repositories handler: %+v", err)
 	}
