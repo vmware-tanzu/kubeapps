@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
@@ -44,18 +43,6 @@ func StorageForMemory(_ string, _ *kubernetes.Clientset) *storage.Storage {
 	return storage.Init(d)
 }
 
-type Options struct {
-	ListLimit int
-	Timeout   int64
-	UserAgent string
-}
-
-type Config struct {
-	ActionConfig *action.Configuration
-	AgentOptions Options
-	ChartClient  chartUtils.Resolver
-}
-
 func ListReleases(actionConfig *action.Configuration, namespace string, listLimit int, status string) ([]proxy.AppOverview, error) {
 	allNamespaces := namespace == ""
 	cmd := action.NewList(actionConfig)
@@ -79,8 +66,8 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	return appOverviews, nil
 }
 
-func CreateRelease(config Config, name, namespace, valueString string, ch *chart.Chart) (*release.Release, error) {
-	cmd := action.NewInstall(config.ActionConfig)
+func CreateRelease(actionConfig *action.Configuration, name, namespace, valueString string, ch *chart.Chart) (*release.Release, error) {
+	cmd := action.NewInstall(actionConfig)
 	cmd.ReleaseName = name
 	cmd.Namespace = namespace
 	values, err := getValues([]byte(valueString))

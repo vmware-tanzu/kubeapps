@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	authFake "github.com/kubeapps/kubeapps/pkg/auth/fake"
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
@@ -25,12 +24,12 @@ import (
 
 const defaultListLimit = 256
 
-// newConfigFixture returns an agent.Config with fake clients
+// newConfigFixture returns a Config with fake clients
 // and memory storage.
-func newConfigFixture(t *testing.T) *agent.Config {
+func newConfigFixture(t *testing.T) *Config {
 	t.Helper()
 
-	return &agent.Config{
+	return &Config{
 		ActionConfig: &action.Configuration{
 			Releases:     storage.Init(driver.NewMemory()),
 			KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
@@ -41,7 +40,7 @@ func newConfigFixture(t *testing.T) *agent.Config {
 			},
 		},
 		ChartClient: &chartFake.FakeChart{},
-		AgentOptions: agent.Options{
+		Options: Options{
 			ListLimit: defaultListLimit,
 		},
 	}
