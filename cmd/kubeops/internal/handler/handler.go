@@ -11,6 +11,7 @@ import (
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	"github.com/urfave/negroni"
+	"helm.sh/helm/v3/pkg/action"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -24,10 +25,25 @@ const (
 const isV1SupportRequired = false
 
 // This type represents the fact that a regular handler cannot actually be created until we have access to the request,
-// because a valid action config (and hence agent config) cannot be created until then.
-// If the agent config were a "this" argument instead of an explicit argument, it would be easy to create a handler with a "zero" config.
-// This approach practically eliminates that risk; it is much easier to use WithAgentConfig to create a handler guaranteed to use a valid agent config.
-type dependentHandler func(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params)
+// because a valid action config (and hence handler config) cannot be created until then.
+// If the handler config were a "this" argument instead of an explicit argument, it would be easy to create a handler with a "zero" config.
+// This approach practically eliminates that risk; it is much easier to use WithHandlerConfig to create a handler guaranteed to use a valid handler config.
+type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params)
+
+// Options represents options that can be created without a bearer token, i.e. once at application startup.
+type Options struct {
+	ListLimit int
+	Timeout   int64
+	UserAgent string
+}
+
+// Config represents data needed by each handler to be able to create Helm 3 actions.
+// It cannot be created without a bearer token, so a new one must be created upon each HTTP request.
+type Config struct {
+	ActionConfig *action.Configuration
+	Options      Options
+	ChartClient  chartUtils.Resolver
+}
 
 func NewInClusterConfig(token string) (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
@@ -39,10 +55,10 @@ func NewInClusterConfig(token string) (*rest.Config, error) {
 	return config, nil
 }
 
-// WithAgentConfig takes a dependentHandler and creates a regular (WithParams) handler that,
-// for every request, will create an agent config for itself.
+// WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
+// for every request, will create a handler config for itself.
 // Written in a curried fashion for convenient usage; see cmd/kubeops/main.go.
-func WithAgentConfig(storageForDriver agent.StorageForDriver, options agent.Options) func(f dependentHandler) handlerutil.WithParams {
+func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 			namespace := params[namespaceParam]
@@ -71,8 +87,8 @@ func WithAgentConfig(storageForDriver agent.StorageForDriver, options agent.Opti
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			cfg := agent.Config{
-				AgentOptions: options,
+			cfg := Config{
+				Options:      options,
 				ActionConfig: actionConfig,
 				ChartClient:  chartUtils.NewChartClient(kubeClient, appRepoClient, options.UserAgent),
 			}
@@ -84,15 +100,15 @@ func WithAgentConfig(storageForDriver agent.StorageForDriver, options agent.Opti
 // AddRouteWith makes it easier to define routes in main.go and avoids code repetition.
 func AddRouteWith(
 	r *mux.Router,
-	withAgentConfig func(dependentHandler) handlerutil.WithParams,
+	withHandlerConfig func(dependentHandler) handlerutil.WithParams,
 ) func(verb, path string, handler dependentHandler) {
 	return func(verb, path string, handler dependentHandler) {
-		r.Methods(verb).Path(path).Handler(negroni.New(negroni.Wrap(withAgentConfig(handler))))
+		r.Methods(verb).Path(path).Handler(negroni.New(negroni.Wrap(withHandlerConfig(handler))))
 	}
 }
 
-func ListReleases(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	apps, err := agent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.AgentOptions.ListLimit, req.URL.Query().Get("statuses"))
+func ListReleases(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+	apps, err := agent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.Options.ListLimit, req.URL.Query().Get("statuses"))
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -100,11 +116,11 @@ func ListReleases(cfg agent.Config, w http.ResponseWriter, req *http.Request, pa
 	response.NewDataResponse(apps).Write(w)
 }
 
-func ListAllReleases(cfg agent.Config, w http.ResponseWriter, req *http.Request, _ handlerutil.Params) {
+func ListAllReleases(cfg Config, w http.ResponseWriter, req *http.Request, _ handlerutil.Params) {
 	ListReleases(cfg, w, req, make(map[string]string))
 }
 
-func CreateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -114,7 +130,7 @@ func CreateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, p
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	release, err := agent.CreateRelease(cfg, releaseName, namespace, valuesString, ch)
+	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -123,7 +139,7 @@ func CreateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, p
 }
 
 // OperateRelease decides which method to call depending on the "action" query param.
-func OperateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+func OperateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	switch req.FormValue("action") {
 	case "upgrade":
 		upgradeRelease(cfg, w, req, params)
@@ -134,7 +150,7 @@ func OperateRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, 
 	}
 }
 
-func upgradeRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
@@ -151,7 +167,7 @@ func upgradeRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, 
 
 }
 
-func GetRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	// Namespace is already known by the RESTClientGetter.
 	releaseName := params[nameParam]
 	release, err := agent.GetRelease(cfg.ActionConfig, releaseName)
@@ -162,7 +178,7 @@ func GetRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, para
 	response.NewDataResponse(newDashboardCompatibleRelease(*release)).Write(w)
 }
 
-func DeleteRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
 	purge := handlerutil.QueryParamIsTruthy("purge", req)
 	// Helm 3 has --purge by default; --keep-history in Helm 3 corresponds to omitting --purge in Helm 2.

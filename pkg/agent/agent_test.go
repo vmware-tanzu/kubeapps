@@ -22,24 +22,18 @@ import (
 
 const defaultListLimit = 256
 
-// newConfigFixture returns an agent.Config with fake clients
+// newActionConfigFixture returns an action.Configuration with fake clients
 // and memory storage.
-func newConfigFixture(t *testing.T) *Config {
+func newActionConfigFixture(t *testing.T) *action.Configuration {
 	t.Helper()
 
-	return &Config{
-		ActionConfig: &action.Configuration{
-			Releases:     storage.Init(driver.NewMemory()),
-			KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
-			Capabilities: chartutil.DefaultCapabilities,
-			Log: func(format string, v ...interface{}) {
-				t.Helper()
-				t.Logf(format, v...)
-			},
-		},
-		ChartClient: &chartFake.FakeChart{},
-		AgentOptions: Options{
-			ListLimit: defaultListLimit,
+	return &action.Configuration{
+		Releases:     storage.Init(driver.NewMemory()),
+		KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+		Capabilities: chartutil.DefaultCapabilities,
+		Log: func(format string, v ...interface{}) {
+			t.Helper()
+			t.Logf(format, v...)
 		},
 	}
 }
@@ -52,9 +46,9 @@ type releaseStub struct {
 }
 
 // makeReleases adds a slice of releases to the configured storage.
-func makeReleases(t *testing.T, config *Config, rels []releaseStub) {
+func makeReleases(t *testing.T, actionConfig *action.Configuration, rels []releaseStub) {
 	t.Helper()
-	storage := config.ActionConfig.Releases
+	storage := actionConfig.Releases
 	for _, r := range rels {
 		rel := &release.Release{
 			Name:      r.name,
@@ -125,14 +119,14 @@ func TestCreateReleases(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			// Initialize environment for test
-			config := newConfigFixture(t)
-			makeReleases(t, config, tc.existingReleases)
+			actionConfig := newActionConfigFixture(t)
+			makeReleases(t, actionConfig, tc.existingReleases)
 			fakechart := chartFake.FakeChart{}
 			ch, _ := fakechart.GetChart(&kubechart.Details{
 				ChartName: tc.chartName,
 			}, nil, false)
 			// Perform test
-			rls, err := CreateRelease(*config, tc.chartName, tc.namespace, tc.values, ch.Helm3Chart)
+			rls, err := CreateRelease(actionConfig, tc.chartName, tc.namespace, tc.values, ch.Helm3Chart)
 			// Check result
 			if tc.shouldFail && err == nil {
 				t.Errorf("Should fail with %v; instead got %s in %s", tc.desc, tc.releaseName, tc.namespace)
@@ -304,10 +298,10 @@ func TestListReleases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			config := newConfigFixture(t)
-			makeReleases(t, config, tc.releases)
+			actionConfig := newActionConfigFixture(t)
+			makeReleases(t, actionConfig, tc.releases)
 
-			apps, err := ListReleases(config.ActionConfig, tc.namespace, tc.listLimit, tc.status)
+			apps, err := ListReleases(actionConfig, tc.namespace, tc.listLimit, tc.status)
 			if err != nil {
 				t.Errorf("%v", err)
 			}
