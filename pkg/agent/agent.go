@@ -63,6 +63,9 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 		cmd.AllNamespaces = true
 	}
 	cmd.Limit = listLimit
+	if status == "all" {
+		cmd.StateMask = action.ListAll
+	}
 	releases, err := cmd.Run()
 	if err != nil {
 		return nil, err
