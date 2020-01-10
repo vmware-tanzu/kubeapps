@@ -65,7 +65,7 @@ func (m *postgresAssetManager) Sync(charts []models.Chart) error {
 
 func (m *postgresAssetManager) initTables() error {
 	_, err := m.DB.Exec(fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, info jsonb NOT NULL)",
+		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, chart_id varchar unique, info jsonb NOT NULL)",
 		dbutils.ChartTable,
 	))
 	if err != nil {
@@ -117,7 +117,7 @@ func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
 		log.Fatal(err)
 	}
 
-	stmt, err := txn.Prepare(pq.CopyIn(dbutils.ChartTable, "info"))
+	stmt, err := txn.Prepare(pq.CopyIn(dbutils.ChartTable, "chart_id", "info"))
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
 		if err != nil {
 			return err
 		}
-		_, err = stmt.Exec(string(d))
+		_, err = stmt.Exec(chart.ID, string(d))
 		if err != nil {
 			return err
 		}
