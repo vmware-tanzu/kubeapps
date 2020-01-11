@@ -52,6 +52,7 @@ func TestActions(t *testing.T) {
 		Description      string
 		ExistingReleases []release.Release
 		DisableAuth      bool
+		Skip             bool //TODO: Remove this when the memory bug is fixed
 		// Request params
 		RequestBody  string
 		RequestQuery string
@@ -117,10 +118,51 @@ func TestActions(t *testing.T) {
 			},
 			ResponseBody: "",
 		},
+		{
+			// Scenario params
+			Description:      "Get a non-existing release",
+			ExistingReleases: []release.Release{},
+			DisableAuth:      true,
+			Skip:             true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        404,
+			RemainingReleases: []release.Release{},
+			ResponseBody:      "",
+		},
+		{
+			// Scenario params
+			Description: "Get a simple release",
+			ExistingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
+			},
+			DisableAuth: true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
+			},
+			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":1}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
+			// TODO Remove this `if` statement after the memory driver bug is fixed
+			if test.Skip {
+				t.SkipNow()
+			}
 			// Initialize environment for test
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
 			if !test.DisableAuth {
@@ -138,6 +180,8 @@ func TestActions(t *testing.T) {
 			}
 			// Perform request
 			switch test.Action {
+			case "get":
+				GetRelease(*cfg, response, req, test.Params)
 			case "create":
 				CreateRelease(*cfg, response, req, test.Params)
 			default:
