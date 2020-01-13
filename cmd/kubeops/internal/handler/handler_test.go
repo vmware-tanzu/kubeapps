@@ -192,6 +192,7 @@ func TestActions(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
 			// TODO Remove this `if` statement after the memory driver bug is fixed
+			// Memory Driver Bug: https://github.com/helm/helm/pull/7372
 			if test.Skip {
 				t.SkipNow()
 			}

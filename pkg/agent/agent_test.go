@@ -363,7 +363,7 @@ func TestDeleteRelease(t *testing.T) {
 			makeReleases(t, cfg, tc.releases)
 			err := DeleteRelease(cfg, tc.releaseToDelete, true)
 			t.Logf("error: %v", err)
-			if isOk := err != nil == tc.shouldFail; !isOk {
+			if didFail := err != nil; didFail != tc.shouldFail {
 				t.Errorf("wanted fail = %v, got fail = %v", tc.shouldFail, err != nil)
 			}
 		})
