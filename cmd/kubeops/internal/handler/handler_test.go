@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 
@@ -263,6 +264,14 @@ func TestActions(t *testing.T) {
 				t.Errorf("Expecting a StatusCode %d, received %d", test.StatusCode, response.Code)
 			}
 			releases := derefReleases(cfg.ActionConfig.Releases)
+			// The Helm memory driver does not appear to have consistent ordering.
+			// See https://github.com/helm/helm/issues/7263
+			// Just sort by "name.version.namespace" which is good enough here.
+			sort.Slice(releases, func(i, j int) bool {
+				iKey := fmt.Sprintf("%s.%d.%s", releases[i].Name, releases[i].Version, releases[i].Namespace)
+				jKey := fmt.Sprintf("%s.%d.%s", releases[j].Name, releases[j].Version, releases[j].Namespace)
+				return iKey < jKey
+			})
 			rlsComparer := cmp.Comparer(func(x release.Release, y release.Release) bool {
 				return x.Name == y.Name &&
 					x.Version == y.Version &&
