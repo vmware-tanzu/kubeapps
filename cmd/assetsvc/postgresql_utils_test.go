@@ -146,8 +146,8 @@ func Test_getChartWithFilters(t *testing.T) {
 	dbChart := models.Chart{
 		Name: "foo",
 		ChartVersions: []models.ChartVersion{
-			{Version: "1.0.0", AppVersion: "1.0.1"},
 			{Version: "2.0.0", AppVersion: "2.0.2"},
+			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
 	}
 	chartsResponse = []*models.Chart{&dbChart}
@@ -160,6 +160,7 @@ func Test_getChartWithFilters(t *testing.T) {
 	expectedCharts := []*models.Chart{&models.Chart{
 		Name: "foo",
 		ChartVersions: []models.ChartVersion{
+			{Version: "2.0.0", AppVersion: "2.0.2"},
 			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
 	}}
