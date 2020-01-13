@@ -1,4 +1,4 @@
-package handler
+package helm3to2
 
 import (
 	"net/http/httptest"
@@ -14,7 +14,7 @@ import (
 	"testing"
 )
 
-func TestNewDashboardCompatibleRelease(t *testing.T) {
+func TestConvert(t *testing.T) {
 	type testScenario struct {
 		// Scenario params
 		Description  string
@@ -124,7 +124,7 @@ func TestNewDashboardCompatibleRelease(t *testing.T) {
 				}
 			}()
 			// Perform conversion
-			compatibleH3rls, err := newDashboardCompatibleRelease(test.Helm3Release)
+			compatibleH3rls, err := Convert(test.Helm3Release)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}

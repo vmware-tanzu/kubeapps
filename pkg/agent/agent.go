@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
@@ -16,7 +17,6 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/yaml"
 )
 
@@ -61,7 +61,11 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	appOverviews := make([]proxy.AppOverview, 0)
 	for _, r := range releases {
 		if allNamespaces || r.Namespace == namespace {
-			appOverviews = append(appOverviews, appOverviewFromRelease(r))
+			appOverview, err := appOverviewFromRelease(r)
+			if err != nil {
+				return nil, err
+			}
+			appOverviews = append(appOverviews, appOverview)
 		}
 	}
 	return appOverviews, nil
@@ -183,25 +187,18 @@ func ParseDriverType(raw string) (StorageForDriver, error) {
 	}
 }
 
-func appOverviewFromRelease(r *release.Release) proxy.AppOverview {
-	return proxy.AppOverview{
-		ReleaseName: r.Name,
-		Version:     r.Chart.Metadata.Version,
-		Icon:        r.Chart.Metadata.Icon,
-		Namespace:   r.Namespace,
-		Status:      r.Info.Status.String(),
-		Chart:       r.Chart.Name(),
-		ChartMetadata: chartv1.Metadata{
-			Name:        r.Chart.Metadata.Name,
-			Home:        r.Chart.Metadata.Home,
-			Sources:     r.Chart.Metadata.Sources,
-			Version:     r.Chart.Metadata.Version,
-			Description: r.Chart.Metadata.Description,
-			Keywords:    r.Chart.Metadata.Keywords,
-			Icon:        r.Chart.Metadata.Icon,
-			ApiVersion:  r.Chart.Metadata.APIVersion,
-			Tags:        r.Chart.Metadata.Tags,
-			AppVersion:  r.Chart.Metadata.AppVersion,
-		},
+func appOverviewFromRelease(r *release.Release) (proxy.AppOverview, error) {
+	releaseHelm2, err := helm3to2.Convert(*r)
+	if err != nil {
+		return proxy.AppOverview{}, fmt.Errorf("Unable to parse release as a Helm v2 release: %v", err)
 	}
+	return proxy.AppOverview{
+		ReleaseName:   r.Name,
+		Version:       r.Chart.Metadata.Version,
+		Icon:          r.Chart.Metadata.Icon,
+		Namespace:     r.Namespace,
+		Status:        r.Info.Status.String(),
+		Chart:         r.Chart.Name(),
+		ChartMetadata: *releaseHelm2.Chart.Metadata,
+	}, nil
 }

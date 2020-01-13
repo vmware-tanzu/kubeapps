@@ -74,8 +74,8 @@ func makeReleases(t *testing.T, actionConfig *action.Configuration, rels []relea
 }
 
 func TestGetRelease(t *testing.T) {
-	fooApp := releaseStub{"foo", "my_ns", 1, release.StatusDeployed}
-	barApp := releaseStub{"bar", "other_ns", 1, release.StatusDeployed}
+	fooApp := releaseStub{"foo", "my_ns", 1, "1.0.0", release.StatusDeployed}
+	barApp := releaseStub{"bar", "other_ns", 1, "1.0.0", release.StatusDeployed}
 	testCases := []struct {
 		description      string
 		existingReleases []releaseStub
@@ -225,8 +225,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 				proxy.AppOverview{
@@ -236,8 +237,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 				proxy.AppOverview{
@@ -247,8 +249,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 			},
@@ -270,8 +273,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 				proxy.AppOverview{
@@ -281,8 +285,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 			},
@@ -304,8 +309,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 			},
@@ -316,7 +322,7 @@ func TestListReleases(t *testing.T) {
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
 				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "dev", 2, "1.0.0", release.StatusDeployed},
+				releaseStub{"wordpress", "dev", 2, "2.0.0", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -326,19 +332,21 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
 					Namespace:   "dev",
-					Version:     "1.0.0",
+					Version:     "2.0.0",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "2.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 			},
@@ -359,8 +367,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 			},
@@ -382,8 +391,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 				proxy.AppOverview{
@@ -393,8 +403,9 @@ func TestListReleases(t *testing.T) {
 					Status:      "uninstalled",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version: "1.0.0",
-						Icon:    "https://example.com/icon.png",
+						Version:     "1.0.0",
+						Icon:        "https://example.com/icon.png",
+						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 			},
@@ -440,14 +451,14 @@ func TestDeleteRelease(t *testing.T) {
 		{
 			description: "Delete a release",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
 			},
 			releaseToDelete: "airwatch",
 		},
 		{
 			description: "Delete a non-existing release",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
 			},
 			releaseToDelete: "apache",
 			shouldFail:      true,
@@ -455,8 +466,8 @@ func TestDeleteRelease(t *testing.T) {
 		{
 			description: "Delete a release in different namespace",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
-				releaseStub{"apache", "dev", 1, release.StatusDeployed},
+				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
+				releaseStub{"apache", "dev", 1, "1.0.0", release.StatusDeployed},
 			},
 			releaseToDelete: "apache",
 		},

@@ -2,7 +2,7 @@
 // This file is a compatibility layer that translates Helm 3 releases to a Helm 2-similar format suitable for the Dashboard.
 // Note that h3.Release and h2.Release are not isomorphic, so it is impossible to map between them in general.
 
-package handler
+package helm3to2
 
 import (
 	"fmt"
@@ -19,7 +19,9 @@ import (
 	h2 "k8s.io/helm/pkg/proto/hapi/release"
 )
 
-func newDashboardCompatibleRelease(h3r h3.Release) (h2.Release, error) {
+// Convert returns a Helm2 compatible release based on the info from a Helm3 release
+// TODO: This method is meant to be deleted once the support for Helm2 is dropped
+func Convert(h3r h3.Release) (h2.Release, error) {
 	var deleted *timestamp.Timestamp
 	if !h3r.Info.Deleted.IsZero() {
 		var err error

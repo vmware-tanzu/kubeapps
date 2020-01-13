@@ -9,6 +9,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	"github.com/urfave/negroni"
 	"helm.sh/helm/v3/pkg/action"
@@ -167,7 +168,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	compatRelease, err := newDashboardCompatibleRelease(*rel)
+	compatRelease, err := helm3to2.Convert(*rel)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
@@ -184,7 +185,7 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	compatRelease, err := newDashboardCompatibleRelease(*release)
+	compatRelease, err := helm3to2.Convert(*release)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
