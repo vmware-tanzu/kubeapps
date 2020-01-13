@@ -45,6 +45,7 @@ type Config struct {
 	ChartClient  chartUtils.Resolver
 }
 
+// NewInClusterConfig returns an internal cluster config replacing the token
 func NewInClusterConfig(token string) (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -107,6 +108,7 @@ func AddRouteWith(
 	}
 }
 
+// ListReleases list existing releases
 func ListReleases(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	apps, err := agent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.Options.ListLimit, req.URL.Query().Get("statuses"))
 	if err != nil {
@@ -116,10 +118,12 @@ func ListReleases(cfg Config, w http.ResponseWriter, req *http.Request, params h
 	response.NewDataResponse(apps).Write(w)
 }
 
+// ListAllReleases list all the releases available
 func ListAllReleases(cfg Config, w http.ResponseWriter, req *http.Request, _ handlerutil.Params) {
 	ListReleases(cfg, w, req, make(map[string]string))
 }
 
+// CreateRelease creates a release
 func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
@@ -167,6 +171,7 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 
 }
 
+// GetRelease returns a release
 func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	// Namespace is already known by the RESTClientGetter.
 	releaseName := params[nameParam]
@@ -178,6 +183,7 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 	response.NewDataResponse(newDashboardCompatibleRelease(*release)).Write(w)
 }
 
+// DeleteRelease deletes a release
 func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
 	purge := handlerutil.QueryParamIsTruthy("purge", req)

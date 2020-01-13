@@ -135,6 +135,41 @@ func TestActions(t *testing.T) {
 			ResponseBody:      "",
 		},
 		{
+			Description: "Delete a simple release",
+			ExistingReleases: []release.Release{
+				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
+			},
+			DisableAuth: true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				createRelease("foobarchart", "foobar", "default", 1, release.StatusUninstalled),
+			},
+			ResponseBody: "",
+		},
+		{
+			// Scenario params
+			Description: "Delete and purge a simple release with purge=true",
+			ExistingReleases: []release.Release{
+				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
+			},
+			DisableAuth: true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "?purge=true",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        200,
+			RemainingReleases: []release.Release{},
+			ResponseBody:      "",
+		},
+		{
 			// Scenario params
 			Description: "Get a simple release",
 			ExistingReleases: []release.Release{
@@ -155,11 +190,45 @@ func TestActions(t *testing.T) {
 			},
 			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":1}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
 		},
+		{
+			// Scenario params
+			Description: "Delete and purge a simple release with purge=1",
+			ExistingReleases: []release.Release{
+				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
+			},
+			DisableAuth: true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "?purge=1",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        200,
+			RemainingReleases: []release.Release{},
+			ResponseBody:      "",
+		},
+		{
+			// Scenario params
+			Description:      "Delete a missing release",
+			ExistingReleases: []release.Release{},
+			DisableAuth:      true,
+			Skip:             true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "delete",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        404,
+			RemainingReleases: []release.Release{},
+			ResponseBody:      "",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
 			// TODO Remove this `if` statement after the memory driver bug is fixed
+			// Memory Driver Bug: https://github.com/helm/helm/pull/7372
 			if test.Skip {
 				t.SkipNow()
 			}
@@ -184,6 +253,8 @@ func TestActions(t *testing.T) {
 				GetRelease(*cfg, response, req, test.Params)
 			case "create":
 				CreateRelease(*cfg, response, req, test.Params)
+			case "delete":
+				DeleteRelease(*cfg, response, req, test.Params)
 			default:
 				t.Errorf("Unexpected action %s", test.Action)
 			}

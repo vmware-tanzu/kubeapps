@@ -382,6 +382,52 @@ func TestListReleases(t *testing.T) {
 	}
 }
 
+func TestDeleteRelease(t *testing.T) {
+	testCases := []struct {
+		description     string
+		releases        []releaseStub
+		releaseToDelete string
+		namespace       string
+		shouldFail      bool
+	}{
+		{
+			description: "Delete a release",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+			},
+			releaseToDelete: "airwatch",
+		},
+		{
+			description: "Delete a non-existing release",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+			},
+			releaseToDelete: "apache",
+			shouldFail:      true,
+		},
+		{
+			description: "Delete a release in different namespace",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+				releaseStub{"apache", "dev", 1, release.StatusDeployed},
+			},
+			releaseToDelete: "apache",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			makeReleases(t, cfg, tc.releases)
+			err := DeleteRelease(cfg, tc.releaseToDelete, true)
+			t.Logf("error: %v", err)
+			if didFail := err != nil; didFail != tc.shouldFail {
+				t.Errorf("wanted fail = %v, got fail = %v", tc.shouldFail, err != nil)
+			}
+		})
+	}
+}
+
 func TestParseDriverType(t *testing.T) {
 	validTestCases := []struct {
 		input      string

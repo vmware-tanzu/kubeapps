@@ -71,7 +71,7 @@ func Test_PGgetChart(t *testing.T) {
 		Chart:   models.Chart{ID: "foo"},
 		RawIcon: iconB64,
 	}
-	m.On("QueryOne", &models.ChartIconString{}, "SELECT info FROM charts WHERE info ->> 'ID' = $1", []interface{}{"foo"}).Run(func(args mock.Arguments) {
+	m.On("QueryOne", &models.ChartIconString{}, "SELECT info FROM charts WHERE chart_id = $1", []interface{}{"foo"}).Run(func(args mock.Arguments) {
 		*args.Get(0).(*models.ChartIconString) = dbChart
 	})
 
@@ -100,7 +100,7 @@ func Test_PGgetChartVersion(t *testing.T) {
 			{Version: "2.0.0"},
 		},
 	}
-	m.On("QueryOne", &models.Chart{}, "SELECT info FROM charts WHERE info ->> 'ID' = $1", []interface{}{"foo"}).Run(func(args mock.Arguments) {
+	m.On("QueryOne", &models.Chart{}, "SELECT info FROM charts WHERE chart_id = $1", []interface{}{"foo"}).Run(func(args mock.Arguments) {
 		*args.Get(0).(*models.Chart) = dbChart
 	})
 
