@@ -147,8 +147,12 @@ func upgradeRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, 
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	response.NewDataResponse(newDashboardCompatibleRelease(*rel)).Write(w)
-
+	compatRelease, err := newDashboardCompatibleRelease(*rel)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(compatRelease).Write(w)
 }
 
 func GetRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
@@ -159,7 +163,12 @@ func GetRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, para
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	response.NewDataResponse(newDashboardCompatibleRelease(*release)).Write(w)
+	compatRelease, err := newDashboardCompatibleRelease(*release)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(compatRelease).Write(w)
 }
 
 func DeleteRelease(cfg agent.Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
