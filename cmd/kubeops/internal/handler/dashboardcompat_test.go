@@ -21,7 +21,6 @@ func TestNewDashboardCompatibleRelease(t *testing.T) {
 		Helm3Release        h3.Release
 		Helm2Release        h2.Release
 		MarshallingFunction func(h2.Release) string
-		ShouldFail          bool
 	}
 	tests := []testScenario{
 		{
@@ -110,68 +109,14 @@ func TestNewDashboardCompatibleRelease(t *testing.T) {
 				},
 			},
 		},
-		{
-			Description:         "Two equivalent releases with different versions",
-			ShouldFail:          true,
-			MarshallingFunction: asResponse,
-			Helm3Release: h3.Release{
-				Name:      "Foo",
-				Namespace: "default",
-				Chart: &h3chart.Chart{
-					Metadata: &h3chart.Metadata{},
-					Values: map[string]interface{}{
-						"port": 8080,
-					},
-				},
-				Info: &h3.Info{
-					Status: h3.StatusDeployed,
-				},
-				Version: 1,
-				Config: map[string]interface{}{
-					"port": 3000,
-					"user": map[string]interface{}{
-						"name":     "user1",
-						"password": "123456",
-					},
-				},
-			},
-			Helm2Release: h2.Release{
-				Name:      "Foo",
-				Namespace: "default",
-				Info: &h2.Info{
-					Status: &h2.Status{
-						Code: h2.Status_DEPLOYED,
-					},
-				},
-				Chart: &h2chart.Chart{
-					Metadata: &h2chart.Metadata{},
-					Values: &h2chart.Config{
-						Raw: "port: 8080\n",
-					},
-				},
-				Version: 5,
-				Config: &h2chart.Config{
-					Raw: "port: 3000\nuser:\n  name: user1\n  password: \"123456\"\n",
-				},
-			},
-		},
-		{
-			Description:         "Incomplete Helm 3 Release",
-			ShouldFail:          true,
-			MarshallingFunction: asResponse,
-			Helm3Release:        h3.Release{Name: "Incomplete"},
-			Helm2Release:        h2.Release{Name: "Incomplete"},
-		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
-			// A panic is a failure for the test
+			// Capture the panic and report it in an orderly fashion
 			defer func() {
 				if r := recover(); r != nil {
-					if !test.ShouldFail {
-						t.Errorf("Not expected to fail, yet got a panic: %v. \nStacktrace: \n%s", r, string(debug.Stack()))
-					}
+					t.Errorf("Got a panic: %v. \nStacktrace: \n%s", r, string(debug.Stack()))
 				}
 			}()
 			// Perform conversion
@@ -182,11 +127,7 @@ func TestNewDashboardCompatibleRelease(t *testing.T) {
 			h2Marshalled := test.MarshallingFunction(test.Helm2Release)
 			t.Logf("Marshalled Helm 2 Release %s", h2Marshalled)
 			// Check result
-			areEqual := h2Marshalled == h3Marshalled
-			if test.ShouldFail && areEqual {
-				t.Errorf("Expected to fail, but are equal %v", cmp.Diff(h3Marshalled, h2Marshalled))
-			}
-			if !test.ShouldFail && !areEqual {
+			if h3Marshalled != h2Marshalled {
 				t.Errorf("Not equal: %s", cmp.Diff(h3Marshalled, h2Marshalled))
 			}
 		})
