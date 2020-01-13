@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/pkg/auth"
@@ -19,11 +20,16 @@ import (
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	helmTime "helm.sh/helm/v3/pkg/time"
 
 	"helm.sh/helm/v3/pkg/release"
 )
 
 const defaultListLimit = 256
+
+var (
+	testingTime, _ = helmTime.Parse(time.RFC3339, "1977-09-02T22:04:05Z")
+)
 
 // newConfigFixture returns a Config with fake clients
 // and memory storage.
@@ -193,6 +199,25 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
+			Description: "Get a deleted release",
+			ExistingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
+			},
+			DisableAuth: true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
+			},
+			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":2},"deleted":{"seconds":242085845}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
+		},
+		{
+			// Scenario params
 			Description: "Delete and purge a simple release with purge=1",
 			ExistingReleases: []release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
@@ -305,11 +330,15 @@ func derefReleases(storage *storage.Storage) []release.Release {
 }
 
 func createRelease(chartName, name, namespace string, version int, status release.Status) release.Release {
+	deleted := helmTime.Time{}
+	if status == release.StatusUninstalled {
+		deleted = testingTime
+	}
 	return release.Release{
 		Name:      name,
 		Namespace: namespace,
 		Version:   version,
-		Info:      &release.Info{Status: status},
+		Info:      &release.Info{Status: status, Deleted: deleted},
 		Chart: &chart.Chart{
 			Metadata: &chart.Metadata{
 				Name: chartName,

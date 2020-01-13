@@ -124,7 +124,10 @@ func TestNewDashboardCompatibleRelease(t *testing.T) {
 				}
 			}()
 			// Perform conversion
-			compatibleH3rls := newDashboardCompatibleRelease(test.Helm3Release)
+			compatibleH3rls, err := newDashboardCompatibleRelease(test.Helm3Release)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
 			// Marshall both: Compatible H3Release and H2Release
 			h3Marshalled := test.MarshallingFunction(compatibleH3rls)
 			t.Logf("Marshalled Helm 3 Release %s", h3Marshalled)
