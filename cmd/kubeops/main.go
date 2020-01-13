@@ -44,7 +44,7 @@ func main() {
 	pflag.Parse()
 	settings.Init(pflag.CommandLine)
 
-	options := agent.Options{
+	options := handler.Options{
 		ListLimit: listLimit,
 		Timeout:   timeout,
 	}
@@ -57,7 +57,7 @@ func main() {
 			panic(err)
 		}
 	}
-	withAgentConfig := handler.WithAgentConfig(storageForDriver, options)
+	withHandlerConfig := handler.WithHandlerConfig(storageForDriver, options)
 	r := mux.NewRouter()
 
 	// Healthcheck
@@ -68,7 +68,7 @@ func main() {
 
 	// Routes
 	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
-	addRoute := handler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withAgentConfig)
+	addRoute := handler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withHandlerConfig)
 	addRoute("GET", "/releases", handler.ListAllReleases)
 	addRoute("GET", "/namespaces/{namespace}/releases", handler.ListReleases)
 	addRoute("POST", "/namespaces/{namespace}/releases", handler.CreateRelease)

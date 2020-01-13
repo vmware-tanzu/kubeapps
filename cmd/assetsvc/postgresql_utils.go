@@ -75,7 +75,7 @@ func (m *postgresAssetManager) getPaginatedChartList(repo string, pageNumber, pa
 
 func (m *postgresAssetManager) getChart(chartID string) (models.Chart, error) {
 	var chart models.ChartIconString
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE info ->> 'ID' = $1", dbutils.ChartTable), chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE chart_id = $1", dbutils.ChartTable), chartID)
 	if err != nil {
 		return models.Chart{}, err
 	}
@@ -103,7 +103,7 @@ func (m *postgresAssetManager) getChart(chartID string) (models.Chart, error) {
 
 func (m *postgresAssetManager) getChartVersion(chartID, version string) (models.Chart, error) {
 	var chart models.Chart
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE info ->> 'ID' = $1", dbutils.ChartTable), chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE chart_id = $1", dbutils.ChartTable), chartID)
 	if err != nil {
 		return models.Chart{}, err
 	}
