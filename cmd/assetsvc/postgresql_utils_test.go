@@ -161,6 +161,7 @@ func Test_getChartWithFilters(t *testing.T) {
 		Name: "foo",
 		ChartVersions: []models.ChartVersion{
 			{Version: "2.0.0", AppVersion: "2.0.2"},
+			{Version: "1.0.0", AppVersion: "1.0.1"},
 		},
 	}}
 	if !cmp.Equal(charts, expectedCharts) {

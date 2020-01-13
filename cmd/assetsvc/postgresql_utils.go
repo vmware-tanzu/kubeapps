@@ -142,8 +142,6 @@ func (m *postgresAssetManager) getChartsWithFilters(name, version, appVersion st
 	result := []*models.Chart{}
 	for _, c := range charts {
 		if _, found := containsVersionAndAppVersion(c.ChartVersions, version, appVersion); found {
-			// Return only the latest ChartVersion
-			c.ChartVersions = []models.ChartVersion{c.ChartVersions[0]}
 			result = append(result, c)
 		}
 	}
