@@ -109,8 +109,8 @@ func RollbackRelease(actionConfig *action.Configuration, releaseName string, rev
 		return nil, err
 	}
 
-	// The Helm3 rollback action does not return the new release, unlike the helm2 equivalent,
-	// so we grab it explicitly as its required by Kubeapps.
+	// The Helm 3 rollback action does not return the new release, unlike the Helm 2 equivalent,
+	// so we grab it explicitly as it's required by Kubeapps.
 	return GetRelease(actionConfig, releaseName)
 }
 

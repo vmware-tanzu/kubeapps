@@ -160,7 +160,7 @@ func TestActions(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 			if !cmp.Equal(releases, test.RemainingReleases, releaseComparer) {
-				t.Errorf("Unexpected remaining releases. Diff %s", cmp.Diff(releases, test.RemainingReleases, releaseComparer))
+				t.Errorf("Unexpected remaining releases. Diff:\n%s", cmp.Diff(releases, test.RemainingReleases, releaseComparer))
 			}
 			if test.ResponseBody != "" {
 				if test.ResponseBody != response.Body.String() {
