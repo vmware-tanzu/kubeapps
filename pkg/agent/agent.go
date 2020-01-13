@@ -43,6 +43,7 @@ func StorageForMemory(_ string, _ *kubernetes.Clientset) *storage.Storage {
 	return storage.Init(d)
 }
 
+// ListReleases lists releases in the specified namespace, or all namespaces if the empty string is given.
 func ListReleases(actionConfig *action.Configuration, namespace string, listLimit int, status string) ([]proxy.AppOverview, error) {
 	allNamespaces := namespace == ""
 	cmd := action.NewList(actionConfig)
@@ -66,6 +67,7 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	return appOverviews, nil
 }
 
+// CreateRelease creates a release.
 func CreateRelease(actionConfig *action.Configuration, name, namespace, valueString string, ch *chart.Chart) (*release.Release, error) {
 	cmd := action.NewInstall(actionConfig)
 	cmd.ReleaseName = name
@@ -81,6 +83,7 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 	return release, nil
 }
 
+// UpgradeRelease upgrades a release.
 func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string, ch *chart.Chart) (*release.Release, error) {
 	// Check if the release already exists:
 	_, err := GetRelease(actionConfig, name)
@@ -100,6 +103,7 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	return res, nil
 }
 
+// GetRelease returns the info of a release.
 func GetRelease(actionConfig *action.Configuration, name string) (*release.Release, error) {
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewGet(actionConfig)
@@ -110,6 +114,7 @@ func GetRelease(actionConfig *action.Configuration, name string) (*release.Relea
 	return release, nil
 }
 
+// DeleteRelease deletes a release.
 func DeleteRelease(actionConfig *action.Configuration, name string, keepHistory bool) error {
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewUninstall(actionConfig)
@@ -118,6 +123,8 @@ func DeleteRelease(actionConfig *action.Configuration, name string, keepHistory 
 	return err
 }
 
+// NewActionConfig creates an action.Configuration, which can then be used to create Helm 3 actions.
+// Among other things, the action.Configuration controls which namespace the command is run against.
 func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, clientset *kubernetes.Clientset, namespace string) (*action.Configuration, error) {
 	actionConfig := new(action.Configuration)
 	store := storageForDriver(namespace, clientset)
@@ -162,6 +169,7 @@ func stringptr(val string) *string {
 	return &val
 }
 
+// ParseDriverType maps strings to well-typed driver representations.
 func ParseDriverType(raw string) (StorageForDriver, error) {
 	switch raw {
 	case "secret", "secrets":
