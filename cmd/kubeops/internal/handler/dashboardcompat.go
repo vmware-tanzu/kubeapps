@@ -5,9 +5,12 @@
 package handler
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 	h3chart "helm.sh/helm/v3/pkg/chart"
@@ -16,16 +19,24 @@ import (
 	h2 "k8s.io/helm/pkg/proto/hapi/release"
 )
 
-func newDashboardCompatibleRelease(h3r h3.Release) h2.Release {
+func newDashboardCompatibleRelease(h3r h3.Release) (h2.Release, error) {
+	var deleted *timestamp.Timestamp
+	if !h3r.Info.Deleted.IsZero() {
+		var err error
+		deleted, err = ptypes.TimestampProto(h3r.Info.Deleted.Time)
+		if err != nil {
+			return h2.Release{}, fmt.Errorf("Failed to parse deletion time %v", err)
+		}
+	}
 	return h2.Release{
 		Name:      h3r.Name,
-		Info:      &h2.Info{Status: compatibleStatus(*h3r.Info)},
+		Info:      &h2.Info{Status: compatibleStatus(*h3r.Info), Deleted: deleted},
 		Chart:     compatibleChart(*h3r.Chart),
 		Config:    compatibleConfig(h3r),
 		Manifest:  h3r.Manifest,
 		Version:   int32(h3r.Version),
 		Namespace: h3r.Namespace,
-	}
+	}, nil
 }
 
 func compatibleChart(h3c h3chart.Chart) *h2chart.Chart {
