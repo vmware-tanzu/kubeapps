@@ -100,6 +100,20 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	return res, nil
 }
 
+func RollbackRelease(actionConfig *action.Configuration, releaseName string, revision int) (*release.Release, error) {
+	log.Printf("Rolling back %s to revision %d.", releaseName, revision)
+	rollback := action.NewRollback(actionConfig)
+	rollback.Version = revision
+	err := rollback.Run(releaseName)
+	if err != nil {
+		return nil, err
+	}
+
+	// The Helm3 rollback action does not return the new release, unlike the helm2 equivalent,
+	// so we grab it explicitly as its required by Kubeapps.
+	return GetRelease(actionConfig, releaseName)
+}
+
 func GetRelease(actionConfig *action.Configuration, name string) (*release.Release, error) {
 	// Namespace is already known by the RESTClientGetter.
 	cmd := action.NewGet(actionConfig)
