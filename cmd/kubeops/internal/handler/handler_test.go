@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http/httptest"
+	"sort"
 	"strings"
 	"testing"
 
@@ -120,6 +121,21 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
+			Description:      "Get a non-existing release",
+			ExistingReleases: []release.Release{},
+			DisableAuth:      true,
+			Skip:             true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode:        404,
+			RemainingReleases: []release.Release{},
+			ResponseBody:      "",
+		},
+		{
 			Description: "Delete a simple release",
 			ExistingReleases: []release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
@@ -153,6 +169,27 @@ func TestActions(t *testing.T) {
 			StatusCode:        200,
 			RemainingReleases: []release.Release{},
 			ResponseBody:      "",
+		},
+		{
+			// Scenario params
+			Description: "Get a simple release",
+			ExistingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
+			},
+			DisableAuth: true,
+			// Request params
+			RequestBody:  "",
+			RequestQuery: "",
+			Action:       "get",
+			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
+			// Expected result
+			StatusCode: 200,
+			RemainingReleases: []release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
+				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
+			},
+			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":1}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
 		},
 		{
 			// Scenario params
@@ -213,6 +250,8 @@ func TestActions(t *testing.T) {
 			}
 			// Perform request
 			switch test.Action {
+			case "get":
+				GetRelease(*cfg, response, req, test.Params)
 			case "create":
 				CreateRelease(*cfg, response, req, test.Params)
 			case "delete":
@@ -225,6 +264,14 @@ func TestActions(t *testing.T) {
 				t.Errorf("Expecting a StatusCode %d, received %d", test.StatusCode, response.Code)
 			}
 			releases := derefReleases(cfg.ActionConfig.Releases)
+			// The Helm memory driver does not appear to have consistent ordering.
+			// See https://github.com/helm/helm/issues/7263
+			// Just sort by "name.version.namespace" which is good enough here.
+			sort.Slice(releases, func(i, j int) bool {
+				iKey := fmt.Sprintf("%s.%d.%s", releases[i].Name, releases[i].Version, releases[i].Namespace)
+				jKey := fmt.Sprintf("%s.%d.%s", releases[j].Name, releases[j].Version, releases[j].Namespace)
+				return iKey < jKey
+			})
 			rlsComparer := cmp.Comparer(func(x release.Release, y release.Release) bool {
 				return x.Name == y.Name &&
 					x.Version == y.Version &&
