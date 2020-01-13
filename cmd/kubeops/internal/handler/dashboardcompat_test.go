@@ -17,9 +17,13 @@ import (
 func TestNewDashboardCompatibleRelease(t *testing.T) {
 	type testScenario struct {
 		// Scenario params
-		Description         string
-		Helm3Release        h3.Release
-		Helm2Release        h2.Release
+		Description  string
+		Helm3Release h3.Release
+		Helm2Release h2.Release
+		// MarshallingFunction defines what it means to
+		// parse a Helm 2 Release to a string i.e. which fields are relevant/redundant,
+		// and how to format the fields of a Helm 2 release.
+		// E.g. spew.Dumps is a valid marhsalling function.
 		MarshallingFunction func(h2.Release) string
 	}
 	tests := []testScenario{
@@ -134,6 +138,8 @@ func TestNewDashboardCompatibleRelease(t *testing.T) {
 	}
 }
 
+// asResponse is one of many possible Marshalling functions
+// However, it's the one most relevant for the current usage of 'dashboardcompat.go'
 func asResponse(data h2.Release) string {
 	w := httptest.NewRecorder()
 	response.NewDataResponse(data).Write(w)
