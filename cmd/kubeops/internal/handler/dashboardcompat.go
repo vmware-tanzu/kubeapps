@@ -19,13 +19,23 @@ import (
 	h2 "k8s.io/helm/pkg/proto/hapi/release"
 )
 
+var (
+	// ErrUnableToConvertWithoutInfo indicates that the input release had nil Info or Chart.
+	ErrUnableToConvertWithoutInfo = fmt.Errorf("unable to convert release without info")
+	// ErrUnableToParseDeletionTime indicates that the deletion time of the h3 chart could not be parsed.
+	ErrFailedToParseDeletionTime = fmt.Errorf("failed to parse deletion time")
+)
+
 func newDashboardCompatibleRelease(h3r h3.Release) (h2.Release, error) {
+	if h3r.Info == nil || h3r.Chart == nil || h3r.Chart.Metadata == nil {
+		return h2.Release{}, ErrUnableToConvertWithoutInfo
+	}
 	var deleted *timestamp.Timestamp
 	if !h3r.Info.Deleted.IsZero() {
 		var err error
 		deleted, err = ptypes.TimestampProto(h3r.Info.Deleted.Time)
 		if err != nil {
-			return h2.Release{}, fmt.Errorf("Failed to parse deletion time %v", err)
+			return h2.Release{}, ErrFailedToParseDeletionTime
 		}
 	}
 	return h2.Release{
