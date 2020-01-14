@@ -170,8 +170,12 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	response.NewDataResponse(newDashboardCompatibleRelease(*rel)).Write(w)
-
+	compatRelease, err := newDashboardCompatibleRelease(*rel)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(compatRelease).Write(w)
 }
 
 func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
@@ -191,7 +195,12 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	response.NewDataResponse(newDashboardCompatibleRelease(*rel)).Write(w)
+	compatRelease, err := newDashboardCompatibleRelease(*rel)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(compatRelease).Write(w)
 }
 
 // GetRelease returns a release
@@ -203,7 +212,12 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	response.NewDataResponse(newDashboardCompatibleRelease(*release)).Write(w)
+	compatRelease, err := newDashboardCompatibleRelease(*release)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(compatRelease).Write(w)
 }
 
 // DeleteRelease deletes a release

@@ -236,3 +236,10 @@ describe("when receiving new props", () => {
     });
   });
 });
+
+it("shows, by default, the default values of the deployed chart plus any modification", () => {
+  const wrapper = shallow(<UpgradeForm {...defaultProps} appCurrentValues="foo: not-bar" />);
+  wrapper.setProps({ deployed: { values: "# A comment\nfoo: bar\n" } as IChartState["deployed"] });
+  const expectedValues = "# A comment\nfoo: not-bar\n";
+  expect(wrapper.find(DeploymentFormBody).prop("deployedValues")).toBe(expectedValues);
+});

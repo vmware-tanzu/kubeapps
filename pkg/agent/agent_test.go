@@ -70,6 +70,64 @@ func makeReleases(t *testing.T, actionConfig *action.Configuration, rels []relea
 	}
 }
 
+func TestGetRelease(t *testing.T) {
+	fooApp := releaseStub{"foo", "my_ns", 1, release.StatusDeployed}
+	barApp := releaseStub{"bar", "other_ns", 1, release.StatusDeployed}
+	testCases := []struct {
+		description      string
+		existingReleases []releaseStub
+		targetApp        string
+		targetNamespace  string
+		expectedResult   string
+		shouldFail       bool
+	}{
+		{
+			description:      "Get an existing release",
+			existingReleases: []releaseStub{fooApp, barApp},
+			targetApp:        "foo",
+			targetNamespace:  "my_ns",
+			expectedResult:   "foo",
+		},
+		{
+			description:      "Get an existing release with default namespace",
+			existingReleases: []releaseStub{fooApp, barApp},
+			targetApp:        "foo",
+			targetNamespace:  "",
+			expectedResult:   "foo",
+		},
+		{
+			description:      "Get an non-existing release",
+			existingReleases: []releaseStub{barApp},
+			targetApp:        "foo",
+			targetNamespace:  "my_ns",
+			expectedResult:   "",
+			shouldFail:       true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			makeReleases(t, cfg, tc.existingReleases)
+			rls, err := GetRelease(cfg, tc.targetApp)
+			if tc.shouldFail && err == nil {
+				t.Errorf("Get %s/%s should fail", tc.targetNamespace, tc.targetApp)
+			}
+			if !tc.shouldFail {
+				if err != nil {
+					t.Errorf("Unexpected error %v", err)
+				}
+				if rls == nil {
+					t.Fatalf("Release is nil: %v", rls)
+				}
+				if rls.Name != tc.expectedResult {
+					t.Errorf("Expecting app %s, received %s", tc.expectedResult, rls.Name)
+				}
+			}
+		})
+	}
+}
+
 func TestCreateReleases(t *testing.T) {
 	testCases := []struct {
 		desc             string
@@ -319,6 +377,52 @@ func TestListReleases(t *testing.T) {
 			//Deep equality check of expected against attained result
 			if !cmp.Equal(apps, tc.expectedApps) {
 				t.Errorf(cmp.Diff(apps, tc.expectedApps))
+			}
+		})
+	}
+}
+
+func TestDeleteRelease(t *testing.T) {
+	testCases := []struct {
+		description     string
+		releases        []releaseStub
+		releaseToDelete string
+		namespace       string
+		shouldFail      bool
+	}{
+		{
+			description: "Delete a release",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+			},
+			releaseToDelete: "airwatch",
+		},
+		{
+			description: "Delete a non-existing release",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+			},
+			releaseToDelete: "apache",
+			shouldFail:      true,
+		},
+		{
+			description: "Delete a release in different namespace",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", 1, release.StatusDeployed},
+				releaseStub{"apache", "dev", 1, release.StatusDeployed},
+			},
+			releaseToDelete: "apache",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			makeReleases(t, cfg, tc.releases)
+			err := DeleteRelease(cfg, tc.releaseToDelete, true)
+			t.Logf("error: %v", err)
+			if didFail := err != nil; didFail != tc.shouldFail {
+				t.Errorf("wanted fail = %v, got fail = %v", tc.shouldFail, err != nil)
 			}
 		})
 	}
