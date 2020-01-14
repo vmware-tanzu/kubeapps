@@ -150,6 +150,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
           <PermissionsErrorPage
             action="resync Service Brokers"
             namespace=""
+            rawMessage=""
             roles={
               Array [
                 Object {
@@ -234,7 +235,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
                 >
                   <div>
                     <p>
-                      Ask your administrator for the following RBAC roles:
+                      Ask your administrator for the following permissions:
                     </p>
                     <ul
                       className="error__permisions-list"

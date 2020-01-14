@@ -52,6 +52,7 @@ const ErrorSelector: React.SFC<IErrorSelectorProps> = props => {
         <PermissionsErrorAlert
           namespace={namespace || ""}
           roles={roles}
+          rawMessage={message}
           action={`${action} ${resource || ""}`}
         />
       );
