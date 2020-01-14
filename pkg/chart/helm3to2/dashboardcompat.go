@@ -37,7 +37,7 @@ func Convert(h3r h3.Release) (h2.Release, error) {
 		var err error
 		deleted, err = ptypes.TimestampProto(h3r.Info.Deleted.Time)
 		if err != nil {
-			return h2.Release{}, ErrFailedToParseDeletionTime
+			return h2.Release{}, fmt.Errorf("%w: %v", ErrFailedToParseDeletionTime, err)
 		}
 	}
 	return h2.Release{
