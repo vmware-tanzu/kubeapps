@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
@@ -46,7 +47,7 @@ type Config struct {
 	ChartClient  chartUtils.Resolver
 }
 
-// NewInClusterConfig returns an internal cluster config replacing the token
+// NewInClusterConfig returns an internal cluster config replacing the token.
 func NewInClusterConfig(token string) (*rest.Config, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -109,7 +110,7 @@ func AddRouteWith(
 	}
 }
 
-// ListReleases list existing releases
+// ListReleases list existing releases.
 func ListReleases(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	apps, err := agent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.Options.ListLimit, req.URL.Query().Get("statuses"))
 	if err != nil {
@@ -119,12 +120,12 @@ func ListReleases(cfg Config, w http.ResponseWriter, req *http.Request, params h
 	response.NewDataResponse(apps).Write(w)
 }
 
-// ListAllReleases list all the releases available
+// ListAllReleases list all the releases available.
 func ListAllReleases(cfg Config, w http.ResponseWriter, req *http.Request, _ handlerutil.Params) {
 	ListReleases(cfg, w, req, make(map[string]string))
 }
 
-// CreateRelease creates a release
+// CreateRelease creates a release.
 func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
@@ -148,7 +149,9 @@ func OperateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	switch req.FormValue("action") {
 	case "upgrade":
 		upgradeRelease(cfg, w, req, params)
-	// TODO: Add "rollback" and "test" cases here.
+	case "rollback":
+		rollbackRelease(cfg, w, req, params)
+	// TODO: Add "test" case here.
 	default:
 		// By default, for maintaining compatibility, we call upgrade.
 		upgradeRelease(cfg, w, req, params)
@@ -176,7 +179,32 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	response.NewDataResponse(compatRelease).Write(w)
 }
 
-// GetRelease returns a release
+func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+	releaseName := params[nameParam]
+	revision := req.FormValue("revision")
+	if revision == "" {
+		response.NewErrorResponse(http.StatusUnprocessableEntity, "Missing revision to rollback in request").Write(w)
+		return
+	}
+	revisionInt, err := strconv.ParseInt(revision, 10, 32)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt))
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	compatRelease, err := newDashboardCompatibleRelease(*rel)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(compatRelease).Write(w)
+}
+
+// GetRelease returns a release.
 func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	// Namespace is already known by the RESTClientGetter.
 	releaseName := params[nameParam]
@@ -193,7 +221,7 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 	response.NewDataResponse(compatRelease).Write(w)
 }
 
-// DeleteRelease deletes a release
+// DeleteRelease deletes a release.
 func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	releaseName := params[nameParam]
 	purge := handlerutil.QueryParamIsTruthy("purge", req)

@@ -537,3 +537,84 @@ func TestParseDriverType(t *testing.T) {
 		}
 	})
 }
+
+func TestRollbackRelease(t *testing.T) {
+	const (
+		revisionBeingSuperseded = 2
+		targetRevision          = 1
+	)
+
+	testCases := []struct {
+		name      string
+		releases  []releaseStub
+		release   string
+		namespace string
+		revision  int
+		err       error
+	}{
+		{
+			name: "rolls back a release",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", targetRevision, release.StatusSuperseded},
+				releaseStub{"airwatch", "default", revisionBeingSuperseded, release.StatusDeployed},
+			},
+			release:  "airwatch",
+			revision: targetRevision,
+		},
+		{
+			name: "errors when rolling back to a release revision which does not exist",
+			releases: []releaseStub{
+				releaseStub{"airwatch", "default", revisionBeingSuperseded, release.StatusDeployed},
+			},
+			release:  "airwatch",
+			revision: targetRevision,
+			err:      driver.ErrReleaseNotFound,
+		},
+		{
+			name: "rolls back a release in non-default namespace",
+			releases: []releaseStub{
+				releaseStub{"otherrelease", "default", 1, release.StatusDeployed},
+				releaseStub{"airwatch", "othernamespace", targetRevision, release.StatusSuperseded},
+				releaseStub{"airwatch", "othernamespace", revisionBeingSuperseded, release.StatusDeployed},
+			},
+			release:  "airwatch",
+			revision: targetRevision,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			makeReleases(t, cfg, tc.releases)
+
+			newRelease, err := RollbackRelease(cfg, tc.release, tc.revision)
+			if got, want := err, tc.err; got != want {
+				t.Errorf("got: %v, want: %v", got, want)
+			}
+			if tc.err != nil {
+				return
+			}
+
+			// Previously deployed revision gets superseded
+			rel, err := cfg.Releases.Get(tc.release, revisionBeingSuperseded)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			if got, want := rel.Info.Status, release.StatusSuperseded; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+
+			// Target revision is deployed as a new revision
+			rel, err = cfg.Releases.Get(tc.release, revisionBeingSuperseded+1)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			if got, want := newRelease.Version, revisionBeingSuperseded+1; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+			if got, want := rel.Info.Status, release.StatusDeployed; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
