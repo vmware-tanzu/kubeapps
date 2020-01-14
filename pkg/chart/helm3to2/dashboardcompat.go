@@ -22,7 +22,7 @@ import (
 var (
 	// ErrUnableToConvertWithoutInfo indicates that the input release had nil Info or Chart.
 	ErrUnableToConvertWithoutInfo = fmt.Errorf("unable to convert release without info")
-	// ErrUnableToParseDeletionTime indicates that the deletion time of the h3 chart could not be parsed.
+	// ErrFailedToParseDeletionTime indicates that the deletion time of the h3 chart could not be parsed.
 	ErrFailedToParseDeletionTime = fmt.Errorf("failed to parse deletion time")
 )
 
@@ -54,13 +54,14 @@ func Convert(h3r h3.Release) (h2.Release, error) {
 func compatibleChart(h3c h3chart.Chart) *h2chart.Chart {
 	return &h2chart.Chart{
 		Files:     compatibleFiles(h3c.Files),
-		Metadata:  compatibleMetadata(*h3c.Metadata),
+		Metadata:  ConvertMetadata(*h3c.Metadata),
 		Templates: compatibleTemplates(h3c.Templates),
 		Values:    compatibleValues(h3c),
 	}
 }
 
-func compatibleMetadata(h3m h3chart.Metadata) *h2chart.Metadata {
+// ConvertMetadata turns the Metadata from a Helm3 release to a Helm2 compatibility format.
+func ConvertMetadata(h3m h3chart.Metadata) *h2chart.Metadata {
 	return &h2chart.Metadata{
 		Annotations:   h3m.Annotations,
 		ApiVersion:    h3m.APIVersion,

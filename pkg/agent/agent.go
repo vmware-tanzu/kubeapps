@@ -61,11 +61,7 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	appOverviews := make([]proxy.AppOverview, 0)
 	for _, r := range releases {
 		if allNamespaces || r.Namespace == namespace {
-			appOverview, err := appOverviewFromRelease(r)
-			if err != nil {
-				return nil, err
-			}
-			appOverviews = append(appOverviews, appOverview)
+			appOverviews = append(appOverviews, appOverviewFromRelease(r))
 		}
 	}
 	return appOverviews, nil
@@ -202,11 +198,8 @@ func ParseDriverType(raw string) (StorageForDriver, error) {
 	}
 }
 
-func appOverviewFromRelease(r *release.Release) (proxy.AppOverview, error) {
-	releaseHelm2, err := helm3to2.Convert(*r)
-	if err != nil {
-		return proxy.AppOverview{}, fmt.Errorf("Unable to parse release as a Helm v2 release: %v", err)
-	}
+func appOverviewFromRelease(r *release.Release) proxy.AppOverview {
+	r2Metadata := helm3to2.ConvertMetadata(*r.Chart.Metadata)
 	return proxy.AppOverview{
 		ReleaseName:   r.Name,
 		Version:       r.Chart.Metadata.Version,
@@ -214,6 +207,6 @@ func appOverviewFromRelease(r *release.Release) (proxy.AppOverview, error) {
 		Namespace:     r.Namespace,
 		Status:        r.Info.Status.String(),
 		Chart:         r.Chart.Name(),
-		ChartMetadata: *releaseHelm2.Chart.Metadata,
-	}, nil
+		ChartMetadata: *r2Metadata,
+	}
 }
