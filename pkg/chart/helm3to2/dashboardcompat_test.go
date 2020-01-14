@@ -2,6 +2,7 @@ package helm3to2
 
 import (
 	"net/http/httptest"
+	"strings"
 
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/google/go-cmp/cmp"
@@ -206,8 +207,10 @@ func TestConvert(t *testing.T) {
 		t.Run(test.Description, func(t *testing.T) {
 			// Perform conversion
 			compatibleH3rls, err := Convert(test.Helm3Release)
-			if got, want := err, test.ExpectedError; got != want {
-				t.Errorf("got: %v, want: %v", got, want)
+			if test.ExpectedError != nil || err != nil {
+				if got, want := err, test.ExpectedError; !strings.Contains(got.Error(), want.Error()) {
+					t.Errorf("got: %v, want: %v", got, want)
+				}
 			}
 			if err != nil {
 				return
