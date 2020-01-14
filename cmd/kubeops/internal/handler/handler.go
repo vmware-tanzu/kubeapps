@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
@@ -147,7 +148,9 @@ func OperateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	switch req.FormValue("action") {
 	case "upgrade":
 		upgradeRelease(cfg, w, req, params)
-	// TODO: Add "rollback" and "test" cases here.
+	case "rollback":
+		rollbackRelease(cfg, w, req, params)
+	// TODO: Add "test" case here.
 	default:
 		// By default, for maintaining compatibility, we call upgrade.
 		upgradeRelease(cfg, w, req, params)
@@ -163,6 +166,31 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	}
 	ch := chartMulti.Helm3Chart
 	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	compatRelease, err := newDashboardCompatibleRelease(*rel)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewDataResponse(compatRelease).Write(w)
+}
+
+func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+	releaseName := params[nameParam]
+	revision := req.FormValue("revision")
+	if revision == "" {
+		response.NewErrorResponse(http.StatusUnprocessableEntity, "Missing revision to rollback in request").Write(w)
+		return
+	}
+	revisionInt, err := strconv.ParseInt(revision, 10, 32)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt))
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return

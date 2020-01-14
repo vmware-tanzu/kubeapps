@@ -29,7 +29,9 @@ func (h WithoutParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func isNotFound(err error) bool {
-	return strings.Contains(err.Error(), "not found")
+	// TODO(mnelson): When helm updates to use golang wrapped errors, switch these
+	// to use errors.is(err, ...) etc.
+	return strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "no revision for release")
 }
 
 func isAlreadyExists(err error) bool {

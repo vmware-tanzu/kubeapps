@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -53,11 +53,35 @@ func newConfigFixture(t *testing.T) *Config {
 	}
 }
 
+// See https://github.com/kubeapps/kubeapps/pull/1439/files#r365678777
+// for discussion about cleaner long booleans.
+func and(exps ...bool) bool {
+	for _, exp := range exps {
+		if !exp {
+			return false
+		}
+	}
+	return true
+}
+
+var releaseComparer = cmp.Comparer(func(x release.Release, y release.Release) bool {
+	return and(
+		x.Name == y.Name,
+		x.Version == y.Version,
+		x.Namespace == y.Namespace,
+		x.Info.Status == y.Info.Status,
+		x.Chart.Name() == y.Chart.Name(),
+		x.Manifest == y.Manifest,
+		cmp.Equal(x.Config, y.Config),
+		cmp.Equal(x.Hooks, y.Hooks),
+	)
+})
+
 func TestActions(t *testing.T) {
 	type testScenario struct {
 		// Scenario params
 		Description      string
-		ExistingReleases []release.Release
+		ExistingReleases []*release.Release
 		DisableAuth      bool
 		Skip             bool //TODO: Remove this when the memory bug is fixed
 		// Request params
@@ -67,7 +91,7 @@ func TestActions(t *testing.T) {
 		Params       map[string]string
 		// Expected result
 		StatusCode        int
-		RemainingReleases []release.Release
+		RemainingReleases []*release.Release
 		ResponseBody      string //optional
 	}
 
@@ -75,7 +99,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description:      "Create a simple release without auth",
-			ExistingReleases: []release.Release{},
+			ExistingReleases: []*release.Release{},
 			DisableAuth:      true,
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
@@ -84,7 +108,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []release.Release{
+			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 			},
 			ResponseBody: "",
@@ -92,7 +116,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description:      "Create a simple release with auth",
-			ExistingReleases: []release.Release{},
+			ExistingReleases: []*release.Release{},
 			DisableAuth:      true,
 			// Request params
 			RequestBody:  `{"chartName":"foo","releaseName":"foobar","version":"1.0.0"}`,
@@ -101,7 +125,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []release.Release{
+			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 			},
 			ResponseBody: "",
@@ -109,7 +133,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description: "Create a conflicting release",
-			ExistingReleases: []release.Release{
+			ExistingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 			},
 			DisableAuth: false,
@@ -120,7 +144,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default"},
 			// Expected result
 			StatusCode: 409,
-			RemainingReleases: []release.Release{
+			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 			},
 			ResponseBody: "",
@@ -128,7 +152,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description:      "Get a non-existing release",
-			ExistingReleases: []release.Release{},
+			ExistingReleases: []*release.Release{},
 			DisableAuth:      true,
 			Skip:             true,
 			// Request params
@@ -138,12 +162,12 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        404,
-			RemainingReleases: []release.Release{},
+			RemainingReleases: []*release.Release{},
 			ResponseBody:      "",
 		},
 		{
 			Description: "Delete a simple release",
-			ExistingReleases: []release.Release{
+			ExistingReleases: []*release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
 			},
 			DisableAuth: true,
@@ -154,7 +178,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []release.Release{
+			RemainingReleases: []*release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusUninstalled),
 			},
 			ResponseBody: "",
@@ -162,7 +186,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description: "Delete and purge a simple release with purge=true",
-			ExistingReleases: []release.Release{
+			ExistingReleases: []*release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
 			},
 			DisableAuth: true,
@@ -173,13 +197,13 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        200,
-			RemainingReleases: []release.Release{},
+			RemainingReleases: nil,
 			ResponseBody:      "",
 		},
 		{
 			// Scenario params
 			Description: "Get a simple release",
-			ExistingReleases: []release.Release{
+			ExistingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
 			},
@@ -191,7 +215,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []release.Release{
+			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
 			},
@@ -200,7 +224,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description: "Get a deleted release",
-			ExistingReleases: []release.Release{
+			ExistingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
 			},
 			DisableAuth: true,
@@ -211,7 +235,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode: 200,
-			RemainingReleases: []release.Release{
+			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
 			},
 			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":2},"deleted":{"seconds":242085845}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
@@ -219,7 +243,7 @@ func TestActions(t *testing.T) {
 		{
 			// Scenario params
 			Description: "Delete and purge a simple release with purge=1",
-			ExistingReleases: []release.Release{
+			ExistingReleases: []*release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
 			},
 			DisableAuth: true,
@@ -230,13 +254,13 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        200,
-			RemainingReleases: []release.Release{},
+			RemainingReleases: nil,
 			ResponseBody:      "",
 		},
 		{
 			// Scenario params
 			Description:      "Delete a missing release",
-			ExistingReleases: []release.Release{},
+			ExistingReleases: []*release.Release{},
 			DisableAuth:      true,
 			Skip:             true,
 			// Request params
@@ -246,7 +270,7 @@ func TestActions(t *testing.T) {
 			Params:       map[string]string{"namespace": "default", "releaseName": "foobar"},
 			// Expected result
 			StatusCode:        404,
-			RemainingReleases: []release.Release{},
+			RemainingReleases: nil,
 			ResponseBody:      "",
 		},
 	}
@@ -267,12 +291,8 @@ func TestActions(t *testing.T) {
 			}
 			response := httptest.NewRecorder()
 			cfg := newConfigFixture(t)
-			for i := range test.ExistingReleases {
-				err := cfg.ActionConfig.Releases.Create(&test.ExistingReleases[i])
-				if err != nil {
-					t.Errorf("Failed to initiate test: %v", err)
-				}
-			}
+			createExistingReleases(t, cfg, test.ExistingReleases)
+
 			// Perform request
 			switch test.Action {
 			case "get":
@@ -288,27 +308,12 @@ func TestActions(t *testing.T) {
 			if response.Code != test.StatusCode {
 				t.Errorf("Expecting a StatusCode %d, received %d", test.StatusCode, response.Code)
 			}
-			releases := derefReleases(cfg.ActionConfig.Releases)
-			// The Helm memory driver does not appear to have consistent ordering.
-			// See https://github.com/helm/helm/issues/7263
-			// Just sort by "name.version.namespace" which is good enough here.
-			sort.Slice(releases, func(i, j int) bool {
-				iKey := fmt.Sprintf("%s.%d.%s", releases[i].Name, releases[i].Version, releases[i].Namespace)
-				jKey := fmt.Sprintf("%s.%d.%s", releases[j].Name, releases[j].Version, releases[j].Namespace)
-				return iKey < jKey
-			})
-			rlsComparer := cmp.Comparer(func(x release.Release, y release.Release) bool {
-				return x.Name == y.Name &&
-					x.Version == y.Version &&
-					x.Namespace == y.Namespace &&
-					x.Info.Status == y.Info.Status &&
-					x.Chart.Name() == y.Chart.Name() &&
-					x.Manifest == y.Manifest &&
-					cmp.Equal(x.Config, y.Config) &&
-					cmp.Equal(x.Hooks, y.Hooks)
-			})
-			if !cmp.Equal(releases, test.RemainingReleases, rlsComparer) {
-				t.Errorf("Unexpected remaining releases. Diff %s", cmp.Diff(releases, test.RemainingReleases, rlsComparer))
+			releases, err := cfg.ActionConfig.Releases.ListReleases()
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			if !cmp.Equal(releases, test.RemainingReleases, releaseComparer) {
+				t.Errorf("Unexpected remaining releases. Diff:\n%s", cmp.Diff(releases, test.RemainingReleases, releaseComparer))
 			}
 			if test.ResponseBody != "" {
 				if test.ResponseBody != response.Body.String() {
@@ -319,22 +324,12 @@ func TestActions(t *testing.T) {
 	}
 }
 
-// derefReleases derefrences the releases in sotrage into an array
-func derefReleases(storage *storage.Storage) []release.Release {
-	rls, _ := storage.ListReleases()
-	releases := make([]release.Release, len(rls))
-	for i := range rls {
-		releases[i] = *rls[i]
-	}
-	return releases
-}
-
-func createRelease(chartName, name, namespace string, version int, status release.Status) release.Release {
+func createRelease(chartName, name, namespace string, version int, status release.Status) *release.Release {
 	deleted := helmTime.Time{}
 	if status == release.StatusUninstalled {
 		deleted = testingTime
 	}
-	return release.Release{
+	return &release.Release{
 		Name:      name,
 		Namespace: namespace,
 		Version:   version,
@@ -346,5 +341,116 @@ func createRelease(chartName, name, namespace string, version int, status releas
 			Values: make(map[string]interface{}),
 		},
 		Config: make(map[string]interface{}),
+	}
+}
+
+func createExistingReleases(t *testing.T, cfg *Config, releases []*release.Release) {
+	for i := range releases {
+		err := cfg.ActionConfig.Releases.Create(releases[i])
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
+}
+
+func TestRollbackAction(t *testing.T) {
+	const releaseName = "my-release"
+	testCases := []struct {
+		name             string
+		existingReleases []*release.Release
+		queryString      string
+		params           map[string]string
+		statusCode       int
+		expectedReleases []*release.Release
+		responseBody     string
+	}{
+		{
+			name: "rolls back a release",
+			existingReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			queryString: "action=rollback&revision=1",
+			params:      map[string]string{nameParam: "my-release"},
+			statusCode:  http.StatusOK,
+			expectedReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 3, release.StatusDeployed),
+			},
+			responseBody: `{"data":{"name":"my-release","info":{"status":{"code":1}},"chart":{"metadata":{"name":"apache"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":3,"namespace":"default"}}`,
+		},
+		{
+			name: "errors if the release does not exist",
+			existingReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			queryString: "action=rollback&revision=1",
+			params:      map[string]string{nameParam: "does-not-exist"},
+			statusCode:  http.StatusNotFound,
+			expectedReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			responseBody: `{"code":404,"message":"no revision for release \"does-not-exist\""}`,
+		},
+		{
+			name: "errors if the revision does not exist",
+			existingReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			queryString: "action=rollback&revision=3",
+			params:      map[string]string{nameParam: "apache"},
+			statusCode:  http.StatusNotFound,
+			expectedReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			responseBody: `{"code":404,"message":"no revision for release \"apache\""}`,
+		},
+		{
+			name: "errors if the revision is not specified",
+			existingReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			queryString: "action=rollback",
+			params:      map[string]string{nameParam: "apache"},
+			statusCode:  http.StatusUnprocessableEntity,
+			expectedReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			responseBody: `{"code":422,"message":"Missing revision to rollback in request"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newConfigFixture(t)
+			createExistingReleases(t, cfg, tc.existingReleases)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("https://example.com/whatever?%s", tc.queryString), strings.NewReader(""))
+			response := httptest.NewRecorder()
+
+			OperateRelease(*cfg, response, req, tc.params)
+
+			if got, want := response.Code, tc.statusCode; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+			if got, want := response.Body.String(), tc.responseBody; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+
+			actualReleases, err := cfg.ActionConfig.Releases.ListReleases()
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := actualReleases, tc.expectedReleases; !cmp.Equal(want, got, releaseComparer) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, releaseComparer))
+			}
+		})
 	}
 }
