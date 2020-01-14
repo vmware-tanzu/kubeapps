@@ -2,7 +2,7 @@
 // This file is a compatibility layer that translates Helm 3 releases to a Helm 2-similar format suitable for the Dashboard.
 // Note that h3.Release and h2.Release are not isomorphic, so it is impossible to map between them in general.
 
-package handler
+package helm3to2
 
 import (
 	"fmt"
@@ -22,11 +22,13 @@ import (
 var (
 	// ErrUnableToConvertWithoutInfo indicates that the input release had nil Info or Chart.
 	ErrUnableToConvertWithoutInfo = fmt.Errorf("unable to convert release without info")
-	// ErrUnableToParseDeletionTime indicates that the deletion time of the h3 chart could not be parsed.
+	// ErrFailedToParseDeletionTime indicates that the deletion time of the h3 chart could not be parsed.
 	ErrFailedToParseDeletionTime = fmt.Errorf("failed to parse deletion time")
 )
 
-func newDashboardCompatibleRelease(h3r h3.Release) (h2.Release, error) {
+// Convert returns a Helm2 compatible release based on the info from a Helm3 release
+// TODO: This method is meant to be deleted once the support for Helm2 is dropped
+func Convert(h3r h3.Release) (h2.Release, error) {
 	if h3r.Info == nil || h3r.Chart == nil || h3r.Chart.Metadata == nil {
 		return h2.Release{}, ErrUnableToConvertWithoutInfo
 	}
@@ -52,13 +54,14 @@ func newDashboardCompatibleRelease(h3r h3.Release) (h2.Release, error) {
 func compatibleChart(h3c h3chart.Chart) *h2chart.Chart {
 	return &h2chart.Chart{
 		Files:     compatibleFiles(h3c.Files),
-		Metadata:  compatibleMetadata(*h3c.Metadata),
+		Metadata:  ConvertMetadata(*h3c.Metadata),
 		Templates: compatibleTemplates(h3c.Templates),
 		Values:    compatibleValues(h3c),
 	}
 }
 
-func compatibleMetadata(h3m h3chart.Metadata) *h2chart.Metadata {
+// ConvertMetadata turns the Metadata from a Helm3 release to a Helm2 compatibility format.
+func ConvertMetadata(h3m h3chart.Metadata) *h2chart.Metadata {
 	return &h2chart.Metadata{
 		Annotations:   h3m.Annotations,
 		ApiVersion:    h3m.APIVersion,

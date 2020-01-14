@@ -1,4 +1,4 @@
-package handler
+package helm3to2
 
 import (
 	"net/http/httptest"
@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-func TestNewDashboardCompatibleRelease(t *testing.T) {
+func TestConvert(t *testing.T) {
 	const (
 		validSeconds   = 1452902400
 		invalidSeconds = 253402300801
@@ -205,7 +205,7 @@ func TestNewDashboardCompatibleRelease(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
 			// Perform conversion
-			compatibleH3rls, err := newDashboardCompatibleRelease(test.Helm3Release)
+			compatibleH3rls, err := Convert(test.Helm3Release)
 			if got, want := err, test.ExpectedError; got != want {
 				t.Errorf("got: %v, want: %v", got, want)
 			}

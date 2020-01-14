@@ -3,8 +3,8 @@ package agent
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
+	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"helm.sh/helm/v3/pkg/action"
@@ -199,11 +199,14 @@ func ParseDriverType(raw string) (StorageForDriver, error) {
 }
 
 func appOverviewFromRelease(r *release.Release) proxy.AppOverview {
+	r2Metadata := helm3to2.ConvertMetadata(*r.Chart.Metadata)
 	return proxy.AppOverview{
-		ReleaseName: r.Name,
-		Version:     strconv.Itoa(r.Version),
-		Icon:        r.Chart.Metadata.Icon,
-		Namespace:   r.Namespace,
-		Status:      r.Info.Status.String(),
+		ReleaseName:   r.Name,
+		Version:       r.Chart.Metadata.Version,
+		Icon:          r.Chart.Metadata.Icon,
+		Namespace:     r.Namespace,
+		Status:        r.Info.Status.String(),
+		Chart:         r.Chart.Name(),
+		ChartMetadata: *r2Metadata,
 	}
 }
