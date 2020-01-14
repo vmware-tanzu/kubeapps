@@ -196,7 +196,7 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	compatRelease, err := newDashboardCompatibleRelease(*rel)
+	compatRelease, err := helm3to2.Convert(*rel)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return

@@ -555,8 +555,8 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "rolls back a release",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", targetRevision, release.StatusSuperseded},
-				releaseStub{"airwatch", "default", revisionBeingSuperseded, release.StatusDeployed},
+				releaseStub{"airwatch", "default", targetRevision, "1.0.0", release.StatusSuperseded},
+				releaseStub{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
@@ -564,7 +564,7 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "errors when rolling back to a release revision which does not exist",
 			releases: []releaseStub{
-				releaseStub{"airwatch", "default", revisionBeingSuperseded, release.StatusDeployed},
+				releaseStub{"airwatch", "default", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
@@ -573,9 +573,9 @@ func TestRollbackRelease(t *testing.T) {
 		{
 			name: "rolls back a release in non-default namespace",
 			releases: []releaseStub{
-				releaseStub{"otherrelease", "default", 1, release.StatusDeployed},
-				releaseStub{"airwatch", "othernamespace", targetRevision, release.StatusSuperseded},
-				releaseStub{"airwatch", "othernamespace", revisionBeingSuperseded, release.StatusDeployed},
+				releaseStub{"otherrelease", "default", 1, "1.0.0", release.StatusDeployed},
+				releaseStub{"airwatch", "othernamespace", targetRevision, "1.0.0", release.StatusSuperseded},
+				releaseStub{"airwatch", "othernamespace", revisionBeingSuperseded, "1.0.0", release.StatusDeployed},
 			},
 			release:  "airwatch",
 			revision: targetRevision,
