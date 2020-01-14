@@ -53,15 +53,28 @@ func newConfigFixture(t *testing.T) *Config {
 	}
 }
 
+// See https://github.com/kubeapps/kubeapps/pull/1439/files#r365678777
+// for discussion about cleaner long booleans.
+func and(exps ...bool) bool {
+	for _, exp := range exps {
+		if !exp {
+			return false
+		}
+	}
+	return true
+}
+
 var releaseComparer = cmp.Comparer(func(x release.Release, y release.Release) bool {
-	return x.Name == y.Name &&
-		x.Version == y.Version &&
-		x.Namespace == y.Namespace &&
-		x.Info.Status == y.Info.Status &&
-		x.Chart.Name() == y.Chart.Name() &&
-		x.Manifest == y.Manifest &&
-		cmp.Equal(x.Config, y.Config) &&
-		cmp.Equal(x.Hooks, y.Hooks)
+	return and(
+		x.Name == y.Name,
+		x.Version == y.Version,
+		x.Namespace == y.Namespace,
+		x.Info.Status == y.Info.Status,
+		x.Chart.Name() == y.Chart.Name(),
+		x.Manifest == y.Manifest,
+		cmp.Equal(x.Config, y.Config),
+		cmp.Equal(x.Hooks, y.Hooks),
+	)
 })
 
 func TestActions(t *testing.T) {
