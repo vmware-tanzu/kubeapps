@@ -72,19 +72,31 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			kubeClient, err := kubernetes.NewForConfig(restConfig)
+			userKubeClient, err := kubernetes.NewForConfig(restConfig)
 			if err != nil {
 				// TODO log details rather than return potentially sensitive details in error.
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			appRepoClient, err := appRepo.NewForConfig(restConfig)
+			svcRestConfig, err := rest.InClusterConfig()
 			if err != nil {
 				// TODO log details rather than return potentially sensitive details in error.
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			actionConfig, err := agent.NewActionConfig(storageForDriver, restConfig, kubeClient, namespace)
+			svcKubeClient, err := kubernetes.NewForConfig(svcRestConfig)
+			if err != nil {
+				// TODO log details rather than return potentially sensitive details in error.
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			appRepoClient, err := appRepo.NewForConfig(svcRestConfig)
+			if err != nil {
+				// TODO log details rather than return potentially sensitive details in error.
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			actionConfig, err := agent.NewActionConfig(storageForDriver, restConfig, userKubeClient, namespace)
 			if err != nil {
 				// TODO log details rather than return potentially sensitive details in error.
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -93,7 +105,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(kubeClient, appRepoClient, options.UserAgent),
+				ChartClient:  chartUtils.NewChartClient(svcKubeClient, appRepoClient, options.UserAgent),
 			}
 			f(cfg, w, req, params)
 		}
