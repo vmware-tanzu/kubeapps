@@ -63,14 +63,14 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_12_MASTER:
+      - GKE_1_14_MASTER:
           <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_12_LATEST_RELEASE:
+      - GKE_1_14_LATEST_RELEASE:
           <<: *build_on_master
           requires:
             - test_go
@@ -84,8 +84,8 @@ workflows:
             - local_e2e_tests_mongodb
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
-            - GKE_1_12_MASTER
-            - GKE_1_12_LATEST_RELEASE
+            - GKE_1_14_MASTER
+            - GKE_1_14_LATEST_RELEASE
       - push_images:
           <<: *build_on_master
           requires:
@@ -93,8 +93,8 @@ workflows:
             - local_e2e_tests_mongodb
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
-            - GKE_1_12_MASTER
-            - GKE_1_12_LATEST_RELEASE
+            - GKE_1_14_MASTER
+            - GKE_1_14_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
@@ -102,8 +102,8 @@ workflows:
             - local_e2e_tests_mongodb
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
-            - GKE_1_12_MASTER
-            - GKE_1_12_LATEST_RELEASE
+            - GKE_1_14_MASTER
+            - GKE_1_14_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -157,7 +157,7 @@ build_images: &build_images
           - "*"
 install_kubectl: &install_kubectl
   run: |
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.13.0/bin/linux/amd64/kubectl
     chmod +x ./kubectl
     sudo mv ./kubectl /usr/local/bin/kubectl
 run_e2e_tests: &run_e2e_tests
@@ -311,14 +311,14 @@ jobs:
     environment:
       GKE_BRANCH: "1.13"
       TEST_LATEST_RELEASE: 1
-  GKE_1_12_MASTER:
+  GKE_1_14_MASTER:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.12"
-  GKE_1_12_LATEST_RELEASE:
+      GKE_BRANCH: "1.14"
+  GKE_1_14_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      GKE_BRANCH: "1.12"
+      GKE_BRANCH: "1.14"
       TEST_LATEST_RELEASE: 1
   sync_chart:
     docker:
