@@ -103,7 +103,7 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	return res, nil
 }
 
-// RollbackRelease rolls back a release to the specified revision
+// RollbackRelease rolls back a release to the specified revision.
 func RollbackRelease(actionConfig *action.Configuration, releaseName string, revision int) (*release.Release, error) {
 	log.Printf("Rolling back %s to revision %d.", releaseName, revision)
 	rollback := action.NewRollback(actionConfig)
@@ -151,7 +151,7 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 	return actionConfig, nil
 }
 
-// NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster
+// NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster.
 func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) *genericclioptions.ConfigFlags {
 	impersonateGroup := []string{}
 	insecure := false
@@ -168,7 +168,7 @@ func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) *ge
 	}
 }
 
-// Values is a type alias for values.yaml
+// Values is a type alias for values.yaml.
 type Values map[string]interface{}
 
 func getValues(raw []byte) (Values, error) {
