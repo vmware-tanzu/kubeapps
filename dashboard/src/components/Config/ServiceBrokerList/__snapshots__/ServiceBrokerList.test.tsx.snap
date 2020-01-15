@@ -150,6 +150,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
           <PermissionsErrorPage
             action="resync Service Brokers"
             namespace=""
+            rawMessage=""
             roles={
               Array [
                 Object {

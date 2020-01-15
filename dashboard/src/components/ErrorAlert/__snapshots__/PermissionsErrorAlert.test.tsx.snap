@@ -21,11 +21,15 @@ exports[`renders an error message for the action 1`] = `
 >
   <div>
     <p>
-      Ask your administrator for the following RBAC roles:
+      The following error was returned:
     </p>
-    <ul
-      className="error__permisions-list"
-    />
+    <div
+      className="error__content"
+    >
+      <section
+        className="Terminal terminal__error elevation-1 type-color-white error__text"
+      />
+    </div>
     <p>
       See the documentation for more info on
        

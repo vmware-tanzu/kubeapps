@@ -9,12 +9,13 @@ import PermissionsListItem from "./PermissionsListItem";
 interface IPermissionsErrorPage {
   action: string;
   roles: IRBACRole[];
+  rawMessage: string;
   namespace: string;
 }
 
 class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
   public render() {
-    const { action, namespace, roles } = this.props;
+    const { action, namespace, roles, rawMessage } = this.props;
     return (
       <UnexpectedErrorAlert
         title={
@@ -26,12 +27,25 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
         showGenericMessage={false}
       >
         <div>
-          <p>Ask your administrator for the following RBAC roles:</p>
-          <ul className="error__permisions-list">
-            {roles.map((r, i) => (
-              <PermissionsListItem key={i} namespace={namespace} role={r} />
-            ))}
-          </ul>
+          {roles.length > 0 ? (
+            <>
+              <p>Ask your administrator for the following RBAC roles:</p>
+              <ul className="error__permisions-list">
+                {roles.map((r, i) => (
+                  <PermissionsListItem key={i} namespace={namespace} role={r} />
+                ))}
+              </ul>
+            </>
+          ) : (
+            <>
+              <p>The following error was returned:</p>
+              <div className="error__content">
+                <section className="Terminal terminal__error elevation-1 type-color-white error__text">
+                  {rawMessage}
+                </section>
+              </div>
+            </>
+          )}
           <p>
             See the documentation for more info on{" "}
             <a
