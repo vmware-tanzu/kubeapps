@@ -66,6 +66,9 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 			namespace := params[namespaceParam]
 			token := auth.ExtractToken(req.Header.Get(authHeader))
+
+			// User configuration and clients, using user token
+			// Used to perform Helm operations
 			restConfig, err := NewInClusterConfig(token)
 			if err != nil {
 				// TODO log details rather than return potentially sensitive details in error.
@@ -78,6 +81,15 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			actionConfig, err := agent.NewActionConfig(storageForDriver, restConfig, userKubeClient, namespace)
+			if err != nil {
+				// TODO log details rather than return potentially sensitive details in error.
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// System configuration and clients, using the service serviceaccount
+			// Used to retrieve apprepositories and secrets related to them
 			svcRestConfig, err := rest.InClusterConfig()
 			if err != nil {
 				// TODO log details rather than return potentially sensitive details in error.
@@ -96,12 +108,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			actionConfig, err := agent.NewActionConfig(storageForDriver, restConfig, userKubeClient, namespace)
-			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
