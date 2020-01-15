@@ -78,8 +78,6 @@ func main() {
 	addRoute("DELETE", "/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
-	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
-	// reconsider where these endpoints live.
 	appreposHandler, err := appRepoHandler.NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
 	if err != nil {
 		log.Fatalf("Unable to create app repositories handler: %+v", err)
