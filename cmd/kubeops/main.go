@@ -14,6 +14,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	"github.com/kubeapps/kubeapps/cmd/kubeops/internal/handler"
 	"github.com/kubeapps/kubeapps/pkg/agent"
+	appRepoHandler "github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -75,6 +76,16 @@ func main() {
 	addRoute("GET", "/namespaces/{namespace}/releases/{releaseName}", handler.GetRelease)
 	addRoute("PUT", "/namespaces/{namespace}/releases/{releaseName}", handler.OperateRelease)
 	addRoute("DELETE", "/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
+
+	// Backend routes unrelated to kubeops functionality.
+	appreposHandler, err := appRepoHandler.NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
+	if err != nil {
+		log.Fatalf("Unable to create app repositories handler: %+v", err)
+	}
+	backendAPIv1 := r.PathPrefix("/backend/v1").Subrouter()
+	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
+		negroni.WrapFunc(appreposHandler.Create),
+	))
 
 	// assetsvc reverse proxy
 	authGate := auth.AuthGate()

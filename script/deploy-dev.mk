@@ -4,16 +4,12 @@
 # Targets in this helper assume that kubectl is configured with a cluster
 # that has been setup with OIDC support (see ./cluster-kind.mk)
 
-deploy-helm:
-	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml
-	helm init --service-account tiller --wait
-
-deploy-dex: deploy-helm
+deploy-dex:
 	kubectl create namespace dex
 	kubectl -n dex create secret tls dex-web-server-tls \
 		--key ./script/test-certs/dex.key.pem \
 		--cert ./script/test-certs/dex.cert.pem
-	helm install stable/dex --namespace dex --name dex --version 2.4.0 \
+	helm install dex stable/dex --namespace dex --version 2.4.0 \
 		--values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
 # The api server does not have service dns entries (in kind or vanilla k8s), so
@@ -28,13 +24,16 @@ update-apiserver-etc-hosts:
 		sh -c "echo '$(shell kubectl -n dex get svc -o=jsonpath='{.items[0].spec.clusterIP}') dex.dex' >> /etc/hosts"
 
 deploy-openldap:
-	helm install stable/openldap --name ldap --namespace ldap \
+	kubectl create namespace ldap
+	helm install ldap stable/openldap --namespace ldap \
 		--values ./docs/user/manifests/kubeapps-local-dev-openldap-values.yaml
 
 deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
-	helm install ./chart/kubeapps --namespace kubeapps --name kubeapps \
+	kubectl create namespace kubeapps
+	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
-		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml
+		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
+		--set useHelm3=true
 	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	@echo "\nEnsure you have the entry '127.0.0.1 dex.dex' in your /etc/hosts, then run\n"
 	@echo "kubectl -n dex port-forward svc/dex 32000\n"
@@ -49,12 +48,12 @@ deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
 	@echo "to authenticate with the corresponding permissions."
 
 reset-dev:
-	helm delete --purge kubeapps || true
-	helm delete --purge dex || true
-	helm delete --purge ldap || true
+	helm delete kubeapps || true
+	helm delete dex || true
+	helm delete ldap || true
+	kubectl delete clusterrole dex || true
+	kubectl delete clusterrolebinding dex || true
 	kubectl delete namespace --wait dex ldap kubeapps || true
-	helm reset --force --tiller-connection-timeout 5 || true
-	kubectl delete --wait -f ./docs/user/manifests/kubeapps-local-dev-tiller-rbac.yaml || true
 	kubectl delete --wait -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml || true
 
 .PHONY: deploy-dex deploy-dev deploy-openldap reset-dev update-apiserver-etc-hosts
