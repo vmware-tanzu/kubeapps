@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,8 +11,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/pkg/auth"
-	authFake "github.com/kubeapps/kubeapps/pkg/auth/fake"
 	chartFake "github.com/kubeapps/kubeapps/pkg/chart/fake"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -83,7 +80,6 @@ func TestActions(t *testing.T) {
 		// Scenario params
 		Description      string
 		ExistingReleases []*release.Release
-		DisableAuth      bool
 		Skip             bool //TODO: Remove this when the memory bug is fixed
 		// Request params
 		RequestBody  string
@@ -99,28 +95,10 @@ func TestActions(t *testing.T) {
 	tests := []testScenario{
 		{
 			// Scenario params
-			Description:      "Create a simple release without auth",
+			Description:      "Create a simple release",
 			ExistingReleases: []*release.Release{},
-			DisableAuth:      true,
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
-			RequestQuery: "",
-			Action:       "create",
-			Params:       map[string]string{"namespace": "default"},
-			// Expected result
-			StatusCode: 200,
-			RemainingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
-			},
-			ResponseBody: "",
-		},
-		{
-			// Scenario params
-			Description:      "Create a simple release with auth",
-			ExistingReleases: []*release.Release{},
-			DisableAuth:      true,
-			// Request params
-			RequestBody:  `{"chartName":"foo","releaseName":"foobar","version":"1.0.0"}`,
 			RequestQuery: "",
 			Action:       "create",
 			Params:       map[string]string{"namespace": "default"},
@@ -137,7 +115,6 @@ func TestActions(t *testing.T) {
 			ExistingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 			},
-			DisableAuth: false,
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
 			RequestQuery: "",
@@ -154,7 +131,6 @@ func TestActions(t *testing.T) {
 			// Scenario params
 			Description:      "Get a non-existing release",
 			ExistingReleases: []*release.Release{},
-			DisableAuth:      true,
 			Skip:             true,
 			// Request params
 			RequestBody:  "",
@@ -171,7 +147,6 @@ func TestActions(t *testing.T) {
 			ExistingReleases: []*release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
 			},
-			DisableAuth: true,
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -190,7 +165,6 @@ func TestActions(t *testing.T) {
 			ExistingReleases: []*release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
 			},
-			DisableAuth: true,
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "?purge=true",
@@ -208,7 +182,6 @@ func TestActions(t *testing.T) {
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
 				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
 			},
-			DisableAuth: true,
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -228,7 +201,6 @@ func TestActions(t *testing.T) {
 			ExistingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusUninstalled),
 			},
-			DisableAuth: true,
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -247,7 +219,6 @@ func TestActions(t *testing.T) {
 			ExistingReleases: []*release.Release{
 				createRelease("foobarchart", "foobar", "default", 1, release.StatusDeployed),
 			},
-			DisableAuth: true,
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "?purge=1",
@@ -262,7 +233,6 @@ func TestActions(t *testing.T) {
 			// Scenario params
 			Description:      "Delete a missing release",
 			ExistingReleases: []*release.Release{},
-			DisableAuth:      true,
 			Skip:             true,
 			// Request params
 			RequestBody:  "",
@@ -285,11 +255,6 @@ func TestActions(t *testing.T) {
 			}
 			// Initialize environment for test
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
-			if !test.DisableAuth {
-				fauth := &authFake.FakeAuth{}
-				ctx := context.WithValue(req.Context(), auth.UserKey, fauth)
-				req = req.WithContext(ctx)
-			}
 			response := httptest.NewRecorder()
 			cfg := newConfigFixture(t)
 			createExistingReleases(t, cfg, test.ExistingReleases)

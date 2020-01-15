@@ -46,12 +46,12 @@ import (
 )
 
 var (
-	settings    environment.EnvSettings
-	proxy       *tillerProxy.Proxy
-	kubeClient  kubernetes.Interface
-	disableAuth bool
-	listLimit   int
-	timeout     int64
+	settings             environment.EnvSettings
+	proxy                *tillerProxy.Proxy
+	kubeClient           kubernetes.Interface
+	disableUserAuthCheck bool
+	listLimit            int
+	timeout              int64
 
 	tlsCaCertFile string // path to TLS CA certificate file
 	tlsCertFile   string // path to TLS certificate file
@@ -74,7 +74,7 @@ func init() {
 	pflag.StringVar(&tlsKeyFile, "tls-key", tlsKeyDefault, "path to TLS key file")
 	pflag.BoolVar(&tlsVerify, "tls-verify", false, "enable TLS for request and verify remote")
 	pflag.BoolVar(&tlsEnable, "tls", false, "enable TLS for request")
-	pflag.BoolVar(&disableAuth, "disable-auth", false, "Disable authorization check")
+	pflag.BoolVar(&disableUserAuthCheck, "disable-auth", false, "Disable authorization check")
 	pflag.IntVar(&listLimit, "list-max", 256, "maximum number of releases to fetch")
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
@@ -147,10 +147,10 @@ func main() {
 
 	// HTTP Handler
 	h := handler.TillerProxy{
-		DisableAuth: disableAuth,
-		ListLimit:   listLimit,
-		ChartClient: chartClient,
-		ProxyClient: proxy,
+		DisableUserAuthCheck: disableUserAuthCheck,
+		ListLimit:            listLimit,
+		ChartClient:          chartClient,
+		ProxyClient:          proxy,
 	}
 
 	// Routes
