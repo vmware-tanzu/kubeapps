@@ -21,7 +21,7 @@ exports[`renders an error message for the action 1`] = `
 >
   <div>
     <p>
-      Ask your administrator for the following permissions:
+      The following error was returned:
     </p>
     <div
       className="error__content"

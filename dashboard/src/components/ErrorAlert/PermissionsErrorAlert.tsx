@@ -27,19 +27,24 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
         showGenericMessage={false}
       >
         <div>
-          <p>Ask your administrator for the following permissions:</p>
           {roles.length > 0 ? (
-            <ul className="error__permisions-list">
-              {roles.map((r, i) => (
-                <PermissionsListItem key={i} namespace={namespace} role={r} />
-              ))}
-            </ul>
+            <>
+              <p>Ask your administrator for the following RBAC roles:</p>
+              <ul className="error__permisions-list">
+                {roles.map((r, i) => (
+                  <PermissionsListItem key={i} namespace={namespace} role={r} />
+                ))}
+              </ul>
+            </>
           ) : (
-            <div className="error__content">
-              <section className="Terminal terminal__error elevation-1 type-color-white error__text">
-                {rawMessage}
-              </section>
-            </div>
+            <>
+              <p>The following error was returned:</p>
+              <div className="error__content">
+                <section className="Terminal terminal__error elevation-1 type-color-white error__text">
+                  {rawMessage}
+                </section>
+              </div>
+            </>
           )}
           <p>
             See the documentation for more info on{" "}

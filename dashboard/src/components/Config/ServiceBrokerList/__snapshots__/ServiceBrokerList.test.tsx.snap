@@ -235,7 +235,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
                 >
                   <div>
                     <p>
-                      Ask your administrator for the following permissions:
+                      Ask your administrator for the following RBAC roles:
                     </p>
                     <ul
                       className="error__permisions-list"

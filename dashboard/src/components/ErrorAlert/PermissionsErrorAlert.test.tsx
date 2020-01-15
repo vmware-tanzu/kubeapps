@@ -20,7 +20,7 @@ it("renders an error message for the action", () => {
     .find(ErrorAlertHeader);
   expect(header).toExist();
   expect(header.shallow().text()).toContain(`You don't have sufficient permissions to ${action}`);
-  expect(wrapper.html()).toContain("Ask your administrator for the following permissions:");
+  expect(wrapper.html()).toContain("The following error was returned:");
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -41,6 +41,7 @@ it("renders PermissionsListItem for each RBAC role", () => {
   const wrapper = shallow(
     <PermissionsErrorAlert roles={roles} action="test" namespace="test" rawMessage="" />,
   );
+  expect(wrapper.html()).toContain("Ask your administrator for the following RBAC roles:");
   expect(wrapper.find(PermissionsListItem)).toHaveLength(2);
 });
 
