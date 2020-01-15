@@ -11,6 +11,7 @@ exports[`ForbiddenError should show an error message with the default RBAC roles
 <PermissionsErrorPage
   action="view my app"
   namespace="my-ns"
+  rawMessage=""
   roles={
     Array [
       Object {

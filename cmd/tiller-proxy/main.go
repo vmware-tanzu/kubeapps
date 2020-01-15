@@ -31,6 +31,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	appRepoHandler "github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
@@ -183,7 +184,7 @@ func main() {
 	// Backend routes unrelated to tiller-proxy functionality.
 	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
 	// reconsider where these endpoints live.
-	appreposHandler, err := handler.NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
+	appreposHandler, err := appRepoHandler.NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
 	if err != nil {
 		log.Fatalf("Unable to create app repositories handler: %+v", err)
 	}

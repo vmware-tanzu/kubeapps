@@ -39,7 +39,7 @@ func isAlreadyExists(err error) bool {
 }
 
 func isForbidden(err error) bool {
-	return strings.Contains(err.Error(), "Unauthorized")
+	return strings.Contains(err.Error(), "Unauthorized") || strings.Contains(err.Error(), "forbidden")
 }
 
 func isUnprocessable(err error) bool {
