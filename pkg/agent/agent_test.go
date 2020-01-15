@@ -214,8 +214,8 @@ func TestListReleases(t *testing.T) {
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
 				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"not-in-default-namespace", "other", 1, "1.0.0", release.StatusDeployed},
+				releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+				releaseStub{"not-in-default-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -231,25 +231,25 @@ func TestListReleases(t *testing.T) {
 					},
 				},
 				proxy.AppOverview{
-					ReleaseName: "not-in-default-namespace",
-					Namespace:   "other",
-					Version:     "1.0.0",
+					ReleaseName: "wordpress",
+					Namespace:   "default",
+					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
+						Version:     "1.0.1",
 						Icon:        "https://example.com/icon.png",
 						Maintainers: []*chartv1.Maintainer{},
 					},
 				},
 				proxy.AppOverview{
-					ReleaseName: "wordpress",
-					Namespace:   "default",
-					Version:     "1.0.0",
+					ReleaseName: "not-in-default-namespace",
+					Namespace:   "other",
+					Version:     "1.0.2",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
+						Version:     "1.0.2",
 						Icon:        "https://example.com/icon.png",
 						Maintainers: []*chartv1.Maintainer{},
 					},
@@ -262,8 +262,8 @@ func TestListReleases(t *testing.T) {
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
 				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"not-in-namespace", "other", 1, "1.0.0", release.StatusDeployed},
+				releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+				releaseStub{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -281,11 +281,11 @@ func TestListReleases(t *testing.T) {
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
 					Namespace:   "default",
-					Version:     "1.0.0",
+					Version:     "1.0.1",
 					Status:      "deployed",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
+						Version:     "1.0.1",
 						Icon:        "https://example.com/icon.png",
 						Maintainers: []*chartv1.Maintainer{},
 					},
@@ -298,8 +298,8 @@ func TestListReleases(t *testing.T) {
 			listLimit: 1,
 			releases: []releaseStub{
 				releaseStub{"airwatch", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"not-in-namespace", "other", 1, "1.0.0", release.StatusDeployed},
+				releaseStub{"wordpress", "default", 1, "1.0.1", release.StatusDeployed},
+				releaseStub{"not-in-namespace", "other", 1, "1.0.2", release.StatusDeployed},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -381,7 +381,7 @@ func TestListReleases(t *testing.T) {
 			listLimit: defaultListLimit,
 			releases: []releaseStub{
 				releaseStub{"wordpress", "default", 1, "1.0.0", release.StatusDeployed},
-				releaseStub{"wordpress", "dev", 2, "1.0.0", release.StatusUninstalled},
+				releaseStub{"wordpress", "dev", 2, "1.0.1", release.StatusUninstalled},
 			},
 			expectedApps: []proxy.AppOverview{
 				proxy.AppOverview{
@@ -399,11 +399,11 @@ func TestListReleases(t *testing.T) {
 				proxy.AppOverview{
 					ReleaseName: "wordpress",
 					Namespace:   "dev",
-					Version:     "1.0.0",
+					Version:     "1.0.1",
 					Status:      "uninstalled",
 					Icon:        "https://example.com/icon.png",
 					ChartMetadata: chartv1.Metadata{
-						Version:     "1.0.0",
+						Version:     "1.0.1",
 						Icon:        "https://example.com/icon.png",
 						Maintainers: []*chartv1.Maintainer{},
 					},
