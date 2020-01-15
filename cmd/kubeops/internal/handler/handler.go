@@ -45,7 +45,6 @@ type Config struct {
 	ActionConfig *action.Configuration
 	Options      Options
 	ChartClient  chartUtils.Resolver
-	AuthChecker  *auth.UserAuth
 }
 
 // NewInClusterConfig returns an internal cluster config replacing the token.
@@ -91,18 +90,10 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			authChecker, err := auth.NewAuth(token)
-			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
 				ChartClient:  chartUtils.NewChartClient(kubeClient, appRepoClient, options.UserAgent),
-				AuthChecker:  authChecker,
 			}
 			f(cfg, w, req, params)
 		}
@@ -244,26 +235,4 @@ func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	}
 	w.Header().Set("Status-Code", "200")
 	w.Write([]byte("OK"))
-}
-
-type kubeopsHandler func(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params)
-
-// UserPermissionChecks decorates an existing handler for kubeops with the user
-// permission checks for better detailing of permission issues in the UI.
-func UserPermissionChecks(f kubeopsHandler, action string) kubeopsHandler {
-	return func(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-		// TODO: Look up how to get manifest (create or from release) using helm3 client.
-		manifest := ""
-		forbiddenActions, err := cfg.AuthChecker.GetForbiddenActions(params["namespace"], action, manifest)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		if len(forbiddenActions) > 0 {
-			cfg.AuthChecker.WriteForbiddenActions(forbiddenActions, w)
-			return
-		}
-
-		f(cfg, w, req, params)
-	}
 }

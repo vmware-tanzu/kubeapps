@@ -22,8 +22,6 @@ import (
 
 type FakeAuth struct {
 	ForbiddenActions []authUtils.Action
-	// Embed the real implementation so WriteForbiddenActions works out of the box.
-	authUtils.UserAuth
 }
 
 func (f *FakeAuth) Validate() error {

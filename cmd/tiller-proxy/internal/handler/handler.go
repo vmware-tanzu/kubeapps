@@ -17,6 +17,7 @@ limitations under the License.
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -29,6 +30,16 @@ import (
 )
 
 const requireV1Support = true
+
+func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	body, err := json.Marshal(forbiddenActions)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	response.NewErrorResponse(http.StatusForbidden, string(body)).Write(w)
+}
 
 // TillerProxy client and configuration
 type TillerProxy struct {
@@ -69,7 +80,7 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 			return
 		}
 		if len(forbiddenActions) > 0 {
-			userAuth.WriteForbiddenActions(forbiddenActions, w)
+			returnForbiddenActions(forbiddenActions, w)
 			return
 		}
 	}
@@ -125,7 +136,7 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 			return
 		}
 		if len(forbiddenActions) > 0 {
-			userAuth.WriteForbiddenActions(forbiddenActions, w)
+			returnForbiddenActions(forbiddenActions, w)
 			return
 		}
 	}
@@ -161,7 +172,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 			return
 		}
 		if len(forbiddenActions) > 0 {
-			userAuth.WriteForbiddenActions(forbiddenActions, w)
+			returnForbiddenActions(forbiddenActions, w)
 			return
 		}
 	}
@@ -208,7 +219,7 @@ func (h *TillerProxy) TestRelease(w http.ResponseWriter, req *http.Request, para
 			return
 		}
 		if len(forbiddenActions) > 0 {
-			userAuth.WriteForbiddenActions(forbiddenActions, w)
+			returnForbiddenActions(forbiddenActions, w)
 			return
 		}
 	}
@@ -241,7 +252,7 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 			return
 		}
 		if len(forbiddenActions) > 0 {
-			userAuth.WriteForbiddenActions(forbiddenActions, w)
+			returnForbiddenActions(forbiddenActions, w)
 			return
 		}
 	}
@@ -268,7 +279,7 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 			return
 		}
 		if len(forbiddenActions) > 0 {
-			userAuth.WriteForbiddenActions(forbiddenActions, w)
+			returnForbiddenActions(forbiddenActions, w)
 			return
 		}
 	}

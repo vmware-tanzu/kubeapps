@@ -17,13 +17,9 @@ limitations under the License.
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 
-	"github.com/kubeapps/common/response"
-	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
 	authorizationapi "k8s.io/api/authorization/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -99,7 +95,6 @@ type Action struct {
 type Checker interface {
 	Validate() error
 	GetForbiddenActions(namespace, action, manifest string) ([]Action, error)
-	WriteForbiddenActions(forbiddenActions []Action, w http.ResponseWriter)
 }
 
 // NewAuth creates an auth agent
@@ -271,15 +266,4 @@ func (u *UserAuth) GetForbiddenActions(namespace, action, manifest string) ([]Ac
 		}
 	}
 	return forbiddenActions, nil
-}
-
-// WriteForbiddenActions writes the forbidden actions to the provider writer.
-func (u *UserAuth) WriteForbiddenActions(forbiddenActions []Action, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json")
-	body, err := json.Marshal(forbiddenActions)
-	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-		return
-	}
-	response.NewErrorResponse(http.StatusForbidden, string(body)).Write(w)
 }
