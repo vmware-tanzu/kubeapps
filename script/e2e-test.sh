@@ -27,32 +27,16 @@ source $ROOT_DIR/script/libtest.sh
 echo "IMAGE TAG TO BE TESTED: $DEV_TAG"
 echo "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
 
+function testHelm {
+  if [[ "$HELM_VERSION" =~ "v2" ]]; then
+    helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci --cleanup
+  else
+    helm test -n kubeapps kubeapps-ci
+  fi
+}
+
 # Print cluster version
 kubectl version
-
-# Install Tiller with TLS support
-kubectl -n kube-system create sa tiller
-kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-helm init \
-  --service-account tiller \
-  --tiller-tls \
-  --tiller-tls-cert ${CERTS_DIR}/tiller.cert.pem \
-  --tiller-tls-key ${CERTS_DIR}/tiller.key.pem \
-  --tiller-tls-verify \
-  --tls-ca-cert ${CERTS_DIR}/ca.cert.pem
-
-# The flag --wait is not available when using TLS flags:
-# https://github.com/helm/helm/issues/4050
-echo "Waiting for Tiller to be ready ... "
-cnt=60 # 60 retries (about 60s)
-until helm version ${HELM_CLIENT_TLS_FLAGS} --tiller-connection-timeout 1; do
-  ((cnt=cnt-1)) || return 1
-  sleep 1
-done
-
-# Add admin permissions to default user in kube-system namespace
-kubectl get clusterrolebinding kube-dns-admin >& /dev/null || \
-    kubectl create clusterrolebinding kube-dns-admin --serviceaccount=kube-system:default --clusterrole=cluster-admin 
 
 dbFlags="--set mongodb.enabled=true --set postgresql.enabled=false"
 if [[ "${KUBEAPPS_DB}" == "postgresql" ]]; then
@@ -65,47 +49,91 @@ assetSyncerImage="kubeapps/asset-syncer"
 assetsvcImage="kubeapps/assetsvc"
 dashboardImage="kubeapps/dashboard"
 tillerProxyImage="kubeapps/tiller-proxy"
+kubeopsImage="kubeapps/kubeops"
 if [[ -n "$TEST_LATEST_RELEASE" ]]; then
   apprepositoryControllerImage="bitnami/kubeapps-apprepository-controller"
   assetSyncerImage="bitnami/kubeapps-asset-syncer"
   assetsvcImage="bitnami/kubeapps-assetsvc"
   dashboardImage="bitnami/kubeapps-dashboard"
   tillerProxyImage="bitnami/kubeapps-tiller-proxy"
+  kubeopsImage="bitnami/kubeapps-kubeops"
 fi
+imgFlags=(
+  --set apprepository.image.tag=${DEV_TAG}
+  --set apprepository.image.repository=${apprepositoryControllerImage}${IMG_MODIFIER}
+  --set apprepository.syncImage.tag=${DEV_TAG}
+  --set apprepository.syncImage.repository=${assetSyncerImage}$IMG_MODIFIER
+  --set assetsvc.image.tag=${DEV_TAG}
+  --set assetsvc.image.repository=${assetsvcImage}${IMG_MODIFIER}
+  --set dashboard.image.tag=${DEV_TAG}
+  --set dashboard.image.repository=${dashboardImage}${IMG_MODIFIER}
+  --set tillerProxy.image.tag=${DEV_TAG}
+  --set tillerProxy.image.repository=${tillerProxyImage}${IMG_MODIFIER}
+  --set kubeops.image.tag=${DEV_TAG}
+  --set kubeops.image.repository=${kubeopsImage}${IMG_MODIFIER}
+)
 
 # Install Kubeapps
-helm dep up $ROOT_DIR/chart/kubeapps/
-helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
+kubectl create ns kubeapps
+if [[ "$HELM_VERSION" =~ "v2" ]]; then
+  # Install Tiller with TLS support
+  kubectl -n kube-system create sa tiller
+  kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+  helm init \
+    --service-account tiller \
+    --tiller-tls \
+    --tiller-tls-cert ${CERTS_DIR}/tiller.cert.pem \
+    --tiller-tls-key ${CERTS_DIR}/tiller.key.pem \
+    --tiller-tls-verify \
+    --tls-ca-cert ${CERTS_DIR}/ca.cert.pem
+
+  # The flag --wait is not available when using TLS flags:
+  # https://github.com/helm/helm/issues/4050
+  echo "Waiting for Tiller to be ready ... "
+  cnt=60 # 60 retries (about 60s)
+  until helm version ${HELM_CLIENT_TLS_FLAGS} --tiller-connection-timeout 1; do
+    ((cnt=cnt-1)) || return 1
+    sleep 1
+  done
+
+  # Install Kubeapps
+  helm dep up $ROOT_DIR/chart/kubeapps/
+  helm install --name kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
     `# Tiller TLS flags` \
     ${HELM_CLIENT_TLS_FLAGS} \
     `# Tiller-proxy TLS flags` \
     --set tillerProxy.tls.key="$(cat ${CERTS_DIR}/helm.key.pem)" \
     --set tillerProxy.tls.cert="$(cat ${CERTS_DIR}/helm.cert.pem)" \
     `# Image flags` \
-    --set apprepository.image.tag=${DEV_TAG} \
-    --set apprepository.image.repository=${apprepositoryControllerImage}${IMG_MODIFIER} \
-    --set apprepository.syncImage.tag=${DEV_TAG} \
-    --set apprepository.syncImage.repository=${assetSyncerImage}$IMG_MODIFIER \
-    --set assetsvc.image.tag=${DEV_TAG} \
-    --set assetsvc.image.repository=${assetsvcImage}${IMG_MODIFIER} \
-    --set dashboard.image.tag=${DEV_TAG} \
-    --set dashboard.image.repository=${dashboardImage}${IMG_MODIFIER} \
-    --set tillerProxy.image.tag=${DEV_TAG} \
-    --set tillerProxy.image.repository=${tillerProxyImage}${IMG_MODIFIER} \
+    "${imgFlags[@]}" \
     `# Database choice flags` \
     ${dbFlags}
+else
+  # Install Kubeapps
+  helm dep up $ROOT_DIR/chart/kubeapps/
+  helm install kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
+    `# Image flags` \
+    "${imgFlags[@]}" \
+    `# Database choice flags` \
+    ${dbFlags} \
+    `# Enable Helm 3 flag` \
+    --set useHelm3=true
+fi
 
 # Ensure that we are testing the correct image
 k8s_ensure_image kubeapps kubeapps-ci-internal-apprepository-controller $DEV_TAG
 k8s_ensure_image kubeapps kubeapps-ci-internal-dashboard $DEV_TAG
-k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
+if [[ "$HELM_VERSION" =~ "v2" ]]; then
+  k8s_ensure_image kubeapps kubeapps-ci-internal-tiller-proxy $DEV_TAG
+else
+  k8s_ensure_image kubeapps kubeapps-ci-internal-kubeops $DEV_TAG
+fi
 
 # Wait for Kubeapps Pods
 deployments=(
   kubeapps-ci
   kubeapps-ci-internal-apprepository-controller
   kubeapps-ci-internal-assetsvc
-  kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
 )
 for dep in ${deployments[@]}; do
@@ -125,7 +153,6 @@ kubectl get ep --namespace=kubeapps
 svcs=(
   kubeapps-ci
   kubeapps-ci-internal-assetsvc
-  kubeapps-ci-internal-tiller-proxy
   kubeapps-ci-internal-dashboard
 )
 for svc in ${svcs[@]}; do
@@ -136,13 +163,13 @@ done
 # Run helm tests
 set +e
 
-helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci --cleanup
+testHelm
 code=$?
 
 if [[ "$code" != 0 ]]; then
   echo "Helm test failed, retrying..."
   # Avoid temporary issues, retry
-  helm test ${HELM_CLIENT_TLS_FLAGS} kubeapps-ci
+  testHelm
   code=$?
 fi
 
