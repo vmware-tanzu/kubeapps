@@ -338,19 +338,23 @@ jobs:
   GKE_1_13_MASTER:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.13"
   GKE_1_13_LATEST_RELEASE:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.13"
       TEST_LATEST_RELEASE: 1
   GKE_1_14_MASTER:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.14"
   GKE_1_14_LATEST_RELEASE:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.14"
       TEST_LATEST_RELEASE: 1
   sync_chart:
