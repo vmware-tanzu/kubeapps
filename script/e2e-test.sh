@@ -73,8 +73,6 @@ imgFlags=(
   --set kubeops.image.repository=${kubeopsImage}${IMG_MODIFIER}
 )
 
-# Install Kubeapps
-kubectl create ns kubeapps
 if [[ "$HELM_VERSION" =~ "v2" ]]; then
   # Install Tiller with TLS support
   kubectl -n kube-system create sa tiller
@@ -110,6 +108,7 @@ if [[ "$HELM_VERSION" =~ "v2" ]]; then
     ${dbFlags}
 else
   # Install Kubeapps
+  kubectl create ns kubeapps
   helm dep up $ROOT_DIR/chart/kubeapps/
   helm install kubeapps-ci --namespace kubeapps $ROOT_DIR/chart/kubeapps \
     `# Image flags` \
