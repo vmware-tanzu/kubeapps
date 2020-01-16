@@ -268,6 +268,25 @@ describe("when receiving new props", () => {
     expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/bar", "1.0.0");
   });
 
+  it("should request the deployed chart when the repo is populated later", () => {
+    const repo = { metadata: { name: "stable" } };
+    const app = {
+      chart: {
+        metadata: {
+          name: "bar",
+          version: "1.0.0",
+        },
+      },
+    } as IRelease;
+    const getDeployedChartVersion = jest.fn();
+    const wrapper = shallow(
+      <AppUpgrade {...defaultProps} app={app} getDeployedChartVersion={getDeployedChartVersion} />,
+    );
+    expect(getDeployedChartVersion).not.toHaveBeenCalled();
+    wrapper.setProps({ repo });
+    expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/bar", "1.0.0");
+  });
+
   it("a new app should re-trigger the deployed chart retrieval", () => {
     const repo = { metadata: { name: "stable" } };
     const app = {
