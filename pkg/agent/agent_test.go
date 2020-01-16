@@ -618,3 +618,79 @@ func TestRollbackRelease(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeRelease(t *testing.T) {
+	const revisionBeingUpdated = 1
+	testCases := []struct {
+		description string
+		releases    []releaseStub
+		release     string
+		valuesYaml  string
+		chartName   string
+		shouldFail  bool
+	}{
+		{
+			description: "upgrade a release with chart",
+			releases: []releaseStub{
+				releaseStub{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
+			},
+			valuesYaml: "IsValidYaml: true",
+			release:    "myrls",
+			chartName:  "mynewchart",
+		},
+		{
+			description: "upgrade a release with invalid values",
+			releases: []releaseStub{
+				releaseStub{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusDeployed},
+			},
+			valuesYaml: "\\-xx-@myval:\"test value\"\\\n", // ← invalid yaml
+			release:    "myrls",
+			chartName:  "mynewchart",
+			shouldFail: true,
+		},
+		{
+			description: "upgrade a deleted release",
+			releases: []releaseStub{
+				releaseStub{"myrls", "default", revisionBeingUpdated, "mychart", release.StatusUninstalled},
+			},
+			release:    "myrls",
+			chartName:  "mynewchart",
+			shouldFail: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			cfg := newActionConfigFixture(t)
+			makeReleases(t, cfg, tc.releases)
+			fakechart := chartFake.FakeChart{}
+			ch, _ := fakechart.GetChart(&kubechart.Details{
+				ChartName: tc.chartName,
+			}, nil, false)
+			newRelease, err := UpgradeRelease(cfg, tc.release, tc.valuesYaml, ch.Helm3Chart)
+			// Check for errors
+			if got, want := err != nil, tc.shouldFail; got != want {
+				t.Errorf("Failure: got: %v, want: %v", got, want)
+			}
+			if tc.shouldFail {
+				return
+			}
+			// Target revision is deployed as a new revision
+			rel, err := cfg.Releases.Get(tc.release, revisionBeingUpdated+1)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+			if got, want := newRelease.Version, revisionBeingUpdated+1; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+			if got, want := rel.Info.Status, release.StatusDeployed; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+			//check original version is superseded
+			rel, err = cfg.Releases.Get(tc.release, revisionBeingUpdated)
+			if got, want := rel.Info.Status, release.StatusSuperseded; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
