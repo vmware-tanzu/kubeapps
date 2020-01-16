@@ -18,6 +18,7 @@ package auth
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	yamlUtils "github.com/kubeapps/kubeapps/pkg/yaml"
@@ -216,17 +217,23 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 
 func reduceActionsByVerb(actions []Action) []Action {
 	resMap := map[string]Action{}
+	resWithVerbMap := map[string]bool{}
 	res := []Action{}
 	for _, action := range actions {
 		req := fmt.Sprintf("%s/%s/%s", action.Namespace, action.APIVersion, action.Resource)
 		if _, ok := resMap[req]; ok {
 			// Element already exists
-			verbs := append(resMap[req].Verbs, action.Verbs...)
-			resMap[req] = Action{
-				APIVersion: action.APIVersion,
-				Resource:   action.Resource,
-				Namespace:  action.Namespace,
-				Verbs:      verbs,
+			for _, verb := range action.Verbs {
+				reqWithVerb := fmt.Sprintf("%s/%s/%s/%s", action.Namespace, action.APIVersion, action.Resource, verb)
+				if !resWithVerbMap[reqWithVerb] {
+					resWithVerbMap[reqWithVerb] = true
+					resMap[req] = Action{
+						APIVersion: action.APIVersion,
+						Resource:   action.Resource,
+						Namespace:  action.Namespace,
+						Verbs:      append(resMap[req].Verbs, verb),
+					}
+				}
 			}
 		} else {
 			resMap[req] = action
@@ -266,4 +273,22 @@ func (u *UserAuth) GetForbiddenActions(namespace, action, manifest string) ([]Ac
 		}
 	}
 	return forbiddenActions, nil
+}
+
+// ParseForbiddenActions parses a forbidden error returned by the Kubernetes API and return the list of forbidden actions
+func ParseForbiddenActions(message string) []Action {
+	re := regexp.MustCompile(`User "(.*?)" cannot (.*?) resource "(.*?)" in API group "(.*?)"(?: in the namespace "(.*?)")?`)
+	match := re.FindAllStringSubmatch(message, -1)
+	forbiddenActions := []Action{}
+	for _, role := range match {
+		forbiddenActions = append(forbiddenActions, Action{
+			// TODO(andresmgot): Return the user/serviceaccount trying to perform the action
+			Verbs:       []string{role[2]},
+			Resource:    role[3],
+			APIVersion:  role[4],
+			Namespace:   role[5],
+			ClusterWide: role[5] == "",
+		})
+	}
+	return reduceActionsByVerb(forbiddenActions)
 }
