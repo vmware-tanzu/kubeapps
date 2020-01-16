@@ -72,6 +72,7 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 	cmd := action.NewInstall(actionConfig)
 	cmd.ReleaseName = name
 	cmd.Namespace = namespace
+	cmd.Atomic = true
 	values, err := getValues([]byte(valueString))
 	if err != nil {
 		return nil, err
