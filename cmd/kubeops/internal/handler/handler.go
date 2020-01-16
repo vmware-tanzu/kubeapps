@@ -12,6 +12,7 @@ import (
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
+	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"helm.sh/helm/v3/pkg/action"
 	"k8s.io/client-go/kubernetes"
@@ -22,6 +23,7 @@ const (
 	authHeader     = "Authorization"
 	namespaceParam = "namespace"
 	nameParam      = "releaseName"
+	authUserError  = "Unexpected error while configuring authentication"
 )
 
 const isV1SupportRequired = false
@@ -71,20 +73,20 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			// Used to perform Helm operations
 			restConfig, err := NewInClusterConfig(token)
 			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Errorf("Failed to create in-cluster config with user token: %v", err)
+				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 			userKubeClient, err := kubernetes.NewForConfig(restConfig)
 			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Errorf("Failed to create kube client with user config: %v", err)
+				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 			actionConfig, err := agent.NewActionConfig(storageForDriver, restConfig, userKubeClient, namespace)
 			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Errorf("Failed to create action config with user client: %v", err)
+				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 
@@ -92,20 +94,20 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			// Used to retrieve apprepositories and secrets related to them
 			svcRestConfig, err := rest.InClusterConfig()
 			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Errorf("Failed to create in-cluster config with service account: %v", err)
+				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 			svcKubeClient, err := kubernetes.NewForConfig(svcRestConfig)
 			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Errorf("Failed to create kube client with service account: %v", err)
+				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 			appRepoClient, err := appRepo.NewForConfig(svcRestConfig)
 			if err != nil {
-				// TODO log details rather than return potentially sensitive details in error.
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Errorf("Failed to create app repo kube client with service account: %v", err)
+				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
 
