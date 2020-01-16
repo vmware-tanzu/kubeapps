@@ -23,6 +23,9 @@ class AdvancedDeploymentForm extends React.Component<IAdvancedDeploymentForm> {
           value={this.props.appValues}
           className="editor"
         />
+        <p>
+          <b>Note:</b> Only comments from the original chart values will be preserved.
+        </p>
       </div>
     );
   }
