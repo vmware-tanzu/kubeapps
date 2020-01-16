@@ -12,6 +12,7 @@ devel/local-dev-apiserver-config.json:
 
 ${CLUSTER_CONFIG}: devel/local-dev-apiserver-config.json
 	kind create cluster \
+		--kubeconfig ${CLUSTER_CONFIG} \
 		--name ${CLUSTER_NAME} \
 		--config=./devel/local-dev-apiserver-config.json \
 		--retain
