@@ -36,10 +36,10 @@ import (
 func TestActions(t *testing.T) {
 	type testScenario struct {
 		// Scenario params
-		Description      string
-		ExistingReleases []release.Release
-		DisableAuth      bool
-		ForbiddenActions []auth.Action
+		Description          string
+		ExistingReleases     []release.Release
+		DisableUserAuthCheck bool
+		ForbiddenActions     []auth.Action
 		// Request params
 		RequestBody  string
 		RequestQuery string
@@ -53,10 +53,10 @@ func TestActions(t *testing.T) {
 	tests := []testScenario{
 		{
 			// Scenario params
-			Description:      "Create a simple release without auth",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Create a simple release without auth",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
 			RequestQuery: "",
@@ -71,10 +71,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Create a simple release with auth",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      false,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Create a simple release with auth",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: false,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
 			RequestQuery: "",
@@ -89,10 +89,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Create a conflicting release",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
-			DisableAuth:      false,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Create a conflicting release",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
+			DisableUserAuthCheck: false,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
 			RequestQuery: "",
@@ -107,9 +107,9 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Create a simple release with forbidden actions",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      false,
+			Description:          "Create a simple release with forbidden actions",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: false,
 			ForbiddenActions: []auth.Action{
 				auth.Action{APIVersion: "v1", Resource: "pods", Namespace: "default", ClusterWide: false, Verbs: []string{"create"}},
 			},
@@ -125,10 +125,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Upgrade a simple release",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Upgrade a simple release",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
 			RequestQuery: "",
@@ -141,10 +141,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Upgrade a missing release",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Upgrade a missing release",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
 			RequestQuery: "",
@@ -157,9 +157,9 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Upgrade a simple release with forbidden actions",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
-			DisableAuth:      false,
+			Description:          "Upgrade a simple release with forbidden actions",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
+			DisableUserAuthCheck: false,
 			ForbiddenActions: []auth.Action{
 				auth.Action{APIVersion: "v1", Resource: "pods", Namespace: "default", ClusterWide: false, Verbs: []string{"upgrade"}},
 			},
@@ -175,10 +175,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Delete a simple release",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Delete a simple release",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -191,10 +191,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Delete and purge a simple release",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Delete and purge a simple release",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "?purge=true",
@@ -207,10 +207,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Delete a missing release",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Delete a missing release",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
 			RequestQuery: "",
@@ -223,9 +223,9 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Delete a release with forbidden actions",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default", Config: &chart.Config{Raw: ""}}},
-			DisableAuth:      false,
+			Description:          "Delete a release with forbidden actions",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default", Config: &chart.Config{Raw: ""}}},
+			DisableUserAuthCheck: false,
 			ForbiddenActions: []auth.Action{
 				auth.Action{APIVersion: "v1", Resource: "pods", Namespace: "default", ClusterWide: false, Verbs: []string{"delete"}},
 			},
@@ -241,10 +241,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Get a simple release",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Get a simple release",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default"}},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -257,10 +257,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Get a missing release",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Get a missing release",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -273,9 +273,9 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Get a release with forbidden actions",
-			ExistingReleases: []release.Release{release.Release{Name: "foobar", Namespace: "default", Config: &chart.Config{Raw: ""}}},
-			DisableAuth:      false,
+			Description:          "Get a release with forbidden actions",
+			ExistingReleases:     []release.Release{release.Release{Name: "foobar", Namespace: "default", Config: &chart.Config{Raw: ""}}},
+			DisableUserAuthCheck: false,
 			ForbiddenActions: []auth.Action{
 				auth.Action{APIVersion: "v1", Resource: "pods", Namespace: "default", ClusterWide: false, Verbs: []string{"get"}},
 			},
@@ -296,8 +296,8 @@ func TestActions(t *testing.T) {
 				release.Release{Name: "foobar", Namespace: "default"},
 				release.Release{Name: "foo", Namespace: "not-default"},
 			},
-			DisableAuth:      false,
-			ForbiddenActions: []auth.Action{},
+			DisableUserAuthCheck: false,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -318,8 +318,8 @@ func TestActions(t *testing.T) {
 				release.Release{Name: "foobar", Namespace: "default"},
 				release.Release{Name: "foo", Namespace: "not-default"},
 			},
-			DisableAuth:      false,
-			ForbiddenActions: []auth.Action{},
+			DisableUserAuthCheck: false,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -340,8 +340,8 @@ func TestActions(t *testing.T) {
 				release.Release{Name: "foobar", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DEPLOYED}}},
 				release.Release{Name: "foo", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DELETED}}},
 			},
-			DisableAuth:      false,
-			ForbiddenActions: []auth.Action{},
+			DisableUserAuthCheck: false,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "?statuses=deployed",
@@ -361,8 +361,8 @@ func TestActions(t *testing.T) {
 			ExistingReleases: []release.Release{
 				release.Release{Name: "foo", Namespace: "default", Info: &release.Info{Status: &release.Status{Code: release.Status_DEPLOYED}}},
 			},
-			DisableAuth:      false,
-			ForbiddenActions: []auth.Action{},
+			DisableUserAuthCheck: false,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "?revision=1",
@@ -377,10 +377,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Rollsback a missing release",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Rollsback a missing release",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "?revision=1",
@@ -393,10 +393,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Rollback without a revision",
-			ExistingReleases: []release.Release{},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Rollback without a revision",
+			ExistingReleases:     []release.Release{},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -409,10 +409,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Test a release successfully",
-			ExistingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Test a release successfully",
+			ExistingReleases:     []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -425,10 +425,10 @@ func TestActions(t *testing.T) {
 		},
 		{
 			// Scenario params
-			Description:      "Fail to test a release",
-			ExistingReleases: []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
-			DisableAuth:      true,
-			ForbiddenActions: []auth.Action{},
+			Description:          "Fail to test a release",
+			ExistingReleases:     []release.Release{release.Release{Name: "kubeapps", Namespace: "kubeapps-ns"}},
+			DisableUserAuthCheck: true,
+			ForbiddenActions:     []auth.Action{},
 			// Request params
 			RequestBody:  "",
 			RequestQuery: "",
@@ -446,13 +446,13 @@ func TestActions(t *testing.T) {
 			Releases: test.ExistingReleases,
 		}
 		handler := TillerProxy{
-			DisableAuth: test.DisableAuth,
-			ListLimit:   255,
-			ChartClient: &chartFake.FakeChart{},
-			ProxyClient: proxy,
+			DisableUserAuthCheck: test.DisableUserAuthCheck,
+			ListLimit:            255,
+			ChartClient:          &chartFake.FakeChart{},
+			ProxyClient:          proxy,
 		}
 		req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
-		if !test.DisableAuth {
+		if !test.DisableUserAuthCheck {
 			fauth := &authFake.FakeAuth{
 				ForbiddenActions: test.ForbiddenActions,
 			}

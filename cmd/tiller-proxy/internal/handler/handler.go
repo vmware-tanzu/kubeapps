@@ -43,10 +43,10 @@ func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWrite
 
 // TillerProxy client and configuration
 type TillerProxy struct {
-	DisableAuth bool
-	ListLimit   int
-	ChartClient chartUtils.Resolver
-	ProxyClient proxy.TillerClient
+	DisableUserAuthCheck bool
+	ListLimit            int
+	ChartClient          chartUtils.Resolver
+	ProxyClient          proxy.TillerClient
 }
 
 func (h *TillerProxy) logStatus(name string) {
@@ -67,7 +67,7 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	if !h.DisableAuth {
+	if !h.DisableUserAuthCheck {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -122,7 +122,7 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	if !h.DisableAuth {
+	if !h.DisableUserAuthCheck {
 		manifest, err := h.ProxyClient.ResolveManifestFromRelease(params["releaseName"], int32(revisionInt))
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -159,7 +159,7 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	if !h.DisableAuth {
+	if !h.DisableUserAuthCheck {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -209,7 +209,7 @@ func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, par
 // TestRelease in the namespace given as Param
 func (h *TillerProxy) TestRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 
-	if !h.DisableAuth {
+	if !h.DisableUserAuthCheck {
 		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
 		// helm tests only create pods so we only need to check that
 		manifest := "apiVersion: v1\nkind: Pod"
@@ -239,7 +239,7 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	if !h.DisableAuth {
+	if !h.DisableUserAuthCheck {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], rel.Config.Raw, rel.Chart)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -261,7 +261,7 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 
 // DeleteRelease removes a release from a namespace
 func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	if !h.DisableAuth {
+	if !h.DisableUserAuthCheck {
 		rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
