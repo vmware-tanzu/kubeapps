@@ -303,7 +303,7 @@ func newChartResponse(c *models.Chart) *apiResponse {
 	return &apiResponse{
 		Type:       "chart",
 		ID:         c.ID,
-		Attributes: chartAttributes(*c),
+		Attributes: blankRawIcon(chartAttributes(*c)),
 		Links:      selfLink{pathPrefix + "/charts/" + c.ID},
 		Relationships: relMap{
 			"latestChartVersion": rel{
@@ -312,6 +312,14 @@ func newChartResponse(c *models.Chart) *apiResponse {
 			},
 		},
 	}
+}
+
+// blankRawIcon returns the same chart data but with a blank raw icon field.
+// TODO(mnelson): The raw icon data should be stored in a separate postgresql column
+// rather than the json field so that this isn't necessary.
+func blankRawIcon(c models.Chart) models.Chart {
+	c.RawIcon = nil
+	return c
 }
 
 func newChartListResponse(charts []*models.Chart) apiListResponse {
@@ -346,7 +354,7 @@ func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiRespon
 		Links:      selfLink{pathPrefix + "/charts/" + c.ID + "/versions/" + cv.Version},
 		Relationships: relMap{
 			"chart": rel{
-				Data:  chartAttributes(*c),
+				Data:  blankRawIcon(chartAttributes(*c)),
 				Links: selfLink{pathPrefix + "/charts/" + c.ID},
 			},
 		},

@@ -123,6 +123,9 @@ func Test_newChartResponse(t *testing.T) {
 		{"chart has many versions", models.Chart{
 			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.2"}, {Version: "0.1.0"}},
 		}},
+		{"raw_icon is never sent down the wire", models.Chart{
+			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -132,6 +135,8 @@ func Test_newChartResponse(t *testing.T) {
 			assert.Equal(t, cResponse.Relationships["latestChartVersion"].Data.(models.ChartVersion).Version, tt.chart.ChartVersions[0].Version, "latestChartVersion should match version at index 0")
 			assert.Equal(t, cResponse.Links.(selfLink).Self, pathPrefix+"/charts/"+tt.chart.ID, "self link should be the same")
 			assert.Equal(t, len(cResponse.Attributes.(models.Chart).ChartVersions), len(tt.chart.ChartVersions), "number of chart versions in the response should be the same")
+			// We don't send the raw icon down the wire.
+			assert.Nil(t, cResponse.Attributes.(models.Chart).RawIcon)
 		})
 	}
 }
@@ -174,12 +179,23 @@ func Test_newChartListResponse(t *testing.T) {
 
 func Test_newChartVersionResponse(t *testing.T) {
 	tests := []struct {
-		name  string
-		chart models.Chart
+		name         string
+		chart        models.Chart
+		expectedIcon string
 	}{
-		{"my-chart", models.Chart{
-			ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
-		}},
+		{
+			name: "my-chart",
+			chart: models.Chart{
+				ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.2.3"}},
+			},
+		},
+		{
+			name: "RawIcon is never sent down the wire",
+			chart: models.Chart{
+				ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "1.2.3"}}, RawIcon: iconBytes(), IconContentType: "image/svg",
+			},
+			expectedIcon: "/v1/assets/my-repo/my-chart/logo",
+		},
 	}
 
 	for _, tt := range tests {
@@ -190,7 +206,12 @@ func Test_newChartVersionResponse(t *testing.T) {
 				assert.Equal(t, cvResponse.ID, tt.chart.ID+"-"+tt.chart.ChartVersions[i].Version, "reponse id should have chart version suffix")
 				assert.Equal(t, cvResponse.Links.(interface{}).(selfLink).Self, pathPrefix+"/charts/"+tt.chart.ID+"/versions/"+tt.chart.ChartVersions[i].Version, "self link should be the same")
 				assert.Equal(t, cvResponse.Attributes.(models.ChartVersion).Version, tt.chart.ChartVersions[i].Version, "chart version in the response should be the same")
-				assert.Equal(t, cvResponse.Relationships["chart"].Data.(interface{}).(models.Chart), tt.chart, "chart in relatioship matches")
+
+				// The chart should have had its icon url set and raw icon data removed.
+				expectedChart := tt.chart
+				expectedChart.RawIcon = nil
+				expectedChart.Icon = tt.expectedIcon
+				assert.Equal(t, cvResponse.Relationships["chart"].Data.(interface{}).(models.Chart), expectedChart, "chart in relatioship matches")
 			}
 		})
 	}
