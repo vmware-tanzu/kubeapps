@@ -303,7 +303,7 @@ func newChartResponse(c *models.Chart) *apiResponse {
 	return &apiResponse{
 		Type:       "chart",
 		ID:         c.ID,
-		Attributes: blankRawIconAndChartVersions(chartAttributes(c)),
+		Attributes: blankRawIconAndChartVersions(chartAttributes(*c)),
 		Links:      selfLink{pathPrefix + "/charts/" + c.ID},
 		Relationships: relMap{
 			"latestChartVersion": rel{
@@ -317,7 +317,7 @@ func newChartResponse(c *models.Chart) *apiResponse {
 // blankRawIconAndChartVersions returns the same chart data but with a blank raw icon field and no chartversions.
 // TODO(mnelson): The raw icon data should be stored in a separate postgresql column
 // rather than the json field so that this isn't necessary.
-func blankRawIconAndChartVersions(c *models.Chart) *models.Chart {
+func blankRawIconAndChartVersions(c models.Chart) models.Chart {
 	c.RawIcon = nil
 	c.ChartVersions = []models.ChartVersion{}
 	return c
@@ -337,7 +337,7 @@ func chartVersionAttributes(cid string, cv models.ChartVersion) models.ChartVers
 	return cv
 }
 
-func chartAttributes(c *models.Chart) *models.Chart {
+func chartAttributes(c models.Chart) models.Chart {
 	if c.RawIcon != nil {
 		c.Icon = pathPrefix + "/assets/" + c.ID + "/logo"
 	} else {
@@ -355,7 +355,7 @@ func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiRespon
 		Links:      selfLink{pathPrefix + "/charts/" + c.ID + "/versions/" + cv.Version},
 		Relationships: relMap{
 			"chart": rel{
-				Data:  blankRawIconAndChartVersions(chartAttributes(c)),
+				Data:  blankRawIconAndChartVersions(chartAttributes(*c)),
 				Links: selfLink{pathPrefix + "/charts/" + c.ID},
 			},
 		},
