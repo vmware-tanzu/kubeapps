@@ -139,6 +139,12 @@ for dep in ${deployments[@]}; do
   k8s_wait_for_deployment kubeapps ${dep}
   echo "Deployment ${dep} ready"
 done
+if [[ "$HELM_VERSION" =~ "v2" ]]; then
+  k8s_wait_for_deployment kubeapps kubeapps-ci-internal-tiller-proxy
+else
+  k8s_wait_for_deployment kubeapps kubeapps-ci-internal-kubeops
+fi
+
 
 # Wait for Kubeapps Jobs
 k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
