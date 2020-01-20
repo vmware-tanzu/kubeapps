@@ -72,7 +72,9 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 	cmd := action.NewInstall(actionConfig)
 	cmd.ReleaseName = name
 	cmd.Namespace = namespace
-	cmd.Atomic = true
+	// TODO(andresmgot): Enable Atomic installations once this issue is fixed in Helm
+	// https://github.com/helm/helm/issues/7426
+	// cmd.Atomic = true
 	values, err := getValues([]byte(valueString))
 	if err != nil {
 		return nil, err
