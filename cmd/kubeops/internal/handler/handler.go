@@ -154,7 +154,7 @@ func returnErrMessage(err error, w http.ResponseWriter) {
 			response.NewErrorResponse(code, errMessage).Write(w)
 		}
 	} else {
-		returnErrMessage(err, w)
+		response.NewErrorResponse(code, errMessage).Write(w)
 	}
 }
 

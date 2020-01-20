@@ -215,30 +215,39 @@ func (u *UserAuth) isAllowed(verb string, itemsToCheck []resource) ([]Action, er
 	return rejectedActions, nil
 }
 
+func uniqVerbs(current []string, new []string) []string {
+	resMap := map[string]bool{}
+	for _, v := range current {
+		if !resMap[v] {
+			resMap[v] = true
+		}
+	}
+	for _, v := range new {
+		if !resMap[v] {
+			resMap[v] = true
+			current = append(current, v)
+		}
+	}
+	return current
+}
+
 func reduceActionsByVerb(actions []Action) []Action {
 	resMap := map[string]Action{}
-	resWithVerbMap := map[string]bool{}
-	res := []Action{}
 	for _, action := range actions {
 		req := fmt.Sprintf("%s/%s/%s", action.Namespace, action.APIVersion, action.Resource)
 		if _, ok := resMap[req]; ok {
 			// Element already exists
-			for _, verb := range action.Verbs {
-				reqWithVerb := fmt.Sprintf("%s/%s/%s/%s", action.Namespace, action.APIVersion, action.Resource, verb)
-				if !resWithVerbMap[reqWithVerb] {
-					resWithVerbMap[reqWithVerb] = true
-					resMap[req] = Action{
-						APIVersion: action.APIVersion,
-						Resource:   action.Resource,
-						Namespace:  action.Namespace,
-						Verbs:      append(resMap[req].Verbs, verb),
-					}
-				}
+			resMap[req] = Action{
+				APIVersion: action.APIVersion,
+				Resource:   action.Resource,
+				Namespace:  action.Namespace,
+				Verbs:      uniqVerbs(resMap[req].Verbs, action.Verbs),
 			}
 		} else {
 			resMap[req] = action
 		}
 	}
+	res := []Action{}
 	for _, a := range resMap {
 		res = append(res, a)
 	}

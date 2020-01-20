@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -31,13 +32,13 @@ var (
 
 // newConfigFixture returns a Config with fake clients
 // and memory storage.
-func newConfigFixture(t *testing.T) *Config {
+func newConfigFixture(t *testing.T, k *kubefake.FailingKubeClient) *Config {
 	t.Helper()
 
 	return &Config{
 		ActionConfig: &action.Configuration{
 			Releases:     storage.Init(driver.NewMemory()),
-			KubeClient:   &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}},
+			KubeClient:   k,
 			Capabilities: chartutil.DefaultCapabilities,
 			Log: func(format string, v ...interface{}) {
 				t.Helper()
@@ -81,6 +82,7 @@ func TestActions(t *testing.T) {
 		Description      string
 		ExistingReleases []*release.Release
 		Skip             bool //TODO: Remove this when the memory bug is fixed
+		KubeError        error
 		// Request params
 		RequestBody  string
 		RequestQuery string
@@ -244,6 +246,23 @@ func TestActions(t *testing.T) {
 			RemainingReleases: nil,
 			ResponseBody:      "",
 		},
+		{
+			// Scenario params
+			Description:      "Creates a release with missing permissions",
+			ExistingReleases: []*release.Release{},
+			KubeError:        errors.New(`Failed to create: secrets is forbidden: User "foo" cannot create resource "secrets" in API group "" in the namespace "default"`),
+			// Request params
+			RequestBody: `{"chartName": "foo", "releaseName": "foobar",	"version": "1.0.0"}`,
+			RequestQuery: "",
+			Action:       "create",
+			Params:       map[string]string{"namespace": "default"},
+			// Expected result
+			StatusCode: 403,
+			RemainingReleases: []*release.Release{
+				createRelease("foo", "foobar", "default", 1, release.StatusFailed),
+			},
+			ResponseBody: `{"code":403,"message":"[{\"apiGroup\":\"\",\"resource\":\"secrets\",\"namespace\":\"default\",\"clusterWide\":false,\"verbs\":[\"create\"]}]"}`,
+		},
 	}
 
 	for _, test := range tests {
@@ -256,7 +275,13 @@ func TestActions(t *testing.T) {
 			// Initialize environment for test
 			req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
 			response := httptest.NewRecorder()
-			cfg := newConfigFixture(t)
+			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+			if test.KubeError != nil {
+				k.CreateError = test.KubeError
+				k.UpdateError = test.KubeError
+				k.DeleteError = test.KubeError
+			}
+			cfg := newConfigFixture(t, k)
 			createExistingReleases(t, cfg, test.ExistingReleases)
 
 			// Perform request
@@ -403,7 +428,8 @@ func TestRollbackAction(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := newConfigFixture(t)
+			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+			cfg := newConfigFixture(t, k)
 			createExistingReleases(t, cfg, tc.existingReleases)
 			req := httptest.NewRequest("PUT", fmt.Sprintf("https://example.com/whatever?%s", tc.queryString), strings.NewReader(""))
 			response := httptest.NewRecorder()
@@ -472,7 +498,8 @@ func TestUpgradeAction(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := newConfigFixture(t)
+			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
+			cfg := newConfigFixture(t, k)
 			createExistingReleases(t, cfg, tc.existingReleases)
 			req := httptest.NewRequest("PUT", fmt.Sprintf("https://example.com/whatever?%s", tc.queryString), strings.NewReader(tc.requestBody))
 			response := httptest.NewRecorder()
