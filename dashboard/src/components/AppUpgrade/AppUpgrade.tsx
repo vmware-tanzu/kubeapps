@@ -61,6 +61,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
 
   public componentDidUpdate(prevProps: IAppUpgradeProps) {
     const { repos, app } = this.props;
+    const prevRepo = this.state.repo;
     let repo = this.state.repo;
     // Retrieve the current repo
     if (!repo) {
@@ -93,7 +94,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
         repo &&
         repo.metadata &&
         repo.metadata.name &&
-        (prevProps.app !== app || prevProps.repo !== repo)
+        (prevProps.app !== app || prevRepo !== repo)
       ) {
         const chartID = `${repo.metadata.name}/${chart.metadata.name}`;
         this.props.getDeployedChartVersion(chartID, chart.metadata.version);
