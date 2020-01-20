@@ -428,3 +428,72 @@ func TestRollbackAction(t *testing.T) {
 		})
 	}
 }
+
+func TestUpgradeAction(t *testing.T) {
+	const releaseName = "my-release"
+	testCases := []struct {
+		name             string
+		existingReleases []*release.Release
+		queryString      string
+		requestBody      string
+		params           map[string]string
+		statusCode       int
+		expectedReleases []*release.Release
+		responseBody     string
+	}{
+		{
+			name: "upgrade a release",
+			existingReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusDeployed),
+			},
+			queryString: "action=upgrade",
+			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0"}`,
+			params:     map[string]string{nameParam: releaseName},
+			statusCode: http.StatusOK,
+			expectedReleases: []*release.Release{
+				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
+				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
+			},
+			responseBody: `{"data":{"name":"my-release","info":{"status":{"code":1}},"chart":{"metadata":{"name":"apache"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":2,"namespace":"default"}}`,
+		},
+		{
+			name:             "upgrade a missing release",
+			existingReleases: []*release.Release{},
+			queryString:      "action=upgrade",
+			requestBody: `{"chartName": "apache",	"releaseName":"my-release",	"version": "1.0.0"}`,
+			params:     map[string]string{nameParam: releaseName},
+			statusCode: http.StatusNotFound,
+			// expectedReleases is `nil` because nil slice != empty slice
+			// sotrage.ListReleases() returns a nil slice if no releases are found
+			expectedReleases: nil,
+			responseBody:     `{"code":404,"message":"no revision for release \"my-release\""}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newConfigFixture(t)
+			createExistingReleases(t, cfg, tc.existingReleases)
+			req := httptest.NewRequest("PUT", fmt.Sprintf("https://example.com/whatever?%s", tc.queryString), strings.NewReader(tc.requestBody))
+			response := httptest.NewRecorder()
+
+			OperateRelease(*cfg, response, req, tc.params)
+
+			if got, want := response.Code, tc.statusCode; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+			if got, want := response.Body.String(), tc.responseBody; got != want {
+				t.Errorf("got: %q, want: %q", got, want)
+			}
+
+			actualReleases, err := cfg.ActionConfig.Releases.ListReleases()
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := actualReleases, tc.expectedReleases; !cmp.Equal(want, got, releaseComparer) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, releaseComparer))
+			}
+		})
+	}
+}
