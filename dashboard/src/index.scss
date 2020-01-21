@@ -4,6 +4,8 @@
 body {
   margin: 0;
   padding: 0;
+  overflow-y: scroll;
+  overflow-x: scroll;
 }
 
 .container-fluid > .row > div {
