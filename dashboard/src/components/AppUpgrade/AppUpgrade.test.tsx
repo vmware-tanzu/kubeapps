@@ -1,6 +1,7 @@
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
+import { BrowserRouter } from "react-router-dom";
 
 import { hapi } from "shared/hapi/release";
 import itBehavesLike from "../../shared/specs";
@@ -13,10 +14,14 @@ import AppUpgrade from "./AppUpgrade";
 
 const defaultProps = {
   app: {} as hapi.release.Release,
+  appsIsFetching: false,
+  reposIsFetching: false,
+  repoName: "",
   isFetching: false,
   checkChart: jest.fn(),
   clearRepo: jest.fn(),
-  error: undefined,
+  appsError: undefined,
+  chartsError: undefined,
   fetchChartVersions: jest.fn(),
   fetchRepositories: jest.fn(),
   getAppWithUpdateInfo: jest.fn(),
@@ -58,6 +63,7 @@ it("renders the repo selection form if not introduced", () => {
             },
           },
           name: "foo",
+          updateInfo: { repository: {} },
         } as IRelease
       }
       repos={[
@@ -81,7 +87,7 @@ context("when an error exists", () => {
     const wrapper = shallow(
       <AppUpgrade
         {...defaultProps}
-        error={new Error("foo doesn't exists")}
+        appsError={new Error("foo doesn't exists")}
         repos={[repo]}
         repo={repo}
       />,
@@ -96,9 +102,6 @@ context("when an error exists", () => {
   });
 
   it("renders a forbidden message", () => {
-    const repo = {
-      metadata: { name: "stable" },
-    } as IAppRepository;
     const role = {
       apiGroup: "kubeapps.com",
       namespace: "kubeapps",
@@ -108,33 +111,22 @@ context("when an error exists", () => {
     const wrapper = mount(
       <AppUpgrade
         {...defaultProps}
-        error={new ForbiddenError(JSON.stringify([role]))}
-        repos={[repo]}
-        repo={repo}
+        app={
+          {
+            chart: {
+              metadata: {
+                name: "bar",
+                version: "1.0.0",
+              },
+            },
+            name: "foo",
+            updateInfo: { repository: {} },
+          } as IRelease
+        }
+        repoError={new ForbiddenError(JSON.stringify([role]))}
       />,
     );
-
     expect(wrapper.find(ErrorSelector)).toExist();
-    expect(wrapper.find(SelectRepoForm)).not.toExist();
-    expect(wrapper.find(UpgradeForm)).not.toExist();
-
-    expect(wrapper.find(ErrorPageHeader).text()).toContain(
-      "You don't have sufficient permissions to update foo in the default namespace",
-    );
-    expect(wrapper.find(PermissionsErrorAlert).prop("roles")[0]).toMatchObject(role);
-  });
-
-  it("renders a forbidden message for the repositories", () => {
-    const role = {
-      apiGroup: "kubeapps.com",
-      namespace: "kubeapps",
-      resource: "apprepositories",
-      verbs: ["get"],
-    };
-    const wrapper = mount(<AppUpgrade {...defaultProps} repoError={new ForbiddenError()} />);
-
-    expect(wrapper.find(ErrorSelector)).toExist();
-    expect(wrapper.find(SelectRepoForm)).not.toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
     expect(wrapper.find(ErrorPageHeader).text()).toContain(
@@ -144,10 +136,28 @@ context("when an error exists", () => {
   });
 
   it("renders a warning message if there are no repositories", () => {
-    const wrapper = shallow(<AppUpgrade {...defaultProps} />);
+    const wrapper = mount(
+      <BrowserRouter>
+        <AppUpgrade
+          {...defaultProps}
+          app={
+            {
+              chart: {
+                metadata: {
+                  name: "bar",
+                  version: "1.0.0",
+                },
+              },
+              name: "foo",
+              updateInfo: { repository: {} },
+            } as IRelease
+          }
+          repos={[]}
+        />
+      </BrowserRouter>,
+    );
 
-    expect(wrapper.find(MessageAlert)).toExist();
-    expect(wrapper.find(SelectRepoForm)).not.toExist();
+    expect(wrapper.find(SelectRepoForm).find(MessageAlert)).toExist();
     expect(wrapper.find(UpgradeForm)).not.toExist();
 
     expect(
@@ -157,40 +167,9 @@ context("when an error exists", () => {
         .text(),
     ).toContain("Chart repositories not found");
   });
-
-  it("renders an error message if the app information is missing some metadata", () => {
-    const repo = {
-      metadata: { name: "stable" },
-    } as IAppRepository;
-    const wrapper = mount(
-      <AppUpgrade
-        {...defaultProps}
-        repos={[repo]}
-        app={
-          {
-            chart: {
-              metadata: {},
-            },
-            name: "foo",
-          } as IRelease
-        }
-      />,
-    );
-
-    expect(wrapper.find(ErrorSelector)).toExist();
-    expect(wrapper.find(SelectRepoForm)).not.toExist();
-    expect(wrapper.find(UpgradeForm)).not.toExist();
-
-    expect(wrapper.find(ErrorSelector).text()).toContain(
-      "Unable to obtain the required information to upgrade",
-    );
-  });
 });
 
 it("renders the upgrade form when the repo is available", () => {
-  const repo = {
-    metadata: { name: "stable" },
-  } as IAppRepository;
   const wrapper = shallow(
     <AppUpgrade
       {...defaultProps}
@@ -203,12 +182,12 @@ it("renders the upgrade form when the repo is available", () => {
             },
           },
           name: "foo",
+          updateInfo: { repository: {} },
         } as IRelease
       }
-      repos={[repo]}
     />,
   );
-  wrapper.setProps({ repo });
+  wrapper.setProps({ repoName: "foobar" });
   expect(wrapper.find(UpgradeForm)).toExist();
   expect(wrapper.find(ErrorSelector)).not.toExist();
   expect(wrapper.find(SelectRepoForm)).not.toExist();
@@ -243,15 +222,7 @@ it("skips the repo selection form if the app contains upgrade info", () => {
 });
 
 describe("when receiving new props", () => {
-  it("should set the source repository in the state if present as a property", () => {
-    const repo = { metadata: { name: "stable" } };
-    const wrapper = shallow(<AppUpgrade {...defaultProps} />);
-    wrapper.setProps({ repo });
-    expect(wrapper.state("repo")).toEqual(repo);
-  });
-
   it("should request the deployed chart when the app and repo are populated", () => {
-    const repo = { metadata: { name: "stable" } };
     const app = {
       chart: {
         metadata: {
@@ -264,12 +235,12 @@ describe("when receiving new props", () => {
     const wrapper = shallow(
       <AppUpgrade {...defaultProps} getDeployedChartVersion={getDeployedChartVersion} />,
     );
-    wrapper.setProps({ repo, app });
+    wrapper.setProps({ repoName: "stable", app });
+    wrapper.update();
     expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/bar", "1.0.0");
   });
 
   it("should request the deployed chart when the repo is populated later", () => {
-    const repo = { metadata: { name: "stable" } };
     const app = {
       chart: {
         metadata: {
@@ -283,12 +254,12 @@ describe("when receiving new props", () => {
       <AppUpgrade {...defaultProps} app={app} getDeployedChartVersion={getDeployedChartVersion} />,
     );
     expect(getDeployedChartVersion).not.toHaveBeenCalled();
-    wrapper.setProps({ repo });
+    wrapper.setProps({ repoName: "stable" });
+    wrapper.update();
     expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/bar", "1.0.0");
   });
 
   it("a new app should re-trigger the deployed chart retrieval", () => {
-    const repo = { metadata: { name: "stable" } };
     const app = {
       chart: {
         metadata: {
@@ -301,7 +272,7 @@ describe("when receiving new props", () => {
     const wrapper = shallow(
       <AppUpgrade {...defaultProps} getDeployedChartVersion={getDeployedChartVersion} />,
     );
-    wrapper.setProps({ repo, app });
+    wrapper.setProps({ repoName: "stable", app });
     expect(getDeployedChartVersion).toHaveBeenCalledWith("stable/bar", "1.0.0");
 
     const app2 = {

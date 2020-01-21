@@ -24,8 +24,10 @@ function mapStateToProps(
 ) {
   return {
     app: apps.selected,
-    isFetching: apps.isFetching || repos.isFetching,
-    error: apps.error || charts.selected.error,
+    appIsFetching: apps.isFetching,
+    reposIsFetching: repos.isFetching,
+    appsError: apps.error,
+    chartsError: charts.selected.error,
     kubeappsNamespace: config.namespace,
     namespace: params.namespace,
     releaseName: params.releaseName,
@@ -34,6 +36,7 @@ function mapStateToProps(
     repos: repos.repos,
     selected: charts.selected,
     deployed: charts.deployed,
+    repoName: repos.repo.metadata && repos.repo.metadata.name,
   };
 }
 

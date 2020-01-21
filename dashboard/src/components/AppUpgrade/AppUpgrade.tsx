@@ -2,30 +2,20 @@ import * as React from "react";
 
 import { RouterAction } from "connected-react-router";
 import { JSONSchema4 } from "json-schema";
-import { Link } from "react-router-dom";
-import {
-  IAppRepository,
-  IChartState,
-  IChartVersion,
-  IRBACRole,
-  IRelease,
-} from "../../shared/types";
-import { ErrorSelector, MessageAlert } from "../ErrorAlert";
+import { IAppRepository, IChartState, IChartVersion, IRelease } from "../../shared/types";
+import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm";
 import UpgradeForm from "../UpgradeForm";
 
 interface IAppUpgradeProps {
   app: IRelease;
-  isFetching: boolean;
-  error: Error | undefined;
-  repoError: Error | undefined;
-  kubeappsNamespace: string;
+  appsIsFetching: boolean;
+  appsError: Error | undefined;
   namespace: string;
   releaseName: string;
   version: string;
-  repos: IAppRepository[];
-  repo: IAppRepository;
+  repoName: string;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
   upgradeApp: (
@@ -35,163 +25,111 @@ interface IAppUpgradeProps {
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
-  clearRepo: () => void;
-  checkChart: (repo: string, chartName: string) => void;
   fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   getDeployedChartVersion: (id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
+  // repo selector properties
+  reposIsFetching: boolean;
+  kubeappsNamespace: string;
+  repoError?: Error;
+  chartsError: Error | undefined;
+  repo: IAppRepository;
+  repos: IAppRepository[];
+  checkChart: (repo: string, chartName: string) => any;
   fetchRepositories: () => void;
 }
 
-interface IAppUpgradeState {
-  repo?: IAppRepository;
-}
-
-class AppUpgrade extends React.Component<IAppUpgradeProps, IAppUpgradeState> {
-  public state: IAppUpgradeState = {};
-
+class AppUpgrade extends React.Component<IAppUpgradeProps> {
   public componentDidMount() {
-    const { releaseName, getAppWithUpdateInfo, namespace, fetchRepositories } = this.props;
+    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
     getAppWithUpdateInfo(releaseName, namespace);
-    fetchRepositories();
   }
 
   public componentDidUpdate(prevProps: IAppUpgradeProps) {
-    const { repos, app } = this.props;
-    const prevRepo = this.state.repo;
-    let repo = this.state.repo;
-    // Retrieve the current repo
-    if (!repo) {
-      repo = this.props.repo;
-      if (repo && repo.metadata) {
-        // If the repository comes from the properties, use it
-        this.setState({ repo });
-      } else {
-        // If there is update info about the app we can automatically chose the repository
-        // with the latest version
-        if (app && app.updateInfo) {
-          const repoWithLatest = repos.find(
-            r => r.metadata.name === (app.updateInfo && app.updateInfo.repository.name),
-          );
-          if (repoWithLatest) {
-            this.setState({ repo: repoWithLatest });
-            repo = repoWithLatest;
-          }
-        }
-      }
-    }
-
-    if (app) {
+    const { app, repoName } = this.props;
+    if (app && repoName) {
       const { chart } = app;
       if (
         chart &&
         chart.metadata &&
         chart.metadata.name &&
         chart.metadata.version &&
-        repo &&
-        repo.metadata &&
-        repo.metadata.name &&
-        (prevProps.app !== app || prevRepo !== repo)
+        (prevProps.app !== app || prevProps.repoName !== repoName)
       ) {
-        const chartID = `${repo.metadata.name}/${chart.metadata.name}`;
+        const chartID = `${repoName}/${chart.metadata.name}`;
         this.props.getDeployedChartVersion(chartID, chart.metadata.version);
       }
     }
   }
 
   public render() {
-    const { app, repos, error, namespace, releaseName, repoError, isFetching } = this.props;
-    const { repo } = this.state;
-    if (isFetching) {
+    const {
+      app,
+      namespace,
+      appsError,
+      releaseName,
+      appsIsFetching,
+      repoName,
+      selected,
+      deployed,
+      upgradeApp,
+      push,
+      goBack,
+      fetchChartVersions,
+      getChartVersion,
+    } = this.props;
+    if (appsError) {
+      return (
+        <ErrorSelector
+          error={appsError}
+          namespace={namespace}
+          action="update"
+          resource={releaseName}
+        />
+      );
+    }
+    if (appsIsFetching || !app || !app.updateInfo) {
       return <LoadingWrapper />;
     }
-    if (
-      !repos ||
-      repos.length === 0 ||
-      !app ||
-      !app.chart ||
-      !app.chart.metadata ||
-      !app.chart.metadata.name ||
-      !app.chart.metadata.version
-    ) {
-      if (error) {
-        return (
-          <ErrorSelector
-            error={error}
-            namespace={namespace}
-            action="update"
-            defaultRequiredRBACRoles={{ update: this.requiredRBACRoles() }}
-            resource={releaseName}
-          />
-        );
-      } else if (repoError) {
-        return (
-          <ErrorSelector
-            error={repoError}
-            namespace={this.props.kubeappsNamespace}
-            action="view"
-            defaultRequiredRBACRoles={{ view: this.requiredRBACRoles() }}
-            resource="App Repositories"
-          />
-        );
-      } else if (repos.length === 0) {
-        return (
-          <MessageAlert
-            level={"warning"}
-            children={
-              <div>
-                <h5>Chart repositories not found.</h5>
-                Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-                <Link to={"/config/repos"}>App repositories configuration</Link> page.
-              </div>
-            }
-          />
-        );
-      } else {
-        return (
-          <ErrorSelector
-            error={new Error("Unable to obtain the required information to upgrade")}
-            resource={releaseName}
-          />
-        );
-      }
-    }
-    if (!repo || !repo.metadata) {
+    const repo = repoName || app.updateInfo.repository.name;
+    if (app && app.chart && app.chart.metadata && repo) {
       return (
         <div>
-          <SelectRepoForm
-            {...this.props}
-            error={this.props.repoError}
-            chartName={app.chart.metadata.name}
+          <UpgradeForm
+            appCurrentVersion={app.chart.metadata.version!}
+            appCurrentValues={(app.config && app.config.raw) || ""}
+            chartName={app.chart.metadata.name!}
+            repo={repo}
+            namespace={namespace}
+            releaseName={releaseName}
+            selected={selected}
+            deployed={deployed}
+            upgradeApp={upgradeApp}
+            push={push}
+            goBack={goBack}
+            fetchChartVersions={fetchChartVersions}
+            getChartVersion={getChartVersion}
           />
         </div>
       );
     }
-    return (
-      <div>
-        <UpgradeForm
-          {...this.props}
-          appCurrentVersion={app.chart.metadata.version}
-          appCurrentValues={(app.config && app.config.raw) || ""}
-          chartName={app.chart.metadata.name}
-          repo={repo.metadata.name}
-        />
-      </div>
-    );
-  }
 
-  private requiredRBACRoles(): IRBACRole[] {
-    return [
-      {
-        apiGroup: "kubeapps.com",
-        namespace: this.props.kubeappsNamespace,
-        resource: "apprepositories",
-        verbs: ["get"],
-      },
-    ];
+    return (
+      <SelectRepoForm
+        isFetching={this.props.reposIsFetching}
+        error={this.props.chartsError}
+        kubeappsNamespace={this.props.kubeappsNamespace}
+        repoError={this.props.repoError}
+        repo={this.props.repo}
+        repos={this.props.repos}
+        chartName={app.chart?.metadata?.name!}
+        checkChart={this.props.checkChart}
+        fetchRepositories={this.props.fetchRepositories}
+      />
+    );
   }
 }
 

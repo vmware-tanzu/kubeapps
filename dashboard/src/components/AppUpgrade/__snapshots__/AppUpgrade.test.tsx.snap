@@ -8,95 +8,41 @@ exports[`loading spinner matches the snapshot 1`] = `
 `;
 
 exports[`renders the repo selection form if not introduced 1`] = `
-<div>
-  <SelectRepoForm
-    app={
+<SelectRepoForm
+  chartName="bar"
+  checkChart={[Function]}
+  fetchRepositories={[Function]}
+  isFetching={false}
+  kubeappsNamespace="kubeapps"
+  repo={Object {}}
+  repos={
+    Array [
       Object {
-        "chart": Object {
-          "metadata": Object {
-            "name": "bar",
-            "version": "1.0.0",
-          },
+        "metadata": Object {
+          "name": "stable",
         },
-        "name": "foo",
-      }
-    }
-    chartName="bar"
-    checkChart={[Function]}
-    clearRepo={[Function]}
-    deployed={Object {}}
-    fetchChartVersions={[Function]}
-    fetchRepositories={[Function]}
-    getAppWithUpdateInfo={[Function]}
-    getChartVersion={[Function]}
-    getDeployedChartVersion={[Function]}
-    goBack={[Function]}
-    isFetching={false}
-    kubeappsNamespace="kubeapps"
-    namespace="default"
-    push={[Function]}
-    releaseName="foo"
-    repo={Object {}}
-    repos={
-      Array [
-        Object {
-          "metadata": Object {
-            "name": "stable",
-          },
-        },
-      ]
-    }
-    selected={Object {}}
-    upgradeApp={[Function]}
-    version="1.0.0"
-  />
-</div>
+      },
+    ]
+  }
+/>
 `;
 
 exports[`renders the upgrade form when the repo is available 1`] = `
 <div>
   <UpgradeForm
-    app={
-      Object {
-        "chart": Object {
-          "metadata": Object {
-            "name": "bar",
-            "version": "1.0.0",
-          },
-        },
-        "name": "foo",
-      }
-    }
     appCurrentValues=""
     appCurrentVersion="1.0.0"
     chartName="bar"
-    checkChart={[Function]}
-    clearRepo={[Function]}
     deployed={Object {}}
     fetchChartVersions={[Function]}
-    fetchRepositories={[Function]}
-    getAppWithUpdateInfo={[Function]}
     getChartVersion={[Function]}
-    getDeployedChartVersion={[Function]}
     goBack={[Function]}
-    isFetching={false}
-    kubeappsNamespace="kubeapps"
     namespace="default"
     push={[Function]}
     releaseName="foo"
-    repo="stable"
-    repos={
-      Array [
-        Object {
-          "metadata": Object {
-            "name": "stable",
-          },
-        },
-      ]
-    }
+    repo="foobar"
     selected={Object {}}
     upgradeApp={[Function]}
-    version="1.0.0"
   />
 </div>
 `;
@@ -104,56 +50,19 @@ exports[`renders the upgrade form when the repo is available 1`] = `
 exports[`skips the repo selection form if the app contains upgrade info 1`] = `
 <div>
   <UpgradeForm
-    app={
-      Object {
-        "chart": Object {
-          "metadata": Object {
-            "name": "bar",
-            "version": "1.0.0",
-          },
-        },
-        "name": "foo",
-        "updateInfo": Object {
-          "appLatestVersion": "1.1.0",
-          "chartLatestVersion": "1.1.0",
-          "repository": Object {
-            "name": "stable",
-            "url": "",
-          },
-          "upToDate": true,
-        },
-      }
-    }
     appCurrentValues=""
     appCurrentVersion="1.0.0"
     chartName="bar"
-    checkChart={[Function]}
-    clearRepo={[Function]}
     deployed={Object {}}
     fetchChartVersions={[Function]}
-    fetchRepositories={[Function]}
-    getAppWithUpdateInfo={[Function]}
     getChartVersion={[Function]}
-    getDeployedChartVersion={[Function]}
     goBack={[Function]}
-    isFetching={false}
-    kubeappsNamespace="kubeapps"
     namespace="default"
     push={[Function]}
     releaseName="foo"
     repo="stable"
-    repos={
-      Array [
-        Object {
-          "metadata": Object {
-            "name": "stable",
-          },
-        },
-      ]
-    }
     selected={Object {}}
     upgradeApp={[Function]}
-    version="1.0.0"
   />
 </div>
 `;
@@ -161,20 +70,6 @@ exports[`skips the repo selection form if the app contains upgrade info 1`] = `
 exports[`when an error exists renders a generic error message 1`] = `
 <ErrorSelector
   action="update"
-  defaultRequiredRBACRoles={
-    Object {
-      "update": Array [
-        Object {
-          "apiGroup": "kubeapps.com",
-          "namespace": "kubeapps",
-          "resource": "apprepositories",
-          "verbs": Array [
-            "get",
-          ],
-        },
-      ],
-    }
-  }
   error={[Error: foo doesn't exists]}
   namespace="default"
   resource="foo"

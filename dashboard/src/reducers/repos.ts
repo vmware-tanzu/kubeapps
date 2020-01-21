@@ -70,11 +70,6 @@ const reposReducer = (
       return { ...state, redirectTo: action.payload };
     case getType(actions.repos.redirected):
       return { ...state, redirectTo: undefined };
-    case getType(actions.charts.errorChart):
-      return {
-        ...state,
-        errors: { fetch: action.payload },
-      };
     case getType(actions.repos.errorRepos):
       return {
         ...state,
