@@ -49,7 +49,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
         />
       );
     }
-    if (this.props.repos?.length === 0) {
+    if (this.props.repos.length === 0) {
       return (
         <MessageAlert
           level={"warning"}
@@ -112,7 +112,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
 
   private getRepoURL = (name: string) => {
     let res = "";
-    this.props.repos!.forEach(r => {
+    this.props.repos.forEach(r => {
       if (r.metadata.name === name && r.spec) {
         res = r.spec.url;
       }
