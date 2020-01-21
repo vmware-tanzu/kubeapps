@@ -35,14 +35,28 @@ workflows:
           <<: *build_always
       - build_dashboard:
           <<: *build_always
-      - local_e2e_tests_mongodb:
+      - local_e2e_tests_mongodb_helm2:
           <<: *build_always
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - local_e2e_tests_postgresql:
+      - local_e2e_tests_postgresql_helm2:
+          <<: *build_always
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - local_e2e_tests_mongodb_helm3:
+          <<: *build_always
+          requires:
+            - test_go
+            - test_dashboard
+            - build_go_images
+            - build_dashboard
+      - local_e2e_tests_postgresql_helm3:
           <<: *build_always
           requires:
             - test_go
@@ -80,8 +94,10 @@ workflows:
       - sync_chart:
           <<: *build_on_master
           requires:
-            - local_e2e_tests_postgresql
-            - local_e2e_tests_mongodb
+            - local_e2e_tests_postgresql_helm2
+            - local_e2e_tests_postgresql_helm3
+            - local_e2e_tests_mongodb_helm2
+            - local_e2e_tests_mongodb_helm3
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_14_MASTER
@@ -89,8 +105,10 @@ workflows:
       - push_images:
           <<: *build_on_master
           requires:
-            - local_e2e_tests_postgresql
-            - local_e2e_tests_mongodb
+            - local_e2e_tests_postgresql_helm2
+            - local_e2e_tests_postgresql_helm3
+            - local_e2e_tests_mongodb_helm2
+            - local_e2e_tests_mongodb_helm3
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_14_MASTER
@@ -98,8 +116,10 @@ workflows:
       - release:
           <<: *build_on_tag
           requires:
-            - local_e2e_tests_postgresql
-            - local_e2e_tests_mongodb
+            - local_e2e_tests_postgresql_helm2
+            - local_e2e_tests_postgresql_helm3
+            - local_e2e_tests_mongodb_helm2
+            - local_e2e_tests_mongodb_helm3
             - GKE_1_13_MASTER
             - GKE_1_13_LATEST_RELEASE
             - GKE_1_14_MASTER
@@ -116,7 +136,7 @@ install_gcloud_sdk: &install_gcloud_sdk
     fi
 install_helm_cli: &install_helm_cli
   run: |
-    wget https://storage.googleapis.com/kubernetes-helm/helm-$HELM_VERSION-linux-amd64.tar.gz
+    wget https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
     tar zxf helm-$HELM_VERSION-linux-amd64.tar.gz
     sudo mv linux-amd64/helm /usr/local/bin/
 exports: &exports
@@ -129,8 +149,6 @@ exports: &exports
     # Apart from using a DEV_TAG we use a different image ID to avoid polluting the tag
     # history of the production tag
     echo "export IMG_MODIFIER=-ci" >> $BASH_ENV
-    # Helm version (should be +2.10)
-    echo "export HELM_VERSION=v2.14.0" >> $BASH_ENV
 build_images: &build_images
   steps:
     - setup_remote_docker:
@@ -264,13 +282,14 @@ jobs:
       - run: yarn --cwd=dashboard run lint
       - run: yarn --cwd=dashboard run test --maxWorkers=4 --coverage
   test_chart_render:
+    environment:
+      HELM_VERSION: "v3.0.2"
     docker:
       - image: circleci/golang:1.13
     steps:
       - <<: *exports
       - checkout
       - <<: *install_helm_cli
-      - run: helm init --client-only
       - run: ./script/chart-template-test.sh
   build_go_images:
     docker:
@@ -278,7 +297,7 @@ jobs:
     working_directory: /go/src/github.com/kubeapps/kubeapps
     environment:
       GOPATH: /home/circleci/.go_workspace
-      IMAGES: "apprepository-controller tiller-proxy asset-syncer assetsvc"
+      IMAGES: "kubeops apprepository-controller tiller-proxy asset-syncer assetsvc"
     <<: *build_images
   build_dashboard:
     docker:
@@ -292,32 +311,50 @@ jobs:
     steps:
       - checkout
       - run: REPO_DOMAIN=kubeapps REPO_NAME=kubeapps ./script/create_release.sh ${CIRCLE_TAG}
-  local_e2e_tests_mongodb:
+  local_e2e_tests_mongodb_helm2:
     machine: true
     environment:
       KUBEAPPS_DB: "mongodb"
+      HELM_VERSION: "v2.14.0"
     <<: *local_e2e_steps
-  local_e2e_tests_postgresql:
+  local_e2e_tests_postgresql_helm2:
     machine: true
     environment:
+      HELM_VERSION: "v2.14.0"
+      KUBEAPPS_DB: "postgresql"
+    <<: *local_e2e_steps
+  local_e2e_tests_mongodb_helm3:
+    machine: true
+    environment:
+      HELM_VERSION: "v3.0.2"
+      KUBEAPPS_DB: "mongodb"
+    <<: *local_e2e_steps
+  local_e2e_tests_postgresql_helm3:
+    machine: true
+    environment:
+      HELM_VERSION: "v3.0.2"
       KUBEAPPS_DB: "postgresql"
     <<: *local_e2e_steps
   GKE_1_13_MASTER:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.13"
   GKE_1_13_LATEST_RELEASE:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.13"
       TEST_LATEST_RELEASE: 1
   GKE_1_14_MASTER:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.14"
   GKE_1_14_LATEST_RELEASE:
     <<: *gke_test
     environment:
+      HELM_VERSION: "v2.14.0"
       GKE_BRANCH: "1.14"
       TEST_LATEST_RELEASE: 1
   sync_chart:
@@ -344,7 +381,7 @@ jobs:
       - run: |
           if [[ -z "$CIRCLE_PULL_REQUEST" && -n "$DOCKER_USERNAME" && -n "$DOCKER_PASSWORD" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
-            for IMAGE in kubeapps/apprepository-controller kubeapps/dashboard kubeapps/tiller-proxy kubeapps/asset-syncer kubeapps/assetsvc; do
+            for IMAGE in kubeapps/apprepository-controller kubeapps/dashboard kubeapps/tiller-proxy kubeapps/asset-syncer kubeapps/assetsvc kubeapps/kubeops; do
               docker pull ${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
               docker tag ${IMAGE}${IMG_MODIFIER}:${DEV_TAG} ${IMAGE}:${PROD_TAG}
               docker push ${IMAGE}:${PROD_TAG}

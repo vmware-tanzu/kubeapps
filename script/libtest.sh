@@ -14,7 +14,7 @@
 
 set -e
 
-export TEST_MAX_WAIT_SEC=300
+export TEST_MAX_WAIT_SEC=600
 
 ## k8s specific Helper functions
 k8s_wait_for_deployment() {
