@@ -17,7 +17,7 @@ export interface IUpgradeFormProps {
   namespace: string;
   releaseName: string;
   repo: string;
-  error: Error | undefined;
+  error?: Error;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
   upgradeApp: (

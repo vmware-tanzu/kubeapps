@@ -1,17 +1,21 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 
-import { IAppRepository } from "../../shared/types";
+import { IAppRepository, IRBACRole } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper";
 
-import { ErrorSelector } from "../ErrorAlert";
+import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 
 interface ISelectRepoFormProps {
+  isFetching: boolean;
   kubeappsNamespace: string;
-  error: Error | undefined;
+  repoError?: Error;
+  error?: Error;
   repo: IAppRepository;
   repos: IAppRepository[];
   chartName: string;
   checkChart: (repo: string, chartName: string) => any;
+  fetchRepositories: () => void;
 }
 
 interface ISelectRepoFormState {
@@ -26,7 +30,39 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
         : "",
   };
 
+  public componentDidMount() {
+    this.props.fetchRepositories();
+  }
+
   public render() {
+    if (this.props.isFetching) {
+      return <LoadingWrapper />;
+    }
+    if (this.props.repoError) {
+      return (
+        <ErrorSelector
+          error={this.props.repoError}
+          namespace={this.props.kubeappsNamespace}
+          action="view"
+          defaultRequiredRBACRoles={{ view: this.requiredRBACRoles() }}
+          resource="App Repositories"
+        />
+      );
+    }
+    if (this.props.repos.length === 0) {
+      return (
+        <MessageAlert
+          level={"warning"}
+          children={
+            <div>
+              <h5>Chart repositories not found.</h5>
+              Manage your Helm chart repositories in Kubeapps by visiting the{" "}
+              <Link to={"/config/repos"}>App repositories configuration</Link> page.
+            </div>
+          }
+        />
+      );
+    }
     return (
       <LoadingWrapper loaded={this.props.repos.length > 0}>
         <div className="container margin-normal">
@@ -83,6 +119,17 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
     });
     return res;
   };
+
+  private requiredRBACRoles(): IRBACRole[] {
+    return [
+      {
+        apiGroup: "kubeapps.com",
+        namespace: this.props.kubeappsNamespace,
+        resource: "apprepositories",
+        verbs: ["get"],
+      },
+    ];
+  }
 }
 
 export default SelectRepoForm;
