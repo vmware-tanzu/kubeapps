@@ -47,24 +47,27 @@ func isUnprocessable(err error) bool {
 	return re.MatchString(err.Error())
 }
 
+// ErrorCode returns the int representing an error.
 func ErrorCode(err error) int {
 	return ErrorCodeWithDefault(err, http.StatusInternalServerError)
 }
 
+// ErrorCodeWithDefault returns the int representing an error with a default value.
 func ErrorCodeWithDefault(err error, defaultCode int) int {
 	errCode := defaultCode
 	if isAlreadyExists(err) {
 		errCode = http.StatusConflict
-	} else if isNotFound(err) {
-		errCode = http.StatusNotFound
 	} else if isForbidden(err) {
 		errCode = http.StatusForbidden
+	} else if isNotFound(err) {
+		errCode = http.StatusNotFound
 	} else if isUnprocessable(err) {
 		errCode = http.StatusUnprocessableEntity
 	}
 	return errCode
 }
 
+// ParseAndGetChart request and parse a chart.
 func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver, requireV1Support bool) (*chartUtils.Details, *chartUtils.ChartMultiVersion, error) {
 	defer req.Body.Close()
 	body, err := ioutil.ReadAll(req.Body)

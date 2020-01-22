@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -131,11 +132,37 @@ func AddRouteWith(
 	}
 }
 
+func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	body, err := json.Marshal(forbiddenActions)
+	if err != nil {
+		returnErrMessage(err, w)
+		return
+	}
+	response.NewErrorResponse(http.StatusForbidden, string(body)).Write(w)
+}
+
+func returnErrMessage(err error, w http.ResponseWriter) {
+	code := handlerutil.ErrorCode(err)
+	errMessage := err.Error()
+	if code == http.StatusForbidden {
+		forbiddenActions := auth.ParseForbiddenActions(errMessage)
+		if len(forbiddenActions) > 0 {
+			returnForbiddenActions(forbiddenActions, w)
+		} else {
+			// Unable to parse forbidden actions, return the raw message
+			response.NewErrorResponse(code, errMessage).Write(w)
+		}
+	} else {
+		response.NewErrorResponse(code, errMessage).Write(w)
+	}
+}
+
 // ListReleases list existing releases.
 func ListReleases(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	apps, err := agent.ListReleases(cfg.ActionConfig, params[namespaceParam], cfg.Options.ListLimit, req.URL.Query().Get("statuses"))
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	response.NewDataResponse(apps).Write(w)
@@ -150,7 +177,7 @@ func ListAllReleases(cfg Config, w http.ResponseWriter, req *http.Request, _ han
 func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	ch := chartMulti.Helm3Chart
@@ -159,7 +186,7 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	valuesString := chartDetails.Values
 	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	response.NewDataResponse(release).Write(w)
@@ -183,18 +210,18 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 	releaseName := params[nameParam]
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, cfg.ChartClient, isV1SupportRequired)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	ch := chartMulti.Helm3Chart
 	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	compatRelease, err := helm3to2.Convert(*rel)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	response.NewDataResponse(compatRelease).Write(w)
@@ -209,17 +236,17 @@ func rollbackRelease(cfg Config, w http.ResponseWriter, req *http.Request, param
 	}
 	revisionInt, err := strconv.ParseInt(revision, 10, 32)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	rel, err := agent.RollbackRelease(cfg.ActionConfig, releaseName, int(revisionInt))
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	compatRelease, err := helm3to2.Convert(*rel)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	response.NewDataResponse(compatRelease).Write(w)
@@ -231,12 +258,12 @@ func GetRelease(cfg Config, w http.ResponseWriter, req *http.Request, params han
 	releaseName := params[nameParam]
 	release, err := agent.GetRelease(cfg.ActionConfig, releaseName)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	compatRelease, err := helm3to2.Convert(*release)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	response.NewDataResponse(compatRelease).Write(w)
@@ -251,7 +278,7 @@ func DeleteRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	keepHistory := !purge
 	err := agent.DeleteRelease(cfg.ActionConfig, releaseName, keepHistory)
 	if err != nil {
-		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		returnErrMessage(err, w)
 		return
 	}
 	w.Header().Set("Status-Code", "200")
