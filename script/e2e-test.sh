@@ -215,9 +215,13 @@ admin_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceacc
 kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
 view_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
+## Create edit user
+kubectl create serviceaccount kubeapps-edit -n kubeapps
+kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
+edit_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
 ## Run tests
 set +e
-kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} yarn start"
+kubectl exec -it ${pod} -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start"
 code=$?
 set -e
 if [[ "$code" != 0 ]]; then
