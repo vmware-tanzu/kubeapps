@@ -222,13 +222,14 @@ func uniqVerbs(current []string, new []string) []string {
 			resMap[v] = true
 		}
 	}
+	res := append([]string{}, current...)
 	for _, v := range new {
 		if !resMap[v] {
 			resMap[v] = true
-			current = append(current, v)
+			res = append(res, v)
 		}
 	}
-	return current
+	return res
 }
 
 func reduceActionsByVerb(actions []Action) []Action {
@@ -286,6 +287,9 @@ func (u *UserAuth) GetForbiddenActions(namespace, action, manifest string) ([]Ac
 
 // ParseForbiddenActions parses a forbidden error returned by the Kubernetes API and return the list of forbidden actions
 func ParseForbiddenActions(message string) []Action {
+	// TODO(andresmgot): Helm may not return all the required permissions in the same message. At the moment of writing this
+	// the only supported format is an error string so we can only parse the message with a regex
+	// More info: https://github.com/helm/helm/issues/7453
 	re := regexp.MustCompile(`User "(.*?)" cannot (.*?) resource "(.*?)" in API group "(.*?)"(?: in the namespace "(.*?)")?`)
 	match := re.FindAllStringSubmatch(message, -1)
 	forbiddenActions := []Action{}
