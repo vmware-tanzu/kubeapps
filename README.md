@@ -15,12 +15,16 @@ Kubeapps is a web-based UI for deploying and managing applications in Kubernetes
 
 Use the Helm chart to install the latest version of Kubeapps: 
 
+***Note:*** Kubeapps supports both Helm v2 and v3. For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](docs/user/getting-started.md).
+
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
+# Helm v2 command
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
+# Helm v3 command
+kubectl create namespace kubeapps
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ``` 
-***Note:*** Kubeapps supports both Helm v2 and v3. If you are already using Helm v3, set the flag `--set useHelm3=true`.
-For detailed instructions on how to install and use Kubeapps follow the [Getting Started Guide](docs/user/getting-started.md).
 
 ## Developer Documentation
 
