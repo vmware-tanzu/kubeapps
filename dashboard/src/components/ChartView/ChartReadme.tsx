@@ -6,6 +6,7 @@ import LoadingWrapper from "../LoadingWrapper";
 import HeadingRenderer from "./HeadingRenderer";
 
 import "./ChartReadme.css";
+import LinkRenderer from "./LinkRenderer";
 
 interface IChartReadmeProps {
   getChartReadme: (version: string) => void;
@@ -36,7 +37,14 @@ class ChartReadme extends React.Component<IChartReadmeProps> {
       <LoadingWrapper loaded={!!readme}>
         {readme && (
           <div className="ChartReadme">
-            <ReactMarkdown source={readme} renderers={{ heading: HeadingRenderer }} />
+            <ReactMarkdown
+              source={readme}
+              renderers={{
+                heading: HeadingRenderer,
+                link: LinkRenderer,
+              }}
+              skipHtml={true}
+            />
           </div>
         )}
       </LoadingWrapper>
