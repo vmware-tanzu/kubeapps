@@ -18,13 +18,13 @@ export GOPATH=~/gopath
 export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```
-## Download the kubeapps source code
+## Download the Kubeapps source code
 
 ```bash
 git clone --recurse-submodules https://github.com/kubeapps/kubeapps $KUBEAPPS_DIR
 ```
 
-The `kubeops` sources are located under the `cmd/kubeops/` and it uses packages from the `pkg` directory.
+The `kubeops` sources are located under `cmd/kubeops/` and use packages from the `pkg` directory.
 
 ### Install Kubeapps in your cluster
 
@@ -54,7 +54,7 @@ Note: By default, Kubeapps will try to fetch the latest version of the image so 
 kubectl patch deployment kubeapps-internal-kubeops -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}]'
 ```
 
-The easiest way to create the `kubeops` image is execute the Makefile task to do so:
+The easiest way to create the `kubeops` image is to execute the Makefile task to do so:
 
 ```bash
 IMAGE_TAG=dev make kubeapps/kubeops
@@ -72,11 +72,11 @@ For further redeploys you can change the version to deploy a different tag or re
 kubectl delete pod -n kubeapps -l app=kubeapps-internal-kubeops
 ```
 
-Note: If you using a cloud provider to develop the service you will need to retag the image and push it to a public registry.
+Note: If you are using a cloud provider to develop the service you will need to retag the image and push it to a public registry.
 
 ### Running tests
 
-You can run the kubeops tests along with the tests of all the projecs
+You can run the kubeops tests along with the tests of all the projects:
 
 ```bash
 make test

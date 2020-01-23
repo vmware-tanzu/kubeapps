@@ -13,14 +13,14 @@
 
 ## TL;DR;
 
-For Helm v2:
+For Helm 2:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-For Helm v3:
+For Helm 3:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -44,16 +44,16 @@ It also packages the [Bitnami MongoDB chart](https://github.com/helm/charts/tree
 
 To install the chart with the release name `kubeapps`:
 
-For Helm v2:
+For Helm 2:
 
 ```console
 $ helm repo add bitnami https://charts.bitnami.com/bitnami
 $ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
-> **IMPORTANT** This assumes an insecure Helm v2 installation, which is not recommended in production. See [the documentation to learn how to secure Helm v2 and Kubeapps in production](https://github.com/kubeapps/kubeapps/blob/master/docs/user/securing-kubeapps.md).
+> **IMPORTANT** This assumes an insecure Helm 2 installation, which is not recommended in production. See [the documentation to learn how to secure Helm 2 and Kubeapps in production](https://github.com/kubeapps/kubeapps/blob/master/docs/user/securing-kubeapps.md).
 
-For Helm v3:
+For Helm 3:
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -98,13 +98,13 @@ Kubeapps supports two database types: MongoDB or PostgreSQL. By default MongoDB 
 
 > **Note**: Changing the database type when upgrading is not supported.
 
-### [Only for Helm v2] Configuring connection to a custom namespace Tiller instance
+### [Only for Helm 2] Configuring connection to a custom namespace Tiller instance
 
 By default, Kubeapps connects to the Tiller Service in the `kube-system` namespace, the default install location for Helm.
 
 If your instance of Tiller is running in a different namespace or you want to have different instances of Kubeapps connected to different Tiller instances, you can achieve it by setting the `tillerProxy.host` parameter. For example, you can set `tillerProxy.host=tiller-deploy.my-custom-namespace:44134`
 
-### [Only for Helm v2] Configuring connection to a secure Tiller instance
+### [Only for Helm 2] Configuring connection to a secure Tiller instance
 
 In production, we strongly recommend setting up a [secure installation of Tiller](https://docs.helm.sh/using_helm/#using-ssl-between-helm-and-tiller), the Helm server side component.
 
@@ -170,9 +170,9 @@ If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-
 To uninstall/delete the `kubeapps` deployment:
 
 ```console
-# For Helm v2
+# For Helm 2
 $ helm delete --purge kubeapps
-# For Helm v3
+# For Helm 3
 $ helm uninstall kubeapps
 # Optional: Only if there are no more instances of Kubeapps
 $ kubectl delete crd apprepositories.kubeapps.com

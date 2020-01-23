@@ -1,6 +1,6 @@
-# Securing Kubeapps installation for Helm v2
+# Securing Kubeapps installation for Helm 2
 
-In this guide we will explain how to secure the installation of Kubeapps in a multi-tenant cluster if you are still using the version 2 of Helm. Following these steps are only necessary if different people with different permissions have access to the same cluster. Generic instructions to secure Helm can be found [here](https://github.com/helm/helm/blob/dev-v2/docs/securing_installation.md).
+In this guide we will explain how to secure the installation of Kubeapps in a multi-tenant cluster if you are still using version 2 of Helm. Following these steps are only necessary if different people with different permissions have access to the same cluster. Generic instructions to secure Helm can be found [here](https://github.com/helm/helm/blob/dev-v2/docs/securing_installation.md).
 
 The main goal is to secure the access to [Tiller](https://github.com/helm/helm/blob/dev-v2/docs/tiller_ssl.md) (Helm server-side component). Tiller has access to create or delete any resource in the cluster so we should be careful on how we expose the functionality it provides.
 

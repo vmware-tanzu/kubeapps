@@ -8,8 +8,8 @@
 #     - myRegistryKeySecretName
 #   storageClass: myStorageClass
 
-## Enable the useHelm3 feature flag to use Kubeapps with Helm3 support.
-## If you set it to true, Kubeapps will not work with Helm2 releases.
+## Enable this feature flag to use Kubeapps with Helm 3 support.
+## If you set it to true, Kubeapps will not work with releases installed with Helm 2.
 useHelm3: false
 
 ## The frontend service is the main reverse proxy used to access the Kubeapps UI
@@ -633,4 +633,3 @@ authProxy:
     requests:
       cpu: 25m
       memory: 32Mi
-

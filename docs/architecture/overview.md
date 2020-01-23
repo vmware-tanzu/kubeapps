@@ -20,8 +20,8 @@ This proxy is written in Go. Check more details about the implementation in this
 
 ### Kubeops
 
-Kubeops is the successor of Tiller proxy. It's the service in charge of comunicating both with the Helm (v3) API and other k8s resources like AppRepositories or Secrets.
-Check more details about the implementation in this [document](/docs/developer/kubeops.md).
+Kubeops is the successor of Tiller proxy. It's the service in charge of communicating both with the Helm (v3) API and other k8s resources like AppRepositories or Secrets.
+Check more details about the implementation in [this document](/docs/developer/kubeops.md).
 
 ### Apprepository CRD and Controller
 
