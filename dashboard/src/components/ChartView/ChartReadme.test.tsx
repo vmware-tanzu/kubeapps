@@ -2,6 +2,8 @@ import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 import * as ReactMarkdown from "react-markdown";
+import { BrowserRouter } from "react-router-dom";
+import { HashLink as Link } from "react-router-hash-link";
 
 import itBehavesLike from "../../shared/specs";
 
@@ -69,4 +71,34 @@ it("renders the ReactMarkdown content adding IDs for the titles", () => {
   );
   const component = wrapper.find("#markdown-readme_or_not");
   expect(component).toExist();
+});
+
+it("renders the ReactMarkdown ignoring comments", () => {
+  const wrapper = mount(
+    <ChartReadme
+      getChartReadme={jest.fn()}
+      hasError={false}
+      version="1.2.3"
+      readme={`<!-- This is a comment -->
+      This is text`}
+    />,
+  );
+  const html = wrapper.html();
+  expect(html).toContain("This is text");
+  expect(html).not.toContain("This is a comment");
+});
+
+it("renders the ReactMarkdown content with hash links", () => {
+  const wrapper = mount(
+    <BrowserRouter>
+      <ChartReadme
+        getChartReadme={jest.fn()}
+        hasError={false}
+        version="1.2.3"
+        readme={`[section 1](#section-1)
+      # Section 1`}
+      />
+    </BrowserRouter>,
+  );
+  expect(wrapper.find(Link)).toExist();
 });

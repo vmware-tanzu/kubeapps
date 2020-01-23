@@ -349,6 +349,15 @@
     "@types/react" "*"
     redux "^4.0.0"
 
+"@types/react-router-dom@*":
+  version "5.1.3"
+  resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-5.1.3.tgz#b5d28e7850bd274d944c0fbbe5d57e6b30d71196"
+  integrity sha512-pCq7AkOvjE65jkGS5fQwQhvUp4+4PVD9g39gXLZViP2UqFiFzsEpB3PKf0O6mdbKsewSK8N14/eegisa/0CwnA==
+  dependencies:
+    "@types/history" "*"
+    "@types/react" "*"
+    "@types/react-router" "*"
+
 "@types/react-router-dom@^5.1.2":
   version "5.1.2"
   resolved "https://registry.yarnpkg.com/@types/react-router-dom/-/react-router-dom-5.1.2.tgz#853f229f1f297513c0be84f7c914a08b778cfdf5"
@@ -357,6 +366,14 @@
     "@types/history" "*"
     "@types/react" "*"
     "@types/react-router" "*"
+
+"@types/react-router-hash-link@^1.2.1":
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/react-router-hash-link/-/react-router-hash-link-1.2.1.tgz#fba7dc351cef2985791023018b7a5dbd0653c843"
+  integrity sha512-jdzPGE8jFGq7fHUpPaKrJvLW1Yhoe5MQCrmgeesC+eSLseMj3cGCTYMDA4BNWG8JQmwO8NTYt/oT3uBZ77pmBA==
+  dependencies:
+    "@types/react" "*"
+    "@types/react-router-dom" "*"
 
 "@types/react-router@*":
   version "5.1.3"
@@ -9033,6 +9050,13 @@ react-router-dom@^5.1.2:
     react-router "5.1.2"
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
+
+react-router-hash-link@^1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/react-router-hash-link/-/react-router-hash-link-1.2.2.tgz#7a0ad5e925d49596d19554de8bc6c554ce4f8099"
+  integrity sha512-LBthLVHdqPeKDVt3+cFRhy15Z7veikOvdKRZRfyBR2vjqIE7rxn+tKLjb6DOmLm6JpoQVemVDnxQ35RVnEHdQA==
+  dependencies:
+    prop-types "^15.6.0"
 
 react-router-redux@^4.0.0:
   version "4.0.8"
