@@ -8,6 +8,9 @@
 #     - myRegistryKeySecretName
 #   storageClass: myStorageClass
 
+## Set this flag to true to use the Helm 3 backend; false to use Helm 2.
+useHelm3: false
+
 ## The frontend service is the main reverse proxy used to access the Kubeapps UI
 ## To expose Kubeapps externally either configure the ingress object below or
 ## set frontend.service.type=LoadBalancer in the frontend configuration.
@@ -629,8 +632,3 @@ authProxy:
     requests:
       cpu: 25m
       memory: 32Mi
-
-## The useHelm3 feature flag is currently only for developing the in-progress (and incomplete) Helm3 support.
-## If you set it to true, Kubeapps will not work at present.
-useHelm3: false
-
