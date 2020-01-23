@@ -17,6 +17,13 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
+If you are using Helm 3, you need to set an extra flag to enable it:
+
+```bash
+kubectl create namespace kubeapps
+helm install kubeapps --namespace kubeapps bitnami/kubeapps --set useHelm3=true
+```
+
 For detailed information on installing, configuring and upgrading Kubeapps, checkout the [chart README](../../chart/kubeapps/README.md).
 
 The above commands will deploy Kubeapps into the `kubeapps` namespace in your cluster. It may take a few minutes to execute. Once it has been deployed and the Kubeapps pods are running, continue to step 2.

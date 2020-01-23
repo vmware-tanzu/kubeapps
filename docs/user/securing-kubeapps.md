@@ -1,8 +1,8 @@
-# Securing Kubeapps installation
+# Securing Kubeapps installation for Helm 2
 
-In this guide we will explain how to secure the installation of Kubeapps in a multi-tenant cluster. Following these steps are only necessary if different people with different permissions have access to the same cluster. Generic instructions to secure Helm can be found [here](https://github.com/kubernetes/helm/blob/master/docs/securing_installation.md).
+In this guide we will explain how to secure the installation of Kubeapps in a multi-tenant cluster if you are still using version 2 of Helm. Following these steps are only necessary if different people with different permissions have access to the same cluster. Generic instructions to secure Helm can be found [here](https://github.com/helm/helm/blob/dev-v2/docs/securing_installation.md).
 
-The main goal is to secure the access to [Tiller](https://github.com/kubernetes/helm/blob/master/docs/securing_installation.md) (Helm server-side component). Tiller has access to create or delete any resource in the cluster so we should be careful on how we expose the functionality it provides.
+The main goal is to secure the access to [Tiller](https://github.com/helm/helm/blob/dev-v2/docs/tiller_ssl.md) (Helm server-side component). Tiller has access to create or delete any resource in the cluster so we should be careful on how we expose the functionality it provides.
 
 In order to take advantage of Kubeapps security features you will need to configure two things: a **TLS certificate** to control the access to Tiller and [**RBAC roles**](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) to authorize requests.
 
@@ -10,8 +10,8 @@ In order to take advantage of Kubeapps security features you will need to config
 
 You can follow the Helm documentation for deploying Tiller in a secure way. In particular we are interested in:
 
-- Using a TLS certificate to control the access to the Tiller deployment: https://docs.helm.sh/using_helm/#using-ssl-between-helm-and-tiller
-- Storing release info as secrets: https://docs.helm.sh/using_helm/#tiller-s-release-information
+- Using a TLS certificate to control the access to the Tiller deployment: https://v2.helm.sh/docs/using_helm/#using-ssl-between-helm-and-tiller
+- Storing release info as secrets: https://v2.helm.sh/docs/using_helm/#secret-storage-backend
 
 From these guides you can find out how to create the TLS certificate and the necessary flags to install Tiller securely:
 

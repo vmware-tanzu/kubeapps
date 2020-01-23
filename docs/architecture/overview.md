@@ -12,11 +12,16 @@ Additionally, the dashboard integrates with the [Kubernetes service catalog](htt
 
 The dashboard is written in the Javascript programming language and is developed using the React Javascript library.
 
-### Tiller proxy
+### Tiller proxy (deprecated)
 
 In order to secure the access to Tiller and allow the dashboard to contact the Helm Tiller server we deploy a proxy that handles the communication with Tiller. The goal of this proxy is to validate that the user doing the request has sufficent permissions to create or delete all the resources that are part of the specific chart being deployed or deleted.
 
 This proxy is written in Go. Check more details about the implementation in this [document](/cmd/tiller-proxy/README.md).
+
+### Kubeops
+
+Kubeops is the successor of Tiller proxy. It's the service in charge of communicating both with the Helm (v3) API and other k8s resources like AppRepositories or Secrets.
+Check more details about the implementation in [this document](/docs/developer/kubeops.md).
 
 ### Apprepository CRD and Controller
 
