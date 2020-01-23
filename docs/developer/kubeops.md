@@ -1,6 +1,6 @@
 # Kubeapps Kubeops Developer Guide
 
-The `kubeops` component is a micro-service that creates a API endpoint for accessing the Helm API and Kubernetes resources.
+The `kubeops` component is a micro-service that creates an API endpoint for accessing the Helm API and Kubernetes resources.
 
 ## Prerequisites
 

@@ -23,7 +23,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 # Helm v3 command
 kubectl create namespace kubeapps
-helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
+helm install kubeapps --namespace kubeapps bitnami/kubeapps --set useHelm3=true
 ``` 
 
 ## Developer Documentation
