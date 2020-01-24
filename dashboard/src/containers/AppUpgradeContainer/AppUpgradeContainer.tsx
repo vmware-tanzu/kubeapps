@@ -36,7 +36,9 @@ function mapStateToProps(
     repos: repos.repos,
     selected: charts.selected,
     deployed: charts.deployed,
-    repoName: repos.repo.metadata && repos.repo.metadata.name,
+    repoName:
+      (repos.repo.metadata && repos.repo.metadata.name) ||
+      (apps.selected && apps.selected.updateInfo && apps.selected.updateInfo.repository.name),
   };
 }
 
