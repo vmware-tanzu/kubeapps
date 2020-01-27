@@ -1,6 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
+import { AlertCircle } from "react-feather";
 import { INamespaceState } from "../../reducers/namespace";
 import NamespaceSelector from "./NamespaceSelector";
 
@@ -71,4 +72,18 @@ it("renders the default namespace option if no namespaces provided", () => {
       ],
     }),
   );
+});
+
+it("renders the a creation error if exists", () => {
+  const error = {
+    action: "create",
+    errorMsg: "Unable to create that namespace",
+  };
+  const ns = {
+    ...defaultProps.namespace,
+    error,
+  };
+  const wrapper = shallow(<NamespaceSelector {...defaultProps} namespace={ns} />);
+
+  expect(wrapper.find(AlertCircle)).toExist();
 });

@@ -21,6 +21,7 @@ interface IHeaderProps {
   pathname: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
+  createNamespace: (ns: string) => void;
 }
 
 interface IHeaderState {
@@ -174,11 +175,13 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   };
 
   private handleNamespaceChange = (ns: string) => {
-    const { pathname, push, setNamespace } = this.props;
+    const { pathname, push, setNamespace, createNamespace, namespace } = this.props;
     const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
-    if (to === pathname) {
-      setNamespace(ns);
-    } else {
+    setNamespace(ns);
+    if (to !== pathname) {
+      if (!namespace.namespaces.includes(ns)) {
+        createNamespace(ns);
+      }
       push(to);
     }
   };

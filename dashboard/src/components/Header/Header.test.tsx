@@ -16,6 +16,7 @@ const defaultProps = {
   pathname: "",
   push: jest.fn(),
   setNamespace: jest.fn(),
+  createNamespace: jest.fn(),
 };
 it("renders the header links and titles", () => {
   const wrapper = shallow(<Header {...defaultProps} />);
@@ -51,4 +52,55 @@ it("renders the namespace switcher", () => {
       namespace: defaultProps.namespace,
     }),
   );
+});
+
+it("call setNamespace when selecting a namespace", () => {
+  const setNamespace = jest.fn();
+  const createNamespace = jest.fn();
+  const namespace = {
+    current: "foo",
+    namespaces: ["foo", "bar"],
+  };
+  const wrapper = shallow(
+    <Header
+      {...defaultProps}
+      setNamespace={setNamespace}
+      namespace={namespace}
+      createNamespace={createNamespace}
+    />,
+  );
+
+  const namespaceSelector = wrapper.find("NamespaceSelector");
+  expect(namespaceSelector).toExist();
+  const onChange = namespaceSelector.prop("onChange") as (ns: any) => void;
+  onChange("bar");
+
+  expect(setNamespace).toHaveBeenCalledWith("bar");
+  expect(createNamespace).not.toHaveBeenCalled();
+});
+
+it("call setNamespace and createNamespace when selecting a new namespace", () => {
+  const setNamespace = jest.fn();
+  const createNamespace = jest.fn();
+  const namespace = {
+    current: "foo",
+    namespaces: ["foo", "bar"],
+  };
+  const wrapper = shallow(
+    <Header
+      {...defaultProps}
+      setNamespace={setNamespace}
+      namespace={namespace}
+      createNamespace={createNamespace}
+      pathname="/ns/foo"
+    />,
+  );
+
+  const namespaceSelector = wrapper.find("NamespaceSelector");
+  expect(namespaceSelector).toExist();
+  const onChange = namespaceSelector.prop("onChange") as (ns: any) => void;
+  onChange("foobar");
+
+  expect(setNamespace).toHaveBeenCalledWith("foobar");
+  expect(createNamespace).toHaveBeenCalledWith("foobar");
 });

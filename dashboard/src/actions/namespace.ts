@@ -9,17 +9,27 @@ export const setNamespace = createAction("SET_NAMESPACE", resolve => {
   return (namespace: string) => resolve(namespace);
 });
 
+export const postNamespace = createAction("CREATE_NAMESPACE", resolve => {
+  return (namespace: string) => resolve(namespace);
+});
+
 export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", resolve => {
   return (namespaces: string[]) => resolve(namespaces);
 });
 
 export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
-  return (err: Error, op: "list") => resolve({ err, op });
+  return (err: Error, op: string) => resolve({ err, op });
 });
 
 export const clearNamespaces = createAction("CLEAR_NAMESPACES");
 
-const allActions = [setNamespace, receiveNamespaces, errorNamespaces, clearNamespaces];
+const allActions = [
+  setNamespace,
+  receiveNamespaces,
+  errorNamespaces,
+  clearNamespaces,
+  postNamespace,
+];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
 
 export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
@@ -30,6 +40,21 @@ export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null,
       dispatch(receiveNamespaces(namespaceStrings));
     } catch (e) {
       dispatch(errorNamespaces(e, "list"));
+      return;
+    }
+  };
+}
+
+export function createNamespace(
+  ns: string,
+): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+  return async dispatch => {
+    try {
+      await Namespace.create(ns);
+      dispatch(postNamespace(ns));
+      dispatch(fetchNamespaces());
+    } catch (e) {
+      dispatch(errorNamespaces(e, "create"));
       return;
     }
   };

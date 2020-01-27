@@ -48,7 +48,7 @@ describe("namespaceReducer", () => {
           type: getType(actions.namespace.errorNamespaces),
           payload: { err, op: "list" },
         }),
-      ).toEqual({ ...initialState, errorMsg: err.message });
+      ).toEqual({ ...initialState, error: { action: "list", errorMsg: err.message } });
     });
   });
 
@@ -77,6 +77,20 @@ describe("namespaceReducer", () => {
           },
         ),
       ).toEqual({ current: "foo-bar", namespaces: [] });
+    });
+  });
+
+  context("when SET_NAMESPACE", () => {
+    it("sets the current namespace and clears error", () => {
+      expect(
+        namespaceReducer(
+          { current: "error", namespaces: [], error: { action: "create", errorMsg: "boom" } },
+          {
+            type: getType(actions.namespace.setNamespace),
+            payload: "default",
+          },
+        ),
+      ).toEqual({ current: "default", namespaces: [], error: undefined });
     });
   });
 });
