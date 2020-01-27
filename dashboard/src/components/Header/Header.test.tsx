@@ -104,3 +104,29 @@ it("call setNamespace and createNamespace when selecting a new namespace", () =>
   expect(setNamespace).toHaveBeenCalledWith("foobar");
   expect(createNamespace).toHaveBeenCalledWith("foobar");
 });
+
+it("do not try to create a namespace if it's setting the default or all", () => {
+  const setNamespace = jest.fn();
+  const createNamespace = jest.fn();
+  const wrapper = shallow(
+    <Header
+      {...defaultProps}
+      setNamespace={setNamespace}
+      createNamespace={createNamespace}
+      pathname="/ns/foo"
+      defaultNamespace="default"
+    />,
+  );
+
+  const namespaceSelector = wrapper.find("NamespaceSelector");
+  expect(namespaceSelector).toExist();
+  const onChange = namespaceSelector.prop("onChange") as (ns: any) => void;
+
+  onChange("default");
+  expect(setNamespace).toHaveBeenCalledWith("default");
+  expect(createNamespace).not.toHaveBeenCalled();
+
+  onChange("_all");
+  expect(setNamespace).toHaveBeenCalledWith("_all");
+  expect(createNamespace).not.toHaveBeenCalled();
+});

@@ -175,11 +175,18 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   };
 
   private handleNamespaceChange = (ns: string) => {
-    const { pathname, push, setNamespace, createNamespace, namespace } = this.props;
+    const {
+      pathname,
+      push,
+      setNamespace,
+      createNamespace,
+      namespace,
+      defaultNamespace,
+    } = this.props;
     const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
     setNamespace(ns);
     if (to !== pathname) {
-      if (!namespace.namespaces.includes(ns)) {
+      if (!namespace.namespaces.includes(ns) && ns !== defaultNamespace && ns !== "_all") {
         createNamespace(ns);
       }
       push(to);
