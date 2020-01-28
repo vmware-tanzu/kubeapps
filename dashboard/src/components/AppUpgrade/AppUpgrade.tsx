@@ -14,7 +14,6 @@ interface IAppUpgradeProps {
   appsError: Error | undefined;
   namespace: string;
   releaseName: string;
-  version: string;
   repoName: string;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
