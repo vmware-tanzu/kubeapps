@@ -41,7 +41,7 @@ export type KubeAction = ActionType<typeof allActions[number]>;
 
 export function getResource(
   ref: ResourceRef,
-  shouldDispatchRequest?: boolean,
+  polling?: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, KubeAction> {
   return async (dispatch, getState) => {
     const key = ref.getResourceURL();
@@ -58,7 +58,7 @@ export function getResource(
 
     // If it's not the first request, we can skip the request REDUX event
     // to avoid the loading animation
-    if (shouldDispatchRequest !== false) {
+    if (!polling) {
       dispatch(requestResource(key));
     }
     try {
@@ -90,7 +90,7 @@ export function getAndWatchResource(
             // If the Socket fails, create an interval to re-request the resource
             // every 5 seconds. This interval needs to be closed calling closeTimer
             timer = setInterval(async () => {
-              dispatch(getResource(ref, false));
+              dispatch(getResource(ref, true));
             }, 5000);
           },
           closeTimer: () => {
