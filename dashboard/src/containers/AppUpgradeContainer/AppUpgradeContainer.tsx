@@ -24,7 +24,7 @@ function mapStateToProps(
 ) {
   return {
     app: apps.selected,
-    appIsFetching: apps.isFetching,
+    appsIsFetching: apps.isFetching,
     reposIsFetching: repos.isFetching,
     appsError: apps.error,
     chartsError: charts.selected.error,
