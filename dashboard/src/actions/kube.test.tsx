@@ -110,6 +110,7 @@ describe("getAndWatchResource", () => {
         payload: {
           ref,
           handler: expect.any(Function),
+          onError: { onErrorHandler: expect.any(Function), closeTimer: expect.any(Function) },
         },
       },
     ];

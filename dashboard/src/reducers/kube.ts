@@ -30,7 +30,7 @@ const kubeReducer = (
       };
       return { ...state, items: { ...state.items, ...erroredItem } };
     case getType(actions.kube.openWatchResource):
-      const { ref, handler } = action.payload;
+      const { ref, handler, onError } = action.payload;
       key = ref.watchResourceURL();
       if (state.sockets[key]) {
         // Socket for this resource already open, do nothing
@@ -38,11 +38,13 @@ const kubeReducer = (
       }
       const socket = ref.watchResource();
       socket.addEventListener("message", handler);
+      const { onErrorHandler, closeTimer } = onError;
+      socket.addEventListener("error", onErrorHandler);
       return {
         ...state,
         sockets: {
           ...state.sockets,
-          [key]: socket,
+          [key]: { socket, closeTimer },
         },
       };
     // TODO(adnan): this won't handle cases where one component closes a socket
@@ -54,7 +56,8 @@ const kubeReducer = (
       const { [key]: foundSocket, ...otherSockets } = sockets;
       // close the socket if it exists
       if (foundSocket !== undefined) {
-        foundSocket.close();
+        foundSocket.socket.close();
+        foundSocket.closeTimer();
       }
       return {
         ...state,

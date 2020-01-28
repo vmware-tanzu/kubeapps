@@ -384,7 +384,7 @@ export interface IKubeItem<T> {
 
 export interface IKubeState {
   items: { [s: string]: IKubeItem<IResource> };
-  sockets: { [s: string]: WebSocket };
+  sockets: { [s: string]: { socket: WebSocket; closeTimer: () => void } };
 }
 
 export interface IBasicFormParam {
