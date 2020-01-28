@@ -37,7 +37,7 @@ And in a different terminal you can push your chart:
 ```console
 $ helm package /path/to/my/chart
 Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
-$ curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
+curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
 {"saved":true}
 ```
 
@@ -62,42 +62,62 @@ It is possible to configure ChartMuseum to use authentication with two different
 
 [Harbor](https://github.com/goharbor/harbor) is an open source trusted cloud native registry project that stores, signs, and scans content, e.g. Docker images. Harbor is hosted by the [Cloud Native Computing Foundation](https://cncf.io/). Since version 1.6.0, Harbor is a composite cloud native registry which supports both container image management and Helm chart management. Harbor integrates [ChartMuseum](https://chartmuseum.com) to provide the Helm chart repository functionality. The access to Helm Charts in a Harbor Chart Repository can be controlled via Role-Based Access Control.
 
-To use Harbor with Kubeapps, first deploy Harbor using [Harbor offline installer](https://github.com/goharbor/harbor/blob/master/docs/installation_guide.md#downloading-the-installer) or the official [Harbor Helm Chart](https://github.com/goharbor/harbor-helm). Here are the minimum steps required for using the Harbor offline installer to deploy Harbor for serving as Helm Chart Repository on a Linux machine.
+To use Harbor with Kubeapps, first deploy the [Bitnami Harbor Helm Chart](https://github.com/bitnami/charts/tree/master/bitnami/harbor) from the `bitnami` repository (alternatively you can deploy Harbor using [Harbor offline installer](https://github.com/goharbor/harbor/blob/master/docs/installation_guide.md#downloading-the-installer)):
 
-```
-$ wget https://storage.googleapis.com/harbor-releases/release-1.8.0/harbor-offline-installer-v1.8.1.tgz
-$ tar xvf harbor-offline-installer-v1.8.1.tgz
-$ cd harbor
-$ sed -i 's/hostname: reg.mydomain.com/hostname: <Current-Machine-IP>/' harbor.yml
-$ sudo ./install.sh --with-chartmuseum
-```
+<img src="../img/harbor-chart.png" alt="Harbor Chart" width="300px">
 
-You will see the following message if Harbor is installed successfully.
+In the deployment form we should change the parameter below:
 
-```console
-----Harbor has been installed and started successfully.----
+- `service.tls.enabled`: We should set this value to `false` so we don't need to configure the TLS settings. Alternatively, you can provide valid TSL certificates (check [Bitnami Harbor Helm Chart documentation](https://github.com/bitnami/charts/tree/master/bitnami/harbor#parameters) for more information).
 
-Now you should be able to visit the admin portal at http://<IP>.
-For more details, please visit https://github.com/goharbor/harbor .
-```
+<img src="../img/harbor-deploy-form.png" alt="Harbor Deploy Form" width="600px">
+
+Deploy the chart and wait for it te be ready.
+
+<img src="../img/harbor-ready.png" alt="Harbor Chart Ready" width="600px">
 
 ### Harbor: Upload a Chart
 
-- First login Harbor admin portal at `http://<IP>` as the default admin user configured in harbor.yml.
-- Create a new Project named 'my-helm-repo' with public access. Each project will serve as a Helm chart repository.
-  <img src="../img/harbor-new-project.png" width="300px">
-- Click the project name to view the project details page, then click 'Helm Charts' tab to list all helm charts.
-  <img src="../img/harbor-list-charts.png" width="600px">
-- Click 'UPLOAD' button to upload a Helm chart. You can also use helm command to upload charts.
-  <img src="../img/harbor-upload-chart.png" width="500px">
+First create a Helm chart package:
+
+```console
+$ helm package /path/to/my/chart
+Successfully packaged chart and saved it to: /path/to/my/chart/my-chart-1.0.0.tgz
+```
+
+Second login Harbor admin portal following the instructions in the chart notes:
+
+```console
+1. Get the Harbor URL:
+
+  echo "Harbor URL: https://127.0.0.1:8080/"
+  kubectl port-forward --namespace default svc/my-harbor 8080:80 &
+
+2. Login with the following credentials to see your Harbor application
+
+  echo Username: "admin"
+  echo Password: $(kubectl get secret --namespace default my-harbor-core-envvars -o jsonpath="{.data.HARBOR_ADMIN_PASSWORD}" | base64 --decode)
+```
+
+Create a new Project named 'my-helm-repo' with public access. Each project will serve as a Helm chart repository.
+
+<img src="../img/harbor-new-project.png" width="300px">
+
+Click the project name to view the project details page, then click 'Helm Charts' tab to list all helm charts.
+
+<img src="../img/harbor-list-charts.png" width="600px">
+
+Click 'UPLOAD' button to upload the Helm chart you previously created. You can also use helm command to upload chart too.
+
+<img src="../img/harbor-upload-chart.png" width="500px">
 
 Please refer to ['Manage Helm Charts in Harbor'](https://github.com/goharbor/harbor/blob/master/docs/user_guide.md#manage-helm-charts) for more details.
 
 ### Harbor: Configure the repository in Kubeapps
 
-To add Harbor as the private chart repository, go to `Configuration > App Repositories` in Kubeapps and click on "Add App Repository" and use the Harbor helm repository URL `http://<IP>/chartrepo/my-helm-repo`.
+To add Harbor as the private chart repository, go to `Configuration > App Repositories` in Kubeapps and click on "Add App Repository" and use the Harbor helm repository URL `http://harbor.default.svc.cluster.local/chartrepo/my-helm-repo`
 
-<img src="../img/harbor-add-repo.png" width="300px">
+<img src="../img/harbor-add-repo.png" width="600px">
 
 Once you create the repository you can click on the link for the specific repository and you will be able to deploy your own applications using Kubeapps.
 
@@ -132,15 +152,15 @@ First, you will need to obtain the user and password of the Helm repository. To 
 
 Once you have done that, you will be able to upload a chart:
 
-```
-$ curl -u{USER}:{PASSWORD} -T /path/to/chart.tgz "http://{REPO_URL}/artifactory/helm/"
+```bash
+curl -u{USER}:{PASSWORD} -T /path/to/chart.tgz "http://{REPO_URL}/artifactory/helm/"
 ```
 
 ### Artifactory: Configure the repository in Kubeapps
 
 To be able able to access private charts with Kubeapps first you need to generate a token. You can do that with the Artifactory API:
 
-```
+```bash
 curl -u{USER}:{PASSWORD} -XPOST "http://{REPO_URL}/artifactory/api/security/token?expires_in=0" -d "username=kubeapps" -d "scope=member-of-groups:readers"
 {
   "scope" : "member-of-groups:readers api:*",
