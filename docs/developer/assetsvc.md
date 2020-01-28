@@ -63,17 +63,17 @@ Note that the assetsvc should be rebuilt for new changes to take effect.
 
 Note: By default, Kubeapps will try to fetch the latest version of the image so in order to make this workflow work in Minikube you will need to update the imagePullPolicy first:
 
-```
+```bash
 kubectl patch deployment kubeapps-internal-assetsvc -n kubeapps --type=json -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/imagePullPolicy", "value": "IfNotPresent"}]'
 ```
 
-```
+```bash
 kubectl set image -n kubeapps deployment kubeapps-internal-assetsvc assetsvc=kubeapps/assetsvc:latest
 ```
 
 For further redeploys you can change the version to deploy a different tag or rebuild the same image and restart the pod executing:
 
-```
+```bash
 kubectl delete pod -n kubeapps -l app=kubeapps-internal-assetsvc
 ```
 

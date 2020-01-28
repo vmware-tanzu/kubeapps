@@ -15,7 +15,7 @@ You can follow the Helm documentation for deploying Tiller in a secure way. In p
 
 From these guides you can find out how to create the TLS certificate and the necessary flags to install Tiller securely:
 
-```
+```bash
 helm init --tiller-tls --tiller-tls-verify \
   --override 'spec.template.spec.containers[0].command'='{/tiller,--storage=secret}' \
   --tiller-tls-cert ./tiller.cert.pem \
@@ -27,7 +27,7 @@ helm init --tiller-tls --tiller-tls-verify \
 
 This is the command to install Kubeapps with our certificate:
 
-```
+```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install \
   --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem \
@@ -44,7 +44,7 @@ helm install \
 
 In order to be able to authorize requests from users it is necessary to enable [RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) in the Kubernetes cluster. Some providers have it enabled by default but in some cases you need to set it up explicitly. Check out your provider documentation to know how to enable it. To verify if your cluster has RBAC available you can check if the API group exists:
 
-```
+```bash
 $ kubectl api-versions | grep rbac.authorization
 rbac.authorization.k8s.io/v1
 ```

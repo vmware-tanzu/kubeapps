@@ -75,7 +75,7 @@ Kubeapps chart allows you to automatically deploy the proxy for you as a sidecar
 
 This example uses `oauth2-proxy`'s generic OIDC provider with Google, but is applicable to any OIDC provider such as Keycloak, Dex, Okta or Azure Active Directory etc. Note that the issuer url is passed as an additional flag here, together with an option to enable the cookie being set over an insecure connection for local development only:
 
-```
+```bash
 helm install bitnami/kubeapps \
   --namespace kubeapps --name kubeapps \
   --set authProxy.enabled=true \
@@ -91,7 +91,8 @@ helm install bitnami/kubeapps \
 Some of the specific providers that come with `oauth2-proxy` are using OpenIDConnect to obtain the required IDToken and can be used instead of the generic oidc provider. Currently this includes only the GitLab, Google and LoginGov providers (see [OAuth2_Proxy's provider configuration](https://pusher.github.io/oauth2_proxy/auth-configuration) for the full list of OAuth2 providers). The user authentication flow is the same as above, with some small UI differences, such as the default login button is customized to the provider (rather than "Login with OpenID Connect"), or improved presentation when accepting the requested scopes (as is the case with Google, but only visible if you request extra scopes).
 
 Here we no longer need to provide the issuer -url as an additional flag:
-```
+
+```bash
 helm install bitnami/kubeapps \
   --namespace kubeapps --name kubeapps \
   --set authProxy.enabled=true \
@@ -112,7 +113,7 @@ For this reason, when deploying Kubeapps on GKE we need to ensure that
 
 Note that using the custom `google` provider here enables google to prompt the user for consent for the specific permissions requested in the scopes below, in a user-friendly way. You can also use the `oidc` provider but in this case the user is not prompted for the extra consent:
 
-```
+```bash
 helm install bitnami/kubeapps \
   --namespace kubeapps --name kubeapps \
   --set authProxy.enabled=true \
@@ -128,7 +129,7 @@ helm install bitnami/kubeapps \
 
 In case you want to manually deploy the proxy, first you will create a Kubernetes deployment and service for the proxy. For the snippet below, you need to set the environment variables `AUTH_PROXY_CLIENT_ID`, `AUTH_PROXY_CLIENT_SECRET`, `AUTH_PROXY_DISCOVERY_URL` with the information from the IdP and `KUBEAPPS_NAMESPACE`.
 
-```
+```bash
 export AUTH_PROXY_CLIENT_ID=<ID>
 export AUTH_PROXY_CLIENT_SECRET=<SECRET>
 export AUTH_PROXY_DISCOVERY_URL=<URL>
@@ -203,7 +204,7 @@ The above is a sample deployment, depending on the configuration of the Identity
 
 Once the proxy is in place and it's able to connect to the IdP we will need to expose it to access it as the main endpoint for Kubeapps (instead of the `kubeapps` service). We can do that with an Ingress object. Note that for doing so an [Ingress Controller](https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-controllers) is needed. There are also other methods to expose the `kubeapps-auth-proxy` service, for example using `LoadBalancer` as type in a cloud environment. In case an Ingress is used, remember to modify the host `kubeapps.local` for the value that you want to use as a hostname for Kubeapps:
 
-```
+```bash
 kubectl create -n $KUBEAPPS_NAMESPACE -f - -o yaml << EOF
 apiVersion: extensions/v1beta1
 kind: Ingress

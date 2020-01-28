@@ -9,7 +9,7 @@ clean install of Kubeapps.
 
 To backup a custom repository, run the following command for each repository:
 
-```
+```bash
 kubectl get apprepository -o yaml <repo name> > <repo name>.yaml
 ```
 
@@ -19,7 +19,7 @@ kubectl get apprepository -o yaml <repo name> > <repo name>.yaml
 After backing up your custom repositories, run the following command to remove
 and reinstall Kubeapps:
 
-```
+```bash
 helm delete --purge kubeapps
 helm install bitnami/kubeapps --version 1.0.0
 ```
@@ -27,6 +27,6 @@ helm install bitnami/kubeapps --version 1.0.0
 To recover your custom repository backups, run the following command for each
 repository:
 
-```
+```bash
 kubectl apply -f <repo name>.yaml
 ```
