@@ -210,14 +210,18 @@ kubectl cp ./use-cases ${pod}:/app/
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=admin --serviceaccount kubeapps:kubeapps-operator
 kubectl create -n kubeapps rolebinding kubeapps-repositories-write --role=kubeapps-ci-repositories-write --serviceaccount kubeapps:kubeapps-operator
-admin_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
 ## Create view user
 kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
-view_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
 ## Create edit user
 kubectl create serviceaccount kubeapps-edit -n kubeapps
 kubectl create rolebinding kubeapps-edit -n kubeapps --clusterrole=edit --serviceaccount kubeapps:kubeapps-edit
+## Give the cluster some time to avoid issues like
+## https://circleci.com/gh/kubeapps/kubeapps/16102
+sleep 2
+## Retrieve tokens
+admin_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-operator -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
+view_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-view -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
 edit_token=`kubectl get -n kubeapps secret $(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}') -o go-template='{{.data.token | base64decode}}' && echo`
 ## Run tests
 set +e
