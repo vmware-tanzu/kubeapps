@@ -40,7 +40,7 @@ You will deploy the Service Catalog as any other Helm chart
 installed through Kubeapps. We recommend to at least change the following value in
 `values.yaml`:
 
-```
+```yaml
 asyncBindingOperationsEnabled: true
 ```
 
@@ -48,7 +48,7 @@ This value is needed for some of the GCP Service Classes to work properly.
 
 Alternatively, you can deploy the Service Catalog using the Helm CLI:
 
-```
+```bash
 helm repo add svc-cat https://svc-catalog-charts.storage.googleapis.com
 helm repo update
 helm install svc-cat/catalog --name catalog --namespace catalog --set asyncBindingOperationsEnabled=true
@@ -71,14 +71,14 @@ cluster.
 
 To check that the broker has been successfully deployed run the following:
 
-```
+```bash
 kubectl get ClusterServiceBroker osba
 ```
 
 If the Broker has been successfully installed and the catalog has been properly
 downloaded you should get the following output:
 
-```
+```bash
 NAME         URL                                                                                     STATUS   AGE
 osba         https://osba-open-service-broker-azure.osba.svc.cluster.local                           Ready    6m
 ```
@@ -141,7 +141,7 @@ It is important to understand the schema of the secret, as it is dependent
 on the broker and the instance. For Azure MySQL the secret will have the
 following schema:
 
-```
+```yaml
 database: name of the database
 host: the URL of the instance
 username: the user name to connect to the database
@@ -160,7 +160,7 @@ we will search for `wordpress`:
 We will click on `Deploy` and will modify the `values.yaml` of the application
 with the following values:
 
-```
+```yaml
 externalDatabase.host: host value in the binding secret
 externalDatabase.user: username value in the binding secret
 externalDatabase.password: password value in the binding secret
@@ -176,7 +176,7 @@ deployment is completed:
 If we check the wordpress pod log we can see that it connected successfully
 to the Azure MySQL database:
 
-```
+```bash
 kubectl logs wordpress-app-wordpress-597b9dbb5-2rk4k
 
 Welcome to the Bitnami wordpress container

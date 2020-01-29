@@ -13,7 +13,7 @@ These are the steps you need to follow to upgrade Kubeapps to this version.
 
 Please follow the steps in [this guide](./securing-kubeapps.md) to install Tiller securely. Don't install the Kubeapps chart yet since it will fail because it will find resources that already exist. Once the new Tiller instance is ready you can migrate the existing releases using the utility command included in `kubeapps` 1.0.0-alpha.5:
 
-```
+```console
 $ kubeapps migrate-configmaps-to-secrets --target-tiller-namespace kube-system
 2018/08/06 12:24:23 Migrated foo.v1 as a secret
 2018/08/06 12:24:23 Done. ConfigMaps are left in the namespace kubeapps to debug possible errors. Please delete them manually
@@ -21,13 +21,13 @@ $ kubeapps migrate-configmaps-to-secrets --target-tiller-namespace kube-system
 
 **NOTE**: The tool asumes that you have deployed Helm storing releases as secrets. If that is not the case you can still migrate the releases executing:
 
-```
+```bash
 kubectl get configmaps -n kubeapps -o yaml -l OWNER=TILLER | sed 's/namespace: kubeapps/namespace: kube-system/g'  | kubectl create -f -
 ```
 
 If you list the releases you should be able to see all of them:
 
-```
+```console
 $ helm ls --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem
 NAME	REVISION	UPDATED                 	STATUS  	CHART          	NAMESPACE
 foo 	1       	Mon Aug  6 12:10:07 2018	DEPLOYED	aerospike-0.1.7	default
@@ -39,7 +39,7 @@ foo 	1       	Mon Aug  6 12:10:07 2018	DEPLOYED	aerospike-0.1.7	default
 
 Now that we have backed up the releases we should delete existing Kubeapps resources. To do so execute:
 
-```
+```bash
 kubeapps down
 kubectl delete crd helmreleases.helm.bitnami.com sealedsecrets.bitnami.com
 kubectl delete -f https://github.com/bitnami-labs/sealed-secrets/releases/download/v0.7.0/controller.yaml
@@ -48,7 +48,7 @@ kubectl get helmreleases -o=name --all-namespaces | xargs kubectl patch $1 --typ
 
 Wait until everything in the namespace of Kubeapps has been deleted:
 
-```
+```console
 $ kubectl get all --namespace kubeapps
 No resources found.
 ```
@@ -57,7 +57,7 @@ No resources found.
 
 If you want to delete Kubeless (if you are not using it) you can delete it executing the following command:
 
-```
+```bash
 kubectl delete -f https://github.com/kubeless/kubeless/releases/download/v0.6.0/kubeless-v0.6.0.yaml
 ```
 
@@ -65,7 +65,7 @@ kubectl delete -f https://github.com/kubeless/kubeless/releases/download/v0.6.0/
 
 Now you can install the new version of Kubeapps using the Helm chart included in this repository:
 
-```
+```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install \
   --tls --tls-ca-cert ca.cert.pem --tls-cert helm.cert.pem --tls-key helm.key.pem \

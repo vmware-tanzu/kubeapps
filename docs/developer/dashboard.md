@@ -55,11 +55,14 @@ telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps
 
 > **NOTE**: If you encounter issues getting this setup working correctly, please try switching the telepresence proxying method in the above command to `vpn-tcp`. Refer to [the telepresence docs](https://www.telepresence.io/reference/methods) to learn more about the available proxying methods and their limitations.
 
-Finally, launch the dashboard within the telepresence shell
+Finally, launch the dashboard within the telepresence shell:
 
 ```bash
+export TELEPRESENCE_CONTAINER_NAMESPACE=kubeapps
 yarn run start
 ```
+
+> **NOTE**: The commands above assume you install Kubeapps in the `kubeapps` namespace. Please update the environment variable `TELEPRESENCE_CONTAINER_NAMESPACE` if you are using a different namespace.
 
 You can now access the local development server simply by accessing the dashboard as you usually would (e.g. doing a port-forward or accesing the Ingress URL).
 

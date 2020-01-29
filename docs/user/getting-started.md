@@ -73,9 +73,8 @@ Open a command prompt and run the `GetDashToken.cmd` Your token can be found in 
 Once Kubeapps is installed, securely access the Kubeapps Dashboard from your system by running:
 
 ```bash
-export POD_NAME=$(kubectl get pods -n kubeapps -l "app=kubeapps,release=kubeapps" -o jsonpath="{.items[0].metadata.name}")
 echo "Visit http://127.0.0.1:8080 in your browser to access the Kubeapps Dashboard"
-kubectl port-forward -n kubeapps $POD_NAME 8080:8080
+kubectl port-forward -n kubeapps svc/kubeapps 8080:80
 ```
 
 This will start an HTTP proxy for secure access to the Kubeapps Dashboard. Visit http://127.0.0.1:8080/ in your preferred web browser to open the Dashboard. Here's what you should see:

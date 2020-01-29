@@ -111,6 +111,7 @@ kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clust
 #### Read access to App Repositories
 
 In order to list the configured App Repositories in Kubeapps, [bind users/groups Subjects](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#command-line-utilities) to the `$RELEASE_NAME-repositories-read` role in the namespace Kubeapps was installed into by the helm chart.
+
 ```bash
 export KUBEAPPS_NAMESPACE=kubeapps
 export KUBEAPPS_RELEASE_NAME=kubeapps

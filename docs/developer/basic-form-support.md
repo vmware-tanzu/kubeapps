@@ -23,7 +23,7 @@ In order to identify which values should be presented in the form, it's necessar
 
 First of all, it's necessary to specify the tag `form` and set it to `true`. All the properties marked with this tag in the schema will be represented in the form. For example:
 
-```
+```json
     "wordpressUsername": {
       "type": "string",
       "form": true
