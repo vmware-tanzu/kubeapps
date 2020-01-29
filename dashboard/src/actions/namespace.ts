@@ -47,15 +47,16 @@ export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null,
 
 export function createNamespace(
   ns: string,
-): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
       await Namespace.create(ns);
       dispatch(postNamespace(ns));
       dispatch(fetchNamespaces());
+      return true;
     } catch (e) {
       dispatch(errorNamespaces(e, "create"));
-      return;
+      return false;
     }
   };
 }

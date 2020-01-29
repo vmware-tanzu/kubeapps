@@ -171,7 +171,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
                 <span>
                   You don't have sufficient permissions to 
                   resync Service Brokers
-                   in 
+                   
                   
                 </span>
               }
@@ -224,7 +224,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
                         <span>
                           You don't have sufficient permissions to 
                           resync Service Brokers
-                           in 
+                           
                         </span>
                       </h5>
                     </div>

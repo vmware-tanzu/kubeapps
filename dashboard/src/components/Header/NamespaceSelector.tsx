@@ -1,21 +1,31 @@
 import * as React from "react";
 import * as Select from "react-select";
-import * as ReactTooltip from "react-tooltip";
 
-import { AlertCircle } from "react-feather";
 import { INamespaceState } from "../../reducers/namespace";
 import { definedNamespaces } from "../../shared/Namespace";
 
 import "./NamespaceSelector.css";
+import NewNamespace from "./NewNamespace";
 
 interface INamespaceSelectorProps {
   namespace: INamespaceState;
   defaultNamespace: string;
   onChange: (ns: string) => any;
   fetchNamespaces: () => void;
+  createNamespace: (ns: string) => Promise<boolean>;
 }
 
-class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
+interface INamespaceSelectorState {
+  modalIsOpen: boolean;
+  newNamespace: string;
+}
+
+class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamespaceSelectorState> {
+  public state: INamespaceSelectorState = {
+    modalIsOpen: false,
+    newNamespace: "",
+  };
+
   public componentDidMount() {
     this.props.fetchNamespaces();
   }
@@ -31,13 +41,14 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
         : [{ value: defaultNamespace, label: defaultNamespace }];
     const allOption = { value: definedNamespaces.all, label: "All Namespaces" };
     options.unshift(allOption);
+    const newOption = { value: "new", label: "Create New" };
+    options.push(newOption);
     const selected = current || defaultNamespace;
     const value =
       selected === definedNamespaces.all ? allOption : { value: selected, label: selected };
     return (
       <div className="NamespaceSelector margin-r-normal">
         <label className="NamespaceSelector__label type-tiny">NAMESPACE</label>
-        {error && error.action === "create" && this.renderError(error.errorMsg)}
         <Select.Creatable
           className="NamespaceSelector__select type-small"
           value={value}
@@ -47,31 +58,48 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
           promptTextCreator={this.promptTextCreator}
           clearable={false}
         />
+        <NewNamespace
+          modalIsOpen={this.state.modalIsOpen}
+          namespace={this.state.newNamespace}
+          onConfirm={this.onConfirmNewNS}
+          onChange={this.handleChangeNewNS}
+          closeModal={this.closeModal}
+          error={error && error.action === "create" ? error.error : undefined}
+        />
       </div>
     );
   }
 
   private handleNamespaceChange = (value: any) => {
+    if (value.value === "new") {
+      this.setState({ modalIsOpen: true });
+      return;
+    }
     if (value) {
       this.props.onChange(value.value);
     }
   };
 
   private promptTextCreator = (text: string) => {
-    return `Create namespace "${text}"`;
+    return `Use namespace "${text}"`;
   };
 
-  private renderError = (errMsg: string) => {
-    return (
-      <>
-        <a data-tip={true} data-for="ns-error">
-          <AlertCircle className="NamespaceSelectorError" color="white" fill="red" />
-        </a>
-        <ReactTooltip id="ns-error" className="extraClass" effect="solid">
-          {errMsg}
-        </ReactTooltip>
-      </>
-    );
+  private onConfirmNewNS = async () => {
+    const success = await this.props.createNamespace(this.state.newNamespace);
+    if (success) {
+      this.handleNamespaceChange({ value: this.state.newNamespace });
+      this.closeModal();
+    }
+  };
+
+  private handleChangeNewNS = (e: React.FormEvent<HTMLInputElement>) => {
+    this.setState({ newNamespace: e.currentTarget.value });
+  };
+
+  private closeModal = async () => {
+    this.setState({
+      modalIsOpen: false,
+    });
   };
 }
 

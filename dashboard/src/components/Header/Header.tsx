@@ -21,7 +21,7 @@ interface IHeaderProps {
   pathname: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
-  createNamespace: (ns: string) => void;
+  createNamespace: (ns: string) => Promise<boolean>;
 }
 
 interface IHeaderState {
@@ -68,7 +68,13 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   }
 
   public render() {
-    const { fetchNamespaces, namespace, defaultNamespace, authenticated: showNav } = this.props;
+    const {
+      fetchNamespaces,
+      namespace,
+      defaultNamespace,
+      authenticated: showNav,
+      createNamespace,
+    } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -112,6 +118,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                   defaultNamespace={defaultNamespace}
                   onChange={this.handleNamespaceChange}
                   fetchNamespaces={fetchNamespaces}
+                  createNamespace={createNamespace}
                 />
                 <ul className="header__nav__menu" role="menubar">
                   <li
@@ -175,20 +182,10 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   };
 
   private handleNamespaceChange = (ns: string) => {
-    const {
-      pathname,
-      push,
-      setNamespace,
-      createNamespace,
-      namespace,
-      defaultNamespace,
-    } = this.props;
+    const { pathname, push, setNamespace } = this.props;
     const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
     setNamespace(ns);
     if (to !== pathname) {
-      if (!namespace.namespaces.includes(ns) && ns !== defaultNamespace && ns !== "_all") {
-        createNamespace(ns);
-      }
       push(to);
     }
   };

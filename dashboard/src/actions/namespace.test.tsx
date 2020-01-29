@@ -103,7 +103,8 @@ describe("createNamespace", () => {
       },
     ];
 
-    await store.dispatch(createNamespace("overlook-hotel"));
+    const res = await store.dispatch(createNamespace("overlook-hotel"));
+    expect(res).toBe(true);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -117,8 +118,8 @@ describe("createNamespace", () => {
       },
     ];
 
-    await store.dispatch(createNamespace("foo"));
-
+    const res = await store.dispatch(createNamespace("foo"));
+    expect(res).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

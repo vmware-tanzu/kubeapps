@@ -20,7 +20,8 @@ class PermissionsErrorPage extends React.Component<IPermissionsErrorPage> {
       <UnexpectedErrorAlert
         title={
           <span>
-            You don't have sufficient permissions to {action} in {namespaceText(namespace)}
+            You don't have sufficient permissions to {action}{" "}
+            {namespace && <>in {namespaceText(namespace)}</>}
           </span>
         }
         icon={Lock}

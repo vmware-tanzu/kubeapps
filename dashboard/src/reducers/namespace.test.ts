@@ -48,7 +48,7 @@ describe("namespaceReducer", () => {
           type: getType(actions.namespace.errorNamespaces),
           payload: { err, op: "list" },
         }),
-      ).toEqual({ ...initialState, error: { action: "list", errorMsg: err.message } });
+      ).toEqual({ ...initialState, error: { action: "list", error: err } });
     });
   });
 
@@ -84,7 +84,11 @@ describe("namespaceReducer", () => {
     it("sets the current namespace and clears error", () => {
       expect(
         namespaceReducer(
-          { current: "error", namespaces: [], error: { action: "create", errorMsg: "boom" } },
+          {
+            current: "error",
+            namespaces: [],
+            error: { action: "create", error: new Error("boom") },
+          },
           {
             type: getType(actions.namespace.setNamespace),
             payload: "default",
