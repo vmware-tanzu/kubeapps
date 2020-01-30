@@ -32,7 +32,7 @@ it("renders the given namespaces with current selection", () => {
       { label: "All Namespaces", value: "_all" },
       { label: "namespace-one", value: "namespace-one" },
       { label: "namespace-two", value: "namespace-two" },
-      { label: "Create New", value: "new" },
+      { label: "Create New", value: "_new" },
     ],
   });
 });
@@ -70,7 +70,7 @@ it("renders the default namespace option if no namespaces provided", () => {
     options: [
       { label: "All Namespaces", value: "_all" },
       { label: defaultProps.defaultNamespace, value: defaultProps.defaultNamespace },
-      { label: "Create New", value: "new" },
+      { label: "Create New", value: "_new" },
     ],
   });
 });
@@ -80,7 +80,7 @@ it("opens the modal to add a new namespace and creates it", async () => {
   const wrapper = mount(<NamespaceSelector {...defaultProps} createNamespace={createNamespace} />);
   ReactModal.setAppElement(document.createElement("div"));
   const select = wrapper.find(Select.Creatable);
-  (select.prop("onChange") as any)({ value: "new" });
+  (select.prop("onChange") as any)({ value: "_new" });
   wrapper.update();
   expect(wrapper.find(NewNamespace).prop("modalIsOpen")).toBe(true);
 

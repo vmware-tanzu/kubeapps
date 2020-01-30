@@ -41,7 +41,7 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
         : [{ value: defaultNamespace, label: defaultNamespace }];
     const allOption = { value: definedNamespaces.all, label: "All Namespaces" };
     options.unshift(allOption);
-    const newOption = { value: "new", label: "Create New" };
+    const newOption = { value: "_new", label: "Create New" };
     options.push(newOption);
     const selected = current || defaultNamespace;
     const value =
@@ -71,7 +71,7 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
   }
 
   private handleNamespaceChange = (value: any) => {
-    if (value.value === "new") {
+    if (value.value === "_new") {
       this.setState({ modalIsOpen: true });
       return;
     }
