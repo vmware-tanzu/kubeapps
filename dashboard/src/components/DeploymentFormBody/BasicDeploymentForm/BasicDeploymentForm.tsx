@@ -1,7 +1,6 @@
 import { isArray } from "lodash";
 import * as React from "react";
 import { IBasicFormParam, IBasicFormSliderParam } from "shared/types";
-import TextAreaParam from "./TextAreaParam";
 import TextParam from "./TextParam";
 
 import { getValue } from "../../../shared/schema";
@@ -99,15 +98,14 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
           );
           break;
         }
-      }
-      case "string": {
         if (param.render === "textArea") {
           paramComponent = (
-            <TextAreaParam
+            <TextParam
               label={param.title || name}
               handleBasicFormParamChange={handleBasicFormParamChange}
               id={id}
               param={param}
+              inputType="textarea"
             />
           );
           break;
