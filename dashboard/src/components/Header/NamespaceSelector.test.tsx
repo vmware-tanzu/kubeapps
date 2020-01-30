@@ -2,8 +2,10 @@ import { mount, shallow } from "enzyme";
 import * as React from "react";
 import * as ReactModal from "react-modal";
 import * as Select from "react-select";
+import * as ReactTooltip from "react-tooltip";
 
 import { INamespaceState } from "../../reducers/namespace";
+import { ForbiddenError } from "../../shared/types";
 import NamespaceSelector from "./NamespaceSelector";
 import NewNamespace from "./NewNamespace";
 
@@ -16,6 +18,7 @@ const defaultProps = {
   defaultNamespace: "kubeapps-user",
   onChange: jest.fn(),
   createNamespace: jest.fn(),
+  getNamespace: jest.fn(),
 };
 
 it("renders the given namespaces with current selection", () => {
@@ -97,4 +100,37 @@ it("opens the modal to add a new namespace and creates it", async () => {
   );
   wrapper.update();
   expect(wrapper.find(NewNamespace).prop("modalIsOpen")).toBe(false);
+});
+
+it("fetches namespaces and retrive the current namespace", () => {
+  const fetchNamespaces = jest.fn();
+  const getNamespace = jest.fn();
+  shallow(
+    <NamespaceSelector
+      {...defaultProps}
+      fetchNamespaces={fetchNamespaces}
+      getNamespace={getNamespace}
+      namespace={{ current: "foo", namespaces: [] }}
+    />,
+  );
+  expect(fetchNamespaces).toHaveBeenCalled();
+  expect(getNamespace).toHaveBeenCalledWith("foo");
+});
+
+it("renders an error warning", () => {
+  const wrapper = shallow(
+    <NamespaceSelector
+      {...defaultProps}
+      namespace={{
+        error: { action: "get", error: new ForbiddenError() },
+        current: "foo",
+        namespaces: [],
+      }}
+    />,
+  );
+  const err = wrapper.find(ReactTooltip);
+  expect(err).toExist();
+  expect(err.children().text()).toContain(
+    "You don't have sufficient permissions to use the namespace foo",
+  );
 });

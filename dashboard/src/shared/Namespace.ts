@@ -20,6 +20,11 @@ export default class Namespace {
     return data;
   }
 
+  public static async get(name: string) {
+    const { data } = await axiosWithAuth.get<IResource>(`${Namespace.APIEndpoint}/${name}`);
+    return data;
+  }
+
   private static APIBase: string = APIBase;
   private static APIEndpoint: string = `${Namespace.APIBase}/api/v1/namespaces/`;
 }

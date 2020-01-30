@@ -26,11 +26,24 @@ const namespaceReducer = (
   action: NamespaceAction | LocationChangeAction | AuthAction,
 ): INamespaceState => {
   switch (action.type) {
+    case getType(actions.namespace.receiveNamespace):
+      if (!state.namespaces.includes(action.payload.metadata.name)) {
+        return {
+          ...state,
+          namespaces: state.namespaces.concat(action.payload.metadata.name),
+          error: undefined,
+        };
+      }
+      return state;
     case getType(actions.namespace.receiveNamespaces):
       return { ...state, namespaces: action.payload };
     case getType(actions.namespace.setNamespace):
       return { ...state, current: action.payload, error: undefined };
     case getType(actions.namespace.errorNamespaces):
+      // Ignore error listing namespaces since those are expected
+      if (action.payload.op === "list") {
+        return state;
+      }
       return {
         ...state,
         error: { action: action.payload.op, error: action.payload.err },

@@ -9,7 +9,7 @@ import ErrorPageHeader from "./ErrorAlertHeader";
 import { namespaceText } from "./helpers";
 
 interface INotFoundErrorPageProps {
-  header?: string;
+  header?: string | JSX.Element;
   children?: JSX.Element;
   resource?: string;
   namespace?: string;

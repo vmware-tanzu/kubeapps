@@ -22,6 +22,7 @@ interface IHeaderProps {
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
   createNamespace: (ns: string) => Promise<boolean>;
+  getNamespace: (ns: string) => void;
 }
 
 interface IHeaderState {
@@ -74,6 +75,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       defaultNamespace,
       authenticated: showNav,
       createNamespace,
+      getNamespace,
     } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
@@ -119,6 +121,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                   onChange={this.handleNamespaceChange}
                   fetchNamespaces={fetchNamespaces}
                   createNamespace={createNamespace}
+                  getNamespace={getNamespace}
                 />
                 <ul className="header__nav__menu" role="menubar">
                   <li
@@ -182,9 +185,10 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   };
 
   private handleNamespaceChange = (ns: string) => {
-    const { pathname, push, setNamespace } = this.props;
+    const { pathname, push, setNamespace, getNamespace } = this.props;
     const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
     setNamespace(ns);
+    getNamespace(ns);
     if (to !== pathname) {
       push(to);
     }

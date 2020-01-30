@@ -17,6 +17,7 @@ const defaultProps = {
   push: jest.fn(),
   setNamespace: jest.fn(),
   createNamespace: jest.fn(),
+  getNamespace: jest.fn(),
 };
 it("renders the header links and titles", () => {
   const wrapper = shallow(<Header {...defaultProps} />);
@@ -54,9 +55,10 @@ it("renders the namespace switcher", () => {
   );
 });
 
-it("call setNamespace when selecting a namespace", () => {
+it("call setNamespace and getNamespace when selecting a namespace", () => {
   const setNamespace = jest.fn();
   const createNamespace = jest.fn();
+  const getNamespace = jest.fn();
   const namespace = {
     current: "foo",
     namespaces: ["foo", "bar"],
@@ -67,6 +69,7 @@ it("call setNamespace when selecting a namespace", () => {
       setNamespace={setNamespace}
       namespace={namespace}
       createNamespace={createNamespace}
+      getNamespace={getNamespace}
     />,
   );
 
@@ -76,5 +79,6 @@ it("call setNamespace when selecting a namespace", () => {
   onChange("bar");
 
   expect(setNamespace).toHaveBeenCalledWith("bar");
+  expect(getNamespace).toHaveBeenCalledWith("bar");
   expect(createNamespace).not.toHaveBeenCalled();
 });

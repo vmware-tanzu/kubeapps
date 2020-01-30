@@ -3,9 +3,9 @@ import * as Moniker from "moniker-native";
 import * as React from "react";
 
 import { JSONSchema4 } from "json-schema";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import { ErrorSelector } from "../ErrorAlert";
+import { ErrorSelector, NotFoundErrorAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
 import "react-tabs/style/react-tabs.css";
@@ -27,6 +27,7 @@ export interface IDeploymentFormProps {
   fetchChartVersions: (id: string) => void;
   getChartVersion: (id: string, chartVersion: string) => void;
   namespace: string;
+  getNamespace: (ns: string) => void;
 }
 
 export interface IDeploymentFormState {
@@ -60,11 +61,25 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { namespace } = this.props;
-    if (this.props.error) {
+    const { namespace, error } = this.props;
+    if (error) {
+      // Helm 3 returns a NotFound error if the namespace doesn't exist
+      if (error.constructor === NotFoundError && error.message.match(/namespaces.*not found/)) {
+        return (
+          <NotFoundErrorAlert
+            header={
+              <span>
+                Namespace <code>{namespace}</code> is missing
+              </span>
+            }
+          >
+            <span>Please create it in advance.</span>
+          </NotFoundErrorAlert>
+        );
+      }
       return (
         <ErrorSelector
-          error={this.props.error}
+          error={error}
           namespace={namespace}
           action="create"
           resource={this.state.latestSubmittedReleaseName}
@@ -119,7 +134,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, deployChart, push, namespace } = this.props;
+    const { selected, deployChart, push, namespace, getNamespace } = this.props;
     const { releaseName, appValues } = this.state;
 
     this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
@@ -133,6 +148,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       );
       this.setState({ isDeploying: false });
       if (deployed) {
+        // Helm 2 may have created a new namespace, re-fetch the ns just in case
+        getNamespace(namespace);
         push(`/apps/ns/${namespace}/${releaseName}`);
       }
     }

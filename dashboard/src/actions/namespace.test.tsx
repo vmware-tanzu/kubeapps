@@ -6,8 +6,11 @@ import {
   createNamespace,
   errorNamespaces,
   fetchNamespaces,
+  getNamespace,
   postNamespace,
+  receiveNamespace,
   receiveNamespaces,
+  requestNamespace,
   setNamespace,
 } from "./namespace";
 
@@ -120,6 +123,42 @@ describe("createNamespace", () => {
 
     const res = await store.dispatch(createNamespace("foo"));
     expect(res).toBe(false);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("createNamespace", () => {
+  it("dispatches requested namespace", async () => {
+    const ns = { metadata: { name: "default" } };
+    Namespace.get = jest.fn(() => ns);
+    const expectedActions = [
+      {
+        type: getType(requestNamespace),
+        payload: "default",
+      },
+      {
+        type: getType(receiveNamespace),
+        payload: ns,
+      },
+    ];
+    await store.dispatch(getNamespace("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches errorNamespace if error creating a namespace", async () => {
+    const err = new Error("Bang!");
+    Namespace.get = jest.fn().mockImplementationOnce(() => Promise.reject(err));
+    const expectedActions = [
+      {
+        type: getType(requestNamespace),
+        payload: "default",
+      },
+      {
+        type: getType(errorNamespaces),
+        payload: { err, op: "get" },
+      },
+    ];
+    await store.dispatch(getNamespace("default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
