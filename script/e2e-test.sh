@@ -23,7 +23,7 @@ ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 DEV_TAG=${1:?missing dev tag}
 IMG_MODIFIER=${2:-""}
 CERTS_DIR="${ROOT_DIR}/script/test-certs"
-HELM_CLIENT_TLS_FLAGS="--tls --tls-cert ${CERTS_DIR}/helm.cert.pem --tls-key ${CERTS_DIR}/helm.key.pem"
+HELM_CLIENT_TLS_FLAGS=("--tls" "--tls-cert" "${CERTS_DIR}/helm.cert.pem" "--tls-key" "${CERTS_DIR}/helm.key.pem")
 
 # Load Generic Libraries
 # shellcheck disable=SC1090
@@ -74,7 +74,7 @@ tiller-init-rbac() {
       --tls-ca-cert "${CERTS_DIR}/ca.cert.pem"
     info "Waiting for Tiller to be ready ... "
     # Retries 60 times with 1 second interval
-    retry_while "helm version ${HELM_CLIENT_TLS_FLAGS} --tiller-connection-timeout 1" "60" "1"
+    retry_while "helm version ${HELM_CLIENT_TLS_FLAGS[*]} --tiller-connection-timeout 1" "60" "1"
 }
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
@@ -120,7 +120,7 @@ if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
   info "Installing Kubeapps..."
   helm dep up "${ROOT_DIR}/chart/kubeapps/"
   helm install --name kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
-    "$HELM_CLIENT_TLS_FLAGS" \
+    "${HELM_CLIENT_TLS_FLAGS[@]}" \
     --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
     --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
     "${img_flags[@]}" \
