@@ -59,8 +59,8 @@ testHelm() {
 #########################
 tiller-init-rbac() {
     info "Installing Tiller..."
-    k create serviceaccount -n kube-system tiller
-    k create clusterrolebinding tiller-cluster-rule \
+    kubectl create serviceaccount -n kube-system tiller
+    kubectl create clusterrolebinding tiller-cluster-rule \
       --clusterrole=cluster-admin \
       --serviceaccount=kube-system:tiller
     # The flag --wait is not available when using TLS flags
@@ -179,7 +179,7 @@ svcs=(
   "kubeapps-ci-internal-dashboard"
 )
 for svc in "${svcs[@]}"; do
-  k8s_wait_for_endpoint kubeapps "$svc" 2
+  k8s_wait_for_endpoints kubeapps "$svc" 2
   info "Endpoints for ${svc} available"
 done
 
