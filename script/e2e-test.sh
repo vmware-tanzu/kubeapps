@@ -45,7 +45,7 @@ HELM_CLIENT_TLS_FLAGS=("--tls" "--tls-cert" "${CERTS_DIR}/helm.cert.pem" "--tls-
 testHelm() {
   info "Running Helm tests..."
   if [[ "$HELM_VERSION" =~ "v2" ]]; then
-    helm test "${HELM_CLIENT_TLS_FLAGS}" kubeapps-ci --cleanup
+    helm test "${HELM_CLIENT_TLS_FLAGS[@]}" kubeapps-ci --cleanup
   else
     helm test -n kubeapps kubeapps-ci
   fi
