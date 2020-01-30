@@ -9,7 +9,7 @@ import { Auth } from "../shared/Auth";
 export interface INamespaceState {
   current: string;
   namespaces: string[];
-  errorMsg?: string;
+  error?: { action: string; error: Error };
 }
 
 const getInitialState: () => INamespaceState = (): INamespaceState => {
@@ -29,9 +29,12 @@ const namespaceReducer = (
     case getType(actions.namespace.receiveNamespaces):
       return { ...state, namespaces: action.payload };
     case getType(actions.namespace.setNamespace):
-      return { ...state, current: action.payload };
+      return { ...state, current: action.payload, error: undefined };
     case getType(actions.namespace.errorNamespaces):
-      return { ...state, errorMsg: action.payload.err.message };
+      return {
+        ...state,
+        error: { action: action.payload.op, error: action.payload.err },
+      };
     case getType(actions.namespace.clearNamespaces):
       return { ...initialState };
     case LOCATION_CHANGE:

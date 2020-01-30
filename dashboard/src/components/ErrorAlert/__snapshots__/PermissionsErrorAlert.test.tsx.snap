@@ -8,14 +8,17 @@ exports[`renders an error message for the action 1`] = `
     <span>
       You don't have sufficient permissions to 
       unit-test
-       in 
-      <span>
-        the 
-        <code>
-          test
-        </code>
-         namespace
-      </span>
+       
+      <Unknown>
+        in 
+        <span>
+          the 
+          <code>
+            test
+          </code>
+           namespace
+        </span>
+      </Unknown>
     </span>
   }
 >

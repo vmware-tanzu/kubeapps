@@ -18,3 +18,10 @@
 .NamespaceSelector .Select-clear {
   line-height: inherit;
 }
+
+.NamespaceSelectorError {
+  position: relative;
+  left: 0.3em;
+  bottom: -0.3em;
+  width: 20px;
+}

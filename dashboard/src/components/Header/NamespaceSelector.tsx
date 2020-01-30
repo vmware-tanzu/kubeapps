@@ -5,22 +5,34 @@ import { INamespaceState } from "../../reducers/namespace";
 import { definedNamespaces } from "../../shared/Namespace";
 
 import "./NamespaceSelector.css";
+import NewNamespace from "./NewNamespace";
 
 interface INamespaceSelectorProps {
   namespace: INamespaceState;
   defaultNamespace: string;
   onChange: (ns: string) => any;
   fetchNamespaces: () => void;
+  createNamespace: (ns: string) => Promise<boolean>;
 }
 
-class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
+interface INamespaceSelectorState {
+  modalIsOpen: boolean;
+  newNamespace: string;
+}
+
+class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamespaceSelectorState> {
+  public state: INamespaceSelectorState = {
+    modalIsOpen: false,
+    newNamespace: "",
+  };
+
   public componentDidMount() {
     this.props.fetchNamespaces();
   }
 
   public render() {
     const {
-      namespace: { current, namespaces },
+      namespace: { current, namespaces, error },
       defaultNamespace,
     } = this.props;
     const options =
@@ -29,6 +41,8 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
         : [{ value: defaultNamespace, label: defaultNamespace }];
     const allOption = { value: definedNamespaces.all, label: "All Namespaces" };
     options.unshift(allOption);
+    const newOption = { value: "_new", label: "Create New" };
+    options.push(newOption);
     const selected = current || defaultNamespace;
     const value =
       selected === definedNamespaces.all ? allOption : { value: selected, label: selected };
@@ -44,11 +58,23 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
           promptTextCreator={this.promptTextCreator}
           clearable={false}
         />
+        <NewNamespace
+          modalIsOpen={this.state.modalIsOpen}
+          namespace={this.state.newNamespace}
+          onConfirm={this.onConfirmNewNS}
+          onChange={this.handleChangeNewNS}
+          closeModal={this.closeModal}
+          error={error && error.action === "create" ? error.error : undefined}
+        />
       </div>
     );
   }
 
   private handleNamespaceChange = (value: any) => {
+    if (value.value === "_new") {
+      this.setState({ modalIsOpen: true });
+      return;
+    }
     if (value) {
       this.props.onChange(value.value);
     }
@@ -56,6 +82,24 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps> {
 
   private promptTextCreator = (text: string) => {
     return `Use namespace "${text}"`;
+  };
+
+  private onConfirmNewNS = async () => {
+    const success = await this.props.createNamespace(this.state.newNamespace);
+    if (success) {
+      this.handleNamespaceChange({ value: this.state.newNamespace });
+      this.closeModal();
+    }
+  };
+
+  private handleChangeNewNS = (e: React.FormEvent<HTMLInputElement>) => {
+    this.setState({ newNamespace: e.currentTarget.value });
+  };
+
+  private closeModal = async () => {
+    this.setState({
+      modalIsOpen: false,
+    });
   };
 }
 

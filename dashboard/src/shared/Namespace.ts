@@ -9,6 +9,17 @@ export default class Namespace {
     return data;
   }
 
+  public static async create(name: string) {
+    const { data } = await axiosWithAuth.post<IResource>(Namespace.APIEndpoint, {
+      apiVersion: "v1",
+      kind: "Namespace",
+      metadata: {
+        name,
+      },
+    });
+    return data;
+  }
+
   private static APIBase: string = APIBase;
   private static APIEndpoint: string = `${Namespace.APIBase}/api/v1/namespaces/`;
 }

@@ -1,0 +1,79 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders the snapshot 1`] = `
+<Modal
+  ariaHideApp={true}
+  bodyOpenClassName="ReactModal__Body--open"
+  className="centered-modal"
+  closeTimeoutMS={0}
+  contentLabel="Modal"
+  isOpen={true}
+  onRequestClose={[Function]}
+  parentSelector={[Function]}
+  portalClassName="ReactModalPortal"
+  role="dialog"
+  shouldCloseOnEsc={true}
+  shouldCloseOnOverlayClick={true}
+  shouldFocusAfterRender={true}
+  shouldReturnFocusAfterClose={true}
+>
+  <ErrorSelector
+    action="create"
+    error={[Error: boom!]}
+    resource="namespace "
+  />
+  <div>
+    <div>
+      <label
+        htmlFor="new-ns"
+      >
+        <div
+          className="row"
+        >
+          <div
+            className="col-3 block"
+          >
+            <div
+              className="centered"
+            >
+              Namespace
+            </div>
+          </div>
+          <div
+            className="col-9 margin-t-big margin-l-big"
+          >
+            <input
+              id="new-ns"
+              onChange={[Function]}
+              type="text"
+              value="foo"
+            />
+            <span
+              className="description"
+            >
+              Introduce the name of the new namespace
+            </span>
+          </div>
+        </div>
+      </label>
+    </div>
+    <div
+      className="margin-t-normal button-row"
+    >
+      <button
+        className="button"
+        onClick={[Function]}
+      >
+        Cancel
+      </button>
+      <button
+        className="button button-primary"
+        onClick={[Function]}
+        type="submit"
+      >
+        Create
+      </button>
+    </div>
+  </div>
+</Modal>
+`;

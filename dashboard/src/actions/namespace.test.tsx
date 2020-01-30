@@ -2,7 +2,14 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
 import Namespace from "../shared/Namespace";
-import { errorNamespaces, fetchNamespaces, receiveNamespaces, setNamespace } from "./namespace";
+import {
+  createNamespace,
+  errorNamespaces,
+  fetchNamespaces,
+  postNamespace,
+  receiveNamespaces,
+  setNamespace,
+} from "./namespace";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -73,6 +80,46 @@ describe("fetchNamespaces", () => {
 
     await store.dispatch(fetchNamespaces());
 
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("createNamespace", () => {
+  it("dispatches the new namespace and re-fetch namespaces", async () => {
+    Namespace.create = jest.fn();
+    Namespace.list = jest.fn().mockImplementationOnce(() => {
+      return {
+        items: [{ metadata: { name: "overlook-hotel" } }, { metadata: { name: "room-217" } }],
+      };
+    });
+    const expectedActions = [
+      {
+        type: getType(postNamespace),
+        payload: "overlook-hotel",
+      },
+      {
+        type: getType(receiveNamespaces),
+        payload: ["overlook-hotel", "room-217"],
+      },
+    ];
+
+    const res = await store.dispatch(createNamespace("overlook-hotel"));
+    expect(res).toBe(true);
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches errorNamespace if error creating a namespace", async () => {
+    const err = new Error("Bang!");
+    Namespace.create = jest.fn().mockImplementationOnce(() => Promise.reject(err));
+    const expectedActions = [
+      {
+        type: getType(errorNamespaces),
+        payload: { err, op: "create" },
+      },
+    ];
+
+    const res = await store.dispatch(createNamespace("foo"));
+    expect(res).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
