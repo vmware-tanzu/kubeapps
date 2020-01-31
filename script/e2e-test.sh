@@ -185,7 +185,7 @@ done
 
 # Run helm tests
 # Retry once if tests fail to avoid temporary issue
-if ! retry_while testHelm "1" "1"; then
+if ! retry_while testHelm "2" "1"; then
   warn "PODS status on failure"
   kubectl get pods -n kubeapps
   for pod in $(kubectl get po -l release=kubeapps-ci -oname -n kubeapps); do
