@@ -72,15 +72,16 @@ export function createNamespace(
 
 export function getNamespace(
   ns: string,
-): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
       dispatch(requestNamespace(ns));
       const namespace = await Namespace.get(ns);
       dispatch(receiveNamespace(namespace));
+      return true;
     } catch (e) {
       dispatch(errorNamespaces(e, "get"));
-      return;
+      return false;
     }
   };
 }

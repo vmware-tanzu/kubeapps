@@ -117,6 +117,21 @@ it("fetches namespaces and retrive the current namespace", () => {
   expect(getNamespace).toHaveBeenCalledWith("foo");
 });
 
+it("doesnt' get the current namespace if all namespaces is selected", () => {
+  const fetchNamespaces = jest.fn();
+  const getNamespace = jest.fn();
+  shallow(
+    <NamespaceSelector
+      {...defaultProps}
+      fetchNamespaces={fetchNamespaces}
+      getNamespace={getNamespace}
+      namespace={{ current: "_all", namespaces: [] }}
+    />,
+  );
+  expect(fetchNamespaces).toHaveBeenCalled();
+  expect(getNamespace).not.toHaveBeenCalled();
+});
+
 it("renders an error warning", () => {
   const wrapper = shallow(
     <NamespaceSelector

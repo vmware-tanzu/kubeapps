@@ -1,7 +1,10 @@
 import * as React from "react";
+
+import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAlert";
 import { UnexpectedErrorAlert } from "../ErrorAlert";
 
 interface IErrorBoundaryProps {
+  error?: Error;
   children: React.ReactChildren | React.ReactNode | string;
 }
 
@@ -15,6 +18,15 @@ class ErrorBoundary extends React.Component<IErrorBoundaryProps, IErrorBoundaryS
 
   public render() {
     const { error } = this.state;
+    if (this.props.error) {
+      return (
+        <UnexpectedErrorPage
+          raw={true}
+          showGenericMessage={false}
+          text={this.props.error.message}
+        />
+      );
+    }
     return <React.Fragment>{error ? this.renderError() : this.props.children}</React.Fragment>;
   }
 

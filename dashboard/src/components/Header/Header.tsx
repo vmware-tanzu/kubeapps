@@ -3,6 +3,7 @@ import { NavLink } from "react-router-dom";
 import logo from "../../logo.svg";
 
 import { INamespaceState } from "../../reducers/namespace";
+import { definedNamespaces } from "../../shared/Namespace";
 import HeaderLink, { IHeaderLinkProps } from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
 
@@ -188,7 +189,9 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     const { pathname, push, setNamespace, getNamespace } = this.props;
     const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
     setNamespace(ns);
-    getNamespace(ns);
+    if (ns !== definedNamespaces.all) {
+      getNamespace(ns);
+    }
     if (to !== pathname) {
       push(to);
     }

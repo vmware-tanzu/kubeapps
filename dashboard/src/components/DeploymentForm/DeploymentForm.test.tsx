@@ -2,7 +2,7 @@ import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 
-import { IChartState, IChartVersion, NotFoundError, UnprocessableEntity } from "../../shared/types";
+import { IChartState, IChartVersion, UnprocessableEntity } from "../../shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector } from "../ErrorAlert";
 import DeploymentForm from "./DeploymentForm";
@@ -19,7 +19,6 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
   namespace: "default",
-  getNamespace: jest.fn(),
 };
 const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 let monikerChooseMock: jest.Mock;
@@ -83,16 +82,6 @@ describe("renders an error", () => {
     wrapper.setState({ releaseName: "another-app" });
     expect(wrapper.find(ErrorSelector).html()).toContain(expectedErrorMsg);
   });
-
-  it("renders a custom error if the namespace is missing", () => {
-    const wrapper = shallow(
-      <DeploymentForm
-        {...defaultProps}
-        error={new NotFoundError(`namespaces ${defaultProps.namespace} not found`)}
-      />,
-    );
-    expect(wrapper.html()).toContain(`Namespace <code>${defaultProps.namespace}</code> is missing`);
-  });
 });
 
 it("renders the full DeploymentForm", () => {
@@ -146,7 +135,6 @@ it("triggers a deployment when submitting the form", done => {
   const schema = { properties: { foo: { type: "string", form: true } } };
   const deployChart = jest.fn(() => true);
   const push = jest.fn();
-  const getNamespace = jest.fn();
   const wrapper = mount(
     <DeploymentForm
       {...defaultProps}
@@ -154,7 +142,6 @@ it("triggers a deployment when submitting the form", done => {
       deployChart={deployChart}
       push={push}
       namespace={namespace}
-      getNamespace={getNamespace}
     />,
   );
   wrapper.setState({ appValues });
@@ -162,7 +149,6 @@ it("triggers a deployment when submitting the form", done => {
   expect(deployChart).toHaveBeenCalledWith(versions[0], releaseName, namespace, appValues, schema);
   setTimeout(() => {
     expect(push).toHaveBeenCalledWith("/apps/ns/default/my-release");
-    expect(getNamespace).toHaveBeenCalledWith(namespace);
     done();
   }, 1);
 });

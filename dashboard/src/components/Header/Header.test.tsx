@@ -82,3 +82,28 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
   expect(getNamespace).toHaveBeenCalledWith("bar");
   expect(createNamespace).not.toHaveBeenCalled();
 });
+
+it("doesn't call getNamespace when selecting all namespaces", () => {
+  const setNamespace = jest.fn();
+  const getNamespace = jest.fn();
+  const namespace = {
+    current: "foo",
+    namespaces: ["foo", "bar"],
+  };
+  const wrapper = shallow(
+    <Header
+      {...defaultProps}
+      setNamespace={setNamespace}
+      namespace={namespace}
+      getNamespace={getNamespace}
+    />,
+  );
+
+  const namespaceSelector = wrapper.find("NamespaceSelector");
+  expect(namespaceSelector).toExist();
+  const onChange = namespaceSelector.prop("onChange") as (ns: any) => void;
+  onChange("_all");
+
+  expect(setNamespace).toHaveBeenCalledWith("_all");
+  expect(getNamespace).not.toHaveBeenCalled();
+});

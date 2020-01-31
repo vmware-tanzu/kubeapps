@@ -36,7 +36,9 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
 
   public componentDidMount() {
     this.props.fetchNamespaces();
-    this.props.getNamespace(this.selected);
+    if (this.selected !== definedNamespaces.all) {
+      this.props.getNamespace(this.selected);
+    }
   }
 
   public render() {

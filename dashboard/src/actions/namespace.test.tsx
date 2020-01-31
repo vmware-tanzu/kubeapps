@@ -127,7 +127,7 @@ describe("createNamespace", () => {
   });
 });
 
-describe("createNamespace", () => {
+describe("getNamespace", () => {
   it("dispatches requested namespace", async () => {
     const ns = { metadata: { name: "default" } };
     Namespace.get = jest.fn(() => ns);
@@ -141,7 +141,8 @@ describe("createNamespace", () => {
         payload: ns,
       },
     ];
-    await store.dispatch(getNamespace("default"));
+    const r = await store.dispatch(getNamespace("default"));
+    expect(r).toBe(true);
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -158,7 +159,8 @@ describe("createNamespace", () => {
         payload: { err, op: "get" },
       },
     ];
-    await store.dispatch(getNamespace("default"));
+    const r = await store.dispatch(getNamespace("default"));
+    expect(r).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
