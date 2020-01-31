@@ -9,6 +9,8 @@ test("Creates a registry", async () => {
 
   await expect(page).toClick("button", { text: "Add App Repository" });
 
+  await expect(page).toMatch("Install Repo");
+
   await page.type("#kubeapps-repo-name", "my-repo");
 
   await page.type("#kubeapps-repo-url", "https://charts.gitlab.io/");
