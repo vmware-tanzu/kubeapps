@@ -8,10 +8,8 @@ test("Creates a registry", async () => {
   await expect(page).toClick("button", { text: "Login" });
 
   await expect(page).toClick("button", { text: "Add App Repository" });
-  // Sometimes, the test fails because the modal doesn't get rendered
-  // Clicking again, just in case, to avoid issues
-  // https://circleci.com/gh/kubeapps/kubeapps/16306
-  await expect(page).toClick("button", { text: "Add App Repository" });
+
+  await expect(page).toMatch("Install Repo");
 
   await page.type("#kubeapps-repo-name", "my-repo");
 
