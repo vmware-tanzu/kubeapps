@@ -30,6 +30,16 @@ const defaultProps = {
     params: [{ path: "blogName", value: "my-blog", type: "string" } as IBasicFormParam],
   },
   {
+    description: "renders a basic deployment with custom configuration",
+    params: [
+      {
+        path: "configuration",
+        value: "First line\n" + "Second line",
+        render: "textArea",
+      } as IBasicFormParam,
+    ],
+  },
+  {
     description: "renders a basic deployment with a disk size",
     params: [
       {

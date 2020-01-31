@@ -980,6 +980,84 @@ exports[`renders a basic deployment with a username 1`] = `
 </BasicDeploymentForm>
 `;
 
+exports[`renders a basic deployment with custom configuration 1`] = `
+<BasicDeploymentForm
+  appValues=""
+  handleBasicFormParamChange={[Function]}
+  handleValuesChange={[Function]}
+  params={
+    Array [
+      Object {
+        "path": "configuration",
+        "render": "textArea",
+        "value": "First line
+    Second line",
+      },
+    ]
+  }
+>
+  <div
+    className="margin-t-normal"
+  >
+    <div
+      key="configuration-0"
+    >
+      <div
+        hidden={false}
+        key="configuration-0"
+      >
+        <TextParam
+          handleBasicFormParamChange={[Function]}
+          id="configuration-0"
+          inputType="string"
+          label="nodejs"
+          param={
+            Object {
+              "path": "configuration",
+              "render": "textArea",
+              "value": "First line
+            Second line",
+            }
+          }
+        >
+          <div>
+            <label
+              htmlFor="configuration-0"
+            >
+              <div
+                className="row"
+              >
+                <div
+                  className="col-3 block"
+                >
+                  <div
+                    className="centered"
+                  >
+                    nodejs
+                  </div>
+                </div>
+                <div
+                  className="col-9 margin-t-small"
+                >
+                  <input
+                    id="configuration-0"
+                    onChange={[Function]}
+                    type="string"
+                    value="First line
+                  Second line"
+                  />
+                </div>
+              </div>
+            </label>
+          </div>
+        </TextParam>
+      </div>
+      <hr />
+    </div>
+  </div>
+</BasicDeploymentForm>
+`;
+
 exports[`renders a basic deployment with username, password, email and a generic string 1`] = `
 <BasicDeploymentForm
   appValues=""
