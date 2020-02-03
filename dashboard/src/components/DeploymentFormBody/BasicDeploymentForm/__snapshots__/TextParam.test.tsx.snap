@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should render a text param with title and description 1`] = `
+exports[`should render a string parameter with title and description 1`] = `
 <TextParam
   handleBasicFormParamChange={[Function]}
   id="foo"
@@ -37,6 +37,53 @@ exports[`should render a text param with title and description 1`] = `
             onChange={[Function]}
             type="text"
             value="user"
+          />
+        </div>
+      </div>
+    </label>
+  </div>
+</TextParam>
+`;
+
+exports[`should render a textArea parameter with title and description 1`] = `
+<TextParam
+  handleBasicFormParamChange={[Function]}
+  id="bar"
+  inputType="textarea"
+  label="Configuration"
+  param={
+    Object {
+      "path": "configuration",
+      "type": "string",
+      "value": "First line
+    Second line",
+    }
+  }
+>
+  <div>
+    <label
+      htmlFor="bar"
+    >
+      <div
+        className="row"
+      >
+        <div
+          className="col-3 block"
+        >
+          <div
+            className="centered"
+          >
+            Configuration
+          </div>
+        </div>
+        <div
+          className="col-9 margin-t-small"
+        >
+          <textarea
+            id="bar"
+            onChange={[Function]}
+            value="First line
+          Second line"
           />
         </div>
       </div>

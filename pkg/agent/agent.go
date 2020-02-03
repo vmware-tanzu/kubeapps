@@ -69,19 +69,26 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 
 // CreateRelease creates a release.
 func CreateRelease(actionConfig *action.Configuration, name, namespace, valueString string, ch *chart.Chart) (*release.Release, error) {
+	// Check if the release already exists
+	_, err := GetRelease(actionConfig, name)
+	if err == nil {
+		return nil, fmt.Errorf("release %s already exists", name)
+	}
 	cmd := action.NewInstall(actionConfig)
 	cmd.ReleaseName = name
 	cmd.Namespace = namespace
-	// TODO(andresmgot): Enable Atomic installations once this issue is fixed in Helm
-	// https://github.com/helm/helm/issues/7426
-	// cmd.Atomic = true
 	values, err := getValues([]byte(valueString))
 	if err != nil {
 		return nil, err
 	}
 	release, err := cmd.Run(ch, values)
 	if err != nil {
-		return nil, err
+		// Simulate the Atomic flag and delete the release if failed
+		errDelete := DeleteRelease(actionConfig, name, false)
+		if errDelete != nil {
+			return nil, fmt.Errorf("Release %q failed: %v. Unable to delete failed release: %v", name, err, errDelete)
+		}
+		return nil, fmt.Errorf("Release %q failed and has been uninstalled: %v", name, err)
 	}
 	return release, nil
 }

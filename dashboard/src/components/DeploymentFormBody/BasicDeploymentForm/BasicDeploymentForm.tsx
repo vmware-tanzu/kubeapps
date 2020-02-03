@@ -13,7 +13,7 @@ export interface IBasicDeploymentFormProps {
   params: IBasicFormParam[];
   handleBasicFormParamChange: (
     p: IBasicFormParam,
-  ) => (e: React.FormEvent<HTMLInputElement>) => void;
+  ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleValuesChange: (value: string) => void;
   appValues: string;
 }
@@ -54,7 +54,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
     id: string,
     handleBasicFormParamChange: (
       p: IBasicFormParam,
-    ) => (e: React.FormEvent<HTMLInputElement>) => void,
+    ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
   ) => {
     let paramComponent: JSX.Element = <></>;
     // If the type of the param is an array, represent it as its first type
@@ -94,6 +94,18 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
               min={p.sliderMin || 1}
               max={p.sliderMax || 1000}
               unit={p.sliderUnit || ""}
+            />
+          );
+          break;
+        }
+        if (param.render === "textArea") {
+          paramComponent = (
+            <TextParam
+              label={param.title || name}
+              handleBasicFormParamChange={handleBasicFormParamChange}
+              id={id}
+              param={param}
+              inputType="textarea"
             />
           );
           break;

@@ -68,6 +68,24 @@ In order to render a slider, there are some requirements and additional tags tha
     }
 ```
 
+### Custom type: TextArea
+
+It's possible to render a component as a textArea instead of a single-line string.
+
+In order to render a component as a textArea, it's necessary to specify the tag `render` and set it to `textArea`.
+
+ This is an example of a textArea param:
+
+```json
+    "size": {
+      "type": "string",
+      "title": "Configuration",
+      "description": "Configuration to be used",
+      "form": true,
+      "render": "textArea"
+    }
+```
+
 ### Subsections
 
 When a property of type `object` is set with a `form` identifier, it will be rendered as a subsection. A subsection is a set of parameters that are grouped together:

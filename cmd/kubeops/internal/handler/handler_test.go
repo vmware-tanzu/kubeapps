@@ -257,11 +257,9 @@ func TestActions(t *testing.T) {
 			Action:       "create",
 			Params:       map[string]string{"namespace": "default"},
 			// Expected result
-			StatusCode: 403,
-			RemainingReleases: []*release.Release{
-				createRelease("foo", "foobar", "default", 1, release.StatusFailed),
-			},
-			ResponseBody: `{"code":403,"message":"[{\"apiGroup\":\"\",\"resource\":\"secrets\",\"namespace\":\"default\",\"clusterWide\":false,\"verbs\":[\"create\"]}]"}`,
+			StatusCode:        403,
+			RemainingReleases: nil,
+			ResponseBody:      `{"code":403,"message":"[{\"apiGroup\":\"\",\"resource\":\"secrets\",\"namespace\":\"default\",\"clusterWide\":false,\"verbs\":[\"create\"]}]"}`,
 		},
 	}
 
