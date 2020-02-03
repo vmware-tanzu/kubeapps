@@ -1,7 +1,7 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
 
-import { IK8sList, IResource } from "./types";
+import { ForbiddenError, IK8sList, IResource, NotFoundError } from "./types";
 
 export default class Namespace {
   public static async list() {
@@ -21,8 +21,21 @@ export default class Namespace {
   }
 
   public static async get(name: string) {
-    const { data } = await axiosWithAuth.get<IResource>(`${Namespace.APIEndpoint}/${name}`);
-    return data;
+    try {
+      const { data } = await axiosWithAuth.get<IResource>(`${Namespace.APIEndpoint}/${name}`);
+      return data;
+    } catch (err) {
+      switch (err.constructor) {
+        case ForbiddenError:
+          throw new ForbiddenError(
+            `You don't have sufficient permissions to use the namespace ${name}`,
+          );
+        case NotFoundError:
+          throw new NotFoundError(`Namespace ${name} not found. Create it before using it.`);
+        default:
+          throw err;
+      }
+    }
   }
 
   private static APIBase: string = APIBase;

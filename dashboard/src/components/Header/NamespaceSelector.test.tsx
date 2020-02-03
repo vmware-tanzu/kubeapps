@@ -2,10 +2,8 @@ import { mount, shallow } from "enzyme";
 import * as React from "react";
 import * as ReactModal from "react-modal";
 import * as Select from "react-select";
-import * as ReactTooltip from "react-tooltip";
 
 import { INamespaceState } from "../../reducers/namespace";
-import { ForbiddenError } from "../../shared/types";
 import NamespaceSelector from "./NamespaceSelector";
 import NewNamespace from "./NewNamespace";
 
@@ -130,22 +128,4 @@ it("doesnt' get the current namespace if all namespaces is selected", () => {
   );
   expect(fetchNamespaces).toHaveBeenCalled();
   expect(getNamespace).not.toHaveBeenCalled();
-});
-
-it("renders an error warning", () => {
-  const wrapper = shallow(
-    <NamespaceSelector
-      {...defaultProps}
-      namespace={{
-        error: { action: "get", error: new ForbiddenError() },
-        current: "foo",
-        namespaces: [],
-      }}
-    />,
-  );
-  const err = wrapper.find(ReactTooltip);
-  expect(err).toExist();
-  expect(err.children().text()).toContain(
-    "You don't have sufficient permissions to use the namespace foo",
-  );
 });

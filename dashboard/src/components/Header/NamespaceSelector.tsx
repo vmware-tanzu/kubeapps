@@ -1,11 +1,8 @@
 import * as React from "react";
-import { AlertCircle } from "react-feather";
 import * as Select from "react-select";
-import * as ReactTooltip from "react-tooltip";
 
 import { INamespaceState } from "../../reducers/namespace";
 import { definedNamespaces } from "../../shared/Namespace";
-import { ForbiddenError, NotFoundError } from "../../shared/types";
 
 import "./NamespaceSelector.css";
 import NewNamespace from "./NewNamespace";
@@ -61,7 +58,6 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
     return (
       <div className="NamespaceSelector margin-r-normal">
         <label className="NamespaceSelector__label type-tiny">NAMESPACE</label>
-        {error && this.renderError(error.error)}
         <Select.Creatable
           className="NamespaceSelector__select type-small"
           value={value}
@@ -113,36 +109,6 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
     this.setState({
       modalIsOpen: false,
     });
-  };
-
-  private errorText = (err: Error) => {
-    switch (err.constructor) {
-      case ForbiddenError:
-        return `You don't have sufficient permissions to use the namespace ${this.selected}`;
-      case NotFoundError:
-        return `Namespace ${this.selected} not found. Create it before using it.`;
-      default:
-        return err.message;
-    }
-  };
-
-  private renderError = (err: Error) => {
-    return (
-      <>
-        <a data-tip={true} data-for="ns-error">
-          <AlertCircle className="NamespaceSelectorError" color="white" fill="red" />
-        </a>
-        <ReactTooltip
-          className="NamespaceTooltipError"
-          delayHide={1000}
-          id="ns-error"
-          effect="solid"
-          place="bottom"
-        >
-          {this.errorText(err)}
-        </ReactTooltip>
-      </>
-    );
   };
 }
 

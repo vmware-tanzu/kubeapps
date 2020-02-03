@@ -111,7 +111,7 @@ describe("createNamespace", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("dispatches errorNamespace if error creating a namespace", async () => {
+  it("dispatches errorNamespace if error getting a namespace", async () => {
     const err = new Error("Bang!");
     Namespace.create = jest.fn().mockImplementationOnce(() => Promise.reject(err));
     const expectedActions = [

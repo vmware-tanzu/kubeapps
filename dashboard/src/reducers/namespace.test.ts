@@ -114,15 +114,15 @@ describe("namespaceReducer", () => {
         namespaceReducer(
           {
             current: "",
-            namespaces: [],
+            namespaces: ["default"],
             error: { action: "create", error: new Error("boom") },
           },
           {
             type: getType(actions.namespace.receiveNamespace),
-            payload: { metadata: { name: "default" } } as IResource,
+            payload: { metadata: { name: "bar" } } as IResource,
           },
         ),
-      ).toEqual({ current: "", namespaces: ["default"], error: undefined });
+      ).toEqual({ current: "", namespaces: ["bar", "default"], error: undefined });
     });
   });
 });

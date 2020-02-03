@@ -30,7 +30,7 @@ const namespaceReducer = (
       if (!state.namespaces.includes(action.payload.metadata.name)) {
         return {
           ...state,
-          namespaces: state.namespaces.concat(action.payload.metadata.name),
+          namespaces: state.namespaces.concat(action.payload.metadata.name).sort(),
           error: undefined,
         };
       }
