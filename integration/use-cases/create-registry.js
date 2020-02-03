@@ -9,7 +9,14 @@ test("Creates a registry", async () => {
 
   await expect(page).toClick("button", { text: "Add App Repository" });
 
-  await expect(page).toMatch("Install Repo");
+  try {
+    await expect(page).toMatch("Install Repo");
+  } catch (e) {
+    // The Modal sometimes fail to be opened, click the button again
+    await expect(page).toClick("button", { text: "Add App Repository" });
+
+    await expect(page).toMatch("Install Repo");
+  }
 
   await page.type("#kubeapps-repo-name", "my-repo");
 
