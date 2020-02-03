@@ -3,6 +3,7 @@ import context from "jest-plugin-context";
 import { getType } from "typesafe-actions";
 
 import actions from "../actions";
+import { IResource } from "../shared/types";
 import namespaceReducer from "./namespace";
 
 describe("namespaceReducer", () => {
@@ -42,13 +43,22 @@ describe("namespaceReducer", () => {
   context("when ERROR_NAMESPACE", () => {
     const err = new Error("Bang!");
 
-    it("leaves namespaces intact and sets error", () => {
+    it("when listing leaves namespaces intact and but ignores the error", () => {
       expect(
         namespaceReducer(initialState, {
           type: getType(actions.namespace.errorNamespaces),
           payload: { err, op: "list" },
         }),
-      ).toEqual({ ...initialState, error: { action: "list", error: err } });
+      ).toEqual({ ...initialState, error: undefined });
+    });
+
+    it("leaves namespaces intact and sets the error", () => {
+      expect(
+        namespaceReducer(initialState, {
+          type: getType(actions.namespace.errorNamespaces),
+          payload: { err, op: "create" },
+        }),
+      ).toEqual({ ...initialState, error: { action: "create", error: err } });
     });
   });
 
@@ -95,6 +105,24 @@ describe("namespaceReducer", () => {
           },
         ),
       ).toEqual({ current: "default", namespaces: [], error: undefined });
+    });
+  });
+
+  context("when RECEIVE_NAMESPACE", () => {
+    it("adds the namespace to the list and clears error", () => {
+      expect(
+        namespaceReducer(
+          {
+            current: "",
+            namespaces: ["default"],
+            error: { action: "create", error: new Error("boom") },
+          },
+          {
+            type: getType(actions.namespace.receiveNamespace),
+            payload: { metadata: { name: "bar" } } as IResource,
+          },
+        ),
+      ).toEqual({ current: "", namespaces: ["bar", "default"], error: undefined });
     });
   });
 });

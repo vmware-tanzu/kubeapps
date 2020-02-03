@@ -25,3 +25,11 @@
   bottom: -0.3em;
   width: 20px;
 }
+
+.NamespaceTooltipError {
+  pointer-events: auto;
+  &:hover {
+    visibility: visible;
+    opacity: 1;
+  }
+}

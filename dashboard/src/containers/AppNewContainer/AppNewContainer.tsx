@@ -45,6 +45,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     getChartVersion: (id: string, version: string) =>
       dispatch(actions.charts.getChartVersion(id, version)),
     push: (location: string) => dispatch(push(location)),
+    getNamespace: (ns: string) => dispatch(actions.namespace.getNamespace(ns)),
   };
 }
 

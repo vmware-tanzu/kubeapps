@@ -5,6 +5,13 @@ import { ActionType, createAction } from "typesafe-actions";
 import Namespace from "../shared/Namespace";
 import { IResource, IStoreState } from "../shared/types";
 
+export const requestNamespace = createAction("REQUEST_NAMESPACE", resolve => {
+  return (namespace: string) => resolve(namespace);
+});
+export const receiveNamespace = createAction("RECEIVE_NAMESPACE", resolve => {
+  return (namespace: IResource) => resolve(namespace);
+});
+
 export const setNamespace = createAction("SET_NAMESPACE", resolve => {
   return (namespace: string) => resolve(namespace);
 });
@@ -24,6 +31,8 @@ export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
 export const clearNamespaces = createAction("CLEAR_NAMESPACES");
 
 const allActions = [
+  requestNamespace,
+  receiveNamespace,
   setNamespace,
   receiveNamespaces,
   errorNamespaces,
@@ -56,6 +65,22 @@ export function createNamespace(
       return true;
     } catch (e) {
       dispatch(errorNamespaces(e, "create"));
+      return false;
+    }
+  };
+}
+
+export function getNamespace(
+  ns: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
+  return async dispatch => {
+    try {
+      dispatch(requestNamespace(ns));
+      const namespace = await Namespace.get(ns);
+      dispatch(receiveNamespace(namespace));
+      return true;
+    } catch (e) {
+      dispatch(errorNamespaces(e, "get"));
       return false;
     }
   };

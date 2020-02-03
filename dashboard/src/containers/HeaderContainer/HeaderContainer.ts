@@ -34,6 +34,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     logout: () => dispatch(actions.auth.logout()),
     push: (path: string) => dispatch(push(path)),
     setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),
+    getNamespace: (ns: string) => dispatch(actions.namespace.getNamespace(ns)),
   };
 }
 

@@ -13,6 +13,7 @@ interface INamespaceSelectorProps {
   onChange: (ns: string) => any;
   fetchNamespaces: () => void;
   createNamespace: (ns: string) => Promise<boolean>;
+  getNamespace: (ns: string) => void;
 }
 
 interface INamespaceSelectorState {
@@ -26,13 +27,20 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
     newNamespace: "",
   };
 
+  get selected() {
+    return this.props.namespace.current || this.props.defaultNamespace;
+  }
+
   public componentDidMount() {
     this.props.fetchNamespaces();
+    if (this.selected !== definedNamespaces.all) {
+      this.props.getNamespace(this.selected);
+    }
   }
 
   public render() {
     const {
-      namespace: { current, namespaces, error },
+      namespace: { namespaces, error },
       defaultNamespace,
     } = this.props;
     const options =
@@ -43,9 +51,10 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
     options.unshift(allOption);
     const newOption = { value: "_new", label: "Create New" };
     options.push(newOption);
-    const selected = current || defaultNamespace;
     const value =
-      selected === definedNamespaces.all ? allOption : { value: selected, label: selected };
+      this.selected === definedNamespaces.all
+        ? allOption
+        : { value: this.selected, label: this.selected };
     return (
       <div className="NamespaceSelector margin-r-normal">
         <label className="NamespaceSelector__label type-tiny">NAMESPACE</label>

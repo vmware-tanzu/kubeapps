@@ -1,6 +1,7 @@
 import { mount } from "enzyme";
 import * as React from "react";
 import ErrorBoundary from ".";
+import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAlert";
 import { UnexpectedErrorAlert } from "../ErrorAlert";
 
 // tslint:disable:no-console
@@ -65,4 +66,9 @@ describe("ErrorBoundary around a component", () => {
     // console.error is not called
     expect(console.error).not.toHaveBeenCalled();
   });
+});
+
+it("renders an error if it exists as a property", () => {
+  const wrapper = mount(<ErrorBoundary error={new Error("boom!")} children={<></>} />);
+  expect(wrapper.find(UnexpectedErrorPage).text()).toContain("boom!");
 });

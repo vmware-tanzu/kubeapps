@@ -1,7 +1,7 @@
 import * as React from "react";
 
+import ErrorBoundaryContainer from "containers/ErrorBoundaryContainer";
 import Footer from "../../containers/FooterContainer";
-import ErrorBoundary from "../ErrorBoundary";
 
 import "./Layout.css";
 
@@ -17,7 +17,7 @@ class Layout extends React.Component<ILayoutProps> {
         <HeaderComponent />
         <main>
           <div className="container">
-            <ErrorBoundary>{this.props.children}</ErrorBoundary>
+            <ErrorBoundaryContainer>{this.props.children}</ErrorBoundaryContainer>
           </div>
         </main>
         <Footer />

@@ -16,6 +16,7 @@ const defaultProps = {
   defaultNamespace: "kubeapps-user",
   onChange: jest.fn(),
   createNamespace: jest.fn(),
+  getNamespace: jest.fn(),
 };
 
 it("renders the given namespaces with current selection", () => {
@@ -97,4 +98,34 @@ it("opens the modal to add a new namespace and creates it", async () => {
   );
   wrapper.update();
   expect(wrapper.find(NewNamespace).prop("modalIsOpen")).toBe(false);
+});
+
+it("fetches namespaces and retrive the current namespace", () => {
+  const fetchNamespaces = jest.fn();
+  const getNamespace = jest.fn();
+  shallow(
+    <NamespaceSelector
+      {...defaultProps}
+      fetchNamespaces={fetchNamespaces}
+      getNamespace={getNamespace}
+      namespace={{ current: "foo", namespaces: [] }}
+    />,
+  );
+  expect(fetchNamespaces).toHaveBeenCalled();
+  expect(getNamespace).toHaveBeenCalledWith("foo");
+});
+
+it("doesnt' get the current namespace if all namespaces is selected", () => {
+  const fetchNamespaces = jest.fn();
+  const getNamespace = jest.fn();
+  shallow(
+    <NamespaceSelector
+      {...defaultProps}
+      fetchNamespaces={fetchNamespaces}
+      getNamespace={getNamespace}
+      namespace={{ current: "_all", namespaces: [] }}
+    />,
+  );
+  expect(fetchNamespaces).toHaveBeenCalled();
+  expect(getNamespace).not.toHaveBeenCalled();
 });

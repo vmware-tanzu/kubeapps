@@ -60,11 +60,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { namespace } = this.props;
-    if (this.props.error) {
+    const { namespace, error } = this.props;
+    if (error) {
       return (
         <ErrorSelector
-          error={this.props.error}
+          error={error}
           namespace={namespace}
           action="create"
           resource={this.state.latestSubmittedReleaseName}
