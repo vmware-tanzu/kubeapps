@@ -133,14 +133,15 @@ func TestGetRelease(t *testing.T) {
 
 func TestCreateReleases(t *testing.T) {
 	testCases := []struct {
-		desc             string
-		releaseName      string
-		namespace        string
-		chartName        string
-		values           string
-		version          int
-		existingReleases []releaseStub
-		shouldFail       bool
+		desc              string
+		releaseName       string
+		namespace         string
+		chartName         string
+		values            string
+		version           int
+		existingReleases  []releaseStub
+		remainingReleases int
+		shouldFail        bool
 	}{
 		{
 			desc:      "install new release",
@@ -151,7 +152,8 @@ func TestCreateReleases(t *testing.T) {
 			existingReleases: []releaseStub{
 				releaseStub{"otherchart", "default", 1, "1.0.0", release.StatusDeployed},
 			},
-			shouldFail: false,
+			remainingReleases: 2,
+			shouldFail:        false,
 		},
 		{
 			desc:      "install with an existing name",
@@ -162,7 +164,8 @@ func TestCreateReleases(t *testing.T) {
 			existingReleases: []releaseStub{
 				releaseStub{"mychart", "default", 1, "1.0.0", release.StatusDeployed},
 			},
-			shouldFail: true,
+			remainingReleases: 1,
+			shouldFail:        true,
 		},
 		{
 			desc:      "install with same name different version",
@@ -173,7 +176,8 @@ func TestCreateReleases(t *testing.T) {
 			existingReleases: []releaseStub{
 				releaseStub{"mychart", "dev", 2, "1.0.0", release.StatusDeployed},
 			},
-			shouldFail: true,
+			remainingReleases: 1,
+			shouldFail:        true,
 		},
 	}
 
@@ -194,6 +198,13 @@ func TestCreateReleases(t *testing.T) {
 			}
 			if !tc.shouldFail && rls == nil {
 				t.Errorf("Should succeed with %v; instead got error %v", tc.desc, err)
+			}
+			rlss, err := actionConfig.Releases.ListReleases()
+			if err != nil {
+				t.Errorf("Unexpected err %v", err)
+			}
+			if len(rlss) != tc.remainingReleases {
+				t.Errorf("Expecting %d remaining releases, got %d", tc.remainingReleases, len(rlss))
 			}
 		})
 	}
