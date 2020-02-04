@@ -76,7 +76,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: "kubeapps:controller:apprepository-reader"
+  name: "kubeapps:controller:apprepository-reader-{{ .Release.Namespace }}"
   labels:
     app: {{ template "kubeapps.apprepository.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
