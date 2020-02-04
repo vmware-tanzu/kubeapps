@@ -37,7 +37,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: "kubeapps:controller:apprepository-reader"
+  name: "kubeapps:controller:apprepository-reader-{{ .Release.Namespace }}"
   labels:
     app: {{ template "kubeapps.apprepository.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
@@ -85,7 +85,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: "kubeapps:controller:apprepository-reader"
+  name: "kubeapps:controller:apprepository-reader-{{ .Release.Namespace }}"
 subjects:
   - kind: ServiceAccount
     name: {{ template "kubeapps.apprepository.fullname" . }}
