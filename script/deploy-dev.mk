@@ -50,11 +50,12 @@ deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
 	@echo "to authenticate with the corresponding permissions."
 
 reset-dev:
-	helm delete kubeapps || true
-	helm delete dex || true
-	helm delete ldap || true
-	kubectl delete clusterrole dex || true
-	kubectl delete clusterrolebinding dex || true
+	helm -n kubeapps delete kubeapps || true
+	helm -n dex delete dex || true
+	helm -n ldap delete ldap || true
+	# In case helm installations fail, still delete non-namespaced resources.
+	kubectl delete clusterrole dex kubeapps:controller:apprepository-reader || true
+	kubectl delete clusterrolebinding dex kubeapps:controller:apprepository-reader || true
 	kubectl delete namespace --wait dex ldap kubeapps || true
 	kubectl delete --wait -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml || true
 
