@@ -633,3 +633,7 @@ authProxy:
     requests:
       cpu: 25m
       memory: 32Mi
+## Feature flags
+## These are used to switch on in development features or new features not yet released.
+featureFlags:
+  reposPerNamespace: false
