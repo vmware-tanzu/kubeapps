@@ -76,6 +76,7 @@ type appRepositoryRequest struct {
 
 type appRepositoryRequestDetails struct {
 	Name               string                 `json:"name"`
+	Namespace          string                 `json:"namespace"`
 	RepoURL            string                 `json:"repoURL"`
 	AuthHeader         string                 `json:"authHeader"`
 	CustomCA           string                 `json:"customCA"`
@@ -162,10 +163,14 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 	}
 
 	appRepo := appRepositoryForRequest(appRepoRequest)
+	if appRepo.ObjectMeta.Namespace == "" {
+		appRepo.ObjectMeta.Namespace = a.kubeappsNamespace
+	}
+
 	// TODO(mnelson): validate both required data and request for index
 	// https://github.com/kubeapps/kubeapps/issues/1330
 
-	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(a.kubeappsNamespace).Create(appRepo)
+	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(appRepo.ObjectMeta.Namespace).Create(appRepo)
 
 	if err != nil {
 		if statusErr, ok := err.(*errors.StatusError); ok {
@@ -238,7 +243,8 @@ func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppR
 
 	return &v1alpha1.AppRepository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: appRepo.Name,
+			Name:      appRepo.Name,
+			Namespace: appRepo.Namespace,
 		},
 		Spec: v1alpha1.AppRepositorySpec{
 			URL:                appRepo.RepoURL,
@@ -267,7 +273,8 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 	blockOwnerDeletion := true
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: secretNameForRepo(appRepo.Name),
+			Name:      secretNameForRepo(appRepo.Name),
+			Namespace: appRepoDetails.Namespace,
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion:         "kubeapps.com/v1alpha1",
