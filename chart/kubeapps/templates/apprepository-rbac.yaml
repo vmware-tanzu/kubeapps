@@ -94,7 +94,7 @@ rules:
     verbs:
       - create
 {{- end -}}
-{{- if .Values.featureflags.repos-per-namespace -}}
+{{- if .Values.featureFlags.reposPerNamespace -}}
 ---
 # Kubeapps can read and watch its own AppRepository resources cluster-wide.
 apiVersion: rbac.authorization.k8s.io/v1
