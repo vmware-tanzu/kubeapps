@@ -633,3 +633,6 @@ authProxy:
     requests:
       cpu: 25m
       memory: 32Mi
+## Feature flags
+featureflags:
+  repos-per-namespace: false
