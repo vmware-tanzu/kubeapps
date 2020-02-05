@@ -1,10 +1,11 @@
-import { mount } from "enzyme";
+import { mount, shallow } from "enzyme";
 import { createMemoryHistory } from "history";
 import * as React from "react";
 import { Route, StaticRouter } from "react-router";
 import { RouteComponentProps } from "react-router-dom";
 
 import NotFound from "../../components/NotFound";
+import RepoListContainer from "../../containers/RepoListContainer";
 import Routes from "./Routes";
 
 const emptyRouteComponentProps: RouteComponentProps<{}> = {
@@ -76,4 +77,52 @@ it("should render a redirect to the login page (when not authenticated)", () => 
       .props()
       .render().props.to,
   ).toEqual("/login");
+});
+
+describe("Routes depending on feature flags", () => {
+  const namespace = "default";
+  const perNamespacePath = "/config/ns/:namespace/repos";
+  const nonNamespacedPath = "/config/repos";
+
+  it("should use a non-namespaced route for app repos without feature flag", () => {
+    const wrapper = shallow(
+      <StaticRouter location="/config/repos" context={{}}>
+        <Routes
+          {...emptyRouteComponentProps}
+          namespace={namespace}
+          authenticated={true}
+          featureFlags={{ reposPerNamespace: false }}
+        />
+      </StaticRouter>,
+    )
+      .dive()
+      .dive()
+      .dive();
+
+    const component = wrapper.find({ component: RepoListContainer });
+
+    expect(component.length).toBe(1);
+    expect(component.props().path).toEqual(nonNamespacedPath);
+  });
+
+  it("should use a namespaced route for app repos when feature flag set", () => {
+    const wrapper = shallow(
+      <StaticRouter location="/config/repos" context={{}}>
+        <Routes
+          {...emptyRouteComponentProps}
+          namespace={namespace}
+          authenticated={true}
+          featureFlags={{ reposPerNamespace: true }}
+        />
+      </StaticRouter>,
+    )
+      .dive()
+      .dive()
+      .dive();
+
+    const component = wrapper.find({ component: RepoListContainer });
+
+    expect(component.length).toBe(1);
+    expect(component.props().path).toEqual(perNamespacePath);
+  });
 });

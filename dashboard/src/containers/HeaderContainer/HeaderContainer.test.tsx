@@ -13,24 +13,45 @@ const emptyLocation = {
   search: "",
 };
 
-const makeStore = (authenticated: boolean, oidcAuthenticated: boolean) => {
-  const state: IAuthState = {
-    sessionExpired: false,
-    authenticated,
-    oidcAuthenticated,
-    authenticating: false,
-    defaultNamespace: "",
-  };
-  return mockStore({ auth: state, router: { location: emptyLocation } });
+const defaultAuthState: IAuthState = {
+  sessionExpired: false,
+  authenticated: true,
+  oidcAuthenticated: true,
+  authenticating: false,
+  defaultNamespace: "",
 };
 
-describe("LoginFormContainer props", () => {
+const defaultState = {
+  auth: defaultAuthState,
+  router: { location: emptyLocation },
+  config: {
+    featureFlags: { reposPerNamespace: true },
+  },
+};
+
+describe("HeaderContainer props", () => {
   it("maps authentication redux states to props", () => {
-    const store = makeStore(true, true);
+    const store = mockStore(defaultState);
     const wrapper = shallow(<Header store={store} />);
     const form = wrapper.find("Header");
     expect(form).toHaveProp({
       authenticated: true,
+    });
+  });
+
+  it("maps featureFlags configuration to props", () => {
+    const store = mockStore({
+      ...defaultState,
+      config: {
+        featureFlags: { reposPerNamespace: true },
+      },
+    });
+
+    const wrapper = shallow(<Header store={store} />);
+
+    const form = wrapper.find("Header");
+    expect(form).toHaveProp({
+      featureFlags: { reposPerNamespace: true },
     });
   });
 });

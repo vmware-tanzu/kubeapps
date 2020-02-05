@@ -4,10 +4,11 @@ import { withRouter } from "react-router";
 import { IStoreState } from "../../shared/types";
 import Routes from "./Routes";
 
-function mapStateToProps({ auth, namespace }: IStoreState) {
+function mapStateToProps({ auth, namespace, config }: IStoreState) {
   return {
     namespace: namespace.current || auth.defaultNamespace,
     authenticated: auth.authenticated,
+    featureFlags: config.featureFlags,
   };
 }
 

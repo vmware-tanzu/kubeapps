@@ -3,5 +3,8 @@
   "appVersion": "DEVEL",
   "authProxyEnabled": false,
   "oauthLoginURI": "/oauth2/start",
-  "oauthLogoutURI": "/oauth2/sign_out"
+  "oauthLogoutURI": "/oauth2/sign_out",
+  "featureFlags": {
+    "reposPerNamespace": false
+  }
 }

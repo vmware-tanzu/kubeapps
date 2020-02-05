@@ -29,7 +29,6 @@ const privateRoutes = {
   "/charts/:repo/:id": ChartViewContainer,
   "/charts/:repo/:id/versions/:version": ChartViewContainer,
   "/config/brokers": ServiceBrokerListContainer,
-  "/config/repos": RepoListContainer,
   "/services/brokers/:brokerName/classes/:className": ServiceClassViewContainer,
   "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": ServiceInstanceViewContainer,
   "/services/classes": ServiceClassListContainer,
@@ -44,10 +43,22 @@ const routes = {
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   namespace: string;
   authenticated: boolean;
+  featureFlags: {
+    reposPerNamespace: boolean;
+  };
 }
 
 class Routes extends React.Component<IRoutesProps> {
+  public static defaultProps = {
+    featureFlags: { reposPerNamespace: false },
+  };
   public render() {
+    // The path used for AppRepository list depends on a feature flag.
+    // TODO(mnelson, #1256) Remove when feature becomes default.
+    const reposPath = this.props.featureFlags.reposPerNamespace
+      ? "/config/ns/:namespace/repos"
+      : "/config/repos";
+
     return (
       <Switch>
         <Route exact={true} path="/" render={this.rootNamespacedRedirect} />
@@ -57,6 +68,12 @@ class Routes extends React.Component<IRoutesProps> {
         {Object.entries(privateRoutes).map(([route, component]) => (
           <PrivateRouteContainer key={route} exact={true} path={route} component={component} />
         ))}
+        <PrivateRouteContainer
+          key={reposPath}
+          exact={true}
+          path={reposPath}
+          component={RepoListContainer}
+        />
         {/* If the route doesn't match any expected path redirect to a 404 page  */}
         <Route component={NotFound} />
       </Switch>

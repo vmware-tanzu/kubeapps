@@ -35,6 +35,7 @@ deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--set useHelm3=true \
 		--set postgresql.enabled=true \
+		--set featureFlags.reposPerNamespace=true \
 		--set mongodb.enabled=false
 	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	@echo "\nEnsure you have the entry '127.0.0.1 dex.dex' in your /etc/hosts, then run\n"
@@ -54,8 +55,8 @@ reset-dev:
 	helm -n dex delete dex || true
 	helm -n ldap delete ldap || true
 	# In case helm installations fail, still delete non-namespaced resources.
-	kubectl delete clusterrole dex kubeapps:controller:apprepository-reader || true
-	kubectl delete clusterrolebinding dex kubeapps:controller:apprepository-reader || true
+	kubectl delete clusterrole dex kubeapps:controller:apprepository-reader-kubeapps || true
+	kubectl delete clusterrolebinding dex kubeapps:controller:apprepository-reader-kubeapps || true
 	kubectl delete namespace --wait dex ldap kubeapps || true
 	kubectl delete --wait -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml || true
 
