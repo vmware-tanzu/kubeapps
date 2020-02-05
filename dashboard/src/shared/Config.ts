@@ -8,6 +8,9 @@ export interface IConfig {
   oauthLoginURI: string;
   oauthLogoutURI: string;
   error?: Error;
+  featureFlags: {
+    reposPerNamespace: boolean;
+  };
 }
 
 export default class Config {

@@ -18,12 +18,14 @@ function mapStateToProps({
   router: {
     location: { pathname },
   },
+  config: { featureFlags },
 }: IState) {
   return {
     authenticated,
     namespace,
     defaultNamespace,
     pathname,
+    featureFlags,
   };
 }
 

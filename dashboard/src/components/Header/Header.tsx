@@ -24,6 +24,7 @@ interface IHeaderProps {
   setNamespace: (ns: string) => void;
   createNamespace: (ns: string) => Promise<boolean>;
   getNamespace: (ns: string) => void;
+  featureFlags: { reposPerNamespace: boolean };
 }
 
 interface IHeaderState {
@@ -32,6 +33,10 @@ interface IHeaderState {
 }
 
 class Header extends React.Component<IHeaderProps, IHeaderState> {
+  public static defaultProps = {
+    featureFlags: { reposPerNamespace: false },
+  };
+
   // Defines the route
   private readonly links: IHeaderLinkProps[] = [
     {
@@ -83,6 +88,9 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       this.state.configOpen ? "header__nav__submenu-open" : ""
     }`;
 
+    const reposPath = this.props.featureFlags.reposPerNamespace
+      ? `/config/ns/${namespace.current}/repos`
+      : "/config/repos";
     return (
       <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
         <div className="container">
@@ -135,7 +143,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                     </a>
                     <ul role="menu" aria-label="Products" className={submenu}>
                       <li role="none">
-                        <NavLink to="/config/repos">App Repositories</NavLink>
+                        <NavLink to={reposPath}>App Repositories</NavLink>
                       </li>
                       <li role="none">
                         <NavLink to="/config/brokers">Service Brokers</NavLink>

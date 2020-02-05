@@ -9,8 +9,8 @@ const defaultProps = {
   fetchNamespaces: jest.fn(),
   logout: jest.fn(),
   namespace: {
-    current: "",
-    namespaces: [],
+    current: "default",
+    namespaces: ["default", "other"],
   } as INamespaceState,
   defaultNamespace: "kubeapps-user",
   pathname: "",
@@ -31,6 +31,38 @@ it("renders the header links and titles", () => {
   items.forEach((item, index) => {
     expect(item.children).toBe(expectedItems[index].children);
     expect(item.to).toBe(expectedItems[index].to);
+  });
+});
+
+describe("settings", () => {
+  it("renders settings without reposPerNamespace", () => {
+    const wrapper = shallow(<Header {...defaultProps} />);
+    const settingsbar = wrapper.find(".header__nav__submenu").first();
+    const items = settingsbar.find("NavLink").map(p => p.props());
+    const expectedItems = [
+      { children: "App Repositories", to: "/config/repos" },
+      { children: "Service Brokers", to: "/config/brokers" },
+    ];
+    items.forEach((item, index) => {
+      expect(item.children).toBe(expectedItems[index].children);
+      expect(item.to).toBe(expectedItems[index].to);
+    });
+  });
+
+  it("renders settings with reposPerNamespace", () => {
+    const wrapper = shallow(
+      <Header {...defaultProps} featureFlags={{ reposPerNamespace: true }} />,
+    );
+    const settingsbar = wrapper.find(".header__nav__submenu").first();
+    const items = settingsbar.find("NavLink").map(p => p.props());
+    const expectedItems = [
+      { children: "App Repositories", to: "/config/ns/default/repos" },
+      { children: "Service Brokers", to: "/config/brokers" },
+    ];
+    items.forEach((item, index) => {
+      expect(item.children).toBe(expectedItems[index].children);
+      expect(item.to).toBe(expectedItems[index].to);
+    });
   });
 });
 
