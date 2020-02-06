@@ -6,7 +6,7 @@ import "./AppRepo.css";
 interface IAppRepoRefreshAllButtonProps {
   resyncAllRepos: (names: string[]) => void;
   repos: IAppRepository[];
-  kubeappsNamespace: string;
+  namespace: string;
 }
 
 export class AppRepoRefreshAllButton extends React.Component<IAppRepoRefreshAllButtonProps> {

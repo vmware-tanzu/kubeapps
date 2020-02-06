@@ -6,10 +6,14 @@ import actions from "../../actions";
 import AppRepoList from "../../components/Config/AppRepoList";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ repos, config }: IStoreState) {
+function mapStateToProps({ config, namespace, repos }: IStoreState) {
+  let repoNamespace = config.namespace;
+  if (config.featureFlags.reposPerNamespace) {
+    repoNamespace = namespace.current;
+  }
   return {
     errors: repos.errors,
-    kubeappsNamespace: config.namespace,
+    namespace: repoNamespace,
     repos: repos.repos,
   };
 }
@@ -19,8 +23,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     deleteRepo: async (name: string) => {
       return dispatch(actions.repos.deleteRepo(name));
     },
-    fetchRepos: async () => {
-      return dispatch(actions.repos.fetchRepos());
+    fetchRepos: async (namespace: string) => {
+      return dispatch(actions.repos.fetchRepos(namespace));
     },
     install: async (
       name: string,

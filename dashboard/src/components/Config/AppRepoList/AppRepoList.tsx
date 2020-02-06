@@ -14,7 +14,7 @@ export interface IAppRepoListProps {
     update?: Error;
   };
   repos: IAppRepository[];
-  fetchRepos: () => void;
+  fetchRepos: (namespace: string) => void;
   deleteRepo: (name: string) => Promise<boolean>;
   resyncRepo: (name: string) => void;
   resyncAllRepos: (names: string[]) => void;
@@ -25,7 +25,7 @@ export interface IAppRepoListProps {
     customCA: string,
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
-  kubeappsNamespace: string;
+  namespace: string;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -54,17 +54,18 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class AppRepoList extends React.Component<IAppRepoListProps> {
   public componentDidMount() {
-    this.props.fetchRepos();
+    this.props.fetchRepos(this.props.namespace);
   }
 
   public componentDidUpdate(prevProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,
+      namespace,
     } = this.props;
     // refetch if error removed due to location change
     if (prevProps.errors.fetch && !fetch) {
-      fetchRepos();
+      fetchRepos(namespace);
     }
   }
 
@@ -76,7 +77,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       deleteRepo,
       resyncRepo,
       resyncAllRepos,
-      kubeappsNamespace,
+      namespace,
     } = this.props;
     return (
       <div className="app-repo-list">
@@ -103,15 +104,11 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
             ))}
           </tbody>
         </table>
-        <AppRepoAddButton
-          error={errors.create}
-          install={install}
-          kubeappsNamespace={kubeappsNamespace}
-        />
+        <AppRepoAddButton error={errors.create} install={install} namespace={namespace} />
         <AppRepoRefreshAllButton
           resyncAllRepos={resyncAllRepos}
           repos={repos}
-          kubeappsNamespace={kubeappsNamespace}
+          namespace={namespace}
         />
       </div>
     );
@@ -123,7 +120,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
         error={this.props.errors[action]}
         defaultRequiredRBACRoles={RequiredRBACRoles}
         action={action}
-        namespace={this.props.kubeappsNamespace}
+        namespace={this.props.namespace}
         resource="App Repositories"
       />
     );

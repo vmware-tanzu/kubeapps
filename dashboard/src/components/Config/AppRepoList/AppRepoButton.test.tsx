@@ -8,7 +8,7 @@ import { AppRepoForm } from "./AppRepoForm";
 
 const defaultProps = {
   install: jest.fn(),
-  kubeappsNamespace: "kubeapps",
+  namespace: "kubeapps",
 };
 
 it("should open a modal with the repository form", () => {

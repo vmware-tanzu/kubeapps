@@ -12,7 +12,9 @@ export const addedRepo = createAction("ADDED_REPO", resolve => {
   return (added: IAppRepository) => resolve(added);
 });
 
-export const requestRepos = createAction("REQUEST_REPOS");
+export const requestRepos = createAction("REQUEST_REPOS", resolve => {
+  return (namespace: string) => resolve(namespace);
+});
 export const receiveRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
 });
@@ -107,13 +109,21 @@ export const resyncAllRepos = (
   };
 };
 
-export const fetchRepos = (): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+// fetchRepos fetches the AppRepositories in a specified namespace, defaulting to those
+// in Kubeapps' own namespace for backwards compatibility.
+export const fetchRepos = (
+  namespace = "",
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
-    dispatch(requestRepos());
     try {
-      const {
-        config: { namespace },
-      } = getState();
+      // Default to the kubeapps' namespace for existing call-sites until we
+      // need to explicitly get repos for a specific namespace as well as
+      // the global app repos from kubeapps' namespace.
+      if (namespace === "") {
+        const { config } = getState();
+        namespace = config.namespace;
+      }
+      dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
     } catch (e) {
