@@ -32,6 +32,7 @@ export class AppRepository {
   // for direct k8s api access (for this resource, at least).
   public static async create(
     name: string,
+    namespace: string,
     repoURL: string,
     authHeader: string,
     customCA: string,
@@ -39,7 +40,7 @@ export class AppRepository {
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(),
-      { appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate } },
+      { appRepository: { name, namespace, repoURL, authHeader, customCA, syncJobPodTemplate } },
     );
     return data;
   }

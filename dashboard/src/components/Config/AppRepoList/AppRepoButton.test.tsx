@@ -36,7 +36,7 @@ it("should install a repository with a custom auth header", done => {
   const button = wrapper.find(AppRepoForm).find(".button");
   button.simulate("submit");
 
-  expect(install).toBeCalledWith("my-repo", "http://foo.bar", "foo", "bar", "");
+  expect(install).toBeCalledWith("my-repo", "kubeapps", "http://foo.bar", "foo", "bar", "");
   // Wait for the Modal to be closed
   setTimeout(() => {
     expect(wrapper.state("modalIsOpen")).toBe(false);
@@ -62,7 +62,14 @@ it("should install a repository with basic auth", done => {
   const button = wrapper.find(AppRepoForm).find(".button");
   button.simulate("submit");
 
-  expect(install).toBeCalledWith("my-repo", "http://foo.bar", "Basic Zm9vOmJhcg==", "", "");
+  expect(install).toBeCalledWith(
+    "my-repo",
+    "kubeapps",
+    "http://foo.bar",
+    "Basic Zm9vOmJhcg==",
+    "",
+    "",
+  );
   // Wait for the Modal to be closed
   setTimeout(() => {
     expect(wrapper.state("modalIsOpen")).toBe(false);
@@ -87,7 +94,7 @@ it("should install a repository with a bearer token", done => {
   const button = wrapper.find(AppRepoForm).find(".button");
   button.simulate("submit");
 
-  expect(install).toBeCalledWith("my-repo", "http://foo.bar", "Bearer foobar", "", "");
+  expect(install).toBeCalledWith("my-repo", "kubeapps", "http://foo.bar", "Bearer foobar", "", "");
   // Wait for the Modal to be closed
   setTimeout(() => {
     expect(wrapper.state("modalIsOpen")).toBe(false);
@@ -112,7 +119,14 @@ it("should install a repository with a podSpecTemplate", done => {
   const button = wrapper.find(AppRepoForm).find(".button");
   button.simulate("submit");
 
-  expect(install).toBeCalledWith("my-repo", "http://foo.bar", "Bearer ", "", "foo: bar");
+  expect(install).toBeCalledWith(
+    "my-repo",
+    "kubeapps",
+    "http://foo.bar",
+    "Bearer ",
+    "",
+    "foo: bar",
+  );
   // Wait for the Modal to be closed
   setTimeout(() => {
     expect(wrapper.state("modalIsOpen")).toBe(false);

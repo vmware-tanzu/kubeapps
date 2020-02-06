@@ -22,6 +22,7 @@ export interface IAppRepoListProps {
   resyncAllRepos: (names: string[]) => void;
   install: (
     name: string,
+    namespace: string,
     url: string,
     authHeader: string,
     customCA: string,

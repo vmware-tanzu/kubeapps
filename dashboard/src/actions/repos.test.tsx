@@ -205,11 +205,19 @@ describe("fetchRepos", () => {
 });
 
 describe("installRepo", () => {
-  const installRepoCMD = repoActions.installRepo("my-repo", "http://foo.bar", "", "", "");
+  const installRepoCMD = repoActions.installRepo(
+    "my-repo",
+    "my-namespace",
+    "http://foo.bar",
+    "",
+    "",
+    "",
+  );
 
   context("when authHeader provided", () => {
     const installRepoCMDAuth = repoActions.installRepo(
       "my-repo",
+      "my-namespace",
       "http://foo.bar",
       "Bearer: abc",
       "",
@@ -220,6 +228,7 @@ describe("installRepo", () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
         "my-repo",
+        "my-namespace",
         "http://foo.bar",
         "Bearer: abc",
         "",
@@ -241,6 +250,7 @@ describe("installRepo", () => {
   context("when a customCA is provided", () => {
     const installRepoCMDAuth = repoActions.installRepo(
       "my-repo",
+      "my-namespace",
       "http://foo.bar",
       "",
       "This is a cert!",
@@ -251,6 +261,7 @@ describe("installRepo", () => {
       await store.dispatch(installRepoCMDAuth);
       expect(AppRepository.create).toHaveBeenCalledWith(
         "my-repo",
+        "my-namespace",
         "http://foo.bar",
         "",
         "This is a cert!",
@@ -279,12 +290,26 @@ spec:
 
       it("calls AppRepository create including pod template", async () => {
         await store.dispatch(
-          repoActions.installRepo("my-repo", "http://foo.bar", "", "", safeYAMLTemplate),
+          repoActions.installRepo(
+            "my-repo",
+            "my-namespace",
+            "http://foo.bar",
+            "",
+            "",
+            safeYAMLTemplate,
+          ),
         );
 
-        expect(AppRepository.create).toHaveBeenCalledWith("my-repo", "http://foo.bar", "", "", {
-          spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
-        });
+        expect(AppRepository.create).toHaveBeenCalledWith(
+          "my-repo",
+          "my-namespace",
+          "http://foo.bar",
+          "",
+          "",
+          {
+            spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
+          },
+        );
       });
 
       // Example from https://nealpoole.com/blog/2013/06/code-execution-via-yaml-in-js-yaml-nodejs-module/
@@ -293,7 +318,14 @@ spec:
 
       it("does not call AppRepository create with an unsafe pod template", async () => {
         await store.dispatch(
-          repoActions.installRepo("my-repo", "http://foo.bar", "", "", unsafeYAMLTemplate),
+          repoActions.installRepo(
+            "my-repo",
+            "my-namespace",
+            "http://foo.bar",
+            "",
+            "",
+            unsafeYAMLTemplate,
+          ),
         );
         expect(AppRepository.create).not.toHaveBeenCalled();
       });
@@ -303,7 +335,14 @@ spec:
   context("when authHeader and customCA are empty", () => {
     it("calls AppRepository create without a auth struct", async () => {
       await store.dispatch(installRepoCMD);
-      expect(AppRepository.create).toHaveBeenCalledWith("my-repo", "http://foo.bar", "", "", {});
+      expect(AppRepository.create).toHaveBeenCalledWith(
+        "my-repo",
+        "my-namespace",
+        "http://foo.bar",
+        "",
+        "",
+        {},
+      );
     });
 
     it("returns true", async () => {

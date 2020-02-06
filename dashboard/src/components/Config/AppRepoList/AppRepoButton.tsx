@@ -24,6 +24,7 @@ interface IAppRepoAddButtonProps {
   error?: Error;
   install: (
     name: string,
+    namespace: string,
     url: string,
     authHeader: string,
     customCA: string,
@@ -84,7 +85,14 @@ export class AppRepoAddButton extends React.Component<
   ) => {
     // Store last submitted name to show it in an error if needed
     this.setState({ lastSubmittedName: name });
-    return this.props.install(name, url, authHeader, customCA, syncJobPodTemplate);
+    return this.props.install(
+      name,
+      this.props.namespace,
+      url,
+      authHeader,
+      customCA,
+      syncJobPodTemplate,
+    );
   };
   private openModal = async () => this.setState({ modalIsOpen: true });
 }

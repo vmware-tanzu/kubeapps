@@ -134,6 +134,7 @@ export const fetchRepos = (
 
 export const installRepo = (
   name: string,
+  namespace: string,
   repoURL: string,
   authHeader: string,
   customCA: string,
@@ -148,6 +149,7 @@ export const installRepo = (
       dispatch(addRepo());
       const data = await AppRepository.create(
         name,
+        namespace,
         repoURL,
         authHeader,
         customCA,
