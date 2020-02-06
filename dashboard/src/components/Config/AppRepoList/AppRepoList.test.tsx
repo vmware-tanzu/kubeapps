@@ -28,7 +28,7 @@ describe("AppRepoList", () => {
     expect(props.fetchRepos).toHaveBeenCalledWith(defaultNamespace);
   });
 
-  it("fetches repos when updating after a fetch error is cleared", () => {
+  it("refetches repos when updating after a fetch error is cleared", () => {
     const props = {
       ...defaultProps,
       errors: { fetch: new Error("Bang!") },
@@ -43,5 +43,37 @@ describe("AppRepoList", () => {
 
     expect(props.fetchRepos).toHaveBeenCalledTimes(2);
     expect(props.fetchRepos).toHaveBeenLastCalledWith(defaultNamespace);
+  });
+
+  it("refetches repos when the namespace changes", () => {
+    const props = {
+      ...defaultProps,
+      fetchRepos: jest.fn(),
+    };
+    const differentNamespace = "different-namespace";
+
+    const wrapper = shallow(<AppRepoList {...props} />);
+    wrapper.setProps({
+      ...props,
+      namespace: differentNamespace,
+    });
+
+    expect(props.fetchRepos).toHaveBeenCalledTimes(2);
+    expect(props.fetchRepos).toHaveBeenLastCalledWith(differentNamespace);
+  });
+
+  it("does not refetch otherwise", () => {
+    const props = {
+      ...defaultProps,
+      fetchRepos: jest.fn(),
+    };
+
+    const wrapper = shallow(<AppRepoList {...props} />);
+    wrapper.setProps({
+      ...props,
+      errors: { fetch: new Error("Bang!") },
+    });
+
+    expect(props.fetchRepos).toHaveBeenCalledTimes(1);
   });
 });

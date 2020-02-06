@@ -4,6 +4,7 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 
 import RepoListContainer from ".";
+import { definedNamespaces } from "../../shared/Namespace";
 
 const mockStore = configureMockStore([thunk]);
 const currentNamespace = "current-namespace";
@@ -43,6 +44,24 @@ describe("RepoListContainer props", () => {
 
     expect(component).toHaveProp({
       namespace: currentNamespace,
+    });
+  });
+
+  it("uses kubeapps namespace when reposPerNamespace is true and _all namespaces selected", () => {
+    const store = mockStore({
+      ...defaultState,
+      config: {
+        featureFlags: { reposPerNamespace: true },
+        namespace: kubeappsNamespace,
+      },
+      namespace: { current: definedNamespaces.all },
+    });
+    const wrapper = shallow(<RepoListContainer store={store} />);
+
+    const component = wrapper.find("AppRepoList");
+
+    expect(component).toHaveProp({
+      namespace: kubeappsNamespace,
     });
   });
 });

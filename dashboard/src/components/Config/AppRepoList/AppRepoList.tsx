@@ -63,8 +63,8 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       fetchRepos,
       namespace,
     } = this.props;
-    // refetch if error removed due to location change
-    if (prevProps.errors.fetch && !fetch) {
+    // refetch if namespace changes or if error removed due to location change
+    if (prevProps.namespace !== namespace || (prevProps.errors.fetch && !fetch)) {
       fetchRepos(namespace);
     }
   }

@@ -4,11 +4,12 @@ import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import AppRepoList from "../../components/Config/AppRepoList";
+import { definedNamespaces } from "../../shared/Namespace";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({ config, namespace, repos }: IStoreState) {
   let repoNamespace = config.namespace;
-  if (config.featureFlags.reposPerNamespace) {
+  if (config.featureFlags.reposPerNamespace && namespace.current !== definedNamespaces.all) {
     repoNamespace = namespace.current;
   }
   return {
