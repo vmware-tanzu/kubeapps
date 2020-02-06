@@ -14,6 +14,7 @@ const defaultProps = {
   resyncAllRepos: jest.fn(),
   install: jest.fn(),
   namespace: defaultNamespace,
+  displayReposPerNamespaceMsg: false,
 };
 
 describe("AppRepoList", () => {

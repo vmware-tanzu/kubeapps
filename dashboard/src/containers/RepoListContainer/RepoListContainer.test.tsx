@@ -17,6 +17,7 @@ const defaultState = {
   },
   namespace: { current: currentNamespace },
   repos: {},
+  displayReposPerNamespaceMsg: false,
 };
 
 describe("RepoListContainer props", () => {
@@ -28,6 +29,7 @@ describe("RepoListContainer props", () => {
 
     expect(component).toHaveProp({
       namespace: kubeappsNamespace,
+      displayReposPerNamespaceMsg: false,
     });
   });
 
@@ -44,6 +46,7 @@ describe("RepoListContainer props", () => {
 
     expect(component).toHaveProp({
       namespace: currentNamespace,
+      displayReposPerNamespaceMsg: true,
     });
   });
 
@@ -62,6 +65,7 @@ describe("RepoListContainer props", () => {
 
     expect(component).toHaveProp({
       namespace: kubeappsNamespace,
+      displayReposPerNamespaceMsg: false,
     });
   });
 });

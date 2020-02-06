@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { IAppRepository, IRBACRole } from "../../../shared/types";
-import ErrorSelector from "../../ErrorAlert/ErrorSelector";
+import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoListItem } from "./AppRepoListItem";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
@@ -26,6 +26,7 @@ export interface IAppRepoListProps {
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
   namespace: string;
+  displayReposPerNamespaceMsg: boolean;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -78,6 +79,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       resyncRepo,
       resyncAllRepos,
       namespace,
+      displayReposPerNamespaceMsg,
     } = this.props;
     return (
       <div className="app-repo-list">
@@ -110,6 +112,24 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
           repos={repos}
           namespace={namespace}
         />
+        {displayReposPerNamespaceMsg && (
+          <MessageAlert header="Looking for site-wide app repositories?">
+            <div>
+              <p className="margin-v-normal">
+                You can view site-wide App Repositories by selecting "All Namespaces" above, if you
+                have permission to view or edit App Repositories available to all namespaces.
+              </p>
+              <p className="margin-v-normal">
+                Kubeapps now enables you to create App Repositories in your own namespace. You can
+                read more information in the{" "}
+                <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#per-namespace-app-repositories">
+                  Private App Repository docs
+                </a>
+                .
+              </p>
+            </div>
+          </MessageAlert>
+        )}
       </div>
     );
   }

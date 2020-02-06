@@ -9,13 +9,16 @@ import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({ config, namespace, repos }: IStoreState) {
   let repoNamespace = config.namespace;
+  let displayReposPerNamespaceMsg = false;
   if (config.featureFlags.reposPerNamespace && namespace.current !== definedNamespaces.all) {
     repoNamespace = namespace.current;
+    displayReposPerNamespaceMsg = true;
   }
   return {
     errors: repos.errors,
     namespace: repoNamespace,
     repos: repos.repos,
+    displayReposPerNamespaceMsg,
   };
 }
 
