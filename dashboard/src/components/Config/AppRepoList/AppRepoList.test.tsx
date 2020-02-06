@@ -15,6 +15,7 @@ const defaultProps = {
   install: jest.fn(),
   namespace: defaultNamespace,
   displayReposPerNamespaceMsg: false,
+  isFetching: false,
 };
 
 describe("AppRepoList", () => {
@@ -76,5 +77,20 @@ describe("AppRepoList", () => {
     });
 
     expect(props.fetchRepos).toHaveBeenCalledTimes(1);
+  });
+
+  it("displays LoadingWrapper when fetching", () => {
+    const props = {
+      ...defaultProps,
+      isFetching: true,
+    };
+
+    const wrapper = shallow(<AppRepoList {...props} />);
+
+    const loading = wrapper.find("LoadingWrapper");
+    expect(loading.length).toBe(1);
+    expect(loading).toHaveProp({
+      loaded: false,
+    });
   });
 });

@@ -21,6 +21,7 @@ function mapStateToProps({ config, namespace, repos }: IStoreState) {
     namespace: repoNamespace,
     repos: repos.repos,
     displayReposPerNamespaceMsg,
+    isFetching: repos.isFetching,
   };
 }
 

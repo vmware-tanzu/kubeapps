@@ -3,6 +3,7 @@ import * as React from "react";
 import { definedNamespaces } from "../../../shared/Namespace";
 import { IAppRepository, IRBACRole } from "../../../shared/types";
 import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
+import LoadingWrapper from "../../LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoListItem } from "./AppRepoListItem";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
@@ -28,6 +29,7 @@ export interface IAppRepoListProps {
   ) => Promise<boolean>;
   namespace: string;
   displayReposPerNamespaceMsg: boolean;
+  isFetching: boolean;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -81,6 +83,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       resyncAllRepos,
       namespace,
       displayReposPerNamespaceMsg,
+      isFetching,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
     return (
@@ -89,27 +92,28 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
         {errors.fetch && this.renderError("fetch")}
         {errors.delete && this.renderError("delete")}
         {errors.update && this.renderError("update")}
-        <table>
-          <thead>
-            <tr>
-              <th>Repo</th>
-              {renderNamespace && <th>Namespace</th>}
-              <th>URL</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {repos.map(repo => (
-              <AppRepoListItem
-                key={repo.metadata.uid}
-                deleteRepo={deleteRepo}
-                resyncRepo={resyncRepo}
-                repo={repo}
-                renderNamespace={renderNamespace}
-              />
-            ))}
-          </tbody>
-        </table>
+        <LoadingWrapper loaded={!isFetching}>
+          <table>
+            <thead>
+              <tr>
+                <th>Repo</th>
+                {renderNamespace && <th>Namespace</th>}
+                <th>URL</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {repos.map(repo => (
+                <AppRepoListItem
+                  key={repo.metadata.uid}
+                  deleteRepo={deleteRepo}
+                  resyncRepo={resyncRepo}
+                  repo={repo}
+                />
+              ))}
+            </tbody>
+          </table>
+        </LoadingWrapper>
         <AppRepoAddButton error={errors.create} install={install} namespace={namespace} />
         <AppRepoRefreshAllButton
           resyncAllRepos={resyncAllRepos}
