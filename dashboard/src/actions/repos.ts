@@ -3,6 +3,7 @@ import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
 import Chart from "../shared/Chart";
+import { definedNamespaces } from "../shared/Namespace";
 import { errorChart } from "./charts";
 
 import { IAppRepository, IStoreState, NotFoundError } from "../shared/types";
@@ -145,6 +146,12 @@ export const installRepo = (
     try {
       if (syncJobPodTemplate.length) {
         syncJobPodTemplateObj = yaml.safeLoad(syncJobPodTemplate);
+      }
+      const {
+        config: { namespace: kubeappsNamespace },
+      } = getState();
+      if (namespace === definedNamespaces.all) {
+        namespace = kubeappsNamespace;
       }
       dispatch(addRepo());
       const data = await AppRepository.create(

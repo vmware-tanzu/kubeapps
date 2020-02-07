@@ -110,6 +110,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                   deleteRepo={deleteRepo}
                   resyncRepo={resyncRepo}
                   repo={repo}
+                  renderNamespace={renderNamespace}
                 />
               ))}
             </tbody>

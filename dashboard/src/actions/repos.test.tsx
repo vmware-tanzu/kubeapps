@@ -393,6 +393,19 @@ spec:
     await store.dispatch(installRepoCMD);
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("uses kubeapps own namespace if namespace is _all", async () => {
+    await store.dispatch(repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", ""));
+
+    expect(AppRepository.create).toHaveBeenCalledWith(
+      "my-repo",
+      "kubeapps-namespace",
+      "http://foo.bar",
+      "",
+      "",
+      {},
+    );
+  });
 });
 
 describe("checkChart", () => {
