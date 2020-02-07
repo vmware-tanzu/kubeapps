@@ -5,7 +5,7 @@ import { ThunkDispatch } from "redux-thunk";
 import actions from "../../actions";
 import AppRepoList from "../../components/Config/AppRepoList";
 import { definedNamespaces } from "../../shared/Namespace";
-import { IStoreState } from "../../shared/types";
+import { IAppRepositoryKey, IStoreState } from "../../shared/types";
 
 function mapStateToProps({ config, namespace, repos }: IStoreState) {
   let repoNamespace = config.namespace;
@@ -27,8 +27,8 @@ function mapStateToProps({ config, namespace, repos }: IStoreState) {
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    deleteRepo: async (name: string) => {
-      return dispatch(actions.repos.deleteRepo(name));
+    deleteRepo: async (name: string, namespace: string) => {
+      return dispatch(actions.repos.deleteRepo(name, namespace));
     },
     fetchRepos: async (namespace: string) => {
       return dispatch(actions.repos.fetchRepos(namespace));
@@ -45,11 +45,12 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
         actions.repos.installRepo(name, namespace, url, authHeader, customCA, syncJobPodTemplate),
       );
     },
-    resyncRepo: async (name: string) => {
-      return dispatch(actions.repos.resyncRepo(name));
+    resyncRepo: async (name: string, namespace: string) => {
+      return dispatch(actions.repos.resyncRepo(name, namespace));
     },
-    resyncAllRepos: async (names: string[]) => {
-      return dispatch(actions.repos.resyncAllRepos(names));
+    // Update here after actions
+    resyncAllRepos: async (repos: IAppRepositoryKey[]) => {
+      return dispatch(actions.repos.resyncAllRepos(repos));
     },
   };
 }

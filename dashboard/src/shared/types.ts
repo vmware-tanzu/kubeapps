@@ -304,6 +304,11 @@ export interface IAppRepositoryList
     }
   > {}
 
+export interface IAppRepositoryKey {
+  name: string;
+  namespace: string;
+}
+
 /** @see https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#response-status-kind */
 export interface IStatus extends IK8sResource {
   kind: "Status";

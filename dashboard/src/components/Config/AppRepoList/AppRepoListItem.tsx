@@ -7,8 +7,8 @@ import ConfirmDialog from "../../ConfirmDialog";
 interface IAppRepoListItemProps {
   repo: IAppRepository;
   renderNamespace: boolean;
-  deleteRepo: (name: string) => Promise<boolean>;
-  resyncRepo: (name: string) => void;
+  deleteRepo: (name: string, namespace: string) => Promise<boolean>;
+  resyncRepo: (name: string, namespace: string) => void;
 }
 
 interface IAppRepoListItemState {
@@ -31,7 +31,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
         <td>{repo.spec && repo.spec.url}</td>
         <td>
           <ConfirmDialog
-            onConfirm={this.handleDeleteClick(repo.metadata.name)}
+            onConfirm={this.handleDeleteClick(repo.metadata.name, repo.metadata.namespace)}
             modalIsOpen={this.state.modalIsOpen}
             loading={false}
             closeModal={this.closeModal}
@@ -43,7 +43,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
 
           <button
             className="button button-secondary"
-            onClick={this.handleResyncClick(repo.metadata.name)}
+            onClick={this.handleResyncClick(repo.metadata.name, repo.metadata.namespace)}
           >
             Refresh
           </button>
@@ -64,16 +64,16 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
     });
   };
 
-  private handleDeleteClick(repoName: string) {
+  private handleDeleteClick(repoName: string, namespace: string) {
     return async () => {
-      this.props.deleteRepo(repoName);
+      this.props.deleteRepo(repoName, namespace);
       this.setState({ modalIsOpen: false });
     };
   }
 
-  private handleResyncClick(repoName: string) {
+  private handleResyncClick(repoName: string, namespace: string) {
     return () => {
-      this.props.resyncRepo(repoName);
+      this.props.resyncRepo(repoName, namespace);
     };
   }
 }
