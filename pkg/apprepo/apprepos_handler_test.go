@@ -24,12 +24,14 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
 	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
+	k8stesting "k8s.io/client-go/testing"
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	fakeapprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
@@ -469,6 +471,90 @@ func TestSecretForRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			if got, want := secretForRequest(appRepositoryRequest{tc.request}, &appRepo), tc.secret; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestGetNamespaces(t *testing.T) {
+	testCases := []struct {
+		name              string
+		kubeappsNamespace string
+		// existingRepos is a map with the namespaces as the key
+		// and a slice of repository names for that namespace as the value.
+		existingNS       []string
+		expectedResponse []corev1.Namespace
+		allowed          bool
+	}{
+		{
+			name:              "it list namespaces",
+			kubeappsNamespace: "kubeapps",
+			existingNS:        []string{"foo"},
+			expectedResponse: []corev1.Namespace{
+				corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "foo",
+					},
+				},
+			},
+			allowed: true,
+		},
+		{
+			name:              "it returns an empty list if not allowed",
+			kubeappsNamespace: "kubeapps",
+			existingNS:        []string{"foo"},
+			expectedResponse:  []corev1.Namespace{},
+			allowed:           false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(),
+				fakecoreclientset.NewSimpleClientset(),
+			}
+
+			for _, ns := range tc.existingNS {
+				cs.Clientset.CoreV1().Namespaces().Create(&corev1.Namespace{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: ns,
+					},
+				})
+			}
+
+			cs.Clientset.Fake.PrependReactor(
+				"create",
+				"selfsubjectaccessreviews",
+				func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
+					mysar := &authorizationv1.SelfSubjectAccessReview{
+						Status: authorizationv1.SubjectAccessReviewStatus{
+							Allowed: tc.allowed,
+							Reason:  "I want to test it",
+						},
+					}
+					return true, mysar, nil
+				},
+			)
+
+			handler := appRepositoriesHandler{
+				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
+				kubeappsNamespace:  tc.kubeappsNamespace,
+			}
+
+			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
+
+			response := httptest.NewRecorder()
+
+			handler.GetNamespaces(response, req)
+
+			var responseNS []corev1.Namespace
+			err := json.NewDecoder(response.Body).Decode(&responseNS)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if !cmp.Equal(responseNS, tc.expectedResponse) {
+				t.Errorf("Unexpected response: %s", cmp.Diff(responseNS, tc.expectedResponse))
 			}
 		})
 	}

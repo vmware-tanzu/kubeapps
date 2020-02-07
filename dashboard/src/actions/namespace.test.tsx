@@ -56,9 +56,7 @@ actionTestCases.forEach(tc => {
 describe("fetchNamespaces", () => {
   it("dispatches the list of namespace names if no error", async () => {
     Namespace.list = jest.fn().mockImplementationOnce(() => {
-      return {
-        items: [{ metadata: { name: "overlook-hotel" } }, { metadata: { name: "room-217" } }],
-      };
+      return [{ metadata: { name: "overlook-hotel" } }, { metadata: { name: "room-217" } }];
     });
     const expectedActions = [
       {
@@ -91,9 +89,7 @@ describe("createNamespace", () => {
   it("dispatches the new namespace and re-fetch namespaces", async () => {
     Namespace.create = jest.fn();
     Namespace.list = jest.fn().mockImplementationOnce(() => {
-      return {
-        items: [{ metadata: { name: "overlook-hotel" } }, { metadata: { name: "room-217" } }],
-      };
+      return [{ metadata: { name: "overlook-hotel" } }, { metadata: { name: "room-217" } }];
     });
     const expectedActions = [
       {

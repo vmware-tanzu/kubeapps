@@ -22,8 +22,10 @@ import (
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
+	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
+	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	corev1typed "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -41,6 +43,7 @@ import (
 type combinedClientsetInterface interface {
 	KubeappsV1alpha1() v1alpha1typed.KubeappsV1alpha1Interface
 	CoreV1() corev1typed.CoreV1Interface
+	AuthorizationV1() authorizationv1.AuthorizationV1Interface
 }
 
 // Need to use a type alias to embed the two Clientset's without a name clash.
@@ -60,6 +63,9 @@ type appRepositoriesHandler struct {
 
 	// The namespace in which (currently) app repositories are created.
 	kubeappsNamespace string
+
+	// The Kubernetes client using the pod serviceaccount
+	svcKubeClient *kubernetes.Clientset
 
 	// clientsetForConfig is a field on the struct only so it can be switched
 	// for a fake version when testing. NewAppRepositoryHandler sets it to the
@@ -89,7 +95,7 @@ type appRepositoryResponse struct {
 	AppRepository v1alpha1.AppRepository `json:"appRepository"`
 }
 
-// NewAppRepositoriesHandler returns an AppRepositories handler configured with
+// NewAppRepositoriesHandler returns an AppRepositories and Kubernetes handler configured with
 // the in-cluster config but overriding the token with an empty string, so that
 // ConfigForToken must be called to obtain a valid config.
 func NewAppRepositoriesHandler(kubeappsNamespace string) (*appRepositoriesHandler, error) {
@@ -110,11 +116,22 @@ func NewAppRepositoriesHandler(kubeappsNamespace string) (*appRepositoriesHandle
 	if err != nil {
 		return nil, err
 	}
+
+	svcRestConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return nil, err
+	}
+	svcKubeClient, err := kubernetes.NewForConfig(svcRestConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &appRepositoriesHandler{
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
 		clientsetForConfig: clientsetForConfig,
+		svcKubeClient:      svcKubeClient,
 	}, nil
 }
 
@@ -287,9 +304,67 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 		},
 		StringData: secrets,
 	}
-	return nil
 }
 
 func secretNameForRepo(repoName string) string {
 	return fmt.Sprintf("apprepo-%s-secrets", repoName)
+}
+
+func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) ([]corev1.Namespace, error) {
+	allowedNamespaces := []corev1.Namespace{}
+	for _, namespace := range namespaces.Items {
+		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
+			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
+				ResourceAttributes: &authorizationapi.ResourceAttributes{
+					Group:     "",
+					Resource:  "secrets",
+					Verb:      "get",
+					Namespace: namespace.Name,
+				},
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		if res.Status.Allowed {
+			allowedNamespaces = append(allowedNamespaces, namespace)
+		}
+	}
+	return allowedNamespaces, nil
+}
+
+// GetNamespaces return namespaces
+func (a *appRepositoriesHandler) GetNamespaces(w http.ResponseWriter, req *http.Request) {
+	token := auth.ExtractToken(req.Header.Get("Authorization"))
+	userClientset, err := a.clientsetForConfig(a.ConfigForToken(token))
+	if err != nil {
+		log.Errorf("unable to create clientset: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	// Try to list namespaces with the user token, for backward compatibility
+	namespaces, err := userClientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	if err != nil {
+		if errors.IsForbidden(err) {
+			// The user doesn't have permissions to list namespaces, use the current serviceaccount
+			namespaces, err = a.svcKubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+		}
+		if err != nil && !errors.IsForbidden(err) {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	allowedNamespaces, err := filterAllowedNamespaces(userClientset, namespaces)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	responseBody, err := json.Marshal(allowedNamespaces)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBody)
 }

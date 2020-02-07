@@ -12,6 +12,10 @@
 ## If you set it to true, Kubeapps will not work with releases installed with Helm 2.
 useHelm3: false
 
+## Enable this feature flag to allow users to discover available namespaces (only the ones they have access).
+## If you set it to true, Kubeapps create a ClusterRole to be able to list namespaces.
+allowNamespaceDiscovery: false
+
 ## The frontend service is the main reverse proxy used to access the Kubeapps UI
 ## To expose Kubeapps externally either configure the ingress object below or
 ## set frontend.service.type=LoadBalancer in the frontend configuration.
