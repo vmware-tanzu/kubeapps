@@ -333,7 +333,10 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 	return allowedNamespaces, nil
 }
 
-// GetNamespaces return namespaces
+// GetNamespaces return the list of namespaces that the user has permission to access
+// TODO(andresmgot): I am adding this method in this package for simplicity
+// (since it already allows to impersonate the user)
+// We should refactor this code to make it more generic (not apprepository-specific)
 func (a *appRepositoriesHandler) GetNamespaces(w http.ResponseWriter, req *http.Request) {
 	token := auth.ExtractToken(req.Header.Get("Authorization"))
 	userClientset, err := a.clientsetForConfig(a.ConfigForToken(token))
