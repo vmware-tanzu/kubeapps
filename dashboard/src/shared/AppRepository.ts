@@ -1,5 +1,6 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
+import { definedNamespaces } from "./Namespace";
 import { IAppRepository, IAppRepositoryList, ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
@@ -47,7 +48,7 @@ export class AppRepository {
   private static APIEndpoint: string = `${AppRepository.APIBase}/apis/kubeapps.com/v1alpha1`;
   private static getResourceLink(namespace?: string): string {
     return `${AppRepository.APIEndpoint}/${
-      namespace ? `namespaces/${namespace}/` : ""
+      !namespace || namespace === definedNamespaces.all ? "" : `namespaces/${namespace}/`
     }apprepositories`;
   }
   private static getSelfLink(name: string, namespace: string): string {

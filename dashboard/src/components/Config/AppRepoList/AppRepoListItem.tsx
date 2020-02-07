@@ -6,6 +6,7 @@ import ConfirmDialog from "../../ConfirmDialog";
 
 interface IAppRepoListItemProps {
   repo: IAppRepository;
+  renderNamespace: boolean;
   deleteRepo: (name: string) => Promise<boolean>;
   resyncRepo: (name: string) => void;
 }
@@ -20,12 +21,13 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
   };
 
   public render() {
-    const { repo } = this.props;
+    const { renderNamespace, repo } = this.props;
     return (
       <tr key={repo.metadata.name}>
         <td>
           <Link to={`/catalog/${repo.metadata.name}`}>{repo.metadata.name}</Link>
         </td>
+        {renderNamespace && <td>{repo.metadata.namespace}</td>}
         <td>{repo.spec && repo.spec.url}</td>
         <td>
           <ConfirmDialog

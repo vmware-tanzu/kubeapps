@@ -50,7 +50,7 @@ describe("RepoListContainer props", () => {
     });
   });
 
-  it("uses kubeapps namespace when reposPerNamespace is true and _all namespaces selected", () => {
+  it("passes _all through as a normal namespace when reposPerNamespaces is true, to be handled by the component", () => {
     const store = mockStore({
       ...defaultState,
       config: {
@@ -64,7 +64,7 @@ describe("RepoListContainer props", () => {
     const component = wrapper.find("AppRepoList");
 
     expect(component).toHaveProp({
-      namespace: kubeappsNamespace,
+      namespace: definedNamespaces.all,
       displayReposPerNamespaceMsg: false,
     });
   });

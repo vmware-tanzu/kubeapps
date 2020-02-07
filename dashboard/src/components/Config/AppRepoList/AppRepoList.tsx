@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { definedNamespaces } from "../../../shared/Namespace";
 import { IAppRepository, IRBACRole } from "../../../shared/types";
 import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
 import { AppRepoAddButton } from "./AppRepoButton";
@@ -81,6 +82,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       namespace,
       displayReposPerNamespaceMsg,
     } = this.props;
+    const renderNamespace = namespace === definedNamespaces.all;
     return (
       <div className="app-repo-list">
         <h1>App Repositories</h1>
@@ -91,6 +93,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
           <thead>
             <tr>
               <th>Repo</th>
+              {renderNamespace && <th>Namespace</th>}
               <th>URL</th>
               <th>Actions</th>
             </tr>
@@ -102,6 +105,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                 deleteRepo={deleteRepo}
                 resyncRepo={resyncRepo}
                 repo={repo}
+                renderNamespace={renderNamespace}
               />
             ))}
           </tbody>
@@ -113,15 +117,18 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
           namespace={namespace}
         />
         {displayReposPerNamespaceMsg && (
-          <MessageAlert header="Looking for site-wide app repositories?">
+          <MessageAlert header="Looking for other app repositories?">
             <div>
               <p className="margin-v-normal">
-                You can view site-wide App Repositories by selecting "All Namespaces" above, if you
-                have permission to view or edit App Repositories available to all namespaces.
+                You can view App Repositories across all namespaces by selecting "All Namespaces"
+                above, if you have permission to view App Repositories cluster-wide. We will also
+                add information on the current page indicating App Repositories in other namespaces
+                which can be used in the current namespace.
               </p>
               <p className="margin-v-normal">
-                Kubeapps now enables you to create App Repositories in your own namespace. You can
-                read more information in the{" "}
+                Kubeapps now enables you to create App Repositories in your own namespace that will
+                be available in your own namespace and optionally other namespaces to which you have
+                access. You can read more information in the{" "}
                 <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#per-namespace-app-repositories">
                   Private App Repository docs
                 </a>
