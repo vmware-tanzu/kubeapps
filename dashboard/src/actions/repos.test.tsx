@@ -13,9 +13,10 @@ const mockStore = configureMockStore([thunk]);
 
 let store: any;
 const appRepo = { spec: { resyncRequests: 10000 } };
+const kubeappsNamespace = "kubeapps-namespace";
 
 beforeEach(() => {
-  store = mockStore({ config: { namespace: "my-namespace" } });
+  store = mockStore({ config: { namespace: kubeappsNamespace } });
   AppRepository.list = jest.fn().mockImplementationOnce(() => {
     return { items: { foo: "bar" } };
   });
@@ -85,6 +86,7 @@ describe("deleteRepo", () => {
     const expectedActions = [
       {
         type: getType(repoActions.requestRepos),
+        payload: kubeappsNamespace,
       },
       {
         type: getType(repoActions.receiveRepos),
@@ -148,10 +150,28 @@ describe("resyncRepo", () => {
 });
 
 describe("fetchRepos", () => {
+  const namespace = "default";
   it("dispatches requestRepos and receivedRepos if no error", async () => {
     const expectedActions = [
       {
         type: getType(repoActions.requestRepos),
+        payload: namespace,
+      },
+      {
+        type: getType(repoActions.receiveRepos),
+        payload: { foo: "bar" },
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepos(namespace));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("defaults to apprepos in kubeapps own namespace if none specified", async () => {
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestRepos),
+        payload: kubeappsNamespace,
       },
       {
         type: getType(repoActions.receiveRepos),
@@ -171,6 +191,7 @@ describe("fetchRepos", () => {
     const expectedActions = [
       {
         type: getType(repoActions.requestRepos),
+        payload: namespace,
       },
       {
         type: getType(repoActions.errorRepos),
@@ -178,7 +199,7 @@ describe("fetchRepos", () => {
       },
     ];
 
-    await store.dispatch(repoActions.fetchRepos());
+    await store.dispatch(repoActions.fetchRepos(namespace));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

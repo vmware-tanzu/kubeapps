@@ -3,7 +3,7 @@
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
   install={[Function]}
-  kubeappsNamespace="kubeapps"
+  namespace="kubeapps"
 >
   <button
     className="button button-primary"

@@ -30,7 +30,7 @@ interface IAppRepoAddButtonProps {
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
   redirectTo?: string;
-  kubeappsNamespace: string;
+  namespace: string;
 }
 interface IAppRepoAddButtonState {
   lastSubmittedName: string;
@@ -63,7 +63,7 @@ export class AppRepoAddButton extends React.Component<
               error={this.props.error}
               defaultRequiredRBACRoles={{ create: RequiredRBACRoles }}
               action="create"
-              namespace={this.props.kubeappsNamespace}
+              namespace={this.props.namespace}
               resource={`App Repository ${this.state.lastSubmittedName}`}
             />
           )}

@@ -199,3 +199,9 @@ spec:
 ```
 
 The above will generate a Pod with the label `my-repo: isPrivate` and the environment variable `FOO=BAR`.
+
+## Per Namespace App Repositories
+
+There is work in progress to support AppRepositories per namespace in Kubeapps, rather than sharing access to AppRepositories in Kubeapps' own namespace. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87).
+
+More information will be added once it is available for general use.

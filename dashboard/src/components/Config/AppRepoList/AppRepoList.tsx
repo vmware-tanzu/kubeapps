@@ -1,7 +1,8 @@
 import * as React from "react";
 
+import { definedNamespaces } from "../../../shared/Namespace";
 import { IAppRepository, IRBACRole } from "../../../shared/types";
-import ErrorSelector from "../../ErrorAlert/ErrorSelector";
+import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoListItem } from "./AppRepoListItem";
 import { AppRepoRefreshAllButton } from "./AppRepoRefreshAllButton";
@@ -14,7 +15,7 @@ export interface IAppRepoListProps {
     update?: Error;
   };
   repos: IAppRepository[];
-  fetchRepos: () => void;
+  fetchRepos: (namespace: string) => void;
   deleteRepo: (name: string) => Promise<boolean>;
   resyncRepo: (name: string) => void;
   resyncAllRepos: (names: string[]) => void;
@@ -25,7 +26,8 @@ export interface IAppRepoListProps {
     customCA: string,
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
-  kubeappsNamespace: string;
+  namespace: string;
+  displayReposPerNamespaceMsg: boolean;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -54,17 +56,18 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 
 class AppRepoList extends React.Component<IAppRepoListProps> {
   public componentDidMount() {
-    this.props.fetchRepos();
+    this.props.fetchRepos(this.props.namespace);
   }
 
   public componentDidUpdate(prevProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,
+      namespace,
     } = this.props;
-    // refetch if error removed due to location change
-    if (prevProps.errors.fetch && !fetch) {
-      fetchRepos();
+    // refetch if namespace changes or if error removed due to location change
+    if (prevProps.namespace !== namespace || (prevProps.errors.fetch && !fetch)) {
+      fetchRepos(namespace);
     }
   }
 
@@ -76,8 +79,10 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       deleteRepo,
       resyncRepo,
       resyncAllRepos,
-      kubeappsNamespace,
+      namespace,
+      displayReposPerNamespaceMsg,
     } = this.props;
+    const renderNamespace = namespace === definedNamespaces.all;
     return (
       <div className="app-repo-list">
         <h1>App Repositories</h1>
@@ -88,6 +93,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
           <thead>
             <tr>
               <th>Repo</th>
+              {renderNamespace && <th>Namespace</th>}
               <th>URL</th>
               <th>Actions</th>
             </tr>
@@ -99,20 +105,36 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                 deleteRepo={deleteRepo}
                 resyncRepo={resyncRepo}
                 repo={repo}
+                renderNamespace={renderNamespace}
               />
             ))}
           </tbody>
         </table>
-        <AppRepoAddButton
-          error={errors.create}
-          install={install}
-          kubeappsNamespace={kubeappsNamespace}
-        />
+        <AppRepoAddButton error={errors.create} install={install} namespace={namespace} />
         <AppRepoRefreshAllButton
           resyncAllRepos={resyncAllRepos}
           repos={repos}
-          kubeappsNamespace={kubeappsNamespace}
+          namespace={namespace}
         />
+        {displayReposPerNamespaceMsg && (
+          <MessageAlert header="Looking for other app repositories?">
+            <div>
+              <p className="margin-v-normal">
+                You can view App Repositories across all namespaces by selecting "All Namespaces"
+                above, if you have permission to view App Repositories cluster-wide.
+              </p>
+              <p className="margin-v-normal">
+                Kubeapps now enables you to create App Repositories in your own namespace that will
+                be available in your own namespace and, in the future, optionally available in other
+                namespaces to which you have access. You can read more information in the{" "}
+                <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#per-namespace-app-repositories">
+                  Private App Repository docs
+                </a>
+                .
+              </p>
+            </div>
+          </MessageAlert>
+        )}
       </div>
     );
   }
@@ -123,7 +145,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
         error={this.props.errors[action]}
         defaultRequiredRBACRoles={RequiredRBACRoles}
         action={action}
-        namespace={this.props.kubeappsNamespace}
+        namespace={this.props.namespace}
         resource="App Repositories"
       />
     );
