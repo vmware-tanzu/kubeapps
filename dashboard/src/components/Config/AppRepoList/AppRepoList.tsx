@@ -121,14 +121,12 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
             <div>
               <p className="margin-v-normal">
                 You can view App Repositories across all namespaces by selecting "All Namespaces"
-                above, if you have permission to view App Repositories cluster-wide. We will also
-                add information on the current page indicating App Repositories in other namespaces
-                which can be used in the current namespace.
+                above, if you have permission to view App Repositories cluster-wide.
               </p>
               <p className="margin-v-normal">
                 Kubeapps now enables you to create App Repositories in your own namespace that will
-                be available in your own namespace and optionally other namespaces to which you have
-                access. You can read more information in the{" "}
+                be available in your own namespace and, in the future, optionally available in other
+                namespaces to which you have access. You can read more information in the{" "}
                 <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#per-namespace-app-repositories">
                   Private App Repository docs
                 </a>
