@@ -44,8 +44,8 @@ export type NamespaceAction = ActionType<typeof allActions[number]>;
 export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
-      const namespaces = await Namespace.list();
-      const namespaceStrings = namespaces.map((n: IResource) => n.metadata.name);
+      const namespaceList = await Namespace.list();
+      const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
       dispatch(receiveNamespaces(namespaceStrings));
     } catch (e) {
       dispatch(errorNamespaces(e, "list"));

@@ -6,7 +6,9 @@ import { ForbiddenError, IResource, NotFoundError } from "./types";
 
 export default class Namespace {
   public static async list() {
-    const { data } = await axiosWithAuth.get<IResource[]>(url.backend.namespaces.list());
+    const { data } = await axiosWithAuth.get<{ namespaces: IResource[] }>(
+      url.backend.namespaces.list(),
+    );
     return data;
   }
 
@@ -45,6 +47,5 @@ export default class Namespace {
 
 // Set of namespaces used accross the applications as default and "all ns" placeholders
 export const definedNamespaces = {
-  default: "default",
   all: "_all",
 };

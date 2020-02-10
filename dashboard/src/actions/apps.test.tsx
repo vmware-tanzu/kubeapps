@@ -256,13 +256,9 @@ describe("deploy chart", () => {
   });
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart(
-        "my-version" as any,
-        "my-release",
-        definedNamespaces.default,
-        "foo: 1",
-        { properties: { foo: { type: "string" } } },
-      ),
+      actions.apps.deployChart("my-version" as any, "my-release", "default", "foo: 1", {
+        properties: { foo: { type: "string" } },
+      }),
     );
     expect(res).toBe(false);
     const expectedActions = [
@@ -323,13 +319,9 @@ describe("upgradeApp", () => {
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
-      actions.apps.upgradeApp(
-        "my-version" as any,
-        "my-release",
-        definedNamespaces.default,
-        "foo: 1",
-        { properties: { foo: { type: "string" } } },
-      ),
+      actions.apps.upgradeApp("my-version" as any, "my-release", "default", "foo: 1", {
+        properties: { foo: { type: "string" } },
+      }),
     );
 
     expect(res).toBe(false);
@@ -347,7 +339,7 @@ describe("upgradeApp", () => {
 });
 
 describe("rollbackApp", () => {
-  const provisionCMD = actions.apps.rollbackApp("my-release", definedNamespaces.default, 1);
+  const provisionCMD = actions.apps.rollbackApp("my-release", "default", 1);
 
   it("success and re-request apps info", async () => {
     App.rollback = jest.fn().mockImplementationOnce(() => true);
@@ -360,7 +352,7 @@ describe("rollbackApp", () => {
       { type: getType(actions.apps.requestApps) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.rollback).toHaveBeenCalledWith("my-release", definedNamespaces.default, 1);
+    expect(App.rollback).toHaveBeenCalledWith("my-release", "default", 1);
   });
 
   it("dispatches an error", async () => {

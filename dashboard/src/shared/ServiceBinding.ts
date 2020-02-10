@@ -1,6 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
-import { definedNamespaces } from "./Namespace";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
 
 interface IK8sApiSecretResponse {
@@ -107,7 +106,7 @@ export class ServiceBinding {
     }/servicebindings${name ? `/${name}` : ""}`;
   }
 
-  private static secretEndpoint(namespace: string = definedNamespaces.default): string {
+  private static secretEndpoint(namespace: string): string {
     return `${APIBase}/api/v1/namespaces/${namespace}/secrets/`;
   }
 }

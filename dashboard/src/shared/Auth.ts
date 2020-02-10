@@ -5,7 +5,7 @@ const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 import { IConfig } from "./Config";
 import { APIBase } from "./Kube";
 
-export const DEFAULT_NAMESPACE = "default";
+export const DEFAULT_NAMESPACE = "_all";
 
 export class Auth {
   public static getAuthToken() {

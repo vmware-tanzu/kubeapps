@@ -95,6 +95,11 @@ type appRepositoryResponse struct {
 	AppRepository v1alpha1.AppRepository `json:"appRepository"`
 }
 
+// namespacesResponse is used to marshal the JSON response
+type namespacesResponse struct {
+	Namespaces []corev1.Namespace `json:"namespaces"`
+}
+
 // NewAppRepositoriesHandler returns an AppRepositories and Kubernetes handler configured with
 // the in-cluster config but overriding the token with an empty string, so that
 // ConfigForToken must be called to obtain a valid config.
@@ -352,8 +357,12 @@ func (a *appRepositoriesHandler) GetNamespaces(w http.ResponseWriter, req *http.
 			// The user doesn't have permissions to list namespaces, use the current serviceaccount
 			namespaces, err = a.svcKubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
 		}
-		if err != nil && !errors.IsForbidden(err) {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err != nil {
+			code := http.StatusInternalServerError
+			if errors.IsForbidden(err) {
+				code = http.StatusForbidden
+			}
+			http.Error(w, err.Error(), code)
 			return
 		}
 	}
@@ -364,7 +373,10 @@ func (a *appRepositoriesHandler) GetNamespaces(w http.ResponseWriter, req *http.
 		return
 	}
 
-	responseBody, err := json.Marshal(allowedNamespaces)
+	response := namespacesResponse{
+		Namespaces: allowedNamespaces,
+	}
+	responseBody, err := json.Marshal(response)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
