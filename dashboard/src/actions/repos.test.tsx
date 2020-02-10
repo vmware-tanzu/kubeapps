@@ -16,7 +16,10 @@ const appRepo = { spec: { resyncRequests: 10000 } };
 const kubeappsNamespace = "kubeapps-namespace";
 
 beforeEach(() => {
-  store = mockStore({ config: { namespace: kubeappsNamespace } });
+  store = mockStore({
+    config: { namespace: kubeappsNamespace },
+    namespace: { current: kubeappsNamespace },
+  });
   AppRepository.list = jest.fn().mockImplementationOnce(() => {
     return { items: { foo: "bar" } };
   });
@@ -94,7 +97,7 @@ describe("deleteRepo", () => {
       },
     ];
 
-    await store.dispatch(repoActions.deleteRepo("foo"));
+    await store.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -110,7 +113,7 @@ describe("deleteRepo", () => {
       },
     ];
 
-    await store.dispatch(repoActions.deleteRepo("foo"));
+    await store.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -128,7 +131,7 @@ describe("resyncRepo", () => {
       },
     ];
 
-    await store.dispatch(repoActions.resyncRepo("foo"));
+    await store.dispatch(repoActions.resyncRepo("foo", "my-namespace"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -144,8 +147,31 @@ describe("resyncRepo", () => {
       },
     ];
 
-    await store.dispatch(repoActions.resyncRepo("foo"));
+    await store.dispatch(repoActions.resyncRepo("foo", "my-namespace"));
     expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("resyncAllRepos", () => {
+  it("resyncs each repo using its namespace", async () => {
+    const appRepoGetMock = jest.fn();
+    AppRepository.get = appRepoGetMock;
+    await store.dispatch(
+      repoActions.resyncAllRepos([
+        {
+          name: "foo",
+          namespace: "namespace-1",
+        },
+        {
+          name: "bar",
+          namespace: "namespace-2",
+        },
+      ]),
+    );
+
+    expect(appRepoGetMock).toHaveBeenCalledTimes(2);
+    expect(appRepoGetMock.mock.calls[0]).toEqual(["foo", "namespace-1"]);
+    expect(appRepoGetMock.mock.calls[1]).toEqual(["bar", "namespace-2"]);
   });
 });
 

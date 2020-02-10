@@ -6,7 +6,7 @@ import Chart from "../shared/Chart";
 import { definedNamespaces } from "../shared/Namespace";
 import { errorChart } from "./charts";
 
-import { IAppRepository, IStoreState, NotFoundError } from "../shared/types";
+import { IAppRepository, IAppRepositoryKey, IStoreState, NotFoundError } from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
@@ -65,14 +65,15 @@ export type AppReposAction = ActionType<typeof allActions[number]>;
 
 export const deleteRepo = (
   name: string,
+  namespace: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
+    const {
+      namespace: { current },
+    } = getState();
     try {
-      const {
-        config: { namespace },
-      } = getState();
       await AppRepository.delete(name, namespace);
-      dispatch(fetchRepos());
+      dispatch(fetchRepos(current));
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "delete"));
@@ -83,12 +84,10 @@ export const deleteRepo = (
 
 export const resyncRepo = (
   name: string,
+  namespace: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     try {
-      const {
-        config: { namespace },
-      } = getState();
       const repo = await AppRepository.get(name, namespace);
       repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
       repo.spec.resyncRequests++;
@@ -101,11 +100,11 @@ export const resyncRepo = (
 };
 
 export const resyncAllRepos = (
-  repoNames: string[],
+  repos: IAppRepositoryKey[],
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
-    repoNames.forEach(name => {
-      dispatch(resyncRepo(name));
+    repos.forEach(repo => {
+      dispatch(resyncRepo(repo.name, repo.namespace));
     });
   };
 };

@@ -1,12 +1,11 @@
 import * as React from "react";
 
-import { IAppRepository } from "shared/types";
+import { IAppRepository, IAppRepositoryKey } from "shared/types";
 import "./AppRepo.css";
 
 interface IAppRepoRefreshAllButtonProps {
-  resyncAllRepos: (names: string[]) => void;
+  resyncAllRepos: (repos: IAppRepositoryKey[]) => void;
   repos: IAppRepository[];
-  namespace: string;
 }
 
 export class AppRepoRefreshAllButton extends React.Component<IAppRepoRefreshAllButtonProps> {
@@ -24,10 +23,13 @@ export class AppRepoRefreshAllButton extends React.Component<IAppRepoRefreshAllB
 
   private handleResyncAllClick = async () => {
     if (this.props.repos) {
-      const repoNames = this.props.repos.map(repo => {
-        return repo.metadata.name;
+      const repos = this.props.repos.map(repo => {
+        return {
+          name: repo.metadata.name,
+          namespace: repo.metadata.namespace,
+        };
       });
-      this.props.resyncAllRepos(repoNames);
+      this.props.resyncAllRepos(repos);
     }
   };
 }

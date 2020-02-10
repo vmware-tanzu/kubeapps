@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { definedNamespaces } from "../../../shared/Namespace";
-import { IAppRepository, IRBACRole } from "../../../shared/types";
+import { IAppRepository, IAppRepositoryKey, IRBACRole } from "../../../shared/types";
 import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
 import LoadingWrapper from "../../LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
@@ -17,9 +17,9 @@ export interface IAppRepoListProps {
   };
   repos: IAppRepository[];
   fetchRepos: (namespace: string) => void;
-  deleteRepo: (name: string) => Promise<boolean>;
-  resyncRepo: (name: string) => void;
-  resyncAllRepos: (names: string[]) => void;
+  deleteRepo: (name: string, namespace: string) => Promise<boolean>;
+  resyncRepo: (name: string, namespace: string) => void;
+  resyncAllRepos: (repos: IAppRepositoryKey[]) => void;
   install: (
     name: string,
     namespace: string,
@@ -79,12 +79,12 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       errors,
       repos,
       install,
-      deleteRepo,
-      resyncRepo,
-      resyncAllRepos,
       namespace,
       displayReposPerNamespaceMsg,
       isFetching,
+      deleteRepo,
+      resyncRepo,
+      resyncAllRepos,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
     return (
@@ -117,11 +117,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
           </table>
         </LoadingWrapper>
         <AppRepoAddButton error={errors.create} install={install} namespace={namespace} />
-        <AppRepoRefreshAllButton
-          resyncAllRepos={resyncAllRepos}
-          repos={repos}
-          namespace={namespace}
-        />
+        <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
         {displayReposPerNamespaceMsg && (
           <MessageAlert header="Looking for other app repositories?">
             <div>
