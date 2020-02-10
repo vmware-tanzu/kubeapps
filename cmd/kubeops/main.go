@@ -86,6 +86,9 @@ func main() {
 	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
 		negroni.WrapFunc(appreposHandler.Create),
 	))
+	backendAPIv1.Methods("GET").Path("/namespaces").Handler(negroni.New(
+		negroni.WrapFunc(appreposHandler.GetNamespaces),
+	))
 
 	// assetsvc reverse proxy
 	authGate := auth.AuthGate()

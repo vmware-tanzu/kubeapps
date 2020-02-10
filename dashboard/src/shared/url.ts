@@ -15,6 +15,10 @@ export const backend = {
     base: "api/v1/apprepositories",
     create: () => `${backend.apprepositories.base}`,
   },
+  namespaces: {
+    base: "api/v1/namespaces",
+    list: () => `${backend.namespaces.base}`,
+  },
 };
 
 export const api = {

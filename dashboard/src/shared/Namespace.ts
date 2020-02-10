@@ -1,11 +1,12 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
+import * as url from "./url";
 
-import { ForbiddenError, IK8sList, IResource, NotFoundError } from "./types";
+import { ForbiddenError, IResource, NotFoundError } from "./types";
 
 export default class Namespace {
   public static async list() {
-    const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(`${Namespace.APIEndpoint}`);
+    const { data } = await axiosWithAuth.get<IResource[]>(url.backend.namespaces.list());
     return data;
   }
 
