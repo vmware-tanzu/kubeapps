@@ -7,6 +7,7 @@ import { Auth } from "./Auth";
 import {
   ConflictError,
   ForbiddenError,
+  InternalServerError,
   NotFoundError,
   UnauthorizedError,
   UnprocessableEntity,
@@ -70,6 +71,7 @@ describe("createAxiosInterceptorWithAuth", () => {
     { code: 404, errorClass: NotFoundError },
     { code: 409, errorClass: ConflictError },
     { code: 422, errorClass: UnprocessableEntity },
+    { code: 500, errorClass: InternalServerError },
   ];
 
   testCases.forEach(t => {

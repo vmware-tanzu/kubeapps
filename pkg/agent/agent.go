@@ -3,6 +3,7 @@ package agent
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/proxy"
@@ -85,7 +86,7 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 	if err != nil {
 		// Simulate the Atomic flag and delete the release if failed
 		errDelete := DeleteRelease(actionConfig, name, false)
-		if errDelete != nil {
+		if errDelete != nil && !strings.Contains(errDelete.Error(), "release: not found") {
 			return nil, fmt.Errorf("Release %q failed: %v. Unable to delete failed release: %v", name, err, errDelete)
 		}
 		return nil, fmt.Errorf("Release %q failed and has been uninstalled: %v", name, err)

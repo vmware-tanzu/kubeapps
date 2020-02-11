@@ -7,6 +7,7 @@ import { Auth } from "./Auth";
 import {
   ConflictError,
   ForbiddenError,
+  InternalServerError,
   IStoreState,
   NotFoundError,
   UnauthorizedError,
@@ -67,6 +68,8 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
           return Promise.reject(new ConflictError(message));
         case 422:
           return Promise.reject(new UnprocessableEntity(message));
+        case 500:
+          return Promise.reject(new InternalServerError(message));
         default:
           return Promise.reject(new Error(message));
       }

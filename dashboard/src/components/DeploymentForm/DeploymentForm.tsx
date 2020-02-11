@@ -3,9 +3,9 @@ import * as Moniker from "moniker-native";
 import * as React from "react";
 
 import { JSONSchema4 } from "json-schema";
-import { IChartState, IChartVersion } from "../../shared/types";
+import { IChartState, IChartVersion, InternalServerError } from "../../shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import { ErrorSelector } from "../ErrorAlert";
+import { UnexpectedErrorAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 
 import "react-tabs/style/react-tabs.css";
@@ -60,15 +60,31 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   }
 
   public render() {
-    const { namespace, error } = this.props;
+    const { error } = this.props;
     if (error) {
       return (
-        <ErrorSelector
-          error={error}
-          namespace={namespace}
-          action="create"
-          resource={this.state.latestSubmittedReleaseName}
-        />
+        <UnexpectedErrorAlert
+          title={`Sorry! The installation of ${this.state.latestSubmittedReleaseName} failed`}
+          text={error.message}
+          raw={true}
+          showGenericMessage={error.constructor === InternalServerError}
+        >
+          {error.constructor === InternalServerError ? (
+            <span>
+              The server returned an internal error. If the problem persists, please contant
+              Kubeapps maintainers.
+            </span>
+          ) : (
+            <span>
+              If you are unable to install the application, contact the chart maintainers or if you
+              think the issue is related to Kubeapps, please open an{" "}
+              <a href="https://github.com/kubeapps/kubeapps/issues/new" target="_blank">
+                issue in GitHub
+              </a>
+              .
+            </span>
+          )}
+        </UnexpectedErrorAlert>
       );
     }
     if (this.state.isDeploying) {
