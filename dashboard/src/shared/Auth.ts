@@ -86,6 +86,10 @@ export class Auth {
   // it in the one spot. We may need to query `/oauth2/info` to avoid potential
   // false positives.
   public static is403FromAuthProxy(r: AxiosResponse): boolean {
+    if (r.data && typeof r.data === "string" && r.data.match("system:serviceaccount")) {
+      // If the error message is related to a service account is not from the auth proxy
+      return false;
+    }
     return r.status === 403 && (!r.data || !r.data.message);
   }
 
