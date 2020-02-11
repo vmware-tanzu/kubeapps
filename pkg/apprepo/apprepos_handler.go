@@ -39,11 +39,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// coreClientsetInterface provides just the core client
-type coreClientsetInterface interface {
-	CoreV1() corev1typed.CoreV1Interface
-}
-
 // combinedClientsetInterface provides both the app repository clientset and the corev1 clientset.
 type combinedClientsetInterface interface {
 	KubeappsV1alpha1() v1alpha1typed.KubeappsV1alpha1Interface
@@ -70,7 +65,7 @@ type appRepositoriesHandler struct {
 	kubeappsNamespace string
 
 	// The Kubernetes client using the pod serviceaccount
-	svcKubeClient coreClientsetInterface
+	svcKubeClient kubernetes.Interface
 
 	// clientsetForConfig is a field on the struct only so it can be switched
 	// for a fake version when testing. NewAppRepositoryHandler sets it to the
