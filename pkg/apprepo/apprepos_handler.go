@@ -65,7 +65,7 @@ type appRepositoriesHandler struct {
 	kubeappsNamespace string
 
 	// The Kubernetes client using the pod serviceaccount
-	svcKubeClient *kubernetes.Clientset
+	svcKubeClient kubernetes.Interface
 
 	// clientsetForConfig is a field on the struct only so it can be switched
 	// for a fake version when testing. NewAppRepositoryHandler sets it to the
@@ -179,10 +179,11 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	appRepo := appRepositoryForRequest(appRepoRequest)
-	if appRepo.ObjectMeta.Namespace == "" {
-		appRepo.ObjectMeta.Namespace = a.kubeappsNamespace
+	// Remove once dashboard always sends namespace.
+	if appRepoRequest.AppRepository.Namespace == "" {
+		appRepoRequest.AppRepository.Namespace = a.kubeappsNamespace
 	}
+	appRepo := appRepositoryForRequest(appRepoRequest)
 
 	// TODO(mnelson): validate both required data and request for index
 	// https://github.com/kubeapps/kubeapps/issues/1330
@@ -201,9 +202,9 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	secret := secretForRequest(appRepoRequest, appRepo)
-	if secret != nil {
-		_, err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Create(secret)
+	repoSecret := secretForRequest(appRepoRequest, appRepo)
+	if repoSecret != nil {
+		_, err = clientset.CoreV1().Secrets(repoSecret.ObjectMeta.Namespace).Create(repoSecret)
 		if err != nil {
 			if statusErr, ok := err.(*errors.StatusError); ok {
 				status := statusErr.ErrStatus
@@ -214,6 +215,31 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return
+		}
+		// If the namespace isn't kubeapps (ie. this is a per-namespace
+		// AppRepository), save a copy of the repository secret in kubeapps
+		// namespace using the service account clientset. This enables the
+		// existing assetsync service to be able to sync private
+		// AppRepositories in other namespaces. It is not ideal and is a
+		// temporary work-around until the asset-sync is updated to run
+		// cronjobs in other namespaces with the assetsvc receiving the data.
+		// See the relevant section of the design doc for details:
+		// https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87#heading=h.kilvd2vii0w
+		if repoSecret.ObjectMeta.Namespace != a.kubeappsNamespace {
+			repoSecret.ObjectMeta.Namespace = a.kubeappsNamespace
+			repoSecret.ObjectMeta.Name = kubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
+			_, err = a.svcKubeClient.CoreV1().Secrets(repoSecret.ObjectMeta.Namespace).Create(repoSecret)
+			if err != nil {
+				if statusErr, ok := err.(*errors.StatusError); ok {
+					status := statusErr.ErrStatus
+					log.Infof("unable to create app repo secret in Kubeapps' namespace: %v", status.Reason)
+					http.Error(w, status.Message, int(status.Code))
+				} else {
+					log.Errorf("unable to create app repo secret in Kubeapps' namespace: %v", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+				return
+			}
 		}
 	}
 
@@ -308,6 +334,12 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 
 func secretNameForRepo(repoName string) string {
 	return fmt.Sprintf("apprepo-%s-secrets", repoName)
+}
+
+// kubeappsSecretNameForRepo returns a name suitable for recording a copy of
+// a per-namespace repository secret in the kubeapps namespace.
+func kubeappsSecretNameForRepo(repoName, namespace string) string {
+	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
 func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) ([]corev1.Namespace, error) {
