@@ -130,7 +130,7 @@ describe("Auth", () => {
       expect(defaultNamespace).toEqual(customNamespace);
     });
 
-    it("should return default if the namespace is not present", () => {
+    it("should return _all if the namespace is not present", () => {
       const token = jwt.sign(
         {
           iss: "kubernetes/serviceaccount",
@@ -140,7 +140,7 @@ describe("Auth", () => {
 
       const defaultNamespace = Auth.defaultNamespaceFromToken(token);
 
-      expect(defaultNamespace).toEqual("default");
+      expect(defaultNamespace).toEqual("_all");
     });
 
     it("should return default if the token cannot be decoded", () => {
@@ -148,7 +148,7 @@ describe("Auth", () => {
 
       const defaultNamespace = Auth.defaultNamespaceFromToken(token);
 
-      expect(defaultNamespace).toEqual("default");
+      expect(defaultNamespace).toEqual("_all");
     });
   });
 

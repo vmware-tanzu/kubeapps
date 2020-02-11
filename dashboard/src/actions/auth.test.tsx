@@ -17,7 +17,7 @@ beforeEach(() => {
     authenticated: false,
     authenticating: false,
     oidcAuthenticated: false,
-    defaultNamespace: "default",
+    defaultNamespace: "_all",
   };
 
   Auth.validateToken = jest.fn();
@@ -66,7 +66,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        payload: { authenticated: true, oidc: false, defaultNamespace: "default" },
+        payload: { authenticated: true, oidc: false, defaultNamespace: "_all" },
         type: getType(actions.auth.setAuthenticated),
       },
     ];
@@ -84,7 +84,7 @@ describe("authenticate", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        payload: { authenticated: true, oidc: true, defaultNamespace: "default" },
+        payload: { authenticated: true, oidc: true, defaultNamespace: "_all" },
         type: getType(actions.auth.setAuthenticated),
       },
       {
@@ -111,7 +111,7 @@ describe("OIDC authentication", () => {
         type: getType(actions.auth.authenticating),
       },
       {
-        payload: { authenticated: true, oidc: true, defaultNamespace: "default" },
+        payload: { authenticated: true, oidc: true, defaultNamespace: "_all" },
         type: getType(actions.auth.setAuthenticated),
       },
       {
