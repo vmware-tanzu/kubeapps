@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -37,7 +36,7 @@ import (
 	apprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1alpha1typed "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/auth"
-	"k8s.io/apimachinery/pkg/api/errors"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -55,9 +54,9 @@ type combinedClientset struct {
 	*kubernetes.Clientset
 }
 
-// appRepositories handles http requests for operating on app repositories
+// AppRepositoriesHandler handles http requests for operating on app repositories
 // in Kubeapps, without exposing implementation details to 3rd party integrations.
-type appRepositoriesHandler struct {
+type AppRepositoriesHandler struct {
 	// The config set internally here cannot be used on its own as a valid
 	// token is required. Call-sites use ConfigForToken to obtain a valid
 	// config with a specific token.
@@ -77,6 +76,12 @@ type appRepositoriesHandler struct {
 	clientsetForConfig func(*rest.Config) (combinedClientsetInterface, error)
 }
 
+// Handler exposes the handler method for testing purposes
+type Handler interface {
+	CreateAppRepository(req *http.Request) (*v1alpha1.AppRepository, error)
+	GetNamespaces(req *http.Request) ([]corev1.Namespace, error)
+}
+
 // appRepositoryRequest is used to parse the JSON request
 type appRepositoryRequest struct {
 	AppRepository appRepositoryRequestDetails `json:"appRepository"`
@@ -91,31 +96,10 @@ type appRepositoryRequestDetails struct {
 	ResyncRequests     uint                   `json:"resyncRequests"`
 }
 
-// appRepositoryResponse is used to marshal the JSON response
-type appRepositoryResponse struct {
-	AppRepository v1alpha1.AppRepository `json:"appRepository"`
-}
-
-// namespacesResponse is used to marshal the JSON response
-type namespacesResponse struct {
-	Namespaces []corev1.Namespace `json:"namespaces"`
-}
-
-// SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router) error {
-	backendHandler, err := NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
-	if err != nil {
-		return err
-	}
-	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(backendHandler.GetNamespaces))
-	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(backendHandler.Create))
-	return nil
-}
-
 // NewAppRepositoriesHandler returns an AppRepositories and Kubernetes handler configured with
 // the in-cluster config but overriding the token with an empty string, so that
 // ConfigForToken must be called to obtain a valid config.
-func NewAppRepositoriesHandler(kubeappsNamespace string) (*appRepositoriesHandler, error) {
+func NewAppRepositoriesHandler(kubeappsNamespace string) (*AppRepositoriesHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -143,7 +127,7 @@ func NewAppRepositoriesHandler(kubeappsNamespace string) (*appRepositoriesHandle
 		return nil, err
 	}
 
-	return &appRepositoriesHandler{
+	return &AppRepositoriesHandler{
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
@@ -166,13 +150,13 @@ func clientsetForConfig(config *rest.Config) (combinedClientsetInterface, error)
 }
 
 // ConfigForToken returns a new config for a given auth token.
-func (a *appRepositoriesHandler) ConfigForToken(token string) *rest.Config {
+func (a *AppRepositoriesHandler) ConfigForToken(token string) *rest.Config {
 	configCopy := a.config
 	configCopy.BearerToken = token
 	return &configCopy
 }
 
-func (a *appRepositoriesHandler) clientsetForRequest(req *http.Request) (combinedClientsetInterface, error) {
+func (a *AppRepositoriesHandler) clientsetForRequest(req *http.Request) (combinedClientsetInterface, error) {
 	token := auth.ExtractToken(req.Header.Get("Authorization"))
 	clientset, err := a.clientsetForConfig(a.ConfigForToken(token))
 	if err != nil {
@@ -181,26 +165,24 @@ func (a *appRepositoriesHandler) clientsetForRequest(req *http.Request) (combine
 	return clientset, err
 }
 
-// Create creates an AppRepository resource based on the request data
-func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request) {
+// CreateAppRepository creates an AppRepository resource based on the request data
+func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
 		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
-		http.Error(w, "kubeappsNamespace must be configured to enable app repository handler", http.StatusUnauthorized)
-		return
+		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
 	}
 
 	clientset, err := a.clientsetForRequest(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		log.Errorf("unable to create clientset: %v", err)
+		return nil, err
 	}
 
 	var appRepoRequest appRepositoryRequest
 	err = json.NewDecoder(req.Body).Decode(&appRepoRequest)
 	if err != nil {
 		log.Infof("unable to decode: %v", err)
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
 	appRepo := appRepositoryForRequest(appRepoRequest)
@@ -211,30 +193,14 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
 
 	if err != nil {
-		if statusErr, ok := err.(*errors.StatusError); ok {
-			status := statusErr.ErrStatus
-			log.Infof("unable to create app repo: %v", status.Reason)
-			http.Error(w, status.Message, int(status.Code))
-		} else {
-			log.Errorf("unable to create app repo: %v", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
+		return nil, err
 	}
 
 	repoSecret := secretForRequest(appRepoRequest, appRepo)
 	if repoSecret != nil {
 		_, err = clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
 		if err != nil {
-			if statusErr, ok := err.(*errors.StatusError); ok {
-				status := statusErr.ErrStatus
-				log.Infof("unable to create app repo secret: %v", status.Reason)
-				http.Error(w, status.Message, int(status.Code))
-			} else {
-				log.Errorf("unable to create app repo secret: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
-			return
+			return nil, err
 		}
 		// If the namespace isn't kubeapps (ie. this is a per-namespace
 		// AppRepository), save a copy of the repository secret in kubeapps
@@ -249,29 +215,11 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 			repoSecret.ObjectMeta.Name = kubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
 			_, err = a.svcKubeClient.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
 			if err != nil {
-				if statusErr, ok := err.(*errors.StatusError); ok {
-					status := statusErr.ErrStatus
-					log.Infof("unable to create app repo secret in Kubeapps' namespace: %v", status.Reason)
-					http.Error(w, status.Message, int(status.Code))
-				} else {
-					log.Errorf("unable to create app repo secret in Kubeapps' namespace: %v", err)
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-				}
-				return
+				return nil, err
 			}
 		}
 	}
-
-	w.WriteHeader(http.StatusCreated)
-	response := appRepositoryResponse{
-		AppRepository: *appRepo,
-	}
-	responseBody, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write(responseBody)
+	return appRepo, nil
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
@@ -386,43 +334,28 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 // TODO(andresmgot): I am adding this method in this package for simplicity
 // (since it already allows to impersonate the user)
 // We should refactor this code to make it more generic (not apprepository-specific)
-func (a *appRepositoriesHandler) GetNamespaces(w http.ResponseWriter, req *http.Request) {
+func (a *AppRepositoriesHandler) GetNamespaces(req *http.Request) ([]corev1.Namespace, error) {
 	userClientset, err := a.clientsetForRequest(req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
 	// Try to list namespaces with the user token, for backward compatibility
 	namespaces, err := userClientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
-		if errors.IsForbidden(err) {
+		if k8sErrors.IsForbidden(err) {
 			// The user doesn't have permissions to list namespaces, use the current serviceaccount
 			namespaces, err = a.svcKubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
 		}
 		if err != nil {
-			code := http.StatusInternalServerError
-			if errors.IsForbidden(err) {
-				code = http.StatusForbidden
-			}
-			http.Error(w, err.Error(), code)
-			return
+			return nil, err
 		}
 	}
 
 	allowedNamespaces, err := filterAllowedNamespaces(userClientset, namespaces)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	response := namespacesResponse{
-		Namespaces: allowedNamespaces,
-	}
-	responseBody, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write(responseBody)
+	return allowedNamespaces, nil
 }
