@@ -4,8 +4,7 @@ const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 import { IConfig } from "./Config";
 import { APIBase } from "./Kube";
-
-export const DEFAULT_NAMESPACE = "_all";
+import { definedNamespaces } from "./Namespace";
 
 export class Auth {
   public static getAuthToken() {
@@ -137,7 +136,7 @@ export class Auth {
     const payload = jwt.decode(token);
     const namespaceKey = "kubernetes.io/serviceaccount/namespace";
     if (!payload || !payload[namespaceKey]) {
-      return DEFAULT_NAMESPACE;
+      return definedNamespaces.all;
     }
     return payload[namespaceKey];
   }
