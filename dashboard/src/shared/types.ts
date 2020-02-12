@@ -27,6 +27,8 @@ export class ConflictError extends CustomError {}
 
 export class UnprocessableEntity extends CustomError {}
 
+export class InternalServerError extends CustomError {}
+
 export interface IRepo {
   name: string;
   url: string;

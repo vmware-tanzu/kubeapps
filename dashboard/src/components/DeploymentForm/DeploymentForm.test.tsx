@@ -2,9 +2,14 @@ import { mount, shallow } from "enzyme";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 
-import { IChartState, IChartVersion, UnprocessableEntity } from "../../shared/types";
+import {
+  ForbiddenError,
+  IChartState,
+  IChartVersion,
+  UnprocessableEntity,
+} from "../../shared/types";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
-import { ErrorSelector } from "../ErrorAlert";
+import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import DeploymentForm from "./DeploymentForm";
 
 const releaseName = "my-release";
@@ -53,15 +58,15 @@ describe("renders an error", () => {
       />,
     );
     wrapper.setState({ latestSubmittedReleaseName: "my-app" });
-    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
-    expect(wrapper.find(ErrorSelector).html()).toContain(
-      "Sorry! Something went wrong processing my-app",
+    expect(wrapper.find(UnexpectedErrorAlert).exists()).toBe(true);
+    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain(
+      "Sorry! The installation of my-app failed",
     );
-    expect(wrapper.find(ErrorSelector).html()).toContain("wrong format!");
+    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain("wrong format!");
   });
 
   it("the error does not change if the release name changes", () => {
-    const expectedErrorMsg = "Sorry! Something went wrong processing my-app";
+    const expectedErrorMsg = "Sorry! The installation of my-app failed";
 
     const wrapper = shallow(
       <DeploymentForm
@@ -77,10 +82,37 @@ describe("renders an error", () => {
     );
 
     wrapper.setState({ latestSubmittedReleaseName: "my-app" });
-    expect(wrapper.find(ErrorSelector).exists()).toBe(true);
-    expect(wrapper.find(ErrorSelector).html()).toContain(expectedErrorMsg);
+    expect(wrapper.find(UnexpectedErrorAlert).exists()).toBe(true);
+    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain(expectedErrorMsg);
     wrapper.setState({ releaseName: "another-app" });
-    expect(wrapper.find(ErrorSelector).html()).toContain(expectedErrorMsg);
+    expect(wrapper.find(UnexpectedErrorAlert).html()).toContain(expectedErrorMsg);
+  });
+
+  it("renders a Forbidden error if the deployment fails because missing permissions", () => {
+    const wrapper = mount(
+      <DeploymentForm
+        {...defaultProps}
+        selected={
+          {
+            version: { attributes: {} },
+            versions: [{ id: "foo", attributes: {} }],
+          } as IChartState["selected"]
+        }
+        error={
+          new ForbiddenError(
+            '[{"apiGroup":"","resource":"secrets","namespace":"kubeapps","clusterWide":false,"verbs":["create","list"]}]',
+          )
+        }
+      />,
+    );
+    wrapper.setState({ latestSubmittedReleaseName: "my-app" });
+    expect(wrapper.find(PermissionsErrorAlert).exists()).toBe(true);
+    expect(wrapper.find(PermissionsErrorAlert).text()).toContain(
+      "You don't have sufficient permissions",
+    );
+    expect(wrapper.find(PermissionsErrorAlert).text()).toContain(
+      "create, list secrets  in the kubeapps namespace",
+    );
   });
 });
 

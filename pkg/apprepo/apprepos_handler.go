@@ -20,7 +20,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -65,7 +67,7 @@ type appRepositoriesHandler struct {
 	kubeappsNamespace string
 
 	// The Kubernetes client using the pod serviceaccount
-	svcKubeClient *kubernetes.Clientset
+	svcKubeClient kubernetes.Interface
 
 	// clientsetForConfig is a field on the struct only so it can be switched
 	// for a fake version when testing. NewAppRepositoryHandler sets it to the
@@ -82,7 +84,6 @@ type appRepositoryRequest struct {
 
 type appRepositoryRequestDetails struct {
 	Name               string                 `json:"name"`
-	Namespace          string                 `json:"namespace"`
 	RepoURL            string                 `json:"repoURL"`
 	AuthHeader         string                 `json:"authHeader"`
 	CustomCA           string                 `json:"customCA"`
@@ -98,6 +99,17 @@ type appRepositoryResponse struct {
 // namespacesResponse is used to marshal the JSON response
 type namespacesResponse struct {
 	Namespaces []corev1.Namespace `json:"namespaces"`
+}
+
+// SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
+func SetupDefaultRoutes(r *mux.Router) error {
+	backendHandler, err := NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
+	if err != nil {
+		return err
+	}
+	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(backendHandler.GetNamespaces))
+	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(backendHandler.Create))
+	return nil
 }
 
 // NewAppRepositoriesHandler returns an AppRepositories and Kubernetes handler configured with
@@ -160,6 +172,15 @@ func (a *appRepositoriesHandler) ConfigForToken(token string) *rest.Config {
 	return &configCopy
 }
 
+func (a *appRepositoriesHandler) clientsetForRequest(req *http.Request) (combinedClientsetInterface, error) {
+	token := auth.ExtractToken(req.Header.Get("Authorization"))
+	clientset, err := a.clientsetForConfig(a.ConfigForToken(token))
+	if err != nil {
+		log.Errorf("unable to create clientset: %v", err)
+	}
+	return clientset, err
+}
+
 // Create creates an AppRepository resource based on the request data
 func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request) {
 	if a.kubeappsNamespace == "" {
@@ -168,10 +189,8 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	token := auth.ExtractToken(req.Header.Get("Authorization"))
-	clientset, err := a.clientsetForConfig(a.ConfigForToken(token))
+	clientset, err := a.clientsetForRequest(req)
 	if err != nil {
-		log.Errorf("unable to create clientset: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -185,14 +204,11 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 	}
 
 	appRepo := appRepositoryForRequest(appRepoRequest)
-	if appRepo.ObjectMeta.Namespace == "" {
-		appRepo.ObjectMeta.Namespace = a.kubeappsNamespace
-	}
 
 	// TODO(mnelson): validate both required data and request for index
 	// https://github.com/kubeapps/kubeapps/issues/1330
-
-	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(appRepo.ObjectMeta.Namespace).Create(appRepo)
+	requestNamespace := mux.Vars(req)["namespace"]
+	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
 
 	if err != nil {
 		if statusErr, ok := err.(*errors.StatusError); ok {
@@ -206,9 +222,9 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	secret := secretForRequest(appRepoRequest, appRepo)
-	if secret != nil {
-		_, err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Create(secret)
+	repoSecret := secretForRequest(appRepoRequest, appRepo)
+	if repoSecret != nil {
+		_, err = clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
 		if err != nil {
 			if statusErr, ok := err.(*errors.StatusError); ok {
 				status := statusErr.ErrStatus
@@ -219,6 +235,30 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return
+		}
+		// If the namespace isn't kubeapps (ie. this is a per-namespace
+		// AppRepository), save a copy of the repository secret in kubeapps
+		// namespace using the service account clientset. This enables the
+		// existing assetsync service to be able to sync private
+		// AppRepositories in other namespaces. It is not ideal and is a
+		// temporary work-around until the asset-sync is updated to run
+		// cronjobs in other namespaces with the assetsvc receiving the data.
+		// See the relevant section of the design doc for details:
+		// https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87#heading=h.kilvd2vii0w
+		if requestNamespace != a.kubeappsNamespace {
+			repoSecret.ObjectMeta.Name = kubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
+			_, err = a.svcKubeClient.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
+			if err != nil {
+				if statusErr, ok := err.(*errors.StatusError); ok {
+					status := statusErr.ErrStatus
+					log.Infof("unable to create app repo secret in Kubeapps' namespace: %v", status.Reason)
+					http.Error(w, status.Message, int(status.Code))
+				} else {
+					log.Errorf("unable to create app repo secret in Kubeapps' namespace: %v", err)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+				return
+			}
 		}
 	}
 
@@ -265,8 +305,7 @@ func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppR
 
 	return &v1alpha1.AppRepository{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      appRepo.Name,
-			Namespace: appRepo.Namespace,
+			Name: appRepo.Name,
 		},
 		Spec: v1alpha1.AppRepositorySpec{
 			URL:                appRepo.RepoURL,
@@ -295,8 +334,7 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 	blockOwnerDeletion := true
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretNameForRepo(appRepo.Name),
-			Namespace: appRepoDetails.Namespace,
+			Name: secretNameForRepo(appRepo.Name),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion:         "kubeapps.com/v1alpha1",
@@ -313,6 +351,12 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 
 func secretNameForRepo(repoName string) string {
 	return fmt.Sprintf("apprepo-%s-secrets", repoName)
+}
+
+// kubeappsSecretNameForRepo returns a name suitable for recording a copy of
+// a per-namespace repository secret in the kubeapps namespace.
+func kubeappsSecretNameForRepo(repoName, namespace string) string {
+	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
 func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) ([]corev1.Namespace, error) {
@@ -343,13 +387,12 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 // (since it already allows to impersonate the user)
 // We should refactor this code to make it more generic (not apprepository-specific)
 func (a *appRepositoriesHandler) GetNamespaces(w http.ResponseWriter, req *http.Request) {
-	token := auth.ExtractToken(req.Header.Get("Authorization"))
-	userClientset, err := a.clientsetForConfig(a.ConfigForToken(token))
+	userClientset, err := a.clientsetForRequest(req)
 	if err != nil {
-		log.Errorf("unable to create clientset: %v", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	// Try to list namespaces with the user token, for backward compatibility
 	namespaces, err := userClientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
