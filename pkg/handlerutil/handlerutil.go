@@ -43,7 +43,7 @@ func isForbidden(err error) bool {
 }
 
 func isUnprocessable(err error) bool {
-	re := regexp.MustCompile(`release.*failed`)
+	re := regexp.MustCompile(`[rR]elease.*failed`)
 	return re.MatchString(err.Error())
 }
 
