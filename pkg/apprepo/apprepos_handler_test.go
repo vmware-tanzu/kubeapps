@@ -423,9 +423,10 @@ func TestSecretForRequest(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name    string
-		request appRepositoryRequestDetails
-		secret  *corev1.Secret
+		name             string
+		requestNamespace string
+		request          appRepositoryRequestDetails
+		secret           *corev1.Secret
 	}{
 		{
 			name: "it does not create a secret without auth",
@@ -466,25 +467,6 @@ func TestSecretForRequest(t *testing.T) {
 				},
 				StringData: map[string]string{
 					"ca.crt": "test-me",
-				},
-			},
-		},
-		{
-			name: "it creates a secret in a specific namespace",
-			request: appRepositoryRequestDetails{
-				Name:       "test-repo",
-				Namespace:  "my-namespace",
-				RepoURL:    "http://example.com/test-repo",
-				AuthHeader: "testing",
-			},
-			secret: &corev1.Secret{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "apprepo-test-repo-secrets",
-					Namespace:       "my-namespace",
-					OwnerReferences: ownerRefs,
-				},
-				StringData: map[string]string{
-					"authorizationHeader": "testing",
 				},
 			},
 		},

@@ -84,7 +84,6 @@ type appRepositoryRequest struct {
 
 type appRepositoryRequestDetails struct {
 	Name               string                 `json:"name"`
-	Namespace          string                 `json:"namespace"`
 	RepoURL            string                 `json:"repoURL"`
 	AuthHeader         string                 `json:"authHeader"`
 	CustomCA           string                 `json:"customCA"`
@@ -335,8 +334,7 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 	blockOwnerDeletion := true
 	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretNameForRepo(appRepo.Name),
-			Namespace: appRepoDetails.Namespace,
+			Name: secretNameForRepo(appRepo.Name),
 			OwnerReferences: []metav1.OwnerReference{
 				metav1.OwnerReference{
 					APIVersion:         "kubeapps.com/v1alpha1",

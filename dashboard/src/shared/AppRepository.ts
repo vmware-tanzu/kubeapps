@@ -39,8 +39,8 @@ export class AppRepository {
     syncJobPodTemplate: any,
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
-      url.backend.apprepositories.create(),
-      { appRepository: { name, namespace, repoURL, authHeader, customCA, syncJobPodTemplate } },
+      url.backend.apprepositories.create(namespace),
+      { appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate } },
     );
     return data;
   }
