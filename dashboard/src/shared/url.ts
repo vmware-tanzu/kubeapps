@@ -12,8 +12,8 @@ export const app = {
 
 export const backend = {
   apprepositories: {
-    base: "api/v1/apprepositories",
-    create: () => `${backend.apprepositories.base}`,
+    base: (namespace: string) => `api/v1/namespaces/${namespace}/apprepositories`,
+    create: (namespace: string) => backend.apprepositories.base(namespace),
   },
   namespaces: {
     base: "api/v1/namespaces",
