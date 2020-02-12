@@ -182,7 +182,7 @@ func main() {
 	))
 
 	// Backend routes unrelated to tiller-proxy functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())
+	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}
