@@ -31,7 +31,7 @@ import (
 	"github.com/heptiolabs/healthcheck"
 	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
-	appRepoHandler "github.com/kubeapps/kubeapps/pkg/apprepo"
+	backendHandlers "github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
@@ -182,19 +182,10 @@ func main() {
 	))
 
 	// Backend routes unrelated to tiller-proxy functionality.
-	// TODO(mnelson): Once the helm3 support is complete and tiller-proxy is being removed,
-	// reconsider where these endpoints live.
-	appreposHandler, err := appRepoHandler.NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
+	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())
 	if err != nil {
-		log.Fatalf("Unable to create app repositories handler: %+v", err)
+		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}
-	backendAPIv1 := r.PathPrefix("/backend/v1").Subrouter()
-	backendAPIv1.Methods("POST").Path("/apprepositories").Handler(negroni.New(
-		negroni.WrapFunc(appreposHandler.Create),
-	))
-	backendAPIv1.Methods("GET").Path("/namespaces").Handler(negroni.New(
-		negroni.WrapFunc(appreposHandler.GetNamespaces),
-	))
 
 	// assetsvc reverse proxy
 	parsedAssetsvcURL, err := url.Parse(assetsvcURL)
