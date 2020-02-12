@@ -1,4 +1,4 @@
-import Axios from "axios";
+import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 import { Auth } from "./Auth";
 import { APIBase } from "./Kube";
@@ -130,7 +130,7 @@ describe("Auth", () => {
       expect(defaultNamespace).toEqual(customNamespace);
     });
 
-    it("should return default if the namespace is not present", () => {
+    it("should return _all if the namespace is not present", () => {
       const token = jwt.sign(
         {
           iss: "kubernetes/serviceaccount",
@@ -140,7 +140,7 @@ describe("Auth", () => {
 
       const defaultNamespace = Auth.defaultNamespaceFromToken(token);
 
-      expect(defaultNamespace).toEqual("default");
+      expect(defaultNamespace).toEqual("_all");
     });
 
     it("should return default if the token cannot be decoded", () => {
@@ -148,7 +148,7 @@ describe("Auth", () => {
 
       const defaultNamespace = Auth.defaultNamespaceFromToken(token);
 
-      expect(defaultNamespace).toEqual("default");
+      expect(defaultNamespace).toEqual("_all");
     });
   });
 
@@ -190,5 +190,17 @@ describe("Auth", () => {
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");
     });
+  });
+});
+
+describe("is403FromAuthProxy", () => {
+  it("does not assume to be authenticated from the auth proxy if the message contains a service account", () => {
+    expect(
+      Auth.is403FromAuthProxy({
+        status: 403,
+        data:
+          'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+      } as AxiosResponse<any>),
+    ).toBe(false);
   });
 });

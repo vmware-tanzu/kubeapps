@@ -56,26 +56,6 @@ it("render with the default namespace selected if no current selection", () => {
   expect(select.props().value).toEqual(expectedValue);
 });
 
-it("renders the default namespace option if no namespaces provided", () => {
-  const props = {
-    ...defaultProps,
-    namespace: {
-      current: "",
-      namespaces: [],
-    },
-  };
-  const wrapper = shallow(<NamespaceSelector {...props} />);
-  const select = wrapper.find(".NamespaceSelector__select").first();
-
-  expect(select.props()).toMatchObject({
-    options: [
-      { label: "All Namespaces", value: "_all" },
-      { label: defaultProps.defaultNamespace, value: defaultProps.defaultNamespace },
-      { label: "Create New", value: "_new" },
-    ],
-  });
-});
-
 it("opens the modal to add a new namespace and creates it", async () => {
   const createNamespace = jest.fn(() => true);
   const wrapper = mount(<NamespaceSelector {...defaultProps} createNamespace={createNamespace} />);

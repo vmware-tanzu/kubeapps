@@ -4,8 +4,7 @@ const AuthTokenKey = "kubeapps_auth_token";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 import { IConfig } from "./Config";
 import { APIBase } from "./Kube";
-
-export const DEFAULT_NAMESPACE = "default";
+import { definedNamespaces } from "./Namespace";
 
 export class Auth {
   public static getAuthToken() {
@@ -86,6 +85,10 @@ export class Auth {
   // it in the one spot. We may need to query `/oauth2/info` to avoid potential
   // false positives.
   public static is403FromAuthProxy(r: AxiosResponse): boolean {
+    if (r.data && typeof r.data === "string" && r.data.match("system:serviceaccount")) {
+      // If the error message is related to a service account is not from the auth proxy
+      return false;
+    }
     return r.status === 403 && (!r.data || !r.data.message);
   }
 
@@ -133,7 +136,7 @@ export class Auth {
     const payload = jwt.decode(token);
     const namespaceKey = "kubernetes.io/serviceaccount/namespace";
     if (!payload || !payload[namespaceKey]) {
-      return DEFAULT_NAMESPACE;
+      return definedNamespaces.all;
     }
     return payload[namespaceKey];
   }

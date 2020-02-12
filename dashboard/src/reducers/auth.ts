@@ -2,7 +2,8 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
-import { Auth, DEFAULT_NAMESPACE } from "../shared/Auth";
+import { Auth } from "../shared/Auth";
+import { definedNamespaces } from "../shared/Namespace";
 
 export interface IAuthState {
   sessionExpired: boolean;
@@ -33,7 +34,7 @@ const authReducer = (state: IAuthState = initialState, action: AuthAction): IAut
         authenticated: action.payload.authenticated,
         oidcAuthenticated: action.payload.oidc,
         authenticating: false,
-        defaultNamespace: action.payload.defaultNamespace || DEFAULT_NAMESPACE,
+        defaultNamespace: action.payload.defaultNamespace || definedNamespaces.all,
       };
     case getType(actions.auth.authenticating):
       return { ...state, authenticated: false, authenticating: true };

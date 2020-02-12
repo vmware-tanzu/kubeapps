@@ -6,12 +6,14 @@ import { ForbiddenError, IResource, NotFoundError } from "./types";
 
 export default class Namespace {
   public static async list() {
-    const { data } = await axiosWithAuth.get<IResource[]>(url.backend.namespaces.list());
+    const { data } = await axiosWithAuth.get<{ namespaces: IResource[] }>(
+      url.backend.namespaces.list(),
+    );
     return data;
   }
 
   public static async create(name: string) {
-    const { data } = await axiosWithAuth.post<IResource>(Namespace.APIEndpoint, {
+    const { data } = await axiosWithAuth.post<IResource>(`${APIBase}/api/v1/namespaces/`, {
       apiVersion: "v1",
       kind: "Namespace",
       metadata: {
@@ -23,7 +25,7 @@ export default class Namespace {
 
   public static async get(name: string) {
     try {
-      const { data } = await axiosWithAuth.get<IResource>(`${Namespace.APIEndpoint}/${name}`);
+      const { data } = await axiosWithAuth.get<IResource>(`${APIBase}/api/v1/namespaces/${name}`);
       return data;
     } catch (err) {
       switch (err.constructor) {
@@ -38,13 +40,9 @@ export default class Namespace {
       }
     }
   }
-
-  private static APIBase: string = APIBase;
-  private static APIEndpoint: string = `${Namespace.APIBase}/api/v1/namespaces/`;
 }
 
 // Set of namespaces used accross the applications as default and "all ns" placeholders
 export const definedNamespaces = {
-  default: "default",
   all: "_all",
 };

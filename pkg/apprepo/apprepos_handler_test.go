@@ -483,18 +483,14 @@ func TestSecretForRequest(t *testing.T) {
 
 func TestGetNamespaces(t *testing.T) {
 	testCases := []struct {
-		name              string
-		kubeappsNamespace string
-		// existingRepos is a map with the namespaces as the key
-		// and a slice of repository names for that namespace as the value.
+		name             string
 		existingNS       []string
 		expectedResponse []corev1.Namespace
 		allowed          bool
 	}{
 		{
-			name:              "it list namespaces",
-			kubeappsNamespace: "kubeapps",
-			existingNS:        []string{"foo"},
+			name:       "it list namespaces",
+			existingNS: []string{"foo"},
 			expectedResponse: []corev1.Namespace{
 				corev1.Namespace{
 					ObjectMeta: metav1.ObjectMeta{
@@ -505,11 +501,10 @@ func TestGetNamespaces(t *testing.T) {
 			allowed: true,
 		},
 		{
-			name:              "it returns an empty list if not allowed",
-			kubeappsNamespace: "kubeapps",
-			existingNS:        []string{"foo"},
-			expectedResponse:  []corev1.Namespace{},
-			allowed:           false,
+			name:             "it returns an empty list if not allowed",
+			existingNS:       []string{"foo"},
+			expectedResponse: []corev1.Namespace{},
+			allowed:          false,
 		},
 	}
 	for _, tc := range testCases {
@@ -543,7 +538,7 @@ func TestGetNamespaces(t *testing.T) {
 
 			handler := appRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
-				kubeappsNamespace:  tc.kubeappsNamespace,
+				kubeappsNamespace:  "kubeapps",
 			}
 
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
@@ -552,13 +547,13 @@ func TestGetNamespaces(t *testing.T) {
 
 			handler.GetNamespaces(response, req)
 
-			var responseNS []corev1.Namespace
+			var responseNS namespacesResponse
 			err := json.NewDecoder(response.Body).Decode(&responseNS)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			if !cmp.Equal(responseNS, tc.expectedResponse) {
+			if !cmp.Equal(responseNS.Namespaces, tc.expectedResponse) {
 				t.Errorf("Unexpected response: %s", cmp.Diff(responseNS, tc.expectedResponse))
 			}
 		})

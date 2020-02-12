@@ -58,7 +58,7 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
           return Promise.reject(new UnauthorizedError(message));
         case 403:
           // A 403 directly from the auth proxy requires reauthentication.
-          if (Auth.is403FromAuthProxy(response)) {
+          if (Auth.usingOIDCToken() && Auth.is403FromAuthProxy(response)) {
             dispatchErrorAndLogout(message);
           }
           return Promise.reject(new ForbiddenError(message));

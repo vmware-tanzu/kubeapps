@@ -72,7 +72,7 @@ describe("namespaceReducer", () => {
         namespaceReducer(dirtyState, {
           type: getType(actions.namespace.clearNamespaces),
         }),
-      ).toEqual({ current: "default", namespaces: [] });
+      ).toEqual({ current: "_all", namespaces: [] });
     });
   });
 
