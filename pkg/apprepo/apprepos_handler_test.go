@@ -18,7 +18,7 @@ package apprepo
 
 import (
 	"encoding/json"
-	"net/http"
+	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -76,28 +76,25 @@ func TestAppRepositoryCreate(t *testing.T) {
 		// and a slice of repository names for that namespace as the value.
 		existingRepos map[string][]string
 		requestData   string
-		expectedCode  int
+		expectedError error
 	}{
 		{
 			name:              "it creates an app repository in the default kubeappsNamespace",
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "kubeapps",
 			requestData:       `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo"}}`,
-			expectedCode:      http.StatusCreated,
 		},
 		{
 			name:              "it creates an app repository in a specific namespace",
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "my-namespace",
 			requestData:       `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo"}}`,
-			expectedCode:      http.StatusCreated,
 		},
 		{
 			name:              "it creates an app repository with an empty template",
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "kubeapps",
 			requestData:       `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "syncJobPodTemplate": {}}}`,
-			expectedCode:      http.StatusCreated,
 		},
 		{
 			name:              "it errors if the repo exists in the kubeapps ns already",
@@ -107,7 +104,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 			existingRepos: map[string][]string{
 				"kubeapps": []string{"bitnami"},
 			},
-			expectedCode: http.StatusConflict,
+			expectedError: fmt.Errorf(`apprepositories.kubeapps.com "bitnami" already exists`),
 		},
 		{
 			name:              "it creates the repo even if the same repo exists in other namespaces",
@@ -118,28 +115,25 @@ func TestAppRepositoryCreate(t *testing.T) {
 				"kubeapps-other-ns-1": []string{"bitnami"},
 				"kubeapps-other-ns-2": []string{"bitnami"},
 			},
-			expectedCode: http.StatusCreated,
 		},
 		{
 			name:              "it results in a bad request if the json cannot be parsed",
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "kubeapps",
 			requestData:       `not a { json object`,
-			expectedCode:      http.StatusBadRequest,
+			expectedError:     fmt.Errorf(`invalid character 'o' in literal null (expecting 'u')`),
 		},
 		{
 			name:              "it creates a secret if the auth header is set",
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "kubeapps",
 			requestData:       `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
-			expectedCode:      http.StatusCreated,
 		},
 		{
 			name:              "it creates a copy of the namespaced repo secret in the kubeapps namespace",
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "test-namespace",
 			requestData:       `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
-			expectedCode:      http.StatusCreated,
 		},
 	}
 
@@ -149,7 +143,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(),
 			}
-			handler := appRepositoriesHandler{
+			handler := AppRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  tc.kubeappsNamespace,
 				svcKubeClient:      fakecoreclientset.NewSimpleClientset(),
@@ -158,15 +152,18 @@ func TestAppRepositoryCreate(t *testing.T) {
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader(tc.requestData))
 			req = mux.SetURLVars(req, map[string]string{"namespace": tc.requestNamespace})
 
-			response := httptest.NewRecorder()
+			apprepo, err := handler.CreateAppRepository(req)
 
-			handler.Create(response, req)
-
-			if got, want := response.Code, tc.expectedCode; got != want {
-				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			if err == nil && tc.expectedError != nil {
+				t.Errorf("Expecting error but got nil")
+			}
+			if err != nil {
+				if err.Error() != tc.expectedError.Error() {
+					t.Errorf("Expecting error %v got %v", tc.expectedError, err)
+				}
 			}
 
-			if response.Code == 201 {
+			if apprepo != nil {
 				var appRepoRequest appRepositoryRequest
 				err := json.NewDecoder(strings.NewReader(tc.requestData)).Decode(&appRepoRequest)
 				if err != nil {
@@ -183,17 +180,6 @@ func TestAppRepositoryCreate(t *testing.T) {
 				}
 
 				if got, want := responseAppRepo, expectedAppRepo; !cmp.Equal(want, got) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-				}
-
-				// Ensure the response contained the created app repository
-				var appRepoResponse appRepositoryResponse
-				err = json.NewDecoder(response.Body).Decode(&appRepoResponse)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				expectedResponse := appRepositoryResponse{AppRepository: *expectedAppRepo}
-				if got, want := appRepoResponse, expectedResponse; !cmp.Equal(want, got) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
 
@@ -248,7 +234,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 }
 
 func TestConfigForToken(t *testing.T) {
-	handler := appRepositoriesHandler{
+	handler := AppRepositoriesHandler{
 		config: rest.Config{},
 	}
 	token := "abcd"
@@ -536,25 +522,20 @@ func TestGetNamespaces(t *testing.T) {
 				},
 			)
 
-			handler := appRepositoriesHandler{
+			handler := AppRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  "kubeapps",
 			}
 
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
 
-			response := httptest.NewRecorder()
-
-			handler.GetNamespaces(response, req)
-
-			var responseNS namespacesResponse
-			err := json.NewDecoder(response.Body).Decode(&responseNS)
+			namespaces, err := handler.GetNamespaces(req)
 			if err != nil {
-				t.Fatalf("%+v", err)
+				t.Errorf("Unexpected error %v", err)
 			}
 
-			if !cmp.Equal(responseNS.Namespaces, tc.expectedResponse) {
-				t.Errorf("Unexpected response: %s", cmp.Diff(responseNS, tc.expectedResponse))
+			if !cmp.Equal(namespaces, tc.expectedResponse) {
+				t.Errorf("Unexpected response: %s", cmp.Diff(namespaces, tc.expectedResponse))
 			}
 		})
 	}
