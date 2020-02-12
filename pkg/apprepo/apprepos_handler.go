@@ -269,11 +269,6 @@ func (a *appRepositoriesHandler) Create(w http.ResponseWriter, req *http.Request
 	w.Write(responseBody)
 }
 
-// Delete deletes an AppRepository resource based on the request data
-// along with any associated secrets
-func (a *appRepositoriesHandler) Delete(w http.ResponseWriter, req *http.Request) {
-}
-
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
 func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppRepository {
 	appRepo := appRepoRequest.AppRepository
