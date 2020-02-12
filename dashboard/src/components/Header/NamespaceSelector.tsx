@@ -41,12 +41,8 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
   public render() {
     const {
       namespace: { namespaces, error },
-      defaultNamespace,
     } = this.props;
-    const options =
-      namespaces.length > 0
-        ? namespaces.map(n => ({ value: n, label: n }))
-        : [{ value: defaultNamespace, label: defaultNamespace }];
+    const options = namespaces.length > 0 ? namespaces.map(n => ({ value: n, label: n })) : [];
     const allOption = { value: definedNamespaces.all, label: "All Namespaces" };
     options.unshift(allOption);
     const newOption = { value: "_new", label: "Create New" };
