@@ -24,6 +24,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/apprepo"
+	"github.com/kubeapps/kubeapps/pkg/auth"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -39,20 +40,25 @@ type appRepositoryResponse struct {
 	AppRepository v1alpha1.AppRepository `json:"appRepository"`
 }
 
+func returnK8sError(err error, w http.ResponseWriter) {
+	if statusErr, ok := err.(*k8sErrors.StatusError); ok {
+		status := statusErr.ErrStatus
+		log.Infof("unable to create app repo: %v", status.Reason)
+		http.Error(w, status.Message, int(status.Code))
+	} else {
+		log.Errorf("unable to create app repo: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 // CreateAppRepository creates App Repository
 func CreateAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace := mux.Vars(req)["namespace"]
-		appRepo, err := appRepo.CreateAppRepository(req, requestNamespace)
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		appRepo, err := appRepo.CreateAppRepository(req.Body, requestNamespace, token)
 		if err != nil {
-			if statusErr, ok := err.(*k8sErrors.StatusError); ok {
-				status := statusErr.ErrStatus
-				log.Infof("unable to create app repo: %v", status.Reason)
-				http.Error(w, status.Message, int(status.Code))
-			} else {
-				log.Errorf("unable to create app repo: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
+			returnK8sError(err, w)
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
@@ -73,18 +79,12 @@ func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 	return func(w http.ResponseWriter, req *http.Request) {
 		repoNamespace := mux.Vars(req)["namespace"]
 		repoName := mux.Vars(req)["name"]
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
 
-		err := appRepo.DeleteAppRepository(req, repoName, repoNamespace)
+		err := appRepo.DeleteAppRepository(repoName, repoNamespace, token)
 
 		if err != nil {
-			if statusErr, ok := err.(*k8sErrors.StatusError); ok {
-				status := statusErr.ErrStatus
-				log.Infof("unable to create app repo: %v", status.Reason)
-				http.Error(w, status.Message, int(status.Code))
-			} else {
-				log.Errorf("unable to create app repo: %v", err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
+			returnK8sError(err, w)
 		}
 	}
 }
@@ -92,13 +92,10 @@ func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 // GetNamespaces return the list of namespaces
 func GetNamespaces(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		namespaces, err := appRepo.GetNamespaces(req)
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		namespaces, err := appRepo.GetNamespaces(token)
 		if err != nil {
-			code := http.StatusInternalServerError
-			if k8sErrors.IsForbidden(err) {
-				code = http.StatusForbidden
-			}
-			http.Error(w, err.Error(), code)
+			returnK8sError(err, w)
 		}
 		response := namespacesResponse{
 			Namespaces: namespaces,
