@@ -73,6 +73,7 @@ func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 	return func(w http.ResponseWriter, req *http.Request) {
 		repoNamespace := mux.Vars(req)["namespace"]
 		repoName := mux.Vars(req)["name"]
+
 		err := appRepo.DeleteAppRepository(req, repoName, repoNamespace)
 
 		if err != nil {

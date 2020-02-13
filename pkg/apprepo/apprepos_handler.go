@@ -244,8 +244,6 @@ func (a *AppRepositoriesHandler) DeleteAppRepository(req *http.Request, repoName
 	// If the app repo was in a namespace other than the kubeapps one, we also delete the copy of
 	// the repository credentials kept in the kubeapps namespace (the repo credentials in the actual
 	// namespace should be deleted when the owning app repo is deleted).
-	// TODO(mnelson) Ensure secret in the app repo namespace is created with owner references so it is
-	// deleted with the AppRepo.
 	if hasCredentials && repoNamespace != a.kubeappsNamespace {
 		err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(kubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
 	}
