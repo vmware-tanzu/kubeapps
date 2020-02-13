@@ -23,6 +23,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	"io"
 	"io/ioutil"
 	"log"
@@ -34,18 +35,16 @@ import (
 
 	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	// appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	// "k8s.io/client-go/kubernetes"
 	helm2loader "k8s.io/helm/pkg/chartutil"
 	helm2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
 
 const (
-	defaultNamespace      = metav1.NamespaceSystem
 	defaultRepoURL        = "https://kubernetes-charts.storage.googleapis.com"
 	defaultTimeoutSeconds = 180
 )
@@ -81,6 +80,7 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// ChartMultiVersion includes both Helm2Chart and Helm3Chart
 type ChartMultiVersion struct {
 	Helm2Chart *helm2chart.Chart
 	Helm3Chart *helm3chart.Chart
@@ -101,18 +101,18 @@ type Resolver interface {
 
 // ChartClient struct contains the clients required to retrieve charts info
 type ChartClient struct {
-	kubeClient    kubernetes.Interface
-	appRepoClient appRepoClientSet.Interface
-	userAgent     string
-	appRepo       *appRepov1.AppRepository
+	appRepoHandler    apprepo.Handler
+	userAgent         string
+	kubeappsNamespace string
+	appRepo           *appRepov1.AppRepository
 }
 
 // NewChartClient returns a new ChartClient
-func NewChartClient(kubeClient kubernetes.Interface, appRepoClient appRepoClientSet.Interface, userAgent string) *ChartClient {
+func NewChartClient(appRepoHandler apprepo.Handler, kubeappsNamespace, userAgent string) *ChartClient {
 	return &ChartClient{
-		kubeClient:    kubeClient,
-		appRepoClient: appRepoClient,
-		userAgent:     userAgent,
+		appRepoHandler:    appRepoHandler,
+		userAgent:         userAgent,
+		kubeappsNamespace: kubeappsNamespace,
 	}
 }
 
@@ -308,14 +308,9 @@ func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 		caCertPool = x509.NewCertPool()
 	}
 
-	namespace := os.Getenv("POD_NAMESPACE")
-	if namespace == "" {
-		namespace = defaultNamespace
-	}
-
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	appRepo, err := c.appRepoClient.KubeappsV1alpha1().AppRepositories(namespace).Get(details.AppRepositoryResourceName, metav1.GetOptions{})
+	appRepo, err := c.appRepoHandler.GetAppRepository(details.AppRepositoryResourceName, c.kubeappsNamespace, "")
 	if err != nil {
 		return nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
@@ -323,7 +318,7 @@ func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 	auth := appRepo.Spec.Auth
 
 	if auth.CustomCA != nil {
-		caCertSecret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(auth.CustomCA.SecretKeyRef.Name, metav1.GetOptions{})
+		caCertSecret, err := c.appRepoHandler.GetSecret(auth.CustomCA.SecretKeyRef.Name, c.kubeappsNamespace, "")
 		if err != nil {
 			return nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
@@ -340,7 +335,7 @@ func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 
 	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
 	if auth.Header != nil {
-		secret, err := c.kubeClient.CoreV1().Secrets(namespace).Get(auth.Header.SecretKeyRef.Name, metav1.GetOptions{})
+		secret, err := c.appRepoHandler.GetSecret(auth.Header.SecretKeyRef.Name, c.kubeappsNamespace, "")
 		if err != nil {
 			return nil, err
 		}

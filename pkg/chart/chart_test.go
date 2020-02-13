@@ -32,10 +32,9 @@ import (
 
 	"github.com/arschles/assert"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeAppRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
+	fakeAppRepo "github.com/kubeapps/kubeapps/pkg/apprepo/fake"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	fakeK8s "k8s.io/client-go/kubernetes/fake"
 	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
 )
@@ -348,7 +347,7 @@ func TestInitNetClient(t *testing.T) {
 
 	for _, tc := range testCases {
 		// The fake k8s client will contain secret for the CA and header respectively.
-		kubeClient := fakeK8s.NewSimpleClientset(&corev1.Secret{
+		secrets := []*corev1.Secret{&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      customCASecretName,
 				Namespace: metav1.NamespaceSystem,
@@ -364,22 +363,20 @@ func TestInitNetClient(t *testing.T) {
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(authHeaderSecretData),
 			},
-		})
+		}}
+		fmt.Println(tc.name)
 
-		// Setup the appRepoClient fake to have an app repository with the provided
-		// app repo spec.
-		expectedAppRepo := &appRepov1.AppRepository{
+		apprepos := []*appRepov1.AppRepository{&appRepov1.AppRepository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tc.details.AppRepositoryResourceName,
 				Namespace: metav1.NamespaceSystem,
 			},
 			Spec: tc.appRepoSpec,
-		}
-		appRepoClient := fakeAppRepo.NewSimpleClientset(expectedAppRepo)
+		}}
 
 		chUtils := ChartClient{
-			kubeClient:    kubeClient,
-			appRepoClient: appRepoClient,
+			appRepoHandler:    &fakeAppRepo.Handler{Secrets: secrets, AppRepos: apprepos},
+			kubeappsNamespace: metav1.NamespaceSystem,
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
@@ -424,7 +421,7 @@ func TestInitNetClient(t *testing.T) {
 			}
 
 			// The client holds a reference to the appRepo.
-			if got, want := chUtils.appRepo, expectedAppRepo; !cmp.Equal(got, want) {
+			if got, want := chUtils.appRepo, apprepos[0]; !cmp.Equal(got, want) {
 				t.Errorf(cmp.Diff(got, want))
 			}
 		})
@@ -551,10 +548,8 @@ func TestGetChart(t *testing.T) {
 		}
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := newHTTPClient(repoURL, []Details{target}, tc.userAgent)
-			kubeClient := fakeK8s.NewSimpleClientset()
 			chUtils := ChartClient{
-				kubeClient: kubeClient,
-				userAgent:  tc.userAgent,
+				userAgent: tc.userAgent,
 				appRepo: &appRepov1.AppRepository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      repoName,

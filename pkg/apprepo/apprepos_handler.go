@@ -79,6 +79,8 @@ type Handler interface {
 	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace, token string) error
 	GetNamespaces(token string) ([]corev1.Namespace, error)
+	GetSecret(name, namespace, token string) (*corev1.Secret, error)
+	GetAppRepository(repoName, repoNamespace, token string) (*v1alpha1.AppRepository, error)
 }
 
 // appRepositoryRequest is used to parse the JSON request
@@ -151,7 +153,9 @@ func clientsetForConfig(config *rest.Config) (combinedClientsetInterface, error)
 // ConfigForToken returns a new config for a given auth token.
 func (a *AppRepositoriesHandler) ConfigForToken(token string) *rest.Config {
 	configCopy := a.config
-	configCopy.BearerToken = token
+	if token != "" {
+		configCopy.BearerToken = token
+	}
 	return &configCopy
 }
 
@@ -246,6 +250,16 @@ func (a *AppRepositoriesHandler) DeleteAppRepository(repoName, repoNamespace, to
 		err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(kubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
 	}
 	return err
+}
+
+// GetAppRepository returns an AppRepository resource from a namespace.
+// Optionally set a token to get the AppRepository using a custom serviceaccount
+func (a *AppRepositoriesHandler) GetAppRepository(repoName, repoNamespace, token string) (*v1alpha1.AppRepository, error) {
+	clientset, err := a.clientsetForRequest(token)
+	if err != nil {
+		return nil, err
+	}
+	return clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
@@ -384,4 +398,14 @@ func (a *AppRepositoriesHandler) GetNamespaces(token string) ([]corev1.Namespace
 	}
 
 	return allowedNamespaces, nil
+}
+
+// GetSecret return the a secret from a namespace using a token if given
+func (a *AppRepositoriesHandler) GetSecret(name, namespace, token string) (*corev1.Secret, error) {
+	userClientset, err := a.clientsetForRequest(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return userClientset.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 }

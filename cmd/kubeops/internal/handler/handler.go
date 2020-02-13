@@ -3,12 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
-	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/pkg/agent"
+	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
@@ -16,15 +17,17 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"helm.sh/helm/v3/pkg/action"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 const (
-	authHeader     = "Authorization"
-	namespaceParam = "namespace"
-	nameParam      = "releaseName"
-	authUserError  = "Unexpected error while configuring authentication"
+	authHeader       = "Authorization"
+	namespaceParam   = "namespace"
+	nameParam        = "releaseName"
+	authUserError    = "Unexpected error while configuring authentication"
+	defaultNamespace = metav1.NamespaceSystem
 )
 
 const isV1SupportRequired = false
@@ -91,23 +94,13 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			// System configuration and clients, using the service serviceaccount
-			// Used to retrieve apprepositories and secrets related to them
-			svcRestConfig, err := rest.InClusterConfig()
-			if err != nil {
-				log.Errorf("Failed to create in-cluster config with service account: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
-				return
+			kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+			if namespace == "" {
+				namespace = defaultNamespace
 			}
-			svcKubeClient, err := kubernetes.NewForConfig(svcRestConfig)
+			appRepoHandler, err := apprepo.NewAppRepositoriesHandler(kubeappsNamespace)
 			if err != nil {
-				log.Errorf("Failed to create kube client with service account: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
-				return
-			}
-			appRepoClient, err := appRepo.NewForConfig(svcRestConfig)
-			if err != nil {
-				log.Errorf("Failed to create app repo kube client with service account: %v", err)
+				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
@@ -115,7 +108,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(svcKubeClient, appRepoClient, options.UserAgent),
+				ChartClient:  chartUtils.NewChartClient(appRepoHandler, kubeappsNamespace, options.UserAgent),
 			}
 			f(cfg, w, req, params)
 		}
