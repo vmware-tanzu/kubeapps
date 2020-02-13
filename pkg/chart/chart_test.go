@@ -364,7 +364,6 @@ func TestInitNetClient(t *testing.T) {
 				"custom-secret-key": []byte(authHeaderSecretData),
 			},
 		}}
-		fmt.Println(tc.name)
 
 		apprepos := []*appRepov1.AppRepository{&appRepov1.AppRepository{
 			ObjectMeta: metav1.ObjectMeta{

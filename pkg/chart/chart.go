@@ -35,10 +35,8 @@ import (
 
 	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	// appRepoClientSet "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
-	// "k8s.io/client-go/kubernetes"
 	helm2loader "k8s.io/helm/pkg/chartutil"
 	helm2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
