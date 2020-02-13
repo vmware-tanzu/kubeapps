@@ -212,6 +212,7 @@ func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request, requestN
 		// https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87#heading=h.kilvd2vii0w
 		if requestNamespace != a.kubeappsNamespace {
 			repoSecret.ObjectMeta.Name = kubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
+			repoSecret.ObjectMeta.OwnerReferences = nil
 			_, err = a.svcKubeClient.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
 			if err != nil {
 				return nil, err
@@ -227,8 +228,26 @@ func (a *AppRepositoriesHandler) DeleteAppRepository(req *http.Request, repoName
 	if err != nil {
 		return err
 	}
+	appRepo, err := clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	hasCredentials := appRepo.Spec.Auth.Header != nil || appRepo.Spec.Auth.CustomCA != nil
+	var propagationPolicy metav1.DeletionPropagation = "Foreground"
+	err = clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(repoName, &metav1.DeleteOptions{
+		PropagationPolicy: &propagationPolicy,
+	})
+	if err != nil {
+		return err
+	}
 
-	return clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(repoName, &metav1.DeleteOptions{})
+	// If the app repo was in a namespace other than the kubeapps one, we also delete the copy of
+	// the repository credentials kept in the kubeapps namespace (the repo credentials in the actual
+	// namespace should be deleted when the owning app repo is deleted).
+	if hasCredentials && repoNamespace != a.kubeappsNamespace {
+		err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(kubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
+	}
+	return err
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
@@ -307,7 +326,7 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 }
 
 func secretNameForRepo(repoName string) string {
-	return fmt.Sprintf("apprepo-%s-secrets", repoName)
+	return fmt.Sprintf("apprepo-%s", repoName)
 }
 
 // kubeappsSecretNameForRepo returns a name suitable for recording a copy of
