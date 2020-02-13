@@ -24,6 +24,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	"github.com/kubeapps/kubeapps/pkg/apprepo"
+	"github.com/kubeapps/kubeapps/pkg/auth"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -54,7 +55,8 @@ func returnK8sError(err error, w http.ResponseWriter) {
 func CreateAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace := mux.Vars(req)["namespace"]
-		appRepo, err := appRepo.CreateAppRepository(req, requestNamespace)
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		appRepo, err := appRepo.CreateAppRepository(req.Body, requestNamespace, token)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -77,8 +79,9 @@ func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 	return func(w http.ResponseWriter, req *http.Request) {
 		repoNamespace := mux.Vars(req)["namespace"]
 		repoName := mux.Vars(req)["name"]
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
 
-		err := appRepo.DeleteAppRepository(req, repoName, repoNamespace)
+		err := appRepo.DeleteAppRepository(repoName, repoNamespace, token)
 
 		if err != nil {
 			returnK8sError(err, w)
@@ -89,7 +92,8 @@ func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 // GetNamespaces return the list of namespaces
 func GetNamespaces(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		namespaces, err := appRepo.GetNamespaces(req)
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		namespaces, err := appRepo.GetNamespaces(token)
 		if err != nil {
 			returnK8sError(err, w)
 		}

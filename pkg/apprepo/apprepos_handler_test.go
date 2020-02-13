@@ -19,7 +19,7 @@ package apprepo
 import (
 	"encoding/json"
 	"fmt"
-	"net/http/httptest"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -188,9 +188,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 				svcKubeClient:      fakecoreclientset.NewSimpleClientset(),
 			}
 
-			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader(tc.requestData))
-
-			apprepo, err := handler.CreateAppRepository(req, tc.requestNamespace)
+			apprepo, err := handler.CreateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, "token")
 
 			if err == nil && tc.expectedError != nil {
 				t.Errorf("got: nil, want: %+v", tc.expectedError)
@@ -317,11 +315,7 @@ func TestDeleteAppRepository(t *testing.T) {
 				svcKubeClient:      fakecoreclientset.NewSimpleClientset(),
 			}
 
-			// TODO: Currently the request is only used to create the clientset with user creds.
-			// Remove the need for http at all in this module.
-			req := httptest.NewRequest("DELETE", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader(""))
-
-			err := handler.DeleteAppRepository(req, tc.repoName, tc.requestNamespace)
+			err := handler.DeleteAppRepository(tc.repoName, tc.requestNamespace, "token")
 
 			if got, want := errorCodeForK8sError(t, err), tc.expectedErrorCode; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
@@ -353,9 +347,8 @@ func errorCodeForK8sError(t *testing.T, err error) int {
 	}
 	if statusErr, ok := err.(*errors.StatusError); ok {
 		return int(statusErr.ErrStatus.Code)
-	} else {
-		t.Fatalf("unable to convert error to status error")
 	}
+	t.Fatalf("unable to convert error to status error")
 	return 0
 }
 
@@ -652,9 +645,7 @@ func TestGetNamespaces(t *testing.T) {
 				kubeappsNamespace:  "kubeapps",
 			}
 
-			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
-
-			namespaces, err := handler.GetNamespaces(req)
+			namespaces, err := handler.GetNamespaces("token")
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}

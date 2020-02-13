@@ -19,7 +19,7 @@ package apprepo
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"io"
 
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
@@ -34,7 +34,6 @@ import (
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	apprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	v1alpha1typed "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/auth"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -77,9 +76,9 @@ type AppRepositoriesHandler struct {
 
 // Handler exposes the handler method for testing purposes
 type Handler interface {
-	CreateAppRepository(req *http.Request, namespace string) (*v1alpha1.AppRepository, error)
-	DeleteAppRepository(req *http.Request, name, namespace string) error
-	GetNamespaces(req *http.Request) ([]corev1.Namespace, error)
+	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error)
+	DeleteAppRepository(name, namespace, token string) error
+	GetNamespaces(token string) ([]corev1.Namespace, error)
 }
 
 // appRepositoryRequest is used to parse the JSON request
@@ -156,8 +155,7 @@ func (a *AppRepositoriesHandler) ConfigForToken(token string) *rest.Config {
 	return &configCopy
 }
 
-func (a *AppRepositoriesHandler) clientsetForRequest(req *http.Request) (combinedClientsetInterface, error) {
-	token := auth.ExtractToken(req.Header.Get("Authorization"))
+func (a *AppRepositoriesHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
 	clientset, err := a.clientsetForConfig(a.ConfigForToken(token))
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
@@ -166,20 +164,20 @@ func (a *AppRepositoriesHandler) clientsetForRequest(req *http.Request) (combine
 }
 
 // CreateAppRepository creates an AppRepository resource based on the request data
-func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request, requestNamespace string) (*v1alpha1.AppRepository, error) {
+func (a *AppRepositoriesHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
 		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
 		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
 	}
 
-	clientset, err := a.clientsetForRequest(req)
+	clientset, err := a.clientsetForRequest(token)
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
 		return nil, err
 	}
 
 	var appRepoRequest appRepositoryRequest
-	err = json.NewDecoder(req.Body).Decode(&appRepoRequest)
+	err = json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
 	if err != nil {
 		log.Infof("unable to decode: %v", err)
 		return nil, err
@@ -223,8 +221,8 @@ func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request, requestN
 }
 
 // DeleteAppRepository deletes an AppRepository resource from a namespace.
-func (a *AppRepositoriesHandler) DeleteAppRepository(req *http.Request, repoName, repoNamespace string) error {
-	clientset, err := a.clientsetForRequest(req)
+func (a *AppRepositoriesHandler) DeleteAppRepository(repoName, repoNamespace, token string) error {
+	clientset, err := a.clientsetForRequest(token)
 	if err != nil {
 		return err
 	}
@@ -362,8 +360,8 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 // TODO(andresmgot): I am adding this method in this package for simplicity
 // (since it already allows to impersonate the user)
 // We should refactor this code to make it more generic (not apprepository-specific)
-func (a *AppRepositoriesHandler) GetNamespaces(req *http.Request) ([]corev1.Namespace, error) {
-	userClientset, err := a.clientsetForRequest(req)
+func (a *AppRepositoriesHandler) GetNamespaces(token string) ([]corev1.Namespace, error) {
+	userClientset, err := a.clientsetForRequest(token)
 	if err != nil {
 		return nil, err
 	}

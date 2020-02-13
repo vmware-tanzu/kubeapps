@@ -19,7 +19,7 @@ package httphandler
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -40,15 +40,15 @@ type FakeHandler struct {
 	err        error
 }
 
-func (c *FakeHandler) CreateAppRepository(req *http.Request, namespace string) (*v1alpha1.AppRepository, error) {
+func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error) {
 	return c.appRepo, c.err
 }
 
-func (c *FakeHandler) DeleteAppRepository(req *http.Request, name, namespace string) error {
+func (c *FakeHandler) DeleteAppRepository(name, namespace, token string) error {
 	return c.err
 }
 
-func (c *FakeHandler) GetNamespaces(req *http.Request) ([]corev1.Namespace, error) {
+func (c *FakeHandler) GetNamespaces(token string) ([]corev1.Namespace, error) {
 	return c.namespaces, c.err
 }
 
