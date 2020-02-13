@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -78,7 +77,8 @@ type AppRepositoriesHandler struct {
 
 // Handler exposes the handler method for testing purposes
 type Handler interface {
-	CreateAppRepository(req *http.Request) (*v1alpha1.AppRepository, error)
+	CreateAppRepository(req *http.Request, namespace string) (*v1alpha1.AppRepository, error)
+	DeleteAppRepository(req *http.Request, name, namespace string) error
 	GetNamespaces(req *http.Request) ([]corev1.Namespace, error)
 }
 
@@ -166,7 +166,7 @@ func (a *AppRepositoriesHandler) clientsetForRequest(req *http.Request) (combine
 }
 
 // CreateAppRepository creates an AppRepository resource based on the request data
-func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alpha1.AppRepository, error) {
+func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
 		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
 		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
@@ -189,7 +189,6 @@ func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alph
 
 	// TODO(mnelson): validate both required data and request for index
 	// https://github.com/kubeapps/kubeapps/issues/1330
-	requestNamespace := mux.Vars(req)["namespace"]
 	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
 
 	if err != nil {
@@ -213,6 +212,7 @@ func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alph
 		// https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87#heading=h.kilvd2vii0w
 		if requestNamespace != a.kubeappsNamespace {
 			repoSecret.ObjectMeta.Name = kubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
+			repoSecret.ObjectMeta.OwnerReferences = nil
 			_, err = a.svcKubeClient.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
 			if err != nil {
 				return nil, err
@@ -220,6 +220,34 @@ func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alph
 		}
 	}
 	return appRepo, nil
+}
+
+// DeleteAppRepository deletes an AppRepository resource from a namespace.
+func (a *AppRepositoriesHandler) DeleteAppRepository(req *http.Request, repoName, repoNamespace string) error {
+	clientset, err := a.clientsetForRequest(req)
+	if err != nil {
+		return err
+	}
+	appRepo, err := clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+	hasCredentials := appRepo.Spec.Auth.Header != nil || appRepo.Spec.Auth.CustomCA != nil
+	var propagationPolicy metav1.DeletionPropagation = "Foreground"
+	err = clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(repoName, &metav1.DeleteOptions{
+		PropagationPolicy: &propagationPolicy,
+	})
+	if err != nil {
+		return err
+	}
+
+	// If the app repo was in a namespace other than the kubeapps one, we also delete the copy of
+	// the repository credentials kept in the kubeapps namespace (the repo credentials in the actual
+	// namespace should be deleted when the owning app repo is deleted).
+	if hasCredentials && repoNamespace != a.kubeappsNamespace {
+		err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(kubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
+	}
+	return err
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
@@ -298,7 +326,7 @@ func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.App
 }
 
 func secretNameForRepo(repoName string) string {
-	return fmt.Sprintf("apprepo-%s-secrets", repoName)
+	return fmt.Sprintf("apprepo-%s", repoName)
 }
 
 // kubeappsSecretNameForRepo returns a name suitable for recording a copy of
