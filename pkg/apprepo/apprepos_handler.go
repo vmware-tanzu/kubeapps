@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -78,7 +77,8 @@ type AppRepositoriesHandler struct {
 
 // Handler exposes the handler method for testing purposes
 type Handler interface {
-	CreateAppRepository(req *http.Request) (*v1alpha1.AppRepository, error)
+	CreateAppRepository(req *http.Request, namespace string) (*v1alpha1.AppRepository, error)
+	DeleteAppRepository(req *http.Request, name, namespace string) error
 	GetNamespaces(req *http.Request) ([]corev1.Namespace, error)
 }
 
@@ -166,7 +166,7 @@ func (a *AppRepositoriesHandler) clientsetForRequest(req *http.Request) (combine
 }
 
 // CreateAppRepository creates an AppRepository resource based on the request data
-func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alpha1.AppRepository, error) {
+func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
 		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
 		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
@@ -189,7 +189,6 @@ func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alph
 
 	// TODO(mnelson): validate both required data and request for index
 	// https://github.com/kubeapps/kubeapps/issues/1330
-	requestNamespace := mux.Vars(req)["namespace"]
 	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
 
 	if err != nil {
@@ -220,6 +219,16 @@ func (a *AppRepositoriesHandler) CreateAppRepository(req *http.Request) (*v1alph
 		}
 	}
 	return appRepo, nil
+}
+
+// DeleteAppRepository deletes an AppRepository resource from a namespace.
+func (a *AppRepositoriesHandler) DeleteAppRepository(req *http.Request, repoName, repoNamespace string) error {
+	clientset, err := a.clientsetForRequest(req)
+	if err != nil {
+		return err
+	}
+
+	return clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(repoName, &metav1.DeleteOptions{})
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.

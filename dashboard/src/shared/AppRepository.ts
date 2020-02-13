@@ -23,7 +23,9 @@ export class AppRepository {
   }
 
   public static async delete(name: string, namespace: string) {
-    const { data } = await axiosWithAuth.delete(AppRepository.getSelfLink(name, namespace));
+    const { data } = await axiosWithAuth.delete(
+      url.backend.apprepositories.delete(name, namespace),
+    );
     return data;
   }
 

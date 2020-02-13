@@ -42,7 +42,8 @@ type appRepositoryResponse struct {
 // CreateAppRepository creates App Repository
 func CreateAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		appRepo, err := appRepo.CreateAppRepository(req)
+		requestNamespace := mux.Vars(req)["namespace"]
+		appRepo, err := appRepo.CreateAppRepository(req, requestNamespace)
 		if err != nil {
 			if statusErr, ok := err.(*k8sErrors.StatusError); ok {
 				status := statusErr.ErrStatus
@@ -64,6 +65,27 @@ func CreateAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 			return
 		}
 		w.Write(responseBody)
+	}
+}
+
+// DeleteAppRepository deletes an App Repository
+func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		repoNamespace := mux.Vars(req)["namespace"]
+		repoName := mux.Vars(req)["name"]
+
+		err := appRepo.DeleteAppRepository(req, repoName, repoNamespace)
+
+		if err != nil {
+			if statusErr, ok := err.(*k8sErrors.StatusError); ok {
+				status := statusErr.ErrStatus
+				log.Infof("unable to create app repo: %v", status.Reason)
+				http.Error(w, status.Message, int(status.Code))
+			} else {
+				log.Errorf("unable to create app repo: %v", err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		}
 	}
 }
 
@@ -98,5 +120,6 @@ func SetupDefaultRoutes(r *mux.Router) error {
 	}
 	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
+	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	return nil
 }

@@ -24,7 +24,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/gorilla/mux"
 	authorizationv1 "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -150,9 +149,8 @@ func TestAppRepositoryCreate(t *testing.T) {
 			}
 
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader(tc.requestData))
-			req = mux.SetURLVars(req, map[string]string{"namespace": tc.requestNamespace})
 
-			apprepo, err := handler.CreateAppRepository(req)
+			apprepo, err := handler.CreateAppRepository(req, tc.requestNamespace)
 
 			if err == nil && tc.expectedError != nil {
 				t.Errorf("Expecting error but got nil")
@@ -231,6 +229,75 @@ func TestAppRepositoryCreate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeleteAppRepository(t *testing.T) {
+	const kubeappsNamespace = "kubeapps"
+	testCases := []struct {
+		name              string
+		repoName          string
+		requestNamespace  string
+		existingRepos     map[string][]string
+		expectedErrorCode int
+	}{
+		{
+			name:             "it deletes an existing repo from a namespace",
+			repoName:         "my-repo",
+			requestNamespace: "my-namespace",
+			existingRepos:    map[string][]string{"my-namespace": []string{"my-repo"}},
+		},
+		{
+			name:              "it returns not found when repo does not exist in specified namespace",
+			repoName:          "my-repo",
+			requestNamespace:  "other-namespace",
+			existingRepos:     map[string][]string{"my-namespace": []string{"my-repo"}},
+			expectedErrorCode: 404,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
+				fakecoreclientset.NewSimpleClientset(),
+			}
+			handler := AppRepositoriesHandler{
+				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
+				kubeappsNamespace:  kubeappsNamespace,
+				svcKubeClient:      fakecoreclientset.NewSimpleClientset(),
+			}
+
+			// TODO: Currently the request is only used to create the clientset with user creds.
+			// Remove the need for http at all in this module.
+			req := httptest.NewRequest("DELETE", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader(""))
+
+			err := handler.DeleteAppRepository(req, tc.repoName, tc.requestNamespace)
+
+			if got, want := errorCodeForK8sError(t, err), tc.expectedErrorCode; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+
+			if err == nil {
+				// Ensure the repo has been deleted, so expecting a 404.
+				_, err = cs.KubeappsV1alpha1().AppRepositories(tc.requestNamespace).Get(tc.repoName, metav1.GetOptions{})
+				if got, want := errorCodeForK8sError(t, err), 404; got != want {
+					t.Errorf("got: %d, want: %d", got, want)
+				}
+			}
+		})
+	}
+}
+
+func errorCodeForK8sError(t *testing.T, err error) int {
+	if err == nil {
+		return 0
+	}
+	if statusErr, ok := err.(*errors.StatusError); ok {
+		return int(statusErr.ErrStatus.Code)
+	} else {
+		t.Fatalf("unable to convert error to status error")
+	}
+	return 0
 }
 
 func TestConfigForToken(t *testing.T) {
@@ -409,10 +476,9 @@ func TestSecretForRequest(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name             string
-		requestNamespace string
-		request          appRepositoryRequestDetails
-		secret           *corev1.Secret
+		name    string
+		request appRepositoryRequestDetails
+		secret  *corev1.Secret
 	}{
 		{
 			name: "it does not create a secret without auth",
