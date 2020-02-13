@@ -38,17 +38,59 @@ import (
 	fakeapprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/fake"
 )
 
-func makeAppRepoObjects(repoNamesPerNamespace map[string][]string) []runtime.Object {
+type repoStub struct {
+	name    string
+	private bool
+}
+
+func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Object {
 	objects := []runtime.Object{}
-	for namespace, repoNames := range repoNamesPerNamespace {
-		for _, repoName := range repoNames {
-			var appRepo runtime.Object = &v1alpha1.AppRepository{
+	for namespace, repoStubs := range reposPerNamespace {
+		for _, repoStub := range repoStubs {
+			appRepo := &v1alpha1.AppRepository{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      repoName,
+					Name:      repoStub.name,
+					Namespace: namespace,
+				},
+			}
+			if repoStub.private {
+				authHeader := &v1alpha1.AppRepositoryAuthHeader{}
+				authHeader.SecretKeyRef.LocalObjectReference.Name = secretNameForRepo(repoStub.name)
+				appRepo.Spec.Auth.Header = authHeader
+			}
+			objects = append(objects, runtime.Object(appRepo))
+		}
+	}
+	return objects
+}
+
+func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamespace string) []runtime.Object {
+	objects := []runtime.Object{}
+	for namespace, repoStubs := range reposPerNamespace {
+		for _, repoStub := range repoStubs {
+			// Only create secrets if it's a private repo.
+			if !repoStub.private {
+				continue
+			}
+			var appRepo runtime.Object = &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      secretNameForRepo(repoStub.name),
 					Namespace: namespace,
 				},
 			}
 			objects = append(objects, appRepo)
+
+			// Only create a copy of the secret in the kubeapps namespace if the app repo
+			// is in a user namespace.
+			if namespace != kubeappsNamespace {
+				var appRepo runtime.Object = &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      kubeappsSecretNameForRepo(repoStub.name, namespace),
+						Namespace: kubeappsNamespace,
+					},
+				}
+				objects = append(objects, appRepo)
+			}
 		}
 	}
 	return objects
@@ -71,11 +113,9 @@ func TestAppRepositoryCreate(t *testing.T) {
 		name              string
 		requestNamespace  string
 		kubeappsNamespace string
-		// existingRepos is a map with the namespaces as the key
-		// and a slice of repository names for that namespace as the value.
-		existingRepos map[string][]string
-		requestData   string
-		expectedError error
+		existingRepos     map[string][]repoStub
+		requestData       string
+		expectedError     error
 	}{
 		{
 			name:              "it creates an app repository in the default kubeappsNamespace",
@@ -100,8 +140,8 @@ func TestAppRepositoryCreate(t *testing.T) {
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "kubeapps",
 			requestData:       `{"appRepository": {"name": "bitnami"}}`,
-			existingRepos: map[string][]string{
-				"kubeapps": []string{"bitnami"},
+			existingRepos: map[string][]repoStub{
+				"kubeapps": []repoStub{repoStub{name: "bitnami"}},
 			},
 			expectedError: fmt.Errorf(`apprepositories.kubeapps.com "bitnami" already exists`),
 		},
@@ -110,9 +150,9 @@ func TestAppRepositoryCreate(t *testing.T) {
 			kubeappsNamespace: "kubeapps",
 			requestNamespace:  "kubeapps",
 			requestData:       `{"appRepository": {"name": "bitnami"}}`,
-			existingRepos: map[string][]string{
-				"kubeapps-other-ns-1": []string{"bitnami"},
-				"kubeapps-other-ns-2": []string{"bitnami"},
+			existingRepos: map[string][]repoStub{
+				"kubeapps-other-ns-1": []repoStub{repoStub{name: "bitnami"}},
+				"kubeapps-other-ns-2": []repoStub{repoStub{name: "bitnami"}},
 			},
 		},
 		{
@@ -153,11 +193,12 @@ func TestAppRepositoryCreate(t *testing.T) {
 			apprepo, err := handler.CreateAppRepository(req, tc.requestNamespace)
 
 			if err == nil && tc.expectedError != nil {
-				t.Errorf("Expecting error but got nil")
-			}
-			if err != nil {
-				if err.Error() != tc.expectedError.Error() {
-					t.Errorf("Expecting error %v got %v", tc.expectedError, err)
+				t.Errorf("got: nil, want: %+v", tc.expectedError)
+			} else if err != nil {
+				if tc.expectedError == nil {
+					t.Errorf("got: %+v, want: nil", err)
+				} else if got, want := err.Error(), tc.expectedError.Error(); got != want {
+					t.Errorf("got: %q, want: %q", got, want)
 				}
 			}
 
@@ -200,6 +241,8 @@ func TestAppRepositoryCreate(t *testing.T) {
 					kubeappsSecretName := kubeappsSecretNameForRepo(expectedAppRepo.ObjectMeta.Name, expectedAppRepo.ObjectMeta.Namespace)
 					expectedSecret.ObjectMeta.Name = kubeappsSecretName
 					expectedSecret.ObjectMeta.Namespace = tc.kubeappsNamespace
+					// The owner ref cannot be present for the copy in the kubeapps namespace.
+					expectedSecret.ObjectMeta.OwnerReferences = nil
 
 					if tc.requestNamespace != tc.kubeappsNamespace {
 						responseSecret, err = handler.svcKubeClient.CoreV1().Secrets(tc.kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
@@ -216,13 +259,8 @@ func TestAppRepositoryCreate(t *testing.T) {
 						if err == nil {
 							t.Fatalf("secret should not be created, found %+v", secret)
 						}
-						if statusErr, ok := err.(*errors.StatusError); ok {
-							status := statusErr.ErrStatus
-							if got, want := status.Code, int32(404); got != want {
-								t.Errorf("got: %d, want: %d", got, want)
-							}
-						} else {
-							t.Errorf("Unable to convert err to StatusError: %+v", err)
+						if got, want := errorCodeForK8sError(t, err), 404; got != want {
+							t.Errorf("got: %d, want: %d", got, want)
 						}
 					}
 				}
@@ -237,21 +275,33 @@ func TestDeleteAppRepository(t *testing.T) {
 		name              string
 		repoName          string
 		requestNamespace  string
-		existingRepos     map[string][]string
+		existingRepos     map[string][]repoStub
 		expectedErrorCode int
 	}{
 		{
 			name:             "it deletes an existing repo from a namespace",
 			repoName:         "my-repo",
 			requestNamespace: "my-namespace",
-			existingRepos:    map[string][]string{"my-namespace": []string{"my-repo"}},
+			existingRepos:    map[string][]repoStub{"my-namespace": []repoStub{repoStub{name: "my-repo"}}},
+		},
+		{
+			name:             "it deletes an existing repo with credentials from a namespace",
+			repoName:         "my-repo",
+			requestNamespace: "my-namespace",
+			existingRepos:    map[string][]repoStub{"my-namespace": []repoStub{repoStub{name: "my-repo", private: true}}},
 		},
 		{
 			name:              "it returns not found when repo does not exist in specified namespace",
 			repoName:          "my-repo",
 			requestNamespace:  "other-namespace",
-			existingRepos:     map[string][]string{"my-namespace": []string{"my-repo"}},
+			existingRepos:     map[string][]repoStub{"my-namespace": []repoStub{repoStub{name: "my-repo"}}},
 			expectedErrorCode: 404,
+		},
+		{
+			name:             "it deletes an existing repo from kubeapps' namespace",
+			repoName:         "my-repo",
+			requestNamespace: kubeappsNamespace,
+			existingRepos:    map[string][]repoStub{kubeappsNamespace: []repoStub{repoStub{name: "my-repo"}}},
 		},
 	}
 
@@ -259,7 +309,7 @@ func TestDeleteAppRepository(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cs := fakeCombinedClientset{
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
-				fakecoreclientset.NewSimpleClientset(),
+				fakecoreclientset.NewSimpleClientset(makeSecretsForRepos(tc.existingRepos, kubeappsNamespace)...),
 			}
 			handler := AppRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
@@ -280,6 +330,15 @@ func TestDeleteAppRepository(t *testing.T) {
 			if err == nil {
 				// Ensure the repo has been deleted, so expecting a 404.
 				_, err = cs.KubeappsV1alpha1().AppRepositories(tc.requestNamespace).Get(tc.repoName, metav1.GetOptions{})
+				if got, want := errorCodeForK8sError(t, err), 404; got != want {
+					t.Errorf("got: %d, want: %d", got, want)
+				}
+
+				// We cannot ensure that the deletion of any owned secret was propagated
+				// because the fake client does not handle finalizers but verified in real life.
+
+				// Ensure any copy of the repo credentials has been deleted from the kubeapps namespace.
+				_, err = cs.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretNameForRepo(tc.repoName, tc.requestNamespace), metav1.GetOptions{})
 				if got, want := errorCodeForK8sError(t, err), 404; got != want {
 					t.Errorf("got: %d, want: %d", got, want)
 				}
@@ -359,7 +418,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 						Header: &v1alpha1.AppRepositoryAuthHeader{
 							SecretKeyRef: corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "apprepo-test-repo-secrets",
+									Name: "apprepo-test-repo",
 								},
 								Key: "authorizationHeader",
 							},
@@ -386,7 +445,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 						CustomCA: &v1alpha1.AppRepositoryCustomCA{
 							SecretKeyRef: corev1.SecretKeySelector{
 								LocalObjectReference: corev1.LocalObjectReference{
-									Name: "apprepo-test-repo-secrets",
+									Name: "apprepo-test-repo",
 								},
 								Key: "ca.crt",
 							},
@@ -497,7 +556,7 @@ func TestSecretForRequest(t *testing.T) {
 			},
 			secret: &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:            "apprepo-test-repo-secrets",
+					Name:            "apprepo-test-repo",
 					OwnerReferences: ownerRefs,
 				},
 				StringData: map[string]string{
@@ -514,7 +573,7 @@ func TestSecretForRequest(t *testing.T) {
 			},
 			secret: &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:            "apprepo-test-repo-secrets",
+					Name:            "apprepo-test-repo",
 					OwnerReferences: ownerRefs,
 				},
 				StringData: map[string]string{

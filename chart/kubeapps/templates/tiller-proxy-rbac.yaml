@@ -16,6 +16,8 @@ rules:
       - secrets
     verbs:
       - get
+      - create
+      - delete
   - apiGroups:
       - "kubeapps.com"
     resources:
