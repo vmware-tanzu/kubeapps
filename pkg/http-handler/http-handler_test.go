@@ -25,7 +25,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
-	"github.com/kubeapps/kubeapps/pkg/apprepo/fake"
+	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,7 +59,7 @@ func TestCreateAppRepository(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			createAppFunc := CreateAppRepository(&fake.Handler{CreatedRepo: tc.appRepo, Err: tc.err})
+			createAppFunc := CreateAppRepository(&apprepo.FakeHandler{CreatedRepo: tc.appRepo, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
 
@@ -108,7 +108,7 @@ func TestDeleteAppRepository(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			deleteAppFunc := DeleteAppRepository(&fake.Handler{Err: tc.err})
+			deleteAppFunc := DeleteAppRepository(&apprepo.FakeHandler{Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
 
@@ -142,7 +142,7 @@ func TestGetNamespaces(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getNSFunc := GetNamespaces(&fake.Handler{Namespaces: tc.namespaces, Err: tc.err})
+			getNSFunc := GetNamespaces(&apprepo.FakeHandler{Namespaces: tc.namespaces, Err: tc.err})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
 
 			response := httptest.NewRecorder()

@@ -99,14 +99,14 @@ type Resolver interface {
 
 // ChartClient struct contains the clients required to retrieve charts info
 type ChartClient struct {
-	appRepoHandler    apprepo.Handler
+	appRepoHandler    apprepo.AuthHandler
 	userAgent         string
 	kubeappsNamespace string
 	appRepo           *appRepov1.AppRepository
 }
 
 // NewChartClient returns a new ChartClient
-func NewChartClient(appRepoHandler apprepo.Handler, kubeappsNamespace, userAgent string) *ChartClient {
+func NewChartClient(appRepoHandler apprepo.AuthHandler, kubeappsNamespace, userAgent string) *ChartClient {
 	return &ChartClient{
 		appRepoHandler:    appRepoHandler,
 		userAgent:         userAgent,
@@ -308,7 +308,7 @@ func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	appRepo, err := c.appRepoHandler.GetAppRepository(details.AppRepositoryResourceName, c.kubeappsNamespace, "")
+	appRepo, err := c.appRepoHandler.AsSVC().GetAppRepository(details.AppRepositoryResourceName, c.kubeappsNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
@@ -316,7 +316,7 @@ func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 	auth := appRepo.Spec.Auth
 
 	if auth.CustomCA != nil {
-		caCertSecret, err := c.appRepoHandler.GetSecret(auth.CustomCA.SecretKeyRef.Name, c.kubeappsNamespace, "")
+		caCertSecret, err := c.appRepoHandler.AsSVC().GetSecret(auth.CustomCA.SecretKeyRef.Name, c.kubeappsNamespace)
 		if err != nil {
 			return nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
@@ -333,7 +333,7 @@ func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
 
 	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
 	if auth.Header != nil {
-		secret, err := c.appRepoHandler.GetSecret(auth.Header.SecretKeyRef.Name, c.kubeappsNamespace, "")
+		secret, err := c.appRepoHandler.AsSVC().GetSecret(auth.Header.SecretKeyRef.Name, c.kubeappsNamespace)
 		if err != nil {
 			return nil, err
 		}

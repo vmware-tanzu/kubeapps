@@ -32,7 +32,7 @@ import (
 
 	"github.com/arschles/assert"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	fakeAppRepo "github.com/kubeapps/kubeapps/pkg/apprepo/fake"
+	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	chartv2 "k8s.io/helm/pkg/proto/hapi/chart"
@@ -374,7 +374,7 @@ func TestInitNetClient(t *testing.T) {
 		}}
 
 		chUtils := ChartClient{
-			appRepoHandler:    &fakeAppRepo.Handler{Secrets: secrets, AppRepos: apprepos},
+			appRepoHandler:    &apprepo.FakeHandler{Secrets: secrets, AppRepos: apprepos},
 			kubeappsNamespace: metav1.NamespaceSystem,
 		}
 

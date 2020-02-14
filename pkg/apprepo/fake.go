@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package fake
+package apprepo
 
 import (
 	"fmt"
@@ -24,8 +24,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// Handler represents a fake Handler for testing purposes
-type Handler struct {
+// FakeHandler represents a fake Handler for testing purposes
+type FakeHandler struct {
 	AppRepos    []*v1alpha1.AppRepository
 	CreatedRepo *v1alpha1.AppRepository
 	Namespaces  []corev1.Namespace
@@ -33,19 +33,29 @@ type Handler struct {
 	Err         error
 }
 
+// AsUser fakes user auth
+func (c *FakeHandler) AsUser(token string) handler {
+	return c
+}
+
+// AsSVC fakes using current svcaccount
+func (c *FakeHandler) AsSVC() handler {
+	return c
+}
+
 // CreateAppRepository fake
-func (c *Handler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error) {
+func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	c.AppRepos = append(c.AppRepos, c.CreatedRepo)
 	return c.CreatedRepo, c.Err
 }
 
 // DeleteAppRepository fake
-func (c *Handler) DeleteAppRepository(name, namespace, token string) error {
+func (c *FakeHandler) DeleteAppRepository(name, namespace string) error {
 	return c.Err
 }
 
 // GetAppRepository fake
-func (c *Handler) GetAppRepository(name, namespace, token string) (*v1alpha1.AppRepository, error) {
+func (c *FakeHandler) GetAppRepository(name, namespace string) (*v1alpha1.AppRepository, error) {
 	for _, r := range c.AppRepos {
 		if r.Name == name && r.Namespace == namespace {
 			return r, nil
@@ -55,12 +65,12 @@ func (c *Handler) GetAppRepository(name, namespace, token string) (*v1alpha1.App
 }
 
 // GetNamespaces fake
-func (c *Handler) GetNamespaces(token string) ([]corev1.Namespace, error) {
+func (c *FakeHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	return c.Namespaces, c.Err
 }
 
 // GetSecret fake
-func (c *Handler) GetSecret(name, namespace, token string) (*corev1.Secret, error) {
+func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	for _, r := range c.Secrets {
 		if r.Name == name && r.Namespace == namespace {
 			return r, nil

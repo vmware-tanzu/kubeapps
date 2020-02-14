@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -17,17 +16,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"helm.sh/helm/v3/pkg/action"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 const (
-	authHeader       = "Authorization"
-	namespaceParam   = "namespace"
-	nameParam        = "releaseName"
-	authUserError    = "Unexpected error while configuring authentication"
-	defaultNamespace = metav1.NamespaceSystem
+	authHeader     = "Authorization"
+	namespaceParam = "namespace"
+	nameParam      = "releaseName"
+	authUserError  = "Unexpected error while configuring authentication"
 )
 
 const isV1SupportRequired = false
@@ -40,9 +37,10 @@ type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request,
 
 // Options represents options that can be created without a bearer token, i.e. once at application startup.
 type Options struct {
-	ListLimit int
-	Timeout   int64
-	UserAgent string
+	ListLimit         int
+	Timeout           int64
+	UserAgent         string
+	KubeappsNamespace string
 }
 
 // Config represents data needed by each handler to be able to create Helm 3 actions.
@@ -94,11 +92,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			kubeappsNamespace := os.Getenv("POD_NAMESPACE")
-			if namespace == "" {
-				namespace = defaultNamespace
-			}
-			appRepoHandler, err := apprepo.NewAppRepositoriesHandler(kubeappsNamespace)
+			appRepoHandler, err := apprepo.NewAppRepositoriesHandler(options.KubeappsNamespace)
 			if err != nil {
 				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
@@ -108,7 +102,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(appRepoHandler, kubeappsNamespace, options.UserAgent),
+				ChartClient:  chartUtils.NewChartClient(appRepoHandler, options.KubeappsNamespace, options.UserAgent),
 			}
 			f(cfg, w, req, params)
 		}

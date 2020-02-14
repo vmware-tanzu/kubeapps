@@ -131,6 +131,10 @@ func main() {
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient, timeout)
 	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		log.Fatalf("POD_NAMESPACE should be defined")
+	}
+
 	appRepoHandler, err := apprepo.NewAppRepositoriesHandler(kubeappsNamespace)
 	if err != nil {
 		log.Fatalf("Failed to create handler: %v", err)
