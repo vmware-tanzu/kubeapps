@@ -311,7 +311,6 @@ func (c *Controller) syncHandler(key string) error {
 	// cronjob for an app repo in another namespace, then we should
 	// log a warning to the event recorder and return it.
 	if !metav1.IsControlledBy(cronjob, apprepo) && !objectBelongsTo(cronjob, apprepo) {
-		log.Errorf("Cronjob: %+v\nAppRepo: %+v", cronjob.ObjectMeta, apprepo.ObjectMeta)
 		msg := fmt.Sprintf(MessageResourceExists, cronjob.Name)
 		c.recorder.Event(apprepo, corev1.EventTypeWarning, ErrResourceExists, msg)
 		return fmt.Errorf(msg)
