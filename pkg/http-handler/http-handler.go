@@ -52,11 +52,11 @@ func returnK8sError(err error, w http.ResponseWriter) {
 }
 
 // CreateAppRepository creates App Repository
-func CreateAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
+func CreateAppRepository(handler apprepo.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace := mux.Vars(req)["namespace"]
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		appRepo, err := appRepo.CreateAppRepository(req.Body, requestNamespace, token)
+		appRepo, err := handler.AsUser(token).CreateAppRepository(req.Body, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -75,13 +75,13 @@ func CreateAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 }
 
 // DeleteAppRepository deletes an App Repository
-func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
+func DeleteAppRepository(appRepo apprepo.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		repoNamespace := mux.Vars(req)["namespace"]
 		repoName := mux.Vars(req)["name"]
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
 
-		err := appRepo.DeleteAppRepository(repoName, repoNamespace, token)
+		err := appRepo.AsUser(token).DeleteAppRepository(repoName, repoNamespace)
 
 		if err != nil {
 			returnK8sError(err, w)
@@ -90,10 +90,10 @@ func DeleteAppRepository(appRepo apprepo.Handler) func(w http.ResponseWriter, re
 }
 
 // GetNamespaces return the list of namespaces
-func GetNamespaces(appRepo apprepo.Handler) func(w http.ResponseWriter, req *http.Request) {
+func GetNamespaces(appRepo apprepo.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		namespaces, err := appRepo.GetNamespaces(token)
+		namespaces, err := appRepo.AsUser(token).GetNamespaces()
 		if err != nil {
 			returnK8sError(err, w)
 		}

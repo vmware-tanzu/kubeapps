@@ -52,33 +52,71 @@ type combinedClientset struct {
 	*kubernetes.Clientset
 }
 
-// AppRepositoriesHandler handles http requests for operating on app repositories
+// appRepositoriesHandler handles http requests for operating on app repositories
 // in Kubeapps, without exposing implementation details to 3rd party integrations.
-type AppRepositoriesHandler struct {
+type appRepositoriesHandler struct {
 	// The config set internally here cannot be used on its own as a valid
-	// token is required. Call-sites use ConfigForToken to obtain a valid
+	// token is required. Call-sites use configForToken to obtain a valid
 	// config with a specific token.
 	config rest.Config
 
 	// The namespace in which (currently) app repositories are created.
 	kubeappsNamespace string
 
-	// The Kubernetes client using the pod serviceaccount
-	svcKubeClient kubernetes.Interface
+	// clientset using the pod serviceaccount
+	svcClientset combinedClientsetInterface
 
 	// clientsetForConfig is a field on the struct only so it can be switched
-	// for a fake version when testing. NewAppRepositoryHandler sets it to the
+	// for a fake version when testing. NewAppRepositoryhandler sets it to the
 	// proper function below so that production code always has the real
 	// version (and since this is a private struct, external code cannot change
 	// the function).
 	clientsetForConfig func(*rest.Config) (combinedClientsetInterface, error)
 }
 
-// Handler exposes the handler method for testing purposes
-type Handler interface {
-	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error)
-	DeleteAppRepository(name, namespace, token string) error
-	GetNamespaces(token string) ([]corev1.Namespace, error)
+type userHandler struct {
+	// The namespace in which (currently) app repositories are created.
+	kubeappsNamespace string
+
+	// clientset using the pod serviceaccount
+	svcClientset combinedClientsetInterface
+
+	// clientset for the given serviceccount
+	clientset combinedClientsetInterface
+}
+
+type handler interface {
+	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
+	DeleteAppRepository(name, namespace string) error
+	GetNamespaces() ([]corev1.Namespace, error)
+	GetSecret(name, namespace string) (*corev1.Secret, error)
+	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
+}
+
+// AuthHandler exposes handler functionality as a user or the current serviceaccount
+type AuthHandler interface {
+	AsUser(token string) handler
+	AsSVC() handler
+}
+
+func (a *appRepositoriesHandler) AsUser(token string) handler {
+	clientset, err := a.clientsetForConfig(a.configForToken(token))
+	if err != nil {
+		log.Errorf("unable to create clientset: %v", err)
+	}
+	return &userHandler{
+		kubeappsNamespace: a.kubeappsNamespace,
+		svcClientset:      a.svcClientset,
+		clientset:         clientset,
+	}
+}
+
+func (a *appRepositoriesHandler) AsSVC() handler {
+	return &userHandler{
+		kubeappsNamespace: a.kubeappsNamespace,
+		svcClientset:      a.svcClientset,
+		clientset:         a.svcClientset,
+	}
 }
 
 // appRepositoryRequest is used to parse the JSON request
@@ -97,8 +135,8 @@ type appRepositoryRequestDetails struct {
 
 // NewAppRepositoriesHandler returns an AppRepositories and Kubernetes handler configured with
 // the in-cluster config but overriding the token with an empty string, so that
-// ConfigForToken must be called to obtain a valid config.
-func NewAppRepositoriesHandler(kubeappsNamespace string) (*AppRepositoriesHandler, error) {
+// configForToken must be called to obtain a valid config.
+func NewAppRepositoriesHandler(kubeappsNamespace string) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -125,13 +163,17 @@ func NewAppRepositoriesHandler(kubeappsNamespace string) (*AppRepositoriesHandle
 	if err != nil {
 		return nil, err
 	}
+	svcAppRepoClient, err := apprepoclientset.NewForConfig(svcRestConfig)
+	if err != nil {
+		return nil, err
+	}
 
-	return &AppRepositoriesHandler{
+	return &appRepositoriesHandler{
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
 		clientsetForConfig: clientsetForConfig,
-		svcKubeClient:      svcKubeClient,
+		svcClientset:       &combinedClientset{svcAppRepoClient, svcKubeClient},
 	}, nil
 }
 
@@ -148,15 +190,15 @@ func clientsetForConfig(config *rest.Config) (combinedClientsetInterface, error)
 	return &combinedClientset{arclientset, coreclientset}, nil
 }
 
-// ConfigForToken returns a new config for a given auth token.
-func (a *AppRepositoriesHandler) ConfigForToken(token string) *rest.Config {
+// configForToken returns a new config for a given auth token.
+func (a *appRepositoriesHandler) configForToken(token string) *rest.Config {
 	configCopy := a.config
 	configCopy.BearerToken = token
 	return &configCopy
 }
 
-func (a *AppRepositoriesHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
-	clientset, err := a.clientsetForConfig(a.ConfigForToken(token))
+func (a *appRepositoriesHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
+	clientset, err := a.clientsetForConfig(a.configForToken(token))
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
 	}
@@ -164,20 +206,14 @@ func (a *AppRepositoriesHandler) clientsetForRequest(token string) (combinedClie
 }
 
 // CreateAppRepository creates an AppRepository resource based on the request data
-func (a *AppRepositoriesHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error) {
+func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
 		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
 		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
 	}
 
-	clientset, err := a.clientsetForRequest(token)
-	if err != nil {
-		log.Errorf("unable to create clientset: %v", err)
-		return nil, err
-	}
-
 	var appRepoRequest appRepositoryRequest
-	err = json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
+	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
 	if err != nil {
 		log.Infof("unable to decode: %v", err)
 		return nil, err
@@ -187,7 +223,7 @@ func (a *AppRepositoriesHandler) CreateAppRepository(appRepoBody io.ReadCloser, 
 
 	// TODO(mnelson): validate both required data and request for index
 	// https://github.com/kubeapps/kubeapps/issues/1330
-	appRepo, err = clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
+	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
 
 	if err != nil {
 		return nil, err
@@ -195,7 +231,7 @@ func (a *AppRepositoriesHandler) CreateAppRepository(appRepoBody io.ReadCloser, 
 
 	repoSecret := secretForRequest(appRepoRequest, appRepo)
 	if repoSecret != nil {
-		_, err = clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
+		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
 		if err != nil {
 			return nil, err
 		}
@@ -211,7 +247,7 @@ func (a *AppRepositoriesHandler) CreateAppRepository(appRepoBody io.ReadCloser, 
 		if requestNamespace != a.kubeappsNamespace {
 			repoSecret.ObjectMeta.Name = kubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
 			repoSecret.ObjectMeta.OwnerReferences = nil
-			_, err = a.svcKubeClient.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
+			_, err = a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
 			if err != nil {
 				return nil, err
 			}
@@ -221,18 +257,14 @@ func (a *AppRepositoriesHandler) CreateAppRepository(appRepoBody io.ReadCloser, 
 }
 
 // DeleteAppRepository deletes an AppRepository resource from a namespace.
-func (a *AppRepositoriesHandler) DeleteAppRepository(repoName, repoNamespace, token string) error {
-	clientset, err := a.clientsetForRequest(token)
-	if err != nil {
-		return err
-	}
-	appRepo, err := clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
+func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error {
+	appRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	hasCredentials := appRepo.Spec.Auth.Header != nil || appRepo.Spec.Auth.CustomCA != nil
 	var propagationPolicy metav1.DeletionPropagation = "Foreground"
-	err = clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(repoName, &metav1.DeleteOptions{
+	err = a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(repoName, &metav1.DeleteOptions{
 		PropagationPolicy: &propagationPolicy,
 	})
 	if err != nil {
@@ -243,9 +275,15 @@ func (a *AppRepositoriesHandler) DeleteAppRepository(repoName, repoNamespace, to
 	// the repository credentials kept in the kubeapps namespace (the repo credentials in the actual
 	// namespace should be deleted when the owning app repo is deleted).
 	if hasCredentials && repoNamespace != a.kubeappsNamespace {
-		err = clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(kubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
+		err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(kubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
 	}
 	return err
+}
+
+// GetAppRepository returns an AppRepository resource from a namespace.
+// Optionally set a token to get the AppRepository using a custom serviceaccount
+func (a *userHandler) GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error) {
+	return a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
@@ -360,28 +398,28 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 // TODO(andresmgot): I am adding this method in this package for simplicity
 // (since it already allows to impersonate the user)
 // We should refactor this code to make it more generic (not apprepository-specific)
-func (a *AppRepositoriesHandler) GetNamespaces(token string) ([]corev1.Namespace, error) {
-	userClientset, err := a.clientsetForRequest(token)
-	if err != nil {
-		return nil, err
-	}
-
+func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	// Try to list namespaces with the user token, for backward compatibility
-	namespaces, err := userClientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	namespaces, err := a.clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 	if err != nil {
 		if k8sErrors.IsForbidden(err) {
 			// The user doesn't have permissions to list namespaces, use the current serviceaccount
-			namespaces, err = a.svcKubeClient.CoreV1().Namespaces().List(metav1.ListOptions{})
+			namespaces, err = a.svcClientset.CoreV1().Namespaces().List(metav1.ListOptions{})
 		}
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	allowedNamespaces, err := filterAllowedNamespaces(userClientset, namespaces)
+	allowedNamespaces, err := filterAllowedNamespaces(a.clientset, namespaces)
 	if err != nil {
 		return nil, err
 	}
 
 	return allowedNamespaces, nil
+}
+
+// GetSecret return the a secret from a namespace using a token if given
+func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
+	return a.clientset.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
 }

@@ -182,13 +182,13 @@ func TestAppRepositoryCreate(t *testing.T) {
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(),
 			}
-			handler := AppRepositoriesHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
-				kubeappsNamespace:  tc.kubeappsNamespace,
-				svcKubeClient:      fakecoreclientset.NewSimpleClientset(),
+			handler := userHandler{
+				kubeappsNamespace: tc.kubeappsNamespace,
+				svcClientset:      cs,
+				clientset:         cs,
 			}
 
-			apprepo, err := handler.CreateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, "token")
+			apprepo, err := handler.CreateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
 
 			if err == nil && tc.expectedError != nil {
 				t.Errorf("got: nil, want: %+v", tc.expectedError)
@@ -243,7 +243,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 					expectedSecret.ObjectMeta.OwnerReferences = nil
 
 					if tc.requestNamespace != tc.kubeappsNamespace {
-						responseSecret, err = handler.svcKubeClient.CoreV1().Secrets(tc.kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
+						responseSecret, err = handler.clientset.CoreV1().Secrets(tc.kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
 						if err != nil {
 							t.Errorf("expected data %v not present: %+v", expectedSecret, err)
 						}
@@ -253,7 +253,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 						}
 					} else {
 						// The copy of the secret should not be created when the request namespace is kubeapps.
-						secret, err := handler.svcKubeClient.CoreV1().Secrets(tc.kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
+						secret, err := handler.clientset.CoreV1().Secrets(tc.kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
 						if err == nil {
 							t.Fatalf("secret should not be created, found %+v", secret)
 						}
@@ -309,13 +309,13 @@ func TestDeleteAppRepository(t *testing.T) {
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(makeSecretsForRepos(tc.existingRepos, kubeappsNamespace)...),
 			}
-			handler := AppRepositoriesHandler{
+			handler := appRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  kubeappsNamespace,
-				svcKubeClient:      fakecoreclientset.NewSimpleClientset(),
+				svcClientset:       cs,
 			}
 
-			err := handler.DeleteAppRepository(tc.repoName, tc.requestNamespace, "token")
+			err := handler.AsSVC().DeleteAppRepository(tc.repoName, tc.requestNamespace)
 
 			if got, want := errorCodeForK8sError(t, err), tc.expectedErrorCode; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
@@ -353,12 +353,12 @@ func errorCodeForK8sError(t *testing.T, err error) int {
 }
 
 func TestConfigForToken(t *testing.T) {
-	handler := AppRepositoriesHandler{
+	handler := appRepositoriesHandler{
 		config: rest.Config{},
 	}
 	token := "abcd"
 
-	configWithToken := handler.ConfigForToken(token)
+	configWithToken := handler.configForToken(token)
 
 	// The returned config has the token set.
 	if got, want := configWithToken.BearerToken, token; got != want {
@@ -640,12 +640,13 @@ func TestGetNamespaces(t *testing.T) {
 				},
 			)
 
-			handler := AppRepositoriesHandler{
+			handler := appRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  "kubeapps",
+				svcClientset:       cs,
 			}
 
-			namespaces, err := handler.GetNamespaces("token")
+			namespaces, err := handler.AsSVC().GetNamespaces()
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}

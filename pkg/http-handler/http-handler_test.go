@@ -19,13 +19,13 @@ package httphandler
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
+	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,24 +33,6 @@ import (
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 )
-
-type FakeHandler struct {
-	appRepo    *v1alpha1.AppRepository
-	namespaces []corev1.Namespace
-	err        error
-}
-
-func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace, token string) (*v1alpha1.AppRepository, error) {
-	return c.appRepo, c.err
-}
-
-func (c *FakeHandler) DeleteAppRepository(name, namespace, token string) error {
-	return c.err
-}
-
-func (c *FakeHandler) GetNamespaces(token string) ([]corev1.Namespace, error) {
-	return c.namespaces, c.err
-}
 
 func TestCreateAppRepository(t *testing.T) {
 	testCases := []struct {
@@ -77,7 +59,7 @@ func TestCreateAppRepository(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			createAppFunc := CreateAppRepository(&FakeHandler{appRepo: tc.appRepo, namespaces: []corev1.Namespace{}, err: tc.err})
+			createAppFunc := CreateAppRepository(&apprepo.FakeHandler{CreatedRepo: tc.appRepo, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
 
@@ -126,7 +108,7 @@ func TestDeleteAppRepository(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			deleteAppFunc := DeleteAppRepository(&FakeHandler{appRepo: nil, namespaces: []corev1.Namespace{}, err: tc.err})
+			deleteAppFunc := DeleteAppRepository(&apprepo.FakeHandler{Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories", strings.NewReader("data"))
 			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
 
@@ -160,7 +142,7 @@ func TestGetNamespaces(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getNSFunc := GetNamespaces(&FakeHandler{appRepo: nil, namespaces: tc.namespaces, err: tc.err})
+			getNSFunc := GetNamespaces(&apprepo.FakeHandler{Namespaces: tc.namespaces, Err: tc.err})
 			req := httptest.NewRequest("GET", "https://foo.bar/backend/v1/namespaces", nil)
 
 			response := httptest.NewRecorder()

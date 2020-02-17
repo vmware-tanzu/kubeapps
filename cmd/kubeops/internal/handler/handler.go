@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
-	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/pkg/agent"
+	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
@@ -37,9 +37,10 @@ type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request,
 
 // Options represents options that can be created without a bearer token, i.e. once at application startup.
 type Options struct {
-	ListLimit int
-	Timeout   int64
-	UserAgent string
+	ListLimit         int
+	Timeout           int64
+	UserAgent         string
+	KubeappsNamespace string
 }
 
 // Config represents data needed by each handler to be able to create Helm 3 actions.
@@ -91,23 +92,9 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			// System configuration and clients, using the service serviceaccount
-			// Used to retrieve apprepositories and secrets related to them
-			svcRestConfig, err := rest.InClusterConfig()
+			appRepoHandler, err := apprepo.NewAppRepositoriesHandler(options.KubeappsNamespace)
 			if err != nil {
-				log.Errorf("Failed to create in-cluster config with service account: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
-				return
-			}
-			svcKubeClient, err := kubernetes.NewForConfig(svcRestConfig)
-			if err != nil {
-				log.Errorf("Failed to create kube client with service account: %v", err)
-				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
-				return
-			}
-			appRepoClient, err := appRepo.NewForConfig(svcRestConfig)
-			if err != nil {
-				log.Errorf("Failed to create app repo kube client with service account: %v", err)
+				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
 				return
 			}
@@ -115,7 +102,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(svcKubeClient, appRepoClient, options.UserAgent),
+				ChartClient:  chartUtils.NewChartClient(appRepoHandler, options.KubeappsNamespace, options.UserAgent),
 			}
 			f(cfg, w, req, params)
 		}

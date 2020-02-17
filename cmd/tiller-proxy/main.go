@@ -29,8 +29,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
-	appRepo "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
+	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
@@ -99,11 +99,6 @@ func main() {
 		log.Fatalf("Unable to create a kubernetes client: %v", err)
 	}
 
-	appRepoClient, err := appRepo.NewForConfig(config)
-	if err != nil {
-		log.Fatalf("Unable to create an app repository client: %v", err)
-	}
-
 	log.Printf("Using tiller host: %s", settings.TillerHost)
 	helmOptions := []helm.Option{helm.Host(settings.TillerHost)}
 	if tlsVerify || tlsEnable {
@@ -135,7 +130,17 @@ func main() {
 	}
 
 	proxy = tillerProxy.NewProxy(kubeClient, helmClient, timeout)
-	chartClient := chartUtils.NewChartClient(kubeClient, appRepoClient, userAgent())
+	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		log.Fatalf("POD_NAMESPACE should be defined")
+	}
+
+	appRepoHandler, err := apprepo.NewAppRepositoriesHandler(kubeappsNamespace)
+	if err != nil {
+		log.Fatalf("Failed to create handler: %v", err)
+	}
+
+	chartClient := chartUtils.NewChartClient(appRepoHandler, kubeappsNamespace, userAgent())
 
 	r := mux.NewRouter()
 

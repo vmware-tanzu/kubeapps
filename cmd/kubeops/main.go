@@ -45,9 +45,15 @@ func main() {
 	pflag.Parse()
 	settings.Init(pflag.CommandLine)
 
+	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+	if kubeappsNamespace == "" {
+		log.Fatal("POD_NAMESPACE should be defined")
+	}
+
 	options := handler.Options{
-		ListLimit: listLimit,
-		Timeout:   timeout,
+		ListLimit:         listLimit,
+		Timeout:           timeout,
+		KubeappsNamespace: kubeappsNamespace,
 	}
 
 	storageForDriver := agent.StorageForSecrets
