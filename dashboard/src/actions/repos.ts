@@ -70,10 +70,14 @@ export const deleteRepo = (
   return async (dispatch, getState) => {
     const {
       namespace: { current },
+      config: { namespace: kubeappsNamespace, featureFlags },
     } = getState();
     try {
       await AppRepository.delete(name, namespace);
-      dispatch(fetchRepos(current));
+      const fetchFromNamespace: string = featureFlags.reposPerNamespace
+        ? current
+        : kubeappsNamespace;
+      dispatch(fetchRepos(fetchFromNamespace));
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "delete"));
