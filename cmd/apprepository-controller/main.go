@@ -30,19 +30,20 @@ import (
 )
 
 var (
-	masterURL        string
-	kubeconfig       string
-	repoSyncImage    string
-	repoSyncCommand  string
-	namespace        string
-	dbType           string
-	dbURL            string
-	dbUser           string
-	dbName           string
-	dbSecretName     string
-	dbSecretKey      string
-	userAgentComment string
-	crontab          string
+	masterURL         string
+	kubeconfig        string
+	repoSyncImage     string
+	repoSyncCommand   string
+	namespace         string
+	dbType            string
+	dbURL             string
+	dbUser            string
+	dbName            string
+	dbSecretName      string
+	dbSecretKey       string
+	userAgentComment  string
+	crontab           string
+	reposPerNamespace bool
 )
 
 func main() {
@@ -66,10 +67,17 @@ func main() {
 		log.Fatalf("Error building apprepo clientset: %s", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewFilteredSharedInformerFactory(kubeClient, 0, namespace, nil)
-	apprepoInformerFactory := informers.NewFilteredSharedInformerFactory(apprepoClient, 0, namespace, nil)
+	// We're interested in being informed about cronjobs in kubeapps namespace only, currently.
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(namespace))
+	// Depending on the flag, we may be interested in AppRepository resources across the cluster.
+	var apprepoInformerFactory informers.SharedInformerFactory
+	if reposPerNamespace {
+		apprepoInformerFactory = informers.NewSharedInformerFactory(apprepoClient, 0)
+	} else {
+		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, namespace, nil)
+	}
 
-	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory)
+	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory, namespace)
 
 	go kubeInformerFactory.Start(stopCh)
 	go apprepoInformerFactory.Start(stopCh)
@@ -85,6 +93,7 @@ func init() {
 	flag.StringVar(&repoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
 	flag.StringVar(&repoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
+	flag.BoolVar(&reposPerNamespace, "repos-per-namespace", false, "Enables syncing app repositories across all namespaces.")
 	flag.StringVar(&dbType, "database-type", "mongodb", "Database type. Allowed values: mongodb, postgresql")
 	flag.StringVar(&dbURL, "database-url", "localhost", "Database URL")
 	flag.StringVar(&dbUser, "database-user", "root", "Database user")

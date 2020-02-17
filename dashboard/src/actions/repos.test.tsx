@@ -85,20 +85,53 @@ actionTestCases.forEach(tc => {
 
 // Async action creators
 describe("deleteRepo", () => {
-  it("dispatches requestRepos and receivedRepos after deletion if no error", async () => {
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestRepos),
-        payload: kubeappsNamespace,
-      },
-      {
-        type: getType(repoActions.receiveRepos),
-        payload: { foo: "bar" },
-      },
-    ];
+  context("dispatches requestRepos and receivedRepos after deletion if no error", async () => {
+    const currentNamespace = "current-namespace";
+    it("dispatches requestRepos with kubeapps namespace when reposPerNamespace is not set", async () => {
+      const storeWithFlag: any = mockStore({
+        config: {
+          namespace: kubeappsNamespace,
+          featureFlags: { reposPerNamespace: false },
+        },
+        namespace: { current: currentNamespace },
+      });
+      const expectedActions = [
+        {
+          type: getType(repoActions.requestRepos),
+          payload: kubeappsNamespace,
+        },
+        {
+          type: getType(repoActions.receiveRepos),
+          payload: { foo: "bar" },
+        },
+      ];
 
-    await store.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
-    expect(store.getActions()).toEqual(expectedActions);
+      await storeWithFlag.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
+      expect(storeWithFlag.getActions()).toEqual(expectedActions);
+    });
+
+    it("dispatches requestRepos with current namespace when reposPerNamespace is set", async () => {
+      const storeWithFlag: any = mockStore({
+        config: {
+          namespace: kubeappsNamespace,
+          featureFlags: { reposPerNamespace: true },
+        },
+        namespace: { current: currentNamespace },
+      });
+      const expectedActions = [
+        {
+          type: getType(repoActions.requestRepos),
+          payload: currentNamespace,
+        },
+        {
+          type: getType(repoActions.receiveRepos),
+          payload: { foo: "bar" },
+        },
+      ];
+
+      await storeWithFlag.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
+      expect(storeWithFlag.getActions()).toEqual(expectedActions);
+    });
   });
 
   it("dispatches errorRepos if error deleting", async () => {

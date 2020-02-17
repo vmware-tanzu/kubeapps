@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	apprepov1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -17,6 +17,7 @@ func Test_newCronJob(t *testing.T) {
 	dbName = "assets"
 	dbUser = "admin"
 	dbSecretName = "mongodb"
+	const kubeappsNamespace = "kubeapps"
 	tests := []struct {
 		name             string
 		apprepo          *apprepov1alpha1.AppRepository
@@ -46,8 +47,7 @@ func Test_newCronJob(t *testing.T) {
 			},
 			batchv1beta1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "apprepo-sync-my-charts",
-					Namespace: "kubeapps",
+					Name: "apprepo-kubeapps-sync-my-charts",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
 							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
@@ -57,6 +57,10 @@ func Test_newCronJob(t *testing.T) {
 								Kind:    "AppRepository",
 							}),
 					},
+					Labels: map[string]string{
+						LabelRepoName:      "my-charts",
+						LabelRepoNamespace: "kubeapps",
+					},
 				},
 				Spec: batchv1beta1.CronJobSpec{
 					Schedule:          "*/10 * * * *",
@@ -65,7 +69,10 @@ func Test_newCronJob(t *testing.T) {
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
-									Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+									Labels: map[string]string{
+										LabelRepoName:      "my-charts",
+										LabelRepoNamespace: "kubeapps",
+									},
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
@@ -129,8 +136,7 @@ func Test_newCronJob(t *testing.T) {
 			},
 			batchv1beta1.CronJob{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "apprepo-sync-my-charts",
-					Namespace: "kubeapps",
+					Name: "apprepo-kubeapps-sync-my-charts",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
 							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
@@ -140,6 +146,10 @@ func Test_newCronJob(t *testing.T) {
 								Kind:    "AppRepository",
 							}),
 					},
+					Labels: map[string]string{
+						LabelRepoName:      "my-charts",
+						LabelRepoNamespace: "kubeapps",
+					},
 				},
 				Spec: batchv1beta1.CronJobSpec{
 					Schedule:          "*/20 * * * *",
@@ -148,7 +158,10 @@ func Test_newCronJob(t *testing.T) {
 						Spec: batchv1.JobSpec{
 							Template: corev1.PodTemplateSpec{
 								ObjectMeta: metav1.ObjectMeta{
-									Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+									Labels: map[string]string{
+										LabelRepoName:      "my-charts",
+										LabelRepoNamespace: "kubeapps",
+									},
 								},
 								Spec: corev1.PodSpec{
 									RestartPolicy: "OnFailure",
@@ -204,9 +217,9 @@ func Test_newCronJob(t *testing.T) {
 				crontab = tt.crontab
 				defer func() { crontab = "" }()
 			}
-			result := newCronJob(tt.apprepo)
-			if diff := deep.Equal(tt.expected, *result); diff != nil {
-				t.Error(diff)
+			result := newCronJob(tt.apprepo, kubeappsNamespace)
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}
@@ -217,6 +230,7 @@ func Test_newSyncJob(t *testing.T) {
 	dbName = "assets"
 	dbUser = "admin"
 	dbSecretName = "mongodb"
+	const kubeappsNamespace = "kubeapps"
 	tests := []struct {
 		name             string
 		apprepo          *apprepov1alpha1.AppRepository
@@ -245,8 +259,7 @@ func Test_newSyncJob(t *testing.T) {
 			},
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "apprepo-sync-my-charts-",
-					Namespace:    "kubeapps",
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
 							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
@@ -261,7 +274,75 @@ func Test_newSyncJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
+						},
+						Spec: corev1.PodSpec{
+							RestartPolicy: "OnFailure",
+							Containers: []corev1.Container{
+								{
+									Name:    "sync",
+									Image:   repoSyncImage,
+									Command: []string{"/chart-repo"},
+									Args: []string{
+										"sync",
+										"--database-type=mongodb",
+										"--database-url=mongodb.kubeapps",
+										"--database-user=admin",
+										"--database-name=assets",
+										"my-charts",
+										"https://charts.acme.com/my-charts",
+									},
+									Env: []corev1.EnvVar{
+										{
+											Name: "DB_PASSWORD",
+											ValueFrom: &corev1.EnvVarSource{
+												SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+										},
+									},
+									VolumeMounts: nil,
+								},
+							},
+							Volumes: nil,
+						},
+					},
+				},
+			},
+			"",
+		},
+		{
+			"an app repository in another namespace results in jobs without owner references",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "my-other-namespace",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+				},
+			},
+			batchv1.Job{
+				ObjectMeta: metav1.ObjectMeta{
+					GenerateName: "apprepo-my-other-namespace-sync-my-charts-",
+				},
+				Spec: batchv1.JobSpec{
+					Template: corev1.PodTemplateSpec{
+						ObjectMeta: metav1.ObjectMeta{
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "my-other-namespace",
+							},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -322,8 +403,7 @@ func Test_newSyncJob(t *testing.T) {
 			},
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "apprepo-sync-my-charts-",
-					Namespace:    "kubeapps",
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
 							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
@@ -338,7 +418,10 @@ func Test_newSyncJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -406,8 +489,7 @@ func Test_newSyncJob(t *testing.T) {
 			},
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "apprepo-sync-my-charts-",
-					Namespace:    "kubeapps",
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
 							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
@@ -422,7 +504,10 @@ func Test_newSyncJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -501,8 +586,7 @@ func Test_newSyncJob(t *testing.T) {
 			},
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "apprepo-sync-my-charts-",
-					Namespace:    "kubeapps",
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
 							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
@@ -517,7 +601,10 @@ func Test_newSyncJob(t *testing.T) {
 				Spec: batchv1.JobSpec{
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
-							Labels: map[string]string{"apprepositories.kubeapps.com/repo-name": "my-charts"},
+							Labels: map[string]string{
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+							},
 						},
 						Spec: corev1.PodSpec{
 							RestartPolicy: "OnFailure",
@@ -612,8 +699,7 @@ func Test_newSyncJob(t *testing.T) {
 			},
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "apprepo-sync-my-charts-",
-					Namespace:    "kubeapps",
+					GenerateName: "apprepo-kubeapps-sync-my-charts-",
 					OwnerReferences: []metav1.OwnerReference{
 						*metav1.NewControllerRef(
 							&apprepov1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "my-charts"}},
@@ -629,8 +715,9 @@ func Test_newSyncJob(t *testing.T) {
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: map[string]string{
-								"apprepositories.kubeapps.com/repo-name": "my-charts",
-								"foo":                                    "bar",
+								LabelRepoName:      "my-charts",
+								LabelRepoNamespace: "kubeapps",
+								"foo":              "bar",
 							},
 						},
 						Spec: corev1.PodSpec{
@@ -677,9 +764,9 @@ func Test_newSyncJob(t *testing.T) {
 				defer func() { userAgentComment = "" }()
 			}
 
-			result := newSyncJob(tt.apprepo)
-			if diff := deep.Equal(tt.expected, *result); diff != nil {
-				t.Error(diff)
+			result := newSyncJob(tt.apprepo, kubeappsNamespace)
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}
@@ -690,6 +777,8 @@ func Test_newCleanupJob(t *testing.T) {
 	dbName = "assets"
 	dbUser = "admin"
 	dbSecretName = "mongodb"
+	const kubeappsNamespace = "kubeapps"
+
 	tests := []struct {
 		name      string
 		repoName  string
@@ -702,7 +791,7 @@ func Test_newCleanupJob(t *testing.T) {
 			"kubeapps",
 			batchv1.Job{
 				ObjectMeta: metav1.ObjectMeta{
-					GenerateName: "apprepo-cleanup-my-charts-",
+					GenerateName: "apprepo-kubeapps-cleanup-my-charts-",
 					Namespace:    "kubeapps",
 				},
 				Spec: batchv1.JobSpec{
@@ -740,9 +829,67 @@ func Test_newCleanupJob(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := newCleanupJob(tt.repoName, tt.namespace)
-			if diff := deep.Equal(tt.expected, *result); diff != nil {
-				t.Error(diff)
+			result := newCleanupJob(tt.repoName, tt.namespace, kubeappsNamespace)
+			if got, want := *result, tt.expected; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestObjectBelongsTo(t *testing.T) {
+	testCases := []struct {
+		name   string
+		object metav1.Object
+		parent metav1.Object
+		expect bool
+	}{
+		{
+			name: "it recognises a cronjob belonging to an app repository in another namespace",
+			object: &batchv1beta1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "apprepo-kubeapps-sync-my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						LabelRepoName:      "my-charts",
+						LabelRepoNamespace: "my-namespace",
+					},
+				},
+			},
+			parent: &apprepov1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "my-namespace",
+				},
+			},
+			expect: true,
+		},
+		{
+			name: "it returns false if the namespace does not match",
+			object: &batchv1beta1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "apprepo-kubeapps-sync-my-charts",
+					Namespace: "kubeapps",
+					Labels: map[string]string{
+						LabelRepoName:      "my-charts",
+						LabelRepoNamespace: "my-namespace",
+					},
+				},
+			},
+			parent: &apprepov1alpha1.AppRepository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts",
+					Namespace: "my-namespace2",
+				},
+			},
+			expect: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got, want := objectBelongsTo(tc.object, tc.parent), tc.expect; got != want {
+				t.Errorf("got: %t, want: %t", got, want)
 			}
 		})
 	}
