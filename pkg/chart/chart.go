@@ -23,7 +23,7 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeapps/kubeapps/pkg/apprepo"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	"io"
 	"io/ioutil"
 	"log"
@@ -99,14 +99,14 @@ type Resolver interface {
 
 // ChartClient struct contains the clients required to retrieve charts info
 type ChartClient struct {
-	appRepoHandler    apprepo.AuthHandler
+	appRepoHandler    kube.AuthHandler
 	userAgent         string
 	kubeappsNamespace string
 	appRepo           *appRepov1.AppRepository
 }
 
 // NewChartClient returns a new ChartClient
-func NewChartClient(appRepoHandler apprepo.AuthHandler, kubeappsNamespace, userAgent string) *ChartClient {
+func NewChartClient(appRepoHandler kube.AuthHandler, kubeappsNamespace, userAgent string) *ChartClient {
 	return &ChartClient{
 		appRepoHandler:    appRepoHandler,
 		userAgent:         userAgent,

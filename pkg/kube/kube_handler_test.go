@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package apprepo
+package kube
 
 import (
 	"encoding/json"
@@ -309,7 +309,7 @@ func TestDeleteAppRepository(t *testing.T) {
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(makeSecretsForRepos(tc.existingRepos, kubeappsNamespace)...),
 			}
-			handler := appRepositoriesHandler{
+			handler := kubeHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  kubeappsNamespace,
 				svcClientset:       cs,
@@ -353,7 +353,7 @@ func errorCodeForK8sError(t *testing.T, err error) int {
 }
 
 func TestConfigForToken(t *testing.T) {
-	handler := appRepositoriesHandler{
+	handler := kubeHandler{
 		config: rest.Config{},
 	}
 	token := "abcd"
@@ -640,7 +640,7 @@ func TestGetNamespaces(t *testing.T) {
 				},
 			)
 
-			handler := appRepositoriesHandler{
+			handler := kubeHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  "kubeapps",
 				svcClientset:       cs,
