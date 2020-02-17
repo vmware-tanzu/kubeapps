@@ -182,11 +182,10 @@ func TestAppRepositoryCreate(t *testing.T) {
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(),
 			}
-			handler := appRepositoriesHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
-				kubeappsNamespace:  tc.kubeappsNamespace,
-				svcClientset:       cs,
-				clientset:          cs,
+			handler := userHandler{
+				kubeappsNamespace: tc.kubeappsNamespace,
+				svcClientset:      cs,
+				clientset:         cs,
 			}
 
 			apprepo, err := handler.CreateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
@@ -313,10 +312,10 @@ func TestDeleteAppRepository(t *testing.T) {
 			handler := appRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  kubeappsNamespace,
-				clientset:          cs,
+				svcClientset:       cs,
 			}
 
-			err := handler.DeleteAppRepository(tc.repoName, tc.requestNamespace)
+			err := handler.AsSVC().DeleteAppRepository(tc.repoName, tc.requestNamespace)
 
 			if got, want := errorCodeForK8sError(t, err), tc.expectedErrorCode; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
@@ -644,10 +643,10 @@ func TestGetNamespaces(t *testing.T) {
 			handler := appRepositoriesHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  "kubeapps",
-				clientset:          cs,
+				svcClientset:       cs,
 			}
 
-			namespaces, err := handler.GetNamespaces()
+			namespaces, err := handler.AsSVC().GetNamespaces()
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
