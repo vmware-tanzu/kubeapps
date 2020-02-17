@@ -30,11 +30,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/kubeapps/kubeapps/cmd/tiller-proxy/internal/handler"
-	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
 	backendHandlers "github.com/kubeapps/kubeapps/pkg/http-handler"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	tillerProxy "github.com/kubeapps/kubeapps/pkg/proxy"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -135,12 +135,12 @@ func main() {
 		log.Fatalf("POD_NAMESPACE should be defined")
 	}
 
-	appRepoHandler, err := apprepo.NewAppRepositoriesHandler(kubeappsNamespace)
+	kubeHandler, err := kube.NewHandler(kubeappsNamespace)
 	if err != nil {
 		log.Fatalf("Failed to create handler: %v", err)
 	}
 
-	chartClient := chartUtils.NewChartClient(appRepoHandler, kubeappsNamespace, userAgent())
+	chartClient := chartUtils.NewChartClient(kubeHandler, kubeappsNamespace, userAgent())
 
 	r := mux.NewRouter()
 

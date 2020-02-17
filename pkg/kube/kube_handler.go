@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package apprepo
+package kube
 
 import (
 	"encoding/json"
@@ -46,15 +46,15 @@ type combinedClientsetInterface interface {
 }
 
 // Need to use a type alias to embed the two Clientset's without a name clash.
-type appRepoClientsetAlias = apprepoclientset.Clientset
+type kubeClientsetAlias = apprepoclientset.Clientset
 type combinedClientset struct {
-	*appRepoClientsetAlias
+	*kubeClientsetAlias
 	*kubernetes.Clientset
 }
 
-// appRepositoriesHandler handles http requests for operating on app repositories
+// kubeHandler handles http requests for operating on app repositories and k8s resources
 // in Kubeapps, without exposing implementation details to 3rd party integrations.
-type appRepositoriesHandler struct {
+type kubeHandler struct {
 	// The config set internally here cannot be used on its own as a valid
 	// token is required. Call-sites use configForToken to obtain a valid
 	// config with a specific token.
@@ -74,6 +74,7 @@ type appRepositoriesHandler struct {
 	clientsetForConfig func(*rest.Config) (combinedClientsetInterface, error)
 }
 
+// userHandler is an extension of kubeHandler for a specific service account
 type userHandler struct {
 	// The namespace in which (currently) app repositories are created.
 	kubeappsNamespace string
@@ -99,7 +100,7 @@ type AuthHandler interface {
 	AsSVC() handler
 }
 
-func (a *appRepositoriesHandler) AsUser(token string) handler {
+func (a *kubeHandler) AsUser(token string) handler {
 	clientset, err := a.clientsetForConfig(a.configForToken(token))
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
@@ -111,7 +112,7 @@ func (a *appRepositoriesHandler) AsUser(token string) handler {
 	}
 }
 
-func (a *appRepositoriesHandler) AsSVC() handler {
+func (a *kubeHandler) AsSVC() handler {
 	return &userHandler{
 		kubeappsNamespace: a.kubeappsNamespace,
 		svcClientset:      a.svcClientset,
@@ -133,10 +134,10 @@ type appRepositoryRequestDetails struct {
 	ResyncRequests     uint                   `json:"resyncRequests"`
 }
 
-// NewAppRepositoriesHandler returns an AppRepositories and Kubernetes handler configured with
+// NewHandler returns an AppRepositories and Kubernetes handler configured with
 // the in-cluster config but overriding the token with an empty string, so that
 // configForToken must be called to obtain a valid config.
-func NewAppRepositoriesHandler(kubeappsNamespace string) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -168,7 +169,7 @@ func NewAppRepositoriesHandler(kubeappsNamespace string) (AuthHandler, error) {
 		return nil, err
 	}
 
-	return &appRepositoriesHandler{
+	return &kubeHandler{
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
@@ -191,13 +192,13 @@ func clientsetForConfig(config *rest.Config) (combinedClientsetInterface, error)
 }
 
 // configForToken returns a new config for a given auth token.
-func (a *appRepositoriesHandler) configForToken(token string) *rest.Config {
+func (a *kubeHandler) configForToken(token string) *rest.Config {
 	configCopy := a.config
 	configCopy.BearerToken = token
 	return &configCopy
 }
 
-func (a *appRepositoriesHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
+func (a *kubeHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
 	clientset, err := a.clientsetForConfig(a.configForToken(token))
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
@@ -395,9 +396,6 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 }
 
 // GetNamespaces return the list of namespaces that the user has permission to access
-// TODO(andresmgot): I am adding this method in this package for simplicity
-// (since it already allows to impersonate the user)
-// We should refactor this code to make it more generic (not apprepository-specific)
 func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	// Try to list namespaces with the user token, for backward compatibility
 	namespaces, err := a.clientset.CoreV1().Namespaces().List(metav1.ListOptions{})

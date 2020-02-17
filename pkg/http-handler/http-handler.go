@@ -23,8 +23,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -52,7 +52,7 @@ func returnK8sError(err error, w http.ResponseWriter) {
 }
 
 // CreateAppRepository creates App Repository
-func CreateAppRepository(handler apprepo.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace := mux.Vars(req)["namespace"]
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
@@ -75,13 +75,13 @@ func CreateAppRepository(handler apprepo.AuthHandler) func(w http.ResponseWriter
 }
 
 // DeleteAppRepository deletes an App Repository
-func DeleteAppRepository(appRepo apprepo.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		repoNamespace := mux.Vars(req)["namespace"]
 		repoName := mux.Vars(req)["name"]
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
 
-		err := appRepo.AsUser(token).DeleteAppRepository(repoName, repoNamespace)
+		err := kubeHandler.AsUser(token).DeleteAppRepository(repoName, repoNamespace)
 
 		if err != nil {
 			returnK8sError(err, w)
@@ -90,10 +90,10 @@ func DeleteAppRepository(appRepo apprepo.AuthHandler) func(w http.ResponseWriter
 }
 
 // GetNamespaces return the list of namespaces
-func GetNamespaces(appRepo apprepo.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		namespaces, err := appRepo.AsUser(token).GetNamespaces()
+		namespaces, err := kubeHandler.AsUser(token).GetNamespaces()
 		if err != nil {
 			returnK8sError(err, w)
 		}
@@ -111,7 +111,7 @@ func GetNamespaces(appRepo apprepo.AuthHandler) func(w http.ResponseWriter, req 
 
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
 func SetupDefaultRoutes(r *mux.Router) error {
-	backendHandler, err := apprepo.NewAppRepositoriesHandler(os.Getenv("POD_NAMESPACE"))
+	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"))
 	if err != nil {
 		return err
 	}

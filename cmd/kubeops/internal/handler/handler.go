@@ -8,11 +8,11 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
 	"github.com/kubeapps/kubeapps/pkg/agent"
-	"github.com/kubeapps/kubeapps/pkg/apprepo"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 	"github.com/kubeapps/kubeapps/pkg/chart/helm3to2"
 	"github.com/kubeapps/kubeapps/pkg/handlerutil"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
 	"github.com/urfave/negroni"
 	"helm.sh/helm/v3/pkg/action"
@@ -92,7 +92,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			appRepoHandler, err := apprepo.NewAppRepositoriesHandler(options.KubeappsNamespace)
+			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace)
 			if err != nil {
 				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
@@ -102,7 +102,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			cfg := Config{
 				Options:      options,
 				ActionConfig: actionConfig,
-				ChartClient:  chartUtils.NewChartClient(appRepoHandler, options.KubeappsNamespace, options.UserAgent),
+				ChartClient:  chartUtils.NewChartClient(kubeHandler, options.KubeappsNamespace, options.UserAgent),
 			}
 			f(cfg, w, req, params)
 		}
