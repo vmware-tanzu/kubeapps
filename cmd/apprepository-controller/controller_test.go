@@ -206,7 +206,7 @@ func Test_newCronJob(t *testing.T) {
 			"*/20 * * * *",
 		},
 		{
-			"it references the repo secret in kubeapps",
+			"a cronjob for an app repo in another namespace references the repo secret in kubeapps",
 			&apprepov1alpha1.AppRepository{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       "AppRepository",
