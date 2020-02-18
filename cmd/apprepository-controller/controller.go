@@ -454,7 +454,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace strin
 			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
+					SecretName: secretKeyRefForRepo(apprepo.Spec.Auth.CustomCA.SecretKeyRef, apprepo, kubeappsNamespace).Name,
 					Items: []corev1.KeyToPath{
 						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
 					},
@@ -583,18 +583,26 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, kubeappsNames
 		},
 	})
 	if apprepo.Spec.Auth.Header != nil {
-		secretKeyRef := apprepo.Spec.Auth.Header.SecretKeyRef
-		if apprepo.ObjectMeta.Namespace != kubeappsNamespace {
-			secretKeyRef.LocalObjectReference.Name = kube.KubeappsSecretNameForRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
-		}
 		envVars = append(envVars, corev1.EnvVar{
 			Name: "AUTHORIZATION_HEADER",
 			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &secretKeyRef,
+				SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, kubeappsNamespace),
 			},
 		})
 	}
 	return envVars
+}
+
+// secretKeyRefForRepo returns a secret key ref with a name depending on whether
+// this repo is in the kubeapps namespace or not. If the repo is not in the
+// kubeapps namespace, then the secret will have been copied from another namespace
+// into the kubeapps namespace and have a slightly different name.
+func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace string) *corev1.SecretKeySelector {
+	if apprepo.ObjectMeta.Namespace == kubeappsNamespace {
+		return &keyRef
+	}
+	keyRef.LocalObjectReference.Name = kube.KubeappsSecretNameForRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
+	return &keyRef
 }
 
 // apprepoCleanupJobArgs returns a list of args for the repo cleanup container
