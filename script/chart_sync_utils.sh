@@ -88,6 +88,7 @@ updateRepo() {
     replaceImage apprepository-controller "${targetChartPath}/values.yaml"
     replaceImage asset-syncer "${targetChartPath}/values.yaml"
     replaceImage assetsvc "${targetChartPath}/values.yaml"
+    replaceImage kubeops "${targetChartPath}/values.yaml"
 }
 
 commitAndPushChanges() {
