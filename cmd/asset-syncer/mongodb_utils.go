@@ -61,7 +61,7 @@ func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum str
 	return err == nil && checksum == lastCheck.Checksum
 }
 
-func (m *mongodbAssetManager) UpdateLastCheck(repoName string, checksum string, now time.Time) error {
+func (m *mongodbAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(repositoryCollection).UpsertId(repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}})

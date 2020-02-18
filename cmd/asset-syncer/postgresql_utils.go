@@ -62,17 +62,27 @@ func (m *postgresAssetManager) Sync(charts []models.Chart) error {
 }
 
 func (m *postgresAssetManager) initTables() error {
-	_, err := m.DB.Exec(fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, chart_id varchar unique, info jsonb NOT NULL)",
-		dbutils.ChartTable,
-	))
+	// Repository table should have a namespace column, and chart table should reference repositories.
+	_, err := m.DB.Exec(fmt.Sprintf(`
+CREATE TABLE IF NOT EXISTS %s (
+	ID serial NOT NULL PRIMARY KEY,
+	namespace varchar NOT NULL,
+	name varchar NOT NULL,
+	checksum varchar,
+	last_update varchar,
+	UNIQUE(namespace, name)
+)`, dbutils.RepositoryTable))
 	if err != nil {
 		return err
 	}
-	_, err = m.DB.Exec(fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, name varchar unique, checksum varchar, last_update varchar)",
-		dbutils.RepositoryTable,
-	))
+
+	_, err = m.DB.Exec(fmt.Sprintf(`
+CREATE TABLE IF NOT EXISTS %s (
+	ID serial NOT NULL PRIMARY KEY,
+	repository_id integer REFERENCES %s (ID),
+	chart_id varchar unique,
+	info jsonb NOT NULL
+)`, dbutils.ChartTable, dbutils.RepositoryTable))
 	if err != nil {
 		return err
 	}
@@ -96,13 +106,13 @@ func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum strin
 	return false
 }
 
-func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now time.Time) error {
-	query := fmt.Sprintf(`INSERT INTO %s (name, checksum, last_update)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (name) 
-	DO UPDATE SET last_update = $3, checksum = $2
+func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {
+	query := fmt.Sprintf(`INSERT INTO %s (namespace, name, checksum, last_update)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (namespace, name)
+	DO UPDATE SET last_update = $4, checksum = $3
 	`, dbutils.RepositoryTable)
-	rows, err := m.DB.Query(query, repoName, checksum, now.String())
+	rows, err := m.DB.Query(query, repoNamespace, repoName, checksum, now.String())
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -117,7 +127,7 @@ func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
 		}
 		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (chart_id, info)
 		VALUES ($1, $2)
-		ON CONFLICT (chart_id) 
+		ON CONFLICT (chart_id)
 		DO UPDATE SET info = $2
 		`, dbutils.ChartTable), chart.ID, string(d))
 		if err != nil {
@@ -187,7 +197,7 @@ func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
 	query := fmt.Sprintf(`INSERT INTO %s (chart_files_ID, info)
 	VALUES ($1, $2)
-	ON CONFLICT (chart_files_ID) 
+	ON CONFLICT (chart_files_ID)
 	DO UPDATE SET info = $2
 	`, dbutils.ChartFilesTable)
 	rows, err := m.DB.Query(query, chartFilesID, files)

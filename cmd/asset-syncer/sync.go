@@ -27,11 +27,11 @@ import (
 )
 
 var syncCmd = &cobra.Command{
-	Use:   "sync [REPO NAME] [REPO URL]",
+	Use:   "sync [REPO_NAMESPACE] [REPO NAME] [REPO URL]",
 	Short: "add a new chart repository, and resync its charts periodically",
 	Run: func(cmd *cobra.Command, args []string) {
-		if len(args) != 2 {
-			logrus.Info("Need exactly two arguments: [REPO NAME] [REPO URL]")
+		if len(args) != 3 {
+			logrus.Info("Need exactly three arguments: [REPO_NAMESPACE] [REPO NAME] [REPO URL]")
 			cmd.Help()
 			return
 		}
@@ -52,7 +52,7 @@ var syncCmd = &cobra.Command{
 		defer manager.Close()
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
-		r, repoContent, err := getRepo(args[0], args[1], authorizationHeader)
+		r, repoContent, err := getRepo(args[0], args[1], args[2], authorizationHeader)
 		if err != nil {
 			logrus.Fatal(err)
 		}
@@ -68,7 +68,7 @@ var syncCmd = &cobra.Command{
 			logrus.Fatal(err)
 		}
 
-		charts := chartsFromIndex(index, &models.Repo{Name: r.Name, URL: r.URL})
+		charts := chartsFromIndex(index, &models.Repo{Namespace: r.Namespace, Name: r.Name, URL: r.URL})
 		if len(charts) == 0 {
 			logrus.Fatal("no charts in repository index")
 		}
@@ -82,7 +82,7 @@ var syncCmd = &cobra.Command{
 		fImporter.fetchFiles(charts, r)
 
 		// Update cache in the database
-		if err = manager.UpdateLastCheck(r.Name, r.Checksum, time.Now()); err != nil {
+		if err = manager.UpdateLastCheck(r.Namespace, r.Name, r.Checksum, time.Now()); err != nil {
 			logrus.Fatal(err)
 		}
 		logrus.WithFields(logrus.Fields{"url": r.URL}).Info("Stored repository update in cache")

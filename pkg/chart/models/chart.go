@@ -27,12 +27,14 @@ import (
 
 // Repo holds the App repository basic details
 type Repo struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
+	Namespace string `json:"namespace"`
+	Name      string `json:"name"`
+	URL       string `json:"url"`
 }
 
 // RepoInternal holds the App repository details including auth and checksum
 type RepoInternal struct {
+	Namespace           string `json:"namespace"`
 	Name                string `json:"name"`
 	URL                 string `json:"url"`
 	AuthorizationHeader string `bson:"-"`

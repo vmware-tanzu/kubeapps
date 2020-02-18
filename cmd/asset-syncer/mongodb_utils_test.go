@@ -111,12 +111,15 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 
 func Test_updateLastCheck(t *testing.T) {
 	m := &mock.Mock{}
-	repoName := "foo"
-	checksum := "bar"
+	const (
+		repoNamespace = "repoNamespace"
+		repoName      = "foo"
+		checksum      = "bar"
+	)
 	now := time.Now()
 	m.On("UpsertId", repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
 	manager := getMockManager(m)
-	err := manager.UpdateLastCheck(repoName, checksum, now)
+	err := manager.UpdateLastCheck(repoNamespace, repoName, checksum, now)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}

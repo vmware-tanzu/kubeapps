@@ -73,19 +73,22 @@ func Test_PGRepoAlreadyPropcessed(t *testing.T) {
 
 func Test_PGUpdateLastCheck(t *testing.T) {
 	m := &mockDB{&mock.Mock{}}
-	repoName := "foo"
-	checksum := "bar"
+	const (
+		repoNamespace = "repoNamespace"
+		repoName      = "foo"
+		checksum      = "bar"
+	)
 	now := time.Now()
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
-	expectedQuery := `INSERT INTO repos (name, checksum, last_update)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (name) 
-	DO UPDATE SET last_update = $3, checksum = $2
+	expectedQuery := `INSERT INTO repos (namespace, name, checksum, last_update)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (namespace, name)
+	DO UPDATE SET last_update = $4, checksum = $3
 	`
-	m.On("Query", expectedQuery, []interface{}{repoName, checksum, now.String()})
-	pgManager.UpdateLastCheck(repoName, checksum, now)
+	m.On("Query", expectedQuery, []interface{}{repoNamespace, repoName, checksum, now.String()})
+	pgManager.UpdateLastCheck(repoNamespace, repoName, checksum, now)
 	m.AssertExpectations(t)
 }
 
@@ -152,7 +155,7 @@ func Test_PGinsertFiles(t *testing.T) {
 		"Query",
 		`INSERT INTO files (chart_files_ID, info)
 	VALUES ($1, $2)
-	ON CONFLICT (chart_files_ID) 
+	ON CONFLICT (chart_files_ID)
 	DO UPDATE SET info = $2
 	`,
 		[]interface{}{id, files},

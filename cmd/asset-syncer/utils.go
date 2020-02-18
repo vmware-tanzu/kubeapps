@@ -78,7 +78,7 @@ type assetManager interface {
 	Delete(repo string) error
 	Sync(charts []models.Chart) error
 	RepoAlreadyProcessed(repoName, checksum string) bool
-	UpdateLastCheck(repoName, checksum string, now time.Time) error
+	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error
 	updateIcon(data []byte, contentType, ID string) error
@@ -105,7 +105,7 @@ func getSha256(src []byte) (string, error) {
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
 
-func getRepo(name, repoURL, authorizationHeader string) (*models.RepoInternal, []byte, error) {
+func getRepo(namespace, name, repoURL, authorizationHeader string) (*models.RepoInternal, []byte, error) {
 	url, err := parseRepoURL(repoURL)
 	if err != nil {
 		log.WithFields(log.Fields{"url": repoURL}).WithError(err).Error("failed to parse URL")
@@ -122,7 +122,7 @@ func getRepo(name, repoURL, authorizationHeader string) (*models.RepoInternal, [
 		return nil, []byte{}, err
 	}
 
-	return &models.RepoInternal{Name: name, URL: url.String(), Checksum: repoChecksum, AuthorizationHeader: authorizationHeader}, repoBytes, nil
+	return &models.RepoInternal{Namespace: namespace, Name: name, URL: url.String(), Checksum: repoChecksum, AuthorizationHeader: authorizationHeader}, repoBytes, nil
 }
 
 func fetchRepoIndex(url, authHeader string) ([]byte, error) {
