@@ -85,7 +85,7 @@ func makeSecretsForRepos(reposPerNamespace map[string][]repoStub, kubeappsNamesp
 			if namespace != kubeappsNamespace {
 				var appRepo runtime.Object = &corev1.Secret{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      kubeappsSecretNameForRepo(repoStub.name, namespace),
+						Name:      KubeappsSecretNameForRepo(repoStub.name, namespace),
 						Namespace: kubeappsNamespace,
 					},
 				}
@@ -236,7 +236,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 
 					// Verify the copy of the repo secret in in kubeapps is
 					// also stored if this is a per-namespace app repository.
-					kubeappsSecretName := kubeappsSecretNameForRepo(expectedAppRepo.ObjectMeta.Name, expectedAppRepo.ObjectMeta.Namespace)
+					kubeappsSecretName := KubeappsSecretNameForRepo(expectedAppRepo.ObjectMeta.Name, expectedAppRepo.ObjectMeta.Namespace)
 					expectedSecret.ObjectMeta.Name = kubeappsSecretName
 					expectedSecret.ObjectMeta.Namespace = tc.kubeappsNamespace
 					// The owner ref cannot be present for the copy in the kubeapps namespace.
@@ -332,7 +332,7 @@ func TestDeleteAppRepository(t *testing.T) {
 				// because the fake client does not handle finalizers but verified in real life.
 
 				// Ensure any copy of the repo credentials has been deleted from the kubeapps namespace.
-				_, err = cs.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretNameForRepo(tc.repoName, tc.requestNamespace), metav1.GetOptions{})
+				_, err = cs.CoreV1().Secrets(kubeappsNamespace).Get(KubeappsSecretNameForRepo(tc.repoName, tc.requestNamespace), metav1.GetOptions{})
 				if got, want := errorCodeForK8sError(t, err), 404; got != want {
 					t.Errorf("got: %d, want: %d", got, want)
 				}
