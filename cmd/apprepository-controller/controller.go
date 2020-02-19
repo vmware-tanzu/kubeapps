@@ -567,7 +567,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 		args = append(args, "--user-agent-comment="+userAgentComment)
 	}
 
-	return append(args, apprepo.GetNamespace(), apprepo.GetName(), apprepo.Spec.URL)
+	return append(args, "--namespace="+apprepo.GetNamespace(), apprepo.GetName(), apprepo.Spec.URL)
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container

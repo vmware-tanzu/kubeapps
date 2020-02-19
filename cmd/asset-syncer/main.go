@@ -29,6 +29,7 @@ var (
 	databaseUser     string
 	databasePassword string
 	debug            bool
+	namespace        string
 )
 
 var rootCmd = &cobra.Command{
@@ -51,6 +52,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&databaseURL, "database-url", "localhost", "Database URL")
 	rootCmd.PersistentFlags().StringVar(&databaseName, "database-name", "charts", "Name of the database to use")
 	rootCmd.PersistentFlags().StringVar(&databaseUser, "database-user", "", "Database user")
+	rootCmd.PersistentFlags().StringVar(&namespace, "namespace", "", "Namespace of the repository being synced")
 	// User agent configuration can be found in version.go. Check that file for more details
 	rootCmd.PersistentFlags().StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "verbose logging")

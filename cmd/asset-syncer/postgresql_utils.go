@@ -50,9 +50,16 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *postgresAssetManager) Sync(charts []models.Chart) error {
+func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Chart) error {
 	m.initTables()
-	err := m.importCharts(charts)
+
+	// Check if repo exists and get ID.
+	repoId, err := m.getRepoId(repo.Namespace, repo.Name)
+	if err != nil {
+		return err
+	}
+
+	err = m.importCharts(charts, repoId)
 	if err != nil {
 		return err
 	}
@@ -80,16 +87,20 @@ CREATE TABLE IF NOT EXISTS %s (
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
 	repository_id integer REFERENCES %s (ID),
-	chart_id varchar unique,
-	info jsonb NOT NULL
+	chart_id varchar,
+	info jsonb NOT NULL,
+	UNIQUE(repository_id, chart_id)
 )`, dbutils.ChartTable, dbutils.RepositoryTable))
 	if err != nil {
 		return err
 	}
-	_, err = m.DB.Exec(fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, chart_files_ID varchar unique, info jsonb NOT NULL)",
-		dbutils.ChartFilesTable,
-	))
+
+	_, err = m.DB.Exec(fmt.Sprintf(`
+CREATE TABLE IF NOT EXISTS %s (
+	ID serial NOT NULL PRIMARY KEY,
+	chart_files_ID varchar unique,
+	info jsonb NOT NULL
+)`, dbutils.ChartFilesTable))
 	if err != nil {
 		return err
 	}
@@ -106,6 +117,42 @@ func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum strin
 	return false
 }
 
+// getRepoId upserts to get the primary key of a repo.
+func (m *postgresAssetManager) getRepoId(repoNamespace, repoName string) (int, error) {
+	// The only query I could find for inserting a new repo or selecting the existing one
+	// to find the ID in a single query.
+	query := fmt.Sprintf(`
+WITH new_repo AS (
+	INSERT INTO %s (namespace, name)
+	SELECT CAST($1 AS VARCHAR), CAST($2 AS VARCHAR) WHERE NOT EXISTS (
+		SELECT * FROM %s WHERE namespace=$1 AND name=$2)
+	RETURNING ID
+)
+SELECT ID FROM new_repo
+UNION
+SELECT ID FROM %s WHERE namespace=$1 AND name=$2
+`, dbutils.RepositoryTable, dbutils.RepositoryTable, dbutils.RepositoryTable)
+
+	rows, err := m.DB.Query(query, repoNamespace, repoName)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	rows.Next()
+	var id int
+	if err := rows.Scan(&id); err != nil {
+		return 0, err
+	}
+
+	// There should only ever be one ID, but just to be sure
+	if rows.Next() {
+		return 0, fmt.Errorf("expected exactly 1 id returned, got more than one")
+	}
+
+	return id, nil
+}
+
 func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {
 	query := fmt.Sprintf(`INSERT INTO %s (namespace, name, checksum, last_update)
 	VALUES ($1, $2, $3, $4)
@@ -119,17 +166,17 @@ func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum
 	return err
 }
 
-func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
+func (m *postgresAssetManager) importCharts(charts []models.Chart, repoId int) error {
 	for _, chart := range charts {
 		d, err := json.Marshal(chart)
 		if err != nil {
 			return err
 		}
-		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (chart_id, info)
-		VALUES ($1, $2)
-		ON CONFLICT (chart_id)
-		DO UPDATE SET info = $2
-		`, dbutils.ChartTable), chart.ID, string(d))
+		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repository_id, chart_id, info)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (chart_id, repository_id)
+		DO UPDATE SET info = $3
+		`, dbutils.ChartTable), repoId, chart.ID, string(d))
 		if err != nil {
 			return err
 		}
