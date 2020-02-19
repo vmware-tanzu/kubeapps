@@ -205,6 +205,92 @@ func Test_newCronJob(t *testing.T) {
 			"kubeapps/v2.3",
 			"*/20 * * * *",
 		},
+		{
+			"a cronjob for an app repo in another namespace references the repo secret in kubeapps",
+			&apprepov1alpha1.AppRepository{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "AppRepository",
+					APIVersion: "kubeapps.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-charts-in-otherns",
+					Namespace: "otherns",
+					Labels: map[string]string{
+						"name":       "my-charts",
+						"created-by": "kubeapps",
+					},
+				},
+				Spec: apprepov1alpha1.AppRepositorySpec{
+					Type: "helm",
+					URL:  "https://charts.acme.com/my-charts",
+					Auth: apprepov1alpha1.AppRepositoryAuth{
+						Header: &apprepov1alpha1.AppRepositoryAuthHeader{
+							SecretKeyRef: corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
+					},
+				},
+			},
+			batchv1beta1.CronJob{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "apprepo-otherns-sync-my-charts-in-otherns",
+					Labels: map[string]string{
+						LabelRepoName:      "my-charts-in-otherns",
+						LabelRepoNamespace: "otherns",
+					},
+				},
+				Spec: batchv1beta1.CronJobSpec{
+					Schedule:          "*/20 * * * *",
+					ConcurrencyPolicy: "Replace",
+					JobTemplate: batchv1beta1.JobTemplateSpec{
+						Spec: batchv1.JobSpec{
+							Template: corev1.PodTemplateSpec{
+								ObjectMeta: metav1.ObjectMeta{
+									Labels: map[string]string{
+										LabelRepoName:      "my-charts-in-otherns",
+										LabelRepoNamespace: "otherns",
+									},
+								},
+								Spec: corev1.PodSpec{
+									RestartPolicy: "OnFailure",
+									Containers: []corev1.Container{
+										{
+											Name:    "sync",
+											Image:   repoSyncImage,
+											Command: []string{"/chart-repo"},
+											Args: []string{
+												"sync",
+												"--database-type=mongodb",
+												"--database-url=mongodb.kubeapps",
+												"--database-user=admin",
+												"--database-name=assets",
+												"--user-agent-comment=kubeapps/v2.3",
+												"my-charts-in-otherns",
+												"https://charts.acme.com/my-charts",
+											},
+											Env: []corev1.EnvVar{
+												{
+													Name: "DB_PASSWORD",
+													ValueFrom: &corev1.EnvVarSource{
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "mongodb"}, Key: "mongodb-root-password"}},
+												},
+												{
+													Name: "AUTHORIZATION_HEADER",
+													ValueFrom: &corev1.EnvVarSource{
+														SecretKeyRef: &corev1.SecretKeySelector{LocalObjectReference: corev1.LocalObjectReference{Name: "otherns-apprepo-my-charts-in-otherns"}, Key: "AuthorizationHeader"}},
+												},
+											},
+											VolumeMounts: nil,
+										},
+									},
+									Volumes: nil,
+								},
+							},
+						},
+					},
+				},
+			},
+			"kubeapps/v2.3",
+			"*/20 * * * *",
+		},
 	}
 
 	for _, tt := range tests {

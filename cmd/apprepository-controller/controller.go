@@ -25,6 +25,7 @@ import (
 	appreposcheme "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/scheme"
 	informers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions"
 	listers "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	batchv1beta1 "k8s.io/api/batch/v1beta1"
@@ -426,7 +427,7 @@ func newCronJob(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace string
 			// https://github.com/kubernetes/kubernetes/issues/54870
 			ConcurrencyPolicy: "Replace",
 			JobTemplate: batchv1beta1.JobTemplateSpec{
-				Spec: syncJobSpec(apprepo),
+				Spec: syncJobSpec(apprepo, kubeappsNamespace),
 			},
 		},
 	}
@@ -440,12 +441,12 @@ func newSyncJob(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace string
 			GenerateName:    cronJobName(apprepo) + "-",
 			OwnerReferences: ownerReferencesForAppRepo(apprepo, kubeappsNamespace),
 		},
-		Spec: syncJobSpec(apprepo),
+		Spec: syncJobSpec(apprepo, kubeappsNamespace),
 	}
 }
 
 // jobSpec returns a batchv1.JobSpec for running the chart-repo sync job
-func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
+func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace string) batchv1.JobSpec {
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 	if apprepo.Spec.Auth.CustomCA != nil {
@@ -453,7 +454,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 			Name: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Name,
+					SecretName: secretKeyRefForRepo(apprepo.Spec.Auth.CustomCA.SecretKeyRef, apprepo, kubeappsNamespace).Name,
 					Items: []corev1.KeyToPath{
 						{Key: apprepo.Spec.Auth.CustomCA.SecretKeyRef.Key, Path: "ca.crt"},
 					},
@@ -487,7 +488,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository) batchv1.JobSpec {
 	podTemplateSpec.Spec.Containers[0].Image = repoSyncImage
 	podTemplateSpec.Spec.Containers[0].Command = []string{repoSyncCommand}
 	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo)
-	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo)...)
+	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, kubeappsNamespace)...)
 	podTemplateSpec.Spec.Containers[0].VolumeMounts = append(podTemplateSpec.Spec.Containers[0].VolumeMounts, volumeMounts...)
 	// Add volumes
 	podTemplateSpec.Spec.Volumes = append(podTemplateSpec.Spec.Volumes, volumes...)
@@ -570,7 +571,7 @@ func apprepoSyncJobArgs(apprepo *apprepov1alpha1.AppRepository) []string {
 }
 
 // apprepoSyncJobEnvVars returns a list of env variables for the sync container
-func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvVar {
+func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace string) []corev1.EnvVar {
 	var envVars []corev1.EnvVar
 	envVars = append(envVars, corev1.EnvVar{
 		Name: "DB_PASSWORD",
@@ -585,11 +586,23 @@ func apprepoSyncJobEnvVars(apprepo *apprepov1alpha1.AppRepository) []corev1.EnvV
 		envVars = append(envVars, corev1.EnvVar{
 			Name: "AUTHORIZATION_HEADER",
 			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &apprepo.Spec.Auth.Header.SecretKeyRef,
+				SecretKeyRef: secretKeyRefForRepo(apprepo.Spec.Auth.Header.SecretKeyRef, apprepo, kubeappsNamespace),
 			},
 		})
 	}
 	return envVars
+}
+
+// secretKeyRefForRepo returns a secret key ref with a name depending on whether
+// this repo is in the kubeapps namespace or not. If the repo is not in the
+// kubeapps namespace, then the secret will have been copied from another namespace
+// into the kubeapps namespace and have a slightly different name.
+func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace string) *corev1.SecretKeySelector {
+	if apprepo.ObjectMeta.Namespace == kubeappsNamespace {
+		return &keyRef
+	}
+	keyRef.LocalObjectReference.Name = kube.KubeappsSecretNameForRepo(apprepo.ObjectMeta.Name, apprepo.ObjectMeta.Namespace)
+	return &keyRef
 }
 
 // apprepoCleanupJobArgs returns a list of args for the repo cleanup container
