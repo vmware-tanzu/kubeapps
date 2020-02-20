@@ -23,6 +23,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/kubeapps/common/datastore"
@@ -30,6 +33,8 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
 )
+
+const envvarPostgresTests = "ENABLE_PG_INTEGRATION_TESTS"
 
 func openTestManager(t *testing.T) *postgresAssetManager {
 	pam, err := newPGManager(datastore.Config{
@@ -49,12 +54,17 @@ func openTestManager(t *testing.T) *postgresAssetManager {
 }
 
 func skipIfNoPostgres(t *testing.T) {
-	pam := openTestManager(t)
-	defer pam.Close()
-
-	_, err := pam.DB.Exec("SELECT 1")
-	if err != nil {
-		t.Skipf("skipping postgres tests: %+v", err)
+	enableEnvVar := os.Getenv(envvarPostgresTests)
+	runTests := false
+	if enableEnvVar != "" {
+		var err error
+		runTests, err = strconv.ParseBool(enableEnvVar)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+	}
+	if !runTests {
+		t.Skipf("skipping postgres tests as %q not set", envvarPostgresTests)
 	}
 }
 
@@ -62,7 +72,8 @@ func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
 	pam := openTestManager(t)
 	cleanup := func() { pam.Close() }
 
-	_, err := pam.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", dbutils.RepositoryTable))
+	tables := strings.Join([]string{dbutils.RepositoryTable, dbutils.ChartTable, dbutils.ChartFilesTable}, ",")
+	_, err := pam.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", tables))
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
@@ -73,6 +84,15 @@ func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
 	}
 
 	return pam, cleanup
+}
+
+func countTable(t *testing.T, pam *postgresAssetManager, table string) int {
+	var count int
+	err := pam.DB.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s", table)).Scan(&count)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	return count
 }
 
 func TestGetRepoId(t *testing.T) {
@@ -111,13 +131,13 @@ func TestGetRepoId(t *testing.T) {
 			defer cleanup()
 
 			for _, repo := range tc.existingRepos {
-				_, err := pam.getRepoId(repo.Namespace, repo.Name)
+				_, err := pam.ensureRepoExists(repo.Namespace, repo.Name)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
 			}
 
-			id, err := pam.getRepoId(tc.newRepo.Namespace, tc.newRepo.Name)
+			id, err := pam.ensureRepoExists(tc.newRepo.Namespace, tc.newRepo.Name)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -154,7 +174,7 @@ func TestImportCharts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			repoId, err := pam.getRepoId(repo.Namespace, repo.Name)
+			repoId, err := pam.ensureRepoExists(repo.Namespace, repo.Name)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -162,6 +182,54 @@ func TestImportCharts(t *testing.T) {
 			err = pam.importCharts(tc.charts, repoId)
 			if err != nil {
 				t.Errorf("%+v", err)
+			}
+		})
+	}
+}
+
+func TestInsertFiles(t *testing.T) {
+	skipIfNoPostgres(t)
+	const namespace = "my-namespace"
+
+	testCases := []struct {
+		name          string
+		existingFiles []models.ChartFiles
+		chartFiles    models.ChartFiles
+		filesInserted int
+	}{
+		{
+			name:          "it inserts new chart files",
+			chartFiles:    models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &models.Repo{Namespace: namespace}},
+			filesInserted: 1,
+		},
+		{
+			name: "it imports the same repo name and chart version in different namespaces",
+			existingFiles: []models.ChartFiles{
+				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A different Readme", Repo: &models.Repo{Namespace: "another-namespace"}},
+			},
+			chartFiles:    models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &models.Repo{Namespace: namespace}},
+			filesInserted: 2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pam, cleanup := getInitializedManager(t)
+			defer cleanup()
+			for _, cf := range tc.existingFiles {
+				err := pam.insertFiles("some-id", cf)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+			}
+
+			err := pam.insertFiles("some-id", tc.chartFiles)
+			if err != nil {
+				t.Errorf("%+v", err)
+			}
+
+			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.filesInserted; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
 			}
 		})
 	}

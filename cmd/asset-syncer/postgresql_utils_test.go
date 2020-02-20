@@ -145,24 +145,27 @@ func Test_PGfilesExist(t *testing.T) {
 }
 
 func Test_PGinsertFiles(t *testing.T) {
-	id := "stable/wordpress"
-	files := models.ChartFiles{ID: id, Readme: "foo", Values: "bar"}
+	const (
+		namespace = "my-namespace"
+		id        = "stable/wordpress"
+	)
+	files := models.ChartFiles{ID: id, Readme: "foo", Values: "bar", Repo: &models.Repo{Namespace: namespace}}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
-		`INSERT INTO files (chart_files_ID, info)
-	VALUES ($1, $2)
-	ON CONFLICT (chart_files_ID)
-	DO UPDATE SET info = $2
+		`INSERT INTO files (namespace, chart_files_ID, info)
+	VALUES ($1, $2, $3)
+	ON CONFLICT (namespace, chart_files_ID)
+	DO UPDATE SET info = $3
 	`,
-		[]interface{}{id, files},
+		[]interface{}{namespace, id, files},
 	)
 	err := pgManager.insertFiles(id, files)
 	if err != nil {
-		t.Errorf("Failed to insert files")
+		t.Errorf("Failed to insert files: %+v", err)
 	}
 	m.AssertExpectations(t)
 }

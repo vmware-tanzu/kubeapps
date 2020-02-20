@@ -54,7 +54,7 @@ func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Ch
 	m.initTables()
 
 	// Check if repo exists and get ID.
-	repoId, err := m.getRepoId(repo.Namespace, repo.Name)
+	repoId, err := m.ensureRepoExists(repo.Namespace, repo.Name)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS %s (
 	_, err = m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
-	repository_id integer REFERENCES %s (ID),
+	repository_id integer NOT NULL REFERENCES %s (ID),
 	chart_id varchar,
 	info jsonb NOT NULL,
 	UNIQUE(repository_id, chart_id)
@@ -98,8 +98,10 @@ CREATE TABLE IF NOT EXISTS %s (
 	_, err = m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
-	chart_files_ID varchar unique,
-	info jsonb NOT NULL
+	namespace varchar NOT NULL,
+	chart_files_ID varchar NOT NULL,
+	info jsonb NOT NULL,
+	UNIQUE(namespace, chart_files_ID)
 )`, dbutils.ChartFilesTable))
 	if err != nil {
 		return err
@@ -117,8 +119,8 @@ func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum strin
 	return false
 }
 
-// getRepoId upserts to get the primary key of a repo.
-func (m *postgresAssetManager) getRepoId(repoNamespace, repoName string) (int, error) {
+// ensureRepoExists upserts to get the primary key of a repo.
+func (m *postgresAssetManager) ensureRepoExists(repoNamespace, repoName string) (int, error) {
 	// The only query I could find for inserting a new repo or selecting the existing one
 	// to find the ID in a single query.
 	query := fmt.Sprintf(`
@@ -133,21 +135,10 @@ UNION
 SELECT ID FROM %s WHERE namespace=$1 AND name=$2
 `, dbutils.RepositoryTable, dbutils.RepositoryTable, dbutils.RepositoryTable)
 
-	rows, err := m.DB.Query(query, repoNamespace, repoName)
+	var id int
+	err := m.DB.QueryRow(query, repoNamespace, repoName).Scan(&id)
 	if err != nil {
 		return 0, err
-	}
-	defer rows.Close()
-
-	rows.Next()
-	var id int
-	if err := rows.Scan(&id); err != nil {
-		return 0, err
-	}
-
-	// There should only ever be one ID, but just to be sure
-	if rows.Next() {
-		return 0, fmt.Errorf("expected exactly 1 id returned, got more than one")
 	}
 
 	return id, nil
@@ -242,12 +233,15 @@ func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 }
 
 func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
-	query := fmt.Sprintf(`INSERT INTO %s (chart_files_ID, info)
-	VALUES ($1, $2)
-	ON CONFLICT (chart_files_ID)
-	DO UPDATE SET info = $2
+	if files.Repo == nil {
+		return fmt.Errorf("unable to insert file without repo: %q", files.ID)
+	}
+	query := fmt.Sprintf(`INSERT INTO %s (namespace, chart_files_ID, info)
+	VALUES ($1, $2, $3)
+	ON CONFLICT (namespace, chart_files_ID)
+	DO UPDATE SET info = $3
 	`, dbutils.ChartFilesTable)
-	rows, err := m.DB.Query(query, chartFilesID, files)
+	rows, err := m.DB.Query(query, files.Repo.Namespace, chartFilesID, files)
 	if rows != nil {
 		defer rows.Close()
 	}
