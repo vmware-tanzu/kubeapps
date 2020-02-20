@@ -19,6 +19,8 @@ The goal of this revamp is to improve the Application View, which is one of the 
 
 Application information already contains the file requirements.yaml. This is the file used by Helm to define the application dependencies. That file is encoded in base64 and it's available under the path `app.chart.files[2].value`. Once that information is properly parsed, we should be able to render that as part of the chart information.
 
+For Helm charts adapted to Helm 3, the same information can be found in the chart definition so it should be available at `app.chart.dependencies`. [Link to docs](https://helm.sh/docs/topics/charts/#the-chart-yaml-file).
+
 The raw information included in the file is this:
 
 ```
@@ -43,7 +45,7 @@ Right now we only show a "Ready" or "Not Ready" status message depending on the 
 
 ### Highlight Application Credentials
 
-In the current view, application credentials can be found either reading and executing the commands that the Notes suggest, or clicking on the icon to reveal the secrets below. Those secrets usually are of the type "Opaque" (rather than `kubernetes.io/tls` or `kubernetes.io/service-account-token`). We can extract those credentials and show them in a more prominent place. That way the user can easily discover the application credentials without the need of a terminal:
+In the current view, application credentials can be found either reading and executing the commands that the Notes suggest, or clicking on the icon to reveal the secrets below. Those secrets usually are of the type "Opaque" (rather than `kubernetes.io/tls` or `kubernetes.io/service-account-token`). We can extract those credentials and show them in a more prominent place. That way the user can easily discover and copy the application credentials without the need of a terminal:
 
 <img src="./img/credentials-box.png" width="400px">
 
@@ -51,7 +53,9 @@ Note that we will still be showing the different application Secrets along with 
 
 ### Compress Application Actions
 
-The current approach is to show one button per action (Upgrade, Delete, Rollback). This list is growing over time (for example, the backend endpoint for running tests is ready to be used). It can also be confusing to show a different list of buttons depending on the release state. One example is the Rollback button that is only rendered if the application has been upgraded. In order to avoid these issues, we can show a clickable menu with the different options, graying out the options not available (potentially showing a tooltip):
+The current approach is to show one button per action (Upgrade, Delete, Rollback). This list is growing over time (for example, the backend endpoint for running tests is ready to be used). It can also be confusing to show a different list of buttons depending on the release state. One example is the Rollback button that is only rendered if the application has been upgraded. In order to avoid these issues, we can show a clickable menu with the different options, graying out the options not available (potentially showing a tooltip).
+
+We could also differentiate between the configuration and the ugprade actions. While both actions translate to the same helm command (`upgrade`), while configuring the application, the same version will be used and when upgrading, the latest version can be auto-selected.
 
 <img src="./img/configuration-options.png" width="300px">
 
@@ -70,7 +74,7 @@ Finally, we can show a single resource table with all the resources so users can
 
 Apart from the basic information of the resource, we could add a summary (human-friendly) to know the status of the resource if possible. 
 
-We can also show different buttons in order to show the resource YAML or description (and logs in the case of pods):
+We can also show different buttons in order to show the resource YAML, description and logs if available (available for pods, services and workloads).
 
 <img src="./img/resources-table.png">
 
@@ -104,9 +108,19 @@ Now, let's discuss in detail what information can be helpful as columns for user
   - Kind: Object Kind
   - Age
 
+## Priorities
+
+In order to prioritize the work described in this document, we can tag each action item with a priority: P0, P1 and P2 (being P0 the most important):
+
+- Improve Application Status Report: P0
+- Render an Extended Resources Table: P0
+- Highlight Application Credentials: P1
+- Compress Application Actions: P1
+- Show Application Dependencies: P2
+- Include Additional Information for Access URLs: P2
+
 ## Summary
 
 This is a general view of the changes planned in this document. Specific implementation details will be discussed in their respective PRs:
 
 <img src="./img/appview-revamp.png">
-
