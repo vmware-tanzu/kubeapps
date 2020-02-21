@@ -245,44 +245,6 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 			},
 			errorExpected: true,
 		},
-		// {
-		// 	name: "errors if custom CA key cannot be found in secret",
-		// 	details: &Details{
-		// 		AppRepositoryResourceName: appRepoName,
-		// 	},
-		// 	appRepoSpec: appRepov1.AppRepositorySpec{
-		// 		Auth: appRepov1.AppRepositoryAuth{
-		// 			CustomCA: &appRepov1.AppRepositoryCustomCA{
-		// 				SecretKeyRef: corev1.SecretKeySelector{
-		// 					corev1.LocalObjectReference{customCASecretName},
-		// 					"some-other-secret-key",
-		// 					nil,
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	customCAData:  pem_cert,
-		// 	errorExpected: true,
-		// },
-		// {
-		// 	name: "errors if custom CA cannot be parsed",
-		// 	details: &Details{
-		// 		AppRepositoryResourceName: appRepoName,
-		// 	},
-		// 	appRepoSpec: appRepov1.AppRepositorySpec{
-		// 		Auth: appRepov1.AppRepositoryAuth{
-		// 			CustomCA: &appRepov1.AppRepositoryCustomCA{
-		// 				SecretKeyRef: corev1.SecretKeySelector{
-		// 					corev1.LocalObjectReference{customCASecretName},
-		// 					"custom-secret-key",
-		// 					nil,
-		// 				},
-		// 			},
-		// 		},
-		// 	},
-		// 	customCAData:  "not a valid cert",
-		// 	errorExpected: true,
-		// },
 		{
 			name: "authorization header added when passed an AppRepository CRD",
 			details: &Details{
@@ -368,32 +330,9 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 				}
 			}
 
-			// TODO: Move to kube
-			// clientWithDefaultHeaders, ok := httpClient.(*clientWithDefaultHeaders)
-			// if !ok {
-			// 	t.Fatalf("unable to assert expected type")
-			// }
-			// client, ok := clientWithDefaultHeaders.client.(*http.Client)
-			// if !ok {
-			// 	t.Fatalf("unable to assert expected type")
-			// }
-			// transport, ok := client.Transport.(*http.Transport)
-			// certPool := transport.TLSClientConfig.RootCAs
-
-			// if got, want := len(certPool.Subjects()), tc.numCertsExpected; got != want {
-			// 	t.Errorf("got: %d, want: %d", got, want)
-			// }
-
 			// If the Auth header was set, secrets should be returned
 			if tc.appRepoSpec.Auth.Header != nil && authSecret == nil {
 				t.Errorf("Expecting auth secret")
-				// _, ok := clientWithDefaultHeaders.defaultHeaders["Authorization"]
-				// if !ok {
-				// 	t.Fatalf("expected Authorization header but found none")
-				// }
-				// if got, want := clientWithDefaultHeaders.defaultHeaders.Get("Authorization"), authHeaderSecretData; got != want {
-				// 	t.Errorf("got: %q, want: %q", got, want)
-				// }
 			}
 			if tc.appRepoSpec.Auth.CustomCA != nil && caCertSecret == nil {
 				t.Errorf("Expecting auth secret")
