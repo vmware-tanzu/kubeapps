@@ -19,6 +19,7 @@ package kube
 import (
 	"fmt"
 	"io"
+	"net/http"
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -77,4 +78,9 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 		}
 	}
 	return nil, fmt.Errorf("not found")
+}
+
+// ValidateAppRepository fake
+func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error) {
+	return nil, nil
 }
