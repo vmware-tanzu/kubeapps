@@ -59,7 +59,7 @@ func init() {
 
 	databasePassword = os.Getenv("DB_PASSWORD")
 
-	cmds := []*cobra.Command{syncCmd, deleteCmd}
+	cmds := []*cobra.Command{syncCmd, deleteCmd, invalidateCacheCmd}
 	for _, cmd := range cmds {
 		rootCmd.AddCommand(cmd)
 	}

@@ -138,3 +138,9 @@ func (m *mongodbAssetManager) insertFiles(chartFilesID string, files models.Char
 	_, err := db.C(chartFilesCollection).UpsertId(chartFilesID, files)
 	return err
 }
+
+// InvalidateCache for mongodb currently is a noop to fulfil the interface.
+func (m *mongodbAssetManager) InvalidateCache() error {
+	// TODO: implement a cache invalidation
+	return nil
+}

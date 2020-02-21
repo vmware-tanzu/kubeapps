@@ -25,7 +25,6 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/kubeapps/common/datastore"
@@ -72,13 +71,7 @@ func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
 	pam := openTestManager(t)
 	cleanup := func() { pam.Close() }
 
-	tables := strings.Join([]string{dbutils.RepositoryTable, dbutils.ChartTable, dbutils.ChartFilesTable}, ",")
-	_, err := pam.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", tables))
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	err = pam.initTables()
+	err := pam.InvalidateCache()
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}
