@@ -39,10 +39,6 @@ import (
 	"k8s.io/helm/pkg/repo"
 )
 
-const (
-	defaultRepoURL = "https://kubernetes-charts.storage.googleapis.com"
-)
-
 type repoIndex struct {
 	checksum string
 	index    *repo.IndexFile
