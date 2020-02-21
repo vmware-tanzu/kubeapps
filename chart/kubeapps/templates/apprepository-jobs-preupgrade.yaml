@@ -5,7 +5,7 @@ metadata:
   name: {{ template "kubeapps.apprepository-jobs-preupgrade.fullname" . }}
   annotations:
     helm.sh/hook: pre-upgrade
-    # helm.sh/hook-delete-policy: hook-succeeded
+    helm.sh/hook-delete-policy: hook-succeeded
   labels:
     app: {{ template "kubeapps.apprepository-jobs-preupgrade.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
