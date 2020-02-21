@@ -53,13 +53,13 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Chart) error {
 	m.initTables()
 
-	// Check if repo exists and get ID.
-	repoId, err := m.ensureRepoExists(repo.Namespace, repo.Name)
+	// Ensure the repo exists so FK constraints will be met.
+	_, err := m.ensureRepoExists(repo.Namespace, repo.Name)
 	if err != nil {
 		return err
 	}
 
-	err = m.importCharts(charts, repoId)
+	err = m.importCharts(charts, models.Repo{Namespace: repo.Namespace, Name: repo.Name})
 	if err != nil {
 		return err
 	}
@@ -86,10 +86,12 @@ CREATE TABLE IF NOT EXISTS %s (
 	_, err = m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
-	repository_id integer NOT NULL REFERENCES %s (ID),
+	repo_name varchar NOT NULL,
+	repo_namespace varchar NOT NULL,
 	chart_id varchar,
 	info jsonb NOT NULL,
-	UNIQUE(repository_id, chart_id)
+	UNIQUE(repo_name, repo_namespace, chart_id),
+	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE
 )`, dbutils.ChartTable, dbutils.RepositoryTable))
 	if err != nil {
 		return err
@@ -98,11 +100,13 @@ CREATE TABLE IF NOT EXISTS %s (
 	_, err = m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
-	namespace varchar NOT NULL,
+	repo_name varchar NOT NULL,
+	repo_namespace varchar NOT NULL,
 	chart_files_ID varchar NOT NULL,
 	info jsonb NOT NULL,
-	UNIQUE(namespace, chart_files_ID)
-)`, dbutils.ChartFilesTable))
+	UNIQUE(repo_namespace, chart_files_ID),
+	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE
+)`, dbutils.ChartFilesTable, dbutils.RepositoryTable))
 	if err != nil {
 		return err
 	}
@@ -157,17 +161,17 @@ func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum
 	return err
 }
 
-func (m *postgresAssetManager) importCharts(charts []models.Chart, repoId int) error {
+func (m *postgresAssetManager) importCharts(charts []models.Chart, repo models.Repo) error {
 	for _, chart := range charts {
 		d, err := json.Marshal(chart)
 		if err != nil {
 			return err
 		}
-		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repository_id, chart_id, info)
-		VALUES ($1, $2, $3)
-		ON CONFLICT (chart_id, repository_id)
-		DO UPDATE SET info = $3
-		`, dbutils.ChartTable), repoId, chart.ID, string(d))
+		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repo_namespace, repo_name, chart_id, info)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (chart_id, repo_namespace, repo_name)
+		DO UPDATE SET info = $4
+		`, dbutils.ChartTable), repo.Namespace, repo.Name, chart.ID, string(d))
 		if err != nil {
 			return err
 		}
@@ -189,18 +193,8 @@ func (m *postgresAssetManager) removeMissingCharts(charts []models.Chart) error 
 	return err
 }
 
-func (m *postgresAssetManager) Delete(repoName string) error {
-	tables := []string{dbutils.ChartTable, dbutils.ChartFilesTable}
-	for _, table := range tables {
-		rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table), repoName)
-		if rows != nil {
-			defer rows.Close()
-		}
-		if err != nil {
-			return err
-		}
-	}
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE name = $1", dbutils.RepositoryTable), repoName)
+func (m *postgresAssetManager) Delete(repo models.Repo) error {
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE name = $1 AND namespace = $2", dbutils.RepositoryTable), repo.Name, repo.Namespace)
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -236,12 +230,12 @@ func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.Cha
 	if files.Repo == nil {
 		return fmt.Errorf("unable to insert file without repo: %q", files.ID)
 	}
-	query := fmt.Sprintf(`INSERT INTO %s (namespace, chart_files_ID, info)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (namespace, chart_files_ID)
-	DO UPDATE SET info = $3
+	query := fmt.Sprintf(`INSERT INTO %s (repo_name, repo_namespace, chart_files_ID, info)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (repo_namespace, chart_files_ID)
+	DO UPDATE SET info = $4
 	`, dbutils.ChartFilesTable)
-	rows, err := m.DB.Query(query, files.Repo.Namespace, chartFilesID, files)
+	rows, err := m.DB.Query(query, files.Repo.Name, files.Repo.Namespace, chartFilesID, files)
 	if rows != nil {
 		defer rows.Close()
 	}

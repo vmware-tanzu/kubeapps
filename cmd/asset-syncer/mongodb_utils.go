@@ -68,25 +68,25 @@ func (m *mongodbAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum 
 	return err
 }
 
-func (m *mongodbAssetManager) Delete(repoName string) error {
+func (m *mongodbAssetManager) Delete(repo models.Repo) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(chartCollection).RemoveAll(bson.M{
-		"repo.name": repoName,
+		"repo.name": repo.Name,
 	})
 	if err != nil {
 		return err
 	}
 
 	_, err = db.C(chartFilesCollection).RemoveAll(bson.M{
-		"repo.name": repoName,
+		"repo.name": repo.Name,
 	})
 	if err != nil {
 		return err
 	}
 
 	_, err = db.C(repositoryCollection).RemoveAll(bson.M{
-		"_id": repoName,
+		"_id": repo.Name,
 	})
 	return err
 }

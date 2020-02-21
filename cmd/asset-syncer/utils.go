@@ -75,7 +75,7 @@ func init() {
 }
 
 type assetManager interface {
-	Delete(repo string) error
+	Delete(repo models.Repo) error
 	Sync(repo models.RepoInternal, charts []models.Chart) error
 	RepoAlreadyProcessed(repoName, checksum string) bool
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error

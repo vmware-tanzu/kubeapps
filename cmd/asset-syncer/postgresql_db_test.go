@@ -167,12 +167,12 @@ func TestImportCharts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			repoId, err := pam.ensureRepoExists(repo.Namespace, repo.Name)
+			_, err := pam.ensureRepoExists(repo.Namespace, repo.Name)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
 
-			err = pam.importCharts(tc.charts, repoId)
+			err = pam.importCharts(tc.charts, repo)
 			if err != nil {
 				t.Errorf("%+v", err)
 			}
@@ -209,19 +209,107 @@ func TestInsertFiles(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			for _, cf := range tc.existingFiles {
-				err := pam.insertFiles("some-id", cf)
+			for _, files := range tc.existingFiles {
+				_, err := pam.ensureRepoExists(files.Repo.Namespace, files.Repo.Name)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				err = pam.insertFiles("some-id", files)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
 			}
+			_, err := pam.ensureRepoExists(tc.chartFiles.Repo.Namespace, tc.chartFiles.Repo.Name)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 
-			err := pam.insertFiles("some-id", tc.chartFiles)
+			err = pam.insertFiles("some-id", tc.chartFiles)
 			if err != nil {
 				t.Errorf("%+v", err)
 			}
 
 			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.filesInserted; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	skipIfNoPostgres(t)
+	const (
+		repoNamespace = "my-namespace"
+		repoName      = "my-repo"
+	)
+	repoToDelete := models.Repo{Namespace: repoNamespace, Name: repoName}
+	otherRepo := models.Repo{Namespace: "other-namespace", Name: repoName}
+
+	testCases := []struct {
+		name           string
+		existingFiles  []models.ChartFiles
+		repo           models.Repo
+		expectedRepos  int
+		expectedCharts int
+		expectedFiles  int
+	}{
+		{
+			name: "it deletes the repo, chart and files",
+			existingFiles: []models.ChartFiles{
+				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &repoToDelete},
+			},
+			repo:           repoToDelete,
+			expectedRepos:  0,
+			expectedCharts: 0,
+			expectedFiles:  0,
+		},
+		{
+			name: "it deletes the repo, chart and files from that namespace only",
+			existingFiles: []models.ChartFiles{
+				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &repoToDelete},
+				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &otherRepo},
+			},
+			repo:           repoToDelete,
+			expectedRepos:  1,
+			expectedCharts: 1,
+			expectedFiles:  1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pam, cleanup := getInitializedManager(t)
+			defer cleanup()
+			for _, files := range tc.existingFiles {
+				// Ensure the repo and chart exists before creating the files.
+				_, err := pam.ensureRepoExists(files.Repo.Namespace, files.Repo.Name)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				err = pam.importCharts([]models.Chart{
+					models.Chart{Repo: files.Repo},
+				}, *files.Repo)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				err = pam.insertFiles("some-id", files)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+			}
+
+			err := pam.Delete(repoToDelete)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := countTable(t, pam, dbutils.RepositoryTable), tc.expectedRepos; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+			if got, want := countTable(t, pam, dbutils.ChartTable), tc.expectedCharts; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.expectedFiles; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 		})

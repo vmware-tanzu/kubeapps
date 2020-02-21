@@ -506,12 +506,12 @@ func newCleanupJob(reponame, namespace, kubeappsNamespace string) *batchv1.Job {
 			GenerateName: deleteJobName(reponame, namespace) + "-",
 			Namespace:    kubeappsNamespace,
 		},
-		Spec: cleanupJobSpec(reponame),
+		Spec: cleanupJobSpec(reponame, namespace),
 	}
 }
 
 // cleanupJobSpec returns a batchv1.JobSpec for running the chart-repo delete job
-func cleanupJobSpec(repoName string) batchv1.JobSpec {
+func cleanupJobSpec(repoName, repoNamespace string) batchv1.JobSpec {
 	return batchv1.JobSpec{
 		Template: corev1.PodTemplateSpec{
 			Spec: corev1.PodSpec{
@@ -522,7 +522,7 @@ func cleanupJobSpec(repoName string) batchv1.JobSpec {
 						Name:    "delete",
 						Image:   repoSyncImage,
 						Command: []string{repoSyncCommand},
-						Args:    apprepoCleanupJobArgs(repoName),
+						Args:    apprepoCleanupJobArgs(repoName, repoNamespace),
 						Env: []corev1.EnvVar{
 							{
 								Name: "DB_PASSWORD",
@@ -606,10 +606,11 @@ func secretKeyRefForRepo(keyRef corev1.SecretKeySelector, apprepo *apprepov1alph
 }
 
 // apprepoCleanupJobArgs returns a list of args for the repo cleanup container
-func apprepoCleanupJobArgs(repoName string) []string {
+func apprepoCleanupJobArgs(repoName, repoNamespace string) []string {
 	return append([]string{
 		"delete",
 		repoName,
+		"--namespace=" + repoNamespace,
 	}, dbFlags()...)
 }
 

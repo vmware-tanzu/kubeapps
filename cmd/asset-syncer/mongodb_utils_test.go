@@ -67,7 +67,7 @@ func Test_DeleteRepo(t *testing.T) {
 		"_id": "test",
 	})
 	manager := getMockManager(m)
-	err := manager.Delete("test")
+	err := manager.Delete(models.Repo{Name: "test"})
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}

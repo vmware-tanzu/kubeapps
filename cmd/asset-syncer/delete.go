@@ -18,6 +18,7 @@ package main
 
 import (
 	"github.com/kubeapps/common/datastore"
+	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -47,7 +48,8 @@ var deleteCmd = &cobra.Command{
 		}
 		defer manager.Close()
 
-		if err = manager.Delete(args[0]); err != nil {
+		repo := models.Repo{Name: args[0], Namespace: namespace}
+		if err = manager.Delete(repo); err != nil {
 			logrus.Fatalf("Can't delete chart repository %s from database: %v", args[0], err)
 		}
 
