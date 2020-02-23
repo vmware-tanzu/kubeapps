@@ -251,7 +251,7 @@ func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.Cha
 // InvalidateCache for postgresql deletes and re-writes the schema
 func (m *postgresAssetManager) InvalidateCache() error {
 	tables := strings.Join([]string{dbutils.RepositoryTable, dbutils.ChartTable, dbutils.ChartFilesTable}, ",")
-	_, err := m.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s CASCADE", tables))
+	_, err := m.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tables))
 	if err != nil {
 		return err
 	}
