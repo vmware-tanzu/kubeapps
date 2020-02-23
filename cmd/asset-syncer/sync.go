@@ -52,14 +52,14 @@ var syncCmd = &cobra.Command{
 		defer manager.Close()
 
 		authorizationHeader := os.Getenv("AUTHORIZATION_HEADER")
-		r, repoContent, err := getRepo(args[0], args[1], authorizationHeader)
+		repo, repoContent, err := getRepo(namespace, args[0], args[1], authorizationHeader)
 		if err != nil {
 			logrus.Fatal(err)
 		}
 
 		// Check if the repo has been already processed
-		if manager.RepoAlreadyProcessed(r.Name, r.Checksum) {
-			logrus.WithFields(logrus.Fields{"url": r.URL}).Info("Skipping repository since there are no updates")
+		if manager.RepoAlreadyProcessed(repo.Name, repo.Checksum) {
+			logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Skipping repository since there are no updates")
 			return
 		}
 
@@ -68,24 +68,24 @@ var syncCmd = &cobra.Command{
 			logrus.Fatal(err)
 		}
 
-		charts := chartsFromIndex(index, &models.Repo{Name: r.Name, URL: r.URL})
+		charts := chartsFromIndex(index, &models.Repo{Namespace: repo.Namespace, Name: repo.Name, URL: repo.URL})
 		if len(charts) == 0 {
 			logrus.Fatal("no charts in repository index")
 		}
 
-		if err = manager.Sync(charts); err != nil {
+		if err = manager.Sync(*repo, charts); err != nil {
 			logrus.Fatalf("Can't add chart repository to database: %v", err)
 		}
 
 		// Fetch and store chart icons
 		fImporter := fileImporter{manager}
-		fImporter.fetchFiles(charts, r)
+		fImporter.fetchFiles(charts, repo)
 
 		// Update cache in the database
-		if err = manager.UpdateLastCheck(r.Name, r.Checksum, time.Now()); err != nil {
+		if err = manager.UpdateLastCheck(repo.Namespace, repo.Name, repo.Checksum, time.Now()); err != nil {
 			logrus.Fatal(err)
 		}
-		logrus.WithFields(logrus.Fields{"url": r.URL}).Info("Stored repository update in cache")
+		logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Stored repository update in cache")
 
 		logrus.Infof("Successfully added the chart repository %s to database", args[0])
 	},

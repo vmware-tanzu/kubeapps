@@ -50,9 +50,16 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *postgresAssetManager) Sync(charts []models.Chart) error {
+func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Chart) error {
 	m.initTables()
-	err := m.importCharts(charts)
+
+	// Check if repo exists and get ID.
+	repoId, err := m.ensureRepoExists(repo.Namespace, repo.Name)
+	if err != nil {
+		return err
+	}
+
+	err = m.importCharts(charts, repoId)
 	if err != nil {
 		return err
 	}
@@ -62,24 +69,40 @@ func (m *postgresAssetManager) Sync(charts []models.Chart) error {
 }
 
 func (m *postgresAssetManager) initTables() error {
-	_, err := m.DB.Exec(fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, chart_id varchar unique, info jsonb NOT NULL)",
-		dbutils.ChartTable,
-	))
+	// Repository table should have a namespace column, and chart table should reference repositories.
+	_, err := m.DB.Exec(fmt.Sprintf(`
+CREATE TABLE IF NOT EXISTS %s (
+	ID serial NOT NULL PRIMARY KEY,
+	namespace varchar NOT NULL,
+	name varchar NOT NULL,
+	checksum varchar,
+	last_update varchar,
+	UNIQUE(namespace, name)
+)`, dbutils.RepositoryTable))
 	if err != nil {
 		return err
 	}
-	_, err = m.DB.Exec(fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, name varchar unique, checksum varchar, last_update varchar)",
-		dbutils.RepositoryTable,
-	))
+
+	_, err = m.DB.Exec(fmt.Sprintf(`
+CREATE TABLE IF NOT EXISTS %s (
+	ID serial NOT NULL PRIMARY KEY,
+	repository_id integer NOT NULL REFERENCES %s (ID),
+	chart_id varchar,
+	info jsonb NOT NULL,
+	UNIQUE(repository_id, chart_id)
+)`, dbutils.ChartTable, dbutils.RepositoryTable))
 	if err != nil {
 		return err
 	}
-	_, err = m.DB.Exec(fmt.Sprintf(
-		"CREATE TABLE IF NOT EXISTS %s (ID serial NOT NULL PRIMARY KEY, chart_files_ID varchar unique, info jsonb NOT NULL)",
-		dbutils.ChartFilesTable,
-	))
+
+	_, err = m.DB.Exec(fmt.Sprintf(`
+CREATE TABLE IF NOT EXISTS %s (
+	ID serial NOT NULL PRIMARY KEY,
+	namespace varchar NOT NULL,
+	chart_files_ID varchar NOT NULL,
+	info jsonb NOT NULL,
+	UNIQUE(namespace, chart_files_ID)
+)`, dbutils.ChartFilesTable))
 	if err != nil {
 		return err
 	}
@@ -96,30 +119,55 @@ func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum strin
 	return false
 }
 
-func (m *postgresAssetManager) UpdateLastCheck(repoName, checksum string, now time.Time) error {
-	query := fmt.Sprintf(`INSERT INTO %s (name, checksum, last_update)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (name) 
-	DO UPDATE SET last_update = $3, checksum = $2
+// ensureRepoExists upserts to get the primary key of a repo.
+func (m *postgresAssetManager) ensureRepoExists(repoNamespace, repoName string) (int, error) {
+	// The only query I could find for inserting a new repo or selecting the existing one
+	// to find the ID in a single query.
+	query := fmt.Sprintf(`
+WITH new_repo AS (
+	INSERT INTO %s (namespace, name)
+	SELECT CAST($1 AS VARCHAR), CAST($2 AS VARCHAR) WHERE NOT EXISTS (
+		SELECT * FROM %s WHERE namespace=$1 AND name=$2)
+	RETURNING ID
+)
+SELECT ID FROM new_repo
+UNION
+SELECT ID FROM %s WHERE namespace=$1 AND name=$2
+`, dbutils.RepositoryTable, dbutils.RepositoryTable, dbutils.RepositoryTable)
+
+	var id int
+	err := m.DB.QueryRow(query, repoNamespace, repoName).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {
+	query := fmt.Sprintf(`INSERT INTO %s (namespace, name, checksum, last_update)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (namespace, name)
+	DO UPDATE SET last_update = $4, checksum = $3
 	`, dbutils.RepositoryTable)
-	rows, err := m.DB.Query(query, repoName, checksum, now.String())
+	rows, err := m.DB.Query(query, repoNamespace, repoName, checksum, now.String())
 	if rows != nil {
 		defer rows.Close()
 	}
 	return err
 }
 
-func (m *postgresAssetManager) importCharts(charts []models.Chart) error {
+func (m *postgresAssetManager) importCharts(charts []models.Chart, repoId int) error {
 	for _, chart := range charts {
 		d, err := json.Marshal(chart)
 		if err != nil {
 			return err
 		}
-		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (chart_id, info)
-		VALUES ($1, $2)
-		ON CONFLICT (chart_id) 
-		DO UPDATE SET info = $2
-		`, dbutils.ChartTable), chart.ID, string(d))
+		_, err = m.DB.Exec(fmt.Sprintf(`INSERT INTO %s (repository_id, chart_id, info)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (chart_id, repository_id)
+		DO UPDATE SET info = $3
+		`, dbutils.ChartTable), repoId, chart.ID, string(d))
 		if err != nil {
 			return err
 		}
@@ -185,14 +233,28 @@ func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 }
 
 func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
-	query := fmt.Sprintf(`INSERT INTO %s (chart_files_ID, info)
-	VALUES ($1, $2)
-	ON CONFLICT (chart_files_ID) 
-	DO UPDATE SET info = $2
+	if files.Repo == nil {
+		return fmt.Errorf("unable to insert file without repo: %q", files.ID)
+	}
+	query := fmt.Sprintf(`INSERT INTO %s (namespace, chart_files_ID, info)
+	VALUES ($1, $2, $3)
+	ON CONFLICT (namespace, chart_files_ID)
+	DO UPDATE SET info = $3
 	`, dbutils.ChartFilesTable)
-	rows, err := m.DB.Query(query, chartFilesID, files)
+	rows, err := m.DB.Query(query, files.Repo.Namespace, chartFilesID, files)
 	if rows != nil {
 		defer rows.Close()
 	}
 	return err
+}
+
+// InvalidateCache for postgresql deletes and re-writes the schema
+func (m *postgresAssetManager) InvalidateCache() error {
+	tables := strings.Join([]string{dbutils.RepositoryTable, dbutils.ChartTable, dbutils.ChartFilesTable}, ",")
+	_, err := m.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tables))
+	if err != nil {
+		return err
+	}
+
+	return m.initTables()
 }

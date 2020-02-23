@@ -49,7 +49,7 @@ func newMongoDBManager(config datastore.Config) assetManager {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *mongodbAssetManager) Sync(charts []models.Chart) error {
+func (m *mongodbAssetManager) Sync(repo models.RepoInternal, charts []models.Chart) error {
 	return m.importCharts(charts)
 }
 
@@ -61,7 +61,7 @@ func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum str
 	return err == nil && checksum == lastCheck.Checksum
 }
 
-func (m *mongodbAssetManager) UpdateLastCheck(repoName string, checksum string, now time.Time) error {
+func (m *mongodbAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(repositoryCollection).UpsertId(repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}})
@@ -137,4 +137,10 @@ func (m *mongodbAssetManager) insertFiles(chartFilesID string, files models.Char
 	defer closer()
 	_, err := db.C(chartFilesCollection).UpsertId(chartFilesID, files)
 	return err
+}
+
+// InvalidateCache for mongodb currently is a noop to fulfil the interface.
+func (m *mongodbAssetManager) InvalidateCache() error {
+	// TODO: implement a cache invalidation
+	return nil
 }
