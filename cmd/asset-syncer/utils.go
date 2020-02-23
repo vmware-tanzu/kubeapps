@@ -81,6 +81,7 @@ type assetManager interface {
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
 	Close() error
+	InvalidateCache() error
 	updateIcon(data []byte, contentType, ID string) error
 	filesExist(chartFilesID, digest string) bool
 	insertFiles(chartFilesID string, files models.ChartFiles) error
