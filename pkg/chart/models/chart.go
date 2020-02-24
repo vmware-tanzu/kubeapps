@@ -71,9 +71,11 @@ type ChartVersion struct {
 	Created    time.Time `json:"created"`
 	Digest     string    `json:"digest"`
 	URLs       []string  `json:"urls"`
-	Readme     string    `json:"readme" bson:"-"`
-	Values     string    `json:"values" bson:"-"`
-	Schema     string    `json:"schema" bson:"-"`
+	// TODO(mnelson): Why are the following three fields repeated here, when they are
+	// already on the ChartFiles struct?
+	Readme string `json:"readme" bson:"-"`
+	Values string `json:"values" bson:"-"`
+	Schema string `json:"schema" bson:"-"`
 }
 
 // ChartFiles holds the README and values for a given chart version
