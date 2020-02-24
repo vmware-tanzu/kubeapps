@@ -71,8 +71,9 @@ type ChartVersion struct {
 	Created    time.Time `json:"created"`
 	Digest     string    `json:"digest"`
 	URLs       []string  `json:"urls"`
-	// TODO(mnelson): Why are the following three fields repeated here, when they are
-	// already on the ChartFiles struct?
+	// The following three fields get set with the URL paths to the respective
+	// chart files (as opposed to the similar fields on ChartFiles which
+	// contain the actual content).
 	Readme string `json:"readme" bson:"-"`
 	Values string `json:"values" bson:"-"`
 	Schema string `json:"schema" bson:"-"`

@@ -164,7 +164,7 @@ func TestGetVersion(t *testing.T) {
 			expectedErr: sql.ErrNoRows,
 		},
 		{
-			name: "it does not ?! return an error if the chart version does not exist",
+			name: "it returns an error if the chart version does not exist",
 			existingCharts: map[string][]models.Chart{
 				"namespace-1": []models.Chart{
 					models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
@@ -175,7 +175,7 @@ func TestGetVersion(t *testing.T) {
 			chartId:          "chart-1",
 			namespace:        "namespace-1",
 			requestedVersion: "doesnt-exist",
-			expectedVersion:  "1.2.3",
+			expectedErr:      ErrChartVersionNotFound,
 		},
 		{
 			name: "it returns the chart version matching the chartid and version",
@@ -183,6 +183,7 @@ func TestGetVersion(t *testing.T) {
 				"namespace-1": []models.Chart{
 					models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
 						models.ChartVersion{Version: "1.2.3"},
+						models.ChartVersion{Version: "4.5.6"},
 					}},
 				},
 			},
@@ -209,7 +210,7 @@ func TestGetVersion(t *testing.T) {
 			if tc.expectedErr != nil {
 				return
 			}
-			// The function just returns the chart with only the one version?
+			// The function just returns the chart with only the one version.
 			if got, want := len(chart.ChartVersions), 1; got != want {
 				t.Fatalf("got: %d, want: %d", got, want)
 			}
