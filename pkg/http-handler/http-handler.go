@@ -90,7 +90,11 @@ func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter,
 			return
 		}
 		w.WriteHeader(res.StatusCode)
-		w.Write(body)
+		if res.StatusCode == 200 {
+			w.Write([]byte("OK"))
+		} else {
+			w.Write(body)
+		}
 	}
 }
 

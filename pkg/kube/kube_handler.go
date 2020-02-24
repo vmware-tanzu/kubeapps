@@ -287,21 +287,30 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	return err
 }
 
-func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error) {
+func getValidationCliAndReq(appRepoBody io.ReadCloser) (HTTPClient, *http.Request, error) {
 	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	fmt.Println(repoSecret)
 	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to create HTTP client: %w", err)
+		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
 	}
 	indexURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/") + "/index.yaml"
 	req, err := http.NewRequest("GET", indexURL, nil)
 	if err != nil {
+		return nil, nil, err
+	}
+	return cli, req, nil
+}
+
+func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error) {
+	// Split body parsing to a different function for ease testing
+	cli, req, err := getValidationCliAndReq(appRepoBody)
+	if err != nil {
 		return nil, err
 	}
-
 	return cli.Do(req)
 }
 

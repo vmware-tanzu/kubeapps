@@ -146,8 +146,8 @@ func TestInitNetClient(t *testing.T) {
 				Name:      customCASecretName,
 				Namespace: metav1.NamespaceSystem,
 			},
-			Data: map[string][]byte{
-				"custom-secret-key": []byte(tc.customCAData),
+			StringData: map[string]string{
+				"custom-secret-key": tc.customCAData,
 			},
 		}
 		authSecret := &corev1.Secret{

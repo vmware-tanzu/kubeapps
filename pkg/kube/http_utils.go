@@ -68,11 +68,16 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *co
 		caCertPool = x509.NewCertPool()
 	}
 
-	if caCertSecret != nil {
+	if caCertSecret != nil && appRepo.Spec.Auth.CustomCA != nil {
 		// Append our cert to the system pool
-		customData, ok := caCertSecret.Data[appRepo.Spec.Auth.CustomCA.SecretKeyRef.Key]
+		key := appRepo.Spec.Auth.CustomCA.SecretKeyRef.Key
+		customData, ok := caCertSecret.Data[key]
 		if !ok {
-			return nil, fmt.Errorf("secret %q did not contain key %q", appRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, appRepo.Spec.Auth.CustomCA.SecretKeyRef.Key)
+			customDataString, ok := caCertSecret.StringData[key]
+			if !ok {
+				return nil, fmt.Errorf("secret %q did not contain key %q", appRepo.Spec.Auth.CustomCA.SecretKeyRef.Name, key)
+			}
+			customData = []byte(customDataString)
 		}
 		if ok := caCertPool.AppendCertsFromPEM(customData); !ok {
 			return nil, fmt.Errorf("Failed to append %s to RootCAs", appRepo.Spec.Auth.CustomCA.SecretKeyRef.Name)
@@ -82,8 +87,17 @@ func InitNetClient(appRepo *v1alpha1.AppRepository, caCertSecret, authSecret *co
 	if defaultHeaders == nil {
 		defaultHeaders = http.Header{}
 	}
-	if authSecret != nil {
-		defaultHeaders.Set("Authorization", string(authSecret.Data[appRepo.Spec.Auth.Header.SecretKeyRef.Key]))
+	if authSecret != nil && appRepo.Spec.Auth.Header != nil {
+		key := appRepo.Spec.Auth.Header.SecretKeyRef.Key
+		auth, ok := authSecret.StringData[key]
+		if !ok {
+			authBytes, ok := authSecret.Data[key]
+			if !ok {
+				return nil, fmt.Errorf("secret %q did not contain key %q", appRepo.Spec.Auth.Header.SecretKeyRef.Name, key)
+			}
+			auth = string(authBytes)
+		}
+		defaultHeaders.Set("Authorization", string(auth))
 	}
 
 	// Return Transport for testing purposes
