@@ -2,8 +2,11 @@
 
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
+  errors={Object {}}
   install={[Function]}
+  isFetching={false}
   namespace="kubeapps"
+  validate={[Function]}
 >
   <button
     className="button button-primary"
@@ -232,9 +235,7 @@ exports[`should open a modal with the repository form 1`] = `
                         </pre>
                       </label>
                     </div>
-                    <div
-                      style="margin-bottom: 1em;"
-                    >
+                    <div>
                       <label
                         for="syncJobPodTemplate"
                       >
@@ -279,15 +280,15 @@ exports[`should open a modal with the repository form 1`] = `
                         data-id="tooltip"
                       >
                         <span>
-                          It's possible to modify the default sync job.
-                          <br />
-                          More info
+                          It's possible to modify the default sync job. More info
                           <a
                             target="_blank"
                             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
                           >
                             here
                           </a>
+                          <br />
+                          When modifying the default sync job, the pre-validation is not supported.
                         </span>
                       </div>
                       <pre
@@ -307,6 +308,13 @@ exports[`should open a modal with the repository form 1`] = `
                       </pre>
                     </div>
                     <div>
+                      <button
+                        class="button"
+                        type="button"
+                        disabled=""
+                      >
+                        Validate
+                      </button>
                       <button
                         class="button button-primary"
                         type="submit"

@@ -8,7 +8,10 @@ import { AppRepoForm } from "./AppRepoForm";
 
 const defaultProps = {
   install: jest.fn(),
+  validate: jest.fn(),
   namespace: "kubeapps",
+  isFetching: false,
+  errors: {},
 };
 
 it("should open a modal with the repository form", () => {
@@ -33,7 +36,7 @@ it("should install a repository with a custom auth header", done => {
     customCA: "bar",
   });
 
-  const button = wrapper.find(AppRepoForm).find(".button");
+  const button = wrapper.find(AppRepoForm).find(".button-primary");
   button.simulate("submit");
 
   expect(install).toBeCalledWith("my-repo", "kubeapps", "http://foo.bar", "foo", "bar", "");
@@ -59,7 +62,7 @@ it("should install a repository with basic auth", done => {
     password: "bar",
   });
 
-  const button = wrapper.find(AppRepoForm).find(".button");
+  const button = wrapper.find(AppRepoForm).find(".button-primary");
   button.simulate("submit");
 
   expect(install).toBeCalledWith(
@@ -91,7 +94,7 @@ it("should install a repository with a bearer token", done => {
     token: "foobar",
   });
 
-  const button = wrapper.find(AppRepoForm).find(".button");
+  const button = wrapper.find(AppRepoForm).find(".button-primary");
   button.simulate("submit");
 
   expect(install).toBeCalledWith("my-repo", "kubeapps", "http://foo.bar", "Bearer foobar", "", "");
@@ -116,7 +119,7 @@ it("should install a repository with a podSpecTemplate", done => {
     syncJobPodTemplate: "foo: bar",
   });
 
-  const button = wrapper.find(AppRepoForm).find(".button");
+  const button = wrapper.find(AppRepoForm).find(".button-primary");
   button.simulate("submit");
 
   expect(install).toBeCalledWith(
@@ -142,9 +145,9 @@ describe("render error", () => {
     wrapper.update();
     wrapper.find(AppRepoForm).setState({ name: "my-repo" });
 
-    const button = wrapper.find(AppRepoForm).find(".button");
+    const button = wrapper.find(AppRepoForm).find(".button-primary");
     button.simulate("submit");
-    wrapper.setProps({ error: new ConflictError("already exists!") });
+    wrapper.setProps({ errors: { create: new ConflictError("already exists!") } });
 
     expect(wrapper.find(ErrorSelector).text()).toContain(
       "App Repository my-repo already exists, try a different name.",
@@ -164,9 +167,9 @@ describe("render error", () => {
     wrapper.update();
     wrapper.find(AppRepoForm).setState({ name: "my-repo" });
 
-    const button = wrapper.find(AppRepoForm).find(".button");
+    const button = wrapper.find(AppRepoForm).find(".button-primary");
     button.simulate("submit");
-    wrapper.setProps({ error: new UnprocessableEntity("cannot process this!") });
+    wrapper.setProps({ errors: { create: new UnprocessableEntity("cannot process this!") } });
 
     expect(wrapper.find(ErrorSelector).text()).toContain(
       "Something went wrong processing App Repository my-repo",

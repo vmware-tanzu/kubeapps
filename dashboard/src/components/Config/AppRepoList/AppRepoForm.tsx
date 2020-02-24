@@ -1,8 +1,10 @@
 import * as React from "react";
 import { Redirect } from "react-router";
+import { UnexpectedErrorAlert } from "../../../components/ErrorAlert";
 import Hint from "../../../components/Hint";
 
 interface IAppRepoFormProps {
+  validateError?: Error;
   message?: string;
   redirectTo?: string;
   install: (
@@ -12,7 +14,9 @@ interface IAppRepoFormProps {
     customCA: string,
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
+  validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   onAfterInstall?: () => Promise<any>;
+  isFetching: boolean;
 }
 
 interface IAppRepoFormState {
@@ -25,6 +29,7 @@ interface IAppRepoFormState {
   token: string;
   customCA: string;
   syncJobPodTemplate: string;
+  validated: boolean;
 }
 
 const AUTH_METHOD_NONE = "none";
@@ -43,6 +48,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     url: "",
     customCA: "",
     syncJobPodTemplate: "",
+    validated: false,
   };
 
   public render() {
@@ -195,19 +201,19 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 </pre>
               </label>
             </div>
-            <div style={{ marginBottom: "1em" }}>
+            <div>
               <label htmlFor="syncJobPodTemplate">Custom Sync Job Template (optional)</label>
               <Hint reactTooltipOpts={{ delayHide: 1000 }} id="syncJobHelp">
                 <span>
-                  It's possible to modify the default sync job.
-                  <br />
-                  More info{" "}
+                  It's possible to modify the default sync job. More info{" "}
                   <a
                     target="_blank"
                     href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
                   >
                     here
                   </a>
+                  <br />
+                  When modifying the default sync job, the pre-validation is not supported.
                 </span>
               </Hint>
               <pre className="CodeContainer">
@@ -228,7 +234,35 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
               </pre>
             </div>
             <div>
-              <button className="button button-primary" type="submit">
+              {this.props.validateError && (
+                <UnexpectedErrorAlert
+                  title="Validation Failed. Got:"
+                  text={this.props.validateError.message}
+                  raw={true}
+                />
+              )}
+              {this.state.validated && (
+                <div className={"alert margin-c margin-t-normal margin-b-big"}>
+                  <div className={"message__content "}>Repository successfully validated!</div>
+                </div>
+              )}
+              <button
+                className="button"
+                type="button"
+                onClick={this.handleValidate}
+                disabled={
+                  this.props.isFetching ||
+                  this.state.url === "" ||
+                  this.state.syncJobPodTemplate !== ""
+                }
+              >
+                {this.props.isFetching ? "Validating..." : "Validate"}
+              </button>
+              <button
+                className="button button-primary"
+                type="submit"
+                disabled={this.props.isFetching}
+              >
                 Install Repo
               </button>
             </div>
@@ -269,6 +303,25 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     if (installed && onAfterInstall) {
       await onAfterInstall();
     }
+  };
+
+  private handleValidate = async () => {
+    const { validate } = this.props;
+    const { url, authHeader, authMethod, token, user, password, customCA } = this.state;
+    let finalHeader = "";
+    switch (authMethod) {
+      case AUTH_METHOD_CUSTOM:
+        finalHeader = authHeader;
+        break;
+      case AUTH_METHOD_BASIC:
+        finalHeader = `Basic ${btoa(`${user}:${password}`)}`;
+        break;
+      case AUTH_METHOD_BEARER:
+        finalHeader = `Bearer ${token}`;
+        break;
+    }
+    const validated = await validate(url, finalHeader, customCA);
+    this.setState({ validated });
   };
 
   private handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,0 +1,272 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render the repo form 1`] = `
+<form
+  className="container padding-b-bigger"
+  onSubmit={[Function]}
+>
+  <div
+    className="row"
+  >
+    <div
+      className="col-12"
+    >
+      <div>
+        <h2>
+          Add an App Repository
+        </h2>
+      </div>
+      <div>
+        <label
+          htmlFor="kubeapps-repo-name"
+        >
+          Name:
+        </label>
+        <input
+          id="kubeapps-repo-name"
+          onChange={[Function]}
+          pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
+          placeholder="example"
+          required={true}
+          title="Use lower case alphanumeric characters, '-' or '.'"
+          type="text"
+          value=""
+        />
+      </div>
+      <div>
+        <label
+          htmlFor="kubeapps-repo-url"
+        >
+          URL:
+        </label>
+        <input
+          id="kubeapps-repo-url"
+          onChange={[Function]}
+          placeholder="https://charts.example.com/stable"
+          required={true}
+          type="url"
+          value=""
+        />
+      </div>
+      <div>
+        <span>
+          Authorization (optional):
+        </span>
+        <div
+          className="row"
+        >
+          <div
+            className="col-2"
+          >
+            <label
+              className="margin-l-big"
+              htmlFor="kubeapps-repo-auth-method-none"
+            >
+              <input
+                defaultChecked={true}
+                id="kubeapps-repo-auth-method-none"
+                name="auth"
+                onChange={[Function]}
+                type="radio"
+                value="none"
+              />
+              None
+              <br />
+            </label>
+            <label
+              htmlFor="kubeapps-repo-auth-method-basic"
+            >
+              <input
+                id="kubeapps-repo-auth-method-basic"
+                name="auth"
+                onChange={[Function]}
+                type="radio"
+                value="basic"
+              />
+              Basic Auth
+              <br />
+            </label>
+            <label
+              htmlFor="kubeapps-repo-auth-method-bearer"
+            >
+              <input
+                id="kubeapps-repo-auth-method-bearer"
+                name="auth"
+                onChange={[Function]}
+                type="radio"
+                value="bearer"
+              />
+              Bearer Token
+              <br />
+            </label>
+            <label
+              htmlFor="kubeapps-repo-auth-method-custom"
+            >
+              <input
+                id="kubeapps-repo-auth-method-custom"
+                name="auth"
+                onChange={[Function]}
+                type="radio"
+                value="custom"
+              />
+              Custom
+              <br />
+            </label>
+          </div>
+          <div
+            aria-live="polite"
+            className="col-10"
+          >
+            <div
+              className="secondary-input"
+              hidden={true}
+            >
+              <label
+                htmlFor="kubeapps-repo-username"
+              >
+                Username
+              </label>
+              <input
+                id="kubeapps-repo-username"
+                onChange={[Function]}
+                placeholder="Username"
+                type="text"
+                value=""
+              />
+              <label
+                htmlFor="kubeapps-repo-password"
+              >
+                Password
+              </label>
+              <input
+                id="kubeapps-repo-password"
+                onChange={[Function]}
+                placeholder="Password"
+                type="password"
+                value=""
+              />
+            </div>
+            <div
+              className="secondary-input"
+              hidden={true}
+            >
+              <label
+                htmlFor="kubeapps-repo-token"
+              >
+                Token
+              </label>
+              <input
+                id="kubeapps-repo-token"
+                onChange={[Function]}
+                type="text"
+                value=""
+              />
+            </div>
+            <div
+              className="secondary-input"
+              hidden={true}
+            >
+              <label
+                htmlFor="kubeapps-repo-custom-header"
+              >
+                Complete Authorization Header
+              </label>
+              <input
+                id="kubeapps-repo-custom-header"
+                onChange={[Function]}
+                placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                type="text"
+                value=""
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        className="margin-t-big"
+      >
+        <label>
+          <span>
+            Custom CA Certificate (optional):
+          </span>
+          <pre
+            className="CodeContainer"
+          >
+            <textarea
+              className="Code"
+              onChange={[Function]}
+              placeholder="-----BEGIN CERTIFICATE-----
+            ...
+            -----END CERTIFICATE-----"
+              rows={4}
+              value=""
+            />
+          </pre>
+        </label>
+      </div>
+      <div>
+        <label
+          htmlFor="syncJobPodTemplate"
+        >
+          Custom Sync Job Template (optional)
+        </label>
+        <Hint
+          id="syncJobHelp"
+          reactTooltipOpts={
+            Object {
+              "delayHide": 1000,
+            }
+          }
+        >
+          <span>
+            It's possible to modify the default sync job. More info
+             
+            <a
+              href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
+              target="_blank"
+            >
+              here
+            </a>
+            <br />
+            When modifying the default sync job, the pre-validation is not supported.
+          </span>
+        </Hint>
+        <pre
+          className="CodeContainer"
+        >
+          <textarea
+            className="Code"
+            id="syncJobPodTemplate"
+            onChange={[Function]}
+            placeholder="spec:
+            containers:
+            - env:
+              - name: FOO
+                value: BAR
+          "
+            rows={4}
+            value=""
+          />
+        </pre>
+      </div>
+      <div>
+        <button
+          className="button"
+          disabled={true}
+          onClick={[Function]}
+          type="button"
+        >
+          Validate
+        </button>
+        <button
+          className="button button-primary"
+          disabled={false}
+          type="submit"
+        >
+          Install Repo
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+`;

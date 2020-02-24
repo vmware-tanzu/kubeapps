@@ -13,6 +13,7 @@ const defaultProps = {
   resyncRepo: jest.fn(),
   resyncAllRepos: jest.fn(),
   install: jest.fn(),
+  validate: jest.fn(),
   namespace: defaultNamespace,
   displayReposPerNamespaceMsg: false,
   isFetching: false,

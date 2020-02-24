@@ -40,8 +40,13 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
         dispatch(actions.auth.expireSession());
       }
       let message = err.message;
-      if (err.response && err.response.data.message) {
-        message = err.response.data.message;
+      if (err.response) {
+        if (err.response.data.message) {
+          message = err.response.data.message;
+        }
+        if (typeof err.response.data === "string") {
+          message = err.response.data;
+        }
       }
 
       const dispatchErrorAndLogout = (m: string) => {

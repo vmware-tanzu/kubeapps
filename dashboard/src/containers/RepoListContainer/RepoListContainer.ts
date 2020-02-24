@@ -45,6 +45,9 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
         actions.repos.installRepo(name, namespace, url, authHeader, customCA, syncJobPodTemplate),
       );
     },
+    validate: async (url: string, authHeader: string, customCA: string) => {
+      return dispatch(actions.repos.validateRepo(url, authHeader, customCA));
+    },
     resyncRepo: async (name: string, namespace: string) => {
       return dispatch(actions.repos.resyncRepo(name, namespace));
     },

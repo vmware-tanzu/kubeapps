@@ -503,3 +503,40 @@ describe("checkChart", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("validateRepo", () => {
+  it("dispatches checkRepo and validatedRepo if no error", async () => {
+    AppRepository.validate = jest.fn();
+    const expectedActions = [
+      {
+        type: getType(repoActions.checkRepo),
+      },
+      {
+        type: getType(repoActions.validatedRepo),
+      },
+    ];
+
+    const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(res).toBe(true);
+  });
+
+  it("dispatches checkRepo and errorRepos when the validation failed", async () => {
+    const error = new Error("boom!");
+    AppRepository.validate = jest.fn(() => {
+      throw error;
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.checkRepo),
+      },
+      {
+        type: getType(repoActions.errorRepos),
+        payload: { err: error, op: "validate" },
+      },
+    ];
+    const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(res).toBe(false);
+  });
+});

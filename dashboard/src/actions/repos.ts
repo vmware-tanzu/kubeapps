@@ -25,6 +25,11 @@ export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
   return (repo: IAppRepository) => resolve(repo);
 });
 
+export const checkRepo = createAction("CHECK_REPO");
+export const validatedRepo = createAction("VALIDATED_REPO", resolve => {
+  return (data: any) => resolve(data);
+});
+
 // Clear repo is basically receiving an empty repo
 export const clearRepo = createAction("RECEIVE_REPO", resolve => {
   return () => resolve({} as IAppRepository);
@@ -41,12 +46,15 @@ export const redirect = createAction("REDIRECT", resolve => {
 
 export const redirected = createAction("REDIRECTED");
 export const errorRepos = createAction("ERROR_REPOS", resolve => {
-  return (err: Error, op: "create" | "update" | "fetch" | "delete") => resolve({ err, op });
+  return (err: Error, op: "create" | "update" | "fetch" | "delete" | "validate") =>
+    resolve({ err, op });
 });
 
 const allActions = [
   addRepo,
   addedRepo,
+  checkRepo,
+  validatedRepo,
   clearRepo,
   errorRepos,
   requestRepos,
@@ -170,6 +178,25 @@ export const installRepo = (
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "create"));
+      return false;
+    }
+  };
+};
+
+export const validateRepo = (
+  repoURL: string,
+  authHeader: string,
+  customCA: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  return async dispatch => {
+    try {
+      dispatch(checkRepo());
+      const data = await AppRepository.validate(repoURL, authHeader, customCA);
+      dispatch(validatedRepo(data));
+
+      return true;
+    } catch (e) {
+      dispatch(errorRepos(e, "validate"));
       return false;
     }
   };
