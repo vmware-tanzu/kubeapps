@@ -901,6 +901,7 @@ func Test_newCleanupJob(t *testing.T) {
 									Args: []string{
 										"delete",
 										"my-charts",
+										"--namespace=kubeapps",
 										"--database-type=mongodb",
 										"--database-url=mongodb.kubeapps",
 										"--database-user=admin",

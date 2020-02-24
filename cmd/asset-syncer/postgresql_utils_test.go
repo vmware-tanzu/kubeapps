@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"testing"
 	"time"
 
@@ -41,20 +40,14 @@ func (d *mockDB) Exec(query string, args ...interface{}) (sql.Result, error) {
 }
 
 func Test_DeletePGRepo(t *testing.T) {
-	repoName := "test"
+	repo := models.Repo{Name: "testrepo", Namespace: "testnamespace"}
 	m := &mockDB{&mock.Mock{}}
-	tables := []string{dbutils.ChartTable, dbutils.ChartFilesTable}
-	for _, table := range tables {
-		q := fmt.Sprintf("DELETE FROM %s WHERE info -> 'repo' ->> 'name' = $1", table)
-		// Since we are not specifying any argument, Query is called with []interface{}(nil)
-		m.On("Query", q, []interface{}{repoName})
-	}
-	m.On("Query", "DELETE FROM repos WHERE name = $1", []interface{}{repoName})
+	m.On("Query", "DELETE FROM repos WHERE name = $1 AND namespace = $2", []interface{}{repo.Name, repo.Namespace})
 
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
-	err := pgManager.Delete(repoName)
+	err := pgManager.Delete(repo)
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}
@@ -148,20 +141,21 @@ func Test_PGinsertFiles(t *testing.T) {
 	const (
 		namespace = "my-namespace"
 		id        = "stable/wordpress"
+		repoName  = "my-repo"
 	)
-	files := models.ChartFiles{ID: id, Readme: "foo", Values: "bar", Repo: &models.Repo{Namespace: namespace}}
+	files := models.ChartFiles{ID: id, Readme: "foo", Values: "bar", Repo: &models.Repo{Namespace: namespace, Name: repoName}}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
-		`INSERT INTO files (namespace, chart_files_ID, info)
-	VALUES ($1, $2, $3)
-	ON CONFLICT (namespace, chart_files_ID)
-	DO UPDATE SET info = $3
+		`INSERT INTO files (repo_name, repo_namespace, chart_files_ID, info)
+	VALUES ($1, $2, $3, $4)
+	ON CONFLICT (repo_namespace, chart_files_ID)
+	DO UPDATE SET info = $4
 	`,
-		[]interface{}{namespace, id, files},
+		[]interface{}{repoName, namespace, id, files},
 	)
 	err := pgManager.insertFiles(id, files)
 	if err != nil {

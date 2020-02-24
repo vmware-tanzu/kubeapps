@@ -75,7 +75,7 @@ func init() {
 }
 
 type assetManager interface {
-	Delete(repo string) error
+	Delete(repo models.Repo) error
 	Sync(repo models.RepoInternal, charts []models.Chart) error
 	RepoAlreadyProcessed(repoName, checksum string) bool
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
@@ -433,7 +433,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 		return err
 	}
 
-	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, URL: r.URL}, Digest: cv.Digest}
+	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, Namespace: r.Namespace, URL: r.URL}, Digest: cv.Digest}
 	if v, ok := files[readmeFileName]; ok {
 		chartFiles.Readme = v
 	} else {
