@@ -121,21 +121,6 @@ func TestGetChart(t *testing.T) {
 			expectedErr:   nil,
 			expectedChart: "my-chart",
 		},
-		// {
-		// 	name: "it returns the chart matching the chartid in the specific namespace",
-		// 	existingCharts: map[string][]models.Chart{
-		// 		"namespace-1": []models.Chart{
-		// 			models.Chart{ID: "chart-1", Name: "incorrect-chart"},
-		// 		},
-		// 		"namespace-2": []models.Chart{
-		// 			models.Chart{ID: "chart-1", Name: "correct-chart"},
-		// 		},
-		// 	},
-		// 	chartId:       "chart-1",
-		// 	namespace:     "namespace-2",
-		// 	expectedErr:   nil,
-		// 	expectedChart: "correct-chart",
-		// },
 	}
 
 	for _, tc := range testCases {
@@ -206,25 +191,6 @@ func TestGetVersion(t *testing.T) {
 			requestedVersion: "1.2.3",
 			expectedVersion:  "1.2.3",
 		},
-		// {
-		// 	name: "it returns the chart version matching the chartid and version",
-		// 	existingCharts: map[string][]models.Chart{
-		// 		"other-namespace": []models.Chart{
-		// 			models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
-		// 				models.ChartVersion{Version: "4.5.6"},
-		// 			}},
-		// 		},
-		// 		"namespace-1": []models.Chart{
-		// 			models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
-		// 				models.ChartVersion{Version: "1.2.3"},
-		// 			}},
-		// 		},
-		// 	},
-		// 	chartId:          "chart-1",
-		// 	namespace:        "namespace-1",
-		// 	requestedVersion: "1.2.3",
-		// 	expectedVersion:  "1.2.3",
-		// },
 	}
 
 	for _, tc := range testCases {
