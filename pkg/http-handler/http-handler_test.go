@@ -166,3 +166,34 @@ func TestGetNamespaces(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateAppRepository(t *testing.T) {
+	testCases := []struct {
+		name         string
+		err          error
+		expectedCode int
+	}{
+		{
+			name:         "it should return OK if no error is detected",
+			expectedCode: 200,
+		},
+		{
+			name:         "it should return the error code if given",
+			err:          fmt.Errorf("Boom"),
+			expectedCode: 500,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			validateAppRepoFunc := ValidateAppRepository(&kube.FakeHandler{Err: tc.err})
+			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/validate", strings.NewReader("data"))
+
+			response := httptest.NewRecorder()
+			validateAppRepoFunc(response, req)
+
+			if got, want := response.Code, tc.expectedCode; got != want {
+				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+		})
+	}
+}

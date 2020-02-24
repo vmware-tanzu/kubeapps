@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
@@ -92,6 +94,7 @@ type handler interface {
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
+	ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error)
 }
 
 // AuthHandler exposes handler functionality as a user or the current serviceaccount
@@ -206,6 +209,19 @@ func (a *kubeHandler) clientsetForRequest(token string) (combinedClientsetInterf
 	return clientset, err
 }
 
+func parseRepoAndSecret(appRepoBody io.ReadCloser) (*v1alpha1.AppRepository, *corev1.Secret, error) {
+	var appRepoRequest appRepositoryRequest
+	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
+	if err != nil {
+		log.Infof("unable to decode: %v", err)
+		return nil, nil, err
+	}
+
+	appRepo := appRepositoryForRequest(appRepoRequest)
+	repoSecret := secretForRequest(appRepoRequest, appRepo)
+	return appRepo, repoSecret, nil
+}
+
 // CreateAppRepository creates an AppRepository resource based on the request data
 func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
@@ -213,24 +229,17 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
 	}
 
-	var appRepoRequest appRepositoryRequest
-	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
+	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
 	if err != nil {
-		log.Infof("unable to decode: %v", err)
 		return nil, err
 	}
 
-	appRepo := appRepositoryForRequest(appRepoRequest)
-
-	// TODO(mnelson): validate both required data and request for index
-	// https://github.com/kubeapps/kubeapps/issues/1330
 	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
 
 	if err != nil {
 		return nil, err
 	}
 
-	repoSecret := secretForRequest(appRepoRequest, appRepo)
 	if repoSecret != nil {
 		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
 		if err != nil {
@@ -276,6 +285,33 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 		err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(KubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
 	}
 	return err
+}
+
+func getValidationCliAndReq(appRepoBody io.ReadCloser) (HTTPClient, *http.Request, error) {
+	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
+	if err != nil {
+		return nil, nil, err
+	}
+	fmt.Println(repoSecret)
+	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
+	}
+	indexURL := strings.TrimSuffix(strings.TrimSpace(appRepo.Spec.URL), "/") + "/index.yaml"
+	req, err := http.NewRequest("GET", indexURL, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cli, req, nil
+}
+
+func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error) {
+	// Split body parsing to a different function for ease testing
+	cli, req, err := getValidationCliAndReq(appRepoBody)
+	if err != nil {
+		return nil, err
+	}
+	return cli.Do(req)
 }
 
 // GetAppRepository returns an AppRepository resource from a namespace.

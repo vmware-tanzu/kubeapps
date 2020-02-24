@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -653,6 +654,46 @@ func TestGetNamespaces(t *testing.T) {
 
 			if !cmp.Equal(namespaces, tc.expectedResponse) {
 				t.Errorf("Unexpected response: %s", cmp.Diff(namespaces, tc.expectedResponse))
+			}
+		})
+	}
+}
+
+func TestValidateAppRepository(t *testing.T) {
+	const kubeappsNamespace = "kubeapps"
+	testCases := []struct {
+		name            string
+		repoName        string
+		requestData     string
+		expectedURL     string
+		expectedHeaders http.Header
+	}{
+		{
+			name:        "it parses the repo URL",
+			repoName:    "my-repo",
+			requestData: `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo"}}`,
+			expectedURL: "http://example.com/test-repo/index.yaml",
+		},
+		{
+			name:            "it includes the auth creds",
+			repoName:        "my-repo",
+			requestData:     `{"appRepository": {"name": "test-repo", "repoURL": "http://example.com/test-repo", "authHeader": "test-me"}}`,
+			expectedURL:     "http://example.com/test-repo/index.yaml",
+			expectedHeaders: http.Header{"Authorization": []string{"test-me"}},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cli, req, err := getValidationCliAndReq(ioutil.NopCloser(strings.NewReader(tc.requestData)))
+			if err != nil {
+				t.Error(err)
+			}
+			if tc.expectedURL != req.URL.String() {
+				t.Errorf("Expected %v got %v", tc.expectedURL, req.URL.String())
+			}
+			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders))
 			}
 		})
 	}

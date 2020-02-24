@@ -19,32 +19,24 @@ package chart
 import (
 	"bytes"
 	"crypto/sha256"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/kubeapps/kubeapps/pkg/kube"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
-	"time"
 
 	"github.com/ghodss/yaml"
 	appRepov1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	helm3chart "helm.sh/helm/v3/pkg/chart"
 	helm3loader "helm.sh/helm/v3/pkg/chart/loader"
+	corev1 "k8s.io/api/core/v1"
 	helm2loader "k8s.io/helm/pkg/chartutil"
 	helm2chart "k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/repo"
-)
-
-const (
-	defaultRepoURL        = "https://kubernetes-charts.storage.googleapis.com"
-	defaultTimeoutSeconds = 180
 )
 
 type repoIndex struct {
@@ -73,11 +65,6 @@ type Details struct {
 	Values string `json:"values,omitempty"`
 }
 
-// HTTPClient Interface to perform HTTP requests
-type HTTPClient interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
 // ChartMultiVersion includes both Helm2Chart and Helm3Chart
 type ChartMultiVersion struct {
 	Helm2Chart *helm2chart.Chart
@@ -93,8 +80,8 @@ type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
 // Resolver for exposed funcs
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
-	GetChart(details *Details, netClient HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
-	InitNetClient(details *Details) (HTTPClient, error)
+	GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
+	InitNetClient(details *Details) (kube.HTTPClient, error)
 }
 
 // ChartClient struct contains the clients required to retrieve charts info
@@ -176,7 +163,7 @@ func parseIndex(data []byte) (*repo.IndexFile, error) {
 }
 
 // fetchRepoIndex returns a Helm repository
-func fetchRepoIndex(netClient *HTTPClient, repoURL string) (*repo.IndexFile, error) {
+func fetchRepoIndex(netClient *kube.HTTPClient, repoURL string) (*repo.IndexFile, error) {
 	req, err := getReq(repoURL)
 	if err != nil {
 		return nil, err
@@ -232,7 +219,7 @@ func findChartInRepoIndex(repoIndex *repo.IndexFile, repoURL, chartName, chartVe
 }
 
 // fetchChart returns the Chart content given an URL
-func fetchChart(netClient *HTTPClient, chartURL string, requireV1Support bool) (*ChartMultiVersion, error) {
+func fetchChart(netClient *kube.HTTPClient, chartURL string, requireV1Support bool) (*ChartMultiVersion, error) {
 	req, err := getReq(chartURL)
 	if err != nil {
 		return nil, err
@@ -275,103 +262,56 @@ func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
-// clientWithDefaultHeaders implements chart.HTTPClient interface
-// and includes an override of the Do method which injects our default
-// headers - User-Agent and Authorization (when present)
-type clientWithDefaultHeaders struct {
-	client         HTTPClient
-	defaultHeaders http.Header
-}
-
-// Do HTTP request
-func (c *clientWithDefaultHeaders) Do(req *http.Request) (*http.Response, error) {
-	for k, v := range c.defaultHeaders {
-		// Only add the default header if it's not already set in the request.
-		if _, ok := req.Header[k]; !ok {
-			req.Header[k] = v
-		}
-	}
-	return c.client.Do(req)
-}
-
-// InitNetClient returns an HTTP client based on the chart details loading a
-// custom CA if provided (as a secret)
-func (c *ChartClient) InitNetClient(details *Details) (HTTPClient, error) {
-	// Require the SystemCertPool unless the env var is explicitly set.
-	caCertPool, err := x509.SystemCertPool()
-	if err != nil {
-		if _, ok := os.LookupEnv("TILLER_PROXY_ALLOW_EMPTY_CERT_POOL"); !ok {
-			return nil, err
-		}
-		caCertPool = x509.NewCertPool()
-	}
-
+func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
 	appRepo, err := c.appRepoHandler.AsSVC().GetAppRepository(details.AppRepositoryResourceName, c.kubeappsNamespace)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
+		return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
 	c.appRepo = appRepo
 	auth := appRepo.Spec.Auth
 
+	var caCertSecret *corev1.Secret
 	if auth.CustomCA != nil {
-		caCertSecret, err := c.appRepoHandler.AsSVC().GetSecret(auth.CustomCA.SecretKeyRef.Name, c.kubeappsNamespace)
+		caCertSecret, err = c.appRepoHandler.AsSVC().GetSecret(auth.CustomCA.SecretKeyRef.Name, c.kubeappsNamespace)
 		if err != nil {
-			return nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
-		}
-
-		// Append our cert to the system pool
-		customData, ok := caCertSecret.Data[auth.CustomCA.SecretKeyRef.Key]
-		if !ok {
-			return nil, fmt.Errorf("secret %q did not contain key %q", auth.CustomCA.SecretKeyRef.Name, auth.CustomCA.SecretKeyRef.Key)
-		}
-		if ok := caCertPool.AppendCertsFromPEM(customData); !ok {
-			return nil, fmt.Errorf("Failed to append %s to RootCAs", auth.CustomCA.SecretKeyRef.Name)
+			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
 	}
 
-	defaultHeaders := http.Header{"User-Agent": []string{c.userAgent}}
+	var authSecret *corev1.Secret
 	if auth.Header != nil {
-		secret, err := c.appRepoHandler.AsSVC().GetSecret(auth.Header.SecretKeyRef.Name, c.kubeappsNamespace)
+		authSecret, err = c.appRepoHandler.AsSVC().GetSecret(auth.Header.SecretKeyRef.Name, c.kubeappsNamespace)
 		if err != nil {
-			return nil, err
+			return nil, nil, nil, err
 		}
-		defaultHeaders.Set("Authorization", string(secret.Data[auth.Header.SecretKeyRef.Key]))
 	}
 
-	// Return Transport for testing purposes
-	return &clientWithDefaultHeaders{
-		client: &http.Client{
-			Timeout: time.Second * defaultTimeoutSeconds,
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				TLSClientConfig: &tls.Config{
-					RootCAs: caCertPool,
-				},
-			},
-		},
-		defaultHeaders: defaultHeaders,
-	}, nil
+	return appRepo, caCertSecret, authSecret, nil
+}
+
+// InitNetClient returns an HTTP client based on the chart details loading a
+// custom CA if provided (as a secret)
+func (c *ChartClient) InitNetClient(details *Details) (kube.HTTPClient, error) {
+	appRepo, caCertSecret, authSecret, err := c.parseDetailsForHTTPClient(details)
+	if err != nil {
+		return nil, err
+	}
+	return kube.InitNetClient(appRepo, caCertSecret, authSecret, http.Header{"User-Agent": []string{c.userAgent}})
 }
 
 // GetChart retrieves and loads a Chart from a registry in both
 // v2 and v3 formats.
-func (c *ChartClient) GetChart(details *Details, netClient HTTPClient, requireV1Support bool) (*ChartMultiVersion, error) {
-	repoURL := c.appRepo.Spec.URL
-	if repoURL == "" {
-		// FIXME: Make configurable
-		repoURL = defaultRepoURL
-	}
-	repoURL = strings.TrimSuffix(strings.TrimSpace(repoURL), "/") + "/index.yaml"
+func (c *ChartClient) GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error) {
+	indexURL := strings.TrimSuffix(strings.TrimSpace(c.appRepo.Spec.URL), "/") + "/index.yaml"
 
-	log.Printf("Downloading repo %s index...", repoURL)
-	repoIndex, err := fetchRepoIndex(&netClient, repoURL)
+	repoIndex, err := fetchRepoIndex(&netClient, indexURL)
 	if err != nil {
 		return nil, err
 	}
 
-	chartURL, err := findChartInRepoIndex(repoIndex, repoURL, details.ChartName, details.Version)
+	chartURL, err := findChartInRepoIndex(repoIndex, indexURL, details.ChartName, details.Version)
 	if err != nil {
 		return nil, err
 	}

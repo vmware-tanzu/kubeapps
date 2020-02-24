@@ -18,6 +18,7 @@ package httphandler
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -74,6 +75,29 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 	}
 }
 
+// ValidateAppRepository returns a 200 if the connection to the AppRepo can be established
+func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		res, err := handler.AsUser(token).ValidateAppRepository(req.Body)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+		w.WriteHeader(res.StatusCode)
+		if res.StatusCode == 200 {
+			w.Write([]byte("OK"))
+		} else {
+			w.Write(body)
+		}
+	}
+}
+
 // DeleteAppRepository deletes an App Repository
 func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -117,6 +141,7 @@ func SetupDefaultRoutes(r *mux.Router) error {
 	}
 	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
+	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
 	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	return nil
 }

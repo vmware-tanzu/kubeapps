@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	chart3 "helm.sh/helm/v3/pkg/chart"
 	chart2 "k8s.io/helm/pkg/proto/hapi/chart"
 	"sigs.k8s.io/yaml"
@@ -34,7 +35,7 @@ func (f *FakeChart) ParseDetails(data []byte) (*chartUtils.Details, error) {
 	return details, err
 }
 
-func (f *FakeChart) GetChart(details *chartUtils.Details, netClient chartUtils.HTTPClient, requireV1Support bool) (*chartUtils.ChartMultiVersion, error) {
+func (f *FakeChart) GetChart(details *chartUtils.Details, netClient kube.HTTPClient, requireV1Support bool) (*chartUtils.ChartMultiVersion, error) {
 	vals, err := getValues([]byte(details.Values))
 	if err != nil {
 		return nil, err
@@ -66,6 +67,6 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 	return values, nil
 }
 
-func (f *FakeChart) InitNetClient(details *chartUtils.Details) (chartUtils.HTTPClient, error) {
+func (f *FakeChart) InitNetClient(details *chartUtils.Details) (kube.HTTPClient, error) {
 	return &http.Client{}, nil
 }
