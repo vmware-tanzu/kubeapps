@@ -52,6 +52,22 @@ func (f *fakePGManager) QueryAllCharts(query string, args ...interface{}) ([]*mo
 	return chartsResponse, nil
 }
 
+func (f *fakePGManager) InvalidateCache() error {
+	return nil
+}
+
+func (f *fakePGManager) InitTables() error {
+	return nil
+}
+
+func (f *fakePGManager) EnsureRepoExists(namespace, name string) (int, error) {
+	return 0, nil
+}
+
+func (f *fakePGManager) GetDB() dbutils.PostgresDB {
+	return nil
+}
+
 func Test_NewPGManager(t *testing.T) {
 	config := datastore.Config{URL: "10.11.12.13:5432"}
 	_, err := newPGManager(config)

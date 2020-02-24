@@ -14,26 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Currently these tests will be skipped entirely if a connection to
-// a local postgres database `testdb` cannot be established.
-// To have the tests run, simply run
+// Currently these tests will be skipped entirely unless the
+// ENABLE_PG_INTEGRATION_TESTS env var is set.
+// Run the local postgres with
 // docker run --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.6.0-debian-9-r0
 // in another terminal.
 package main
 
 import (
 	"fmt"
-	"os"
-	"strconv"
 	"testing"
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
 	_ "github.com/lib/pq"
 )
-
-const envvarPostgresTests = "ENABLE_PG_INTEGRATION_TESTS"
 
 func openTestManager(t *testing.T) *postgresAssetManager {
 	pam, err := newPGManager(datastore.Config{
@@ -50,21 +47,6 @@ func openTestManager(t *testing.T) *postgresAssetManager {
 		t.Fatalf("%+v", err)
 	}
 	return pam.(*postgresAssetManager)
-}
-
-func skipIfNoPostgres(t *testing.T) {
-	enableEnvVar := os.Getenv(envvarPostgresTests)
-	runTests := false
-	if enableEnvVar != "" {
-		var err error
-		runTests, err = strconv.ParseBool(enableEnvVar)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-	}
-	if !runTests {
-		t.Skipf("skipping postgres tests as %q not set", envvarPostgresTests)
-	}
 }
 
 func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
@@ -88,62 +70,8 @@ func countTable(t *testing.T, pam *postgresAssetManager, table string) int {
 	return count
 }
 
-func TestGetRepoId(t *testing.T) {
-	skipIfNoPostgres(t)
-
-	testCases := []struct {
-		name          string
-		existingRepos []models.Repo
-		newRepo       models.Repo
-		expectedId    int
-	}{
-		{
-			name: "it returns a new ID if it does not yet exist",
-			existingRepos: []models.Repo{
-				models.Repo{Namespace: "my-namespace", Name: "other-repo"},
-				models.Repo{Namespace: "other-namespace", Name: "my-repo"},
-			},
-			newRepo:    models.Repo{Namespace: "my-namespace", Name: "my-name"},
-			expectedId: 3,
-		},
-		{
-			name: "it returns the existing ID if the repo exists in the db",
-			existingRepos: []models.Repo{
-				models.Repo{Namespace: "my-namespace", Name: "my-name"},
-				models.Repo{Namespace: "my-namespace", Name: "other-repo"},
-				models.Repo{Namespace: "other-namespace", Name: "my-repo"},
-			},
-			newRepo:    models.Repo{Namespace: "my-namespace", Name: "my-name"},
-			expectedId: 1,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			pam, cleanup := getInitializedManager(t)
-			defer cleanup()
-
-			for _, repo := range tc.existingRepos {
-				_, err := pam.ensureRepoExists(repo.Namespace, repo.Name)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-			}
-
-			id, err := pam.ensureRepoExists(tc.newRepo.Namespace, tc.newRepo.Name)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
-
-			if got, want := id, tc.expectedId; got != want {
-				t.Errorf("got: %d, want: %d", got, want)
-			}
-		})
-	}
-}
-
 func TestImportCharts(t *testing.T) {
-	skipIfNoPostgres(t)
+	dbutilstest.SkipIfNoPostgres(t)
 
 	repo := models.Repo{
 		Name:      "repo-name",
@@ -167,7 +95,7 @@ func TestImportCharts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			_, err := pam.ensureRepoExists(repo.Namespace, repo.Name)
+			_, err := pam.EnsureRepoExists(repo.Namespace, repo.Name)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -181,7 +109,7 @@ func TestImportCharts(t *testing.T) {
 }
 
 func TestInsertFiles(t *testing.T) {
-	skipIfNoPostgres(t)
+	dbutilstest.SkipIfNoPostgres(t)
 	const namespace = "my-namespace"
 
 	testCases := []struct {
@@ -210,7 +138,7 @@ func TestInsertFiles(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
 			for _, files := range tc.existingFiles {
-				_, err := pam.ensureRepoExists(files.Repo.Namespace, files.Repo.Name)
+				_, err := pam.EnsureRepoExists(files.Repo.Namespace, files.Repo.Name)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -219,7 +147,7 @@ func TestInsertFiles(t *testing.T) {
 					t.Fatalf("%+v", err)
 				}
 			}
-			_, err := pam.ensureRepoExists(tc.chartFiles.Repo.Namespace, tc.chartFiles.Repo.Name)
+			_, err := pam.EnsureRepoExists(tc.chartFiles.Repo.Namespace, tc.chartFiles.Repo.Name)
 			if err != nil {
 				t.Fatalf("%+v", err)
 			}
@@ -237,7 +165,7 @@ func TestInsertFiles(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	skipIfNoPostgres(t)
+	dbutilstest.SkipIfNoPostgres(t)
 	const (
 		repoNamespace = "my-namespace"
 		repoName      = "my-repo"
@@ -282,7 +210,7 @@ func TestDelete(t *testing.T) {
 			defer cleanup()
 			for _, files := range tc.existingFiles {
 				// Ensure the repo and chart exists before creating the files.
-				_, err := pam.ensureRepoExists(files.Repo.Namespace, files.Repo.Name)
+				_, err := pam.EnsureRepoExists(files.Repo.Namespace, files.Repo.Name)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}

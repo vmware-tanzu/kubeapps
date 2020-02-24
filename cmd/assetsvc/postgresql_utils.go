@@ -18,6 +18,7 @@ package main
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/kubeapps/common/datastore"
@@ -25,6 +26,9 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	_ "github.com/lib/pq"
 )
+
+// TODO(mnelson): standardise error API for package.
+var ErrChartVersionNotFound = errors.New("chart version not found")
 
 type postgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
@@ -107,11 +111,16 @@ func (m *postgresAssetManager) getChartVersion(chartID, version string) (models.
 	if err != nil {
 		return models.Chart{}, err
 	}
+	found := false
 	for _, c := range chart.ChartVersions {
 		if c.Version == version {
 			chart.ChartVersions = []models.ChartVersion{c}
+			found = true
 			break
 		}
+	}
+	if !found {
+		return models.Chart{}, ErrChartVersionNotFound
 	}
 	return chart, nil
 }

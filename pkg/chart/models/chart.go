@@ -71,9 +71,12 @@ type ChartVersion struct {
 	Created    time.Time `json:"created"`
 	Digest     string    `json:"digest"`
 	URLs       []string  `json:"urls"`
-	Readme     string    `json:"readme" bson:"-"`
-	Values     string    `json:"values" bson:"-"`
-	Schema     string    `json:"schema" bson:"-"`
+	// The following three fields get set with the URL paths to the respective
+	// chart files (as opposed to the similar fields on ChartFiles which
+	// contain the actual content).
+	Readme string `json:"readme" bson:"-"`
+	Values string `json:"values" bson:"-"`
+	Schema string `json:"schema" bson:"-"`
 }
 
 // ChartFiles holds the README and values for a given chart version

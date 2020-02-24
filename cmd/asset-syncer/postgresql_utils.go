@@ -51,10 +51,10 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
 func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Chart) error {
-	m.initTables()
+	m.InitTables()
 
 	// Ensure the repo exists so FK constraints will be met.
-	_, err := m.ensureRepoExists(repo.Namespace, repo.Name)
+	_, err := m.EnsureRepoExists(repo.Namespace, repo.Name)
 	if err != nil {
 		return err
 	}
@@ -68,51 +68,6 @@ func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Ch
 	return m.removeMissingCharts(charts)
 }
 
-func (m *postgresAssetManager) initTables() error {
-	// Repository table should have a namespace column, and chart table should reference repositories.
-	_, err := m.DB.Exec(fmt.Sprintf(`
-CREATE TABLE IF NOT EXISTS %s (
-	ID serial NOT NULL PRIMARY KEY,
-	namespace varchar NOT NULL,
-	name varchar NOT NULL,
-	checksum varchar,
-	last_update varchar,
-	UNIQUE(namespace, name)
-)`, dbutils.RepositoryTable))
-	if err != nil {
-		return err
-	}
-
-	_, err = m.DB.Exec(fmt.Sprintf(`
-CREATE TABLE IF NOT EXISTS %s (
-	ID serial NOT NULL PRIMARY KEY,
-	repo_name varchar NOT NULL,
-	repo_namespace varchar NOT NULL,
-	chart_id varchar,
-	info jsonb NOT NULL,
-	UNIQUE(repo_name, repo_namespace, chart_id),
-	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE
-)`, dbutils.ChartTable, dbutils.RepositoryTable))
-	if err != nil {
-		return err
-	}
-
-	_, err = m.DB.Exec(fmt.Sprintf(`
-CREATE TABLE IF NOT EXISTS %s (
-	ID serial NOT NULL PRIMARY KEY,
-	repo_name varchar NOT NULL,
-	repo_namespace varchar NOT NULL,
-	chart_files_ID varchar NOT NULL,
-	info jsonb NOT NULL,
-	UNIQUE(repo_namespace, chart_files_ID),
-	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE
-)`, dbutils.ChartFilesTable, dbutils.RepositoryTable))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum string) bool {
 	var lastChecksum string
 	row := m.DB.QueryRow(fmt.Sprintf("SELECT checksum FROM %s WHERE name = $1", dbutils.RepositoryTable), repoName)
@@ -121,31 +76,6 @@ func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum strin
 		return err == nil && lastChecksum == repoChecksum
 	}
 	return false
-}
-
-// ensureRepoExists upserts to get the primary key of a repo.
-func (m *postgresAssetManager) ensureRepoExists(repoNamespace, repoName string) (int, error) {
-	// The only query I could find for inserting a new repo or selecting the existing one
-	// to find the ID in a single query.
-	query := fmt.Sprintf(`
-WITH new_repo AS (
-	INSERT INTO %s (namespace, name)
-	SELECT CAST($1 AS VARCHAR), CAST($2 AS VARCHAR) WHERE NOT EXISTS (
-		SELECT * FROM %s WHERE namespace=$1 AND name=$2)
-	RETURNING ID
-)
-SELECT ID FROM new_repo
-UNION
-SELECT ID FROM %s WHERE namespace=$1 AND name=$2
-`, dbutils.RepositoryTable, dbutils.RepositoryTable, dbutils.RepositoryTable)
-
-	var id int
-	err := m.DB.QueryRow(query, repoNamespace, repoName).Scan(&id)
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
 }
 
 func (m *postgresAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {
@@ -240,15 +170,4 @@ func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.Cha
 		defer rows.Close()
 	}
 	return err
-}
-
-// InvalidateCache for postgresql deletes and re-writes the schema
-func (m *postgresAssetManager) InvalidateCache() error {
-	tables := strings.Join([]string{dbutils.RepositoryTable, dbutils.ChartTable, dbutils.ChartFilesTable}, ",")
-	_, err := m.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tables))
-	if err != nil {
-		return err
-	}
-
-	return m.initTables()
 }
