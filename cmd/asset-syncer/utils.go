@@ -433,7 +433,7 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 		return err
 	}
 
-	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, URL: r.URL}, Digest: cv.Digest}
+	chartFiles := models.ChartFiles{ID: chartFilesID, Repo: &models.Repo{Name: r.Name, Namespace: r.Namespace, URL: r.URL}, Digest: cv.Digest}
 	if v, ok := files[readmeFileName]; ok {
 		chartFiles.Readme = v
 	} else {
