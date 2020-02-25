@@ -49,7 +49,7 @@ func newMongoDBManager(config datastore.Config) assetManager {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *mongodbAssetManager) Sync(repo models.RepoInternal, charts []models.Chart) error {
+func (m *mongodbAssetManager) Sync(repo models.Repo, charts []models.Chart) error {
 	return m.importCharts(charts)
 }
 
@@ -132,10 +132,10 @@ func (m *mongodbAssetManager) filesExist(chartFilesID, digest string) bool {
 	return err == nil
 }
 
-func (m *mongodbAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
+func (m *mongodbAssetManager) insertFiles(chartId string, files models.ChartFiles) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
-	_, err := db.C(chartFilesCollection).UpsertId(chartFilesID, files)
+	_, err := db.C(chartFilesCollection).UpsertId(files.ID, files)
 	return err
 }
 

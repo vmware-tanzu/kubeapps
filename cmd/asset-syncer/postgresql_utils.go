@@ -50,7 +50,7 @@ func newPGManager(config datastore.Config) (assetManager, error) {
 // These steps are processed in this way to ensure relevant chart data is
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
-func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Chart) error {
+func (m *postgresAssetManager) Sync(repo models.Repo, charts []models.Chart) error {
 	m.InitTables()
 
 	// Ensure the repo exists so FK constraints will be met.
@@ -59,13 +59,13 @@ func (m *postgresAssetManager) Sync(repo models.RepoInternal, charts []models.Ch
 		return err
 	}
 
-	err = m.importCharts(charts, models.Repo{Namespace: repo.Namespace, Name: repo.Name})
+	err = m.importCharts(charts, repo)
 	if err != nil {
 		return err
 	}
 
 	// Remove charts no longer existing in index
-	return m.removeMissingCharts(charts)
+	return m.removeMissingCharts(repo, charts)
 }
 
 func (m *postgresAssetManager) RepoAlreadyProcessed(repoName, repoChecksum string) bool {
@@ -110,13 +110,13 @@ func (m *postgresAssetManager) importCharts(charts []models.Chart, repo models.R
 	return nil
 }
 
-func (m *postgresAssetManager) removeMissingCharts(charts []models.Chart) error {
+func (m *postgresAssetManager) removeMissingCharts(repo models.Repo, charts []models.Chart) error {
 	var chartIDs []string
 	for _, chart := range charts {
 		chartIDs = append(chartIDs, fmt.Sprintf("'%s'", chart.ID))
 	}
 	chartIDsString := strings.Join(chartIDs, ", ")
-	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE info ->> 'ID' NOT IN (%s) AND info -> 'repo' ->> 'name' = $1", dbutils.ChartTable, chartIDsString), charts[0].Repo.Name)
+	rows, err := m.DB.Query(fmt.Sprintf("DELETE FROM %s WHERE chart_id NOT IN (%s) AND repo_name = $1 AND repo_namespace = $2", dbutils.ChartTable, chartIDsString), repo.Name, repo.Namespace)
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -156,16 +156,16 @@ func (m *postgresAssetManager) filesExist(chartFilesID, digest string) bool {
 	return err == nil && hasEntries
 }
 
-func (m *postgresAssetManager) insertFiles(chartFilesID string, files models.ChartFiles) error {
+func (m *postgresAssetManager) insertFiles(chartId string, files models.ChartFiles) error {
 	if files.Repo == nil {
 		return fmt.Errorf("unable to insert file without repo: %q", files.ID)
 	}
-	query := fmt.Sprintf(`INSERT INTO %s (repo_name, repo_namespace, chart_files_ID, info)
-	VALUES ($1, $2, $3, $4)
+	query := fmt.Sprintf(`INSERT INTO %s (chart_id, repo_name, repo_namespace, chart_files_ID, info)
+	VALUES ($1, $2, $3, $4, $5)
 	ON CONFLICT (repo_namespace, chart_files_ID)
-	DO UPDATE SET info = $4
+	DO UPDATE SET info = $5
 	`, dbutils.ChartFilesTable)
-	rows, err := m.DB.Query(query, files.Repo.Name, files.Repo.Namespace, chartFilesID, files)
+	rows, err := m.DB.Query(query, chartId, files.Repo.Name, files.Repo.Namespace, files.ID, files)
 	if rows != nil {
 		defer rows.Close()
 	}

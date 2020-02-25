@@ -110,26 +110,38 @@ func TestImportCharts(t *testing.T) {
 
 func TestInsertFiles(t *testing.T) {
 	dbutilstest.SkipIfNoPostgres(t)
-	const namespace = "my-namespace"
+	const (
+		namespace = "my-namespace"
+		chartId   = "my-chart-id"
+		filesId   = chartId + "-1.0"
+	)
 
 	testCases := []struct {
 		name          string
 		existingFiles []models.ChartFiles
 		chartFiles    models.ChartFiles
-		filesInserted int
+		fileCount     int
 	}{
 		{
-			name:          "it inserts new chart files",
-			chartFiles:    models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &models.Repo{Namespace: namespace}},
-			filesInserted: 1,
+			name:       "it inserts new chart files",
+			chartFiles: models.ChartFiles{ID: filesId, Readme: "A Readme", Repo: &models.Repo{Namespace: namespace}},
+			fileCount:  1,
+		},
+		{
+			name: "it updates existing chart files",
+			existingFiles: []models.ChartFiles{
+				models.ChartFiles{ID: filesId, Readme: "A Readme", Repo: &models.Repo{Namespace: namespace}},
+			},
+			chartFiles: models.ChartFiles{ID: filesId, Readme: "A New Readme", Repo: &models.Repo{Namespace: namespace}},
+			fileCount:  1,
 		},
 		{
 			name: "it imports the same repo name and chart version in different namespaces",
 			existingFiles: []models.ChartFiles{
-				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A different Readme", Repo: &models.Repo{Namespace: "another-namespace"}},
+				models.ChartFiles{ID: filesId, Readme: "A different Readme", Repo: &models.Repo{Namespace: "another-namespace"}},
 			},
-			chartFiles:    models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &models.Repo{Namespace: namespace}},
-			filesInserted: 2,
+			chartFiles: models.ChartFiles{ID: filesId, Readme: "A Readme", Repo: &models.Repo{Namespace: namespace}},
+			fileCount:  2,
 		},
 	}
 
@@ -137,30 +149,40 @@ func TestInsertFiles(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			for _, files := range tc.existingFiles {
-				_, err := pam.EnsureRepoExists(files.Repo.Namespace, files.Repo.Name)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				err = pam.insertFiles("some-id", files)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-			}
-			_, err := pam.EnsureRepoExists(tc.chartFiles.Repo.Namespace, tc.chartFiles.Repo.Name)
-			if err != nil {
-				t.Fatalf("%+v", err)
-			}
+			ensureFilesExist(t, pam, chartId, tc.existingFiles)
 
-			err = pam.insertFiles("some-id", tc.chartFiles)
+			ensureChartExists(t, pam, models.Chart{ID: chartId, Repo: tc.chartFiles.Repo})
+
+			err := pam.insertFiles(chartId, tc.chartFiles)
 			if err != nil {
 				t.Errorf("%+v", err)
 			}
 
-			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.filesInserted; got != want {
+			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.fileCount; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 		})
+	}
+}
+
+func ensureChartExists(t *testing.T, pam *postgresAssetManager, chart models.Chart) {
+	_, err := pam.EnsureRepoExists(chart.Repo.Namespace, chart.Repo.Name)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	err = pam.importCharts([]models.Chart{chart}, *chart.Repo)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+}
+
+func ensureFilesExist(t *testing.T, pam *postgresAssetManager, chartId string, files []models.ChartFiles) {
+	for _, f := range files {
+		ensureChartExists(t, pam, models.Chart{ID: chartId, Repo: f.Repo})
+		err := pam.insertFiles(chartId, f)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
 	}
 }
 
@@ -169,6 +191,7 @@ func TestDelete(t *testing.T) {
 	const (
 		repoNamespace = "my-namespace"
 		repoName      = "my-repo"
+		chartId       = repoName + "/my-chart"
 	)
 	repoToDelete := models.Repo{Namespace: repoNamespace, Name: repoName}
 	otherRepo := models.Repo{Namespace: "other-namespace", Name: repoName}
@@ -184,7 +207,7 @@ func TestDelete(t *testing.T) {
 		{
 			name: "it deletes the repo, chart and files",
 			existingFiles: []models.ChartFiles{
-				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &repoToDelete},
+				models.ChartFiles{ID: chartId + "-1.8", Readme: "A Readme", Repo: &repoToDelete},
 			},
 			repo:           repoToDelete,
 			expectedRepos:  0,
@@ -194,8 +217,8 @@ func TestDelete(t *testing.T) {
 		{
 			name: "it deletes the repo, chart and files from that namespace only",
 			existingFiles: []models.ChartFiles{
-				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &repoToDelete},
-				models.ChartFiles{ID: "repo/chart-1.8", Readme: "A Readme", Repo: &otherRepo},
+				models.ChartFiles{ID: chartId + "-1.8", Readme: "A Readme", Repo: &repoToDelete},
+				models.ChartFiles{ID: chartId + "-1.8", Readme: "A Readme", Repo: &otherRepo},
 			},
 			repo:           repoToDelete,
 			expectedRepos:  1,
@@ -208,23 +231,7 @@ func TestDelete(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
-			for _, files := range tc.existingFiles {
-				// Ensure the repo and chart exists before creating the files.
-				_, err := pam.EnsureRepoExists(files.Repo.Namespace, files.Repo.Name)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				err = pam.importCharts([]models.Chart{
-					models.Chart{Repo: files.Repo},
-				}, *files.Repo)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				err = pam.insertFiles("some-id", files)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-			}
+			ensureFilesExist(t, pam, chartId, tc.existingFiles)
 
 			err := pam.Delete(repoToDelete)
 			if err != nil {
@@ -242,4 +249,141 @@ func TestDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRemoveMissingCharts(t *testing.T) {
+	const (
+		repoName = "my-repo"
+	)
+	repo := models.Repo{Name: repoName, Namespace: "my-namespace"}
+	repoOtherNameSameNamespace := models.Repo{Name: "other-repo", Namespace: "my-namespace"}
+	repoSameNameOtherNamespace := models.Repo{Name: repoName, Namespace: "other-namespace"}
+
+	testCases := []struct {
+		name string
+		// existingFiles maps a chartId to a slice of files for different
+		// versions of that chart.
+		existingFiles   map[string][]models.ChartFiles
+		remainingCharts []models.Chart
+		expectedCharts  int
+		expectedFiles   int
+	}{
+		{
+			name: "it removes missing charts and files",
+			existingFiles: map[string][]models.ChartFiles{
+				"my-chart": {
+					models.ChartFiles{ID: "my-chart-1", Readme: "A Readme", Repo: &repo},
+				},
+				"other-chart": {
+					models.ChartFiles{ID: "other-chart-1", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "other-chart-2", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "other-chart-3", Readme: "A Readme", Repo: &repo},
+				},
+			},
+			remainingCharts: []models.Chart{
+				models.Chart{ID: "my-chart"},
+			},
+			expectedCharts: 1,
+			expectedFiles:  1,
+		},
+		{
+			name: "it leaves two charts while removing one",
+			existingFiles: map[string][]models.ChartFiles{
+				"my-chart": {
+					models.ChartFiles{ID: "my-chart-1", Readme: "A Readme", Repo: &repo},
+				},
+				"other-chart": {
+					models.ChartFiles{ID: "other-chart-1", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "other-chart-2", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "other-chart-3", Readme: "A Readme", Repo: &repo},
+				},
+				"third-chart": {
+					models.ChartFiles{ID: "third-chart-1", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "third-chart-2", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
+				},
+			},
+			remainingCharts: []models.Chart{
+				models.Chart{ID: "my-chart"},
+				models.Chart{ID: "other-chart"},
+			},
+			expectedCharts: 2,
+			expectedFiles:  4,
+		},
+		{
+			name: "it leaves the same chart in a different repo of same namespace",
+			// None of the charts or files are removed because my-chart and third-chart
+			// are the only charts in the specific repo.
+			existingFiles: map[string][]models.ChartFiles{
+				"my-chart": {
+					models.ChartFiles{ID: "my-chart-1", Readme: "A Readme", Repo: &repo},
+				},
+				"other-chart": {
+					models.ChartFiles{ID: "other-chart-1", Readme: "A Readme", Repo: &repoOtherNameSameNamespace},
+					models.ChartFiles{ID: "other-chart-2", Readme: "A Readme", Repo: &repoOtherNameSameNamespace},
+					models.ChartFiles{ID: "other-chart-3", Readme: "A Readme", Repo: &repoOtherNameSameNamespace},
+				},
+				"third-chart": {
+					models.ChartFiles{ID: "third-chart-1", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "third-chart-2", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
+				},
+			},
+			remainingCharts: []models.Chart{
+				models.Chart{ID: "my-chart"},
+				models.Chart{ID: "third-chart"},
+			},
+			expectedCharts: 3,
+			expectedFiles:  7,
+		},
+		{
+			name: "it leaves the same chart in a repo in a different",
+			// None of the charts or files are removed because my-chart and third-chart
+			// are the only charts in the specific repo.
+			existingFiles: map[string][]models.ChartFiles{
+				"my-chart": {
+					models.ChartFiles{ID: "my-chart-1", Readme: "A Readme", Repo: &repo},
+				},
+				"other-chart": {
+					models.ChartFiles{ID: "other-chart-1", Readme: "A Readme", Repo: &repoSameNameOtherNamespace},
+					models.ChartFiles{ID: "other-chart-2", Readme: "A Readme", Repo: &repoSameNameOtherNamespace},
+					models.ChartFiles{ID: "other-chart-3", Readme: "A Readme", Repo: &repoSameNameOtherNamespace},
+				},
+				"third-chart": {
+					models.ChartFiles{ID: "third-chart-1", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "third-chart-2", Readme: "A Readme", Repo: &repo},
+					models.ChartFiles{ID: "third-chart-3", Readme: "A Readme", Repo: &repo},
+				},
+			},
+			remainingCharts: []models.Chart{
+				models.Chart{ID: "my-chart"},
+				models.Chart{ID: "third-chart"},
+			},
+			expectedCharts: 3,
+			expectedFiles:  7,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pam, cleanup := getInitializedManager(t)
+			defer cleanup()
+			for chartId, files := range tc.existingFiles {
+				ensureFilesExist(t, pam, chartId, files)
+			}
+
+			err := pam.removeMissingCharts(repo, tc.remainingCharts)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := countTable(t, pam, dbutils.ChartTable), tc.expectedCharts; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.expectedFiles; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+		})
+	}
+
 }

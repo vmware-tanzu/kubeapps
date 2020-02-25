@@ -73,7 +73,7 @@ var syncCmd = &cobra.Command{
 			logrus.Fatal("no charts in repository index")
 		}
 
-		if err = manager.Sync(*repo, charts); err != nil {
+		if err = manager.Sync(models.Repo{Name: repo.Name, Namespace: repo.Namespace}, charts); err != nil {
 			logrus.Fatalf("Can't add chart repository to database: %v", err)
 		}
 

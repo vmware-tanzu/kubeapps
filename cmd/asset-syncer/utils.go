@@ -76,7 +76,7 @@ func init() {
 
 type assetManager interface {
 	Delete(repo models.Repo) error
-	Sync(repo models.RepoInternal, charts []models.Chart) error
+	Sync(repo models.Repo, charts []models.Chart) error
 	RepoAlreadyProcessed(repoName, checksum string) bool
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
@@ -84,7 +84,7 @@ type assetManager interface {
 	InvalidateCache() error
 	updateIcon(data []byte, contentType, ID string) error
 	filesExist(chartFilesID, digest string) bool
-	insertFiles(chartFilesID string, files models.ChartFiles) error
+	insertFiles(chartId string, files models.ChartFiles) error
 }
 
 func newManager(databaseType string, config datastore.Config) (assetManager, error) {
@@ -386,15 +386,15 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 	return f.manager.updateIcon(b, contentType, c.ID)
 }
 
-func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, cv models.ChartVersion) error {
-	chartFilesID := fmt.Sprintf("%s/%s-%s", r.Name, name, cv.Version)
+func (f *fileImporter) fetchAndImportFiles(chartId string, r *models.RepoInternal, cv models.ChartVersion) error {
+	chartFilesID := fmt.Sprintf("%s/%s-%s", r.Name, chartId, cv.Version)
 
 	// Check if we already have indexed files for this chart version and digest
 	if f.manager.filesExist(chartFilesID, cv.Digest) {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Debug("skipping existing files")
+		log.WithFields(log.Fields{"name": chartId, "version": cv.Version}).Debug("skipping existing files")
 		return nil
 	}
-	log.WithFields(log.Fields{"name": name, "version": cv.Version}).Debug("fetching files")
+	log.WithFields(log.Fields{"name": chartId, "version": cv.Version}).Debug("fetching files")
 
 	url := chartTarballURL(r, cv)
 	req, err := http.NewRequest("GET", url, nil)
@@ -423,9 +423,9 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 
 	tarf := tar.NewReader(gzf)
 
-	readmeFileName := name + "/README.md"
-	valuesFileName := name + "/values.yaml"
-	schemaFileName := name + "/values.schema.json"
+	readmeFileName := chartId + "/README.md"
+	valuesFileName := chartId + "/values.yaml"
+	schemaFileName := chartId + "/values.schema.json"
 	filenames := []string{valuesFileName, readmeFileName, schemaFileName}
 
 	files, err := extractFilesFromTarball(filenames, tarf)
@@ -437,20 +437,20 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 	if v, ok := files[readmeFileName]; ok {
 		chartFiles.Readme = v
 	} else {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("README.md not found")
+		log.WithFields(log.Fields{"name": chartId, "version": cv.Version}).Info("README.md not found")
 	}
 	if v, ok := files[valuesFileName]; ok {
 		chartFiles.Values = v
 	} else {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.yaml not found")
+		log.WithFields(log.Fields{"name": chartId, "version": cv.Version}).Info("values.yaml not found")
 	}
 	if v, ok := files[schemaFileName]; ok {
 		chartFiles.Schema = v
 	} else {
-		log.WithFields(log.Fields{"name": name, "version": cv.Version}).Info("values.schema.json not found")
+		log.WithFields(log.Fields{"name": chartId, "version": cv.Version}).Info("values.schema.json not found")
 	}
 
 	// inserts the chart files if not already indexed, or updates the existing
 	// entry if digest has changed
-	return f.manager.insertFiles(chartFilesID, chartFiles)
+	return f.manager.insertFiles(chartId, chartFiles)
 }
