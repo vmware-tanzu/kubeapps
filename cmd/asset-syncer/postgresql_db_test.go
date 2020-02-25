@@ -252,6 +252,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestRemoveMissingCharts(t *testing.T) {
+	dbutilstest.SkipIfNoPostgres(t)
 	const (
 		repoName = "my-repo"
 	)
