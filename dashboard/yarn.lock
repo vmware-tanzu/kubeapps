@@ -9015,10 +9015,10 @@ react-markdown@^4.2.2:
     unist-util-visit "^1.3.0"
     xtend "^4.0.1"
 
-react-minimal-pie-chart@^5.0.1:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/react-minimal-pie-chart/-/react-minimal-pie-chart-5.0.2.tgz#65508b333a02904b4975058b86b19065bfa8b869"
-  integrity sha512-EHwFOyH/GMeKn1n5djYEe2pjhClXrwS9XyRhtv12LwzdAYf+U0Aj3ZdX72wyy7lbbo4hbWacp7/2GGGrVHpmNw==
+react-minimal-pie-chart@^6.0.1:
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/react-minimal-pie-chart/-/react-minimal-pie-chart-6.0.1.tgz#4baa3d62afaac4ea63edeb68425ec7b781ff841d"
+  integrity sha512-AlnZn2TjgX7Rm9E4SlV4iZphJVx8r3cojhm/VAzxuJMOevizCAxbSKhBlYjmmRtCNAWBX6JlALaPkOpEaPBFMQ==
   dependencies:
     prop-types "^15.5.7"
 
