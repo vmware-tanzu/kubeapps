@@ -48,6 +48,7 @@
     "react-feather": "^1.0.8",
     "react-jsonschema-form": "^1.0.3",
     "react-markdown": "^4.2.2",
+    "react-minimal-pie-chart": "^6.0.1",
     "react-modal": "^3.1.11",
     "react-redux": "^5.0.6",
     "react-router": "^5.1.2",

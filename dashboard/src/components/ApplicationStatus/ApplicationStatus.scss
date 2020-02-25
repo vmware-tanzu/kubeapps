@@ -7,6 +7,36 @@
   height: 2.5em;
 }
 
+.ApplicationStatusPieChart {
+  text-align: center;
+  max-width: 100px;
+  margin-bottom: -50px;
+  a {
+    color: unset;
+  }
+  a:hover {
+    text-decoration: none !important;
+    color: unset;
+  }
+  &__title {
+    margin-top: 0px;
+  }
+  &__label {
+    position: relative;
+    bottom: 80px;
+    &__number {
+      margin: 0;
+      font-size: 1.5em;
+    }
+    &__text {
+      margin: -5px 0 0 0;
+    }
+  }
+  tr {
+    line-height: 5px;
+  }
+}
+
 .ApplicationStatus--success {
   color: #fff;
   background-color: #1598cb;

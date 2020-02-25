@@ -1,5 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
+import * as ReactTooltip from "react-tooltip";
 
 import { IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
@@ -10,6 +11,7 @@ const defaultProps = {
   deployments: [],
   statefulsets: [],
   daemonsets: [],
+  skipPieChart: true,
 };
 
 describe("componentDidMount", () => {
@@ -77,6 +79,8 @@ describe("isFetching", () => {
     statefulsets: Array<IKubeItem<IResource>>;
     daemonsets: Array<IKubeItem<IResource>>;
     deployed: boolean;
+    totalPods: number;
+    readyPods: number;
   }> = [
     {
       title: "shows a deployed status if there are no resources",
@@ -84,6 +88,8 @@ describe("isFetching", () => {
       statefulsets: [],
       daemonsets: [],
       deployed: true,
+      totalPods: 0,
+      readyPods: 0,
     },
     {
       title: "shows a deploying status if there is a non deployed deployment",
@@ -91,6 +97,7 @@ describe("isFetching", () => {
         {
           isFetching: false,
           item: {
+            metadata: { name: "foo" },
             status: {
               replicas: 1,
               availableReplicas: 0,
@@ -101,6 +108,8 @@ describe("isFetching", () => {
       statefulsets: [],
       daemonsets: [],
       deployed: false,
+      totalPods: 1,
+      readyPods: 0,
     },
     {
       title: "shows a deploying status if there is a non deployed statefulset",
@@ -108,6 +117,7 @@ describe("isFetching", () => {
         {
           isFetching: false,
           item: {
+            metadata: { name: "foo" },
             status: {
               replicas: 1,
               readyReplicas: 0,
@@ -118,6 +128,8 @@ describe("isFetching", () => {
       deployments: [],
       daemonsets: [],
       deployed: false,
+      totalPods: 1,
+      readyPods: 0,
     },
     {
       title: "shows a deploying status if there is a non deployed daemonset",
@@ -125,6 +137,7 @@ describe("isFetching", () => {
         {
           isFetching: false,
           item: {
+            metadata: { name: "foo" },
             status: {
               currentNumberScheduled: 1,
               numberReady: 0,
@@ -135,6 +148,8 @@ describe("isFetching", () => {
       deployments: [],
       statefulsets: [],
       deployed: false,
+      totalPods: 1,
+      readyPods: 0,
     },
     {
       title: "shows a deployed status if it has a daemonset, deployment and statefulset deployed",
@@ -142,6 +157,7 @@ describe("isFetching", () => {
         {
           isFetching: false,
           item: {
+            metadata: { name: "foo" },
             status: {
               currentNumberScheduled: 1,
               numberReady: 1,
@@ -153,6 +169,7 @@ describe("isFetching", () => {
         {
           isFetching: false,
           item: {
+            metadata: { name: "foo" },
             status: {
               replicas: 1,
               availableReplicas: 1,
@@ -164,6 +181,7 @@ describe("isFetching", () => {
         {
           isFetching: false,
           item: {
+            metadata: { name: "foo" },
             status: {
               replicas: 1,
               readyReplicas: 1,
@@ -172,19 +190,83 @@ describe("isFetching", () => {
         },
       ],
       deployed: true,
+      totalPods: 3,
+      readyPods: 3,
+    },
+    {
+      title:
+        "shows a deploying status if it has a daemonset, deployment (deployed) and statefulset (not deployed)",
+      daemonsets: [
+        {
+          isFetching: false,
+          item: {
+            metadata: { name: "foo-ds" },
+            status: {
+              currentNumberScheduled: 1,
+              numberReady: 1,
+            },
+          } as IResource,
+        },
+      ],
+      deployments: [
+        {
+          isFetching: false,
+          item: {
+            metadata: { name: "foo-dp" },
+            status: {
+              replicas: 1,
+              availableReplicas: 1,
+            },
+          } as IResource,
+        },
+      ],
+      statefulsets: [
+        {
+          isFetching: false,
+          item: {
+            metadata: { name: "foo-ss" },
+            status: {
+              replicas: 1,
+              readyReplicas: 0,
+            },
+          } as IResource,
+        },
+      ],
+      deployed: true,
+      totalPods: 3,
+      readyPods: 2,
     },
   ];
   tests.forEach(t => {
     it(t.title, () => {
-      const wrapper = shallow(
-        <ApplicationStatus
-          {...defaultProps}
-          deployments={t.deployments}
-          statefulsets={t.statefulsets}
-          daemonsets={t.daemonsets}
-        />,
-      );
+      const wrapper = shallow(<ApplicationStatus {...defaultProps} />);
+      wrapper.setProps({
+        deployments: t.deployments,
+        statefulsets: t.statefulsets,
+        daemonsets: t.daemonsets,
+      });
       expect(wrapper.text()).toContain(t.deployed ? "Ready" : "Not Ready");
+      expect(wrapper.state()).toMatchObject({ totalPods: t.totalPods, readyPods: t.readyPods });
+      // Check tooltip text
+      const tooltipText = wrapper
+        .find(ReactTooltip)
+        .dive()
+        .text();
+      t.deployments.forEach(d =>
+        expect(tooltipText).toContain(
+          `${d.item?.status.availableReplicas}/${d.item?.status.replicas}${d.item?.metadata.name}`,
+        ),
+      );
+      t.statefulsets.forEach(d =>
+        expect(tooltipText).toContain(
+          `${d.item?.status.readyReplicas}/${d.item?.status.replicas}${d.item?.metadata.name}`,
+        ),
+      );
+      t.daemonsets.forEach(d =>
+        expect(tooltipText).toContain(
+          `${d.item?.status.numberReady}/${d.item?.status.currentNumberScheduled}${d.item?.metadata.name}`,
+        ),
+      );
     });
   });
 });
