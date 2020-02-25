@@ -53,11 +53,11 @@ func (m *mongodbAssetManager) Sync(repo models.Repo, charts []models.Chart) erro
 	return m.importCharts(charts)
 }
 
-func (m *mongodbAssetManager) RepoAlreadyProcessed(repoName string, checksum string) bool {
+func (m *mongodbAssetManager) RepoAlreadyProcessed(repo models.Repo, checksum string) bool {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	lastCheck := &models.RepoCheck{}
-	err := db.C(repositoryCollection).Find(bson.M{"_id": repoName}).One(lastCheck)
+	err := db.C(repositoryCollection).Find(bson.M{"_id": repo.Name}).One(lastCheck)
 	return err == nil && checksum == lastCheck.Checksum
 }
 
@@ -119,13 +119,13 @@ func (m *mongodbAssetManager) importCharts(charts []models.Chart) error {
 	return err
 }
 
-func (m *mongodbAssetManager) updateIcon(data []byte, contentType, ID string) error {
+func (m *mongodbAssetManager) updateIcon(repo models.Repo, data []byte, contentType, ID string) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	return db.C(chartCollection).UpdateId(ID, bson.M{"$set": bson.M{"raw_icon": data, "icon_content_type": contentType}})
 }
 
-func (m *mongodbAssetManager) filesExist(chartFilesID, digest string) bool {
+func (m *mongodbAssetManager) filesExist(repo models.Repo, chartFilesID, digest string) bool {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	err := db.C(chartFilesCollection).Find(bson.M{"_id": chartFilesID, "digest": digest}).One(&models.ChartFiles{})
