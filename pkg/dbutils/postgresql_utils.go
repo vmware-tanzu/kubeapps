@@ -161,13 +161,15 @@ CREATE TABLE IF NOT EXISTS %s (
 	_, err = m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
+	chart_id varchar NOT NULL,
 	repo_name varchar NOT NULL,
 	repo_namespace varchar NOT NULL,
 	chart_files_ID varchar NOT NULL,
 	info jsonb NOT NULL,
 	UNIQUE(repo_namespace, chart_files_ID),
-	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE
-)`, ChartFilesTable, RepositoryTable))
+	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE,
+	FOREIGN KEY (repo_name, repo_namespace, chart_id) REFERENCES %s (repo_name, repo_namespace, chart_id) ON DELETE CASCADE
+)`, ChartFilesTable, RepositoryTable, ChartTable))
 	if err != nil {
 		return err
 	}

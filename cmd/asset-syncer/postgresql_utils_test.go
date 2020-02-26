@@ -86,13 +86,14 @@ func Test_PGUpdateLastCheck(t *testing.T) {
 }
 
 func Test_PGremoveMissingCharts(t *testing.T) {
-	charts := []models.Chart{{ID: "foo", Repo: &models.Repo{Name: "repo"}}, {ID: "bar"}}
+	repo := models.Repo{Name: "repo"}
+	charts := []models.Chart{{ID: "foo", Repo: &repo}, {ID: "bar"}}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
-	m.On("Query", "DELETE FROM charts WHERE info ->> 'ID' NOT IN ('foo', 'bar') AND info -> 'repo' ->> 'name' = $1", []interface{}{"repo"})
-	pgManager.removeMissingCharts(charts)
+	m.On("Query", "DELETE FROM charts WHERE chart_id NOT IN ('foo', 'bar') AND repo_name = $1 AND repo_namespace = $2", []interface{}{repo.Name, repo.Namespace})
+	pgManager.removeMissingCharts(repo, charts)
 	m.AssertExpectations(t)
 }
 
@@ -140,24 +141,25 @@ func Test_PGfilesExist(t *testing.T) {
 func Test_PGinsertFiles(t *testing.T) {
 	const (
 		namespace = "my-namespace"
-		id        = "stable/wordpress"
 		repoName  = "my-repo"
+		chartId   = repoName + "/wordpress"
+		filesId   = chartId + "-2.1.3"
 	)
-	files := models.ChartFiles{ID: id, Readme: "foo", Values: "bar", Repo: &models.Repo{Namespace: namespace, Name: repoName}}
+	files := models.ChartFiles{ID: filesId, Readme: "foo", Values: "bar", Repo: &models.Repo{Namespace: namespace, Name: repoName}}
 	m := &mockDB{&mock.Mock{}}
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
-		`INSERT INTO files (repo_name, repo_namespace, chart_files_ID, info)
-	VALUES ($1, $2, $3, $4)
+		`INSERT INTO files (chart_id, repo_name, repo_namespace, chart_files_ID, info)
+	VALUES ($1, $2, $3, $4, $5)
 	ON CONFLICT (repo_namespace, chart_files_ID)
-	DO UPDATE SET info = $4
+	DO UPDATE SET info = $5
 	`,
-		[]interface{}{repoName, namespace, id, files},
+		[]interface{}{chartId, repoName, namespace, filesId, files},
 	)
-	err := pgManager.insertFiles(id, files)
+	err := pgManager.insertFiles(chartId, files)
 	if err != nil {
 		t.Errorf("Failed to insert files: %+v", err)
 	}

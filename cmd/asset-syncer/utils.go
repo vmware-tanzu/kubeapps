@@ -76,7 +76,7 @@ func init() {
 
 type assetManager interface {
 	Delete(repo models.Repo) error
-	Sync(repo models.RepoInternal, charts []models.Chart) error
+	Sync(repo models.Repo, charts []models.Chart) error
 	RepoAlreadyProcessed(repoName, checksum string) bool
 	UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error
 	Init() error
@@ -84,7 +84,7 @@ type assetManager interface {
 	InvalidateCache() error
 	updateIcon(data []byte, contentType, ID string) error
 	filesExist(chartFilesID, digest string) bool
-	insertFiles(chartFilesID string, files models.ChartFiles) error
+	insertFiles(chartId string, files models.ChartFiles) error
 }
 
 func newManager(databaseType string, config datastore.Config) (assetManager, error) {
@@ -387,7 +387,8 @@ func (f *fileImporter) fetchAndImportIcon(c models.Chart, r *models.RepoInternal
 }
 
 func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, cv models.ChartVersion) error {
-	chartFilesID := fmt.Sprintf("%s/%s-%s", r.Name, name, cv.Version)
+	chartID := fmt.Sprintf("%s/%s", r.Name, name)
+	chartFilesID := fmt.Sprintf("%s-%s", chartID, cv.Version)
 
 	// Check if we already have indexed files for this chart version and digest
 	if f.manager.filesExist(chartFilesID, cv.Digest) {
@@ -452,5 +453,5 @@ func (f *fileImporter) fetchAndImportFiles(name string, r *models.RepoInternal, 
 
 	// inserts the chart files if not already indexed, or updates the existing
 	// entry if digest has changed
-	return f.manager.insertFiles(chartFilesID, chartFiles)
+	return f.manager.insertFiles(chartID, chartFiles)
 }
