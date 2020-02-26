@@ -251,19 +251,11 @@ exports[`should render the repo form 1`] = `
       </div>
       <div>
         <button
-          className="button"
-          disabled={true}
-          onClick={[Function]}
-          type="button"
-        >
-          Validate
-        </button>
-        <button
           className="button button-primary"
           disabled={false}
           type="submit"
         >
-          Install Repo
+          Install Repo 
         </button>
       </div>
     </div>

@@ -1,10 +1,9 @@
 import * as React from "react";
 import { Redirect } from "react-router";
-import { UnexpectedErrorAlert } from "../../../components/ErrorAlert";
 import Hint from "../../../components/Hint";
+import { UnexpectedErrorAlert } from "../../ErrorAlert";
 
 interface IAppRepoFormProps {
-  validateError?: Error;
   message?: string;
   redirectTo?: string;
   install: (
@@ -17,6 +16,7 @@ interface IAppRepoFormProps {
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   onAfterInstall?: () => Promise<any>;
   isFetching: boolean;
+  validationError?: Error;
 }
 
 interface IAppRepoFormState {
@@ -29,7 +29,7 @@ interface IAppRepoFormState {
   token: string;
   customCA: string;
   syncJobPodTemplate: string;
-  validated: boolean;
+  validated?: boolean;
 }
 
 const AUTH_METHOD_NONE = "none";
@@ -38,7 +38,7 @@ const AUTH_METHOD_BEARER = "bearer";
 const AUTH_METHOD_CUSTOM = "custom";
 
 export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoFormState> {
-  public state = {
+  public state: IAppRepoFormState = {
     authMethod: AUTH_METHOD_NONE,
     user: "",
     password: "",
@@ -48,7 +48,6 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     url: "",
     customCA: "",
     syncJobPodTemplate: "",
-    validated: false,
   };
 
   public render() {
@@ -233,37 +232,22 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 />
               </pre>
             </div>
+            {this.props.validationError && (
+              <UnexpectedErrorAlert
+                title="Validation Failed. Got:"
+                text={this.props.validationError.message}
+                raw={true}
+              />
+            )}
             <div>
-              {this.props.validateError && (
-                <UnexpectedErrorAlert
-                  title="Validation Failed. Got:"
-                  text={this.props.validateError.message}
-                  raw={true}
-                />
-              )}
-              {this.state.validated && (
-                <div className={"alert margin-c margin-t-normal margin-b-big"}>
-                  <div className={"message__content "}>Repository successfully validated!</div>
-                </div>
-              )}
-              <button
-                className="button"
-                type="button"
-                onClick={this.handleValidate}
-                disabled={
-                  this.props.isFetching ||
-                  this.state.url === "" ||
-                  this.state.syncJobPodTemplate !== ""
-                }
-              >
-                {this.props.isFetching ? "Validating..." : "Validate"}
-              </button>
               <button
                 className="button button-primary"
                 type="submit"
                 disabled={this.props.isFetching}
               >
-                Install Repo
+                {this.props.isFetching
+                  ? "Validating..."
+                  : `Install Repo ${this.state.validated === false ? "(force)" : ""}`}
               </button>
             </div>
             {this.props.redirectTo && <Redirect to={this.props.redirectTo} />}
@@ -274,7 +258,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
   }
 
   private handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
-    const { install, onAfterInstall } = this.props;
+    const { install, onAfterInstall, validate } = this.props;
     const {
       name,
       url,
@@ -299,29 +283,20 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
         finalHeader = `Bearer ${token}`;
         break;
     }
-    const installed = await install(name, url, finalHeader, customCA, syncJobPodTemplate);
-    if (installed && onAfterInstall) {
-      await onAfterInstall();
+    let validated = this.state.validated;
+    // If the validation already failed and we try to reinstall,
+    // skip validation and force install
+    const force = validated === false;
+    if (!validated && !force) {
+      validated = await validate(url, finalHeader, customCA);
+      this.setState({ validated });
     }
-  };
-
-  private handleValidate = async () => {
-    const { validate } = this.props;
-    const { url, authHeader, authMethod, token, user, password, customCA } = this.state;
-    let finalHeader = "";
-    switch (authMethod) {
-      case AUTH_METHOD_CUSTOM:
-        finalHeader = authHeader;
-        break;
-      case AUTH_METHOD_BASIC:
-        finalHeader = `Basic ${btoa(`${user}:${password}`)}`;
-        break;
-      case AUTH_METHOD_BEARER:
-        finalHeader = `Bearer ${token}`;
-        break;
+    if (validated || force) {
+      const installed = await install(name, url, finalHeader, customCA, syncJobPodTemplate);
+      if (installed && onAfterInstall) {
+        await onAfterInstall();
+      }
     }
-    const validated = await validate(url, finalHeader, customCA);
-    this.setState({ validated });
   };
 
   private handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -329,30 +304,30 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
   };
 
   private handleURLChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ url: e.target.value });
+    this.setState({ url: e.target.value, validated: undefined });
   };
   private handleAuthHeaderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ authHeader: e.target.value });
+    this.setState({ authHeader: e.target.value, validated: undefined });
   };
   private handleAuthTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ token: e.target.value });
+    this.setState({ token: e.target.value, validated: undefined });
   };
   private handleCustomCAChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    this.setState({ customCA: e.target.value });
+    this.setState({ customCA: e.target.value, validated: undefined });
   };
   private handleAuthRadioButtonChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ authMethod: e.target.value });
   };
 
   private handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ user: e.target.value });
+    this.setState({ user: e.target.value, validated: undefined });
   };
 
   private handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ password: e.target.value });
+    this.setState({ password: e.target.value, validated: undefined });
   };
 
   private handleSyncJobPodTemplateChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    this.setState({ syncJobPodTemplate: e.target.value });
+    this.setState({ syncJobPodTemplate: e.target.value, validated: undefined });
   };
 }

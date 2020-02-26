@@ -81,7 +81,7 @@ export class AppRepoAddButton extends React.Component<
             validate={this.props.validate}
             onAfterInstall={this.closeModal}
             isFetching={this.props.isFetching}
-            validateError={this.props.errors.validate}
+            validationError={this.props.errors.validate}
           />
         </Modal>
         {redirectTo && <Redirect to={redirectTo} />}

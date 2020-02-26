@@ -309,17 +309,10 @@ exports[`should open a modal with the repository form 1`] = `
                     </div>
                     <div>
                       <button
-                        class="button"
-                        type="button"
-                        disabled=""
-                      >
-                        Validate
-                      </button>
-                      <button
                         class="button button-primary"
                         type="submit"
                       >
-                        Install Repo
+                        Install Repo 
                       </button>
                     </div>
                   </div>
