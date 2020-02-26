@@ -4,8 +4,6 @@ import * as ReactTooltip from "react-tooltip";
 
 import { AlertTriangle } from "react-feather";
 import isSomeResourceLoading from "../../components/AppView/helpers";
-// import Check from "../../icons/Check";
-// import Compass from "../../icons/Compass";
 import { hapi } from "../../shared/hapi/release";
 import {
   IDaemonsetStatus,
@@ -23,7 +21,6 @@ interface IApplicationStatusProps {
   info?: hapi.release.IInfo;
   watchWorkloads: () => void;
   closeWatches: () => void;
-  skipPieChart?: boolean;
 }
 
 interface IWorkload {
@@ -132,22 +129,18 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
       <div className="ApplicationStatusPieChart">
         <a data-tip={true} data-for="app-status">
           <h5 className="ApplicationStatusPieChart__title">{ready ? "Ready" : "Not Ready"}</h5>
-          {/* Avoid issues when rendering the pie chart in tests */}
-          {/* https://github.com/toomuchdesign/react-minimal-pie-chart/issues/131 */}
-          {!this.props.skipPieChart && (
-            <PieChart
-              data={[{ value: 1, color: `${ready ? "#008145" : "#FDBA12"}` }]}
-              reveal={(readyPods / totalPods) * 100}
-              animate={true}
-              animationDuration={1000}
-              lineWidth={20}
-              startAngle={270}
-              labelStyle={{ fontSize: "30px" }}
-              rounded={true}
-              style={{ height: "100px", width: "100px" }}
-              background="#bfbfbf"
-            />
-          )}
+          <PieChart
+            data={[{ value: 1, color: `${ready ? "#1598CB" : "#F58220"}` }]}
+            reveal={(readyPods / totalPods) * 100}
+            animate={true}
+            animationDuration={1000}
+            lineWidth={20}
+            startAngle={270}
+            labelStyle={{ fontSize: "30px" }}
+            rounded={true}
+            style={{ height: "100px", width: "100px" }}
+            background="#bfbfbf"
+          />
           <div className="ApplicationStatusPieChart__label">
             <p className="ApplicationStatusPieChart__label__number">{readyPods}</p>
             <p className="ApplicationStatusPieChart__label__text">Pod{readyPods > 1 ? "s" : ""}</p>

@@ -11,8 +11,18 @@ const defaultProps = {
   deployments: [],
   statefulsets: [],
   daemonsets: [],
-  skipPieChart: true,
 };
+
+const consoleError = global.console.error;
+beforeEach(() => {
+  // Mute console.error since we are getting a lot of error for rendering the PieChart component
+  // more info here: https://github.com/toomuchdesign/react-minimal-pie-chart/issues/131
+  global.console.error = jest.fn();
+});
+afterEach(() => {
+  jest.resetAllMocks();
+  global.console.error = consoleError;
+});
 
 describe("componentDidMount", () => {
   it("calls watchWorkloads", () => {
