@@ -22,8 +22,11 @@ limitations under the License.
 package main
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -386,5 +389,139 @@ func TestRemoveMissingCharts(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestRepoAlreadyProcessed(t *testing.T) {
+	dbutilstest.SkipIfNoPostgres(t)
+	const (
+		repoNamespace = "my-namespace"
+		repoName      = "my-repo"
+		checksum      = "deadbeef"
+	)
+	repo := models.Repo{Namespace: repoNamespace, Name: repoName}
+
+	pam, cleanup := getInitializedManager(t)
+	defer cleanup()
+
+	// not processed when it doesn't exist
+	if got, want := pam.RepoAlreadyProcessed(repo, checksum), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+
+	// not processed when repo exists but has not been processed
+	pam.EnsureRepoExists(repoNamespace, repoName)
+	if got, want := pam.RepoAlreadyProcessed(repo, checksum), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+
+	// not processed when checksum doesn't match
+	pam.UpdateLastCheck(repoNamespace, repoName, checksum, time.Now())
+	if got, want := pam.RepoAlreadyProcessed(repo, "other-checksum"), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+
+	// processed when checksums match
+	if got, want := pam.RepoAlreadyProcessed(repo, checksum), true; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+
+	// it does not match the same repo in a different namespace
+	if got, want := pam.RepoAlreadyProcessed(models.Repo{Namespace: "other-namespace", Name: repo.Name}, checksum), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+}
+
+func TestFilesExist(t *testing.T) {
+	dbutilstest.SkipIfNoPostgres(t)
+
+	const (
+		namespace = "my-namespace"
+		repoName  = "my-repo"
+		chartId   = repoName + "/chart-name"
+		filesId   = chartId + "-1.0"
+		digest    = "some-digest"
+	)
+	repo := models.Repo{Namespace: namespace, Name: repoName}
+	pam, cleanup := getInitializedManager(t)
+	defer cleanup()
+
+	// false when it does not exist
+	if got, want := pam.filesExist(repo, filesId, digest), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+
+	// false when it exists with a different digest
+	ensureFilesExist(t, pam, chartId, []models.ChartFiles{models.ChartFiles{ID: filesId, Repo: &repo, Digest: "other-digest"}})
+	if got, want := pam.filesExist(repo, filesId, digest), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+
+	// true when it exists in the repo with the correct digest
+	ensureFilesExist(t, pam, chartId, []models.ChartFiles{models.ChartFiles{ID: filesId, Repo: &repo, Digest: digest}})
+	if got, want := pam.filesExist(repo, filesId, digest), true; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+
+	// false when it exists in another repo
+	if got, want := pam.filesExist(models.Repo{Namespace: repo.Namespace, Name: "other-name"}, filesId, digest), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+	if got, want := pam.filesExist(models.Repo{Namespace: "other-namespace", Name: repo.Name}, filesId, digest), false; got != want {
+		t.Errorf("got: %t, want: %t", got, want)
+	}
+}
+
+func TestUpdateIcon(t *testing.T) {
+	dbutilstest.SkipIfNoPostgres(t)
+
+	const (
+		iconContentType = "icon-content-type"
+		repoNamespace   = "repo-namespace"
+		repoName        = "repo-name"
+		chartId         = repoName + "/chart-id"
+	)
+	iconData := []byte("icon-data")
+	repo := models.Repo{Namespace: repoNamespace, Name: repoName}
+
+	testCases := []struct {
+		name           string
+		existingCharts map[string][]string
+		expectedErr    error
+	}{
+		{
+			name:        "it errors if the chart does not exist",
+			expectedErr: sql.ErrNoRows,
+		},
+		{
+			name: "it updates the chart if it exists in the repo",
+			existingCharts: map[string][]string{
+				repoNamespace: []string{chartId},
+			},
+		},
+		{
+			name: "it updates only the chart in the specific namespace",
+			existingCharts: map[string][]string{
+				repoNamespace:     []string{chartId},
+				"other-namespace": []string{chartId},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pam, cleanup := getInitializedManager(t)
+			defer cleanup()
+			for namespace, chartIds := range tc.existingCharts {
+				for _, chartId := range chartIds {
+					ensureChartExists(t, pam, models.Chart{ID: chartId, Repo: &models.Repo{Namespace: namespace, Name: repoName}})
+				}
+			}
+
+			err := pam.updateIcon(repo, iconData, iconContentType, chartId)
+
+			if got, want := err, tc.expectedErr; !errors.Is(got, want) {
+				t.Fatalf("got: %+v, want: %+v", got, want)
+			}
+		})
+	}
 }

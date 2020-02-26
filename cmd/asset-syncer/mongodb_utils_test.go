@@ -101,7 +101,7 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 				*args.Get(0).(*models.RepoCheck) = tt.mockedLastCheck
 			}).Return(nil)
 			manager := getMockManager(m)
-			res := manager.RepoAlreadyProcessed("", tt.checksum)
+			res := manager.RepoAlreadyProcessed(models.Repo{Namespace: "repo-namespace", Name: "repo-name"}, tt.checksum)
 			if res != tt.processed {
 				t.Errorf("Expected alreadyProcessed to be %v got %v", tt.processed, res)
 			}

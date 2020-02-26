@@ -59,8 +59,8 @@ func Test_PGRepoAlreadyPropcessed(t *testing.T) {
 	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
-	m.On("QueryRow", "SELECT checksum FROM repos WHERE name = $1", []interface{}{"foo"})
-	pgManager.RepoAlreadyProcessed("foo", "123")
+	m.On("QueryRow", "SELECT checksum FROM repos WHERE name = $1 AND namespace = $2", []interface{}{"foo", "repo-namespace"})
+	pgManager.RepoAlreadyProcessed(models.Repo{Namespace: "repo-namespace", Name: "foo"}, "123")
 	m.AssertExpectations(t)
 }
 
@@ -107,10 +107,10 @@ func Test_PGupdateIcon(t *testing.T) {
 	pgManager := &postgresAssetManager{man}
 	m.On(
 		"Query",
-		`UPDATE charts SET info = info || '{"raw_icon": "Zm9v", "icon_content_type": "image/png"}'  WHERE info ->> 'ID' = 'stable/wordpress'`,
-		[]interface{}(nil),
+		`UPDATE charts SET info = info || '{"raw_icon": "Zm9v", "icon_content_type": "image/png"}' WHERE chart_id = $1 AND repo_namespace = $2 AND repo_name = $3 RETURNING ID`,
+		[]interface{}{"stable/wordpress", "repo-namespace", "repo-name"},
 	)
-	err := pgManager.updateIcon(data, contentType, id)
+	err := pgManager.updateIcon(models.Repo{Namespace: "repo-namespace", Name: "repo-name"}, data, contentType, id)
 	if err != nil {
 		t.Errorf("Failed to update icon")
 	}
@@ -122,13 +122,19 @@ func Test_PGfilesExist(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	rows := sqlmock.NewRows([]string{"info"}).AddRow(`{"ID": "foo"}`)
-	mock.ExpectQuery(`^SELECT \* FROM files WHERE chart_files_id = \$1 AND info ->> 'Digest' = \$2$`).WillReturnRows(rows)
+	rows := sqlmock.NewRows([]string{"info"}).AddRow(`true`)
+	mock.ExpectQuery(`^SELECT EXISTS\(
+	SELECT 1 FROM files
+	WHERE chart_files_id = \$1 AND
+		repo_name = \$2 AND
+		repo_namespace = \$3 AND
+		info ->> 'Digest' = \$4
+	\)$`).WillReturnRows(rows)
 	id := "stable/wordpress"
 	digest := "foo"
 	man := &dbutils.PostgresAssetManager{DB: db}
 	pgManager := &postgresAssetManager{man}
-	exists := pgManager.filesExist(id, digest)
+	exists := pgManager.filesExist(models.Repo{Namespace: "namespace", Name: "repo-name"}, id, digest)
 	if exists != true {
 		t.Errorf("Failed to check if file exists")
 	}

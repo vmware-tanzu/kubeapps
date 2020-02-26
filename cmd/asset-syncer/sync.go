@@ -58,7 +58,7 @@ var syncCmd = &cobra.Command{
 		}
 
 		// Check if the repo has been already processed
-		if manager.RepoAlreadyProcessed(repo.Name, repo.Checksum) {
+		if manager.RepoAlreadyProcessed(models.Repo{Namespace: repo.Namespace, Name: repo.Name}, repo.Checksum) {
 			logrus.WithFields(logrus.Fields{"url": repo.URL}).Info("Skipping repository since there are no updates")
 			return
 		}
