@@ -1,17 +1,11 @@
 import * as React from "react";
+import PieChart from "react-minimal-pie-chart";
+import * as ReactTooltip from "react-tooltip";
 
 import { AlertTriangle } from "react-feather";
 import isSomeResourceLoading from "../../components/AppView/helpers";
-import Check from "../../icons/Check";
-import Compass from "../../icons/Compass";
 import { hapi } from "../../shared/hapi/release";
-import {
-  IDaemonsetStatus,
-  IDeploymentStatus,
-  IKubeItem,
-  IResource,
-  IStatefulsetStatus,
-} from "../../shared/types";
+import { IDeploymentStatus, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
 interface IApplicationStatusProps {
@@ -23,7 +17,25 @@ interface IApplicationStatusProps {
   closeWatches: () => void;
 }
 
-class ApplicationStatus extends React.Component<IApplicationStatusProps> {
+interface IWorkload {
+  replicas: number;
+  readyReplicas: number;
+  name: string;
+}
+
+interface IApplicationStatusState {
+  workloads: IWorkload[];
+  totalPods: number;
+  readyPods: number;
+}
+
+class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplicationStatusState> {
+  public state: IApplicationStatusState = {
+    workloads: [],
+    totalPods: 0,
+    readyPods: 0,
+  };
+
   public componentDidMount() {
     this.props.watchWorkloads();
   }
@@ -32,7 +44,44 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps> {
     this.props.closeWatches();
   }
 
+  public componentDidUpdate(prevProps: IApplicationStatusProps) {
+    if (prevProps !== this.props) {
+      const { deployments, statefulsets, daemonsets } = this.props;
+      let totalPods = 0;
+      let readyPods = 0;
+      let workloads: IWorkload[] = [];
+      [
+        { workloads: deployments, readyKey: "availableReplicas", totalKey: "replicas" },
+        { workloads: statefulsets, readyKey: "readyReplicas", totalKey: "replicas" },
+        { workloads: daemonsets, readyKey: "numberReady", totalKey: "currentNumberScheduled" },
+      ].forEach(src => {
+        src.workloads.forEach(w => {
+          if (w.item) {
+            const status: IDeploymentStatus = w.item.status;
+            const wReady = status[src.readyKey];
+            const wTotal = status[src.totalKey];
+            if (wReady) {
+              readyPods += wReady;
+            }
+            if (wTotal) {
+              totalPods += wTotal;
+            }
+            workloads = workloads.concat({
+              name: w.item.metadata.name,
+              replicas: wTotal || 0,
+              readyReplicas: wReady || 0,
+            });
+          }
+        });
+      });
+      this.setState({ workloads, totalPods, readyPods });
+    }
+  }
+
   public render() {
+    const { totalPods, readyPods } = this.state;
+    const ready = totalPods === readyPods;
+
     if (isSomeResourceLoading(this.props.deployments)) {
       return <span className="ApplicationStatus">Loading...</span>;
     }
@@ -46,16 +95,59 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps> {
         return this.helmStatusError(helmStatus);
       }
     }
-    return this.isReady() ? this.renderSuccessStatus() : this.renderPendingStatus();
-  }
-
-  private renderSuccessStatus() {
     return (
-      <span className="ApplicationStatus ApplicationStatus--success">
-        <Check className="icon padding-t-tiny" /> Ready
-      </span>
+      <div className="ApplicationStatusPieChart">
+        <a data-tip={true} data-for="app-status">
+          <h5 className="ApplicationStatusPieChart__title">{ready ? "Ready" : "Not Ready"}</h5>
+          <PieChart
+            data={[{ value: 1, color: `${ready ? "#1598CB" : "#F58220"}` }]}
+            reveal={(readyPods / totalPods) * 100}
+            animate={true}
+            animationDuration={1000}
+            lineWidth={20}
+            startAngle={270}
+            labelStyle={{ fontSize: "30px" }}
+            rounded={true}
+            style={{ height: "100px", width: "100px" }}
+            background="#bfbfbf"
+          />
+          <div className="ApplicationStatusPieChart__label">
+            <p className="ApplicationStatusPieChart__label__number">{readyPods}</p>
+            <p className="ApplicationStatusPieChart__label__text">Pod{readyPods > 1 ? "s" : ""}</p>
+          </div>
+        </a>
+        <ReactTooltip id="app-status" className="extraClass" effect="solid" place="right">
+          {this.renderWorkloadTable()}
+        </ReactTooltip>
+      </div>
     );
   }
+
+  private renderWorkloadTable = () => {
+    const { workloads } = this.state;
+    return (
+      <table style={{ margin: 0 }}>
+        <thead>
+          <tr>
+            <th>Pod(s)</th>
+            <th>Workload</th>
+          </tr>
+        </thead>
+        <tbody>
+          {workloads.map(workload => {
+            return (
+              <tr key={workload.name}>
+                <td>
+                  {workload.readyReplicas}/{workload.replicas}
+                </td>
+                <td>{workload.name}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  };
 
   private codeToString(status: hapi.release.IStatus | null | undefined) {
     // Codes from https://github.com/helm/helm/blob/268695813ba957821e53a784ac849aa3ca7f70a3/_proto/hapi/release/status.proto
@@ -83,51 +175,6 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps> {
         {status}
       </span>
     );
-  }
-
-  private renderPendingStatus() {
-    return (
-      <span className="ApplicationStatus ApplicationStatus--pending">
-        <Compass className="icon padding-t-tiny" /> Not Ready
-      </span>
-    );
-  }
-
-  private areDeploymentsReady() {
-    const { deployments } = this.props;
-    return deployments.every(d => {
-      if (d.item) {
-        const status: IDeploymentStatus = d.item.status;
-        return status.availableReplicas === status.replicas;
-      }
-      return false;
-    });
-  }
-
-  private areStatefulsetsReady() {
-    const { statefulsets } = this.props;
-    return statefulsets.every(d => {
-      if (d.item) {
-        const status: IStatefulsetStatus = d.item.status;
-        return status.readyReplicas === status.replicas;
-      }
-      return false;
-    });
-  }
-
-  private areDaemonsetsReady() {
-    const { daemonsets } = this.props;
-    return daemonsets.every(d => {
-      if (d.item) {
-        const status: IDaemonsetStatus = d.item.status;
-        return status.numberReady === status.currentNumberScheduled;
-      }
-      return false;
-    });
-  }
-
-  private isReady() {
-    return this.areDeploymentsReady() && this.areStatefulsetsReady() && this.areDaemonsetsReady();
   }
 
   private renderDeletedStatus() {
