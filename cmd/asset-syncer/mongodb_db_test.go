@@ -63,6 +63,8 @@ func TestMongoImportCharts(t *testing.T) {
 			if err != nil {
 				t.Errorf("%+v", err)
 			}
+
+			// TODO: Add actual assertions on remaining charts etc.
 		})
 	}
 }
