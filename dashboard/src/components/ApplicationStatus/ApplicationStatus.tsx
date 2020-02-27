@@ -5,13 +5,7 @@ import * as ReactTooltip from "react-tooltip";
 import { AlertTriangle } from "react-feather";
 import isSomeResourceLoading from "../../components/AppView/helpers";
 import { hapi } from "../../shared/hapi/release";
-import {
-  IDaemonsetStatus,
-  IDeploymentStatus,
-  IKubeItem,
-  IResource,
-  IStatefulsetStatus,
-} from "../../shared/types";
+import { IDeploymentStatus, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
 interface IApplicationStatusProps {
@@ -56,53 +50,29 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
       let totalPods = 0;
       let readyPods = 0;
       let workloads: IWorkload[] = [];
-      deployments.forEach(d => {
-        if (d.item) {
-          const status: IDeploymentStatus = d.item.status;
-          if (status.availableReplicas) {
-            readyPods += status.availableReplicas;
+      [
+        { workloads: deployments, readyKey: "availableReplicas", totalKey: "replicas" },
+        { workloads: statefulsets, readyKey: "readyReplicas", totalKey: "replicas" },
+        { workloads: daemonsets, readyKey: "numberReady", totalKey: "currentNumberScheduled" },
+      ].forEach(src => {
+        src.workloads.forEach(w => {
+          if (w.item) {
+            const status: IDeploymentStatus = w.item.status;
+            const wReady = status[src.readyKey];
+            const wTotal = status[src.totalKey];
+            if (wReady) {
+              readyPods += wReady;
+            }
+            if (wTotal) {
+              totalPods += wTotal;
+            }
+            workloads = workloads.concat({
+              name: w.item.metadata.name,
+              replicas: wTotal || 0,
+              readyReplicas: wReady || 0,
+            });
           }
-          if (status.replicas) {
-            totalPods += status.replicas;
-          }
-          workloads = workloads.concat({
-            name: d.item.metadata.name,
-            replicas: status.replicas || 0,
-            readyReplicas: status.availableReplicas || 0,
-          });
-        }
-      });
-      statefulsets.forEach(d => {
-        if (d.item) {
-          const status: IStatefulsetStatus = d.item.status;
-          if (status.readyReplicas) {
-            readyPods += status.readyReplicas;
-          }
-          if (status.replicas) {
-            totalPods += status.replicas;
-          }
-          workloads = workloads.concat({
-            name: d.item.metadata.name,
-            replicas: status.replicas || 0,
-            readyReplicas: status.readyReplicas || 0,
-          });
-        }
-      });
-      daemonsets.forEach(d => {
-        if (d.item) {
-          const status: IDaemonsetStatus = d.item.status;
-          if (status.numberReady) {
-            readyPods += status.numberReady;
-          }
-          if (status.currentNumberScheduled) {
-            totalPods += status.currentNumberScheduled;
-          }
-          workloads = workloads.concat({
-            name: d.item.metadata.name,
-            replicas: status.currentNumberScheduled || 0,
-            readyReplicas: status.numberReady || 0,
-          });
-        }
+        });
       });
       this.setState({ workloads, totalPods, readyPods });
     }
