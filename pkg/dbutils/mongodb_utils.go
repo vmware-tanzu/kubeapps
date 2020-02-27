@@ -47,3 +47,7 @@ func (m *MongodbAssetManager) Init() error {
 func (m *MongodbAssetManager) Close() error {
 	return nil
 }
+
+func (m *MongodbAssetManager) InvalidateCache() error {
+	return nil
+}
