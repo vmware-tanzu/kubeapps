@@ -6,17 +6,17 @@ The dashboard is the main UI component of the Kubeapps project. Written in Javas
 
 Please refer to the [Kubeapps Dashboard Developer Guide](dashboard.md) for the developer setup.
 
-### chartsvc
+### assetsvc
 
-The `chartsvc` component is a micro-service that creates a API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server.
+The `assetsvc` component is a micro-service that creates an API endpoint for accessing the metadata for charts in Helm chart repositories that's populated in a MongoDB server.
 
-Please refer to the [Kubeapps chartsvc Developer Guide](chartsvc.md) for the developer setup.
+Please refer to the [Kubeapps assetsvc Developer Guide](assetsvc.md) for the developer setup.
 
-### chart-repo
+### asset-syncer
 
-The `chart-repo` component is tool that scans a Helm chart repository and populates chart metadata in a MongoDB server. This metadata is then served by the `chartsvc` component.
+The `asset-syncer` component is a tool that scans a Helm chart repository and populates chart metadata in the database. This metadata is then served by the `assetsvc` component.
 
-Please refer to the [Kubeapps chart-repo Developer Guide](chart-repo.md) for the developer setup.
+Please refer to the [Kubeapps asset-syncer Developer Guide](asset-syncer.md) for the developer setup.
 
 ### tiller-proxy
 
