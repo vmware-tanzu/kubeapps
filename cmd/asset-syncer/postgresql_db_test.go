@@ -24,57 +24,76 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
+	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 	_ "github.com/lib/pq"
 )
 
-func openTestManager(t *testing.T) *postgresAssetManager {
-	pam, err := newPGManager(datastore.Config{
-		URL:      "localhost:5432",
-		Database: "testdb",
-		Username: "postgres",
-	})
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	err = pam.Init()
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	return pam.(*postgresAssetManager)
-}
-
 func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
-	pam := openTestManager(t)
-	cleanup := func() { pam.Close() }
-
-	err := pam.InvalidateCache()
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	return pam, cleanup
+	pam, cleanup := pgtest.GetInitializedManager(t)
+	return &postgresAssetManager{pam}, cleanup
 }
 
-func countTable(t *testing.T, pam *postgresAssetManager, table string) int {
-	var count int
-	err := pam.DB.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s", table)).Scan(&count)
-	if err != nil {
-		t.Fatalf("%+v", err)
+func TestEnsureRepoExists(t *testing.T) {
+	pgtest.SkipIfNoDB(t)
+
+	testCases := []struct {
+		name          string
+		existingRepos []models.Repo
+		newRepo       models.Repo
+		expectedId    int
+	}{
+		{
+			name: "it returns a new ID if it does not yet exist",
+			existingRepos: []models.Repo{
+				models.Repo{Namespace: "my-namespace", Name: "other-repo"},
+				models.Repo{Namespace: "other-namespace", Name: "my-repo"},
+			},
+			newRepo:    models.Repo{Namespace: "my-namespace", Name: "my-name"},
+			expectedId: 3,
+		},
+		{
+			name: "it returns the existing ID if the repo exists in the db",
+			existingRepos: []models.Repo{
+				models.Repo{Namespace: "my-namespace", Name: "my-name"},
+				models.Repo{Namespace: "my-namespace", Name: "other-repo"},
+				models.Repo{Namespace: "other-namespace", Name: "my-repo"},
+			},
+			newRepo:    models.Repo{Namespace: "my-namespace", Name: "my-name"},
+			expectedId: 1,
+		},
 	}
-	return count
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pam, cleanup := getInitializedManager(t)
+			defer cleanup()
+
+			for _, repo := range tc.existingRepos {
+				_, err := pam.EnsureRepoExists(repo.Namespace, repo.Name)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+			}
+
+			id, err := pam.EnsureRepoExists(tc.newRepo.Namespace, tc.newRepo.Name)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
+
+			if got, want := id, tc.expectedId; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+		})
+	}
 }
 
 func TestImportCharts(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 
 	repo := models.Repo{
 		Name:      "repo-name",
@@ -112,7 +131,7 @@ func TestImportCharts(t *testing.T) {
 }
 
 func TestInsertFiles(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 	const (
 		namespace = "my-namespace"
 		chartId   = "my-chart-id"
@@ -154,34 +173,23 @@ func TestInsertFiles(t *testing.T) {
 			defer cleanup()
 			ensureFilesExist(t, pam, chartId, tc.existingFiles)
 
-			ensureChartExists(t, pam, models.Chart{ID: chartId, Repo: tc.chartFiles.Repo})
+			pgtest.EnsureChartsExist(t, pam, []models.Chart{models.Chart{ID: chartId}}, *tc.chartFiles.Repo)
 
 			err := pam.insertFiles(chartId, tc.chartFiles)
 			if err != nil {
 				t.Errorf("%+v", err)
 			}
 
-			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.fileCount; got != want {
+			if got, want := pgtest.CountRows(t, pam.DB, dbutils.ChartFilesTable), tc.fileCount; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 		})
 	}
 }
 
-func ensureChartExists(t *testing.T, pam *postgresAssetManager, chart models.Chart) {
-	_, err := pam.EnsureRepoExists(chart.Repo.Namespace, chart.Repo.Name)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	err = pam.importCharts([]models.Chart{chart}, *chart.Repo)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-}
-
 func ensureFilesExist(t *testing.T, pam *postgresAssetManager, chartId string, files []models.ChartFiles) {
 	for _, f := range files {
-		ensureChartExists(t, pam, models.Chart{ID: chartId, Repo: f.Repo})
+		pgtest.EnsureChartsExist(t, pam, []models.Chart{models.Chart{ID: chartId}}, *f.Repo)
 		err := pam.insertFiles(chartId, f)
 		if err != nil {
 			t.Fatalf("%+v", err)
@@ -190,7 +198,7 @@ func ensureFilesExist(t *testing.T, pam *postgresAssetManager, chartId string, f
 }
 
 func TestDelete(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 	const (
 		repoNamespace = "my-namespace"
 		repoName      = "my-repo"
@@ -241,13 +249,13 @@ func TestDelete(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := countTable(t, pam, dbutils.RepositoryTable), tc.expectedRepos; got != want {
+			if got, want := pgtest.CountRows(t, pam.DB, dbutils.RepositoryTable), tc.expectedRepos; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
-			if got, want := countTable(t, pam, dbutils.ChartTable), tc.expectedCharts; got != want {
+			if got, want := pgtest.CountRows(t, pam.DB, dbutils.ChartTable), tc.expectedCharts; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
-			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.expectedFiles; got != want {
+			if got, want := pgtest.CountRows(t, pam.DB, dbutils.ChartFilesTable), tc.expectedFiles; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 		})
@@ -255,7 +263,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestRemoveMissingCharts(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 	const (
 		repoName = "my-repo"
 	)
@@ -381,10 +389,10 @@ func TestRemoveMissingCharts(t *testing.T) {
 				t.Fatalf("%+v", err)
 			}
 
-			if got, want := countTable(t, pam, dbutils.ChartTable), tc.expectedCharts; got != want {
+			if got, want := pgtest.CountRows(t, pam.DB, dbutils.ChartTable), tc.expectedCharts; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
-			if got, want := countTable(t, pam, dbutils.ChartFilesTable), tc.expectedFiles; got != want {
+			if got, want := pgtest.CountRows(t, pam.DB, dbutils.ChartFilesTable), tc.expectedFiles; got != want {
 				t.Errorf("got: %d, want: %d", got, want)
 			}
 		})
@@ -392,7 +400,7 @@ func TestRemoveMissingCharts(t *testing.T) {
 }
 
 func TestRepoAlreadyProcessed(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 	const (
 		repoNamespace = "my-namespace"
 		repoName      = "my-repo"
@@ -432,7 +440,7 @@ func TestRepoAlreadyProcessed(t *testing.T) {
 }
 
 func TestFilesExist(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 
 	const (
 		namespace = "my-namespace"
@@ -472,7 +480,7 @@ func TestFilesExist(t *testing.T) {
 }
 
 func TestUpdateIcon(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 
 	const (
 		iconContentType = "icon-content-type"
@@ -512,9 +520,11 @@ func TestUpdateIcon(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
 			for namespace, chartIds := range tc.existingCharts {
+				charts := []models.Chart{}
 				for _, chartId := range chartIds {
-					ensureChartExists(t, pam, models.Chart{ID: chartId, Repo: &models.Repo{Namespace: namespace, Name: repoName}})
+					charts = append(charts, models.Chart{ID: chartId})
 				}
+				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Namespace: namespace, Name: repoName})
 			}
 
 			err := pam.updateIcon(repo, iconData, iconContentType, chartId)

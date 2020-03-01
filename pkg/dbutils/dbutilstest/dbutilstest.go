@@ -22,22 +22,15 @@ import (
 	"testing"
 )
 
-const (
-	// EnvvarPostgresTests enables tests that run against a local postgres
-	EnvvarPostgresTests = "ENABLE_PG_INTEGRATION_TESTS"
-)
-
-func SkipIfNoPostgres(t *testing.T) {
-	enableEnvVar := os.Getenv(EnvvarPostgresTests)
-	runTests := false
+func IsEnvVarTrue(t *testing.T, envvar string) bool {
+	enableEnvVar := os.Getenv(envvar)
+	isTrue := false
 	if enableEnvVar != "" {
 		var err error
-		runTests, err = strconv.ParseBool(enableEnvVar)
+		isTrue, err = strconv.ParseBool(enableEnvVar)
 		if err != nil {
 			t.Fatalf("%+v", err)
 		}
 	}
-	if !runTests {
-		t.Skipf("skipping postgres tests as %q not set", EnvvarPostgresTests)
-	}
+	return isTrue
 }

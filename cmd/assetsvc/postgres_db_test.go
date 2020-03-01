@@ -23,75 +23,20 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
-	"fmt"
 	"testing"
 
-	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
-	"github.com/kubeapps/kubeapps/pkg/dbutils"
-	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
+	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 	_ "github.com/lib/pq"
 )
 
-func openTestManager(t *testing.T) *postgresAssetManager {
-	pam, err := newPGManager(datastore.Config{
-		URL:      "localhost:5432",
-		Database: "testdb",
-		Username: "postgres",
-	})
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	err = pam.Init()
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	return pam.(*postgresAssetManager)
-}
-
 func getInitializedManager(t *testing.T) (*postgresAssetManager, func()) {
-	pam := openTestManager(t)
-	cleanup := func() { pam.Close() }
-
-	err := pam.InvalidateCache()
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	return pam, cleanup
-}
-
-func countTable(t *testing.T, pam *dbutils.PostgresAssetManager, table string) int {
-	var count int
-	err := pam.DB.QueryRow(fmt.Sprintf("SELECT COUNT(*) FROM %s", table)).Scan(&count)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	return count
-}
-
-func insertCharts(t *testing.T, pam *postgresAssetManager, charts []models.Chart, repo models.Repo) {
-	_, err := pam.EnsureRepoExists(repo.Namespace, repo.Name)
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-	for _, chart := range charts {
-		d, err := json.Marshal(chart)
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-		_, err = pam.GetDB().Exec(fmt.Sprintf(`INSERT INTO %s (repo_namespace, repo_name, chart_id, info)
-		VALUES ($1, $2, $3, $4)`, dbutils.ChartTable), repo.Namespace, repo.Name, chart.ID, string(d))
-		if err != nil {
-			t.Fatalf("%+v", err)
-		}
-	}
+	pam, cleanup := pgtest.GetInitializedManager(t)
+	return &postgresAssetManager{pam}, cleanup
 }
 
 func TestGetChart(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 	const repoName = "repo-name"
 
 	testCases := []struct {
@@ -128,7 +73,7 @@ func TestGetChart(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
 			for namespace, charts := range tc.existingCharts {
-				insertCharts(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
+				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
 			chart, err := pam.getChart(tc.chartId)
@@ -144,7 +89,7 @@ func TestGetChart(t *testing.T) {
 }
 
 func TestGetVersion(t *testing.T) {
-	dbutilstest.SkipIfNoPostgres(t)
+	pgtest.SkipIfNoDB(t)
 	const repoName = "repo-name"
 
 	testCases := []struct {
@@ -199,7 +144,7 @@ func TestGetVersion(t *testing.T) {
 			pam, cleanup := getInitializedManager(t)
 			defer cleanup()
 			for namespace, charts := range tc.existingCharts {
-				insertCharts(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
+				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
 			chart, err := pam.getChartVersion(tc.chartId, tc.requestedVersion)
