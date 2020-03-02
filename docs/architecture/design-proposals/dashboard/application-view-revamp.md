@@ -78,6 +78,8 @@ We can also show different buttons in order to show the resource YAML, descripti
 
 <img src="./img/resources-table.png">
 
+If we later develop a clearer way to capture and present errors to users, clearly identifying the cause without requiring clicking through resources, the resources table will still be useful as a way to dig deeper and learn more without leaving the UI.
+
 When clicking in any of the buttons we could render either a modal or display the information below the item. It's pending to evaluate if we could follow logs opening a websocket connection.
 
 Now, let's discuss in detail what information can be helpful as columns for users in the different tabs:
