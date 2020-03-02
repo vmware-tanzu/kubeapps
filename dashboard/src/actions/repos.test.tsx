@@ -505,14 +505,15 @@ describe("checkChart", () => {
 });
 
 describe("validateRepo", () => {
-  it("dispatches checkRepo and validatedRepo if no error", async () => {
-    AppRepository.validate = jest.fn();
+  it("dispatches repoValidating and repoValidated if no error", async () => {
+    AppRepository.validate = jest.fn(() => "OK");
     const expectedActions = [
       {
-        type: getType(repoActions.checkRepo),
+        type: getType(repoActions.repoValidating),
       },
       {
-        type: getType(repoActions.validatedRepo),
+        type: getType(repoActions.repoValidated),
+        payload: "OK",
       },
     ];
 
@@ -528,11 +529,32 @@ describe("validateRepo", () => {
     });
     const expectedActions = [
       {
-        type: getType(repoActions.checkRepo),
+        type: getType(repoActions.repoValidating),
       },
       {
         type: getType(repoActions.errorRepos),
         payload: { err: error, op: "validate" },
+      },
+    ];
+    const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(res).toBe(false);
+  });
+
+  it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
+    AppRepository.validate = jest.fn(() => {
+      return { statusCode: 409 };
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.repoValidating),
+      },
+      {
+        type: getType(repoActions.errorRepos),
+        payload: {
+          err: new Error('Unable to parse validation response, got: {"statusCode":409}'),
+          op: "validate",
+        },
       },
     ];
     const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));

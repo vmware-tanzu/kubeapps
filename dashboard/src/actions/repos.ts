@@ -25,8 +25,8 @@ export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
   return (repo: IAppRepository) => resolve(repo);
 });
 
-export const checkRepo = createAction("CHECK_REPO");
-export const validatedRepo = createAction("VALIDATED_REPO", resolve => {
+export const repoValidating = createAction("REPO_VALIDATING");
+export const repoValidated = createAction("REPO_VALIDATED", resolve => {
   return (data: any) => resolve(data);
 });
 
@@ -53,8 +53,8 @@ export const errorRepos = createAction("ERROR_REPOS", resolve => {
 const allActions = [
   addRepo,
   addedRepo,
-  checkRepo,
-  validatedRepo,
+  repoValidating,
+  repoValidated,
   clearRepo,
   errorRepos,
   requestRepos,
@@ -190,11 +190,21 @@ export const validateRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async dispatch => {
     try {
-      dispatch(checkRepo());
+      dispatch(repoValidating());
       const data = await AppRepository.validate(repoURL, authHeader, customCA);
-      dispatch(validatedRepo(data));
-
-      return true;
+      if (data === "OK") {
+        dispatch(repoValidated(data));
+        return true;
+      } else {
+        // Unexpected error
+        dispatch(
+          errorRepos(
+            new Error(`Unable to parse validation response, got: ${JSON.stringify(data)}`),
+            "validate",
+          ),
+        );
+        return false;
+      }
     } catch (e) {
       dispatch(errorRepos(e, "validate"));
       return false;
