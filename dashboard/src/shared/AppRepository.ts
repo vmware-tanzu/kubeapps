@@ -47,6 +47,13 @@ export class AppRepository {
     return data;
   }
 
+  public static async validate(repoURL: string, authHeader: string, customCA: string) {
+    const { data } = await axiosWithAuth.post<any>(url.backend.apprepositories.validate(), {
+      appRepository: { name, repoURL, authHeader, customCA },
+    });
+    return data;
+  }
+
   private static APIBase: string = APIBase;
   private static APIEndpoint: string = `${AppRepository.APIBase}/apis/kubeapps.com/v1alpha1`;
   private static getResourceLink(namespace?: string): string {

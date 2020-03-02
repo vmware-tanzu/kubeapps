@@ -12,6 +12,7 @@ export interface IAppRepositoryState {
     delete?: Error;
     fetch?: Error;
     update?: Error;
+    validate?: Error;
   };
   lastAdded?: IAppRepository;
   isFetching: boolean;
@@ -60,6 +61,10 @@ const reposReducer = (
         lastAdded: action.payload,
         repos: [...state.repos, action.payload],
       };
+    case getType(actions.repos.repoValidating):
+      return { ...state, isFetching: true };
+    case getType(actions.repos.repoValidated):
+      return { ...state, isFetching: false, errors: { ...state.errors, validate: undefined } };
     case getType(actions.repos.resetForm):
       return { ...state, form: { ...state.form, name: "", namespace: "", url: "" } };
     case getType(actions.repos.showForm):

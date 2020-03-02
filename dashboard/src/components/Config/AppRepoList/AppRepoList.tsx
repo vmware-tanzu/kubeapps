@@ -14,6 +14,7 @@ export interface IAppRepoListProps {
     delete?: Error;
     fetch?: Error;
     update?: Error;
+    validate?: Error;
   };
   repos: IAppRepository[];
   fetchRepos: (namespace: string) => void;
@@ -28,6 +29,7 @@ export interface IAppRepoListProps {
     customCA: string,
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
+  validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   namespace: string;
   displayReposPerNamespaceMsg: boolean;
   isFetching: boolean;
@@ -85,6 +87,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       deleteRepo,
       resyncRepo,
       resyncAllRepos,
+      validate,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
     return (
@@ -116,7 +119,13 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
             </tbody>
           </table>
         </LoadingWrapper>
-        <AppRepoAddButton error={errors.create} install={install} namespace={namespace} />
+        <AppRepoAddButton
+          errors={errors}
+          install={install}
+          validate={validate}
+          namespace={namespace}
+          isFetching={isFetching}
+        />
         <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
         {displayReposPerNamespaceMsg && (
           <MessageAlert header="Looking for other app repositories?">

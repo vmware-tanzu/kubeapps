@@ -21,7 +21,13 @@ const RequiredRBACRoles: IRBACRole[] = [
 ];
 
 interface IAppRepoAddButtonProps {
-  error?: Error;
+  errors: {
+    create?: Error;
+    delete?: Error;
+    fetch?: Error;
+    update?: Error;
+    validate?: Error;
+  };
   install: (
     name: string,
     namespace: string,
@@ -30,6 +36,8 @@ interface IAppRepoAddButtonProps {
     customCA: string,
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
+  validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
+  isFetching: boolean;
   redirectTo?: string;
   namespace: string;
 }
@@ -59,16 +67,22 @@ export class AppRepoAddButton extends React.Component<
           onRequestClose={this.closeModal}
           contentLabel="Modal"
         >
-          {this.props.error && (
+          {this.props.errors.create && (
             <ErrorSelector
-              error={this.props.error}
+              error={this.props.errors.create}
               defaultRequiredRBACRoles={{ create: RequiredRBACRoles }}
               action="create"
               namespace={this.props.namespace}
               resource={`App Repository ${this.state.lastSubmittedName}`}
             />
           )}
-          <AppRepoForm install={this.install} onAfterInstall={this.closeModal} />
+          <AppRepoForm
+            install={this.install}
+            validate={this.props.validate}
+            onAfterInstall={this.closeModal}
+            isFetching={this.props.isFetching}
+            validationError={this.props.errors.validate}
+          />
         </Modal>
         {redirectTo && <Redirect to={redirectTo} />}
       </React.Fragment>

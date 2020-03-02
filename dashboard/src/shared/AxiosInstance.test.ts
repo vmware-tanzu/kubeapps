@@ -160,7 +160,7 @@ describe("createAxiosInterceptorWithAuth", () => {
     Auth.unsetAuthCookie = jest.fn();
     const expectedActions = [
       {
-        payload: "Request failed with status code 401",
+        payload: "not ajson paylod",
         type: "AUTHENTICATION_ERROR",
       },
       {
