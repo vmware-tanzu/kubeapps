@@ -42,12 +42,13 @@ func Test_importCharts(t *testing.T) {
 	m.On("Upsert", mock.Anything)
 	m.On("RemoveAll", mock.Anything)
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &models.Repo{Name: "test", URL: "http://testrepo.com"})
-	manager := getMockManager(m)
 	repo := models.Repo{
 		Name:      "repo-name",
 		Namespace: "repo-namespace",
+		URL:       "http://testrepo.example.com",
 	}
+	charts := chartsFromIndex(index, &repo)
+	manager := getMockManager(m)
 	manager.importCharts(charts, repo)
 
 	m.AssertExpectations(t)
@@ -57,8 +58,9 @@ func Test_importCharts(t *testing.T) {
 	args := m.Calls[0].Arguments.Get(0).([]interface{})
 	assert.Equal(t, len(args), len(charts)*2, "number of selector, chart pairs to upsert")
 	for i := 0; i < len(args); i += 2 {
-		c := args[i+1].(models.Chart)
-		assert.Equal(t, args[i], bson.M{"_id": "test/" + c.Name}, "selector")
+		m := args[i+1].(bson.M)
+		c := m["$set"].(models.Chart)
+		assert.Equal(t, args[i], bson.M{"id": "repo-name/" + c.Name, "repo.name": "repo-name", "repo.namespace": "repo-namespace"}, "selector")
 	}
 }
 

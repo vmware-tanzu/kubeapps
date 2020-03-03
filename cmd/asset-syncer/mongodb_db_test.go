@@ -90,6 +90,50 @@ func TestMongoImportCharts(t *testing.T) {
 				models.Chart{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
 			},
 		},
+		{
+			name: "it removes charts that are not included in the import",
+			existingCharts: []models.Chart{
+				models.Chart{Name: "my-chart-old", Repo: &repo, ID: "foo/old:123"},
+			},
+			charts: []models.Chart{
+				models.Chart{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123", Description: "New description"},
+				models.Chart{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			},
+			expectedCharts: []models.Chart{
+				models.Chart{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123", Description: "New description"},
+				models.Chart{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			},
+		},
+		{
+			name: "it does not remove charts from other namespaces",
+			existingCharts: []models.Chart{
+				models.Chart{Name: "my-chart-old", Repo: &repoSameNameOtherNamespace, ID: "foo/other:123"},
+			},
+			charts: []models.Chart{
+				models.Chart{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123", Description: "New description"},
+				models.Chart{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			},
+			expectedCharts: []models.Chart{
+				models.Chart{Name: "my-chart-old", Repo: &repoSameNameOtherNamespace, ID: "foo/other:123"},
+				models.Chart{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123", Description: "New description"},
+				models.Chart{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			},
+		},
+		{
+			name: "it does not remove charts from other namespaces even if they have the same repo name",
+			existingCharts: []models.Chart{
+				models.Chart{Name: "my-chart-old", Repo: &repoSameNameOtherNamespace, ID: "foo/bar:123"},
+			},
+			charts: []models.Chart{
+				models.Chart{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123", Description: "New description"},
+				models.Chart{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			},
+			expectedCharts: []models.Chart{
+				models.Chart{Name: "my-chart-old", Repo: &repoSameNameOtherNamespace, ID: "foo/bar:123"},
+				models.Chart{Name: "my-chart1", Repo: &repo, ID: "foo/bar:123", Description: "New description"},
+				models.Chart{Name: "my-chart2", Repo: &repo, ID: "foo/bar:456"},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -97,7 +141,7 @@ func TestMongoImportCharts(t *testing.T) {
 			manager, cleanup := getInitializedMongoManager(t)
 			defer cleanup()
 			if len(tc.existingCharts) > 0 {
-				err := manager.importCharts(tc.existingCharts, repo)
+				err := manager.importCharts(tc.existingCharts, *tc.existingCharts[0].Repo)
 				if err != nil {
 					t.Fatalf("%+v", err)
 				}
@@ -126,7 +170,7 @@ func getAllCharts(t *testing.T, manager *mongodbAssetManager) []models.Chart {
 	defer closer()
 
 	coll := db.C(dbutils.ChartCollection)
-	err := coll.Find(nil).Sort("id").All(&result)
+	err := coll.Find(nil).Sort("repo.name", "repo.namespace", "id").All(&result)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

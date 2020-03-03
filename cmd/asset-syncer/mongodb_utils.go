@@ -98,7 +98,7 @@ func (m *mongodbAssetManager) importCharts(charts []models.Chart, repo models.Re
 		chartIDs = append(chartIDs, c.ID)
 		// charts to upsert - pair of selector, chart
 		// Mongodb generates the unique _id, we rely on the compound unique index on id and repo.
-		pairs = append(pairs, bson.M{"id": c.ID, "repo": repo}, bson.M{"$set": c})
+		pairs = append(pairs, bson.M{"id": c.ID, "repo.name": repo.Name, "repo.namespace": repo.Namespace}, bson.M{"$set": c})
 	}
 
 	db, closer := m.DBSession.DB()
@@ -109,13 +109,13 @@ func (m *mongodbAssetManager) importCharts(charts []models.Chart, repo models.Re
 	bulk.Upsert(pairs...)
 
 	// Remove charts no longer existing in index
-	// bulk.RemoveAll(bson.M{
-	// 	"id": bson.M{
-	// 		"$nin": chartIDs,
-	// 		// TODO: need to include namespace.
-	// 	},
-	// 	"repo.name": charts[0].Repo.Name,
-	// })
+	bulk.RemoveAll(bson.M{
+		"id": bson.M{
+			"$nin": chartIDs,
+		},
+		"repo.name":      repo.Name,
+		"repo.namespace": repo.Namespace,
+	})
 
 	_, err := bulk.Run()
 	return err
