@@ -35,7 +35,7 @@ func SkipIfNoDB(t *testing.T) {
 	}
 }
 
-func openTestManager(t *testing.T) *dbutils.MongodbAssetManager {
+func OpenTestManager(t *testing.T) *dbutils.MongodbAssetManager {
 	manager := dbutils.NewMongoDBManager(datastore.Config{
 		URL:      "localhost:27017",
 		Username: "root",
@@ -51,7 +51,7 @@ func openTestManager(t *testing.T) *dbutils.MongodbAssetManager {
 
 // GetInitializedManager returns an initialized mongodb manager ready for testing.
 func GetInitializedManager(t *testing.T) (*dbutils.MongodbAssetManager, func()) {
-	manager := openTestManager(t)
+	manager := OpenTestManager(t)
 	cleanup := func() { manager.Close() }
 
 	err := manager.InvalidateCache()

@@ -43,7 +43,7 @@ type RepoInternal struct {
 
 // Chart is a higher-level representation of a chart package
 type Chart struct {
-	ID              string             `json:"ID" bson:"_id"`
+	ID              string             `json:"ID" bson:"ID"`
 	Name            string             `json:"name"`
 	Repo            *Repo              `json:"repo"`
 	Description     string             `json:"description"`

@@ -44,7 +44,11 @@ func Test_importCharts(t *testing.T) {
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
 	charts := chartsFromIndex(index, &models.Repo{Name: "test", URL: "http://testrepo.com"})
 	manager := getMockManager(m)
-	manager.importCharts(charts)
+	repo := models.Repo{
+		Name:      "repo-name",
+		Namespace: "repo-namespace",
+	}
+	manager.importCharts(charts, repo)
 
 	m.AssertExpectations(t)
 	// The Bulk Upsert method takes an array that consists of a selector followed by an interface to upsert.

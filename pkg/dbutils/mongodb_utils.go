@@ -19,7 +19,14 @@ package dbutils
 import (
 	"fmt"
 
+	"github.com/globalsign/mgo"
 	"github.com/kubeapps/common/datastore"
+)
+
+const (
+	ChartCollection      = "charts"
+	RepositoryCollection = "repos"
+	ChartFilesCollection = "files"
 )
 
 // MongodbAssetManager struct containing mongodb info
@@ -49,5 +56,23 @@ func (m *MongodbAssetManager) Close() error {
 }
 
 func (m *MongodbAssetManager) InvalidateCache() error {
-	return nil
+	db, closer := m.DBSession.DB()
+	defer closer()
+
+	err := db.C(ChartCollection).DropCollection()
+	// We ignore "ns not found" which relates to an operation on a non-existent collection.
+	if err != nil && err.Error() != "ns not found" {
+		return err
+	}
+
+	err = db.C(ChartCollection).EnsureIndex(mgo.Index{
+		Key:        []string{"ID", "repo.Namespace", "repo.Name"},
+		Unique:     true,
+		DropDups:   true,
+		Background: false,
+	})
+	if err != nil {
+		return err
+	}
+	return m.DBSession.Fsync(false)
 }

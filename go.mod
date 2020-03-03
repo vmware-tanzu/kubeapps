@@ -38,3 +38,5 @@ require (
 	k8s.io/helm v2.16.0+incompatible
 	sigs.k8s.io/yaml v1.1.0
 )
+
+replace github.com/kubeapps/common => github.com/kubeapps/common v0.0.0-20200302011928-2d5128279fd5
