@@ -10,6 +10,7 @@ export interface IConfig {
   error?: Error;
   featureFlags: {
     reposPerNamespace: boolean;
+    operators: boolean;
   };
 }
 
