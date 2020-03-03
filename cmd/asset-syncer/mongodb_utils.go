@@ -54,14 +54,14 @@ func (m *mongodbAssetManager) RepoAlreadyProcessed(repo models.Repo, checksum st
 	db, closer := m.DBSession.DB()
 	defer closer()
 	lastCheck := &models.RepoCheck{}
-	err := db.C(dbutils.RepositoryCollection).Find(bson.M{"_id": repo.Name}).One(lastCheck)
+	err := db.C(dbutils.RepositoryCollection).Find(bson.M{"id": repo.Name, "repo.name": repo.Name, "repo.namespace": repo.Namespace}).One(lastCheck)
 	return err == nil && checksum == lastCheck.Checksum
 }
 
 func (m *mongodbAssetManager) UpdateLastCheck(repoNamespace, repoName, checksum string, now time.Time) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
-	_, err := db.C(dbutils.RepositoryCollection).UpsertId(repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}})
+	_, err := db.C(dbutils.RepositoryCollection).Upsert(bson.M{"id": repoName, "repo.name": repoName, "repo.namespace": repoNamespace}, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}})
 	return err
 }
 
@@ -69,21 +69,23 @@ func (m *mongodbAssetManager) Delete(repo models.Repo) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	_, err := db.C(dbutils.ChartCollection).RemoveAll(bson.M{
-		"repo.name": repo.Name,
+		"repo.name":      repo.Name,
+		"repo.namespace": repo.Namespace,
 	})
 	if err != nil {
 		return err
 	}
 
 	_, err = db.C(dbutils.ChartFilesCollection).RemoveAll(bson.M{
-		"repo.name": repo.Name,
+		"repo.name":      repo.Name,
+		"repo.namespace": repo.Namespace,
 	})
 	if err != nil {
 		return err
 	}
 
 	_, err = db.C(dbutils.RepositoryCollection).RemoveAll(bson.M{
-		"_id": repo.Name,
+		"id": repo.Name,
 	})
 	return err
 }
@@ -124,19 +126,21 @@ func (m *mongodbAssetManager) importCharts(charts []models.Chart, repo models.Re
 func (m *mongodbAssetManager) updateIcon(repo models.Repo, data []byte, contentType, ID string) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
-	return db.C(dbutils.ChartCollection).UpdateId(ID, bson.M{"$set": bson.M{"raw_icon": data, "icon_content_type": contentType}})
+	_, err := db.C(dbutils.ChartCollection).Upsert(bson.M{"id": ID, "repo.name": repo.Name, "repo.namespace": repo.Namespace}, bson.M{"$set": bson.M{"raw_icon": data, "icon_content_type": contentType}})
+	return err
 }
 
 func (m *mongodbAssetManager) filesExist(repo models.Repo, chartFilesID, digest string) bool {
 	db, closer := m.DBSession.DB()
 	defer closer()
-	err := db.C(dbutils.ChartFilesCollection).Find(bson.M{"_id": chartFilesID, "digest": digest}).One(&models.ChartFiles{})
+	err := db.C(dbutils.ChartFilesCollection).Find(bson.M{"id": chartFilesID, "repo.name": repo.Name, "repo.namespace": repo.Namespace, "digest": digest}).One(&models.ChartFiles{})
 	return err == nil
 }
 
 func (m *mongodbAssetManager) insertFiles(chartId string, files models.ChartFiles) error {
 	db, closer := m.DBSession.DB()
 	defer closer()
-	_, err := db.C(dbutils.ChartFilesCollection).UpsertId(files.ID, files)
+
+	_, err := db.C(dbutils.ChartFilesCollection).Upsert(bson.M{"id": files.ID, "repo.name": files.Repo.Name, "repo.namespace": files.Repo.Namespace}, files)
 	return err
 }

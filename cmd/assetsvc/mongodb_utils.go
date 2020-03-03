@@ -94,7 +94,7 @@ func (m *mongodbAssetManager) getChart(chartID string) (models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var chart models.Chart
-	err := db.C(chartCollection).FindId(chartID).One(&chart)
+	err := db.C(chartCollection).Find(bson.M{"id": chartID}).One(&chart)
 	return chart, err
 }
 
@@ -103,7 +103,7 @@ func (m *mongodbAssetManager) getChartVersion(chartID, version string) (models.C
 	defer closer()
 	var chart models.Chart
 	err := db.C(chartCollection).Find(bson.M{
-		"_id":           chartID,
+		"id":            chartID,
 		"chartversions": bson.M{"$elemMatch": bson.M{"version": version}},
 	}).Select(bson.M{
 		"name": 1, "repo": 1, "description": 1, "home": 1, "keywords": 1, "maintainers": 1, "sources": 1,
@@ -116,7 +116,7 @@ func (m *mongodbAssetManager) getChartFiles(filesID string) (models.ChartFiles, 
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var files models.ChartFiles
-	err := db.C(filesCollection).FindId(filesID).One(&files)
+	err := db.C(filesCollection).Find(bson.M{"id": filesID}).One(&files)
 	return files, err
 }
 
