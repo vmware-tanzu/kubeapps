@@ -24,7 +24,7 @@ In this section, we will define the UX for a user that explores and deploys an O
 
 *NOTE*: There are several steps in the management of Operators that require cluster-admin privileges. For this first implementation, we will assume that the persona using Kubeapps is a cluster administrator with admin permissions.
 
-1. The user goes to the Operators section. Since they don't have the OLM installed, they get an error:
+1. The user goes to the Configuration > Operators section. Since they don't have the OLM installed, they get an error:
 
  <img src="./img/olm-not-installed.png">
 
@@ -34,11 +34,7 @@ In this section, we will define the UX for a user that explores and deploys an O
 $ curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.14.1/install.sh | bash -s 0.14.1
 ```
 
-3. Once the OLM is installed, the list of Operators currently installed in the cluster will be empty. Kubeapps will show a message saying so and a link to explore the available Operators.
-
- <img src="./img/empty-operators.png">
-
-4. Next Kubeapps will show the list of Operators available in the Operator Hub. Similar to the list that can be found here: https://operatorhub.io/
+4. Once the OLM has been installed, Kubeapps will show the list of Operators available in the Operator Hub. Similar to the list that can be found here: https://operatorhub.io/
 
 5. When clicking in an Operator, it will display the information for the specific Operator. Again, this will be similar to the chart view and the Operator view from the hub: https://operatorhub.io/operator/etcd
 
@@ -92,9 +88,9 @@ To the current Catalog view, we need to add the list of Operators types availabl
 
 Again, for the icon of the instance type, we can query the logo of the Operator owning the resource.
 
-#### Operator (instances) list
+#### Application list
 
-This is the view that will list the different instances created in a namespace. There is not a single endpoint that Kubeapps can query in order to get all the running instances (since each of them has a different group and version). Because of that, first we need the list of instance types owned by the different Operators in a namespace (already described in the previous section). Once that list is already built, we can query each of those resources for the current namespace.
+To the current App list, we need to add the different instances created in a namespace. There is not a single endpoint that Kubeapps can query in order to get all the running instances (since each of them has a different group and version). Because of that, first we need the list of instance types owned by the different Operators in a namespace (already described in the previous section). Once that list is already built, we can query each of those resources for the current namespace.
 
 #### Operator view
 
