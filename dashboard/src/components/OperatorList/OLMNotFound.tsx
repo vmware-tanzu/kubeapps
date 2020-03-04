@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
 
 import { NotFoundErrorAlert } from "../ErrorAlert";
 
@@ -17,9 +16,7 @@ const OLMNotFound: React.SFC = () => {
           </a>{" "}
           to browse, provision and manage Operators within Kubeapps.
         </p>
-        <Link className="button button-primary button-small" to={"/charts/svc-cat/catalog"}>
-          Install OLM
-        </Link>
+        <button className="button button-primary button-small">Install OLM</button>
       </div>
     </NotFoundErrorAlert>
   );
