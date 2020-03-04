@@ -66,7 +66,7 @@ func (m *MongodbAssetManager) InvalidateCache() error {
 	}
 
 	err = db.C(ChartCollection).EnsureIndex(mgo.Index{
-		Key:        []string{"ID", "repo.namespace", "repo.name"},
+		Key:        []string{"chart_id", "repo.namespace", "repo.name"},
 		Unique:     true,
 		DropDups:   true,
 		Background: false,

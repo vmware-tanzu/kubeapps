@@ -60,7 +60,7 @@ func Test_importCharts(t *testing.T) {
 	for i := 0; i < len(args); i += 2 {
 		m := args[i+1].(bson.M)
 		c := m["$set"].(models.Chart)
-		assert.Equal(t, args[i], bson.M{"id": "repo-name/" + c.Name, "repo.name": "repo-name", "repo.namespace": "repo-namespace"}, "selector")
+		assert.Equal(t, args[i], bson.M{"chart_id": "repo-name/" + c.Name, "repo.name": "repo-name", "repo.namespace": "repo-namespace"}, "selector")
 	}
 }
 
@@ -72,10 +72,12 @@ func Test_DeleteRepo(t *testing.T) {
 		"repo.namespace": repo.Namespace,
 	})
 	m.On("RemoveAll", bson.M{
-		"id": repo.Name,
+		"name":      repo.Name,
+		"namespace": repo.Namespace,
 	})
 	manager := getMockManager(m)
 	err := manager.Delete(repo)
+	// err := manager.UpdateLastCheck(repoNamespace, repoName, checksum, now)
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}
@@ -117,7 +119,7 @@ func Test_repoAlreadyProcessed(t *testing.T) {
 	}
 }
 
-func _Test_updateLastCheck(t *testing.T) {
+func Test_updateLastCheck(t *testing.T) {
 	m := &mock.Mock{}
 	const (
 		repoNamespace = "repoNamespace"
@@ -125,9 +127,10 @@ func _Test_updateLastCheck(t *testing.T) {
 		checksum      = "bar"
 	)
 	now := time.Now()
-	m.On("Upsert", bson.M{"id": repoName, "repo.name": repoName, "repo.namespace": repoNamespace}, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
+	m.On("Upsert", bson.M{"name": repoName, "namespace": repoNamespace}, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
 	manager := getMockManager(m)
 	err := manager.UpdateLastCheck(repoNamespace, repoName, checksum, now)
+	m.AssertExpectations(t)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}

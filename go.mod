@@ -18,7 +18,7 @@ require (
 	github.com/gorilla/mux v1.7.3
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/jinzhu/copier v0.0.0-20190924061706-b57f9002281a
-	github.com/kubeapps/common v0.0.0-20190508164739-10b110436c1a
+	github.com/kubeapps/common v0.0.0-20200303230740-24b02ef65caf
 	github.com/lib/pq v1.2.0
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
@@ -39,4 +39,4 @@ require (
 	sigs.k8s.io/yaml v1.1.0
 )
 
-replace github.com/kubeapps/common => github.com/kubeapps/common v0.0.0-20200302011928-2d5128279fd5
+replace github.com/kubeapps/common => github.com/kubeapps/common v0.0.0-20200304054735-9a4709593163
