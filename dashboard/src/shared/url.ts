@@ -56,4 +56,9 @@ export const api = {
     sync: (broker: IServiceBroker) =>
       `${api.clusterservicebrokers.base}/clusterservicebrokers/${broker.metadata.name}`,
   },
+
+  operators: {
+    crd: `${APIBase}/apis/apiextensions.k8s.io/v1/customresourcedefinitions/clusterserviceversions.operators.coreos.com`,
+    csv: `${APIBase}/apis/clusterserviceversions.operators.coreos.com/v1`,
+  },
 };
