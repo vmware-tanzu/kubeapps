@@ -10,7 +10,6 @@ import CatalogContainer from "../../containers/CatalogContainer";
 import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
-import OperatorInstancesListContainer from "../../containers/OperatorInstancesListContainer";
 import OperatorInstanceViewContainer from "../../containers/OperatorInstanceViewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
@@ -69,7 +68,6 @@ class Routes extends React.Component<IRoutesProps> {
       Object.assign(privateRoutes, {
         "/operators/ns/:namespace": OperatorsListContainer,
         "/operators/ns/:namespace/:operator": OperatorViewContainer,
-        "/operators-instances/ns/:namespace": OperatorInstancesListContainer,
         "/operators-instances/ns/:namespace/:instanceName": OperatorInstanceViewContainer,
         "/operators-instances/ns/:namespace/new/:operator/:instanceType": OperatorInstanceCreateContainer,
       });
