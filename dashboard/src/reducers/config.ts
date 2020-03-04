@@ -15,7 +15,7 @@ const initialState: IConfigState = {
   authProxyEnabled: false,
   oauthLoginURI: "",
   oauthLogoutURI: "",
-  featureFlags: { reposPerNamespace: true },
+  featureFlags: { reposPerNamespace: true, operators: true },
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

@@ -9,6 +9,10 @@ import AppViewContainer from "../../containers/AppViewContainer";
 import CatalogContainer from "../../containers/CatalogContainer";
 import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
+import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
+import OperatorInstanceViewContainer from "../../containers/OperatorInstanceViewContainer";
+import OperatorsListContainer from "../../containers/OperatorsListContainer";
+import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
 import RepoListContainer from "../../containers/RepoListContainer";
 import ServiceBrokerListContainer from "../../containers/ServiceBrokerListContainer";
@@ -45,12 +49,13 @@ interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   authenticated: boolean;
   featureFlags: {
     reposPerNamespace: boolean;
+    operators: boolean;
   };
 }
 
 class Routes extends React.Component<IRoutesProps> {
   public static defaultProps = {
-    featureFlags: { reposPerNamespace: false },
+    featureFlags: { reposPerNamespace: false, operators: false },
   };
   public render() {
     // The path used for AppRepository list depends on a feature flag.
@@ -58,7 +63,15 @@ class Routes extends React.Component<IRoutesProps> {
     const reposPath = this.props.featureFlags.reposPerNamespace
       ? "/config/ns/:namespace/repos"
       : "/config/repos";
-
+    if (this.props.featureFlags.operators) {
+      // Add routes related to operators
+      Object.assign(privateRoutes, {
+        "/operators/ns/:namespace": OperatorsListContainer,
+        "/operators/ns/:namespace/:operator": OperatorViewContainer,
+        "/operators-instances/ns/:namespace/:instanceName": OperatorInstanceViewContainer,
+        "/operators-instances/ns/:namespace/new/:operator/:instanceType": OperatorInstanceCreateContainer,
+      });
+    }
     return (
       <Switch>
         <Route exact={true} path="/" render={this.rootNamespacedRedirect} />

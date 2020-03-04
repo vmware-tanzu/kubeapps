@@ -91,7 +91,7 @@ describe("Routes depending on feature flags", () => {
           {...emptyRouteComponentProps}
           namespace={namespace}
           authenticated={true}
-          featureFlags={{ reposPerNamespace: false }}
+          featureFlags={{ reposPerNamespace: false, operators: false }}
         />
       </StaticRouter>,
     )
@@ -112,7 +112,7 @@ describe("Routes depending on feature flags", () => {
           {...emptyRouteComponentProps}
           namespace={namespace}
           authenticated={true}
-          featureFlags={{ reposPerNamespace: true }}
+          featureFlags={{ reposPerNamespace: true, operators: false }}
         />
       </StaticRouter>,
     )

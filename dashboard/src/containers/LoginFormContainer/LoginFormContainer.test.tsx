@@ -34,7 +34,7 @@ const makeStore = (
     namespace: "",
     appVersion: "",
     oauthLogoutURI: "",
-    featureFlags: { reposPerNamespace: false },
+    featureFlags: { reposPerNamespace: false, operators: false },
   };
   return mockStore({ auth, config });
 };
