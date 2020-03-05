@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loading spinner matches the snapshot 1`] = `
+<div>
+  <PageHeader>
+    <h1>
+      Operators
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <OLMNotFound />
+    </LoadingWrapper>
+  </main>
+</div>
+`;

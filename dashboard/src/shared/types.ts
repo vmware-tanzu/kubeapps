@@ -1,4 +1,5 @@
 import * as jsonSchema from "json-schema";
+import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IConfigState } from "../reducers/config";
@@ -232,6 +233,7 @@ export interface IStoreState {
   kube: IKubeState;
   repos: IAppRepositoryState;
   namespace: INamespaceState;
+  operators: IOperatorsState;
 }
 
 interface IK8sResource {

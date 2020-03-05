@@ -8,6 +8,7 @@ import chartsReducer from "./charts";
 import configReducer from "./config";
 import kubeReducer from "./kube";
 import namespaceReducer from "./namespace";
+import operatorReducer from "./operators";
 import reposReducer from "./repos";
 
 const rootReducer = combineReducers<IStoreState>({
@@ -19,6 +20,7 @@ const rootReducer = combineReducers<IStoreState>({
   kube: kubeReducer,
   namespace: namespaceReducer,
   repos: reposReducer,
+  operators: operatorReducer,
 });
 
 export default rootReducer;

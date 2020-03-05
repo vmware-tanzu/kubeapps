@@ -7,6 +7,7 @@ import * as charts from "./charts";
 import * as config from "./config";
 import * as kube from "./kube";
 import * as namespace from "./namespace";
+import * as operators from "./operators";
 import * as repos from "./repos";
 
 export default {
@@ -17,6 +18,7 @@ export default {
   config,
   kube,
   namespace,
+  operators,
   repos,
   shared: {
     pushSearchFilter: (f: string) => push(`?q=${f}`),
