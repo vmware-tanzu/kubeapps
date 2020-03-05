@@ -11,6 +11,7 @@ describe("catalogReducer", () => {
     initialState = {
       isFetching: false,
       isOLMInstalled: false,
+      operators: [],
     };
   });
 
@@ -55,4 +56,6 @@ describe("catalogReducer", () => {
       });
     });
   });
+
+  // TODO(andresmgot): getOperators tests
 });

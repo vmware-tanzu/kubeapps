@@ -11,7 +11,6 @@ let store: any;
 
 beforeEach(() => {
   store = mockStore({});
-  Operators.isOLMInstalled = jest.fn();
 });
 
 afterEach(jest.resetAllMocks);
@@ -42,6 +41,44 @@ describe("checkOLMInstalled", () => {
       },
     ];
     await store.dispatch(operatorActions.checkOLMInstalled());
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("getOperators", () => {
+  it("returns an ordered list of operators based on the name", async () => {
+    Operators.getOperators = jest.fn(() => [
+      { metadata: { name: "foo" } },
+      { metadata: { name: "bar" } },
+    ]);
+    const sortedOperators = [{ metadata: { name: "bar" } }, { metadata: { name: "foo" } }];
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestOperators),
+      },
+      {
+        type: getType(operatorActions.receiveOperators),
+        payload: sortedOperators,
+      },
+    ];
+    await store.dispatch(operatorActions.getOperators("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.getOperators = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestOperators),
+      },
+      {
+        type: getType(operatorActions.errorOperators),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.getOperators("default"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
