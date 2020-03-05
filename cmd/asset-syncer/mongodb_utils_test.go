@@ -42,9 +42,14 @@ func Test_importCharts(t *testing.T) {
 	m.On("Upsert", mock.Anything)
 	m.On("RemoveAll", mock.Anything)
 	index, _ := parseRepoIndex([]byte(validRepoIndexYAML))
-	charts := chartsFromIndex(index, &models.Repo{Name: "test", URL: "http://testrepo.com"})
+	repo := models.Repo{
+		Name:      "repo-name",
+		Namespace: "repo-namespace",
+		URL:       "http://testrepo.example.com",
+	}
+	charts := chartsFromIndex(index, &repo)
 	manager := getMockManager(m)
-	manager.importCharts(charts)
+	manager.importCharts(charts, repo)
 
 	m.AssertExpectations(t)
 	// The Bulk Upsert method takes an array that consists of a selector followed by an interface to upsert.
@@ -53,21 +58,25 @@ func Test_importCharts(t *testing.T) {
 	args := m.Calls[0].Arguments.Get(0).([]interface{})
 	assert.Equal(t, len(args), len(charts)*2, "number of selector, chart pairs to upsert")
 	for i := 0; i < len(args); i += 2 {
-		c := args[i+1].(models.Chart)
-		assert.Equal(t, args[i], bson.M{"_id": "test/" + c.Name}, "selector")
+		m := args[i+1].(bson.M)
+		c := m["$set"].(models.Chart)
+		assert.Equal(t, args[i], bson.M{"chart_id": "repo-name/" + c.Name, "repo.name": "repo-name", "repo.namespace": "repo-namespace"}, "selector")
 	}
 }
 
 func Test_DeleteRepo(t *testing.T) {
 	m := &mock.Mock{}
+	repo := models.Repo{Name: "repo-name", Namespace: "repo-namespace"}
 	m.On("RemoveAll", bson.M{
-		"repo.name": "test",
+		"repo.name":      repo.Name,
+		"repo.namespace": repo.Namespace,
 	})
 	m.On("RemoveAll", bson.M{
-		"_id": "test",
+		"name":      repo.Name,
+		"namespace": repo.Namespace,
 	})
 	manager := getMockManager(m)
-	err := manager.Delete(models.Repo{Name: "test"})
+	err := manager.Delete(repo)
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}
@@ -117,9 +126,10 @@ func Test_updateLastCheck(t *testing.T) {
 		checksum      = "bar"
 	)
 	now := time.Now()
-	m.On("UpsertId", repoName, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
+	m.On("Upsert", bson.M{"name": repoName, "namespace": repoNamespace}, bson.M{"$set": bson.M{"last_update": now, "checksum": checksum}}).Return(nil)
 	manager := getMockManager(m)
 	err := manager.UpdateLastCheck(repoNamespace, repoName, checksum, now)
+	m.AssertExpectations(t)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}

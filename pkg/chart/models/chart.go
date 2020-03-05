@@ -43,7 +43,7 @@ type RepoInternal struct {
 
 // Chart is a higher-level representation of a chart package
 type Chart struct {
-	ID              string             `json:"ID" bson:"_id"`
+	ID              string             `json:"ID" bson:"chart_id"`
 	Name            string             `json:"name"`
 	Repo            *Repo              `json:"repo"`
 	Description     string             `json:"description"`
@@ -81,7 +81,7 @@ type ChartVersion struct {
 
 // ChartFiles holds the README and values for a given chart version
 type ChartFiles struct {
-	ID     string `bson:"_id"`
+	ID     string `bson:"file_id"`
 	Readme string
 	Values string
 	Schema string
