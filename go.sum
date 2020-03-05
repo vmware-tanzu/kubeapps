@@ -293,6 +293,8 @@ github.com/kubeapps/common v0.0.0-20200303230740-24b02ef65caf h1:JQI3IKAxj2fTPg5
 github.com/kubeapps/common v0.0.0-20200303230740-24b02ef65caf/go.mod h1:TsgmjeDpbftqhwPKInJ3v+l+xbHs4goiB6DFb2WqY9c=
 github.com/kubeapps/common v0.0.0-20200304054735-9a4709593163 h1:PqdyxAPCi/ZWljQ6pg4ix83pqel7nee9ZTwmp1eMQ7g=
 github.com/kubeapps/common v0.0.0-20200304054735-9a4709593163/go.mod h1:TsgmjeDpbftqhwPKInJ3v+l+xbHs4goiB6DFb2WqY9c=
+github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47 h1:Bi+dW7HktNkUkXkMB/cil7+BAbPYNW82hWJ73UV42Z4=
+github.com/kubeapps/common v0.0.0-20200304064434-f6ba82e79f47/go.mod h1:TsgmjeDpbftqhwPKInJ3v+l+xbHs4goiB6DFb2WqY9c=
 github.com/lib/pq v1.2.0 h1:LXpIM/LZ5xGFhOpXAQUIMM1HdyqzVYM13zNdjCEEcA0=
 github.com/lib/pq v1.2.0/go.mod h1:5WUZQaWbwv1U+lTReE5YruASi9Al49XbQIvNi/34Woo=
 github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de/go.mod h1:zAbeS9B/r2mtpb6U+EI2rYA5OAXxsYw6wTamcNW+zcE=

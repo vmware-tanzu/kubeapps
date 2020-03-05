@@ -1,11 +1,11 @@
-{{- if .Values.featureFlags.reposPerNamespace -}}
-# Invalidate the chart cache during upgrade.
+# Ensure db indexes are set and invalidate the chart cache during both install and upgrade.
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ template "kubeapps.apprepository-jobs-preupgrade.fullname" . }}
   annotations:
-    helm.sh/hook: pre-upgrade
+    helm.sh/hook: pre-upgrade,post-install
+    helm.sh/hook-weight: "0"
     helm.sh/hook-delete-policy: hook-succeeded
   labels:
     app: {{ template "kubeapps.apprepository-jobs-preupgrade.fullname" . }}
@@ -66,4 +66,3 @@ spec:
                   key: postgresql-password
                   name: {{ .Values.postgresql.existingSecret }}
             {{- end }}
-{{- end -}}

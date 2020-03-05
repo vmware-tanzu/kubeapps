@@ -74,5 +74,12 @@ func (m *MongodbAssetManager) InvalidateCache() error {
 	if err != nil {
 		return err
 	}
+	err = db.C(ChartFilesCollection).EnsureIndex(mgo.Index{
+		Key:        []string{"file_id", "repo.namespace", "repo.name"},
+		Background: false,
+	})
+	if err != nil {
+		return err
+	}
 	return m.DBSession.Fsync(false)
 }

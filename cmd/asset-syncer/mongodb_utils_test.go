@@ -77,7 +77,6 @@ func Test_DeleteRepo(t *testing.T) {
 	})
 	manager := getMockManager(m)
 	err := manager.Delete(repo)
-	// err := manager.UpdateLastCheck(repoNamespace, repoName, checksum, now)
 	if err != nil {
 		t.Errorf("failed to delete chart repo test: %v", err)
 	}
