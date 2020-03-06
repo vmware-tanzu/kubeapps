@@ -193,6 +193,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 	}
 	tests := []struct {
 		name               string
+		namespace          string
 		repo               string
 		pageNumber         int
 		pageSize           int
@@ -200,8 +201,26 @@ func Test_getPaginatedChartList(t *testing.T) {
 		expectedCharts     []*models.Chart
 		expectedTotalPages int
 	}{
-		{"one page with duplicates with repo", "bitnami", 1, 100, true, availableCharts, 1},
-		{"one page withuot duplicates", "", 1, 100, false, []*models.Chart{availableCharts[0], availableCharts[1]}, 1},
+		{
+			name:               "one page with duplicates with repo",
+			namespace:          "kubeapps",
+			repo:               "bitnami",
+			pageNumber:         1,
+			pageSize:           100,
+			showDuplicates:     true,
+			expectedCharts:     availableCharts,
+			expectedTotalPages: 1,
+		},
+		{
+			name:               "one page withuot duplicates",
+			namespace:          "kubeapps",
+			repo:               "",
+			pageNumber:         1,
+			pageSize:           100,
+			showDuplicates:     false,
+			expectedCharts:     []*models.Chart{availableCharts[0], availableCharts[1]},
+			expectedTotalPages: 1,
+		},
 		// TODO(andresmgot): several pages
 	}
 	for _, tt := range tests {
@@ -211,13 +230,15 @@ func Test_getPaginatedChartList(t *testing.T) {
 			pg := postgresAssetManager{fpg}
 
 			chartsResponse = availableCharts
-			expectedQuery := ""
+			expectedQuery := "WHERE repo_namespace = $1"
+			expectedParams := []interface{}{"kubeapps"}
 			if tt.repo != "" {
-				expectedQuery = fmt.Sprintf("WHERE info -> 'repo' ->> 'name' = '%s'", tt.repo)
+				expectedQuery = expectedQuery + " AND repo_name = $2"
+				expectedParams = append(expectedParams, "bitnami")
 			}
 			expectedQuery = fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, expectedQuery)
-			m.On("QueryAllCharts", expectedQuery, []interface{}(nil))
-			charts, totalPages, err := pg.getPaginatedChartList(tt.repo, tt.pageNumber, tt.pageSize, tt.showDuplicates)
+			m.On("QueryAllCharts", expectedQuery, expectedParams)
+			charts, totalPages, err := pg.getPaginatedChartList(tt.namespace, tt.repo, tt.pageNumber, tt.pageSize, tt.showDuplicates)
 			if err != nil {
 				t.Errorf("Found error %v", err)
 			}

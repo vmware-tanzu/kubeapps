@@ -56,7 +56,7 @@ func Test_GetReady(t *testing.T) {
 	assert.Equal(t, res.StatusCode, http.StatusOK, "http status code should match")
 }
 
-// tests the GET /{apiVersion}/charts endpoint
+// tests the GET /{apiVersion}/ns/{namespace}/charts endpoint
 func Test_GetCharts(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -83,7 +83,7 @@ func Test_GetCharts(t *testing.T) {
 				*args.Get(0).(*[]*models.Chart) = tt.charts
 			})
 
-			res, err := http.Get(ts.URL + pathPrefix + "/charts")
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/charts")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -97,7 +97,7 @@ func Test_GetCharts(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/charts/{repo} endpoint
+// tests the GET /{apiVersion}/ns/{namespace}/charts/{repo} endpoint
 func Test_GetChartsInRepo(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -125,7 +125,7 @@ func Test_GetChartsInRepo(t *testing.T) {
 				*args.Get(0).(*[]*models.Chart) = tt.charts
 			})
 
-			res, err := http.Get(ts.URL + pathPrefix + "/charts/" + tt.repo)
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/charts/" + tt.repo)
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -139,7 +139,7 @@ func Test_GetChartsInRepo(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/charts/{repo}/{chartName} endpoint
+// tests the GET /{apiVersion}/ns/charts/{repo}/{chartName} endpoint
 func Test_GetChartInRepo(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -182,7 +182,7 @@ func Test_GetChartInRepo(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/charts/" + tt.chart.ID)
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/charts/" + tt.chart.ID)
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -192,7 +192,7 @@ func Test_GetChartInRepo(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/charts/{repo}/{chartName}/versions endpoint
+// tests the GET /{apiVersion}/ns/charts/{repo}/{chartName}/versions endpoint
 func Test_ListChartVersions(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -235,7 +235,7 @@ func Test_ListChartVersions(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/charts/" + tt.chart.ID + "/versions")
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/charts/" + tt.chart.ID + "/versions")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -245,7 +245,7 @@ func Test_ListChartVersions(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/charts/{repo}/{chartName}/versions/{:version} endpoint
+// tests the GET /{apiVersion}/ns/charts/{repo}/{chartName}/versions/{:version} endpoint
 func Test_GetChartVersion(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -288,7 +288,7 @@ func Test_GetChartVersion(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/charts/" + tt.chart.ID + "/versions/" + tt.chart.ChartVersions[0].Version)
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/charts/" + tt.chart.ID + "/versions/" + tt.chart.ChartVersions[0].Version)
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -298,7 +298,7 @@ func Test_GetChartVersion(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/assets/{repo}/{chartName}/logo-160x160-fit.png endpoint
+// tests the GET /{apiVersion}/ns/assets/{repo}/{chartName}/logo-160x160-fit.png endpoint
 func Test_GetChartIcon(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -341,7 +341,7 @@ func Test_GetChartIcon(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/assets/" + tt.chart.ID + "/logo")
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/assets/" + tt.chart.ID + "/logo")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -351,7 +351,7 @@ func Test_GetChartIcon(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/assets/{repo}/{chartName}/versions/{version}/README.md endpoint
+// tests the GET /{apiVersion}/ns/assets/{repo}/{chartName}/versions/{version}/README.md endpoint
 func Test_GetChartReadme(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -398,7 +398,7 @@ func Test_GetChartReadme(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/assets/" + tt.files.ID + "/versions/" + tt.version + "/README.md")
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/assets/" + tt.files.ID + "/versions/" + tt.version + "/README.md")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -408,7 +408,7 @@ func Test_GetChartReadme(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/assets/{repo}/{chartName}/versions/{version}/values.yaml endpoint
+// tests the GET /{apiVersion}/ns/assets/{repo}/{chartName}/versions/{version}/values.yaml endpoint
 func Test_GetChartValues(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -455,7 +455,7 @@ func Test_GetChartValues(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.yaml")
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.yaml")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 
@@ -465,7 +465,7 @@ func Test_GetChartValues(t *testing.T) {
 	}
 }
 
-// tests the GET /{apiVersion}/assets/{repo}/{chartName}/versions/{version}/values/schema.json endpoint
+// tests the GET /{apiVersion}/ns/assets/{repo}/{chartName}/versions/{version}/values/schema.json endpoint
 func Test_GetChartSchema(t *testing.T) {
 	ts := httptest.NewServer(setupRoutes())
 	defer ts.Close()
@@ -512,7 +512,7 @@ func Test_GetChartSchema(t *testing.T) {
 				})
 			}
 
-			res, err := http.Get(ts.URL + pathPrefix + "/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.schema.json")
+			res, err := http.Get(ts.URL + pathPrefix + "/ns/kubeapps/assets/" + tt.files.ID + "/versions/" + tt.version + "/values.schema.json")
 			assert.NoError(t, err)
 			defer res.Body.Close()
 

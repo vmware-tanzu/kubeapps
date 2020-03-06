@@ -113,15 +113,17 @@ func uniqChartList(charts []*models.Chart) []*models.Chart {
 	return res
 }
 
-func getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) (apiListResponse, interface{}, error) {
-	charts, totalPages, err := manager.getPaginatedChartList(repo, pageNumber, pageSize, showDuplicates)
+func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) (apiListResponse, interface{}, error) {
+	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize, showDuplicates)
 	return newChartListResponse(charts), meta{totalPages}, err
 }
 
+const namespaceTODO = "kubeapps"
+
 // listCharts returns a list of charts
-func listCharts(w http.ResponseWriter, req *http.Request) {
+func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 	pageNumber, pageSize := getPageNumberAndSize(req)
-	cl, meta, err := getPaginatedChartList("", pageNumber, pageSize, showDuplicates(req))
+	cl, meta, err := getPaginatedChartList(namespaceTODO, "", pageNumber, pageSize, showDuplicates(req))
 	if err != nil {
 		log.WithError(err).Error("could not fetch charts")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
@@ -131,9 +133,10 @@ func listCharts(w http.ResponseWriter, req *http.Request) {
 }
 
 // listRepoCharts returns a list of charts in the given repo
+// TODO: mnelson: shouldn't need a separate function here.
 func listRepoCharts(w http.ResponseWriter, req *http.Request, params Params) {
 	pageNumber, pageSize := getPageNumberAndSize(req)
-	cl, meta, err := getPaginatedChartList(params["repo"], pageNumber, pageSize, showDuplicates(req))
+	cl, meta, err := getPaginatedChartList(namespaceTODO, params["repo"], pageNumber, pageSize, showDuplicates(req))
 	if err != nil {
 		log.WithError(err).Error("could not fetch charts")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)

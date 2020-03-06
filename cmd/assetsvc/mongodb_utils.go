@@ -34,15 +34,22 @@ func newMongoDBManager(config datastore.Config) assetManager {
 	return &mongodbAssetManager{m}
 }
 
-func (m *mongodbAssetManager) getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
+func (m *mongodbAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
 
 	c := db.C(chartCollection)
 	pipeline := []bson.M{}
+	matcher := bson.M{}
+	if namespace != dbutils.AllNamespaces {
+		matcher["repo.namespace"] = namespace
+	}
 	if repo != "" {
-		pipeline = append(pipeline, bson.M{"$match": bson.M{"repo.name": repo}})
+		matcher["repo.name"] = repo
+	}
+	if len(matcher) > 0 {
+		pipeline = append(pipeline, matcher)
 	}
 
 	if !showDuplicates {

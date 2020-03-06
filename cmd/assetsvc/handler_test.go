@@ -285,7 +285,7 @@ func Test_listCharts(t *testing.T) {
 
 			w := httptest.NewRecorder()
 			req := httptest.NewRequest("GET", "/charts"+tt.query, nil)
-			listCharts(w, req)
+			listCharts(w, req, Params{})
 
 			m.AssertExpectations(t)
 			assert.Equal(t, http.StatusOK, w.Code)
