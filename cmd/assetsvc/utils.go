@@ -26,7 +26,7 @@ import (
 type assetManager interface {
 	Init() error
 	Close() error
-	getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error)
+	getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error)
 	getChart(chartID string) (models.Chart, error)
 	getChartVersion(chartID, version string) (models.Chart, error)
 	getChartFiles(filesID string) (models.ChartFiles, error)

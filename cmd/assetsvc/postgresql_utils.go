@@ -20,6 +20,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
@@ -51,13 +52,24 @@ func exists(current []string, str string) bool {
 	return false
 }
 
-func (m *postgresAssetManager) getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
-	repoQuery := ""
+func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
+	clauses := []string{}
+	queryParams := []interface{}{}
+	if namespace != dbutils.AllNamespaces {
+		clauses = append(clauses, "repo_namespace = $1")
+		queryParams = append(queryParams, namespace)
+	}
 	if repo != "" {
-		repoQuery = fmt.Sprintf("WHERE info -> 'repo' ->> 'name' = '%s'", repo)
+		clauses = append(clauses, "repo_name = $2")
+		queryParams = append(queryParams, repo)
+	}
+	repoQuery := ""
+	if len(clauses) > 0 {
+		repoQuery = strings.Join(clauses, " AND ")
+		repoQuery = "WHERE " + repoQuery
 	}
 	dbQuery := fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, repoQuery)
-	charts, err := m.QueryAllCharts(dbQuery)
+	charts, err := m.QueryAllCharts(dbQuery, queryParams...)
 	if err != nil {
 		return nil, 0, nil
 	}
@@ -66,6 +78,9 @@ func (m *postgresAssetManager) getPaginatedChartList(repo string, pageNumber, pa
 		uniqueCharts := []*models.Chart{}
 		digests := []string{}
 		for _, c := range charts {
+			if len(c.ChartVersions) == 0 {
+				return nil, 0, fmt.Errorf("chart %q missing chart versions", c.ID)
+			}
 			if !exists(digests, c.ChartVersions[0].Digest) {
 				digests = append(digests, c.ChartVersions[0].Digest)
 				uniqueCharts = append(uniqueCharts, c)
