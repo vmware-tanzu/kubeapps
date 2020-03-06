@@ -1,6 +1,7 @@
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 
+import { IPackageManifest } from "shared/types";
 import operatorReducer from "./operators";
 import { IOperatorsState } from "./operators";
 
@@ -20,6 +21,10 @@ describe("catalogReducer", () => {
       checkingOLM: getType(actions.operators.checkingOLM),
       OLMInstalled: getType(actions.operators.OLMInstalled),
       OLMNotInstalled: getType(actions.operators.OLMNotInstalled),
+      requestOperators: getType(actions.operators.requestOperators),
+      receiveOperators: getType(actions.operators.receiveOperators),
+      errorOperators: getType(actions.operators.errorOperators),
+      setNamespace: getType(actions.namespace.setNamespace),
     };
 
     describe("reducer actions", () => {
@@ -54,8 +59,46 @@ describe("catalogReducer", () => {
           }),
         ).toEqual({ ...initialState, isOLMInstalled: false });
       });
+
+      it("sets receive operators", () => {
+        const state = operatorReducer(undefined, {
+          type: actionTypes.requestOperators as any,
+        });
+        const op = {} as IPackageManifest;
+        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(
+          operatorReducer(undefined, {
+            type: actionTypes.receiveOperators as any,
+            payload: [op],
+          }),
+        ).toEqual({ ...initialState, isFetching: false, operators: [op] });
+      });
+
+      it("sets an error", () => {
+        const state = operatorReducer(undefined, {
+          type: actionTypes.requestOperators as any,
+        });
+        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(
+          operatorReducer(undefined, {
+            type: actionTypes.errorOperators as any,
+            payload: new Error("Boom!"),
+          }),
+        ).toEqual({ ...initialState, isFetching: false, error: new Error("Boom!") });
+      });
+
+      it("unsets an error when changing namespace", () => {
+        const state = operatorReducer(undefined, {
+          type: actionTypes.errorOperators as any,
+          payload: new Error("Boom!"),
+        });
+        expect(state).toEqual({ ...initialState, error: new Error("Boom!") });
+        expect(
+          operatorReducer(undefined, {
+            type: actionTypes.setNamespace as any,
+          }),
+        ).toEqual({ ...initialState, error: undefined });
+      });
     });
   });
-
-  // TODO(andresmgot): getOperators tests
 });
