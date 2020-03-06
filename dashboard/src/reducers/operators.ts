@@ -1,18 +1,22 @@
-import { LocationChangeAction } from "connected-react-router";
+import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 
 import { OperatorAction } from "actions/operators";
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
+import { IResource } from "../shared/types";
 
 export interface IOperatorsState {
   isFetching: boolean;
   isOLMInstalled: boolean;
+  operators: IResource[];
+  error?: Error;
 }
 
 const initialState: IOperatorsState = {
   isFetching: false,
   isOLMInstalled: false,
+  operators: [],
 };
 
 const catalogReducer = (
@@ -27,11 +31,16 @@ const catalogReducer = (
       return { ...state, isOLMInstalled: true, isFetching: false };
     case getType(operators.OLMNotInstalled):
       return { ...state, isOLMInstalled: false, isFetching: false };
-    // TODO(andresmgot): Enable error cleanup when managing errors
-    // case LOCATION_CHANGE:
-    //   return { ...state, errors: {} };
-    // case getType(actions.namespace.setNamespace):
-    //   return { ...state, errors: {} };
+    case getType(operators.requestOperators):
+      return { ...state, isFetching: true };
+    case getType(operators.receiveOperators):
+      return { ...state, isFetching: false, operators: action.payload };
+    case getType(operators.errorOperators):
+      return { ...state, isFetching: false, error: action.payload };
+    case LOCATION_CHANGE:
+      return { ...state, error: undefined };
+    case getType(actions.namespace.setNamespace):
+      return { ...state, error: undefined };
     default:
       return { ...state };
   }

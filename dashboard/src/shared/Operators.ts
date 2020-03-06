@@ -1,5 +1,6 @@
 import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
+import { IK8sList, IPackageManifest } from "./types";
 
 export class Operators {
   public static async isOLMInstalled() {
@@ -9,5 +10,12 @@ export class Operators {
     } catch (err) {
       return false;
     }
+  }
+
+  public static async getOperators(namespace: string) {
+    const { data } = await axiosWithAuth.get<IK8sList<IPackageManifest, {}>>(
+      urls.api.operators.operators(namespace),
+    );
+    return data.items;
   }
 }

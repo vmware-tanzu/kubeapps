@@ -1,5 +1,9 @@
 import * as React from "react";
 
+import { IPackageManifest } from "shared/types";
+import { CardGrid } from "../Card";
+import { ErrorSelector } from "../ErrorAlert";
+import InfoCard from "../InfoCard";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import OLMNotFound from "./OLMNotFound";
@@ -8,11 +12,16 @@ export interface IOperatorListProps {
   isFetching: boolean;
   checkOLMInstalled: () => Promise<boolean>;
   isOLMInstalled: boolean;
+  namespace: string;
+  getOperators: (namespace: string) => Promise<void>;
+  operators: IPackageManifest[];
+  error?: Error;
 }
 
 class OperatorList extends React.Component<IOperatorListProps> {
   public componentDidMount() {
     this.props.checkOLMInstalled();
+    this.props.getOperators(this.props.namespace);
   }
 
   public render() {
@@ -24,10 +33,42 @@ class OperatorList extends React.Component<IOperatorListProps> {
         </PageHeader>
         <main>
           <LoadingWrapper loaded={!isFetching}>
-            {isOLMInstalled ? <p>OLM Installed!</p> : <OLMNotFound />}
+            {isOLMInstalled ? this.renderOperators() : <OLMNotFound />}
           </LoadingWrapper>
         </main>
       </div>
+    );
+  }
+
+  private renderOperators() {
+    const { operators, error } = this.props;
+    if (error) {
+      return (
+        <ErrorSelector
+          error={error}
+          action="list"
+          resource="Operators"
+          namespace={this.props.namespace}
+        />
+      );
+    }
+    return (
+      <CardGrid>
+        {operators.map(operator => {
+          return (
+            <InfoCard
+              key={operator.metadata.name}
+              link={`/operators/ns/${this.props.namespace}/${operator.metadata.name}`}
+              title={operator.metadata.name}
+              // TODO(andresmgot): Icons are protected by RBAC so we need to use the backend to retrieve those
+              // icon={TBD}
+              info={`v${operator.status.channels[0].currentCSVDesc.version}`}
+              tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
+              tag2Content={operator.status.provider.name}
+            />
+          );
+        })}
+      </CardGrid>
     );
   }
 }

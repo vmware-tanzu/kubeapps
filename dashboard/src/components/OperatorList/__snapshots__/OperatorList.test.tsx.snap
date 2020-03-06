@@ -17,3 +17,30 @@ exports[`loading spinner matches the snapshot 1`] = `
   </main>
 </div>
 `;
+
+exports[`render the operator list if the OLM is installed 1`] = `
+<div>
+  <PageHeader>
+    <h1>
+      Operators
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <CardGrid>
+        <InfoCard
+          info="v1.0.0"
+          key="foo"
+          link="/operators/ns/default/foo"
+          tag1Content="security"
+          tag2Content="kubeapps"
+          title="foo"
+        />
+      </CardGrid>
+    </LoadingWrapper>
+  </main>
+</div>
+`;
