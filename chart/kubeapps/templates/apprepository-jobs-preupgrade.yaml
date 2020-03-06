@@ -1,3 +1,4 @@
+{{- if .Values.featureFlags.invalidateCache }}
 # Ensure db indexes are set and invalidate the chart cache during both install and upgrade.
 apiVersion: batch/v1
 kind: Job
@@ -66,3 +67,4 @@ spec:
                   key: postgresql-password
                   name: {{ .Values.postgresql.existingSecret }}
             {{- end }}
+{{- end }}
