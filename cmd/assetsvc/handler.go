@@ -118,12 +118,10 @@ func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, sho
 	return newChartListResponse(charts), meta{totalPages}, err
 }
 
-const namespaceTODO = "kubeapps"
-
 // listCharts returns a list of charts
 func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 	pageNumber, pageSize := getPageNumberAndSize(req)
-	cl, meta, err := getPaginatedChartList(namespaceTODO, "", pageNumber, pageSize, showDuplicates(req))
+	cl, meta, err := getPaginatedChartList(params["namespace"], "", pageNumber, pageSize, showDuplicates(req))
 	if err != nil {
 		log.WithError(err).Error("could not fetch charts")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
@@ -133,10 +131,10 @@ func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 }
 
 // listRepoCharts returns a list of charts in the given repo
-// TODO: mnelson: shouldn't need a separate function here.
+// TODO: mnelson: check with Andres why we need a separate function above when `params["repo"]` should be "" by default
 func listRepoCharts(w http.ResponseWriter, req *http.Request, params Params) {
 	pageNumber, pageSize := getPageNumberAndSize(req)
-	cl, meta, err := getPaginatedChartList(namespaceTODO, params["repo"], pageNumber, pageSize, showDuplicates(req))
+	cl, meta, err := getPaginatedChartList(params["namespace"], params["repo"], pageNumber, pageSize, showDuplicates(req))
 	if err != nil {
 		log.WithError(err).Error("could not fetch charts")
 		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
