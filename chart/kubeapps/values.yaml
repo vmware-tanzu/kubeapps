@@ -641,4 +641,6 @@ authProxy:
 ## These are used to switch on in development features or new features not yet released.
 featureFlags:
   reposPerNamespace: false
+  # The invalidateCache flag must be set to default to true when we next release the Kubeapps app.
+  invalidateCache: false
   operators: false

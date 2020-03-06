@@ -123,6 +123,7 @@ if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
     "${HELM_CLIENT_TLS_FLAGS[@]}" \
     --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
     --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
+    --set featureFlags.invalidateCache=true \
     "${img_flags[@]}" \
     "${db_flags[@]}"
 else
@@ -131,6 +132,7 @@ else
   kubectl create ns kubeapps
   helm dep up "${ROOT_DIR}/chart/kubeapps/"
   helm install kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
+    --set featureFlags.invalidateCache=true \
     "${img_flags[@]}" \
     "${db_flags[@]}" \
     --set useHelm3=true
