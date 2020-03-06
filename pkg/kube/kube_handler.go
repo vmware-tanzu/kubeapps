@@ -23,21 +23,20 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
+	v1alpha1typed "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
 	corev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
 	corev1typed "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-
-	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
-	apprepoclientset "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
-	v1alpha1typed "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned/typed/apprepository/v1alpha1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // combinedClientsetInterface provides both the app repository clientset and the corev1 clientset.
@@ -45,6 +44,7 @@ type combinedClientsetInterface interface {
 	KubeappsV1alpha1() v1alpha1typed.KubeappsV1alpha1Interface
 	CoreV1() corev1typed.CoreV1Interface
 	AuthorizationV1() authorizationv1.AuthorizationV1Interface
+	RestClient() rest.Interface
 }
 
 // Need to use a type alias to embed the two Clientset's without a name clash.
@@ -52,6 +52,11 @@ type kubeClientsetAlias = apprepoclientset.Clientset
 type combinedClientset struct {
 	*kubeClientsetAlias
 	*kubernetes.Clientset
+	restCli rest.Interface
+}
+
+func (c *combinedClientset) RestClient() rest.Interface {
+	return c.restCli
 }
 
 // kubeHandler handles http requests for operating on app repositories and k8s resources
@@ -95,6 +100,7 @@ type handler interface {
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
 	ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error)
+	GetOperatorLogo(namespace, name string) ([]byte, error)
 }
 
 // AuthHandler exposes handler functionality as a user or the current serviceaccount
@@ -177,7 +183,7 @@ func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
 		clientsetForConfig: clientsetForConfig,
-		svcClientset:       &combinedClientset{svcAppRepoClient, svcKubeClient},
+		svcClientset:       &combinedClientset{svcAppRepoClient, svcKubeClient, svcKubeClient.RESTClient()},
 	}, nil
 }
 
@@ -191,7 +197,7 @@ func clientsetForConfig(config *rest.Config) (combinedClientsetInterface, error)
 	if err != nil {
 		return nil, err
 	}
-	return &combinedClientset{arclientset, coreclientset}, nil
+	return &combinedClientset{arclientset, coreclientset, coreclientset.RESTClient()}, nil
 }
 
 // configForToken returns a new config for a given auth token.
@@ -453,4 +459,9 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 // GetSecret return the a secret from a namespace using a token if given
 func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
 	return a.clientset.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+}
+
+// GetNamespaces return the list of namespaces that the user has permission to access
+func (a *userHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
+	return a.clientset.RestClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do().Raw()
 }

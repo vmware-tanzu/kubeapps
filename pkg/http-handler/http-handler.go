@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -133,6 +134,26 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 	}
 }
 
+// GetOperatorLogo return the list of namespaces
+func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		ns := mux.Vars(req)["namespace"]
+		name := mux.Vars(req)["name"]
+		logo, err := kubeHandler.AsSVC().GetOperatorLogo(ns, name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		ctype := http.DetectContentType(logo)
+		if strings.Contains(ctype, "text/") {
+			// DetectContentType is unable to return svg icons since they are in fact text
+			ctype = "image/svg+xml"
+		}
+		w.Header().Set("Content-Type", ctype)
+		w.Write(logo)
+	}
+}
+
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
 func SetupDefaultRoutes(r *mux.Router) error {
 	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"))
@@ -143,5 +164,6 @@ func SetupDefaultRoutes(r *mux.Router) error {
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
 	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
+	r.Methods("GET").Path("/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
 	return nil
 }
