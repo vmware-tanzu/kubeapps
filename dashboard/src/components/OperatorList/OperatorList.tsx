@@ -25,34 +25,36 @@ class OperatorList extends React.Component<IOperatorListProps> {
   }
 
   public render() {
-    const { isFetching, isOLMInstalled, error } = this.props;
+    const { isFetching, isOLMInstalled } = this.props;
     return (
       <div>
         <PageHeader>
           <h1>Operators</h1>
         </PageHeader>
         <main>
-          {error ? (
-            <ErrorSelector
-              error={error}
-              action="list"
-              resource="Operators"
-              namespace={this.props.namespace}
-            />
-          ) : (
-            <LoadingWrapper loaded={!isFetching}>
-              {isOLMInstalled ? this.renderOperators() : <OLMNotFound />}
-            </LoadingWrapper>
-          )}
+          <LoadingWrapper loaded={!isFetching}>
+            {isOLMInstalled ? this.renderOperators() : <OLMNotFound />}
+          </LoadingWrapper>
         </main>
       </div>
     );
   }
 
   private renderOperators() {
+    const { operators, error } = this.props;
+    if (error) {
+      return (
+        <ErrorSelector
+          error={error}
+          action="list"
+          resource="Operators"
+          namespace={this.props.namespace}
+        />
+      );
+    }
     return (
       <CardGrid>
-        {this.props.operators.map(operator => {
+        {operators.map(operator => {
           return (
             <InfoCard
               key={operator.metadata.name}

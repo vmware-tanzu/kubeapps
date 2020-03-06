@@ -50,7 +50,9 @@ it("call the OLM check and render the NotFound message if not found", () => {
 });
 
 it("renders an error if exists", () => {
-  const wrapper = shallow(<OperatorList {...defaultProps} error={new Error("Boom!")} />);
+  const wrapper = shallow(
+    <OperatorList {...defaultProps} isOLMInstalled={true} error={new Error("Boom!")} />,
+  );
   expect(wrapper.find(ErrorSelector)).toExist();
   expect(
     wrapper
@@ -59,6 +61,18 @@ it("renders an error if exists", () => {
       .dive()
       .text(),
   ).toMatch("Boom!");
+});
+
+it("skips the error if the OLM is not installed", () => {
+  const wrapper = shallow(
+    <OperatorList
+      {...defaultProps}
+      isOLMInstalled={false}
+      error={new Error("There are no operators!")}
+    />,
+  );
+  expect(wrapper.find(ErrorSelector)).not.toExist();
+  expect(wrapper.find(OLMNotFound)).toExist();
 });
 
 it("render the operator list if the OLM is installed", () => {
