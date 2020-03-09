@@ -27,7 +27,7 @@ type assetManager interface {
 	Init() error
 	Close() error
 	getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error)
-	getChart(chartID string) (models.Chart, error)
+	getChart(namespace, chartID string) (models.Chart, error)
 	getChartVersion(chartID, version string) (models.Chart, error)
 	getChartFiles(filesID string) (models.ChartFiles, error)
 	getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error)

@@ -97,11 +97,11 @@ func (m *mongodbAssetManager) getPaginatedChartList(namespace, repo string, page
 	return charts, totalPages, nil
 }
 
-func (m *mongodbAssetManager) getChart(chartID string) (models.Chart, error) {
+func (m *mongodbAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var chart models.Chart
-	err := db.C(chartCollection).Find(bson.M{"chart_id": chartID}).One(&chart)
+	err := db.C(chartCollection).Find(bson.M{"repo.namespace": namespace, "chart_id": chartID}).One(&chart)
 	return chart, err
 }
 

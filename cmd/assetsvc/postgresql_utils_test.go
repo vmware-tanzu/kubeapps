@@ -87,11 +87,11 @@ func Test_PGgetChart(t *testing.T) {
 		Chart:   models.Chart{ID: "foo"},
 		RawIcon: iconB64,
 	}
-	m.On("QueryOne", &models.ChartIconString{}, "SELECT info FROM charts WHERE chart_id = $1", []interface{}{"foo"}).Run(func(args mock.Arguments) {
+	m.On("QueryOne", &models.ChartIconString{}, "SELECT info FROM charts WHERE repo_namespace = $1 AND chart_id = $2", []interface{}{"namespace", "foo"}).Run(func(args mock.Arguments) {
 		*args.Get(0).(*models.ChartIconString) = dbChart
 	})
 
-	chart, err := pg.getChart("foo")
+	chart, err := pg.getChart("namespace", "foo")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}

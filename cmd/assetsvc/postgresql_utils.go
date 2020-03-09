@@ -92,9 +92,9 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	return charts, 1, nil
 }
 
-func (m *postgresAssetManager) getChart(chartID string) (models.Chart, error) {
+func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
 	var chart models.ChartIconString
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE chart_id = $1", dbutils.ChartTable), chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		return models.Chart{}, err
 	}
