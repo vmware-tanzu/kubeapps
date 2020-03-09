@@ -144,7 +144,6 @@ CREATE TABLE IF NOT EXISTS %s (
 		return err
 	}
 
-	// TODO(mnelson): Update to store chart name rather than chart_id for postgres
 	_, err = m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
