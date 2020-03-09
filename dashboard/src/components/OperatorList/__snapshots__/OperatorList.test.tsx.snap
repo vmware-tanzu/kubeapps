@@ -32,6 +32,7 @@ exports[`render the operator list if the OLM is installed 1`] = `
     >
       <CardGrid>
         <InfoCard
+          icon="api/v1/namespaces/default/operator/foo/logo"
           info="v1.0.0"
           key="foo"
           link="/operators/ns/default/foo"
