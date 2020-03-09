@@ -105,13 +105,14 @@ func (m *mongodbAssetManager) getChart(namespace, chartID string) (models.Chart,
 	return chart, err
 }
 
-func (m *mongodbAssetManager) getChartVersion(chartID, version string) (models.Chart, error) {
+func (m *mongodbAssetManager) getChartVersion(namespace, chartID, version string) (models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var chart models.Chart
 	err := db.C(chartCollection).Find(bson.M{
-		"chart_id":      chartID,
-		"chartversions": bson.M{"$elemMatch": bson.M{"version": version}},
+		"repo.namespace": namespace,
+		"chart_id":       chartID,
+		"chartversions":  bson.M{"$elemMatch": bson.M{"version": version}},
 	}).Select(bson.M{
 		"name": 1, "repo": 1, "description": 1, "home": 1, "keywords": 1, "maintainers": 1, "sources": 1,
 		"chartversions.$": 1,

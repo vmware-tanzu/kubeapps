@@ -116,11 +116,11 @@ func Test_PGgetChartVersion(t *testing.T) {
 			{Version: "2.0.0"},
 		},
 	}
-	m.On("QueryOne", &models.Chart{}, "SELECT info FROM charts WHERE chart_id = $1", []interface{}{"foo"}).Run(func(args mock.Arguments) {
+	m.On("QueryOne", &models.Chart{}, "SELECT info FROM charts WHERE repo_namespace = $1 AND chart_id = $2", []interface{}{"namespace", "foo"}).Run(func(args mock.Arguments) {
 		*args.Get(0).(*models.Chart) = dbChart
 	})
 
-	chart, err := pg.getChartVersion("foo", "1.0.0")
+	chart, err := pg.getChartVersion("namespace", "foo", "1.0.0")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}

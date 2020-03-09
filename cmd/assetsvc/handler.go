@@ -175,7 +175,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 // getChartVersion returns the given chart version
 func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	chart, err := manager.getChartVersion(chartID, params["version"])
+	chart, err := manager.getChartVersion(params["namespace"], chartID, params["version"])
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart version").Write(w)

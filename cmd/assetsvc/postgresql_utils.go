@@ -120,9 +120,9 @@ func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart
 	}, nil
 }
 
-func (m *postgresAssetManager) getChartVersion(chartID, version string) (models.Chart, error) {
+func (m *postgresAssetManager) getChartVersion(namespace, chartID, version string) (models.Chart, error) {
 	var chart models.Chart
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE chart_id = $1", dbutils.ChartTable), chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		return models.Chart{}, err
 	}
