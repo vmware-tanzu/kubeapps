@@ -171,25 +171,3 @@ func (m *postgresAssetManager) getChartsWithFilters(namespace, name, version, ap
 	}
 	return result, nil
 }
-
-// NOTE: searchCharts is not currently being used in Kubeapps
-func (m *postgresAssetManager) searchCharts(query, repo string) ([]*models.Chart, error) {
-	repoQuery := ""
-	if repo != "" {
-		repoQuery = fmt.Sprintf("info -> 'repo' ->> 'name' = '%s' AND", repo)
-	}
-	dbQuery := fmt.Sprintf(
-		"SELECT info FROM %s WHERE %s (info ->> 'name' ~ $1) "+
-			"OR (info ->> 'description' ~ $1) "+
-			"OR (info -> 'repo' ->> 'name' ~ $1) "+
-			// TODO(andresmgot): compare keywords one by one
-			"OR (info ->> 'keywords' ~ $1)"+
-			// TODO(andresmgot): compare sources one by one
-			"OR (info ->> 'sources' ~ $1)"+
-			// TODO(andresmgot): compare maintainers one by one
-			"OR (info ->> 'maintainers' ~ $1)",
-		dbutils.ChartTable,
-		repoQuery,
-	)
-	return m.QueryAllCharts(dbQuery, query)
-}

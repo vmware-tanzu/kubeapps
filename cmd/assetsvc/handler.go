@@ -273,33 +273,6 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 	response.NewDataResponse(cl).Write(w)
 }
 
-// searchCharts returns the list of charts that matches the query param in any of these fields:
-//  - name
-//  - description
-//  - repository name
-//  - any keyword
-//  - any source
-//  - any maintainer name
-func searchCharts(w http.ResponseWriter, req *http.Request, params Params) {
-	query := req.FormValue("q")
-	repo := params["repo"]
-	charts, err := manager.searchCharts(query, repo)
-	if err != nil {
-		log.WithError(err).Errorf(
-			"could not find charts with the given query %s",
-			query,
-		)
-		// continue to return empty list
-	}
-
-	chartResponse := charts
-	if !showDuplicates(req) {
-		chartResponse = uniqChartList(charts)
-	}
-	cl := newChartListResponse(chartResponse)
-	response.NewDataResponse(cl).Write(w)
-}
-
 func newChartResponse(c *models.Chart) *apiResponse {
 	latestCV := c.ChartVersions[0]
 	return &apiResponse{

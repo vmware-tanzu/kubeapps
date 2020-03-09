@@ -251,26 +251,3 @@ func Test_getPaginatedChartList(t *testing.T) {
 		})
 	}
 }
-
-func Test_searchCharts(t *testing.T) {
-	tests := []struct {
-		name          string
-		query         string
-		repo          string
-		expectedQuery string
-	}{
-		{"without repo", "foo", "", "SELECT info FROM charts WHERE  (info ->> 'name' ~ $1) OR (info ->> 'description' ~ $1) OR (info -> 'repo' ->> 'name' ~ $1) OR (info ->> 'keywords' ~ $1)OR (info ->> 'sources' ~ $1)OR (info ->> 'maintainers' ~ $1)"},
-		{"with repo", "foo", "bar", "SELECT info FROM charts WHERE info -> 'repo' ->> 'name' = 'bar' AND (info ->> 'name' ~ $1) OR (info ->> 'description' ~ $1) OR (info -> 'repo' ->> 'name' ~ $1) OR (info ->> 'keywords' ~ $1)OR (info ->> 'sources' ~ $1)OR (info ->> 'maintainers' ~ $1)"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &mock.Mock{}
-			fpg := &fakePGManager{m}
-			pg := postgresAssetManager{fpg}
-
-			m.On("QueryAllCharts", tt.expectedQuery, []interface{}{tt.query})
-			pg.searchCharts(tt.query, tt.repo)
-			m.AssertExpectations(t)
-		})
-	}
-}

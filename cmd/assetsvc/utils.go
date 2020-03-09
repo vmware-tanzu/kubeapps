@@ -31,7 +31,6 @@ type assetManager interface {
 	getChartVersion(namespace, chartID, version string) (models.Chart, error)
 	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
 	getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error)
-	searchCharts(query, repo string) ([]*models.Chart, error)
 }
 
 func newManager(databaseType string, config datastore.Config) (assetManager, error) {
