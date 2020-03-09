@@ -140,9 +140,9 @@ func (m *postgresAssetManager) getChartVersion(namespace, chartID, version strin
 	return chart, nil
 }
 
-func (m *postgresAssetManager) getChartFiles(filesID string) (models.ChartFiles, error) {
+func (m *postgresAssetManager) getChartFiles(namespace, filesID string) (models.ChartFiles, error) {
 	var chartFiles models.ChartFiles
-	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE chart_files_id = $1", dbutils.ChartFilesTable), filesID)
+	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
 		return models.ChartFiles{}, err
 	}
@@ -158,8 +158,8 @@ func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, 
 	return models.ChartVersion{}, false
 }
 
-func (m *postgresAssetManager) getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error) {
-	charts, err := m.QueryAllCharts(fmt.Sprintf("SELECT info FROM %s WHERE info ->> 'name' = $1", dbutils.ChartTable), name)
+func (m *postgresAssetManager) getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error) {
+	charts, err := m.QueryAllCharts(fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND info ->> 'name' = $2", dbutils.ChartTable), namespace, name)
 	if err != nil {
 		return nil, err
 	}

@@ -120,20 +120,21 @@ func (m *mongodbAssetManager) getChartVersion(namespace, chartID, version string
 	return chart, err
 }
 
-func (m *mongodbAssetManager) getChartFiles(filesID string) (models.ChartFiles, error) {
+func (m *mongodbAssetManager) getChartFiles(namespace, filesID string) (models.ChartFiles, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var files models.ChartFiles
-	err := db.C(filesCollection).Find(bson.M{"file_id": filesID}).One(&files)
+	err := db.C(filesCollection).Find(bson.M{"repo.namespace": namespace, "file_id": filesID}).One(&files)
 	return files, err
 }
 
-func (m *mongodbAssetManager) getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error) {
+func (m *mongodbAssetManager) getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
 	err := db.C(chartCollection).Find(bson.M{
-		"name": name,
+		"repo.namespace": namespace,
+		"name":           name,
 		"chartversions": bson.M{
 			"$elemMatch": bson.M{"version": version, "appversion": appVersion},
 		}}).Select(bson.M{

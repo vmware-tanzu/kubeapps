@@ -141,11 +141,11 @@ func Test_getChartFiles(t *testing.T) {
 	pg := postgresAssetManager{fpg}
 
 	expectedFiles := models.ChartFiles{ID: "foo"}
-	m.On("QueryOne", &models.ChartFiles{}, "SELECT info FROM files WHERE chart_files_id = $1", []interface{}{"foo"}).Run(func(args mock.Arguments) {
+	m.On("QueryOne", &models.ChartFiles{}, "SELECT info FROM files WHERE repo_namespace = $1 AND chart_files_id = $2", []interface{}{"namespace", "foo"}).Run(func(args mock.Arguments) {
 		*args.Get(0).(*models.ChartFiles) = expectedFiles
 	})
 
-	files, err := pg.getChartFiles("foo")
+	files, err := pg.getChartFiles("namespace", "foo")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -167,9 +167,9 @@ func Test_getChartWithFilters(t *testing.T) {
 		},
 	}
 	chartsResponse = []*models.Chart{&dbChart}
-	m.On("QueryAllCharts", "SELECT info FROM charts WHERE info ->> 'name' = $1", []interface{}{"foo"})
+	m.On("QueryAllCharts", "SELECT info FROM charts WHERE repo_namespace = $1 AND info ->> 'name' = $2", []interface{}{"namespace", "foo"})
 
-	charts, err := pg.getChartsWithFilters("foo", "1.0.0", "1.0.1")
+	charts, err := pg.getChartsWithFilters("namespace", "foo", "1.0.0", "1.0.1")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}

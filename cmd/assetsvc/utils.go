@@ -29,8 +29,8 @@ type assetManager interface {
 	getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error)
 	getChart(namespace, chartID string) (models.Chart, error)
 	getChartVersion(namespace, chartID, version string) (models.Chart, error)
-	getChartFiles(filesID string) (models.ChartFiles, error)
-	getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error)
+	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
+	getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error)
 	searchCharts(query, repo string) ([]*models.Chart, error)
 }
 
