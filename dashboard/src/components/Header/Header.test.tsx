@@ -51,13 +51,30 @@ describe("settings", () => {
 
   it("renders settings with reposPerNamespace", () => {
     const wrapper = shallow(
-      <Header {...defaultProps} featureFlags={{ reposPerNamespace: true }} />,
+      <Header {...defaultProps} featureFlags={{ reposPerNamespace: true, operators: false }} />,
     );
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
     const expectedItems = [
       { children: "App Repositories", to: "/config/ns/default/repos" },
       { children: "Service Brokers", to: "/config/brokers" },
+    ];
+    items.forEach((item, index) => {
+      expect(item.children).toBe(expectedItems[index].children);
+      expect(item.to).toBe(expectedItems[index].to);
+    });
+  });
+
+  it("renders operators link", () => {
+    const wrapper = shallow(
+      <Header {...defaultProps} featureFlags={{ reposPerNamespace: true, operators: true }} />,
+    );
+    const settingsbar = wrapper.find(".header__nav__submenu").first();
+    const items = settingsbar.find("NavLink").map(p => p.props());
+    const expectedItems = [
+      { children: "App Repositories", to: "/config/ns/default/repos" },
+      { children: "Service Brokers", to: "/config/brokers" },
+      { children: "Operators", to: "/operators/ns/default" },
     ];
     items.forEach((item, index) => {
       expect(item.children).toBe(expectedItems[index].children);
