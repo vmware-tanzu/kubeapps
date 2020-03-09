@@ -60,8 +60,7 @@ class OperatorList extends React.Component<IOperatorListProps> {
               key={operator.metadata.name}
               link={`/operators/ns/${this.props.namespace}/${operator.metadata.name}`}
               title={operator.metadata.name}
-              // TODO(andresmgot): Icons are protected by RBAC so we need to use the backend to retrieve those
-              // icon={TBD}
+              icon={`api/v1/namespaces/${this.props.namespace}/operator/${operator.metadata.name}/logo`}
               info={`v${operator.status.channels[0].currentCSVDesc.version}`}
               tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
               tag2Content={operator.status.provider.name}

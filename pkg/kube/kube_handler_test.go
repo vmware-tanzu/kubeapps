@@ -33,6 +33,7 @@ import (
 	"k8s.io/client-go/discovery"
 	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
+	fakeRest "k8s.io/client-go/rest/fake"
 	k8stesting "k8s.io/client-go/testing"
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -101,12 +102,17 @@ type fakeAppRepoClientset = fakeapprepoclientset.Clientset
 type fakeCombinedClientset struct {
 	*fakeAppRepoClientset
 	*fakecoreclientset.Clientset
+	rc *fakeRest.RESTClient
 }
 
 // Not sure why golang thinks this Discovery() is ambiguous on the fake but not on
 // the real combinedClientset, but to satisfy:
 func (f fakeCombinedClientset) Discovery() discovery.DiscoveryInterface {
 	return f.Clientset.Discovery()
+}
+
+func (f fakeCombinedClientset) RestClient() rest.Interface {
+	return f.rc
 }
 
 func TestAppRepositoryCreate(t *testing.T) {
@@ -182,6 +188,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 			cs := fakeCombinedClientset{
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
 			}
 			handler := userHandler{
 				kubeappsNamespace: tc.kubeappsNamespace,
@@ -309,6 +316,7 @@ func TestDeleteAppRepository(t *testing.T) {
 			cs := fakeCombinedClientset{
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(makeSecretsForRepos(tc.existingRepos, kubeappsNamespace)...),
+				&fakeRest.RESTClient{},
 			}
 			handler := kubeHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
@@ -617,6 +625,7 @@ func TestGetNamespaces(t *testing.T) {
 			cs := fakeCombinedClientset{
 				fakeapprepoclientset.NewSimpleClientset(),
 				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
 			}
 
 			for _, ns := range tc.existingNS {

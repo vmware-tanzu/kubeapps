@@ -86,3 +86,8 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error) {
 	return &http.Response{Body: ioutil.NopCloser(strings.NewReader("valid: yaml")), StatusCode: 200}, c.Err
 }
+
+// GetOperatorLogo fake
+func (c *FakeHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
+	return []byte{}, nil
+}

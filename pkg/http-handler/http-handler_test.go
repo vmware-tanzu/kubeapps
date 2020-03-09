@@ -17,6 +17,7 @@ limitations under the License.
 package httphandler
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
@@ -193,6 +194,36 @@ func TestValidateAppRepository(t *testing.T) {
 
 			if got, want := response.Code, tc.expectedCode; got != want {
 				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+		})
+	}
+}
+
+func TestGetOperatorLogo(t *testing.T) {
+	testCases := []struct {
+		name                string
+		logo                []byte
+		expectedContentType string
+		err                 error
+	}{
+		{
+			name:                "it should return a SVG logo",
+			logo:                []byte("<svg viewBox=\"0 0 658 270\"></svg>"),
+			expectedContentType: "image/svg+xml",
+		},
+		// TODO(andresmgot): Add test for PNG scenario
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			getOpLogo := GetOperatorLogo(&kube.FakeHandler{Err: tc.err})
+			req := httptest.NewRequest("Get", "https://foo.bar/backend/v1/namespaces/kubeapps/operator/foo", bytes.NewReader(tc.logo))
+			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps", "name": "foo"})
+
+			response := httptest.NewRecorder()
+			getOpLogo(response, req)
+
+			if got := response.Header().Get("Content-Type"); tc.expectedContentType != got {
+				t.Errorf("Expecting content-type %s got %s", tc.expectedContentType, got)
 			}
 		})
 	}
