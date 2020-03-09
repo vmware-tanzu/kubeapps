@@ -49,7 +49,7 @@ func (m *mongodbAssetManager) getPaginatedChartList(namespace, repo string, page
 		matcher["repo.name"] = repo
 	}
 	if len(matcher) > 0 {
-		pipeline = append(pipeline, matcher)
+		pipeline = append(pipeline, bson.M{"$match": matcher})
 	}
 
 	if !showDuplicates {

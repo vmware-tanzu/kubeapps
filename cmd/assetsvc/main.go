@@ -42,7 +42,7 @@ func setupRoutes() http.Handler {
 
 	// Routes
 	apiv1 := r.PathPrefix(pathPrefix).Subrouter()
-	// TODO: Check if we actually need multiple handlers here or can just use one path per endpoint.
+	// TODO: mnelson: Seems we could use path per endpoint handling empty params? Check.
 	apiv1.Methods("GET").Path("/ns/{namespace}/charts").Queries("name", "{chartName}", "version", "{version}", "appversion", "{appversion}").Handler(WithParams(listChartsWithFilters))
 	apiv1.Methods("GET").Path("/ns/{namespace}/charts").Queries("name", "{chartName}", "version", "{version}", "appversion", "{appversion}", "showDuplicates", "{showDuplicates}").Handler(WithParams(listChartsWithFilters))
 	apiv1.Methods("GET").Path("/ns/{namespace}/charts").Handler(WithParams(listCharts))

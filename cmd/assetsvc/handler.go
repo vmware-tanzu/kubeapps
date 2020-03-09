@@ -131,7 +131,8 @@ func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
 }
 
 // listRepoCharts returns a list of charts in the given repo
-// TODO: mnelson: check with Andres why we need a separate function above when `params["repo"]` should be "" by default
+// TODO: mnelson: Refactor to have just one `listCharts` function where params
+// can be empty.
 func listRepoCharts(w http.ResponseWriter, req *http.Request, params Params) {
 	pageNumber, pageSize := getPageNumberAndSize(req)
 	cl, meta, err := getPaginatedChartList(params["namespace"], params["repo"], pageNumber, pageSize, showDuplicates(req))
