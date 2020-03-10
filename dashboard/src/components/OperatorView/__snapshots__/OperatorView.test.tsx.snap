@@ -9,6 +9,7 @@ exports[`renders a full OperatorView 1`] = `
     icon="api/v1/namespaces/kubeapps/operator/foo/logo"
     id="foo"
     namespace="kubeapps"
+    namespaced={true}
     provider="Kubeapps"
     version="1.0.0"
   />

@@ -5,7 +5,7 @@ import { ErrorSelector } from "../ErrorAlert";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import CapabiliyLevel from "./OperatorCapabilityLevel";
-import OperatorReadme from "./OperatorDescription";
+import OperatorDescription from "./OperatorDescription";
 import OperatorHeader from "./OperatorHeader";
 
 interface IOperatorViewProps {
@@ -31,14 +31,16 @@ class OperatorView extends React.Component<IOperatorViewProps> {
     if (isFetching || !operator) {
       return <LoadingWrapper />;
     }
-    if (operator.status.channels.length === 0) {
+    const channel = operator.status.channels.find(ch => ch.name === operator.status.defaultChannel);
+    if (!channel) {
       return (
         <UnexpectedErrorPage
           text={`Operator ${operatorName} doesn't define a valid channel. This is needed to extract required info.`}
         />
       );
     }
-    const { currentCSVDesc } = operator.status.channels[0];
+    const { currentCSVDesc } = channel;
+    const namespaced = currentCSVDesc.installModes.find(m => m.type === "AllNamespaces");
     return (
       <section className="ChartView padding-b-big">
         <OperatorHeader
@@ -48,12 +50,13 @@ class OperatorView extends React.Component<IOperatorViewProps> {
           version={currentCSVDesc.version}
           namespace={namespace}
           provider={operator.status.provider.name}
+          namespaced={!namespaced?.supported}
         />
         <main>
           <div className="container container-fluid">
             <div className="row">
               <div className="col-9 ChartView__readme-container">
-                <OperatorReadme description={currentCSVDesc.description} />
+                <OperatorDescription description={currentCSVDesc.description} />
               </div>
               <div className="col-3 ChartView__sidebar-container">
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">

@@ -2,6 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 import { NotFoundError } from "../../shared/types";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
+import OperatorDescription from "./OperatorDescription";
 import OperatorView from "./OperatorView";
 
 const defaultProps = {
@@ -10,6 +11,36 @@ const defaultProps = {
   isFetching: false,
   namespace: "kubeapps",
 };
+
+const defaultOperator = {
+  metadata: {
+    name: "foo",
+    namespace: "kubeapps",
+  },
+  status: {
+    provider: {
+      name: "Kubeapps",
+    },
+    defaultChannel: "beta",
+    channels: [
+      {
+        name: "beta",
+        currentCSVDesc: {
+          displayName: "Foo",
+          version: "1.0.0",
+          description: "this is a testing operator",
+          annotations: {
+            capabilities: "Basic Install",
+            repository: "github.com/kubeapps/kubeapps",
+            containerImage: "kubeapps/kubeapps",
+            createdAt: "one day",
+          },
+          installModes: [],
+        },
+      },
+    ],
+  },
+} as any;
 
 it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
@@ -40,32 +71,20 @@ it("shows an error if the operator doesn't have any channel defined", () => {
 });
 
 it("renders a full OperatorView", () => {
+  const wrapper = shallow(<OperatorView {...defaultProps} operator={defaultOperator} />);
+  expect(wrapper).toMatchSnapshot();
+});
+
+it("selects the default channel", () => {
   const operator = {
-    metadata: {
-      name: "foo",
-      namespace: "kubeapps",
-    },
+    ...defaultOperator,
     status: {
-      provider: {
-        name: "Kubeapps",
-      },
-      channels: [
-        {
-          currentCSVDesc: {
-            displayName: "Foo",
-            version: "1.0.0",
-            description: "this is a testing operator",
-            annotations: {
-              capabilities: "Basic Install",
-              repository: "github.com/kubeapps/kubeapps",
-              containerImage: "kubeapps/kubeapps",
-              createdAt: "one day",
-            },
-          },
-        },
-      ],
+      ...defaultOperator.status,
+      channels: [{ name: "alpha" }, defaultOperator.status.channels[0]],
     },
   };
   const wrapper = shallow(<OperatorView {...defaultProps} operator={operator as any} />);
-  expect(wrapper).toMatchSnapshot();
+  expect(wrapper.find(OperatorDescription).prop("description")).toEqual(
+    "this is a testing operator",
+  );
 });
