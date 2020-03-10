@@ -92,9 +92,9 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	return charts, 1, nil
 }
 
-func (m *postgresAssetManager) getChart(chartID string) (models.Chart, error) {
+func (m *postgresAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
 	var chart models.ChartIconString
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE chart_id = $1", dbutils.ChartTable), chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		return models.Chart{}, err
 	}
@@ -120,9 +120,9 @@ func (m *postgresAssetManager) getChart(chartID string) (models.Chart, error) {
 	}, nil
 }
 
-func (m *postgresAssetManager) getChartVersion(chartID, version string) (models.Chart, error) {
+func (m *postgresAssetManager) getChartVersion(namespace, chartID, version string) (models.Chart, error) {
 	var chart models.Chart
-	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE chart_id = $1", dbutils.ChartTable), chartID)
+	err := m.QueryOne(&chart, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_id = $2", dbutils.ChartTable), namespace, chartID)
 	if err != nil {
 		return models.Chart{}, err
 	}
@@ -140,9 +140,9 @@ func (m *postgresAssetManager) getChartVersion(chartID, version string) (models.
 	return chart, nil
 }
 
-func (m *postgresAssetManager) getChartFiles(filesID string) (models.ChartFiles, error) {
+func (m *postgresAssetManager) getChartFiles(namespace, filesID string) (models.ChartFiles, error) {
 	var chartFiles models.ChartFiles
-	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE chart_files_id = $1", dbutils.ChartFilesTable), filesID)
+	err := m.QueryOne(&chartFiles, fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND chart_files_id = $2", dbutils.ChartFilesTable), namespace, filesID)
 	if err != nil {
 		return models.ChartFiles{}, err
 	}
@@ -158,8 +158,8 @@ func containsVersionAndAppVersion(chartVersions []models.ChartVersion, version, 
 	return models.ChartVersion{}, false
 }
 
-func (m *postgresAssetManager) getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error) {
-	charts, err := m.QueryAllCharts(fmt.Sprintf("SELECT info FROM %s WHERE info ->> 'name' = $1", dbutils.ChartTable), name)
+func (m *postgresAssetManager) getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error) {
+	charts, err := m.QueryAllCharts(fmt.Sprintf("SELECT info FROM %s WHERE repo_namespace = $1 AND info ->> 'name' = $2", dbutils.ChartTable), namespace, name)
 	if err != nil {
 		return nil, err
 	}
@@ -170,26 +170,4 @@ func (m *postgresAssetManager) getChartsWithFilters(name, version, appVersion st
 		}
 	}
 	return result, nil
-}
-
-// NOTE: searchCharts is not currently being used in Kubeapps
-func (m *postgresAssetManager) searchCharts(query, repo string) ([]*models.Chart, error) {
-	repoQuery := ""
-	if repo != "" {
-		repoQuery = fmt.Sprintf("info -> 'repo' ->> 'name' = '%s' AND", repo)
-	}
-	dbQuery := fmt.Sprintf(
-		"SELECT info FROM %s WHERE %s (info ->> 'name' ~ $1) "+
-			"OR (info ->> 'description' ~ $1) "+
-			"OR (info -> 'repo' ->> 'name' ~ $1) "+
-			// TODO(andresmgot): compare keywords one by one
-			"OR (info ->> 'keywords' ~ $1)"+
-			// TODO(andresmgot): compare sources one by one
-			"OR (info ->> 'sources' ~ $1)"+
-			// TODO(andresmgot): compare maintainers one by one
-			"OR (info ->> 'maintainers' ~ $1)",
-		dbutils.ChartTable,
-		repoQuery,
-	)
-	return m.QueryAllCharts(dbQuery, query)
 }

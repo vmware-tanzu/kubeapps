@@ -27,11 +27,10 @@ type assetManager interface {
 	Init() error
 	Close() error
 	getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error)
-	getChart(chartID string) (models.Chart, error)
-	getChartVersion(chartID, version string) (models.Chart, error)
-	getChartFiles(filesID string) (models.ChartFiles, error)
-	getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error)
-	searchCharts(query, repo string) ([]*models.Chart, error)
+	getChart(namespace, chartID string) (models.Chart, error)
+	getChartVersion(namespace, chartID, version string) (models.Chart, error)
+	getChartFiles(namespace, filesID string) (models.ChartFiles, error)
+	getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error)
 }
 
 func newManager(databaseType string, config datastore.Config) (assetManager, error) {

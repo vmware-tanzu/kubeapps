@@ -56,6 +56,17 @@ func TestGetChart(t *testing.T) {
 			expectedErr: sql.ErrNoRows,
 		},
 		{
+			name: "it returns an error if the chart does not exist in that repo",
+			existingCharts: map[string][]models.Chart{
+				"namespace-1": []models.Chart{
+					models.Chart{ID: "chart-1", Name: "my-chart"},
+				},
+			},
+			chartId:     "chart-1",
+			namespace:   "other-namespace",
+			expectedErr: sql.ErrNoRows,
+		},
+		{
 			name: "it returns the chart matching the chartid",
 			existingCharts: map[string][]models.Chart{
 				"namespace-1": []models.Chart{
@@ -77,7 +88,7 @@ func TestGetChart(t *testing.T) {
 				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
-			chart, err := pam.getChart(tc.chartId)
+			chart, err := pam.getChart(tc.namespace, tc.chartId)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("got: %+v, want: %+v", got, want)
@@ -124,6 +135,20 @@ func TestGetVersion(t *testing.T) {
 			expectedErr:      ErrChartVersionNotFound,
 		},
 		{
+			name: "it returns an error if the chart version does not exist in that namespace",
+			existingCharts: map[string][]models.Chart{
+				"namespace-1": []models.Chart{
+					models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
+						models.ChartVersion{Version: "1.2.3"},
+					}},
+				},
+			},
+			chartId:          "chart-1",
+			namespace:        "other-namespace",
+			requestedVersion: "1.2.3",
+			expectedErr:      sql.ErrNoRows,
+		},
+		{
 			name: "it returns the chart version matching the chartid and version",
 			existingCharts: map[string][]models.Chart{
 				"namespace-1": []models.Chart{
@@ -148,7 +173,7 @@ func TestGetVersion(t *testing.T) {
 				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
-			chart, err := pam.getChartVersion(tc.chartId, tc.requestedVersion)
+			chart, err := pam.getChartVersion(tc.namespace, tc.chartId, tc.requestedVersion)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("got: %+v, want: %+v", got, want)

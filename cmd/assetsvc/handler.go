@@ -147,7 +147,7 @@ func listRepoCharts(w http.ResponseWriter, req *http.Request, params Params) {
 // getChart returns the chart from the given repo
 func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	chart, err := manager.getChart(chartID)
+	chart, err := manager.getChart(params["namespace"], chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
@@ -161,7 +161,7 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 // listChartVersions returns a list of chart versions for the given chart
 func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) {
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	chart, err := manager.getChart(chartID)
+	chart, err := manager.getChart(params["namespace"], chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart").Write(w)
@@ -175,7 +175,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 // getChartVersion returns the given chart version
 func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	chart, err := manager.getChartVersion(chartID, params["version"])
+	chart, err := manager.getChartVersion(params["namespace"], chartID, params["version"])
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		response.NewErrorResponse(http.StatusNotFound, "could not find chart version").Write(w)
@@ -189,7 +189,7 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 // getChartIcon returns the icon for a given chart
 func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 	chartID := fmt.Sprintf("%s/%s", params["repo"], params["chartName"])
-	chart, err := manager.getChart(chartID)
+	chart, err := manager.getChart(params["namespace"], chartID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find chart with id %s", chartID)
 		http.NotFound(w, req)
@@ -213,7 +213,7 @@ func getChartIcon(w http.ResponseWriter, req *http.Request, params Params) {
 // getChartVersionReadme returns the README for a given chart
 func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Params) {
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	files, err := manager.getChartFiles(fileID)
+	files, err := manager.getChartFiles(params["namespace"], fileID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find files with id %s", fileID)
 		http.NotFound(w, req)
@@ -231,7 +231,7 @@ func getChartVersionReadme(w http.ResponseWriter, req *http.Request, params Para
 // getChartVersionValues returns the values.yaml for a given chart
 func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Params) {
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	files, err := manager.getChartFiles(fileID)
+	files, err := manager.getChartFiles(params["namespace"], fileID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find values.yaml with id %s", fileID)
 		http.NotFound(w, req)
@@ -244,7 +244,7 @@ func getChartVersionValues(w http.ResponseWriter, req *http.Request, params Para
 // getChartVersionSchema returns the values.schema.json for a given chart
 func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Params) {
 	fileID := fmt.Sprintf("%s/%s-%s", params["repo"], params["chartName"], params["version"])
-	files, err := manager.getChartFiles(fileID)
+	files, err := manager.getChartFiles(params["namespace"], fileID)
 	if err != nil {
 		log.WithError(err).Errorf("could not find values.schema.json with id %s", fileID)
 		http.NotFound(w, req)
@@ -256,38 +256,11 @@ func getChartVersionSchema(w http.ResponseWriter, req *http.Request, params Para
 
 // listChartsWithFilters returns the list of repos that contains the given chart and the latest version found
 func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Params) {
-	charts, err := manager.getChartsWithFilters(params["chartName"], req.FormValue("version"), req.FormValue("appversion"))
+	charts, err := manager.getChartsWithFilters(params["namespace"], params["chartName"], req.FormValue("version"), req.FormValue("appversion"))
 	if err != nil {
 		log.WithError(err).Errorf(
 			"could not find charts with the given name %s, version %s and appversion %s",
 			params["chartName"], req.FormValue("version"), req.FormValue("appversion"),
-		)
-		// continue to return empty list
-	}
-
-	chartResponse := charts
-	if !showDuplicates(req) {
-		chartResponse = uniqChartList(charts)
-	}
-	cl := newChartListResponse(chartResponse)
-	response.NewDataResponse(cl).Write(w)
-}
-
-// searchCharts returns the list of charts that matches the query param in any of these fields:
-//  - name
-//  - description
-//  - repository name
-//  - any keyword
-//  - any source
-//  - any maintainer name
-func searchCharts(w http.ResponseWriter, req *http.Request, params Params) {
-	query := req.FormValue("q")
-	repo := params["repo"]
-	charts, err := manager.searchCharts(query, repo)
-	if err != nil {
-		log.WithError(err).Errorf(
-			"could not find charts with the given query %s",
-			query,
 		)
 		// continue to return empty list
 	}
