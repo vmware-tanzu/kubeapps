@@ -7,5 +7,5 @@ RUN yarn install --frozen-lockfile
 COPY . /app
 RUN yarn run build
 
-FROM bitnami/nginx:1.16.1-debian-10-r27
+FROM bitnami/nginx:1.16.1-debian-10-r42
 COPY --from=build /app/build /app
