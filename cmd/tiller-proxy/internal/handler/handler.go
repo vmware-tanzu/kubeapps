@@ -62,11 +62,11 @@ func (h *TillerProxy) logStatus(name string) {
 func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	log.Printf("Creating Helm Release")
 	chartDetails, chartMulti, err := handlerutil.ParseAndGetChart(req, h.ChartClient, requireV1Support)
-	ch := chartMulti.Helm2Chart
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
+	ch := chartMulti.Helm2Chart
 	if !h.DisableUserAuthCheck {
 		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
 		if err != nil {
