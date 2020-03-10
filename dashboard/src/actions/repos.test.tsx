@@ -482,6 +482,7 @@ describe("checkChart", () => {
 
     await store.dispatch(repoActions.checkChart("my-repo", "my-chart"));
     expect(store.getActions()).toEqual(expectedActions);
+    expect(Chart.fetchChartVersions).toBeCalledWith("kubeapps-namespace", "my-repo/my-chart");
   });
 
   it("dispatches requestRepo and errorChart if error fetching", async () => {
@@ -501,6 +502,7 @@ describe("checkChart", () => {
 
     await store.dispatch(repoActions.checkChart("my-repo", "my-chart"));
     expect(store.getActions()).toEqual(expectedActions);
+    expect(Chart.fetchChartVersions).toBeCalledWith("kubeapps-namespace", "my-repo/my-chart");
   });
 });
 

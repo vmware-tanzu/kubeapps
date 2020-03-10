@@ -12,8 +12,12 @@ let axiosGetMock = jest.fn();
 let store: any;
 let response: any;
 
+const namespace = "chart-namespace";
+
 beforeEach(() => {
-  store = mockStore();
+  store = mockStore({
+    config: { namespace },
+  });
   axiosGetMock.mockImplementation(() => {
     return {
       status: 200,
@@ -38,7 +42,7 @@ describe("fetchCharts", () => {
     ];
     await store.dispatch(actions.charts.fetchCharts("foo"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe("api/assetsvc/v1/charts/foo");
+    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo`);
   });
 
   it("returns a 404 error", async () => {
@@ -80,7 +84,7 @@ describe("fetchChartVersions", () => {
     ];
     await store.dispatch(actions.charts.fetchChartVersions("foo"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe("api/assetsvc/v1/charts/foo/versions");
+    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions`);
   });
 });
 
@@ -96,7 +100,7 @@ describe("getChartVersion", () => {
     ];
     await store.dispatch(actions.charts.getChartVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe("api/assetsvc/v1/charts/foo/versions/1.0.0");
+    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions/1.0.0`);
   });
 
   it("gets a chart version with tag", async () => {
@@ -111,7 +115,7 @@ describe("getChartVersion", () => {
     await store.dispatch(actions.charts.getChartVersion("foo", "1.0.0-alpha+1.2.3-beta2"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      "api/assetsvc/v1/charts/foo/versions/1.0.0-alpha%2B1.2.3-beta2",
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions/1.0.0-alpha%2B1.2.3-beta2`,
     );
   });
 
@@ -215,7 +219,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     ];
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe("api/assetsvc/v1/charts/foo/versions");
+    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions`);
   });
 
   it("returns a not found error", async () => {
@@ -233,7 +237,7 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     axiosWithAuth.get = axiosGetMock;
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe("api/assetsvc/v1/charts/foo/versions");
+    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions`);
   });
 });
 
