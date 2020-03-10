@@ -4,12 +4,13 @@ import { getType } from "typesafe-actions";
 import { OperatorAction } from "actions/operators";
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
-import { IResource } from "../shared/types";
+import { IPackageManifest, IResource } from "../shared/types";
 
 export interface IOperatorsState {
   isFetching: boolean;
   isOLMInstalled: boolean;
   operators: IResource[];
+  operator?: IPackageManifest;
   error?: Error;
 }
 
@@ -35,6 +36,10 @@ const catalogReducer = (
       return { ...state, isFetching: true };
     case getType(operators.receiveOperators):
       return { ...state, isFetching: false, operators: action.payload };
+    case getType(operators.requestOperator):
+      return { ...state, isFetching: true };
+    case getType(operators.receiveOperator):
+      return { ...state, isFetching: false, operator: action.payload };
     case getType(operators.errorOperators):
       return { ...state, isFetching: false, error: action.payload };
     case LOCATION_CHANGE:

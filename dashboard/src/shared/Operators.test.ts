@@ -39,3 +39,17 @@ it("get operators", async () => {
     `api/kube/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests`,
   );
 });
+
+it("get operator", async () => {
+  const operator = { metadata: { name: "foo" } } as IPackageManifest;
+  const ns = "default";
+  const opName = "foo";
+  axiosWithAuth.get = jest.fn(() => {
+    return { data: operator };
+  });
+  expect(await Operators.getOperator(ns, opName)).toEqual(operator);
+  expect(axiosWithAuth.get).toHaveBeenCalled();
+  expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
+    `api/kube/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests/${opName}`,
+  );
+});
