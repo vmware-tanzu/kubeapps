@@ -223,7 +223,7 @@ export function checkChart(
     dispatch(requestRepo());
     const appRepository = await AppRepository.get(repo, namespace);
     try {
-      await Chart.fetchChartVersions(`${repo}/${chartName}`);
+      await Chart.fetchChartVersions(namespace, `${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));
       return true;
     } catch (e) {
