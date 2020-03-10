@@ -113,6 +113,11 @@ img_flags=(
   "--set" "kubeops.image.repository=${images[5]}"
 )
 
+# TODO(andresmgot): Remove this condition with the parameter in the next version
+if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
+  invalidateCacheFlag="--set featureFlags.invalidateCache=true"
+fi
+
 if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
   # Init Tiller
   tiller-init-rbac
@@ -123,7 +128,7 @@ if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
     "${HELM_CLIENT_TLS_FLAGS[@]}" \
     --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
     --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
-    --set featureFlags.invalidateCache=true \
+    ${invalidateCacheFlag} \
     "${img_flags[@]}" \
     "${db_flags[@]}"
 else
@@ -132,7 +137,7 @@ else
   kubectl create ns kubeapps
   helm dep up "${ROOT_DIR}/chart/kubeapps/"
   helm install kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
-    --set featureFlags.invalidateCache=true \
+    ${invalidateCacheFlag} \
     "${img_flags[@]}" \
     "${db_flags[@]}" \
     --set useHelm3=true
