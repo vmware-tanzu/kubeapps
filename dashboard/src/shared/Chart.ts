@@ -38,15 +38,6 @@ export default class Chart {
     return data;
   }
 
-  public static async exists(id: string, version: string, repo: string) {
-    try {
-      await axiosWithAuth.get(URL.api.charts.getVersion(`${repo}/${id}`, version));
-    } catch (e) {
-      return false;
-    }
-    return true;
-  }
-
   public static async listWithFilters(name: string, version: string, appVersion: string) {
     const url = `${Chart.APIEndpoint}/charts?name=${name}&version=${encodeURIComponent(
       version,
