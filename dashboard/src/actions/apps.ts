@@ -109,10 +109,13 @@ function getAppUpdateInfo(
   currentVersion: string,
   appVersion: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
-  return async dispatch => {
+  return async (dispatch, getState) => {
     dispatch(requestAppUpdateInfo());
+    const {
+      config: { namespace },
+    } = getState();
     try {
-      const chartsInfo = await Chart.listWithFilters(chartName, currentVersion, appVersion);
+      const chartsInfo = await Chart.listWithFilters(namespace, chartName, currentVersion, appVersion);
       let updateInfo: IChartUpdateInfo = {
         upToDate: true,
         repository: { name: "", url: "" },

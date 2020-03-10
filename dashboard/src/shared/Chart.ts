@@ -38,8 +38,8 @@ export default class Chart {
     return data;
   }
 
-  public static async listWithFilters(name: string, version: string, appVersion: string) {
-    const url = `${Chart.APIEndpoint}/charts?name=${name}&version=${encodeURIComponent(
+  public static async listWithFilters(namespace: string, name: string, version: string, appVersion: string) {
+    const url = `${Chart.APIEndpoint}/ns/${namespace}/charts?name=${name}&version=${encodeURIComponent(
       version,
     )}&appversion=${appVersion}`;
     const { data } = await axiosWithAuth.get<{ data: IChart[] }>(url);
