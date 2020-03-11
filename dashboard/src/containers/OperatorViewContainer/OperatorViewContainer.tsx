@@ -1,26 +1,37 @@
-import * as React from "react";
 import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
+import actions from "../../actions";
+import OperatorView from "../../components/OperatorView";
 import { IStoreState } from "../../shared/types";
 
+interface IRouteProps {
+  match: {
+    params: {
+      operator: string;
+    };
+  };
+}
+
 function mapStateToProps(
-  { apps, namespace, charts }: IStoreState,
-  { location }: RouteComponentProps<{}>,
+  { operators, namespace }: IStoreState,
+  { match: { params } }: IRouteProps,
 ) {
-  return {};
+  return {
+    namespace: namespace.current,
+    isFetching: operators.isFetching,
+    operator: operators.operator,
+    error: operators.error,
+    operatorName: params.operator,
+  };
 }
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
-  return {};
+  return {
+    getOperator: (namespace: string, operatorName: string) =>
+      dispatch(actions.operators.getOperator(namespace, operatorName)),
+  };
 }
 
-class Comp extends React.Component {
-  public render() {
-    return <h1>This component has not been built yet</h1>;
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Comp);
+export default connect(mapStateToProps, mapDispatchToProps)(OperatorView);

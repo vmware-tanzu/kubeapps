@@ -13,6 +13,11 @@ export const receiveOperators = createAction("RECEIVE_OPERATORS", resolve => {
   return (operators: IPackageManifest[]) => resolve(operators);
 });
 
+export const requestOperator = createAction("REQUEST_OPERATOR");
+export const receiveOperator = createAction("RECEIVE_OPERATOR", resolve => {
+  return (operator: IPackageManifest) => resolve(operator);
+});
+
 export const errorOperators = createAction("ERROR_OPERATORS", resolve => {
   return (err: Error) => resolve(err);
 });
@@ -24,6 +29,8 @@ const actions = [
   requestOperators,
   receiveOperators,
   errorOperators,
+  requestOperator,
+  receiveOperator,
 ];
 
 export type OperatorAction = ActionType<typeof actions[number]>;
@@ -51,6 +58,21 @@ export function getOperators(
       const operators = await Operators.getOperators(namespace);
       const sortedOp = operators.sort((o1, o2) => (o1.metadata.name > o2.metadata.name ? 1 : -1));
       dispatch(receiveOperators(sortedOp));
+    } catch (e) {
+      dispatch(errorOperators(e));
+    }
+  };
+}
+
+export function getOperator(
+  namespace: string,
+  operatorName: string,
+): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(requestOperator());
+    try {
+      const operator = await Operators.getOperator(namespace, operatorName);
+      dispatch(receiveOperator(operator));
     } catch (e) {
       dispatch(errorOperators(e));
     }

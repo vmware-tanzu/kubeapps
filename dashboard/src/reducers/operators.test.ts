@@ -25,6 +25,8 @@ describe("catalogReducer", () => {
       receiveOperators: getType(actions.operators.receiveOperators),
       errorOperators: getType(actions.operators.errorOperators),
       setNamespace: getType(actions.namespace.setNamespace),
+      requestOperator: getType(actions.operators.requestOperator),
+      receiveOperator: getType(actions.operators.receiveOperator),
     };
 
     describe("reducer actions", () => {
@@ -98,6 +100,20 @@ describe("catalogReducer", () => {
             type: actionTypes.setNamespace as any,
           }),
         ).toEqual({ ...initialState, error: undefined });
+      });
+
+      it("sets receive operator", () => {
+        const state = operatorReducer(undefined, {
+          type: actionTypes.requestOperator as any,
+        });
+        const op = {} as IPackageManifest;
+        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(
+          operatorReducer(undefined, {
+            type: actionTypes.receiveOperator as any,
+            payload: op,
+          }),
+        ).toEqual({ ...initialState, isFetching: false, operator: op });
       });
     });
   });

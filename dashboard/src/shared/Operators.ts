@@ -18,4 +18,11 @@ export class Operators {
     );
     return data.items;
   }
+
+  public static async getOperator(namespace: string, name: string) {
+    const { data } = await axiosWithAuth.get<IPackageManifest>(
+      urls.api.operators.operator(namespace, name),
+    );
+    return data;
+  }
 }

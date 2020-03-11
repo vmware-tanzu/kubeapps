@@ -1,0 +1,121 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a full OperatorView 1`] = `
+<section
+  className="ChartView padding-b-big"
+>
+  <OperatorHeader
+    description="Foo"
+    icon="api/v1/namespaces/kubeapps/operator/foo/logo"
+    id="foo"
+    namespace="kubeapps"
+    namespaced={true}
+    provider="Kubeapps"
+    version="1.0.0"
+  />
+  <main>
+    <div
+      className="container container-fluid"
+    >
+      <div
+        className="row"
+      >
+        <div
+          className="col-9 ChartView__readme-container"
+        >
+          <OperatorDescription
+            description="this is a testing operator"
+          />
+        </div>
+        <div
+          className="col-3 ChartView__sidebar-container"
+        >
+          <aside
+            className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal"
+          >
+            <div
+              className="ChartViewSidebar__section"
+            >
+              <h2>
+                Capability Level
+              </h2>
+              <div>
+                <ul
+                  className="remove-style padding-l-reset margin-b-reset"
+                >
+                  <li>
+                    <CapabiliyLevel
+                      level="Basic Install"
+                    />
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div
+              className="ChartViewSidebar__section"
+            >
+              <h2>
+                Repository
+              </h2>
+              <div
+                className="margin-l-big"
+              >
+                <span>
+                  <a
+                    href="github.com/kubeapps/kubeapps"
+                    target="_blank"
+                  >
+                    github.com/kubeapps/kubeapps
+                  </a>
+                </span>
+              </div>
+            </div>
+            <div
+              className="ChartViewSidebar__section"
+            >
+              <h2>
+                Provider
+              </h2>
+              <div
+                className="margin-l-big"
+              >
+                <span>
+                  Kubeapps
+                </span>
+              </div>
+            </div>
+            <div
+              className="ChartViewSidebar__section"
+            >
+              <h2>
+                Container Image
+              </h2>
+              <div
+                className="margin-l-big"
+              >
+                <span>
+                  kubeapps/kubeapps
+                </span>
+              </div>
+            </div>
+            <div
+              className="ChartViewSidebar__section"
+            >
+              <h2>
+                Created At
+              </h2>
+              <div
+                className="margin-l-big"
+              >
+                <span>
+                  one day
+                </span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+`;

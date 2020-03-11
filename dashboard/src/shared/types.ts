@@ -221,6 +221,7 @@ export interface IPackageManifestStatus {
   provider: {
     name: string;
   };
+  defaultChannel: string;
   channels: Array<{
     name: string;
     currentCSV: string;

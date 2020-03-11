@@ -82,3 +82,38 @@ describe("getOperators", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("getOperator", () => {
+  it("returns an an operator", async () => {
+    const op = { metadata: { name: "foo" } };
+    Operators.getOperator = jest.fn(() => op);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestOperator),
+      },
+      {
+        type: getType(operatorActions.receiveOperator),
+        payload: op,
+      },
+    ];
+    await store.dispatch(operatorActions.getOperator("default", "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.getOperator = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestOperator),
+      },
+      {
+        type: getType(operatorActions.errorOperators),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.getOperator("default", "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

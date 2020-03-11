@@ -61,5 +61,7 @@ export const api = {
     crd: `${APIBase}/apis/apiextensions.k8s.io/v1/customresourcedefinitions/clusterserviceversions.operators.coreos.com`,
     operators: (namespace: string) =>
       `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests`,
+    operator: (namespace: string, name: string) =>
+      `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
   },
 };
