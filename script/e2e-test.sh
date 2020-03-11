@@ -114,6 +114,7 @@ img_flags=(
 )
 
 # TODO(andresmgot): Remove this condition with the parameter in the next version
+invalidateCacheFlag=""
 if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   invalidateCacheFlag="--set featureFlags.invalidateCache=true"
 fi
