@@ -53,9 +53,16 @@ exports[`renders the header 1`] = `
     >
       <button
         className="button button-primary button-accent"
+        onClick={[Function]}
       >
         Deploy
       </button>
+      <OperatorInstallation
+        closeModal={[Function]}
+        modalIsOpen={false}
+        name="foo"
+        namespaced={false}
+      />
     </div>
   </div>
   <hr />

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
+import OperatorInstallation from "./OperatorInstallation";
 
 interface IOperatorHeaderProps {
   id: string;
@@ -8,9 +9,14 @@ interface IOperatorHeaderProps {
   namespace: string;
   version: string;
   provider: string;
+  namespaced: boolean;
 }
 
 class OperatorHeader extends React.Component<IOperatorHeaderProps> {
+  public state = {
+    modalIsOpen: false,
+  };
+
   public render() {
     const { id, icon, description, namespace, version, provider } = this.props;
     return (
@@ -33,13 +39,33 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
             </div>
           </div>
           <div className="col-2 ChartHeader__button">
-            <button className="button button-primary button-accent">Deploy</button>
+            <button className="button button-primary button-accent" onClick={this.openModal}>
+              Deploy
+            </button>
+            <OperatorInstallation
+              name={id}
+              namespaced={this.props.namespaced}
+              closeModal={this.closeModal}
+              modalIsOpen={this.state.modalIsOpen}
+            />
           </div>
         </div>
         <hr />
       </header>
     );
   }
+
+  public openModal = () => {
+    this.setState({
+      modalIsOpen: true,
+    });
+  };
+
+  public closeModal = () => {
+    this.setState({
+      modalIsOpen: false,
+    });
+  };
 }
 
 export default OperatorHeader;

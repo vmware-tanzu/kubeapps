@@ -9,6 +9,7 @@ const defaultProps = {
   namespace: "kubeapps",
   version: "1.0.0",
   provider: "Kubeapps",
+  namespaced: false,
 };
 
 it("renders the header", () => {
