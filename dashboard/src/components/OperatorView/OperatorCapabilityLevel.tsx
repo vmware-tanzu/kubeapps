@@ -7,12 +7,18 @@ interface IOperatorCapabilitiesProps {
   level: string;
 }
 
+export const BASIC_INSTALL = "Basic Install";
+export const SEAMLESS_UPGRADES = "Seamless Upgrades";
+export const FULL_LIFECYCLE = "Full Lifecycle";
+export const DEEP_INSIGHTS = "Deep Insights";
+export const AUTO_PILOT = "Auto Pilot";
+
 const levels = {
-  "Basic Install": 1,
-  "Seamless Upgrades": 2,
-  "Full Lifecycle": 3,
-  "Deep Insights": 4,
-  "Auto Pilot": 5,
+  [BASIC_INSTALL]: 1,
+  [SEAMLESS_UPGRADES]: 2,
+  [FULL_LIFECYCLE]: 3,
+  [DEEP_INSIGHTS]: 4,
+  [AUTO_PILOT]: 5,
 };
 
 class CapabiliyLevel extends React.Component<IOperatorCapabilitiesProps> {

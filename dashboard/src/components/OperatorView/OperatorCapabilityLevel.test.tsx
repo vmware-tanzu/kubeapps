@@ -1,17 +1,17 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import CapabiliyLevel from "./OperatorCapabilityLevel";
+import CapabiliyLevel, { AUTO_PILOT, BASIC_INSTALL } from "./OperatorCapabilityLevel";
 
 [
   {
     name: "basic install level",
     expectedLevels: 1,
-    level: "Basic Install",
+    level: BASIC_INSTALL,
   },
   {
     name: "auto pilot level",
     expectedLevels: 5,
-    level: "Auto Pilot",
+    level: AUTO_PILOT,
   },
   {
     name: "unknown level",
