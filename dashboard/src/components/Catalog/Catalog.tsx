@@ -163,8 +163,6 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
       });
     });
     csvs.forEach(csv => {
-      // Cosmetic change, remove the version from the csv name
-      const csvName = csv.metadata.name.split(".v")[0];
       csv.spec.customresourcedefinitions.owned.forEach(crd => {
         result = result.concat({
           id: crd.name,
@@ -173,7 +171,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
           version: crd.version,
           description: crd.description,
           type: "operator",
-          csv: csvName,
+          csv: csv.metadata.name,
           namespace: this.props.namespace,
         });
       });

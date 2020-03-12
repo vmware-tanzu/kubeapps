@@ -47,7 +47,9 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
     );
     link = `/charts/${repoName}/${name}`;
   } else {
-    tag1 = <span>{csv}</span>;
+    // Cosmetic change, remove the version from the csv name
+    const csvName = csv?.split(".v")[0];
+    tag1 = <span>{csvName}</span>;
     link = `/operators-instances/ns/${namespace}/new/${csv}/${id}`;
   }
   const descriptionC = (
