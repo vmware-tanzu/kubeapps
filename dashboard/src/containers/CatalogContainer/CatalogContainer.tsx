@@ -17,7 +17,6 @@ function mapStateToProps(
     repo: params.repo,
     csvs: operators.csvs,
     namespace: namespace.current,
-    operators: operators.operators,
     featureFlags: config.featureFlags,
   };
 }
@@ -27,7 +26,6 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchCharts: (repo: string) => dispatch(actions.charts.fetchCharts(repo)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
     getCSVs: (namespace: string) => dispatch(actions.operators.getCSVs(namespace)),
-    getOperators: (namespace: string) => dispatch(actions.operators.getOperators(namespace)),
   };
 }
 

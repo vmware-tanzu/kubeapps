@@ -19,7 +19,6 @@ export interface ICatalogItem {
   namespace: string;
   icon?: string;
   repoName?: string;
-  operator?: string;
   csv?: string;
 }
 
@@ -36,7 +35,7 @@ function trimDescription(desc: string): string {
 
 const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   const { item } = props;
-  const { icon, name, repoName, version, description, type, operator, namespace, id, csv } = item;
+  const { icon, name, repoName, version, description, type, namespace, id, csv } = item;
   const iconSrc = icon || placeholder;
   let link;
   let tag1;
@@ -48,7 +47,7 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
     );
     link = `/charts/${repoName}/${name}`;
   } else {
-    tag1 = <span>{operator}</span>;
+    tag1 = <span>{csv}</span>;
     link = `/operators-instances/ns/${namespace}/new/${csv}/${id}`;
   }
   const descriptionC = (

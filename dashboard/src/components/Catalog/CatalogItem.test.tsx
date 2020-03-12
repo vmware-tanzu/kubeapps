@@ -83,7 +83,6 @@ context("when the description is too long", () => {
 context("when the item is a catalog", () => {
   const catalogItem = {
     ...defaultItem,
-    operator: "foo-operator",
     csv: "foo-cluster",
     type: "operator",
   } as ICatalogItem;
@@ -91,7 +90,7 @@ context("when the item is a catalog", () => {
   it("shows the proper tag", () => {
     const wrapper = shallow(<CatalogItem item={catalogItem} />);
     expect((wrapper.find(InfoCard).prop("tag1Content") as JSX.Element).props.children).toEqual(
-      "foo-operator",
+      "foo-cluster",
     );
   });
 

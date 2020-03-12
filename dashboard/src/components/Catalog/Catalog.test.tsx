@@ -27,8 +27,6 @@ const defaultProps = {
   namespace: "kubeapps",
   csvs: [],
   getCSVs: jest.fn(),
-  operators: [],
-  getOperators: jest.fn(),
   featureFlags: { operators: false },
 };
 
@@ -59,39 +57,29 @@ it("keeps the filter from the state", () => {
 });
 
 describe("componentDidMount", () => {
-  it("retrieves operators and csvs in the namespace", () => {
-    const getOperators = jest.fn();
+  it("retrieves csvs in the namespace", () => {
     const getCSVs = jest.fn();
     const namespace = "foo";
     shallow(
       <Catalog
         {...defaultProps}
-        getOperators={getOperators}
         getCSVs={getCSVs}
         namespace={namespace}
         featureFlags={{ operators: true }}
       />,
     );
     expect(getCSVs).toHaveBeenCalledWith(namespace);
-    expect(getOperators).toHaveBeenCalledWith(namespace);
   });
 });
 
 describe("componentDidUpdate", () => {
-  it("re-fetches operators and csvs if the namespace changes", () => {
-    const getOperators = jest.fn();
+  it("re-fetches csvs if the namespace changes", () => {
     const getCSVs = jest.fn();
     const wrapper = shallow(
-      <Catalog
-        {...defaultProps}
-        getOperators={getOperators}
-        getCSVs={getCSVs}
-        featureFlags={{ operators: true }}
-      />,
+      <Catalog {...defaultProps} getCSVs={getCSVs} featureFlags={{ operators: true }} />,
     );
     wrapper.setProps({ namespace: "a-different-one" });
     expect(getCSVs).toHaveBeenCalledWith("a-different-one");
-    expect(getOperators).toHaveBeenCalledWith("a-different-one");
   });
 });
 
@@ -175,6 +163,8 @@ describe("renderization", () => {
           .props().item,
       ).toEqual(expectedItem2);
       expect(wrapper).toMatchSnapshot();
+      // If there are no csvs, there shouldn't be columns
+      expect(wrapper.find(".col-10")).not.toExist();
     });
 
     it("should filter apps", () => {
@@ -201,28 +191,13 @@ describe("renderization", () => {
     });
 
     describe("when operators available", () => {
-      const operators = [
-        {
-          metadata: {
-            name: "foo-op",
-          },
-          status: {
-            defaultChannel: "foo",
-            channels: [
-              {
-                name: "foo",
-                currentCSV: "test-csv",
-              },
-            ],
-          },
-        } as any,
-      ];
       const csvs = [
         {
           metadata: {
             name: "test-csv",
           },
           spec: {
+            icon: [{ base64data: "data", mediatype: "img/png" }],
             customresourcedefinitions: {
               owned: [
                 {
@@ -237,10 +212,8 @@ describe("renderization", () => {
         } as any,
       ];
 
-      it("show render the list of charts and operators", () => {
-        const wrapper = shallow(
-          <Catalog {...defaultProps} charts={chartState} operators={operators} csvs={csvs} />,
-        );
+      it("shows the list of charts and operators", () => {
+        const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} csvs={csvs} />);
         const cardGrid = wrapper.find(CardGrid);
         expect(cardGrid).toExist();
         expect(cardGrid.children().length).toBe(chartState.items.length + csvs.length);
@@ -248,11 +221,10 @@ describe("renderization", () => {
         const expectedItem = {
           csv: "test-csv",
           description: "a meaningful description",
-          icon: "api/v1/namespaces/kubeapps/operator/foo-op/logo",
+          icon: "data:img/png;base64,data",
           id: "foo-cluster",
           name: "Foo Cluster",
           namespace: "kubeapps",
-          operator: "foo-op",
           type: "operator",
           version: "v1.0.0",
         };
@@ -261,12 +233,12 @@ describe("renderization", () => {
           .findWhere(c => c.prop("item").id === "foo-cluster");
         expect(csvCard).toExist();
         expect(csvCard.prop("item")).toMatchObject(expectedItem);
+        // If there are no csvs, there should be a column for the cardgrid
+        expect(wrapper.find(".col-10")).toExist();
       });
 
       it("should filter out charts or operators when requested", () => {
-        const wrapper = shallow(
-          <Catalog {...defaultProps} charts={chartState} operators={operators} csvs={csvs} />,
-        );
+        const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} csvs={csvs} />);
 
         wrapper.setState({ listCharts: false });
         let cardGrid = wrapper.find(CardGrid);

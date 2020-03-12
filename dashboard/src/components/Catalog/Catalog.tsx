@@ -2,8 +2,7 @@ import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IChart, IChartState, IClusterServiceVersion, IPackageManifest } from "../../shared/types";
-import { api } from "../../shared/url";
+import { IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { MessageAlert } from "../ErrorAlert";
@@ -21,8 +20,6 @@ interface ICatalogProps {
   namespace: string;
   getCSVs: (namespace: string) => void;
   csvs: IClusterServiceVersion[];
-  getOperators: (namespace: string) => void;
-  operators: IPackageManifest[];
   featureFlags: { operators: boolean };
 }
 
@@ -40,19 +37,10 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
   };
 
   public componentDidMount() {
-    const {
-      repo,
-      fetchCharts,
-      filter,
-      namespace,
-      getCSVs,
-      getOperators,
-      featureFlags,
-    } = this.props;
+    const { repo, fetchCharts, filter, namespace, getCSVs, featureFlags } = this.props;
     this.setState({ filter });
     fetchCharts(repo);
     if (featureFlags.operators) {
-      getOperators(namespace);
       getCSVs(namespace);
     }
   }
@@ -66,7 +54,6 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     }
     if (this.props.namespace !== prevProps.namespace && this.props.featureFlags.operators) {
       this.props.getCSVs(this.props.namespace);
-      this.props.getOperators(this.props.namespace);
     }
   }
 
@@ -95,7 +82,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     const filteredCSVs = this.filteredCSVs(csvs);
     const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
     const items = catalogItems.map(c => (
-      <CatalogItem key={`${c.type}/${c.repoName || c.operator}/${c.name}`} item={c} />
+      <CatalogItem key={`${c.type}/${c.repoName || c.csv}/${c.name}`} item={c} />
     ));
     return (
       <section className="Catalog">
@@ -111,38 +98,32 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         </PageHeader>
         <LoadingWrapper loaded={!isFetching}>
           <div className="row">
-            <div className="col-2">
-              {csvs.length > 0 && (
-                <>
-                  <div className="margin-b-normal">
-                    <span>
-                      <b>Type:</b>
-                    </span>
-                  </div>
-                  <div>
-                    <label className="checkbox" key="listcharts">
-                      <input
-                        type="checkbox"
-                        checked={listCharts}
-                        onChange={this.toggleListCharts}
-                      />
-                      <span>Charts</span>
-                    </label>
-                  </div>
-                  <div>
-                    <label className="checkbox" key="listoperators">
-                      <input
-                        type="checkbox"
-                        checked={listOperators}
-                        onChange={this.toggleListOperators}
-                      />
-                      <span>Operators</span>
-                    </label>
-                  </div>
-                </>
-              )}
-            </div>
-            <div className="col-10">
+            {csvs.length > 0 && (
+              <div className="col-2">
+                <div className="margin-b-normal">
+                  <span>
+                    <b>Type:</b>
+                  </span>
+                </div>
+                <div>
+                  <label className="checkbox" key="listcharts">
+                    <input type="checkbox" checked={listCharts} onChange={this.toggleListCharts} />
+                    <span>Charts</span>
+                  </label>
+                </div>
+                <div>
+                  <label className="checkbox" key="listoperators">
+                    <input
+                      type="checkbox"
+                      checked={listOperators}
+                      onChange={this.toggleListOperators}
+                    />
+                    <span>Operator Instances</span>
+                  </label>
+                </div>
+              </div>
+            )}
+            <div className={csvs.length > 0 ? "col-10" : ""}>
               <CardGrid>{items}</CardGrid>
             </div>
           </div>
@@ -182,26 +163,17 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
       });
     });
     csvs.forEach(csv => {
-      const owningOperator = this.props.operators.find(op => {
-        const { defaultChannel, channels } = op.status;
-        // TODO(andresmgot): It's not mandatory to use the default channel
-        const matchingChannel = channels.find(
-          channel => channel.name === defaultChannel && channel.currentCSV === csv.metadata.name,
-        );
-        return !!matchingChannel;
-      });
+      // Cosmetic change, remove the version from the csv name
+      const csvName = csv.metadata.name.split(".v")[0];
       csv.spec.customresourcedefinitions.owned.forEach(crd => {
         result = result.concat({
           id: crd.name,
           name: crd.displayName,
-          icon: owningOperator
-            ? api.operators.operatorIcon(this.props.namespace, owningOperator.metadata.name)
-            : undefined,
+          icon: `data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`,
           version: crd.version,
           description: crd.description,
           type: "operator",
-          operator: owningOperator?.metadata.name,
-          csv: csv.metadata.name,
+          csv: csvName,
           namespace: this.props.namespace,
         });
       });
