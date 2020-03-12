@@ -266,6 +266,69 @@ export interface IPackageManifest extends IResource {
   status: IPackageManifestStatus;
 }
 
+export interface IClusterServiceVersionSpec {
+  apiservicedefinitions: any;
+  customresourcedefinitions: {
+    owned: Array<{
+      description: string;
+      displayName: string;
+      kind: string;
+      name: string;
+      version: string;
+      resources: Array<{
+        kind: string;
+        name: string;
+        version: string;
+      }>;
+      specDescriptors: Array<{
+        description: string;
+        displayName: string;
+        path: string;
+        "x-descriptors": string[];
+      }>;
+      statusDescriptors: Array<{
+        description: string;
+        displayName: string;
+        path: string;
+        "x-descriptors": string[];
+      }>;
+    }>;
+  };
+  description: string;
+  displayName: string;
+  icon: Array<{
+    base64data: string;
+    mediatype: string;
+  }>;
+  install: any;
+  installModes: [
+    { supported: boolean; type: "OwnNamespace" },
+    { supported: boolean; type: "SingleNamespace" },
+    { supported: boolean; type: "MultiNamespace" },
+    { supported: boolean; type: "AllNamespaces" },
+  ];
+  keywords: string[];
+  labels: any;
+  links: Array<{
+    name: string;
+    url: string;
+  }>;
+  maintainers: Array<{
+    email: string;
+    name: string;
+  }>;
+  maturity: string;
+  provider: {
+    name: string;
+  };
+  selector: any;
+  version: string;
+}
+
+export interface IClusterServiceVersion extends IResource {
+  spec: IClusterServiceVersionSpec;
+}
+
 export interface IAppState {
   isFetching: boolean;
   error?: Error;

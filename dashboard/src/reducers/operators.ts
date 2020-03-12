@@ -4,7 +4,7 @@ import { getType } from "typesafe-actions";
 import { OperatorAction } from "actions/operators";
 import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
-import { IPackageManifest, IResource } from "../shared/types";
+import { IClusterServiceVersion, IPackageManifest, IResource } from "../shared/types";
 
 export interface IOperatorsState {
   isFetching: boolean;
@@ -12,12 +12,14 @@ export interface IOperatorsState {
   operators: IResource[];
   operator?: IPackageManifest;
   error?: Error;
+  csvs: IClusterServiceVersion[];
 }
 
 const initialState: IOperatorsState = {
   isFetching: false,
   isOLMInstalled: false,
   operators: [],
+  csvs: [],
 };
 
 const catalogReducer = (
@@ -41,6 +43,12 @@ const catalogReducer = (
     case getType(operators.receiveOperator):
       return { ...state, isFetching: false, operator: action.payload };
     case getType(operators.errorOperators):
+      return { ...state, isFetching: false, error: action.payload };
+    case getType(operators.requestCSVs):
+      return { ...state, isFetching: true };
+    case getType(operators.receiveCSVs):
+      return { ...state, isFetching: false, csvs: action.payload };
+    case getType(operators.errorCSVs):
       return { ...state, isFetching: false, error: action.payload };
     case LOCATION_CHANGE:
       return { ...state, error: undefined };

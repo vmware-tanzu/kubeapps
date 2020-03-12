@@ -20,30 +20,49 @@ exports[`renderization when charts available should render the list of charts 1`
     loaded={true}
     type={0}
   >
-    <CardGrid>
-      <CatalogItem
-        chart={
-          Object {
-            "attributes": Object {
-              "description": "",
-            },
-            "id": "foo",
-          }
-        }
-        key="foo"
+    <div
+      className="row"
+    >
+      <div
+        className="col-2"
       />
-      <CatalogItem
-        chart={
-          Object {
-            "attributes": Object {
-              "description": "",
-            },
-            "id": "bar",
-          }
-        }
-        key="bar"
-      />
-    </CardGrid>
+      <div
+        className="col-10"
+      >
+        <CardGrid>
+          <CatalogItem
+            item={
+              Object {
+                "description": "",
+                "icon": undefined,
+                "id": "foo",
+                "name": undefined,
+                "namespace": "kubeapps",
+                "repoName": "foo",
+                "type": "chart",
+                "version": "v1.0.0",
+              }
+            }
+            key="chart/foo/undefined"
+          />
+          <CatalogItem
+            item={
+              Object {
+                "description": "",
+                "icon": undefined,
+                "id": "bar",
+                "name": undefined,
+                "namespace": "kubeapps",
+                "repoName": "bar",
+                "type": "chart",
+                "version": "v2.0.0",
+              }
+            }
+            key="chart/bar/undefined"
+          />
+        </CardGrid>
+      </div>
+    </div>
   </LoadingWrapper>
 </section>
 `;
@@ -68,7 +87,18 @@ exports[`renderization when fetching apps loading spinner matches the snapshot 1
     loaded={false}
     type={0}
   >
-    <CardGrid />
+    <div
+      className="row"
+    >
+      <div
+        className="col-2"
+      />
+      <div
+        className="col-10"
+      >
+        <CardGrid />
+      </div>
+    </div>
   </LoadingWrapper>
 </section>
 `;

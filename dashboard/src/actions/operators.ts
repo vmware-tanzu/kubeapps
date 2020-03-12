@@ -2,7 +2,7 @@ import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
 import { Operators } from "../shared/Operators";
-import { IPackageManifest, IStoreState } from "../shared/types";
+import { IClusterServiceVersion, IPackageManifest, IStoreState } from "../shared/types";
 
 export const checkingOLM = createAction("CHECKING_OLM");
 export const OLMInstalled = createAction("OLM_INSTALLED");
@@ -22,6 +22,15 @@ export const errorOperators = createAction("ERROR_OPERATORS", resolve => {
   return (err: Error) => resolve(err);
 });
 
+export const requestCSVs = createAction("REQUEST_CSVS");
+export const receiveCSVs = createAction("RECEIVE_CSVS", resolve => {
+  return (csvs: IClusterServiceVersion[]) => resolve(csvs);
+});
+
+export const errorCSVs = createAction("ERROR_CSVS", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 const actions = [
   checkingOLM,
   OLMInstalled,
@@ -31,6 +40,9 @@ const actions = [
   errorOperators,
   requestOperator,
   receiveOperator,
+  requestCSVs,
+  receiveCSVs,
+  errorCSVs,
 ];
 
 export type OperatorAction = ActionType<typeof actions[number]>;
@@ -75,6 +87,21 @@ export function getOperator(
       dispatch(receiveOperator(operator));
     } catch (e) {
       dispatch(errorOperators(e));
+    }
+  };
+}
+
+export function getCSVs(
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(requestCSVs());
+    try {
+      const csvs = await Operators.getCSVs(namespace);
+      const sortedCSVs = csvs.sort((o1, o2) => (o1.metadata.name > o2.metadata.name ? 1 : -1));
+      dispatch(receiveCSVs(sortedCSVs));
+    } catch (e) {
+      dispatch(errorCSVs(e));
     }
   };
 }

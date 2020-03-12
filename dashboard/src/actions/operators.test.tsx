@@ -117,3 +117,41 @@ describe("getOperator", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("getCSVs", () => {
+  it("returns an ordered list of csvs based on the name", async () => {
+    Operators.getCSVs = jest.fn(() => [
+      { metadata: { name: "foo" } },
+      { metadata: { name: "bar" } },
+    ]);
+    const sortedCSVs = [{ metadata: { name: "bar" } }, { metadata: { name: "foo" } }];
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCSVs),
+      },
+      {
+        type: getType(operatorActions.receiveCSVs),
+        payload: sortedCSVs,
+      },
+    ];
+    await store.dispatch(operatorActions.getCSVs("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.getCSVs = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCSVs),
+      },
+      {
+        type: getType(operatorActions.errorCSVs),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.getCSVs("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

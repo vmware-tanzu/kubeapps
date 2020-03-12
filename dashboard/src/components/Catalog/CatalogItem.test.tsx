@@ -3,42 +3,31 @@ import context from "jest-plugin-context";
 import { cloneDeep } from "lodash";
 import * as React from "react";
 
-import { IChart, IRepo } from "../../shared/types";
 import { CardIcon } from "../Card";
 import InfoCard from "../InfoCard";
-import CatalogItem from "./CatalogItem";
+import CatalogItem, { ICatalogItem } from "./CatalogItem";
 
 jest.mock("../../placeholder.png", () => "placeholder.png");
 
-const defaultChart = {
-  id: "foo",
-  attributes: {
-    description: "",
-    keywords: [""],
-    maintainers: [{ name: "" }],
-    sources: [""],
-    icon: "icon.png",
-    name: "foo",
-    repo: {} as IRepo,
-  },
-  relationships: {
-    latestChartVersion: {
-      data: {
-        app_version: "1.0.0",
-      },
-    },
-  },
-} as IChart;
+const defaultItem = {
+  id: "foo1",
+  name: "foo",
+  version: "1.0.0",
+  description: "",
+  type: "chart",
+  namespace: "kubeapps",
+  icon: "icon.png",
+} as ICatalogItem;
 
 it("should render an item", () => {
-  const wrapper = shallow(<CatalogItem chart={defaultChart} />);
+  const wrapper = shallow(<CatalogItem item={defaultItem} />);
   expect(wrapper).toMatchSnapshot();
 });
 
 it("should use the default placeholder for the icon if it doesn't exist", () => {
-  const chartWithoutIcon = cloneDeep(defaultChart);
-  chartWithoutIcon.attributes.icon = undefined;
-  const wrapper = shallow(<CatalogItem chart={chartWithoutIcon} />);
+  const chartWithoutIcon = cloneDeep(defaultItem);
+  chartWithoutIcon.icon = undefined;
+  const wrapper = shallow(<CatalogItem item={chartWithoutIcon} />);
   // Importing an image returns "undefined"
   expect(
     wrapper
@@ -50,9 +39,9 @@ it("should use the default placeholder for the icon if it doesn't exist", () => 
 });
 
 it("should place a dash if the version is not avaliable", () => {
-  const chartWithoutVersion = cloneDeep(defaultChart);
-  chartWithoutVersion.relationships.latestChartVersion.data.app_version = "";
-  const wrapper = shallow(<CatalogItem chart={chartWithoutVersion} />);
+  const chartWithoutVersion = cloneDeep(defaultItem);
+  chartWithoutVersion.version = "";
+  const wrapper = shallow(<CatalogItem item={chartWithoutVersion} />);
   expect(
     wrapper
       .find(InfoCard)
@@ -63,24 +52,24 @@ it("should place a dash if the version is not avaliable", () => {
 });
 
 it("show the chart description", () => {
-  const chartWithDescription = cloneDeep(defaultChart);
-  chartWithDescription.attributes.description = "This is a description";
-  const wrapper = shallow(<CatalogItem chart={chartWithDescription} />);
+  const chartWithDescription = cloneDeep(defaultItem);
+  chartWithDescription.description = "This is a description";
+  const wrapper = shallow(<CatalogItem item={chartWithDescription} />);
   expect(
     wrapper
       .find(InfoCard)
       .shallow()
       .find(".ListItem__content__description")
       .text(),
-  ).toBe(chartWithDescription.attributes.description);
+  ).toBe(chartWithDescription.description);
 });
 
 context("when the description is too long", () => {
   it("trims the description", () => {
-    const chartWithDescription = cloneDeep(defaultChart);
-    chartWithDescription.attributes.description =
+    const chartWithDescription = cloneDeep(defaultItem);
+    chartWithDescription.description =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ultrices velit leo, quis pharetra mi vestibulum quis.";
-    const wrapper = shallow(<CatalogItem chart={chartWithDescription} />);
+    const wrapper = shallow(<CatalogItem item={chartWithDescription} />);
     expect(
       wrapper
         .find(InfoCard)
@@ -88,5 +77,28 @@ context("when the description is too long", () => {
         .find(".ListItem__content__description")
         .text(),
     ).toMatch(/\.\.\.$/);
+  });
+});
+
+context("when the item is a catalog", () => {
+  const catalogItem = {
+    ...defaultItem,
+    operator: "foo-operator",
+    csv: "foo-cluster",
+    type: "operator",
+  } as ICatalogItem;
+
+  it("shows the proper tag", () => {
+    const wrapper = shallow(<CatalogItem item={catalogItem} />);
+    expect((wrapper.find(InfoCard).prop("tag1Content") as JSX.Element).props.children).toEqual(
+      "foo-operator",
+    );
+  });
+
+  it("has the proper link", () => {
+    const wrapper = shallow(<CatalogItem item={catalogItem} />);
+    expect(wrapper.find(InfoCard).prop("link")).toEqual(
+      "/operators-instances/ns/kubeapps/new/foo-cluster/foo1",
+    );
   });
 });

@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { IPackageManifest } from "shared/types";
+import { api } from "../../shared/url";
 import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
@@ -60,7 +61,7 @@ class OperatorList extends React.Component<IOperatorListProps> {
               key={operator.metadata.name}
               link={`/operators/ns/${this.props.namespace}/${operator.metadata.name}`}
               title={operator.metadata.name}
-              icon={`api/v1/namespaces/${this.props.namespace}/operator/${operator.metadata.name}/logo`}
+              icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
               info={`v${operator.status.channels[0].currentCSVDesc.version}`}
               tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
               tag2Content={operator.status.provider.name}

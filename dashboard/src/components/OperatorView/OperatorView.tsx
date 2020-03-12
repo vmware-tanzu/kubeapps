@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { IPackageManifest } from "../../shared/types";
+import { api } from "../../shared/url";
 import { ErrorSelector } from "../ErrorAlert";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
@@ -46,7 +47,7 @@ class OperatorView extends React.Component<IOperatorViewProps> {
         <OperatorHeader
           id={operator.metadata.name}
           description={currentCSVDesc.displayName}
-          icon={`api/v1/namespaces/${this.props.namespace}/operator/${operator.metadata.name}/logo`}
+          icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
           version={currentCSVDesc.version}
           namespace={namespace}
           provider={operator.status.provider.name}
