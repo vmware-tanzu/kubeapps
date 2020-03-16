@@ -21,3 +21,5 @@ type AssetManager interface {
 	Init() error
 	Close() error
 }
+
+const AllNamespaces = "_all"
