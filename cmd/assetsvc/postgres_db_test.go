@@ -25,6 +25,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 	_ "github.com/lib/pq"
@@ -55,6 +56,17 @@ func TestGetChart(t *testing.T) {
 			expectedErr: sql.ErrNoRows,
 		},
 		{
+			name: "it returns an error if the chart does not exist in that repo",
+			existingCharts: map[string][]models.Chart{
+				"namespace-1": []models.Chart{
+					models.Chart{ID: "chart-1", Name: "my-chart"},
+				},
+			},
+			chartId:     "chart-1",
+			namespace:   "other-namespace",
+			expectedErr: sql.ErrNoRows,
+		},
+		{
 			name: "it returns the chart matching the chartid",
 			existingCharts: map[string][]models.Chart{
 				"namespace-1": []models.Chart{
@@ -76,7 +88,7 @@ func TestGetChart(t *testing.T) {
 				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
-			chart, err := pam.getChart(tc.chartId)
+			chart, err := pam.getChart(tc.namespace, tc.chartId)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("got: %+v, want: %+v", got, want)
@@ -123,6 +135,20 @@ func TestGetVersion(t *testing.T) {
 			expectedErr:      ErrChartVersionNotFound,
 		},
 		{
+			name: "it returns an error if the chart version does not exist in that namespace",
+			existingCharts: map[string][]models.Chart{
+				"namespace-1": []models.Chart{
+					models.Chart{ID: "chart-1", ChartVersions: []models.ChartVersion{
+						models.ChartVersion{Version: "1.2.3"},
+					}},
+				},
+			},
+			chartId:          "chart-1",
+			namespace:        "other-namespace",
+			requestedVersion: "1.2.3",
+			expectedErr:      sql.ErrNoRows,
+		},
+		{
 			name: "it returns the chart version matching the chartid and version",
 			existingCharts: map[string][]models.Chart{
 				"namespace-1": []models.Chart{
@@ -147,7 +173,7 @@ func TestGetVersion(t *testing.T) {
 				pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repoName, Namespace: namespace})
 			}
 
-			chart, err := pam.getChartVersion(tc.chartId, tc.requestedVersion)
+			chart, err := pam.getChartVersion(tc.namespace, tc.chartId, tc.requestedVersion)
 
 			if got, want := err, tc.expectedErr; got != want {
 				t.Fatalf("got: %+v, want: %+v", got, want)
@@ -161,6 +187,154 @@ func TestGetVersion(t *testing.T) {
 			}
 			if got, want := chart.ChartVersions[0].Version, tc.expectedVersion; got != want {
 				t.Errorf("got: %q, want: %q", got, want)
+			}
+		})
+	}
+}
+
+func TestGetPaginatedChartList(t *testing.T) {
+	pgtest.SkipIfNoDB(t)
+	const (
+		repoName      = "repo-name"
+		namespaceName = "namespace-name"
+	)
+
+	chartVersions := []models.ChartVersion{
+		models.ChartVersion{
+			Digest: "abc-123",
+		},
+	}
+
+	testCases := []struct {
+		name string
+		// existingCharts is a map of charts per namespace and repo
+		existingCharts map[string]map[string][]models.Chart
+		namespace      string
+		repo           string
+		showDups       bool
+		expectedCharts []*models.Chart
+		expectedErr    error
+	}{
+		{
+			name:           "it returns an empty list if the repo or namespace do not exist",
+			repo:           "repo-doesnt-exist",
+			namespace:      "doesnt-exist",
+			expectedCharts: []*models.Chart{},
+		},
+		{
+			name:      "it returns charts from a specific repo in a specific namespace",
+			repo:      repoName,
+			namespace: namespaceName,
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+					},
+					"other-repo": []models.Chart{
+						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					},
+				},
+				"other-namespace": map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+					},
+				},
+			},
+			showDups: true,
+			expectedCharts: []*models.Chart{
+				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+			},
+		},
+		{
+			name: "it returns charts from multiple repos in a specific namespace",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+					},
+					"other-repo": []models.Chart{
+						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					},
+				},
+				"other-namespace": map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+					},
+				},
+			},
+			repo:      "",
+			namespace: namespaceName,
+			showDups:  true,
+			expectedCharts: []*models.Chart{
+				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+			},
+		},
+		{
+			name: "it returns charts from multiple repos across all namespaces",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+					},
+					"other-repo": []models.Chart{
+						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					},
+				},
+				"other-namespace": map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+					},
+				},
+			},
+			repo:      "",
+			namespace: "_all",
+			showDups:  true,
+			expectedCharts: []*models.Chart{
+				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+			},
+		},
+		{
+			name: "it removes duplicates when requested",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
+					},
+					"other-repo": []models.Chart{
+						models.Chart{ID: "other-repo/same-chart-different-repo", Name: "same-chart-different-repo", ChartVersions: chartVersions},
+					},
+				},
+			},
+			repo:      "",
+			namespace: namespaceName,
+			showDups:  false,
+			expectedCharts: []*models.Chart{
+				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1", ChartVersions: chartVersions},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			pam, cleanup := getInitializedManager(t)
+			defer cleanup()
+			for namespace, chartsPerRepo := range tc.existingCharts {
+				for repo, charts := range chartsPerRepo {
+					pgtest.EnsureChartsExist(t, pam, charts, models.Repo{Name: repo, Namespace: namespace})
+				}
+			}
+
+			// The actual pagination isn't currently implemented as its not yet used by Kubeapps.
+			charts, _, err := pam.getPaginatedChartList(tc.namespace, tc.repo, 1, 10, tc.showDups)
+
+			if got, want := err, tc.expectedErr; got != want {
+				t.Fatalf("got: %+v, want: %+v", got, want)
+			}
+			if got, want := charts, tc.expectedCharts; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}

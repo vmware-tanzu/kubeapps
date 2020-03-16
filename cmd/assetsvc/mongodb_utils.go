@@ -34,15 +34,22 @@ func newMongoDBManager(config datastore.Config) assetManager {
 	return &mongodbAssetManager{m}
 }
 
-func (m *mongodbAssetManager) getPaginatedChartList(repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
+func (m *mongodbAssetManager) getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) ([]*models.Chart, int, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
 
 	c := db.C(chartCollection)
 	pipeline := []bson.M{}
+	matcher := bson.M{}
+	if namespace != dbutils.AllNamespaces {
+		matcher["repo.namespace"] = namespace
+	}
 	if repo != "" {
-		pipeline = append(pipeline, bson.M{"$match": bson.M{"repo.name": repo}})
+		matcher["repo.name"] = repo
+	}
+	if len(matcher) > 0 {
+		pipeline = append(pipeline, bson.M{"$match": matcher})
 	}
 
 	if !showDuplicates {
@@ -90,21 +97,22 @@ func (m *mongodbAssetManager) getPaginatedChartList(repo string, pageNumber, pag
 	return charts, totalPages, nil
 }
 
-func (m *mongodbAssetManager) getChart(chartID string) (models.Chart, error) {
+func (m *mongodbAssetManager) getChart(namespace, chartID string) (models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var chart models.Chart
-	err := db.C(chartCollection).Find(bson.M{"chart_id": chartID}).One(&chart)
+	err := db.C(chartCollection).Find(bson.M{"repo.namespace": namespace, "chart_id": chartID}).One(&chart)
 	return chart, err
 }
 
-func (m *mongodbAssetManager) getChartVersion(chartID, version string) (models.Chart, error) {
+func (m *mongodbAssetManager) getChartVersion(namespace, chartID, version string) (models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var chart models.Chart
 	err := db.C(chartCollection).Find(bson.M{
-		"chart_id":      chartID,
-		"chartversions": bson.M{"$elemMatch": bson.M{"version": version}},
+		"repo.namespace": namespace,
+		"chart_id":       chartID,
+		"chartversions":  bson.M{"$elemMatch": bson.M{"version": version}},
 	}).Select(bson.M{
 		"name": 1, "repo": 1, "description": 1, "home": 1, "keywords": 1, "maintainers": 1, "sources": 1,
 		"chartversions.$": 1,
@@ -112,20 +120,21 @@ func (m *mongodbAssetManager) getChartVersion(chartID, version string) (models.C
 	return chart, err
 }
 
-func (m *mongodbAssetManager) getChartFiles(filesID string) (models.ChartFiles, error) {
+func (m *mongodbAssetManager) getChartFiles(namespace, filesID string) (models.ChartFiles, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var files models.ChartFiles
-	err := db.C(filesCollection).Find(bson.M{"file_id": filesID}).One(&files)
+	err := db.C(filesCollection).Find(bson.M{"repo.namespace": namespace, "file_id": filesID}).One(&files)
 	return files, err
 }
 
-func (m *mongodbAssetManager) getChartsWithFilters(name, version, appVersion string) ([]*models.Chart, error) {
+func (m *mongodbAssetManager) getChartsWithFilters(namespace, name, version, appVersion string) ([]*models.Chart, error) {
 	db, closer := m.DBSession.DB()
 	defer closer()
 	var charts []*models.Chart
 	err := db.C(chartCollection).Find(bson.M{
-		"name": name,
+		"repo.namespace": namespace,
+		"name":           name,
 		"chartversions": bson.M{
 			"$elemMatch": bson.M{"version": version, "appversion": appVersion},
 		}}).Select(bson.M{
