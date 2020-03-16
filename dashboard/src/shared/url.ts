@@ -72,7 +72,11 @@ export const api = {
       `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
     clusterServiceVersions: (namespace: string) =>
       `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions`,
+    clusterServiceVersion: (namespace: string, name: string) =>
+      `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions/${name}`,
     operatorIcon: (namespace: string, name: string) =>
       `api/v1/namespaces/${namespace}/operator/${name}/logo`,
+    resources: (namespace: string, apiVersion: string, resource: string) =>
+      `${APIBase}/apis/${apiVersion}/namespaces/${namespace}/${resource}`,
   },
 };

@@ -158,7 +158,7 @@ export interface IResource {
   metadata: {
     name: string;
     namespace: string;
-    annotations: string;
+    annotations: any;
     creationTimestamp: string;
     selfLink: string;
     resourceVersion: string;
@@ -266,33 +266,35 @@ export interface IPackageManifest extends IResource {
   status: IPackageManifestStatus;
 }
 
+export interface IClusterServiceVersionCRD {
+  description: string;
+  displayName: string;
+  kind: string;
+  name: string;
+  version: string;
+  resources: Array<{
+    kind: string;
+    name: string;
+    version: string;
+  }>;
+  specDescriptors: Array<{
+    description: string;
+    displayName: string;
+    path: string;
+    "x-descriptors": string[];
+  }>;
+  statusDescriptors: Array<{
+    description: string;
+    displayName: string;
+    path: string;
+    "x-descriptors": string[];
+  }>;
+}
+
 export interface IClusterServiceVersionSpec {
   apiservicedefinitions: any;
   customresourcedefinitions: {
-    owned: Array<{
-      description: string;
-      displayName: string;
-      kind: string;
-      name: string;
-      version: string;
-      resources: Array<{
-        kind: string;
-        name: string;
-        version: string;
-      }>;
-      specDescriptors: Array<{
-        description: string;
-        displayName: string;
-        path: string;
-        "x-descriptors": string[];
-      }>;
-      statusDescriptors: Array<{
-        description: string;
-        displayName: string;
-        path: string;
-        "x-descriptors": string[];
-      }>;
-    }>;
+    owned: IClusterServiceVersionCRD[];
   };
   description: string;
   displayName: string;

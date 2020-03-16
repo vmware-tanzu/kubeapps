@@ -2,7 +2,7 @@ import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
 import { Operators } from "../shared/Operators";
-import { IClusterServiceVersion, IPackageManifest, IStoreState } from "../shared/types";
+import { IClusterServiceVersion, IPackageManifest, IResource, IStoreState } from "../shared/types";
 
 export const checkingOLM = createAction("CHECKING_OLM");
 export const OLMInstalled = createAction("OLM_INSTALLED");
@@ -31,6 +31,20 @@ export const errorCSVs = createAction("ERROR_CSVS", resolve => {
   return (err: Error) => resolve(err);
 });
 
+export const requestCSV = createAction("REQUEST_CSV");
+export const receiveCSV = createAction("RECEIVE_CSV", resolve => {
+  return (csv: IClusterServiceVersion) => resolve(csv);
+});
+
+export const creatingResource = createAction("CREATING_RESOURCE");
+export const resourceCreated = createAction("RESOURCE_CREATED", resolve => {
+  return (resource: IResource) => resolve(resource);
+});
+
+export const errorResourceCreate = createAction("ERROR_RESOURCE_CREATE", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 const actions = [
   checkingOLM,
   OLMInstalled,
@@ -43,6 +57,11 @@ const actions = [
   requestCSVs,
   receiveCSVs,
   errorCSVs,
+  requestCSV,
+  receiveCSV,
+  creatingResource,
+  resourceCreated,
+  errorResourceCreate,
 ];
 
 export type OperatorAction = ActionType<typeof actions[number]>;
@@ -102,6 +121,40 @@ export function getCSVs(
       dispatch(receiveCSVs(sortedCSVs));
     } catch (e) {
       dispatch(errorCSVs(e));
+    }
+  };
+}
+
+export function getCSV(
+  namespace: string,
+  name: string,
+): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(requestCSV());
+    try {
+      const csv = await Operators.getCSV(namespace, name);
+      dispatch(receiveCSV(csv));
+    } catch (e) {
+      dispatch(errorCSVs(e));
+    }
+  };
+}
+
+export function createResource(
+  namespace: string,
+  apiVersion: string,
+  resource: string,
+  body: object,
+): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(creatingResource());
+    try {
+      const r = await Operators.createResource(namespace, apiVersion, resource, body);
+      dispatch(resourceCreated(r));
+      return true;
+    } catch (e) {
+      dispatch(errorResourceCreate(e));
+      return false;
     }
   };
 }

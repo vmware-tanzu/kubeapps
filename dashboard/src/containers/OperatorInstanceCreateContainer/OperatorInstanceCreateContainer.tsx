@@ -1,26 +1,43 @@
-import * as React from "react";
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
+import OperatorInstanceForm from "components/OperatorInstanceForm";
+import actions from "../../actions";
 import { IStoreState } from "../../shared/types";
 
+interface IRouteProps {
+  match: {
+    params: {
+      csv: string;
+      crd: string;
+    };
+  };
+}
+
 function mapStateToProps(
-  { apps, namespace, charts }: IStoreState,
-  { location }: RouteComponentProps<{}>,
+  { operators, namespace }: IStoreState,
+  { match: { params } }: IRouteProps,
 ) {
-  return {};
+  return {
+    namespace: namespace.current,
+    isFetching: operators.isFetching,
+    csv: operators.csv,
+    errors: operators.errors,
+    csvName: params.csv,
+    crdName: params.crd,
+  };
 }
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
-  return {};
+  return {
+    getCSV: (namespace: string, name: string) =>
+      dispatch(actions.operators.getCSV(namespace, name)),
+    createResource: (namespace: string, apiVersion: string, resource: string, body: object) =>
+      dispatch(actions.operators.createResource(namespace, apiVersion, resource, body)),
+    push: (location: string) => dispatch(push(location)),
+  };
 }
 
-class Comp extends React.Component {
-  public render() {
-    return <h1>This component has not been built yet</h1>;
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Comp);
+export default connect(mapStateToProps, mapDispatchToProps)(OperatorInstanceForm);

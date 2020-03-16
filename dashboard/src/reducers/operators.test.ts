@@ -1,7 +1,7 @@
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 
-import { IClusterServiceVersion, IPackageManifest } from "shared/types";
+import { IClusterServiceVersion, IPackageManifest, IResource } from "shared/types";
 import operatorReducer from "./operators";
 import { IOperatorsState } from "./operators";
 
@@ -14,6 +14,7 @@ describe("catalogReducer", () => {
       isOLMInstalled: false,
       operators: [],
       csvs: [],
+      errors: {},
     };
   });
 
@@ -30,7 +31,12 @@ describe("catalogReducer", () => {
       receiveOperator: getType(actions.operators.receiveOperator),
       requestCSVs: getType(actions.operators.requestCSVs),
       receiveCSVs: getType(actions.operators.receiveCSVs),
+      requestCSV: getType(actions.operators.requestCSV),
+      receiveCSV: getType(actions.operators.receiveCSV),
       errorCSVs: getType(actions.operators.errorCSVs),
+      creatingResource: getType(actions.operators.creatingResource),
+      resourceCreated: getType(actions.operators.resourceCreated),
+      errorResourceCreate: getType(actions.operators.errorResourceCreate),
     };
 
     describe("reducer actions", () => {
@@ -90,7 +96,7 @@ describe("catalogReducer", () => {
             type: actionTypes.errorOperators as any,
             payload: new Error("Boom!"),
           }),
-        ).toEqual({ ...initialState, isFetching: false, error: new Error("Boom!") });
+        ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
       });
 
       it("unsets an error when changing namespace", () => {
@@ -98,7 +104,12 @@ describe("catalogReducer", () => {
           type: actionTypes.errorOperators as any,
           payload: new Error("Boom!"),
         });
-        expect(state).toEqual({ ...initialState, error: new Error("Boom!") });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: false,
+          errors: { fetch: new Error("Boom!") },
+        });
+
         expect(
           operatorReducer(undefined, {
             type: actionTypes.setNamespace as any,
@@ -144,8 +155,49 @@ describe("catalogReducer", () => {
             type: actionTypes.errorCSVs as any,
             payload: new Error("Boom!"),
           }),
-        ).toEqual({ ...initialState, isFetching: false, error: new Error("Boom!") });
+        ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
       });
+
+      it("sets receive csv", () => {
+        const state = operatorReducer(undefined, {
+          type: actionTypes.requestCSV as any,
+        });
+        const csv = {} as IClusterServiceVersion;
+        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(
+          operatorReducer(undefined, {
+            type: actionTypes.receiveCSV as any,
+            payload: csv,
+          }),
+        ).toEqual({ ...initialState, isFetching: false, csv });
+      });
+    });
+
+    it("creates a resource", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.creatingResource as any,
+      });
+      const resource = {} as IResource;
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.resourceCreated as any,
+          payload: resource,
+        }),
+      ).toEqual({ ...initialState, isFetching: false });
+    });
+
+    it("sets an error creating a resource", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.creatingResource as any,
+      });
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.errorResourceCreate as any,
+          payload: new Error("Boom!"),
+        }),
+      ).toEqual({ ...initialState, isFetching: false, errors: { create: new Error("Boom!") } });
     });
   });
 });
