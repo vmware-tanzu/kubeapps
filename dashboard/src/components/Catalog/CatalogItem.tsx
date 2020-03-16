@@ -2,13 +2,24 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import placeholder from "../../placeholder.png";
-import { IChart } from "../../shared/types";
 import InfoCard from "../InfoCard";
 
 import "./CatalogItem.css";
 
 interface ICatalogItemProps {
-  chart: IChart;
+  item: ICatalogItem;
+}
+
+export interface ICatalogItem {
+  id: string;
+  name: string;
+  version: string;
+  description: string;
+  type: "chart" | "operator";
+  namespace: string;
+  icon?: string;
+  repoName?: string;
+  csv?: string;
 }
 
 // 3 lines description max
@@ -23,30 +34,38 @@ function trimDescription(desc: string): string {
 }
 
 const CatalogItem: React.SFC<ICatalogItemProps> = props => {
-  const { chart } = props;
-  const { icon, name, repo } = chart.attributes;
-  const iconSrc = icon ? `api/assetsvc/${icon}` : placeholder;
-  const latestAppVersion = chart.relationships.latestChartVersion.data.app_version;
-  const repoTag = (
-    <Link className="ListItem__content__info_tag_link" to={`/catalog/${repo.name}`}>
-      {repo.name}
-    </Link>
-  );
-  const description = (
-    <div className="ListItem__content__description">
-      {trimDescription(chart.attributes.description)}
-    </div>
+  const { item } = props;
+  const { icon, name, repoName, version, description, type, namespace, id, csv } = item;
+  const iconSrc = icon || placeholder;
+  let link;
+  let tag1;
+  if (type === "chart") {
+    tag1 = (
+      <Link className="ListItem__content__info_tag_link" to={`/catalog/${repoName}`}>
+        {repoName}
+      </Link>
+    );
+    link = `/charts/${repoName}/${name}`;
+  } else {
+    // Cosmetic change, remove the version from the csv name
+    const csvName = csv?.split(".v")[0];
+    tag1 = <span>{csvName}</span>;
+    link = `/operators-instances/ns/${namespace}/new/${csv}/${id}`;
+  }
+  const descriptionC = (
+    <div className="ListItem__content__description">{trimDescription(description)}</div>
   );
   return (
     <InfoCard
-      key={`${repo}/${name}`}
+      key={id}
       title={name}
-      link={`/charts/${chart.id}`}
-      info={latestAppVersion || "-"}
+      link={link}
+      info={version || "-"}
       icon={iconSrc}
-      description={description}
-      tag1Content={repoTag}
-      tag1Class={repo.name}
+      description={descriptionC}
+      tag1Content={tag1}
+      tag1Class={repoName}
+      tag2Content={type}
     />
   );
 };

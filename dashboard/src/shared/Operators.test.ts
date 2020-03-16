@@ -1,6 +1,6 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { Operators } from "./Operators";
-import { IPackageManifest } from "./types";
+import { IClusterServiceVersion, IPackageManifest } from "./types";
 
 it("check if the OLM has been installed", async () => {
   axiosWithAuth.get = jest.fn(() => {
@@ -51,5 +51,18 @@ it("get operator", async () => {
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
     `api/kube/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests/${opName}`,
+  );
+});
+
+it("get csvs", async () => {
+  const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
+  const ns = "default";
+  axiosWithAuth.get = jest.fn(() => {
+    return { data: { items: [csv] } };
+  });
+  expect(await Operators.getCSVs(ns)).toEqual([csv]);
+  expect(axiosWithAuth.get).toHaveBeenCalled();
+  expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
+    `api/kube/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions`,
   );
 });

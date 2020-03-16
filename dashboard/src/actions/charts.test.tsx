@@ -84,7 +84,9 @@ describe("fetchChartVersions", () => {
     ];
     await store.dispatch(actions.charts.fetchChartVersions("foo"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions`);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
+    );
   });
 });
 
@@ -100,7 +102,9 @@ describe("getChartVersion", () => {
     ];
     await store.dispatch(actions.charts.getChartVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions/1.0.0`);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions/1.0.0`,
+    );
   });
 
   it("gets a chart version with tag", async () => {
@@ -219,7 +223,9 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     ];
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions`);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
+    );
   });
 
   it("returns a not found error", async () => {
@@ -237,7 +243,9 @@ describe("fetchChartVersionsAndSelectVersion", () => {
     axiosWithAuth.get = axiosGetMock;
     await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(axiosGetMock.mock.calls[0][0]).toBe(`api/assetsvc/v1/ns/${namespace}/charts/foo/versions`);
+    expect(axiosGetMock.mock.calls[0][0]).toBe(
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
+    );
   });
 });
 

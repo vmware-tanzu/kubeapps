@@ -34,14 +34,21 @@ export const api = {
     base: "api/assetsvc/v1",
     get: (namespace: string, id: string) => `${api.charts.base}/ns/${namespace}/charts/${id}`,
     getReadme: (namespace: string, id: string, version: string) =>
-      `${api.charts.base}/ns/${namespace}/assets/${id}/versions/${encodeURIComponent(version)}/README.md`,
+      `${api.charts.base}/ns/${namespace}/assets/${id}/versions/${encodeURIComponent(
+        version,
+      )}/README.md`,
     getValues: (namespace: string, id: string, version: string) =>
-      `${api.charts.base}/ns/${namespace}/assets/${id}/versions/${encodeURIComponent(version)}/values.yaml`,
+      `${api.charts.base}/ns/${namespace}/assets/${id}/versions/${encodeURIComponent(
+        version,
+      )}/values.yaml`,
     getSchema: (namespace: string, id: string, version: string) =>
-      `${api.charts.base}/ns/${namespace}/assets/${id}/versions/${encodeURIComponent(version)}/values.schema.json`,
+      `${api.charts.base}/ns/${namespace}/assets/${id}/versions/${encodeURIComponent(
+        version,
+      )}/values.schema.json`,
     getVersion: (namespace: string, id: string, version: string) =>
       `${api.charts.base}/ns/${namespace}/charts/${id}/versions/${encodeURIComponent(version)}`,
-    list: (namespace: string, repo?: string) => `${api.charts.base}/ns/${namespace}/charts${repo ? `/${repo}` : ""}`,
+    list: (namespace: string, repo?: string) =>
+      `${api.charts.base}/ns/${namespace}/charts${repo ? `/${repo}` : ""}`,
     listVersions: (namespace: string, id: string) => `${api.charts.get(namespace, id)}/versions`,
   },
 
@@ -63,5 +70,9 @@ export const api = {
       `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests`,
     operator: (namespace: string, name: string) =>
       `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
+    clusterServiceVersions: (namespace: string) =>
+      `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions`,
+    operatorIcon: (namespace: string, name: string) =>
+      `api/v1/namespaces/${namespace}/operator/${name}/logo`,
   },
 };

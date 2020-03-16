@@ -9,6 +9,7 @@ import { MessageAlert } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import Catalog from "./Catalog";
+import CatalogItem from "./CatalogItem";
 
 const defaultChartState = {
   isFetching: false,
@@ -23,6 +24,10 @@ const defaultProps = {
   filter: "",
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
+  namespace: "kubeapps",
+  csvs: [],
+  getCSVs: jest.fn(),
+  featureFlags: { operators: false },
 };
 
 it("propagates the filter from the props", () => {
@@ -49,6 +54,33 @@ it("keeps the filter from the state", () => {
   expect(wrapper.state("filter")).toBe("");
   wrapper.setState({ filter: "foo" });
   expect(wrapper.state("filter")).toBe("foo");
+});
+
+describe("componentDidMount", () => {
+  it("retrieves csvs in the namespace", () => {
+    const getCSVs = jest.fn();
+    const namespace = "foo";
+    shallow(
+      <Catalog
+        {...defaultProps}
+        getCSVs={getCSVs}
+        namespace={namespace}
+        featureFlags={{ operators: true }}
+      />,
+    );
+    expect(getCSVs).toHaveBeenCalledWith(namespace);
+  });
+});
+
+describe("componentDidUpdate", () => {
+  it("re-fetches csvs if the namespace changes", () => {
+    const getCSVs = jest.fn();
+    const wrapper = shallow(
+      <Catalog {...defaultProps} getCSVs={getCSVs} featureFlags={{ operators: true }} />,
+    );
+    wrapper.setProps({ namespace: "a-different-one" });
+    expect(getCSVs).toHaveBeenCalledWith("a-different-one");
+  });
 });
 
 describe("renderization", () => {
@@ -79,8 +111,16 @@ describe("renderization", () => {
       isFetching: false,
       selected: {} as IChartState["selected"],
       items: [
-        { id: "foo", attributes: { description: "" } } as IChart,
-        { id: "bar", attributes: { description: "" } } as IChart,
+        {
+          id: "foo",
+          attributes: { name: "foo", description: "", repo: { name: "foo" } },
+          relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
+        } as IChart,
+        {
+          id: "bar",
+          attributes: { name: "bar", description: "", repo: { name: "bar" } },
+          relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
+        } as IChart,
       ],
     } as IChartState;
 
@@ -94,19 +134,39 @@ describe("renderization", () => {
       const cardGrid = wrapper.find(CardGrid);
       expect(cardGrid).toExist();
       expect(cardGrid.children().length).toBe(chartState.items.length);
+      const expectedItem1 = {
+        description: "",
+        id: "bar",
+        name: "bar",
+        namespace: "kubeapps",
+        repoName: "bar",
+        type: "chart",
+        version: "v2.0.0",
+      };
+      const expectedItem2 = {
+        description: "",
+        id: "foo",
+        name: "foo",
+        namespace: "kubeapps",
+        repoName: "foo",
+        type: "chart",
+        version: "v1.0.0",
+      };
       expect(
         cardGrid
           .children()
           .at(0)
-          .props().chart,
-      ).toEqual(chartState.items[0]);
+          .props().item,
+      ).toEqual(expectedItem1);
       expect(
         cardGrid
           .children()
           .at(1)
-          .props().chart,
-      ).toEqual(chartState.items[1]);
+          .props().item,
+      ).toEqual(expectedItem2);
       expect(wrapper).toMatchSnapshot();
+      // If there are no csvs, there shouldn't be columns
+      expect(wrapper.find(".col-10")).not.toExist();
     });
 
     it("should filter apps", () => {
@@ -116,12 +176,89 @@ describe("renderization", () => {
       const cardGrid = wrapper.find(CardGrid);
       expect(cardGrid).toExist();
       expect(cardGrid.children().length).toBe(1);
+      const expectedItem = {
+        description: "",
+        id: "foo",
+        name: "foo",
+        namespace: "kubeapps",
+        repoName: "foo",
+        type: "chart",
+        version: "v1.0.0",
+      };
       expect(
         cardGrid
           .children()
           .at(0)
-          .props().chart,
-      ).toEqual(chartState.items[0]);
+          .props().item,
+      ).toEqual(expectedItem);
+    });
+
+    describe("when operators available", () => {
+      const csvs = [
+        {
+          metadata: {
+            name: "test-csv",
+          },
+          spec: {
+            icon: [{ base64data: "data", mediatype: "img/png" }],
+            customresourcedefinitions: {
+              owned: [
+                {
+                  name: "foo-cluster",
+                  displayName: "foo-cluster",
+                  version: "v1.0.0",
+                  description: "a meaningful description",
+                },
+              ],
+            },
+          },
+        } as any,
+      ];
+
+      it("shows the list of charts and operators", () => {
+        const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} csvs={csvs} />);
+        const cardGrid = wrapper.find(CardGrid);
+        expect(cardGrid).toExist();
+        expect(cardGrid.children().length).toBe(chartState.items.length + csvs.length);
+
+        const expectedItem = {
+          csv: "test-csv",
+          description: "a meaningful description",
+          icon: "data:img/png;base64,data",
+          id: "foo-cluster",
+          name: "foo-cluster",
+          namespace: "kubeapps",
+          type: "operator",
+          version: "v1.0.0",
+        };
+        const csvCard = cardGrid
+          .find(CatalogItem)
+          .findWhere(c => c.prop("item").id === "foo-cluster");
+        expect(csvCard).toExist();
+        expect(csvCard.prop("item")).toMatchObject(expectedItem);
+        // If there are no csvs, there should be a column for the cardgrid
+        expect(wrapper.find(".col-10")).toExist();
+        // The list should be ordered
+        expect(cardGrid.children().map(c => c.props().item.id)).toEqual([
+          "bar",
+          "foo",
+          "foo-cluster",
+        ]);
+      });
+
+      it("should filter out charts or operators when requested", () => {
+        const wrapper = shallow(<Catalog {...defaultProps} charts={chartState} csvs={csvs} />);
+
+        wrapper.setState({ listCharts: false });
+        let cardGrid = wrapper.find(CardGrid);
+        expect(cardGrid).toExist();
+        expect(cardGrid.children().length).toBe(csvs.length);
+
+        wrapper.setState({ listOperators: false, listCharts: true });
+        cardGrid = wrapper.find(CardGrid);
+        expect(cardGrid).toExist();
+        expect(cardGrid.children().length).toBe(chartState.items.length);
+      });
     });
   });
 });

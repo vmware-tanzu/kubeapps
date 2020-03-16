@@ -1,7 +1,7 @@
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 
-import { IPackageManifest } from "shared/types";
+import { IClusterServiceVersion, IPackageManifest } from "shared/types";
 import operatorReducer from "./operators";
 import { IOperatorsState } from "./operators";
 
@@ -13,6 +13,7 @@ describe("catalogReducer", () => {
       isFetching: false,
       isOLMInstalled: false,
       operators: [],
+      csvs: [],
     };
   });
 
@@ -27,6 +28,9 @@ describe("catalogReducer", () => {
       setNamespace: getType(actions.namespace.setNamespace),
       requestOperator: getType(actions.operators.requestOperator),
       receiveOperator: getType(actions.operators.receiveOperator),
+      requestCSVs: getType(actions.operators.requestCSVs),
+      receiveCSVs: getType(actions.operators.receiveCSVs),
+      errorCSVs: getType(actions.operators.errorCSVs),
     };
 
     describe("reducer actions", () => {
@@ -114,6 +118,33 @@ describe("catalogReducer", () => {
             payload: op,
           }),
         ).toEqual({ ...initialState, isFetching: false, operator: op });
+      });
+
+      it("sets receive csvs", () => {
+        const state = operatorReducer(undefined, {
+          type: actionTypes.requestCSVs as any,
+        });
+        const csv = {} as IClusterServiceVersion;
+        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(
+          operatorReducer(undefined, {
+            type: actionTypes.receiveCSVs as any,
+            payload: [csv],
+          }),
+        ).toEqual({ ...initialState, isFetching: false, csvs: [csv] });
+      });
+
+      it("sets an error for csvs", () => {
+        const state = operatorReducer(undefined, {
+          type: actionTypes.requestCSVs as any,
+        });
+        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(
+          operatorReducer(undefined, {
+            type: actionTypes.errorCSVs as any,
+            payload: new Error("Boom!"),
+          }),
+        ).toEqual({ ...initialState, isFetching: false, error: new Error("Boom!") });
       });
     });
   });

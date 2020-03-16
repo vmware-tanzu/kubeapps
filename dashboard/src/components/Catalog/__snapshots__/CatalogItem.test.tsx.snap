@@ -7,16 +7,17 @@ exports[`should render an item 1`] = `
       className="ListItem__content__description"
     />
   }
-  icon="api/assetsvc/icon.png"
+  icon="icon.png"
   info="1.0.0"
-  key="[object Object]/foo"
-  link="/charts/foo"
+  key="foo1"
+  link="/charts/undefined/foo"
   tag1Content={
     <Unknown
       className="ListItem__content__info_tag_link"
       to="/catalog/undefined"
     />
   }
+  tag2Content="chart"
   title="foo"
 />
 `;
