@@ -5,7 +5,9 @@ import * as URL from "./url";
 
 export default class Chart {
   public static async fetchCharts(namespace: string, repo: string) {
-    const { data } = await axiosWithAuth.get<{ data: IChart[] }>(URL.api.charts.list(namespace, repo));
+    const { data } = await axiosWithAuth.get<{ data: IChart[] }>(
+      URL.api.charts.list(namespace, repo),
+    );
     return data.data;
   }
 
@@ -24,22 +26,35 @@ export default class Chart {
   }
 
   public static async getReadme(namespace: string, id: string, version: string) {
-    const { data } = await axiosWithAuth.get<string>(URL.api.charts.getReadme(namespace, id, version));
+    const { data } = await axiosWithAuth.get<string>(
+      URL.api.charts.getReadme(namespace, id, version),
+    );
     return data;
   }
 
   public static async getValues(namespace: string, id: string, version: string) {
-    const { data } = await axiosWithAuth.get<string>(URL.api.charts.getValues(namespace, id, version));
+    const { data } = await axiosWithAuth.get<string>(
+      URL.api.charts.getValues(namespace, id, version),
+    );
     return data;
   }
 
   public static async getSchema(namespace: string, id: string, version: string) {
-    const { data } = await axiosWithAuth.get<JSONSchema4>(URL.api.charts.getSchema(namespace, id, version));
+    const { data } = await axiosWithAuth.get<JSONSchema4>(
+      URL.api.charts.getSchema(namespace, id, version),
+    );
     return data;
   }
 
-  public static async listWithFilters(namespace: string, name: string, version: string, appVersion: string) {
-    const url = `${Chart.APIEndpoint}/ns/${namespace}/charts?name=${name}&version=${encodeURIComponent(
+  public static async listWithFilters(
+    namespace: string,
+    name: string,
+    version: string,
+    appVersion: string,
+  ) {
+    const url = `${
+      Chart.APIEndpoint
+    }/ns/${namespace}/charts?name=${name}&version=${encodeURIComponent(
       version,
     )}&appversion=${appVersion}`;
     const { data } = await axiosWithAuth.get<{ data: IChart[] }>(url);

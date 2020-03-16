@@ -32,30 +32,30 @@ exports[`renderization when charts available should render the list of charts 1`
               Object {
                 "description": "",
                 "icon": undefined,
-                "id": "foo",
-                "name": undefined,
-                "namespace": "kubeapps",
-                "repoName": "foo",
-                "type": "chart",
-                "version": "v1.0.0",
-              }
-            }
-            key="chart/foo/undefined"
-          />
-          <CatalogItem
-            item={
-              Object {
-                "description": "",
-                "icon": undefined,
                 "id": "bar",
-                "name": undefined,
+                "name": "bar",
                 "namespace": "kubeapps",
                 "repoName": "bar",
                 "type": "chart",
                 "version": "v2.0.0",
               }
             }
-            key="chart/bar/undefined"
+            key="chart/bar/bar"
+          />
+          <CatalogItem
+            item={
+              Object {
+                "description": "",
+                "icon": undefined,
+                "id": "foo",
+                "name": "foo",
+                "namespace": "kubeapps",
+                "repoName": "foo",
+                "type": "chart",
+                "version": "v1.0.0",
+              }
+            }
+            key="chart/foo/foo"
           />
         </CardGrid>
       </div>

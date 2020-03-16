@@ -113,12 +113,12 @@ describe("renderization", () => {
       items: [
         {
           id: "foo",
-          attributes: { description: "", repo: { name: "foo" } },
+          attributes: { name: "foo", description: "", repo: { name: "foo" } },
           relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
         } as IChart,
         {
           id: "bar",
-          attributes: { description: "", repo: { name: "bar" } },
+          attributes: { name: "bar", description: "", repo: { name: "bar" } },
           relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
         } as IChart,
       ],
@@ -136,19 +136,21 @@ describe("renderization", () => {
       expect(cardGrid.children().length).toBe(chartState.items.length);
       const expectedItem1 = {
         description: "",
-        id: "foo",
-        namespace: "kubeapps",
-        repoName: "foo",
-        type: "chart",
-        version: "v1.0.0",
-      };
-      const expectedItem2 = {
-        description: "",
         id: "bar",
+        name: "bar",
         namespace: "kubeapps",
         repoName: "bar",
         type: "chart",
         version: "v2.0.0",
+      };
+      const expectedItem2 = {
+        description: "",
+        id: "foo",
+        name: "foo",
+        namespace: "kubeapps",
+        repoName: "foo",
+        type: "chart",
+        version: "v1.0.0",
       };
       expect(
         cardGrid
@@ -177,6 +179,7 @@ describe("renderization", () => {
       const expectedItem = {
         description: "",
         id: "foo",
+        name: "foo",
         namespace: "kubeapps",
         repoName: "foo",
         type: "chart",
@@ -202,7 +205,7 @@ describe("renderization", () => {
               owned: [
                 {
                   name: "foo-cluster",
-                  displayName: "Foo Cluster",
+                  displayName: "foo-cluster",
                   version: "v1.0.0",
                   description: "a meaningful description",
                 },
@@ -223,7 +226,7 @@ describe("renderization", () => {
           description: "a meaningful description",
           icon: "data:img/png;base64,data",
           id: "foo-cluster",
-          name: "Foo Cluster",
+          name: "foo-cluster",
           namespace: "kubeapps",
           type: "operator",
           version: "v1.0.0",
@@ -235,6 +238,12 @@ describe("renderization", () => {
         expect(csvCard.prop("item")).toMatchObject(expectedItem);
         // If there are no csvs, there should be a column for the cardgrid
         expect(wrapper.find(".col-10")).toExist();
+        // The list should be ordered
+        expect(cardGrid.children().map(c => c.props().item.id)).toEqual([
+          "bar",
+          "foo",
+          "foo-cluster",
+        ]);
       });
 
       it("should filter out charts or operators when requested", () => {

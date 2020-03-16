@@ -118,7 +118,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
                       checked={listOperators}
                       onChange={this.toggleListOperators}
                     />
-                    <span>Operator Instances</span>
+                    <span>Operators</span>
                   </label>
                 </div>
               </div>
@@ -176,7 +176,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         });
       });
     });
-    return result;
+    return result.sort((a, b) => (a.name > b.name ? 1 : -1));
   }
 
   private toggleListCharts = () => {

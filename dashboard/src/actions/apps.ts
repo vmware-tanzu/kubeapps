@@ -115,7 +115,12 @@ function getAppUpdateInfo(
       config: { namespace },
     } = getState();
     try {
-      const chartsInfo = await Chart.listWithFilters(namespace, chartName, currentVersion, appVersion);
+      const chartsInfo = await Chart.listWithFilters(
+        namespace,
+        chartName,
+        currentVersion,
+        appVersion,
+      );
       let updateInfo: IChartUpdateInfo = {
         upToDate: true,
         repository: { name: "", url: "" },
