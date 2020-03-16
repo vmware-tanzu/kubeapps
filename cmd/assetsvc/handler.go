@@ -118,22 +118,8 @@ func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, sho
 	return newChartListResponse(namespace, charts), meta{totalPages}, err
 }
 
-// listCharts returns a list of charts
+// listCharts returns a list of charts based on filter params
 func listCharts(w http.ResponseWriter, req *http.Request, params Params) {
-	pageNumber, pageSize := getPageNumberAndSize(req)
-	cl, meta, err := getPaginatedChartList(params["namespace"], "", pageNumber, pageSize, showDuplicates(req))
-	if err != nil {
-		log.WithError(err).Error("could not fetch charts")
-		response.NewErrorResponse(http.StatusInternalServerError, "could not fetch all charts").Write(w)
-		return
-	}
-	response.NewDataResponseWithMeta(cl, meta).Write(w)
-}
-
-// listRepoCharts returns a list of charts in the given repo
-// TODO: mnelson: Refactor to have just one `listCharts` function where params
-// can be empty.
-func listRepoCharts(w http.ResponseWriter, req *http.Request, params Params) {
 	pageNumber, pageSize := getPageNumberAndSize(req)
 	cl, meta, err := getPaginatedChartList(params["namespace"], params["repo"], pageNumber, pageSize, showDuplicates(req))
 	if err != nil {

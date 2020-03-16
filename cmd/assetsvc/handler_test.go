@@ -355,7 +355,7 @@ func Test_listRepoCharts(t *testing.T) {
 				"repo": "my-repo",
 			}
 
-			listRepoCharts(w, req, params)
+			listCharts(w, req, params)
 
 			m.AssertExpectations(t)
 			assert.Equal(t, http.StatusOK, w.Code)
