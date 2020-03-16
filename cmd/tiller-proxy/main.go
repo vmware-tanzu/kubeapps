@@ -201,7 +201,7 @@ func main() {
 	assetsvcPrefix := "/assetsvc"
 	assetsvcRouter := r.PathPrefix(assetsvcPrefix).Subrouter()
 	// Logos don't require authentication so bypass that step
-	assetsvcRouter.Methods("GET").Path("/v1/assets/{repo}/{id}/logo").Handler(negroni.New(
+	assetsvcRouter.Methods("GET").Path("/v1/ns/{ns}/assets/{repo}/{id}/logo").Handler(negroni.New(
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
 	assetsvcRouter.Methods("GET").Handler(negroni.New(
