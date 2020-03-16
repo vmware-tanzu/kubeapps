@@ -3,8 +3,8 @@ import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
-import OperatorInstanceForm from "components/OperatorInstanceForm";
 import actions from "../../actions";
+import OperatorInstanceForm from "../../components/OperatorInstanceForm";
 import { IStoreState } from "../../shared/types";
 
 interface IRouteProps {

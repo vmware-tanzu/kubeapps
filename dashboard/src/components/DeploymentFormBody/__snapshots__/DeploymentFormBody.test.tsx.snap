@@ -81,7 +81,14 @@ exports[`renders the full DeploymentFormBody 1`] = `
         <AdvancedDeploymentForm
           appValues="foo: bar"
           handleValuesChange={[Function]}
-        />
+        >
+          <p>
+            <b>
+              Note:
+            </b>
+             Only comments from the original chart values will be preserved.
+          </p>
+        </AdvancedDeploymentForm>
       </TabPanel>
       <TabPanel
         className="react-tabs__tab-panel"
