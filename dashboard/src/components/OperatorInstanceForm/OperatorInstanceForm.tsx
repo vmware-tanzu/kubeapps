@@ -1,10 +1,16 @@
 import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
+import { get } from "lodash";
 import * as Moniker from "moniker-native";
 import * as React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
-import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
+import {
+  IClusterServiceVersion,
+  IClusterServiceVersionCRD,
+  IResource,
+  UnprocessableEntity,
+} from "../../shared/types";
 import ConfirmDialog from "../ConfirmDialog";
 import AdvancedDeploymentForm from "../DeploymentFormBody/AdvancedDeploymentForm";
 import Differential from "../DeploymentFormBody/Differential";
@@ -40,6 +46,7 @@ export interface IOperatorInstanceFormBodyState {
   restoreDefaultValuesModalIsOpen: boolean;
   submittedResourceName: string;
   crd?: IClusterServiceVersionCRD;
+  error?: Error;
 }
 
 class DeploymentFormBody extends React.Component<
@@ -86,7 +93,7 @@ class DeploymentFormBody extends React.Component<
 
   public render() {
     const { isFetching, errors, csvName, crdName } = this.props;
-    const { crd, submittedResourceName } = this.state;
+    const { crd, submittedResourceName, error } = this.state;
 
     if (errors.fetch) {
       return (
@@ -122,6 +129,7 @@ class DeploymentFormBody extends React.Component<
               resource={`Operator Instance "${submittedResourceName}" (${crd?.name})`}
             />
           )}
+          {error && <ErrorSelector error={error} resource={`Operator Instance (${crd?.name})`} />}
           <p>{crd.description}</p>
           <ConfirmDialog
             modalIsOpen={this.state.restoreDefaultValuesModalIsOpen}
@@ -192,15 +200,33 @@ class DeploymentFormBody extends React.Component<
 
   private handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    // Clean possible previous errors
+    this.setState({ error: undefined });
     const { createResource, push, namespace } = this.props;
     const { values, crd } = this.state;
     const resourceType = crd!.name.split(".")[0];
-    // TODO: Catch errors
-    const resource: IResource = yaml.safeLoad(values);
-    this.setState({ submittedResourceName: resource.metadata.name });
+    let resource: IResource = {} as any;
+    try {
+      resource = yaml.safeLoad(values);
+    } catch (e) {
+      this.setState({
+        error: new UnprocessableEntity(`Unable to parse the given YAML. Got: ${e.message}`),
+      });
+      return;
+    }
+    if (!resource.apiVersion) {
+      this.setState({
+        error: new UnprocessableEntity(
+          "Unable parse the resource. Make sure it contains a valid apiVersion",
+        ),
+      });
+      return;
+    }
+    const resourceName = get(resource, "metadata.name");
+    this.setState({ submittedResourceName: resourceName });
     const created = await createResource(namespace, resource.apiVersion, resourceType, resource);
     if (created) {
-      push(`/operators-instances/ns/${namespace}/${resource.metadata.name}`);
+      push(`/operators-instances/ns/${namespace}/${resourceName}`);
     }
   };
 }
