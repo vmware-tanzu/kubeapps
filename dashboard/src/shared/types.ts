@@ -158,7 +158,7 @@ export interface IResource {
   metadata: {
     name: string;
     namespace: string;
-    annotations: any;
+    annotations: { [key: string]: string };
     creationTimestamp: string;
     selfLink: string;
     resourceVersion: string;

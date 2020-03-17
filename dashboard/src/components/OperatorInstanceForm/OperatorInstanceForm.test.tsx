@@ -49,11 +49,28 @@ it("retrieves the example values and the target CRD from the given CSV", () => {
         owned: [defaultCRD],
       },
     },
-  } as IClusterServiceVersion;
+  } as any;
   const wrapper = shallow(<OperatorInstanceForm {...defaultProps} />);
   wrapper.setProps({ csv });
   expect(wrapper.state()).toMatchObject({
     defaultValues: "kind: Foo\napiVersion: v1\n",
+    crd: defaultCRD,
+  });
+});
+
+it("defaults to empty defaultValues if the examples annotation is not found", () => {
+  const csv = {
+    metadata: {},
+    spec: {
+      customresourcedefinitions: {
+        owned: [defaultCRD],
+      },
+    },
+  } as IClusterServiceVersion;
+  const wrapper = shallow(<OperatorInstanceForm {...defaultProps} />);
+  wrapper.setProps({ csv });
+  expect(wrapper.state()).toMatchObject({
+    defaultValues: "",
     crd: defaultCRD,
   });
 });
@@ -88,7 +105,9 @@ it("restores the default values", async () => {
   const restoreConfirmButton = wrapper.find("button").filterWhere(b => b.text() === "Restore");
   restoreConfirmButton.simulate("click");
 
-  // expect(wrapper.state() as any).toMatchObject({ values: "foo", defaultValues: "foo" });
+  const { values, defaultValues } = wrapper.state() as any;
+  expect(values).toEqual("foo");
+  expect(defaultValues).toEqual("foo");
 });
 
 it("should submit the form", () => {
