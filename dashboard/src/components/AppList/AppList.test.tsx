@@ -9,6 +9,7 @@ import { ErrorSelector } from "../ErrorAlert";
 import { genericMessage } from "../ErrorAlert/UnexpectedErrorAlert";
 import AppList from "./AppList";
 import AppListItem from "./AppListItem";
+import CustomResourceListItem from "./CustomResourceListItem";
 
 let props = {} as any;
 
@@ -18,18 +19,26 @@ const defaultProps: any = {
   filter: "",
   namespace: "default",
   pushSearchFilter: jest.fn(),
-  toggleListAll: jest.fn(),
   fetchAppsWithUpdateInfo: jest.fn(),
+  getCustomResources: jest.fn(),
+  customResources: [],
+  csvs: [],
 };
 
 context("when changing props", () => {
   it("should fetch apps in the new namespace", () => {
     const fetchAppsWithUpdateInfo = jest.fn();
+    const getCustomResources = jest.fn();
     const wrapper = shallow(
-      <AppList {...defaultProps} fetchAppsWithUpdateInfo={fetchAppsWithUpdateInfo} />,
+      <AppList
+        {...defaultProps}
+        fetchAppsWithUpdateInfo={fetchAppsWithUpdateInfo}
+        getCustomResources={getCustomResources}
+      />,
     );
     wrapper.setProps({ namespace: "foo" });
     expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("foo", undefined);
+    expect(getCustomResources).toHaveBeenCalledWith("foo");
   });
 
   it("should update the filter", () => {
@@ -43,6 +52,10 @@ context("while fetching apps", () => {
   props = { ...defaultProps, apps: { isFetching: true } };
 
   itBehavesLike("aLoadingComponent", { component: AppList, props });
+  itBehavesLike("aLoadingComponent", {
+    component: AppList,
+    props: { ...defaultProps, isFetchingResources: true },
+  });
 
   it("matches the snapshot", () => {
     const wrapper = shallow(<AppList {...props} />);
@@ -237,4 +250,45 @@ it("renders the 'Show deleted apps' button even if the app list is empty", () =>
     />,
   );
   expect(wrapper.find('input[type="checkbox"]').exists()).toBe(true);
+});
+
+context("when custom resources available", () => {
+  beforeEach(() => {
+    const cr = { kind: "KubeappsCluster", metadata: { name: "foo-cluster" } };
+    const csv = {
+      spec: {
+        customresourcedefinitions: {
+          owned: [
+            {
+              kind: "KubeappsCluster",
+            },
+          ],
+        },
+      },
+    };
+    props = {
+      ...defaultProps,
+      customResources: [cr],
+      csvs: [csv],
+    };
+  });
+
+  it("matches the snapshot", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders a CardGrid with the available resources", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    const itemList = wrapper.find(CustomResourceListItem);
+    expect(itemList).toExist();
+    expect(itemList.key()).toBe("foo-cluster");
+  });
+
+  it("filters out items", () => {
+    const wrapper = shallow(<AppList {...props} />);
+    wrapper.setState({ filter: "nop" });
+    const itemList = wrapper.find(CustomResourceListItem);
+    expect(itemList).not.toExist();
+  });
 });

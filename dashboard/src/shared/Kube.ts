@@ -1,7 +1,7 @@
 import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { ResourceKind, ResourceKindsWithPlurals } from "./ResourceKinds";
-import { IResource } from "./types";
+import { IAPIGroup, IResource } from "./types";
 
 export const APIBase = "api/kube";
 export let WebSocketAPIBase: string;
@@ -87,5 +87,10 @@ export class Kube {
   // Gets the plural form of the resource Kind for use in the resource path
   public static resourcePlural(kind: ResourceKind) {
     return ResourceKindsWithPlurals[kind];
+  }
+
+  public static async getAPIGroup(name: string) {
+    const { data } = await axiosWithAuth.get<IAPIGroup>(`${APIBase}/apis/${name}`);
+    return data;
   }
 }

@@ -15,6 +15,7 @@ describe("catalogReducer", () => {
       operators: [],
       csvs: [],
       errors: {},
+      resources: [],
     };
   });
 
@@ -37,6 +38,9 @@ describe("catalogReducer", () => {
       creatingResource: getType(actions.operators.creatingResource),
       resourceCreated: getType(actions.operators.resourceCreated),
       errorResourceCreate: getType(actions.operators.errorResourceCreate),
+      requestCustomResources: getType(actions.operators.requestCustomResources),
+      receiveCustomResources: getType(actions.operators.receiveCustomResources),
+      errorCustomResource: getType(actions.operators.errorCustomResource),
     };
 
     describe("reducer actions", () => {
@@ -198,6 +202,33 @@ describe("catalogReducer", () => {
           payload: new Error("Boom!"),
         }),
       ).toEqual({ ...initialState, isFetching: false, errors: { create: new Error("Boom!") } });
+    });
+
+    it("sets receive resources", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.requestCustomResources as any,
+      });
+      const resource = {} as IResource;
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.receiveCustomResources as any,
+          payload: [resource],
+        }),
+      ).toEqual({ ...initialState, isFetching: false, resources: [resource] });
+    });
+
+    it("sets an error for resources", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.requestCustomResources as any,
+      });
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.errorCustomResource as any,
+          payload: new Error("Boom!"),
+        }),
+      ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
     });
   });
 });

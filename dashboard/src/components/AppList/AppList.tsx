@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IAppOverview, IAppState } from "../../shared/types";
+import { IAppOverview, IAppState, IClusterServiceVersion, IResource } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
@@ -9,6 +9,7 @@ import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
+import CustomResourceListItem from "./CustomResourceListItem";
 
 interface IAppListProps {
   apps: IAppState;
@@ -16,6 +17,10 @@ interface IAppListProps {
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;
+  getCustomResources: (ns: string) => void;
+  customResources: IResource[];
+  isFetchingResources: boolean;
+  csvs: IClusterServiceVersion[];
 }
 
 interface IAppListState {
@@ -25,8 +30,9 @@ interface IAppListState {
 class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
   public componentDidMount() {
-    const { fetchAppsWithUpdateInfo, filter, namespace, apps } = this.props;
+    const { fetchAppsWithUpdateInfo, filter, namespace, apps, getCustomResources } = this.props;
     fetchAppsWithUpdateInfo(namespace, apps.listingAll);
+    getCustomResources(namespace);
     this.setState({ filter });
   }
 
@@ -34,12 +40,14 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     const {
       apps: { error, listingAll },
       fetchAppsWithUpdateInfo,
+      getCustomResources,
       filter,
       namespace,
     } = this.props;
     // refetch if new namespace or error removed due to location change
     if (prevProps.namespace !== namespace || (!error && prevProps.apps.error)) {
       fetchAppsWithUpdateInfo(namespace, listingAll);
+      getCustomResources(namespace);
     }
     if (prevProps.filter !== filter) {
       this.setState({ filter });
@@ -48,7 +56,8 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
 
   public render() {
     const {
-      apps: { error, isFetching, listOverview },
+      apps: { error, isFetching },
+      isFetchingResources,
     } = this.props;
     return (
       <section className="AppList">
@@ -68,7 +77,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
         </PageHeader>
         <main>
-          <LoadingWrapper loaded={!isFetching}>
+          <LoadingWrapper loaded={!isFetching && !isFetchingResources}>
             {error ? (
               <ErrorSelector
                 error={error}
@@ -77,7 +86,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
                 namespace={this.props.namespace}
               />
             ) : (
-              this.appListItems(listOverview)
+              this.appListItems()
             )}
           </LoadingWrapper>
         </main>
@@ -108,40 +117,56 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     );
   }
 
-  public appListItems(items: IAppState["listOverview"]) {
-    if (items) {
-      const filteredItems = this.filteredApps(items, this.state.filter);
-      if (filteredItems.length === 0) {
-        return (
-          <MessageAlert header="Supercharge your Kubernetes cluster">
-            <div>
-              <p className="margin-v-normal">
-                Deploy applications on your Kubernetes cluster with a single click.
-              </p>
-            </div>
-          </MessageAlert>
-        );
-      } else {
-        return (
+  public appListItems() {
+    const {
+      apps: { listOverview },
+      customResources,
+    } = this.props;
+    const filteredReleases = this.filteredReleases(listOverview || [], this.state.filter);
+    const filteredCRs = this.filteredCRs(customResources, this.state.filter);
+    if (filteredReleases.length === 0 && filteredCRs.length === 0) {
+      return (
+        <MessageAlert header="Supercharge your Kubernetes cluster">
           <div>
-            <CardGrid>
-              {filteredItems.map(r => {
-                return <AppListItem key={r.releaseName} app={r} />;
-              })}
-            </CardGrid>
+            <p className="margin-v-normal">
+              Deploy applications on your Kubernetes cluster with a single click.
+            </p>
           </div>
-        );
-      }
+        </MessageAlert>
+      );
     }
-    return <div />;
+    return (
+      <div>
+        <CardGrid>
+          {filteredReleases.map(r => {
+            return <AppListItem key={r.releaseName} app={r} />;
+          })}
+          {filteredCRs.map(r => {
+            return (
+              <CustomResourceListItem
+                key={r.metadata.name}
+                resource={r}
+                csv={this.props.csvs.find(csv =>
+                  csv.spec.customresourcedefinitions.owned.some(crd => crd.kind === r.kind),
+                )}
+              />
+            );
+          })}
+        </CardGrid>
+      </div>
+    );
   }
 
   private toggleListAll = () => {
     this.props.fetchAppsWithUpdateInfo(this.props.namespace, !this.props.apps.listingAll);
   };
 
-  private filteredApps(apps: IAppOverview[], filter: string) {
+  private filteredReleases(apps: IAppOverview[], filter: string) {
     return apps.filter(a => new RegExp(escapeRegExp(filter), "i").test(a.releaseName));
+  }
+
+  private filteredCRs(crs: IResource[], filter: string) {
+    return crs.filter(cr => new RegExp(escapeRegExp(filter), "i").test(cr.metadata.name));
   }
 
   private handleFilterQueryChange = (filter: string) => {

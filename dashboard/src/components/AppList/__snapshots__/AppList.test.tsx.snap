@@ -77,6 +77,94 @@ exports[`when apps available matches the snapshot 1`] = `
 </section>
 `;
 
+exports[`when custom resources available matches the snapshot 1`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
+            onChange={[Function]}
+            type="checkbox"
+          />
+          <span>
+            Show deleted apps
+          </span>
+        </label>
+      </div>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    >
+      <Link
+        to="/catalog"
+      >
+        <button
+          className="deploy-button button button-accent"
+        >
+          Deploy App
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <div>
+        <CardGrid>
+          <CustomResourceListItem
+            csv={
+              Object {
+                "spec": Object {
+                  "customresourcedefinitions": Object {
+                    "owned": Array [
+                      Object {
+                        "kind": "KubeappsCluster",
+                      },
+                    ],
+                  },
+                },
+              }
+            }
+            key="foo-cluster"
+            resource={
+              Object {
+                "kind": "KubeappsCluster",
+                "metadata": Object {
+                  "name": "foo-cluster",
+                },
+              }
+            }
+          />
+        </CardGrid>
+      </div>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
 exports[`when error present matches the snapshot 1`] = `
 <section
   className="AppList"
@@ -275,7 +363,88 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
       loaded={false}
       type={0}
     >
-      <div />
+      <MessageAlertPage
+        header="Supercharge your Kubernetes cluster"
+      >
+        <div>
+          <p
+            className="margin-v-normal"
+          >
+            Deploy applications on your Kubernetes cluster with a single click.
+          </p>
+        </div>
+      </MessageAlertPage>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching apps loading spinner matches the snapshot 2`] = `
+<section
+  className="AppList"
+>
+  <PageHeader>
+    <div
+      className="col-9"
+    >
+      <div
+        className="row"
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          className="margin-l-big"
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[Function]}
+          placeholder="search apps..."
+          value=""
+        />
+        <label
+          className="checkbox margin-r-big margin-l-big margin-t-big"
+          key="listall"
+        >
+          <input
+            onChange={[Function]}
+            type="checkbox"
+          />
+          <span>
+            Show deleted apps
+          </span>
+        </label>
+      </div>
+    </div>
+    <div
+      className="col-3 text-r align-center"
+    >
+      <Link
+        to="/catalog"
+      >
+        <button
+          className="deploy-button button button-accent"
+        >
+          Deploy App
+        </button>
+      </Link>
+    </div>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    >
+      <MessageAlertPage
+        header="Supercharge your Kubernetes cluster"
+      >
+        <div>
+          <p
+            className="margin-v-normal"
+          >
+            Deploy applications on your Kubernetes cluster with a single click.
+          </p>
+        </div>
+      </MessageAlertPage>
     </LoadingWrapper>
   </main>
 </section>
@@ -336,7 +505,17 @@ exports[`while fetching apps matches the snapshot 1`] = `
       loaded={false}
       type={0}
     >
-      <div />
+      <MessageAlertPage
+        header="Supercharge your Kubernetes cluster"
+      >
+        <div>
+          <p
+            className="margin-v-normal"
+          >
+            Deploy applications on your Kubernetes cluster with a single click.
+          </p>
+        </div>
+      </MessageAlertPage>
     </LoadingWrapper>
   </main>
 </section>

@@ -52,4 +52,11 @@ export class Operators {
     );
     return data;
   }
+
+  public static async listResources(namespace: string, apiVersion: string, resource: string) {
+    const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
+      urls.api.operators.resources(namespace, apiVersion, resource),
+    );
+    return data;
+  }
 }

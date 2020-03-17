@@ -17,6 +17,7 @@ export interface IOperatorsState {
   };
   csvs: IClusterServiceVersion[];
   csv?: IClusterServiceVersion;
+  resources: IResource[];
 }
 
 const initialState: IOperatorsState = {
@@ -25,6 +26,7 @@ const initialState: IOperatorsState = {
   operators: [],
   csvs: [],
   errors: {},
+  resources: [],
 };
 
 const catalogReducer = (
@@ -65,6 +67,12 @@ const catalogReducer = (
       return { ...state, isFetching: false };
     case getType(operators.errorResourceCreate):
       return { ...state, isFetching: false, errors: { create: action.payload } };
+    case getType(operators.requestCustomResources):
+      return { ...state, isFetching: true };
+    case getType(operators.receiveCustomResources):
+      return { ...state, isFetching: false, resources: action.payload };
+    case getType(operators.errorCustomResource):
+      return { ...state, isFetching: false, errors: { fetch: action.payload } };
     case LOCATION_CHANGE:
       return { ...state, errors: {} };
     case getType(actions.namespace.setNamespace):
