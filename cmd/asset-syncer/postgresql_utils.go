@@ -36,8 +36,8 @@ type postgresAssetManager struct {
 	*dbutils.PostgresAssetManager
 }
 
-func newPGManager(config datastore.Config) (assetManager, error) {
-	m, err := dbutils.NewPGManager(config)
+func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
+	m, err := dbutils.NewPGManager(config, kubeappsNamespace)
 	if err != nil {
 		return nil, err
 	}

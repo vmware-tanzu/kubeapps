@@ -26,12 +26,13 @@ import (
 	"github.com/kubeapps/common/datastore/mockstore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
 	"github.com/stretchr/testify/mock"
 )
 
 func getMockManager(m *mock.Mock) *mongodbAssetManager {
 	dbSession := mockstore.NewMockSession(m)
-	man := dbutils.NewMongoDBManager(datastore.Config{})
+	man := dbutils.NewMongoDBManager(datastore.Config{}, dbutilstest.KubeappsTestNamespace)
 	man.DBSession = dbSession
 	return &mongodbAssetManager{man}
 }

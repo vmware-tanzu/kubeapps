@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"os"
+
 	"github.com/kubeapps/common/datastore"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -37,7 +39,8 @@ var invalidateCacheCmd = &cobra.Command{
 		}
 
 		dbConfig := datastore.Config{URL: databaseURL, Database: databaseName, Username: databaseUser, Password: databasePassword}
-		manager, err := newManager(databaseType, dbConfig)
+		kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+		manager, err := newManager(databaseType, dbConfig, kubeappsNamespace)
 		if err != nil {
 			logrus.Fatal(err)
 		}

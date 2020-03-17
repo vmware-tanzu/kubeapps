@@ -486,7 +486,7 @@ func Test_newManager(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config := datastore.Config{URL: tt.dbURL, Database: tt.dbName, Username: tt.dbUser, Password: tt.dbPass}
-			_, err := newManager(tt.database, config)
+			_, err := newManager(tt.database, config, "kubeapps")
 			assert.NoErr(t, err)
 		})
 	}

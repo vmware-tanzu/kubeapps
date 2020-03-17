@@ -41,7 +41,8 @@ var syncCmd = &cobra.Command{
 		}
 
 		dbConfig := datastore.Config{URL: databaseURL, Database: databaseName, Username: databaseUser, Password: databasePassword}
-		manager, err := newManager(databaseType, dbConfig)
+		kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+		manager, err := newManager(databaseType, dbConfig, kubeappsNamespace)
 		if err != nil {
 			logrus.Fatal(err)
 		}

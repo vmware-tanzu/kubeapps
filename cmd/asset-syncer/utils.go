@@ -87,11 +87,11 @@ type assetManager interface {
 	insertFiles(chartId string, files models.ChartFiles) error
 }
 
-func newManager(databaseType string, config datastore.Config) (assetManager, error) {
+func newManager(databaseType string, config datastore.Config, kubeappsNamespace string) (assetManager, error) {
 	if databaseType == "mongodb" {
-		return newMongoDBManager(config), nil
+		return newMongoDBManager(config, kubeappsNamespace), nil
 	} else if databaseType == "postgresql" {
-		return newPGManager(config)
+		return newPGManager(config, kubeappsNamespace)
 	} else {
 		return nil, fmt.Errorf("Unsupported database type %s", databaseType)
 	}
