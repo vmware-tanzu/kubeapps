@@ -65,7 +65,7 @@
     "semver": "^5.6.0",
     "ts-jest": "^22.0.1",
     "typesafe-actions": "^2.0.4",
-    "yaml": "^1.7.1"
+    "yaml": "1.7.2"
   },
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",

@@ -34,7 +34,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
       return <LoadingWrapper />;
     }
     if (this.props.authenticated) {
-      const { from } = this.props.location.state || { from: { pathname: "/" } };
+      const { from } = (this.props.location.state as any) || { from: { pathname: "/" } };
       return <Redirect to={from} />;
     }
 
