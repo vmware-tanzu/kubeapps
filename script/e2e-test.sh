@@ -124,6 +124,7 @@ if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
   tiller-init-rbac
   # Install Kubeapps
   info "Installing Kubeapps..."
+  helm repo add bitnami https://charts.bitnami.com/bitnami
   helm dep up "${ROOT_DIR}/chart/kubeapps/"
   helm install --name kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
     "${HELM_CLIENT_TLS_FLAGS[@]}" \
