@@ -43,7 +43,7 @@ func openTestManager(t *testing.T) *dbutils.PostgresAssetManager {
 		URL:      "localhost:5432",
 		Database: "testdb",
 		Username: "postgres",
-	})
+	}, dbutilstest.KubeappsTestNamespace)
 	if err != nil {
 		t.Fatalf("%+v", err)
 	}

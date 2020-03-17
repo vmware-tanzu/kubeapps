@@ -40,7 +40,7 @@ func OpenTestManager(t *testing.T) *dbutils.MongodbAssetManager {
 		URL:      "localhost:27017",
 		Username: "root",
 		Password: "testpassword",
-	})
+	}, dbutilstest.KubeappsTestNamespace)
 
 	err := manager.Init()
 	if err != nil {

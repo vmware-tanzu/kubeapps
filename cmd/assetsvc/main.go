@@ -70,8 +70,11 @@ func main() {
 	flag.Parse()
 
 	dbConfig := datastore.Config{URL: *dbURL, Database: *dbName, Username: *dbUsername, Password: dbPassword}
+
+	kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+
 	var err error
-	manager, err = newManager(*dbType, dbConfig)
+	manager, err = newManager(*dbType, dbConfig, kubeappsNamespace)
 	if err != nil {
 		log.Fatal(err)
 	}
