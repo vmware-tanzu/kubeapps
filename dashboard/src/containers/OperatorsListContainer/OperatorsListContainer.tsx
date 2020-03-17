@@ -16,7 +16,7 @@ function mapStateToProps(
     isFetching: operators.isFetching,
     isOLMInstalled: operators.isOLMInstalled,
     operators: operators.operators,
-    error: operators.error,
+    error: operators.errors.fetch,
   };
 }
 

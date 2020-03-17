@@ -22,10 +22,9 @@ class AdvancedDeploymentForm extends React.Component<IAdvancedDeploymentForm> {
           editorProps={{ $blockScrolling: Infinity }}
           value={this.props.appValues}
           className="editor"
+          fontSize="15px"
         />
-        <p>
-          <b>Note:</b> Only comments from the original chart values will be preserved.
-        </p>
+        {this.props.children}
       </div>
     );
   }

@@ -1,6 +1,6 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { Operators } from "./Operators";
-import { IClusterServiceVersion, IPackageManifest } from "./types";
+import { IClusterServiceVersion, IPackageManifest, IResource } from "./types";
 
 it("check if the OLM has been installed", async () => {
   axiosWithAuth.get = jest.fn(() => {
@@ -65,4 +65,31 @@ it("get csvs", async () => {
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
     `api/kube/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions`,
   );
+});
+
+it("get csv", async () => {
+  const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
+  const ns = "default";
+  axiosWithAuth.get = jest.fn(() => {
+    return { data: csv };
+  });
+  expect(await Operators.getCSV(ns, "foo")).toEqual(csv);
+  expect(axiosWithAuth.get).toHaveBeenCalled();
+  expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
+    `api/kube/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions/foo`,
+  );
+});
+
+it("creates a resource", async () => {
+  const resource = { metadata: { name: "foo" } } as IResource;
+  const ns = "default";
+  axiosWithAuth.post = jest.fn(() => {
+    return { data: resource };
+  });
+  expect(await Operators.createResource(ns, "v1", "pods", resource)).toEqual(resource);
+  expect(axiosWithAuth.post).toHaveBeenCalled();
+  expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
+    `api/kube/apis/v1/namespaces/${ns}/pods`,
+    resource,
+  ]);
 });

@@ -200,7 +200,11 @@ class DeploymentFormBody extends React.Component<
             <AdvancedDeploymentForm
               appValues={this.props.appValues}
               handleValuesChange={this.handleValuesChange}
-            />
+            >
+              <p>
+                <b>Note:</b> Only comments from the original chart values will be preserved.
+              </p>
+            </AdvancedDeploymentForm>
           </TabPanel>
           <TabPanel>{this.renderDiff()}</TabPanel>
         </Tabs>

@@ -1,6 +1,6 @@
 import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IClusterServiceVersion, IK8sList, IPackageManifest } from "./types";
+import { IClusterServiceVersion, IK8sList, IPackageManifest, IResource } from "./types";
 
 export class Operators {
   public static async isOLMInstalled() {
@@ -31,5 +31,25 @@ export class Operators {
       urls.api.operators.clusterServiceVersions(namespace),
     );
     return data.items;
+  }
+
+  public static async getCSV(namespace: string, name: string) {
+    const { data } = await axiosWithAuth.get<IClusterServiceVersion>(
+      urls.api.operators.clusterServiceVersion(namespace, name),
+    );
+    return data;
+  }
+
+  public static async createResource(
+    namespace: string,
+    apiVersion: string,
+    resource: string,
+    body: object,
+  ) {
+    const { data } = await axiosWithAuth.post<IResource>(
+      urls.api.operators.resources(namespace, apiVersion, resource),
+      body,
+    );
+    return data;
   }
 }

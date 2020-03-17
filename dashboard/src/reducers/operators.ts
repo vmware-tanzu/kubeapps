@@ -11,8 +11,12 @@ export interface IOperatorsState {
   isOLMInstalled: boolean;
   operators: IResource[];
   operator?: IPackageManifest;
-  error?: Error;
+  errors: {
+    fetch?: Error;
+    create?: Error;
+  };
   csvs: IClusterServiceVersion[];
+  csv?: IClusterServiceVersion;
 }
 
 const initialState: IOperatorsState = {
@@ -20,6 +24,7 @@ const initialState: IOperatorsState = {
   isOLMInstalled: false,
   operators: [],
   csvs: [],
+  errors: {},
 };
 
 const catalogReducer = (
@@ -43,17 +48,27 @@ const catalogReducer = (
     case getType(operators.receiveOperator):
       return { ...state, isFetching: false, operator: action.payload };
     case getType(operators.errorOperators):
-      return { ...state, isFetching: false, error: action.payload };
+      return { ...state, isFetching: false, errors: { fetch: action.payload } };
     case getType(operators.requestCSVs):
       return { ...state, isFetching: true };
     case getType(operators.receiveCSVs):
       return { ...state, isFetching: false, csvs: action.payload };
+    case getType(operators.requestCSV):
+      return { ...state, isFetching: true };
+    case getType(operators.receiveCSV):
+      return { ...state, isFetching: false, csv: action.payload };
     case getType(operators.errorCSVs):
-      return { ...state, isFetching: false, error: action.payload };
+      return { ...state, isFetching: false, errors: { fetch: action.payload } };
+    case getType(operators.creatingResource):
+      return { ...state, isFetching: true };
+    case getType(operators.resourceCreated):
+      return { ...state, isFetching: false };
+    case getType(operators.errorResourceCreate):
+      return { ...state, isFetching: false, errors: { create: action.payload } };
     case LOCATION_CHANGE:
-      return { ...state, error: undefined };
+      return { ...state, errors: {} };
     case getType(actions.namespace.setNamespace):
-      return { ...state, error: undefined };
+      return { ...state, errors: {} };
     default:
       return { ...state };
   }

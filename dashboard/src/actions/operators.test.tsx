@@ -155,3 +155,72 @@ describe("getCSVs", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("getCSV", () => {
+  it("returns an an ClusterServiceVersion", async () => {
+    const csv = { metadata: { name: "foo" } };
+    Operators.getCSV = jest.fn(() => csv);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCSV),
+      },
+      {
+        type: getType(operatorActions.receiveCSV),
+        payload: csv,
+      },
+    ];
+    await store.dispatch(operatorActions.getCSV("default", "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.getCSV = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCSV),
+      },
+      {
+        type: getType(operatorActions.errorCSVs),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.getCSV("default", "foo"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("createResource", () => {
+  it("creates a resource", async () => {
+    Operators.createResource = jest.fn(() => true);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.creatingResource),
+      },
+      {
+        type: getType(operatorActions.resourceCreated),
+        payload: true,
+      },
+    ];
+    await store.dispatch(operatorActions.createResource("default", "v1", "pods", {}));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.createResource = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.creatingResource),
+      },
+      {
+        type: getType(operatorActions.errorResourceCreate),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.createResource("default", "v1", "pods", {}));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
