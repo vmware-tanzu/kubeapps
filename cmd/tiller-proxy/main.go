@@ -193,6 +193,9 @@ func main() {
 	}
 
 	// assetsvc reverse proxy
+	// TODO(mnelson) remove this reverse proxy once the haproxy frontend
+	// proxies requests directly to the assetsvc. Move the authz to the
+	// assetsvc itself.
 	parsedAssetsvcURL, err := url.Parse(assetsvcURL)
 	if err != nil {
 		log.Fatalf("Unable to parse the assetsvc URL: %v", err)
