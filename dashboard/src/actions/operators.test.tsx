@@ -226,3 +226,71 @@ describe("createResource", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("getResources", () => {
+  it("list resources in a namespace", async () => {
+    const csv = {
+      metadata: { name: "foo" },
+      spec: {
+        customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+      },
+    };
+    const resource = { metadata: { name: "resource" } };
+    Operators.getCSVs = jest.fn(() => [csv]);
+    Operators.listResources = jest.fn(() => {
+      return {
+        items: [resource],
+      };
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCustomResources),
+      },
+      {
+        type: getType(operatorActions.requestCSVs),
+      },
+      {
+        type: getType(operatorActions.receiveCSVs),
+        payload: [csv],
+      },
+      {
+        type: getType(operatorActions.receiveCustomResources),
+        payload: [resource],
+      },
+    ];
+    await store.dispatch(operatorActions.getResources("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(Operators.listResources).toHaveBeenCalledWith("default", "kubeapps.com/v1alpha1", "foo");
+  });
+
+  it("dispatches an error if listing resources fail", async () => {
+    const csv = {
+      metadata: { name: "foo" },
+      spec: {
+        customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+      },
+    };
+    Operators.getCSVs = jest.fn(() => [csv]);
+    Operators.listResources = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCustomResources),
+      },
+      {
+        type: getType(operatorActions.requestCSVs),
+      },
+      {
+        type: getType(operatorActions.receiveCSVs),
+        payload: [csv],
+      },
+      {
+        type: getType(operatorActions.errorCustomResource),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.getResources("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

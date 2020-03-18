@@ -93,3 +93,16 @@ it("creates a resource", async () => {
     resource,
   ]);
 });
+
+it("list resources", async () => {
+  const resource = { metadata: { name: "foo" } } as IResource;
+  const ns = "default";
+  axiosWithAuth.get = jest.fn(() => {
+    return { data: { items: [resource] } };
+  });
+  expect(await Operators.listResources(ns, "v1", "pods")).toEqual({ items: [resource] });
+  expect(axiosWithAuth.get).toHaveBeenCalled();
+  expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
+    `api/kube/apis/v1/namespaces/${ns}/pods`,
+  ]);
+});
