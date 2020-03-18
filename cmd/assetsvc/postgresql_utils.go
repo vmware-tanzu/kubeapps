@@ -35,8 +35,8 @@ type postgresAssetManager struct {
 	dbutils.PostgresAssetManagerIface
 }
 
-func newPGManager(config datastore.Config) (assetManager, error) {
-	m, err := dbutils.NewPGManager(config)
+func newPGManager(config datastore.Config, kubeappsNamespace string) (assetManager, error) {
+	m, err := dbutils.NewPGManager(config, kubeappsNamespace)
 	if err != nil {
 		return nil, err
 	}
@@ -56,12 +56,12 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	clauses := []string{}
 	queryParams := []interface{}{}
 	if namespace != dbutils.AllNamespaces {
-		clauses = append(clauses, "repo_namespace = $1")
-		queryParams = append(queryParams, namespace)
+		queryParams = append(queryParams, namespace, m.GetKubeappsNamespace())
+		clauses = append(clauses, "(repo_namespace = $1 OR repo_namespace = $2)")
 	}
 	if repo != "" {
-		clauses = append(clauses, "repo_name = $2")
 		queryParams = append(queryParams, repo)
+		clauses = append(clauses, fmt.Sprintf("repo_name = $%d", len(queryParams)))
 	}
 	repoQuery := ""
 	if len(clauses) > 0 {

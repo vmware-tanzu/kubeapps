@@ -68,9 +68,13 @@ func (f *fakePGManager) GetDB() dbutils.PostgresDB {
 	return nil
 }
 
+func (f *fakePGManager) GetKubeappsNamespace() string {
+	return "kubeapps"
+}
+
 func Test_NewPGManager(t *testing.T) {
 	config := datastore.Config{URL: "10.11.12.13:5432"}
-	_, err := newPGManager(config)
+	_, err := newPGManager(config, "kubeapps")
 	if err != nil {
 		t.Errorf("Found error %v", err)
 	}
@@ -203,7 +207,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 	}{
 		{
 			name:               "one page with duplicates with repo",
-			namespace:          "kubeapps",
+			namespace:          "other-namespace",
 			repo:               "bitnami",
 			pageNumber:         1,
 			pageSize:           100,
@@ -213,7 +217,7 @@ func Test_getPaginatedChartList(t *testing.T) {
 		},
 		{
 			name:               "one page withuot duplicates",
-			namespace:          "kubeapps",
+			namespace:          "other-namespace",
 			repo:               "",
 			pageNumber:         1,
 			pageSize:           100,
@@ -230,10 +234,10 @@ func Test_getPaginatedChartList(t *testing.T) {
 			pg := postgresAssetManager{fpg}
 
 			chartsResponse = availableCharts
-			expectedQuery := "WHERE repo_namespace = $1"
-			expectedParams := []interface{}{"kubeapps"}
+			expectedQuery := "WHERE (repo_namespace = $1 OR repo_namespace = $2)"
+			expectedParams := []interface{}{"other-namespace", "kubeapps"}
 			if tt.repo != "" {
-				expectedQuery = expectedQuery + " AND repo_name = $2"
+				expectedQuery = expectedQuery + " AND repo_name = $3"
 				expectedParams = append(expectedParams, "bitnami")
 			}
 			expectedQuery = fmt.Sprintf("SELECT info FROM %s %s ORDER BY info ->> 'name' ASC", dbutils.ChartTable, expectedQuery)

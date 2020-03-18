@@ -9,6 +9,7 @@ import (
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/kubeapps/kubeapps/pkg/dbutils"
+	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -44,7 +45,7 @@ func Test_DeletePGRepo(t *testing.T) {
 	m := &mockDB{&mock.Mock{}}
 	m.On("Query", "DELETE FROM repos WHERE name = $1 AND namespace = $2", []interface{}{repo.Name, repo.Namespace})
 
-	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"}, dbutilstest.KubeappsTestNamespace)
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	err := pgManager.Delete(repo)
@@ -56,7 +57,7 @@ func Test_DeletePGRepo(t *testing.T) {
 
 func Test_PGRepoAlreadyPropcessed(t *testing.T) {
 	m := &mockDB{&mock.Mock{}}
-	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"}, dbutilstest.KubeappsTestNamespace)
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	m.On("QueryRow", "SELECT checksum FROM repos WHERE name = $1 AND namespace = $2", []interface{}{"foo", "repo-namespace"})
@@ -72,7 +73,7 @@ func Test_PGUpdateLastCheck(t *testing.T) {
 		checksum      = "bar"
 	)
 	now := time.Now()
-	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"}, dbutilstest.KubeappsTestNamespace)
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	expectedQuery := `INSERT INTO repos (namespace, name, checksum, last_update)
@@ -89,7 +90,7 @@ func Test_PGremoveMissingCharts(t *testing.T) {
 	repo := models.Repo{Name: "repo"}
 	charts := []models.Chart{{ID: "foo", Repo: &repo}, {ID: "bar"}}
 	m := &mockDB{&mock.Mock{}}
-	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"}, dbutilstest.KubeappsTestNamespace)
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	m.On("Query", "DELETE FROM charts WHERE chart_id NOT IN ('foo', 'bar') AND repo_name = $1 AND repo_namespace = $2", []interface{}{repo.Name, repo.Namespace})
@@ -102,7 +103,7 @@ func Test_PGupdateIcon(t *testing.T) {
 	contentType := "image/png"
 	id := "stable/wordpress"
 	m := &mockDB{&mock.Mock{}}
-	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"}, dbutilstest.KubeappsTestNamespace)
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	m.On(
@@ -153,7 +154,7 @@ func Test_PGinsertFiles(t *testing.T) {
 	)
 	files := models.ChartFiles{ID: filesId, Readme: "foo", Values: "bar", Repo: &models.Repo{Namespace: namespace, Name: repoName}}
 	m := &mockDB{&mock.Mock{}}
-	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"})
+	man, _ := dbutils.NewPGManager(datastore.Config{URL: "localhost:4123"}, dbutilstest.KubeappsTestNamespace)
 	man.DB = m
 	pgManager := &postgresAssetManager{man}
 	m.On(

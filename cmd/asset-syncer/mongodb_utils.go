@@ -32,8 +32,8 @@ type mongodbAssetManager struct {
 	*dbutils.MongodbAssetManager
 }
 
-func newMongoDBManager(config datastore.Config) assetManager {
-	m := dbutils.NewMongoDBManager(config)
+func newMongoDBManager(config datastore.Config, kubeappsNamespace string) assetManager {
+	m := dbutils.NewMongoDBManager(config, kubeappsNamespace)
 	return &mongodbAssetManager{m}
 }
 

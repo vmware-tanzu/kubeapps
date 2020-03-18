@@ -29,8 +29,8 @@ type mongodbAssetManager struct {
 	*dbutils.MongodbAssetManager
 }
 
-func newMongoDBManager(config datastore.Config) assetManager {
-	m := dbutils.NewMongoDBManager(config)
+func newMongoDBManager(config datastore.Config, kubeappsNamespace string) assetManager {
+	m := dbutils.NewMongoDBManager(config, kubeappsNamespace)
 	return &mongodbAssetManager{m}
 }
 
@@ -43,7 +43,7 @@ func (m *mongodbAssetManager) getPaginatedChartList(namespace, repo string, page
 	pipeline := []bson.M{}
 	matcher := bson.M{}
 	if namespace != dbutils.AllNamespaces {
-		matcher["repo.namespace"] = namespace
+		matcher["repo.namespace"] = bson.M{"$in": []string{namespace, m.KubeappsNamespace}}
 	}
 	if repo != "" {
 		matcher["repo.name"] = repo

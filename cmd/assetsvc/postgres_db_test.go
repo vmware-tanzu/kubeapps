@@ -27,6 +27,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest"
 	"github.com/kubeapps/kubeapps/pkg/dbutils/dbutilstest/pgtest"
 	_ "github.com/lib/pq"
 )
@@ -271,6 +272,37 @@ func TestGetPaginatedChartList(t *testing.T) {
 			},
 		},
 		{
+			name: "it includes charts from global repositories and the specific namespace",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+					},
+					"other-repo": []models.Chart{
+						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					},
+				},
+				"other-namespace": map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+					},
+				},
+				dbutilstest.KubeappsTestNamespace: map[string][]models.Chart{
+					"global-repo": []models.Chart{
+						models.Chart{ID: "global-repo/global-chart", Name: "global-chart"},
+					},
+				},
+			},
+			repo:      "",
+			namespace: namespaceName,
+			showDups:  true,
+			expectedCharts: []*models.Chart{
+				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				&models.Chart{ID: "global-repo/global-chart", Name: "global-chart"},
+				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+			},
+		},
+		{
 			name: "it returns charts from multiple repos across all namespaces",
 			existingCharts: map[string]map[string][]models.Chart{
 				namespaceName: map[string][]models.Chart{
@@ -294,6 +326,31 @@ func TestGetPaginatedChartList(t *testing.T) {
 				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
 				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 				&models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+			},
+		},
+		{
+			name: "it returns charts from a single repo across all namespaces",
+			existingCharts: map[string]map[string][]models.Chart{
+				namespaceName: map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+					},
+					"other-repo": []models.Chart{
+						models.Chart{ID: "other-repo/other-chart", Name: "other-chart"},
+					},
+				},
+				"other-namespace": map[string][]models.Chart{
+					repoName: []models.Chart{
+						models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
+					},
+				},
+			},
+			repo:      repoName,
+			namespace: "_all",
+			showDups:  true,
+			expectedCharts: []*models.Chart{
+				&models.Chart{ID: repoName + "/chart-1", Name: "chart-1"},
+				&models.Chart{ID: repoName + "/chart-in-other-namespace", Name: "chart-in-other-namespace"},
 			},
 		},
 		{

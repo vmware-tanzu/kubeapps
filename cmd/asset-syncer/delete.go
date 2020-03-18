@@ -17,6 +17,8 @@ limitations under the License.
 package main
 
 import (
+	"os"
+
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
 	"github.com/sirupsen/logrus"
@@ -38,7 +40,8 @@ var deleteCmd = &cobra.Command{
 		}
 
 		dbConfig := datastore.Config{URL: databaseURL, Database: databaseName, Username: databaseUser, Password: databasePassword}
-		manager, err := newManager(databaseType, dbConfig)
+		kubeappsNamespace := os.Getenv("POD_NAMESPACE")
+		manager, err := newManager(databaseType, dbConfig, kubeappsNamespace)
 		if err != nil {
 			logrus.Fatal(err)
 		}

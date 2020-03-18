@@ -55,16 +55,18 @@ type PostgresAssetManagerIface interface {
 	InvalidateCache() error
 	EnsureRepoExists(repoNamespace, repoName string) (int, error)
 	GetDB() PostgresDB
+	GetKubeappsNamespace() string
 }
 
 // PostgresAssetManager asset manager for postgres
 type PostgresAssetManager struct {
-	connStr string
-	DB      PostgresDB
+	connStr           string
+	DB                PostgresDB
+	kubeappsNamespace string
 }
 
 // NewPGManager creates an asset manager for PG
-func NewPGManager(config datastore.Config) (*PostgresAssetManager, error) {
+func NewPGManager(config datastore.Config, kubeappsNamespace string) (*PostgresAssetManager, error) {
 	url := strings.Split(config.URL, ":")
 	if len(url) != 2 {
 		return nil, fmt.Errorf("Can't parse database URL: %s", config.URL)
@@ -73,7 +75,7 @@ func NewPGManager(config datastore.Config) (*PostgresAssetManager, error) {
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		url[0], url[1], config.Username, config.Password, config.Database,
 	)
-	return &PostgresAssetManager{connStr, nil}, nil
+	return &PostgresAssetManager{connStr, nil, kubeappsNamespace}, nil
 }
 
 // Init connects to PG
@@ -214,4 +216,8 @@ SELECT ID FROM %s WHERE namespace=$1 AND name=$2
 
 func (m *PostgresAssetManager) GetDB() PostgresDB {
 	return m.DB
+}
+
+func (m *PostgresAssetManager) GetKubeappsNamespace() string {
+	return m.kubeappsNamespace
 }

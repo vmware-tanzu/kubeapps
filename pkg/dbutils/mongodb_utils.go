@@ -31,13 +31,14 @@ const (
 
 // MongodbAssetManager struct containing mongodb info
 type MongodbAssetManager struct {
-	mongoConfig datastore.Config
-	DBSession   datastore.Session
+	mongoConfig       datastore.Config
+	DBSession         datastore.Session
+	KubeappsNamespace string
 }
 
 // NewMongoDBManager creates an asset manager for MongoDB
-func NewMongoDBManager(config datastore.Config) *MongodbAssetManager {
-	return &MongodbAssetManager{config, nil}
+func NewMongoDBManager(config datastore.Config, kubeappsNamespace string) *MongodbAssetManager {
+	return &MongodbAssetManager{config, nil, kubeappsNamespace}
 }
 
 // Init creates dbsession

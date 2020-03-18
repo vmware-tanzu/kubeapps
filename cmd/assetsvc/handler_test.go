@@ -63,7 +63,7 @@ func iconBytes() []byte {
 
 func getMockManager(m *mock.Mock) *mongodbAssetManager {
 	dbSession := mockstore.NewMockSession(m)
-	man := dbutils.NewMongoDBManager(datastore.Config{})
+	man := dbutils.NewMongoDBManager(datastore.Config{}, "kubeapps")
 	man.DBSession = dbSession
 	return &mongodbAssetManager{man}
 }
