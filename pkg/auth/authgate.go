@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/common/response"
+	"github.com/kubeapps/kubeapps/pkg/dbutils"
 	"github.com/urfave/negroni"
 )
 
@@ -22,8 +23,8 @@ const tokenPrefix = "Bearer "
 
 // AuthGate implements middleware to check if the user has access to the specific namespace
 // before continuing. If the path being handled by the AuthGate middleware does not include
-// the 'namespace' mux var, the kubeapps namespace will be assumed.
-func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
+// the 'namespace' mux var, or the value is _all, then the check is for cluster-wide access.
+func AuthGate() negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		token := ExtractToken(req.Header.Get("Authorization"))
 		if token == "" {
@@ -36,8 +37,8 @@ func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
 			return
 		}
 		namespace := mux.Vars(req)["namespace"]
-		if namespace == "" {
-			namespace = kubeappsNamespace
+		if namespace == dbutils.AllNamespaces {
+			namespace = ""
 		}
 		authz, err := userAuth.ValidateForNamespace(namespace)
 

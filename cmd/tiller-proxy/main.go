@@ -149,7 +149,7 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := auth.AuthGate(kubeappsNamespace)
+	authGate := auth.AuthGate()
 
 	// HTTP Handler
 	h := handler.TillerProxy{
