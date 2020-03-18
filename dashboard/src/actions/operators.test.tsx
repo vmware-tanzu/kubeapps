@@ -2,7 +2,6 @@ import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import { getType } from "typesafe-actions";
 import actions from ".";
-import { Kube } from "../shared/Kube";
 import { Operators } from "../shared/Operators";
 
 const { operators: operatorActions } = actions;
@@ -230,17 +229,12 @@ describe("getResources", () => {
   it("list resources in a namespace", async () => {
     const csv = {
       metadata: { name: "foo" },
-      spec: { customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com" }] } },
+      spec: {
+        customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+      },
     };
     const resource = { metadata: { name: "resource" } };
     Operators.getCSVs = jest.fn(() => [csv]);
-    Kube.getAPIGroup = jest.fn(() => {
-      return {
-        preferredVersion: {
-          groupVersion: "kubeapps.com/v1alpha1",
-        },
-      };
-    });
     Operators.listResources = jest.fn(() => {
       return {
         items: [resource],
@@ -264,51 +258,17 @@ describe("getResources", () => {
     ];
     await store.dispatch(operatorActions.getResources("default"));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(Kube.getAPIGroup).toHaveBeenCalledWith("kubeapps.com");
     expect(Operators.listResources).toHaveBeenCalledWith("default", "kubeapps.com/v1alpha1", "foo");
   });
 
-  it("dispatches an error if apiGroup is not found", async () => {
-    const csv = {
-      metadata: { name: "foo" },
-      spec: { customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com" }] } },
-    };
-    Operators.getCSVs = jest.fn(() => [csv]);
-    Kube.getAPIGroup = jest.fn(() => {
-      throw new Error("Boom!");
-    });
-    const expectedActions = [
-      {
-        type: getType(operatorActions.requestCustomResources),
-      },
-      {
-        type: getType(operatorActions.requestCSVs),
-      },
-      {
-        type: getType(operatorActions.receiveCSVs),
-        payload: [csv],
-      },
-      {
-        type: getType(operatorActions.errorCustomResource),
-        payload: new Error("Unable to find resource group for foo.kubeapps.com. Got Boom!"),
-      },
-    ];
-    await store.dispatch(operatorActions.getResources("default"));
-    expect(store.getActions()).toEqual(expectedActions);
-  });
   it("dispatches an error if listing resources fail", async () => {
     const csv = {
       metadata: { name: "foo" },
-      spec: { customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com" }] } },
+      spec: {
+        customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+      },
     };
     Operators.getCSVs = jest.fn(() => [csv]);
-    Kube.getAPIGroup = jest.fn(() => {
-      return {
-        preferredVersion: {
-          groupVersion: "kubeapps.com/v1alpha1",
-        },
-      };
-    });
     Operators.listResources = jest.fn(() => {
       throw new Error("Boom!");
     });

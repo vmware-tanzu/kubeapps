@@ -1,7 +1,6 @@
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 
-import { Kube } from "../shared/Kube";
 import { Operators } from "../shared/Operators";
 import { IClusterServiceVersion, IPackageManifest, IResource, IStoreState } from "../shared/types";
 
@@ -132,7 +131,7 @@ export function getCSVs(
       const csvs = await Operators.getCSVs(namespace);
       const sortedCSVs = csvs.sort((o1, o2) => (o1.metadata.name > o2.metadata.name ? 1 : -1));
       dispatch(receiveCSVs(sortedCSVs));
-      return csvs;
+      return sortedCSVs;
     } catch (e) {
       dispatch(errorCSVs(e));
       return [];
@@ -186,24 +185,16 @@ export function getResources(
         const parsedCRD = crd.name.split(".");
         const name = parsedCRD[0];
         const group = parsedCRD.slice(1).join(".");
+        const groupVersion = crd.version;
         try {
-          const resourceGroup = await Kube.getAPIGroup(group);
-          try {
-            const csvResources = await Operators.listResources(
-              namespace,
-              resourceGroup.preferredVersion.groupVersion,
-              name,
-            );
-            resources = resources.concat(csvResources.items);
-          } catch (e) {
-            dispatch(errorCustomResource(e));
-          }
-        } catch (e) {
-          dispatch(
-            errorCustomResource(
-              new Error(`Unable to find resource group for ${crd.name}. Got ${e.message}`),
-            ),
+          const csvResources = await Operators.listResources(
+            namespace,
+            `${group}/${groupVersion}`,
+            name,
           );
+          resources = resources.concat(csvResources.items);
+        } catch (e) {
+          dispatch(errorCustomResource(e));
         }
       });
       await Promise.all(crdPromises);

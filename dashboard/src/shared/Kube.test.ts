@@ -101,14 +101,3 @@ describe("App", () => {
     });
   });
 });
-
-describe("getAPIGroup", () => {
-  const apiGroup = { version: "v1" };
-  it("should request a resource", async () => {
-    axiosWithAuth.get = jest.fn(() => {
-      return { data: apiGroup };
-    });
-    expect(await Kube.getAPIGroup("pods")).toEqual(apiGroup);
-    expect(axiosWithAuth.get).toHaveBeenCalledWith(`${APIBase}/apis/pods`);
-  });
-});

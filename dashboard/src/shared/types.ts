@@ -331,20 +331,6 @@ export interface IClusterServiceVersion extends IResource {
   spec: IClusterServiceVersionSpec;
 }
 
-export interface IAPIGroup {
-  apiVersion: string;
-  kind: ResourceKind;
-  name: string;
-  versions: Array<{
-    groupVersion: string;
-    version: string;
-  }>;
-  preferredVersion: {
-    groupVersion: string;
-    version: string;
-  };
-}
-
 export interface IAppState {
   isFetching: boolean;
   error?: Error;
