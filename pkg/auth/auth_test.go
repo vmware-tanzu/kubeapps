@@ -33,6 +33,8 @@ import (
 
 type fakeK8sAuth struct {
 	DiscoveryCli discovery.DiscoveryInterface
+	canIResult   bool
+	canIError    error
 }
 
 func (u fakeK8sAuth) Validate() error {
@@ -48,18 +50,10 @@ func (u fakeK8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceLi
 }
 
 func (u fakeK8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
-	// Fake write permissions for pods
-	if resource == "pods" {
-		return true, nil
-	}
-	// Fake permissions for clusterroles in any version
-	if resource == "clusterroles" && group == "rbac.authorization.k8s.io" {
-		return true, nil
-	}
-	return false, nil
+	return u.canIResult, u.canIError
 }
 
-func newFakeUserAuth() *UserAuth {
+func newFakeUserAuth(canIResult bool, canIError error) *UserAuth {
 	resourceListV1 := metav1.APIResourceList{
 		GroupVersion: "v1",
 		APIResources: []metav1.APIResource{
@@ -93,44 +87,44 @@ func newFakeUserAuth() *UserAuth {
 		&resourceListExtensionsV1Beta1,
 		&resourceListClusterRoleRBAC,
 	}
-	fakeK8sAuthCli := fakeK8sAuth{cli.Discovery()}
+	fakeK8sAuthCli := fakeK8sAuth{cli.Discovery(), canIResult, canIError}
 	return &UserAuth{fakeK8sAuthCli}
 }
 
 func TestGetForbidden(t *testing.T) {
+	const namespace = "test-namspace"
 	type test struct {
+		Name            string
 		Action          string
-		Namespace       string
+		CanIResult      bool
 		Manifest        string
 		ExpectedActions []Action
 	}
 	testSuite := []test{
-		// It should be able to create pods
 		{
-			Action:    "create",
-			Namespace: "foo",
+			Name:       "it should be able to create pods",
+			Action:     "create",
+			CanIResult: true,
 			Manifest: `---
 apiVersion: v1
 kind: Pod
 `,
 			ExpectedActions: []Action{},
 		},
-		// It shouldn't be able to create deployments
 		{
-			Action:    "create",
-			Namespace: "foo",
+			Name:   "it shouldn't be able to create deployments",
+			Action: "create",
 			Manifest: `---
 apiVersion: apps/v1beta1
 kind: Deployment
 `,
 			ExpectedActions: []Action{
-				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create"}},
+				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: namespace, Verbs: []string{"create"}},
 			},
 		},
-		// It should overwrite the default namespace
 		{
-			Action:    "create",
-			Namespace: "foo",
+			Name:   "it should overwrite the default namespace",
+			Action: "create",
 			Manifest: `---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -141,10 +135,9 @@ metadata:
 				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "bar", Verbs: []string{"create"}},
 			},
 		},
-		// It should report the same resource in different resource groups
 		{
-			Action:    "create",
-			Namespace: "foo",
+			Name:   "it should report the same resource in different resource groups",
+			Action: "create",
 			Manifest: `---
 apiVersion: apps/v1beta1
 kind: Deployment
@@ -153,36 +146,34 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 `,
 			ExpectedActions: []Action{
-				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create"}},
-				{APIVersion: "extensions/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create"}},
+				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: namespace, Verbs: []string{"create"}},
+				{APIVersion: "extensions/v1beta1", Resource: "deployments", Namespace: namespace, Verbs: []string{"create"}},
 			},
 		},
-		// It should report the same resource with different verbs when upgrading
 		{
-			Action:    "upgrade",
-			Namespace: "foo",
+			Name:   "it should report the same resource with different verbs when upgrading",
+			Action: "upgrade",
 			Manifest: `---
 apiVersion: apps/v1beta1
 kind: Deployment
 `,
 			ExpectedActions: []Action{
-				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: "foo", Verbs: []string{"create", "update", "delete"}},
+				{APIVersion: "apps/v1beta1", Resource: "deployments", Namespace: namespace, Verbs: []string{"create", "update", "delete"}},
 			},
 		},
-		// It should allow unversioned clusterroles
 		{
-			Action:    "get",
-			Namespace: "foo",
+			Name:       "it should allow unversioned clusterroles",
+			Action:     "get",
+			CanIResult: true,
 			Manifest: `---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 `,
 			ExpectedActions: []Action{},
 		},
-		// It should report if a resource is clusterWide
 		{
-			Action:    "get",
-			Namespace: "foo",
+			Name:   "it should report if a resource is clusterWide",
+			Action: "get",
 			Manifest: `---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -191,10 +182,9 @@ kind: ClusterRoleBinding
 				{APIVersion: "rbac.authorization.k8s.io/v1", Resource: "clusterrolebindings", ClusterWide: true, Verbs: []string{"get"}},
 			},
 		},
-		// It should allow an unrecognized resource, so that CRDs can be installed before CRs
 		{
-			Action:    "get",
-			Namespace: "foo",
+			Name:   "it should allow an unrecognized resource, so that CRDs can be installed before CRs",
+			Action: "get",
 			Manifest: `---
 apiVersion: foo.bar.io/v1
 kind: FooBar
@@ -203,14 +193,16 @@ kind: FooBar
 		},
 	}
 	for _, tt := range testSuite {
-		auth := newFakeUserAuth()
-		res, err := auth.GetForbiddenActions(tt.Namespace, tt.Action, tt.Manifest)
-		if err != nil {
-			t.Errorf("Unexpected error: %v", err)
-		}
-		if !reflect.DeepEqual(res, tt.ExpectedActions) {
-			t.Errorf("Expecting %v, received %v", tt.ExpectedActions, res)
-		}
+		t.Run(tt.Name, func(t *testing.T) {
+			auth := newFakeUserAuth(tt.CanIResult, nil)
+			res, err := auth.GetForbiddenActions(namespace, tt.Action, tt.Manifest)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			if !reflect.DeepEqual(res, tt.ExpectedActions) {
+				t.Errorf("Expecting %v, received %v", tt.ExpectedActions, res)
+			}
+		})
 	}
 }
 

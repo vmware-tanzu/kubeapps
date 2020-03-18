@@ -90,7 +90,9 @@ func main() {
 	}
 
 	// assetsvc reverse proxy
-	authGate := auth.AuthGate()
+	// TODO(mnelson) remove this reverse proxy once the frontend sends requests directly
+	// to the assetsvc. Move the authz to the assetsvc itself.
+	authGate := auth.AuthGate(kubeappsNamespace)
 	parsedAssetsvcURL, err := url.Parse(assetsvcURL)
 	if err != nil {
 		log.Fatalf("Unable to parse the assetsvc URL: %v", err)
@@ -99,10 +101,10 @@ func main() {
 	assetsvcPrefix := "/assetsvc"
 	assetsvcRouter := r.PathPrefix(assetsvcPrefix).Subrouter()
 	// Logos don't require authentication so bypass that step
-	assetsvcRouter.Methods("GET").Path("/v1/ns/{ns}/assets/{repo}/{id}/logo").Handler(negroni.New(
+	assetsvcRouter.Methods("GET").Path("/v1/ns/{namespace}/assets/{repo}/{id}/logo").Handler(negroni.New(
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
-	assetsvcRouter.Methods("GET").Handler(negroni.New(
+	assetsvcRouter.PathPrefix("/v1/ns/{namespace}/").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))

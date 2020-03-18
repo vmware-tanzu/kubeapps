@@ -126,6 +126,12 @@ func (u *UserAuth) Validate() error {
 	return u.k8sAuth.Validate()
 }
 
+// ValidateForNamespace checks if the user can access secrets in the given
+// namespace, as a check of whether they can view the namespace.
+func (u *UserAuth) ValidateForNamespace(namespace string) (bool, error) {
+	return u.k8sAuth.CanI("get", "", "Secret", namespace)
+}
+
 type resourceInfo struct {
 	Name       string
 	Namespaced bool
