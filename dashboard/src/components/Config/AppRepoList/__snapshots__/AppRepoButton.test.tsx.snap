@@ -275,7 +275,7 @@ exports[`should open a modal with the repository form 1`] = `
                         </svg>
                       </a>
                       <div
-                        class="__react_component_tooltip place-top type-dark"
+                        class="__react_component_tooltip place-top type-dark "
                         id="syncJobHelp"
                         data-id="tooltip"
                       >
