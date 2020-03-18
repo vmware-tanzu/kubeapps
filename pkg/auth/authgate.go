@@ -21,8 +21,8 @@ const UserKey contextKey = 0
 const tokenPrefix = "Bearer "
 
 // AuthGate implements middleware to check if the user has access to the specific namespace
-// before continuing. The path being handled by the AuthGate middleware must include the
-// 'namespace' mux var.
+// before continuing. If the path being handled by the AuthGate middleware does not include
+// the 'namespace' mux var, the kubeapps namespace will be assumed.
 func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		token := ExtractToken(req.Header.Get("Authorization"))
@@ -37,18 +37,9 @@ func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
 		}
 		namespace := mux.Vars(req)["namespace"]
 		if namespace == "" {
-			response.NewErrorResponse(http.StatusInternalServerError, "AuthGate used without namespace").Write(w)
-			return
+			namespace = kubeappsNamespace
 		}
-		// Until we've switched to per-namespace repos/catalogs by default use
-		// the old auth Validate if the request is for the charts in the
-		// kubeapps namespace and the new ValidateForNamespace otherwise.
-		authz := true
-		if namespace == kubeappsNamespace {
-			err = userAuth.Validate()
-		} else {
-			authz, err = userAuth.ValidateForNamespace(namespace)
-		}
+		authz, err := userAuth.ValidateForNamespace(namespace)
 
 		if err != nil || !authz {
 			msg := fmt.Sprintf("Unable to validate user for namespace %q", namespace)

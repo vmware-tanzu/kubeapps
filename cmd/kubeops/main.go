@@ -90,8 +90,8 @@ func main() {
 	}
 
 	// assetsvc reverse proxy
-	// TODO(mnelson) remove this reverse proxy once the frontend sends requests directly
-	// to the assetsvc. Move the authz to the assetsvc itself.
+	// TODO(mnelson) remove this reverse proxy once the frontend sends requests
+	// directly to the assetsvc. Move the authz to the assetsvc itself.
 	authGate := auth.AuthGate(kubeappsNamespace)
 	parsedAssetsvcURL, err := url.Parse(assetsvcURL)
 	if err != nil {

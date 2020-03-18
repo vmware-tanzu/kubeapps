@@ -149,7 +149,7 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := auth.AuthGate()
+	authGate := auth.AuthGate(kubeappsNamespace)
 
 	// HTTP Handler
 	h := handler.TillerProxy{
@@ -204,7 +204,7 @@ func main() {
 	assetsvcRouter.Methods("GET").Path("/v1/ns/{ns}/assets/{repo}/{id}/logo").Handler(negroni.New(
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
-	assetsvcRouter.Methods("GET").Handler(negroni.New(
+	assetsvcRouter.PathPrefix("/v1/ns/{namespace}/").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
 	))
