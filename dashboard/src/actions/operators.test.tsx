@@ -1,5 +1,6 @@
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
+import { IResource } from "shared/types";
 import { getType } from "typesafe-actions";
 import actions from ".";
 import { Operators } from "../shared/Operators";
@@ -193,14 +194,15 @@ describe("getCSV", () => {
 
 describe("createResource", () => {
   it("creates a resource", async () => {
-    Operators.createResource = jest.fn(() => true);
+    const resource = {} as IResource;
+    Operators.createResource = jest.fn(() => resource);
     const expectedActions = [
       {
         type: getType(operatorActions.creatingResource),
       },
       {
         type: getType(operatorActions.resourceCreated),
-        payload: true,
+        payload: resource,
       },
     ];
     await store.dispatch(operatorActions.createResource("default", "v1", "pods", {}));

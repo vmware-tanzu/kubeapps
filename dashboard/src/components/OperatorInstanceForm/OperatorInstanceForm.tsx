@@ -73,18 +73,19 @@ class DeploymentFormBody extends React.Component<
         if (ownedCRD.name === crdName) {
           // Got the target CRD, extract the example
           const kind = ownedCRD.kind;
-          const rawExamples = csv.metadata.annotations["alm-examples"];
+          const rawExamples = get(csv, 'metadata.annotations["alm-examples"]', "[]");
           const examples = JSON.parse(rawExamples) as IResource[];
+          let defaultValues = "";
           examples.forEach(example => {
             if (example.kind === kind) {
               // Found the example, set the default values
-              const yamlValues = yaml.safeDump(example);
-              this.setState({
-                values: yamlValues,
-                defaultValues: yamlValues,
-                crd: ownedCRD,
-              });
+              defaultValues = yaml.safeDump(example);
             }
+          });
+          this.setState({
+            values: defaultValues,
+            defaultValues,
+            crd: ownedCRD,
           });
         }
       });
