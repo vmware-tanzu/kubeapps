@@ -57,7 +57,7 @@ func (m *postgresAssetManager) getPaginatedChartList(namespace, repo string, pag
 	queryParams := []interface{}{}
 	if namespace != dbutils.AllNamespaces {
 		queryParams = append(queryParams, namespace, m.GetKubeappsNamespace())
-		clauses = append(clauses, fmt.Sprintf("(repo_namespace = $%d OR repo_namespace = $%d)", len(queryParams)-1, len(queryParams)))
+		clauses = append(clauses, "(repo_namespace = $1 OR repo_namespace = $2)")
 	}
 	if repo != "" {
 		queryParams = append(queryParams, repo)
