@@ -37,6 +37,8 @@ describe("catalogReducer", () => {
       errorCSVs: getType(actions.operators.errorCSVs),
       creatingResource: getType(actions.operators.creatingResource),
       resourceCreated: getType(actions.operators.resourceCreated),
+      deletingResource: getType(actions.operators.deletingResource),
+      resourceDeleted: getType(actions.operators.resourceDeleted),
       errorResourceCreate: getType(actions.operators.errorResourceCreate),
       requestCustomResources: getType(actions.operators.requestCustomResources),
       receiveCustomResources: getType(actions.operators.receiveCustomResources),
@@ -245,6 +247,18 @@ describe("catalogReducer", () => {
           payload: resource,
         }),
       ).toEqual({ ...initialState, isFetching: false, resource });
+    });
+
+    it("sets deleting resource", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.deletingResource as any,
+      });
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.resourceDeleted as any,
+        }),
+      ).toEqual({ ...initialState, isFetching: false });
     });
   });
 });

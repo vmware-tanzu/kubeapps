@@ -71,4 +71,16 @@ export class Operators {
     );
     return data;
   }
+
+  public static async deleteResource(
+    namespace: string,
+    apiVersion: string,
+    plural: string,
+    name: string,
+  ) {
+    const { data } = await axiosWithAuth.delete<any>(
+      urls.api.operators.resource(namespace, apiVersion, plural, name),
+    );
+    return data;
+  }
 }

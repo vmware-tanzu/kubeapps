@@ -14,6 +14,7 @@ export interface IOperatorsState {
   errors: {
     fetch?: Error;
     create?: Error;
+    delete?: Error;
   };
   csvs: IClusterServiceVersion[];
   csv?: IClusterServiceVersion;
@@ -66,6 +67,12 @@ const catalogReducer = (
       return { ...state, isFetching: true };
     case getType(operators.resourceCreated):
       return { ...state, isFetching: false };
+    case getType(operators.deletingResource):
+      return { ...state, isFetching: true };
+    case getType(operators.resourceDeleted):
+      return { ...state, isFetching: false };
+    case getType(operators.errorResourceDelete):
+      return { ...state, isFetching: false, errors: { delete: action.payload } };
     case getType(operators.errorResourceCreate):
       return { ...state, isFetching: false, errors: { create: action.payload } };
     case getType(operators.requestCustomResources):

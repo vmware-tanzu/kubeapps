@@ -48,7 +48,6 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
                   </div>
                   <div>
                     Kind: 
-                    Foo
                   </div>
                 </div>
               </CardFooter>
@@ -73,9 +72,16 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
             >
               <button
                 className="button button-danger"
+                onClick={[Function]}
               >
                 Delete
               </button>
+              <ConfirmDialog
+                closeModal={[Function]}
+                loading={false}
+                modalIsOpen={false}
+                onConfirm={[Function]}
+              />
             </div>
           </div>
           <AppNotes
