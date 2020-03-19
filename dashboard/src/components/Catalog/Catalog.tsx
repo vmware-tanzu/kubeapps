@@ -15,7 +15,7 @@ interface ICatalogProps {
   charts: IChartState;
   repo: string;
   filter: string;
-  fetchCharts: (repo: string) => void;
+  fetchCharts: (namespace: string, repo: string) => void;
   pushSearchFilter: (filter: string) => RouterAction;
   namespace: string;
   getCSVs: (namespace: string) => void;
@@ -39,7 +39,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
   public componentDidMount() {
     const { repo, fetchCharts, filter, namespace, getCSVs, featureFlags } = this.props;
     this.setState({ filter });
-    fetchCharts(repo);
+    fetchCharts(namespace, repo);
     if (featureFlags.operators) {
       getCSVs(namespace);
     }
@@ -49,8 +49,8 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     if (this.props.filter !== prevProps.filter) {
       this.setState({ filter: this.props.filter });
     }
-    if (this.props.repo !== prevProps.repo) {
-      this.props.fetchCharts(this.props.repo);
+    if (this.props.repo !== prevProps.repo || this.props.namespace !== prevProps.namespace) {
+      this.props.fetchCharts(this.props.namespace, this.props.repo);
     }
     if (this.props.namespace !== prevProps.namespace && this.props.featureFlags.operators) {
       this.props.getCSVs(this.props.namespace);
