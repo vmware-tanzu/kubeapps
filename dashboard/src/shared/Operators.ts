@@ -59,4 +59,16 @@ export class Operators {
     );
     return data;
   }
+
+  public static async getResource(
+    namespace: string,
+    apiVersion: string,
+    crd: string,
+    name: string,
+  ) {
+    const { data } = await axiosWithAuth.get<IResource>(
+      urls.api.operators.resource(namespace, apiVersion, crd, name),
+    );
+    return data;
+  }
 }

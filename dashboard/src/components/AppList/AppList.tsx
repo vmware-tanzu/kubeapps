@@ -142,15 +142,10 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
             return <AppListItem key={r.releaseName} app={r} />;
           })}
           {filteredCRs.map(r => {
-            return (
-              <CustomResourceListItem
-                key={r.metadata.name}
-                resource={r}
-                csv={this.props.csvs.find(csv =>
-                  csv.spec.customresourcedefinitions.owned.some(crd => crd.kind === r.kind),
-                )}
-              />
+            const csv = this.props.csvs.find(c =>
+              c.spec.customresourcedefinitions.owned.some(crd => crd.kind === r.kind),
             );
+            return <CustomResourceListItem key={r.metadata.name} resource={r} csv={csv!} />;
           })}
         </CardGrid>
       </div>

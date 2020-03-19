@@ -203,7 +203,7 @@ class DeploymentFormBody extends React.Component<
     e.preventDefault();
     // Clean possible previous errors
     this.setState({ error: undefined });
-    const { createResource, push, namespace } = this.props;
+    const { createResource, push, namespace, csv } = this.props;
     const { values, crd } = this.state;
     const resourceType = crd!.name.split(".")[0];
     let resource: IResource = {} as any;
@@ -227,7 +227,9 @@ class DeploymentFormBody extends React.Component<
     this.setState({ submittedResourceName: resourceName });
     const created = await createResource(namespace, resource.apiVersion, resourceType, resource);
     if (created) {
-      push(`/operators-instances/ns/${namespace}/${resourceName}`);
+      push(
+        `/operators-instances/ns/${namespace}/${csv?.metadata.name}/${crd?.name}/${resourceName}`,
+      );
     }
   };
 }

@@ -78,5 +78,7 @@ export const api = {
       `api/v1/namespaces/${namespace}/operator/${name}/logo`,
     resources: (namespace: string, apiVersion: string, resource: string) =>
       `${APIBase}/apis/${apiVersion}/namespaces/${namespace}/${resource}`,
+    resource: (namespace: string, apiVersion: string, resource: string, name: string) =>
+      `${APIBase}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
   },
 };

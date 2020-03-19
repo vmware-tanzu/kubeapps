@@ -41,6 +41,8 @@ describe("catalogReducer", () => {
       requestCustomResources: getType(actions.operators.requestCustomResources),
       receiveCustomResources: getType(actions.operators.receiveCustomResources),
       errorCustomResource: getType(actions.operators.errorCustomResource),
+      requestCustomResource: getType(actions.operators.requestCustomResource),
+      receiveCustomResource: getType(actions.operators.receiveCustomResource),
     };
 
     describe("reducer actions", () => {
@@ -229,6 +231,20 @@ describe("catalogReducer", () => {
           payload: new Error("Boom!"),
         }),
       ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
+    });
+
+    it("sets receive resource", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.requestCustomResource as any,
+      });
+      const resource = {} as IResource;
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.receiveCustomResource as any,
+          payload: resource,
+        }),
+      ).toEqual({ ...initialState, isFetching: false, resource });
     });
   });
 });

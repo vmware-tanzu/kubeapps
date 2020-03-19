@@ -68,7 +68,7 @@ class Routes extends React.Component<IRoutesProps> {
       Object.assign(privateRoutes, {
         "/operators/ns/:namespace": OperatorsListContainer,
         "/operators/ns/:namespace/:operator": OperatorViewContainer,
-        "/operators-instances/ns/:namespace/:instanceName": OperatorInstanceViewContainer,
+        "/operators-instances/ns/:namespace/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
         "/operators-instances/ns/:namespace/new/:csv/:crd": OperatorInstanceCreateContainer,
       });
     }

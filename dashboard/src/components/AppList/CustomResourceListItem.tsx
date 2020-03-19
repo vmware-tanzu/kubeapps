@@ -6,19 +6,20 @@ import InfoCard from "../InfoCard";
 
 interface ICustomResourceListItemProps {
   resource: IResource;
-  csv?: IClusterServiceVersion;
+  csv: IClusterServiceVersion;
 }
 
 class CustomResourceListItem extends React.Component<ICustomResourceListItemProps> {
   public render() {
     const { resource, csv } = this.props;
-    const icon = csv?.spec.icon
+    const icon = csv.spec.icon
       ? `data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`
       : placeholder;
+    const crd = csv.spec.customresourcedefinitions.owned.find(c => c.kind === resource.kind);
     return (
       <InfoCard
         key={resource.metadata.name}
-        link={`/operators-instances/ns/${resource.metadata.namespace}/${resource.metadata.name}`}
+        link={`/operators-instances/ns/${resource.metadata.namespace}/${csv.metadata.name}/${crd?.name}/${resource.metadata.name}`}
         title={resource.metadata.name}
         icon={icon}
         info={`${resource.kind} v${csv?.spec.version || "-"}`}
