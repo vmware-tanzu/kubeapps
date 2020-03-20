@@ -109,7 +109,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   private renderCSVInfo = (csv: IClusterServiceVersion) => {
     const { instanceName } = this.props;
     const { crd } = this.state;
-    const icon = csv.spec.icon?.length
+    const icon = csv.spec.icon.length
       ? `data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`
       : placeholder;
     return (
@@ -118,12 +118,12 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
           <CardIcon icon={icon} />
           <CardContent>
             <h5>{instanceName}</h5>
-            <p className="margin-b-reset">{crd?.description}</p>
+            <p className="margin-b-reset">{crd!.description}</p>
           </CardContent>
           <CardFooter>
             <div>
               <div>Cluster Service Version: v{csv.spec.version}</div>
-              <div>Kind: {crd?.kind}</div>
+              <div>Kind: {crd!.kind}</div>
             </div>
           </CardFooter>
         </Card>
