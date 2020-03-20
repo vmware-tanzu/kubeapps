@@ -21,10 +21,14 @@ const UserKey contextKey = 0
 // tokenPrefix is the string preceding the token in the Authorization header.
 const tokenPrefix = "Bearer "
 
-// AuthGate implements middleware to check if the user has access to the specific namespace
-// before continuing. If the path being handled by the AuthGate middleware does not include
-// the 'namespace' mux var, or the value is _all, then the check is for cluster-wide access.
-func AuthGate() negroni.HandlerFunc {
+// AuthGate implements middleware to check if the user has access to read from
+// the specific namespace before continuing.
+//   * If the path being handled by the
+//     AuthGate middleware does not include the 'namespace' mux var, or the value
+//     is _all, then the check is for cluster-wide access.
+//   * If the namespace is the global chart namespace (ie. kubeappsNamespace) then
+//     we allow read access regardless.
+func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		token := ExtractToken(req.Header.Get("Authorization"))
 		if token == "" {
@@ -40,7 +44,15 @@ func AuthGate() negroni.HandlerFunc {
 		if namespace == dbutils.AllNamespaces {
 			namespace = ""
 		}
-		authz, err := userAuth.ValidateForNamespace(namespace)
+
+		// If the request is for the global public charts (ie. kubeappsNamespace)
+		// we do not check authz.
+		authz := false
+		if namespace == kubeappsNamespace {
+			authz = true
+		} else {
+			authz, err = userAuth.ValidateForNamespace(namespace)
+		}
 
 		if err != nil || !authz {
 			msg := fmt.Sprintf("Unable to validate user for namespace %q", namespace)

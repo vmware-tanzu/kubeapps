@@ -34,7 +34,10 @@ deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--set useHelm3=true \
+		--set allowNamespaceDiscovery=true \
 		--set postgresql.enabled=true \
+		--set postgresql.volumePermissions.enabled=false \
+		--set postgresql.volumePermissions.image.pullPolicy=IfNotPresent \
 		--set featureFlags.reposPerNamespace=true \
 		--set featureFlags.invalidateCache=true \
 		--set mongodb.enabled=false
