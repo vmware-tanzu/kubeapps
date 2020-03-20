@@ -9,7 +9,7 @@ import { IBasicFormParam } from "./types";
 
 // Avoid to explicitly add "null" when an element is not defined
 // tslint:disable-next-line
-const { nullOptions } = require("yaml/types");
+const { nullOptions } = require("yaml/browser/types");
 nullOptions.nullStr = "";
 
 // retrieveBasicFormParams iterates over a JSON Schema properties looking for `form` keys
