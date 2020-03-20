@@ -52,16 +52,17 @@ describe("renders a resource", () => {
   const csv = {
     metadata: { name: "foo" },
     spec: {
+      icon: [{}],
       customresourcedefinitions: {
         owned: [{ name: "foo.kubeapps.com", version: "v1alpha1", kind: "Foo" }],
       },
     },
   } as any;
   const resource = { kind: "Foo", spec: { test: true }, status: { alive: true } } as any;
-  const props = { ...defaultProps, csv, resource };
 
   it("renders the resource and CSV info", () => {
-    const wrapper = shallow(<OperatorInstance {...props} />);
+    const wrapper = shallow(<OperatorInstance {...defaultProps} />);
+    wrapper.setProps({ csv, resource });
     expect(wrapper.find(AppNotes)).toExist();
     expect(wrapper.find(AppValues)).toExist();
     expect(wrapper.find(".ChartInfo")).toExist();
@@ -72,9 +73,9 @@ describe("renders a resource", () => {
     const deleteResource = jest.fn(() => true);
     const push = jest.fn();
     const wrapper = shallow(
-      <OperatorInstance {...props} deleteResource={deleteResource} push={push} />,
+      <OperatorInstance {...defaultProps} deleteResource={deleteResource} push={push} />,
     );
-    wrapper.setState({ crd: csv.spec.customresourcedefinitions.owned[0] });
+    wrapper.setProps({ csv, resource });
     ReactModal.setAppElement(document.createElement("div"));
     wrapper.find(".button-danger").simulate("click");
 

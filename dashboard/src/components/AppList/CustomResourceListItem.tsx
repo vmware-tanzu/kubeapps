@@ -1,8 +1,8 @@
 import * as React from "react";
 
-import UnexpectedErrorPage from "components/ErrorAlert/UnexpectedErrorAlert";
 import placeholder from "../../placeholder.png";
 import { IClusterServiceVersion, IResource } from "../../shared/types";
+import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import InfoCard from "../InfoCard";
 
 interface ICustomResourceListItemProps {

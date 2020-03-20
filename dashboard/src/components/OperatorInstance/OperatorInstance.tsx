@@ -118,12 +118,12 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
           <CardIcon icon={icon} />
           <CardContent>
             <h5>{instanceName}</h5>
-            <p className="margin-b-reset">{crd!.description}</p>
+            <p className="margin-b-reset">{crd?.description}</p>
           </CardContent>
           <CardFooter>
             <div>
               <div>Cluster Service Version: v{csv.spec.version}</div>
-              <div>Kind: {crd!.kind}</div>
+              <div>Kind: {crd?.kind}</div>
             </div>
           </CardFooter>
         </Card>

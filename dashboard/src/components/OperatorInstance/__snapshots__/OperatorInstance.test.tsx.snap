@@ -32,7 +32,9 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
             className="ChartInfo"
           >
             <Card>
-              <CardIcon />
+              <CardIcon
+                icon="data:undefined;base64,undefined"
+              />
               <CardContent>
                 <h5>
                   foo-cluster
@@ -48,6 +50,7 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
                   </div>
                   <div>
                     Kind: 
+                    Foo
                   </div>
                 </div>
               </CardFooter>
