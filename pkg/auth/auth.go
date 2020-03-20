@@ -96,6 +96,7 @@ type Action struct {
 // Checker for the exported funcs
 type Checker interface {
 	Validate() error
+	ValidateForNamespace(namespace string) (bool, error)
 	GetForbiddenActions(namespace, action, manifest string) ([]Action, error)
 }
 

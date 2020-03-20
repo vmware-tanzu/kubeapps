@@ -152,6 +152,7 @@ func main() {
 	// HTTP Handler
 	h := handler.TillerProxy{
 		DisableUserAuthCheck: disableUserAuthCheck,
+		CheckerForRequest:    auth.AuthCheckerForRequest,
 		ListLimit:            listLimit,
 		ChartClient:          chartClient,
 		ProxyClient:          proxy,

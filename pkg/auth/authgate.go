@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,14 +11,20 @@ import (
 	"github.com/urfave/negroni"
 )
 
-// Context key type for request contexts
-type contextKey int
-
-// UserKey is the context key for the User data in the request context
-const UserKey contextKey = 0
-
 // tokenPrefix is the string preceding the token in the Authorization header.
 const tokenPrefix = "Bearer "
+
+// CheckerForRequest defines a function type so we can also inject a fake for tests
+// rather than setting a context value.
+type CheckerForRequest func(req *http.Request) (Checker, error)
+
+func AuthCheckerForRequest(req *http.Request) (Checker, error) {
+	token := ExtractToken(req.Header.Get("Authorization"))
+	if token == "" {
+		return nil, fmt.Errorf("Authorization token missing")
+	}
+	return NewAuth(token)
+}
 
 // AuthGate implements middleware to check if the user has access to read from
 // the specific namespace before continuing.
@@ -30,14 +35,9 @@ const tokenPrefix = "Bearer "
 //     we allow read access regardless.
 func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-		token := ExtractToken(req.Header.Get("Authorization"))
-		if token == "" {
-			response.NewErrorResponse(http.StatusUnauthorized, "Unauthorized").Write(w)
-			return
-		}
-		userAuth, err := NewAuth(token)
+		userAuth, err := AuthCheckerForRequest(req)
 		if err != nil {
-			response.NewErrorResponse(http.StatusInternalServerError, err.Error()).Write(w)
+			response.NewErrorResponse(http.StatusUnauthorized, err.Error()).Write(w)
 			return
 		}
 		namespace := mux.Vars(req)["namespace"]
@@ -62,8 +62,7 @@ func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
 			response.NewErrorResponse(http.StatusUnauthorized, msg).Write(w)
 			return
 		}
-		ctx := context.WithValue(req.Context(), UserKey, userAuth)
-		next(w, req.WithContext(ctx))
+		next(w, req)
 	}
 }
 
