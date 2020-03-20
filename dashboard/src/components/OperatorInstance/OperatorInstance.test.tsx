@@ -35,6 +35,13 @@ it("gets a resource when loading the component", () => {
   );
 });
 
+it("gets a resource again if the namespace changes", () => {
+  const getResource = jest.fn();
+  const wrapper = shallow(<OperatorInstance {...defaultProps} getResource={getResource} />);
+  wrapper.setProps({ namespace: "other" });
+  expect(getResource).toHaveBeenCalledTimes(2);
+});
+
 it("renders an error", () => {
   const wrapper = shallow(<OperatorInstance {...defaultProps} error={new Error("Boom!")} />);
   expect(wrapper.find(ErrorSelector)).toExist();

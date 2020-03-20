@@ -46,7 +46,12 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   }
 
   public componentDidUpdate(prevProps: IOperatorInstanceProps) {
-    const { resource, csv } = this.props;
+    const { csvName, crdName, instanceName, namespace, getResource, resource, csv } = this.props;
+    if (prevProps.namespace !== namespace) {
+      getResource(namespace, csvName, crdName, instanceName);
+      return;
+    }
+
     if (csv !== prevProps.csv || resource !== prevProps.resource) {
       if (csv && resource) {
         this.setState({

@@ -125,6 +125,22 @@ describe("catalogReducer", () => {
         ).toEqual({ ...initialState, error: undefined });
       });
 
+      it("sets the initial state when changing namespace", () => {
+        expect(
+          operatorReducer(
+            {
+              ...initialState,
+              isFetching: true,
+              errors: { fetch: new Error("Boom!") },
+              operators: [{} as any],
+            },
+            {
+              type: actionTypes.setNamespace as any,
+            },
+          ),
+        ).toEqual({ ...initialState });
+      });
+
       it("sets receive operator", () => {
         const state = operatorReducer(undefined, {
           type: actionTypes.requestOperator as any,
