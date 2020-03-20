@@ -45,6 +45,12 @@ export const errorResourceCreate = createAction("ERROR_RESOURCE_CREATE", resolve
   return (err: Error) => resolve(err);
 });
 
+export const deletingResource = createAction("DELETING_RESOURCE");
+export const resourceDeleted = createAction("RESOURCE_DELETED");
+export const errorResourceDelete = createAction("ERROR_RESOURCE_DELETE", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 export const requestCustomResources = createAction("REQUEST_CUSTOM_RESOURCES");
 export const receiveCustomResources = createAction("RECEIVE_CUSTOM_RESOURCES", resolve => {
   return (resources: IResource[]) => resolve(resources);
@@ -81,6 +87,9 @@ const actions = [
   errorCustomResource,
   requestCustomResource,
   receiveCustomResource,
+  deletingResource,
+  resourceDeleted,
+  errorResourceDelete,
 ];
 
 export type OperatorAction = ActionType<typeof actions[number]>;
@@ -177,6 +186,29 @@ export function createResource(
       return true;
     } catch (e) {
       dispatch(errorResourceCreate(e));
+      return false;
+    }
+  };
+}
+
+export function deleteResource(
+  namespace: string,
+  plural: string,
+  resource: IResource,
+): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(deletingResource());
+    try {
+      await Operators.deleteResource(
+        namespace,
+        resource.apiVersion,
+        plural,
+        resource.metadata.name,
+      );
+      dispatch(resourceDeleted());
+      return true;
+    } catch (e) {
+      dispatch(errorResourceDelete(e));
       return false;
     }
   };

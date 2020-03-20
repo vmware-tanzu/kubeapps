@@ -1,10 +1,11 @@
+import { push } from "connected-react-router";
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 
 import actions from "../../actions";
 import OperatorInstance from "../../components/OperatorInstance";
-import { IStoreState } from "../../shared/types";
+import { IResource, IStoreState } from "../../shared/types";
 
 interface IRouteProps {
   match: {
@@ -27,7 +28,7 @@ function mapStateToProps(
     isFetching: operators.isFetching,
     resource: operators.resource,
     csv: operators.csv,
-    error: operators.errors.fetch,
+    error: operators.errors.fetch || operators.errors.delete,
   };
 }
 
@@ -35,6 +36,9 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   return {
     getResource: (namespace: string, csvName: string, crdName: string, resourceName: string) =>
       dispatch(actions.operators.getResource(namespace, csvName, crdName, resourceName)),
+    deleteResource: (namespace: string, crdName: string, resource: IResource) =>
+      dispatch(actions.operators.deleteResource(namespace, crdName, resource)),
+    push: (location: string) => dispatch(push(location)),
   };
 }
 

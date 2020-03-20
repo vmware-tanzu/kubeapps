@@ -414,3 +414,38 @@ describe("getResources", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("deleteResource", () => {
+  it("delete a resource in a namespace", async () => {
+    const resource = { metadata: { name: "resource" } } as any;
+    Operators.deleteResource = jest.fn();
+    const expectedActions = [
+      {
+        type: getType(operatorActions.deletingResource),
+      },
+      {
+        type: getType(operatorActions.resourceDeleted),
+      },
+    ];
+    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error if deleting a resource fails", async () => {
+    const resource = { metadata: { name: "resource" } } as any;
+    Operators.deleteResource = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.deletingResource),
+      },
+      {
+        type: getType(operatorActions.errorResourceDelete),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
