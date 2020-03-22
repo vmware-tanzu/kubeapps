@@ -67,11 +67,11 @@ func Test_GetCharts(t *testing.T) {
 	}{
 		{"no charts", []*models.Chart{}},
 		{"one chart", []*models.Chart{
-			{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}}}},
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1"}}}},
 		},
 		{"two charts", []*models.Chart{
-			{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}},
 	}
 
@@ -109,11 +109,11 @@ func Test_GetChartsInRepo(t *testing.T) {
 	}{
 		{"repo has no charts", "my-repo", []*models.Chart{}},
 		{"repo has one chart", "my-repo", []*models.Chart{
-			{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
 		}},
 		{"repo has many charts", "my-repo", []*models.Chart{
-			{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
-			{ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
+			{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.0.1", Digest: "123"}}},
+			{Repo: testRepo, ID: "my-repo/dokuwiki", ChartVersions: []models.ChartVersion{{Version: "1.2.3", Digest: "1234"}, {Version: "1.2.2", Digest: "12345"}}},
 		}},
 	}
 
@@ -153,19 +153,19 @@ func Test_GetChartInRepo(t *testing.T) {
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{ID: "my-repo/my-chart"},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart has multiple versions",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
 			http.StatusOK,
 		},
 	}
@@ -206,19 +206,19 @@ func Test_ListChartVersions(t *testing.T) {
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{ID: "my-repo/my-chart"},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart"},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart has multiple versions",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
 			http.StatusOK,
 		},
 	}
@@ -259,19 +259,19 @@ func Test_GetChartVersion(t *testing.T) {
 		{
 			"chart does not exist",
 			errors.New("return an error when checking if chart exists"),
-			models.Chart{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusNotFound,
 		},
 		{
 			"chart exists",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}}},
 			http.StatusOK,
 		},
 		{
 			"chart has multiple versions",
 			nil,
-			models.Chart{ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
+			models.Chart{Repo: testRepo, ID: "my-repo/my-chart", ChartVersions: []models.ChartVersion{{Version: "0.1.0"}, {Version: "0.0.1"}}},
 			http.StatusOK,
 		},
 	}

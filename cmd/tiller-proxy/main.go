@@ -149,11 +149,10 @@ func main() {
 	r.Handle("/live", health)
 	r.Handle("/ready", health)
 
-	authGate := auth.AuthGate()
-
 	// HTTP Handler
 	h := handler.TillerProxy{
 		DisableUserAuthCheck: disableUserAuthCheck,
+		CheckerForRequest:    auth.AuthCheckerForRequest,
 		ListLimit:            listLimit,
 		ChartClient:          chartClient,
 		ProxyClient:          proxy,
@@ -161,30 +160,12 @@ func main() {
 
 	// Routes
 	apiv1 := r.PathPrefix("/v1").Subrouter()
-	apiv1.Methods("GET").Path("/releases").Handler(negroni.New(
-		authGate,
-		negroni.Wrap(handlerutil.WithoutParams(h.ListAllReleases)),
-	))
-	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
-		authGate,
-		negroni.Wrap(handlerutil.WithParams(h.ListReleases)),
-	))
-	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(negroni.New(
-		authGate,
-		negroni.Wrap(handlerutil.WithParams(h.CreateRelease)),
-	))
-	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
-		authGate,
-		negroni.Wrap(handlerutil.WithParams(h.GetRelease)),
-	))
-	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
-		authGate,
-		negroni.Wrap(handlerutil.WithParams(h.OperateRelease)),
-	))
-	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(negroni.New(
-		authGate,
-		negroni.Wrap(handlerutil.WithParams(h.DeleteRelease)),
-	))
+	apiv1.Methods("GET").Path("/releases").Handler(handlerutil.WithoutParams(h.ListAllReleases))
+	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(handlerutil.WithParams(h.ListReleases))
+	apiv1.Methods("POST").Path("/namespaces/{namespace}/releases").Handler(handlerutil.WithParams(h.CreateRelease))
+	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.GetRelease))
+	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.OperateRelease))
+	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.DeleteRelease))
 
 	// Backend routes unrelated to tiller-proxy functionality.
 	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())
@@ -204,9 +185,8 @@ func main() {
 	assetsvcPrefix := "/assetsvc"
 	assetsvcRouter := r.PathPrefix(assetsvcPrefix).Subrouter()
 	// Logos don't require authentication so bypass that step
-	assetsvcRouter.Methods("GET").Path("/v1/ns/{ns}/assets/{repo}/{id}/logo").Handler(negroni.New(
-		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
-	))
+	assetsvcRouter.Methods("GET").Path("/v1/ns/{ns}/assets/{repo}/{id}/logo").Handler(http.StripPrefix(assetsvcPrefix, assetsvcProxy))
+	authGate := auth.AuthGate(kubeappsNamespace)
 	assetsvcRouter.PathPrefix("/v1/ns/{namespace}/").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
