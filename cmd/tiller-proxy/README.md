@@ -12,7 +12,6 @@ It is possible to configure this proxy with the following flags:
 
 ```
       --debug                           enable verbose output
-      --disable-auth                    Disable authorization check
       --home string                     location of your Helm config. Overrides $HELM_HOME (default "/root/.helm")
       --host string                     address of Tiller. Overrides $HELM_HOST
       --kube-context string             name of the kubeconfig context to use

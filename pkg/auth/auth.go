@@ -38,7 +38,6 @@ type resource struct {
 }
 
 type k8sAuthInterface interface {
-	Validate() error
 	GetResourceList(groupVersion string) (*metav1.APIResourceList, error)
 	CanI(verb, group, resource, namespace string) (bool, error)
 }
@@ -46,15 +45,6 @@ type k8sAuthInterface interface {
 type k8sAuth struct {
 	AuthCli      authorizationv1.AuthorizationV1Interface
 	DiscoveryCli discovery.DiscoveryInterface
-}
-
-func (u k8sAuth) Validate() error {
-	_, err := u.AuthCli.SelfSubjectRulesReviews().Create(&authorizationapi.SelfSubjectRulesReview{
-		Spec: authorizationapi.SelfSubjectRulesReviewSpec{
-			Namespace: "default",
-		},
-	})
-	return err
 }
 
 func (u k8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, error) {
@@ -95,7 +85,6 @@ type Action struct {
 
 // Checker for the exported funcs
 type Checker interface {
-	Validate() error
 	ValidateForNamespace(namespace string) (bool, error)
 	GetForbiddenActions(namespace, action, manifest string) ([]Action, error)
 }
@@ -121,11 +110,6 @@ func NewAuth(token string) (*UserAuth, error) {
 	}
 
 	return &UserAuth{k8sAuthCli}, nil
-}
-
-// Validate checks if the given token is valid
-func (u *UserAuth) Validate() error {
-	return u.k8sAuth.Validate()
 }
 
 // ValidateForNamespace checks if the user can access secrets in the given
