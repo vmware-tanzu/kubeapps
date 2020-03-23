@@ -39,7 +39,7 @@ interface IAppViewState {
   manifest: IResource[];
 }
 
-interface IPartialAppViewState {
+export interface IPartialAppViewState {
   deployRefs: ResourceRef[];
   statefulSetRefs: ResourceRef[];
   daemonSetRefs: ResourceRef[];

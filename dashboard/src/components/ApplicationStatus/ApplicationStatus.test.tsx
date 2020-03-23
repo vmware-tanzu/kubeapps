@@ -1,8 +1,9 @@
 import { shallow } from "enzyme";
+import { has } from "lodash";
 import * as React from "react";
 import * as ReactTooltip from "react-tooltip";
 
-import { IKubeItem, IResource } from "shared/types";
+import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";
 
 const defaultProps = {
@@ -85,9 +86,9 @@ it("renders a failed status", () => {
 describe("isFetching", () => {
   const tests: Array<{
     title: string;
-    deployments: Array<IKubeItem<IResource>>;
-    statefulsets: Array<IKubeItem<IResource>>;
-    daemonsets: Array<IKubeItem<IResource>>;
+    deployments: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
+    statefulsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
+    daemonsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
     deployed: boolean;
     totalPods: number;
     readyPods: number;
@@ -246,6 +247,61 @@ describe("isFetching", () => {
       totalPods: 3,
       readyPods: 2,
     },
+    {
+      title:
+        "shows a deploying status if it has a daemonset, deployment (deployed) and statefulset (not deployed) with lists",
+      daemonsets: [
+        {
+          isFetching: false,
+          item: {
+            items: [
+              {
+                metadata: { name: "foo-ds" },
+                status: {
+                  currentNumberScheduled: 1,
+                  numberReady: 1,
+                },
+              } as IResource,
+            ],
+          } as IK8sList<IResource, {}>,
+        },
+      ],
+      deployments: [
+        {
+          isFetching: false,
+          item: {
+            items: [
+              {
+                metadata: { name: "foo-dp" },
+                status: {
+                  replicas: 1,
+                  availableReplicas: 1,
+                },
+              } as IResource,
+            ],
+          } as IK8sList<IResource, {}>,
+        },
+      ],
+      statefulsets: [
+        {
+          isFetching: false,
+          item: {
+            items: [
+              {
+                metadata: { name: "foo-ss" },
+                status: {
+                  replicas: 1,
+                  readyReplicas: 0,
+                },
+              } as IResource,
+            ],
+          } as IK8sList<IResource, {}>,
+        },
+      ],
+      deployed: true,
+      totalPods: 3,
+      readyPods: 2,
+    },
   ];
   tests.forEach(t => {
     it(t.title, () => {
@@ -255,6 +311,9 @@ describe("isFetching", () => {
         statefulsets: t.statefulsets,
         daemonsets: t.daemonsets,
       });
+      const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {
+        return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
+      };
       expect(wrapper.text()).toContain(t.deployed ? "Ready" : "Not Ready");
       expect(wrapper.state()).toMatchObject({ totalPods: t.totalPods, readyPods: t.readyPods });
       // Check tooltip text
@@ -262,21 +321,24 @@ describe("isFetching", () => {
         .find(ReactTooltip)
         .dive()
         .text();
-      t.deployments.forEach(d =>
+      t.deployments.forEach(d => {
+        const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${d.item?.status.availableReplicas}/${d.item?.status.replicas}${d.item?.metadata.name}`,
-        ),
-      );
-      t.statefulsets.forEach(d =>
+          `${item.status.availableReplicas}/${item.status.replicas}${item.metadata.name}`,
+        );
+      });
+      t.statefulsets.forEach(d => {
+        const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${d.item?.status.readyReplicas}/${d.item?.status.replicas}${d.item?.metadata.name}`,
-        ),
-      );
-      t.daemonsets.forEach(d =>
+          `${item.status.readyReplicas}/${item.status.replicas}${item.metadata.name}`,
+        );
+      });
+      t.daemonsets.forEach(d => {
+        const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${d.item?.status.numberReady}/${d.item?.status.currentNumberScheduled}${d.item?.metadata.name}`,
-        ),
-      );
+          `${item.status.numberReady}/${item.status.currentNumberScheduled}${item.metadata.name}`,
+        );
+      });
     });
   });
 });

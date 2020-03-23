@@ -2,15 +2,15 @@ import * as React from "react";
 
 import ResourceRef from "shared/ResourceRef";
 import LoadingWrapper, { LoaderType } from "../../../components/LoadingWrapper";
-import { IKubeItem, IResource, IServiceSpec } from "../../../shared/types";
+import { IK8sList, IKubeItem, IResource, IServiceSpec } from "../../../shared/types";
 import isSomeResourceLoading from "../helpers";
 import AccessURLItem from "./AccessURLItem";
 import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 
 interface IAccessURLTableProps {
-  services: Array<IKubeItem<IResource>>;
-  ingresses: Array<IKubeItem<IResource>>;
+  services: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
+  ingresses: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   ingressRefs: ResourceRef[];
   getResource: (r: ResourceRef) => void;
 }
@@ -46,9 +46,18 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
     const publicServices: Array<IKubeItem<IResource>> = [];
     services.forEach(s => {
       if (s.item) {
-        const spec = s.item.spec as IServiceSpec;
-        if (spec.type === "LoadBalancer") {
-          publicServices.push(s);
+        const listItem = s.item as IK8sList<IResource, {}>;
+        if (listItem.items) {
+          listItem.items.forEach(item => {
+            if (item.spec.type === "LoadBalancer") {
+              publicServices.push({ isFetching: false, item });
+            }
+          });
+        } else {
+          const spec = (s.item as IResource).spec as IServiceSpec;
+          if (spec.type === "LoadBalancer") {
+            publicServices.push(s as IKubeItem<IResource>);
+          }
         }
       }
     });
@@ -81,7 +90,7 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
     return accessTableSection;
   }
 
-  private renderTableEntry(i: IKubeItem<IResource>) {
+  private renderTableEntry(i: IKubeItem<IResource | IK8sList<IResource, {}>>) {
     if (i.error) {
       return (
         <tr key={i.error.message}>
@@ -90,11 +99,19 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
       );
     }
     if (i.item) {
-      const urlItem =
-        i.item.kind === "Ingress" ? GetURLItemFromIngress(i.item) : GetURLItemFromService(i.item);
-      return <AccessURLItem key={`accessURL/${i.item.metadata.name}`} URLItem={urlItem} />;
+      const listItem = i.item as IK8sList<IResource, {}>;
+      if (listItem.items) {
+        return listItem.items.map(item => this.renderURLItem(item));
+      } else {
+        return this.renderURLItem(i.item as IResource);
+      }
     }
     return;
+  }
+
+  private renderURLItem(i: IResource) {
+    const urlItem = i.kind === "Ingress" ? GetURLItemFromIngress(i) : GetURLItemFromService(i);
+    return <AccessURLItem key={`accessURL/${i.metadata.name}`} URLItem={urlItem} />;
   }
 
   private fetchIngresses() {

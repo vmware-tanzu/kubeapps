@@ -2,10 +2,15 @@ import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
 import * as React from "react";
 
+import AccessURLTable from "../../containers/AccessURLTableContainer";
+import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
+import { fromCRD } from "../../shared/ResourceRef";
 import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
 import AppNotes from "../AppView/AppNotes";
 import AppValues from "../AppView/AppValues";
+import { IPartialAppViewState } from "../AppView/AppView";
+import ResourceTable from "../AppView/ResourceTable";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 import ConfirmDialog from "../ConfirmDialog";
 import { ErrorSelector } from "../ErrorAlert";
@@ -33,6 +38,7 @@ export interface IOperatorInstanceProps {
 export interface IOperatorInstanceState {
   modalIsOpen: boolean;
   crd?: IClusterServiceVersionCRD;
+  resources?: IPartialAppViewState;
 }
 
 class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperatorInstanceState> {
@@ -51,18 +57,55 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
       getResource(namespace, csvName, crdName, instanceName);
       return;
     }
-
+    let crd = this.state.crd;
     if (csv !== prevProps.csv || resource !== prevProps.resource) {
       if (csv && resource) {
-        this.setState({
-          crd: csv.spec.customresourcedefinitions.owned.find(c => c.kind === resource.kind),
+        crd = csv.spec.customresourcedefinitions.owned.find(c => c.kind === resource.kind);
+        this.setState({ crd });
+      }
+      if (crd && resource) {
+        const result: IPartialAppViewState = {
+          ingressRefs: [],
+          deployRefs: [],
+          statefulSetRefs: [],
+          daemonSetRefs: [],
+          otherResources: [],
+          serviceRefs: [],
+          secretRefs: [],
+        };
+        const ownerRef = { name: resource.metadata.name, kind: resource.kind };
+        crd.resources.forEach(r => {
+          switch (r.kind) {
+            case "Deployment":
+              result.deployRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+              break;
+            case "StatefulSet":
+              result.statefulSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+              break;
+            case "DaemonSet":
+              result.daemonSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+              break;
+            case "Service":
+              result.serviceRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+              break;
+            case "Ingress":
+              result.ingressRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+              break;
+            case "Secret":
+              result.secretRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+              break;
+            default:
+              result.otherResources.push(fromCRD(r, this.props.namespace, ownerRef));
+          }
         });
+        this.setState({ resources: result });
       }
     }
   }
 
   public render() {
     const { isFetching, error, resource, csv, instanceName, namespace } = this.props;
+    const { resources } = this.state;
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -81,7 +124,13 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
                 <div className="col-9">
                   <div className="row padding-t-bigger">
                     <div className="col-4">
-                      <h5>{instanceName}</h5>
+                      {resources && (
+                        <ApplicationStatus
+                          deployRefs={resources.deployRefs}
+                          statefulsetRefs={resources.statefulSetRefs}
+                          daemonsetRefs={resources.daemonSetRefs}
+                        />
+                      )}
                     </div>
                     <div className="col-8 text-r">
                       <button className="button button-danger" onClick={this.openModal}>
@@ -95,8 +144,29 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
                       />
                     </div>
                   </div>
-                  <AppNotes title="Status" notes={yaml.safeDump(resource.status)} />
-                  <AppValues values={yaml.safeDump(resource.spec)} />
+                  {resources && (
+                    <>
+                      <AccessURLTable
+                        serviceRefs={resources.serviceRefs}
+                        ingressRefs={resources.ingressRefs}
+                      />
+                      <AppNotes title="Status" notes={yaml.safeDump(resource.status)} />
+                      <ResourceTable resourceRefs={resources.secretRefs} title="Secrets" />
+                      <ResourceTable resourceRefs={resources.deployRefs} title="Deployments" />
+                      <ResourceTable
+                        resourceRefs={resources.statefulSetRefs}
+                        title="StatefulSets"
+                      />
+                      <ResourceTable resourceRefs={resources.daemonSetRefs} title="DaemonSets" />
+                      <ResourceTable resourceRefs={resources.serviceRefs} title="Services" />
+                      <AppValues values={yaml.safeDump(resource.spec)} />
+                      {/* TODO(andresmgot): Enable otherResourcesTable when they are fetched */}
+                      {/* <ResourceTable
+                        resourceRefs={resources.otherResources}
+                        title="Other Resources"
+                      /> */}
+                    </>
+                  )}
                 </div>
               </div>
             )}

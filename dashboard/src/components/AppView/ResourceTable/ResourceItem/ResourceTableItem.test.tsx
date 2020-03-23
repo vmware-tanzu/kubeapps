@@ -4,6 +4,7 @@ import * as React from "react";
 
 import itBehavesLike from "../../../../shared/specs";
 import { IKubeItem, IResource } from "../../../../shared/types";
+import DeploymentItemRow from "./DeploymentItem/DeploymentItem";
 import ResourceTableItem from "./ResourceTableItem";
 
 const kubeItem: IKubeItem<IResource> = {
@@ -82,6 +83,7 @@ context("when there is a valid resouce", () => {
     const deployment = {
       metadata: {
         name: "foo",
+        selfLink: "/foo",
       },
       status: { replicas: 1, updatedReplicas: 1, availableReplicas: 1 },
     } as IResource;
@@ -89,6 +91,29 @@ context("when there is a valid resouce", () => {
     const wrapper = shallow(
       <ResourceTableItem {...defaultProps} resource={kubeItem} name={deployment.metadata.name} />,
     );
+    expect(wrapper).toMatchSnapshot();
+  });
+
+  it("renders info about the resource status when given a list", () => {
+    const deployment = {
+      metadata: {
+        name: "foo",
+        selfLink: "/deployments/foo",
+      },
+      status: { replicas: 1, updatedReplicas: 1, availableReplicas: 1 },
+    } as IResource;
+    const kubeList = {
+      isFetching: false,
+      item: { items: [deployment] },
+    };
+    const wrapper = shallow(
+      <ResourceTableItem
+        {...defaultProps}
+        resource={kubeList as any}
+        name={deployment.metadata.name}
+      />,
+    );
+    expect(wrapper.find(DeploymentItemRow)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
 });

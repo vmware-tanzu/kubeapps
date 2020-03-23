@@ -1,9 +1,12 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import * as ReactModal from "react-modal";
+import AccessURLTable from "../../containers/AccessURLTableContainer";
+import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import itBehavesLike from "../../shared/specs";
 import AppNotes from "../AppView/AppNotes";
 import AppValues from "../AppView/AppValues";
+import ResourceTable from "../AppView/ResourceTable";
 import ConfirmDialog from "../ConfirmDialog";
 import { ErrorSelector } from "../ErrorAlert";
 import OperatorInstance, { IOperatorInstanceProps } from "./OperatorInstance";
@@ -54,11 +57,23 @@ describe("renders a resource", () => {
     spec: {
       icon: [{}],
       customresourcedefinitions: {
-        owned: [{ name: "foo.kubeapps.com", version: "v1alpha1", kind: "Foo" }],
+        owned: [
+          {
+            name: "foo.kubeapps.com",
+            version: "v1alpha1",
+            kind: "Foo",
+            resources: [{ kind: "Deployment" }],
+          },
+        ],
       },
     },
   } as any;
-  const resource = { kind: "Foo", spec: { test: true }, status: { alive: true } } as any;
+  const resource = {
+    kind: "Foo",
+    metadata: { name: "foo-instance" },
+    spec: { test: true },
+    status: { alive: true },
+  } as any;
 
   it("renders the resource and CSV info", () => {
     const wrapper = shallow(<OperatorInstance {...defaultProps} />);
@@ -66,6 +81,9 @@ describe("renders a resource", () => {
     expect(wrapper.find(AppNotes)).toExist();
     expect(wrapper.find(AppValues)).toExist();
     expect(wrapper.find(".ChartInfo")).toExist();
+    expect(wrapper.find(ApplicationStatus)).toExist();
+    expect(wrapper.find(AccessURLTable)).toExist();
+    expect(wrapper.find(ResourceTable)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -86,5 +104,27 @@ describe("renders a resource", () => {
     // wait async calls
     await new Promise(r => r());
     expect(push).toHaveBeenCalledWith(`/apps/ns/${defaultProps.namespace}`);
+  });
+
+  it("updates the state with the CRD resources", () => {
+    const wrapper = shallow(<OperatorInstance {...defaultProps} />);
+    wrapper.setProps({ csv, resource });
+    expect(wrapper.state("resources")).toMatchObject({
+      deployRefs: [
+        {
+          apiVersion: "apps/v1",
+          filter: {
+            metadata: {
+              ownerReferences: [
+                {
+                  kind: "Foo",
+                  name: "foo-instance",
+                },
+              ],
+            },
+          },
+        },
+      ],
+    });
   });
 });

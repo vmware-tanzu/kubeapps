@@ -66,9 +66,30 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
             <div
               className="col-4"
             >
-              <h5>
-                foo-cluster
-              </h5>
+              <Connect(ApplicationStatus)
+                daemonsetRefs={Array []}
+                deployRefs={
+                  Array [
+                    ResourceRef {
+                      "apiVersion": "apps/v1",
+                      "filter": Object {
+                        "metadata": Object {
+                          "ownerReferences": Array [
+                            Object {
+                              "kind": "Foo",
+                              "name": "foo-instance",
+                            },
+                          ],
+                        },
+                      },
+                      "kind": "Deployment",
+                      "name": undefined,
+                      "namespace": "default",
+                    },
+                  ]
+                }
+                statefulsetRefs={Array []}
+              />
             </div>
             <div
               className="col-8 text-r"
@@ -87,10 +108,53 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
               />
             </div>
           </div>
+          <Connect(AccessURLTable)
+            ingressRefs={Array []}
+            serviceRefs={Array []}
+          />
           <AppNotes
             notes="alive: true
           "
             title="Status"
+          />
+          <ResourceTable
+            resourceRefs={Array []}
+            title="Secrets"
+          />
+          <ResourceTable
+            resourceRefs={
+              Array [
+                ResourceRef {
+                  "apiVersion": "apps/v1",
+                  "filter": Object {
+                    "metadata": Object {
+                      "ownerReferences": Array [
+                        Object {
+                          "kind": "Foo",
+                          "name": "foo-instance",
+                        },
+                      ],
+                    },
+                  },
+                  "kind": "Deployment",
+                  "name": undefined,
+                  "namespace": "default",
+                },
+              ]
+            }
+            title="Deployments"
+          />
+          <ResourceTable
+            resourceRefs={Array []}
+            title="StatefulSets"
+          />
+          <ResourceTable
+            resourceRefs={Array []}
+            title="DaemonSets"
+          />
+          <ResourceTable
+            resourceRefs={Array []}
+            title="Services"
           />
           <AppValues
             values="test: true

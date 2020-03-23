@@ -3,7 +3,7 @@ import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 import actions from "../actions";
 import { KubeAction } from "../actions/kube";
-import { IKubeState } from "../shared/types";
+import { IK8sList, IKubeState, IResource } from "../shared/types";
 
 const initialState: IKubeState = {
   items: {},
@@ -24,6 +24,25 @@ const kubeReducer = (
         [action.payload.key]: { isFetching: false, item: action.payload.resource },
       };
       return { ...state, items: { ...state.items, ...receivedItem } };
+    case getType(actions.kube.receiveResourceFromList):
+      const stateListItem = state.items[action.payload.key].item as IK8sList<IResource, {}>;
+      const newItem = action.payload.resource as IResource;
+      const updatedItems = stateListItem.items.map(it => {
+        if (it.metadata.selfLink === newItem.metadata.selfLink) {
+          return action.payload.resource as IResource;
+        }
+        return it;
+      });
+      return {
+        ...state,
+        items: {
+          ...state.items,
+          [action.payload.key]: {
+            isFetching: false,
+            item: { ...stateListItem, items: updatedItems },
+          },
+        },
+      };
     case getType(actions.kube.receiveResourceError):
       const erroredItem = {
         [action.payload.key]: { isFetching: false, error: action.payload.error },
