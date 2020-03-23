@@ -1,3 +1,7 @@
 .Terminal {
   overflow-wrap: break-word;
 }
+
+.Terminal__Code code {
+  white-space: pre-wrap;
+}

@@ -1,0 +1,104 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`loading spinner matches the snapshot 1`] = `
+<section
+  className="AppView padding-b-big"
+>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+      type={0}
+    />
+  </main>
+</section>
+`;
+
+exports[`renders a resource renders the resource and CSV info 1`] = `
+<section
+  className="AppView padding-b-big"
+>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <div
+        className="row collapse-b-tablet"
+      >
+        <div
+          className="col-3"
+        >
+          <CardGrid
+            className="ChartInfo"
+          >
+            <Card>
+              <CardIcon
+                icon="data:undefined;base64,undefined"
+              />
+              <CardContent>
+                <h5>
+                  foo-cluster
+                </h5>
+                <p
+                  className="margin-b-reset"
+                />
+              </CardContent>
+              <CardFooter>
+                <div>
+                  <div>
+                    Cluster Service Version: v
+                  </div>
+                  <div>
+                    Kind: 
+                    Foo
+                  </div>
+                </div>
+              </CardFooter>
+            </Card>
+          </CardGrid>
+        </div>
+        <div
+          className="col-9"
+        >
+          <div
+            className="row padding-t-bigger"
+          >
+            <div
+              className="col-4"
+            >
+              <h5>
+                foo-cluster
+              </h5>
+            </div>
+            <div
+              className="col-8 text-r"
+            >
+              <button
+                className="button button-danger"
+                onClick={[Function]}
+              >
+                Delete
+              </button>
+              <ConfirmDialog
+                closeModal={[Function]}
+                loading={false}
+                modalIsOpen={false}
+                onConfirm={[Function]}
+              />
+            </div>
+          </div>
+          <AppNotes
+            notes="alive: true
+          "
+            title="Status"
+          />
+          <AppValues
+            values="test: true
+          "
+          />
+        </div>
+      </div>
+    </LoadingWrapper>
+  </main>
+</section>
+`;

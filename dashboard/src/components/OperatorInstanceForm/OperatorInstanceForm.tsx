@@ -127,10 +127,10 @@ class DeploymentFormBody extends React.Component<
           {errors.create && (
             <ErrorSelector
               error={errors.create}
-              resource={`Operator Instance "${submittedResourceName}" (${crd?.name})`}
+              resource={`Operator Instance "${submittedResourceName}" (${crd.name})`}
             />
           )}
-          {error && <ErrorSelector error={error} resource={`Operator Instance (${crd?.name})`} />}
+          {error && <ErrorSelector error={error} resource={`Operator Instance (${crd.name})`} />}
           <p>{crd.description}</p>
           <ConfirmDialog
             modalIsOpen={this.state.restoreDefaultValuesModalIsOpen}
@@ -203,9 +203,16 @@ class DeploymentFormBody extends React.Component<
     e.preventDefault();
     // Clean possible previous errors
     this.setState({ error: undefined });
-    const { createResource, push, namespace } = this.props;
+    const { createResource, push, namespace, csv } = this.props;
     const { values, crd } = this.state;
-    const resourceType = crd!.name.split(".")[0];
+    if (!crd || !csv) {
+      // Unexpected error, CRD and CSV should have been previously populated
+      this.setState({
+        error: new Error(`Missing CRD (${JSON.stringify(crd)}) or CSV (${JSON.stringify(csv)})`),
+      });
+      return;
+    }
+    const resourceType = crd.name.split(".")[0];
     let resource: IResource = {} as any;
     try {
       resource = yaml.safeLoad(values);
@@ -227,7 +234,7 @@ class DeploymentFormBody extends React.Component<
     this.setState({ submittedResourceName: resourceName });
     const created = await createResource(namespace, resource.apiVersion, resourceType, resource);
     if (created) {
-      push(`/operators-instances/ns/${namespace}/${resourceName}`);
+      push(`/operators-instances/ns/${namespace}/${csv.metadata.name}/${crd.name}/${resourceName}`);
     }
   };
 }

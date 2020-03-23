@@ -26,6 +26,19 @@ const defaultCRD = {
   description: "useful description",
 } as any;
 
+const defaultCSV = {
+  metadata: {
+    annotations: {
+      "alm-examples": '[{"kind": "Foo", "apiVersion": "v1"}]',
+    },
+  },
+  spec: {
+    customresourcedefinitions: {
+      owned: [defaultCRD],
+    },
+  },
+} as any;
+
 itBehavesLike("aLoadingComponent", {
   component: OperatorInstanceForm,
   props: { ...defaultProps, isFetching: true },
@@ -38,20 +51,8 @@ it("retrieves CSV when mounted", () => {
 });
 
 it("retrieves the example values and the target CRD from the given CSV", () => {
-  const csv = {
-    metadata: {
-      annotations: {
-        "alm-examples": '[{"kind": "Foo", "apiVersion": "v1"}]',
-      },
-    },
-    spec: {
-      customresourcedefinitions: {
-        owned: [defaultCRD],
-      },
-    },
-  } as any;
   const wrapper = shallow(<OperatorInstanceForm {...defaultProps} />);
-  wrapper.setProps({ csv });
+  wrapper.setProps({ csv: defaultCSV });
   expect(wrapper.state()).toMatchObject({
     defaultValues: "kind: Foo\napiVersion: v1\n",
     crd: defaultCRD,
@@ -113,7 +114,7 @@ it("restores the default values", async () => {
 it("should submit the form", () => {
   const createResource = jest.fn();
   const wrapper = shallow(
-    <OperatorInstanceForm {...defaultProps} createResource={createResource} />,
+    <OperatorInstanceForm {...defaultProps} createResource={createResource} csv={defaultCSV} />,
   );
 
   const values = "apiVersion: v1\nmetadata:\n  name: foo";
@@ -138,7 +139,7 @@ it("should submit the form", () => {
 it("should catch a syntax error in the form", () => {
   const createResource = jest.fn();
   const wrapper = shallow(
-    <OperatorInstanceForm {...defaultProps} createResource={createResource} />,
+    <OperatorInstanceForm {...defaultProps} createResource={createResource} csv={defaultCSV} />,
   );
 
   const values = "metadata: invalid!\n  name: foo";
@@ -159,7 +160,7 @@ it("should catch a syntax error in the form", () => {
 it("should throw an eror if the element doesn't contain an apiVersion", () => {
   const createResource = jest.fn();
   const wrapper = shallow(
-    <OperatorInstanceForm {...defaultProps} createResource={createResource} />,
+    <OperatorInstanceForm {...defaultProps} createResource={createResource} csv={defaultCSV} />,
   );
 
   const values = "metadata:\nname: foo";

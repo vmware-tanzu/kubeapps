@@ -37,10 +37,14 @@ describe("catalogReducer", () => {
       errorCSVs: getType(actions.operators.errorCSVs),
       creatingResource: getType(actions.operators.creatingResource),
       resourceCreated: getType(actions.operators.resourceCreated),
+      deletingResource: getType(actions.operators.deletingResource),
+      resourceDeleted: getType(actions.operators.resourceDeleted),
       errorResourceCreate: getType(actions.operators.errorResourceCreate),
       requestCustomResources: getType(actions.operators.requestCustomResources),
       receiveCustomResources: getType(actions.operators.receiveCustomResources),
       errorCustomResource: getType(actions.operators.errorCustomResource),
+      requestCustomResource: getType(actions.operators.requestCustomResource),
+      receiveCustomResource: getType(actions.operators.receiveCustomResource),
     };
 
     describe("reducer actions", () => {
@@ -119,6 +123,22 @@ describe("catalogReducer", () => {
             type: actionTypes.setNamespace as any,
           }),
         ).toEqual({ ...initialState, error: undefined });
+      });
+
+      it("sets the initial state when changing namespace", () => {
+        expect(
+          operatorReducer(
+            {
+              ...initialState,
+              isFetching: true,
+              errors: { fetch: new Error("Boom!") },
+              operators: [{} as any],
+            },
+            {
+              type: actionTypes.setNamespace as any,
+            },
+          ),
+        ).toEqual({ ...initialState });
       });
 
       it("sets receive operator", () => {
@@ -229,6 +249,32 @@ describe("catalogReducer", () => {
           payload: new Error("Boom!"),
         }),
       ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
+    });
+
+    it("sets receive resource", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.requestCustomResource as any,
+      });
+      const resource = {} as IResource;
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.receiveCustomResource as any,
+          payload: resource,
+        }),
+      ).toEqual({ ...initialState, isFetching: false, resource });
+    });
+
+    it("sets deleting resource", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.deletingResource as any,
+      });
+      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.resourceDeleted as any,
+        }),
+      ).toEqual({ ...initialState, isFetching: false });
     });
   });
 });

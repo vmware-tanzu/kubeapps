@@ -294,3 +294,158 @@ describe("getResources", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("getResources", () => {
+  it("get a resource in a namespace", async () => {
+    const csv = {
+      metadata: { name: "foo" },
+      spec: {
+        customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+      },
+    };
+    const resource = { metadata: { name: "resource" } };
+    Operators.getCSV = jest.fn(() => csv);
+    Operators.getResource = jest.fn(() => resource);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCustomResource),
+      },
+      {
+        type: getType(operatorActions.requestCSV),
+      },
+      {
+        type: getType(operatorActions.receiveCSV),
+        payload: csv,
+      },
+      {
+        type: getType(operatorActions.receiveCustomResource),
+        payload: resource,
+      },
+    ];
+    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(Operators.getResource).toHaveBeenCalledWith(
+      "default",
+      "kubeapps.com/v1alpha1",
+      "foo",
+      "bar",
+    );
+  });
+
+  it("dispatches an error if getting a resource fails", async () => {
+    const csv = {
+      metadata: { name: "foo" },
+      spec: {
+        customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+      },
+    };
+    Operators.getCSV = jest.fn(() => csv);
+    Operators.getResource = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCustomResource),
+      },
+      {
+        type: getType(operatorActions.requestCSV),
+      },
+      {
+        type: getType(operatorActions.receiveCSV),
+        payload: csv,
+      },
+      {
+        type: getType(operatorActions.errorCustomResource),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error if the given csv is not found", async () => {
+    Operators.getCSV = jest.fn(() => undefined);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCustomResource),
+      },
+      {
+        type: getType(operatorActions.requestCSV),
+      },
+      {
+        type: getType(operatorActions.receiveCSV),
+      },
+      {
+        type: getType(operatorActions.errorCustomResource),
+        payload: new Error("CSV foo not found in default"),
+      },
+    ];
+    await store.dispatch(operatorActions.getResource("default", "foo", "foo.kubeapps.com", "bar"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error if the given crd is not found fails", async () => {
+    const csv = {
+      metadata: { name: "foo" },
+      spec: {
+        customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
+      },
+    };
+    Operators.getCSV = jest.fn(() => csv);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.requestCustomResource),
+      },
+      {
+        type: getType(operatorActions.requestCSV),
+      },
+      {
+        type: getType(operatorActions.receiveCSV),
+        payload: csv,
+      },
+      {
+        type: getType(operatorActions.errorCustomResource),
+        payload: new Error("Not found a valid CRD definition for foo/not-foo.kubeapps.com"),
+      },
+    ];
+    await store.dispatch(
+      operatorActions.getResource("default", "foo", "not-foo.kubeapps.com", "bar"),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("deleteResource", () => {
+  it("delete a resource in a namespace", async () => {
+    const resource = { metadata: { name: "resource" } } as any;
+    Operators.deleteResource = jest.fn();
+    const expectedActions = [
+      {
+        type: getType(operatorActions.deletingResource),
+      },
+      {
+        type: getType(operatorActions.resourceDeleted),
+      },
+    ];
+    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error if deleting a resource fails", async () => {
+    const resource = { metadata: { name: "resource" } } as any;
+    Operators.deleteResource = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.deletingResource),
+      },
+      {
+        type: getType(operatorActions.errorResourceDelete),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.deleteResource("default", "foos", resource));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

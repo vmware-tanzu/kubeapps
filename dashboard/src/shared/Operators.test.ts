@@ -106,3 +106,29 @@ it("list resources", async () => {
     `api/kube/apis/v1/namespaces/${ns}/pods`,
   ]);
 });
+
+it("get a resource", async () => {
+  const resource = { metadata: { name: "foo" } } as IResource;
+  const ns = "default";
+  axiosWithAuth.get = jest.fn(() => {
+    return { data: resource };
+  });
+  expect(await Operators.getResource(ns, "v1", "pods", "foo")).toEqual(resource);
+  expect(axiosWithAuth.get).toHaveBeenCalled();
+  expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
+    `api/kube/apis/v1/namespaces/${ns}/pods/foo`,
+  ]);
+});
+
+it("deletes a resource", async () => {
+  const resource = { metadata: { name: "foo" } } as IResource;
+  const ns = "default";
+  axiosWithAuth.delete = jest.fn(() => {
+    return { data: resource };
+  });
+  expect(await Operators.deleteResource(ns, "v1", "pods", "foo")).toEqual(resource);
+  expect(axiosWithAuth.delete).toHaveBeenCalled();
+  expect((axiosWithAuth.delete as jest.Mock).mock.calls[0]).toEqual([
+    `api/kube/apis/v1/namespaces/${ns}/pods/foo`,
+  ]);
+});

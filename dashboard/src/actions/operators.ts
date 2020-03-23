@@ -45,6 +45,12 @@ export const errorResourceCreate = createAction("ERROR_RESOURCE_CREATE", resolve
   return (err: Error) => resolve(err);
 });
 
+export const deletingResource = createAction("DELETING_RESOURCE");
+export const resourceDeleted = createAction("RESOURCE_DELETED");
+export const errorResourceDelete = createAction("ERROR_RESOURCE_DELETE", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 export const requestCustomResources = createAction("REQUEST_CUSTOM_RESOURCES");
 export const receiveCustomResources = createAction("RECEIVE_CUSTOM_RESOURCES", resolve => {
   return (resources: IResource[]) => resolve(resources);
@@ -52,6 +58,11 @@ export const receiveCustomResources = createAction("RECEIVE_CUSTOM_RESOURCES", r
 
 export const errorCustomResource = createAction("ERROR_CUSTOM_RESOURCE", resolve => {
   return (err: Error) => resolve(err);
+});
+
+export const requestCustomResource = createAction("REQUEST_CUSTOM_RESOURCE");
+export const receiveCustomResource = createAction("RECEIVE_CUSTOM_RESOURCE", resolve => {
+  return (resource: IResource) => resolve(resource);
 });
 
 const actions = [
@@ -74,6 +85,11 @@ const actions = [
   requestCustomResources,
   receiveCustomResources,
   errorCustomResource,
+  requestCustomResource,
+  receiveCustomResource,
+  deletingResource,
+  resourceDeleted,
+  errorResourceDelete,
 ];
 
 export type OperatorAction = ActionType<typeof actions[number]>;
@@ -142,14 +158,16 @@ export function getCSVs(
 export function getCSV(
   namespace: string,
   name: string,
-): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
+): ThunkAction<Promise<IClusterServiceVersion | undefined>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCSV());
     try {
       const csv = await Operators.getCSV(namespace, name);
       dispatch(receiveCSV(csv));
+      return csv;
     } catch (e) {
       dispatch(errorCSVs(e));
+      return;
     }
   };
 }
@@ -173,24 +191,51 @@ export function createResource(
   };
 }
 
+export function deleteResource(
+  namespace: string,
+  plural: string,
+  resource: IResource,
+): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(deletingResource());
+    try {
+      await Operators.deleteResource(
+        namespace,
+        resource.apiVersion,
+        plural,
+        resource.metadata.name,
+      );
+      dispatch(resourceDeleted());
+      return true;
+    } catch (e) {
+      dispatch(errorResourceDelete(e));
+      return false;
+    }
+  };
+}
+
+function parseCRD(crdName: string) {
+  const parsedCRD = crdName.split(".");
+  const plural = parsedCRD[0];
+  const group = parsedCRD.slice(1).join(".");
+  return { plural, group };
+}
+
 export function getResources(
   namespace: string,
-): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
+): ThunkAction<Promise<IResource[]>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(requestCustomResources());
     const csvs = await dispatch(getCSVs(namespace));
     let resources: IResource[] = [];
     const csvPromises = csvs.map(async csv => {
       const crdPromises = csv.spec.customresourcedefinitions.owned.map(async crd => {
-        const parsedCRD = crd.name.split(".");
-        const name = parsedCRD[0];
-        const group = parsedCRD.slice(1).join(".");
-        const groupVersion = crd.version;
+        const { plural, group } = parseCRD(crd.name);
         try {
           const csvResources = await Operators.listResources(
             namespace,
-            `${group}/${groupVersion}`,
-            name,
+            `${group}/${crd.version}`,
+            plural,
           );
           resources = resources.concat(csvResources.items);
         } catch (e) {
@@ -202,6 +247,44 @@ export function getResources(
     await Promise.all(csvPromises);
     if (resources.length) {
       dispatch(receiveCustomResources(resources));
+    }
+    return resources;
+  };
+}
+
+export function getResource(
+  namespace: string,
+  csvName: string,
+  crdName: string,
+  resourceName: string,
+): ThunkAction<Promise<void>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(requestCustomResource());
+    const csv = await dispatch(getCSV(namespace, csvName));
+    if (csv) {
+      const crd = csv.spec.customresourcedefinitions.owned.find(c => c.name === crdName);
+      if (crd) {
+        const { plural, group } = parseCRD(crd.name);
+        try {
+          const resource = await Operators.getResource(
+            namespace,
+            `${group}/${crd.version}`,
+            plural,
+            resourceName,
+          );
+          dispatch(receiveCustomResource(resource));
+        } catch (e) {
+          dispatch(errorCustomResource(e));
+        }
+      } else {
+        dispatch(
+          errorCustomResource(
+            new Error(`Not found a valid CRD definition for ${csvName}/${crdName}`),
+          ),
+        );
+      }
+    } else {
+      dispatch(errorCustomResource(new Error(`CSV ${csvName} not found in ${namespace}`)));
     }
   };
 }

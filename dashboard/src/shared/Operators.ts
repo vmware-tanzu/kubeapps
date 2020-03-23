@@ -59,4 +59,28 @@ export class Operators {
     );
     return data;
   }
+
+  public static async getResource(
+    namespace: string,
+    apiVersion: string,
+    crd: string,
+    name: string,
+  ) {
+    const { data } = await axiosWithAuth.get<IResource>(
+      urls.api.operators.resource(namespace, apiVersion, crd, name),
+    );
+    return data;
+  }
+
+  public static async deleteResource(
+    namespace: string,
+    apiVersion: string,
+    plural: string,
+    name: string,
+  ) {
+    const { data } = await axiosWithAuth.delete<any>(
+      urls.api.operators.resource(namespace, apiVersion, plural, name),
+    );
+    return data;
+  }
 }
