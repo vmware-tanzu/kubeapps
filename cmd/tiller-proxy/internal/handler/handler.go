@@ -43,7 +43,10 @@ func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWrite
 
 // TillerProxy client and configuration
 type TillerProxy struct {
+	// TODO(mnelson): was DisableUserAuthCheck just an initial compatibility flag when the auth check
+	// was added? (ie. can it be removed).
 	DisableUserAuthCheck bool
+	CheckerForRequest    auth.CheckerForRequest
 	ListLimit            int
 	ChartClient          chartUtils.Resolver
 	ProxyClient          proxy.TillerClient
@@ -73,7 +76,11 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		userAuth, err := h.CheckerForRequest(req)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -128,7 +135,11 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		userAuth, err := h.CheckerForRequest(req)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
 		// Using "upgrade" action since the concept is the same
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
@@ -165,7 +176,11 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		userAuth, err := h.CheckerForRequest(req)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -210,7 +225,11 @@ func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, par
 func (h *TillerProxy) TestRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 
 	if !h.DisableUserAuthCheck {
-		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		userAuth, err := h.CheckerForRequest(req)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
 		// helm tests only create pods so we only need to check that
 		manifest := "apiVersion: v1\nkind: Pod"
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
@@ -245,7 +264,11 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		userAuth, err := h.CheckerForRequest(req)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "get", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
@@ -272,7 +295,11 @@ func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, pa
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 			return
 		}
-		userAuth := req.Context().Value(auth.UserKey).(auth.Checker)
+		userAuth, err := h.CheckerForRequest(req)
+		if err != nil {
+			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+			return
+		}
 		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "delete", manifest)
 		if err != nil {
 			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)

@@ -69,12 +69,10 @@ function dispatchError(dispatch: Dispatch, err: Error) {
 }
 
 export function fetchCharts(
+  namespace: string,
   repo: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async (dispatch, getState) => {
-    const {
-      config: { namespace },
-    } = getState();
+  return async dispatch => {
     dispatch(requestCharts());
     try {
       const charts = await Chart.fetchCharts(namespace, repo);

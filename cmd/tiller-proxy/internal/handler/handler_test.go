@@ -17,8 +17,8 @@ limitations under the License.
 package handler
 
 import (
-	"context"
 	"fmt"
+	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"strings"
@@ -453,11 +453,11 @@ func TestActions(t *testing.T) {
 		}
 		req := httptest.NewRequest("GET", fmt.Sprintf("http://foo.bar%s", test.RequestQuery), strings.NewReader(test.RequestBody))
 		if !test.DisableUserAuthCheck {
-			fauth := &authFake.FakeAuth{
-				ForbiddenActions: test.ForbiddenActions,
+			handler.CheckerForRequest = func(req *http.Request) (auth.Checker, error) {
+				return &authFake.FakeAuth{
+					ForbiddenActions: test.ForbiddenActions,
+				}, nil
 			}
-			ctx := context.WithValue(req.Context(), auth.UserKey, fauth)
-			req = req.WithContext(ctx)
 		}
 		response := httptest.NewRecorder()
 		// Perform request

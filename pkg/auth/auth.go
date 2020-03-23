@@ -62,14 +62,15 @@ func (u k8sAuth) GetResourceList(groupVersion string) (*metav1.APIResourceList, 
 }
 
 func (u k8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
+	attr := &authorizationapi.ResourceAttributes{
+		Group:     group,
+		Resource:  resource,
+		Verb:      verb,
+		Namespace: namespace,
+	}
 	res, err := u.AuthCli.SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
 		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
-			ResourceAttributes: &authorizationapi.ResourceAttributes{
-				Group:     group,
-				Resource:  resource,
-				Verb:      verb,
-				Namespace: namespace,
-			},
+			ResourceAttributes: attr,
 		},
 	})
 	if err != nil {
@@ -95,6 +96,7 @@ type Action struct {
 // Checker for the exported funcs
 type Checker interface {
 	Validate() error
+	ValidateForNamespace(namespace string) (bool, error)
 	GetForbiddenActions(namespace, action, manifest string) ([]Action, error)
 }
 
@@ -124,6 +126,12 @@ func NewAuth(token string) (*UserAuth, error) {
 // Validate checks if the given token is valid
 func (u *UserAuth) Validate() error {
 	return u.k8sAuth.Validate()
+}
+
+// ValidateForNamespace checks if the user can access secrets in the given
+// namespace, as a check of whether they can view the namespace.
+func (u *UserAuth) ValidateForNamespace(namespace string) (bool, error) {
+	return u.k8sAuth.CanI("get", "", "secrets", namespace)
 }
 
 type resourceInfo struct {

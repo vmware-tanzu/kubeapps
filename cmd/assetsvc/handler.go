@@ -115,7 +115,7 @@ func uniqChartList(charts []*models.Chart) []*models.Chart {
 
 func getPaginatedChartList(namespace, repo string, pageNumber, pageSize int, showDuplicates bool) (apiListResponse, interface{}, error) {
 	charts, totalPages, err := manager.getPaginatedChartList(namespace, repo, pageNumber, pageSize, showDuplicates)
-	return newChartListResponse(namespace, charts), meta{totalPages}, err
+	return newChartListResponse(charts), meta{totalPages}, err
 }
 
 // listCharts returns a list of charts based on filter params
@@ -140,7 +140,7 @@ func getChart(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 
-	cr := newChartResponse(params["namespace"], &chart)
+	cr := newChartResponse(&chart)
 	response.NewDataResponse(cr).Write(w)
 }
 
@@ -154,7 +154,7 @@ func listChartVersions(w http.ResponseWriter, req *http.Request, params Params) 
 		return
 	}
 
-	cvl := newChartVersionListResponse(params["namespace"], &chart)
+	cvl := newChartVersionListResponse(&chart)
 	response.NewDataResponse(cvl).Write(w)
 }
 
@@ -168,7 +168,7 @@ func getChartVersion(w http.ResponseWriter, req *http.Request, params Params) {
 		return
 	}
 
-	cvr := newChartVersionResponse(params["namespace"], &chart, chart.ChartVersions[0])
+	cvr := newChartVersionResponse(&chart, chart.ChartVersions[0])
 	response.NewDataResponse(cvr).Write(w)
 }
 
@@ -255,12 +255,13 @@ func listChartsWithFilters(w http.ResponseWriter, req *http.Request, params Para
 	if !showDuplicates(req) {
 		chartResponse = uniqChartList(charts)
 	}
-	cl := newChartListResponse(params["namespace"], chartResponse)
+	cl := newChartListResponse(chartResponse)
 	response.NewDataResponse(cl).Write(w)
 }
 
-func newChartResponse(namespace string, c *models.Chart) *apiResponse {
+func newChartResponse(c *models.Chart) *apiResponse {
 	latestCV := c.ChartVersions[0]
+	namespace := c.Repo.Namespace
 	chartPath := fmt.Sprintf("%s/ns/%s/charts/", pathPrefix, namespace)
 	return &apiResponse{
 		Type:       "chart",
@@ -285,10 +286,10 @@ func blankRawIconAndChartVersions(c models.Chart) models.Chart {
 	return c
 }
 
-func newChartListResponse(namespace string, charts []*models.Chart) apiListResponse {
+func newChartListResponse(charts []*models.Chart) apiListResponse {
 	cl := apiListResponse{}
 	for _, c := range charts {
-		cl = append(cl, newChartResponse(namespace, c))
+		cl = append(cl, newChartResponse(c))
 	}
 	return cl
 }
@@ -310,7 +311,8 @@ func chartAttributes(namespace string, c models.Chart) models.Chart {
 	return c
 }
 
-func newChartVersionResponse(namespace string, c *models.Chart, cv models.ChartVersion) *apiResponse {
+func newChartVersionResponse(c *models.Chart, cv models.ChartVersion) *apiResponse {
+	namespace := c.Repo.Namespace
 	chartPath := fmt.Sprintf("%s/ns/%s/charts/%s", pathPrefix, namespace, c.ID)
 	return &apiResponse{
 		Type:       "chartVersion",
@@ -326,10 +328,10 @@ func newChartVersionResponse(namespace string, c *models.Chart, cv models.ChartV
 	}
 }
 
-func newChartVersionListResponse(namespace string, c *models.Chart) apiListResponse {
+func newChartVersionListResponse(c *models.Chart) apiListResponse {
 	var cvl apiListResponse
 	for _, cv := range c.ChartVersions {
-		cvl = append(cvl, newChartVersionResponse(namespace, c, cv))
+		cvl = append(cvl, newChartVersionResponse(c, cv))
 	}
 
 	return cvl
