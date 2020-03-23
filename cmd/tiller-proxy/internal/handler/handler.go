@@ -43,13 +43,10 @@ func returnForbiddenActions(forbiddenActions []auth.Action, w http.ResponseWrite
 
 // TillerProxy client and configuration
 type TillerProxy struct {
-	// TODO(mnelson): was DisableUserAuthCheck just an initial compatibility flag when the auth check
-	// was added? (ie. can it be removed).
-	DisableUserAuthCheck bool
-	CheckerForRequest    auth.CheckerForRequest
-	ListLimit            int
-	ChartClient          chartUtils.Resolver
-	ProxyClient          proxy.TillerClient
+	CheckerForRequest auth.CheckerForRequest
+	ListLimit         int
+	ChartClient       chartUtils.Resolver
+	ProxyClient       proxy.TillerClient
 }
 
 func (h *TillerProxy) logStatus(name string) {
@@ -70,26 +67,24 @@ func (h *TillerProxy) CreateRelease(w http.ResponseWriter, req *http.Request, pa
 		return
 	}
 	ch := chartMulti.Helm2Chart
-	if !h.DisableUserAuthCheck {
-		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		userAuth, err := h.CheckerForRequest(req)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		if len(forbiddenActions) > 0 {
-			returnForbiddenActions(forbiddenActions, w)
-			return
-		}
+	manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	userAuth, err := h.CheckerForRequest(req)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	if len(forbiddenActions) > 0 {
+		returnForbiddenActions(forbiddenActions, w)
+		return
 	}
 	rel, err := h.ProxyClient.CreateRelease(chartDetails.ReleaseName, params["namespace"], chartDetails.Values, ch)
 	if err != nil {
@@ -129,27 +124,25 @@ func (h *TillerProxy) RollbackRelease(w http.ResponseWriter, req *http.Request, 
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	if !h.DisableUserAuthCheck {
-		manifest, err := h.ProxyClient.ResolveManifestFromRelease(params["releaseName"], int32(revisionInt))
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		userAuth, err := h.CheckerForRequest(req)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		// Using "upgrade" action since the concept is the same
-		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		if len(forbiddenActions) > 0 {
-			returnForbiddenActions(forbiddenActions, w)
-			return
-		}
+	manifest, err := h.ProxyClient.ResolveManifestFromRelease(params["releaseName"], int32(revisionInt))
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	userAuth, err := h.CheckerForRequest(req)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	// Using "upgrade" action since the concept is the same
+	forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	if len(forbiddenActions) > 0 {
+		returnForbiddenActions(forbiddenActions, w)
+		return
 	}
 	rel, err := h.ProxyClient.RollbackRelease(params["releaseName"], params["namespace"], int32(revisionInt))
 	if err != nil {
@@ -170,26 +163,24 @@ func (h *TillerProxy) UpgradeRelease(w http.ResponseWriter, req *http.Request, p
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	if !h.DisableUserAuthCheck {
-		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		userAuth, err := h.CheckerForRequest(req)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		if len(forbiddenActions) > 0 {
-			returnForbiddenActions(forbiddenActions, w)
-			return
-		}
+	manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], chartDetails.Values, ch)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	userAuth, err := h.CheckerForRequest(req)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "upgrade", manifest)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	if len(forbiddenActions) > 0 {
+		returnForbiddenActions(forbiddenActions, w)
+		return
 	}
 	rel, err := h.ProxyClient.UpdateRelease(params["releaseName"], params["namespace"], chartDetails.Values, ch)
 	if err != nil {
@@ -224,23 +215,21 @@ func (h *TillerProxy) ListReleases(w http.ResponseWriter, req *http.Request, par
 // TestRelease in the namespace given as Param
 func (h *TillerProxy) TestRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 
-	if !h.DisableUserAuthCheck {
-		userAuth, err := h.CheckerForRequest(req)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		// helm tests only create pods so we only need to check that
-		manifest := "apiVersion: v1\nkind: Pod"
-		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		if len(forbiddenActions) > 0 {
-			returnForbiddenActions(forbiddenActions, w)
-			return
-		}
+	userAuth, err := h.CheckerForRequest(req)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	// helm tests only create pods so we only need to check that
+	manifest := "apiVersion: v1\nkind: Pod"
+	forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "create", manifest)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	if len(forbiddenActions) > 0 {
+		returnForbiddenActions(forbiddenActions, w)
+		return
 	}
 
 	testResult, err := h.ProxyClient.TestRelease(params["releaseName"], params["namespace"])
@@ -258,60 +247,56 @@ func (h *TillerProxy) GetRelease(w http.ResponseWriter, req *http.Request, param
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
 	}
-	if !h.DisableUserAuthCheck {
-		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], rel.Config.Raw, rel.Chart)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		userAuth, err := h.CheckerForRequest(req)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "get", manifest)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		if len(forbiddenActions) > 0 {
-			returnForbiddenActions(forbiddenActions, w)
-			return
-		}
+	manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], rel.Config.Raw, rel.Chart)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	userAuth, err := h.CheckerForRequest(req)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "get", manifest)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	if len(forbiddenActions) > 0 {
+		returnForbiddenActions(forbiddenActions, w)
+		return
 	}
 	response.NewDataResponse(*rel).Write(w)
 }
 
 // DeleteRelease removes a release from a namespace
 func (h *TillerProxy) DeleteRelease(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-	if !h.DisableUserAuthCheck {
-		rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], rel.Config.Raw, rel.Chart)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		userAuth, err := h.CheckerForRequest(req)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "delete", manifest)
-		if err != nil {
-			response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
-			return
-		}
-		if len(forbiddenActions) > 0 {
-			returnForbiddenActions(forbiddenActions, w)
-			return
-		}
+	rel, err := h.ProxyClient.GetRelease(params["releaseName"], params["namespace"])
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	manifest, err := h.ProxyClient.ResolveManifest(params["namespace"], rel.Config.Raw, rel.Chart)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	userAuth, err := h.CheckerForRequest(req)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	forbiddenActions, err := userAuth.GetForbiddenActions(params["namespace"], "delete", manifest)
+	if err != nil {
+		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
+		return
+	}
+	if len(forbiddenActions) > 0 {
+		returnForbiddenActions(forbiddenActions, w)
+		return
 	}
 	purge := handlerutil.QueryParamIsTruthy("purge", req)
-	err := h.ProxyClient.DeleteRelease(params["releaseName"], params["namespace"], purge)
+	err = h.ProxyClient.DeleteRelease(params["releaseName"], params["namespace"], purge)
 	if err != nil {
 		response.NewErrorResponse(handlerutil.ErrorCode(err), err.Error()).Write(w)
 		return
