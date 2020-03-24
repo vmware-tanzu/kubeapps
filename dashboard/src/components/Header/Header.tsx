@@ -47,6 +47,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     },
     {
       children: "Catalog",
+      namespaced: true,
       to: "/catalog",
     },
     {
