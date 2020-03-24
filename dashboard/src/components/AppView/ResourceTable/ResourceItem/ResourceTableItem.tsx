@@ -1,7 +1,7 @@
 import * as React from "react";
 import { AlertTriangle } from "react-feather";
 
-import { IKubeItem, IResource, ISecret } from "../../../../shared/types";
+import { IK8sList, IKubeItem, IResource, ISecret } from "../../../../shared/types";
 import LoadingWrapper, { LoaderType } from "../../../LoadingWrapper";
 import DaemonSetItemRow from "./DaemonSetItem";
 import DeploymentItemRow from "./DeploymentItem";
@@ -11,7 +11,7 @@ import StatefulSetItemRow from "./StatefulSetItem";
 
 interface IResourceItemProps {
   name: string;
-  resource?: IKubeItem<IResource | ISecret>;
+  resource?: IKubeItem<IResource | ISecret | IK8sList<IResource | ISecret, {}>>;
   watchResource: () => void;
   closeWatch: () => void;
 }
@@ -27,24 +27,27 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
 
   public render() {
     const { resource } = this.props;
-    return <tr className="flex">{this.renderInfo(resource)}</tr>;
+    return this.renderInfo(resource);
   }
 
-  private renderInfo(resource?: IKubeItem<IResource | ISecret>) {
+  private renderInfo(
+    resource?: IKubeItem<IResource | ISecret | IK8sList<IResource | ISecret, {}>>,
+  ) {
     const { name } = this.props;
     if (resource === undefined || resource.isFetching) {
       return (
-        <React.Fragment>
+        <tr className="flex">
           <td className="col-3">{name}</td>
           <td className="col-9">
             <LoadingWrapper type={LoaderType.Placeholder} />
           </td>
-        </React.Fragment>
+        </tr>
       );
     }
     if (resource.error) {
       return (
-        <React.Fragment>
+        <tr className="flex">
+          {" "}
           <td className="col-3">{name}</td>
           <td className="col-9">
             <span className="flex">
@@ -52,26 +55,39 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
               <span className="flex margin-l-normal">Error: {resource.error.message}</span>
             </span>
           </td>
-        </React.Fragment>
+        </tr>
       );
     }
     if (resource.item) {
-      const r = resource.item as IResource;
-      switch (resource.item.kind) {
-        case "Deployment":
-          return <DeploymentItemRow resource={r} />;
-        case "StatefulSet":
-          return <StatefulSetItemRow resource={r} />;
-        case "DaemonSet":
-          return <DaemonSetItemRow resource={r} />;
-        case "Service":
-          return <ServiceItem resource={r} />;
-        case "Secret":
-          return <SecretItem resource={resource.item as ISecret} />;
+      const listItem = resource.item as IK8sList<IResource | ISecret, {}>;
+      if (listItem.items) {
+        return listItem.items.map(i => (
+          <tr key={i.metadata.selfLink} className="flex">
+            {this.renderResource(i)}
+          </tr>
+        ));
       }
+      return <tr className="flex">{this.renderResource(resource.item as IResource)}</tr>;
     }
     return null;
   }
+
+  private renderResource = (r: IResource | ISecret) => {
+    const plainResource = r as IResource;
+    // resource kind may not be available for Lists
+    if (r.metadata.selfLink.match("deployments")) {
+      return <DeploymentItemRow resource={plainResource} />;
+    } else if (r.metadata.selfLink.match("statefulsets")) {
+      return <StatefulSetItemRow resource={plainResource} />;
+    } else if (r.metadata.selfLink.match("daemonsets")) {
+      return <DaemonSetItemRow resource={plainResource} />;
+    } else if (r.metadata.selfLink.match("services")) {
+      return <ServiceItem resource={plainResource} />;
+    } else if (r.metadata.selfLink.match("secrets")) {
+      return <SecretItem resource={r as ISecret} />;
+    }
+    return null;
+  };
 }
 
 export default WorkloadItem;

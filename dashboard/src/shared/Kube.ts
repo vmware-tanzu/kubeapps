@@ -1,7 +1,8 @@
 import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
+import { ResourceKindsWithAPIVersions } from "./ResourceAPIVersion";
 import { ResourceKind, ResourceKindsWithPlurals } from "./ResourceKinds";
-import { IResource } from "./types";
+import { IK8sList, IResource } from "./types";
 
 export const APIBase = "api/kube";
 export let WebSocketAPIBase: string;
@@ -61,7 +62,7 @@ export class Kube {
     name?: string,
     query?: string,
   ) {
-    const { data } = await axiosWithAuth.get<IResource>(
+    const { data } = await axiosWithAuth.get<IResource | IK8sList<IResource, {}>>(
       this.getResourceURL(apiVersion, resource, namespace, name, query),
     );
     return data;
@@ -87,5 +88,10 @@ export class Kube {
   // Gets the plural form of the resource Kind for use in the resource path
   public static resourcePlural(kind: ResourceKind) {
     return ResourceKindsWithPlurals[kind];
+  }
+
+  // Gets the apiVersion of the resource Kind for use in the resource path
+  public static resourceAPIVersion(kind: ResourceKind) {
+    return ResourceKindsWithAPIVersions[kind];
   }
 }

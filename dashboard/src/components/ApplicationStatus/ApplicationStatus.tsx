@@ -1,3 +1,4 @@
+import { flatten } from "lodash";
 import * as React from "react";
 import PieChart from "react-minimal-pie-chart";
 import * as ReactTooltip from "react-tooltip";
@@ -5,13 +6,13 @@ import * as ReactTooltip from "react-tooltip";
 import { AlertTriangle } from "react-feather";
 import isSomeResourceLoading from "../../components/AppView/helpers";
 import { hapi } from "../../shared/hapi/release";
-import { IDeploymentStatus, IKubeItem, IResource } from "../../shared/types";
+import { IDeploymentStatus, IK8sList, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
 interface IApplicationStatusProps {
-  deployments: Array<IKubeItem<IResource>>;
-  statefulsets: Array<IKubeItem<IResource>>;
-  daemonsets: Array<IKubeItem<IResource>>;
+  deployments: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
+  statefulsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
+  daemonsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   info?: hapi.release.IInfo;
   watchWorkloads: () => void;
   closeWatches: () => void;
@@ -51,27 +52,37 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
       let readyPods = 0;
       let workloads: IWorkload[] = [];
       [
-        { workloads: deployments, readyKey: "availableReplicas", totalKey: "replicas" },
-        { workloads: statefulsets, readyKey: "readyReplicas", totalKey: "replicas" },
-        { workloads: daemonsets, readyKey: "numberReady", totalKey: "currentNumberScheduled" },
+        {
+          workloads: this.flattenItemList(deployments),
+          readyKey: "availableReplicas",
+          totalKey: "replicas",
+        },
+        {
+          workloads: this.flattenItemList(statefulsets),
+          readyKey: "readyReplicas",
+          totalKey: "replicas",
+        },
+        {
+          workloads: this.flattenItemList(daemonsets),
+          readyKey: "numberReady",
+          totalKey: "currentNumberScheduled",
+        },
       ].forEach(src => {
         src.workloads.forEach(w => {
-          if (w.item) {
-            const status: IDeploymentStatus = w.item.status;
-            const wReady = status[src.readyKey];
-            const wTotal = status[src.totalKey];
-            if (wReady) {
-              readyPods += wReady;
-            }
-            if (wTotal) {
-              totalPods += wTotal;
-            }
-            workloads = workloads.concat({
-              name: w.item.metadata.name,
-              replicas: wTotal || 0,
-              readyReplicas: wReady || 0,
-            });
+          const status: IDeploymentStatus = w.status;
+          const wReady = status[src.readyKey];
+          const wTotal = status[src.totalKey];
+          if (wReady) {
+            readyPods += wReady;
           }
+          if (wTotal) {
+            totalPods += wTotal;
+          }
+          workloads = workloads.concat({
+            name: w.metadata.name,
+            replicas: wTotal || 0,
+            readyReplicas: wReady || 0,
+          });
         });
       });
       this.setState({ workloads, totalPods, readyPods });
@@ -183,6 +194,20 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
         <AlertTriangle className="icon" style={{ bottom: "-0.425em" }} /> Deleted
       </span>
     );
+  }
+
+  private flattenItemList(items: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>) {
+    return flatten(
+      items.map(i => {
+        const itemList = i.item as IK8sList<IResource, {}>;
+        if (itemList && itemList.items) {
+          // If the item is a list, return the array of items
+          return itemList.items;
+        }
+        return i.item as IResource;
+      }),
+      // Remove empty items
+    ).filter(r => !!r);
   }
 }
 

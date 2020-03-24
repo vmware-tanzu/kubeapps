@@ -118,7 +118,9 @@ describe("ResourceRef", () => {
   describe("getResource", () => {
     let kubeGetResourceMock: jest.Mock;
     beforeEach(() => {
-      kubeGetResourceMock = jest.fn();
+      kubeGetResourceMock = jest.fn(() => {
+        return { metadata: { name: "foo" } };
+      });
       Kube.getResource = kubeGetResourceMock;
     });
     afterEach(() => {
@@ -138,6 +140,25 @@ describe("ResourceRef", () => {
 
       ref.getResource();
       expect(kubeGetResourceMock).toBeCalledWith("v1", "services", "bar", "foo");
+    });
+
+    it("filters out the result when receiving a list", async () => {
+      const r = {
+        apiVersion: "v1",
+        kind: "Service",
+        metadata: {
+          name: "foo",
+          namespace: "bar",
+        },
+      } as IResource;
+
+      const ref = new ResourceRef(r);
+      ref.filter = { metadata: { name: "bar" } };
+      Kube.getResource = jest.fn(() => {
+        return { items: [r] };
+      });
+      const res = await ref.getResource();
+      expect(res).toEqual({ items: [] });
     });
   });
 

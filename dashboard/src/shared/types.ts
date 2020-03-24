@@ -266,17 +266,19 @@ export interface IPackageManifest extends IResource {
   status: IPackageManifestStatus;
 }
 
+export interface IClusterServiceVersionCRDResource {
+  kind: string;
+  name: string;
+  version: string;
+}
+
 export interface IClusterServiceVersionCRD {
   description: string;
   displayName: string;
   kind: string;
   name: string;
   version: string;
-  resources: Array<{
-    kind: string;
-    name: string;
-    version: string;
-  }>;
+  resources: IClusterServiceVersionCRDResource[];
   specDescriptors: Array<{
     description: string;
     displayName: string;
@@ -510,7 +512,7 @@ export interface IKubeItem<T> {
 }
 
 export interface IKubeState {
-  items: { [s: string]: IKubeItem<IResource> };
+  items: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
   sockets: { [s: string]: { socket: WebSocket; closeTimer: () => void } };
 }
 

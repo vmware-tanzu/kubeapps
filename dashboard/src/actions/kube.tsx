@@ -1,13 +1,18 @@
 import { ThunkAction } from "redux-thunk";
 import { ActionType, createAction } from "typesafe-actions";
 import ResourceRef from "../shared/ResourceRef";
-import { IResource, IStoreState } from "../shared/types";
+import { IK8sList, IResource, IStoreState } from "../shared/types";
 
 export const requestResource = createAction("REQUEST_RESOURCE", resolve => {
   return (resourceID: string) => resolve(resourceID);
 });
 
 export const receiveResource = createAction("RECEIVE_RESOURCE", resolve => {
+  return (resource: { key: string; resource: IResource | IK8sList<IResource, {}> }) =>
+    resolve(resource);
+});
+
+export const receiveResourceFromList = createAction("RECEIVE_RESOURCE_FROM_LIST", resolve => {
   return (resource: { key: string; resource: IResource }) => resolve(resource);
 });
 
@@ -35,6 +40,7 @@ const allActions = [
   receiveResourceError,
   openWatchResource,
   closeWatchResource,
+  receiveResourceFromList,
 ];
 
 export type KubeAction = ActionType<typeof allActions[number]>;
@@ -83,7 +89,12 @@ export function getAndWatchResource(
           const msg = JSON.parse(e.data);
           const resource: IResource = msg.object;
           const key = ref.getResourceURL();
-          dispatch(receiveResource({ key, resource }));
+          if (ref.name === "") {
+            // if the ref doesn't have a name, it's a list
+            dispatch(receiveResourceFromList({ key, resource }));
+          } else {
+            dispatch(receiveResource({ key, resource }));
+          }
         },
         {
           onErrorHandler: () => {

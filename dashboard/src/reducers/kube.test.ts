@@ -58,6 +58,23 @@ describe("authReducer", () => {
       });
     });
 
+    it("receives an item from a list", () => {
+      const resource = {
+        metadata: { name: "foo", selfLink: "/foo" },
+        status: { ready: false },
+      } as IResource;
+      const payload = { key: "foo", resource: { ...resource, status: { ready: true } } };
+      const type = actionTypes.receiveResource as any;
+      const stateWithItems = {
+        ...initialState,
+        items: { foo: { isFetching: true, resource } },
+      };
+      expect(kubeReducer(stateWithItems, { type, payload })).toEqual({
+        ...initialState,
+        items: { foo: { isFetching: false, item: payload.resource } },
+      });
+    });
+
     describe("openWatchResource", () => {
       it("adds a new socket to the state for the requested resource", () => {
         const newState = kubeReducer(undefined, {

@@ -17,6 +17,7 @@ exports[`renders a ResourceItem 1`] = `
         resourceRef={
           ResourceRef {
             "apiVersion": undefined,
+            "filter": undefined,
             "kind": "Deployment",
             "name": "foo",
             "namespace": "default",

@@ -11,6 +11,7 @@ export const ResourceKindsWithPlurals = {
   Secret: "secrets",
   Service: "services",
   StatefulSet: "statefulsets",
+  Pod: "pods",
 } as const;
 
 export type ResourceKind = keyof typeof ResourceKindsWithPlurals;

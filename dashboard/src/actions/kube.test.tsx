@@ -4,8 +4,8 @@ import { getType } from "typesafe-actions";
 
 import actions from ".";
 import { Kube } from "../shared/Kube";
-import ResourceRef from "../shared/ResourceRef";
-import { IKubeState, IResource } from "../shared/types";
+import ResourceRef, { fromCRD } from "../shared/ResourceRef";
+import { IClusterServiceVersionCRD, IKubeState, IResource } from "../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -118,5 +118,56 @@ describe("getAndWatchResource", () => {
     store.dispatch(actions.kube.getAndWatchResource(ref));
     expect(store.getActions()).toEqual(expectedActions);
     expect(getResourceMock).toHaveBeenCalledWith("v1", "services", "default", "foo");
+  });
+
+  it("dispatches a getResource and openWatchResource action for a list", () => {
+    const ref = {
+      kind: "Service",
+      name: "",
+      version: "v1",
+    } as IClusterServiceVersionCRD;
+    const svc = {
+      apiVersion: "v1",
+      kind: "Service",
+      metadata: {
+        name: "foo",
+        namespace: "default",
+      },
+    } as IResource;
+
+    const r = fromCRD(ref, "default", {});
+
+    const expectedActions = [
+      {
+        type: getType(actions.kube.requestResource),
+        payload: "api/kube/api/v1/namespaces/default/services",
+      },
+      {
+        type: getType(actions.kube.openWatchResource),
+        payload: {
+          ref: r,
+          handler: expect.any(Function),
+          onError: { onErrorHandler: expect.any(Function), closeTimer: expect.any(Function) },
+        },
+      },
+    ];
+
+    store.dispatch(actions.kube.getAndWatchResource(r));
+    const testActions = store.getActions();
+    expect(testActions).toEqual(expectedActions);
+    expect(getResourceMock).toHaveBeenCalledWith("v1", "services", "default", "");
+
+    const watchFunction = (testActions[1].payload as any).handler as (e: any) => void;
+    watchFunction({ data: `{"object": ${JSON.stringify(svc)}}` });
+    const newAction = {
+      type: getType(actions.kube.receiveResourceFromList),
+      payload: {
+        key: "api/kube/api/v1/namespaces/default/services",
+        resource: svc,
+      },
+    };
+    const expectedUpdatedActions = expectedActions.concat(newAction as any);
+    const updatedActions = store.getActions();
+    expect(updatedActions).toEqual(expectedUpdatedActions);
   });
 });

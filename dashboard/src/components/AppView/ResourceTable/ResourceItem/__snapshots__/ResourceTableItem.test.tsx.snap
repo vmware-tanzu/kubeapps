@@ -45,3 +45,26 @@ exports[`when there is a valid resouce renders info about the resource status 1`
   className="flex"
 />
 `;
+
+exports[`when there is a valid resouce renders info about the resource status when given a list 1`] = `
+<tr
+  className="flex"
+  key="/deployments/foo"
+>
+  <DeploymentItemRow
+    resource={
+      Object {
+        "metadata": Object {
+          "name": "foo",
+          "selfLink": "/deployments/foo",
+        },
+        "status": Object {
+          "availableReplicas": 1,
+          "replicas": 1,
+          "updatedReplicas": 1,
+        },
+      }
+    }
+  />
+</tr>
+`;
