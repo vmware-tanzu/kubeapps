@@ -65,7 +65,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     } = this.props;
     const { listCharts, listOperators } = this.state;
     if (error) {
-      const isForbidden = error.constructor == ForbiddenError;
+      const isForbidden = error.constructor === ForbiddenError;
       return (
         <MessageAlert
           level={"error"}
