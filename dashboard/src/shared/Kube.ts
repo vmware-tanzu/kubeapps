@@ -90,7 +90,7 @@ export class Kube {
     return ResourceKindsWithPlurals[kind];
   }
 
-  // Gets the plural form of the resource Kind for use in the resource path
+  // Gets the apiVersion of the resource Kind for use in the resource path
   public static resourceAPIVersion(kind: ResourceKind) {
     return ResourceKindsWithAPIVersions[kind];
   }
