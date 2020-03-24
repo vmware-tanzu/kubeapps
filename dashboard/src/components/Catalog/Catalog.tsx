@@ -59,11 +59,24 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
 
   public render() {
     const {
-      charts: { isFetching, items: allItems },
+      charts: { isFetching, selected: { error }, items: allItems },
       pushSearchFilter,
       csvs,
     } = this.props;
     const { listCharts, listOperators } = this.state;
+    if (error) {
+      return (
+        <MessageAlert
+          level={"error"}
+          children={
+            <div>
+              <h5>Unable to fetch catalog</h5>
+              There was an error fetching the catalog. Please choose a namespace above to which you have access.
+            </div>
+          }
+        />
+      );
+    }
     if (!isFetching && allItems.length === 0) {
       return (
         <MessageAlert

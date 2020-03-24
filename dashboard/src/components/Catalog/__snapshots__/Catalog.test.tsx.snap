@@ -116,3 +116,16 @@ exports[`renderization when no charts should render an error 1`] = `
   </div>
 </MessageAlertPage>
 `;
+
+exports[`renderization when there is an error fetching charts should render an error 1`] = `
+<MessageAlertPage
+  level="error"
+>
+  <div>
+    <h5>
+      Unable to fetch catalog
+    </h5>
+    There was an error fetching the catalog. Please choose a namespace above to which you have access.
+  </div>
+</MessageAlertPage>
+`;

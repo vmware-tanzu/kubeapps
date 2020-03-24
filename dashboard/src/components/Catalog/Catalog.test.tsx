@@ -99,10 +99,35 @@ describe("renderization", () => {
     });
   });
 
+  context("when there is an error fetching charts", () => {
+    it("should render an error", () => {
+      const props = {
+        ...defaultProps,
+        charts: {
+          ...defaultProps.charts,
+          selected: {
+            ...defaultProps.charts.selected,
+            error: new Error("Bang!"),
+          },
+        },
+      };
+      const wrapper = shallow(<Catalog {...props} />);
+      expect(wrapper.find(MessageAlert)).toExist();
+      expect(wrapper.find(".Catalog")).not.toExist();
+      expect(
+        wrapper
+          .find(MessageAlert)
+          .children()
+          .text(),
+      ).toContain("Unable to fetch catalog");
+      expect(wrapper).toMatchSnapshot();
+    });
+  });
+
   context("when fetching apps", () => {
     itBehavesLike("aLoadingComponent", {
       component: Catalog,
-      props: { ...defaultProps, charts: { isFetching: true, items: [] } },
+      props: { ...defaultProps, charts: { isFetching: true, items: [], selected: {} } },
     });
   });
 
