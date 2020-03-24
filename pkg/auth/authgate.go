@@ -59,7 +59,7 @@ func AuthGate(kubeappsNamespace string) negroni.HandlerFunc {
 			if err != nil {
 				msg = fmt.Sprintf("%s: %s", msg, err.Error())
 			}
-			response.NewErrorResponse(http.StatusUnauthorized, msg).Write(w)
+			response.NewErrorResponse(http.StatusForbidden, msg).Write(w)
 			return
 		}
 		next(w, req)

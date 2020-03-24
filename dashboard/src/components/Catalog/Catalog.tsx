@@ -2,7 +2,7 @@ import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
+import { ForbiddenError, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { MessageAlert } from "../ErrorAlert";
@@ -59,11 +59,25 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
 
   public render() {
     const {
-      charts: { isFetching, items: allItems },
+      charts: { isFetching, selected: { error }, items: allItems },
       pushSearchFilter,
       csvs,
     } = this.props;
     const { listCharts, listOperators } = this.state;
+    if (error) {
+      const isForbidden = error.constructor === ForbiddenError;
+      return (
+        <MessageAlert
+          level={"error"}
+          children={
+            <div>
+              <h5>Unable to fetch catalog</h5>
+              There was an error fetching the catalog.{ isForbidden && "Please choose a namespace above to which you have access." }
+            </div>
+          }
+        />
+      );
+    }
     if (!isFetching && allItems.length === 0) {
       return (
         <MessageAlert
