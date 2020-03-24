@@ -27,6 +27,18 @@ const kubeReducer = (
     case getType(actions.kube.receiveResourceFromList):
       const stateListItem = state.items[action.payload.key].item as IK8sList<IResource, {}>;
       const newItem = action.payload.resource as IResource;
+      if (!stateListItem || !stateListItem.items) {
+        return {
+          ...state,
+          items: {
+            ...state.items,
+            [action.payload.key]: {
+              isFetching: false,
+              item: { ...stateListItem, items: [newItem] },
+            },
+          },
+        };
+      }
       const updatedItems = stateListItem.items.map(it => {
         if (it.metadata.selfLink === newItem.metadata.selfLink) {
           return action.payload.resource as IResource;

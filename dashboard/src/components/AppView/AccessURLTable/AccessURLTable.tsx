@@ -110,7 +110,9 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
   }
 
   private renderURLItem(i: IResource) {
-    const urlItem = i.kind === "Ingress" ? GetURLItemFromIngress(i) : GetURLItemFromService(i);
+    const urlItem = i.metadata.selfLink.match("ingresses")
+      ? GetURLItemFromIngress(i)
+      : GetURLItemFromService(i);
     return <AccessURLItem key={`accessURL/${i.metadata.name}`} URLItem={urlItem} />;
   }
 

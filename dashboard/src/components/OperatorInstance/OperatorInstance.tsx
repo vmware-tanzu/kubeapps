@@ -64,7 +64,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
         this.setState({ crd });
       }
       if (crd && resource) {
-        const result: IPartialAppViewState = {
+        let result: IPartialAppViewState = {
           ingressRefs: [],
           deployRefs: [],
           statefulSetRefs: [],
@@ -74,30 +74,47 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
           secretRefs: [],
         };
         const ownerRef = { name: resource.metadata.name, kind: resource.kind };
-        crd.resources.forEach(r => {
-          switch (r.kind) {
-            case "Deployment":
-              result.deployRefs.push(fromCRD(r, this.props.namespace, ownerRef));
-              break;
-            case "StatefulSet":
-              result.statefulSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
-              break;
-            case "DaemonSet":
-              result.daemonSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
-              break;
-            case "Service":
-              result.serviceRefs.push(fromCRD(r, this.props.namespace, ownerRef));
-              break;
-            case "Ingress":
-              result.ingressRefs.push(fromCRD(r, this.props.namespace, ownerRef));
-              break;
-            case "Secret":
-              result.secretRefs.push(fromCRD(r, this.props.namespace, ownerRef));
-              break;
-            default:
-              result.otherResources.push(fromCRD(r, this.props.namespace, ownerRef));
-          }
-        });
+        if (crd.resources) {
+          crd.resources?.forEach(r => {
+            switch (r.kind) {
+              case "Deployment":
+                result.deployRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                break;
+              case "StatefulSet":
+                result.statefulSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                break;
+              case "DaemonSet":
+                result.daemonSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                break;
+              case "Service":
+                result.serviceRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                break;
+              case "Ingress":
+                result.ingressRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                break;
+              case "Secret":
+                result.secretRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                break;
+              default:
+                result.otherResources.push(fromCRD(r, this.props.namespace, ownerRef));
+            }
+          });
+        } else {
+          // The CRD definition doesn't define any service so pull everything
+          result = {
+            deployRefs: [fromCRD({ kind: "Deployment", name: "" }, this.props.namespace, ownerRef)],
+            ingressRefs: [fromCRD({ kind: "Ingress", name: "" }, this.props.namespace, ownerRef)],
+            statefulSetRefs: [
+              fromCRD({ kind: "StatefulSet", name: "" }, this.props.namespace, ownerRef),
+            ],
+            daemonSetRefs: [
+              fromCRD({ kind: "DaemonSet", name: "" }, this.props.namespace, ownerRef),
+            ],
+            serviceRefs: [fromCRD({ kind: "Service", name: "" }, this.props.namespace, ownerRef)],
+            secretRefs: [fromCRD({ kind: "Secret", name: "" }, this.props.namespace, ownerRef)],
+            otherResources: [],
+          };
+        }
         this.setState({ resources: result });
       }
     }
@@ -150,7 +167,9 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
                         serviceRefs={resources.serviceRefs}
                         ingressRefs={resources.ingressRefs}
                       />
-                      <AppNotes title="Status" notes={yaml.safeDump(resource.status)} />
+                      {resource.status && (
+                        <AppNotes title="Status" notes={yaml.safeDump(resource.status)} />
+                      )}
                       <ResourceTable resourceRefs={resources.secretRefs} title="Secrets" />
                       <ResourceTable resourceRefs={resources.deployRefs} title="Deployments" />
                       <ResourceTable
@@ -159,7 +178,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
                       />
                       <ResourceTable resourceRefs={resources.daemonSetRefs} title="DaemonSets" />
                       <ResourceTable resourceRefs={resources.serviceRefs} title="Services" />
-                      <AppValues values={yaml.safeDump(resource.spec)} />
+                      {resource.spec && <AppValues values={yaml.safeDump(resource.spec)} />}
                       {/* TODO(andresmgot): Enable otherResourcesTable when they are fetched */}
                       {/* <ResourceTable
                         resourceRefs={resources.otherResources}

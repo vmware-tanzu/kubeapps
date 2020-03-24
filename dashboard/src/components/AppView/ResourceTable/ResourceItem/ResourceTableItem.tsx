@@ -61,6 +61,13 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
     if (resource.item) {
       const listItem = resource.item as IK8sList<IResource | ISecret, {}>;
       if (listItem.items) {
+        if (listItem.items.length === 0) {
+          return (
+            <tr className="flex">
+              <td className="col-12">No resource found</td>
+            </tr>
+          );
+        }
         return listItem.items.map(i => (
           <tr key={i.metadata.selfLink} className="flex">
             {this.renderResource(i)}
@@ -69,7 +76,7 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
       }
       return <tr className="flex">{this.renderResource(resource.item as IResource)}</tr>;
     }
-    return null;
+    return <span>No resource found</span>;
   }
 
   private renderResource = (r: IResource | ISecret) => {

@@ -147,6 +147,10 @@ export interface IIngressTLS {
 export interface IIngressSpec {
   rules: IIngressRule[];
   tls?: IIngressTLS[];
+  backend?: {
+    serviceName: string;
+    servicePort: number;
+  };
 }
 
 export interface IResource {
@@ -269,7 +273,7 @@ export interface IPackageManifest extends IResource {
 export interface IClusterServiceVersionCRDResource {
   kind: string;
   name: string;
-  version: string;
+  version?: string;
 }
 
 export interface IClusterServiceVersionCRD {

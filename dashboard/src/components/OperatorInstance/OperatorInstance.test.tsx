@@ -1,3 +1,4 @@
+import { IPartialAppViewState } from "components/AppView/AppView";
 import { shallow } from "enzyme";
 import * as React from "react";
 import * as ReactModal from "react-modal";
@@ -126,5 +127,35 @@ describe("renders a resource", () => {
         },
       ],
     });
+  });
+
+  it("updates the state with all the resources if the CRD doesn't define any", () => {
+    const wrapper = shallow(<OperatorInstance {...defaultProps} />);
+    const csvWithoutResource = {
+      ...csv,
+      spec: {
+        ...csv.spec,
+        customresourcedefinitions: {
+          owned: [
+            {
+              name: "foo.kubeapps.com",
+              version: "v1alpha1",
+              kind: "Foo",
+            },
+          ],
+        },
+      },
+    } as any;
+    wrapper.setProps({ csv: csvWithoutResource, resource });
+    const resources = wrapper.state("resources") as IPartialAppViewState;
+    const resourcesKeys = Object.keys(resources).filter(k => k !== "otherResources");
+    resourcesKeys.forEach(k => expect(resources[k].length).toBe(1));
+  });
+
+  it("skips AppNotes and AppValues if the resource doesn't have spec or status", () => {
+    const wrapper = shallow(<OperatorInstance {...defaultProps} />);
+    wrapper.setProps({ csv, resource: { ...resource, spec: undefined, status: undefined } });
+    expect(wrapper.find(AppNotes)).not.toExist();
+    expect(wrapper.find(AppValues)).not.toExist();
   });
 });

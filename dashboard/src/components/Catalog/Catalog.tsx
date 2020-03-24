@@ -64,7 +64,10 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
       csvs,
     } = this.props;
     const { listCharts, listOperators } = this.state;
-    if (!isFetching && allItems.length === 0) {
+    const filteredCharts = this.filteredCharts(allItems);
+    const filteredCSVs = this.filteredCSVs(csvs);
+    const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
+    if (!isFetching && catalogItems.length === 0) {
       return (
         <MessageAlert
           level={"warning"}
@@ -78,9 +81,6 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         />
       );
     }
-    const filteredCharts = this.filteredCharts(allItems);
-    const filteredCSVs = this.filteredCSVs(csvs);
-    const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
     const items = catalogItems.map(c => (
       <CatalogItem key={`${c.type}/${c.repoName || c.csv}/${c.name}`} item={c} />
     ));
@@ -176,7 +176,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         });
       });
     });
-    return result.sort((a, b) => (a.name > b.name ? 1 : -1));
+    return result.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1));
   }
 
   private toggleListCharts = () => {

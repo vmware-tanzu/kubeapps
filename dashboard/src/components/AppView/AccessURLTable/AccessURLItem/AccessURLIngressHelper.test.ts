@@ -1,4 +1,4 @@
-import { IHTTPIngressPath, IIngressRule, IIngressSpec, IResource } from "shared/types";
+import { IHTTPIngressPath, IIngressRule, IResource } from "shared/types";
 import { GetURLItemFromIngress } from "./AccessURLIngressHelper";
 
 describe("GetURLItemFromIngress", () => {
@@ -8,6 +8,8 @@ describe("GetURLItemFromIngress", () => {
     paths?: IHTTPIngressPath[];
     tlsHosts?: string[];
     expectedURLs: string[];
+    status?: any;
+    backend?: any;
   }
   const tests: ITest[] = [
     {
@@ -59,6 +61,16 @@ describe("GetURLItemFromIngress", () => {
       tlsHosts: undefined,
       expectedURLs: ["http://foo.bar"],
     },
+    {
+      description: "it should add an ingress with a default backend",
+      status: {
+        loadBalancer: {
+          ingress: [{ ip: "1.2.3.4" }],
+        },
+      },
+      backend: {},
+      expectedURLs: ["http://1.2.3.4"],
+    },
   ];
   tests.forEach(test => {
     it(test.description, () => {
@@ -67,10 +79,12 @@ describe("GetURLItemFromIngress", () => {
           name: "foo",
         },
         spec: {
-          rules: [],
-        } as IIngressSpec,
+          backend: test.backend,
+        },
+        status: test.status,
       } as IResource;
       if (test.hosts) {
+        ingress.spec.rules = [];
         test.hosts.forEach(h => {
           const rule = {
             host: h,

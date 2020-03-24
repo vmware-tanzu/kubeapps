@@ -259,6 +259,12 @@ describe("renderization", () => {
         expect(cardGrid).toExist();
         expect(cardGrid.children().length).toBe(chartState.items.length);
       });
+
+      it("should show operators if there are no charts available", () => {
+        const wrapper = shallow(<Catalog {...defaultProps} csvs={csvs} />);
+        expect(wrapper.find(MessageAlert)).not.toExist();
+        expect(wrapper.find(".Catalog")).toExist();
+      });
     });
   });
 });

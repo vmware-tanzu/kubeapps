@@ -116,4 +116,16 @@ context("when there is a valid resouce", () => {
     expect(wrapper.find(DeploymentItemRow)).toExist();
     expect(wrapper).toMatchSnapshot();
   });
+
+  it("shows a warning when a list is empty", () => {
+    const kubeList = {
+      isFetching: false,
+      item: { items: [] },
+    };
+    const wrapper = shallow(
+      <ResourceTableItem {...defaultProps} resource={kubeList as any} name={""} />,
+    );
+    expect(wrapper.find("td")).toExist();
+    expect(wrapper.find("td").text()).toEqual("No resource found");
+  });
 });
