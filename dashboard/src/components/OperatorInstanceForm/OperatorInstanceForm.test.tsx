@@ -7,6 +7,7 @@ import itBehavesLike from "../../shared/specs";
 import { ConflictError, IClusterServiceVersion } from "../../shared/types";
 import { ErrorSelector } from "../ErrorAlert";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
+import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import { IOperatorInstanceFormProps } from "./OperatorInstanceForm";
 
 const defaultProps: IOperatorInstanceFormProps = {
@@ -81,6 +82,11 @@ it("renders an error if there is some error fetching", () => {
     <OperatorInstanceForm {...defaultProps} errors={{ fetch: new Error("Boom!") }} />,
   );
   expect(wrapper.find(ErrorSelector)).toExist();
+});
+
+it("renders an error if the namespace is _all", () => {
+  const wrapper = shallow(<OperatorInstanceForm {...defaultProps} namespace="_all" />);
+  expect(wrapper.find(UnexpectedErrorPage)).toExist();
 });
 
 it("renders an error if the CRD is not populated", () => {

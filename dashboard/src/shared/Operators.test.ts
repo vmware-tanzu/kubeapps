@@ -67,6 +67,19 @@ it("get csvs", async () => {
   );
 });
 
+it("get global csvs", async () => {
+  const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
+  const ns = "_all";
+  axiosWithAuth.get = jest.fn(() => {
+    return { data: { items: [csv] } };
+  });
+  expect(await Operators.getCSVs(ns)).toEqual([csv]);
+  expect(axiosWithAuth.get).toHaveBeenCalled();
+  expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
+    "api/kube/apis/operators.coreos.com/v1alpha1/namespaces/operators/clusterserviceversions",
+  );
+});
+
 it("get csv", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "default";
