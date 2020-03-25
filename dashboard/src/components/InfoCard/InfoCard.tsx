@@ -11,6 +11,7 @@ export interface IServiceInstanceCardProps {
   link?: string;
   icon?: string;
   banner?: string;
+  subIcon?: string;
   description?: string | JSX.Element;
   tag1Class?: string;
   tag1Content?: string | JSX.Element;
@@ -29,6 +30,7 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
     tag2Content,
     tag2Class,
     banner,
+    subIcon,
   } = props;
   const icon = props.icon ? props.icon : placeholder;
   return (
@@ -36,6 +38,11 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
       <Link to={link || "#"} title={title} className="ListItem__header">
         <CardIcon icon={icon} />
         {banner && <p className="ListItem__banner">{banner}</p>}
+        {subIcon && (
+          <div className="Card__subIcon bg-light text-r">
+            <img src={subIcon} />
+          </div>
+        )}
       </Link>
       <CardContent>
         <div className="ListItem__content">

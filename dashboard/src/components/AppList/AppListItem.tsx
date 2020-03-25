@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
 import { IAppOverview } from "../../shared/types";
 import InfoCard from "../InfoCard";
@@ -28,6 +29,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
         tag1Content={app.namespace}
         tag2Content={app.status.toLocaleLowerCase()}
         tag2Class={app.status.toLocaleLowerCase()}
+        subIcon={helmIcon}
       />
     );
   }
