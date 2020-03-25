@@ -3,7 +3,7 @@ import context from "jest-plugin-context";
 import * as React from "react";
 
 import itBehavesLike from "../../shared/specs";
-import { IChart, IChartState } from "../../shared/types";
+import { ForbiddenError, IChart, IChartState } from "../../shared/types";
 import { CardGrid } from "../Card";
 import { MessageAlert } from "../ErrorAlert";
 import PageHeader from "../PageHeader";
@@ -99,10 +99,58 @@ describe("renderization", () => {
     });
   });
 
+  context("when there is an error fetching charts", () => {
+    it("should render a generic error", () => {
+      const props = {
+        ...defaultProps,
+        charts: {
+          ...defaultProps.charts,
+          selected: {
+            ...defaultProps.charts.selected,
+            error: new Error("Bang!"),
+          },
+        },
+      };
+      const wrapper = shallow(<Catalog {...props} />);
+      expect(wrapper.find(MessageAlert)).toExist();
+      expect(wrapper.find(".Catalog")).not.toExist();
+      const errText = wrapper
+        .find(MessageAlert)
+        .children()
+        .text();
+      expect(errText).toContain("Unable to fetch catalog");
+      expect(errText).not.toContain("Please choose a namespace");
+      expect(wrapper).toMatchSnapshot();
+    });
+
+    it("should render a specific error for a forbidden error", () => {
+      const props = {
+        ...defaultProps,
+        charts: {
+          ...defaultProps.charts,
+          selected: {
+            ...defaultProps.charts.selected,
+            error: new ForbiddenError("Bang!"),
+          },
+        },
+      };
+      const wrapper = shallow(<Catalog {...props} />);
+      expect(wrapper.find(MessageAlert)).toExist();
+      expect(wrapper.find(".Catalog")).not.toExist();
+      const errText = wrapper
+        .find(MessageAlert)
+        .children()
+        .text();
+      expect(errText).toContain("Unable to fetch catalog");
+      expect(errText).toContain("Please choose a namespace");
+      expect(wrapper).toMatchSnapshot();
+    });
+  });
+
   context("when fetching apps", () => {
     itBehavesLike("aLoadingComponent", {
       component: Catalog,
-      props: { ...defaultProps, charts: { isFetching: true, items: [] } },
+      props: { ...defaultProps, charts: { isFetching: true, items: [], selected: {} } },
     });
   });
 

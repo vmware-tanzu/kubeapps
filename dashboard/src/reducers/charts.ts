@@ -2,6 +2,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { ChartsAction } from "../actions/charts";
+import { NamespaceAction } from "../actions/namespace";
 import { IChartState } from "../shared/types";
 
 const initialState: IChartState = {
@@ -15,7 +16,7 @@ const initialState: IChartState = {
 
 const chartsSelectedReducer = (
   state: IChartState["selected"],
-  action: ChartsAction,
+  action: ChartsAction | NamespaceAction,
 ): IChartState["selected"] => {
   switch (action.type) {
     case getType(actions.charts.selectChartVersion):
@@ -46,7 +47,10 @@ const chartsSelectedReducer = (
   return state;
 };
 
-const chartsReducer = (state: IChartState = initialState, action: ChartsAction): IChartState => {
+const chartsReducer = (
+  state: IChartState = initialState,
+  action: ChartsAction | NamespaceAction,
+): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };
@@ -79,7 +83,13 @@ const chartsReducer = (state: IChartState = initialState, action: ChartsAction):
     case getType(actions.charts.selectReadme):
     case getType(actions.charts.errorReadme):
     case getType(actions.charts.errorChart):
-      return { ...state, selected: chartsSelectedReducer(state.selected, action) };
+      return {
+        ...state,
+        isFetching: false,
+        selected: chartsSelectedReducer(state.selected, action),
+      };
+    case getType(actions.namespace.setNamespace):
+      return { ...initialState };
     default:
   }
   return state;
