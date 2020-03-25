@@ -63,29 +63,33 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_13_MASTER:
-          <<: *build_on_master
+      - GKE_1_15_MASTER:
+          <<: *build_always
+          # <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_13_LATEST_RELEASE:
-          <<: *build_on_master
+      - GKE_1_15_LATEST_RELEASE:
+          <<: *build_always
+          # <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
       - GKE_1_14_MASTER:
-          <<: *build_on_master
+          <<: *build_always
+          # <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
       - GKE_1_14_LATEST_RELEASE:
-          <<: *build_on_master
+          <<: *build_always
+          # <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
@@ -98,8 +102,8 @@ workflows:
             - local_e2e_tests_postgresql_helm3
             - local_e2e_tests_mongodb_helm2
             - local_e2e_tests_mongodb_helm3
-            - GKE_1_13_MASTER
-            - GKE_1_13_LATEST_RELEASE
+            - GKE_1_15_MASTER
+            - GKE_1_15_LATEST_RELEASE
             - GKE_1_14_MASTER
             - GKE_1_14_LATEST_RELEASE
       - push_images:
@@ -109,8 +113,8 @@ workflows:
             - local_e2e_tests_postgresql_helm3
             - local_e2e_tests_mongodb_helm2
             - local_e2e_tests_mongodb_helm3
-            - GKE_1_13_MASTER
-            - GKE_1_13_LATEST_RELEASE
+            - GKE_1_15_MASTER
+            - GKE_1_15_LATEST_RELEASE
             - GKE_1_14_MASTER
             - GKE_1_14_LATEST_RELEASE
       - release:
@@ -120,8 +124,8 @@ workflows:
             - local_e2e_tests_postgresql_helm3
             - local_e2e_tests_mongodb_helm2
             - local_e2e_tests_mongodb_helm3
-            - GKE_1_13_MASTER
-            - GKE_1_13_LATEST_RELEASE
+            - GKE_1_15_MASTER
+            - GKE_1_15_LATEST_RELEASE
             - GKE_1_14_MASTER
             - GKE_1_14_LATEST_RELEASE
 
@@ -175,7 +179,7 @@ build_images: &build_images
           - "*"
 install_kubectl: &install_kubectl
   run: |
-    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.13.0/bin/linux/amd64/kubectl
+    curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.14.0/bin/linux/amd64/kubectl
     chmod +x ./kubectl
     sudo mv ./kubectl /usr/local/bin/kubectl
 run_e2e_tests: &run_e2e_tests
@@ -335,16 +339,16 @@ jobs:
       HELM_VERSION: "v3.0.2"
       KUBEAPPS_DB: "postgresql"
     <<: *local_e2e_steps
-  GKE_1_13_MASTER:
+  GKE_1_15_MASTER:
     <<: *gke_test
     environment:
       HELM_VERSION: "v2.14.0"
-      GKE_BRANCH: "1.13"
-  GKE_1_13_LATEST_RELEASE:
+      GKE_BRANCH: "1.15"
+  GKE_1_15_LATEST_RELEASE:
     <<: *gke_test
     environment:
       HELM_VERSION: "v2.14.0"
-      GKE_BRANCH: "1.13"
+      GKE_BRANCH: "1.15"
       TEST_LATEST_RELEASE: 1
   GKE_1_14_MASTER:
     <<: *gke_test
