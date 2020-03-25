@@ -142,7 +142,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                 Kubeapps now enables you to create App Repositories in your own namespace that will
                 be available in your own namespace and, in the future, optionally available in other
                 namespaces to which you have access. You can read more information in the{" "}
-                <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#per-namespace-app-repositories">
+                <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md">
                   Private App Repository docs
                 </a>
                 .
