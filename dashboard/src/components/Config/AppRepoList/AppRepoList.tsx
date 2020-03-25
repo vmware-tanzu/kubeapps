@@ -116,6 +116,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                       resyncRepo={resyncRepo}
                       repo={repo}
                       renderNamespace={renderNamespace}
+                      namespace={namespace}
                     />
                   ))}
                 </tbody>
