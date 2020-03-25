@@ -64,32 +64,28 @@ workflows:
             - build_go_images
             - build_dashboard
       - GKE_1_15_MASTER:
-          <<: *build_always
-          # <<: *build_on_master
+          <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
       - GKE_1_15_LATEST_RELEASE:
-          <<: *build_always
-          # <<: *build_on_master
+          <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
       - GKE_1_14_MASTER:
-          <<: *build_always
-          # <<: *build_on_master
+          <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
             - build_go_images
             - build_dashboard
       - GKE_1_14_LATEST_RELEASE:
-          <<: *build_always
-          # <<: *build_on_master
+          <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
@@ -167,11 +163,10 @@ build_images: &build_images
         fi
         for IMAGE in "${IMG_ARRAY[@]}"; do
           make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
-          # TODO(re-enable)
-          # if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+          if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
             docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
-          # fi
+          fi
           docker save kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
         done
     - persist_to_workspace:
