@@ -249,7 +249,7 @@ local_e2e_steps: &local_e2e_steps
     - <<: *exports
     # Install kind
     - run: |
-        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/0.7.0/kind-linux-amd64
+        curl -LO https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-Linux-amd64
         chmod +x kind-linux-amd64
         sudo mv kind-linux-amd64 /usr/local/bin/kind
     - run: kind create cluster
@@ -342,23 +342,23 @@ jobs:
   GKE_1_15_MASTER:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v2.14.0"
+      HELM_VERSION: "v3.0.2"
       GKE_BRANCH: "1.15"
   GKE_1_15_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v2.14.0"
+      HELM_VERSION: "v3.0.2"
       GKE_BRANCH: "1.15"
       TEST_LATEST_RELEASE: 1
   GKE_1_14_MASTER:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v2.14.0"
+      HELM_VERSION: "v3.0.2"
       GKE_BRANCH: "1.14"
   GKE_1_14_LATEST_RELEASE:
     <<: *gke_test
     environment:
-      HELM_VERSION: "v2.14.0"
+      HELM_VERSION: "v3.0.2"
       GKE_BRANCH: "1.14"
       TEST_LATEST_RELEASE: 1
   sync_chart:
