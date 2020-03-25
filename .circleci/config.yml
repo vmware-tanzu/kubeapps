@@ -167,10 +167,11 @@ build_images: &build_images
         fi
         for IMAGE in "${IMG_ARRAY[@]}"; do
           make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
-          if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+          # TODO(re-enable)
+          # if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
             docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
-          fi
+          # fi
           docker save kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG} > images/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
         done
     - persist_to_workspace:
@@ -319,12 +320,12 @@ jobs:
     machine: true
     environment:
       KUBEAPPS_DB: "mongodb"
-      HELM_VERSION: "v2.16.4"
+      HELM_VERSION: "v2.16.3"
     <<: *local_e2e_steps
   local_e2e_tests_postgresql_helm2:
     machine: true
     environment:
-      HELM_VERSION: "v2.16.4"
+      HELM_VERSION: "v2.16.3"
       KUBEAPPS_DB: "postgresql"
     <<: *local_e2e_steps
   local_e2e_tests_mongodb_helm3:
