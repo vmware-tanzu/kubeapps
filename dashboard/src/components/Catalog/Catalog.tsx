@@ -60,6 +60,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
   public render() {
     const {
       charts: { isFetching, selected: { error }, items: allItems },
+      namespace,
       pushSearchFilter,
       csvs,
     } = this.props;
@@ -86,7 +87,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
             <div>
               <h5>Charts not found.</h5>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={"/config/repos"}>App repositories configuration</Link> page.
+              <Link to={`/config/ns/${namespace}/repos`}>App repositories configuration</Link> page.
             </div>
           }
         />

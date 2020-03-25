@@ -108,7 +108,7 @@ exports[`renderization when no charts should render an error 1`] = `
     Manage your Helm chart repositories in Kubeapps by visiting the
      
     <Link
-      to="/config/repos"
+      to="/config/ns/kubeapps/repos"
     >
       App repositories configuration
     </Link>
