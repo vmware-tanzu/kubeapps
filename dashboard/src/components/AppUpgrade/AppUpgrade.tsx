@@ -121,6 +121,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
         isFetching={this.props.reposIsFetching}
         error={this.props.chartsError}
         kubeappsNamespace={this.props.kubeappsNamespace}
+        namespace={this.props.namespace}
         repoError={this.props.repoError}
         repo={this.props.repo}
         repos={this.props.repos}
