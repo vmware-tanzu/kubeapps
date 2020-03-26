@@ -96,7 +96,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
         {errors.fetch && this.renderError("fetch")}
         {errors.delete && this.renderError("delete")}
         {errors.update && this.renderError("update")}
-        {!errors.fetch &&
+        {!errors.fetch && (
           <>
             <LoadingWrapper loaded={!isFetching}>
               <table>
@@ -131,7 +131,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
             />
             <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
           </>
-        }
+        )}
         {displayReposPerNamespaceMsg && (
           <MessageAlert header="Looking for other app repositories?">
             <div>

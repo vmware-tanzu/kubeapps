@@ -15,6 +15,10 @@ function URLs(ingress: IResource): string[] {
         res.push(getURL(r.host, spec.tls));
       }
     });
+  } else {
+    if (spec.backend && ingress.status?.loadBalancer.ingress[0]) {
+      res.push(getURL(ingress.status?.loadBalancer.ingress[0].ip, spec.tls));
+    }
   }
   return res;
 }

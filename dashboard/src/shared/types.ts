@@ -147,6 +147,10 @@ export interface IIngressTLS {
 export interface IIngressSpec {
   rules: IIngressRule[];
   tls?: IIngressTLS[];
+  backend?: {
+    serviceName: string;
+    servicePort: number;
+  };
 }
 
 export interface IResource {

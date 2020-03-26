@@ -58,7 +58,10 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
             <div>
               <h5>Chart repositories not found.</h5>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={`/config/ns/${this.props.namespace}/repos`}>App repositories configuration</Link> page.
+              <Link to={`/config/ns/${this.props.namespace}/repos`}>
+                App repositories configuration
+              </Link>{" "}
+              page.
             </div>
           }
         />

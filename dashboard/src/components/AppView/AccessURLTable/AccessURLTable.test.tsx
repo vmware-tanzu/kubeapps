@@ -73,6 +73,7 @@ context("when the app contains services", () => {
       kind: "Service",
       metadata: {
         name: "foo",
+        selfLink: "/services/foo",
       },
       spec: {
         type: "ClusterIP",
@@ -97,6 +98,7 @@ context("when the app contains services", () => {
       kind: "Service",
       metadata: {
         name: "foo",
+        selfLink: "/services/foo",
       },
       spec: {
         type: "LoadBalancer",
@@ -119,6 +121,7 @@ context("when the app contains ingresses", () => {
       kind: "Ingress",
       metadata: {
         name: "foo",
+        selfLink: "/ingresses/foo",
       },
       spec: {
         rules: [
@@ -144,6 +147,7 @@ context("when the app contains services and ingresses", () => {
       kind: "Service",
       metadata: {
         name: "foo",
+        selfLink: "/services/foo",
       },
       spec: {
         type: "LoadBalancer",
@@ -158,6 +162,7 @@ context("when the app contains services and ingresses", () => {
       kind: "Ingress",
       metadata: {
         name: "foo",
+        selfLink: "/ingresses/foo",
       },
       spec: {
         rules: [

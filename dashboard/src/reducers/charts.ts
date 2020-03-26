@@ -47,7 +47,10 @@ const chartsSelectedReducer = (
   return state;
 };
 
-const chartsReducer = (state: IChartState = initialState, action: ChartsAction | NamespaceAction): IChartState => {
+const chartsReducer = (
+  state: IChartState = initialState,
+  action: ChartsAction | NamespaceAction,
+): IChartState => {
   switch (action.type) {
     case getType(actions.charts.requestCharts):
       return { ...state, isFetching: true };

@@ -59,7 +59,11 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
 
   public render() {
     const {
-      charts: { isFetching, selected: { error }, items: allItems },
+      charts: {
+        isFetching,
+        selected: { error },
+        items: allItems,
+      },
       namespace,
       pushSearchFilter,
       csvs,
@@ -73,13 +77,17 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
           children={
             <div>
               <h5>Unable to fetch catalog</h5>
-              There was an error fetching the catalog.{ isForbidden && " Please choose a namespace above to which you have access." }
+              There was an error fetching the catalog.
+              {isForbidden && " Please choose a namespace above to which you have access."}
             </div>
           }
         />
       );
     }
-    if (!isFetching && allItems.length === 0) {
+    const filteredCharts = this.filteredCharts(allItems);
+    const filteredCSVs = this.filteredCSVs(csvs);
+    const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
+    if (!isFetching && catalogItems.length === 0) {
       return (
         <MessageAlert
           level={"warning"}
@@ -93,9 +101,6 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         />
       );
     }
-    const filteredCharts = this.filteredCharts(allItems);
-    const filteredCSVs = this.filteredCSVs(csvs);
-    const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
     const items = catalogItems.map(c => (
       <CatalogItem key={`${c.type}/${c.repoName || c.csv}/${c.name}`} item={c} />
     ));
@@ -191,7 +196,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         });
       });
     });
-    return result.sort((a, b) => (a.name > b.name ? 1 : -1));
+    return result.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1));
   }
 
   private toggleListCharts = () => {

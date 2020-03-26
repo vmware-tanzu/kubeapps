@@ -49,6 +49,7 @@ describe("chartReducer", () => {
             ...initialState.selected,
             error,
           },
+        },
         {
           type: getType(actions.namespace.setNamespace) as any,
         },
