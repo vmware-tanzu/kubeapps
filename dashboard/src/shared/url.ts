@@ -9,6 +9,10 @@ export const app = {
   },
 };
 
+function withNS(namespace: string) {
+  return namespace === "_all" ? "" : `namespaces/${namespace}/`;
+}
+
 export const backend = {
   apprepositories: {
     base: (namespace: string) => `api/v1/namespaces/${namespace}/apprepositories`,
@@ -67,17 +71,17 @@ export const api = {
   operators: {
     crd: `${APIBase}/apis/apiextensions.k8s.io/v1/customresourcedefinitions/clusterserviceversions.operators.coreos.com`,
     operators: (namespace: string) =>
-      `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests`,
+      `${APIBase}/apis/packages.operators.coreos.com/v1/${withNS(namespace)}packagemanifests`,
     operator: (namespace: string, name: string) =>
       `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
     clusterServiceVersions: (namespace: string) =>
-      `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions`,
+      `${APIBase}/apis/operators.coreos.com/v1alpha1/${withNS(namespace)}clusterserviceversions`,
     clusterServiceVersion: (namespace: string, name: string) =>
       `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions/${name}`,
     operatorIcon: (namespace: string, name: string) =>
       `api/v1/namespaces/${namespace}/operator/${name}/logo`,
     resources: (namespace: string, apiVersion: string, resource: string) =>
-      `${APIBase}/apis/${apiVersion}/namespaces/${namespace}/${resource}`,
+      `${APIBase}/apis/${apiVersion}/${withNS(namespace)}${resource}`,
     resource: (namespace: string, apiVersion: string, resource: string, name: string) =>
       `${APIBase}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
   },

@@ -5,6 +5,7 @@ import * as Moniker from "moniker-native";
 import * as React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
+import { definedNamespaces } from "../../shared/Namespace";
 import {
   IClusterServiceVersion,
   IClusterServiceVersionCRD,
@@ -16,6 +17,7 @@ import AdvancedDeploymentForm from "../DeploymentFormBody/AdvancedDeploymentForm
 import Differential from "../DeploymentFormBody/Differential";
 import { ErrorSelector } from "../ErrorAlert";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
+import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 
@@ -93,7 +95,7 @@ class DeploymentFormBody extends React.Component<
   }
 
   public render() {
-    const { isFetching, errors, csvName, crdName } = this.props;
+    const { isFetching, errors, csvName, crdName, namespace } = this.props;
     const { crd, submittedResourceName, error } = this.state;
 
     if (errors.fetch) {
@@ -103,6 +105,9 @@ class DeploymentFormBody extends React.Component<
           resource={`Operator Instance "${csvName}" (${crd?.name})`}
         />
       );
+    }
+    if (namespace === definedNamespaces.all) {
+      return <UnexpectedErrorPage title="Select a namespace before creating a new instance." />;
     }
     if (isFetching) {
       return <LoadingWrapper />;
