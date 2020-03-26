@@ -22,9 +22,17 @@ test("Creates a registry", async () => {
 
   await page.type("#kubeapps-repo-url", "https://charts.gitlab.io/");
 
+  // Similar to the above click for an App Repository, the click on
+  // the Install Repo doesn't always register (in fact, from the
+  // screenshot on failure, it appears to focus the button only (hover css applied)
   await expect(page).toClick("button", { text: "Install Repo" });
 
-  await expect(page).toClick("a", { text: "my-repo" });
+  try {
+    await expect(page).toClick("a", { text: "my-repo" });
+  } catch (e) {
+    await expect(page).toClick("button", { text: "Install Repo" });
+    await expect(page).toMatch("Install Repo");
+  }
 
   let retries = 3;
   while (retries > 0) {
