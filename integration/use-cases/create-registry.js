@@ -31,7 +31,7 @@ test("Creates a registry", async () => {
     await expect(page).toClick("a", { text: "my-repo" });
   } catch (e) {
     await expect(page).toClick("button", { text: "Install Repo" });
-    await expect(page).toMatch("Install Repo");
+    await expect(page).toClick("a", { text: "my-repo" });
   }
 
   let retries = 3;
