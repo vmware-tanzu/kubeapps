@@ -94,4 +94,22 @@ describe("AppRepoList", () => {
       loaded: false,
     });
   });
+
+  it("displays the AppRepoAddButton when no fetching errors", () => {
+    const wrapper = shallow(<AppRepoList {...defaultProps} />);
+
+    const addButton = wrapper.find("AppRepoAddButton");
+    expect(addButton.length).toBe(1);
+  });
+
+  it("does not display the AppRepoAddButton when there is a fetching error", () => {
+    const props = {
+      ...defaultProps,
+      errors: { fetch: new Error("Bang!") },
+    };
+    const wrapper = shallow(<AppRepoList {...props} />);
+
+    const addButton = wrapper.find("AppRepoAddButton");
+    expect(addButton.length).toBe(0);
+  });
 });

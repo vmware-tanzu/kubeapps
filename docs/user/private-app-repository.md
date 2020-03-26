@@ -43,7 +43,7 @@ curl --data-binary "@my-chart-1.0.0.tgz" http://localhost:8080/api/charts
 
 ### ChartMuseum: Configure the repository in Kubeapps
 
-To add your private repository go to `Configuration > App Repositories` in Kubeapps and click on "Add App Repository". You will need to add your repository using the Kubernetes DNS name for the ChartMuseum service. This will be `<release_name>-chartmuseum.<namespace>:8080`:
+To add your private repository to Kubeapps, select the Kubernetes namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to `Configuration > App Repositories` and click on "Add App Repository". You will need to add your repository using the Kubernetes DNS name for the ChartMuseum service. This will be `<release_name>-chartmuseum.<namespace>:8080`:
 
 <img src="../img/chartmuseum-repository.png" alt="ChartMuseum App Repository" width="300px">
 
@@ -115,7 +115,7 @@ Please refer to ['Manage Helm Charts in Harbor'](https://github.com/goharbor/har
 
 ### Harbor: Configure the repository in Kubeapps
 
-To add Harbor as the private chart repository, go to `Configuration > App Repositories` in Kubeapps and click on "Add App Repository" and use the Harbor helm repository URL `http://harbor.default.svc.cluster.local/chartrepo/my-helm-repo`
+To add Harbor as the private chart repository in Kubeapps, select the Kubernetes namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to `Configuration > App Repositories` and click on "Add App Repository" and use the Harbor helm repository URL `http://harbor.default.svc.cluster.local/chartrepo/my-helm-repo`
 
 <img src="../img/harbor-add-repo.png" width="600px">
 
@@ -169,7 +169,7 @@ curl -u{USER}:{PASSWORD} -XPOST "http://{REPO_URL}/artifactory/api/security/toke
 }
 ```
 
-The above command creates a token with read-only permissions. Now you can go to the `Configuration > App Repositories` menu and add your personal repository:
+The above command creates a token with read-only permissions. Now you can select the namespace to which you want to add the repository (or "All Namespaces" if you want it available to users in all namespaces), go to the `Configuration > App Repositories` menu and add your personal repository:
 
 <img src="../img/jfrog-custom-repo.png" alt="JFrog custom repository" width="400px">
 
@@ -202,6 +202,6 @@ The above will generate a Pod with the label `my-repo: isPrivate` and the enviro
 
 ## Per Namespace App Repositories
 
-There is work in progress to support AppRepositories per namespace in Kubeapps, rather than sharing access to AppRepositories in Kubeapps' own namespace. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87).
+Previously, once an App Repository was created in Kubeapps, the charts of that repository were then available cluster-wide to all users of Kubeapps. This was changed to allow creating App Repositories available only in specific namespaces, enabling future work supporting deploying charts with private docker registries. You can still create an App Repository whose charts will be available to users in all namespaces by selecting "All Namespaces" when creating the repository.
 
-More information will be added once it is available for general use.
+There is work in progress to support AppRepositories with private docker registries in Kubeapps. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87). More information will be added once it is available for general use.
