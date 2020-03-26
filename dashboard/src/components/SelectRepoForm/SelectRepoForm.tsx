@@ -8,6 +8,7 @@ import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 
 interface ISelectRepoFormProps {
   isFetching: boolean;
+  namespace: string;
   kubeappsNamespace: string;
   repoError?: Error;
   error?: Error;
@@ -57,7 +58,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
             <div>
               <h5>Chart repositories not found.</h5>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={"/config/repos"}>App repositories configuration</Link> page.
+              <Link to={`/config/ns/${this.props.namespace}/repos`}>App repositories configuration</Link> page.
             </div>
           }
         />

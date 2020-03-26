@@ -60,6 +60,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
   public render() {
     const {
       charts: { isFetching, selected: { error }, items: allItems },
+      namespace,
       pushSearchFilter,
       csvs,
     } = this.props;
@@ -72,7 +73,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
           children={
             <div>
               <h5>Unable to fetch catalog</h5>
-              There was an error fetching the catalog.{ isForbidden && "Please choose a namespace above to which you have access." }
+              There was an error fetching the catalog.{ isForbidden && " Please choose a namespace above to which you have access." }
             </div>
           }
         />
@@ -86,7 +87,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
             <div>
               <h5>Charts not found.</h5>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={"/config/repos"}>App repositories configuration</Link> page.
+              <Link to={`/config/ns/${namespace}/repos`}>App repositories configuration</Link> page.
             </div>
           }
         />
