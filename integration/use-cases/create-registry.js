@@ -31,7 +31,7 @@ test("Creates a registry", async () => {
   let retries = 3;
   while (retries > 0) {
     try {
-      await expect(page).toMatch("gitlab", { timeout: 2000 });
+      await expect(page).toMatch("gitlab-runner", { timeout: 2000 });
       break;
     } catch (e) {
       // Refresh since the chart will get a bit of time to populate
