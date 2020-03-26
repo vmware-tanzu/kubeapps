@@ -9,3 +9,16 @@
   max-height: 72px;
   max-width: 160px;
 }
+
+.Card__subIcon {
+  right: 10px;
+  position: relative;
+  bottom: 40px;
+  background: transparent;
+  height: 0px;
+}
+
+.Card__subIcon img {
+  max-height: 30px;
+  max-width: 30px;
+}

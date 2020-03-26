@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import operatorIcon from "../../icons/operator-framework.svg";
 import placeholder from "../../placeholder.png";
 import { IClusterServiceVersion, IResource } from "../../shared/types";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
@@ -33,7 +34,8 @@ class CustomResourceListItem extends React.Component<ICustomResourceListItemProp
         icon={icon}
         info={`${resource.kind} v${csv.spec.version || "-"}`}
         tag1Content={resource.metadata.namespace}
-        tag2Content="operator"
+        tag2Content={csv.metadata.name.split(".")[0]}
+        subIcon={operatorIcon}
       />
     );
   }
