@@ -145,3 +145,19 @@ it("deletes a resource", async () => {
     `api/kube/apis/v1/namespaces/${ns}/pods/foo`,
   ]);
 });
+
+it("updates a resource", async () => {
+  const resource = { metadata: { name: "foo" } } as IResource;
+  const ns = "default";
+  axiosWithAuth.put = jest.fn(() => {
+    return { data: resource };
+  });
+  expect(
+    await Operators.updateResource(ns, "v1", "pods", resource.metadata.name, resource),
+  ).toEqual(resource);
+  expect(axiosWithAuth.post).toHaveBeenCalled();
+  expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
+    `api/kube/apis/v1/namespaces/${ns}/pods`,
+    resource,
+  ]);
+});

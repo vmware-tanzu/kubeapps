@@ -214,6 +214,26 @@ export function deleteResource(
   };
 }
 
+export function updateResource(
+  namespace: string,
+  apiVersion: string,
+  resource: string,
+  name: string,
+  body: object,
+): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(creatingResource());
+    try {
+      const r = await Operators.updateResource(namespace, apiVersion, resource, name, body);
+      dispatch(resourceCreated(r));
+      return true;
+    } catch (e) {
+      dispatch(errorResourceCreate(e));
+      return false;
+    }
+  };
+}
+
 function parseCRD(crdName: string) {
   const parsedCRD = crdName.split(".");
   const plural = parsedCRD[0];

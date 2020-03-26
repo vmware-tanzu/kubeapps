@@ -128,8 +128,21 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   }
 
   public render() {
-    const { isFetching, error, resource, csv, instanceName, namespace } = this.props;
+    const {
+      isFetching,
+      error,
+      resource,
+      csv,
+      instanceName,
+      csvName,
+      crdName,
+      namespace,
+      push,
+    } = this.props;
     const { resources } = this.state;
+    const onUpdateClick = () =>
+      push(`/operators-instances/ns/${namespace}/${csvName}/${crdName}/update/${instanceName}`);
+
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -157,6 +170,9 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
                       )}
                     </div>
                     <div className="col-8 text-r">
+                      <button className="button" onClick={onUpdateClick}>
+                        Update
+                      </button>
                       <button className="button button-danger" onClick={this.openModal}>
                         Delete
                       </button>

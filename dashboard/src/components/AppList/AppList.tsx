@@ -21,6 +21,7 @@ interface IAppListProps {
   customResources: IResource[];
   isFetchingResources: boolean;
   csvs: IClusterServiceVersion[];
+  featureFlags: { operators: boolean };
 }
 
 interface IAppListState {
@@ -32,7 +33,9 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   public componentDidMount() {
     const { fetchAppsWithUpdateInfo, filter, namespace, apps, getCustomResources } = this.props;
     fetchAppsWithUpdateInfo(namespace, apps.listingAll);
-    getCustomResources(namespace);
+    if (this.props.featureFlags.operators) {
+      getCustomResources(namespace);
+    }
     this.setState({ filter });
   }
 
@@ -47,7 +50,9 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     // refetch if new namespace or error removed due to location change
     if (prevProps.namespace !== namespace || (!error && prevProps.apps.error)) {
       fetchAppsWithUpdateInfo(namespace, listingAll);
-      getCustomResources(namespace);
+      if (this.props.featureFlags.operators) {
+        getCustomResources(namespace);
+      }
     }
     if (prevProps.filter !== filter) {
       this.setState({ filter });
