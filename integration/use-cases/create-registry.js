@@ -26,13 +26,7 @@ test("Creates a registry", async () => {
   // the Install Repo doesn't always register (in fact, from the
   // screenshot on failure, it appears to focus the button only (hover css applied)
   await expect(page).toClick("button", { text: "Install Repo" });
-
-  try {
-    await expect(page).toClick("a", { text: "my-repo" });
-  } catch (e) {
-    await expect(page).toClick("button", { text: "Install Repo" });
-    await expect(page).toMatch("Install Repo");
-  }
+  await expect(page).toClick("a", { text: "my-repo" });
 
   let retries = 3;
   while (retries > 0) {
