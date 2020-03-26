@@ -34,7 +34,7 @@ class CustomResourceListItem extends React.Component<ICustomResourceListItemProp
         icon={icon}
         info={`${resource.kind} v${csv.spec.version || "-"}`}
         tag1Content={resource.metadata.namespace}
-        tag2Content="operator"
+        tag2Content={csv.metadata.name.split(".")[0]}
         subIcon={operatorIcon}
       />
     );
