@@ -100,18 +100,25 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
             }
           });
         } else {
+          const emptyCRD = { kind: "", name: "", version: "" };
           // The CRD definition doesn't define any service so pull everything
           result = {
-            deployRefs: [fromCRD({ kind: "Deployment", name: "" }, this.props.namespace, ownerRef)],
-            ingressRefs: [fromCRD({ kind: "Ingress", name: "" }, this.props.namespace, ownerRef)],
+            deployRefs: [
+              fromCRD({ ...emptyCRD, kind: "Deployment" }, this.props.namespace, ownerRef),
+            ],
+            ingressRefs: [
+              fromCRD({ ...emptyCRD, kind: "Ingress" }, this.props.namespace, ownerRef),
+            ],
             statefulSetRefs: [
-              fromCRD({ kind: "StatefulSet", name: "" }, this.props.namespace, ownerRef),
+              fromCRD({ ...emptyCRD, kind: "StatefulSet" }, this.props.namespace, ownerRef),
             ],
             daemonSetRefs: [
-              fromCRD({ kind: "DaemonSet", name: "" }, this.props.namespace, ownerRef),
+              fromCRD({ ...emptyCRD, kind: "DaemonSet" }, this.props.namespace, ownerRef),
             ],
-            serviceRefs: [fromCRD({ kind: "Service", name: "" }, this.props.namespace, ownerRef)],
-            secretRefs: [fromCRD({ kind: "Secret", name: "" }, this.props.namespace, ownerRef)],
+            serviceRefs: [
+              fromCRD({ ...emptyCRD, kind: "Service" }, this.props.namespace, ownerRef),
+            ],
+            secretRefs: [fromCRD({ ...emptyCRD, kind: "Secret" }, this.props.namespace, ownerRef)],
             otherResources: [],
           };
         }

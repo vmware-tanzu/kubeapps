@@ -273,7 +273,7 @@ export interface IPackageManifest extends IResource {
 export interface IClusterServiceVersionCRDResource {
   kind: string;
   name: string;
-  version?: string;
+  version: string;
 }
 
 export interface IClusterServiceVersionCRD {

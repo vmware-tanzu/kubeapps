@@ -78,7 +78,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
             <div>
               <h5>Unable to fetch catalog</h5>
               There was an error fetching the catalog.
-              {isForbidden && "Please choose a namespace above to which you have access."}
+              {isForbidden && " Please choose a namespace above to which you have access."}
             </div>
           }
         />
