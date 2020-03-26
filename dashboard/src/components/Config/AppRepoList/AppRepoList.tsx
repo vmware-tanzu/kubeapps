@@ -96,38 +96,42 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
         {errors.fetch && this.renderError("fetch")}
         {errors.delete && this.renderError("delete")}
         {errors.update && this.renderError("update")}
-        <LoadingWrapper loaded={!isFetching}>
-          <table>
-            <thead>
-              <tr>
-                <th>Repo</th>
-                {renderNamespace && <th>Namespace</th>}
-                <th>URL</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {repos.map(repo => (
-                <AppRepoListItem
-                  key={repo.metadata.uid}
-                  deleteRepo={deleteRepo}
-                  resyncRepo={resyncRepo}
-                  repo={repo}
-                  renderNamespace={renderNamespace}
-                  namespace={namespace}
-                />
-              ))}
-            </tbody>
-          </table>
-        </LoadingWrapper>
-        <AppRepoAddButton
-          errors={errors}
-          install={install}
-          validate={validate}
-          namespace={namespace}
-          isFetching={isFetching}
-        />
-        <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
+        {!errors.fetch && (
+          <>
+            <LoadingWrapper loaded={!isFetching}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Repo</th>
+                    {renderNamespace && <th>Namespace</th>}
+                    <th>URL</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {repos.map(repo => (
+                    <AppRepoListItem
+                      key={repo.metadata.uid}
+                      deleteRepo={deleteRepo}
+                      resyncRepo={resyncRepo}
+                      repo={repo}
+                      renderNamespace={renderNamespace}
+                      namespace={namespace}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </LoadingWrapper>
+            <AppRepoAddButton
+              errors={errors}
+              install={install}
+              validate={validate}
+              namespace={namespace}
+              isFetching={isFetching}
+            />
+            <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
+          </>
+        )}
         {displayReposPerNamespaceMsg && (
           <MessageAlert header="Looking for other app repositories?">
             <div>
@@ -139,7 +143,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                 Kubeapps now enables you to create App Repositories in your own namespace that will
                 be available in your own namespace and, in the future, optionally available in other
                 namespaces to which you have access. You can read more information in the{" "}
-                <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#per-namespace-app-repositories">
+                <a href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md">
                   Private App Repository docs
                 </a>
                 .
