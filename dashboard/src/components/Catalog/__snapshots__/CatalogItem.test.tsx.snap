@@ -17,7 +17,6 @@ exports[`should render an item 1`] = `
       to="/catalog/undefined"
     />
   }
-  tag2Content="chart"
   title="foo"
 />
 `;
