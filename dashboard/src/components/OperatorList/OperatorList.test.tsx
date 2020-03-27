@@ -14,6 +14,8 @@ const defaultProps: IOperatorListProps = {
   operators: [],
   namespace: "default",
   getOperators: jest.fn(),
+  getCSVs: jest.fn(),
+  csvs: [],
 };
 
 const sampleOperator = {
@@ -24,8 +26,11 @@ const sampleOperator = {
     provider: {
       name: "kubeapps",
     },
+    defaultChannel: "alpha",
     channels: [
       {
+        name: "alpha",
+        currentCSV: "kubeapps-operator",
         currentCSVDesc: {
           version: "1.0.0",
           annotations: {
@@ -37,6 +42,26 @@ const sampleOperator = {
   },
 } as IPackageManifest;
 
+const sampleCSV = {
+  metadata: { name: "kubeapps-operator" },
+  spec: {
+    icon: [{}],
+    provider: {
+      name: "kubeapps",
+    },
+    customresourcedefinitions: {
+      owned: [
+        {
+          name: "foo.kubeapps.com",
+          version: "v1alpha1",
+          kind: "Foo",
+          resources: [{ kind: "Deployment" }],
+        },
+      ],
+    },
+  },
+} as any;
+
 itBehavesLike("aLoadingComponent", {
   component: OperatorList,
   props: { ...defaultProps, isFetching: true },
@@ -47,6 +72,17 @@ it("call the OLM check and render the NotFound message if not found", () => {
   const wrapper = shallow(<OperatorList {...defaultProps} checkOLMInstalled={checkOLMInstalled} />);
   expect(checkOLMInstalled).toHaveBeenCalled();
   expect(wrapper.find(OLMNotFound)).toExist();
+});
+
+it("re-request operators if the namespace changes", () => {
+  const getOperators = jest.fn();
+  const getCSVs = jest.fn();
+  const wrapper = shallow(
+    <OperatorList {...defaultProps} getOperators={getOperators} getCSVs={getCSVs} />,
+  );
+  wrapper.setProps({ namespace: "other" });
+  expect(getOperators).toHaveBeenCalledTimes(2);
+  expect(getCSVs).toHaveBeenCalledTimes(2);
 });
 
 it("renders an error if exists", () => {
@@ -77,7 +113,12 @@ it("skips the error if the OLM is not installed", () => {
 
 it("render the operator list if the OLM is installed", () => {
   const wrapper = shallow(
-    <OperatorList {...defaultProps} isOLMInstalled={true} operators={[sampleOperator]} />,
+    <OperatorList
+      {...defaultProps}
+      isOLMInstalled={true}
+      operators={[sampleOperator]}
+      csvs={[sampleCSV]}
+    />,
   );
   expect(wrapper.find(OLMNotFound)).not.toExist();
   expect(wrapper.find(InfoCard)).toExist();

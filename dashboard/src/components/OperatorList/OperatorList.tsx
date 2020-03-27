@@ -1,6 +1,7 @@
 import * as React from "react";
+import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
-import { IPackageManifest } from "shared/types";
+import { IClusterServiceVersion, IPackageManifest } from "shared/types";
 import { api } from "../../shared/url";
 import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
@@ -17,12 +18,22 @@ export interface IOperatorListProps {
   getOperators: (namespace: string) => Promise<void>;
   operators: IPackageManifest[];
   error?: Error;
+  getCSVs: (namespace: string) => Promise<IClusterServiceVersion[]>;
+  csvs: IClusterServiceVersion[];
 }
 
 class OperatorList extends React.Component<IOperatorListProps> {
   public componentDidMount() {
     this.props.checkOLMInstalled();
     this.props.getOperators(this.props.namespace);
+    this.props.getCSVs(this.props.namespace);
+  }
+
+  public componentDidUpdate(prevProps: IOperatorListProps) {
+    if (prevProps.namespace !== this.props.namespace) {
+      this.props.getOperators(this.props.namespace);
+      this.props.getCSVs(this.props.namespace);
+    }
   }
 
   public render() {
@@ -42,7 +53,7 @@ class OperatorList extends React.Component<IOperatorListProps> {
   }
 
   private renderOperators() {
-    const { operators, error } = this.props;
+    const { operators, error, csvs } = this.props;
     if (error) {
       return (
         <ErrorSelector
@@ -54,21 +65,51 @@ class OperatorList extends React.Component<IOperatorListProps> {
       );
     }
     return (
-      <CardGrid>
-        {operators.map(operator => {
-          return (
-            <InfoCard
-              key={operator.metadata.name}
-              link={`/operators/ns/${this.props.namespace}/${operator.metadata.name}`}
-              title={operator.metadata.name}
-              icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
-              info={`v${operator.status.channels[0].currentCSVDesc.version}`}
-              tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
-              tag2Content={operator.status.provider.name}
-            />
-          );
-        })}
-      </CardGrid>
+      <Tabs className="margin-t-big">
+        <TabList>
+          <Tab>Browse</Tab>
+          <Tab>Installed</Tab>
+        </TabList>
+        <TabPanel>
+          <CardGrid>
+            {operators.map(operator => {
+              return (
+                <InfoCard
+                  key={operator.metadata.name}
+                  link={`/operators/ns/${this.props.namespace}/${operator.metadata.name}`}
+                  title={operator.metadata.name}
+                  icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
+                  info={`v${operator.status.channels[0].currentCSVDesc.version}`}
+                  tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
+                  tag2Content={operator.status.provider.name}
+                />
+              );
+            })}
+          </CardGrid>
+        </TabPanel>
+        <TabPanel>
+          <CardGrid>
+            {csvs.map(csv => {
+              const op = operators.find(operator => {
+                const defaultChannel = operator.status.defaultChannel;
+                const channel = operator.status.channels.find(ch => ch.name === defaultChannel);
+                return channel?.currentCSV === csv.metadata.name;
+              });
+              return (
+                <InfoCard
+                  key={csv.metadata.name}
+                  link={`/operators/ns/${this.props.namespace}/${op?.metadata.name}`}
+                  title={op?.metadata.name || csv.metadata.name}
+                  icon={`data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`}
+                  info={`v${csv.spec.version}`}
+                  tag1Content={csv.spec.provider.name}
+                  tag2Content={csv.metadata.namespace}
+                />
+              );
+            })}
+          </CardGrid>
+        </TabPanel>
+      </Tabs>
     );
   }
 }
