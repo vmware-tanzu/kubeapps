@@ -17,6 +17,7 @@ import "react-tabs/style/react-tabs.css";
 
 export interface IDeploymentFormProps {
   kubeappsNamespace: string;
+  chartNamespace: string;
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
@@ -30,7 +31,7 @@ export interface IDeploymentFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   fetchChartVersions: (id: string) => void;
-  getChartVersion: (id: string, chartVersion: string) => void;
+  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   namespace: string;
 }
 
@@ -55,7 +56,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public componentDidMount() {
-    this.props.fetchChartVersions(this.props.chartID);
+    this.props.fetchChartVersions(this.props.chartNamespace, this.props.chartID);
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {
@@ -126,6 +127,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               />
             </div>
             <DeploymentFormBody
+              chartNamespace={this.props.chartNamespace}
               chartID={this.props.chartID}
               chartVersion={this.props.chartVersion}
               namespace={this.props.namespace}

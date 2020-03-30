@@ -28,6 +28,7 @@ exports[`renders the full UpgradeForm 1`] = `
       <DeploymentFormBody
         appValues="foo: bar"
         chartID="my-repo/my-chart"
+        chartNamespace="kubeapps"
         chartVersion="1.0.0"
         deployedValues=""
         getChartVersion={[Function]}

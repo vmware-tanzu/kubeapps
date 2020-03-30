@@ -16,6 +16,7 @@ const defaultProps = {
   namespace: "default",
   releaseName: "my-release",
   repo: "my-repo",
+  repoNamespace: "kubeapps",
   selected: { versions } as IChartState["selected"],
   deployed: {} as IChartState["deployed"],
   upgradeApp: jest.fn(),
@@ -34,7 +35,7 @@ itBehavesLike("aLoadingComponent", {
 it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
   shallow(<UpgradeForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
-  expect(fetchChartVersions).toHaveBeenCalledWith(`${defaultProps.repo}/${defaultProps.chartName}`);
+  expect(fetchChartVersions).toHaveBeenCalledWith(defaultProps.repoNamespace, `${defaultProps.repo}/${defaultProps.chartName}`);
 });
 
 describe("renders an error", () => {

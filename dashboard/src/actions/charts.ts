@@ -88,12 +88,10 @@ export function fetchCharts(
 }
 
 export function fetchChartVersions(
+  namespace: string,
   id: string,
 ): ThunkAction<Promise<IChartVersion[] | undefined>, IStoreState, null, ChartsAction> {
   return async (dispatch, getState) => {
-    const {
-      config: { namespace },
-    } = getState();
     dispatch(requestCharts());
     try {
       const versions = await Chart.fetchChartVersions(namespace, id);
@@ -126,13 +124,11 @@ async function getChart(namespace: string, id: string, version: string) {
 }
 
 export function getChartVersion(
+  namespace: string,
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async (dispatch, getState) => {
-    const {
-      config: { namespace },
-    } = getState();
     try {
       dispatch(requestCharts());
       const { chartVersion, values, schema } = await getChart(namespace, id, version);
@@ -146,13 +142,11 @@ export function getChartVersion(
 }
 
 export function getDeployedChartVersion(
+  namespace: string,
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async (dispatch, getState) => {
-    const {
-      config: { namespace },
-    } = getState();
     try {
       dispatch(requestDeployedChartVersion());
       const { chartVersion, values, schema } = await getChart(namespace, id, version);
@@ -166,11 +160,12 @@ export function getDeployedChartVersion(
 }
 
 export function fetchChartVersionsAndSelectVersion(
+  namespace: string,
   id: string,
   version?: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
-    const versions = (await dispatch(fetchChartVersions(id))) as IChartVersion[];
+    const versions = (await dispatch(fetchChartVersions(namespace, id))) as IChartVersion[];
     if (versions) {
       let cv: IChartVersion = versions[0];
       if (version) {

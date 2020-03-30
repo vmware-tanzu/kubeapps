@@ -17,6 +17,7 @@ export interface IUpgradeFormProps {
   namespace: string;
   releaseName: string;
   repo: string;
+  repoNamespace: string;
   error?: Error;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
@@ -29,8 +30,8 @@ export interface IUpgradeFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
-  fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
-  getChartVersion: (id: string, chartVersion: string) => void;
+  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
+  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
 }
 
 interface IUpgradeFormState {
@@ -49,7 +50,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
 
   public componentDidMount() {
     const chartID = `${this.props.repo}/${this.props.chartName}`;
-    this.props.fetchChartVersions(chartID);
+    this.props.fetchChartVersions(this.props.repoNamespace, chartID);
   }
 
   public componentDidUpdate = (prevProps: IUpgradeFormProps) => {
@@ -91,6 +92,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
           </div>
           <div className="col-8">
             <DeploymentFormBody
+              chartNamespace={this.props.repoNamespace}
               chartID={chartID}
               chartVersion={this.props.appCurrentVersion}
               deployedValues={this.applyModifications(
