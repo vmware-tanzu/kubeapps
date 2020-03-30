@@ -9,7 +9,7 @@ import AppList from "../../components/AppList";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { apps, namespace, operators }: IStoreState,
+  { apps, namespace, operators, config }: IStoreState,
   { location }: RouteComponentProps<{}>,
 ) {
   return {
@@ -19,6 +19,7 @@ function mapStateToProps(
     customResources: operators.resources,
     isFetchingResources: operators.isFetching,
     csvs: operators.csvs,
+    featureFlags: config.featureFlags,
   };
 }
 

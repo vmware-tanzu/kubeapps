@@ -10,6 +10,7 @@ import CatalogContainer from "../../containers/CatalogContainer";
 import ChartViewContainer from "../../containers/ChartViewContainer";
 import LoginFormContainer from "../../containers/LoginFormContainer";
 import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
+import OperatorInstanceUpdateContainer from "../../containers/OperatorInstanceUpdateContainer";
 import OperatorInstanceViewContainer from "../../containers/OperatorInstanceViewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
@@ -70,6 +71,7 @@ class Routes extends React.Component<IRoutesProps> {
         "/operators/ns/:namespace/:operator": OperatorViewContainer,
         "/operators-instances/ns/:namespace/new/:csv/:crd": OperatorInstanceCreateContainer,
         "/operators-instances/ns/:namespace/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
+        "/operators-instances/ns/:namespace/:csv/:crd/update/:instanceName": OperatorInstanceUpdateContainer,
       });
     }
     return (

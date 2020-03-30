@@ -7,6 +7,7 @@ import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import { fromCRD } from "../../shared/ResourceRef";
 import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
+import { app } from "../../shared/url";
 import AppNotes from "../AppView/AppNotes";
 import AppValues from "../AppView/AppValues";
 import { IPartialAppViewState } from "../AppView/AppView";
@@ -128,8 +129,21 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   }
 
   public render() {
-    const { isFetching, error, resource, csv, instanceName, namespace } = this.props;
+    const {
+      isFetching,
+      error,
+      resource,
+      csv,
+      instanceName,
+      csvName,
+      crdName,
+      namespace,
+      push,
+    } = this.props;
     const { resources } = this.state;
+    const onUpdateClick = () =>
+      push(app.operatorInstances.update(namespace, csvName, crdName, instanceName));
+
     return (
       <section className="AppView padding-b-big">
         <main>
@@ -157,6 +171,9 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
                       )}
                     </div>
                     <div className="col-8 text-r">
+                      <button className="button" onClick={onUpdateClick}>
+                        Update
+                      </button>
                       <button className="button button-danger" onClick={this.openModal}>
                         Delete
                       </button>

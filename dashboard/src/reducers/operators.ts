@@ -15,6 +15,7 @@ export interface IOperatorsState {
     fetch?: Error;
     create?: Error;
     delete?: Error;
+    update?: Error;
   };
   csvs: IClusterServiceVersion[];
   csv?: IClusterServiceVersion;
@@ -67,6 +68,10 @@ const catalogReducer = (
       return { ...state, isFetching: true };
     case getType(operators.resourceCreated):
       return { ...state, isFetching: false };
+    case getType(operators.updatingResource):
+      return { ...state, isFetching: true };
+    case getType(operators.resourceUpdated):
+      return { ...state, isFetching: false };
     case getType(operators.deletingResource):
       return { ...state, isFetching: true };
     case getType(operators.resourceDeleted):
@@ -75,6 +80,8 @@ const catalogReducer = (
       return { ...state, isFetching: false, errors: { delete: action.payload } };
     case getType(operators.errorResourceCreate):
       return { ...state, isFetching: false, errors: { create: action.payload } };
+    case getType(operators.errorResourceUpdate):
+      return { ...state, isFetching: false, errors: { update: action.payload } };
     case getType(operators.requestCustomResources):
       return { ...state, isFetching: true };
     case getType(operators.receiveCustomResources):

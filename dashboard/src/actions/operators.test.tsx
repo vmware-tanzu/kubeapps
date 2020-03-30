@@ -227,6 +227,41 @@ describe("createResource", () => {
   });
 });
 
+describe("updateResource", () => {
+  it("updates a resource", async () => {
+    const resource = {} as IResource;
+    Operators.updateResource = jest.fn(() => resource);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.updatingResource),
+      },
+      {
+        type: getType(operatorActions.resourceUpdated),
+        payload: resource,
+      },
+    ];
+    await store.dispatch(operatorActions.updateResource("default", "v1", "pods", "foo", {}));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.updateResource = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.updatingResource),
+      },
+      {
+        type: getType(operatorActions.errorResourceUpdate),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(operatorActions.updateResource("default", "v1", "pods", "foo", {}));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
 describe("getResources", () => {
   it("list resources in a namespace", async () => {
     const csv = {
