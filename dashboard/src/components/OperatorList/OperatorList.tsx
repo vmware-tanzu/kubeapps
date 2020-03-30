@@ -3,7 +3,7 @@ import * as React from "react";
 import { IPackageManifest } from "shared/types";
 import { api } from "../../shared/url";
 import { CardGrid } from "../Card";
-import { ErrorSelector } from "../ErrorAlert";
+import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
@@ -33,6 +33,15 @@ class OperatorList extends React.Component<IOperatorListProps> {
           <h1>Operators</h1>
         </PageHeader>
         <main>
+          <MessageAlert level="warning">
+            <div>
+              Operators integration is under heavy development and currently in alpha state. If you
+              find an issue please report it{" "}
+              <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues">
+                here.
+              </a>
+            </div>
+          </MessageAlert>
           <LoadingWrapper loaded={!isFetching}>
             {isOLMInstalled ? this.renderOperators() : <OLMNotFound />}
           </LoadingWrapper>
