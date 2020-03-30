@@ -85,4 +85,18 @@ export class Operators {
     );
     return data;
   }
+
+  public static async updateResource(
+    namespace: string,
+    apiVersion: string,
+    resource: string,
+    name: string,
+    body: object,
+  ) {
+    const { data } = await axiosWithAuth.put<IResource>(
+      urls.api.operators.resource(namespace, apiVersion, resource, name),
+      body,
+    );
+    return data;
+  }
 }

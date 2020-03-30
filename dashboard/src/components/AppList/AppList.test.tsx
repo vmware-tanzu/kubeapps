@@ -23,6 +23,7 @@ const defaultProps: any = {
   getCustomResources: jest.fn(),
   customResources: [],
   csvs: [],
+  featureFlags: { operators: true },
 };
 
 context("when changing props", () => {
