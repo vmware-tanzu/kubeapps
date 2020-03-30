@@ -15,6 +15,7 @@ interface IAppUpgradeProps {
   namespace: string;
   releaseName: string;
   repoName: string;
+  repoNamespace: string;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
   upgradeApp: (
@@ -24,10 +25,10 @@ interface IAppUpgradeProps {
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
-  fetchChartVersions: (id: string) => Promise<IChartVersion[]>;
+  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
-  getChartVersion: (id: string, chartVersion: string) => void;
-  getDeployedChartVersion: (id: string, chartVersion: string) => void;
+  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
+  getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
   // repo selector properties
@@ -48,7 +49,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
   }
 
   public componentDidUpdate(prevProps: IAppUpgradeProps) {
-    const { app, repoName } = this.props;
+    const { app, repoName, repoNamespace } = this.props;
     if (app && repoName) {
       const { chart } = app;
       if (
@@ -59,7 +60,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
         (prevProps.app !== app || prevProps.repoName !== repoName)
       ) {
         const chartID = `${repoName}/${chart.metadata.name}`;
-        this.props.getDeployedChartVersion(chartID, chart.metadata.version);
+        this.props.getDeployedChartVersion(repoNamespace, chartID, chart.metadata.version);
       }
     }
   }
@@ -72,6 +73,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
       releaseName,
       appsIsFetching,
       repoName,
+      repoNamespace,
       selected,
       deployed,
       upgradeApp,
@@ -102,6 +104,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
             appCurrentValues={(app.config && app.config.raw) || ""}
             chartName={app.chart.metadata.name!}
             repo={repo}
+            repoNamespace={repoNamespace}
             namespace={namespace}
             releaseName={releaseName}
             selected={selected}

@@ -42,6 +42,7 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     push={[Function]}
     releaseName="foo"
     repo="foobar"
+    repoNamespace="chart-namespace"
     selected={Object {}}
     upgradeApp={[Function]}
   />
@@ -62,6 +63,7 @@ exports[`skips the repo selection form if the app contains upgrade info 1`] = `
     push={[Function]}
     releaseName="foo"
     repo="stable"
+    repoNamespace="chart-namespace"
     selected={Object {}}
     upgradeApp={[Function]}
   />

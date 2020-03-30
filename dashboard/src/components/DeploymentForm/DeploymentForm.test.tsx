@@ -15,6 +15,7 @@ import DeploymentForm from "./DeploymentForm";
 const releaseName = "my-release";
 const defaultProps = {
   kubeappsNamespace: "kubeapps",
+  chartNamespace: "other-namespace",
   chartID: "foo",
   chartVersion: "1.0.0",
   error: undefined,
@@ -40,7 +41,7 @@ afterEach(() => {
 it("fetches the available versions", () => {
   const fetchChartVersions = jest.fn();
   shallow(<DeploymentForm {...defaultProps} fetchChartVersions={fetchChartVersions} />);
-  expect(fetchChartVersions).toHaveBeenCalledWith(defaultProps.chartID);
+  expect(fetchChartVersions).toHaveBeenCalledWith(defaultProps.chartNamespace, defaultProps.chartID);
 });
 
 describe("renders an error", () => {

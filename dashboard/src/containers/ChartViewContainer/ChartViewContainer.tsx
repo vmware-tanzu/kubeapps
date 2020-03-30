@@ -31,8 +31,8 @@ function mapDispatchToProps(
   { match: { params } }: IRouteProps,
 ) {
   return {
-    fetchChartVersionsAndSelectVersion: (id: string, version?: string) =>
-      dispatch(actions.charts.fetchChartVersionsAndSelectVersion(id, version)),
+    fetchChartVersionsAndSelectVersion: (namespace: string, id: string, version?: string) =>
+      dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, id, version)),
     getChartReadme: (version: string) =>
       dispatch(actions.charts.getChartReadme(chartID(params), version)),
     resetChartVersion: () => dispatch(actions.charts.resetChartVersion()),
