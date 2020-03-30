@@ -106,6 +106,11 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
         return this.helmStatusError(helmStatus);
       }
     }
+    if (this.state.totalPods === 0) {
+      return (
+        <span className="ApplicationStatus ApplicationStatus--pending">No workload found</span>
+      );
+    }
     return (
       <div className="ApplicationStatusPieChart">
         <a data-tip={true} data-for="app-status">

@@ -28,15 +28,16 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
 
   public render() {
     const { ingresses, services } = this.props;
+    if (isSomeResourceLoading(ingresses.concat(services))) {
+      return <LoadingWrapper type={LoaderType.Placeholder} />;
+    }
+    if (!this.hasItems(services, ingresses)) {
+      return null;
+    }
     return (
       <React.Fragment>
         <h6>Access URLs</h6>
-        <LoadingWrapper
-          loaded={!isSomeResourceLoading(ingresses.concat(services))}
-          type={LoaderType.Placeholder}
-        >
-          {this.accessTableSection()}
-        </LoadingWrapper>
+        {this.accessTableSection()}
       </React.Fragment>
     );
   }
@@ -120,6 +121,30 @@ class AccessURLTable extends React.Component<IAccessURLTableProps> {
     // Fetch all related Ingress resources. We don't need to fetch Services as
     // they are expected to be watched by the ServiceTable.
     this.props.ingressRefs.forEach(r => this.props.getResource(r));
+  }
+
+  private elemHasItems(i: IKubeItem<IResource | IK8sList<IResource, {}>>) {
+    if (i.error) {
+      return true;
+    }
+    if (i.item) {
+      const list = i.item as IK8sList<IResource, {}>;
+      if (list.items && list.items.length === 0) {
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  private hasItems(
+    svcs: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>,
+    ingresses: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>,
+  ) {
+    return (
+      (svcs.length && svcs.some(svc => this.elemHasItems(svc))) ||
+      (ingresses.length && ingresses.some(ingress => this.elemHasItems(ingress)))
+    );
   }
 }
 

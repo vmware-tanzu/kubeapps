@@ -94,11 +94,11 @@ describe("isFetching", () => {
     readyPods: number;
   }> = [
     {
-      title: "shows a deployed status if there are no resources",
+      title: "shows a warning if no workloads are present",
       deployments: [],
       statefulsets: [],
       daemonsets: [],
-      deployed: true,
+      deployed: false,
       totalPods: 0,
       readyPods: 0,
     },
@@ -314,6 +314,10 @@ describe("isFetching", () => {
       const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {
         return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
       };
+      if (!t.deployments.length && !t.statefulsets.length && !t.daemonsets.length) {
+        expect(wrapper.text()).toContain("No workload found");
+        return;
+      }
       expect(wrapper.text()).toContain(t.deployed ? "Ready" : "Not Ready");
       expect(wrapper.state()).toMatchObject({ totalPods: t.totalPods, readyPods: t.readyPods });
       // Check tooltip text
