@@ -2,6 +2,7 @@ import { shallow } from "enzyme";
 import * as React from "react";
 import { IPackageManifest } from "shared/types";
 import itBehavesLike from "../../shared/specs";
+import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
 import OLMNotFound from "./OLMNotFound";
@@ -111,7 +112,7 @@ it("skips the error if the OLM is not installed", () => {
   expect(wrapper.find(OLMNotFound)).toExist();
 });
 
-it("render the operator list if the OLM is installed", () => {
+it("render the operator list with installed operators", () => {
   const wrapper = shallow(
     <OperatorList
       {...defaultProps}
@@ -122,5 +123,30 @@ it("render the operator list if the OLM is installed", () => {
   );
   expect(wrapper.find(OLMNotFound)).not.toExist();
   expect(wrapper.find(InfoCard)).toExist();
+  // The section "Available operators" should be empty since all the ops are installed
+  expect(wrapper.find("h3").filterWhere(c => c.text() === "Installed")).toExist();
+  expect(
+    wrapper
+      .find(CardGrid)
+      .last()
+      .children(),
+  ).not.toExist();
+  expect(wrapper).toMatchSnapshot();
+});
+
+it("render the operator list with installed operators", () => {
+  const wrapper = shallow(
+    <OperatorList {...defaultProps} isOLMInstalled={true} operators={[sampleOperator]} csvs={[]} />,
+  );
+  expect(wrapper.find(OLMNotFound)).not.toExist();
+  expect(wrapper.find(InfoCard)).toExist();
+  // The section "Available operators" should not be empty since the operator is not installed
+  expect(wrapper.find("h3").filterWhere(c => c.text() === "Installed")).not.toExist();
+  expect(
+    wrapper
+      .find(CardGrid)
+      .last()
+      .children(),
+  ).toExist();
   expect(wrapper).toMatchSnapshot();
 });

@@ -18,7 +18,7 @@ exports[`loading spinner matches the snapshot 1`] = `
 </div>
 `;
 
-exports[`render the operator list if the OLM is installed 1`] = `
+exports[`render the operator list with installed operators 1`] = `
 <div>
   <PageHeader>
     <h1>
@@ -30,73 +30,55 @@ exports[`render the operator list if the OLM is installed 1`] = `
       loaded={true}
       type={0}
     >
-      <Tabs
-        className="margin-t-big"
-        defaultFocus={false}
-        defaultIndex={null}
-        forceRenderTabPanel={false}
-        selectedIndex={null}
-      >
-        <TabList
-          className="react-tabs__tab-list"
-        >
-          <Tab
-            className="react-tabs__tab"
-            disabledClassName="react-tabs__tab--disabled"
-            focus={false}
-            id={null}
-            panelId={null}
-            selected={false}
-            selectedClassName="react-tabs__tab--selected"
-          >
-            Browse
-          </Tab>
-          <Tab
-            className="react-tabs__tab"
-            disabledClassName="react-tabs__tab--disabled"
-            focus={false}
-            id={null}
-            panelId={null}
-            selected={false}
-            selectedClassName="react-tabs__tab--selected"
-          >
-            Installed
-          </Tab>
-        </TabList>
-        <TabPanel
-          className="react-tabs__tab-panel"
-          forceRender={false}
-          selectedClassName="react-tabs__tab-panel--selected"
-        >
-          <CardGrid>
-            <InfoCard
-              icon="api/v1/namespaces/default/operator/foo/logo"
-              info="v1.0.0"
-              key="foo"
-              link="/operators/ns/default/foo"
-              tag1Content="security"
-              tag2Content="kubeapps"
-              title="foo"
-            />
-          </CardGrid>
-        </TabPanel>
-        <TabPanel
-          className="react-tabs__tab-panel"
-          forceRender={false}
-          selectedClassName="react-tabs__tab-panel--selected"
-        >
-          <CardGrid>
-            <InfoCard
-              icon="data:undefined;base64,undefined"
-              info="vundefined"
-              key="kubeapps-operator"
-              link="/operators/ns/default/foo"
-              tag1Content="kubeapps"
-              title="foo"
-            />
-          </CardGrid>
-        </TabPanel>
-      </Tabs>
+      <h3>
+        Installed
+      </h3>
+      <CardGrid>
+        <InfoCard
+          icon="api/v1/namespaces/default/operator/foo/logo"
+          info="v1.0.0"
+          key="foo"
+          link="/operators/ns/default/foo"
+          tag1Content="security"
+          tag2Content="kubeapps"
+          title="foo"
+        />
+      </CardGrid>
+      <h3>
+        Available Operators
+      </h3>
+      <CardGrid />
+    </LoadingWrapper>
+  </main>
+</div>
+`;
+
+exports[`render the operator list with installed operators 2`] = `
+<div>
+  <PageHeader>
+    <h1>
+      Operators
+    </h1>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+      type={0}
+    >
+      <h3>
+        Available Operators
+      </h3>
+      <CardGrid>
+        <InfoCard
+          icon="api/v1/namespaces/default/operator/foo/logo"
+          info="v1.0.0"
+          key="foo"
+          link="/operators/ns/default/foo"
+          tag1Content="security"
+          tag2Content="kubeapps"
+          title="foo"
+        />
+      </CardGrid>
     </LoadingWrapper>
   </main>
 </div>
