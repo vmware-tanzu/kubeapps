@@ -1,6 +1,8 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
+import helmIcon from "../../icons/helm.svg";
+import operatorIcon from "../../icons/operator-framework.svg";
 import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard";
 
@@ -39,6 +41,7 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   const iconSrc = icon || placeholder;
   let link;
   let tag1;
+  let subIcon;
   if (type === "chart") {
     tag1 = (
       <Link className="ListItem__content__info_tag_link" to={`/catalog/${repoName}`}>
@@ -46,11 +49,13 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
       </Link>
     );
     link = `/charts/${repoName}/${name}`;
+    subIcon = helmIcon;
   } else {
     // Cosmetic change, remove the version from the csv name
     const csvName = csv?.split(".v")[0];
     tag1 = <span>{csvName}</span>;
     link = `/operators-instances/ns/${namespace}/new/${csv}/${id}`;
+    subIcon = operatorIcon;
   }
   const descriptionC = (
     <div className="ListItem__content__description">{trimDescription(description)}</div>
@@ -65,7 +70,7 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
       description={descriptionC}
       tag1Content={tag1}
       tag1Class={repoName}
-      tag2Content={type}
+      subIcon={subIcon}
     />
   );
 };
