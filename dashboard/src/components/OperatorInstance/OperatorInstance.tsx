@@ -7,6 +7,7 @@ import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
 import { fromCRD } from "../../shared/ResourceRef";
 import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
+import { app } from "../../shared/url";
 import AppNotes from "../AppView/AppNotes";
 import AppValues from "../AppView/AppValues";
 import { IPartialAppViewState } from "../AppView/AppView";
@@ -141,7 +142,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
     } = this.props;
     const { resources } = this.state;
     const onUpdateClick = () =>
-      push(`/operators-instances/ns/${namespace}/${csvName}/${crdName}/update/${instanceName}`);
+      push(app.operatorInstances.update(namespace, csvName, crdName, instanceName));
 
     return (
       <section className="AppView padding-b-big">

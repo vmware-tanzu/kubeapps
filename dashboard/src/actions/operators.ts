@@ -45,6 +45,15 @@ export const errorResourceCreate = createAction("ERROR_RESOURCE_CREATE", resolve
   return (err: Error) => resolve(err);
 });
 
+export const updatingResource = createAction("UPDATING_RESOURCE");
+export const resourceUpdated = createAction("RESOURCE_UPDATED", resolve => {
+  return (resource: IResource) => resolve(resource);
+});
+
+export const errorResourceUpdate = createAction("ERROR_RESOURCE_UPDATE", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 export const deletingResource = createAction("DELETING_RESOURCE");
 export const resourceDeleted = createAction("RESOURCE_DELETED");
 export const errorResourceDelete = createAction("ERROR_RESOURCE_DELETE", resolve => {
@@ -82,6 +91,9 @@ const actions = [
   creatingResource,
   resourceCreated,
   errorResourceCreate,
+  updatingResource,
+  resourceUpdated,
+  errorResourceUpdate,
   requestCustomResources,
   receiveCustomResources,
   errorCustomResource,
@@ -222,13 +234,13 @@ export function updateResource(
   body: object,
 ): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
   return async dispatch => {
-    dispatch(creatingResource());
+    dispatch(updatingResource());
     try {
       const r = await Operators.updateResource(namespace, apiVersion, resource, name, body);
-      dispatch(resourceCreated(r));
+      dispatch(resourceUpdated(r));
       return true;
     } catch (e) {
-      dispatch(errorResourceCreate(e));
+      dispatch(errorResourceUpdate(e));
       return false;
     }
   };

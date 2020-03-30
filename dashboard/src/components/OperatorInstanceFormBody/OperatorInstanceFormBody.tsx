@@ -19,10 +19,10 @@ export interface IOperatorInstanceFormProps {
   handleDeploy: (resource: IResource) => void;
   defaultValues: string;
   crd?: IClusterServiceVersionCRD;
-  resource?: IResource;
   errors: {
     fetch?: Error;
     create?: Error;
+    update?: Error;
   };
 }
 
@@ -73,6 +73,12 @@ class DeploymentFormBody extends React.Component<
         {errors.create && (
           <ErrorSelector
             error={errors.create}
+            resource={`Operator Instance "${submittedResourceName}"`}
+          />
+        )}
+        {errors.update && (
+          <ErrorSelector
+            error={errors.update}
             resource={`Operator Instance "${submittedResourceName}"`}
           />
         )}

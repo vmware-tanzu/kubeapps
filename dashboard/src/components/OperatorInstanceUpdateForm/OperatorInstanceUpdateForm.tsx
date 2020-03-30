@@ -79,7 +79,6 @@ class DeploymentFormBody extends React.Component<
             isFetching={isFetching}
             namespace={namespace}
             handleDeploy={this.handleDeploy}
-            resource={resource}
             errors={errors}
             defaultValues={defaultValues}
           />

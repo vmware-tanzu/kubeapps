@@ -233,10 +233,10 @@ describe("updateResource", () => {
     Operators.updateResource = jest.fn(() => resource);
     const expectedActions = [
       {
-        type: getType(operatorActions.creatingResource),
+        type: getType(operatorActions.updatingResource),
       },
       {
-        type: getType(operatorActions.resourceCreated),
+        type: getType(operatorActions.resourceUpdated),
         payload: resource,
       },
     ];
@@ -250,10 +250,10 @@ describe("updateResource", () => {
     });
     const expectedActions = [
       {
-        type: getType(operatorActions.creatingResource),
+        type: getType(operatorActions.updatingResource),
       },
       {
-        type: getType(operatorActions.errorResourceCreate),
+        type: getType(operatorActions.errorResourceUpdate),
         payload: new Error("Boom!"),
       },
     ];
