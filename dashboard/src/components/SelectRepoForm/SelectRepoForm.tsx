@@ -16,7 +16,7 @@ interface ISelectRepoFormProps {
   repos: IAppRepository[];
   chartName: string;
   checkChart: (repo: string, chartName: string) => any;
-  fetchRepositories: () => void;
+  fetchRepositories: (namespace: string) => void;
 }
 
 interface ISelectRepoFormState {
@@ -32,7 +32,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
   };
 
   public componentDidMount() {
-    this.props.fetchRepositories();
+    this.props.fetchRepositories(this.props.namespace);
   }
 
   public render() {

@@ -121,20 +121,12 @@ export const resyncAllRepos = (
   };
 };
 
-// fetchRepos fetches the AppRepositories in a specified namespace, defaulting to those
-// in Kubeapps' own namespace for backwards compatibility.
+// fetchRepos fetches the AppRepositories in a specified namespace.
 export const fetchRepos = (
-  namespace = "",
+  namespace: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     try {
-      // Default to the kubeapps' namespace for existing call-sites until we
-      // need to explicitly get repos for a specific namespace as well as
-      // the global app repos from kubeapps' namespace.
-      if (namespace === "") {
-        const { config } = getState();
-        namespace = config.namespace;
-      }
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));

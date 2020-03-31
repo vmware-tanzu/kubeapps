@@ -51,7 +51,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       dispatch(actions.repos.checkChart(repo, chartName)),
     clearRepo: () => dispatch(actions.repos.clearRepo()),
     fetchChartVersions: (namespace: string, id: string) => dispatch(actions.charts.fetchChartVersions(namespace, id)),
-    fetchRepositories: () => dispatch(actions.repos.fetchRepos()),
+    fetchRepositories: (namespace: string) => dispatch(actions.repos.fetchRepos(namespace)),
     getAppWithUpdateInfo: (releaseName: string, ns: string) =>
       dispatch(actions.apps.getAppWithUpdateInfo(releaseName, ns)),
     getChartVersion: (namespace: string, id: string, version: string) =>
