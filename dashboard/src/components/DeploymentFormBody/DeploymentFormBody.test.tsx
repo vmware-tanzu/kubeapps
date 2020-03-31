@@ -16,6 +16,7 @@ import DeploymentFormBody, {
 import Differential from "./Differential";
 
 const defaultProps = {
+  chartNamespace: "chart-namespace",
   chartID: "foo",
   chartVersion: "1.0.0",
   error: undefined,
@@ -92,6 +93,7 @@ const chartVersion = {
         repo: {
           name: "repo",
           url: "http://example.com",
+          namespace: "repo-namespace",
         },
         sources: [],
       },

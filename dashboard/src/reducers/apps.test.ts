@@ -55,7 +55,7 @@ describe("appsReducer", () => {
         upToDate: false,
         chartLatestVersion: "1.0.0",
         appLatestVersion: "1.0.0",
-        repository: { name: "myrepo", url: "myrepo.com" },
+        repository: { name: "myrepo", url: "myrepo.com", namespace: "my-namespace" },
       };
 
       it("updates the listOverview entry with the updateInfo if it exists", () => {

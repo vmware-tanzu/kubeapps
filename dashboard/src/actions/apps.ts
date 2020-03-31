@@ -123,7 +123,7 @@ function getAppUpdateInfo(
       );
       let updateInfo: IChartUpdateInfo = {
         upToDate: true,
-        repository: { name: "", url: "" },
+        repository: { name: "", url: "", namespace: "" },
         chartLatestVersion: "",
         appLatestVersion: "",
       };
@@ -149,7 +149,7 @@ function getAppUpdateInfo(
       const updateInfo: IChartUpdateInfo = {
         error: e,
         upToDate: false,
-        repository: { name: "", url: "" },
+        repository: { name: "", url: "", namespace: "" },
         chartLatestVersion: "",
         appLatestVersion: "",
       };
