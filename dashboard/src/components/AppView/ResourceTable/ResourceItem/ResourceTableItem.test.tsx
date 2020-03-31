@@ -130,7 +130,7 @@ context("when there is a valid resouce", () => {
     expect(wrapper.find("td").text()).toEqual("No resource found");
   });
 
-  it("shows skips an empty component if requested", () => {
+  it("skips an empty component if requested", () => {
     const kubeList = {
       isFetching: false,
       item: { items: [] },

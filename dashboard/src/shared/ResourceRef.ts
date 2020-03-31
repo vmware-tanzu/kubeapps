@@ -16,7 +16,7 @@ export function fromCRD(
     },
   } as IResource;
   // Avoid namespace for cluster-wide resources supported (ClusterRole, ClusterRoleBinding)
-  // TODO(andresmgot): This won't work for new resourceTypes, we would need to dinamically
+  // TODO(andresmgot): This won't work for new resource types, we would need to dinamically
   // resolve those
   const resourceNamespace = r.kind.startsWith("Cluster") ? "" : namespace;
   return new ResourceRef(resource, resourceNamespace, {
