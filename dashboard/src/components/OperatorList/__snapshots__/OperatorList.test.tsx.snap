@@ -53,7 +53,7 @@ exports[`render the operator list with installed operators 1`] = `
 </div>
 `;
 
-exports[`render the operator list with installed operators 2`] = `
+exports[`render the operator list without installed operators 1`] = `
 <div>
   <PageHeader>
     <h1>
