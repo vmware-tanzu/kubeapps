@@ -12,7 +12,7 @@ let axiosGetMock = jest.fn();
 let store: any;
 let response: any;
 
-const namespace = "kubeapps-namespace";
+const namespace = "chart-namespace";
 
 beforeEach(() => {
   store = mockStore();
@@ -80,10 +80,10 @@ describe("fetchChartVersions", () => {
       { type: getType(actions.charts.requestCharts) },
       { type: getType(actions.charts.receiveChartVersions), payload: response },
     ];
-    await store.dispatch(actions.charts.fetchChartVersions("chart-namespace", "foo"));
+    await store.dispatch(actions.charts.fetchChartVersions(namespace, "foo"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/chart-namespace/charts/foo/versions`,
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
     );
   });
 });
@@ -219,10 +219,10 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       { type: getType(actions.charts.receiveChartVersions), payload: response },
       { type: getType(actions.charts.selectChartVersion), payload: { chartVersion: response[0] } },
     ];
-    await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("chart-namespace", "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/chart-namespace/charts/foo/versions`,
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
     );
   });
 
@@ -239,10 +239,10 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       throw new Error("could not find chart");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion("chart-namespace", "foo", "1.0.0"));
+    await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
-      `api/assetsvc/v1/ns/chart-namespace/charts/foo/versions`,
+      `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
     );
   });
 });

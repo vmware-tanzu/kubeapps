@@ -19,6 +19,7 @@ interface IRouteProps {
 function mapStateToProps({ charts, namespace }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     chartID: chartID(params),
+    chartNamespace: params.namespace,
     isFetching: charts.isFetching,
     namespace: namespace.current,
     selected: charts.selected,
@@ -33,8 +34,8 @@ function mapDispatchToProps(
   return {
     fetchChartVersionsAndSelectVersion: (namespace: string, id: string, version?: string) =>
       dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, id, version)),
-    getChartReadme: (version: string) =>
-      dispatch(actions.charts.getChartReadme(chartID(params), version)),
+    getChartReadme: (namespace: string, version: string) =>
+      dispatch(actions.charts.getChartReadme(namespace, chartID(params), version)),
     resetChartVersion: () => dispatch(actions.charts.resetChartVersion()),
     selectChartVersion: (version: IChartVersion) =>
       dispatch(actions.charts.selectChartVersion(version)),

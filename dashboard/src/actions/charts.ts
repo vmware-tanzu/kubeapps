@@ -91,7 +91,7 @@ export function fetchChartVersions(
   namespace: string,
   id: string,
 ): ThunkAction<Promise<IChartVersion[] | undefined>, IStoreState, null, ChartsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch  => {
     dispatch(requestCharts());
     try {
       const versions = await Chart.fetchChartVersions(namespace, id);
@@ -128,7 +128,7 @@ export function getChartVersion(
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     try {
       dispatch(requestCharts());
       const { chartVersion, values, schema } = await getChart(namespace, id, version);
@@ -146,7 +146,7 @@ export function getDeployedChartVersion(
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async (dispatch, getState) => {
+  return async dispatch => {
     try {
       dispatch(requestDeployedChartVersion());
       const { chartVersion, values, schema } = await getChart(namespace, id, version);
@@ -181,13 +181,11 @@ export function fetchChartVersionsAndSelectVersion(
 }
 
 export function getChartReadme(
+  namespace: string,
   id: string,
   version: string,
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
-  return async (dispatch, getState) => {
-    const {
-      config: { namespace },
-    } = getState();
+  return async dispatch => {
     try {
       const readme = await Chart.getReadme(namespace, id, version);
       dispatch(selectReadme(readme));
