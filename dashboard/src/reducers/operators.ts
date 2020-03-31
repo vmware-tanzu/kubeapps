@@ -93,9 +93,9 @@ const catalogReducer = (
     case getType(operators.receiveCustomResource):
       return { ...state, isFetching: false, resource: action.payload };
     case LOCATION_CHANGE:
-      return { ...initialState };
+      return { ...initialState, isOLMInstalled: state.isOLMInstalled };
     case getType(actions.namespace.setNamespace):
-      return { ...initialState };
+      return { ...initialState, isOLMInstalled: state.isOLMInstalled };
     default:
       return { ...state };
   }

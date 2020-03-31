@@ -17,6 +17,7 @@ function mapStateToProps(
     isOLMInstalled: operators.isOLMInstalled,
     operators: operators.operators,
     error: operators.errors.fetch,
+    csvs: operators.csvs,
   };
 }
 
@@ -24,6 +25,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   return {
     checkOLMInstalled: () => dispatch(actions.operators.checkOLMInstalled()),
     getOperators: (namespace: string) => dispatch(actions.operators.getOperators(namespace)),
+    getCSVs: (namespace: string) => dispatch(actions.operators.getCSVs(namespace)),
   };
 }
 
