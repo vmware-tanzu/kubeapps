@@ -134,7 +134,7 @@ it("render the operator list with installed operators", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
-it("render the operator list with installed operators", () => {
+it("render the operator list without installed operators", () => {
   const wrapper = shallow(
     <OperatorList {...defaultProps} isOLMInstalled={true} operators={[sampleOperator]} csvs={[]} />,
   );
