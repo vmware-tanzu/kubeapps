@@ -159,8 +159,8 @@ function getAppUpdateInfo(
 }
 
 export function getAppWithUpdateInfo(
-  releaseName: string,
   namespace: string,
+  releaseName: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     try {

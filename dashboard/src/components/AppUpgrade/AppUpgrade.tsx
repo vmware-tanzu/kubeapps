@@ -26,7 +26,7 @@ interface IAppUpgradeProps {
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
-  getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
+  getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
   getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
@@ -38,14 +38,14 @@ interface IAppUpgradeProps {
   chartsError: Error | undefined;
   repo: IAppRepository;
   repos: IAppRepository[];
-  checkChart: (repo: string, chartName: string) => any;
+  checkChart: (namespace: string, repo: string, chartName: string) => any;
   fetchRepositories: (namespace: string) => void;
 }
 
 class AppUpgrade extends React.Component<IAppUpgradeProps> {
   public componentDidMount() {
     const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
-    getAppWithUpdateInfo(releaseName, namespace);
+    getAppWithUpdateInfo(namespace, releaseName);
   }
 
   public componentDidUpdate(prevProps: IAppUpgradeProps) {

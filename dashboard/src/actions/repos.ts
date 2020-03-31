@@ -205,6 +205,7 @@ export const validateRepo = (
 };
 
 export function checkChart(
+  repoNamespace: string,
   repo: string,
   chartName: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {

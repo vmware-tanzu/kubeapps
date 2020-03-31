@@ -15,7 +15,7 @@ interface ISelectRepoFormProps {
   repo: IAppRepository;
   repos: IAppRepository[];
   chartName: string;
-  checkChart: (repo: string, chartName: string) => any;
+  checkChart: (namespace: string, repo: string, chartName: string) => any;
   fetchRepositories: (namespace: string) => void;
 }
 
@@ -110,7 +110,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
   }
 
   public handleChartRepoNameChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    this.props.checkChart(e.currentTarget.value, this.props.chartName);
+    this.props.checkChart(this.props.namespace, e.currentTarget.value, this.props.chartName);
     this.setState({ repo: e.currentTarget.value });
   };
 

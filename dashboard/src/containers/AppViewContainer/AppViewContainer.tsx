@@ -31,8 +31,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
   return {
     deleteApp: (releaseName: string, ns: string, purge: boolean) =>
       dispatch(actions.apps.deleteApp(releaseName, ns, purge)),
-    getAppWithUpdateInfo: (releaseName: string, ns: string) =>
-      dispatch(actions.apps.getAppWithUpdateInfo(releaseName, ns)),
+    getAppWithUpdateInfo: (namespace: string, releaseName: string) =>
+      dispatch(actions.apps.getAppWithUpdateInfo(namespace, releaseName)),
     // TODO: remove once WebSockets are moved to Redux store (#882)
     receiveResource: (payload: { key: string; resource: IResource }) =>
       dispatch(actions.kube.receiveResource(payload)),

@@ -13,6 +13,7 @@ import ChartView from "./ChartView";
 
 const props: any = {
   chartID: "testrepo/test",
+  chartNamespace: "kubeapps-namespace",
   fetchChartVersionsAndSelectVersion: jest.fn(),
   getChartReadme: jest.fn(),
   isFetching: false,
@@ -43,7 +44,7 @@ const testVersion = {
 it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
   const spy = jest.fn();
   shallow(<ChartView {...props} fetchChartVersionsAndSelectVersion={spy} />);
-  expect(spy).toHaveBeenCalledWith("testrepo/test", undefined);
+  expect(spy).toHaveBeenCalledWith("kubeapps-namespace", "testrepo/test", undefined);
 });
 
 describe("when receiving new props", () => {

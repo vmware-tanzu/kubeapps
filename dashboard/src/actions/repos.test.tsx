@@ -464,7 +464,7 @@ describe("checkChart", () => {
       },
     ];
 
-    await store.dispatch(repoActions.checkChart("my-repo", "my-chart"));
+    await store.dispatch(repoActions.checkChart(kubeappsNamespace, "my-repo", "my-chart"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(Chart.fetchChartVersions).toBeCalledWith("kubeapps-namespace", "my-repo/my-chart");
   });
@@ -484,7 +484,7 @@ describe("checkChart", () => {
       },
     ];
 
-    await store.dispatch(repoActions.checkChart("my-repo", "my-chart"));
+    await store.dispatch(repoActions.checkChart(kubeappsNamespace, "my-repo", "my-chart"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(Chart.fetchChartVersions).toBeCalledWith("kubeapps-namespace", "my-repo/my-chart");
   });
