@@ -11,20 +11,21 @@ import "./ChartView.css";
 
 interface IChartViewProps {
   chartID: string;
-  fetchChartVersionsAndSelectVersion: (id: string, version?: string) => void;
+  chartNamespace: string;
+  fetchChartVersionsAndSelectVersion: (namespace: string, id: string, version?: string) => void;
   isFetching: boolean;
   selected: IChartState["selected"];
   selectChartVersion: (version: IChartVersion) => any;
   resetChartVersion: () => any;
-  getChartReadme: (version: string) => any;
+  getChartReadme: (namespace: string, version: string) => any;
   namespace: string;
   version: string | undefined;
 }
 
 class ChartView extends React.Component<IChartViewProps> {
   public componentDidMount() {
-    const { chartID, fetchChartVersionsAndSelectVersion, version } = this.props;
-    fetchChartVersionsAndSelectVersion(chartID, version);
+    const { chartID, chartNamespace, fetchChartVersionsAndSelectVersion, version } = this.props;
+    fetchChartVersionsAndSelectVersion(chartNamespace, chartID, version);
   }
 
   public componentDidUpdate(prevProps: IChartViewProps) {
@@ -45,7 +46,7 @@ class ChartView extends React.Component<IChartViewProps> {
   }
 
   public render() {
-    const { isFetching, getChartReadme, namespace, chartID } = this.props;
+    const { isFetching, getChartReadme, namespace, chartID, chartNamespace } = this.props;
     const { version, readme, error, readmeError, versions } = this.props.selected;
     if (error) {
       return <ErrorSelector error={error} resource={`Chart ${chartID}`} />;
@@ -73,6 +74,7 @@ class ChartView extends React.Component<IChartViewProps> {
                   readme={readme}
                   hasError={!!readmeError}
                   version={version.attributes.version}
+                  chartNamespace={chartNamespace}
                 />
               </div>
               <div className="col-3 ChartView__sidebar-container">

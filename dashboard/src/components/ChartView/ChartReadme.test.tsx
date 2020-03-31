@@ -9,28 +9,37 @@ import itBehavesLike from "../../shared/specs";
 
 import ChartReadme from "./ChartReadme";
 
+const chartNamespace = "chart-namespace";
+const version = "1.2.3";
+
 context("when readme is not present", () => {
   itBehavesLike("aLoadingComponent", {
     component: ChartReadme,
     props: {
       getChartReadme: jest.fn(),
       hasError: false,
-      version: "1.2.3",
+      version,
+      chartNamespace,
     },
   });
 });
 
 describe("getChartReadme", () => {
   const spy = jest.fn();
-  const wrapper = shallow(<ChartReadme getChartReadme={spy} hasError={false} version="1.2.3" />);
+  const props = {
+    chartNamespace,
+    hasError: false,
+    version,
+  };
+  const wrapper = shallow(<ChartReadme getChartReadme={spy} {...props} />);
 
   it("gets triggered when mounting", () => {
-    expect(spy).toHaveBeenCalledWith("1.2.3");
+    expect(spy).toHaveBeenCalledWith(chartNamespace, version);
   });
 
   it("gets triggered after changing version", () => {
     wrapper.setProps({ version: "1.2.4" });
-    expect(spy).toHaveBeenCalledWith("1.2.4");
+    expect(spy).toHaveBeenCalledWith(chartNamespace, "1.2.4");
   });
 
   it("does not get triggered when version doesn't change", () => {
