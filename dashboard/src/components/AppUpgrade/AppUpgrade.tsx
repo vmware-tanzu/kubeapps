@@ -39,7 +39,7 @@ interface IAppUpgradeProps {
   repo: IAppRepository;
   repos: IAppRepository[];
   checkChart: (repo: string, chartName: string) => any;
-  fetchRepositories: () => void;
+  fetchRepositories: (namespace: string) => void;
 }
 
 class AppUpgrade extends React.Component<IAppUpgradeProps> {
