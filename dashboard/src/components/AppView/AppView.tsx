@@ -23,7 +23,7 @@ export interface IAppViewProps {
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
-  getAppWithUpdateInfo: (releaseName: string, namespace: string) => void;
+  getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
   deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
   push: (location: string) => RouterAction;
 }
@@ -78,13 +78,13 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public async componentDidMount() {
     const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
-    getAppWithUpdateInfo(releaseName, namespace);
+    getAppWithUpdateInfo(namespace, releaseName);
   }
 
   public componentDidUpdate(prevProps: IAppViewProps) {
     const { releaseName, getAppWithUpdateInfo, namespace, error, app } = this.props;
     if (prevProps.namespace !== namespace) {
-      getAppWithUpdateInfo(releaseName, namespace);
+      getAppWithUpdateInfo(namespace, releaseName);
       return;
     }
     if (error || !app) {
