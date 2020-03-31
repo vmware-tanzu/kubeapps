@@ -162,6 +162,11 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
             resourceRefs={Array []}
             title="Services"
           />
+          <ResourceTable
+            requestOtherResources={true}
+            resourceRefs={Array []}
+            title="Other Resources"
+          />
           <AppValues
             values="test: true
           "

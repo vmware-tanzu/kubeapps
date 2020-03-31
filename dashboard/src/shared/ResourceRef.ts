@@ -15,7 +15,13 @@ export function fromCRD(
       name: r.name,
     },
   } as IResource;
-  return new ResourceRef(resource, namespace, { metadata: { ownerReferences: [ownerReference] } });
+  // Avoid namespace for cluster-wide resources supported (ClusterRole, ClusterRoleBinding)
+  // TODO(andresmgot): This won't work for new resourceTypes, we would need to dinamically
+  // resolve those
+  const resourceNamespace = r.kind.startsWith("Cluster") ? "" : namespace;
+  return new ResourceRef(resource, resourceNamespace, {
+    metadata: { ownerReferences: [ownerReference] },
+  });
 }
 
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
@@ -35,11 +41,7 @@ class ResourceRef {
     this.apiVersion = r.apiVersion;
     this.kind = r.kind;
     this.name = r.metadata.name;
-    const namespace = r.metadata.namespace || defaultNamespace;
-    if (!namespace) {
-      throw new Error(`Namespace missing for resource ${this.name}, define a default namespace`);
-    }
-    this.namespace = namespace;
+    this.namespace = r.metadata.namespace || defaultNamespace || "";
     this.filter = defaultFilter;
     return this;
   }

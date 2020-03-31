@@ -5,6 +5,7 @@ import { IK8sList, IKubeItem, IResource, ISecret } from "../../../../shared/type
 import LoadingWrapper, { LoaderType } from "../../../LoadingWrapper";
 import DaemonSetItemRow from "./DaemonSetItem";
 import DeploymentItemRow from "./DeploymentItem";
+import OtherResourceItem from "./OtherResourceItem";
 import SecretItem from "./SecretItem/SecretItem";
 import ServiceItem from "./ServiceItem/ServiceItem";
 import StatefulSetItemRow from "./StatefulSetItem";
@@ -14,6 +15,7 @@ interface IResourceItemProps {
   resource?: IKubeItem<IResource | ISecret | IK8sList<IResource | ISecret, {}>>;
   watchResource: () => void;
   closeWatch: () => void;
+  avoidEmptyResouce?: boolean;
 }
 
 class WorkloadItem extends React.Component<IResourceItemProps> {
@@ -62,6 +64,9 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
       const listItem = resource.item as IK8sList<IResource | ISecret, {}>;
       if (listItem.items) {
         if (listItem.items.length === 0) {
+          if (this.props.avoidEmptyResouce) {
+            return null;
+          }
           return (
             <tr className="flex">
               <td className="col-12">No resource found</td>
@@ -92,8 +97,9 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
       return <ServiceItem resource={plainResource} />;
     } else if (r.metadata.selfLink.match("secrets")) {
       return <SecretItem resource={r as ISecret} />;
+    } else {
+      return <OtherResourceItem resource={plainResource} />;
     }
-    return null;
   };
 }
 

@@ -202,12 +202,12 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
                       />
                       <ResourceTable resourceRefs={resources.daemonSetRefs} title="DaemonSets" />
                       <ResourceTable resourceRefs={resources.serviceRefs} title="Services" />
-                      {resource.spec && <AppValues values={yaml.safeDump(resource.spec)} />}
-                      {/* TODO(andresmgot): Enable otherResourcesTable when they are fetched */}
-                      {/* <ResourceTable
+                      <ResourceTable
                         resourceRefs={resources.otherResources}
                         title="Other Resources"
-                      /> */}
+                        requestOtherResources={true}
+                      />
+                      {resource.spec && <AppValues values={yaml.safeDump(resource.spec)} />}
                     </>
                   )}
                 </div>

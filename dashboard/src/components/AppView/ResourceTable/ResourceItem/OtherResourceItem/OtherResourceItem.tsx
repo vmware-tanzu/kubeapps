@@ -1,8 +1,9 @@
 import * as React from "react";
-import ResourceRef from "shared/ResourceRef";
+import ResourceRef from "../../../../../shared/ResourceRef";
+import { IResource } from "../../../../../shared/types";
 
 export interface IOtherResourceProps {
-  resource: ResourceRef;
+  resource: IResource | ResourceRef;
 }
 
 export const OtherResourceColumns: React.SFC = () => {
@@ -16,11 +17,19 @@ export const OtherResourceColumns: React.SFC = () => {
 
 const OtherResourceItem: React.SFC<IOtherResourceProps> = props => {
   const { resource } = props;
+  let name;
+  const fullResource = resource as IResource;
+  if (fullResource.metadata && fullResource.metadata.name) {
+    name = fullResource.metadata.name;
+  } else {
+    const resourceRef = resource as ResourceRef;
+    name = resourceRef.name;
+  }
   return (
-    <tr key={`otherResources/${resource.kind}/${resource.name}`} className="flex">
-      <td className="col-6">{resource.name}</td>
+    <>
+      <td className="col-6">{name}</td>
       <td className="col-6">{resource.kind}</td>
-    </tr>
+    </>
   );
 };
 
