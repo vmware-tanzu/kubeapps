@@ -118,6 +118,7 @@ You can also use the URLs shown to directly access the application. Note that, d
 Learn more about Kubeapps with the links below:
 
 - [Detailed installation instructions](../../chart/kubeapps/README.md)
+- [Deploying Operators](./operators.md)
 - [Kubeapps Dashboard documentation](dashboard.md)
 - [Kubeapps components](../architecture/overview.md)
 - [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)
