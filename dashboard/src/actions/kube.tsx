@@ -89,7 +89,7 @@ export function getAndWatchResource(
           const msg = JSON.parse(e.data);
           const resource: IResource = msg.object;
           const key = ref.getResourceURL();
-          if (ref.name === "") {
+          if (!ref.name) {
             // if the ref doesn't have a name, it's a list
             dispatch(receiveResourceFromList({ key, resource }));
           } else {

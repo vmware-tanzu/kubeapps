@@ -66,7 +66,7 @@ describe("ResourceRef", () => {
         expect(res).toMatchObject({
           apiVersion: "apps/v1",
           kind: "Deployment",
-          name: "",
+          name: undefined,
           namespace: "default",
           filter: { metadata: { ownerReferences: [ownerRef] } },
         });
@@ -87,7 +87,7 @@ describe("ResourceRef", () => {
         expect(res).toMatchObject({
           apiVersion: "rbac.authorization.k8s.io/v1",
           kind: "ClusterRole",
-          name: "",
+          name: undefined,
           namespace: "",
           filter: { metadata: { ownerReferences: [ownerRef] } },
         });

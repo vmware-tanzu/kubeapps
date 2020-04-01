@@ -89,6 +89,20 @@ exports[`render the operator list without installed operators 1`] = `
     </h1>
   </PageHeader>
   <main>
+    <MessageAlertPage
+      level="warning"
+    >
+      <div>
+        Operators integration is under heavy development and currently in alpha state. If you find an issue please report it
+         
+        <a
+          href="https://github.com/kubeapps/kubeapps/issues"
+          target="_blank"
+        >
+          here.
+        </a>
+      </div>
+    </MessageAlertPage>
     <LoadingWrapper
       loaded={true}
       type={0}
