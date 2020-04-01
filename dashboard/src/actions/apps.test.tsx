@@ -161,7 +161,7 @@ describe("fetches applications", () => {
               upToDate: false,
               chartLatestVersion: "",
               appLatestVersion: "",
-              repository: { name: "", url: "" },
+              repository: { name: "", url: "", namespace: "" },
             },
           },
         },
