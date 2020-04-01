@@ -16,7 +16,8 @@ export const ResourceKindsWithPlurals = {
   Service: "services",
   ServiceAccount: "serviceaccounts",
   StatefulSet: "statefulsets",
-  Pods: "pods",
+  PersistentVolumeClaim: "persistentvolumeclaims",
+  Pod: "pods",
 } as const;
 
 export type ResourceKind = keyof typeof ResourceKindsWithPlurals;

@@ -155,7 +155,7 @@ describe("getAndWatchResource", () => {
     store.dispatch(actions.kube.getAndWatchResource(r));
     const testActions = store.getActions();
     expect(testActions).toEqual(expectedActions);
-    expect(getResourceMock).toHaveBeenCalledWith("v1", "services", "default", "");
+    expect(getResourceMock).toHaveBeenCalledWith("v1", "services", "default", undefined);
 
     const watchFunction = (testActions[1].payload as any).handler as (e: any) => void;
     watchFunction({ data: `{"object": ${JSON.stringify(svc)}}` });

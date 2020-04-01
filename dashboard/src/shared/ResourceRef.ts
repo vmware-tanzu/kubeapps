@@ -11,9 +11,7 @@ export function fromCRD(
   const resource = {
     apiVersion: Kube.resourceAPIVersion(r.kind as ResourceKind),
     kind: r.kind,
-    metadata: {
-      name: r.name,
-    },
+    metadata: {},
   } as IResource;
   // Avoid namespace for cluster-wide resources supported (ClusterRole, ClusterRoleBinding)
   // TODO(andresmgot): This won't work for new resource types, we would need to dinamically

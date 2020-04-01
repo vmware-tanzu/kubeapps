@@ -14,7 +14,8 @@ export const ResourceKindsWithAPIVersions = {
   Service: "v1",
   ServiceAccount: "v1",
   StatefulSet: "apps/v1",
-  Pods: "v1",
+  PersistentVolumeClaim: "v1",
+  Pod: "v1",
 } as const;
 
 export type ResourceAPIVersion = keyof typeof ResourceKindsWithAPIVersions;

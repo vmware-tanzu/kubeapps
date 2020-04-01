@@ -22,7 +22,7 @@ const StatefulSetItemRow: React.SFC<IStatefulSetItemRow> = props => {
   return (
     <React.Fragment>
       <td className="col-6">{props.resource.metadata.name}</td>
-      <td className="col-2">{status.replicas || 0}</td>
+      <td className="col-2">{props.resource.spec.replicas || 0}</td>
       <td className="col-2">{status.updatedReplicas || 0}</td>
       <td className="col-2">{status.readyReplicas || 0}</td>
     </React.Fragment>

@@ -109,8 +109,10 @@ describe("isFetching", () => {
           isFetching: false,
           item: {
             metadata: { name: "foo" },
-            status: {
+            spec: {
               replicas: 1,
+            },
+            status: {
               availableReplicas: 0,
             },
           } as IResource,
@@ -129,8 +131,10 @@ describe("isFetching", () => {
           isFetching: false,
           item: {
             metadata: { name: "foo" },
-            status: {
+            spec: {
               replicas: 1,
+            },
+            status: {
               readyReplicas: 0,
             },
           } as IResource,
@@ -181,8 +185,10 @@ describe("isFetching", () => {
           isFetching: false,
           item: {
             metadata: { name: "foo" },
-            status: {
+            spec: {
               replicas: 1,
+            },
+            status: {
               availableReplicas: 1,
             },
           } as IResource,
@@ -193,8 +199,10 @@ describe("isFetching", () => {
           isFetching: false,
           item: {
             metadata: { name: "foo" },
-            status: {
+            spec: {
               replicas: 1,
+            },
+            status: {
               readyReplicas: 1,
             },
           } as IResource,
@@ -224,8 +232,10 @@ describe("isFetching", () => {
           isFetching: false,
           item: {
             metadata: { name: "foo-dp" },
-            status: {
+            spec: {
               replicas: 1,
+            },
+            status: {
               availableReplicas: 1,
             },
           } as IResource,
@@ -236,8 +246,10 @@ describe("isFetching", () => {
           isFetching: false,
           item: {
             metadata: { name: "foo-ss" },
-            status: {
+            spec: {
               replicas: 1,
+            },
+            status: {
               readyReplicas: 0,
             },
           } as IResource,
@@ -273,8 +285,10 @@ describe("isFetching", () => {
             items: [
               {
                 metadata: { name: "foo-dp" },
-                status: {
+                spec: {
                   replicas: 1,
+                },
+                status: {
                   availableReplicas: 1,
                 },
               } as IResource,
@@ -289,8 +303,10 @@ describe("isFetching", () => {
             items: [
               {
                 metadata: { name: "foo-ss" },
-                status: {
+                spec: {
                   replicas: 1,
+                },
+                status: {
                   readyReplicas: 0,
                 },
               } as IResource,
@@ -328,13 +344,13 @@ describe("isFetching", () => {
       t.deployments.forEach(d => {
         const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${item.status.availableReplicas}/${item.status.replicas}${item.metadata.name}`,
+          `${item.status.availableReplicas}/${item.spec.replicas}${item.metadata.name}`,
         );
       });
       t.statefulsets.forEach(d => {
         const item = getItem(d.item);
         expect(tooltipText).toContain(
-          `${item.status.readyReplicas}/${item.status.replicas}${item.metadata.name}`,
+          `${item.status.readyReplicas}/${item.spec.replicas}${item.metadata.name}`,
         );
       });
       t.daemonsets.forEach(d => {

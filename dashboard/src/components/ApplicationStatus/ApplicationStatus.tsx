@@ -1,4 +1,5 @@
 import { flatten } from "lodash";
+import { get } from "lodash";
 import * as React from "react";
 import PieChart from "react-minimal-pie-chart";
 import * as ReactTooltip from "react-tooltip";
@@ -6,7 +7,7 @@ import * as ReactTooltip from "react-tooltip";
 import { AlertTriangle } from "react-feather";
 import isSomeResourceLoading from "../../components/AppView/helpers";
 import { hapi } from "../../shared/hapi/release";
-import { IDeploymentStatus, IK8sList, IKubeItem, IResource } from "../../shared/types";
+import { IK8sList, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
 interface IApplicationStatusProps {
@@ -54,24 +55,23 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
       [
         {
           workloads: this.flattenItemList(deployments),
-          readyKey: "availableReplicas",
-          totalKey: "replicas",
+          readyKey: "status.availableReplicas",
+          totalKey: "spec.replicas",
         },
         {
           workloads: this.flattenItemList(statefulsets),
-          readyKey: "readyReplicas",
-          totalKey: "replicas",
+          readyKey: "status.readyReplicas",
+          totalKey: "spec.replicas",
         },
         {
           workloads: this.flattenItemList(daemonsets),
-          readyKey: "numberReady",
-          totalKey: "currentNumberScheduled",
+          readyKey: "status.numberReady",
+          totalKey: "status.currentNumberScheduled",
         },
       ].forEach(src => {
         src.workloads.forEach(w => {
-          const status: IDeploymentStatus = w.status;
-          const wReady = status[src.readyKey];
-          const wTotal = status[src.totalKey];
+          const wReady = get(w, src.readyKey, 0);
+          const wTotal = get(w, src.totalKey, 0);
           if (wReady) {
             readyPods += wReady;
           }
@@ -80,8 +80,8 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
           }
           workloads = workloads.concat({
             name: w.metadata.name,
-            replicas: wTotal || 0,
-            readyReplicas: wReady || 0,
+            replicas: wTotal,
+            readyReplicas: wReady,
           });
         });
       });
