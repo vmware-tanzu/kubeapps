@@ -1,10 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders a ConfigMap 1`] = `
-<tr
-  className="flex"
-  key="otherResources/ConfigMap/foo"
->
+exports[`renders a ConfigMap as a resource 1`] = `
+<Fragment>
   <td
     className="col-6"
   >
@@ -15,5 +12,20 @@ exports[`renders a ConfigMap 1`] = `
   >
     ConfigMap
   </td>
-</tr>
+</Fragment>
+`;
+
+exports[`renders a ConfigMap as a resourceref 1`] = `
+<Fragment>
+  <td
+    className="col-6"
+  >
+    foo
+  </td>
+  <td
+    className="col-6"
+  >
+    ConfigMap
+  </td>
+</Fragment>
 `;

@@ -4,6 +4,7 @@ import * as React from "react";
 import ResourceItemContainer from "../../../containers/ResourceItemContainer";
 import ResourceRef from "../../../shared/ResourceRef";
 import { IResource } from "../../../shared/types";
+import OtherResourceItem from "./ResourceItem/OtherResourceItem";
 import ResourceTable from "./ResourceTable";
 
 it("skips the element if there are no resources", () => {
@@ -40,4 +41,24 @@ it("renders two resources", () => {
       .at(1)
       .prop("resourceRef"),
   ).toBe(deployRefs[1]);
+});
+
+it("renders OtherResourceItem", () => {
+  const resourceRefs = [
+    new ResourceRef({ kind: "ConfigMap", metadata: { name: "foo" } } as IResource, "default"),
+  ];
+  const wrapper = shallow(<ResourceTable resourceRefs={resourceRefs} title={""} />);
+  expect(wrapper.find(OtherResourceItem)).toExist();
+  expect(wrapper.find(ResourceItemContainer)).not.toExist();
+});
+
+it("renders OtherResource as ItemContainer", () => {
+  const resourceRefs = [
+    new ResourceRef({ kind: "ConfigMap", metadata: { name: "foo" } } as IResource, "default"),
+  ];
+  const wrapper = shallow(
+    <ResourceTable resourceRefs={resourceRefs} title={""} requestOtherResources={true} />,
+  );
+  expect(wrapper.find(OtherResourceItem)).not.toExist();
+  expect(wrapper.find(ResourceItemContainer)).toExist();
 });

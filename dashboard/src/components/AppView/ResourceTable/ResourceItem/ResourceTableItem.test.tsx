@@ -5,6 +5,7 @@ import * as React from "react";
 import itBehavesLike from "../../../../shared/specs";
 import { IKubeItem, IResource } from "../../../../shared/types";
 import DeploymentItemRow from "./DeploymentItem/DeploymentItem";
+import OtherResourceItem from "./OtherResourceItem";
 import ResourceTableItem from "./ResourceTableItem";
 
 const kubeItem: IKubeItem<IResource> = {
@@ -83,7 +84,7 @@ context("when there is a valid resouce", () => {
     const deployment = {
       metadata: {
         name: "foo",
-        selfLink: "/foo",
+        selfLink: "/deployments/foo",
       },
       status: { replicas: 1, updatedReplicas: 1, availableReplicas: 1 },
     } as IResource;
@@ -127,5 +128,35 @@ context("when there is a valid resouce", () => {
     );
     expect(wrapper.find("td")).toExist();
     expect(wrapper.find("td").text()).toEqual("No resource found");
+  });
+
+  it("skips an empty component if requested", () => {
+    const kubeList = {
+      isFetching: false,
+      item: { items: [] },
+    };
+    const wrapper = shallow(
+      <ResourceTableItem
+        {...defaultProps}
+        resource={kubeList as any}
+        name={""}
+        avoidEmptyResouce={true}
+      />,
+    );
+    expect(wrapper.find("td")).not.toExist();
+  });
+
+  it("renders a ConfigMap", () => {
+    const cm = {
+      metadata: {
+        name: "foo",
+        selfLink: "/configmaps/foo",
+      },
+    } as IResource;
+    kubeItem.item = cm;
+    const wrapper = shallow(
+      <ResourceTableItem {...defaultProps} resource={kubeItem} name={cm.metadata.name} />,
+    );
+    expect(wrapper.find(OtherResourceItem)).toExist();
   });
 });

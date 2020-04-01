@@ -14,6 +14,7 @@ import { StatefulSetColumns } from "./ResourceItem/StatefulSetItem/StatefulSetIt
 interface IResourceTableProps {
   title: string;
   resourceRefs: ResourceRef[];
+  requestOtherResources?: boolean;
 }
 
 class ResourceTable extends React.Component<IResourceTableProps> {
@@ -38,9 +39,20 @@ class ResourceTable extends React.Component<IResourceTableProps> {
                   case "Secret":
                     return <ResourceItemContainer key={r.getResourceURL()} resourceRef={r} />;
                   default:
-                    return (
+                    return this.props.requestOtherResources ? (
+                      <ResourceItemContainer
+                        key={r.getResourceURL()}
+                        resourceRef={r}
+                        avoidEmptyResouce={true}
+                      />
+                    ) : (
                       // We may not know the plural of the resource so we don't get the full resource URL
-                      <OtherResourceItem key={`${r.kind}/${r.namespace}/${r.name}`} resource={r} />
+                      <tr key={`otherResources/${r.kind}/${r.name}`} className="flex">
+                        <OtherResourceItem
+                          key={`${r.kind}/${r.namespace}/${r.name}`}
+                          resource={r}
+                        />
+                      </tr>
                     );
                 }
               })}
