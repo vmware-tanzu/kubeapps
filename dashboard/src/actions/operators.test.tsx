@@ -44,6 +44,26 @@ describe("checkOLMInstalled", () => {
     await store.dispatch(operatorActions.checkOLMInstalled());
     expect(store.getActions()).toEqual(expectedActions);
   });
+
+  it("dispatches error", async () => {
+    Operators.isOLMInstalled = jest.fn(() => {
+      throw new Error("nope");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.checkingOLM),
+      },
+      {
+        type: getType(operatorActions.errorOperators),
+        payload: new Error("nope"),
+      },
+      {
+        type: getType(operatorActions.OLMNotInstalled),
+      },
+    ];
+    await store.dispatch(operatorActions.checkOLMInstalled());
+    expect(store.getActions()).toEqual(expectedActions);
+  });
 });
 
 describe("getOperators", () => {

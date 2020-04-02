@@ -114,9 +114,15 @@ export function checkOLMInstalled(): ThunkAction<
 > {
   return async dispatch => {
     dispatch(checkingOLM());
-    const installed = await Operators.isOLMInstalled();
-    installed ? dispatch(OLMInstalled()) : dispatch(OLMNotInstalled());
-    return installed;
+    try {
+      const installed = await Operators.isOLMInstalled();
+      installed ? dispatch(OLMInstalled()) : dispatch(OLMNotInstalled());
+      return installed;
+    } catch (e) {
+      dispatch(errorOperators(e));
+      dispatch(OLMNotInstalled());
+      return false;
+    }
   };
 }
 

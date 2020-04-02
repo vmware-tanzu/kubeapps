@@ -15,7 +15,7 @@ it("check if the OLM has been installed", async () => {
 
 it("OLM is not installed if the request fails", async () => {
   axiosWithAuth.get = jest.fn(() => {
-    throw new Error("nope");
+    return { status: 404 };
   });
   expect(await Operators.isOLMInstalled()).toBe(false);
 });
