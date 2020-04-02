@@ -29,7 +29,7 @@ class CustomResourceListItem extends React.Component<ICustomResourceListItemProp
     return (
       <InfoCard
         key={resource.metadata.name}
-        link={`/operators-instances/ns/${resource.metadata.namespace}/${csv.metadata.name}/${crd.name}/${resource.metadata.name}`}
+        link={`/ns/${resource.metadata.namespace}/operators-instances/${csv.metadata.name}/${crd.name}/${resource.metadata.name}`}
         title={resource.metadata.name}
         icon={icon}
         info={`${resource.kind} v${csv.spec.version || "-"}`}

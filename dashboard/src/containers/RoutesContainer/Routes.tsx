@@ -67,11 +67,11 @@ class Routes extends React.Component<IRoutesProps> {
     if (this.props.featureFlags.operators) {
       // Add routes related to operators
       Object.assign(privateRoutes, {
-        "/operators/ns/:namespace": OperatorsListContainer,
-        "/operators/ns/:namespace/:operator": OperatorViewContainer,
-        "/operators-instances/ns/:namespace/new/:csv/:crd": OperatorInstanceCreateContainer,
-        "/operators-instances/ns/:namespace/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
-        "/operators-instances/ns/:namespace/:csv/:crd/update/:instanceName": OperatorInstanceUpdateContainer,
+        "/ns/:namespace/operators": OperatorsListContainer,
+        "/ns/:namespace/operators/:operator": OperatorViewContainer,
+        "/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
+        "/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
+        "/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
       });
     }
     return (
