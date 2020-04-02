@@ -166,7 +166,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       );
       this.setState({ isDeploying: false });
       if (deployed) {
-        push(`/apps/ns/${namespace}/${releaseName}`);
+        push(`/ns/${namespace}/apps/${releaseName}`);
       }
     }
   };

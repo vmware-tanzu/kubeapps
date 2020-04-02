@@ -109,7 +109,7 @@ it("triggers an upgrade when submitting the form", done => {
   wrapper.find("form").simulate("submit");
   expect(upgradeApp).toHaveBeenCalledWith(versions[0], releaseName, namespace, appValues, schema);
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith("/apps/ns/default/my-release");
+    expect(push).toHaveBeenCalledWith("/ns/default/apps/my-release");
     done();
   }, 1);
 });

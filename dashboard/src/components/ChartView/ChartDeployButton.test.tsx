@@ -30,11 +30,11 @@ it("renders a button to deploy the chart version", () => {
 
 it("renders a redirect with the correct URL when the button is clicked", () => {
   const testCases = [
-    { namespace: "test", version: "1.2.3", url: "/apps/ns/test/new/testrepo/test/versions/1.2.3" },
+    { namespace: "test", version: "1.2.3", url: "/ns/test/apps/new/testrepo/test/versions/1.2.3" },
     {
       namespace: "foo",
       version: "alpha-0",
-      url: "/apps/ns/foo/new/testrepo/test/versions/alpha-0",
+      url: "/ns/foo/apps/new/testrepo/test/versions/alpha-0",
     },
   ];
 

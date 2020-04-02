@@ -21,7 +21,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
     return (
       <InfoCard
         key={app.releaseName}
-        link={`/apps/ns/${app.namespace}/${app.releaseName}`}
+        link={`/ns/${app.namespace}/apps/${app.releaseName}`}
         title={app.releaseName}
         icon={icon}
         info={`${app.chart} v${app.version || "-"}`}

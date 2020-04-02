@@ -31,7 +31,7 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
         {this.state.clicked && (
           <Redirect
             push={true}
-            to={`/apps/ns/${namespace}/new/${repoName}/${chartName}/versions/${versionStr}`}
+            to={`/ns/${namespace}/apps/new/${repoName}/${chartName}/versions/${versionStr}`}
           />
         )}
       </div>

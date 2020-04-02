@@ -24,9 +24,9 @@ it("renders the header links and titles", () => {
   const menubar = wrapper.find(".header__nav__menu").first();
   const items = menubar.children().map(p => p.props().children.props);
   const expectedItems = [
-    { children: "Applications", to: "/apps" },
-    { children: "Catalog", to: "/catalog" },
-    { children: "Service Instances (alpha)", to: "/services/instances" },
+    { children: "Applications", to: "apps" },
+    { children: "Catalog", to: "catalog" },
+    { children: "Service Instances (alpha)", to: "services/instances" },
   ];
   items.forEach((item, index) => {
     expect(item.children).toBe(expectedItems[index].children);

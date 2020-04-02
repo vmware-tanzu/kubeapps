@@ -83,7 +83,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
             )
           }
         />
-        {this.state.redirectToAppList && <Redirect to={`/apps/ns/${namespace}`} />}
+        {this.state.redirectToAppList && <Redirect to={`/ns/${namespace}/apps`} />}
       </div>
     );
   }

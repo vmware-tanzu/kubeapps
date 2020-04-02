@@ -19,7 +19,7 @@ class HeaderLink extends React.Component<IHeaderLinkProps> {
 
   public renderInternalLink() {
     const { currentNamespace, namespaced, to } = this.props;
-    const link = currentNamespace && namespaced ? `${to}/ns/${currentNamespace}` : to;
+    const link = currentNamespace && namespaced ? `/ns/${currentNamespace}/${to}` : to;
     return (
       <NavLink
         to={link}

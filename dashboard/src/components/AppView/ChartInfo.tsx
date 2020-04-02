@@ -99,7 +99,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
               {update}
               <br />
               <span>
-                Click <Link to={`/apps/ns/${app.namespace}/upgrade/${app.name}`}>here</Link> to
+                Click <Link to={`/ns/${app.namespace}/apps/${app.name}/upgrade`}>here</Link> to
                 upgrade.
               </span>
             </React.Fragment>
