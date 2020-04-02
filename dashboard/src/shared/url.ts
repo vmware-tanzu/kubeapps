@@ -8,11 +8,11 @@ export const app = {
       `/charts/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${cv.attributes.version}`,
   },
   operators: {
-    view: (namespace: string, name: string) => `/operators/ns/${namespace}/${name}`,
+    view: (namespace: string, name: string) => `/ns/${namespace}/operators/${name}`,
   },
   operatorInstances: {
     update: (namespace: string, csvName: string, crdName: string, instanceName: string) =>
-      `/operators-instances/ns/${namespace}/${csvName}/${crdName}/update/${instanceName}`,
+      `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${instanceName}/update`,
   },
 };
 

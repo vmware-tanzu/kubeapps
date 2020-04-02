@@ -97,7 +97,7 @@ context("when the item is a catalog", () => {
   it("has the proper link", () => {
     const wrapper = shallow(<CatalogItem item={catalogItem} />);
     expect(wrapper.find(InfoCard).prop("link")).toEqual(
-      "/operators-instances/ns/kubeapps/new/foo-cluster/foo1",
+      "/ns/kubeapps/operators-instances/new/foo-cluster/foo1",
     );
   });
 });

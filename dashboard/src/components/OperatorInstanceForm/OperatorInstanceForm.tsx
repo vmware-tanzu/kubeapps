@@ -117,7 +117,7 @@ class DeploymentFormBody extends React.Component<
     const created = await createResource(namespace, resource.apiVersion, resourceType, resource);
     if (created) {
       push(
-        `/operators-instances/ns/${namespace}/${csv.metadata.name}/${crd.name}/${resource.metadata.name}`,
+        `/ns/${namespace}/operators-instances/${csv.metadata.name}/${crd.name}/${resource.metadata.name}`,
       );
     }
   };

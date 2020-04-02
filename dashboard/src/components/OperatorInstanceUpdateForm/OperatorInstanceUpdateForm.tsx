@@ -98,7 +98,7 @@ class DeploymentFormBody extends React.Component<
       resource,
     );
     if (created) {
-      push(`/operators-instances/ns/${namespace}/${csvName}/${crdName}/${resourceName}`);
+      push(`/ns/${namespace}/operators-instances/${csvName}/${crdName}/${resourceName}`);
     }
   };
 }
