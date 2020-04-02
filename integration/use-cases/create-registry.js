@@ -1,5 +1,5 @@
 test("Creates a registry", async () => {
-  await page.goto(getUrl("/#/config/ns/kubeapps/repos"));
+  await page.goto(getUrl("/#/config/repos"));
 
   await expect(page).toFillForm("form", {
     token: process.env.ADMIN_TOKEN
