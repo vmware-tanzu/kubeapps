@@ -32,7 +32,7 @@ it("renders an app item", () => {
       .find(Link)
       .at(0)
       .props().to,
-  ).toBe("/apps/ns/default/foo");
+  ).toBe("/ns/default/apps/foo");
   expect(card.find(".type-color-light-blue").text()).toBe("myapp v1.0.0");
   expect(card.find(".deployed").exists()).toBe(true);
   expect(card.find(".ListItem__content__info_tag-1").text()).toBe("default");

@@ -137,7 +137,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
       );
       this.setState({ isDeploying: false });
       if (deployed) {
-        push(`/apps/ns/${namespace}/${releaseName}`);
+        push(`/ns/${namespace}/apps/${releaseName}`);
       }
     }
   };

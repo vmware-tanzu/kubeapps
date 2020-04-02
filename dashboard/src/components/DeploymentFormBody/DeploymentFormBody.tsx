@@ -144,7 +144,7 @@ class DeploymentFormBody extends React.Component<
       getChartVersion(chartID, e.currentTarget.value);
     } else {
       this.props.push(
-        `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
+        `/ns/${this.props.namespace}/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
       );
     }
   };

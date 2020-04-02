@@ -25,10 +25,10 @@ import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewCo
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 const privateRoutes = {
-  "/apps/ns/:namespace": AppListContainer,
-  "/apps/ns/:namespace/:releaseName": AppViewContainer,
-  "/apps/ns/:namespace/new/:repo/:id/versions/:version": AppNewContainer,
-  "/apps/ns/:namespace/upgrade/:releaseName": AppUpgradeContainer,
+  "/ns/:namespace/apps": AppListContainer,
+  "/ns/:namespace/apps/:releaseName": AppViewContainer,
+  "/ns/:namespace/apps/:releaseName/upgrade": AppUpgradeContainer,
+  "/ns/:namespace/apps/new/:repo/:id/versions/:version": AppNewContainer,
   "/catalog/ns/:namespace": CatalogContainer,
   "/catalog/ns/:namespace/:repo": CatalogContainer,
   "/charts/:repo/:id": ChartViewContainer,
@@ -96,7 +96,7 @@ class Routes extends React.Component<IRoutesProps> {
   }
   private rootNamespacedRedirect = () => {
     if (this.props.namespace && this.props.authenticated) {
-      return <Redirect to={`/apps/ns/${this.props.namespace}`} />;
+      return <Redirect to={`/ns/${this.props.namespace}/apps`} />;
     }
     // There is not a default namespace, redirect to login page
     return <Redirect to={"/login"} />;

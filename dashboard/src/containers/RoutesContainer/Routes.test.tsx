@@ -41,7 +41,7 @@ it("should render a redirect to the default namespace", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual("/apps/ns/default");
+  expect(wrapper.find(Redirect).prop("to")).toEqual("/ns/default/apps");
 });
 
 it("should render a redirect to the login page", () => {

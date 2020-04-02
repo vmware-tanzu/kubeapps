@@ -11,7 +11,7 @@ interface IUpgradeButtonProps {
 
 const UpgradeButton: React.SFC<IUpgradeButtonProps> = props => {
   const { newVersion, push, releaseName, releaseNamespace } = props;
-  const onClick = () => push(`/apps/ns/${releaseNamespace}/upgrade/${releaseName}`);
+  const onClick = () => push(`/ns/${releaseNamespace}/apps/${releaseName}/upgrade`);
   let upgradeButton = (
     <button className="button" onClick={onClick}>
       Upgrade

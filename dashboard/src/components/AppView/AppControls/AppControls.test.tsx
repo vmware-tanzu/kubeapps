@@ -40,7 +40,7 @@ it("calls delete function when clicking the button", done => {
     wrapper.update();
     const redirect = wrapper.find(Redirect);
     expect(redirect.props()).toMatchObject({
-      to: `/apps/ns/${namespace}`,
+      to: `/ns/${namespace}/apps`,
     } as any);
     done();
   }, 1);

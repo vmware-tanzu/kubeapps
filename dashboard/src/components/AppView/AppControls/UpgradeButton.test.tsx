@@ -17,7 +17,7 @@ it("renders a redirect when clicking upgrade", () => {
 
   button.simulate("click");
   expect(push.mock.calls.length).toBe(1);
-  expect(push.mock.calls[0]).toEqual(["/apps/ns/default/upgrade/foo"]);
+  expect(push.mock.calls[0]).toEqual(["/ns/default/apps/foo/upgrade"]);
 });
 
 context("when a new version is available", () => {
