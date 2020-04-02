@@ -640,6 +640,6 @@ authProxy:
 ## Feature flags
 ## These are used to switch on in development features or new features which are ready to be released.
 featureFlags:
-  reposPerNamespace: true
+  reposPerNamespace: false
   invalidateCache: true
   operators: false
