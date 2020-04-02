@@ -26,7 +26,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
     return (
       <tr key={repo.metadata.name}>
         <td>
-          <Link to={`/catalog/ns/${namespace}/${repo.metadata.name}`}>{repo.metadata.name}</Link>
+          <Link to={`/ns/${namespace}/catalog/${repo.metadata.name}`}>{repo.metadata.name}</Link>
         </td>
         {renderNamespace && <td>{repo.metadata.namespace}</td>}
         <td>{repo.spec && repo.spec.url}</td>
