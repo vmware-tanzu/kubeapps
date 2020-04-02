@@ -43,17 +43,17 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       children: "Applications",
       exact: true,
       namespaced: true,
-      to: "/apps",
+      to: "apps",
     },
     {
       children: "Catalog",
       namespaced: true,
-      to: "/catalog",
+      to: "catalog",
     },
     {
       children: "Service Instances (alpha)",
       namespaced: true,
-      to: "/services/instances",
+      to: "services/instances",
     },
   ];
 

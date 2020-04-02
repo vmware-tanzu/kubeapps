@@ -37,7 +37,7 @@ const privateRoutes = {
   "/services/brokers/:brokerName/classes/:className": ServiceClassViewContainer,
   "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": ServiceInstanceViewContainer,
   "/services/classes": ServiceClassListContainer,
-  "/services/instances/ns/:namespace": ServiceInstanceListContainer,
+  "/ns/:namespace/services/instances": ServiceInstanceListContainer,
 } as const;
 
 // Public routes that don't require authentication
