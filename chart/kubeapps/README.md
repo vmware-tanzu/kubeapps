@@ -98,6 +98,10 @@ Kubeapps supports two database types: MongoDB or PostgreSQL. By default MongoDB 
 
 > **Note**: Changing the database type when upgrading is not supported.
 
+### Enabling Operators
+
+Since v1.9.0, Kubeapps supports to deploy and manage Operators within its dashboard. To enable this feature, set the flag `featureFlags.operators=true`. More information about how to enable and use this feature can be found in [this guide](https://github.com/kubeapps/kubeapps/blob/master/docs/user/operators.md).
+
 ### [Only for Helm 2] Configuring connection to a custom namespace Tiller instance
 
 By default, Kubeapps connects to the Tiller Service in the `kube-system` namespace, the default install location for Helm.
