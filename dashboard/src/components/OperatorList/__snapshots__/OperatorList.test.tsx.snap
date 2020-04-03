@@ -6,6 +6,13 @@ exports[`loading spinner matches the snapshot 1`] = `
     <h1>
       Operators
     </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search operators..."
+      value=""
+    />
   </PageHeader>
   <main>
     <MessageAlertPage
@@ -38,6 +45,13 @@ exports[`render the operator list with installed operators 1`] = `
     <h1>
       Operators
     </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search operators..."
+      value=""
+    />
   </PageHeader>
   <main>
     <MessageAlertPage
@@ -87,6 +101,13 @@ exports[`render the operator list without installed operators 1`] = `
     <h1>
       Operators
     </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search operators..."
+      value=""
+    />
   </PageHeader>
   <main>
     <MessageAlertPage

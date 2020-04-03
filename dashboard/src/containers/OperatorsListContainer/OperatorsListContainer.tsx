@@ -1,3 +1,4 @@
+import * as qs from "qs";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Action } from "redux";
@@ -18,6 +19,7 @@ function mapStateToProps(
     operators: operators.operators,
     error: operators.errors.fetch,
     csvs: operators.csvs,
+    filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
   };
 }
 
@@ -26,6 +28,7 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     checkOLMInstalled: () => dispatch(actions.operators.checkOLMInstalled()),
     getOperators: (namespace: string) => dispatch(actions.operators.getOperators(namespace)),
     getCSVs: (namespace: string) => dispatch(actions.operators.getCSVs(namespace)),
+    pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),
   };
 }
 
