@@ -9,7 +9,7 @@ import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
   { charts, operators, config }: IStoreState,
-  { match: { params }, location }: RouteComponentProps<{ repo: string }>,
+  { match: { params }, location }: RouteComponentProps<{ namespace: string, repo: string }>,
 ) {
   return {
     charts,

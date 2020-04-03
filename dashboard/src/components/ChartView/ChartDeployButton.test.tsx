@@ -15,6 +15,7 @@ const testChartVersion: IChartVersion = {
         name: "test",
         repo: {
           name: "testrepo",
+          // namespace: "
         },
       },
     },

@@ -25,6 +25,7 @@ const defaultProps = {
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
   namespace: "kubeapps",
+  kubeappsNamespace: "kubeapps",
   csvs: [],
   getCSVs: jest.fn(),
   featureFlags: { operators: false },

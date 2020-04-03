@@ -11,6 +11,7 @@ import { IChartVersion, IStoreState } from "../../shared/types";
 interface IRouteProps {
   match: {
     params: {
+      namespace: string;
       repo: string;
       global: string;
       id: string;

@@ -35,7 +35,7 @@ it("should render a global chart item in a namespace", () => {
     repo: {
       name: "repo-name",
       namespace: "kubeapps",
-    },
+    } as IRepo,
   };
   const wrapper = shallow(<CatalogItem item={globalItem} />);
   expect(wrapper).toMatchSnapshot();
