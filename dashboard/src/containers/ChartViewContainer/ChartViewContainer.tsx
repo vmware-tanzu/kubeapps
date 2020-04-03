@@ -11,18 +11,19 @@ interface IRouteProps {
     params: {
       namespace: string;
       repo: string;
+      global: string;
       id: string;
       version?: string;
     };
   };
 }
 
-function mapStateToProps({ charts, namespace }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ charts, config }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     chartID: chartID(params),
-    chartNamespace: params.namespace,
+    chartNamespace: params.global === "global" ? config.namespace : params.namespace,
     isFetching: charts.isFetching,
-    namespace: namespace.current,
+    namespace: params.namespace,
     selected: charts.selected,
     version: params.version,
   };

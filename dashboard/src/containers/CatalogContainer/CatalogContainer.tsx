@@ -8,7 +8,7 @@ import Catalog from "../../components/Catalog";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { charts, operators, namespace, config }: IStoreState,
+  { charts, operators, config }: IStoreState,
   { match: { params }, location }: RouteComponentProps<{ repo: string }>,
 ) {
   return {
@@ -16,7 +16,8 @@ function mapStateToProps(
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     repo: params.repo,
     csvs: operators.csvs,
-    namespace: namespace.current,
+    namespace: params.namespace,
+    kubeappsNamespace: config.namespace,
     featureFlags: config.featureFlags,
   };
 }

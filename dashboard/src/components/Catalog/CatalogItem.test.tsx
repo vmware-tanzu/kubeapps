@@ -3,6 +3,7 @@ import context from "jest-plugin-context";
 import { cloneDeep } from "lodash";
 import * as React from "react";
 
+import { IRepo } from "../../shared/types";
 import { CardIcon } from "../Card";
 import InfoCard from "../InfoCard";
 import CatalogItem, { ICatalogItem } from "./CatalogItem";
@@ -15,12 +16,28 @@ const defaultItem = {
   version: "1.0.0",
   description: "",
   type: "chart",
-  namespace: "kubeapps",
+  repo: {
+    name: "repo-name",
+    namespace: "repo-namespace",
+  } as IRepo,
+  namespace: "repo-namespace",
   icon: "icon.png",
 } as ICatalogItem;
 
-it("should render an item", () => {
+it("should render a chart item in a namespace", () => {
   const wrapper = shallow(<CatalogItem item={defaultItem} />);
+  expect(wrapper).toMatchSnapshot();
+});
+
+it("should render a global chart item in a namespace", () => {
+  const globalItem = {
+    ...defaultItem,
+    repo: {
+      name: "repo-name",
+      namespace: "kubeapps",
+    },
+  };
+  const wrapper = shallow(<CatalogItem item={globalItem} />);
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -97,7 +114,7 @@ context("when the item is a catalog", () => {
   it("has the proper link", () => {
     const wrapper = shallow(<CatalogItem item={catalogItem} />);
     expect(wrapper.find(InfoCard).prop("link")).toEqual(
-      "/ns/kubeapps/operators-instances/new/foo-cluster/foo1",
+      `/ns/${defaultItem.namespace}/operators-instances/new/foo-cluster/foo1`,
     );
   });
 });

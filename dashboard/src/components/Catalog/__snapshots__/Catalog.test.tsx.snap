@@ -35,7 +35,10 @@ exports[`renderization when charts available should render the list of charts 1`
                 "id": "bar",
                 "name": "bar",
                 "namespace": "kubeapps",
-                "repoName": "bar",
+                "repo": Object {
+                  "name": "bar",
+                  "namespace": "chart-namespace",
+                },
                 "type": "chart",
                 "version": "v2.0.0",
               }
@@ -50,7 +53,10 @@ exports[`renderization when charts available should render the list of charts 1`
                 "id": "foo",
                 "name": "foo",
                 "namespace": "kubeapps",
-                "repoName": "foo",
+                "repo": Object {
+                  "name": "foo",
+                  "namespace": "chart-namespace",
+                },
                 "type": "chart",
                 "version": "v1.0.0",
               }
