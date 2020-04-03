@@ -15,7 +15,7 @@ const testChartVersion: IChartVersion = {
         name: "test",
         repo: {
           name: "testrepo",
-          // namespace: "
+          namespace: "kubeapps",
         },
       },
     },
@@ -23,7 +23,7 @@ const testChartVersion: IChartVersion = {
 } as IChartVersion;
 
 it("renders a button to deploy the chart version", () => {
-  const wrapper = shallow(<ChartDeployButton version={testChartVersion} namespace="test" />);
+  const wrapper = shallow(<ChartDeployButton version={testChartVersion} namespace="kubeapps" />);
   const button = wrapper.find("button");
   expect(button.exists()).toBe(true);
   expect(button.text()).toBe("Deploy");
@@ -31,11 +31,11 @@ it("renders a button to deploy the chart version", () => {
 
 it("renders a redirect with the correct URL when the button is clicked", () => {
   const testCases = [
-    { namespace: "test", version: "1.2.3", url: "/ns/test/apps/new/testrepo/test/versions/1.2.3" },
+    { namespace: "kubeapps", version: "1.2.3", url: "/ns/kubeapps/apps/new/testrepo/test/versions/1.2.3" },
     {
       namespace: "foo",
       version: "alpha-0",
-      url: "/ns/foo/apps/new/testrepo/test/versions/alpha-0",
+      url: "/ns/foo/apps/new-from-global/testrepo/test/versions/alpha-0",
     },
   ];
 
