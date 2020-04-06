@@ -259,7 +259,7 @@ describe("filter operators", () => {
     wrapper.setProps({ operators: [sampleOperator, sampleOperator2] });
     expect(wrapper.find(InfoCard).length).toBe(2);
 
-    // Filter category "security"
+    // Filter by capability "Basic Install"
     wrapper.setState({
       filterCapabilities: {
         [BASIC_INSTALL]: true,
