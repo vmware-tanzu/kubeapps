@@ -160,6 +160,20 @@ describe("filter operators", () => {
     metadata: {
       name: "bar",
     },
+    status: {
+      ...sampleOperator.status,
+      channels: [
+        {
+          ...sampleOperator.status.channels[0],
+          currentCSVDesc: {
+            version: "1.0.0",
+            annotations: {
+              categories: "database, other",
+            },
+          },
+        },
+      ],
+    },
   } as any;
 
   it("setting the filter in the state", () => {
@@ -208,5 +222,23 @@ describe("filter operators", () => {
         .dive()
         .text(),
     ).toMatch("No Operator found");
+  });
+
+  it("filters by category", () => {
+    const wrapper = shallow(<OperatorList {...defaultProps} isOLMInstalled={true} csvs={[]} />);
+    wrapper.setProps({ operators: [sampleOperator, sampleOperator2] });
+    const column = wrapper.find(".horizontal-column").text();
+    expect(column).toContain("security");
+    expect(column).toContain("database");
+    expect(column).toContain("other");
+    expect(wrapper.find(InfoCard).length).toBe(2);
+
+    // Filter category "security"
+    wrapper.setState({
+      filterCategories: {
+        security: true,
+      },
+    });
+    expect(wrapper.find(InfoCard).length).toBe(1);
   });
 });

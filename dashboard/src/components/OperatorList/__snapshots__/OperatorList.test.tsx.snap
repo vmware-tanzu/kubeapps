@@ -72,24 +72,47 @@ exports[`render the operator list with installed operators 1`] = `
       loaded={true}
       type={0}
     >
-      <h3>
-        Installed
-      </h3>
-      <CardGrid>
-        <InfoCard
-          icon="api/v1/namespaces/default/operator/foo/logo"
-          info="v1.0.0"
-          key="foo"
-          link="/ns/default/operators/foo"
-          tag1Content="security"
-          tag2Content="kubeapps"
-          title="foo"
-        />
-      </CardGrid>
-      <h3>
-        Available Operators
-      </h3>
-      <CardGrid />
+      <div
+        className="row margin-t-big"
+      >
+        <div
+          className="col-2 margin-t-big horizontal-column"
+        >
+          <div
+            className="margin-b-normal "
+          >
+            <b>
+              Categories
+            </b>
+          </div>
+        </div>
+        <div
+          className="col-10"
+        >
+          <div
+            className="padding-l-normal"
+          >
+            <h3>
+              Installed
+            </h3>
+            <CardGrid>
+              <InfoCard
+                icon="api/v1/namespaces/default/operator/foo/logo"
+                info="v1.0.0"
+                key="foo"
+                link="/ns/default/operators/foo"
+                tag1Content="security"
+                tag2Content="kubeapps"
+                title="foo"
+              />
+            </CardGrid>
+            <h3>
+              Available Operators
+            </h3>
+            <CardGrid />
+          </div>
+        </div>
+      </div>
     </LoadingWrapper>
   </main>
 </div>
@@ -128,20 +151,43 @@ exports[`render the operator list without installed operators 1`] = `
       loaded={true}
       type={0}
     >
-      <h3>
-        Available Operators
-      </h3>
-      <CardGrid>
-        <InfoCard
-          icon="api/v1/namespaces/default/operator/foo/logo"
-          info="v1.0.0"
-          key="foo"
-          link="/ns/default/operators/foo"
-          tag1Content="security"
-          tag2Content="kubeapps"
-          title="foo"
-        />
-      </CardGrid>
+      <div
+        className="row margin-t-big"
+      >
+        <div
+          className="col-2 margin-t-big horizontal-column"
+        >
+          <div
+            className="margin-b-normal "
+          >
+            <b>
+              Categories
+            </b>
+          </div>
+        </div>
+        <div
+          className="col-10"
+        >
+          <div
+            className="padding-l-normal"
+          >
+            <h3>
+              Available Operators
+            </h3>
+            <CardGrid>
+              <InfoCard
+                icon="api/v1/namespaces/default/operator/foo/logo"
+                info="v1.0.0"
+                key="foo"
+                link="/ns/default/operators/foo"
+                tag1Content="security"
+                tag2Content="kubeapps"
+                title="foo"
+              />
+            </CardGrid>
+          </div>
+        </div>
+      </div>
     </LoadingWrapper>
   </main>
 </div>
