@@ -31,14 +31,17 @@ describe("checkOLMInstalled", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("dispatches OLM_NOT_INSTALLED when failed", async () => {
-    Operators.isOLMInstalled = jest.fn(() => false);
+  it("dispatches error", async () => {
+    Operators.isOLMInstalled = jest.fn(() => {
+      throw new Error("nope");
+    });
     const expectedActions = [
       {
         type: getType(operatorActions.checkingOLM),
       },
       {
-        type: getType(operatorActions.OLMNotInstalled),
+        type: getType(operatorActions.errorOperators),
+        payload: new Error("nope"),
       },
     ];
     await store.dispatch(operatorActions.checkOLMInstalled());

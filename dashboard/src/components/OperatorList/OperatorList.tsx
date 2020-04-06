@@ -2,7 +2,12 @@ import { RouterAction } from "connected-react-router";
 import { flatten, intersection, uniq } from "lodash";
 import * as React from "react";
 
-import { IClusterServiceVersion, IPackageManifest, IPackageManifestStatus } from "shared/types";
+import {
+  ForbiddenError,
+  IClusterServiceVersion,
+  IPackageManifest,
+  IPackageManifestStatus,
+} from "../../shared/types";
 import { api, app } from "../../shared/url";
 import { CardGrid } from "../Card";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
@@ -83,7 +88,7 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
   }
 
   public render() {
-    const { isFetching, isOLMInstalled, pushSearchFilter } = this.props;
+    const { isFetching, pushSearchFilter } = this.props;
     return (
       <div>
         <PageHeader>
@@ -106,17 +111,28 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
               </a>
             </div>
           </MessageAlert>
-          <LoadingWrapper loaded={!isFetching}>
-            {isOLMInstalled ? this.renderOperators() : <OLMNotFound />}
-          </LoadingWrapper>
+          <LoadingWrapper loaded={!isFetching}>{this.renderOperators()}</LoadingWrapper>
         </main>
       </div>
     );
   }
 
   private renderOperators() {
-    const { operators, error, csvs } = this.props;
+    const { operators, error, csvs, isOLMInstalled } = this.props;
     const { filter, filterCategories } = this.state;
+    if (error && error.constructor === ForbiddenError) {
+      return (
+        <ErrorSelector
+          error={error}
+          action="list"
+          resource="Operators"
+          namespace={this.props.namespace}
+        />
+      );
+    }
+    if (!isOLMInstalled) {
+      return <OLMNotFound />;
+    }
     if (error) {
       return (
         <ErrorSelector
