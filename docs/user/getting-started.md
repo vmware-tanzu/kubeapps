@@ -12,6 +12,8 @@ Kubeapps assumes a working Kubernetes cluster (v1.8+), [`Helm`](https://helm.sh/
 
 Use the Helm chart to install the latest version of Kubeapps:
 
+For Helm 2:
+
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
@@ -20,6 +22,7 @@ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 If you are using Helm 3, you need to set an extra flag to enable it:
 
 ```bash
+helm repo add bitnami https://charts.bitnami.com/bitnami
 kubectl create namespace kubeapps
 helm install kubeapps --namespace kubeapps bitnami/kubeapps --set useHelm3=true
 ```
@@ -118,6 +121,7 @@ You can also use the URLs shown to directly access the application. Note that, d
 Learn more about Kubeapps with the links below:
 
 - [Detailed installation instructions](../../chart/kubeapps/README.md)
+- [Deploying Operators](./operators.md)
 - [Kubeapps Dashboard documentation](dashboard.md)
 - [Kubeapps components](../architecture/overview.md)
 - [Roadmap](https://github.com/kubeapps/kubeapps/wiki/Roadmap)

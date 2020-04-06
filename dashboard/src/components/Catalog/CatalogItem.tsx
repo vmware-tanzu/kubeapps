@@ -54,7 +54,7 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
     // Cosmetic change, remove the version from the csv name
     const csvName = csv?.split(".v")[0];
     tag1 = <span>{csvName}</span>;
-    link = `/operators-instances/ns/${namespace}/new/${csv}/${id}`;
+    link = `/ns/${namespace}/operators-instances/new/${csv}/${id}`;
     subIcon = operatorIcon;
   }
   const descriptionC = (

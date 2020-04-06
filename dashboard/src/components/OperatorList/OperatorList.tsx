@@ -1,12 +1,15 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 
 import { ForbiddenError, IClusterServiceVersion, IPackageManifest } from "../../shared/types";
 import { api, app } from "../../shared/url";
+import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
+import SearchFilter from "../SearchFilter";
 import OLMNotFound from "./OLMNotFound";
 
 export interface IOperatorListProps {
@@ -19,13 +22,24 @@ export interface IOperatorListProps {
   error?: Error;
   getCSVs: (namespace: string) => Promise<IClusterServiceVersion[]>;
   csvs: IClusterServiceVersion[];
+  filter: string;
+  pushSearchFilter: (filter: string) => RouterAction;
 }
 
-class OperatorList extends React.Component<IOperatorListProps> {
+export interface IOperatorListState {
+  filter: string;
+}
+
+class OperatorList extends React.Component<IOperatorListProps, IOperatorListState> {
+  public state: IOperatorListState = {
+    filter: "",
+  };
+
   public componentDidMount() {
     this.props.checkOLMInstalled();
     this.props.getOperators(this.props.namespace);
     this.props.getCSVs(this.props.namespace);
+    this.setState({ filter: this.props.filter });
   }
 
   public componentDidUpdate(prevProps: IOperatorListProps) {
@@ -33,14 +47,26 @@ class OperatorList extends React.Component<IOperatorListProps> {
       this.props.getOperators(this.props.namespace);
       this.props.getCSVs(this.props.namespace);
     }
+    if (this.props.filter !== prevProps.filter) {
+      this.props.getOperators(this.props.namespace);
+      this.props.getCSVs(this.props.namespace);
+      this.setState({ filter: this.props.filter });
+    }
   }
 
   public render() {
-    const { isFetching } = this.props;
+    const { isFetching, pushSearchFilter } = this.props;
     return (
       <div>
         <PageHeader>
           <h1>Operators</h1>
+          <SearchFilter
+            className="margin-l-big"
+            placeholder="search operators..."
+            onChange={this.handleFilterQueryChange}
+            value={this.state.filter}
+            onSubmit={pushSearchFilter}
+          />
         </PageHeader>
         <main>
           <MessageAlert level="warning">
@@ -60,6 +86,7 @@ class OperatorList extends React.Component<IOperatorListProps> {
 
   private renderOperators() {
     const { operators, error, csvs, isOLMInstalled } = this.props;
+    const { filter } = this.state;
     if (error && error.constructor === ForbiddenError) {
       return (
         <ErrorSelector
@@ -86,7 +113,13 @@ class OperatorList extends React.Component<IOperatorListProps> {
     const csvNames = csvs.map(csv => csv.metadata.name);
     const installedOperators: IPackageManifest[] = [];
     const availableOperators: IPackageManifest[] = [];
-    operators.forEach(operator => {
+    const filteredOperators = operators.filter(c =>
+      new RegExp(escapeRegExp(filter), "i").test(c.metadata.name),
+    );
+    if (filteredOperators.length === 0) {
+      return <p>No Operator found</p>;
+    }
+    filteredOperators.forEach(operator => {
       const defaultChannel = operator.status.defaultChannel;
       const channel = operator.status.channels.find(ch => ch.name === defaultChannel);
       if (csvNames.some(csvName => csvName === channel?.currentCSV)) {
@@ -136,6 +169,12 @@ class OperatorList extends React.Component<IOperatorListProps> {
       </>
     );
   }
+
+  private handleFilterQueryChange = (filter: string) => {
+    this.setState({
+      filter,
+    });
+  };
 }
 
 export default OperatorList;

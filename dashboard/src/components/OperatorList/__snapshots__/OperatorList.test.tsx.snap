@@ -6,6 +6,13 @@ exports[`loading spinner matches the snapshot 1`] = `
     <h1>
       Operators
     </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search operators..."
+      value=""
+    />
   </PageHeader>
   <main>
     <MessageAlertPage
@@ -38,6 +45,13 @@ exports[`render the operator list with installed operators 1`] = `
     <h1>
       Operators
     </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search operators..."
+      value=""
+    />
   </PageHeader>
   <main>
     <MessageAlertPage
@@ -66,7 +80,7 @@ exports[`render the operator list with installed operators 1`] = `
           icon="api/v1/namespaces/default/operator/foo/logo"
           info="v1.0.0"
           key="foo"
-          link="/operators/ns/default/foo"
+          link="/ns/default/operators/foo"
           tag1Content="security"
           tag2Content="kubeapps"
           title="foo"
@@ -87,6 +101,13 @@ exports[`render the operator list without installed operators 1`] = `
     <h1>
       Operators
     </h1>
+    <SearchFilter
+      className="margin-l-big"
+      onChange={[Function]}
+      onSubmit={[Function]}
+      placeholder="search operators..."
+      value=""
+    />
   </PageHeader>
   <main>
     <MessageAlertPage
@@ -115,7 +136,7 @@ exports[`render the operator list without installed operators 1`] = `
           icon="api/v1/namespaces/default/operator/foo/logo"
           info="v1.0.0"
           key="foo"
-          link="/operators/ns/default/foo"
+          link="/ns/default/operators/foo"
           tag1Content="security"
           tag2Content="kubeapps"
           title="foo"

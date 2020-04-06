@@ -5,6 +5,7 @@ import { ForbiddenError, IPackageManifest } from "../../shared/types";
 import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
+import LoadingWrapper from "../LoadingWrapper";
 import OLMNotFound from "./OLMNotFound";
 import OperatorList, { IOperatorListProps } from "./OperatorList";
 
@@ -17,6 +18,8 @@ const defaultProps: IOperatorListProps = {
   getOperators: jest.fn(),
   getCSVs: jest.fn(),
   csvs: [],
+  filter: "",
+  pushSearchFilter: jest.fn(),
 };
 
 const sampleOperator = {
@@ -158,4 +161,61 @@ it("render the operator list without installed operators", () => {
       .children(),
   ).toExist();
   expect(wrapper).toMatchSnapshot();
+});
+
+describe("filter operators", () => {
+  const sampleOperator2 = {
+    ...sampleOperator,
+    metadata: {
+      name: "bar",
+    },
+  } as any;
+
+  it("setting the filter in the state", () => {
+    const wrapper = shallow(
+      <OperatorList
+        {...defaultProps}
+        isOLMInstalled={true}
+        operators={[sampleOperator, sampleOperator2]}
+        csvs={[]}
+      />,
+    );
+    expect(wrapper.find(InfoCard).length).toBe(2);
+    wrapper.setState({ filter: "foo" });
+    expect(wrapper.find(InfoCard).length).toBe(1);
+  });
+
+  it("setting the filter in the props", () => {
+    const wrapper = shallow(
+      <OperatorList
+        {...defaultProps}
+        isOLMInstalled={true}
+        operators={[sampleOperator, sampleOperator2]}
+        csvs={[]}
+      />,
+    );
+    expect(wrapper.find(InfoCard).length).toBe(2);
+    wrapper.setProps({ filter: "foo" });
+    expect(wrapper.find(InfoCard).length).toBe(1);
+  });
+
+  it("show a message if the filter doesn't match any operator", () => {
+    const wrapper = shallow(
+      <OperatorList
+        {...defaultProps}
+        isOLMInstalled={true}
+        operators={[sampleOperator, sampleOperator2]}
+        csvs={[]}
+      />,
+    );
+    expect(wrapper.find(InfoCard).length).toBe(2);
+    wrapper.setProps({ filter: "nope" });
+    expect(wrapper.find(InfoCard)).not.toExist();
+    expect(
+      wrapper
+        .find(LoadingWrapper)
+        .dive()
+        .text(),
+    ).toMatch("No Operator found");
+  });
 });

@@ -151,7 +151,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                       {this.props.featureFlags.operators && (
                         <li role="none">
-                          <NavLink to={`/operators/ns/${namespace.current}`}>Operators</NavLink>
+                          <NavLink to={`/ns/${namespace.current}/operators`}>Operators</NavLink>
                         </li>
                       )}
                     </ul>

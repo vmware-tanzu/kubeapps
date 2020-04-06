@@ -33,7 +33,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
               <h5 className="subtitle margin-b-normal">
                 {/* TODO(andresmgot): Filter by provider */}
                 <span>{version} - Provided by </span>
-                <Link to={`/operators/ns/${namespace}`}>{provider}</Link>
+                <Link to={`/ns/${namespace}/operators`}>{provider}</Link>
               </h5>
               <h5 className="subtitle margin-b-reset">{description}</h5>
             </div>

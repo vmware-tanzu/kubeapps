@@ -6,11 +6,11 @@ This document describes the Kubeapps architecture at a high level.
 
 ### Kubeapps dashboard
 
-At the heart of Kubeapps is a in-cluster Kubernetes dashboard that provides you a simple browse and click experience for installing and manage Kubernetes applications packaged as Helm charts.
+At the heart of Kubeapps is an in-cluster Kubernetes dashboard that provides you a simple browse and click experience for installing and managing Kubernetes applications packaged as Helm charts.
 
 Additionally, the dashboard integrates with the [Kubernetes service catalog](https://github.com/kubernetes-incubator/service-catalog) and enables you to browse and provision cloud services via the [Open Service Broker API](https://github.com/openservicebrokerapi/servicebroker).
 
-The dashboard is written in the Javascript programming language and is developed using the React Javascript library.
+The dashboard is written in the JavaScript programming language and is developed using the React JavaScript library.
 
 ### Tiller proxy (deprecated)
 
