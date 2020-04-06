@@ -41,9 +41,7 @@ const catalogReducer = (
     case getType(operators.checkingOLM):
       return { ...state, isFetching: true };
     case getType(operators.OLMInstalled):
-      return { ...state, isOLMInstalled: true, isFetching: false };
-    case getType(operators.OLMNotInstalled):
-      return { ...state, isOLMInstalled: false, isFetching: false };
+      return { ...state, isOLMInstalled: true };
     case getType(operators.requestOperators):
       return { ...state, isFetching: true };
     case getType(operators.receiveOperators):

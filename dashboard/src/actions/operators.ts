@@ -6,7 +6,6 @@ import { IClusterServiceVersion, IPackageManifest, IResource, IStoreState } from
 
 export const checkingOLM = createAction("CHECKING_OLM");
 export const OLMInstalled = createAction("OLM_INSTALLED");
-export const OLMNotInstalled = createAction("OLM_NOT_INSTALLED");
 
 export const requestOperators = createAction("REQUEST_OPERATORS");
 export const receiveOperators = createAction("RECEIVE_OPERATORS", resolve => {
@@ -77,7 +76,6 @@ export const receiveCustomResource = createAction("RECEIVE_CUSTOM_RESOURCE", res
 const actions = [
   checkingOLM,
   OLMInstalled,
-  OLMNotInstalled,
   requestOperators,
   receiveOperators,
   errorOperators,
@@ -116,11 +114,12 @@ export function checkOLMInstalled(): ThunkAction<
     dispatch(checkingOLM());
     try {
       const installed = await Operators.isOLMInstalled();
-      installed ? dispatch(OLMInstalled()) : dispatch(OLMNotInstalled());
+      if (installed) {
+        dispatch(OLMInstalled());
+      }
       return installed;
     } catch (e) {
       dispatch(errorOperators(e));
-      dispatch(OLMNotInstalled());
       return false;
     }
   };
