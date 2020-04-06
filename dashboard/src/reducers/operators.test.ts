@@ -23,7 +23,6 @@ describe("catalogReducer", () => {
     const actionTypes = {
       checkingOLM: getType(actions.operators.checkingOLM),
       OLMInstalled: getType(actions.operators.OLMInstalled),
-      OLMNotInstalled: getType(actions.operators.OLMNotInstalled),
       requestOperators: getType(actions.operators.requestOperators),
       receiveOperators: getType(actions.operators.receiveOperators),
       errorOperators: getType(actions.operators.errorOperators),
@@ -66,18 +65,6 @@ describe("catalogReducer", () => {
             type: actionTypes.OLMInstalled as any,
           }),
         ).toEqual({ ...initialState, isOLMInstalled: true });
-      });
-
-      it("unsets isFetching and mark OLM as not installed", () => {
-        const state = operatorReducer(undefined, {
-          type: actionTypes.checkingOLM as any,
-        });
-        expect(state).toEqual({ ...initialState, isFetching: true });
-        expect(
-          operatorReducer(undefined, {
-            type: actionTypes.OLMNotInstalled as any,
-          }),
-        ).toEqual({ ...initialState, isOLMInstalled: false });
       });
 
       it("sets receive operators", () => {

@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { IPackageManifest } from "shared/types";
 import itBehavesLike from "../../shared/specs";
+import { ForbiddenError, IPackageManifest } from "../../shared/types";
 import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
@@ -76,6 +76,15 @@ it("call the OLM check and render the NotFound message if not found", () => {
   const wrapper = shallow(<OperatorList {...defaultProps} checkOLMInstalled={checkOLMInstalled} />);
   expect(checkOLMInstalled).toHaveBeenCalled();
   expect(wrapper.find(OLMNotFound)).toExist();
+});
+
+it("call the OLM check and render the a Forbidden message if it could do the check", () => {
+  const checkOLMInstalled = jest.fn();
+  const wrapper = shallow(<OperatorList {...defaultProps} checkOLMInstalled={checkOLMInstalled} />);
+  wrapper.setProps({ error: new ForbiddenError("nope") });
+  expect(checkOLMInstalled).toHaveBeenCalled();
+  expect(wrapper.find(ErrorSelector)).toExist();
+  expect(wrapper.find(OLMNotFound)).not.toExist();
 });
 
 it("re-request operators if the namespace changes", () => {

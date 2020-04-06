@@ -4,12 +4,8 @@ import { IClusterServiceVersion, IK8sList, IPackageManifest, IResource } from ".
 
 export class Operators {
   public static async isOLMInstalled() {
-    try {
-      const { status } = await axiosWithAuth.get(urls.api.operators.crd);
-      return status === 200;
-    } catch (err) {
-      return false;
-    }
+    const { status } = await axiosWithAuth.get(urls.api.operators.crd);
+    return status === 200;
   }
 
   public static async getOperators(namespace: string) {
