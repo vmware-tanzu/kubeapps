@@ -6,6 +6,7 @@ import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
 import LoadingWrapper from "../LoadingWrapper";
+import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLevel";
 import OLMNotFound from "./OLMNotFound";
 import OperatorList, { IOperatorListProps } from "./OperatorList";
 
@@ -39,6 +40,7 @@ const sampleOperator = {
           version: "1.0.0",
           annotations: {
             categories: "security",
+            capabilities: AUTO_PILOT,
           },
         },
       },
@@ -178,6 +180,7 @@ describe("filter operators", () => {
             version: "1.0.0",
             annotations: {
               categories: "database, other",
+              capabilities: BASIC_INSTALL,
             },
           },
         },
@@ -246,6 +249,20 @@ describe("filter operators", () => {
     wrapper.setState({
       filterCategories: {
         security: true,
+      },
+    });
+    expect(wrapper.find(InfoCard).length).toBe(1);
+  });
+
+  it("filters by capability", () => {
+    const wrapper = shallow(<OperatorList {...defaultProps} isOLMInstalled={true} csvs={[]} />);
+    wrapper.setProps({ operators: [sampleOperator, sampleOperator2] });
+    expect(wrapper.find(InfoCard).length).toBe(2);
+
+    // Filter category "security"
+    wrapper.setState({
+      filterCapabilities: {
+        [BASIC_INSTALL]: true,
       },
     });
     expect(wrapper.find(InfoCard).length).toBe(1);
