@@ -72,24 +72,134 @@ exports[`render the operator list with installed operators 1`] = `
       loaded={true}
       type={0}
     >
-      <h3>
-        Installed
-      </h3>
-      <CardGrid>
-        <InfoCard
-          icon="api/v1/namespaces/default/operator/foo/logo"
-          info="v1.0.0"
-          key="foo"
-          link="/ns/default/operators/foo"
-          tag1Content="security"
-          tag2Content="kubeapps"
-          title="foo"
-        />
-      </CardGrid>
-      <h3>
-        Available Operators
-      </h3>
-      <CardGrid />
+      <div
+        className="row margin-t-big"
+      >
+        <div
+          className="col-2 margin-t-big horizontal-column"
+        >
+          <div
+            className="margin-b-normal "
+          >
+            <b>
+              Categories
+            </b>
+          </div>
+          <div
+            className="margin-v-normal "
+          >
+            <b>
+              Capability Level
+            </b>
+          </div>
+          <div
+            key="Basic Install"
+          >
+            <label
+              className="checkbox"
+              key="Basic Install"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Basic Install
+              </span>
+            </label>
+          </div>
+          <div
+            key="Seamless Upgrades"
+          >
+            <label
+              className="checkbox"
+              key="Seamless Upgrades"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Seamless Upgrades
+              </span>
+            </label>
+          </div>
+          <div
+            key="Full Lifecycle"
+          >
+            <label
+              className="checkbox"
+              key="Full Lifecycle"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Full Lifecycle
+              </span>
+            </label>
+          </div>
+          <div
+            key="Deep Insights"
+          >
+            <label
+              className="checkbox"
+              key="Deep Insights"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Deep Insights
+              </span>
+            </label>
+          </div>
+          <div
+            key="Auto Pilot"
+          >
+            <label
+              className="checkbox"
+              key="Auto Pilot"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Auto Pilot
+              </span>
+            </label>
+          </div>
+        </div>
+        <div
+          className="col-10"
+        >
+          <div
+            className="padding-l-normal"
+          >
+            <h3>
+              Installed
+            </h3>
+            <CardGrid>
+              <InfoCard
+                icon="api/v1/namespaces/default/operator/foo/logo"
+                info="v1.0.0"
+                key="foo"
+                link="/ns/default/operators/foo"
+                tag1Content="security"
+                tag2Content="kubeapps"
+                title="foo"
+              />
+            </CardGrid>
+            <h3>
+              Available Operators
+            </h3>
+            <CardGrid />
+          </div>
+        </div>
+      </div>
     </LoadingWrapper>
   </main>
 </div>
@@ -128,20 +238,130 @@ exports[`render the operator list without installed operators 1`] = `
       loaded={true}
       type={0}
     >
-      <h3>
-        Available Operators
-      </h3>
-      <CardGrid>
-        <InfoCard
-          icon="api/v1/namespaces/default/operator/foo/logo"
-          info="v1.0.0"
-          key="foo"
-          link="/ns/default/operators/foo"
-          tag1Content="security"
-          tag2Content="kubeapps"
-          title="foo"
-        />
-      </CardGrid>
+      <div
+        className="row margin-t-big"
+      >
+        <div
+          className="col-2 margin-t-big horizontal-column"
+        >
+          <div
+            className="margin-b-normal "
+          >
+            <b>
+              Categories
+            </b>
+          </div>
+          <div
+            className="margin-v-normal "
+          >
+            <b>
+              Capability Level
+            </b>
+          </div>
+          <div
+            key="Basic Install"
+          >
+            <label
+              className="checkbox"
+              key="Basic Install"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Basic Install
+              </span>
+            </label>
+          </div>
+          <div
+            key="Seamless Upgrades"
+          >
+            <label
+              className="checkbox"
+              key="Seamless Upgrades"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Seamless Upgrades
+              </span>
+            </label>
+          </div>
+          <div
+            key="Full Lifecycle"
+          >
+            <label
+              className="checkbox"
+              key="Full Lifecycle"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Full Lifecycle
+              </span>
+            </label>
+          </div>
+          <div
+            key="Deep Insights"
+          >
+            <label
+              className="checkbox"
+              key="Deep Insights"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Deep Insights
+              </span>
+            </label>
+          </div>
+          <div
+            key="Auto Pilot"
+          >
+            <label
+              className="checkbox"
+              key="Auto Pilot"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Auto Pilot
+              </span>
+            </label>
+          </div>
+        </div>
+        <div
+          className="col-10"
+        >
+          <div
+            className="padding-l-normal"
+          >
+            <h3>
+              Available Operators
+            </h3>
+            <CardGrid>
+              <InfoCard
+                icon="api/v1/namespaces/default/operator/foo/logo"
+                info="v1.0.0"
+                key="foo"
+                link="/ns/default/operators/foo"
+                tag1Content="security"
+                tag2Content="kubeapps"
+                title="foo"
+              />
+            </CardGrid>
+          </div>
+        </div>
+      </div>
     </LoadingWrapper>
   </main>
 </div>
