@@ -37,7 +37,7 @@ It also packages the [Bitnami MongoDB chart](https://github.com/bitnami/charts/t
 ## Prerequisites
 
 - Kubernetes 1.8+ (tested with Azure Kubernetes Service, Google Kubernetes Engine, minikube and Docker for Desktop Kubernetes)
-- Helm 2.10.0+
+- Helm 2.14.0+
 - Administrative access to the cluster to create Custom Resource Definitions (CRDs)
 
 ## Installing the Chart

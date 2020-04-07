@@ -17,5 +17,5 @@ maintainers:
     email: containers@bitnami.com
   - name: prydonius
     email: adnan@bitnami.com
-# 2.10+ required because we need the install-crd hook type
-tillerVersion: ">=2.10.0"
+# 2.14+ required https://github.com/kubeapps/kubeapps/issues/1185
+tillerVersion: ">=2.14.0"
