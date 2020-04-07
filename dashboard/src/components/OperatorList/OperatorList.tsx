@@ -13,6 +13,13 @@ import { CardGrid } from "../Card";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 import InfoCard from "../InfoCard";
 import LoadingWrapper from "../LoadingWrapper";
+import {
+  AUTO_PILOT,
+  BASIC_INSTALL,
+  DEEP_INSIGHTS,
+  FULL_LIFECYCLE,
+  SEAMLESS_UPGRADES,
+} from "../OperatorView/OperatorCapabilityLevel";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import OLMNotFound from "./OLMNotFound";
@@ -37,6 +44,7 @@ export interface IOperatorListState {
   filter: string;
   categories: string[];
   filterCategories: { [key: string]: boolean };
+  filterCapabilities: { [key: string]: boolean };
 }
 
 function getDefaultChannel(packageStatus: IPackageManifestStatus) {
@@ -50,11 +58,23 @@ function getCategories(packageStatus: IPackageManifestStatus) {
   return channel.currentCSVDesc.annotations.categories.split(",").map(c => c.trim());
 }
 
+function getCapabilities(packageStatus: IPackageManifestStatus) {
+  const channel = getDefaultChannel(packageStatus);
+  return channel.currentCSVDesc.annotations.capabilities;
+}
+
 class OperatorList extends React.Component<IOperatorListProps, IOperatorListState> {
   public state: IOperatorListState = {
     filter: "",
     categories: [],
     filterCategories: {},
+    filterCapabilities: {
+      [BASIC_INSTALL]: false,
+      [SEAMLESS_UPGRADES]: false,
+      [FULL_LIFECYCLE]: false,
+      [DEEP_INSIGHTS]: false,
+      [AUTO_PILOT]: false,
+    },
   };
 
   public componentDidMount() {
@@ -119,7 +139,7 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
 
   private renderOperators() {
     const { operators, error, csvs, isOLMInstalled } = this.props;
-    const { filter, filterCategories } = this.state;
+    const { filter, filterCategories, filterCapabilities } = this.state;
     if (error && error.constructor === ForbiddenError) {
       return (
         <ErrorSelector
@@ -162,6 +182,19 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
           return false;
         }
       }
+      const hasFilteredCapabilities = Object.values(filterCapabilities).some(
+        filterCapability => filterCapability,
+      );
+      if (hasFilteredCapabilities) {
+        const allowedCapabilities = Object.keys(filterCapabilities).filter(
+          capability => filterCapabilities[capability],
+        );
+        if (
+          !allowedCapabilities.some(capability => capability === getCapabilities(operator.status))
+        ) {
+          return false;
+        }
+      }
       return true;
     });
     if (filteredOperators.length === 0) {
@@ -194,6 +227,25 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
               </div>
             );
           })}
+          <div className="margin-v-normal ">
+            <b>Capability Level</b>
+          </div>
+          {[BASIC_INSTALL, SEAMLESS_UPGRADES, FULL_LIFECYCLE, DEEP_INSIGHTS, AUTO_PILOT].map(
+            capability => {
+              return (
+                <div key={capability}>
+                  <label
+                    className="checkbox"
+                    key={capability}
+                    onChange={this.toggleFilterCapability(capability)}
+                  >
+                    <input type="checkbox" />
+                    <span>{capability}</span>
+                  </label>
+                </div>
+              );
+            },
+          )}
         </div>
         <div className="col-10">
           <div className="padding-l-normal">
@@ -257,6 +309,18 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
         filterCategories: {
           ...filterCategories,
           [category]: !filterCategories[category],
+        },
+      });
+    };
+  };
+
+  private toggleFilterCapability = (capability: string) => {
+    return () => {
+      const { filterCapabilities } = this.state;
+      this.setState({
+        filterCapabilities: {
+          ...filterCapabilities,
+          [capability]: !filterCapabilities[capability],
         },
       });
     };

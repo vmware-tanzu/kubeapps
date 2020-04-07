@@ -85,6 +85,93 @@ exports[`render the operator list with installed operators 1`] = `
               Categories
             </b>
           </div>
+          <div
+            className="margin-v-normal "
+          >
+            <b>
+              Capability Level
+            </b>
+          </div>
+          <div
+            key="Basic Install"
+          >
+            <label
+              className="checkbox"
+              key="Basic Install"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Basic Install
+              </span>
+            </label>
+          </div>
+          <div
+            key="Seamless Upgrades"
+          >
+            <label
+              className="checkbox"
+              key="Seamless Upgrades"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Seamless Upgrades
+              </span>
+            </label>
+          </div>
+          <div
+            key="Full Lifecycle"
+          >
+            <label
+              className="checkbox"
+              key="Full Lifecycle"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Full Lifecycle
+              </span>
+            </label>
+          </div>
+          <div
+            key="Deep Insights"
+          >
+            <label
+              className="checkbox"
+              key="Deep Insights"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Deep Insights
+              </span>
+            </label>
+          </div>
+          <div
+            key="Auto Pilot"
+          >
+            <label
+              className="checkbox"
+              key="Auto Pilot"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Auto Pilot
+              </span>
+            </label>
+          </div>
         </div>
         <div
           className="col-10"
@@ -163,6 +250,93 @@ exports[`render the operator list without installed operators 1`] = `
             <b>
               Categories
             </b>
+          </div>
+          <div
+            className="margin-v-normal "
+          >
+            <b>
+              Capability Level
+            </b>
+          </div>
+          <div
+            key="Basic Install"
+          >
+            <label
+              className="checkbox"
+              key="Basic Install"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Basic Install
+              </span>
+            </label>
+          </div>
+          <div
+            key="Seamless Upgrades"
+          >
+            <label
+              className="checkbox"
+              key="Seamless Upgrades"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Seamless Upgrades
+              </span>
+            </label>
+          </div>
+          <div
+            key="Full Lifecycle"
+          >
+            <label
+              className="checkbox"
+              key="Full Lifecycle"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Full Lifecycle
+              </span>
+            </label>
+          </div>
+          <div
+            key="Deep Insights"
+          >
+            <label
+              className="checkbox"
+              key="Deep Insights"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Deep Insights
+              </span>
+            </label>
+          </div>
+          <div
+            key="Auto Pilot"
+          >
+            <label
+              className="checkbox"
+              key="Auto Pilot"
+              onChange={[Function]}
+            >
+              <input
+                type="checkbox"
+              />
+              <span>
+                Auto Pilot
+              </span>
+            </label>
           </div>
         </div>
         <div
