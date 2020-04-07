@@ -6,6 +6,9 @@ import { IClusterServiceVersion, IPackageManifest, IResource, IStoreState } from
 
 export const checkingOLM = createAction("CHECKING_OLM");
 export const OLMInstalled = createAction("OLM_INSTALLED");
+export const errorOLMCheck = createAction("ERROR_OLM_CHECK", resolve => {
+  return (err: Error) => resolve(err);
+});
 
 export const requestOperators = createAction("REQUEST_OPERATORS");
 export const receiveOperators = createAction("RECEIVE_OPERATORS", resolve => {
@@ -76,6 +79,7 @@ export const receiveCustomResource = createAction("RECEIVE_CUSTOM_RESOURCE", res
 const actions = [
   checkingOLM,
   OLMInstalled,
+  errorOLMCheck,
   requestOperators,
   receiveOperators,
   errorOperators,
@@ -119,7 +123,7 @@ export function checkOLMInstalled(): ThunkAction<
       }
       return installed;
     } catch (e) {
-      dispatch(errorOperators(e));
+      dispatch(errorOLMCheck(e));
       return false;
     }
   };

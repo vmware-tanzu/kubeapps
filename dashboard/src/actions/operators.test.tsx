@@ -40,7 +40,7 @@ describe("checkOLMInstalled", () => {
         type: getType(operatorActions.checkingOLM),
       },
       {
-        type: getType(operatorActions.errorOperators),
+        type: getType(operatorActions.errorOLMCheck),
         payload: new Error("nope"),
       },
     ];
