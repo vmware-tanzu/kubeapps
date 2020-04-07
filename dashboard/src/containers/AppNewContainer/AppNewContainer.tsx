@@ -11,7 +11,9 @@ import { IChartVersion, IStoreState } from "../../shared/types";
 interface IRouteProps {
   match: {
     params: {
+      namespace: string;
       repo: string;
+      global: string;
       id: string;
       version: string;
     };
@@ -19,15 +21,16 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { apps, charts, config, namespace }: IStoreState,
+  { apps, charts, config }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
     chartID: `${params.repo}/${params.id}`,
+    chartNamespace: params.global === "global" ? config.namespace : params.namespace,
     chartVersion: params.version,
     error: apps.error,
     kubeappsNamespace: config.namespace,
-    namespace: namespace.current,
+    namespace: params.namespace,
     selected: charts.selected,
   };
 }

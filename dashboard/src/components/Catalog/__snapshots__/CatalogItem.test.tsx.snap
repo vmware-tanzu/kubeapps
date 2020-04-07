@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`should render an item 1`] = `
+exports[`should render a chart item in a namespace 1`] = `
 <InfoCard
   description={
     <div
@@ -10,12 +10,39 @@ exports[`should render an item 1`] = `
   icon="icon.png"
   info="1.0.0"
   key="foo1"
-  link="/charts/undefined/foo"
+  link="/ns/repo-namespace/charts/repo-name/foo"
+  tag1Class="repo-name"
   tag1Content={
     <Unknown
       className="ListItem__content__info_tag_link"
-      to="/ns/kubeapps/catalog/undefined"
+      to="/ns/repo-namespace/catalog/repo-name"
+    >
+      repo-name
+    </Unknown>
+  }
+  title="foo"
+/>
+`;
+
+exports[`should render a global chart item in a namespace 1`] = `
+<InfoCard
+  description={
+    <div
+      className="ListItem__content__description"
     />
+  }
+  icon="icon.png"
+  info="1.0.0"
+  key="foo1"
+  link="/ns/repo-namespace/global-charts/repo-name/foo"
+  tag1Class="repo-name"
+  tag1Content={
+    <Unknown
+      className="ListItem__content__info_tag_link"
+      to="/ns/repo-namespace/catalog/repo-name"
+    >
+      repo-name
+    </Unknown>
   }
   title="foo"
 />

@@ -20,8 +20,10 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
     const { version } = this.props;
     const { namespace } = this.props;
     const repoName = version.relationships.chart.data.repo.name;
+    const repoNamespace = version.relationships.chart.data.repo.namespace;
     const chartName = version.relationships.chart.data.name;
     const versionStr = version.attributes.version;
+    const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
 
     return (
       <div className="ChartDeployButton text-r">
@@ -31,7 +33,7 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
         {this.state.clicked && (
           <Redirect
             push={true}
-            to={`/ns/${namespace}/apps/new/${repoName}/${chartName}/versions/${versionStr}`}
+            to={`/ns/${namespace}/apps/${newSegment}/${repoName}/${chartName}/versions/${versionStr}`}
           />
         )}
       </div>

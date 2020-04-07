@@ -8,15 +8,16 @@ import Catalog from "../../components/Catalog";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { charts, operators, namespace, config }: IStoreState,
-  { match: { params }, location }: RouteComponentProps<{ repo: string }>,
+  { charts, operators, config }: IStoreState,
+  { match: { params }, location }: RouteComponentProps<{ namespace: string, repo: string }>,
 ) {
   return {
     charts,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     repo: params.repo,
     csvs: operators.csvs,
-    namespace: namespace.current,
+    namespace: params.namespace,
+    kubeappsNamespace: config.namespace,
     featureFlags: config.featureFlags,
   };
 }
