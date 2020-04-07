@@ -14,7 +14,7 @@ exports[`should render an item 1`] = `
   tag1Content={
     <Unknown
       className="ListItem__content__info_tag_link"
-      to="/catalog/undefined"
+      to="/ns/kubeapps/catalog/undefined"
     />
   }
   title="foo"
