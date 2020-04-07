@@ -20,7 +20,7 @@ const defaultChartState = {
 } as IChartState;
 const defaultProps = {
   charts: defaultChartState,
-  repo: "stable",
+  repo: "",
   filter: "",
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
@@ -312,6 +312,15 @@ describe("renderization", () => {
         const wrapper = shallow(<Catalog {...defaultProps} csvs={csvs} />);
         expect(wrapper.find(MessageAlert)).not.toExist();
         expect(wrapper.find(".Catalog")).toExist();
+      });
+
+      it("should skip operators if the repo filter is used", () => {
+        const wrapper = shallow(
+          <Catalog {...defaultProps} charts={chartState} csvs={csvs} repo="test" />,
+        );
+        const cardGrid = wrapper.find(CardGrid);
+        expect(cardGrid).toExist();
+        expect(cardGrid.children().length).toBe(chartState.items.length);
       });
     });
   });
