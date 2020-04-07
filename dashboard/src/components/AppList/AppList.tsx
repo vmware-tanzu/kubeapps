@@ -63,6 +63,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
     const {
       apps: { error, isFetching },
       isFetchingResources,
+      namespace,
     } = this.props;
     return (
       <section className="AppList">
@@ -75,7 +76,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
           <div className="col-3 text-r align-center">
             {!error && (
-              <Link to="/catalog">
+              <Link to={`/ns/${namespace}/catalog`}>
                 <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
             )}
