@@ -76,7 +76,6 @@ Open a command prompt and run the `GetDashToken.cmd` Your token can be found in 
 Once Kubeapps is installed, securely access the Kubeapps Dashboard from your system by running:
 
 ```bash
-echo "Visit http://127.0.0.1:8080 in your browser to access the Kubeapps Dashboard"
 kubectl port-forward -n kubeapps svc/kubeapps 8080:80
 ```
 
@@ -94,27 +93,31 @@ Paste the token generated in the previous step to authenticate and access the Ku
 
 Once you have the Kubeapps Dashboard up and running, you can start deploying applications into your cluster.
 
-- Use the "Catalog" page in the Dashboard to select an application from the list of charts in any of the configured Helm chart repositories. This example assumes you want to deploy WordPress.
+- Use the "Deploy App" or click on the "Catalog" page in the Dashboard to select an application from the list of charts in any of the configured Helm chart repositories. This example assumes you want to deploy WordPress.
 
   ![WordPress chart](../img/wordpress-search.png)
 
-- Click the "Deploy using Helm" button.
+- Click the "Deploy" button.
 
   ![WordPress chart](../img/wordpress-chart.png)
 
-- You will be prompted for the release name and values for the application.
+- You will be prompted for the release name and values for the application. The form is populated by the values (YAML), which you can see in the adjacent tab.
 
   ![WordPress installation](../img/wordpress-installation.png)
 
-- Click the "Submit" button. The application will be deployed. You will be able to track the new Kubernetes deployment directly from the browser.
+- Click the "Submit" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top and you can also look at the individual resources lower in the page.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
-To obtain the WordPress username and password, refer to the "Notes" section of the deployment page, which contains the commands you will need to run to obtain the credentials for the deployment.
+To access your new WordPress site, you can run the commands in the "Notes" section to get the URLs or simply click a URL (HTTP and HTTPS) shown.
 
-You can also use the URLs shown to directly access the application. Note that, depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
+***Note:*** Depending on your cloud provider of choice, it may take some time for an access URL to be available for the application and the Service will stay in a "Pending" state until a URL is assigned. If using Minikube, you will need to run `minikube tunnel` in your terminal in order for an IP address to be assigned to your application.
 
-![WordPress deployment notes](../img/wordpress-notes.png)
+![WordPress deployment notes](../img/wordpress-url.png)
+
+To get the credentials for logging into your WordPress account, refer to the "Notes" section. You can also get the WordPress password by scrolling down to "Secrets" and clicking the eye next to `wordpress-password`.
+
+![WordPress deployment notes](../img/wordpress-credentials.png)
 
 ## Next Steps
 
