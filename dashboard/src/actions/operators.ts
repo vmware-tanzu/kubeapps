@@ -286,9 +286,7 @@ export function getResources(
       await Promise.all(crdPromises);
     });
     await Promise.all(csvPromises);
-    if (resources.length) {
-      dispatch(receiveCustomResources(resources));
-    }
+    dispatch(receiveCustomResources(resources));
     return resources;
   };
 }

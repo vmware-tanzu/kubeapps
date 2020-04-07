@@ -327,6 +327,10 @@ describe("getResources", () => {
         type: getType(operatorActions.errorCustomResource),
         payload: new Error("Boom!"),
       },
+      {
+        type: getType(operatorActions.receiveCustomResources),
+        payload: [],
+      },
     ];
     await store.dispatch(operatorActions.getResources("default"));
     expect(store.getActions()).toEqual(expectedActions);
