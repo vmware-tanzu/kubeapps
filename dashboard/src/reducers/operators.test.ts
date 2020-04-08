@@ -10,6 +10,12 @@ describe("catalogReducer", () => {
 
   beforeEach(() => {
     initialState = {
+      isFetchingElem: {
+        OLM: false,
+        operator: false,
+        csv: false,
+        resource: false,
+      },
       isFetching: false,
       isOLMInstalled: false,
       operators: [],
@@ -52,14 +58,22 @@ describe("catalogReducer", () => {
           operatorReducer(undefined, {
             type: actionTypes.checkingOLM as any,
           }),
-        ).toEqual({ ...initialState, isFetching: true });
+        ).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: true, operator: false, csv: false, resource: false },
+        });
       });
 
       it("unsets isFetching and mark OLM as installed", () => {
         const state = operatorReducer(undefined, {
           type: actionTypes.checkingOLM as any,
         });
-        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: true, operator: false, csv: false, resource: false },
+        });
         expect(
           operatorReducer(undefined, {
             type: actionTypes.OLMInstalled as any,
@@ -72,7 +86,11 @@ describe("catalogReducer", () => {
           type: actionTypes.requestOperators as any,
         });
         const op = {} as IPackageManifest;
-        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+        });
         expect(
           operatorReducer(undefined, {
             type: actionTypes.receiveOperators as any,
@@ -85,7 +103,11 @@ describe("catalogReducer", () => {
         const state = operatorReducer(undefined, {
           type: actionTypes.requestOperators as any,
         });
-        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+        });
         expect(
           operatorReducer(undefined, {
             type: actionTypes.errorOperators as any,
@@ -118,6 +140,7 @@ describe("catalogReducer", () => {
             {
               ...initialState,
               isFetching: true,
+              isFetchingElem: { OLM: true, operator: false, csv: false, resource: false },
               errors: { fetch: new Error("Boom!") },
               operators: [{} as any],
             },
@@ -133,7 +156,11 @@ describe("catalogReducer", () => {
           type: actionTypes.requestOperator as any,
         });
         const op = {} as IPackageManifest;
-        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+        });
         expect(
           operatorReducer(undefined, {
             type: actionTypes.receiveOperator as any,
@@ -147,7 +174,11 @@ describe("catalogReducer", () => {
           type: actionTypes.requestCSVs as any,
         });
         const csv = {} as IClusterServiceVersion;
-        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: false, operator: false, csv: true, resource: false },
+        });
         expect(
           operatorReducer(undefined, {
             type: actionTypes.receiveCSVs as any,
@@ -160,7 +191,11 @@ describe("catalogReducer", () => {
         const state = operatorReducer(undefined, {
           type: actionTypes.requestCSVs as any,
         });
-        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: false, operator: false, csv: true, resource: false },
+        });
         expect(
           operatorReducer(undefined, {
             type: actionTypes.errorCSVs as any,
@@ -174,7 +209,11 @@ describe("catalogReducer", () => {
           type: actionTypes.requestCSV as any,
         });
         const csv = {} as IClusterServiceVersion;
-        expect(state).toEqual({ ...initialState, isFetching: true });
+        expect(state).toEqual({
+          ...initialState,
+          isFetching: true,
+          isFetchingElem: { OLM: false, operator: false, csv: true, resource: false },
+        });
         expect(
           operatorReducer(undefined, {
             type: actionTypes.receiveCSV as any,
@@ -189,7 +228,11 @@ describe("catalogReducer", () => {
         type: actionTypes.creatingResource as any,
       });
       const resource = {} as IResource;
-      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+      });
       expect(
         operatorReducer(undefined, {
           type: actionTypes.resourceCreated as any,
@@ -202,7 +245,11 @@ describe("catalogReducer", () => {
       const state = operatorReducer(undefined, {
         type: actionTypes.creatingResource as any,
       });
-      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+      });
       expect(
         operatorReducer(undefined, {
           type: actionTypes.errorResourceCreate as any,
@@ -216,7 +263,11 @@ describe("catalogReducer", () => {
         type: actionTypes.requestCustomResources as any,
       });
       const resource = {} as IResource;
-      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+      });
       expect(
         operatorReducer(undefined, {
           type: actionTypes.receiveCustomResources as any,
@@ -229,7 +280,11 @@ describe("catalogReducer", () => {
       const state = operatorReducer(undefined, {
         type: actionTypes.requestCustomResources as any,
       });
-      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+      });
       expect(
         operatorReducer(undefined, {
           type: actionTypes.errorCustomResource as any,
@@ -243,7 +298,11 @@ describe("catalogReducer", () => {
         type: actionTypes.requestCustomResource as any,
       });
       const resource = {} as IResource;
-      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+      });
       expect(
         operatorReducer(undefined, {
           type: actionTypes.receiveCustomResource as any,
@@ -256,12 +315,38 @@ describe("catalogReducer", () => {
       const state = operatorReducer(undefined, {
         type: actionTypes.deletingResource as any,
       });
-      expect(state).toEqual({ ...initialState, isFetching: true });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: false, csv: false, resource: true },
+      });
       expect(
         operatorReducer(undefined, {
           type: actionTypes.resourceDeleted as any,
         }),
       ).toEqual({ ...initialState, isFetching: false });
+    });
+
+    it("marks as still fetching if some resource is still fetching", () => {
+      let state = operatorReducer(undefined, {
+        type: actionTypes.checkingOLM as any,
+      });
+      state = operatorReducer(state, {
+        type: actionTypes.requestOperator as any,
+      });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: true, operator: true, csv: false, resource: false },
+      });
+      state = operatorReducer(state, {
+        type: actionTypes.OLMInstalled as any,
+      });
+      expect(state.isFetching).toBe(true);
+      state = operatorReducer(state, {
+        type: actionTypes.receiveOperator as any,
+      });
+      expect(state.isFetching).toBe(false);
     });
   });
 });

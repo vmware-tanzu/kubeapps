@@ -40,7 +40,7 @@ describe("checkOLMInstalled", () => {
         type: getType(operatorActions.checkingOLM),
       },
       {
-        type: getType(operatorActions.errorOperators),
+        type: getType(operatorActions.errorOLMCheck),
         payload: new Error("nope"),
       },
     ];
@@ -326,6 +326,10 @@ describe("getResources", () => {
       {
         type: getType(operatorActions.errorCustomResource),
         payload: new Error("Boom!"),
+      },
+      {
+        type: getType(operatorActions.receiveCustomResources),
+        payload: [],
       },
     ];
     await store.dispatch(operatorActions.getResources("default"));
