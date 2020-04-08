@@ -24,6 +24,7 @@ export interface IDeploymentFormProps {
   selected: IChartState["selected"];
   deployChart: (
     version: IChartVersion,
+    chartNamespace: string,
     releaseName: string,
     namespace: string,
     values?: string,
@@ -154,13 +155,14 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, deployChart, push, namespace } = this.props;
+    const { chartNamespace, selected, deployChart, push, namespace } = this.props;
     const { releaseName, appValues } = this.state;
 
     this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
     if (selected.version) {
       const deployed = await deployChart(
         selected.version,
+        chartNamespace,
         releaseName,
         namespace,
         appValues,

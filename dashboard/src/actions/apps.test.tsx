@@ -221,13 +221,13 @@ describe("deploy chart", () => {
 
   it("returns true if namespace is correct and deployment is successful", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "my-release", "default"),
+      actions.apps.deployChart("my-version" as any, "chart-namespace", "my-release", "default"),
     );
     expect(res).toBe(true);
     expect(App.create).toHaveBeenCalledWith(
       "my-release",
       "default",
-      "kubeapps-ns",
+      "chart-namespace",
       "my-version",
       undefined,
     );
@@ -240,7 +240,7 @@ describe("deploy chart", () => {
 
   it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "my-release", definedNamespaces.all),
+      actions.apps.deployChart("my-version" as any, "chart-namespace", "my-release", definedNamespaces.all),
     );
     expect(res).toBe(false);
     const expectedActions = [
@@ -256,7 +256,7 @@ describe("deploy chart", () => {
   });
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "my-release", "default", "foo: 1", {
+      actions.apps.deployChart("my-version" as any, "chart-namespace", "my-release", "default", "foo: 1", {
         properties: { foo: { type: "string" } },
       }),
     );
@@ -277,6 +277,7 @@ describe("deploy chart", () => {
 describe("upgradeApp", () => {
   const provisionCMD = actions.apps.upgradeApp(
     "my-version" as any,
+    "kubeapps-ns",
     "my-release",
     definedNamespaces.all,
   );
@@ -319,7 +320,7 @@ describe("upgradeApp", () => {
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
-      actions.apps.upgradeApp("my-version" as any, "my-release", "default", "foo: 1", {
+      actions.apps.upgradeApp("my-version" as any, "kubeapps-ns", "my-release", "default", "foo: 1", {
         properties: { foo: { type: "string" } },
       }),
     );

@@ -179,7 +179,7 @@ it("triggers a deployment when submitting the form", done => {
   );
   wrapper.setState({ appValues });
   wrapper.find("form").simulate("submit");
-  expect(deployChart).toHaveBeenCalledWith(versions[0], releaseName, namespace, appValues, schema);
+  expect(deployChart).toHaveBeenCalledWith(versions[0], defaultProps.chartNamespace, releaseName, namespace, appValues, schema);
   setTimeout(() => {
     expect(push).toHaveBeenCalledWith("/ns/default/apps/my-release");
     done();

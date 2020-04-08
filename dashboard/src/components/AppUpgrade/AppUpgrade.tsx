@@ -20,6 +20,7 @@ interface IAppUpgradeProps {
   deployed: IChartState["deployed"];
   upgradeApp: (
     version: IChartVersion,
+    chartNamespace: string,
     releaseName: string,
     namespace: string,
     values?: string,
