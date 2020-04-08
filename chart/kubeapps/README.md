@@ -47,8 +47,8 @@ To install the chart with the release name `kubeapps`:
 For Helm 2:
 
 ```console
-$ helm repo add bitnami https://charts.bitnami.com/bitnami
-$ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
 > **IMPORTANT** This assumes an insecure Helm 2 installation, which is not recommended in production. See [the documentation to learn how to secure Helm 2 and Kubeapps in production](https://github.com/kubeapps/kubeapps/blob/master/docs/user/securing-kubeapps.md).
@@ -74,7 +74,7 @@ For a full list of configuration parameters of the Kubeapps chart, see the [valu
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```console
-$ helm install kubeapps --namespace kubeapps \
+helm install kubeapps --namespace kubeapps \
   --set assetsvc.service.port=9090 \
     bitnami/kubeapps
 ```
@@ -84,7 +84,7 @@ The above command sets the port for the assetsvc Service to 9090.
 Alternatively, a YAML file that specifies the values for parameters can be provided while installing the chart. For example,
 
 ```console
-$ helm install kubeapps --namespace kubeapps -f custom-values.yaml bitnami/kubeapps
+helm install kubeapps --namespace kubeapps -f custom-values.yaml bitnami/kubeapps
 ```
 
 ## Configuration and installation details
@@ -126,7 +126,7 @@ The simplest way to expose the Kubeapps Dashboard is to assign a LoadBalancer ty
 Wait for your cluster to assign a LoadBalancer IP or Hostname to the `kubeapps` Service and access it on that address:
 
 ```console
-$ kubectl get services --namespace kubeapps --watch
+kubectl get services --namespace kubeapps --watch
 ```
 
 #### Ingress
@@ -157,15 +157,15 @@ You can upgrade Kubeapps from the Kubeapps web interface. Select the namespace i
 
 You can also use the Helm CLI to upgrade Kubeapps, first ensure you have updated your local chart repository cache:
 
-```console
-$ helm repo update
+```bash
+helm repo update
 ```
 
 Now upgrade Kubeapps:
 
-```console
-$ export RELEASE_NAME=kubeapps
-$ helm upgrade $RELEASE_NAME bitnami/kubeapps
+```bash
+export RELEASE_NAME=kubeapps
+helm upgrade $RELEASE_NAME bitnami/kubeapps
 ```
 
 If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-upgrading-the-chart) section.
@@ -176,11 +176,13 @@ To uninstall/delete the `kubeapps` deployment:
 
 ```console
 # For Helm 2
-$ helm delete --purge kubeapps
+helm delete --purge kubeapps
+
 # For Helm 3
-$ helm uninstall kubeapps
+helm uninstall kubeapps
+
 # Optional: Only if there are no more instances of Kubeapps
-$ kubectl delete crd apprepositories.kubeapps.com
+kubectl delete crd apprepositories.kubeapps.com
 ```
 
 The first command removes most of the Kubernetes components associated with the chart and deletes the release. After that, if there are no more instances of Kubeapps in the cluster you can manually delete the `apprepositories.kubeapps.com` CRD used by Kubeapps that is shared for the entire cluster.
@@ -190,7 +192,7 @@ The first command removes most of the Kubernetes components associated with the 
 If you have dedicated a namespace only for Kubeapps you can completely clean remaining completed/failed jobs or any stale resources by deleting the namespace
 
 ```console
-$ kubectl delete namespace kubeapps
+kubectl delete namespace kubeapps
 ```
 
 ## Troubleshooting
@@ -222,13 +224,13 @@ but for a production environment you can assign the specific permissions so that
 It is also possible, though less common, that your cluster does not have Role Based Access Control (RBAC) enabled. To check if your cluster has RBAC you can execute:
 
 ```console
-$ kubectl api-versions
+kubectl api-versions
 ```
 
 If the above command does not include entries for `rbac.authorization.k8s.io` you should perform the chart installation by setting `rbac.create=false`:
 
 ```console
-$ helm install --name kubeapps --namespace kubeapps bitnami/kubeapps --set rbac.create=false
+helm install --name kubeapps --namespace kubeapps bitnami/kubeapps --set rbac.create=false
 ```
 
 ### Error while upgrading the Chart
