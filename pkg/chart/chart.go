@@ -55,6 +55,9 @@ type Details struct {
 	// AppRepositoryResourceName specifies an app repository resource to use
 	// for the request.
 	AppRepositoryResourceName string `json:"appRepositoryResourceName,omitempty"`
+	// AppRepositoryResourceNamespace specifies the namespace for the app repository
+	AppRepositoryResourceNamespace string `json:"appRepositoryResourceNamespace,omitempty"`
+	// resource for the request.
 	// ChartName is the name of the chart within the repo.
 	ChartName string `json:"chartName"`
 	// ReleaseName is the Name of the release given to Tiller.
@@ -265,7 +268,7 @@ func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	appRepo, err := c.appRepoHandler.AsSVC().GetAppRepository(details.AppRepositoryResourceName, c.kubeappsNamespace)
+	appRepo, err := c.appRepoHandler.AsSVC().GetAppRepository(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
@@ -274,7 +277,12 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 
 	var caCertSecret *corev1.Secret
 	if auth.CustomCA != nil {
-		caCertSecret, err = c.appRepoHandler.AsSVC().GetSecret(auth.CustomCA.SecretKeyRef.Name, c.kubeappsNamespace)
+		secretName := auth.CustomCA.SecretKeyRef.Name
+		if details.AppRepositoryResourceNamespace != c.kubeappsNamespace {
+			// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
+			secretName = kube.KubeappsSecretNameForRepo(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
+		}
+		caCertSecret, err = c.appRepoHandler.AsSVC().GetSecret(secretName, c.kubeappsNamespace)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
@@ -282,7 +290,12 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 
 	var authSecret *corev1.Secret
 	if auth.Header != nil {
-		authSecret, err = c.appRepoHandler.AsSVC().GetSecret(auth.Header.SecretKeyRef.Name, c.kubeappsNamespace)
+		secretName := auth.Header.SecretKeyRef.Name
+		if details.AppRepositoryResourceNamespace != c.kubeappsNamespace {
+			// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
+			secretName = kube.KubeappsSecretNameForRepo(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
+		}
+		authSecret, err = c.appRepoHandler.AsSVC().GetSecret(secretName, c.kubeappsNamespace)
 		if err != nil {
 			return nil, nil, nil, err
 		}
