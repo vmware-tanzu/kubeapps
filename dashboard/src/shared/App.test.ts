@@ -100,8 +100,8 @@ describe("App", () => {
       expect(request.config.data).toEqual(
         JSON.stringify({
           appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
+          appRepositoryResourceNamespace: "kubeapps",
           chartName: testChartVersion.relationships.chart.data.name,
-          chartNamespace: "kubeapps",
           releaseName: "absent-ant",
           version: testChartVersion.attributes.version,
         }),
@@ -135,8 +135,8 @@ describe("App", () => {
       expect(request.config.data).toEqual(
         JSON.stringify({
           appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
+          appRepositoryResourceNamespace: "kubeapps",
           chartName: testChartVersion.relationships.chart.data.name,
-          chartNamespace: "kubeapps",
           releaseName: "absent-ant",
           version: testChartVersion.attributes.version,
         }),
