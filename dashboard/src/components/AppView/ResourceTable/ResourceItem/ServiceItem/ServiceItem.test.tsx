@@ -48,4 +48,13 @@ context("when there is a valid Service", () => {
     const wrapper = shallow(<ServiceItem resource={service} />);
     expect(wrapper).toMatchSnapshot();
   });
+
+  it("renders a view with no ports", () => {
+    const service = {
+      metadata: { name: "foo" },
+      spec: { type: "ClusterIP" },
+    } as IResource;
+    const wrapper = shallow(<ServiceItem resource={service} />);
+    expect(wrapper).toMatchSnapshot();
+  });
 });
