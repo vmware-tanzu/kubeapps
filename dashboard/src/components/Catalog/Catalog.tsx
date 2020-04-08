@@ -143,7 +143,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
                 </div>
               </div>
             )}
-            <div className={this.shouldRenderOperators() ? "col-10" : ""}>
+            <div className={this.shouldRenderOperators() ? "col-10" : "col-12"}>
               <CardGrid>{items}</CardGrid>
             </div>
           </div>
