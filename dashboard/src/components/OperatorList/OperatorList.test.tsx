@@ -234,6 +234,7 @@ describe("filter operators", () => {
         .dive()
         .text(),
     ).toMatch("No Operator found");
+    expect(wrapper.find(".horizontal-column")).toExist();
   });
 
   it("filters by category", () => {

@@ -197,9 +197,6 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
       }
       return true;
     });
-    if (filteredOperators.length === 0) {
-      return <p>No Operator found</p>;
-    }
     filteredOperators.forEach(operator => {
       if (csvNames.some(csvName => csvName === getDefaultChannel(operator.status).currentCSV)) {
         installedOperators.push(operator);
@@ -249,34 +246,28 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
         </div>
         <div className="col-10">
           <div className="padding-l-normal">
-            {installedOperators.length > 0 && (
-              <>
-                <h3>Installed</h3>
-                <CardGrid>
-                  {installedOperators.map(operator => {
-                    return (
-                      <InfoCard
-                        key={operator.metadata.name}
-                        link={app.operators.view(this.props.namespace, operator.metadata.name)}
-                        title={operator.metadata.name}
-                        icon={api.operators.operatorIcon(
-                          this.props.namespace,
-                          operator.metadata.name,
-                        )}
-                        info={`v${operator.status.channels[0].currentCSVDesc.version}`}
-                        tag1Content={
-                          operator.status.channels[0].currentCSVDesc.annotations.categories
-                        }
-                        tag2Content={operator.status.provider.name}
-                      />
-                    );
-                  })}
-                </CardGrid>
-              </>
+            {filteredOperators.length === 0 ? (
+              <p>No Operator found</p>
+            ) : (
+              this.renderCardGrid(installedOperators, availableOperators)
             )}
-            <h3>Available Operators</h3>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  private renderCardGrid(
+    installedOperators: IPackageManifest[],
+    availableOperators: IPackageManifest[],
+  ) {
+    return (
+      <>
+        {installedOperators.length > 0 && (
+          <>
+            <h3>Installed</h3>
             <CardGrid>
-              {availableOperators.map(operator => {
+              {installedOperators.map(operator => {
                 return (
                   <InfoCard
                     key={operator.metadata.name}
@@ -290,9 +281,25 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
                 );
               })}
             </CardGrid>
-          </div>
-        </div>
-      </div>
+          </>
+        )}
+        <h3>Available Operators</h3>
+        <CardGrid>
+          {availableOperators.map(operator => {
+            return (
+              <InfoCard
+                key={operator.metadata.name}
+                link={app.operators.view(this.props.namespace, operator.metadata.name)}
+                title={operator.metadata.name}
+                icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
+                info={`v${operator.status.channels[0].currentCSVDesc.version}`}
+                tag1Content={operator.status.channels[0].currentCSVDesc.annotations.categories}
+                tag2Content={operator.status.provider.name}
+              />
+            );
+          })}
+        </CardGrid>
+      </>
     );
   }
 
