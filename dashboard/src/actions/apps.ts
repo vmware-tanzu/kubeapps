@@ -248,6 +248,7 @@ export function fetchAppsWithUpdateInfo(
 
 export function deployChart(
   chartVersion: IChartVersion,
+  chartNamespace: string,
   releaseName: string,
   namespace: string,
   values?: string,
@@ -273,10 +274,7 @@ export function deployChart(
           );
         }
       }
-      const {
-        config: { namespace: kubeappsNamespace },
-      } = getState();
-      await App.create(releaseName, namespace, kubeappsNamespace, chartVersion, values);
+      await App.create(releaseName, namespace, chartNamespace, chartVersion, values);
       dispatch(receiveDeployApp());
       return true;
     } catch (e) {
