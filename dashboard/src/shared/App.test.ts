@@ -136,6 +136,7 @@ describe("App", () => {
         JSON.stringify({
           appRepositoryResourceName: testChartVersion.relationships.chart.data.repo.name,
           chartName: testChartVersion.relationships.chart.data.name,
+          chartNamespace: "kubeapps",
           releaseName: "absent-ant",
           version: testChartVersion.attributes.version,
         }),

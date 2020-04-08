@@ -286,6 +286,7 @@ export function deployChart(
 
 export function upgradeApp(
   chartVersion: IChartVersion,
+  chartNamespace: string,
   releaseName: string,
   namespace: string,
   values?: string,
@@ -294,9 +295,6 @@ export function upgradeApp(
   return async (dispatch, getState) => {
     dispatch(requestUpgradeApp());
     try {
-      const {
-        config: { namespace: kubeappsNamespace },
-      } = getState();
       if (values && schema) {
         const validation = validate(values, schema);
         if (!validation.valid) {
@@ -308,7 +306,7 @@ export function upgradeApp(
           );
         }
       }
-      await App.upgrade(releaseName, namespace, kubeappsNamespace, chartVersion, values);
+      await App.upgrade(releaseName, namespace, chartNamespace, chartVersion, values);
       dispatch(receiveUpgradeApp());
       return true;
     } catch (e) {

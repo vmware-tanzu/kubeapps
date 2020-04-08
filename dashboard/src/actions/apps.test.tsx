@@ -277,6 +277,7 @@ describe("deploy chart", () => {
 describe("upgradeApp", () => {
   const provisionCMD = actions.apps.upgradeApp(
     "my-version" as any,
+    "kubeapps-ns",
     "my-release",
     definedNamespaces.all,
   );
@@ -319,7 +320,7 @@ describe("upgradeApp", () => {
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
-      actions.apps.upgradeApp("my-version" as any, "my-release", "default", "foo: 1", {
+      actions.apps.upgradeApp("my-version" as any, "kubeapps-ns", "my-release", "default", "foo: 1", {
         properties: { foo: { type: "string" } },
       }),
     );

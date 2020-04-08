@@ -43,7 +43,7 @@ export class App {
   public static async upgrade(
     releaseName: string,
     namespace: string,
-    kubeappsNamespace: string,
+    chartNamespace: string,
     chartVersion: IChartVersion,
     values?: string,
   ) {
@@ -52,6 +52,7 @@ export class App {
     const { data } = await axiosWithAuth.put(endpoint, {
       appRepositoryResourceName: chartAttrs.repo.name,
       chartName: chartAttrs.name,
+      chartNamespace,
       releaseName,
       values,
       version: chartVersion.attributes.version,

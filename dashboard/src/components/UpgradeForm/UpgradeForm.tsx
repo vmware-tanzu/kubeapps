@@ -23,6 +23,7 @@ export interface IUpgradeFormProps {
   deployed: IChartState["deployed"];
   upgradeApp: (
     version: IChartVersion,
+    chartNamespace: string,
     releaseName: string,
     namespace: string,
     values?: string,
@@ -125,13 +126,14 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, push, upgradeApp, releaseName, namespace } = this.props;
+    const { selected, push, upgradeApp, releaseName, namespace, repoNamespace } = this.props;
     const { appValues } = this.state;
 
     this.setState({ isDeploying: true });
     if (selected.version) {
       const deployed = await upgradeApp(
         selected.version,
+        repoNamespace,
         releaseName,
         namespace,
         appValues,
