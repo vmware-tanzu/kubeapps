@@ -84,10 +84,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         />
       );
     }
-    const filteredCharts = this.filteredCharts(allItems);
-    const filteredCSVs = this.filteredCSVs(csvs);
-    const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
-    if (!isFetching && catalogItems.length === 0) {
+    if (!isFetching && allItems.length === 0 && csvs.length === 0) {
       return (
         <MessageAlert
           level={"warning"}
@@ -101,6 +98,9 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         />
       );
     }
+    const filteredCharts = this.filteredCharts(allItems);
+    const filteredCSVs = this.shouldRenderOperators() ? this.filteredCSVs(csvs) : [];
+    const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
     const items = catalogItems.map(c => (
       <CatalogItem key={`${c.type}/${c.repoName || c.csv}/${c.name}`} item={c} />
     ));
@@ -118,7 +118,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         </PageHeader>
         <LoadingWrapper loaded={!isFetching}>
           <div className="row">
-            {csvs.length > 0 && (
+            {this.shouldRenderOperators() && (
               <div className="col-2">
                 <div className="margin-b-normal">
                   <span>
@@ -143,7 +143,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
                 </div>
               </div>
             )}
-            <div className={csvs.length > 0 ? "col-10" : ""}>
+            <div className={this.shouldRenderOperators() ? "col-10" : ""}>
               <CardGrid>{items}</CardGrid>
             </div>
           </div>
@@ -211,6 +211,13 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     this.setState({
       filter,
     });
+  };
+
+  // Render Operators only if there are Operators to render and if we are not
+  // filtering by repo
+  private shouldRenderOperators = () => {
+    const { csvs, repo } = this.props;
+    return csvs.length > 0 && !repo;
   };
 }
 
