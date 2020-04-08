@@ -46,7 +46,7 @@ To install the chart with the release name `kubeapps`:
 
 For Helm 2:
 
-```console
+```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
@@ -73,7 +73,7 @@ For a full list of configuration parameters of the Kubeapps chart, see the [valu
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
-```console
+```bash
 helm install kubeapps --namespace kubeapps \
   --set assetsvc.service.port=9090 \
     bitnami/kubeapps
@@ -83,7 +83,7 @@ The above command sets the port for the assetsvc Service to 9090.
 
 Alternatively, a YAML file that specifies the values for parameters can be provided while installing the chart. For example,
 
-```console
+```bash
 helm install kubeapps --namespace kubeapps -f custom-values.yaml bitnami/kubeapps
 ```
 
@@ -125,7 +125,7 @@ The simplest way to expose the Kubeapps Dashboard is to assign a LoadBalancer ty
 
 Wait for your cluster to assign a LoadBalancer IP or Hostname to the `kubeapps` Service and access it on that address:
 
-```console
+```bash
 kubectl get services --namespace kubeapps --watch
 ```
 
@@ -174,7 +174,7 @@ If you find issues upgrading Kubeapps, check the [troubleshooting](#error-while-
 
 To uninstall/delete the `kubeapps` deployment:
 
-```console
+```bash
 # For Helm 2
 helm delete --purge kubeapps
 
@@ -191,7 +191,7 @@ The first command removes most of the Kubernetes components associated with the 
 
 If you have dedicated a namespace only for Kubeapps you can completely clean remaining completed/failed jobs or any stale resources by deleting the namespace
 
-```console
+```bash
 kubectl delete namespace kubeapps
 ```
 
@@ -213,7 +213,7 @@ Error: namespaces "kubeapps" is forbidden: User "system:serviceaccount:kube-syst
 
 This usually is an indication that Tiller was not installed with enough permissions to create the resources required by Kubeapps. In order to install Kubeapps, tiller will need to be able to install Custom Resource Definitions cluster-wide, as well as manage app repositories in your kubeapps namespace. The easiest way to enable this in a development environment is install Tiller with elevated permissions (e.g. as a cluster-admin). For example:
 
-```
+```bash
 kubectl -n kube-system create sa tiller
 kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
 helm init --service-account tiller
@@ -223,13 +223,13 @@ but for a production environment you can assign the specific permissions so that
 
 It is also possible, though less common, that your cluster does not have Role Based Access Control (RBAC) enabled. To check if your cluster has RBAC you can execute:
 
-```console
+```bash
 kubectl api-versions
 ```
 
 If the above command does not include entries for `rbac.authorization.k8s.io` you should perform the chart installation by setting `rbac.create=false`:
 
-```console
+```bash
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps --set rbac.create=false
 ```
 
@@ -241,13 +241,13 @@ It is possible that when upgrading Kubeapps an error appears. That can be caused
 
 1.  (Optional) Backup your personal repositories (if you have any):
 
-```console
+```bash
 kubectl get apprepository --namespace kubeapps -o yaml <repo name> > <repo name>.yaml
 ```
 
 2.  Delete Kubeapps:
 
-```console
+```bash
 helm del --purge kubeapps
 ```
 
@@ -255,7 +255,7 @@ helm del --purge kubeapps
 
 > **Warning**: Don't execute this step if you have more than one Kubeapps installation in your cluster.
 
-```console
+```bash
 kubectl delete crd apprepositories.kubeapps.com
 ```
 
@@ -263,20 +263,20 @@ kubectl delete crd apprepositories.kubeapps.com
 
 > **Warning**: Don't execute this step if you have workloads other than Kubeapps in the `kubeapps` namespace.
 
-```console
+```bash
 kubectl delete namespace kubeapps
 ```
 
 5.  Install the latest version of Kubeapps (using any custom modifications you need):
 
-```console
+```bash
 helm repo update
 helm install --name kubeapps --namespace kubeapps bitnami/kubeapps
 ```
 
 6.  (Optional) Restore any repositories you backed up in the first step:
 
-```console
+```bash
 kubectl apply -f <repo name>.yaml
 ```
 
