@@ -276,7 +276,7 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
 	client := c.appRepoHandler.AsUser(details.UserToken)
-	if details.AppRepositoryResourceName == c.kubeappsNamespace {
+	if details.AppRepositoryResourceNamespace == c.kubeappsNamespace {
 		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
 		client = c.appRepoHandler.AsSVC()
 	}
