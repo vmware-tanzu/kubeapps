@@ -197,10 +197,6 @@ func fakeLoadChartV2(in io.Reader) (*chartv2.Chart, error) {
 	return &chartv2.Chart{}, nil
 }
 
-func TestmeTest(t *testing.T) {
-	t.Fatalf("bar")
-}
-
 func TestParseDetailsForHTTPClient(t *testing.T) {
 	systemCertPool, err := x509.SystemCertPool()
 	if err != nil {
