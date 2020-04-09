@@ -9,18 +9,21 @@ import { IChartVersion, IStoreState } from "../../shared/types";
 interface IRouteProps {
   match: {
     params: {
+      namespace: string;
       repo: string;
+      global: string;
       id: string;
       version?: string;
     };
   };
 }
 
-function mapStateToProps({ charts, namespace }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ charts, config }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     chartID: chartID(params),
+    chartNamespace: params.global === "global" ? config.namespace : params.namespace,
     isFetching: charts.isFetching,
-    namespace: namespace.current,
+    namespace: params.namespace,
     selected: charts.selected,
     version: params.version,
   };
@@ -31,10 +34,10 @@ function mapDispatchToProps(
   { match: { params } }: IRouteProps,
 ) {
   return {
-    fetchChartVersionsAndSelectVersion: (id: string, version?: string) =>
-      dispatch(actions.charts.fetchChartVersionsAndSelectVersion(id, version)),
-    getChartReadme: (version: string) =>
-      dispatch(actions.charts.getChartReadme(chartID(params), version)),
+    fetchChartVersionsAndSelectVersion: (namespace: string, id: string, version?: string) =>
+      dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, id, version)),
+    getChartReadme: (namespace: string, version: string) =>
+      dispatch(actions.charts.getChartReadme(namespace, chartID(params), version)),
     resetChartVersion: () => dispatch(actions.charts.resetChartVersion()),
     selectChartVersion: (version: IChartVersion) =>
       dispatch(actions.charts.selectChartVersion(version)),

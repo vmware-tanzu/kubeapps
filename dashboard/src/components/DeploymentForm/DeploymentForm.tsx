@@ -17,20 +17,22 @@ import "react-tabs/style/react-tabs.css";
 
 export interface IDeploymentFormProps {
   kubeappsNamespace: string;
+  chartNamespace: string;
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
   selected: IChartState["selected"];
   deployChart: (
     version: IChartVersion,
+    chartNamespace: string,
     releaseName: string,
     namespace: string,
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (id: string) => void;
-  getChartVersion: (id: string, chartVersion: string) => void;
+  fetchChartVersions: (namespace: string, id: string) => void;
+  getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   namespace: string;
 }
 
@@ -55,7 +57,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
   };
 
   public componentDidMount() {
-    this.props.fetchChartVersions(this.props.chartID);
+    this.props.fetchChartVersions(this.props.chartNamespace, this.props.chartID);
   }
 
   public componentDidUpdate(prevProps: IDeploymentFormProps) {
@@ -126,6 +128,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               />
             </div>
             <DeploymentFormBody
+              chartNamespace={this.props.chartNamespace}
               chartID={this.props.chartID}
               chartVersion={this.props.chartVersion}
               namespace={this.props.namespace}
@@ -152,13 +155,14 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, deployChart, push, namespace } = this.props;
+    const { chartNamespace, selected, deployChart, push, namespace } = this.props;
     const { releaseName, appValues } = this.state;
 
     this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
     if (selected.version) {
       const deployed = await deployChart(
         selected.version,
+        chartNamespace,
         releaseName,
         namespace,
         appValues,

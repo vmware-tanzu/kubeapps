@@ -31,6 +31,7 @@ export class UnprocessableEntity extends CustomError {}
 export class InternalServerError extends CustomError {}
 
 export interface IRepo {
+  namespace: string;
   name: string;
   url: string;
 }

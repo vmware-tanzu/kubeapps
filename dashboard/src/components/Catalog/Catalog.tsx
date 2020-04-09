@@ -18,6 +18,7 @@ interface ICatalogProps {
   fetchCharts: (namespace: string, repo: string) => void;
   pushSearchFilter: (filter: string) => RouterAction;
   namespace: string;
+  kubeappsNamespace: string;
   getCSVs: (namespace: string) => void;
   csvs: IClusterServiceVersion[];
   featureFlags: { operators: boolean };
@@ -102,7 +103,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     const filteredCSVs = this.shouldRenderOperators() ? this.filteredCSVs(csvs) : [];
     const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
     const items = catalogItems.map(c => (
-      <CatalogItem key={`${c.type}/${c.repoName || c.csv}/${c.name}`} item={c} />
+      <CatalogItem key={`${c.type}/${c.repo?.name || c.csv}/${c.name}`} item={c} />
     ));
     return (
       <section className="Catalog">
@@ -178,7 +179,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         version: c.relationships.latestChartVersion.data.app_version,
         description: c.attributes.description,
         type: "chart",
-        repoName: c.attributes.repo.name,
+        repo: c.attributes.repo,
         namespace: this.props.namespace,
       });
     });

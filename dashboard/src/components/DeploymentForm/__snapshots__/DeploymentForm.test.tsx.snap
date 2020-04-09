@@ -36,6 +36,7 @@ exports[`renders the full DeploymentForm 1`] = `
       <DeploymentFormBody
         appValues=""
         chartID="foo"
+        chartNamespace="other-namespace"
         chartVersion="1.0.0"
         getChartVersion={[Function]}
         namespace="default"

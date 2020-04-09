@@ -25,6 +25,7 @@ const defaultProps = {
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
   namespace: "kubeapps",
+  kubeappsNamespace: "kubeapps",
   csvs: [],
   getCSVs: jest.fn(),
   featureFlags: { operators: false },
@@ -161,12 +162,12 @@ describe("renderization", () => {
       items: [
         {
           id: "foo",
-          attributes: { name: "foo", description: "", repo: { name: "foo" } },
+          attributes: { name: "foo", description: "", repo: { name: "foo", namespace: "chart-namespace"} },
           relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
         } as IChart,
         {
           id: "bar",
-          attributes: { name: "bar", description: "", repo: { name: "bar" } },
+          attributes: { name: "bar", description: "", repo: { name: "bar", namespace: "chart-namespace"} },
           relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
         } as IChart,
       ],
@@ -187,7 +188,10 @@ describe("renderization", () => {
         id: "bar",
         name: "bar",
         namespace: "kubeapps",
-        repoName: "bar",
+        repo: {
+          name: "bar",
+          namespace: "chart-namespace",
+        },
         type: "chart",
         version: "v2.0.0",
       };
@@ -196,7 +200,10 @@ describe("renderization", () => {
         id: "foo",
         name: "foo",
         namespace: "kubeapps",
-        repoName: "foo",
+        repo: {
+          name: "foo",
+          namespace: "chart-namespace",
+        },
         type: "chart",
         version: "v1.0.0",
       };
@@ -229,7 +236,10 @@ describe("renderization", () => {
         id: "foo",
         name: "foo",
         namespace: "kubeapps",
-        repoName: "foo",
+        repo: {
+          name: "foo",
+          namespace: "chart-namespace",
+        },
         type: "chart",
         version: "v1.0.0",
       };

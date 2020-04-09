@@ -226,22 +226,6 @@ describe("fetchRepos", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 
-  it("defaults to apprepos in kubeapps own namespace if none specified", async () => {
-    const expectedActions = [
-      {
-        type: getType(repoActions.requestRepos),
-        payload: kubeappsNamespace,
-      },
-      {
-        type: getType(repoActions.receiveRepos),
-        payload: { foo: "bar" },
-      },
-    ];
-
-    await store.dispatch(repoActions.fetchRepos());
-    expect(store.getActions()).toEqual(expectedActions);
-  });
-
   it("dispatches requestRepos and errorRepos if error fetching", async () => {
     AppRepository.list = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
@@ -480,7 +464,7 @@ describe("checkChart", () => {
       },
     ];
 
-    await store.dispatch(repoActions.checkChart("my-repo", "my-chart"));
+    await store.dispatch(repoActions.checkChart(kubeappsNamespace, "my-repo", "my-chart"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(Chart.fetchChartVersions).toBeCalledWith("kubeapps-namespace", "my-repo/my-chart");
   });
@@ -500,7 +484,7 @@ describe("checkChart", () => {
       },
     ];
 
-    await store.dispatch(repoActions.checkChart("my-repo", "my-chart"));
+    await store.dispatch(repoActions.checkChart(kubeappsNamespace, "my-repo", "my-chart"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(Chart.fetchChartVersions).toBeCalledWith("kubeapps-namespace", "my-repo/my-chart");
   });
