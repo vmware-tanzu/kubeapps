@@ -117,22 +117,25 @@ func TestParseDetails(t *testing.T) {
 			name: "parses request including app repo resource",
 			data: `{
 				"appRepositoryResourceName": "my-chart-repo",
+				"appRepositoryResourceNamespace": "my-repo-namespace",
 	        	"chartName": "test",
 	        	"releaseName": "foo",
 	        	"version": "1.0.0",
 	        	"values": "foo: bar"
 	        }`,
 			expected: &Details{
-				AppRepositoryResourceName: "my-chart-repo",
-				ChartName:                 "test",
-				ReleaseName:               "foo",
-				Version:                   "1.0.0",
-				Values:                    "foo: bar",
+				AppRepositoryResourceName:      "my-chart-repo",
+				AppRepositoryResourceNamespace: "my-repo-namespace",
+				ChartName:                      "test",
+				ReleaseName:                    "foo",
+				Version:                        "1.0.0",
+				Values:                         "foo: bar",
 			},
 		},
 		{
 			name: "errors if appRepositoryResourceName is not present",
 			data: `{
+				"appRepositoryResourceNamespace": "my-repo-namespace",
 				"chartName": "test",
 				"releaseName": "foo",
 				"version": "1.0.0",
@@ -144,6 +147,19 @@ func TestParseDetails(t *testing.T) {
 			name: "errors if appRepositoryResourceName is empty",
 			data: `{
 				"appRepositoryResourceName": "",
+				"appRepositoryResourceNamespace": "my-repo-namespace",
+				"chartName": "test",
+				"releaseName": "foo",
+				"version": "1.0.0",
+				"values": "foo: bar"
+			}`,
+			err: true,
+		},
+		{
+			name: "errors if appRepositoryResourceNamespace is empty",
+			data: `{
+				"appRepositoryResourceName": "my-repo",
+				"appRepositoryResourceNamespace": "",
 				"chartName": "test",
 				"releaseName": "foo",
 				"version": "1.0.0",
@@ -181,7 +197,11 @@ func fakeLoadChartV2(in io.Reader) (*chartv2.Chart, error) {
 	return &chartv2.Chart{}, nil
 }
 
-func TestparseDetailsForHTTPClient(t *testing.T) {
+func TestmeTest(t *testing.T) {
+	t.Fatalf("bar")
+}
+
+func TestParseDetailsForHTTPClient(t *testing.T) {
 	systemCertPool, err := x509.SystemCertPool()
 	if err != nil {
 		t.Fatalf("%+v", err)
@@ -193,6 +213,7 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		customCASecretName   = "custom-ca-secret-name"
 		customCASecretData   = "some-cert-data"
 		appRepoName          = "custom-repo"
+		appRepoNamespace     = "my-namespace"
 	)
 
 	testCases := []struct {
@@ -205,14 +226,16 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		{
 			name: "default cert pool without auth",
 			details: &Details{
-				AppRepositoryResourceName: appRepoName,
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
 			numCertsExpected: len(systemCertPool.Subjects()),
 		},
 		{
 			name: "custom CA added when passed an AppRepository CRD",
 			details: &Details{
-				AppRepositoryResourceName: appRepoName,
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
@@ -230,7 +253,8 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		{
 			name: "errors if secret for custom CA secret cannot be found",
 			details: &Details{
-				AppRepositoryResourceName: appRepoName,
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
@@ -248,7 +272,8 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		{
 			name: "authorization header added when passed an AppRepository CRD",
 			details: &Details{
-				AppRepositoryResourceName: appRepoName,
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
@@ -266,7 +291,8 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		{
 			name: "errors if auth secret cannot be found",
 			details: &Details{
-				AppRepositoryResourceName: appRepoName,
+				AppRepositoryResourceName:      appRepoName,
+				AppRepositoryResourceNamespace: appRepoNamespace,
 			},
 			appRepoSpec: appRepov1.AppRepositorySpec{
 				Auth: appRepov1.AppRepositoryAuth{
@@ -288,7 +314,7 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		secrets := []*corev1.Secret{&corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      customCASecretName,
-				Namespace: metav1.NamespaceSystem,
+				Namespace: appRepoNamespace,
 			},
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(customCASecretData),
@@ -296,7 +322,7 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		}, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      authHeaderSecretName,
-				Namespace: metav1.NamespaceSystem,
+				Namespace: appRepoNamespace,
 			},
 			Data: map[string][]byte{
 				"custom-secret-key": []byte(authHeaderSecretData),
@@ -306,7 +332,7 @@ func TestparseDetailsForHTTPClient(t *testing.T) {
 		apprepos := []*appRepov1.AppRepository{&appRepov1.AppRepository{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      tc.details.AppRepositoryResourceName,
-				Namespace: metav1.NamespaceSystem,
+				Namespace: appRepoNamespace,
 			},
 			Spec: tc.appRepoSpec,
 		}}

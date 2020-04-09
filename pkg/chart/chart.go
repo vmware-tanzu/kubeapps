@@ -66,6 +66,9 @@ type Details struct {
 	Version string `json:"version"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
+	// UserToken is the request token required to request an app repository
+	// in a users namespace.
+	UserToken string `json:"userToken"`
 }
 
 // ChartMultiVersion includes both Helm2Chart and Helm3Chart
@@ -262,13 +265,22 @@ func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 		return nil, fmt.Errorf("an AppRepositoryResourceName is required")
 	}
 
+	if details.AppRepositoryResourceNamespace == "" {
+		return nil, fmt.Errorf("an AppRepositoryResourceNamespace is required")
+	}
+
 	return details, nil
 }
 
 func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	appRepo, err := c.appRepoHandler.AsSVC().GetAppRepository(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
+	client := c.appRepoHandler.AsUser(details.UserToken)
+	if details.AppRepositoryResourceName == c.kubeappsNamespace {
+		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
+		client = c.appRepoHandler.AsSVC()
+	}
+	appRepo, err := client.GetAppRepository(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
@@ -278,11 +290,7 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 	var caCertSecret *corev1.Secret
 	if auth.CustomCA != nil {
 		secretName := auth.CustomCA.SecretKeyRef.Name
-		if details.AppRepositoryResourceNamespace != c.kubeappsNamespace {
-			// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
-			secretName = kube.KubeappsSecretNameForRepo(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
-		}
-		caCertSecret, err = c.appRepoHandler.AsSVC().GetSecret(secretName, c.kubeappsNamespace)
+		caCertSecret, err = client.GetSecret(secretName, details.AppRepositoryResourceNamespace)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
@@ -291,11 +299,7 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 	var authSecret *corev1.Secret
 	if auth.Header != nil {
 		secretName := auth.Header.SecretKeyRef.Name
-		if details.AppRepositoryResourceNamespace != c.kubeappsNamespace {
-			// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
-			secretName = kube.KubeappsSecretNameForRepo(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
-		}
-		authSecret, err = c.appRepoHandler.AsSVC().GetSecret(secretName, c.kubeappsNamespace)
+		authSecret, err = client.GetSecret(secretName, details.AppRepositoryResourceNamespace)
 		if err != nil {
 			return nil, nil, nil, err
 		}
