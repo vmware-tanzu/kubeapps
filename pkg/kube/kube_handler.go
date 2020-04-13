@@ -247,6 +247,10 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 	}
 
 	if repoSecret != nil {
+		// TODO(#1655) Fixes the immediate issue, but the proper fix would no
+		// longer set the complete owner reference during secretForRequest and
+		// rather do so explicitly here.
+		repoSecret.ObjectMeta.OwnerReferences[0].UID = appRepo.ObjectMeta.UID
 		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
 		if err != nil {
 			return nil, err
