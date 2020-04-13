@@ -24,7 +24,7 @@ exports[`renderization when charts available should render the list of charts 1`
       className="row"
     >
       <div
-        className=""
+        className="col-12"
       >
         <CardGrid>
           <CatalogItem
@@ -94,7 +94,7 @@ exports[`renderization when fetching apps loading spinner matches the snapshot 1
       className="row"
     >
       <div
-        className=""
+        className="col-12"
       >
         <CardGrid />
       </div>
