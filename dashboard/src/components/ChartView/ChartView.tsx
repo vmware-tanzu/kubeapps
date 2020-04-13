@@ -110,7 +110,7 @@ class ChartView extends React.Component<IChartViewProps> {
                       githubIDAsNames={this.isKubernetesCharts(chartAttrs.repo.url)}
                     />
                   </div>
-                  {chartAttrs.sources.length > 0 && (
+                  {chartAttrs.sources?.length > 0 && (
                     <div className="ChartViewSidebar__section">
                       <h2>Related</h2>
                       <div className="ChartSources">

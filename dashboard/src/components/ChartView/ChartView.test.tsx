@@ -29,7 +29,6 @@ const testChart: IChartVersion["relationships"]["chart"] = {
     repo: {
       name: "testrepo",
     },
-    sources: [] as string[],
   },
 } as IChartVersion["relationships"]["chart"];
 
