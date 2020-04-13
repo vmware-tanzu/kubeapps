@@ -302,7 +302,6 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser) (HTTPClient, *http.Reques
 	if err != nil {
 		return nil, nil, err
 	}
-	fmt.Println(repoSecret)
 	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
