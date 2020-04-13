@@ -228,6 +228,13 @@ func TestAppRepositoryCreate(t *testing.T) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
 
+				// TODO(#1655)
+				// The fake k8s API does not generate UID's for created object
+				// (among other things). We would need to add reactors to the fake
+				// to do so to test the UID being set on the secret.
+				// https://github.com/kubernetes/client-go/issues/439
+				// responseAppRepo.ObjectMeta.UID = "dead-beef"
+
 				// When appropriate, ensure the expected secret is stored.
 				if appRepoRequest.AppRepository.AuthHeader != "" {
 					expectedSecret := secretForRequest(appRepoRequest, responseAppRepo)
