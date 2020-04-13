@@ -42,9 +42,10 @@ const ServiceItem: React.SFC<IServiceItemRow> = props => {
       <td className="col-2">{spec.clusterIP}</td>
       <td className="col-2">{getExternalIP(resource)}</td>
       <td className="col-2">
-        {spec.ports
-          .map(p => `${p.port}${p.nodePort ? `:${p.nodePort}` : ""}/${p.protocol || "TCP"}`)
-          .join(", ")}
+        {spec.ports &&
+          spec.ports
+            .map(p => `${p.port}${p.nodePort ? `:${p.nodePort}` : ""}/${p.protocol || "TCP"}`)
+            .join(", ")}
       </td>
     </React.Fragment>
   );
