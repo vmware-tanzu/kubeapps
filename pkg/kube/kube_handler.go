@@ -255,15 +255,7 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 		if err != nil {
 			return nil, err
 		}
-		// If the namespace isn't kubeapps (ie. this is a per-namespace
-		// AppRepository), save a copy of the repository secret in kubeapps
-		// namespace using the service account clientset. This enables the
-		// existing assetsync service to be able to sync private
-		// AppRepositories in other namespaces. It is not ideal and is a
-		// temporary work-around until the asset-sync is updated to run
-		// cronjobs in other namespaces with the assetsvc receiving the data.
-		// See the relevant section of the design doc for details:
-		// https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87#heading=h.kilvd2vii0w
+		// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
 		if requestNamespace != a.kubeappsNamespace {
 			repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
 			repoSecret.ObjectMeta.OwnerReferences = nil

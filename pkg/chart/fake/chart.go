@@ -67,6 +67,6 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 	return values, nil
 }
 
-func (f *FakeChart) InitNetClient(details *chartUtils.Details) (kube.HTTPClient, error) {
+func (f *FakeChart) InitNetClient(details *chartUtils.Details, userAuthToken string) (kube.HTTPClient, error) {
 	return &http.Client{}, nil
 }

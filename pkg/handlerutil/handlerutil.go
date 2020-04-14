@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/kubeapps/kubeapps/pkg/auth"
 	chartUtils "github.com/kubeapps/kubeapps/pkg/chart"
 )
 
@@ -78,7 +79,8 @@ func ParseAndGetChart(req *http.Request, cu chartUtils.Resolver, requireV1Suppor
 	if err != nil {
 		return nil, nil, err
 	}
-	netClient, err := cu.InitNetClient(chartDetails)
+
+	netClient, err := cu.InitNetClient(chartDetails, auth.ExtractToken(req.Header.Get("Authorization")))
 	if err != nil {
 		return nil, nil, err
 	}

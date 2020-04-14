@@ -55,6 +55,9 @@ type Details struct {
 	// AppRepositoryResourceName specifies an app repository resource to use
 	// for the request.
 	AppRepositoryResourceName string `json:"appRepositoryResourceName,omitempty"`
+	// AppRepositoryResourceNamespace specifies the namespace for the app repository
+	AppRepositoryResourceNamespace string `json:"appRepositoryResourceNamespace,omitempty"`
+	// resource for the request.
 	// ChartName is the name of the chart within the repo.
 	ChartName string `json:"chartName"`
 	// ReleaseName is the Name of the release given to Tiller.
@@ -81,7 +84,7 @@ type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
 	GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
-	InitNetClient(details *Details) (kube.HTTPClient, error)
+	InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error)
 }
 
 // ChartClient struct contains the clients required to retrieve charts info
@@ -259,13 +262,22 @@ func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 		return nil, fmt.Errorf("an AppRepositoryResourceName is required")
 	}
 
+	if details.AppRepositoryResourceNamespace == "" {
+		return nil, fmt.Errorf("an AppRepositoryResourceNamespace is required")
+	}
+
 	return details, nil
 }
 
-func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
+func (c *ChartClient) parseDetailsForHTTPClient(details *Details, userAuthToken string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	appRepo, err := c.appRepoHandler.AsSVC().GetAppRepository(details.AppRepositoryResourceName, c.kubeappsNamespace)
+	client := c.appRepoHandler.AsUser(userAuthToken)
+	if details.AppRepositoryResourceNamespace == c.kubeappsNamespace {
+		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
+		client = c.appRepoHandler.AsSVC()
+	}
+	appRepo, err := client.GetAppRepository(details.AppRepositoryResourceName, details.AppRepositoryResourceNamespace)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("unable to get app repository %q: %v", details.AppRepositoryResourceName, err)
 	}
@@ -274,7 +286,8 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 
 	var caCertSecret *corev1.Secret
 	if auth.CustomCA != nil {
-		caCertSecret, err = c.appRepoHandler.AsSVC().GetSecret(auth.CustomCA.SecretKeyRef.Name, c.kubeappsNamespace)
+		secretName := auth.CustomCA.SecretKeyRef.Name
+		caCertSecret, err = client.GetSecret(secretName, details.AppRepositoryResourceNamespace)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("unable to read secret %q: %v", auth.CustomCA.SecretKeyRef.Name, err)
 		}
@@ -282,7 +295,8 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 
 	var authSecret *corev1.Secret
 	if auth.Header != nil {
-		authSecret, err = c.appRepoHandler.AsSVC().GetSecret(auth.Header.SecretKeyRef.Name, c.kubeappsNamespace)
+		secretName := auth.Header.SecretKeyRef.Name
+		authSecret, err = client.GetSecret(secretName, details.AppRepositoryResourceNamespace)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -293,8 +307,8 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *ChartClient) InitNetClient(details *Details) (kube.HTTPClient, error) {
-	appRepo, caCertSecret, authSecret, err := c.parseDetailsForHTTPClient(details)
+func (c *ChartClient) InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error) {
+	appRepo, caCertSecret, authSecret, err := c.parseDetailsForHTTPClient(details, userAuthToken)
 	if err != nil {
 		return nil, err
 	}
