@@ -202,18 +202,20 @@ The above will generate a Pod with the label `my-repo: isPrivate` and the enviro
 
 ## Per Namespace App Repositories
 
-Previously, once an App Repository was created in Kubeapps, the chart of that repository were then available cluster-wide to all users of Kubeapps. This was changed to allow creating App Repositories available only in specific namespaces, enabling future work supporting deploying charts with private docker registries. These can be created by anyone with the required RBAC for that namespace. You can still create an App Repository whose charts will be available to users in all namespaces by selecting "All Namespaces" when creating the repository.
+Previously, once an App Repository was created in Kubeapps, the charts of that repository were then available cluster-wide to all users of Kubeapps. This was changed to allow creating App Repositories available only in specific namespaces, enabling future work supporting deploying charts with private docker registries. These can be created by anyone with the required RBAC for that namespace. You can still create an App Repository whose charts will be available to users in all namespaces by selecting "All Namespaces" when creating the repository.
 
 You can give specific users the ability to create App Repositories in a specific namespace by granting them the necessary RBAC:
 
 ```bash
-kubectl -n custom-namespace create rolebinding username-apprepositories-read --user username --clusterrole kubeapps:apprepositories-write
+KUBEAPPS_NAMESPACE=kubeapps
+kubectl -n custom-namespace create rolebinding username-apprepositories-read --user username --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
 ```
 
 or other users the ability to deploy charts from App Repositories in a specific namespace by granting them read access:
 
 ```bash
-kubectl -n custom-namespace create rolebinding username-apprepositories-read --user username --clusterrole kubeapps:apprepositories-read
+KUBEAPPS_NAMESPACE=kubeapps
+kubectl -n custom-namespace create rolebinding username-apprepositories-read --user username --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read
 ```
 
 There is work in progress to support AppRepositories with private docker registries in Kubeapps. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87). More information will be added once it is available for general use.

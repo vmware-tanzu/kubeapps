@@ -46,7 +46,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: kubeapps:apprepositories-read
+  name: kubeapps:kubeapps:apprepositories-read
 subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
@@ -63,7 +63,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: kubeapps:apprepositories-write
+  name: kubeapps:kubeapps:apprepositories-write
 subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
