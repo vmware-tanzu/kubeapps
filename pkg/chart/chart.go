@@ -66,9 +66,6 @@ type Details struct {
 	Version string `json:"version"`
 	// Values is a string containing (unparsed) YAML values.
 	Values string `json:"values,omitempty"`
-	// UserToken is the request token required to request an app repository
-	// in a users namespace.
-	UserToken string `json:"userToken"`
 }
 
 // ChartMultiVersion includes both Helm2Chart and Helm3Chart
@@ -87,7 +84,7 @@ type LoadHelm3Chart func(in io.Reader) (*helm3chart.Chart, error)
 type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
 	GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
-	InitNetClient(details *Details) (kube.HTTPClient, error)
+	InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error)
 }
 
 // ChartClient struct contains the clients required to retrieve charts info
@@ -272,10 +269,10 @@ func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 	return details, nil
 }
 
-func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
+func (c *ChartClient) parseDetailsForHTTPClient(details *Details, userAuthToken string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	client := c.appRepoHandler.AsUser(details.UserToken)
+	client := c.appRepoHandler.AsUser(userAuthToken)
 	if details.AppRepositoryResourceNamespace == c.kubeappsNamespace {
 		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
 		client = c.appRepoHandler.AsSVC()
@@ -310,8 +307,8 @@ func (c *ChartClient) parseDetailsForHTTPClient(details *Details) (*appRepov1.Ap
 
 // InitNetClient returns an HTTP client based on the chart details loading a
 // custom CA if provided (as a secret)
-func (c *ChartClient) InitNetClient(details *Details) (kube.HTTPClient, error) {
-	appRepo, caCertSecret, authSecret, err := c.parseDetailsForHTTPClient(details)
+func (c *ChartClient) InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error) {
+	appRepo, caCertSecret, authSecret, err := c.parseDetailsForHTTPClient(details, userAuthToken)
 	if err != nil {
 		return nil, err
 	}

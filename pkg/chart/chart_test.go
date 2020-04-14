@@ -339,7 +339,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 		}
 
 		t.Run(tc.name, func(t *testing.T) {
-			appRepo, caCertSecret, authSecret, err := chUtils.parseDetailsForHTTPClient(tc.details)
+			appRepo, caCertSecret, authSecret, err := chUtils.parseDetailsForHTTPClient(tc.details, "dummy-user-token")
 
 			if err != nil {
 				if tc.errorExpected {
