@@ -9,7 +9,7 @@ it("check if the OLM has been installed", async () => {
   expect(await Operators.isOLMInstalled()).toBe(true);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    "api/kube/apis/apiextensions.k8s.io/v1/customresourcedefinitions/clusterserviceversions.operators.coreos.com",
+    "api/kube/apis/packages.operators.coreos.com/v1/packagemanifests",
   );
 });
 

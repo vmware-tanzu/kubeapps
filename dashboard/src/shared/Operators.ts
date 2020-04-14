@@ -1,10 +1,11 @@
 import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
+import { definedNamespaces } from "./Namespace";
 import { IClusterServiceVersion, IK8sList, IPackageManifest, IResource } from "./types";
 
 export class Operators {
   public static async isOLMInstalled() {
-    const { status } = await axiosWithAuth.get(urls.api.operators.crd);
+    const { status } = await axiosWithAuth.get(urls.api.operators.operators(definedNamespaces.all));
     return status === 200;
   }
 
