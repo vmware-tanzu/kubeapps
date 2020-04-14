@@ -310,6 +310,8 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeapp
 		return nil, nil, err
 	}
 	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && requestNamespace == kubeappsNamespace {
+		// TODO(mnelson): we may also want to validate that any docker registry secrets listed
+		// already exist in the namespace.
 		return nil, nil, ErrGlobalRepositoryWithSecrets
 	}
 
