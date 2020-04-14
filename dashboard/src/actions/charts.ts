@@ -91,7 +91,7 @@ export function fetchChartVersions(
   namespace: string,
   id: string,
 ): ThunkAction<Promise<IChartVersion[] | undefined>, IStoreState, null, ChartsAction> {
-  return async dispatch  => {
+  return async dispatch => {
     dispatch(requestCharts());
     try {
       const versions = await Chart.fetchChartVersions(namespace, id);

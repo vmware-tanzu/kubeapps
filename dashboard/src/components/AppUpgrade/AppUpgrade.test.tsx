@@ -238,7 +238,11 @@ describe("when receiving new props", () => {
     );
     wrapper.setProps({ repoName: "stable", app });
     wrapper.update();
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(defaultProps.repoNamespace, "stable/bar", "1.0.0");
+    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.repoNamespace,
+      "stable/bar",
+      "1.0.0",
+    );
   });
 
   it("should request the deployed chart when the repo is populated later", () => {
@@ -257,7 +261,11 @@ describe("when receiving new props", () => {
     expect(getDeployedChartVersion).not.toHaveBeenCalled();
     wrapper.setProps({ repoName: "stable" });
     wrapper.update();
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(defaultProps.repoNamespace, "stable/bar", "1.0.0");
+    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.repoNamespace,
+      "stable/bar",
+      "1.0.0",
+    );
   });
 
   it("a new app should re-trigger the deployed chart retrieval", () => {
@@ -274,7 +282,11 @@ describe("when receiving new props", () => {
       <AppUpgrade {...defaultProps} getDeployedChartVersion={getDeployedChartVersion} />,
     );
     wrapper.setProps({ repoName: "stable", app });
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(defaultProps.repoNamespace, "stable/bar", "1.0.0");
+    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.repoNamespace,
+      "stable/bar",
+      "1.0.0",
+    );
 
     const app2 = {
       chart: {
@@ -285,6 +297,10 @@ describe("when receiving new props", () => {
       },
     } as IRelease;
     wrapper.setProps({ app: app2 });
-    expect(getDeployedChartVersion).toHaveBeenCalledWith(defaultProps.repoNamespace, "stable/foobar", "1.0.0");
+    expect(getDeployedChartVersion).toHaveBeenCalledWith(
+      defaultProps.repoNamespace,
+      "stable/foobar",
+      "1.0.0",
+    );
   });
 });
