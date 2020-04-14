@@ -45,7 +45,8 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   let subIcon;
   if (type === "chart") {
     tag1 = (
-      <Link className="ListItem__content__info_tag_link"
+      <Link
+        className="ListItem__content__info_tag_link"
         to={`/ns/${namespace}/catalog/${repo?.name}`}
       >
         {repo?.name}

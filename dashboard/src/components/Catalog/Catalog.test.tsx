@@ -162,12 +162,20 @@ describe("renderization", () => {
       items: [
         {
           id: "foo",
-          attributes: { name: "foo", description: "", repo: { name: "foo", namespace: "chart-namespace"} },
+          attributes: {
+            name: "foo",
+            description: "",
+            repo: { name: "foo", namespace: "chart-namespace" },
+          },
           relationships: { latestChartVersion: { data: { app_version: "v1.0.0" } } },
         } as IChart,
         {
           id: "bar",
-          attributes: { name: "bar", description: "", repo: { name: "bar", namespace: "chart-namespace"} },
+          attributes: {
+            name: "bar",
+            description: "",
+            repo: { name: "bar", namespace: "chart-namespace" },
+          },
           relationships: { latestChartVersion: { data: { app_version: "v2.0.0" } } },
         } as IChart,
       ],

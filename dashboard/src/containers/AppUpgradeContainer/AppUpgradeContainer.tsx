@@ -50,7 +50,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     checkChart: (namespace: string, repo: string, chartName: string) =>
       dispatch(actions.repos.checkChart(namespace, repo, chartName)),
     clearRepo: () => dispatch(actions.repos.clearRepo()),
-    fetchChartVersions: (namespace: string, id: string) => dispatch(actions.charts.fetchChartVersions(namespace, id)),
+    fetchChartVersions: (namespace: string, id: string) =>
+      dispatch(actions.charts.fetchChartVersions(namespace, id)),
     fetchRepositories: (namespace: string) => dispatch(actions.repos.fetchRepos(namespace)),
     getAppWithUpdateInfo: (namespace: string, releaseName: string) =>
       dispatch(actions.apps.getAppWithUpdateInfo(namespace, releaseName)),
@@ -65,7 +66,10 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
       namespace: string,
       values?: string,
       schema?: JSONSchema4,
-    ) => dispatch(actions.apps.upgradeApp(version, chartNamespace, releaseName, namespace, values, schema)),
+    ) =>
+      dispatch(
+        actions.apps.upgradeApp(version, chartNamespace, releaseName, namespace, values, schema),
+      ),
     getDeployedChartVersion: (namespace: string, id: string, version: string) =>
       dispatch(actions.charts.getDeployedChartVersion(namespace, id, version)),
   };

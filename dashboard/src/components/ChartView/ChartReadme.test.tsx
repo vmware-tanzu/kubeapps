@@ -53,28 +53,19 @@ it("renders the ReactMarkdown content is readme is present", () => {
   const props = {
     ...defaultProps,
     readme: "# Markdown Readme",
-  }
-  const wrapper = shallow(
-    <ChartReadme {...props} />,
-  );
+  };
+  const wrapper = shallow(<ChartReadme {...props} />);
   const component = wrapper.find(ReactMarkdown);
   expect(component.props()).toMatchObject({ source: "# Markdown Readme" });
 });
 
 it("renders an error when hasError is set", () => {
-  const wrapper = shallow(
-    <ChartReadme {...defaultProps} hasError={true} />,
-  );
+  const wrapper = shallow(<ChartReadme {...defaultProps} hasError={true} />);
   expect(wrapper.text()).toContain("No README found");
 });
 
 it("renders the ReactMarkdown content adding IDs for the titles", () => {
-  const wrapper = mount(
-    <ChartReadme
-      {...defaultProps}
-      readme="# _Markdown_ 'Readme_or_not'!"
-    />,
-  );
+  const wrapper = mount(<ChartReadme {...defaultProps} readme="# _Markdown_ 'Readme_or_not'!" />);
   const component = wrapper.find("#markdown-readme_or_not");
   expect(component).toExist();
 });

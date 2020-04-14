@@ -114,7 +114,9 @@ describe("getChartVersion", () => {
         payload: { chartVersion: response, schema: { data: response }, values: { data: response } },
       },
     ];
-    await store.dispatch(actions.charts.getChartVersion(namespace, "foo", "1.0.0-alpha+1.2.3-beta2"));
+    await store.dispatch(
+      actions.charts.getChartVersion(namespace, "foo", "1.0.0-alpha+1.2.3-beta2"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/ns/${namespace}/charts/foo/versions/1.0.0-alpha%2B1.2.3-beta2`,
@@ -219,7 +221,9 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       { type: getType(actions.charts.receiveChartVersions), payload: response },
       { type: getType(actions.charts.selectChartVersion), payload: { chartVersion: response[0] } },
     ];
-    await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"));
+    await store.dispatch(
+      actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,
@@ -239,7 +243,9 @@ describe("fetchChartVersionsAndSelectVersion", () => {
       throw new Error("could not find chart");
     });
     axiosWithAuth.get = axiosGetMock;
-    await store.dispatch(actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"));
+    await store.dispatch(
+      actions.charts.fetchChartVersionsAndSelectVersion(namespace, "foo", "1.0.0"),
+    );
     expect(store.getActions()).toEqual(expectedActions);
     expect(axiosGetMock.mock.calls[0][0]).toBe(
       `api/assetsvc/v1/ns/${namespace}/charts/foo/versions`,

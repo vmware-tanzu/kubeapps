@@ -240,7 +240,12 @@ describe("deploy chart", () => {
 
   it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "chart-namespace", "my-release", definedNamespaces.all),
+      actions.apps.deployChart(
+        "my-version" as any,
+        "chart-namespace",
+        "my-release",
+        definedNamespaces.all,
+      ),
     );
     expect(res).toBe(false);
     const expectedActions = [
@@ -256,9 +261,16 @@ describe("deploy chart", () => {
   });
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "chart-namespace", "my-release", "default", "foo: 1", {
-        properties: { foo: { type: "string" } },
-      }),
+      actions.apps.deployChart(
+        "my-version" as any,
+        "chart-namespace",
+        "my-release",
+        "default",
+        "foo: 1",
+        {
+          properties: { foo: { type: "string" } },
+        },
+      ),
     );
     expect(res).toBe(false);
     const expectedActions = [
@@ -320,9 +332,16 @@ describe("upgradeApp", () => {
 
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
-      actions.apps.upgradeApp("my-version" as any, "kubeapps-ns", "my-release", "default", "foo: 1", {
-        properties: { foo: { type: "string" } },
-      }),
+      actions.apps.upgradeApp(
+        "my-version" as any,
+        "kubeapps-ns",
+        "my-release",
+        "default",
+        "foo: 1",
+        {
+          properties: { foo: { type: "string" } },
+        },
+      ),
     );
 
     expect(res).toBe(false);
