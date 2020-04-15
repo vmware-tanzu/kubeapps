@@ -108,16 +108,13 @@ const actions = [
 
 export type OperatorAction = ActionType<typeof actions[number]>;
 
-export function checkOLMInstalled(): ThunkAction<
-  Promise<boolean>,
-  IStoreState,
-  null,
-  OperatorAction
-> {
+export function checkOLMInstalled(
+  namespace: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
   return async dispatch => {
     dispatch(checkingOLM());
     try {
-      const installed = await Operators.isOLMInstalled();
+      const installed = await Operators.isOLMInstalled(namespace);
       if (installed) {
         dispatch(OLMInstalled());
       }

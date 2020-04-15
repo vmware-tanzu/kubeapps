@@ -6,10 +6,10 @@ it("check if the OLM has been installed", async () => {
   axiosWithAuth.get = jest.fn(() => {
     return { status: 200 };
   });
-  expect(await Operators.isOLMInstalled()).toBe(true);
+  expect(await Operators.isOLMInstalled("ns")).toBe(true);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    "api/kube/apis/packages.operators.coreos.com/v1/packagemanifests",
+    "api/kube/apis/packages.operators.coreos.com/v1/namespaces/ns/packagemanifests",
   );
 });
 
@@ -17,14 +17,14 @@ it("OLM is not installed if the request fails", async () => {
   axiosWithAuth.get = jest.fn(() => {
     return { status: 404 };
   });
-  expect(await Operators.isOLMInstalled()).toBe(false);
+  expect(await Operators.isOLMInstalled("ns")).toBe(false);
 });
 
 it("OLM is not installed if the request returns != 200", async () => {
   axiosWithAuth.get = jest.fn(() => {
     return { status: 404 };
   });
-  expect(await Operators.isOLMInstalled()).toBe(false);
+  expect(await Operators.isOLMInstalled("ns")).toBe(false);
 });
 
 it("get operators", async () => {
