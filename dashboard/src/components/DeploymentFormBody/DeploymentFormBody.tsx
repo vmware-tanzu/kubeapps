@@ -54,7 +54,14 @@ class DeploymentFormBody extends React.Component<
   }
 
   public componentDidUpdate = (prevProps: IDeploymentFormBodyProps) => {
-    const { chartID, chartNamespace, chartVersion, getChartVersion, selected, appValues } = this.props;
+    const {
+      chartID,
+      chartNamespace,
+      chartVersion,
+      getChartVersion,
+      selected,
+      appValues,
+    } = this.props;
 
     if (chartVersion !== prevProps.chartVersion) {
       // New version detected

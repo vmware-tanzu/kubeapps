@@ -99,7 +99,7 @@ type handler interface {
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
-	ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error)
+	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*http.Response, error)
 	GetOperatorLogo(namespace, name string) ([]byte, error)
 }
 
@@ -139,9 +139,14 @@ type appRepositoryRequestDetails struct {
 	RepoURL            string                 `json:"repoURL"`
 	AuthHeader         string                 `json:"authHeader"`
 	CustomCA           string                 `json:"customCA"`
+	RegistrySecrets    []string               `json:"registrySecrets"`
 	SyncJobPodTemplate corev1.PodTemplateSpec `json:"syncJobPodTemplate"`
 	ResyncRequests     uint                   `json:"resyncRequests"`
 }
+
+// ErrGlobalRepositoryWithSecrets defines the error returned when an attempt is
+// made to create registry secrets for a global repo.
+var ErrGlobalRepositoryWithSecrets = fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces")
 
 // NewHandler returns an AppRepositories and Kubernetes handler configured with
 // the in-cluster config but overriding the token with an empty string, so that
@@ -240,6 +245,10 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, err
 	}
 
+	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && requestNamespace == a.kubeappsNamespace {
+		return nil, ErrGlobalRepositoryWithSecrets
+	}
+
 	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
 
 	if err != nil {
@@ -289,11 +298,17 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	return err
 }
 
-func getValidationCliAndReq(appRepoBody io.ReadCloser) (HTTPClient, *http.Request, error) {
+func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (HTTPClient, *http.Request, error) {
 	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
 	if err != nil {
 		return nil, nil, err
 	}
+	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && requestNamespace == kubeappsNamespace {
+		// TODO(mnelson): we may also want to validate that any docker registry secrets listed
+		// already exist in the namespace.
+		return nil, nil, ErrGlobalRepositoryWithSecrets
+	}
+
 	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
@@ -306,12 +321,13 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser) (HTTPClient, *http.Reques
 	return cli, req, nil
 }
 
-func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error) {
+func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*http.Response, error) {
 	// Split body parsing to a different function for ease testing
-	cli, req, err := getValidationCliAndReq(appRepoBody)
+	cli, req, err := getValidationCliAndReq(appRepoBody, requestNamespace, a.kubeappsNamespace)
 	if err != nil {
 		return nil, err
 	}
+
 	return cli.Do(req)
 }
 
@@ -355,11 +371,12 @@ func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppR
 			Name: appRepo.Name,
 		},
 		Spec: v1alpha1.AppRepositorySpec{
-			URL:                appRepo.RepoURL,
-			Type:               "helm",
-			Auth:               auth,
-			SyncJobPodTemplate: appRepo.SyncJobPodTemplate,
-			ResyncRequests:     appRepo.ResyncRequests,
+			URL:                   appRepo.RepoURL,
+			Type:                  "helm",
+			Auth:                  auth,
+			DockerRegistrySecrets: appRepo.RegistrySecrets,
+			SyncJobPodTemplate:    appRepo.SyncJobPodTemplate,
+			ResyncRequests:        appRepo.ResyncRequests,
 		},
 	}
 }

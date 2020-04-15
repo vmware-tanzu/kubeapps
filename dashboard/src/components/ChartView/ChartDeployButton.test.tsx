@@ -31,7 +31,11 @@ it("renders a button to deploy the chart version", () => {
 
 it("renders a redirect with the correct URL when the button is clicked", () => {
   const testCases = [
-    { namespace: "kubeapps", version: "1.2.3", url: "/ns/kubeapps/apps/new/testrepo/test/versions/1.2.3" },
+    {
+      namespace: "kubeapps",
+      version: "1.2.3",
+      url: "/ns/kubeapps/apps/new/testrepo/test/versions/1.2.3",
+    },
     {
       namespace: "foo",
       version: "alpha-0",

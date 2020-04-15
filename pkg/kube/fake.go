@@ -83,7 +83,7 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 }
 
 // ValidateAppRepository fake
-func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser) (*http.Response, error) {
+func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*http.Response, error) {
 	return &http.Response{Body: ioutil.NopCloser(strings.NewReader("valid: yaml")), StatusCode: 200}, c.Err
 }
 

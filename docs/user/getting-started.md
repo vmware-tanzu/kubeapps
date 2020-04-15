@@ -105,7 +105,7 @@ Once you have the Kubeapps Dashboard up and running, you can start deploying app
 
   ![WordPress installation](../img/wordpress-installation.png)
 
-- Click the "Submit" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top and you can also look at the individual resources lower in the page.
+- Click the "Submit" button. The application will be deployed. You will be able to track the new Helm deployment directly from the browser. The status will be shown at the top and you can also look at the individual resources lower in the page. It will also show the number of ready pods. If you run your cursor over the status, you can see the workloads and number of ready and total pods within them.
 
   ![WordPress deployment](../img/wordpress-deployment.png)
 
@@ -118,6 +118,11 @@ To access your new WordPress site, you can run the commands in the "Notes" secti
 To get the credentials for logging into your WordPress account, refer to the "Notes" section. You can also get the WordPress password by scrolling down to "Secrets" and clicking the eye next to `wordpress-password`.
 
 ![WordPress deployment notes](../img/wordpress-credentials.png)
+
+## [Optional] Step 5: Uninstall/Delete WordPress
+If you want to uninstall/delete your WordPress application, you can do so by clicking the "Delete" button. You can choose to click the checkbox for "Purge Release" (default action with the Helm 3 CLI). If you do not click it, the Helm chart history will remain (default action with Helm 2). This is fine, so long as you don't attempt to install another chart with the same name in the same namespace.
+
+![WordPress uninstall](../img/wordpress-uninstall.png)
 
 ## Next Steps
 
