@@ -110,27 +110,25 @@ kubectl create clusterrolebinding example-kubeapps-service-catalog-admin --clust
 
 #### Read access to App Repositories
 
-In order to list the configured App Repositories in Kubeapps, [bind users/groups Subjects](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#command-line-utilities) to the `$RELEASE_NAME-repositories-read` role in the namespace Kubeapps was installed into by the helm chart.
+In order to list the configured App Repositories in Kubeapps, [bind users/groups Subjects](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#command-line-utilities) to the Kubeapps `apprepositories-read` clusterrole in the namespace Kubeapps was installed into by the helm chart.
 
 ```bash
 export KUBEAPPS_NAMESPACE=kubeapps
-export KUBEAPPS_RELEASE_NAME=kubeapps
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-read \
-  --role=$KUBEAPPS_RELEASE_NAME-repositories-read \
+  --clusterrole=kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read \
   --serviceaccount default:example
 ```
 
 #### Write access to App Repositories
 
 Likewise to the read access bind users/group Subjects to the
-`$KUBEAPPS_RELEASE_NAME-repositories-write` Role in the namespace Kubeapps is installed in
+Kubeapps `apprepositories-write` ClusterRole in the namespace Kubeapps is installed in
 for users to create and refresh App Repositories in Kubeapps
 
 ```bash
 export KUBEAPPS_NAMESPACE=kubeapps
-export KUBEAPPS_RELEASE_NAME=kubeapps
 kubectl create -n $KUBEAPPS_NAMESPACE rolebinding example-kubeapps-repositories-write \
-  --role=$KUBEAPPS_RELEASE_NAME-repositories-write \
+  --clusterrole=kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write \
   --serviceaccount default:example
 ```
 

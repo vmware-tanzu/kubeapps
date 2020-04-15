@@ -37,4 +37,38 @@ subjects:
 - apiGroup: rbac.authorization.k8s.io
   kind: User
   name: oidc:kubeapps-user-ldap@example.org
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubeapps-user-apprepositories-read
+  namespace: kubeapps-user-namespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeapps:kubeapps:apprepositories-read
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kubeapps-user@example.com
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kubeapps-user-ldap@example.org
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: kubeapps-operator-apprepositories-write
+  namespace: kubeapps-user-namespace
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kubeapps:kubeapps:apprepositories-write
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kubeapps-operator@example.com
+- apiGroup: rbac.authorization.k8s.io
+  kind: User
+  name: oidc:kubeapps-operator-ldap@example.org
 
