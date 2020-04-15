@@ -144,6 +144,8 @@ type appRepositoryRequestDetails struct {
 	ResyncRequests     uint                   `json:"resyncRequests"`
 }
 
+// ErrGlobalRepositoryWithSecrets defines the error returned when an attempt is
+// made to create registry secrets for a global repo.
 var ErrGlobalRepositoryWithSecrets = fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces")
 
 // NewHandler returns an AppRepositories and Kubernetes handler configured with
