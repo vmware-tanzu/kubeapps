@@ -2,7 +2,6 @@ package agent
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,11 +9,11 @@ import (
 
 func TestDockerSecretsPostRenderer(t *testing.T) {
 	testCases := []struct {
-		name        string
-		input       *bytes.Buffer
-		secrets     map[string]string
-		output      *bytes.Buffer
-		expectedErr error
+		name      string
+		input     *bytes.Buffer
+		secrets   map[string]string
+		output    *bytes.Buffer
+		expectErr bool
 	}{
 		{
 			name:   "it returns the input without parsing when no secrets set",
@@ -22,10 +21,10 @@ func TestDockerSecretsPostRenderer(t *testing.T) {
 			output: bytes.NewBuffer([]byte(`anything at : all`)),
 		},
 		{
-			name:        "it returns an error if the input cannot be parsed as yaml",
-			input:       bytes.NewBuffer([]byte("v: [A,")),
-			secrets:     map[string]string{"foo.example.com": "secret-name"},
-			expectedErr: fmt.Errorf("yaml: line 1: did not find expected node content"),
+			name:      "it returns an error if the input cannot be parsed as yaml",
+			input:     bytes.NewBuffer([]byte("v: [A,")),
+			secrets:   map[string]string{"foo.example.com": "secret-name"},
+			expectErr: true,
 		},
 		{
 			name: "it re-renders the yaml with ordering and indent changes only",
@@ -79,19 +78,12 @@ other: doc
 		t.Run(tc.name, func(t *testing.T) {
 			r := NewDockerSecretsPostRenderer(tc.secrets)
 
-			got, err := r.Run(tc.input)
-			if err != nil {
-				if got, want := err.Error(), tc.expectedErr.Error(); got != want {
-					t.Fatalf("got: %q, want: %q", got, want)
-				}
-			} else if want := tc.expectedErr; nil != want {
-				t.Fatalf("got: nil, want: %+v", want)
-			}
-			if tc.expectedErr != nil {
-				return
+			renderedManifests, err := r.Run(tc.input)
+			if got, want := err != nil, tc.expectErr; got != want {
+				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
 			}
 
-			if got, want := got.String(), tc.output.String(); !cmp.Equal(got, want) {
+			if got, want := renderedManifests.String(), tc.output.String(); !cmp.Equal(got, want) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
