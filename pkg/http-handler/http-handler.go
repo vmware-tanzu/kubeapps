@@ -80,7 +80,7 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		res, err := handler.AsUser(token).ValidateAppRepository(req.Body)
+		res, err := handler.AsUser(token).ValidateAppRepository(req.Body, mux.Vars(req)["namespace"])
 		if err != nil {
 			returnK8sError(err, w)
 			return
