@@ -25,7 +25,8 @@ function mapStateToProps(
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    checkOLMInstalled: () => dispatch(actions.operators.checkOLMInstalled()),
+    checkOLMInstalled: (namespace: string) =>
+      dispatch(actions.operators.checkOLMInstalled(namespace)),
     getOperators: (namespace: string) => dispatch(actions.operators.getOperators(namespace)),
     getCSVs: (namespace: string) => dispatch(actions.operators.getCSVs(namespace)),
     pushSearchFilter: (filter: string) => dispatch(actions.shared.pushSearchFilter(filter)),

@@ -28,7 +28,7 @@ import "./OperatorList.css";
 
 export interface IOperatorListProps {
   isFetching: boolean;
-  checkOLMInstalled: () => Promise<boolean>;
+  checkOLMInstalled: (namespace: string) => Promise<boolean>;
   isOLMInstalled: boolean;
   namespace: string;
   getOperators: (namespace: string) => Promise<void>;
@@ -78,7 +78,7 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
   };
 
   public componentDidMount() {
-    this.props.checkOLMInstalled();
+    this.props.checkOLMInstalled(this.props.namespace);
     this.props.getOperators(this.props.namespace);
     this.props.getCSVs(this.props.namespace);
     this.setState({ filter: this.props.filter });

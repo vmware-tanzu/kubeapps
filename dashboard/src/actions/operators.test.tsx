@@ -27,7 +27,7 @@ describe("checkOLMInstalled", () => {
         type: getType(operatorActions.OLMInstalled),
       },
     ];
-    await store.dispatch(operatorActions.checkOLMInstalled());
+    await store.dispatch(operatorActions.checkOLMInstalled("ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -44,7 +44,7 @@ describe("checkOLMInstalled", () => {
         payload: new Error("nope"),
       },
     ];
-    await store.dispatch(operatorActions.checkOLMInstalled());
+    await store.dispatch(operatorActions.checkOLMInstalled("ns"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 });

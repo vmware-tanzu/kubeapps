@@ -3,8 +3,8 @@ import { axiosWithAuth } from "./AxiosInstance";
 import { IClusterServiceVersion, IK8sList, IPackageManifest, IResource } from "./types";
 
 export class Operators {
-  public static async isOLMInstalled() {
-    const { status } = await axiosWithAuth.get(urls.api.operators.crd);
+  public static async isOLMInstalled(namespace: string) {
+    const { status } = await axiosWithAuth.get(urls.api.operators.operators(namespace));
     return status === 200;
   }
 
