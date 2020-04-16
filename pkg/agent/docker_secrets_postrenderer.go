@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v2"
 )
 
 // DockerSecretsPostRenderer is a helm post-renderer (see https://helm.sh/docs/topics/advanced/#post-rendering)
@@ -44,7 +44,6 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 	modifiedManifests = bytes.NewBuffer([]byte{})
 	encoder := yaml.NewEncoder(modifiedManifests)
 	defer encoder.Close()
-	encoder.SetIndent(2)
 
 	for _, resource := range resourceList {
 		err = encoder.Encode(resource)
