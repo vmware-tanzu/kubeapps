@@ -27,15 +27,6 @@ func TestDockerSecretsPostRenderer(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name: "it returns an error if a document has no kind",
-			input: bytes.NewBuffer([]byte(`apiVersion: v1
-nokind: Pod
-metadata: somemetadata
-`)),
-			secrets:   map[string]string{"foo.example.com": "secret-name"},
-			expectErr: true,
-		},
-		{
 			name: "it re-renders the yaml with ordering and indent changes only",
 			input: bytes.NewBuffer([]byte(`apiVersion: v1
 kind: Pod
@@ -157,7 +148,6 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		podSpec             map[interface{}]interface{}
 		secrets             map[string]string
 		expectedPullSecrets interface{}
-		expectErr           bool
 	}{
 		{
 			name: "it does not add image pull secrets when no secret matches",
@@ -278,7 +268,7 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 			expectedPullSecrets: nil,
 		},
 		{
-			name: "it returns an error if a containers key does not exist",
+			name: "it makes no changes if a containers key does not exist",
 			podSpec: map[interface{}]interface{}{
 				"notcontainers": []interface{}{
 					map[interface{}]interface{}{
@@ -286,34 +276,53 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 					},
 				},
 			},
-			expectErr: true,
+			secrets: map[string]string{
+				"example.com": "secret-1",
+			},
+			expectedPullSecrets: nil,
 		},
 		{
-			name: "it returns an error if a containers value is not a map",
+			name: "it makes no changes if a containers value is not a slice",
 			podSpec: map[interface{}]interface{}{
 				"containers": "not a slice",
 			},
-			expectErr: true,
+			expectedPullSecrets: nil,
 		},
 		{
-			name: "it returns an error if values within the containers slice are not maps",
+			name: "it ignores containers with non-map values while updating others",
 			podSpec: map[interface{}]interface{}{
 				"containers": []interface{}{
 					"not a map",
-				},
-			},
-			expectErr: true,
-		},
-		{
-			name: "it returns an error if a container value does not include an image key",
-			podSpec: map[interface{}]interface{}{
-				"containers": []interface{}{
 					map[interface{}]interface{}{
-						"notimage": "example.com/foobar:v1",
+						"image": "example.com/foobar:v1",
 					},
 				},
 			},
-			expectErr: true,
+			secrets: map[string]string{
+				"example.com": "secret-1",
+			},
+			expectedPullSecrets: []map[string]interface{}{
+				{"name": "secret-1"},
+			},
+		},
+		{
+			name: "it ignores containers without an image key",
+			podSpec: map[interface{}]interface{}{
+				"containers": []interface{}{
+					map[interface{}]interface{}{
+						"notimage": "somethingelse.com/foobar:v1",
+					},
+					map[interface{}]interface{}{
+						"image": "example.com/foobar:v1",
+					},
+				},
+			},
+			secrets: map[string]string{
+				"example.com": "secret-1",
+			},
+			expectedPullSecrets: []map[string]interface{}{
+				{"name": "secret-1"},
+			},
 		},
 	}
 
@@ -321,10 +330,7 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := NewDockerSecretsPostRenderer(tc.secrets)
 
-			err := r.updatePodSpecWithPullSecrets(tc.podSpec)
-			if got, want := err != nil, tc.expectErr; got != want {
-				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
-			}
+			r.updatePodSpecWithPullSecrets(tc.podSpec)
 
 			if got, want := tc.podSpec["imagePullSecrets"], tc.expectedPullSecrets; !cmp.Equal(got, want) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
@@ -335,34 +341,33 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 
 func TestGetResourcePodSpec(t *testing.T) {
 	testCases := []struct {
-		name      string
-		resource  map[interface{}]interface{}
-		result    map[interface{}]interface{}
-		expectErr bool
+		name     string
+		resource map[interface{}]interface{}
+		result   map[interface{}]interface{}
 	}{
 		{
-			name: "it returns an error if the resource does not have a kind",
+			name: "it ignores an invalid doc without a kind",
 			resource: map[interface{}]interface{}{
 				"notkind": "Pod",
 				"spec":    map[string]interface{}{"some": "spec"},
 			},
-			expectErr: true,
+			result: nil,
 		},
 		{
-			name: "it returns an error if the kind is not a string",
+			name: "it ignores an invalid doc with a non-string kind",
 			resource: map[interface{}]interface{}{
 				"kind": map[string]interface{}{"not": "string"},
 				"spec": map[interface{}]interface{}{"some": "spec"},
 			},
-			expectErr: true,
+			result: nil,
 		},
 		{
-			name: "it returns an error if the spec is not a map",
+			name: "it ignores an invalid doc with a non-map spec",
 			resource: map[interface{}]interface{}{
 				"kind": "Pod",
 				"spec": "not a map",
 			},
-			expectErr: true,
+			result: nil,
 		},
 		{
 			name: "it returns the pod spec from a pod",
@@ -378,13 +383,7 @@ func TestGetResourcePodSpec(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := getResourcePodSpec(tc.resource)
-
-			if got, want := err != nil, tc.expectErr; got != want {
-				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
-			}
-
-			if got, want := result, tc.result; !cmp.Equal(got, want) {
+			if got, want := getResourcePodSpec(tc.resource), tc.result; !cmp.Equal(got, want) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})

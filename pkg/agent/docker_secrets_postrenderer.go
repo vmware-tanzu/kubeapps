@@ -2,10 +2,10 @@ package agent
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -22,6 +22,7 @@ func NewDockerSecretsPostRenderer(secrets map[string]string) *DockerSecretsPostR
 }
 
 // Run returns the rendered yaml including any additions of the post-renderer.
+// An error is only returned if the manifests cannot be parsed or re-rendered.
 func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifiedManifests *bytes.Buffer, err error) {
 	if r.secrets == nil {
 		return renderedManifests, nil
@@ -50,17 +51,11 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 		if !ok {
 			continue
 		}
-		podSpec, err := getResourcePodSpec(resource)
-		if err != nil {
-			return nil, err
-		}
+		podSpec := getResourcePodSpec(resource)
 		if podSpec == nil {
 			continue
 		}
-		err = r.updatePodSpecWithPullSecrets(podSpec)
-		if err != nil {
-			return nil, err
-		}
+		r.updatePodSpecWithPullSecrets(podSpec)
 	}
 
 	modifiedManifests = bytes.NewBuffer([]byte{})
@@ -80,18 +75,20 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 // updatePodSpecWithPullSecrets updates the podSpec inline with the relevant pull secrets.
 // We do not parse the yaml into actual Kubernetes objects since we want to be
 // independent of api versions. This requires special care and limitations, so
-// we limit our assumptions of the untyped handling to the following, with
-// clear errors when the assumption fails:
-// - The pod spec includes a 'containers' key with a slice value (with a clear error if this is not the case)
+// we limit our assumptions of the untyped handling to the following:
+// - The pod spec includes a 'containers' key with a slice value
 // - Each container value is a map with an 'image' key and string value.
-func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[interface{}]interface{}) error {
+// An invalid resource doc is logged but left for the k8s API to respond to.
+func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[interface{}]interface{}) {
 	containersObject, ok := podSpec["containers"]
 	if !ok {
-		return fmt.Errorf("pod spec did not include a containers key: %+v", podSpec)
+		log.Errorf("podSpec contained no containers key: %+v", podSpec)
+		return
 	}
 	containers, ok := containersObject.([]interface{})
 	if !ok {
-		return fmt.Errorf("pod spec did not include a slice for the containers value: %+v", podSpec)
+		log.Errorf("podSpec containers key is not a slice: %+v", podSpec)
+		return
 	}
 
 	// If there are existing pull secrets, initialise our slice with that value
@@ -113,14 +110,16 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 	for _, c := range containers {
 		container, ok := c.(map[interface{}]interface{})
 		if !ok {
-			return fmt.Errorf("pod containers did not contain maps: %+v", c)
+			log.Errorf("pod spec container is not a map: %+v", c)
+			continue
 		}
 		image, ok := container["image"].(string)
 		if !ok {
 			// NOTE: in https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#container-v1-core
 			// the image is optional to allow higher level config management to default or override (such as
 			// deployments or statefulsets), but both only define pod templates which in turn define containers?
-			return fmt.Errorf("pod container did not contain an image reference: %+v", container)
+			log.Errorf("pod spec container does not define an string image: %+v", container)
+			continue
 		}
 
 		// Ignore (dockerhub) image refs without a domain.
@@ -144,25 +143,26 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 	if len(imagePullSecrets) > 0 {
 		podSpec["imagePullSecrets"] = imagePullSecrets
 	}
-
-	return nil
 }
 
 // getResourcePodSpec checks the kind of the resource and extracts the pod spec accordingly.
 // We do not parse the yaml into actual Kubernetes objects since we want to be
 // independent of api versions. This requires special care and limitations, so
-// we limit our assumptions of the untyped handling to:
-// - A resource doc is a map with a "kind" key with a string value (with a clear error if this is not the case)
-// - A pod resource doc has a "spec" key containing a map (with a clear error if this is not the case).
-func getResourcePodSpec(resource map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+// we limit our assumptions of the untyped handling to the following, with any
+// invalid docs ignored and left for the API server to respond accordingly:
+// - A resource doc is a map with a "kind" key with a string value
+// - A pod resource doc has a "spec" key containing a map
+func getResourcePodSpec(resource map[interface{}]interface{}) map[interface{}]interface{} {
 	kindValue, ok := resource["kind"]
 	if !ok {
-		return nil, fmt.Errorf("resource did not specify resource kind: %+v", resource)
+		log.Errorf("invalid resource: no kind. %+v", resource)
+		return nil
 	}
 
 	kind, ok := kindValue.(string)
 	if !ok {
-		return nil, fmt.Errorf("resource kind was not a string: %+v", resource)
+		log.Errorf("invalid resource: non-string resource kind. %+v", resource)
+		return nil
 	}
 
 	// TODO: Update to support other kinds with pod specs as part of pod templates:
@@ -171,10 +171,11 @@ func getResourcePodSpec(resource map[interface{}]interface{}) (map[interface{}]i
 	case "Pod":
 		podSpec, ok := resource["spec"].(map[interface{}]interface{})
 		if !ok {
-			return nil, fmt.Errorf("pod's spec was not a map: %+v", resource)
+			log.Errorf("invalid resource: non-map pod spec. %+v", resource)
+			return nil
 		}
-		return podSpec, nil
+		return podSpec
 	}
 
-	return nil, nil
+	return nil
 }
