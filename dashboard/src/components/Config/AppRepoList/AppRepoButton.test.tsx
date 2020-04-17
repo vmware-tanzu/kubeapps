@@ -7,10 +7,10 @@ import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoForm } from "./AppRepoForm";
 
 const defaultProps = {
-  install: jest.fn(),
+  onSubmit: jest.fn(),
   validate: jest.fn(() => true),
   namespace: "kubeapps",
-  isFetching: false,
+  validating: false,
   errors: {},
 };
 
@@ -23,7 +23,7 @@ it("should open a modal with the repository form", () => {
 
 it("should install a repository with a custom auth header", done => {
   const install = jest.fn(() => true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} install={install} />);
+  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
@@ -49,7 +49,7 @@ it("should install a repository with a custom auth header", done => {
 
 it("should install a repository with basic auth", done => {
   const install = jest.fn(() => true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} install={install} />);
+  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
@@ -82,7 +82,7 @@ it("should install a repository with basic auth", done => {
 
 it("should install a repository with a bearer token", done => {
   const install = jest.fn(() => true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} install={install} />);
+  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
@@ -114,7 +114,7 @@ it("should install a repository with a bearer token", done => {
 
 it("should install a repository with a podSpecTemplate", done => {
   const install = jest.fn(() => true);
-  const wrapper = mount(<AppRepoAddButton {...defaultProps} install={install} />);
+  const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
@@ -189,4 +189,9 @@ describe("render error", () => {
       done();
     }, 1);
   });
+});
+
+it("should modify the default button text", () => {
+  const wrapper = mount(<AppRepoAddButton {...defaultProps} text="foo" />);
+  expect(wrapper.text()).toContain("foo");
 });

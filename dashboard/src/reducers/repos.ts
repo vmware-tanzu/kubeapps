@@ -3,7 +3,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { AppReposAction } from "../actions/repos";
-import { IAppRepository } from "../shared/types";
+import { IAppRepository, ISecret } from "../shared/types";
 
 export interface IAppRepositoryState {
   addingRepo: boolean;
@@ -16,8 +16,10 @@ export interface IAppRepositoryState {
   };
   lastAdded?: IAppRepository;
   isFetching: boolean;
+  validating: boolean;
   repo: IAppRepository;
   repos: IAppRepository[];
+  repoSecrets: ISecret[];
   form: {
     name: string;
     namespace: string;
@@ -37,8 +39,10 @@ const initialState: IAppRepositoryState = {
     url: "",
   },
   isFetching: false,
+  validating: false,
   repo: {} as IAppRepository,
   repos: [],
+  repoSecrets: [],
 };
 
 const reposReducer = (
@@ -50,6 +54,8 @@ const reposReducer = (
       return { ...state, isFetching: false, repos: action.payload, errors: {} };
     case getType(actions.repos.receiveRepo):
       return { ...state, isFetching: false, repo: action.payload, errors: {} };
+    case getType(actions.repos.receiveReposSecrets):
+      return { ...state, isFetching: false, repoSecrets: action.payload };
     case getType(actions.repos.requestRepos):
       return { ...state, isFetching: true };
     case getType(actions.repos.addRepo):
@@ -62,9 +68,9 @@ const reposReducer = (
         repos: [...state.repos, action.payload],
       };
     case getType(actions.repos.repoValidating):
-      return { ...state, isFetching: true };
+      return { ...state, validating: true };
     case getType(actions.repos.repoValidated):
-      return { ...state, isFetching: false, errors: { ...state.errors, validate: undefined } };
+      return { ...state, validating: false, errors: { ...state.errors, validate: undefined } };
     case getType(actions.repos.resetForm):
       return { ...state, form: { ...state.form, name: "", namespace: "", url: "" } };
     case getType(actions.repos.showForm):
@@ -81,6 +87,7 @@ const reposReducer = (
         // don't reset the fetch error
         errors: { fetch: state.errors.fetch, [action.payload.op]: action.payload.err },
         isFetching: false,
+        validating: false,
       };
     case LOCATION_CHANGE:
       return {

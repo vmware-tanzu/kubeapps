@@ -3,13 +3,13 @@
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
   errors={Object {}}
-  install={[Function]}
-  isFetching={false}
   namespace="kubeapps"
+  onSubmit={[Function]}
   validate={[Function]}
+  validating={false}
 >
   <button
-    className="button button-primary"
+    className="button "
     onClick={[Function]}
   >
     Add App Repository

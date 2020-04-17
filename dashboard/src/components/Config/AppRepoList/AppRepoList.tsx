@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { definedNamespaces } from "../../../shared/Namespace";
-import { IAppRepository, IAppRepositoryKey, IRBACRole } from "../../../shared/types";
+import { IAppRepository, IAppRepositoryKey, IRBACRole, ISecret } from "../../../shared/types";
 import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
 import LoadingWrapper from "../../LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
@@ -17,6 +17,7 @@ export interface IAppRepoListProps {
     validate?: Error;
   };
   repos: IAppRepository[];
+  repoSecrets: ISecret[];
   fetchRepos: (namespace: string) => void;
   deleteRepo: (name: string, namespace: string) => Promise<boolean>;
   resyncRepo: (name: string, namespace: string) => void;
@@ -29,6 +30,15 @@ export interface IAppRepoListProps {
     customCA: string,
     syncJobPodTemplate: string,
   ) => Promise<boolean>;
+  update: (
+    name: string,
+    namespace: string,
+    url: string,
+    authHeader: string,
+    customCA: string,
+    syncJobPodTemplate: string,
+  ) => Promise<boolean>;
+  validating: boolean;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   namespace: string;
   displayReposPerNamespaceMsg: boolean;
@@ -81,6 +91,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       errors,
       repos,
       install,
+      update,
       namespace,
       displayReposPerNamespaceMsg,
       isFetching,
@@ -88,6 +99,8 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       resyncRepo,
       resyncAllRepos,
       validate,
+      repoSecrets,
+      validating,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
     return (
@@ -117,6 +130,15 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                       repo={repo}
                       renderNamespace={renderNamespace}
                       namespace={namespace}
+                      errors={errors}
+                      validating={validating}
+                      validate={validate}
+                      secret={repoSecrets.find(secret =>
+                        secret.metadata.ownerReferences?.some(
+                          ownerRef => ownerRef.name === repo.metadata.name,
+                        ),
+                      )}
+                      update={update}
                     />
                   ))}
                 </tbody>
@@ -124,10 +146,11 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
             </LoadingWrapper>
             <AppRepoAddButton
               errors={errors}
-              install={install}
+              onSubmit={install}
               validate={validate}
               namespace={namespace}
-              isFetching={isFetching}
+              validating={validating}
+              primary={true}
             />
             <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
           </>

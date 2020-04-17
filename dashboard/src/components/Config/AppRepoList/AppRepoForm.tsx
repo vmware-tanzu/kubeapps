@@ -1,12 +1,14 @@
+import * as yaml from "js-yaml";
 import * as React from "react";
 import { Redirect } from "react-router";
+import { IAppRepository, ISecret } from "shared/types";
 import Hint from "../../../components/Hint";
 import { UnexpectedErrorAlert } from "../../ErrorAlert";
 
 interface IAppRepoFormProps {
   message?: string;
   redirectTo?: string;
-  install: (
+  onSubmit: (
     name: string,
     url: string,
     authHeader: string,
@@ -15,8 +17,10 @@ interface IAppRepoFormProps {
   ) => Promise<boolean>;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   onAfterInstall?: () => Promise<any>;
-  isFetching: boolean;
+  validating: boolean;
   validationError?: Error;
+  repo?: IAppRepository;
+  secret?: ISecret;
 }
 
 interface IAppRepoFormState {
@@ -50,7 +54,54 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     syncJobPodTemplate: "",
   };
 
+  public componentDidMount() {
+    if (this.props.repo) {
+      const name = this.props.repo.metadata.name;
+      const url = this.props.repo.spec?.url || "";
+      const syncJobPodTemplate = this.props.repo.spec?.syncJobPodTemplate
+        ? yaml.safeDump(this.props.repo.spec?.syncJobPodTemplate)
+        : "";
+      let customCA = "";
+      let authHeader = "";
+      let token = "";
+      let user = "";
+      let password = "";
+      let authMethod = AUTH_METHOD_NONE;
+      if (this.props.secret) {
+        if (this.props.secret.data["ca.crt"]) {
+          customCA = atob(this.props.secret.data["ca.crt"]);
+        }
+        if (this.props.secret.data.authorizationHeader) {
+          authMethod = AUTH_METHOD_CUSTOM;
+          authHeader = atob(this.props.secret.data.authorizationHeader);
+          if (authHeader.startsWith("Basic")) {
+            const userPass = atob(authHeader.split(" ")[1]).split(":");
+            user = userPass[0];
+            password = userPass[1];
+            authMethod = AUTH_METHOD_BASIC;
+          } else if (authHeader.startsWith("Bearer")) {
+            token = authHeader.split(" ")[1];
+            authMethod = AUTH_METHOD_BEARER;
+          }
+        }
+      }
+      this.setState({
+        name,
+        url,
+        syncJobPodTemplate,
+        customCA,
+        authHeader,
+        user,
+        password,
+        token,
+        authMethod,
+      });
+    }
+  }
+
   public render() {
+    const { repo } = this.props;
+    const { authMethod } = this.state;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleInstallClick}>
         <div className="row">
@@ -69,6 +120,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 required={true}
                 pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                 title="Use lower case alphanumeric characters, '-' or '.'"
+                disabled={this.props.repo?.metadata.name ? true : false}
               />
             </div>
             <div>
@@ -92,7 +144,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       id="kubeapps-repo-auth-method-none"
                       name="auth"
                       value={AUTH_METHOD_NONE}
-                      defaultChecked={true}
+                      checked={authMethod === AUTH_METHOD_NONE}
                       onChange={this.handleAuthRadioButtonChange}
                     />
                     None
@@ -103,6 +155,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       type="radio"
                       id="kubeapps-repo-auth-method-basic"
                       name="auth"
+                      checked={authMethod === AUTH_METHOD_BASIC}
                       value={AUTH_METHOD_BASIC}
                       onChange={this.handleAuthRadioButtonChange}
                     />
@@ -115,6 +168,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       id="kubeapps-repo-auth-method-bearer"
                       name="auth"
                       value={AUTH_METHOD_BEARER}
+                      checked={authMethod === AUTH_METHOD_BEARER}
                       onChange={this.handleAuthRadioButtonChange}
                     />
                     Bearer Token
@@ -126,6 +180,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       id="kubeapps-repo-auth-method-custom"
                       name="auth"
                       value={AUTH_METHOD_CUSTOM}
+                      checked={authMethod === AUTH_METHOD_CUSTOM}
                       onChange={this.handleAuthRadioButtonChange}
                     />
                     Custom
@@ -243,11 +298,13 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
               <button
                 className="button button-primary"
                 type="submit"
-                disabled={this.props.isFetching}
+                disabled={this.props.validating}
               >
-                {this.props.isFetching
+                {this.props.validating
                   ? "Validating..."
-                  : `Install Repo ${this.state.validated === false ? "(force)" : ""}`}
+                  : `${repo ? "Update" : "Install"} Repo ${
+                      this.state.validated === false ? "(force)" : ""
+                    }`}
               </button>
             </div>
             {this.props.redirectTo && <Redirect to={this.props.redirectTo} />}
@@ -258,7 +315,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
   }
 
   private handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
-    const { install, onAfterInstall, validate } = this.props;
+    const { onSubmit, onAfterInstall, validate } = this.props;
     const {
       name,
       url,
@@ -292,8 +349,8 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
       this.setState({ validated });
     }
     if (validated || force) {
-      const installed = await install(name, url, finalHeader, customCA, syncJobPodTemplate);
-      if (installed && onAfterInstall) {
+      const success = await onSubmit(name, url, finalHeader, customCA, syncJobPodTemplate);
+      if (success && onAfterInstall) {
         await onAfterInstall();
       }
     }

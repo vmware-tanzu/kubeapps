@@ -22,6 +22,8 @@ function mapStateToProps({ config, namespace, repos }: IStoreState) {
     repos: repos.repos,
     displayReposPerNamespaceMsg,
     isFetching: repos.isFetching,
+    repoSecrets: repos.repoSecrets,
+    validating: repos.validating,
   };
 }
 
@@ -43,6 +45,18 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     ) => {
       return dispatch(
         actions.repos.installRepo(name, namespace, url, authHeader, customCA, syncJobPodTemplate),
+      );
+    },
+    update: async (
+      name: string,
+      namespace: string,
+      url: string,
+      authHeader: string,
+      customCA: string,
+      syncJobPodTemplate: string,
+    ) => {
+      return dispatch(
+        actions.repos.updateRepo(name, namespace, url, authHeader, customCA, syncJobPodTemplate),
       );
     },
     validate: async (url: string, authHeader: string, customCA: string) => {

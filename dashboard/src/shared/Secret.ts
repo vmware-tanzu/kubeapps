@@ -1,6 +1,6 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
-import { IOwnerReference, ISecret } from "./types";
+import { IK8sList, IOwnerReference, ISecret } from "./types";
 
 export default class Secret {
   public static async create(
@@ -36,7 +36,7 @@ export default class Secret {
 
   public static async list(namespace: string) {
     const url = Secret.getLink(namespace);
-    const { data } = await axiosWithAuth.get<ISecret>(url);
+    const { data } = await axiosWithAuth.get<IK8sList<ISecret, {}>>(url);
     return data;
   }
 
