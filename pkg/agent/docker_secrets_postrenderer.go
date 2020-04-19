@@ -3,10 +3,17 @@ package agent
 import (
 	"bytes"
 	"io"
+	"net/url"
 	"strings"
 
+	"github.com/docker/distribution/reference"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+)
+
+const (
+	IndexDockerIO = "index.docker.io"
+	DockerIO      = "docker.io"
 )
 
 // DockerSecretsPostRenderer is a helm post-renderer (see https://helm.sh/docs/topics/advanced/#post-rendering)
@@ -17,14 +24,38 @@ type DockerSecretsPostRenderer struct {
 }
 
 // NewDockerSecretsPostRenderer returns a post renderer configured with the specified secrets.
-func NewDockerSecretsPostRenderer(secrets map[string]string) *DockerSecretsPostRenderer {
-	return &DockerSecretsPostRenderer{secrets}
+func NewDockerSecretsPostRenderer(secrets map[string]string) (*DockerSecretsPostRenderer, error) {
+	r := &DockerSecretsPostRenderer{}
+	r.secrets = map[string]string{}
+	// Docker authentication credentials can be stored as either the registry domain
+	// or explicitly with the protocol and potential path of the server.
+	// We want to compare on the registry domain only when making the decision whether to
+	// include the imagePullSecret, but note this does not change the server reference in
+	// the secret itself.
+	for registryServer, secretName := range secrets {
+		// To use net/url to parse the domain, a protocol must be present.
+		if !strings.HasPrefix(registryServer, "https://") && !strings.HasPrefix(registryServer, "http://") {
+			registryServer = "https://" + registryServer
+		}
+		u, err := url.Parse(registryServer)
+		if err != nil {
+			return nil, err
+		}
+		r.secrets[u.Host] = secretName
+
+		// A special case for docker hub, where authentication credentials for dockerhub must
+		// be for the registry server index.docker.io, yet the reference is for just docker.io.
+		if u.Host == IndexDockerIO {
+			r.secrets[DockerIO] = secretName
+		}
+	}
+	return r, nil
 }
 
 // Run returns the rendered yaml including any additions of the post-renderer.
 // An error is only returned if the manifests cannot be parsed or re-rendered.
 func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifiedManifests *bytes.Buffer, err error) {
-	if r.secrets == nil {
+	if len(r.secrets) == 0 {
 		return renderedManifests, nil
 	}
 
@@ -122,12 +153,12 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 			continue
 		}
 
-		// Ignore (dockerhub) image refs without a domain.
-		domainSplit := strings.Split(image, "/")
-		if len(domainSplit) == 1 {
+		ref, err := reference.ParseNormalizedNamed(image)
+		if err != nil {
+			log.Errorf("unable to parse image reference: %q", image)
 			continue
 		}
-		imageDomain := domainSplit[0]
+		imageDomain := reference.Domain(ref)
 
 		secretName, ok := r.secrets[imageDomain]
 		if !ok {
