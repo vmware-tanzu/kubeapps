@@ -182,7 +182,6 @@ func TestActions(t *testing.T) {
 			Description: "Get a simple release",
 			ExistingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
-				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
 			},
 			// Request params
 			RequestBody:  "",
@@ -193,7 +192,6 @@ func TestActions(t *testing.T) {
 			StatusCode: 200,
 			RemainingReleases: []*release.Release{
 				createRelease("foo", "foobar", "default", 1, release.StatusDeployed),
-				createRelease("oof", "oofbar", "dev", 1, release.StatusDeployed),
 			},
 			ResponseBody: `{"data":{"name":"foobar","info":{"status":{"code":1}},"chart":{"metadata":{"name":"foo"},"values":{"raw":"{}\n"}},"config":{"raw":"{}\n"},"version":1,"namespace":"default"}}`,
 		},
