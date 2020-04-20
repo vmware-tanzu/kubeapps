@@ -76,7 +76,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
             validate={validate}
             namespace={namespace}
             validating={validating}
-            text="Modify"
+            text="Edit"
             repo={repo}
             secret={secret}
           />
