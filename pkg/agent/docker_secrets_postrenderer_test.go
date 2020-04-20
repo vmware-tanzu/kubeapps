@@ -7,6 +7,53 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+func TestNewDockerSecretsPostRenderer(t *testing.T) {
+	testCases := []struct {
+		name            string
+		secrets         map[string]string
+		expectedSecrets map[string]string
+		expectErr       bool
+	}{
+		{
+			name:            "it copies the secrets without changing the original",
+			secrets:         map[string]string{"example.com": "secret-name"},
+			expectedSecrets: map[string]string{"example.com": "secret-name"},
+		},
+		{
+			name: "it reduces FQDNs to hosts for comparison",
+			secrets: map[string]string{
+				"https://example.com/": "secret-1",
+			},
+			expectedSecrets: map[string]string{
+				"example.com": "secret-1",
+			},
+		},
+		{
+			name: "it includes both index.docker.io and docker.io",
+			secrets: map[string]string{
+				"https://index.docker.io/v1/": "dockerhub-secret",
+			},
+			expectedSecrets: map[string]string{
+				"index.docker.io": "dockerhub-secret",
+				"docker.io":       "dockerhub-secret",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r, err := NewDockerSecretsPostRenderer(tc.secrets)
+			if got, want := err != nil, tc.expectErr; got != want {
+				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
+			}
+
+			if got, want := r.secrets, tc.expectedSecrets; !cmp.Equal(got, want) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
 func TestDockerSecretsPostRenderer(t *testing.T) {
 	testCases := []struct {
 		name      string
@@ -128,7 +175,10 @@ other: doc
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			r := NewDockerSecretsPostRenderer(tc.secrets)
+			r, err := NewDockerSecretsPostRenderer(tc.secrets)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 
 			renderedManifests, err := r.Run(tc.input)
 			if got, want := err != nil, tc.expectErr; got != want {
@@ -268,6 +318,22 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 			expectedPullSecrets: nil,
 		},
 		{
+			name: "it adds an explicit dockerhub secret when the registry server matches dockerhubs",
+			podSpec: map[interface{}]interface{}{
+				"containers": []interface{}{
+					map[interface{}]interface{}{
+						"image": "wordpress",
+					},
+				},
+			},
+			secrets: map[string]string{
+				"https://index.docker.io/v1/": "secret-1",
+			},
+			expectedPullSecrets: []map[string]interface{}{
+				{"name": "secret-1"},
+			},
+		},
+		{
 			name: "it makes no changes if a containers key does not exist",
 			podSpec: map[interface{}]interface{}{
 				"notcontainers": []interface{}{
@@ -328,7 +394,10 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			r := NewDockerSecretsPostRenderer(tc.secrets)
+			r, err := NewDockerSecretsPostRenderer(tc.secrets)
+			if err != nil {
+				t.Fatalf("%+v", err)
+			}
 
 			r.updatePodSpecWithPullSecrets(tc.podSpec)
 
