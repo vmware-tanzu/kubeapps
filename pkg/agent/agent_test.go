@@ -112,6 +112,8 @@ func TestGetRelease(t *testing.T) {
 		t.Run(tc.description, func(t *testing.T) {
 			cfg := newActionConfigFixture(t)
 			makeReleases(t, cfg, tc.existingReleases)
+			cfg.Releases.Driver.(*driver.Memory).SetNamespace(tc.targetNamespace)
+
 			rls, err := GetRelease(cfg, tc.targetApp)
 			if tc.shouldFail && err == nil {
 				t.Errorf("Get %s/%s should fail", tc.targetNamespace, tc.targetApp)
@@ -427,6 +429,7 @@ func TestListReleases(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actionConfig := newActionConfigFixture(t)
 			makeReleases(t, actionConfig, tc.releases)
+			actionConfig.Releases.Driver.(*driver.Memory).SetNamespace(tc.namespace)
 
 			apps, err := ListReleases(actionConfig, tc.namespace, tc.listLimit, tc.status)
 			if err != nil {
