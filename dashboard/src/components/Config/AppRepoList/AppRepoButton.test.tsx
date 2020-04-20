@@ -12,6 +12,9 @@ const defaultProps = {
   namespace: "kubeapps",
   validating: false,
   errors: {},
+  imagePullSecrets: [],
+  createDockerRegistrySecret: jest.fn(),
+  fetchImagePullSecrets: jest.fn(),
 };
 
 it("should open a modal with the repository form", () => {

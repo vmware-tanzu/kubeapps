@@ -29,6 +29,7 @@ export interface IAppRepoListProps {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
   update: (
     name: string,
@@ -43,6 +44,16 @@ export interface IAppRepoListProps {
   namespace: string;
   displayReposPerNamespaceMsg: boolean;
   isFetching: boolean;
+  imagePullSecrets: ISecret[];
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -72,17 +83,20 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 class AppRepoList extends React.Component<IAppRepoListProps> {
   public componentDidMount() {
     this.props.fetchRepos(this.props.namespace);
+    this.props.fetchImagePullSecrets(this.props.namespace);
   }
 
   public componentDidUpdate(prevProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,
+      fetchImagePullSecrets,
       namespace,
     } = this.props;
     // refetch if namespace changes or if error removed due to location change
     if (prevProps.namespace !== namespace || (prevProps.errors.fetch && !fetch)) {
       fetchRepos(namespace);
+      fetchImagePullSecrets(namespace);
     }
   }
 
@@ -101,6 +115,9 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       validate,
       repoSecrets,
       validating,
+      imagePullSecrets,
+      createDockerRegistrySecret,
+      fetchImagePullSecrets,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
     return (
@@ -139,6 +156,9 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                         ),
                       )}
                       update={update}
+                      imagePullSecrets={imagePullSecrets}
+                      createDockerRegistrySecret={createDockerRegistrySecret}
+                      fetchImagePullSecrets={fetchImagePullSecrets}
                     />
                   ))}
                 </tbody>
@@ -151,6 +171,9 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
               namespace={namespace}
               validating={validating}
               primary={true}
+              imagePullSecrets={imagePullSecrets}
+              createDockerRegistrySecret={createDockerRegistrySecret}
+              fetchImagePullSecrets={fetchImagePullSecrets}
             />
             <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
           </>

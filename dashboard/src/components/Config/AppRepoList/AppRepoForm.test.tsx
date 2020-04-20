@@ -7,6 +7,10 @@ const defaultProps = {
   onSubmit: jest.fn(),
   validate: jest.fn(),
   validating: false,
+  imagePullSecrets: [],
+  createDockerRegistrySecret: jest.fn(),
+  namespace: "default",
+  fetchImagePullSecrets: jest.fn(),
 };
 
 it("should render the repo form", () => {

@@ -20,6 +20,9 @@ const defaultProps = {
   validating: false,
   isFetching: false,
   repoSecrets: [],
+  fetchImagePullSecrets: jest.fn(),
+  imagePullSecrets: [],
+  createDockerRegistrySecret: jest.fn(),
 };
 
 describe("AppRepoList", () => {

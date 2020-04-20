@@ -313,6 +313,7 @@ describe("installRepo", () => {
     "",
     "",
     "",
+    [],
   );
 
   context("when authHeader provided", () => {
@@ -323,6 +324,7 @@ describe("installRepo", () => {
       "Bearer: abc",
       "",
       "",
+      [],
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -334,6 +336,7 @@ describe("installRepo", () => {
         "Bearer: abc",
         "",
         {},
+        [],
       );
     });
 
@@ -356,6 +359,7 @@ describe("installRepo", () => {
       "",
       "This is a cert!",
       "",
+      [],
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -367,6 +371,7 @@ describe("installRepo", () => {
         "",
         "This is a cert!",
         {},
+        [],
       );
     });
 
@@ -390,6 +395,7 @@ describe("installRepo", () => {
             "",
             "",
             safeYAMLTemplate,
+            [],
           ),
         );
 
@@ -402,6 +408,7 @@ describe("installRepo", () => {
           {
             spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
           },
+          [],
         );
       });
 
@@ -418,6 +425,7 @@ describe("installRepo", () => {
             "",
             "",
             unsafeYAMLTemplate,
+            [],
           ),
         );
         expect(AppRepository.create).not.toHaveBeenCalled();
@@ -435,6 +443,7 @@ describe("installRepo", () => {
         "",
         "",
         {},
+        [],
       );
     });
 
@@ -488,7 +497,9 @@ describe("installRepo", () => {
   });
 
   it("uses kubeapps own namespace if namespace is _all", async () => {
-    await store.dispatch(repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", ""));
+    await store.dispatch(
+      repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", "", []),
+    );
 
     expect(AppRepository.create).toHaveBeenCalledWith(
       "my-repo",
@@ -497,6 +508,7 @@ describe("installRepo", () => {
       "",
       "",
       {},
+      [],
     );
   });
 });
@@ -525,6 +537,7 @@ describe("updateRepo", () => {
         "foo",
         "bar",
         safeYAMLTemplate,
+        [],
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
@@ -552,6 +565,7 @@ describe("updateRepo", () => {
         "foo",
         "bar",
         safeYAMLTemplate,
+        [],
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
