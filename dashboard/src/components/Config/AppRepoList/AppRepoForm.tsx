@@ -111,7 +111,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   public componentDidUpdate(prevProps: IAppRepoFormProps) {
     if (prevProps.imagePullSecrets !== this.props.imagePullSecrets) {
-      this.parseSecrets(this.props.imagePullSecrets, this.props.repo);
+      this.parseSecrets(this.props.imagePullSecrets);
     }
   }
 
@@ -455,13 +455,17 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     };
   };
 
+  // Select the pull secrets based on the current status and if they are already
+  // selected in the existing repo info
   private parseSecrets = (secrets: ISecret[], repo?: IAppRepository) => {
     const selectedImagePullSecrets = this.state.selectedImagePullSecrets;
     secrets.forEach(secret => {
       let selected = false;
+      // If it has been already selected
       if (selectedImagePullSecrets[secret.metadata.name]) {
         selected = true;
       }
+      // Or if it's already selected in the existing repo
       if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secret.metadata.name)) {
         selected = true;
       }

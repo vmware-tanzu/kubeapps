@@ -511,6 +511,22 @@ describe("installRepo", () => {
       [],
     );
   });
+
+  it("includes registry secrets if given", async () => {
+    await store.dispatch(
+      repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", "", ["repo-1"]),
+    );
+
+    expect(AppRepository.create).toHaveBeenCalledWith(
+      "my-repo",
+      "kubeapps-namespace",
+      "http://foo.bar",
+      "",
+      "",
+      {},
+      ["repo-1"],
+    );
+  });
 });
 
 describe("updateRepo", () => {
@@ -537,10 +553,19 @@ describe("updateRepo", () => {
         "foo",
         "bar",
         safeYAMLTemplate,
-        [],
+        ["repo-1"],
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
+    expect(AppRepository.update).toHaveBeenCalledWith(
+      "my-repo",
+      "my-namespace",
+      "http://foo.bar",
+      "foo",
+      "bar",
+      { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
+      ["repo-1"],
+    );
   });
 
   it("returns an error if failed", async () => {
@@ -667,5 +692,54 @@ describe("validateRepo", () => {
     const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
+  });
+});
+
+describe("fetchImagePullSecrets", () => {
+  it("fetches image pull secrets", async () => {
+    const secret1 = {
+      type: "kubernetes.io/dockerconfigjson",
+    };
+    const secret2 = {
+      type: "Opaque",
+    };
+    Secret.list = jest.fn(() => {
+      return {
+        items: [secret1, secret2],
+      };
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestImagePullSecrets),
+        payload: "default",
+      },
+      {
+        type: getType(repoActions.receiveImagePullSecrets),
+        payload: [secret1],
+      },
+    ];
+    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Secret.list = jest.fn(() => {
+      throw new Error("boom");
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestImagePullSecrets),
+        payload: "default",
+      },
+      {
+        type: getType(repoActions.errorRepos),
+        payload: {
+          err: new Error("boom"),
+          op: "fetch",
+        },
+      },
+    ];
+    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });

@@ -5,6 +5,7 @@ exports[`should open a modal with the repository form 1`] = `
   errors={Object {}}
   fetchImagePullSecrets={[Function]}
   imagePullSecrets={Array []}
+  kubeappsNamespace="kubeapps"
   namespace="kubeapps"
   onSubmit={[Function]}
   validate={[Function]}
@@ -223,34 +224,6 @@ exports[`should open a modal with the repository form 1`] = `
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div>
-                      <p
-                        class="margin-b-small"
-                      >
-                        Associate Docker Registry Credentials (optional):
-                      </p>
-                      <span
-                        class="AppRepoInputDescription"
-                      >
-                        Select existing secret(s) to access a private Docker registry and pull images from it. More info
-                        <a
-                          href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
-                          target="_blank"
-                        >
-                          here
-                        </a>
-                        .
-                        <div
-                          class="margin-l-big margin-t-normal"
-                        >
-                          <span
-                            class="margin-b-small"
-                          >
-                            No existing credentials found.
-                          </span>
-                        </div>
-                      </span>
                     </div>
                     <div
                       class="margin-t-big"

@@ -213,6 +213,7 @@ exports[`should render the repo form 1`] = `
           .
           <AppRepoAddDockerCreds
             imagePullSecrets={Array []}
+            selectedImagePullSecrets={Object {}}
             togglePullSecret={[Function]}
           />
         </span>

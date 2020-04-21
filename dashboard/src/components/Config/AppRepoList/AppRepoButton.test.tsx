@@ -10,7 +10,7 @@ import { AppRepoForm } from "./AppRepoForm";
 const defaultProps = {
   onSubmit: jest.fn(),
   validate: jest.fn(() => true),
-  namespace: "default",
+  namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
   validating: false,
   errors: {},

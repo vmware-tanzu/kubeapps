@@ -1,6 +1,9 @@
 import { shallow } from "enzyme";
 import * as React from "react";
+import { ISecret } from "shared/types";
+import { wait } from "../../../shared/utils";
 import UnexpectedErrorPage from "../../ErrorAlert/UnexpectedErrorAlert";
+import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 import { AppRepoForm } from "./AppRepoForm";
 
 const defaultProps = {
@@ -64,6 +67,54 @@ it("should not call the install method when the validation fails unless forced",
   expect(install).toHaveBeenCalled();
 });
 
+it("should not show the docker registry credentials section if the namespace is the global one", () => {
+  const wrapper = shallow(
+    <AppRepoForm {...defaultProps} kubeappsNamespace={defaultProps.namespace} />,
+  );
+  expect(wrapper.text()).not.toContain("Associate Docker Registry Credentials");
+});
+
+it("should render the docker registry credentials section", () => {
+  const wrapper = shallow(<AppRepoForm {...defaultProps} />);
+  expect(wrapper.find(AppRepoAddDockerCreds)).toExist();
+});
+
+it("should call the install method with the selected docker credentials", async () => {
+  const validate = jest.fn(() => true);
+  const install = jest.fn(() => true);
+  const wrapper = shallow(<AppRepoForm {...defaultProps} validate={validate} onSubmit={install} />);
+  wrapper.setState({ selectedImagePullSecrets: { "repo-1": true } });
+
+  const button = wrapper.find("form");
+  button.simulate("submit", { preventDefault: jest.fn() });
+  // wait for async functions
+  await wait(1);
+  expect(install).toHaveBeenCalledWith("", "", "", "", "", ["repo-1"]);
+});
+
+it("should parse and preserve the selection of docker credentials", () => {
+  const secret1 = {
+    metadata: {
+      name: "foo",
+    },
+  } as ISecret;
+  const secret2 = {
+    metadata: {
+      name: "bar",
+    },
+  } as ISecret;
+  const wrapper = shallow(<AppRepoForm {...defaultProps} imagePullSecrets={[secret1]} />);
+  expect(wrapper.state()).toMatchObject({ selectedImagePullSecrets: { foo: false } });
+
+  // Select secret
+  wrapper.setState({ selectedImagePullSecrets: { foo: true } });
+
+  // Add new secret, force re-render
+  wrapper.setProps({ imagePullSecrets: [secret1, secret2] });
+
+  expect(wrapper.state()).toMatchObject({ selectedImagePullSecrets: { foo: true, bar: false } });
+});
+
 describe("when the repository info is already populated", () => {
   it("should parse the existing name", () => {
     const repo = { metadata: { name: "foo" } } as any;
@@ -125,6 +176,31 @@ describe("when the repository info is already populated", () => {
         authHeader: "Bearer foo",
         token: "foo",
         authMethod: "bearer",
+      });
+    });
+
+    it("should pre-select the existing docker registry secret", () => {
+      const secret = {
+        metadata: {
+          name: "foo",
+        },
+      } as ISecret;
+      const repo = { metadata: { name: "foo" }, spec: { dockerRegistrySecrets: ["foo"] } } as any;
+      const wrapper = shallow(
+        <AppRepoForm {...defaultProps} imagePullSecrets={[secret]} repo={repo} />,
+      );
+      expect(wrapper.state()).toMatchObject({ selectedImagePullSecrets: { foo: true } });
+
+      // Add new secret, force re-render
+      const secret2 = {
+        metadata: {
+          name: "bar",
+        },
+      } as ISecret;
+      wrapper.setProps({ imagePullSecrets: [secret, secret2] });
+
+      expect(wrapper.state()).toMatchObject({
+        selectedImagePullSecrets: { foo: true, bar: false },
       });
     });
   });
