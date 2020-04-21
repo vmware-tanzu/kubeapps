@@ -4,11 +4,12 @@ import { ISecret } from "../../../shared/types";
 interface IAppRepoFormProps {
   imagePullSecrets: ISecret[];
   togglePullSecret: (imagePullSecret: string) => () => void;
+  selectedImagePullSecrets: { [key: string]: boolean };
 }
 
 export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, {}> {
   public render() {
-    const { imagePullSecrets, togglePullSecret } = this.props;
+    const { imagePullSecrets, togglePullSecret, selectedImagePullSecrets } = this.props;
     return (
       <div className="margin-l-big margin-t-normal">
         {imagePullSecrets.length > 0 ? (
@@ -20,7 +21,7 @@ export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, {}
                   key={secret.metadata.name}
                   onChange={togglePullSecret(secret.metadata.name)}
                 >
-                  <input type="checkbox" />
+                  <input type="checkbox" checked={selectedImagePullSecrets[secret.metadata.name]} />
                   <span>{secret.metadata.name}</span>
                 </label>
               </div>

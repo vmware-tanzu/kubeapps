@@ -41,6 +41,7 @@ interface IAppRepoAddButtonProps {
   validating: boolean;
   redirectTo?: string;
   namespace: string;
+  kubeappsNamespace: string;
   imagePullSecrets: ISecret[];
   fetchImagePullSecrets: (namespace: string) => void;
   text?: string;
@@ -63,7 +64,7 @@ export class AppRepoAddButton extends React.Component<
   };
 
   public render() {
-    const { redirectTo, text, primary, namespace } = this.props;
+    const { redirectTo, text, primary, namespace, kubeappsNamespace } = this.props;
     return (
       <React.Fragment>
         <button className={`button ${primary ? "button-primary" : ""}`} onClick={this.openModal}>
@@ -93,6 +94,7 @@ export class AppRepoAddButton extends React.Component<
             secret={this.props.secret}
             imagePullSecrets={this.props.imagePullSecrets}
             namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
             fetchImagePullSecrets={this.props.fetchImagePullSecrets}
           />
         </Modal>

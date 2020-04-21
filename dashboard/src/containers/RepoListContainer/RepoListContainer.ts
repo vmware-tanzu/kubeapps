@@ -25,6 +25,7 @@ function mapStateToProps({ config, namespace, repos }: IStoreState) {
     repoSecrets: repos.repoSecrets,
     validating: repos.validating,
     imagePullSecrets: repos.imagePullSecrets,
+    kubeappsNamespace: config.namespace,
   };
 }
 

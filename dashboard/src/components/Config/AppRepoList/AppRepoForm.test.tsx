@@ -9,6 +9,7 @@ const defaultProps = {
   validating: false,
   imagePullSecrets: [],
   namespace: "default",
+  kubeappsNamespace: "kubeapps",
   fetchImagePullSecrets: jest.fn(),
 };
 

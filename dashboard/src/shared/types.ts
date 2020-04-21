@@ -416,6 +416,7 @@ export interface IAppRepository
       };
       resyncRequests: number;
       syncJobPodTemplate?: object;
+      dockerRegistrySecrets?: string[];
     },
     undefined
   > {}

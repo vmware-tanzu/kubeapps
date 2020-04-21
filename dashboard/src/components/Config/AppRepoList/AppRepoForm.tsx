@@ -23,6 +23,7 @@ interface IAppRepoFormProps {
   validationError?: Error;
   imagePullSecrets: ISecret[];
   namespace: string;
+  kubeappsNamespace: string;
   fetchImagePullSecrets: (namespace: string) => void;
   repo?: IAppRepository;
   secret?: ISecret;
@@ -105,18 +106,18 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
       });
     }
 
-    this.parseSecrets(this.props.imagePullSecrets);
+    this.parseSecrets(this.props.imagePullSecrets, this.props.repo);
   }
 
   public componentDidUpdate(prevProps: IAppRepoFormProps) {
     if (prevProps.imagePullSecrets !== this.props.imagePullSecrets) {
-      this.parseSecrets(this.props.imagePullSecrets);
+      this.parseSecrets(this.props.imagePullSecrets, this.props.repo);
     }
   }
 
   public render() {
-    const { repo, imagePullSecrets } = this.props;
-    const { authMethod } = this.state;
+    const { repo, imagePullSecrets, namespace, kubeappsNamespace } = this.props;
+    const { authMethod, selectedImagePullSecrets } = this.state;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleInstallClick}>
         <div className="row">
@@ -258,24 +259,30 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 </div>
               </div>
             </div>
-            <div>
-              <p className="margin-b-small">Associate Docker Registry Credentials (optional):</p>
-              <span className="AppRepoInputDescription">
-                Select existing secret(s) to access a private Docker registry and pull images from
-                it. More info{" "}
-                <a
-                  href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
-                  target="_blank"
-                >
-                  here
-                </a>
-                .
-                <AppRepoAddDockerCreds
-                  imagePullSecrets={imagePullSecrets}
-                  togglePullSecret={this.togglePullSecret}
-                />
-              </span>
-            </div>
+            {/* Only when using a namespace different than the Kubeapps namespace (Global)
+              the repository can be associated with Docker Registry Credentials since
+              the pull secret won't be available in all namespaces */
+            namespace !== kubeappsNamespace && (
+              <div>
+                <p className="margin-b-small">Associate Docker Registry Credentials (optional):</p>
+                <span className="AppRepoInputDescription">
+                  Select existing secret(s) to access a private Docker registry and pull images from
+                  it. More info{" "}
+                  <a
+                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
+                    target="_blank"
+                  >
+                    here
+                  </a>
+                  .
+                  <AppRepoAddDockerCreds
+                    imagePullSecrets={imagePullSecrets}
+                    togglePullSecret={this.togglePullSecret}
+                    selectedImagePullSecrets={selectedImagePullSecrets}
+                  />
+                </span>
+              </div>
+            )}
             <div className="margin-t-big">
               <label>
                 <span>Custom CA Certificate (optional):</span>
@@ -448,11 +455,17 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     };
   };
 
-  private parseSecrets = (secrets: ISecret[]) => {
+  private parseSecrets = (secrets: ISecret[], repo?: IAppRepository) => {
     const selectedImagePullSecrets = this.state.selectedImagePullSecrets;
     secrets.forEach(secret => {
-      selectedImagePullSecrets[secret.metadata.name] =
-        selectedImagePullSecrets[secret.metadata.name] || false;
+      let selected = false;
+      if (selectedImagePullSecrets[secret.metadata.name]) {
+        selected = true;
+      }
+      if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secret.metadata.name)) {
+        selected = true;
+      }
+      selectedImagePullSecrets[secret.metadata.name] = selected;
     });
     this.setState({ selectedImagePullSecrets });
   };

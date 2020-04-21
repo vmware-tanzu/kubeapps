@@ -16,6 +16,7 @@ const defaultProps = {
   update: jest.fn(),
   validate: jest.fn(),
   namespace: defaultNamespace,
+  kubeappsNamespace: "kubeapps",
   displayReposPerNamespaceMsg: false,
   validating: false,
   isFetching: false,

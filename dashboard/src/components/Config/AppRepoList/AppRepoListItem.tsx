@@ -27,6 +27,7 @@ interface IAppRepoListItemProps {
   secret?: ISecret;
   renderNamespace: boolean;
   namespace: string;
+  kubeappsNamespace: string;
   deleteRepo: (name: string, namespace: string) => Promise<boolean>;
   resyncRepo: (name: string, namespace: string) => void;
   imagePullSecrets: ISecret[];
@@ -54,6 +55,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
       secret,
       imagePullSecrets,
       fetchImagePullSecrets,
+      kubeappsNamespace,
     } = this.props;
     return (
       <tr key={repo.metadata.name}>
@@ -79,6 +81,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
             onSubmit={update}
             validate={validate}
             namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
             validating={validating}
             text="Edit"
             repo={repo}

@@ -42,6 +42,7 @@ export interface IAppRepoListProps {
   validating: boolean;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   namespace: string;
+  kubeappsNamespace: string;
   displayReposPerNamespaceMsg: boolean;
   isFetching: boolean;
   imagePullSecrets: ISecret[];
@@ -99,6 +100,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       install,
       update,
       namespace,
+      kubeappsNamespace,
       displayReposPerNamespaceMsg,
       isFetching,
       deleteRepo,
@@ -138,6 +140,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                       repo={repo}
                       renderNamespace={renderNamespace}
                       namespace={namespace}
+                      kubeappsNamespace={kubeappsNamespace}
                       errors={errors}
                       validating={validating}
                       validate={validate}
@@ -159,6 +162,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
               onSubmit={install}
               validate={validate}
               namespace={namespace}
+              kubeappsNamespace={kubeappsNamespace}
               validating={validating}
               primary={true}
               imagePullSecrets={imagePullSecrets}
