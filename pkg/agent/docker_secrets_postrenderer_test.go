@@ -448,6 +448,34 @@ func TestGetResourcePodSpec(t *testing.T) {
 				"some": "spec",
 			},
 		},
+		{
+			name: "it returns the pod spec from a daemon set",
+			resource: map[interface{}]interface{}{
+				"kind": "DaemonSet",
+				"spec": map[interface{}]interface{}{
+					"template": map[interface{}]interface{}{
+						"spec": map[interface{}]interface{}{"some": "spec"},
+					},
+				},
+			},
+			result: map[interface{}]interface{}{
+				"some": "spec",
+			},
+		},
+		{
+			name: "it returns the pod spec from a deployment",
+			resource: map[interface{}]interface{}{
+				"kind": "Deployment",
+				"spec": map[interface{}]interface{}{
+					"template": map[interface{}]interface{}{
+						"spec": map[interface{}]interface{}{"some": "spec"},
+					},
+				},
+			},
+			result: map[interface{}]interface{}{
+				"some": "spec",
+			},
+		},
 	}
 
 	for _, tc := range testCases {

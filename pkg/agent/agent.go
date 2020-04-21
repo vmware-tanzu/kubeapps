@@ -78,6 +78,13 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 	cmd := action.NewInstall(actionConfig)
 	cmd.ReleaseName = name
 	cmd.Namespace = namespace
+	// TODO(#1617): the map of registry domains to secret names needs to be passed
+	// to both CreateRelease and UpgradeRelease.
+	var secrets map[string]string
+	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(secrets)
+	if err != nil {
+		return nil, err
+	}
 	values, err := getValues([]byte(valueString))
 	if err != nil {
 		return nil, err
@@ -103,6 +110,13 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	}
 	log.Printf("Upgrading release %s", name)
 	cmd := action.NewUpgrade(actionConfig)
+	// TODO(#1617): the map of registry domains to secret names needs to be passed
+	// to both CreateRelease and UpgradeRelease.
+	var secrets map[string]string
+	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(secrets)
+	if err != nil {
+		return nil, err
+	}
 	values, err := chartutil.ReadValues([]byte(valuesYaml))
 	if err != nil {
 		return nil, fmt.Errorf("Unable to upgrade the release because values could not be parsed: %v", err)
