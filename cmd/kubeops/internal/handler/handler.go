@@ -180,10 +180,6 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 	response.NewDataResponse(release).Write(w)
 }
 
-func getRegistrySecretsPerDomain(secretNames []string) (map[string]string, error) {
-	return nil, nil
-}
-
 // OperateRelease decides which method to call depending on the "action" query param.
 func OperateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 	switch req.FormValue("action") {

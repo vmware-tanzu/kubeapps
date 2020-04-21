@@ -355,6 +355,9 @@ func (c *ChartClient) GetChart(details *Details, netClient kube.HTTPClient, requ
 
 // RegistrySecretsPerDomain checks the app repo and available secrets
 // to return the secret names per registry domain.
+//
+// These are actually calculated during InitNetClient when we already have a
+// k8s client with the user token.
 func (c *ChartClient) RegistrySecretsPerDomain() map[string]string {
 	return c.registrySecretsPerDomain
 }
