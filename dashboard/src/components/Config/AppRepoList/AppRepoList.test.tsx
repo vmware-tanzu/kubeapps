@@ -13,10 +13,16 @@ const defaultProps = {
   resyncRepo: jest.fn(),
   resyncAllRepos: jest.fn(),
   install: jest.fn(),
+  update: jest.fn(),
   validate: jest.fn(),
   namespace: defaultNamespace,
   displayReposPerNamespaceMsg: false,
+  validating: false,
   isFetching: false,
+  repoSecrets: [],
+  fetchImagePullSecrets: jest.fn(),
+  imagePullSecrets: [],
+  createDockerRegistrySecret: jest.fn(),
 };
 
 describe("AppRepoList", () => {

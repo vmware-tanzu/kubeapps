@@ -23,6 +23,7 @@ exports[`should render the repo form 1`] = `
           Name:
         </label>
         <input
+          disabled={false}
           id="kubeapps-repo-name"
           onChange={[Function]}
           pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
@@ -63,7 +64,7 @@ exports[`should render the repo form 1`] = `
               htmlFor="kubeapps-repo-auth-method-none"
             >
               <input
-                defaultChecked={true}
+                checked={true}
                 id="kubeapps-repo-auth-method-none"
                 name="auth"
                 onChange={[Function]}
@@ -77,6 +78,7 @@ exports[`should render the repo form 1`] = `
               htmlFor="kubeapps-repo-auth-method-basic"
             >
               <input
+                checked={false}
                 id="kubeapps-repo-auth-method-basic"
                 name="auth"
                 onChange={[Function]}
@@ -90,6 +92,7 @@ exports[`should render the repo form 1`] = `
               htmlFor="kubeapps-repo-auth-method-bearer"
             >
               <input
+                checked={false}
                 id="kubeapps-repo-auth-method-bearer"
                 name="auth"
                 onChange={[Function]}
@@ -103,6 +106,7 @@ exports[`should render the repo form 1`] = `
               htmlFor="kubeapps-repo-auth-method-custom"
             >
               <input
+                checked={false}
                 id="kubeapps-repo-auth-method-custom"
                 name="auth"
                 onChange={[Function]}

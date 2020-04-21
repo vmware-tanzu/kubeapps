@@ -27,6 +27,8 @@ export const backend = {
     validate: () => `${backend.apprepositories.base("kubeapps")}/validate`,
     delete: (name: string, namespace: string) =>
       `${backend.apprepositories.base(namespace)}/${name}`,
+    update: (namespace: string, name: string) =>
+      `${backend.apprepositories.base(namespace)}/${name}`,
   },
   namespaces: {
     base: "api/v1/namespaces",

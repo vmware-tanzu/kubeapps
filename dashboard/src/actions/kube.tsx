@@ -69,7 +69,7 @@ export function getResource(
     }
     try {
       const r = await ref.getResource();
-      dispatch(receiveResource({ key, resource: r }));
+      dispatch(receiveResource({ key, resource: r as IResource }));
     } catch (e) {
       dispatch(receiveResourceError({ key, error: e }));
     }

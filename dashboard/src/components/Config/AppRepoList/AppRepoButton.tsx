@@ -2,7 +2,7 @@ import * as React from "react";
 import * as Modal from "react-modal";
 import { Redirect } from "react-router";
 
-import { IRBACRole } from "../../../shared/types";
+import { IAppRepository, IRBACRole, ISecret } from "../../../shared/types";
 import ErrorSelector from "../../ErrorAlert/ErrorSelector";
 import "./AppRepo.css";
 import { AppRepoForm } from "./AppRepoForm";
@@ -28,18 +28,33 @@ interface IAppRepoAddButtonProps {
     update?: Error;
     validate?: Error;
   };
-  install: (
+  onSubmit: (
     name: string,
     namespace: string,
     url: string,
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
-  isFetching: boolean;
+  validating: boolean;
   redirectTo?: string;
   namespace: string;
+  imagePullSecrets: ISecret[];
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
+  fetchImagePullSecrets: (namespace: string) => void;
+  text?: string;
+  primary?: boolean;
+  repo?: IAppRepository;
+  secret?: ISecret;
 }
 interface IAppRepoAddButtonState {
   lastSubmittedName: string;
@@ -56,11 +71,11 @@ export class AppRepoAddButton extends React.Component<
   };
 
   public render() {
-    const { redirectTo } = this.props;
+    const { redirectTo, text, primary, namespace } = this.props;
     return (
       <React.Fragment>
-        <button className="button button-primary" onClick={this.openModal}>
-          Add App Repository
+        <button className={`button ${primary ? "button-primary" : ""}`} onClick={this.openModal}>
+          {text || "Add App Repository"}
         </button>
         <Modal
           isOpen={this.state.modalIsOpen}
@@ -77,11 +92,17 @@ export class AppRepoAddButton extends React.Component<
             />
           )}
           <AppRepoForm
-            install={this.install}
+            onSubmit={this.onSubmit}
             validate={this.props.validate}
             onAfterInstall={this.closeModal}
-            isFetching={this.props.isFetching}
+            validating={this.props.validating}
             validationError={this.props.errors.validate}
+            repo={this.props.repo}
+            secret={this.props.secret}
+            imagePullSecrets={this.props.imagePullSecrets}
+            createDockerRegistrySecret={this.props.createDockerRegistrySecret}
+            namespace={namespace}
+            fetchImagePullSecrets={this.props.fetchImagePullSecrets}
           />
         </Modal>
         {redirectTo && <Redirect to={redirectTo} />}
@@ -90,22 +111,24 @@ export class AppRepoAddButton extends React.Component<
   }
 
   private closeModal = async () => this.setState({ modalIsOpen: false });
-  private install = (
+  private onSubmit = (
     name: string,
     url: string,
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => {
     // Store last submitted name to show it in an error if needed
     this.setState({ lastSubmittedName: name });
-    return this.props.install(
+    return this.props.onSubmit(
       name,
       this.props.namespace,
       url,
       authHeader,
       customCA,
       syncJobPodTemplate,
+      registrySecrets,
     );
   };
   private openModal = async () => this.setState({ modalIsOpen: true });

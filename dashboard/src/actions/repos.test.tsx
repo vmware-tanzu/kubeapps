@@ -15,6 +15,14 @@ let store: any;
 const appRepo = { spec: { resyncRequests: 10000 } };
 const kubeappsNamespace = "kubeapps-namespace";
 
+const safeYAMLTemplate = `
+spec:
+  containers:
+    - env:
+      - name: FOO
+        value: BAR
+`;
+
 beforeEach(() => {
   store = mockStore({
     config: { namespace: kubeappsNamespace },
@@ -32,6 +40,9 @@ beforeEach(() => {
     return { appRepository: { metadata: { name: "repo-abc" } } };
   });
   Secret.create = jest.fn();
+  Secret.list = jest.fn(() => {
+    return { items: [] };
+  });
 });
 
 afterEach(jest.resetAllMocks);
@@ -169,7 +180,7 @@ describe("resyncRepo", () => {
   });
 
   it("dispatches errorRepos if error on #update", async () => {
-    AppRepository.update = jest.fn().mockImplementationOnce(() => {
+    AppRepository.resync = jest.fn().mockImplementationOnce(() => {
       throw new Error("Boom!");
     });
 
@@ -188,7 +199,7 @@ describe("resyncRepo", () => {
 describe("resyncAllRepos", () => {
   it("resyncs each repo using its namespace", async () => {
     const appRepoGetMock = jest.fn();
-    AppRepository.get = appRepoGetMock;
+    AppRepository.resync = appRepoGetMock;
     await store.dispatch(
       repoActions.resyncAllRepos([
         {
@@ -219,6 +230,53 @@ describe("fetchRepos", () => {
       {
         type: getType(repoActions.receiveRepos),
         payload: { foo: "bar" },
+      },
+      {
+        type: getType(repoActions.receiveReposSecrets),
+        payload: [],
+      },
+    ];
+
+    await store.dispatch(repoActions.fetchRepos(namespace));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("includes secrets that are owned by an apprepo", async () => {
+    const appRepoSecret = {
+      metadata: {
+        name: "foo",
+        ownerReferences: [
+          {
+            kind: "AppRepository",
+          },
+        ],
+      },
+    };
+    const otherSecret = {
+      metadata: {
+        name: "bar",
+        ownerReferences: [
+          {
+            kind: "Other",
+          },
+        ],
+      },
+    };
+    Secret.list = jest.fn(() => {
+      return { items: [appRepoSecret, otherSecret] };
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestRepos),
+        payload: namespace,
+      },
+      {
+        type: getType(repoActions.receiveRepos),
+        payload: { foo: "bar" },
+      },
+      {
+        type: getType(repoActions.receiveReposSecrets),
+        payload: [appRepoSecret],
       },
     ];
 
@@ -255,6 +313,7 @@ describe("installRepo", () => {
     "",
     "",
     "",
+    [],
   );
 
   context("when authHeader provided", () => {
@@ -265,6 +324,7 @@ describe("installRepo", () => {
       "Bearer: abc",
       "",
       "",
+      [],
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -276,6 +336,7 @@ describe("installRepo", () => {
         "Bearer: abc",
         "",
         {},
+        [],
       );
     });
 
@@ -298,6 +359,7 @@ describe("installRepo", () => {
       "",
       "This is a cert!",
       "",
+      [],
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -309,6 +371,7 @@ describe("installRepo", () => {
         "",
         "This is a cert!",
         {},
+        [],
       );
     });
 
@@ -323,14 +386,6 @@ describe("installRepo", () => {
     });
 
     context("when a pod template is provided", () => {
-      const safeYAMLTemplate = `
-spec:
-  containers:
-    - env:
-      - name: FOO
-        value: BAR
-`;
-
       it("calls AppRepository create including pod template", async () => {
         await store.dispatch(
           repoActions.installRepo(
@@ -340,6 +395,7 @@ spec:
             "",
             "",
             safeYAMLTemplate,
+            [],
           ),
         );
 
@@ -352,6 +408,7 @@ spec:
           {
             spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
           },
+          [],
         );
       });
 
@@ -368,6 +425,7 @@ spec:
             "",
             "",
             unsafeYAMLTemplate,
+            [],
           ),
         );
         expect(AppRepository.create).not.toHaveBeenCalled();
@@ -385,6 +443,7 @@ spec:
         "",
         "",
         {},
+        [],
       );
     });
 
@@ -438,7 +497,9 @@ spec:
   });
 
   it("uses kubeapps own namespace if namespace is _all", async () => {
-    await store.dispatch(repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", ""));
+    await store.dispatch(
+      repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", "", []),
+    );
 
     expect(AppRepository.create).toHaveBeenCalledWith(
       "my-repo",
@@ -447,7 +508,67 @@ spec:
       "",
       "",
       {},
+      [],
     );
+  });
+});
+
+describe("updateRepo", () => {
+  it("updates a repo", async () => {
+    const r = { metadata: { name: "repo-abc" } };
+    AppRepository.update = jest.fn(() => {
+      return { appRepository: r };
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestRepoUpdate),
+      },
+      {
+        type: getType(repoActions.repoUpdated),
+        payload: r,
+      },
+    ];
+
+    await store.dispatch(
+      repoActions.updateRepo(
+        "my-repo",
+        "my-namespace",
+        "http://foo.bar",
+        "foo",
+        "bar",
+        safeYAMLTemplate,
+        [],
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("returns an error if failed", async () => {
+    AppRepository.update = jest.fn(() => {
+      throw new Error("boom");
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestRepoUpdate),
+      },
+      {
+        type: getType(repoActions.errorRepos),
+        payload: { err: new Error("boom"), op: "update" },
+      },
+    ];
+
+    await store.dispatch(
+      repoActions.updateRepo(
+        "my-repo",
+        "my-namespace",
+        "http://foo.bar",
+        "foo",
+        "bar",
+        safeYAMLTemplate,
+        [],
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });
 
