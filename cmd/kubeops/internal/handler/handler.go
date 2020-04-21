@@ -167,16 +167,21 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		returnErrMessage(err, w)
 		return
 	}
+
 	ch := chartMulti.Helm3Chart
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch)
+	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, cfg.ChartClient.RegistrySecretsPerDomain())
 	if err != nil {
 		returnErrMessage(err, w)
 		return
 	}
 	response.NewDataResponse(release).Write(w)
+}
+
+func getRegistrySecretsPerDomain(secretNames []string) (map[string]string, error) {
+	return nil, nil
 }
 
 // OperateRelease decides which method to call depending on the "action" query param.
@@ -200,8 +205,9 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
+
 	ch := chartMulti.Helm3Chart
-	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch)
+	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, cfg.ChartClient.RegistrySecretsPerDomain())
 	if err != nil {
 		returnErrMessage(err, w)
 		return

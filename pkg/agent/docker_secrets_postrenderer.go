@@ -166,6 +166,7 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 		}
 		// Only add the secret if it's not already included in the image pull secrets.
 		if _, ok := existingNames[secretName]; !ok {
+			log.Infof("appending imagePullSecret %q for fetching image %s", secretName, image)
 			imagePullSecrets = append(imagePullSecrets, map[string]interface{}{"name": secretName})
 			existingNames[secretName] = true
 		}

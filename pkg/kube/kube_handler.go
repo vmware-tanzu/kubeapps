@@ -93,7 +93,7 @@ type userHandler struct {
 	clientset combinedClientsetInterface
 }
 
-type handler interface {
+type Handler interface {
 	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
 	GetNamespaces() ([]corev1.Namespace, error)
@@ -103,13 +103,13 @@ type handler interface {
 	GetOperatorLogo(namespace, name string) ([]byte, error)
 }
 
-// AuthHandler exposes handler functionality as a user or the current serviceaccount
+// AuthHandler exposes Handler functionality as a user or the current serviceaccount
 type AuthHandler interface {
-	AsUser(token string) handler
-	AsSVC() handler
+	AsUser(token string) Handler
+	AsSVC() Handler
 }
 
-func (a *kubeHandler) AsUser(token string) handler {
+func (a *kubeHandler) AsUser(token string) Handler {
 	clientset, err := a.clientsetForConfig(a.configForToken(token))
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
@@ -121,7 +121,7 @@ func (a *kubeHandler) AsUser(token string) handler {
 	}
 }
 
-func (a *kubeHandler) AsSVC() handler {
+func (a *kubeHandler) AsSVC() Handler {
 	return &userHandler{
 		kubeappsNamespace: a.kubeappsNamespace,
 		svcClientset:      a.svcClientset,

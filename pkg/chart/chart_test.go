@@ -313,7 +313,7 @@ func TestParseDetailsForHTTPClient(t *testing.T) {
 				Namespace: appRepoNamespace,
 			},
 			Data: map[string][]byte{
-				"custom-secret-key": []byte(customCASecretData),
+				"custom-secret-key": []byte(customCASecretName),
 			},
 		}, &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -641,6 +641,154 @@ func TestClientWithDefaultHeaders(t *testing.T) {
 
 			if got, want := requestWithHeader.Header, tc.expectedHeaders; !cmp.Equal(got, want) {
 				t.Errorf(cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestGetRegistrySecretsPerDomain(t *testing.T) {
+	const (
+		userAuthToken = "ignored"
+		namespace     = "user-namespace"
+		// Secret created with
+		// k create secret docker-registry test-secret --dry-run --docker-email=a@b.com --docker-password='password' --docker-username='username' --docker-server='https://index.docker.io/v1/' -o yaml
+		indexDockerIOCred   = `{"auths":{"https://index.docker.io/v1/":{"username":"username","password":"password","email":"a@b.com","auth":"dXNlcm5hbWU6cGFzc3dvcmQ="}}}`
+		otherExampleComCred = `{"auths":{"other.example.com":{"username":"username","password":"password","email":"a@b.com","auth":"dXNlcm5hbWU6cGFzc3dvcmQ="}}}`
+	)
+
+	testCases := []struct {
+		name             string
+		secretNames      []string
+		existingSecrets  []*corev1.Secret
+		secretsPerDomain map[string]string
+		expectError      bool
+	}{
+		{
+			name:             "it returns an empty map if there are no secret names",
+			secretNames:      nil,
+			secretsPerDomain: map[string]string{},
+		},
+		{
+			name:        "it returns an error if a secret does not exist",
+			secretNames: []string{"should-exist"},
+			expectError: true,
+		},
+		{
+			name:        "it returns an error if the secret is not a dockerConfigJSON type",
+			secretNames: []string{"bitnami-repo"},
+			existingSecrets: []*corev1.Secret{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bitnami-repo",
+						Namespace: namespace,
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						dockerConfigJSONKey: []byte("whatevs"),
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name:        "it returns an error if the secret data does not have .dockerconfigjson key",
+			secretNames: []string{"bitnami-repo"},
+			existingSecrets: []*corev1.Secret{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bitnami-repo",
+						Namespace: namespace,
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						"custom-secret-key": []byte("whatevs"),
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name:        "it returns an error if the secret .dockerconfigjson value is not json decodable",
+			secretNames: []string{"bitnami-repo"},
+			existingSecrets: []*corev1.Secret{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bitnami-repo",
+						Namespace: namespace,
+					},
+					Type: "Opaque",
+					Data: map[string][]byte{
+						dockerConfigJSONKey: []byte("not json"),
+					},
+				},
+			},
+			expectError: true,
+		},
+		{
+			name:        "it returns the registry secrets per domain",
+			secretNames: []string{"bitnami-repo"},
+			existingSecrets: []*corev1.Secret{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bitnami-repo",
+						Namespace: namespace,
+					},
+					Type: dockerConfigJSONType,
+					Data: map[string][]byte{
+						dockerConfigJSONKey: []byte(indexDockerIOCred),
+					},
+				},
+			},
+			secretsPerDomain: map[string]string{
+				"https://index.docker.io/v1/": "bitnami-repo",
+			},
+		},
+		{
+			name:        "it includes secrets for multiple servers",
+			secretNames: []string{"bitnami-repo1", "bitnami-repo2"},
+			existingSecrets: []*corev1.Secret{
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bitnami-repo1",
+						Namespace: namespace,
+					},
+					Type: dockerConfigJSONType,
+					Data: map[string][]byte{
+						dockerConfigJSONKey: []byte(indexDockerIOCred),
+					},
+				},
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      "bitnami-repo2",
+						Namespace: namespace,
+					},
+					Type: dockerConfigJSONType,
+					Data: map[string][]byte{
+						dockerConfigJSONKey: []byte(otherExampleComCred),
+					},
+				},
+			},
+			secretsPerDomain: map[string]string{
+				"https://index.docker.io/v1/": "bitnami-repo1",
+				"other.example.com":           "bitnami-repo2",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &kube.FakeHandler{Secrets: tc.existingSecrets}
+
+			secretsPerDomain, err := getRegistrySecretsPerDomain(tc.secretNames, namespace, client)
+			if got, want := err != nil, tc.expectError; !cmp.Equal(got, want) {
+				t.Fatalf("got: %t, want: %t, err was: %+v", got, want, err)
+			}
+			if err != nil {
+				return
+			}
+
+			if got, want := secretsPerDomain, tc.secretsPerDomain; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}

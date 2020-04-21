@@ -70,3 +70,7 @@ func getValues(raw []byte) (map[string]interface{}, error) {
 func (f *FakeChart) InitNetClient(details *chartUtils.Details, userAuthToken string) (kube.HTTPClient, error) {
 	return &http.Client{}, nil
 }
+
+func (f *FakeChart) RegistrySecretsPerDomain() (map[string]string, error) {
+	return nil, nil
+}
