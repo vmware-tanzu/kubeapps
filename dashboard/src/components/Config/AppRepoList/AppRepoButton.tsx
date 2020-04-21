@@ -44,6 +44,14 @@ interface IAppRepoAddButtonProps {
   kubeappsNamespace: string;
   imagePullSecrets: ISecret[];
   fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
   text?: string;
   primary?: boolean;
   repo?: IAppRepository;
@@ -96,6 +104,7 @@ export class AppRepoAddButton extends React.Component<
             namespace={namespace}
             kubeappsNamespace={kubeappsNamespace}
             fetchImagePullSecrets={this.props.fetchImagePullSecrets}
+            createDockerRegistrySecret={this.props.createDockerRegistrySecret}
           />
         </Modal>
         {redirectTo && <Redirect to={redirectTo} />}

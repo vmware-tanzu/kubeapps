@@ -14,6 +14,7 @@ const defaultProps = {
   namespace: "default",
   kubeappsNamespace: "kubeapps",
   fetchImagePullSecrets: jest.fn(),
+  createDockerRegistrySecret: jest.fn(),
 };
 
 it("should render the repo form", () => {

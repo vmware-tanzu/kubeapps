@@ -25,6 +25,14 @@ interface IAppRepoFormProps {
   namespace: string;
   kubeappsNamespace: string;
   fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
   repo?: IAppRepository;
   secret?: ISecret;
 }
@@ -116,7 +124,14 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
   }
 
   public render() {
-    const { repo, imagePullSecrets, namespace, kubeappsNamespace } = this.props;
+    const {
+      repo,
+      imagePullSecrets,
+      namespace,
+      kubeappsNamespace,
+      createDockerRegistrySecret,
+      fetchImagePullSecrets,
+    } = this.props;
     const { authMethod, selectedImagePullSecrets } = this.state;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleInstallClick}>
@@ -279,6 +294,9 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                     imagePullSecrets={imagePullSecrets}
                     togglePullSecret={this.togglePullSecret}
                     selectedImagePullSecrets={selectedImagePullSecrets}
+                    createDockerRegistrySecret={createDockerRegistrySecret}
+                    namespace={namespace}
+                    fetchImagePullSecrets={fetchImagePullSecrets}
                   />
                 </span>
               </div>
