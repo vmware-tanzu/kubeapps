@@ -476,6 +476,26 @@ func TestGetResourcePodSpec(t *testing.T) {
 				"some": "spec",
 			},
 		},
+		{
+			name: "it returns the pod spec from a CronJob",
+			resource: map[interface{}]interface{}{
+				"kind": "CronJob",
+				"spec": map[interface{}]interface{}{
+					"jobTemplate": map[interface{}]interface{}{
+						"spec": map[interface{}]interface{}{
+							"template": map[interface{}]interface{}{
+								"spec": map[interface{}]interface{}{
+									"some": "spec",
+								},
+							},
+						},
+					},
+				},
+			},
+			result: map[interface{}]interface{}{
+				"some": "spec",
+			},
+		},
 	}
 
 	for _, tc := range testCases {

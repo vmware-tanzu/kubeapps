@@ -198,32 +198,27 @@ func getResourcePodSpec(resource map[interface{}]interface{}) map[interface{}]in
 
 	switch kind {
 	case "Pod":
-		podSpec, ok := resource["spec"].(map[interface{}]interface{})
-		if !ok {
-			log.Errorf("invalid resource: non-map pod spec. %+v", resource)
-			return nil
-		}
-		return podSpec
+		return getMapForKeys([]string{"spec"}, resource)
 	case "DaemonSet", "Deployment", "Job", "PodTemplate", "ReplicaSet", "ReplicationController", "StatefulSet":
 		// These resources all include a spec.template.spec PodSpec.
 		// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#podtemplatespec-v1-core
-		spec, ok := resource["spec"].(map[interface{}]interface{})
-		if !ok {
-			log.Errorf("invalid resource: non-map spec. %+v", resource)
-			return nil
-		}
-		template, ok := spec["template"].(map[interface{}]interface{})
-		if !ok {
-			log.Errorf("invalid resource: non-map spec.template. %+v", resource)
-			return nil
-		}
-		podSpec, ok := template["spec"].(map[interface{}]interface{})
-		if !ok {
-			log.Errorf("invalid resource: non-map spec.template.spec. %+v", resource)
-			return nil
-		}
-		return podSpec
+		return getMapForKeys([]string{"spec", "template", "spec"}, resource)
+	case "CronJob":
+		return getMapForKeys([]string{"spec", "jobTemplate", "spec", "template", "spec"}, resource)
 	}
 
 	return nil
+}
+
+func getMapForKeys(keys []string, m map[interface{}]interface{}) map[interface{}]interface{} {
+	current := m
+	var ok bool
+	for _, k := range keys {
+		current, ok = current[k].(map[interface{}]interface{})
+		if !ok {
+			log.Errorf("invalid resource: non-map %q, in %+v", k, m)
+			return nil
+		}
+	}
+	return current
 }
