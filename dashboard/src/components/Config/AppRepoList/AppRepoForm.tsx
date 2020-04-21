@@ -22,14 +22,6 @@ interface IAppRepoFormProps {
   validating: boolean;
   validationError?: Error;
   imagePullSecrets: ISecret[];
-  createDockerRegistrySecret: (
-    name: string,
-    user: string,
-    password: string,
-    email: string,
-    server: string,
-    namespace: string,
-  ) => Promise<boolean>;
   namespace: string;
   fetchImagePullSecrets: (namespace: string) => void;
   repo?: IAppRepository;
@@ -47,7 +39,6 @@ interface IAppRepoFormState {
   customCA: string;
   syncJobPodTemplate: string;
   selectedImagePullSecrets: { [key: string]: boolean };
-  showSecretSubForm: boolean;
   validated?: boolean;
 }
 
@@ -68,7 +59,6 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     customCA: "",
     syncJobPodTemplate: "",
     selectedImagePullSecrets: {},
-    showSecretSubForm: false,
   };
 
   public componentDidMount() {
@@ -125,14 +115,8 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
   }
 
   public render() {
-    const {
-      repo,
-      imagePullSecrets,
-      createDockerRegistrySecret,
-      namespace,
-      fetchImagePullSecrets,
-    } = this.props;
-    const { authMethod, selectedImagePullSecrets } = this.state;
+    const { repo, imagePullSecrets } = this.props;
+    const { authMethod } = this.state;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleInstallClick}>
         <div className="row">
@@ -287,11 +271,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 </a>
                 .
                 <AppRepoAddDockerCreds
-                  namespace={namespace}
                   imagePullSecrets={imagePullSecrets}
-                  createDockerRegistrySecret={createDockerRegistrySecret}
-                  fetchImagePullSecrets={fetchImagePullSecrets}
-                  selectedImagePullSecrets={selectedImagePullSecrets}
                   togglePullSecret={this.togglePullSecret}
                 />
               </span>

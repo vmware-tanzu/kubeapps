@@ -72,10 +72,6 @@ export const receiveImagePullSecrets = createAction("RECEIVE_IMAGE_PULL_SECRETS"
   return (secrets: ISecret[]) => resolve(secrets);
 });
 
-export const createImagePullSecret = createAction("CREATE_IMAGE_PULL_SECRET", resolve => {
-  return (secret: ISecret) => resolve(secret);
-});
-
 const allActions = [
   addRepo,
   addedRepo,
@@ -99,7 +95,6 @@ const allActions = [
   redirected,
   requestImagePullSecrets,
   receiveImagePullSecrets,
-  createImagePullSecret,
 ];
 export type AppReposAction = ActionType<typeof allActions[number]>;
 
@@ -319,26 +314,6 @@ export function fetchImagePullSecrets(
       dispatch(receiveImagePullSecrets(imgPullSecrets));
     } catch (e) {
       dispatch(errorRepos(e, "fetch"));
-    }
-  };
-}
-
-export function createDockerRegistrySecret(
-  name: string,
-  user: string,
-  password: string,
-  email: string,
-  server: string,
-  namespace: string,
-): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
-  return async dispatch => {
-    try {
-      const secret = await Secret.createPullSecret(name, user, password, email, server, namespace);
-      dispatch(createImagePullSecret(secret));
-      return true;
-    } catch (e) {
-      dispatch(errorRepos(e, "fetch"));
-      return false;
     }
   };
 }

@@ -3,6 +3,8 @@
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
   errors={Object {}}
+  fetchImagePullSecrets={[Function]}
+  imagePullSecrets={Array []}
   namespace="kubeapps"
   onSubmit={[Function]}
   validate={[Function]}
@@ -90,8 +92,15 @@ exports[`should open a modal with the repository form 1`] = `
                       />
                     </div>
                     <div>
-                      <span>
-                        Authorization (optional):
+                      <p
+                        class="margin-b-small"
+                      >
+                        Repository Authorization (optional):
+                      </p>
+                      <span
+                        class="AppRepoInputDescription"
+                      >
+                        Introduce the credentials to access the Chart repository if authentication is enabled.
                       </span>
                       <div
                         class="row"
@@ -214,6 +223,34 @@ exports[`should open a modal with the repository form 1`] = `
                           </div>
                         </div>
                       </div>
+                    </div>
+                    <div>
+                      <p
+                        class="margin-b-small"
+                      >
+                        Associate Docker Registry Credentials (optional):
+                      </p>
+                      <span
+                        class="AppRepoInputDescription"
+                      >
+                        Select existing secret(s) to access a private Docker registry and pull images from it. More info
+                        <a
+                          href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
+                          target="_blank"
+                        >
+                          here
+                        </a>
+                        .
+                        <div
+                          class="margin-l-big margin-t-normal"
+                        >
+                          <span
+                            class="margin-b-small"
+                          >
+                            No existing credentials found.
+                          </span>
+                        </div>
+                      </span>
                     </div>
                     <div
                       class="margin-t-big"

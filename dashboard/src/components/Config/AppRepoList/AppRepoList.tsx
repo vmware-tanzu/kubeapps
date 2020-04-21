@@ -46,14 +46,6 @@ export interface IAppRepoListProps {
   isFetching: boolean;
   imagePullSecrets: ISecret[];
   fetchImagePullSecrets: (namespace: string) => void;
-  createDockerRegistrySecret: (
-    name: string,
-    user: string,
-    password: string,
-    email: string,
-    server: string,
-    namespace: string,
-  ) => Promise<boolean>;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -116,7 +108,6 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       repoSecrets,
       validating,
       imagePullSecrets,
-      createDockerRegistrySecret,
       fetchImagePullSecrets,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
@@ -157,7 +148,6 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                       )}
                       update={update}
                       imagePullSecrets={imagePullSecrets}
-                      createDockerRegistrySecret={createDockerRegistrySecret}
                       fetchImagePullSecrets={fetchImagePullSecrets}
                     />
                   ))}
@@ -172,7 +162,6 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
               validating={validating}
               primary={true}
               imagePullSecrets={imagePullSecrets}
-              createDockerRegistrySecret={createDockerRegistrySecret}
               fetchImagePullSecrets={fetchImagePullSecrets}
             />
             <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />

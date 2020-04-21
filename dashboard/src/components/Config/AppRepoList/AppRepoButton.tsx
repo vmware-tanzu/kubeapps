@@ -42,14 +42,6 @@ interface IAppRepoAddButtonProps {
   redirectTo?: string;
   namespace: string;
   imagePullSecrets: ISecret[];
-  createDockerRegistrySecret: (
-    name: string,
-    user: string,
-    password: string,
-    email: string,
-    server: string,
-    namespace: string,
-  ) => Promise<boolean>;
   fetchImagePullSecrets: (namespace: string) => void;
   text?: string;
   primary?: boolean;
@@ -100,7 +92,6 @@ export class AppRepoAddButton extends React.Component<
             repo={this.props.repo}
             secret={this.props.secret}
             imagePullSecrets={this.props.imagePullSecrets}
-            createDockerRegistrySecret={this.props.createDockerRegistrySecret}
             namespace={namespace}
             fetchImagePullSecrets={this.props.fetchImagePullSecrets}
           />

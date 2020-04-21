@@ -50,8 +50,15 @@ exports[`should render the repo form 1`] = `
         />
       </div>
       <div>
-        <span>
-          Authorization (optional):
+        <p
+          className="margin-b-small"
+        >
+          Repository Authorization (optional):
+        </p>
+        <span
+          className="AppRepoInputDescription"
+        >
+          Introduce the credentials to access the Chart repository if authentication is enabled.
         </span>
         <div
           className="row"
@@ -185,6 +192,30 @@ exports[`should render the repo form 1`] = `
             </div>
           </div>
         </div>
+      </div>
+      <div>
+        <p
+          className="margin-b-small"
+        >
+          Associate Docker Registry Credentials (optional):
+        </p>
+        <span
+          className="AppRepoInputDescription"
+        >
+          Select existing secret(s) to access a private Docker registry and pull images from it. More info
+           
+          <a
+            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
+            target="_blank"
+          >
+            here
+          </a>
+          .
+          <AppRepoAddDockerCreds
+            imagePullSecrets={Array []}
+            togglePullSecret={[Function]}
+          />
+        </span>
       </div>
       <div
         className="margin-t-big"

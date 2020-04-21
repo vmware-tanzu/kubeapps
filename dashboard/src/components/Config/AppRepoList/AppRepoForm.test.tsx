@@ -8,7 +8,6 @@ const defaultProps = {
   validate: jest.fn(),
   validating: false,
   imagePullSecrets: [],
-  createDockerRegistrySecret: jest.fn(),
   namespace: "default",
   fetchImagePullSecrets: jest.fn(),
 };

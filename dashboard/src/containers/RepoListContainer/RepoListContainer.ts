@@ -84,18 +84,6 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchImagePullSecrets: async (namespace: string) => {
       return dispatch(actions.repos.fetchImagePullSecrets(namespace));
     },
-    createDockerRegistrySecret: async (
-      name: string,
-      user: string,
-      password: string,
-      email: string,
-      server: string,
-      namespace: string,
-    ) => {
-      return dispatch(
-        actions.repos.createDockerRegistrySecret(name, user, password, email, server, namespace),
-      );
-    },
     resyncRepo: async (name: string, namespace: string) => {
       return dispatch(actions.repos.resyncRepo(name, namespace));
     },

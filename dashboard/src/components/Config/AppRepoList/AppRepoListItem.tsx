@@ -30,14 +30,6 @@ interface IAppRepoListItemProps {
   deleteRepo: (name: string, namespace: string) => Promise<boolean>;
   resyncRepo: (name: string, namespace: string) => void;
   imagePullSecrets: ISecret[];
-  createDockerRegistrySecret: (
-    name: string,
-    user: string,
-    password: string,
-    email: string,
-    server: string,
-    namespace: string,
-  ) => Promise<boolean>;
   fetchImagePullSecrets: (namespace: string) => void;
 }
 
@@ -61,7 +53,6 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
       validating,
       secret,
       imagePullSecrets,
-      createDockerRegistrySecret,
       fetchImagePullSecrets,
     } = this.props;
     return (
@@ -93,7 +84,6 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
             repo={repo}
             secret={secret}
             imagePullSecrets={imagePullSecrets}
-            createDockerRegistrySecret={createDockerRegistrySecret}
             fetchImagePullSecrets={fetchImagePullSecrets}
           />
 
