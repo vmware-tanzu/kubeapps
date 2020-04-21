@@ -52,6 +52,57 @@ func NewDockerSecretsPostRenderer(secrets map[string]string) (*DockerSecretsPost
 	return r, nil
 }
 
+// resourceListTypes defines all the list types for which we need to
+// search for pod templates.
+var resourceListTypes map[string]struct{} = map[string]struct{}{
+	"CronJobList":               struct{}{},
+	"DaemonSetList":             struct{}{},
+	"DeploymentList":            struct{}{},
+	"JobList":                   struct{}{},
+	"PodTemplateList":           struct{}{},
+	"ReplicaSetList":            struct{}{},
+	"ReplicationControllerList": struct{}{},
+	"StatefulSetList":           struct{}{},
+}
+
+func (r *DockerSecretsPostRenderer) processResourceList(resourceList []interface{}) {
+	for _, resourceItem := range resourceList {
+		resource, ok := resourceItem.(map[interface{}]interface{})
+		if !ok {
+			continue
+		}
+		kindValue, ok := resource["kind"]
+		if !ok {
+			log.Errorf("invalid resource: no kind. %+v", resource)
+			continue
+		}
+
+		kind, ok := kindValue.(string)
+		if !ok {
+			log.Errorf("invalid resource: non-string resource kind. %+v", resource)
+			continue
+		}
+		if _, ok := resourceListTypes[kind]; ok {
+			if items, ok := resource["items"]; ok {
+				if itemsSlice, ok := items.([]interface{}); ok {
+					r.processResourceList(itemsSlice)
+				} else {
+					log.Errorf("Items of list type did not contain a slice: %+v", resource)
+				}
+			} else {
+				log.Errorf("list type did not contain an items key: %+v", resource)
+			}
+			continue
+		}
+
+		podSpec := getResourcePodSpec(kind, resource)
+		if podSpec == nil {
+			continue
+		}
+		r.updatePodSpecWithPullSecrets(podSpec)
+	}
+}
+
 // Run returns the rendered yaml including any additions of the post-renderer.
 // An error is only returned if the manifests cannot be parsed or re-rendered.
 func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifiedManifests *bytes.Buffer, err error) {
@@ -77,17 +128,7 @@ func (r *DockerSecretsPostRenderer) Run(renderedManifests *bytes.Buffer) (modifi
 	// could instead find the correct byte position and insert the image pull
 	// secret into the byte stream at the relevant points, but this will be
 	// more complex.
-	for _, resourceItem := range resourceList {
-		resource, ok := resourceItem.(map[interface{}]interface{})
-		if !ok {
-			continue
-		}
-		podSpec := getResourcePodSpec(resource)
-		if podSpec == nil {
-			continue
-		}
-		r.updatePodSpecWithPullSecrets(podSpec)
-	}
+	r.processResourceList(resourceList)
 
 	modifiedManifests = bytes.NewBuffer([]byte{})
 	encoder := yaml.NewEncoder(modifiedManifests)
@@ -183,27 +224,19 @@ func (r *DockerSecretsPostRenderer) updatePodSpecWithPullSecrets(podSpec map[int
 // invalid docs ignored and left for the API server to respond accordingly:
 // - A resource doc is a map with a "kind" key with a string value
 // - A pod resource doc has a "spec" key containing a map
-func getResourcePodSpec(resource map[interface{}]interface{}) map[interface{}]interface{} {
-	kindValue, ok := resource["kind"]
-	if !ok {
-		log.Errorf("invalid resource: no kind. %+v", resource)
-		return nil
-	}
-
-	kind, ok := kindValue.(string)
-	if !ok {
-		log.Errorf("invalid resource: non-string resource kind. %+v", resource)
-		return nil
-	}
-
+func getResourcePodSpec(kind string, resource map[interface{}]interface{}) map[interface{}]interface{} {
 	switch kind {
 	case "Pod":
 		return getMapForKeys([]string{"spec"}, resource)
-	case "DaemonSet", "Deployment", "Job", "PodTemplate", "ReplicaSet", "ReplicationController", "StatefulSet":
+	case "DaemonSet", "Deployment", "Job", "ReplicaSet", "ReplicationController", "StatefulSet":
 		// These resources all include a spec.template.spec PodSpec.
 		// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#podtemplatespec-v1-core
 		return getMapForKeys([]string{"spec", "template", "spec"}, resource)
+	case "PodTemplate":
+		return getMapForKeys([]string{"template", "spec"}, resource)
 	case "CronJob":
+		// A CronJob spec contains a jobTemplate:
+		// https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#cronjobspec-v1beta1-batch
 		return getMapForKeys([]string{"spec", "jobTemplate", "spec", "template", "spec"}, resource)
 	}
 

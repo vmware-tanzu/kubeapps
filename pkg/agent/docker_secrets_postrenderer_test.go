@@ -171,6 +171,92 @@ other: doc
 `)),
 			secrets: map[string]string{"example.com": "secret-1"},
 		},
+		{
+			name: "it appends relevant image pull secret for nested lists of resources",
+			input: bytes.NewBuffer([]byte(`apiVersion: v1
+kind: PodTemplateList
+metadata:
+  annotations:
+    annotation-1: some-annotation
+  name: image-secret-test
+items:
+- kind: PodTemplate
+  template:
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - echo 'foo'
+        env:
+        - name: SOME_ENV
+          value: env_value
+        image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+        name: container-name
+      restartPolicy: Never
+- kind: PodTemplate
+  template:
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - echo 'bar'
+        env:
+        - name: SOME_ENV
+          value: env_value
+        image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+        name: container-name
+      restartPolicy: Never
+---
+kind: Unknown
+other: doc
+`)),
+			output: bytes.NewBuffer([]byte(`apiVersion: v1
+items:
+- kind: PodTemplate
+  template:
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - echo 'foo'
+        env:
+        - name: SOME_ENV
+          value: env_value
+        image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+        name: container-name
+      imagePullSecrets:
+      - name: secret-1
+      restartPolicy: Never
+- kind: PodTemplate
+  template:
+    spec:
+      containers:
+      - command:
+        - sh
+        - -c
+        - echo 'bar'
+        env:
+        - name: SOME_ENV
+          value: env_value
+        image: example.com/bitnami/nginx:1.16.1-debian-10-r42
+        name: container-name
+      imagePullSecrets:
+      - name: secret-1
+      restartPolicy: Never
+kind: PodTemplateList
+metadata:
+  annotations:
+    annotation-1: some-annotation
+  name: image-secret-test
+---
+kind: Unknown
+other: doc
+`)),
+			secrets: map[string]string{"example.com": "secret-1"},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -411,37 +497,22 @@ func TestUpdatePodSpecWithPullSecrets(t *testing.T) {
 func TestGetResourcePodSpec(t *testing.T) {
 	testCases := []struct {
 		name     string
+		kind     string
 		resource map[interface{}]interface{}
 		result   map[interface{}]interface{}
 	}{
 		{
-			name: "it ignores an invalid doc without a kind",
-			resource: map[interface{}]interface{}{
-				"notkind": "Pod",
-				"spec":    map[string]interface{}{"some": "spec"},
-			},
-			result: nil,
-		},
-		{
-			name: "it ignores an invalid doc with a non-string kind",
-			resource: map[interface{}]interface{}{
-				"kind": map[string]interface{}{"not": "string"},
-				"spec": map[interface{}]interface{}{"some": "spec"},
-			},
-			result: nil,
-		},
-		{
 			name: "it ignores an invalid doc with a non-map spec",
+			kind: "Pod",
 			resource: map[interface{}]interface{}{
-				"kind": "Pod",
 				"spec": "not a map",
 			},
 			result: nil,
 		},
 		{
 			name: "it returns the pod spec from a pod",
+			kind: "Pod",
 			resource: map[interface{}]interface{}{
-				"kind": "Pod",
 				"spec": map[interface{}]interface{}{"some": "spec"},
 			},
 			result: map[interface{}]interface{}{
@@ -450,6 +521,7 @@ func TestGetResourcePodSpec(t *testing.T) {
 		},
 		{
 			name: "it returns the pod spec from a daemon set",
+			kind: "DaemonSet",
 			resource: map[interface{}]interface{}{
 				"kind": "DaemonSet",
 				"spec": map[interface{}]interface{}{
@@ -464,6 +536,7 @@ func TestGetResourcePodSpec(t *testing.T) {
 		},
 		{
 			name: "it returns the pod spec from a deployment",
+			kind: "Deployment",
 			resource: map[interface{}]interface{}{
 				"kind": "Deployment",
 				"spec": map[interface{}]interface{}{
@@ -478,6 +551,7 @@ func TestGetResourcePodSpec(t *testing.T) {
 		},
 		{
 			name: "it returns the pod spec from a CronJob",
+			kind: "CronJob",
 			resource: map[interface{}]interface{}{
 				"kind": "CronJob",
 				"spec": map[interface{}]interface{}{
@@ -500,7 +574,7 @@ func TestGetResourcePodSpec(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := getResourcePodSpec(tc.resource), tc.result; !cmp.Equal(got, want) {
+			if got, want := getResourcePodSpec(tc.kind, tc.resource), tc.result; !cmp.Equal(got, want) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
