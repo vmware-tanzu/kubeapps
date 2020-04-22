@@ -92,6 +92,18 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     resyncAllRepos: async (repos: IAppRepositoryKey[]) => {
       return dispatch(actions.repos.resyncAllRepos(repos));
     },
+    createDockerRegistrySecret: async (
+      name: string,
+      user: string,
+      password: string,
+      email: string,
+      server: string,
+      namespace: string,
+    ) => {
+      return dispatch(
+        actions.repos.createDockerRegistrySecret(name, user, password, email, server, namespace),
+      );
+    },
   };
 }
 

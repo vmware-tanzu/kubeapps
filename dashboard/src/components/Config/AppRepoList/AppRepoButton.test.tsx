@@ -16,6 +16,7 @@ const defaultProps = {
   errors: {},
   imagePullSecrets: [],
   fetchImagePullSecrets: jest.fn(),
+  createDockerRegistrySecret: jest.fn(),
 };
 
 it("should open a modal with the repository form", () => {

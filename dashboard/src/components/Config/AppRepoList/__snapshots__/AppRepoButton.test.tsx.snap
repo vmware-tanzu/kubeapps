@@ -2,6 +2,7 @@
 
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
+  createDockerRegistrySecret={[Function]}
   errors={Object {}}
   fetchImagePullSecrets={[Function]}
   imagePullSecrets={Array []}

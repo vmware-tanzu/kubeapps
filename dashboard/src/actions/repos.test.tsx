@@ -743,3 +743,37 @@ describe("fetchImagePullSecrets", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("createDockerRegistrySecret", () => {
+  it("creates a docker registry", async () => {
+    const secret = {
+      type: "kubernetes.io/dockerconfigjson",
+    };
+    Secret.createPullSecret = jest.fn(() => secret);
+    const expectedActions = [
+      {
+        type: getType(repoActions.createImagePullSecret),
+        payload: secret,
+      },
+    ];
+    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Secret.createPullSecret = jest.fn(() => {
+      throw new Error("boom");
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.errorRepos),
+        payload: {
+          err: new Error("boom"),
+          op: "fetch",
+        },
+      },
+    ];
+    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
