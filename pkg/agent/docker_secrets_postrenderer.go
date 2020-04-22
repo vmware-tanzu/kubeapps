@@ -52,19 +52,6 @@ func NewDockerSecretsPostRenderer(secrets map[string]string) (*DockerSecretsPost
 	return r, nil
 }
 
-// resourceListTypes defines all the list types for which we need to
-// search for pod templates.
-var resourceListTypes map[string]struct{} = map[string]struct{}{
-	"CronJobList":               struct{}{},
-	"DaemonSetList":             struct{}{},
-	"DeploymentList":            struct{}{},
-	"JobList":                   struct{}{},
-	"PodTemplateList":           struct{}{},
-	"ReplicaSetList":            struct{}{},
-	"ReplicationControllerList": struct{}{},
-	"StatefulSetList":           struct{}{},
-}
-
 func (r *DockerSecretsPostRenderer) processResourceList(resourceList []interface{}) {
 	for _, resourceItem := range resourceList {
 		resource, ok := resourceItem.(map[interface{}]interface{})
@@ -82,15 +69,11 @@ func (r *DockerSecretsPostRenderer) processResourceList(resourceList []interface
 			log.Errorf("invalid resource: non-string resource kind. %+v", resource)
 			continue
 		}
-		if _, ok := resourceListTypes[kind]; ok {
-			if items, ok := resource["items"]; ok {
-				if itemsSlice, ok := items.([]interface{}); ok {
-					r.processResourceList(itemsSlice)
-				} else {
-					log.Errorf("Items of list type did not contain a slice: %+v", resource)
-				}
+		if items, ok := resource["items"]; ok {
+			if itemsSlice, ok := items.([]interface{}); ok {
+				r.processResourceList(itemsSlice)
 			} else {
-				log.Errorf("list type did not contain an items key: %+v", resource)
+				log.Errorf("Items of list type did not contain a slice: %+v", resource)
 			}
 			continue
 		}
