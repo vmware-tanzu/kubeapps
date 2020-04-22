@@ -4,13 +4,25 @@ import { ActionType, createAction } from "typesafe-actions";
 import { AppRepository } from "../shared/AppRepository";
 import Chart from "../shared/Chart";
 import { definedNamespaces } from "../shared/Namespace";
+import Secret from "../shared/Secret";
 import { errorChart } from "./charts";
 
-import { IAppRepository, IAppRepositoryKey, IStoreState, NotFoundError } from "../shared/types";
+import {
+  IAppRepository,
+  IAppRepositoryKey,
+  ISecret,
+  IStoreState,
+  NotFoundError,
+} from "../shared/types";
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
   return (added: IAppRepository) => resolve(added);
+});
+
+export const requestRepoUpdate = createAction("REQUEST_REPO_UPDATE");
+export const repoUpdated = createAction("REPO_UPDATED", resolve => {
+  return (updated: IAppRepository) => resolve(updated);
 });
 
 export const requestRepos = createAction("REQUEST_REPOS", resolve => {
@@ -18,6 +30,9 @@ export const requestRepos = createAction("REQUEST_REPOS", resolve => {
 });
 export const receiveRepos = createAction("RECEIVE_REPOS", resolve => {
   return (repos: IAppRepository[]) => resolve(repos);
+});
+export const receiveReposSecrets = createAction("RECEIVE_REPOS_SECRETS", resolve => {
+  return (secrets: ISecret[]) => resolve(secrets);
 });
 
 export const requestRepo = createAction("REQUEST_REPO");
@@ -50,9 +65,22 @@ export const errorRepos = createAction("ERROR_REPOS", resolve => {
     resolve({ err, op });
 });
 
+export const requestImagePullSecrets = createAction("REQUEST_IMAGE_PULL_SECRETS", resolve => {
+  return (namespace: string) => resolve(namespace);
+});
+export const receiveImagePullSecrets = createAction("RECEIVE_IMAGE_PULL_SECRETS", resolve => {
+  return (secrets: ISecret[]) => resolve(secrets);
+});
+
+export const createImagePullSecret = createAction("CREATE_IMAGE_PULL_SECRET", resolve => {
+  return (secret: ISecret) => resolve(secret);
+});
+
 const allActions = [
   addRepo,
   addedRepo,
+  requestRepoUpdate,
+  repoUpdated,
   repoValidating,
   repoValidated,
   clearRepo,
@@ -60,6 +88,7 @@ const allActions = [
   requestRepos,
   receiveRepo,
   receiveRepos,
+  receiveReposSecrets,
   resetForm,
   errorChart,
   requestRepo,
@@ -68,6 +97,9 @@ const allActions = [
   hideForm,
   redirect,
   redirected,
+  requestImagePullSecrets,
+  receiveImagePullSecrets,
+  createImagePullSecret,
 ];
 export type AppReposAction = ActionType<typeof allActions[number]>;
 
@@ -100,11 +132,7 @@ export const resyncRepo = (
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async dispatch => {
     try {
-      const repo = await AppRepository.get(name, namespace);
-      repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
-      repo.spec.resyncRequests++;
-      await AppRepository.update(name, namespace, repo);
-      // TODO: Do something to show progress
+      await AppRepository.resync(name, namespace);
     } catch (e) {
       dispatch(errorRepos(e, "update"));
     }
@@ -130,11 +158,38 @@ export const fetchRepos = (
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
+      // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
+      // to avoid listing secrets
+      // https://github.com/kubeapps/kubeapps/issues/1686
+      const secrets = await Secret.list(namespace);
+      const repoSecrets = secrets.items?.filter(s =>
+        s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
+      );
+      dispatch(receiveReposSecrets(repoSecrets));
     } catch (e) {
       dispatch(errorRepos(e, "fetch"));
     }
   };
 };
+
+function parsePodTemplate(syncJobPodTemplate: string) {
+  let syncJobPodTemplateObj = {};
+  if (syncJobPodTemplate.length) {
+    syncJobPodTemplateObj = yaml.safeLoad(syncJobPodTemplate);
+  }
+  return syncJobPodTemplateObj;
+}
+
+function getTargetNS(getState: () => IStoreState, namespace: string) {
+  let target = namespace;
+  const {
+    config: { namespace: kubeappsNamespace },
+  } = getState();
+  if (namespace === definedNamespaces.all) {
+    target = kubeappsNamespace;
+  }
+  return target;
+}
 
 export const installRepo = (
   name: string,
@@ -143,33 +198,59 @@ export const installRepo = (
   authHeader: string,
   customCA: string,
   syncJobPodTemplate: string,
+  registrySecrets: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
-    let syncJobPodTemplateObj = {};
     try {
-      if (syncJobPodTemplate.length) {
-        syncJobPodTemplateObj = yaml.safeLoad(syncJobPodTemplate);
-      }
-      const {
-        config: { namespace: kubeappsNamespace },
-      } = getState();
-      if (namespace === definedNamespaces.all) {
-        namespace = kubeappsNamespace;
-      }
+      const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
+      const ns = getTargetNS(getState, namespace);
       dispatch(addRepo());
       const data = await AppRepository.create(
         name,
-        namespace,
+        ns,
         repoURL,
         authHeader,
         customCA,
         syncJobPodTemplateObj,
+        registrySecrets,
       );
       dispatch(addedRepo(data.appRepository));
 
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "create"));
+      return false;
+    }
+  };
+};
+
+export const updateRepo = (
+  name: string,
+  namespace: string,
+  repoURL: string,
+  authHeader: string,
+  customCA: string,
+  syncJobPodTemplate: string,
+  registrySecrets: string[],
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
+    try {
+      const syncJobPodTemplateObj = parsePodTemplate(syncJobPodTemplate);
+      const ns = getTargetNS(getState, namespace);
+      dispatch(requestRepoUpdate());
+      const data = await AppRepository.update(
+        name,
+        ns,
+        repoURL,
+        authHeader,
+        customCA,
+        syncJobPodTemplateObj,
+        registrySecrets,
+      );
+      dispatch(repoUpdated(data.appRepository));
+      return true;
+    } catch (e) {
+      dispatch(errorRepos(e, "update"));
       return false;
     }
   };
@@ -223,6 +304,46 @@ export function checkChart(
       dispatch(
         errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
+      return false;
+    }
+  };
+}
+
+export function fetchImagePullSecrets(
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
+  return async dispatch => {
+    try {
+      dispatch(requestImagePullSecrets(namespace));
+      // TODO(andresmgot): Create an endpoint for returning just the list of secret names
+      // to avoid listing all the secrets with protected information
+      // https://github.com/kubeapps/kubeapps/issues/1686
+      const secrets = await Secret.list(namespace);
+      const imgPullSecrets = secrets.items?.filter(
+        s => s.type === "kubernetes.io/dockerconfigjson",
+      );
+      dispatch(receiveImagePullSecrets(imgPullSecrets));
+    } catch (e) {
+      dispatch(errorRepos(e, "fetch"));
+    }
+  };
+}
+
+export function createDockerRegistrySecret(
+  name: string,
+  user: string,
+  password: string,
+  email: string,
+  server: string,
+  namespace: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
+  return async dispatch => {
+    try {
+      const secret = await Secret.createPullSecret(name, user, password, email, server, namespace);
+      dispatch(createImagePullSecret(secret));
+      return true;
+    } catch (e) {
+      dispatch(errorRepos(e, "fetch"));
       return false;
     }
   };

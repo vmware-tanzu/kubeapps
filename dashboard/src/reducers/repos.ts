@@ -3,7 +3,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { AppReposAction } from "../actions/repos";
-import { IAppRepository } from "../shared/types";
+import { IAppRepository, ISecret } from "../shared/types";
 
 export interface IAppRepositoryState {
   addingRepo: boolean;
@@ -16,14 +16,21 @@ export interface IAppRepositoryState {
   };
   lastAdded?: IAppRepository;
   isFetching: boolean;
+  isFetchingElem: {
+    repositories: boolean;
+    secrets: boolean;
+  };
+  validating: boolean;
   repo: IAppRepository;
   repos: IAppRepository[];
+  repoSecrets: ISecret[];
   form: {
     name: string;
     namespace: string;
     url: string;
     show: boolean;
   };
+  imagePullSecrets: ISecret[];
   redirectTo?: string;
 }
 
@@ -37,9 +44,27 @@ const initialState: IAppRepositoryState = {
     url: "",
   },
   isFetching: false,
+  isFetchingElem: {
+    repositories: false,
+    secrets: false,
+  },
+  validating: false,
   repo: {} as IAppRepository,
   repos: [],
+  repoSecrets: [],
+  imagePullSecrets: [],
 };
+
+function isFetching(state: IAppRepositoryState, item: string, fetching: boolean) {
+  const composedIsFetching = {
+    ...state.isFetchingElem,
+    [item]: fetching,
+  };
+  return {
+    isFetching: Object.values(composedIsFetching).some(v => v),
+    isFetchingElem: composedIsFetching,
+  };
+}
 
 const reposReducer = (
   state: IAppRepositoryState = initialState,
@@ -47,11 +72,23 @@ const reposReducer = (
 ): IAppRepositoryState => {
   switch (action.type) {
     case getType(actions.repos.receiveRepos):
-      return { ...state, isFetching: false, repos: action.payload, errors: {} };
+      return {
+        ...state,
+        ...isFetching(state, "repositories", false),
+        repos: action.payload,
+        errors: {},
+      };
     case getType(actions.repos.receiveRepo):
-      return { ...state, isFetching: false, repo: action.payload, errors: {} };
+      return {
+        ...state,
+        ...isFetching(state, "repositories", false),
+        repo: action.payload,
+        errors: {},
+      };
+    case getType(actions.repos.receiveReposSecrets):
+      return { ...state, repoSecrets: action.payload };
     case getType(actions.repos.requestRepos):
-      return { ...state, isFetching: true };
+      return { ...state, ...isFetching(state, "repositories", true) };
     case getType(actions.repos.addRepo):
       return { ...state, addingRepo: true };
     case getType(actions.repos.addedRepo):
@@ -62,9 +99,9 @@ const reposReducer = (
         repos: [...state.repos, action.payload],
       };
     case getType(actions.repos.repoValidating):
-      return { ...state, isFetching: true };
+      return { ...state, validating: true };
     case getType(actions.repos.repoValidated):
-      return { ...state, isFetching: false, errors: { ...state.errors, validate: undefined } };
+      return { ...state, validating: false, errors: { ...state.errors, validate: undefined } };
     case getType(actions.repos.resetForm):
       return { ...state, form: { ...state.form, name: "", namespace: "", url: "" } };
     case getType(actions.repos.showForm):
@@ -75,18 +112,31 @@ const reposReducer = (
       return { ...state, redirectTo: action.payload };
     case getType(actions.repos.redirected):
       return { ...state, redirectTo: undefined };
+    case getType(actions.repos.requestImagePullSecrets):
+      return { ...state, ...isFetching(state, "secrets", true) };
+    case getType(actions.repos.receiveImagePullSecrets):
+      return { ...state, ...isFetching(state, "secrets", false), imagePullSecrets: action.payload };
     case getType(actions.repos.errorRepos):
       return {
         ...state,
         // don't reset the fetch error
         errors: { fetch: state.errors.fetch, [action.payload.op]: action.payload.err },
         isFetching: false,
+        isFetchingElem: {
+          repositories: false,
+          secrets: false,
+        },
+        validating: false,
       };
     case LOCATION_CHANGE:
       return {
         ...state,
         errors: {},
         isFetching: false,
+        isFetchingElem: {
+          repositories: false,
+          secrets: false,
+        },
       };
     default:
       return state;

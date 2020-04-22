@@ -154,22 +154,31 @@ export interface IIngressSpec {
   };
 }
 
+export interface IResourceMetadata {
+  name: string;
+  namespace: string;
+  annotations: { [key: string]: string };
+  ownerReferences?: Array<{
+    apiVersion: string;
+    blockOwnerDeletion: string;
+    kind: string;
+    name: string;
+    uid: string;
+  }>;
+  creationTimestamp: string;
+  selfLink: string;
+  resourceVersion: string;
+  deletionTimestamp?: string;
+  uid: string;
+}
+
 export interface IResource {
   apiVersion: string;
   kind: ResourceKind;
   type: string;
   spec: any;
   status: any;
-  metadata: {
-    name: string;
-    namespace: string;
-    annotations: { [key: string]: string };
-    creationTimestamp: string;
-    selfLink: string;
-    resourceVersion: string;
-    deletionTimestamp?: string;
-    uid: string;
-  };
+  metadata: IResourceMetadata;
 }
 
 export interface IOwnerReference {
@@ -185,16 +194,7 @@ export interface ISecret {
   kind: string;
   type: string;
   data: { [s: string]: string };
-  metadata: {
-    name: string;
-    namespace: string;
-    annotations: string;
-    creationTimestamp: string;
-    selfLink: string;
-    resourceVersion: string;
-    deletionTimestamp?: string;
-    uid: string;
-  };
+  metadata: IResourceMetadata;
 }
 
 export interface IDeploymentStatus {
@@ -415,6 +415,8 @@ export interface IAppRepository
         };
       };
       resyncRequests: number;
+      syncJobPodTemplate?: object;
+      dockerRegistrySecrets?: string[];
     },
     undefined
   > {}

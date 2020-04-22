@@ -1,6 +1,6 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
-import { IOwnerReference, ISecret } from "./types";
+import { IK8sList, IOwnerReference, ISecret } from "./types";
 
 export default class Secret {
   public static async create(
@@ -36,7 +36,40 @@ export default class Secret {
 
   public static async list(namespace: string) {
     const url = Secret.getLink(namespace);
-    const { data } = await axiosWithAuth.get<ISecret>(url);
+    const { data } = await axiosWithAuth.get<IK8sList<ISecret, {}>>(url);
+    return data;
+  }
+
+  public static async createPullSecret(
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) {
+    const url = Secret.getLink(namespace);
+    const dockercfg = {
+      auths: {
+        [server]: {
+          username: user,
+          password,
+          email,
+          auth: btoa(`${user}:${password}`),
+        },
+      },
+    };
+    const { data } = await axiosWithAuth.post<ISecret>(url, {
+      apiVersion: "v1",
+      stringData: {
+        ".dockerconfigjson": JSON.stringify(dockercfg),
+      },
+      kind: "Secret",
+      metadata: {
+        name,
+      },
+      type: "kubernetes.io/dockerconfigjson",
+    });
     return data;
   }
 

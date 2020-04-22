@@ -1,7 +1,7 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
 import { definedNamespaces } from "./Namespace";
-import { IAppRepository, IAppRepositoryList, ICreateAppRepositoryResponse } from "./types";
+import { IAppRepositoryList, ICreateAppRepositoryResponse } from "./types";
 import * as url from "./url";
 
 export class AppRepository {
@@ -17,8 +17,29 @@ export class AppRepository {
     return data;
   }
 
-  public static async update(name: string, namespace: string, newApp: IAppRepository) {
-    const { data } = await axiosWithAuth.put(AppRepository.getSelfLink(name, namespace), newApp);
+  public static async resync(name: string, namespace: string) {
+    const repo = await AppRepository.get(name, namespace);
+    repo.spec.resyncRequests = repo.spec.resyncRequests || 0;
+    repo.spec.resyncRequests++;
+    const { data } = await axiosWithAuth.put(AppRepository.getSelfLink(name, namespace), repo);
+    return data;
+  }
+
+  public static async update(
+    name: string,
+    namespace: string,
+    repoURL: string,
+    authHeader: string,
+    customCA: string,
+    syncJobPodTemplate: any,
+    registrySecrets: string[],
+  ) {
+    const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
+      url.backend.apprepositories.update(namespace, name),
+      {
+        appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate, registrySecrets },
+      },
+    );
     return data;
   }
 
@@ -39,10 +60,13 @@ export class AppRepository {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: any,
+    registrySecrets: string[],
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(namespace),
-      { appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate } },
+      {
+        appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate, registrySecrets },
+      },
     );
     return data;
   }

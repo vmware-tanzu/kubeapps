@@ -1,15 +1,45 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { IAppRepository } from "shared/types";
+import { IAppRepository, ISecret } from "shared/types";
 import ConfirmDialog from "../../ConfirmDialog";
+import { AppRepoAddButton } from "./AppRepoButton";
 
 interface IAppRepoListItemProps {
+  errors: {
+    create?: Error;
+    delete?: Error;
+    fetch?: Error;
+    update?: Error;
+    validate?: Error;
+  };
+  update: (
+    name: string,
+    namespace: string,
+    url: string,
+    authHeader: string,
+    customCA: string,
+    syncJobPodTemplate: string,
+  ) => Promise<boolean>;
+  validating: boolean;
+  validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   repo: IAppRepository;
+  secret?: ISecret;
   renderNamespace: boolean;
   namespace: string;
+  kubeappsNamespace: string;
   deleteRepo: (name: string, namespace: string) => Promise<boolean>;
   resyncRepo: (name: string, namespace: string) => void;
+  imagePullSecrets: ISecret[];
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
 }
 
 interface IAppRepoListItemState {
@@ -22,7 +52,20 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
   };
 
   public render() {
-    const { namespace, renderNamespace, repo } = this.props;
+    const {
+      namespace,
+      renderNamespace,
+      repo,
+      errors,
+      update,
+      validate,
+      validating,
+      secret,
+      imagePullSecrets,
+      fetchImagePullSecrets,
+      kubeappsNamespace,
+      createDockerRegistrySecret,
+    } = this.props;
     return (
       <tr key={repo.metadata.name}>
         <td>
@@ -41,6 +84,24 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
           <button className="button button-secondary" onClick={this.openModel}>
             Delete
           </button>
+
+          {/*TODO(andresmgot): Re-enable this component when the update endpoint is available */}
+          <div hidden={true}>
+            <AppRepoAddButton
+              errors={errors}
+              onSubmit={update}
+              validate={validate}
+              namespace={namespace}
+              kubeappsNamespace={kubeappsNamespace}
+              validating={validating}
+              text="Edit"
+              repo={repo}
+              secret={secret}
+              imagePullSecrets={imagePullSecrets}
+              fetchImagePullSecrets={fetchImagePullSecrets}
+              createDockerRegistrySecret={createDockerRegistrySecret}
+            />
+          </div>
 
           <button
             className="button button-secondary"

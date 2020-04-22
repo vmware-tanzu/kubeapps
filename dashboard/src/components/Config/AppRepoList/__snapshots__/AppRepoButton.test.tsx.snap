@@ -2,14 +2,18 @@
 
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
+  createDockerRegistrySecret={[Function]}
   errors={Object {}}
-  install={[Function]}
-  isFetching={false}
+  fetchImagePullSecrets={[Function]}
+  imagePullSecrets={Array []}
+  kubeappsNamespace="kubeapps"
   namespace="kubeapps"
+  onSubmit={[Function]}
   validate={[Function]}
+  validating={false}
 >
   <button
-    className="button button-primary"
+    className="button "
     onClick={[Function]}
   >
     Add App Repository
@@ -90,8 +94,15 @@ exports[`should open a modal with the repository form 1`] = `
                       />
                     </div>
                     <div>
-                      <span>
-                        Authorization (optional):
+                      <p
+                        class="margin-b-small"
+                      >
+                        Repository Authorization (optional):
+                      </p>
+                      <span
+                        class="AppRepoInputDescription"
+                      >
+                        Introduce the credentials to access the Chart repository if authentication is enabled.
                       </span>
                       <div
                         class="row"

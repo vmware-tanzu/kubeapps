@@ -1,22 +1,40 @@
+import * as yaml from "js-yaml";
 import * as React from "react";
 import { Redirect } from "react-router";
+import { IAppRepository, ISecret } from "shared/types";
 import Hint from "../../../components/Hint";
 import { UnexpectedErrorAlert } from "../../ErrorAlert";
+import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 
 interface IAppRepoFormProps {
   message?: string;
   redirectTo?: string;
-  install: (
+  onSubmit: (
     name: string,
     url: string,
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   onAfterInstall?: () => Promise<any>;
-  isFetching: boolean;
+  validating: boolean;
   validationError?: Error;
+  imagePullSecrets: ISecret[];
+  namespace: string;
+  kubeappsNamespace: string;
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
+  repo?: IAppRepository;
+  secret?: ISecret;
 }
 
 interface IAppRepoFormState {
@@ -29,6 +47,7 @@ interface IAppRepoFormState {
   token: string;
   customCA: string;
   syncJobPodTemplate: string;
+  selectedImagePullSecrets: { [key: string]: boolean };
   validated?: boolean;
 }
 
@@ -48,9 +67,72 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     url: "",
     customCA: "",
     syncJobPodTemplate: "",
+    selectedImagePullSecrets: {},
   };
 
+  public componentDidMount() {
+    if (this.props.repo) {
+      const name = this.props.repo.metadata.name;
+      const url = this.props.repo.spec?.url || "";
+      const syncJobPodTemplate = this.props.repo.spec?.syncJobPodTemplate
+        ? yaml.safeDump(this.props.repo.spec?.syncJobPodTemplate)
+        : "";
+      let customCA = "";
+      let authHeader = "";
+      let token = "";
+      let user = "";
+      let password = "";
+      let authMethod = AUTH_METHOD_NONE;
+      if (this.props.secret) {
+        if (this.props.secret.data["ca.crt"]) {
+          customCA = atob(this.props.secret.data["ca.crt"]);
+        }
+        if (this.props.secret.data.authorizationHeader) {
+          authMethod = AUTH_METHOD_CUSTOM;
+          authHeader = atob(this.props.secret.data.authorizationHeader);
+          if (authHeader.startsWith("Basic")) {
+            const userPass = atob(authHeader.split(" ")[1]).split(":");
+            user = userPass[0];
+            password = userPass[1];
+            authMethod = AUTH_METHOD_BASIC;
+          } else if (authHeader.startsWith("Bearer")) {
+            token = authHeader.split(" ")[1];
+            authMethod = AUTH_METHOD_BEARER;
+          }
+        }
+      }
+      this.setState({
+        name,
+        url,
+        syncJobPodTemplate,
+        customCA,
+        authHeader,
+        user,
+        password,
+        token,
+        authMethod,
+      });
+    }
+
+    this.parseSecrets(this.props.imagePullSecrets, this.props.repo);
+  }
+
+  public componentDidUpdate(prevProps: IAppRepoFormProps) {
+    if (prevProps.imagePullSecrets !== this.props.imagePullSecrets) {
+      this.parseSecrets(this.props.imagePullSecrets);
+    }
+  }
+
   public render() {
+    const {
+      repo,
+      imagePullSecrets,
+      namespace,
+      kubeappsNamespace,
+      createDockerRegistrySecret,
+      fetchImagePullSecrets,
+    } = this.props;
+    const { authMethod, selectedImagePullSecrets } = this.state;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleInstallClick}>
         <div className="row">
@@ -69,6 +151,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 required={true}
                 pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                 title="Use lower case alphanumeric characters, '-' or '.'"
+                disabled={this.props.repo?.metadata.name ? true : false}
               />
             </div>
             <div>
@@ -83,7 +166,11 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
               />
             </div>
             <div>
-              <span>Authorization (optional):</span>
+              <p className="margin-b-small">Repository Authorization (optional):</p>
+              <span className="AppRepoInputDescription">
+                Introduce the credentials to access the Chart repository if authentication is
+                enabled.
+              </span>
               <div className="row">
                 <div className="col-2">
                   <label className="margin-l-big" htmlFor="kubeapps-repo-auth-method-none">
@@ -92,7 +179,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       id="kubeapps-repo-auth-method-none"
                       name="auth"
                       value={AUTH_METHOD_NONE}
-                      defaultChecked={true}
+                      checked={authMethod === AUTH_METHOD_NONE}
                       onChange={this.handleAuthRadioButtonChange}
                     />
                     None
@@ -103,6 +190,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       type="radio"
                       id="kubeapps-repo-auth-method-basic"
                       name="auth"
+                      checked={authMethod === AUTH_METHOD_BASIC}
                       value={AUTH_METHOD_BASIC}
                       onChange={this.handleAuthRadioButtonChange}
                     />
@@ -115,6 +203,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       id="kubeapps-repo-auth-method-bearer"
                       name="auth"
                       value={AUTH_METHOD_BEARER}
+                      checked={authMethod === AUTH_METHOD_BEARER}
                       onChange={this.handleAuthRadioButtonChange}
                     />
                     Bearer Token
@@ -126,6 +215,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                       id="kubeapps-repo-auth-method-custom"
                       name="auth"
                       value={AUTH_METHOD_CUSTOM}
+                      checked={authMethod === AUTH_METHOD_CUSTOM}
                       onChange={this.handleAuthRadioButtonChange}
                     />
                     Custom
@@ -184,6 +274,33 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 </div>
               </div>
             </div>
+            {/* Only when using a namespace different than the Kubeapps namespace (Global)
+              the repository can be associated with Docker Registry Credentials since
+              the pull secret won't be available in all namespaces */
+            namespace !== kubeappsNamespace && (
+              <div>
+                <p className="margin-b-small">Associate Docker Registry Credentials (optional):</p>
+                <span className="AppRepoInputDescription">
+                  Select existing secret(s) to access a private Docker registry and pull images from
+                  it. More info{" "}
+                  <a
+                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
+                    target="_blank"
+                  >
+                    here
+                  </a>
+                  .
+                  <AppRepoAddDockerCreds
+                    imagePullSecrets={imagePullSecrets}
+                    togglePullSecret={this.togglePullSecret}
+                    selectedImagePullSecrets={selectedImagePullSecrets}
+                    createDockerRegistrySecret={createDockerRegistrySecret}
+                    namespace={namespace}
+                    fetchImagePullSecrets={fetchImagePullSecrets}
+                  />
+                </span>
+              </div>
+            )}
             <div className="margin-t-big">
               <label>
                 <span>Custom CA Certificate (optional):</span>
@@ -243,11 +360,13 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
               <button
                 className="button button-primary"
                 type="submit"
-                disabled={this.props.isFetching}
+                disabled={this.props.validating}
               >
-                {this.props.isFetching
+                {this.props.validating
                   ? "Validating..."
-                  : `Install Repo ${this.state.validated === false ? "(force)" : ""}`}
+                  : `${repo ? "Update" : "Install"} Repo ${
+                      this.state.validated === false ? "(force)" : ""
+                    }`}
               </button>
             </div>
             {this.props.redirectTo && <Redirect to={this.props.redirectTo} />}
@@ -258,7 +377,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
   }
 
   private handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
-    const { install, onAfterInstall, validate } = this.props;
+    const { onSubmit, onAfterInstall, validate } = this.props;
     const {
       name,
       url,
@@ -269,6 +388,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
       password,
       customCA,
       syncJobPodTemplate,
+      selectedImagePullSecrets,
     } = this.state;
     e.preventDefault();
     let finalHeader = "";
@@ -292,8 +412,18 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
       this.setState({ validated });
     }
     if (validated || force) {
-      const installed = await install(name, url, finalHeader, customCA, syncJobPodTemplate);
-      if (installed && onAfterInstall) {
+      const imagePullSecrets = Object.keys(selectedImagePullSecrets).filter(
+        s => selectedImagePullSecrets[s],
+      );
+      const success = await onSubmit(
+        name,
+        url,
+        finalHeader,
+        customCA,
+        syncJobPodTemplate,
+        imagePullSecrets,
+      );
+      if (success && onAfterInstall) {
         await onAfterInstall();
       }
     }
@@ -329,5 +459,36 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   private handleSyncJobPodTemplateChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({ syncJobPodTemplate: e.target.value, validated: undefined });
+  };
+
+  private togglePullSecret = (imagePullSecret: string) => {
+    return () => {
+      const { selectedImagePullSecrets } = this.state;
+      this.setState({
+        selectedImagePullSecrets: {
+          ...selectedImagePullSecrets,
+          [imagePullSecret]: !selectedImagePullSecrets[imagePullSecret],
+        },
+      });
+    };
+  };
+
+  // Select the pull secrets based on the current status and if they are already
+  // selected in the existing repo info
+  private parseSecrets = (secrets: ISecret[], repo?: IAppRepository) => {
+    const selectedImagePullSecrets = this.state.selectedImagePullSecrets;
+    secrets.forEach(secret => {
+      let selected = false;
+      // If it has been already selected
+      if (selectedImagePullSecrets[secret.metadata.name]) {
+        selected = true;
+      }
+      // Or if it's already selected in the existing repo
+      if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secret.metadata.name)) {
+        selected = true;
+      }
+      selectedImagePullSecrets[secret.metadata.name] = selected;
+    });
+    this.setState({ selectedImagePullSecrets });
   };
 }

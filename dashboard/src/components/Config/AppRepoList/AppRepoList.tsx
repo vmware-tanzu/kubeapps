@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { definedNamespaces } from "../../../shared/Namespace";
-import { IAppRepository, IAppRepositoryKey, IRBACRole } from "../../../shared/types";
+import { IAppRepository, IAppRepositoryKey, IRBACRole, ISecret } from "../../../shared/types";
 import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
 import LoadingWrapper from "../../LoadingWrapper";
 import { AppRepoAddButton } from "./AppRepoButton";
@@ -17,6 +17,7 @@ export interface IAppRepoListProps {
     validate?: Error;
   };
   repos: IAppRepository[];
+  repoSecrets: ISecret[];
   fetchRepos: (namespace: string) => void;
   deleteRepo: (name: string, namespace: string) => Promise<boolean>;
   resyncRepo: (name: string, namespace: string) => void;
@@ -28,11 +29,32 @@ export interface IAppRepoListProps {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
+  update: (
+    name: string,
+    namespace: string,
+    url: string,
+    authHeader: string,
+    customCA: string,
+    syncJobPodTemplate: string,
+  ) => Promise<boolean>;
+  validating: boolean;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   namespace: string;
+  kubeappsNamespace: string;
   displayReposPerNamespaceMsg: boolean;
   isFetching: boolean;
+  imagePullSecrets: ISecret[];
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -62,17 +84,20 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 class AppRepoList extends React.Component<IAppRepoListProps> {
   public componentDidMount() {
     this.props.fetchRepos(this.props.namespace);
+    this.props.fetchImagePullSecrets(this.props.namespace);
   }
 
   public componentDidUpdate(prevProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,
+      fetchImagePullSecrets,
       namespace,
     } = this.props;
     // refetch if namespace changes or if error removed due to location change
     if (prevProps.namespace !== namespace || (prevProps.errors.fetch && !fetch)) {
       fetchRepos(namespace);
+      fetchImagePullSecrets(namespace);
     }
   }
 
@@ -81,13 +106,20 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       errors,
       repos,
       install,
+      update,
       namespace,
+      kubeappsNamespace,
       displayReposPerNamespaceMsg,
       isFetching,
       deleteRepo,
       resyncRepo,
       resyncAllRepos,
       validate,
+      repoSecrets,
+      validating,
+      imagePullSecrets,
+      fetchImagePullSecrets,
+      createDockerRegistrySecret,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
     return (
@@ -117,6 +149,19 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                       repo={repo}
                       renderNamespace={renderNamespace}
                       namespace={namespace}
+                      kubeappsNamespace={kubeappsNamespace}
+                      errors={errors}
+                      validating={validating}
+                      validate={validate}
+                      secret={repoSecrets.find(secret =>
+                        secret.metadata.ownerReferences?.some(
+                          ownerRef => ownerRef.name === repo.metadata.name,
+                        ),
+                      )}
+                      update={update}
+                      imagePullSecrets={imagePullSecrets}
+                      fetchImagePullSecrets={fetchImagePullSecrets}
+                      createDockerRegistrySecret={createDockerRegistrySecret}
                     />
                   ))}
                 </tbody>
@@ -124,10 +169,15 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
             </LoadingWrapper>
             <AppRepoAddButton
               errors={errors}
-              install={install}
+              onSubmit={install}
               validate={validate}
               namespace={namespace}
-              isFetching={isFetching}
+              kubeappsNamespace={kubeappsNamespace}
+              validating={validating}
+              primary={true}
+              imagePullSecrets={imagePullSecrets}
+              fetchImagePullSecrets={fetchImagePullSecrets}
+              createDockerRegistrySecret={createDockerRegistrySecret}
             />
             <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
           </>
