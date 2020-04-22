@@ -167,11 +167,12 @@ func CreateRelease(cfg Config, w http.ResponseWriter, req *http.Request, params 
 		returnErrMessage(err, w)
 		return
 	}
+
 	ch := chartMulti.Helm3Chart
 	releaseName := chartDetails.ReleaseName
 	namespace := params[namespaceParam]
 	valuesString := chartDetails.Values
-	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch)
+	release, err := agent.CreateRelease(cfg.ActionConfig, releaseName, namespace, valuesString, ch, cfg.ChartClient.RegistrySecretsPerDomain())
 	if err != nil {
 		returnErrMessage(err, w)
 		return
@@ -200,8 +201,9 @@ func upgradeRelease(cfg Config, w http.ResponseWriter, req *http.Request, params
 		returnErrMessage(err, w)
 		return
 	}
+
 	ch := chartMulti.Helm3Chart
-	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch)
+	rel, err := agent.UpgradeRelease(cfg.ActionConfig, releaseName, chartDetails.Values, ch, cfg.ChartClient.RegistrySecretsPerDomain())
 	if err != nil {
 		returnErrMessage(err, w)
 		return

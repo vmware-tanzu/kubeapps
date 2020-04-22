@@ -93,6 +93,12 @@ type userHandler struct {
 	clientset combinedClientsetInterface
 }
 
+// This interface is explicitly private so that it cannot be used in function
+// args, so that call-sites cannot accidentally pass a service handler in place
+// of a user handler.
+// TODO(mnelson): We could instead just create a UserHandler interface which embeds
+// this one and adds one method, to force call-sites to explicitly use a UserHandler
+// or ServiceHandler.
 type handler interface {
 	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
@@ -103,7 +109,7 @@ type handler interface {
 	GetOperatorLogo(namespace, name string) ([]byte, error)
 }
 
-// AuthHandler exposes handler functionality as a user or the current serviceaccount
+// AuthHandler exposes Handler functionality as a user or the current serviceaccount
 type AuthHandler interface {
 	AsUser(token string) handler
 	AsSVC() handler

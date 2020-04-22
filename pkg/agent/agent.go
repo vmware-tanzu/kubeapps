@@ -69,7 +69,7 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 }
 
 // CreateRelease creates a release.
-func CreateRelease(actionConfig *action.Configuration, name, namespace, valueString string, ch *chart.Chart) (*release.Release, error) {
+func CreateRelease(actionConfig *action.Configuration, name, namespace, valueString string, ch *chart.Chart, registrySecrets map[string]string) (*release.Release, error) {
 	// Check if the release already exists
 	_, err := GetRelease(actionConfig, name)
 	if err == nil {
@@ -78,10 +78,7 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 	cmd := action.NewInstall(actionConfig)
 	cmd.ReleaseName = name
 	cmd.Namespace = namespace
-	// TODO(#1617): the map of registry domains to secret names needs to be passed
-	// to both CreateRelease and UpgradeRelease.
-	var secrets map[string]string
-	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(secrets)
+	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(registrySecrets)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +99,7 @@ func CreateRelease(actionConfig *action.Configuration, name, namespace, valueStr
 }
 
 // UpgradeRelease upgrades a release.
-func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string, ch *chart.Chart) (*release.Release, error) {
+func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string, ch *chart.Chart, registrySecrets map[string]string) (*release.Release, error) {
 	// Check if the release already exists:
 	_, err := GetRelease(actionConfig, name)
 	if err != nil {
@@ -110,10 +107,8 @@ func UpgradeRelease(actionConfig *action.Configuration, name, valuesYaml string,
 	}
 	log.Printf("Upgrading release %s", name)
 	cmd := action.NewUpgrade(actionConfig)
-	// TODO(#1617): the map of registry domains to secret names needs to be passed
-	// to both CreateRelease and UpgradeRelease.
-	var secrets map[string]string
-	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(secrets)
+
+	cmd.PostRenderer, err = NewDockerSecretsPostRenderer(registrySecrets)
 	if err != nil {
 		return nil, err
 	}

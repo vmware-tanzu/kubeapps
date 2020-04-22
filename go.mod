@@ -69,6 +69,7 @@ require (
 	k8s.io/cli-runtime v0.17.2
 	k8s.io/client-go v0.17.2
 	k8s.io/helm v2.16.0+incompatible
+	k8s.io/kubernetes v1.13.0
 	rsc.io/letsencrypt v0.0.1 // indirect
 	sigs.k8s.io/yaml v1.1.0
 )
