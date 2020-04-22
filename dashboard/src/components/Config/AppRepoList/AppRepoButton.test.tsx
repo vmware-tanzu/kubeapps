@@ -2,6 +2,7 @@ import { mount } from "enzyme";
 import * as React from "react";
 import * as ReactModal from "react-modal";
 import { ConflictError, UnprocessableEntity } from "../../../shared/types";
+import { wait } from "../../../shared/utils";
 import ErrorSelector from "../../ErrorAlert/ErrorSelector";
 import { AppRepoAddButton } from "./AppRepoButton";
 import { AppRepoForm } from "./AppRepoForm";
@@ -10,8 +11,12 @@ const defaultProps = {
   onSubmit: jest.fn(),
   validate: jest.fn(() => true),
   namespace: "kubeapps",
+  kubeappsNamespace: "kubeapps",
   validating: false,
   errors: {},
+  imagePullSecrets: [],
+  fetchImagePullSecrets: jest.fn(),
+  createDockerRegistrySecret: jest.fn(),
 };
 
 it("should open a modal with the repository form", () => {
@@ -21,7 +26,7 @@ it("should open a modal with the repository form", () => {
   expect(wrapper).toMatchSnapshot();
 });
 
-it("should install a repository with a custom auth header", done => {
+it("should install a repository with a custom auth header", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
@@ -40,14 +45,12 @@ it("should install a repository with a custom auth header", done => {
   button.simulate("submit");
 
   // Wait for the Modal to be closed
-  setTimeout(() => {
-    expect(install).toBeCalledWith("my-repo", "kubeapps", "http://foo.bar", "foo", "bar", "");
-    expect(wrapper.state("modalIsOpen")).toBe(false);
-    done();
-  }, 1);
+  await wait(1);
+  expect(install).toBeCalledWith("my-repo", "kubeapps", "http://foo.bar", "foo", "bar", "", []);
+  expect(wrapper.state("modalIsOpen")).toBe(false);
 });
 
-it("should install a repository with basic auth", done => {
+it("should install a repository with basic auth", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
@@ -66,21 +69,20 @@ it("should install a repository with basic auth", done => {
   button.simulate("submit");
 
   // Wait for the Modal to be closed
-  setTimeout(() => {
-    expect(install).toBeCalledWith(
-      "my-repo",
-      "kubeapps",
-      "http://foo.bar",
-      "Basic Zm9vOmJhcg==",
-      "",
-      "",
-    );
-    expect(wrapper.state("modalIsOpen")).toBe(false);
-    done();
-  }, 1);
+  await wait(1);
+  expect(install).toBeCalledWith(
+    "my-repo",
+    "kubeapps",
+    "http://foo.bar",
+    "Basic Zm9vOmJhcg==",
+    "",
+    "",
+    [],
+  );
+  expect(wrapper.state("modalIsOpen")).toBe(false);
 });
 
-it("should install a repository with a bearer token", done => {
+it("should install a repository with a bearer token", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
@@ -98,21 +100,20 @@ it("should install a repository with a bearer token", done => {
   button.simulate("submit");
 
   // Wait for the Modal to be closed
-  setTimeout(() => {
-    expect(install).toBeCalledWith(
-      "my-repo",
-      "kubeapps",
-      "http://foo.bar",
-      "Bearer foobar",
-      "",
-      "",
-    );
-    expect(wrapper.state("modalIsOpen")).toBe(false);
-    done();
-  }, 1);
+  await wait(1);
+  expect(install).toBeCalledWith(
+    "my-repo",
+    "kubeapps",
+    "http://foo.bar",
+    "Bearer foobar",
+    "",
+    "",
+    [],
+  );
+  expect(wrapper.state("modalIsOpen")).toBe(false);
 });
 
-it("should install a repository with a podSpecTemplate", done => {
+it("should install a repository with a podSpecTemplate", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   ReactModal.setAppElement(document.createElement("div"));
@@ -130,22 +131,21 @@ it("should install a repository with a podSpecTemplate", done => {
   button.simulate("submit");
 
   // Wait for the Modal to be closed
-  setTimeout(() => {
-    expect(install).toBeCalledWith(
-      "my-repo",
-      "kubeapps",
-      "http://foo.bar",
-      "Bearer ",
-      "",
-      "foo: bar",
-    );
-    expect(wrapper.state("modalIsOpen")).toBe(false);
-    done();
-  }, 1);
+  await wait(1);
+  expect(install).toBeCalledWith(
+    "my-repo",
+    "kubeapps",
+    "http://foo.bar",
+    "Bearer ",
+    "",
+    "foo: bar",
+    [],
+  );
+  expect(wrapper.state("modalIsOpen")).toBe(false);
 });
 
 describe("render error", () => {
-  it("renders a conflict error", done => {
+  it("renders a conflict error", async () => {
     const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
     ReactModal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true });
@@ -156,21 +156,19 @@ describe("render error", () => {
     button.simulate("submit");
     wrapper.setProps({ errors: { create: new ConflictError("already exists!") } });
 
-    setTimeout(() => {
-      expect(wrapper.find(ErrorSelector).text()).toContain(
-        "App Repository my-repo already exists, try a different name.",
-      );
-      // Now changing the name should not change the error message
-      wrapper.setState({ name: "my-app-2" });
-      wrapper.update();
-      expect(wrapper.find(ErrorSelector).text()).toContain(
-        "App Repository my-repo already exists, try a different name.",
-      );
-      done();
-    }, 1);
+    await wait(1);
+    expect(wrapper.find(ErrorSelector).text()).toContain(
+      "App Repository my-repo already exists, try a different name.",
+    );
+    // Now changing the name should not change the error message
+    wrapper.setState({ name: "my-app-2" });
+    wrapper.update();
+    expect(wrapper.find(ErrorSelector).text()).toContain(
+      "App Repository my-repo already exists, try a different name.",
+    );
   });
 
-  it("renders an 'unprocessable entity' error", done => {
+  it("renders an 'unprocessable entity' error", async () => {
     const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
     ReactModal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true });
@@ -181,13 +179,11 @@ describe("render error", () => {
     button.simulate("submit");
     wrapper.setProps({ errors: { create: new UnprocessableEntity("cannot process this!") } });
 
-    setTimeout(() => {
-      expect(wrapper.find(ErrorSelector).text()).toContain(
-        "Something went wrong processing App Repository my-repo",
-      );
-      expect(wrapper.find(ErrorSelector).text()).toContain("cannot process this!");
-      done();
-    }, 1);
+    await wait(1);
+    expect(wrapper.find(ErrorSelector).text()).toContain(
+      "Something went wrong processing App Repository my-repo",
+    );
+    expect(wrapper.find(ErrorSelector).text()).toContain("cannot process this!");
   });
 });
 

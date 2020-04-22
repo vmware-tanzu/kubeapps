@@ -27,8 +27,19 @@ interface IAppRepoListItemProps {
   secret?: ISecret;
   renderNamespace: boolean;
   namespace: string;
+  kubeappsNamespace: string;
   deleteRepo: (name: string, namespace: string) => Promise<boolean>;
   resyncRepo: (name: string, namespace: string) => void;
+  imagePullSecrets: ISecret[];
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
 }
 
 interface IAppRepoListItemState {
@@ -50,6 +61,10 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
       validate,
       validating,
       secret,
+      imagePullSecrets,
+      fetchImagePullSecrets,
+      kubeappsNamespace,
+      createDockerRegistrySecret,
     } = this.props;
     return (
       <tr key={repo.metadata.name}>
@@ -75,10 +90,14 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
             onSubmit={update}
             validate={validate}
             namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
             validating={validating}
             text="Edit"
             repo={repo}
             secret={secret}
+            imagePullSecrets={imagePullSecrets}
+            fetchImagePullSecrets={fetchImagePullSecrets}
+            createDockerRegistrySecret={createDockerRegistrySecret}
           />
 
           <button

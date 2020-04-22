@@ -16,10 +16,14 @@ const defaultProps = {
   update: jest.fn(),
   validate: jest.fn(),
   namespace: defaultNamespace,
+  kubeappsNamespace: "kubeapps",
   displayReposPerNamespaceMsg: false,
   validating: false,
   isFetching: false,
   repoSecrets: [],
+  fetchImagePullSecrets: jest.fn(),
+  imagePullSecrets: [],
+  createDockerRegistrySecret: jest.fn(),
 };
 
 describe("AppRepoList", () => {

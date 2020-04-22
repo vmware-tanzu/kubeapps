@@ -40,6 +40,39 @@ export default class Secret {
     return data;
   }
 
+  public static async createPullSecret(
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) {
+    const url = Secret.getLink(namespace);
+    const dockercfg = {
+      auths: {
+        [server]: {
+          username: user,
+          password,
+          email,
+          auth: btoa(`${user}:${password}`),
+        },
+      },
+    };
+    const { data } = await axiosWithAuth.post<ISecret>(url, {
+      apiVersion: "v1",
+      stringData: {
+        ".dockerconfigjson": JSON.stringify(dockercfg),
+      },
+      kind: "Secret",
+      metadata: {
+        name,
+      },
+      type: "kubernetes.io/dockerconfigjson",
+    });
+    return data;
+  }
+
   private static getLink(namespace: string, name?: string): string {
     return `${APIBase}/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
   }

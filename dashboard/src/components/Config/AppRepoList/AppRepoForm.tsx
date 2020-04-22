@@ -4,6 +4,7 @@ import { Redirect } from "react-router";
 import { IAppRepository, ISecret } from "shared/types";
 import Hint from "../../../components/Hint";
 import { UnexpectedErrorAlert } from "../../ErrorAlert";
+import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 
 interface IAppRepoFormProps {
   message?: string;
@@ -14,11 +15,24 @@ interface IAppRepoFormProps {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   onAfterInstall?: () => Promise<any>;
   validating: boolean;
   validationError?: Error;
+  imagePullSecrets: ISecret[];
+  namespace: string;
+  kubeappsNamespace: string;
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
   repo?: IAppRepository;
   secret?: ISecret;
 }
@@ -33,6 +47,7 @@ interface IAppRepoFormState {
   token: string;
   customCA: string;
   syncJobPodTemplate: string;
+  selectedImagePullSecrets: { [key: string]: boolean };
   validated?: boolean;
 }
 
@@ -52,6 +67,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     url: "",
     customCA: "",
     syncJobPodTemplate: "",
+    selectedImagePullSecrets: {},
   };
 
   public componentDidMount() {
@@ -97,11 +113,26 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
         authMethod,
       });
     }
+
+    this.parseSecrets(this.props.imagePullSecrets, this.props.repo);
+  }
+
+  public componentDidUpdate(prevProps: IAppRepoFormProps) {
+    if (prevProps.imagePullSecrets !== this.props.imagePullSecrets) {
+      this.parseSecrets(this.props.imagePullSecrets);
+    }
   }
 
   public render() {
-    const { repo } = this.props;
-    const { authMethod } = this.state;
+    const {
+      repo,
+      imagePullSecrets,
+      namespace,
+      kubeappsNamespace,
+      createDockerRegistrySecret,
+      fetchImagePullSecrets,
+    } = this.props;
+    const { authMethod, selectedImagePullSecrets } = this.state;
     return (
       <form className="container padding-b-bigger" onSubmit={this.handleInstallClick}>
         <div className="row">
@@ -135,7 +166,11 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
               />
             </div>
             <div>
-              <span>Authorization (optional):</span>
+              <p className="margin-b-small">Repository Authorization (optional):</p>
+              <span className="AppRepoInputDescription">
+                Introduce the credentials to access the Chart repository if authentication is
+                enabled.
+              </span>
               <div className="row">
                 <div className="col-2">
                   <label className="margin-l-big" htmlFor="kubeapps-repo-auth-method-none">
@@ -239,6 +274,33 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 </div>
               </div>
             </div>
+            {/* Only when using a namespace different than the Kubeapps namespace (Global)
+              the repository can be associated with Docker Registry Credentials since
+              the pull secret won't be available in all namespaces */
+            namespace !== kubeappsNamespace && (
+              <div>
+                <p className="margin-b-small">Associate Docker Registry Credentials (optional):</p>
+                <span className="AppRepoInputDescription">
+                  Select existing secret(s) to access a private Docker registry and pull images from
+                  it. More info{" "}
+                  <a
+                    href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
+                    target="_blank"
+                  >
+                    here
+                  </a>
+                  .
+                  <AppRepoAddDockerCreds
+                    imagePullSecrets={imagePullSecrets}
+                    togglePullSecret={this.togglePullSecret}
+                    selectedImagePullSecrets={selectedImagePullSecrets}
+                    createDockerRegistrySecret={createDockerRegistrySecret}
+                    namespace={namespace}
+                    fetchImagePullSecrets={fetchImagePullSecrets}
+                  />
+                </span>
+              </div>
+            )}
             <div className="margin-t-big">
               <label>
                 <span>Custom CA Certificate (optional):</span>
@@ -326,6 +388,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
       password,
       customCA,
       syncJobPodTemplate,
+      selectedImagePullSecrets,
     } = this.state;
     e.preventDefault();
     let finalHeader = "";
@@ -349,7 +412,17 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
       this.setState({ validated });
     }
     if (validated || force) {
-      const success = await onSubmit(name, url, finalHeader, customCA, syncJobPodTemplate);
+      const imagePullSecrets = Object.keys(selectedImagePullSecrets).filter(
+        s => selectedImagePullSecrets[s],
+      );
+      const success = await onSubmit(
+        name,
+        url,
+        finalHeader,
+        customCA,
+        syncJobPodTemplate,
+        imagePullSecrets,
+      );
       if (success && onAfterInstall) {
         await onAfterInstall();
       }
@@ -386,5 +459,36 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
 
   private handleSyncJobPodTemplateChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     this.setState({ syncJobPodTemplate: e.target.value, validated: undefined });
+  };
+
+  private togglePullSecret = (imagePullSecret: string) => {
+    return () => {
+      const { selectedImagePullSecrets } = this.state;
+      this.setState({
+        selectedImagePullSecrets: {
+          ...selectedImagePullSecrets,
+          [imagePullSecret]: !selectedImagePullSecrets[imagePullSecret],
+        },
+      });
+    };
+  };
+
+  // Select the pull secrets based on the current status and if they are already
+  // selected in the existing repo info
+  private parseSecrets = (secrets: ISecret[], repo?: IAppRepository) => {
+    const selectedImagePullSecrets = this.state.selectedImagePullSecrets;
+    secrets.forEach(secret => {
+      let selected = false;
+      // If it has been already selected
+      if (selectedImagePullSecrets[secret.metadata.name]) {
+        selected = true;
+      }
+      // Or if it's already selected in the existing repo
+      if (repo?.spec?.dockerRegistrySecrets?.some(s => s === secret.metadata.name)) {
+        selected = true;
+      }
+      selectedImagePullSecrets[secret.metadata.name] = selected;
+    });
+    this.setState({ selectedImagePullSecrets });
   };
 }

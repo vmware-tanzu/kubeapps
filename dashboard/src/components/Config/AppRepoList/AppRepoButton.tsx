@@ -35,11 +35,23 @@ interface IAppRepoAddButtonProps {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   validating: boolean;
   redirectTo?: string;
   namespace: string;
+  kubeappsNamespace: string;
+  imagePullSecrets: ISecret[];
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
   text?: string;
   primary?: boolean;
   repo?: IAppRepository;
@@ -60,7 +72,7 @@ export class AppRepoAddButton extends React.Component<
   };
 
   public render() {
-    const { redirectTo, text, primary } = this.props;
+    const { redirectTo, text, primary, namespace, kubeappsNamespace } = this.props;
     return (
       <React.Fragment>
         <button className={`button ${primary ? "button-primary" : ""}`} onClick={this.openModal}>
@@ -88,6 +100,11 @@ export class AppRepoAddButton extends React.Component<
             validationError={this.props.errors.validate}
             repo={this.props.repo}
             secret={this.props.secret}
+            imagePullSecrets={this.props.imagePullSecrets}
+            namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
+            fetchImagePullSecrets={this.props.fetchImagePullSecrets}
+            createDockerRegistrySecret={this.props.createDockerRegistrySecret}
           />
         </Modal>
         {redirectTo && <Redirect to={redirectTo} />}
@@ -102,6 +119,7 @@ export class AppRepoAddButton extends React.Component<
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => {
     // Store last submitted name to show it in an error if needed
     this.setState({ lastSubmittedName: name });
@@ -112,6 +130,7 @@ export class AppRepoAddButton extends React.Component<
       authHeader,
       customCA,
       syncJobPodTemplate,
+      registrySecrets,
     );
   };
   private openModal = async () => this.setState({ modalIsOpen: true });

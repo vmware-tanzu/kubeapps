@@ -16,3 +16,7 @@ export function getValueFromEvent(e: React.FormEvent<HTMLInputElement>) {
   }
   return value;
 }
+
+export async function wait(ms: number = 1) {
+  await new Promise(resolve => setTimeout(() => resolve(), ms));
+}

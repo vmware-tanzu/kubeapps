@@ -313,6 +313,7 @@ describe("installRepo", () => {
     "",
     "",
     "",
+    [],
   );
 
   context("when authHeader provided", () => {
@@ -323,6 +324,7 @@ describe("installRepo", () => {
       "Bearer: abc",
       "",
       "",
+      [],
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -334,6 +336,7 @@ describe("installRepo", () => {
         "Bearer: abc",
         "",
         {},
+        [],
       );
     });
 
@@ -356,6 +359,7 @@ describe("installRepo", () => {
       "",
       "This is a cert!",
       "",
+      [],
     );
 
     it("calls AppRepository create including a auth struct", async () => {
@@ -367,6 +371,7 @@ describe("installRepo", () => {
         "",
         "This is a cert!",
         {},
+        [],
       );
     });
 
@@ -390,6 +395,7 @@ describe("installRepo", () => {
             "",
             "",
             safeYAMLTemplate,
+            [],
           ),
         );
 
@@ -402,6 +408,7 @@ describe("installRepo", () => {
           {
             spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] },
           },
+          [],
         );
       });
 
@@ -418,6 +425,7 @@ describe("installRepo", () => {
             "",
             "",
             unsafeYAMLTemplate,
+            [],
           ),
         );
         expect(AppRepository.create).not.toHaveBeenCalled();
@@ -435,6 +443,7 @@ describe("installRepo", () => {
         "",
         "",
         {},
+        [],
       );
     });
 
@@ -488,7 +497,9 @@ describe("installRepo", () => {
   });
 
   it("uses kubeapps own namespace if namespace is _all", async () => {
-    await store.dispatch(repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", ""));
+    await store.dispatch(
+      repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", "", []),
+    );
 
     expect(AppRepository.create).toHaveBeenCalledWith(
       "my-repo",
@@ -497,6 +508,23 @@ describe("installRepo", () => {
       "",
       "",
       {},
+      [],
+    );
+  });
+
+  it("includes registry secrets if given", async () => {
+    await store.dispatch(
+      repoActions.installRepo("my-repo", "_all", "http://foo.bar", "", "", "", ["repo-1"]),
+    );
+
+    expect(AppRepository.create).toHaveBeenCalledWith(
+      "my-repo",
+      "kubeapps-namespace",
+      "http://foo.bar",
+      "",
+      "",
+      {},
+      ["repo-1"],
     );
   });
 });
@@ -525,9 +553,19 @@ describe("updateRepo", () => {
         "foo",
         "bar",
         safeYAMLTemplate,
+        ["repo-1"],
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
+    expect(AppRepository.update).toHaveBeenCalledWith(
+      "my-repo",
+      "my-namespace",
+      "http://foo.bar",
+      "foo",
+      "bar",
+      { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
+      ["repo-1"],
+    );
   });
 
   it("returns an error if failed", async () => {
@@ -552,6 +590,7 @@ describe("updateRepo", () => {
         "foo",
         "bar",
         safeYAMLTemplate,
+        [],
       ),
     );
     expect(store.getActions()).toEqual(expectedActions);
@@ -653,5 +692,88 @@ describe("validateRepo", () => {
     const res = await store.dispatch(repoActions.validateRepo("url", "auth", "cert"));
     expect(store.getActions()).toEqual(expectedActions);
     expect(res).toBe(false);
+  });
+});
+
+describe("fetchImagePullSecrets", () => {
+  it("fetches image pull secrets", async () => {
+    const secret1 = {
+      type: "kubernetes.io/dockerconfigjson",
+    };
+    const secret2 = {
+      type: "Opaque",
+    };
+    Secret.list = jest.fn(() => {
+      return {
+        items: [secret1, secret2],
+      };
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestImagePullSecrets),
+        payload: "default",
+      },
+      {
+        type: getType(repoActions.receiveImagePullSecrets),
+        payload: [secret1],
+      },
+    ];
+    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Secret.list = jest.fn(() => {
+      throw new Error("boom");
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestImagePullSecrets),
+        payload: "default",
+      },
+      {
+        type: getType(repoActions.errorRepos),
+        payload: {
+          err: new Error("boom"),
+          op: "fetch",
+        },
+      },
+    ];
+    await store.dispatch(repoActions.fetchImagePullSecrets("default"));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});
+
+describe("createDockerRegistrySecret", () => {
+  it("creates a docker registry", async () => {
+    const secret = {
+      type: "kubernetes.io/dockerconfigjson",
+    };
+    Secret.createPullSecret = jest.fn(() => secret);
+    const expectedActions = [
+      {
+        type: getType(repoActions.createImagePullSecret),
+        payload: secret,
+      },
+    ];
+    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Secret.createPullSecret = jest.fn(() => {
+      throw new Error("boom");
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.errorRepos),
+        payload: {
+          err: new Error("boom"),
+          op: "fetch",
+        },
+      },
+    ];
+    await store.dispatch(repoActions.createDockerRegistrySecret("", "", "", "", "", ""));
+    expect(store.getActions()).toEqual(expectedActions);
   });
 });

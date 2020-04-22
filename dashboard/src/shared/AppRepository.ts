@@ -32,10 +32,13 @@ export class AppRepository {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: any,
+    registrySecrets: string[],
   ) {
     const { data } = await axiosWithAuth.put<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.update(namespace, name),
-      { appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate } },
+      {
+        appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate, registrySecrets },
+      },
     );
     return data;
   }
@@ -57,10 +60,13 @@ export class AppRepository {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: any,
+    registrySecrets: string[],
   ) {
     const { data } = await axiosWithAuth.post<ICreateAppRepositoryResponse>(
       url.backend.apprepositories.create(namespace),
-      { appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate } },
+      {
+        appRepository: { name, repoURL, authHeader, customCA, syncJobPodTemplate, registrySecrets },
+      },
     );
     return data;
   }

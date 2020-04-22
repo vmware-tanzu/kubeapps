@@ -29,6 +29,7 @@ export interface IAppRepoListProps {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
   update: (
     name: string,
@@ -41,8 +42,19 @@ export interface IAppRepoListProps {
   validating: boolean;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
   namespace: string;
+  kubeappsNamespace: string;
   displayReposPerNamespaceMsg: boolean;
   isFetching: boolean;
+  imagePullSecrets: ISecret[];
+  fetchImagePullSecrets: (namespace: string) => void;
+  createDockerRegistrySecret: (
+    name: string,
+    user: string,
+    password: string,
+    email: string,
+    server: string,
+    namespace: string,
+  ) => Promise<boolean>;
 }
 
 const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -72,17 +84,20 @@ const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
 class AppRepoList extends React.Component<IAppRepoListProps> {
   public componentDidMount() {
     this.props.fetchRepos(this.props.namespace);
+    this.props.fetchImagePullSecrets(this.props.namespace);
   }
 
   public componentDidUpdate(prevProps: IAppRepoListProps) {
     const {
       errors: { fetch },
       fetchRepos,
+      fetchImagePullSecrets,
       namespace,
     } = this.props;
     // refetch if namespace changes or if error removed due to location change
     if (prevProps.namespace !== namespace || (prevProps.errors.fetch && !fetch)) {
       fetchRepos(namespace);
+      fetchImagePullSecrets(namespace);
     }
   }
 
@@ -93,6 +108,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       install,
       update,
       namespace,
+      kubeappsNamespace,
       displayReposPerNamespaceMsg,
       isFetching,
       deleteRepo,
@@ -101,6 +117,9 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       validate,
       repoSecrets,
       validating,
+      imagePullSecrets,
+      fetchImagePullSecrets,
+      createDockerRegistrySecret,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
     return (
@@ -130,6 +149,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                       repo={repo}
                       renderNamespace={renderNamespace}
                       namespace={namespace}
+                      kubeappsNamespace={kubeappsNamespace}
                       errors={errors}
                       validating={validating}
                       validate={validate}
@@ -139,6 +159,9 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                         ),
                       )}
                       update={update}
+                      imagePullSecrets={imagePullSecrets}
+                      fetchImagePullSecrets={fetchImagePullSecrets}
+                      createDockerRegistrySecret={createDockerRegistrySecret}
                     />
                   ))}
                 </tbody>
@@ -149,8 +172,12 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
               onSubmit={install}
               validate={validate}
               namespace={namespace}
+              kubeappsNamespace={kubeappsNamespace}
               validating={validating}
               primary={true}
+              imagePullSecrets={imagePullSecrets}
+              fetchImagePullSecrets={fetchImagePullSecrets}
+              createDockerRegistrySecret={createDockerRegistrySecret}
             />
             <AppRepoRefreshAllButton resyncAllRepos={resyncAllRepos} repos={repos} />
           </>

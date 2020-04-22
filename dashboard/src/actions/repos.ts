@@ -65,6 +65,17 @@ export const errorRepos = createAction("ERROR_REPOS", resolve => {
     resolve({ err, op });
 });
 
+export const requestImagePullSecrets = createAction("REQUEST_IMAGE_PULL_SECRETS", resolve => {
+  return (namespace: string) => resolve(namespace);
+});
+export const receiveImagePullSecrets = createAction("RECEIVE_IMAGE_PULL_SECRETS", resolve => {
+  return (secrets: ISecret[]) => resolve(secrets);
+});
+
+export const createImagePullSecret = createAction("CREATE_IMAGE_PULL_SECRET", resolve => {
+  return (secret: ISecret) => resolve(secret);
+});
+
 const allActions = [
   addRepo,
   addedRepo,
@@ -86,6 +97,9 @@ const allActions = [
   hideForm,
   redirect,
   redirected,
+  requestImagePullSecrets,
+  receiveImagePullSecrets,
+  createImagePullSecret,
 ];
 export type AppReposAction = ActionType<typeof allActions[number]>;
 
@@ -144,6 +158,9 @@ export const fetchRepos = (
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
+      // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
+      // to avoid listing secrets
+      // https://github.com/kubeapps/kubeapps/issues/1686
       const secrets = await Secret.list(namespace);
       const repoSecrets = secrets.items?.filter(s =>
         s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
@@ -181,6 +198,7 @@ export const installRepo = (
   authHeader: string,
   customCA: string,
   syncJobPodTemplate: string,
+  registrySecrets: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     try {
@@ -194,6 +212,7 @@ export const installRepo = (
         authHeader,
         customCA,
         syncJobPodTemplateObj,
+        registrySecrets,
       );
       dispatch(addedRepo(data.appRepository));
 
@@ -212,6 +231,7 @@ export const updateRepo = (
   authHeader: string,
   customCA: string,
   syncJobPodTemplate: string,
+  registrySecrets: string[],
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     try {
@@ -225,6 +245,7 @@ export const updateRepo = (
         authHeader,
         customCA,
         syncJobPodTemplateObj,
+        registrySecrets,
       );
       dispatch(repoUpdated(data.appRepository));
       return true;
@@ -283,6 +304,46 @@ export function checkChart(
       dispatch(
         errorChart(new NotFoundError(`Chart ${chartName} not found in the repository ${repo}.`)),
       );
+      return false;
+    }
+  };
+}
+
+export function fetchImagePullSecrets(
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> {
+  return async dispatch => {
+    try {
+      dispatch(requestImagePullSecrets(namespace));
+      // TODO(andresmgot): Create an endpoint for returning just the list of secret names
+      // to avoid listing all the secrets with protected information
+      // https://github.com/kubeapps/kubeapps/issues/1686
+      const secrets = await Secret.list(namespace);
+      const imgPullSecrets = secrets.items?.filter(
+        s => s.type === "kubernetes.io/dockerconfigjson",
+      );
+      dispatch(receiveImagePullSecrets(imgPullSecrets));
+    } catch (e) {
+      dispatch(errorRepos(e, "fetch"));
+    }
+  };
+}
+
+export function createDockerRegistrySecret(
+  name: string,
+  user: string,
+  password: string,
+  email: string,
+  server: string,
+  namespace: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
+  return async dispatch => {
+    try {
+      const secret = await Secret.createPullSecret(name, user, password, email, server, namespace);
+      dispatch(createImagePullSecret(secret));
+      return true;
+    } catch (e) {
+      dispatch(errorRepos(e, "fetch"));
       return false;
     }
   };
