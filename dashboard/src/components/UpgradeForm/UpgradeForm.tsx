@@ -40,6 +40,7 @@ interface IUpgradeFormState {
   valuesModified: boolean;
   isDeploying: boolean;
   modifications?: jsonpatch.Operation[];
+  deployedValues?: string;
 }
 
 class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> {
@@ -56,19 +57,41 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
 
   public componentDidUpdate = (prevProps: IUpgradeFormProps) => {
     let modifications = this.state.modifications;
+    // applyModifications is an expensive operatior, that's why it's only defined within
+    // the componentDidUpdate scope
+    const applyModifications = (mods: jsonpatch.Operation[], appValues: string) => {
+      // And we add any possible change made to the original version
+      if (mods.length) {
+        mods.forEach(modification => {
+          // Transform the JSON Path to the format expected by setValue
+          // /a/b/c => a.b.c
+          const path = modification.path.replace(/^\//, "").replace(/\//g, ".");
+          if (modification.op === "remove") {
+            appValues = deleteValue(appValues, path);
+          } else {
+            // Transform the modification as a ReplaceOperation to read its value
+            const value = (modification as jsonpatch.ReplaceOperation<any>).value;
+            appValues = setValue(appValues, path, value);
+          }
+        });
+      }
+      return appValues;
+    };
+
     if (this.props.deployed.values && !modifications) {
       // Calculate modifications from the default values
       const defaultValuesObj = YAML.parse(this.props.deployed.values);
       const deployedValuesObj = YAML.parse(this.props.appCurrentValues || "");
       modifications = jsonpatch.compare(defaultValuesObj, deployedValuesObj);
+      const values = applyModifications(modifications, this.props.deployed.values);
       this.setState({ modifications });
-      this.setState({ appValues: this.applyModifications(modifications, this.state.appValues) });
+      this.setState({ appValues: values, deployedValues: values });
     }
 
     if (prevProps.selected.version !== this.props.selected.version && !this.state.valuesModified) {
       // Apply modifications to the new selected version
       const appValues = modifications
-        ? this.applyModifications(modifications, this.props.selected.values || "")
+        ? applyModifications(modifications, this.props.selected.values || "")
         : this.props.selected.values || "";
       this.setState({ appValues });
     }
@@ -96,10 +119,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
               chartNamespace={this.props.repoNamespace}
               chartID={chartID}
               chartVersion={this.props.appCurrentVersion}
-              deployedValues={this.applyModifications(
-                this.state.modifications || [],
-                this.props.deployed.values || "",
-              )}
+              deployedValues={this.state.deployedValues}
               namespace={this.props.namespace}
               releaseVersion={this.props.appCurrentVersion}
               selected={this.props.selected}
@@ -145,25 +165,6 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
       }
     }
   };
-
-  private applyModifications(modifications: jsonpatch.Operation[], appValues: string) {
-    // And we add any possible change made to the original version
-    if (modifications.length) {
-      modifications.forEach(modification => {
-        // Transform the JSON Path to the format expected by setValue
-        // /a/b/c => a.b.c
-        const path = modification.path.replace(/^\//, "").replace(/\//g, ".");
-        if (modification.op === "remove") {
-          appValues = deleteValue(appValues, path);
-        } else {
-          // Transform the modification as a ReplaceOperation to read its value
-          const value = (modification as jsonpatch.ReplaceOperation<any>).value;
-          appValues = setValue(appValues, path, value);
-        }
-      });
-    }
-    return appValues;
-  }
 }
 
 export default UpgradeForm;
