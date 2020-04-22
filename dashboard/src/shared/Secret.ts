@@ -61,8 +61,8 @@ export default class Secret {
     };
     const { data } = await axiosWithAuth.post<ISecret>(url, {
       apiVersion: "v1",
-      data: {
-        ".dockerconfigjson": btoa(JSON.stringify(dockercfg)),
+      stringData: {
+        ".dockerconfigjson": JSON.stringify(dockercfg),
       },
       kind: "Secret",
       metadata: {

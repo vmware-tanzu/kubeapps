@@ -58,9 +58,9 @@ it("creates a pull secret", async () => {
   expect(await Secret.createPullSecret(name, user, password, email, server, namespace)).toBe("ok");
   expect(axiosWithAuth.post).toHaveBeenCalledWith("api/kube/api/v1/namespaces/default/secrets", {
     apiVersion: "v1",
-    data: {
+    stringData: {
       ".dockerconfigjson":
-        "eyJhdXRocyI6eyJkb2NrZXIuaW8iOnsidXNlcm5hbWUiOiJmb28iLCJwYXNzd29yZCI6InBhc3MiLCJlbWFpbCI6ImZvb0BiYXIuY29tIiwiYXV0aCI6IlptOXZPbkJoYzNNPSJ9fX0=",
+        '{"auths":{"docker.io":{"username":"foo","password":"pass","email":"foo@bar.com","auth":"Zm9vOnBhc3M="}}}',
     },
     kind: "Secret",
     metadata: { name: "repo-1" },
