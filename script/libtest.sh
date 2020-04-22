@@ -39,10 +39,10 @@ k8s_wait_for_deployment() {
     deployment=${2:?deployment name is missing}
     local -i exit_code=0
     
-    info "Waiting for deployment ${deployment} to be successfully rolled out..."
+    debug "Waiting for deployment ${deployment} to be successfully rolled out..."
     # Avoid to exit the function if the rollout fails
-    kubectl rollout status --namespace "$namespace" deployment "$deployment" || exit_code=$?
-    info "Rollout exit code: '${exit_code}'"
+    silence kubectl rollout status --namespace "$namespace" deployment "$deployment" || exit_code=$?
+    debug "Rollout exit code: '${exit_code}'"
     return $exit_code
 }
 
@@ -61,7 +61,7 @@ k8s_svc_endpoints() {
     number_of_endpoints=${3:?number of endpoints is missing}
     local -i exit_code=0
 
-    kubectl get ep "$svc" -n "$namespace" -o jsonpath="{.subsets[0].addresses[$((number_of_endpoints - 1))]}" > /dev/null || exit_code=$?
+    silence kubectl get ep "$svc" -n "$namespace" -o jsonpath="{.subsets[0].addresses[$((number_of_endpoints - 1))]}" || exit_code=$?
     [[ "$exit_code" -eq 0 ]] && info "Endpoint ready!"
     
     return $exit_code
@@ -82,7 +82,7 @@ k8s_wait_for_endpoints() {
     number_of_endpoints=${3:?number of endpoints is missing}
     local -i exit_code=0
 
-    info "Waiting for the endpoints of ${svc} to be at least ${number_of_endpoints}..."
+    debug "Waiting for the endpoints of ${svc} to be at least ${number_of_endpoints}..."
     retry_while "k8s_svc_endpoints $namespace $svc $number_of_endpoints" "$TEST_MAX_RETRIES" "$TEXT_TIME_STEP" || exit_code=$?
     
     return $exit_code
@@ -105,7 +105,7 @@ k8s_ensure_image() {
     jsonpath=${4:-'{.spec.template.spec.containers[0].image}'}
     local -i exit_code=0
     
-    info "Checking that $deployment uses an image matching $expectedPattern..."
+    debug "Checking that $deployment uses an image matching $expectedPattern..."
     kubectl get deployment "$deployment" -n "$namespace" -o jsonpath="$jsonpath" | grep "$expectedPattern" || exit_code=$?
 
     return $exit_code
@@ -125,7 +125,7 @@ k8s_job_completed() {
     local -i exit_code=0
 
     kubectl get jobs -l "$label_selector" -n "$namespace" -o jsonpath='{.items[*].status.conditions[?(@.type=="Complete")].status}' | grep "True" || exit_code=$?
-    [[ "$exit_code" -eq 0 ]] && info "Job completed!"
+    [[ "$exit_code" -eq 0 ]] && debug "Job completed!"
     
     return $exit_code
 }
@@ -143,7 +143,7 @@ k8s_wait_for_job_completed() {
     label_selector=${2:?labels selector is missing}
     local -i exit_code=0
 
-    info "Wait for job completion..."
+    debug "Wait for job completion..."
     retry_while "k8s_job_completed $namespace $label_selector" "$TEST_MAX_RETRIES" "$TEXT_TIME_STEP" || exit_code=$?
     
     return $exit_code

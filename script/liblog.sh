@@ -21,6 +21,7 @@ RESET='\033[0m'
 GREEN='\033[38;5;2m'
 RED='\033[38;5;1m'
 YELLOW='\033[38;5;3m'
+MAGENTA='\033[38;5;5m'
 
 # Functions
 
@@ -58,4 +59,22 @@ warn() {
 #########################
 error() {
   log "${RED}ERROR ${RESET} ==> ${*}"
+}
+
+########################
+# Log a 'debug' message
+# Globals:
+#   DEBUG_MODE
+# Arguments:
+#   None
+# Returns:
+#   None
+#########################
+debug() {
+    local -r bool="${DEBUG_MODE:-false}"
+    # comparison is performed without regard to the case of alphabetic characters
+    shopt -s nocasematch
+    if [[ "$bool" = 1 || "$bool" =~ ^(yes|true)$ ]]; then
+        log "${MAGENTA}DEBUG${RESET} ==> ${*}"
+    fi
 }
