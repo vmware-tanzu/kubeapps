@@ -91,7 +91,7 @@ type Resolver interface {
 	ParseDetails(data []byte) (*Details, error)
 	GetChart(details *Details, netClient kube.HTTPClient, requireV1Support bool) (*ChartMultiVersion, error)
 	InitNetClient(details *Details, userAuthToken string) (kube.HTTPClient, error)
-	RegistrySecretsPerDomain() (map[string]string, error)
+	RegistrySecretsPerDomain() map[string]string
 }
 
 // ChartClient struct contains the clients required to retrieve charts info
@@ -321,7 +321,7 @@ func (c *ChartClient) InitNetClient(details *Details, userAuthToken string) (kub
 		return nil, err
 	}
 
-	c.registrySecretsPerDomain, err = getRegistrySecretsPerDomain(c.appRepo.Spec.DockerRegistrySecrets, details.AppRepositoryResourceNamespace, c.appRepoHandler.AsUser(userAuthToken))
+	c.registrySecretsPerDomain, err = getRegistrySecretsPerDomain(c.appRepo.Spec.DockerRegistrySecrets, details.AppRepositoryResourceNamespace, userAuthToken, c.appRepoHandler)
 	if err != nil {
 		return nil, err
 	}
@@ -362,8 +362,9 @@ func (c *ChartClient) RegistrySecretsPerDomain() map[string]string {
 	return c.registrySecretsPerDomain
 }
 
-func getRegistrySecretsPerDomain(appRepoSecrets []string, namespace string, client kube.Handler) (map[string]string, error) {
+func getRegistrySecretsPerDomain(appRepoSecrets []string, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
 	secretsPerDomain := map[string]string{}
+	client := authHandler.AsUser(token)
 	for _, secretName := range appRepoSecrets {
 		secret, err := client.GetSecret(secretName, namespace)
 		if err != nil {

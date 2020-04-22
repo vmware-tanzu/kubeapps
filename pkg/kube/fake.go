@@ -37,12 +37,12 @@ type FakeHandler struct {
 }
 
 // AsUser fakes user auth
-func (c *FakeHandler) AsUser(token string) Handler {
+func (c *FakeHandler) AsUser(token string) handler {
 	return c
 }
 
 // AsSVC fakes using current svcaccount
-func (c *FakeHandler) AsSVC() Handler {
+func (c *FakeHandler) AsSVC() handler {
 	return c
 }
 

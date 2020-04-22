@@ -71,6 +71,6 @@ func (f *FakeChart) InitNetClient(details *chartUtils.Details, userAuthToken str
 	return &http.Client{}, nil
 }
 
-func (f *FakeChart) RegistrySecretsPerDomain() (map[string]string, error) {
-	return nil, nil
+func (f *FakeChart) RegistrySecretsPerDomain() map[string]string {
+	return nil
 }
