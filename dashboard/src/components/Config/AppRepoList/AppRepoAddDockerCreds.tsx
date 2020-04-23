@@ -62,7 +62,7 @@ export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, IA
             );
           })
         ) : (
-          <span className="margin-b-small">No existing credentials found.</span>
+          <div className="margin-b-small">No existing credentials found.</div>
         )}
         {this.state.showSecretSubForm && (
           <div className="secondary-input margin-t-big">
