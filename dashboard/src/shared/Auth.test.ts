@@ -193,11 +193,20 @@ describe("Auth", () => {
   });
 });
 
-describe("is403FromAuthProxy", () => {
+describe("isErrorFromAuthProxy", () => {
   it("does not assume to be authenticated from the auth proxy if the message contains a service account", () => {
     expect(
-      Auth.is403FromAuthProxy({
+      Auth.isErrorFromAuthProxy({
         status: 403,
+        data:
+          'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
+      } as AxiosResponse<any>),
+    ).toBe(false);
+  });
+  it("does not assume to be authenticated from the auth proxy if the message contains a service account", () => {
+    expect(
+      Auth.isErrorFromAuthProxy({
+        status: 401,
         data:
           'namespaces is forbidden: User "system:serviceaccount:kubeapps:kubeapps-internal-kubeops" cannot list resource "namespaces" in API group "" at the cluster scope',
       } as AxiosResponse<any>),

@@ -133,7 +133,7 @@ describe("createAxiosInterceptorWithAuth", () => {
     Auth.unsetAuthCookie = jest.fn();
     const expectedActions = [
       {
-        payload: "Boom!",
+        payload: "not ajson paylod",
         type: "AUTHENTICATION_ERROR",
       },
       {
@@ -143,7 +143,7 @@ describe("createAxiosInterceptorWithAuth", () => {
     ];
 
     moxios.stubRequest(testPath, {
-      response: { message: "Boom!" },
+      responseText: "not ajson paylod",
       status: 401,
     });
 

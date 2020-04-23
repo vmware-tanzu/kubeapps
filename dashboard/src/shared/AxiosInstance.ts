@@ -59,11 +59,13 @@ export function addErrorHandling(axiosInstance: AxiosInstance, store: Store<ISto
       const response = err.response as AxiosResponse;
       switch (response && response.status) {
         case 401:
-          dispatchErrorAndLogout(message);
+          if (Auth.usingOIDCToken() && Auth.isErrorFromAuthProxy(response)) {
+            dispatchErrorAndLogout(message);
+          }
           return Promise.reject(new UnauthorizedError(message));
         case 403:
           // A 403 directly from the auth proxy requires reauthentication.
-          if (Auth.usingOIDCToken() && Auth.is403FromAuthProxy(response)) {
+          if (Auth.usingOIDCToken() && Auth.isErrorFromAuthProxy(response)) {
             dispatchErrorAndLogout(message);
           }
           return Promise.reject(new ForbiddenError(message));
