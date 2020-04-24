@@ -2,6 +2,7 @@
 // In particular, it doesn't contain definitions for `get` and `set`
 // that are used in this package
 import * as AJV from "ajv";
+import * as jsonpatch from "fast-json-patch";
 import * as jsonSchema from "json-schema";
 import { isEmpty, set } from "lodash";
 import * as YAML from "yaml";
@@ -38,7 +39,7 @@ export function retrieveBasicFormParams(
           value,
           children:
             properties[propertyKey].type === "object"
-              ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`)
+              ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}/`)
               : undefined,
         };
         params = params.concat(param);
@@ -46,7 +47,7 @@ export function retrieveBasicFormParams(
         // If the property is an object, iterate recursively
         if (schema.properties![propertyKey].type === "object") {
           params = params.concat(
-            retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}.`),
+            retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}/`),
           );
         }
       }
@@ -73,12 +74,31 @@ function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document)
   return currentPath;
 }
 
+function splitPath(path: string): string[] {
+  return (
+    path
+      // ignore the first slash, if exists
+      .replace(/^\//, "")
+      // split by slashes
+      .split("/")
+  );
+}
+
+function unescapePath(path: string[]): string[] {
+  // jsonpath escapes slashes to not mistake then with objects so we need to revert that
+  return path.map(p => jsonpatch.unescapePathComponent(p));
+}
+
+function parsePath(path: string): string[] {
+  return unescapePath(splitPath(path));
+}
+
 function parsePathAndValue(doc: YAML.ast.Document, path: string, value?: any) {
   if (isEmpty(doc.contents)) {
     // If the doc is empty we have an special case
-    return { value: set({}, path, value), splittedPath: [] };
+    return { value: set({}, path.replace(/^\//, ""), value), splittedPath: [] };
   }
-  let splittedPath = path.split(".");
+  let splittedPath = splitPath(path);
   // If the path is not defined (the parent nodes are undefined)
   // We need to change the path and the value to set to avoid accessing
   // the undefined node. For example, if a.b is undefined:
@@ -93,7 +113,7 @@ function parsePathAndValue(doc: YAML.ast.Document, path: string, value?: any) {
     value = set({}, remainingPath.join("."), value);
     splittedPath = splittedPath.slice(0, definedPath.length + 1);
   }
-  return { splittedPath, value };
+  return { splittedPath: unescapePath(splittedPath), value };
 }
 
 // setValue modifies the current values (text) based on a path
@@ -116,7 +136,7 @@ export function deleteValue(values: string, path: string) {
 // getValue returns the current value of an object based on YAML text and its path
 export function getValue(values: string, path: string, defaultValue?: any) {
   const doc = YAML.parseDocument(values);
-  const splittedPath = path.split(".");
+  const splittedPath = parsePath(path);
   const value = (doc as any).getIn(splittedPath);
   return value === undefined || value === null ? defaultValue : value;
 }

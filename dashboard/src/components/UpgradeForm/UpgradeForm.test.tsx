@@ -225,6 +225,13 @@ describe("when receiving new props", () => {
     bar1: value1
 `,
     },
+    {
+      description: "set a value with dots and slashes in the key",
+      defaultValues: "foo.bar/foobar: ",
+      deployedValues: "foo.bar/foobar: value",
+      newDefaultValues: "foo.bar/foobar: ",
+      result: "foo.bar/foobar: value\n",
+    },
   ].forEach(t => {
     it(t.description, () => {
       const deployed = {

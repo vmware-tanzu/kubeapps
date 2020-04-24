@@ -63,15 +63,12 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
       // And we add any possible change made to the original version
       if (mods.length) {
         mods.forEach(modification => {
-          // Transform the JSON Path to the format expected by setValue
-          // /a/b/c => a.b.c
-          const path = modification.path.replace(/^\//, "").replace(/\//g, ".");
           if (modification.op === "remove") {
-            appValues = deleteValue(appValues, path);
+            appValues = deleteValue(appValues, modification.path);
           } else {
             // Transform the modification as a ReplaceOperation to read its value
             const value = (modification as jsonpatch.ReplaceOperation<any>).value;
-            appValues = setValue(appValues, path, value);
+            appValues = setValue(appValues, modification.path, value);
           }
         });
       }
