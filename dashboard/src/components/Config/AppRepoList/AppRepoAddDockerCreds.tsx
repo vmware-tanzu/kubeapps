@@ -62,7 +62,7 @@ export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, IA
             );
           })
         ) : (
-          <span className="margin-b-small">No existing credentials found.</span>
+          <div className="margin-b-small">No existing credentials found.</div>
         )}
         {this.state.showSecretSubForm && (
           <div className="secondary-input margin-t-big">
@@ -89,7 +89,7 @@ export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, IA
                   id="kubeapps-docker-cred-server"
                   value={this.state.server}
                   onChange={this.handleServerChange}
-                  placeholder="https://index.docker.io/v1"
+                  placeholder="docker.io"
                   required={true}
                 />
               </div>
