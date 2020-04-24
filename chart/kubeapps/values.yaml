@@ -627,6 +627,11 @@ authProxy:
   ## OAuth2 Proxy containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
+  ## Overridable flags for OAuth URIs that Kubeapps uses, useful when serving
+  ## Kubeapps under a sub path
+  oauthLoginURI: /oauth2/start
+  oauthLogoutURI: /oauth2/sign_out
+  ##
   resources:
     ## Default values set based on usage data from running Kubeapps instances
     ## ref: https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
