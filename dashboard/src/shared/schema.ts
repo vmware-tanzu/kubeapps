@@ -85,7 +85,7 @@ function splitPath(path: string): string[] {
 }
 
 function unescapePath(path: string[]): string[] {
-  // jsonpath scapes slashes to not mistake then with objects so we need to revert that
+  // jsonpath escapes slashes to not mistake then with objects so we need to revert that
   return path.map(p => jsonpatch.unescapePathComponent(p));
 }
 
