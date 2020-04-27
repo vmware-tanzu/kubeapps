@@ -5,7 +5,7 @@
   "oauthLoginURI": "/oauth2/start",
   "oauthLogoutURI": "/oauth2/sign_out",
   "featureFlags": {
-    "reposPerNamespace": false,
+    "reposPerNamespace": true,
     "operators": true
   }
 }
