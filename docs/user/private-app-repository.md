@@ -6,7 +6,7 @@ It is possible to use a private Helm repository to store your own Helm charts an
 - [Harbor](#harbor)
 - [Artifactory](#artifactory) (Pro)
 
-But first, a note about Kubeapps AppRepository resources
+But first, a note about Kubeapps AppRepository resources:
 
 ## Per Namespace App Repositories
 
@@ -23,13 +23,13 @@ kubectl -n custom-namespace create rolebinding username-apprepositories-write --
 
 or to allow other users the ability to deploy charts from App Repositories in a specific namespace, grant the read access only.
 
-## Binding docker image pull secrets to an AppRepository
+## Associating docker image pull secrets to an AppRepository
 
-When creating an AppRepository in Kubeapps, you can now additionally choose (or create) an [imagePullSecret](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod) to be bound to the AppRepository:
+When creating an AppRepository in Kubeapps, you can now additionally choose (or create) an [imagePullSecret](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod) to be associated with the AppRepository:
 
-<img src="../img/app-repo-pull-secret.png" alt="AppRepository with imagePullSecret" width="300px">
+<img src="../img/app-repo-pull-secret.png" alt="AppRepository with imagePullSecret" width="600px">
 
-When Kubeapps deploys any chart from this AppRepository, if a referenced docker image within the chart is from a docker registry server matching one of the secrets bound to the AppRepository, then Kubeapps will automatically append the corresponding imagePullSecret so that image can be pulled from the private registry. Note that the user deploying the chart will need to be able to read secrets in that namespace, which is usually the case when deploying to a namespace.
+When Kubeapps deploys any chart from this AppRepository, if a referenced docker image within the chart is from a docker registry server matching one of the secrets associated with the AppRepository, then Kubeapps will automatically append the corresponding imagePullSecret so that image can be pulled from the private registry. Note that the user deploying the chart will need to be able to read secrets in that namespace, which is usually the case when deploying to a namespace.
 
 There will be further work to enable private AppRepositories to be available in multiple namespaces. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87).
 
