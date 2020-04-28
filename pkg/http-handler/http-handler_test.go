@@ -57,6 +57,11 @@ func TestCreateAppRepository(t *testing.T) {
 			err:          k8sErrors.NewConflict(schema.GroupResource{}, "foo", fmt.Errorf("already exists")),
 			expectedCode: 409,
 		},
+		{
+			name:         "it returns a json 500 error as a plain string for internal backend errors",
+			err:          fmt.Errorf("Bang!"),
+			expectedCode: 500,
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -79,6 +84,29 @@ func TestCreateAppRepository(t *testing.T) {
 				}
 				expectedResponse := appRepositoryResponse{AppRepository: *tc.appRepo}
 				if got, want := appRepoResponse, expectedResponse; !cmp.Equal(want, got) {
+					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+				}
+			} else if response.Code == 500 {
+
+				// We return a simple JSON string for a 500, rather than
+				// It wasn't a status error, this will be the case for 500s
+				// in which case we return a plain JSON string.
+				var errMsg string
+				err := json.NewDecoder(response.Body).Decode(&errMsg)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				if got, want := errMsg, tc.err.Error(); got != want {
+					t.Errorf("got: %q, want: %q", got, want)
+				}
+			} else {
+				// The error should be a kubernetes error response.
+				var status metav1.Status
+				err := json.NewDecoder(response.Body).Decode(&status)
+				if err != nil {
+					t.Fatalf("%+v", err)
+				}
+				if got, want := status, tc.err.(*k8sErrors.StatusError).ErrStatus; !cmp.Equal(want, got) {
 					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 				}
 			}

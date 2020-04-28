@@ -42,14 +42,21 @@ type appRepositoryResponse struct {
 	AppRepository v1alpha1.AppRepository `json:"appRepository"`
 }
 
+func JSONError(w http.ResponseWriter, err interface{}, code int) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(err)
+}
+
 func returnK8sError(err error, w http.ResponseWriter) {
 	if statusErr, ok := err.(*k8sErrors.StatusError); ok {
 		status := statusErr.ErrStatus
 		log.Infof("unable to create app repo: %v", status.Reason)
-		http.Error(w, status.Message, int(status.Code))
+		JSONError(w, statusErr.ErrStatus, int(status.Code))
 	} else {
 		log.Errorf("unable to create app repo: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		JSONError(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -69,7 +76,7 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 		}
 		responseBody, err := json.Marshal(response)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(responseBody)
@@ -127,7 +134,7 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 		}
 		responseBody, err := json.Marshal(response)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(responseBody)
@@ -141,7 +148,7 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 		name := mux.Vars(req)["name"]
 		logo, err := kubeHandler.AsSVC().GetOperatorLogo(ns, name)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		ctype := http.DetectContentType(logo)
