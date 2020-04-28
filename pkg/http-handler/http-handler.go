@@ -76,7 +76,7 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 		}
 		responseBody, err := json.Marshal(response)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(responseBody)
@@ -134,7 +134,7 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 		}
 		responseBody, err := json.Marshal(response)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(responseBody)
@@ -148,7 +148,7 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 		name := mux.Vars(req)["name"]
 		logo, err := kubeHandler.AsSVC().GetOperatorLogo(ns, name)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		ctype := http.DetectContentType(logo)
