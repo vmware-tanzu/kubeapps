@@ -6,6 +6,33 @@ It is possible to use a private Helm repository to store your own Helm charts an
 - [Harbor](#harbor)
 - [Artifactory](#artifactory) (Pro)
 
+But first, a note about Kubeapps AppRepository resources:
+
+## Per Namespace App Repositories
+
+Previously, once an App Repository was created in Kubeapps, the charts indexed by that repository were then available cluster-wide to all Kubeapps users. This was changed in Kubeapps 1.10 to allow creating App Repositories that are available only in specific namespaces, which is more inline with the Kubernetes RBAC model where an account can have roles in specific namespaces. This change also enables Kubeapps to support deploying charts with images from private docker registries (more below).
+
+A Kubeapps AppRepository can be created by anyone with the required RBAC for that namespace. If you have cluster-wide RBAC for creating AppRepositories, you can still create an App Repository whose charts will be available to users in all namespaces by selecting "All Namespaces" when creating the repository.
+
+To give a specific user `USERNAME` the ability to create App Repositories in a specific namespace named `custom-namespace`, grant them both read and write RBAC for AppRepositories in that namespace:
+
+```bash
+kubectl -n custom-namespace create rolebinding username-apprepositories-read --user $USERNAME --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read
+kubectl -n custom-namespace create rolebinding username-apprepositories-write --user $USERNAME --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
+```
+
+or to allow other users the ability to deploy charts from App Repositories in a specific namespace, grant the read access only.
+
+## Associating docker image pull secrets to an AppRepository
+
+When creating an AppRepository in Kubeapps, you can now additionally choose (or create) an [imagePullSecret](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod) to be associated with the AppRepository:
+
+<img src="../img/app-repo-pull-secret.png" alt="AppRepository with imagePullSecret" width="600px">
+
+When Kubeapps deploys any chart from this AppRepository, if a referenced docker image within the chart is from a docker registry server matching one of the secrets associated with the AppRepository, then Kubeapps will automatically append the corresponding imagePullSecret so that image can be pulled from the private registry. Note that the user deploying the chart will need to be able to read secrets in that namespace, which is usually the case when deploying to a namespace.
+
+There will be further work to enable private AppRepositories to be available in multiple namespaces. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87).
+
 ## ChartMuseum
 
 [ChartMuseum](https://chartmuseum.com) is an open-source Helm Chart Repository written in Go (Golang), with support for cloud storage backends, including Google Cloud Storage, Amazon S3, Microsoft Azure Blob Storage, Alibaba Cloud OSS Storage and OpenStack Object Storage.
@@ -199,23 +226,3 @@ spec:
 ```
 
 The above will generate a Pod with the label `my-repo: isPrivate` and the environment variable `FOO=BAR`.
-
-## Per Namespace App Repositories
-
-Previously, once an App Repository was created in Kubeapps, the charts of that repository were then available cluster-wide to all users of Kubeapps. This was changed to allow creating App Repositories available only in specific namespaces, enabling future work supporting deploying charts with private docker registries. These can be created by anyone with the required RBAC for that namespace. You can still create an App Repository whose charts will be available to users in all namespaces by selecting "All Namespaces" when creating the repository.
-
-You can give specific users the ability to create App Repositories in a specific namespace by granting them the necessary RBAC:
-
-```bash
-KUBEAPPS_NAMESPACE=kubeapps
-kubectl -n custom-namespace create rolebinding username-apprepositories-read --user username --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-write
-```
-
-or other users the ability to deploy charts from App Repositories in a specific namespace by granting them read access:
-
-```bash
-KUBEAPPS_NAMESPACE=kubeapps
-kubectl -n custom-namespace create rolebinding username-apprepositories-read --user username --clusterrole kubeapps:$KUBEAPPS_NAMESPACE:apprepositories-read
-```
-
-There is work in progress to support AppRepositories with private docker registries in Kubeapps. Details about the design can be read on the [design document](https://docs.google.com/document/d/1YEeKC6nPLoq4oaxs9v8_UsmxrRfWxB6KCyqrh2-Q8x0/edit?ts=5e2adf87). More information will be added once it is available for general use.
