@@ -543,6 +543,10 @@ describe("updateRepo", () => {
         type: getType(repoActions.repoUpdated),
         payload: r,
       },
+      {
+        type: getType(repoActions.receiveReposSecrets),
+        payload: [],
+      },
     ];
 
     await store.dispatch(

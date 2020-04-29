@@ -149,6 +149,21 @@ export const resyncAllRepos = (
   };
 };
 
+export const fetchRepoSecrets = (
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
+    // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
+    // to avoid listing secrets
+    // https://github.com/kubeapps/kubeapps/issues/1686
+    const secrets = await Secret.list(namespace);
+    const repoSecrets = secrets.items?.filter(s =>
+      s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
+    );
+    dispatch(receiveReposSecrets(repoSecrets));
+  };
+};
+
 // fetchRepos fetches the AppRepositories in a specified namespace.
 export const fetchRepos = (
   namespace: string,
@@ -158,14 +173,7 @@ export const fetchRepos = (
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
-      // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
-      // to avoid listing secrets
-      // https://github.com/kubeapps/kubeapps/issues/1686
-      const secrets = await Secret.list(namespace);
-      const repoSecrets = secrets.items?.filter(s =>
-        s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
-      );
-      dispatch(receiveReposSecrets(repoSecrets));
+      dispatch(fetchRepoSecrets(namespace));
     } catch (e) {
       dispatch(errorRepos(e, "fetch"));
     }
@@ -248,6 +256,8 @@ export const updateRepo = (
         registrySecrets,
       );
       dispatch(repoUpdated(data.appRepository));
+      // Re-fetch secrets in case there are updates
+      dispatch(fetchRepoSecrets(namespace));
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "update"));

@@ -85,23 +85,20 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
             Delete
           </button>
 
-          {/*TODO(andresmgot): Re-enable this component when the update endpoint is available */}
-          <div hidden={true}>
-            <AppRepoAddButton
-              errors={errors}
-              onSubmit={update}
-              validate={validate}
-              namespace={namespace}
-              kubeappsNamespace={kubeappsNamespace}
-              validating={validating}
-              text="Edit"
-              repo={repo}
-              secret={secret}
-              imagePullSecrets={imagePullSecrets}
-              fetchImagePullSecrets={fetchImagePullSecrets}
-              createDockerRegistrySecret={createDockerRegistrySecret}
-            />
-          </div>
+          <AppRepoAddButton
+            errors={errors}
+            onSubmit={update}
+            validate={validate}
+            namespace={namespace}
+            kubeappsNamespace={kubeappsNamespace}
+            validating={validating}
+            text="Edit"
+            repo={repo}
+            secret={secret}
+            imagePullSecrets={imagePullSecrets}
+            fetchImagePullSecrets={fetchImagePullSecrets}
+            createDockerRegistrySecret={createDockerRegistrySecret}
+          />
 
           <button
             className="button button-secondary"

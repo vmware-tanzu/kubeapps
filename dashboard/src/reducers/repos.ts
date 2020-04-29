@@ -98,6 +98,15 @@ const reposReducer = (
         lastAdded: action.payload,
         repos: [...state.repos, action.payload],
       };
+    case getType(actions.repos.repoUpdated):
+      const updatedRepo = action.payload;
+      const repos = state.repos.map(r =>
+        r.metadata.name === updatedRepo.metadata.name &&
+        r.metadata.namespace === updatedRepo.metadata.namespace
+          ? updatedRepo
+          : r,
+      );
+      return { ...state, repos };
     case getType(actions.repos.repoValidating):
       return { ...state, validating: true };
     case getType(actions.repos.repoValidated):
