@@ -101,6 +101,7 @@ type userHandler struct {
 // or ServiceHandler.
 type handler interface {
 	CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
+	UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error)
 	DeleteAppRepository(name, namespace string) error
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
@@ -239,6 +240,34 @@ func parseRepoAndSecret(appRepoBody io.ReadCloser) (*v1alpha1.AppRepository, *co
 	return appRepo, repoSecret, nil
 }
 
+func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, requestNamespace string, appRepo *v1alpha1.AppRepository) error {
+	// TODO(#1655) Fixes the immediate issue, but the proper fix would no
+	// longer set the complete owner reference during secretForRequest and
+	// rather do so explicitly here.
+	repoSecret.ObjectMeta.OwnerReferences[0].UID = appRepo.ObjectMeta.UID
+	_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
+	if err != nil && k8sErrors.IsAlreadyExists(err) {
+		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(repoSecret)
+	}
+	if err != nil {
+		return err
+	}
+
+	// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
+	if requestNamespace != a.kubeappsNamespace {
+		repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
+		repoSecret.ObjectMeta.OwnerReferences = nil
+		_, err = a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
+		if err != nil && k8sErrors.IsAlreadyExists(err) {
+			_, err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Update(repoSecret)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // CreateAppRepository creates an AppRepository resource based on the request data
 func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	if a.kubeappsNamespace == "" {
@@ -262,22 +291,46 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 	}
 
 	if repoSecret != nil {
-		// TODO(#1655) Fixes the immediate issue, but the proper fix would no
-		// longer set the complete owner reference during secretForRequest and
-		// rather do so explicitly here.
-		repoSecret.ObjectMeta.OwnerReferences[0].UID = appRepo.ObjectMeta.UID
-		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
+		a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
 		if err != nil {
 			return nil, err
 		}
-		// TODO(#1647): Move app repo sync to namespaces so secret copy not required.
-		if requestNamespace != a.kubeappsNamespace {
-			repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
-			repoSecret.ObjectMeta.OwnerReferences = nil
-			_, err = a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
-			if err != nil {
-				return nil, err
-			}
+	}
+	return appRepo, nil
+}
+
+// UpdateAppRepository updates an AppRepository resource based on the request data
+func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
+	if a.kubeappsNamespace == "" {
+		log.Errorf("attempt to use app repositories handler without kubeappsNamespace configured")
+		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
+	}
+
+	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(appRepo.Spec.DockerRegistrySecrets) > 0 && requestNamespace == a.kubeappsNamespace {
+		return nil, ErrGlobalRepositoryWithSecrets
+	}
+
+	existingAppRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(appRepo.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Update existing repo with the new spec
+	existingAppRepo.Spec = appRepo.Spec
+	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Update(existingAppRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	if repoSecret != nil {
+		a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
+		if err != nil {
+			return nil, err
 		}
 	}
 	return appRepo, nil

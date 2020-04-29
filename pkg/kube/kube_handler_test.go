@@ -46,6 +46,12 @@ type repoStub struct {
 	private bool
 }
 
+type secretStub struct {
+	name string
+}
+
+const kubeappsNamespace = "kubeapps"
+
 func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Object {
 	objects := []runtime.Object{}
 	for namespace, repoStubs := range reposPerNamespace {
@@ -62,6 +68,22 @@ func makeAppRepoObjects(reposPerNamespace map[string][]repoStub) []runtime.Objec
 				appRepo.Spec.Auth.Header = authHeader
 			}
 			objects = append(objects, runtime.Object(appRepo))
+		}
+	}
+	return objects
+}
+
+func makeSecretObjects(secretsPerNamespace map[string][]secretStub) []runtime.Object {
+	objects := []runtime.Object{}
+	for namespace, secretsStubs := range secretsPerNamespace {
+		for _, secretStub := range secretsStubs {
+			secret := &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      secretStub.name,
+					Namespace: namespace,
+				},
+			}
+			objects = append(objects, runtime.Object(secret))
 		}
 	}
 	return objects
@@ -116,8 +138,94 @@ func (f fakeCombinedClientset) RestClient() rest.Interface {
 	return f.rc
 }
 
+func checkErr(t *testing.T, err error, expectedError error) {
+	if err == nil && expectedError != nil {
+		t.Errorf("got: nil, want: %+v", expectedError)
+	} else if err != nil {
+		if expectedError == nil {
+			t.Errorf("got: %+v, want: nil", err)
+		} else if got, want := err.Error(), expectedError.Error(); got != want {
+			t.Errorf("got: %q, want: %q", got, want)
+		}
+	}
+}
+
+func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs fakeCombinedClientset) (appRepositoryRequest, *v1alpha1.AppRepository, *v1alpha1.AppRepository) {
+	var appRepoRequest appRepositoryRequest
+	err := json.NewDecoder(strings.NewReader(requestData)).Decode(&appRepoRequest)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+
+	// Ensure the expected AppRepository is stored
+	expectedAppRepo := appRepositoryForRequest(appRepoRequest)
+	expectedAppRepo.ObjectMeta.Namespace = requestNamespace
+
+	responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(expectedAppRepo.ObjectMeta.Name, metav1.GetOptions{})
+	if err != nil {
+		t.Fatalf("expected data %v not present: %+v", expectedAppRepo, err)
+	}
+
+	if got, want := responseAppRepo, expectedAppRepo; !cmp.Equal(want, got) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+	}
+	return appRepoRequest, expectedAppRepo, responseAppRepo
+}
+
+func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepositoryRequest, expectedAppRepo *v1alpha1.AppRepository, responseAppRepo *v1alpha1.AppRepository, handler userHandler) {
+	// TODO(#1655)
+	// The fake k8s API does not generate UID's for created object
+	// (among other things). We would need to add reactors to the fake
+	// to do so to test the UID being set on the secret.
+	// https://github.com/kubernetes/client-go/issues/439
+	// responseAppRepo.ObjectMeta.UID = "dead-beef"
+
+	// When appropriate, ensure the expected secret is stored.
+	if appRepoRequest.AppRepository.AuthHeader != "" {
+		expectedSecret := secretForRequest(appRepoRequest, responseAppRepo)
+		expectedSecret.ObjectMeta.Namespace = requestNamespace
+		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
+
+		if err != nil {
+			t.Errorf("expected data %v not present: %+v", expectedSecret, err)
+		}
+
+		if got, want := responseSecret, expectedSecret; !cmp.Equal(want, got) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+		}
+
+		// Verify the copy of the repo secret in in kubeapps is
+		// also stored if this is a per-namespace app repository.
+		kubeappsSecretName := KubeappsSecretNameForRepo(expectedAppRepo.ObjectMeta.Name, expectedAppRepo.ObjectMeta.Namespace)
+		expectedSecret.ObjectMeta.Name = kubeappsSecretName
+		expectedSecret.ObjectMeta.Namespace = kubeappsNamespace
+		// The owner ref cannot be present for the copy in the kubeapps namespace.
+		expectedSecret.ObjectMeta.OwnerReferences = nil
+
+		if requestNamespace != kubeappsNamespace {
+			responseSecret, err = handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
+			if err != nil {
+				t.Errorf("expected data %v not present: %+v", expectedSecret, err)
+			}
+
+			if got, want := responseSecret, expectedSecret; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		} else {
+			// The copy of the secret should not be created when the request namespace is kubeapps.
+			secret, err := handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
+			if err == nil {
+				t.Fatalf("secret should not be created, found %+v", secret)
+			}
+			if got, want := errorCodeForK8sError(t, err), 404; got != want {
+				t.Errorf("got: %d, want: %d", got, want)
+			}
+		}
+	}
+
+}
+
 func TestAppRepositoryCreate(t *testing.T) {
-	const kubeappsNamespace = "kubeapps"
 	testCases := []struct {
 		name             string
 		requestNamespace string
@@ -201,86 +309,111 @@ func TestAppRepositoryCreate(t *testing.T) {
 			}
 
 			apprepo, err := handler.CreateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
-
-			if err == nil && tc.expectedError != nil {
-				t.Errorf("got: nil, want: %+v", tc.expectedError)
-			} else if err != nil {
-				if tc.expectedError == nil {
-					t.Errorf("got: %+v, want: nil", err)
-				} else if got, want := err.Error(), tc.expectedError.Error(); got != want {
-					t.Errorf("got: %q, want: %q", got, want)
-				}
-			}
+			checkErr(t, err, tc.expectedError)
 
 			if apprepo != nil {
-				var appRepoRequest appRepositoryRequest
-				err := json.NewDecoder(strings.NewReader(tc.requestData)).Decode(&appRepoRequest)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
+				appRepoRequest, expectedAppRepo, responseAppRepo := checkAppRepo(t, tc.requestData, tc.requestNamespace, cs)
+				checkSecrets(t, tc.requestNamespace, appRepoRequest, expectedAppRepo, responseAppRepo, handler)
+			}
+		})
+	}
+}
 
-				// Ensure the expected AppRepository is stored
-				expectedAppRepo := appRepositoryForRequest(appRepoRequest)
-				expectedAppRepo.ObjectMeta.Namespace = tc.requestNamespace
+func TestAppRepositoryUpdate(t *testing.T) {
+	const kubeappsNamespace = "kubeapps"
+	testCases := []struct {
+		name             string
+		requestNamespace string
+		existingRepos    map[string][]repoStub
+		existingSecrets  map[string][]secretStub
+		requestData      string
+		expectedError    error
+	}{
+		{
+			name:             "it updates an app repository in the default kubeappsNamespace",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo"}}`,
+			existingRepos: map[string][]repoStub{
+				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+			},
+		},
+		{
+			name:             "it errors if the repo doesn't exist",
+			requestNamespace: kubeappsNamespace,
+			requestData:      `{"appRepository": {"name": "test-repo"}}`,
+			expectedError:    errors.New("apprepositories.kubeapps.com \"test-repo\" not found"),
+		},
+		{
+			name:             "it updates an app repository in both default and kubeapps namespace",
+			requestNamespace: "default",
+			requestData:      `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo"}}`,
+			existingRepos: map[string][]repoStub{
+				"kubeapps": []repoStub{repoStub{name: "default-test-repo"}},
+				"default":  []repoStub{repoStub{name: "test-repo"}},
+			},
+		},
+		{
+			name:             "it creates a secret if the auth header is set",
+			requestNamespace: kubeappsNamespace,
+			existingRepos: map[string][]repoStub{
+				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+			},
+			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
+		},
+		{
+			name:             "it creates a secret if the auth header is set in different namespaces",
+			requestNamespace: "default",
+			existingRepos: map[string][]repoStub{
+				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+				"default":  []repoStub{repoStub{name: "test-repo"}},
+			},
+			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
+		},
+		{
+			name:             "it updates a secret if the auth header is set",
+			requestNamespace: kubeappsNamespace,
+			existingRepos: map[string][]repoStub{
+				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+			},
+			existingSecrets: map[string][]secretStub{
+				"kubeapps": []secretStub{secretStub{name: "apprepo-test-repo"}},
+			},
+			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
+		},
+		{
+			name:             "it updates a secret if the auth header is set in both default and kubeapps namespace",
+			requestNamespace: "default",
+			existingRepos: map[string][]repoStub{
+				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+				"default":  []repoStub{repoStub{name: "test-repo"}},
+			},
+			existingSecrets: map[string][]secretStub{
+				"kubeapps": []secretStub{secretStub{name: "default-apprepo-test-repo"}},
+				"default":  []secretStub{secretStub{name: "apprepo-test-repo"}},
+			},
+			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
+		},
+	}
 
-				responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(tc.requestNamespace).Get(expectedAppRepo.ObjectMeta.Name, metav1.GetOptions{})
-				if err != nil {
-					t.Fatalf("expected data %v not present: %+v", expectedAppRepo, err)
-				}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cs := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
+				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
+			}
+			handler := userHandler{
+				kubeappsNamespace: kubeappsNamespace,
+				svcClientset:      cs,
+				clientset:         cs,
+			}
 
-				if got, want := responseAppRepo, expectedAppRepo; !cmp.Equal(want, got) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-				}
+			apprepo, err := handler.UpdateAppRepository(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace)
+			checkErr(t, err, tc.expectedError)
 
-				// TODO(#1655)
-				// The fake k8s API does not generate UID's for created object
-				// (among other things). We would need to add reactors to the fake
-				// to do so to test the UID being set on the secret.
-				// https://github.com/kubernetes/client-go/issues/439
-				// responseAppRepo.ObjectMeta.UID = "dead-beef"
-
-				// When appropriate, ensure the expected secret is stored.
-				if appRepoRequest.AppRepository.AuthHeader != "" {
-					expectedSecret := secretForRequest(appRepoRequest, responseAppRepo)
-					expectedSecret.ObjectMeta.Namespace = tc.requestNamespace
-					responseSecret, err := cs.CoreV1().Secrets(tc.requestNamespace).Get(expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
-
-					if err != nil {
-						t.Errorf("expected data %v not present: %+v", expectedSecret, err)
-					}
-
-					if got, want := responseSecret, expectedSecret; !cmp.Equal(want, got) {
-						t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-					}
-
-					// Verify the copy of the repo secret in in kubeapps is
-					// also stored if this is a per-namespace app repository.
-					kubeappsSecretName := KubeappsSecretNameForRepo(expectedAppRepo.ObjectMeta.Name, expectedAppRepo.ObjectMeta.Namespace)
-					expectedSecret.ObjectMeta.Name = kubeappsSecretName
-					expectedSecret.ObjectMeta.Namespace = kubeappsNamespace
-					// The owner ref cannot be present for the copy in the kubeapps namespace.
-					expectedSecret.ObjectMeta.OwnerReferences = nil
-
-					if tc.requestNamespace != kubeappsNamespace {
-						responseSecret, err = handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
-						if err != nil {
-							t.Errorf("expected data %v not present: %+v", expectedSecret, err)
-						}
-
-						if got, want := responseSecret, expectedSecret; !cmp.Equal(want, got) {
-							t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-						}
-					} else {
-						// The copy of the secret should not be created when the request namespace is kubeapps.
-						secret, err := handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
-						if err == nil {
-							t.Fatalf("secret should not be created, found %+v", secret)
-						}
-						if got, want := errorCodeForK8sError(t, err), 404; got != want {
-							t.Errorf("got: %d, want: %d", got, want)
-						}
-					}
-				}
+			if apprepo != nil {
+				appRepoRequest, expectedAppRepo, responseAppRepo := checkAppRepo(t, tc.requestData, tc.requestNamespace, cs)
+				checkSecrets(t, tc.requestNamespace, appRepoRequest, expectedAppRepo, responseAppRepo, handler)
 			}
 		})
 	}
