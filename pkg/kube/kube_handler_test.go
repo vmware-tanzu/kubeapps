@@ -344,12 +344,11 @@ func TestAppRepositoryUpdate(t *testing.T) {
 			expectedError:    errors.New("apprepositories.kubeapps.com \"test-repo\" not found"),
 		},
 		{
-			name:             "it updates an app repository in both default and kubeapps namespace",
+			name:             "it updates an app repository in the correct namespace",
 			requestNamespace: "default",
 			requestData:      `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo"}}`,
 			existingRepos: map[string][]repoStub{
-				"kubeapps": []repoStub{repoStub{name: "default-test-repo"}},
-				"default":  []repoStub{repoStub{name: "test-repo"}},
+				"default": []repoStub{repoStub{name: "test-repo"}},
 			},
 		},
 		{
@@ -384,8 +383,7 @@ func TestAppRepositoryUpdate(t *testing.T) {
 			name:             "it updates a secret if the auth header is set in both default and kubeapps namespace",
 			requestNamespace: "default",
 			existingRepos: map[string][]repoStub{
-				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
-				"default":  []repoStub{repoStub{name: "test-repo"}},
+				"default": []repoStub{repoStub{name: "test-repo"}},
 			},
 			existingSecrets: map[string][]secretStub{
 				"kubeapps": []secretStub{secretStub{name: "default-apprepo-test-repo"}},

@@ -49,9 +49,7 @@ func checkAppResponse(t *testing.T, response *httptest.ResponseRecorder, expecte
 
 func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError error) {
 	if response.Code == 500 {
-		// We return a simple JSON string for a 500, rather than
-		// It wasn't a status error, this will be the case for 500s
-		// in which case we return a plain JSON string.
+		// If the error is a 500 we simply retunr a string (encoded in JSON)
 		var errMsg string
 		err := json.NewDecoder(response.Body).Decode(&errMsg)
 		if err != nil {
