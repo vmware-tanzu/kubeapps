@@ -42,6 +42,7 @@ type appRepositoryResponse struct {
 	AppRepository v1alpha1.AppRepository `json:"appRepository"`
 }
 
+// JSONError returns an error code and a JSON response
 func JSONError(w http.ResponseWriter, err interface{}, code int) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -71,6 +72,29 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
+		response := appRepositoryResponse{
+			AppRepository: *appRepo,
+		}
+		responseBody, err := json.Marshal(response)
+		if err != nil {
+			JSONError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(responseBody)
+	}
+}
+
+// UpdateAppRepository updates an App Repository
+func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		requestNamespace := mux.Vars(req)["namespace"]
+		token := auth.ExtractToken(req.Header.Get("Authorization"))
+		appRepo, err := handler.AsUser(token).UpdateAppRepository(req.Body, requestNamespace)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 		response := appRepositoryResponse{
 			AppRepository: *appRepo,
 		}
@@ -170,6 +194,7 @@ func SetupDefaultRoutes(r *mux.Router) error {
 	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
+	r.Methods("PUT").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(UpdateAppRepository(backendHandler)))
 	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	r.Methods("GET").Path("/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
 	return nil

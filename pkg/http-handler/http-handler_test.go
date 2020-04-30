@@ -35,6 +35,42 @@ import (
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 )
 
+func checkAppResponse(t *testing.T, response *httptest.ResponseRecorder, expectedRepo *v1alpha1.AppRepository) {
+	var appRepoResponse appRepositoryResponse
+	err := json.NewDecoder(response.Body).Decode(&appRepoResponse)
+	if err != nil {
+		t.Fatalf("%+v", err)
+	}
+	expectedResponse := appRepositoryResponse{AppRepository: *expectedRepo}
+	if got, want := appRepoResponse, expectedResponse; !cmp.Equal(want, got) {
+		t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+	}
+}
+
+func checkError(t *testing.T, response *httptest.ResponseRecorder, expectedError error) {
+	if response.Code == 500 {
+		// If the error is a 500 we simply retunr a string (encoded in JSON)
+		var errMsg string
+		err := json.NewDecoder(response.Body).Decode(&errMsg)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		if got, want := errMsg, expectedError.Error(); got != want {
+			t.Errorf("got: %q, want: %q", got, want)
+		}
+	} else {
+		// The error should be a kubernetes error response.
+		var status metav1.Status
+		err := json.NewDecoder(response.Body).Decode(&status)
+		if err != nil {
+			t.Fatalf("%+v", err)
+		}
+		if got, want := status, expectedError.(*k8sErrors.StatusError).ErrStatus; !cmp.Equal(want, got) {
+			t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+		}
+	}
+}
+
 func TestCreateAppRepository(t *testing.T) {
 	testCases := []struct {
 		name         string
@@ -59,7 +95,7 @@ func TestCreateAppRepository(t *testing.T) {
 		},
 		{
 			name:         "it returns a json 500 error as a plain string for internal backend errors",
-			err:          fmt.Errorf("Bang!"),
+			err:          fmt.Errorf("bang"),
 			expectedCode: 500,
 		},
 	}
@@ -77,38 +113,54 @@ func TestCreateAppRepository(t *testing.T) {
 			}
 
 			if response.Code == 201 {
-				var appRepoResponse appRepositoryResponse
-				err := json.NewDecoder(response.Body).Decode(&appRepoResponse)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				expectedResponse := appRepositoryResponse{AppRepository: *tc.appRepo}
-				if got, want := appRepoResponse, expectedResponse; !cmp.Equal(want, got) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-				}
-			} else if response.Code == 500 {
-
-				// We return a simple JSON string for a 500, rather than
-				// It wasn't a status error, this will be the case for 500s
-				// in which case we return a plain JSON string.
-				var errMsg string
-				err := json.NewDecoder(response.Body).Decode(&errMsg)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				if got, want := errMsg, tc.err.Error(); got != want {
-					t.Errorf("got: %q, want: %q", got, want)
-				}
+				checkAppResponse(t, response, tc.appRepo)
 			} else {
-				// The error should be a kubernetes error response.
-				var status metav1.Status
-				err := json.NewDecoder(response.Body).Decode(&status)
-				if err != nil {
-					t.Fatalf("%+v", err)
-				}
-				if got, want := status, tc.err.(*k8sErrors.StatusError).ErrStatus; !cmp.Equal(want, got) {
-					t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
-				}
+				checkError(t, response, tc.err)
+			}
+		})
+	}
+}
+
+func TestUpdateAppRepository(t *testing.T) {
+	testCases := []struct {
+		name         string
+		appRepo      *v1alpha1.AppRepository
+		err          error
+		expectedCode int
+	}{
+		{
+			name:         "it should return the repo and a 200 if the repo is updated",
+			appRepo:      &v1alpha1.AppRepository{ObjectMeta: metav1.ObjectMeta{Name: "foo"}},
+			expectedCode: 200,
+		},
+		{
+			name:         "it should return a 404 if not found",
+			err:          k8sErrors.NewNotFound(schema.GroupResource{}, "foo"),
+			expectedCode: 404,
+		},
+		{
+			name:         "it returns a json 500 error as a plain string for internal backend errors",
+			err:          fmt.Errorf("bang"),
+			expectedCode: 500,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			createAppFunc := UpdateAppRepository(&kube.FakeHandler{UpdatedRepo: tc.appRepo, Err: tc.err})
+			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/foo", strings.NewReader("data"))
+			req = mux.SetURLVars(req, map[string]string{"namespace": "kubeapps"})
+
+			response := httptest.NewRecorder()
+			createAppFunc(response, req)
+
+			if got, want := response.Code, tc.expectedCode; got != want {
+				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+
+			if response.Code == 200 {
+				checkAppResponse(t, response, tc.appRepo)
+			} else {
+				checkError(t, response, tc.err)
 			}
 		})
 	}

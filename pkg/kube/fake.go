@@ -31,6 +31,7 @@ import (
 type FakeHandler struct {
 	AppRepos    []*v1alpha1.AppRepository
 	CreatedRepo *v1alpha1.AppRepository
+	UpdatedRepo *v1alpha1.AppRepository
 	Namespaces  []corev1.Namespace
 	Secrets     []*corev1.Secret
 	Err         error
@@ -50,6 +51,11 @@ func (c *FakeHandler) AsSVC() handler {
 func (c *FakeHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
 	c.AppRepos = append(c.AppRepos, c.CreatedRepo)
 	return c.CreatedRepo, c.Err
+}
+
+// UpdateAppRepository fake
+func (c *FakeHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*v1alpha1.AppRepository, error) {
+	return c.UpdatedRepo, c.Err
 }
 
 // DeleteAppRepository fake
