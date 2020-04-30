@@ -97,6 +97,10 @@ installOLM() {
     # But the fix has not been published yet. To workaround the issue we are using a newer image
     # This will be fixed in a version > 0.14.2
     kubectl apply -f "${ROOT_DIR}/script/manifests/olm.yaml"
+
+    # wait for deployments to be ready
+    kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
+    kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"
 }
 
 ########################
