@@ -91,7 +91,12 @@ installOLM() {
     namespace=olm
 
     kubectl apply -f ${url}/crds.yaml
-    kubectl apply -f ${url}/olm.yaml
+
+    # The Pod that populates the catalog gets OOM Killed due to very low limits
+    # This has been fixed here: https://github.com/operator-framework/operator-lifecycle-manager/pull/1389
+    # But the fix has not been published yet. To workaround the issue we are using a newer image
+    # This will be fixed in a version > 0.14.2
+    kubectl apply -f "${ROOT_DIR}/script/manifests/olm.yaml"
 }
 
 ########################

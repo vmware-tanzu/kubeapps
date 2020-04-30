@@ -1,4 +1,4 @@
-test("Upgrades an application", async () => {
+test("Deploys an Operator", async () => {
   await page.goto(getUrl("/#/ns/kubeapps/operators"));
 
   await expect(page).toFillForm("form", {
