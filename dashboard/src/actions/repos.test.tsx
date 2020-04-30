@@ -531,9 +531,16 @@ describe("installRepo", () => {
 
 describe("updateRepo", () => {
   it("updates a repo", async () => {
-    const r = { metadata: { name: "repo-abc" } };
+    const r = {
+      metadata: { name: "repo-abc" },
+      spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
+    };
+    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn(() => {
       return { appRepository: r };
+    });
+    Secret.get = jest.fn(() => {
+      return secret;
     });
     const expectedActions = [
       {
@@ -544,8 +551,8 @@ describe("updateRepo", () => {
         payload: r,
       },
       {
-        type: getType(repoActions.receiveReposSecrets),
-        payload: [],
+        type: getType(repoActions.receiveReposSecret),
+        payload: secret,
       },
     ];
 

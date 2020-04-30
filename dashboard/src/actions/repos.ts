@@ -35,6 +35,10 @@ export const receiveReposSecrets = createAction("RECEIVE_REPOS_SECRETS", resolve
   return (secrets: ISecret[]) => resolve(secrets);
 });
 
+export const receiveReposSecret = createAction("RECEIVE_REPOS_SECRET", resolve => {
+  return (secret: ISecret) => resolve(secret);
+});
+
 export const requestRepo = createAction("REQUEST_REPO");
 export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
   return (repo: IAppRepository) => resolve(repo);
@@ -89,6 +93,7 @@ const allActions = [
   receiveRepo,
   receiveRepos,
   receiveReposSecrets,
+  receiveReposSecret,
   resetForm,
   errorChart,
   requestRepo,
@@ -161,6 +166,16 @@ export const fetchRepoSecrets = (
       s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
     );
     dispatch(receiveReposSecrets(repoSecrets));
+  };
+};
+
+export const fetchRepoSecret = (
+  namespace: string,
+  name: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async dispatch => {
+    const secret = await Secret.get(name, namespace);
+    dispatch(receiveReposSecret(secret));
   };
 };
 
@@ -256,8 +271,12 @@ export const updateRepo = (
         registrySecrets,
       );
       dispatch(repoUpdated(data.appRepository));
-      // Re-fetch secrets in case there are updates
-      dispatch(fetchRepoSecrets(namespace));
+      // Re-fetch the helm repo secret that could have been modified with the updated headers
+      // so that if the user chooses to edit the app repo again, they will see the current value.
+      if (data.appRepository.spec?.auth) {
+        const secretName = data.appRepository.spec.auth.header.secretKeyRef.name;
+        dispatch(fetchRepoSecret(namespace, secretName));
+      }
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "update"));

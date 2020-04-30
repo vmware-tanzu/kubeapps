@@ -40,6 +40,7 @@ describe("reposReducer", () => {
       requestRepos: getType(actions.repos.requestRepos),
       receiveRepos: getType(actions.repos.receiveRepos),
       receiveReposSecrets: getType(actions.repos.receiveReposSecrets),
+      receiveReposSecret: getType(actions.repos.receiveReposSecret),
       requestRepo: getType(actions.repos.requestRepo),
       receiveRepo: getType(actions.repos.receiveRepo),
       repoValidating: getType(actions.repos.repoValidating),
@@ -115,6 +116,20 @@ describe("reposReducer", () => {
           payload: [secret],
         }),
       ).toEqual({ ...initialState, repoSecrets: [secret] });
+    });
+
+    it("receives a repo secret", () => {
+      const secret = { metadata: { name: "foo" } } as any;
+      const modifiedSecret = { ...secret, spec: { foo: "bar" } };
+      expect(
+        reposReducer(
+          { ...initialState, repoSecrets: [secret] },
+          {
+            type: actionTypes.receiveReposSecret as any,
+            payload: modifiedSecret,
+          },
+        ),
+      ).toEqual({ ...initialState, repoSecrets: [modifiedSecret] });
     });
 
     it("adds a repo", () => {

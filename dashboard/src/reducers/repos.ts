@@ -87,6 +87,15 @@ const reposReducer = (
       };
     case getType(actions.repos.receiveReposSecrets):
       return { ...state, repoSecrets: action.payload };
+    case getType(actions.repos.receiveReposSecret):
+      const secret = action.payload;
+      const repoSecrets = state.repoSecrets.map(s =>
+        s.metadata.name === secret.metadata.name &&
+        s.metadata.namespace === secret.metadata.namespace
+          ? secret
+          : s,
+      );
+      return { ...state, repoSecrets };
     case getType(actions.repos.requestRepos):
       return { ...state, ...isFetching(state, "repositories", true) };
     case getType(actions.repos.addRepo):
