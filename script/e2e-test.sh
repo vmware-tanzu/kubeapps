@@ -77,6 +77,40 @@ tiller-init-rbac() {
     retry_while "helm version ${HELM_CLIENT_TLS_FLAGS[*]} --tiller-connection-timeout 1" "60" "1"
 }
 
+########################
+# Install OLM
+# Globals: None
+# Arguments:
+#   $1: Version of OLM
+# Returns: None
+#########################
+installOLM() {
+    local release=$1
+    info "Installing OLM ${release} ..."
+    url=https://github.com/operator-framework/operator-lifecycle-manager/releases/download/${release}
+    namespace=olm
+
+    kubectl apply -f ${url}/crds.yaml
+    kubectl apply -f ${url}/olm.yaml
+}
+
+########################
+# Install the given operator using OperatorHub
+# Globals: None
+# Arguments:
+#   $1: Operator to install
+# Returns: None
+#########################
+installOperator() {
+    local operator=$1
+    info "Installing Operator ${operator} ..."
+    kubectl create -f "https://operatorhub.io/install/${operator}.yaml"
+}
+
+installOLM 0.14.1
+# TODO(andresmgot): Switch to install the operator using the web form when ready
+installOperator prometheus
+
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
 info "Cluster Version: $(kubectl version -o json | jq -r '.serverVersion.gitVersion')"
@@ -130,6 +164,7 @@ if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
     "${HELM_CLIENT_TLS_FLAGS[@]}" \
     --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
     --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
+    --set featureFlags.operators=true \
     ${invalidateCacheFlag} \
     "${img_flags[@]}" \
     "${db_flags[@]}"
@@ -142,6 +177,7 @@ else
     ${invalidateCacheFlag} \
     "${img_flags[@]}" \
     "${db_flags[@]}" \
+    --set featureFlags.operators=true \
     --set useHelm3=true
 fi
 
