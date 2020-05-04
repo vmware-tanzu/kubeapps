@@ -116,9 +116,67 @@ installOperator() {
     kubectl create -f "https://operatorhub.io/install/${operator}.yaml"
 }
 
+########################
+# Install chartmuseum
+# Globals: None
+# Arguments:
+#   $1: Username
+#   $2: Password
+# Returns: None
+#########################
+installChartmuseum() {
+    local user=$1
+    local password=$2
+    info "Installing ChartMuseum ..."
+    helm repo add stable https://kubernetes-charts.storage.googleapis.com
+    helm repo up
+    if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
+      helm install --name chartmuseum --namespace kubeapps stable/chartmuseum \
+        --set env.open.DISABLE_API=false \
+        --set persistence.enabled=true \
+        --set secret.AUTH_USER=$user \
+        --set secret.AUTH_PASS=$password
+    else
+      helm install chartmuseum --namespace kubeapps stable/chartmuseum \
+        --set env.open.DISABLE_API=false \
+        --set persistence.enabled=true \
+        --set secret.AUTH_USER=$user \
+        --set secret.AUTH_PASS=$password
+    fi
+    kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
+}
+
+########################
+# Push a chart to chartmusem
+# Globals: None
+# Arguments:
+#   $1: chart
+#   $2: version
+#   $3: chartmuseum username
+#   $4: chartmuseum password
+# Returns: None
+#########################
+pushChart() {
+    local chart=$1
+    local version=$2
+    local user=$3
+    local password=$4
+    info "Adding ${chart}-${version} to ChartMuseum ..."
+    curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+
+    local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
+    /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
+    sleep 2
+    curl -u "${user}:${password}" --data-binary "@${chart}-${version}.tgz" http://localhost:8080/api/charts
+    pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
+}
+
 installOLM 0.14.1
 # TODO(andresmgot): Switch to install the operator using the web form when ready
 installOperator prometheus
+
+installChartmuseum admin password
+pushChart apache 7.3.15 admin password
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
