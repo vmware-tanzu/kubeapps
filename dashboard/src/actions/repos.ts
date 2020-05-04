@@ -35,6 +35,10 @@ export const receiveReposSecrets = createAction("RECEIVE_REPOS_SECRETS", resolve
   return (secrets: ISecret[]) => resolve(secrets);
 });
 
+export const receiveReposSecret = createAction("RECEIVE_REPOS_SECRET", resolve => {
+  return (secret: ISecret) => resolve(secret);
+});
+
 export const requestRepo = createAction("REQUEST_REPO");
 export const receiveRepo = createAction("RECEIVE_REPO", resolve => {
   return (repo: IAppRepository) => resolve(repo);
@@ -89,6 +93,7 @@ const allActions = [
   receiveRepo,
   receiveRepos,
   receiveReposSecrets,
+  receiveReposSecret,
   resetForm,
   errorChart,
   requestRepo,
@@ -149,6 +154,31 @@ export const resyncAllRepos = (
   };
 };
 
+export const fetchRepoSecrets = (
+  namespace: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async (dispatch, getState) => {
+    // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
+    // to avoid listing secrets
+    // https://github.com/kubeapps/kubeapps/issues/1686
+    const secrets = await Secret.list(namespace);
+    const repoSecrets = secrets.items?.filter(s =>
+      s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
+    );
+    dispatch(receiveReposSecrets(repoSecrets));
+  };
+};
+
+export const fetchRepoSecret = (
+  namespace: string,
+  name: string,
+): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
+  return async dispatch => {
+    const secret = await Secret.get(name, namespace);
+    dispatch(receiveReposSecret(secret));
+  };
+};
+
 // fetchRepos fetches the AppRepositories in a specified namespace.
 export const fetchRepos = (
   namespace: string,
@@ -158,14 +188,7 @@ export const fetchRepos = (
       dispatch(requestRepos(namespace));
       const repos = await AppRepository.list(namespace);
       dispatch(receiveRepos(repos.items));
-      // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
-      // to avoid listing secrets
-      // https://github.com/kubeapps/kubeapps/issues/1686
-      const secrets = await Secret.list(namespace);
-      const repoSecrets = secrets.items?.filter(s =>
-        s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
-      );
-      dispatch(receiveReposSecrets(repoSecrets));
+      dispatch(fetchRepoSecrets(namespace));
     } catch (e) {
       dispatch(errorRepos(e, "fetch"));
     }
@@ -248,6 +271,22 @@ export const updateRepo = (
         registrySecrets,
       );
       dispatch(repoUpdated(data.appRepository));
+      // Re-fetch the helm repo secret that could have been modified with the updated headers
+      // so that if the user chooses to edit the app repo again, they will see the current value.
+      if (data.appRepository.spec?.auth) {
+        let secretName = "";
+        if (data.appRepository.spec.auth.header) {
+          secretName = data.appRepository.spec.auth.header.secretKeyRef.name;
+          dispatch(fetchRepoSecret(namespace, secretName));
+        }
+        if (
+          data.appRepository.spec.auth.customCA &&
+          secretName !== data.appRepository.spec.auth.customCA.secretKeyRef.name
+        ) {
+          secretName = data.appRepository.spec.auth.customCA.secretKeyRef.name;
+          dispatch(fetchRepoSecret(namespace, secretName));
+        }
+      }
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "update"));
