@@ -334,8 +334,8 @@ kubectl cp ./use-cases "${pod}:/app/"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=admin --serviceaccount kubeapps:kubeapps-operator
-kubectl create -n kubeapps rolebinding kubeapps-repositories-write --role=kubeapps-ci-repositories-write --serviceaccount kubeapps:kubeapps-operator
-kubectl create -n kubeapps rolebinding kubeapps-repositories-read --role=kubeapps-ci-repositories-read --serviceaccount kubeapps:kubeapps-operator
+kubectl create -n kubeapps clusterrolebinding kubeapps-repositories-write --role=kubeapps-ci-repositories-write --serviceaccount kubeapps:kubeapps-operator
+kubectl create -n kubeapps clusterrolebinding kubeapps-repositories-read --role=kubeapps-ci-repositories-read --serviceaccount kubeapps:kubeapps-operator
 ## Create view user
 kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
