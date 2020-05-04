@@ -92,12 +92,17 @@ installOLM() {
 
     kubectl apply -f ${url}/crds.yaml
 
-    # The Pod that populates the catalog gets OOM Killed due to very low limits
-    # This has been fixed here: https://github.com/operator-framework/operator-lifecycle-manager/pull/1389
-    # But the fix has not been published yet. To workaround the issue we are using a newer image
-    # This will be fixed in a version > 0.14.2
-    kubectl apply -f "${ROOT_DIR}/script/manifests/olm.yaml"
-
+    if [[ -z "$GKE_ADMIN" ]]; then
+      # The Pod that populates the catalog gets OOM Killed due to very low limits
+      # This has been fixed here: https://github.com/operator-framework/operator-lifecycle-manager/pull/1389
+      # But the fix has not been published yet. To workaround the issue we are using a newer image
+      # This will be fixed in a version > 0.14.2
+      kubectl apply -f "${ROOT_DIR}/script/manifests/olm.yaml"
+    else
+      # This issue is not present in GKE and the newer manifest doesn't work in k8s 1.15
+      # So we use the default manifest
+      kubectl apply -f ${url}/olm.yaml
+    fi
     # wait for deployments to be ready
     kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
     kubectl rollout status -w deployment/catalog-operator --namespace="${namespace}"

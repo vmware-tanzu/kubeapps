@@ -1,4 +1,9 @@
 test("Deploys an Operator", async () => {
+  if (process.env.GKE_BRANCH === "1.14") {
+    console.log("Operators are not supported in GKE 1.14, skipping test");
+    return;
+  }
+
   await page.goto(getUrl("/#/ns/kubeapps/operators"));
 
   await expect(page).toFillForm("form", {
