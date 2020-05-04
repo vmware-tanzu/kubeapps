@@ -122,7 +122,7 @@ installOperator() {
 }
 
 # Operators are not supported in GKE 1.14, skipping test
-if [[ "$GKE_BRANCH" != "1.14" ]]; then
+if [[ "${GKE_BRANCH-}" != "1.14" ]]; then
   installOLM 0.14.1
   # TODO(andresmgot): Switch to install the operator using the web form when ready
   installOperator prometheus
