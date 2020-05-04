@@ -132,6 +132,7 @@ installChartmuseum() {
     helm repo up
     if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
       helm install --name chartmuseum --namespace kubeapps stable/chartmuseum \
+        "${HELM_CLIENT_TLS_FLAGS[@]}" \
         --set env.open.DISABLE_API=false \
         --set persistence.enabled=true \
         --set secret.AUTH_USER=$user \
@@ -174,10 +175,6 @@ pushChart() {
 installOLM 0.14.1
 # TODO(andresmgot): Switch to install the operator using the web form when ready
 installOperator prometheus
-
-kubectl create ns kubeapps
-installChartmuseum admin password
-pushChart apache 7.3.15 admin password
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
@@ -239,6 +236,7 @@ if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
 else
   # Install Kubeapps
   info "Installing Kubeapps..."
+  kubectl create ns kubeapps
   helm dep up "${ROOT_DIR}/chart/kubeapps/"
   helm install kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
     ${invalidateCacheFlag} \
@@ -247,6 +245,9 @@ else
     --set featureFlags.operators=true \
     --set useHelm3=true
 fi
+
+installChartmuseum admin password
+pushChart apache 7.3.15 admin password
 
 # Ensure that we are testing the correct image
 info ""
