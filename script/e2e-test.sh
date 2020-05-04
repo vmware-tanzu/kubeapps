@@ -175,6 +175,7 @@ installOLM 0.14.1
 # TODO(andresmgot): Switch to install the operator using the web form when ready
 installOperator prometheus
 
+kubectl create ns kubeapps
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password
 
@@ -238,7 +239,6 @@ if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
 else
   # Install Kubeapps
   info "Installing Kubeapps..."
-  kubectl create ns kubeapps
   helm dep up "${ROOT_DIR}/chart/kubeapps/"
   helm install kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
     ${invalidateCacheFlag} \
