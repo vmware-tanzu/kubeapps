@@ -279,6 +279,10 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
+## Operators are not supported for GKE 1.14, skip that test
+if [[ "${GKE_BRANCH:-}" == "1.14" ]]; then
+  rm use-cases/operator-deployment.js
+fi
 kubectl cp ./use-cases "${pod}:/app/"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
