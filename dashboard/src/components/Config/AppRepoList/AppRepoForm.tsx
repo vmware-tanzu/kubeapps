@@ -282,7 +282,8 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 <p className="margin-b-small">Associate Docker Registry Credentials (optional):</p>
                 <span className="AppRepoInputDescription">
                   Select existing secret(s) to access a private Docker registry and pull images from
-                  it. Note that this functionality is supported for Kubeapps with Helm3 only, more info{" "}
+                  it. Note that this functionality is supported for Kubeapps with Helm3 only, more
+                  info{" "}
                   <a
                     href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
                     target="_blank"
