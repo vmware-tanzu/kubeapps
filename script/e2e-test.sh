@@ -92,7 +92,7 @@ installOLM() {
 
     kubectl apply -f ${url}/crds.yaml
 
-    if [[ -z "$GKE_ADMIN" ]]; then
+    if [[ -z "$GKE_BRANCH" ]]; then
       # The Pod that populates the catalog gets OOM Killed due to very low limits
       # This has been fixed here: https://github.com/operator-framework/operator-lifecycle-manager/pull/1389
       # But the fix has not been published yet. To workaround the issue we are using a newer image
@@ -121,9 +121,12 @@ installOperator() {
     kubectl create -f "https://operatorhub.io/install/${operator}.yaml"
 }
 
-installOLM 0.14.1
-# TODO(andresmgot): Switch to install the operator using the web form when ready
-installOperator prometheus
+# Operators are not supported in GKE 1.14, skipping test
+if [[ "$GKE_BRANCH" != "1.14" ]]; then
+  installOLM 0.14.1
+  # TODO(andresmgot): Switch to install the operator using the web form when ready
+  installOperator prometheus
+fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
