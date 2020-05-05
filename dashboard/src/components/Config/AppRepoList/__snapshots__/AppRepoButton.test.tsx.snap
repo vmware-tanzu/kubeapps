@@ -318,6 +318,16 @@ exports[`should open a modal with the repository form 1`] = `
                         />
                       </pre>
                     </div>
+                    <div
+                      class="margin-b-normal"
+                    >
+                      <strong>
+                        NOTE:
+                      </strong>
+                      This App Repository will be created in the "
+                      kubeapps
+                      " namespace and charts will be available in all namespaces for installation.
+                    </div>
                     <div>
                       <button
                         class="button button-primary"

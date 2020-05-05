@@ -1,8 +1,9 @@
 import * as yaml from "js-yaml";
 import * as React from "react";
 import { Redirect } from "react-router";
-import { IAppRepository, ISecret } from "shared/types";
 import Hint from "../../../components/Hint";
+import { definedNamespaces } from "../../../shared/Namespace";
+import { IAppRepository, ISecret } from "../../../shared/types";
 import { UnexpectedErrorAlert } from "../../ErrorAlert";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 
@@ -350,6 +351,13 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 />
               </pre>
             </div>
+            {(namespace === kubeappsNamespace || namespace === definedNamespaces.all) && (
+              <div className="margin-b-normal">
+                <strong>NOTE:</strong> This App Repository will be created in the "
+                {kubeappsNamespace}" namespace and charts will be available in all namespaces for
+                installation.
+              </div>
+            )}
             {this.props.validationError && (
               <UnexpectedErrorAlert
                 title="Validation Failed. Got:"
