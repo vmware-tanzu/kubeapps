@@ -165,7 +165,7 @@ build_images: &build_images
         fi
         for IMAGE in "${IMG_ARRAY[@]}"; do
           make IMG_MODIFIER="$IMG_MODIFIER" IMAGE_TAG="${DEV_TAG}" $makeArgs kubeapps/${IMAGE}
-          if [[ -z "${CIRCLE_PULL_REQUEST}" && -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
+          if [[ -n "${DOCKER_USERNAME}" && -n "${DOCKER_PASSWORD}" ]]; then
             docker login -u="${DOCKER_USERNAME}" -p="${DOCKER_PASSWORD}"
             docker push kubeapps/${IMAGE}${IMG_MODIFIER}:${DEV_TAG}
           fi
