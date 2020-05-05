@@ -358,8 +358,8 @@ for f in *.js; do
 done
 testsToIgnore=()
 # Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
-if [[ -z "${GKE_BRANCH-}" ]]; then
-  testsToIgnore=("operator-deployment" "${testsToIgnore[@]}")
+if [[ -n "${GKE_BRANCH-}" ]]; then
+  testsToIgnore=("operator-deployment.js" "${testsToIgnore[@]}")
 fi
 ## Support for Docker registry secrets are not supported for Helm2, skipping that test
 if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
