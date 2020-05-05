@@ -78,6 +78,16 @@ tiller-init-rbac() {
 }
 
 ########################
+# Check if the pod that populates de OperatorHub catalog is running
+# Globals: None
+# Arguments: None
+# Returns: None
+#########################
+isOperatorHubCatalogRunning() {
+  kubectl get pod -n olm -l olm.catalogSource=operatorhubio-catalog -o jsonpath='{.items[0].status.phase}' | grep Running
+}
+
+########################
 # Install OLM
 # Globals: None
 # Arguments:
@@ -269,6 +279,10 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   fi
   info "Helm tests succeded!!"
 fi
+
+## Wait for the Operator catalog to be populated
+info "Waiting for the OperatorHub Catalog to be ready ..."
+retry_while isOperatorHubCatalogRunning 24
 
 # Browser tests
 cd "${ROOT_DIR}/integration"
