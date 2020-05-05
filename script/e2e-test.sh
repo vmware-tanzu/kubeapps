@@ -104,15 +104,15 @@ installOLM() {
 
     kubectl apply -f ${url}/crds.yaml
 
-    if [[ -z "${GKE_BRANCH-}" ]]; then
+    if [[ "${GKE_BRANCH-}" != "1.15" ]]; then
       # The Pod that populates the catalog gets OOM Killed due to very low limits
       # This has been fixed here: https://github.com/operator-framework/operator-lifecycle-manager/pull/1389
       # But the fix has not been published yet. To workaround the issue we are using a newer image
       # This will be fixed in a version > 0.14.2
       kubectl apply -f "${ROOT_DIR}/script/manifests/olm.yaml"
     else
-      # This issue is not present in GKE and the newer manifest doesn't work in k8s 1.15
-      # So we use the default manifest
+      # The newer manifest doesn't work in k8s 1.15
+      # So we use the default manifest, the only problem is that it's way slower
       kubectl apply -f ${url}/olm.yaml
     fi
     # wait for deployments to be ready
@@ -297,9 +297,17 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
+testsToIgnore=()
 ## Operators are not supported for GKE 1.14, skip that test
 if [[ "${GKE_BRANCH:-}" == "1.14" ]]; then
-  rm use-cases/operator-deployment.js
+  testsToIgnore=("operator-deployment" "${testToIgnore[@]}")
+fi
+ignoreFlag=""
+if [[ "${#testsToIgnore[@]}" > "0" ]]; then
+  # Join tests to ignore
+  testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
+  testsToIgnore=${testsToIgnore:1}
+  ignoreFlag="--testPathIgnorePatterns $testsToIgnore"
 fi
 kubectl cp ./use-cases "${pod}:/app/"
 ## Create admin user
