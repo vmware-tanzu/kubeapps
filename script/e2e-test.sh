@@ -330,9 +330,17 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
+testsToIgnore=()
 ## Support for Docker registry secrets are not supported for Helm2, skipping that test
 if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-  rm use-cases/create-private-registry.js
+  testsToIgnore=("create-private-registry.js" "${testToIgnore[@]}")
+fi
+ignoreFlag=""
+if [[ "${#testsToIgnore[@]}" > "0" ]]; then
+  # Join tests to ignore
+  testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
+  testsToIgnore=${testsToIgnore:1}
+  ignoreFlag="--testPathIgnorePatterns $testsToIgnore"
 fi
 kubectl cp ./use-cases "${pod}:/app/"
 ## Create admin user
