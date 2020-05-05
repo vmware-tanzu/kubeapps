@@ -13,25 +13,15 @@ ROOT_DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )/.." >/dev/null && pwd)"
 # shellcheck disable=SC1090
 . "${ROOT_DIR}/script/liblog.sh"
 
-
-# Uninstall Harbor
-info "Uninstalling Harbor in namespace 'harbor'..."
-silence helm uninstall harbor -n harbor
-silence kubectl delete pvc -n harbor $(kubectl get pvc -n harbor -o jsonpath='{.items[*].metadata.name}')
-info "Deleting 'harbor' namespace..."
-silence kubectl delete ns harbor
-
-# Uninstall Kubeapps
-info "Uninstalling Kubeapps in namespace 'kubeapps'..."
-silence helm uninstall kubeapps -n kubeapps
-silence kubectl delete rolebinding example-kubeapps-repositories-read -n kubeapps
-silence kubectl delete rolebinding example-kubeapps-repositories-write -n kubeapps
-info "Deleting 'kubeapps' namespace..."
-silence kubectl delete ns kubeapps
-
-# Delete serviceAccount
-info "Deleting 'example' serviceAccount and related RBAC objects..."
-silence kubectl delete serviceaccount example --namespace default
-silence kubectl delete clusterrole kubeapps-applications-read
-silence kubectl delete rolebinding example-view
-silence kubectl delete rolebinding example-edit
+# Delete Harbor
+info "---------------------"
+info "-- Harbor deletion --"
+info "---------------------"
+echo
+"$ROOT_DIR"/script/delete-harbor.sh --namespace "harbor"
+# Delete Kubeapps
+info "-----------------------"
+info "-- Kubeapps deletion --"
+info "-----------------------"
+echo
+"$ROOT_DIR"/script/delete-kubeapps.sh --namespace "kubeapps"
