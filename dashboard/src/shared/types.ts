@@ -407,7 +407,13 @@ export interface IAppRepository
       type: string;
       url: string;
       auth: {
-        header: {
+        header?: {
+          secretKeyRef: {
+            name: string;
+            key: string;
+          };
+        };
+        customCA?: {
           secretKeyRef: {
             name: string;
             key: string;

@@ -530,10 +530,17 @@ describe("installRepo", () => {
 });
 
 describe("updateRepo", () => {
-  it("updates a repo", async () => {
-    const r = { metadata: { name: "repo-abc" } };
+  it("updates a repo with an auth header", async () => {
+    const r = {
+      metadata: { name: "repo-abc" },
+      spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
+    };
+    const secret = { metadata: { name: "apprepo-repo-abc" } };
     AppRepository.update = jest.fn(() => {
       return { appRepository: r };
+    });
+    Secret.get = jest.fn(() => {
+      return secret;
     });
     const expectedActions = [
       {
@@ -542,6 +549,59 @@ describe("updateRepo", () => {
       {
         type: getType(repoActions.repoUpdated),
         payload: r,
+      },
+      {
+        type: getType(repoActions.receiveReposSecret),
+        payload: secret,
+      },
+    ];
+
+    await store.dispatch(
+      repoActions.updateRepo(
+        "my-repo",
+        "my-namespace",
+        "http://foo.bar",
+        "foo",
+        "bar",
+        safeYAMLTemplate,
+        ["repo-1"],
+      ),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+    expect(AppRepository.update).toHaveBeenCalledWith(
+      "my-repo",
+      "my-namespace",
+      "http://foo.bar",
+      "foo",
+      "bar",
+      { spec: { containers: [{ env: [{ name: "FOO", value: "BAR" }] }] } },
+      ["repo-1"],
+    );
+  });
+
+  it("updates a repo with an customCA", async () => {
+    const r = {
+      metadata: { name: "repo-abc" },
+      spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
+    };
+    const secret = { metadata: { name: "apprepo-repo-abc" } };
+    AppRepository.update = jest.fn(() => {
+      return { appRepository: r };
+    });
+    Secret.get = jest.fn(() => {
+      return secret;
+    });
+    const expectedActions = [
+      {
+        type: getType(repoActions.requestRepoUpdate),
+      },
+      {
+        type: getType(repoActions.repoUpdated),
+        payload: r,
+      },
+      {
+        type: getType(repoActions.receiveReposSecret),
+        payload: secret,
       },
     ];
 
