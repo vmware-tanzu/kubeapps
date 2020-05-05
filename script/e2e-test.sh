@@ -188,8 +188,8 @@ pushChart() {
     pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
 }
 
-# Operators are not supported in GKE 1.14, skipping test
-if [[ -z "${GKE_BRANCH-}" != "1.14" ]]; then
+# Operators are not supported in GKE 1.14 and flaky in 1.15
+if [[ -z "${GKE_BRANCH-}" ]]; then
   installOLM 0.14.1
   # TODO(andresmgot): Switch to install the operator using the web form when ready
   installOperator prometheus
@@ -340,7 +340,8 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   info "Helm tests succeded!!"
 fi
 
-if [[ "${GKE_BRANCH-}" != "1.14" ]]; then
+# Operators are not supported in GKE 1.14 and flaky in 1.15
+if [[ -z "${GKE_BRANCH-}" ]]; then
   ## Wait for the Operator catalog to be populated
   info "Waiting for the OperatorHub Catalog to be ready ..."
   retry_while isOperatorHubCatalogRunning 24
@@ -356,8 +357,8 @@ for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
 testsToIgnore=()
-## Operators are not supported for GKE 1.14, skip that test
-if [[ "${GKE_BRANCH:-}" == "1.14" ]]; then
+# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+if [[ -z "${GKE_BRANCH-}" ]]; then
   testsToIgnore=("operator-deployment" "${testsToIgnore[@]}")
 fi
 ## Support for Docker registry secrets are not supported for Helm2, skipping that test
