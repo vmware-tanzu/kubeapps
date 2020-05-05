@@ -370,7 +370,7 @@ if [[ "${#testsToIgnore[@]}" > "0" ]]; then
   # Join tests to ignore
   testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
   testsToIgnore=${testsToIgnore:1}
-  ignoreFlag="--testPathIgnorePatterns $testsToIgnore"
+  ignoreFlag="--testPathIgnorePatterns '$testsToIgnore'"
 fi
 kubectl cp ./use-cases "${pod}:/app/"
 ## Create admin user
