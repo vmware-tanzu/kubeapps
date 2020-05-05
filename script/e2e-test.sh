@@ -15,7 +15,6 @@
 # limitations under the License.
 
 set -o errexit
-set -o nounset
 set -o pipefail
 
 # Constants
@@ -116,6 +115,62 @@ installOperator() {
     kubectl create -f "https://operatorhub.io/install/${operator}.yaml"
 }
 
+########################
+# Install chartmuseum
+# Globals: None
+# Arguments:
+#   $1: Username
+#   $2: Password
+# Returns: None
+#########################
+installChartmuseum() {
+    local user=$1
+    local password=$2
+    info "Installing ChartMuseum ..."
+    helm repo add stable https://kubernetes-charts.storage.googleapis.com
+    helm repo up
+    if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
+      helm install --name chartmuseum --namespace kubeapps stable/chartmuseum \
+        "${HELM_CLIENT_TLS_FLAGS[@]}" \
+        --set env.open.DISABLE_API=false \
+        --set persistence.enabled=true \
+        --set secret.AUTH_USER=$user \
+        --set secret.AUTH_PASS=$password
+    else
+      helm install chartmuseum --namespace kubeapps stable/chartmuseum \
+        --set env.open.DISABLE_API=false \
+        --set persistence.enabled=true \
+        --set secret.AUTH_USER=$user \
+        --set secret.AUTH_PASS=$password
+    fi
+    kubectl rollout status -w deployment/chartmuseum-chartmuseum --namespace=kubeapps
+}
+
+########################
+# Push a chart to chartmusem
+# Globals: None
+# Arguments:
+#   $1: chart
+#   $2: version
+#   $3: chartmuseum username
+#   $4: chartmuseum password
+# Returns: None
+#########################
+pushChart() {
+    local chart=$1
+    local version=$2
+    local user=$3
+    local password=$4
+    info "Adding ${chart}-${version} to ChartMuseum ..."
+    curl -LO "https://charts.bitnami.com/bitnami/${chart}-${version}.tgz"
+
+    local POD_NAME=$(kubectl get pods --namespace kubeapps -l "app=chartmuseum" -l "release=chartmuseum" -o jsonpath="{.items[0].metadata.name}")
+    /bin/sh -c "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps &"
+    sleep 2
+    curl -u "${user}:${password}" --data-binary "@${chart}-${version}.tgz" http://localhost:8080/api/charts
+    pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
+}
+
 installOLM 0.14.1
 # TODO(andresmgot): Switch to install the operator using the web form when ready
 installOperator prometheus
@@ -189,6 +244,9 @@ else
     --set featureFlags.operators=true \
     --set useHelm3=true
 fi
+
+installChartmuseum admin password
+pushChart apache 7.3.15 admin password
 
 # Ensure that we are testing the correct image
 info ""
@@ -271,12 +329,23 @@ pod=$(kubectl get po -l run=integration -o jsonpath="{.items[0].metadata.name}")
 for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
+testsToIgnore=()
+## Support for Docker registry secrets are not supported for Helm2, skipping that test
+if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
+  testsToIgnore=("create-private-registry.js" "${testsToIgnore[@]}")
+fi
+ignoreFlag=""
+if [[ "${#testsToIgnore[@]}" > "0" ]]; then
+  # Join tests to ignore
+  testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
+  testsToIgnore=${testsToIgnore:1}
+  ignoreFlag="--testPathIgnorePatterns $testsToIgnore"
+fi
 kubectl cp ./use-cases "${pod}:/app/"
 ## Create admin user
 kubectl create serviceaccount kubeapps-operator -n kubeapps
 kubectl create clusterrolebinding kubeapps-operator-admin --clusterrole=admin --serviceaccount kubeapps:kubeapps-operator
-kubectl create -n kubeapps rolebinding kubeapps-repositories-write --role=kubeapps-ci-repositories-write --serviceaccount kubeapps:kubeapps-operator
-kubectl create -n kubeapps rolebinding kubeapps-repositories-read --role=kubeapps-ci-repositories-read --serviceaccount kubeapps:kubeapps-operator
+kubectl create clusterrolebinding kubeapps-repositories-write --clusterrole kubeapps:kubeapps:apprepositories-write --serviceaccount kubeapps:kubeapps-operator
 ## Create view user
 kubectl create serviceaccount kubeapps-view -n kubeapps
 kubectl create clusterrolebinding kubeapps-view --clusterrole=view --serviceaccount kubeapps:kubeapps-view
@@ -294,7 +363,7 @@ view_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps servicea
 edit_token="$(kubectl get -n kubeapps secret "$(kubectl get -n kubeapps serviceaccount kubeapps-edit -o jsonpath='{.secrets[].name}')" -o go-template='{{.data.token | base64decode}}' && echo)"
 ## Run tests
 info "Running Integration tests..."
-if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start"; then
+if ! kubectl exec -it "$pod" -- /bin/sh -c "INTEGRATION_ENTRYPOINT=http://kubeapps-ci.kubeapps ADMIN_TOKEN=${admin_token} VIEW_TOKEN=${view_token} EDIT_TOKEN=${edit_token} yarn start ${ignoreFlag}"; then
   ## Integration tests failed, get report screenshot
   warn "PODS status on failure"
   kubectl cp "${pod}:/app/reports" ./reports
