@@ -64,8 +64,7 @@ workflows:
             - build_go_images
             - build_dashboard
       - GKE_1_15_MASTER:
-          # <<: *build_on_master
-          <<: *build_always
+          <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
@@ -79,8 +78,7 @@ workflows:
             - build_go_images
             - build_dashboard
       - GKE_1_14_MASTER:
-          # <<: *build_on_master
-          <<: *build_always
+          <<: *build_on_master
           requires:
             - test_go
             - test_dashboard
