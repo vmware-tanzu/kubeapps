@@ -22,7 +22,7 @@ info "-------------------------"
 info "-- Harbor installation --"
 info "-------------------------"
 echo
-"$ROOT_DIR"/script/setup-harbor.sh --namespace "harbor"
+"$ROOT_DIR"/script/setup-harbor.sh --namespace "harbor" --disable-clair --disable-notary
 # Install Kubeapps
 info "---------------------------"
 info "-- Kubeapps installation --"

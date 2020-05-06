@@ -29,7 +29,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Uninstall Harbor
-silence kubectl delete ns "$namespace"
+info "Uninstalling Harbor in namespace '$namespace'..."
 silence helm uninstall harbor -n "$namespace"
 silence kubectl delete pvc -n "$namespace" $(kubectl get pvc -n "$namespace" -o jsonpath='{.items[*].metadata.name}')
 info "Deleting '$namespace' namespace..."

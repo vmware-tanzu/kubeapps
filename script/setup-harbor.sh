@@ -24,8 +24,8 @@ print_menu() {
     log "${RED}NAME${RESET}"
     log "    $(basename -s .sh "${BASH_SOURCE[0]}")"
     log ""
-    log "${RED}SINOPSIS${RESET}"
-    log "    $script [${YELLOW}-dh${RESET}] [${YELLOW}-n ${GREEN}\"namespace\"${RESET}]"
+    log "${RED}SYNOPSIS${RESET}"
+    log "    $script [${YELLOW}-dh${RESET}] [${YELLOW}-n ${GREEN}\"namespace\"${RESET}] [${YELLOW}--disable-clair] [${YELLOW}--disable-notary]"
     log ""
     log "${RED}DESCRIPTION${RESET}"
     log "    Script to setup Harbor on your K8s cluster."
@@ -33,16 +33,23 @@ print_menu() {
     log "    The options are as follow:"
     log ""
     log "      ${YELLOW}-n, --namespace ${GREEN}[namespace]${RESET}           Namespace to use for Harbor."
-    log "      ${YELLOW}-h, --help${RESET}                            Print this help"
-    log "      ${YELLOW}-u, --dry-run${RESET}                         Enable \"dry run\" mode"
+    log "      ${YELLOW}--disable-chartmuseum${RESET}                 Disable ChartMuseum."
+    log "      ${YELLOW}--disable-clair${RESET}                       Disable Clair."
+    log "      ${YELLOW}--disable-notary${RESET}                      Disable Notary."
+    log "      ${YELLOW}-h, --help${RESET}                            Print this help menu."
+    log "      ${YELLOW}-u, --dry-run${RESET}                         Enable \"dry run\" mode."
     log ""
     log "${RED}EXAMPLES${RESET}"
     log "      $script --help"
     log "      $script --namespace \"harbor\""
+    log "      $script --namespace \"harbor\" --disable-clair"
     log ""
 }
 
 namespace="harbor"
+disable_chartmuseum=0
+disable_clair=0
+disable_notary=0
 help_menu=0
 dry_run=0
 while [[ "$#" -gt 0 ]]; do
@@ -52,6 +59,15 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         -u|--dry-run)
             dry_run=1
+            ;;
+        --disable-chartmuseum)
+            disable_chartmuseum=1
+            ;;
+        --disable-clair)
+            disable_clair=1
+            ;;
+        --disable-notary)
+            disable_notary=1
             ;;
         -n|--namespace)
             shift; namespace="${1:?missing namespace}"
@@ -74,6 +90,12 @@ values="$(cat << EOF
 service:
   tls:
     enabled: false
+chartmuseum:
+  enabled: $([[ "$disable_chartmuseum" -eq 0 ]] && echo "true" || echo "false")
+clair:
+  enabled: $([[ "$disable_clair" -eq 0 ]] && echo "true" || echo "false")
+notary:
+  enabled: $([[ "$disable_notary" -eq 0 ]] && echo "true" || echo "false")
 EOF
 )"
 
@@ -97,16 +119,15 @@ silence helm install harbor \
 # Wait for Harbor components
 info "Waiting for Harbor components to be ready..."
 deployments=(
-    "harbor-chartmuseum"
-    "harbor-clair"
     "harbor-core"
     "harbor-jobservice"
     "harbor-nginx"
-    "harbor-notary-server"
-    "harbor-notary-signer"
     "harbor-portal"
     "harbor-registry"
 )
+[[ "$disable_chartmuseum" -eq 0 ]] && deployments=("harbor-chartmuseum" "${deployments[@]}")
+[[ "$disable_clair" -eq 0 ]] && deployments=("harbor-clair" "${deployments[@]}")
+[[ "$disable_notary" -eq 0 ]] && deployments=("harbor-notary-server" "harbor-notary-signer" "${deployments[@]}")
 
 for dep in "${deployments[@]}"; do
     k8s_wait_for_deployment "$namespace" "$dep"
