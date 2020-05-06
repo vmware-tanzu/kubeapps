@@ -77,6 +77,18 @@ tiller-init-rbac() {
 }
 
 ########################
+# Check if the pod that populates de OperatorHub catalog is running
+# Globals: None
+# Arguments: None
+# Returns: None
+#########################
+isOperatorHubCatalogRunning() {
+  kubectl get pod -n olm -l olm.catalogSource=operatorhubio-catalog -o jsonpath='{.items[0].status.phase}' | grep Running
+  # Wait also for the catalog to be populated
+  kubectl get packagemanifests.packages.operators.coreos.com | grep prometheus
+}
+
+########################
 # Install OLM
 # Globals: None
 # Arguments:
@@ -171,9 +183,12 @@ pushChart() {
     pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
 }
 
-installOLM 0.14.1
-# TODO(andresmgot): Switch to install the operator using the web form when ready
-installOperator prometheus
+# Operators are not supported in GKE 1.14 and flaky in 1.15
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  installOLM 0.14.1
+  # TODO(andresmgot): Switch to install the operator using the web form when ready
+  installOperator prometheus
+fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"
 info "IMAGE_REPO_SUFFIX: $IMG_MODIFIER"
@@ -320,6 +335,13 @@ if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   info "Helm tests succeded!!"
 fi
 
+# Operators are not supported in GKE 1.14 and flaky in 1.15
+if [[ -z "${GKE_BRANCH-}" ]]; then
+  ## Wait for the Operator catalog to be populated
+  info "Waiting for the OperatorHub Catalog to be ready ..."
+  retry_while isOperatorHubCatalogRunning 24
+fi
+
 # Browser tests
 cd "${ROOT_DIR}/integration"
 kubectl apply -f manifests/executor.yaml
@@ -330,6 +352,10 @@ for f in *.js; do
   kubectl cp "./${f}" "${pod}:/app/"
 done
 testsToIgnore=()
+# Operators are not supported in GKE 1.14 and flaky in 1.15, skipping test
+if [[ -n "${GKE_BRANCH-}" ]]; then
+  testsToIgnore=("operator-deployment.js" "${testsToIgnore[@]}")
+fi
 ## Support for Docker registry secrets are not supported for Helm2, skipping that test
 if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
   testsToIgnore=("create-private-registry.js" "${testsToIgnore[@]}")
@@ -339,7 +365,7 @@ if [[ "${#testsToIgnore[@]}" > "0" ]]; then
   # Join tests to ignore
   testsToIgnore=$(printf "|%s" "${testsToIgnore[@]}")
   testsToIgnore=${testsToIgnore:1}
-  ignoreFlag="--testPathIgnorePatterns $testsToIgnore"
+  ignoreFlag="--testPathIgnorePatterns '$testsToIgnore'"
 fi
 kubectl cp ./use-cases "${pod}:/app/"
 ## Create admin user
