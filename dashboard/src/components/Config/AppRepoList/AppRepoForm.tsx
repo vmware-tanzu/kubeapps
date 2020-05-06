@@ -1,8 +1,9 @@
 import * as yaml from "js-yaml";
 import * as React from "react";
 import { Redirect } from "react-router";
-import { IAppRepository, ISecret } from "shared/types";
 import Hint from "../../../components/Hint";
+import { definedNamespaces } from "../../../shared/Namespace";
+import { IAppRepository, ISecret } from "../../../shared/types";
 import { UnexpectedErrorAlert } from "../../ErrorAlert";
 import AppRepoAddDockerCreds from "./AppRepoAddDockerCreds";
 
@@ -282,7 +283,8 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 <p className="margin-b-small">Associate Docker Registry Credentials (optional):</p>
                 <span className="AppRepoInputDescription">
                   Select existing secret(s) to access a private Docker registry and pull images from
-                  it. Note that this functionality is supported for Kubeapps with Helm3 only, more info{" "}
+                  it. Note that this functionality is supported for Kubeapps with Helm3 only, more
+                  info{" "}
                   <a
                     href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
                     target="_blank"
@@ -349,6 +351,13 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 />
               </pre>
             </div>
+            {(namespace === kubeappsNamespace || namespace === definedNamespaces.all) && (
+              <div className="margin-b-normal">
+                <strong>NOTE:</strong> This App Repository will be created in the "
+                {kubeappsNamespace}" namespace and charts will be available in all namespaces for
+                installation.
+              </div>
+            )}
             {this.props.validationError && (
               <UnexpectedErrorAlert
                 title="Validation Failed. Got:"
