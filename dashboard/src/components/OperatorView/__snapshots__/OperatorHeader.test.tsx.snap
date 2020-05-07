@@ -57,12 +57,6 @@ exports[`renders the header 1`] = `
       >
         Deploy
       </button>
-      <OperatorInstallation
-        closeModal={[Function]}
-        modalIsOpen={false}
-        name="foo"
-        namespaced={false}
-      />
     </div>
   </div>
   <hr />

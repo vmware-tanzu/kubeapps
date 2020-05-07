@@ -1,15 +1,18 @@
+import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import OperatorInstallation from "./OperatorInstallation";
+import { app } from "../../shared/url";
 
 interface IOperatorHeaderProps {
   id: string;
   icon?: string;
+  hideButton?: boolean;
   description: string;
   namespace: string;
   version: string;
   provider: string;
   namespaced: boolean;
+  push: (location: string) => RouterAction;
 }
 
 class OperatorHeader extends React.Component<IOperatorHeaderProps> {
@@ -18,7 +21,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
   };
 
   public render() {
-    const { id, icon, description, namespace, version, provider } = this.props;
+    const { id, icon, description, namespace, version, provider, hideButton } = this.props;
     return (
       <header>
         <div className="ChartView__heading margin-normal row">
@@ -38,33 +41,21 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
               <h5 className="subtitle margin-b-reset">{description}</h5>
             </div>
           </div>
-          <div className="col-2 ChartHeader__button">
-            <button className="button button-primary button-accent" onClick={this.openModal}>
-              Deploy
-            </button>
-            <OperatorInstallation
-              name={id}
-              namespaced={this.props.namespaced}
-              closeModal={this.closeModal}
-              modalIsOpen={this.state.modalIsOpen}
-            />
-          </div>
+          {!hideButton && (
+            <div className="col-2 ChartHeader__button">
+              <button className="button button-primary button-accent" onClick={this.redirect}>
+                Deploy
+              </button>
+            </div>
+          )}
         </div>
         <hr />
       </header>
     );
   }
 
-  public openModal = () => {
-    this.setState({
-      modalIsOpen: true,
-    });
-  };
-
-  public closeModal = () => {
-    this.setState({
-      modalIsOpen: false,
-    });
+  public redirect = () => {
+    this.props.push(app.operators.new(this.props.namespace, this.props.id));
   };
 }
 

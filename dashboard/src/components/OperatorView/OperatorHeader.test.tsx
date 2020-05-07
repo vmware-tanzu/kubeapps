@@ -10,9 +10,15 @@ const defaultProps = {
   version: "1.0.0",
   provider: "Kubeapps",
   namespaced: false,
+  push: jest.fn(),
 };
 
 it("renders the header", () => {
   const wrapper = shallow(<OperatorHeader {...defaultProps} />);
   expect(wrapper).toMatchSnapshot();
+});
+
+it("omits the button", () => {
+  const wrapper = shallow(<OperatorHeader {...defaultProps} hideButton={true} />);
+  expect(wrapper.find("button")).not.toExist();
 });

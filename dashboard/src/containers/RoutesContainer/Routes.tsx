@@ -12,6 +12,7 @@ import LoginFormContainer from "../../containers/LoginFormContainer";
 import OperatorInstanceCreateContainer from "../../containers/OperatorInstanceCreateContainer";
 import OperatorInstanceUpdateContainer from "../../containers/OperatorInstanceUpdateContainer";
 import OperatorInstanceViewContainer from "../../containers/OperatorInstanceViewContainer";
+import OperatorNewContainer from "../../containers/OperatorNewContainer";
 import OperatorsListContainer from "../../containers/OperatorsListContainer";
 import OperatorViewContainer from "../../containers/OperatorViewContainer";
 import PrivateRouteContainer from "../../containers/PrivateRouteContainer";
@@ -72,6 +73,7 @@ class Routes extends React.Component<IRoutesProps> {
       Object.assign(privateRoutes, {
         "/ns/:namespace/operators": OperatorsListContainer,
         "/ns/:namespace/operators/:operator": OperatorViewContainer,
+        "/ns/:namespace/operators/new/:operator": OperatorNewContainer,
         "/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
         "/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
         "/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,

@@ -50,6 +50,9 @@ describe("catalogReducer", () => {
       errorCustomResource: getType(actions.operators.errorCustomResource),
       requestCustomResource: getType(actions.operators.requestCustomResource),
       receiveCustomResource: getType(actions.operators.receiveCustomResource),
+      creatingOperator: getType(actions.operators.creatingOperator),
+      operatorCreated: getType(actions.operators.operatorCreated),
+      errorOperatorCreate: getType(actions.operators.errorOperatorCreate),
     };
 
     describe("reducer actions", () => {
@@ -347,6 +350,41 @@ describe("catalogReducer", () => {
         type: actionTypes.receiveOperator as any,
       });
       expect(state.isFetching).toBe(false);
+    });
+
+    it("creates an Operator", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.creatingOperator as any,
+      });
+      const resource = {} as IResource;
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+      });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.operatorCreated as any,
+          payload: resource,
+        }),
+      ).toEqual({ ...initialState, isFetching: false });
+    });
+
+    it("sets an error creating a resource", () => {
+      const state = operatorReducer(undefined, {
+        type: actionTypes.creatingOperator as any,
+      });
+      expect(state).toEqual({
+        ...initialState,
+        isFetching: true,
+        isFetchingElem: { OLM: false, operator: true, csv: false, resource: false },
+      });
+      expect(
+        operatorReducer(undefined, {
+          type: actionTypes.errorOperatorCreate as any,
+          payload: new Error("Boom!"),
+        }),
+      ).toEqual({ ...initialState, isFetching: false, errors: { create: new Error("Boom!") } });
     });
   });
 });

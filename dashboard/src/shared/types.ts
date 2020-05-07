@@ -218,6 +218,45 @@ export interface IRelease extends hapi.release.Release {
   updateInfo?: IChartUpdateInfo;
 }
 
+export interface IPackageManifestChannel {
+  name: string;
+  currentCSV: string;
+  currentCSVDesc: {
+    annotations: {
+      "alm-examples": string;
+      capabilities: string;
+      categories: string;
+      certified: string;
+      containerImage: string;
+      createdAt: string;
+      description: string;
+      repository: string;
+      support: string;
+    };
+    description: string;
+    displayName: string;
+    provider: {
+      name: string;
+    };
+    version: string;
+    installModes: [
+      { supported: boolean; type: "OwnNamespace" },
+      { supported: boolean; type: "SingleNamespace" },
+      { supported: boolean; type: "MultiNamespace" },
+      { supported: boolean; type: "AllNamespaces" },
+    ];
+    customresourcedefinitions: {
+      owned: Array<{
+        description: string;
+        displayName: string;
+        kind: string;
+        name: string;
+        version: string;
+      }>;
+    };
+  };
+}
+
 export interface IPackageManifestStatus {
   catalogSource: string;
   catalogSourceDisplayName: string;
@@ -227,44 +266,7 @@ export interface IPackageManifestStatus {
     name: string;
   };
   defaultChannel: string;
-  channels: Array<{
-    name: string;
-    currentCSV: string;
-    currentCSVDesc: {
-      annotations: {
-        "alm-examples": string;
-        capabilities: string;
-        categories: string;
-        certified: string;
-        containerImage: string;
-        createdAt: string;
-        description: string;
-        repository: string;
-        support: string;
-      };
-      description: string;
-      displayName: string;
-      provider: {
-        name: string;
-      };
-      version: string;
-      installModes: [
-        { supported: boolean; type: "OwnNamespace" },
-        { supported: boolean; type: "SingleNamespace" },
-        { supported: boolean; type: "MultiNamespace" },
-        { supported: boolean; type: "AllNamespaces" },
-      ];
-      customresourcedefinitions: {
-        owned: Array<{
-          description: string;
-          displayName: string;
-          kind: string;
-          name: string;
-          version: string;
-        }>;
-      };
-    };
-  }>;
+  channels: IPackageManifestChannel[];
 }
 
 export interface IPackageManifest extends IResource {
