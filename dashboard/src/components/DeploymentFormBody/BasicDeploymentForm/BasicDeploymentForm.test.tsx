@@ -131,8 +131,17 @@ it("should hide an element if it depends on a param (object)", () => {
       path: "foo",
       type: "string",
       hidden: {
-        value: "bar",
-        condition: "enabled",
+        conditions: [
+          {
+            value: "bar",
+            reference: "enabled",
+          },
+          {
+            value: "baz",
+            reference: "disabled",
+          },
+        ],
+        operator: "and",
       },
     },
     {
@@ -140,7 +149,7 @@ it("should hide an element if it depends on a param (object)", () => {
       type: "string",
     },
   ] as IBasicFormParam[];
-  const appValues = "foo: 1\nbar: enabled";
+  const appValues = "foo: 1\nbar: enabled\nbaz: disabled";
   const wrapper = shallow(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
   );

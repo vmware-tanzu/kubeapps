@@ -42,8 +42,33 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         // If hidden is a string, it points to the value that should be true
         return getValue(this.props.appValues, hidden) === true;
       case "object":
-        // If hidden is an object, inspect the value it points to
-        return getValue(this.props.appValues, hidden.value) === hidden.condition;
+        let isHiddenParam;
+        // If hidden is an object, a different logic should be applied
+        // based on the operator
+        switch (hidden.operator) {
+          case "and":
+            // Every value matches its reference in
+            // all the conditions
+            isHiddenParam = true;
+            hidden.conditions.forEach(c => {
+              if (getValue(this.props.appValues, c.value) !== c.reference) {
+                isHiddenParam = false;
+              }
+            });
+            return isHiddenParam;
+          case "or":
+            // It is enough if the value matches its reference in
+            // any of the conditions
+            isHiddenParam = false;
+            hidden.conditions.forEach(c => {
+              if (getValue(this.props.appValues, c.value) === c.reference) {
+                isHiddenParam = true;
+              }
+            });
+            return isHiddenParam;
+          default:
+            return false;
+        }
       case "undefined":
         return false;
     }

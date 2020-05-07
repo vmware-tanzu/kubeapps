@@ -4,8 +4,8 @@
 
 Since Kubeapps 1.6.0, it's possible to include a JSON schema with a chart that defines the structure of the `values.yaml` file. This JSON schema is used with two goals:
 
- - Validate that the given values satisfy the schema defined. In case the submitted values are not valid, the installation or upgrade will fail. This has been introduced with Helm v3.
- - Present the user with a simpler so the chart is easier to deploy and configure.
+- Validate that the given values satisfy the schema defined. In case the submitted values are not valid, the installation or upgrade will fail. This has been introduced with Helm v3.
+- Present the user with a simpler so the chart is easier to deploy and configure.
 
 The goal of this feature is to present the user with the most common parameters which are typically modified before deploying a chart (like username and password) in a more user-friendly form.
 
@@ -36,9 +36,9 @@ With the definition above, we are marking the value `wordpressUsername` as a val
 
 In addition to the `type`, there are other tags that can be used to customize the way the parameter is represented:
 
- - `title` is used to render the title of the parameter. If it's not specified, Kubeapps will use the path of the value (i.e. `credentials.username`).
- - `description` is used to include additional information of the parameter.
- - `default` is used to set a default value. Note that this field will only be used if the `values.yaml` file doesn't have already a default value for the parameter.
+- `title` is used to render the title of the parameter. If it's not specified, Kubeapps will use the path of the value (i.e. `credentials.username`).
+- `description` is used to include additional information of the parameter.
+- `default` is used to set a default value. Note that this field will only be used if the `values.yaml` file doesn't have already a default value for the parameter.
 
 ### Custom type: Slider
 
@@ -48,11 +48,11 @@ It's possible to render a component as a slider, users can then drag and drop th
 
 In order to render a slider, there are some requirements and additional tags that you may need to set:
 
- - The only supported `type` for the moment is a string. Other types like `integer` will be transformed to a string.
- - It's necessary to specify the tag `render` and set it to `slider`.
- - The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writting a smaller value in the input).
- - The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writting a bigger value in the input).
- - The tag `sliderUnit` specifies the unit of the value to set. For example `Gi`.
+- The only supported `type` for the moment is a string. Other types like `integer` will be transformed to a string.
+- It's necessary to specify the tag `render` and set it to `slider`.
+- The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writting a smaller value in the input).
+- The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writting a bigger value in the input).
+- The tag `sliderUnit` specifies the unit of the value to set. For example `Gi`.
 
  This is an example of a slider param:
 
@@ -94,7 +94,26 @@ When a property of type `object` is set with a `form` identifier, it will be ren
 
 All the parameters within an `object` will be rendered in the subsection.
 
-Note that in some cases, a parameter cause that the rest of parameters are no longer relevant. For example, setting `ingress.enabled` to `false` makes the `ingress.hostname` irrelevant. To avoid confussion, you can hide that parameter setting the special tag `hidden`. The tag `hidden` can be a `string` pointing to the parameter that needs to be `true` to hide the element or an object to also set the value that the pointed value needs to match.
+Note that in some cases, a parameter cause that the rest of parameters are no longer relevant. For example, setting `ingress.enabled` to `false` makes the `ingress.hostname` irrelevant. To avoid confussion, you can hide that parameter setting the special tag `hidden`. The tag `hidden` can be a `string` pointing to the parameter that needs to be `true` to hide the element or an `object` to also set a group of values that need to match a given reference.
+
+When using an `object` to set the `hidden` tag, you can specify an array of conditions to match, and the conditional operator to use (currently supported: `and`, `or`). The format is shown below:
+
+```json
+{
+  "hidden": {
+    "conditions": [
+      {
+        "value": "foo",
+        "reference": "bar"
+      },
+      {
+        "value": "baz",
+        "reference": "qux"
+      }
+    ],
+    "operator": "or"
+}
+```
 
 This is an example for a subsection with a parameter that can be hidden:
 
@@ -115,8 +134,11 @@ This is an example for a subsection with a parameter that can be hidden:
           "form": "hostname",
           "title": "Hostname",
           "hidden": {
-            "value": "ingress.enabled",
-            "condition": false
+            "conditions": [{
+              "reference": false,
+              "value": "ingress/enabled"
+            }],
+            "operator": "and"
           }
         }
       }
