@@ -2,12 +2,12 @@
 
 In every CI build, a set of end-to-end tests are run to verify, as much as possible, that the changes don't include regressions from an user point of view. The current end-to-end tests are executed in two steps (or categories):
 
- - Chart tests
- - Browser tests
+- Chart tests
+- Browser tests
 
 These tests are executed by the script [scripts/e2e-test.sh](../../script/e2e-test.sh). This script:
 
- 1. Installs Tiller using a certificate
+ 1. Installs Tiller using a certificate (this step is skipped when `HELM_VERSION=v3`)
  2. Installs Kubeapps using the images built during the CI process
  3. Waits for the different deployments to be ready
  4. Execute the Helm tests (see the section below for more details).
