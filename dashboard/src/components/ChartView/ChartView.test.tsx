@@ -107,7 +107,7 @@ context("when fetching is true and chart is available", () => {
 describe("subcomponents", () => {
   const wrapper = shallow(<ChartView {...props} selected={{ version: testVersion }} />);
 
-  for (const component of [ChartHeader, ChartReadme, ChartVersionsList, ChartMaintainers]) {
+  for (const component of [ChartHeader, ChartReadme, ChartVersionsList]) {
     it(`renders ${component.name}`, () => {
       expect(wrapper.find(component).exists()).toBe(true);
     });
@@ -119,6 +119,7 @@ it("does not render the app version, home and sources sections if not set", () =
   expect(wrapper.contains(<h2>App Version</h2>)).toBe(false);
   expect(wrapper.contains(<h2>Home</h2>)).toBe(false);
   expect(wrapper.contains(<h2>Related</h2>)).toBe(false);
+  expect(wrapper.contains(<h2>Maintainers</h2>)).toBe(false);
 });
 
 it("renders the app version when set", () => {
@@ -149,22 +150,31 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
     expected: boolean;
     name: string;
     repoURL: string;
+    maintainers: Array<{ name: string; email?: string }>;
   }> = [
     {
       expected: true,
       name: "stable Helm repo",
+      maintainers: [{ name: "Bitnami" }],
       repoURL: "https://kubernetes-charts.storage.googleapis.com",
     },
     {
       expected: true,
       name: "incubator Helm repo",
+      maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
       repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
     },
-    { name: "random Helm repo", repoURL: "https://examplerepo.com", expected: false },
+    {
+      expected: false,
+      name: "random Helm repo",
+      maintainers: [{ name: "Bitnami" }],
+      repoURL: "https://examplerepo.com",
+    },
   ];
 
   for (const t of tests) {
     it(`for ${t.name}`, () => {
+      v.relationships.chart.data.maintainers = [{ name: "John Smith" }];
       v.relationships.chart.data.repo.url = t.repoURL;
       const wrapper = shallow(<ChartView {...props} selected={{ version: v }} />);
       const chartMaintainers = wrapper.find(ChartMaintainers);

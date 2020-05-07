@@ -103,13 +103,15 @@ class ChartView extends React.Component<IChartViewProps> {
                       </div>
                     </div>
                   )}
-                  <div className="ChartViewSidebar__section">
-                    <h2>Maintainers</h2>
-                    <ChartMaintainers
-                      maintainers={chartAttrs.maintainers}
-                      githubIDAsNames={this.isKubernetesCharts(chartAttrs.repo.url)}
-                    />
-                  </div>
+                  {chartAttrs.maintainers?.length > 0 && (
+                    <div className="ChartViewSidebar__section">
+                      <h2>Maintainers</h2>
+                      <ChartMaintainers
+                        maintainers={chartAttrs.maintainers}
+                        githubIDAsNames={this.isKubernetesCharts(chartAttrs.repo.url)}
+                      />
+                    </div>
+                  )}
                   {chartAttrs.sources?.length > 0 && (
                     <div className="ChartViewSidebar__section">
                       <h2>Related</h2>
