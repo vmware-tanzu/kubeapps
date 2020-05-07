@@ -13,8 +13,10 @@ rules:
       - ""
     resources:
       - events
+      - secrets
     verbs:
       - create
+      - get
   - apiGroups:
       - batch
     resources:
