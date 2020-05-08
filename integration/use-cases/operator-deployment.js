@@ -12,14 +12,8 @@ test("Deploys an Operator", async () => {
 
   await expect(page).toClick("button", { text: "Deploy" });
 
-  // TODO(andresmgot) Fill deployment form when it's ready
-  // For now we assume is already installed
-  await expect(page).toMatch(
-    "Install the operator by running the following command"
-  );
-
-  // Close modal
-  await expect(page).toClick("h1", { text: "prometheus" });
+  // Deploy the Operator
+  await expect(page).toClick("button", { text: "Submit" });
 
   // Deploy Operator instance
   await expect(page).toClick("a", { text: "Catalog" });
