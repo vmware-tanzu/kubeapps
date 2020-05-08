@@ -1,5 +1,5 @@
 const axios = require("axios");
-const utils = require("./utils");
+const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
   await page.goto(getUrl("/#/config/ns/default/repos"));

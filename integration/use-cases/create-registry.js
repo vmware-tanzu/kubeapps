@@ -1,4 +1,4 @@
-const utils = require("./utils");
+const utils = require("./lib/utils");
 
 test("Creates a registry", async () => {
   await page.goto(getUrl("/#/config/ns/kubeapps/repos"));

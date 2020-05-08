@@ -13,7 +13,6 @@ module.exports = {
         });
       } finally {
         retriesLeft--;
-        console.log("retrying");
       }
     }
   },

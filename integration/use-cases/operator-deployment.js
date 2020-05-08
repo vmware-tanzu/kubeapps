@@ -1,4 +1,4 @@
-const utils = require("./utils");
+const utils = require("./lib/utils");
 
 test("Deploys an Operator", async () => {
   await page.goto(getUrl("/#/ns/kubeapps/operators"));
