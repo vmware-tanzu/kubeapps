@@ -1,7 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import { NotFoundError } from "../../shared/types";
-import { wait } from "../../shared/utils";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import OperatorNew from "./OperatorNew";
 
@@ -69,7 +68,7 @@ it("parses the default channel when receiving the operator", () => {
   });
 });
 
-it("shows an error if it exists", () => {
+it("renders an error if present", () => {
   const wrapper = shallow(<OperatorNew {...defaultProps} error={new NotFoundError()} />);
   expect(wrapper.html()).toContain("Operator foo not found");
 });
@@ -116,8 +115,8 @@ it("deploys an operator", async () => {
     />,
   );
   wrapper.setProps({ operator: defaultOperator });
-  wrapper.find("form").simulate("submit");
-  await wait(1);
+  const onSubmit = wrapper.find("form").prop("onSubmit") as () => Promise<void>;
+  await onSubmit();
 
   expect(createOperator).toHaveBeenCalledWith("operators", "foo", "beta", "Automatic", "foo.1.0.0");
   expect(push).toHaveBeenCalledWith("/ns/operators/operators");
