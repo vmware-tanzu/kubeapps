@@ -1,8 +1,10 @@
+const utils = require("./utils");
+
 test("Creates a registry", async () => {
   await page.goto(getUrl("/#/config/ns/kubeapps/repos"));
 
   await expect(page).toFillForm("form", {
-    token: process.env.ADMIN_TOKEN
+    token: process.env.ADMIN_TOKEN,
   });
 
   await expect(page).toClick("button", { text: "Login" });
@@ -28,16 +30,7 @@ test("Creates a registry", async () => {
   await expect(page).toClick("button", { text: "Install Repo" });
   await expect(page).toClick("a", { text: "my-repo" });
 
-  let retries = 3;
-  while (retries > 0) {
-    try {
-      await expect(page).toMatch("gitlab-runner", { timeout: 2000 });
-      break;
-    } catch (e) {
-      // Refresh since the chart will get a bit of time to populate
-      await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
-    } finally {
-      retries--;
-    }
-  }
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatch("gitlab-runner", { timeout: 2000 });
+  });
 });

@@ -1,8 +1,10 @@
+const utils = require("./utils");
+
 test("Deploys an Operator", async () => {
   await page.goto(getUrl("/#/ns/kubeapps/operators"));
 
   await expect(page).toFillForm("form", {
-    token: process.env.EDIT_TOKEN,
+    token: process.env.ADMIN_TOKEN,
   });
 
   await expect(page).toClick("button", { text: "Login" });
@@ -14,6 +16,21 @@ test("Deploys an Operator", async () => {
 
   // Deploy the Operator
   await expect(page).toClick("button", { text: "Submit" });
+
+  await utils.retryAndRefresh(page, 10, async () => {
+    // The CSV takes a bit to get populated
+    await expect(page).toMatch("Installed");
+  });
+
+  // Wait for the operator to be ready to be used
+  await expect(page).toClick("a", { text: "Catalog" });
+
+  await utils.retryAndRefresh(page, 10, async () => {
+    // Filter out charts to search only for the prometheus operator
+    await expect(page).toClick(".checkbox", { text: "Charts" });
+
+    await expect(page).toMatch("Prometheus");
+  });
 
   // Deploy Operator instance
   await expect(page).toClick("a", { text: "Catalog" });
@@ -27,7 +44,7 @@ test("Deploys an Operator", async () => {
 
   await expect(page).toClick("button", { text: "Submit" });
 
-  await expect(page).toMatch("Ready", { timeout: 60000 });
+  await expect(page).toMatch("Installation Values", { timeout: 60000 });
 
   // Update
   await expect(page).toClick("button", { text: "Update" });
