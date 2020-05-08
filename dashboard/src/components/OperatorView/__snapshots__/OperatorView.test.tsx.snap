@@ -11,6 +11,7 @@ exports[`renders a full OperatorView 1`] = `
     namespace="kubeapps"
     namespaced={true}
     provider="Kubeapps"
+    push={[Function]}
     version="1.0.0"
   />
   <main>

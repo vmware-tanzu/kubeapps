@@ -1,0 +1,168 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a full OperatorNew 1`] = `
+<section
+  className="ChartView padding-b-big"
+>
+  <OperatorHeader
+    description="Foo"
+    hideButton={true}
+    icon="api/v1/namespaces/kubeapps/operator/foo/logo"
+    id="foo"
+    namespace="kubeapps"
+    namespaced={true}
+    provider="Kubeapps"
+    push={[Function]}
+    version="1.0.0"
+  />
+  <main>
+    <div
+      className="container container-fluid"
+    >
+      <div
+        className="row"
+      >
+        <div
+          className="col-9"
+        >
+          <form
+            className="container"
+            onSubmit={[Function]}
+          >
+            <div
+              className="margin-b-normal"
+            >
+              <div>
+                <strong>
+                  Update Channel
+                </strong>
+              </div>
+              <div
+                className="margin-b-small"
+              >
+                The channel to track and receive updates from.
+              </div>
+              <label
+                className="margin-l-big"
+                htmlFor="operator-channel-beta"
+                key="beta"
+              >
+                <input
+                  checked={true}
+                  id="operator-channel-beta"
+                  name="channel"
+                  onClick={[Function]}
+                  type="radio"
+                />
+                beta
+                <br />
+              </label>
+            </div>
+            <div
+              className="margin-b-normal"
+            >
+              <div
+                className="margin-b-small"
+              >
+                <strong>
+                  Installation Mode
+                </strong>
+              </div>
+              <label
+                className="margin-l-big"
+                htmlFor="operator-installation-mode-global"
+              >
+                <input
+                  checked={false}
+                  disabled={true}
+                  id="operator-installation-mode-global"
+                  name="installation-mode"
+                  onClick={[Function]}
+                  type="radio"
+                />
+                <span
+                  className="disabled"
+                >
+                  All namespaces on the cluster (default)
+                </span>
+                <br />
+                <div
+                  className="disabled margin-l-enormous"
+                >
+                  <i>
+                    This mode is not supported by this Operator and channel.
+                  </i>
+                </div>
+              </label>
+              <label
+                className="margin-l-big"
+                htmlFor="operator-installation-mode-namespaced"
+              >
+                <input
+                  checked={true}
+                  id="operator-installation-mode-namespaced"
+                  name="installation-mode"
+                  onClick={[Function]}
+                  type="radio"
+                />
+                The current namespace: 
+                kubeapps
+                <br />
+              </label>
+            </div>
+            <div
+              className="margin-b-normal"
+            >
+              <div>
+                <strong>
+                  Approval Strategy
+                </strong>
+              </div>
+              <div
+                className="margin-b-small"
+              >
+                The strategy to determine either manual or automatic updates.
+              </div>
+              <label
+                className="margin-l-big"
+                htmlFor="operator-update-automatic"
+              >
+                <input
+                  checked={true}
+                  id="operator-update-automatic"
+                  name="operator-update"
+                  onClick={[Function]}
+                  type="radio"
+                />
+                Automatic
+                <br />
+              </label>
+              <label
+                className="margin-l-big"
+                htmlFor="operator-update-manual"
+              >
+                <input
+                  checked={false}
+                  id="operator-update-manual"
+                  name="operator-update"
+                  onClick={[Function]}
+                  type="radio"
+                />
+                Manual
+                <br />
+              </label>
+            </div>
+            <button
+              className="button button-primary"
+              disabled={false}
+              type="submit"
+            >
+              Submit
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+`;

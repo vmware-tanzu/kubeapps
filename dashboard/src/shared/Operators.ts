@@ -95,4 +95,65 @@ export class Operators {
     );
     return data;
   }
+
+  public static async createOperator(
+    namespace: string,
+    name: string,
+    channel: string,
+    installPlanApproval: string,
+    csv: string,
+  ) {
+    // First create the OperatorGroup if needed
+    await this.createOperatorGroupIfNotExists(namespace);
+    // Now create the subscription
+    const { data: result } = await axiosWithAuth.post<IResource>(
+      urls.api.operators.subscription(namespace, name),
+      {
+        apiVersion: "operators.coreos.com/v1alpha1",
+        kind: "Subscription",
+        metadata: {
+          name,
+          namespace,
+        },
+        spec: {
+          channel,
+          installPlanApproval,
+          name,
+          source: "operatorhubio-catalog",
+          sourceNamespace: "olm",
+          startingCSV: csv,
+        },
+      },
+    );
+    return result;
+  }
+
+  private static async createOperatorGroupIfNotExists(namespace: string) {
+    if (namespace === "operators") {
+      // The opertors ns already have an operatorgroup
+      return;
+    }
+    const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
+      urls.api.operators.operatorGroups(namespace),
+    );
+    if (data.items.length > 0) {
+      // An operatorgroup already exists, do nothing
+      return;
+    }
+    const { data: result } = await axiosWithAuth.post<IK8sList<IResource, {}>>(
+      urls.api.operators.operatorGroups(namespace),
+      {
+        apiVersion: "operators.coreos.com/v1",
+        kind: "OperatorGroup",
+        metadata: {
+          generateName: "default-",
+          namespace,
+        },
+        spec: {
+          targetNamespaces: [namespace],
+        },
+      },
+    );
+    return result;
+  }
 }

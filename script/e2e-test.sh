@@ -115,19 +115,6 @@ installOLM() {
 }
 
 ########################
-# Install the given operator using OperatorHub
-# Globals: None
-# Arguments:
-#   $1: Operator to install
-# Returns: None
-#########################
-installOperator() {
-    local operator=$1
-    info "Installing Operator ${operator} ..."
-    kubectl create -f "https://operatorhub.io/install/${operator}.yaml"
-}
-
-########################
 # Install chartmuseum
 # Globals: None
 # Arguments:
@@ -186,8 +173,6 @@ pushChart() {
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
   installOLM 0.14.1
-  # TODO(andresmgot): Switch to install the operator using the web form when ready
-  installOperator prometheus
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"

@@ -491,3 +491,42 @@ describe("deleteResource", () => {
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
+
+describe("createOperator", () => {
+  it("creates an Operator", async () => {
+    const resource = {} as IResource;
+    Operators.createOperator = jest.fn(() => resource);
+    const expectedActions = [
+      {
+        type: getType(operatorActions.creatingOperator),
+      },
+      {
+        type: getType(operatorActions.operatorCreated),
+        payload: resource,
+      },
+    ];
+    await store.dispatch(
+      operatorActions.createOperator("default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+
+  it("dispatches an error", async () => {
+    Operators.createOperator = jest.fn(() => {
+      throw new Error("Boom!");
+    });
+    const expectedActions = [
+      {
+        type: getType(operatorActions.creatingOperator),
+      },
+      {
+        type: getType(operatorActions.errorOperatorCreate),
+        payload: new Error("Boom!"),
+      },
+    ];
+    await store.dispatch(
+      operatorActions.createOperator("default", "etcd", "alpha", "Manual", "etcd.1.0.0"),
+    );
+    expect(store.getActions()).toEqual(expectedActions);
+  });
+});

@@ -76,6 +76,14 @@ export const receiveCustomResource = createAction("RECEIVE_CUSTOM_RESOURCE", res
   return (resource: IResource) => resolve(resource);
 });
 
+export const creatingOperator = createAction("CREATING_OPERATOR");
+export const operatorCreated = createAction("OPERATOR_CREATED", resolve => {
+  return (resource: IResource) => resolve(resource);
+});
+export const errorOperatorCreate = createAction("ERROR_OPERATOR_CREATE", resolve => {
+  return (err: Error) => resolve(err);
+});
+
 const actions = [
   checkingOLM,
   OLMInstalled,
@@ -104,6 +112,9 @@ const actions = [
   deletingResource,
   resourceDeleted,
   errorResourceDelete,
+  creatingOperator,
+  operatorCreated,
+  errorOperatorCreate,
 ];
 
 export type OperatorAction = ActionType<typeof actions[number]>;
@@ -321,6 +332,26 @@ export function getResource(
       }
     } else {
       dispatch(errorCustomResource(new Error(`CSV ${csvName} not found in ${namespace}`)));
+    }
+  };
+}
+
+export function createOperator(
+  namespace: string,
+  name: string,
+  channel: string,
+  installPlanApproval: string,
+  csv: string,
+): ThunkAction<Promise<boolean>, IStoreState, null, OperatorAction> {
+  return async dispatch => {
+    dispatch(creatingOperator());
+    try {
+      const r = await Operators.createOperator(namespace, name, channel, installPlanApproval, csv);
+      dispatch(operatorCreated(r));
+      return true;
+    } catch (e) {
+      dispatch(errorOperatorCreate(e));
+      return false;
     }
   };
 }
