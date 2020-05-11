@@ -24,7 +24,10 @@ function mapStateToProps(
     namespace: namespace.current,
     isFetching: operators.isFetching,
     csv: operators.csv,
-    errors: operators.errors,
+    errors: {
+      fetch: operators.errors.csv.fetch,
+      create: operators.errors.resource.create,
+    },
     csvName: params.csv,
     crdName: params.crd,
   };

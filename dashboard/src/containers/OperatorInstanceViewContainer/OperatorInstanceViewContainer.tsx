@@ -28,7 +28,7 @@ function mapStateToProps(
     isFetching: operators.isFetching,
     resource: operators.resource,
     csv: operators.csv,
-    error: operators.errors.fetch || operators.errors.delete,
+    errors: operators.errors.resource,
   };
 }
 

@@ -23,7 +23,7 @@ function mapStateToProps(
     namespace: namespace.current,
     isFetching: operators.isFetching,
     operator: operators.operator,
-    error: operators.errors.fetch || operators.errors.create,
+    errors: operators.errors.operator,
     operatorName: params.operator,
   };
 }

@@ -1,6 +1,12 @@
 import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
-import { IClusterServiceVersion, IK8sList, IPackageManifest, IResource } from "./types";
+import {
+  IClusterServiceVersion,
+  IK8sList,
+  IPackageManifest,
+  IPackageManifestChannel,
+  IResource,
+} from "./types";
 
 export class Operators {
   public static async isOLMInstalled(namespace: string) {
@@ -126,6 +132,14 @@ export class Operators {
       },
     );
     return result;
+  }
+
+  public static getDefaultChannel(operator: IPackageManifest) {
+    return operator.status.channels.find(ch => ch.name === operator.status.defaultChannel);
+  }
+
+  public static global(channel?: IPackageManifestChannel) {
+    return !!channel?.currentCSVDesc.installModes.find(m => m.type === "AllNamespaces")?.supported;
   }
 
   private static async createOperatorGroupIfNotExists(namespace: string) {

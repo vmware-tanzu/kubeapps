@@ -21,6 +21,7 @@ const defaultProps: IOperatorInstanceProps = {
   getResource: jest.fn(),
   deleteResource: jest.fn(),
   push: jest.fn(),
+  errors: {},
 };
 
 itBehavesLike("aLoadingComponent", {
@@ -47,7 +48,9 @@ it("gets a resource again if the namespace changes", () => {
 });
 
 it("renders an error", () => {
-  const wrapper = shallow(<OperatorInstance {...defaultProps} error={new Error("Boom!")} />);
+  const wrapper = shallow(
+    <OperatorInstance {...defaultProps} errors={{ fetch: new Error("Boom!") }} />,
+  );
   expect(wrapper.find(ErrorSelector)).toExist();
   expect(wrapper.find(AppNotes)).not.toExist();
 });

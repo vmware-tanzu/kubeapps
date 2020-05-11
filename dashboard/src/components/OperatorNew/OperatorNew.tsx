@@ -1,6 +1,8 @@
 import * as React from "react";
 
 import { RouterAction } from "connected-react-router";
+import { IOperatorsStateError } from "../../reducers/operators";
+import { Operators } from "../../shared/Operators";
 import { IPackageManifest, IPackageManifestChannel } from "../../shared/types";
 import { api, app } from "../../shared/url";
 import { ErrorSelector } from "../ErrorAlert";
@@ -16,7 +18,7 @@ interface IOperatorNewProps {
   getOperator: (namespace: string, name: string) => Promise<void>;
   isFetching: boolean;
   namespace: string;
-  error?: Error;
+  errors: IOperatorsStateError;
   createOperator: (
     namespace: string,
     name: string,
@@ -50,8 +52,8 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
 
   public componentDidUpdate(prevProps: IOperatorNewProps) {
     if (prevProps.operator !== this.props.operator && this.props.operator) {
-      const defaultChannel = this.getDefaultChannel(this.props.operator);
-      const global = this.supportAllNamespaces(defaultChannel);
+      const defaultChannel = Operators.getDefaultChannel(this.props.operator);
+      const global = Operators.global(defaultChannel);
       this.setState({
         updateChannel: defaultChannel,
         updateChannelGlobal: global,
@@ -64,13 +66,14 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
   }
 
   public render() {
-    const { isFetching, namespace, operatorName, operator, error, push } = this.props;
+    const { isFetching, namespace, operatorName, operator, errors, push } = this.props;
     const {
       updateChannel,
       updateChannelGlobal,
       installationModeGlobal,
       approvalStrategyAutomatic,
     } = this.state;
+    const error = errors.fetch || errors.create;
     if (error) {
       return <ErrorSelector error={error} resource={`Operator ${operatorName}`} />;
     }
@@ -216,17 +219,9 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
     );
   }
 
-  private getDefaultChannel(operator: IPackageManifest) {
-    return operator.status.channels.find(ch => ch.name === operator.status.defaultChannel);
-  }
-
-  private supportAllNamespaces(channel?: IPackageManifestChannel) {
-    return !!channel?.currentCSVDesc.installModes.find(m => m.type === "AllNamespaces")?.supported;
-  }
-
   private selectChannel = (channel: string) => {
     const newChannel = this.props.operator?.status.channels.find(ch => ch.name === channel);
-    const global = this.supportAllNamespaces(newChannel);
+    const global = Operators.global(newChannel);
     return () => {
       this.setState({
         updateChannel: newChannel,

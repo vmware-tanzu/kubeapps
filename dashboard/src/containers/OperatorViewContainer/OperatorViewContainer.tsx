@@ -23,8 +23,9 @@ function mapStateToProps(
     namespace: namespace.current,
     isFetching: operators.isFetching,
     operator: operators.operator,
-    error: operators.errors.fetch,
+    error: operators.errors.operator.fetch,
     operatorName: params.operator,
+    csv: operators.csv,
   };
 }
 
@@ -33,6 +34,8 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     getOperator: (namespace: string, operatorName: string) =>
       dispatch(actions.operators.getOperator(namespace, operatorName)),
     push: (location: string) => dispatch(push(location)),
+    getCSV: (namespace: string, name: string) =>
+      dispatch(actions.operators.getCSV(namespace, name)),
   };
 }
 

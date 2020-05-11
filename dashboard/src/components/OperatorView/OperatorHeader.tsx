@@ -7,6 +7,7 @@ interface IOperatorHeaderProps {
   id: string;
   icon?: string;
   hideButton?: boolean;
+  disableButton?: boolean;
   description: string;
   namespace: string;
   version: string;
@@ -21,7 +22,16 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
   };
 
   public render() {
-    const { id, icon, description, namespace, version, provider, hideButton } = this.props;
+    const {
+      id,
+      icon,
+      description,
+      namespace,
+      version,
+      provider,
+      hideButton,
+      disableButton,
+    } = this.props;
     return (
       <header>
         <div className="ChartView__heading margin-normal row">
@@ -43,8 +53,12 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
           </div>
           {!hideButton && (
             <div className="col-2 ChartHeader__button">
-              <button className="button button-primary button-accent" onClick={this.redirect}>
-                Deploy
+              <button
+                className="button button-primary button-accent"
+                onClick={this.redirect}
+                disabled={disableButton}
+              >
+                {disableButton ? "Deployed" : "Deploy"}
               </button>
             </div>
           )}

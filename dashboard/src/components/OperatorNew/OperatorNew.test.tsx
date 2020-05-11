@@ -11,6 +11,7 @@ const defaultProps = {
   namespace: "kubeapps",
   push: jest.fn(),
   createOperator: jest.fn(),
+  errors: {},
 };
 
 const defaultOperator = {
@@ -69,7 +70,9 @@ it("parses the default channel when receiving the operator", () => {
 });
 
 it("renders an error if present", () => {
-  const wrapper = shallow(<OperatorNew {...defaultProps} error={new NotFoundError()} />);
+  const wrapper = shallow(
+    <OperatorNew {...defaultProps} errors={{ fetch: new NotFoundError() }} />,
+  );
   expect(wrapper.html()).toContain("Operator foo not found");
 });
 
