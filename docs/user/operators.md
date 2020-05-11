@@ -60,7 +60,7 @@ When clicking on the Deploy button, a form to deploy the operator will be displa
 
   ![Operator Deployment Form](../img/operator-deployment.png)
 
-Once the Operator is installed (it may take a bit) it would be listed like that and you can start deploy instances of that Operator:
+Once the Operator is installed (it may take a minute or two) it would be listed like that and you can start deploy instances of that Operator:
 
   ![Installed Operators](../img/installed-operators.png)
 
