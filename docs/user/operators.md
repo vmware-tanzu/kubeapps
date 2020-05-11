@@ -56,11 +56,11 @@ Let's deploy the "Akka Cluster Operator". When clicking on it, the information a
 
   ![Operators View](../img/operator-view.png)
 
-When clicking on the Deploy button, instructions on how to deploy the operator will be displayed. There are two type of Operators: Global and namespaced. Namespaced Operators will be available in a single namespace while global Operators across the cluster. In this case, we are installing a global Operator:
+When clicking on the Deploy button, a form to deploy the operator will be displayed. There are two type of Operators: Global and namespaced. Namespaced Operators will be available in a single namespace while global Operators across the cluster. In this case, we are installing a global Operator:
 
-  ![Operator Installation Instructions](../img/operator-installation-instructions.png)
+  ![Operator Deployment Form](../img/operator-deployment.png)
 
-Once the Operator is installed it would be listed like that and you can start deploy instances of that Operator:
+Once the Operator is installed (it may take a minute or two) it would be listed like that and you can start deploy instances of that Operator:
 
   ![Installed Operators](../img/installed-operators.png)
 
