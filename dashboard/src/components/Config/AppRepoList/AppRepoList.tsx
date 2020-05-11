@@ -186,8 +186,8 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
           <MessageAlert header="Looking for other app repositories?">
             <div>
               <p className="margin-v-normal">
-                You can view App Repositories across all namespaces by selecting "All Namespaces"
-                above, if you have permission to view App Repositories cluster-wide.
+                Administrators can view App Repositories across all namespaces using the Namespace
+                selector at the top and clicking on "All Namespaces".
               </p>
               <p className="margin-v-normal">
                 Kubeapps now enables you to create App Repositories in your own namespace that will
