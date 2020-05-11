@@ -28,14 +28,22 @@ deploy-openldap:
 	helm install ldap stable/openldap --namespace ldap \
 		--values ./docs/user/manifests/kubeapps-local-dev-openldap-values.yaml
 
+test-upgrade:
+	helm upgrade kubeapps ./chart/kubeapps --namespace kubeapps \
+		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
+		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
+		--set useHelm3=true \
+		--set postgresql.enabled=true \
+		--set mongodb.enabled=false
+
 deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
 	kubectl create namespace kubeapps
 	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--set useHelm3=true \
-		--set postgresql.enabled=true \
-		--set mongodb.enabled=false
+		--set postgresql.enabled=false \
+		--set mongodb.enabled=true
 	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	@echo "\nEnsure you have the entry '127.0.0.1 dex.dex' in your /etc/hosts, then run\n"
 	@echo "kubectl -n dex port-forward svc/dex 32000\n"

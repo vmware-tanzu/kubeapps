@@ -36,7 +36,7 @@ spec:
         runAsUser: {{ .Values.securityContext.runAsUser }}
       {{- end }}
       restartPolicy: OnFailure
-      serviceAccountName: {{ template "kubeapps.apprepository.fullname" . }}
+      serviceAccountName: {{ template "kubeapps.apprepository-job-postupgrade.fullname" . }}
       containers:
         - name: invalidate-cache
           image: {{ template "kubeapps.image" (list .Values.apprepository.syncImage .Values.global) }}
