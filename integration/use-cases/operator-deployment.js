@@ -19,7 +19,7 @@ test("Deploys an Operator", async () => {
 
   await utils.retryAndRefresh(page, 10, async () => {
     // The CSV takes a bit to get populated
-    await expect(page).toMatch("Installed");
+    await expect(page).toMatch("Installed", { timeout: 10000 });
   });
 
   // Wait for the operator to be ready to be used
