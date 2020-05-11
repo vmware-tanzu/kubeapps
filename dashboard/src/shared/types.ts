@@ -542,8 +542,10 @@ export interface IBasicFormParam {
   description?: string;
   hidden?:
     | {
+        path: any;
+        value: string;
         conditions: Array<{
-          reference: any;
+          path: any;
           value: string;
         }>;
         operator: string;

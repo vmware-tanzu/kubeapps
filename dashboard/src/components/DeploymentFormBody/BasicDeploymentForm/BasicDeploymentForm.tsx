@@ -42,32 +42,30 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         // If hidden is a string, it points to the value that should be true
         return getValue(this.props.appValues, hidden) === true;
       case "object":
-        let isHiddenParam;
-        // If hidden is an object, a different logic should be applied
-        // based on the operator
-        switch (hidden.operator) {
-          case "and":
-            // Every value matches its reference in
-            // all the conditions
-            isHiddenParam = true;
-            hidden.conditions.forEach(c => {
-              if (getValue(this.props.appValues, c.value) !== c.reference) {
-                isHiddenParam = false;
-              }
-            });
-            return isHiddenParam;
-          case "or":
-            // It is enough if the value matches its reference in
-            // any of the conditions
-            isHiddenParam = false;
-            hidden.conditions.forEach(c => {
-              if (getValue(this.props.appValues, c.value) === c.reference) {
-                isHiddenParam = true;
-              }
-            });
-            return isHiddenParam;
-          default:
-            return false;
+        // Two type of supported objects
+        // A single condition: {value: string, path: any}
+        // An array of conditions: {conditions: Array<{value: string, path: any}, operator: string}
+        if (hidden.conditions?.length > 0) {
+          // If hidden is an object, a different logic should be applied
+          // based on the operator
+          switch (hidden.operator) {
+            case "and":
+              // Every value matches the referenced
+              // value (via jsonpath) in all the conditions
+              return hidden.conditions.every(
+                c => getValue(this.props.appValues, c.value) === c.path,
+              );
+            case "or":
+              // It is enough if the value matches the referenced
+              // value (via jsonpath) in any of the conditions
+              return hidden.conditions.some(
+                c => getValue(this.props.appValues, c.value) === c.path,
+              );
+            default:
+              return false;
+          }
+        } else {
+          return getValue(this.props.appValues, hidden.value) === hidden.path;
         }
       case "undefined":
         return false;

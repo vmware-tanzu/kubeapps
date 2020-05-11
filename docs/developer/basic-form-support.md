@@ -94,9 +94,18 @@ When a property of type `object` is set with a `form` identifier, it will be ren
 
 All the parameters within an `object` will be rendered in the subsection.
 
-Note that in some cases, a parameter cause that the rest of parameters are no longer relevant. For example, setting `ingress.enabled` to `false` makes the `ingress.hostname` irrelevant. To avoid confussion, you can hide that parameter setting the special tag `hidden`. The tag `hidden` can be a `string` pointing to the parameter that needs to be `true` to hide the element or an `object` to also set a group of values that need to match a given reference.
+Note that in some cases, a parameter cause that the rest of parameters are no longer relevant. For example, setting `ingress.enabled` to `false` makes the `ingress.hostname` irrelevant. To avoid confussion, you can hide that parameter setting the special tag `hidden`. The tag `hidden` can be a `string` pointing to the parameter that needs to be `true` to hide the element, or an `object` to also set the value that the pointed value needs to match as shown below:
 
-When using an `object` to set the `hidden` tag, you can specify an array of conditions to match, and the conditional operator to use (currently supported: `and`, `or`). The format is shown below:
+```json
+{
+  "hidden": {
+    "value": "foo",
+    "path": "bar"
+  }
+}
+```
+
+When using an `object` to set the `hidden` tag, you can also specify an array of conditions to match, and the conditional operator to use (currently supported: `and`, `or`). The format is shown below:
 
 ```json
 {
@@ -104,11 +113,11 @@ When using an `object` to set the `hidden` tag, you can specify an array of cond
     "conditions": [
       {
         "value": "foo",
-        "reference": "bar"
+        "path": "bar"
       },
       {
         "value": "baz",
-        "reference": "qux"
+        "path": "qux"
       }
     ],
     "operator": "or"
@@ -135,7 +144,7 @@ This is an example for a subsection with a parameter that can be hidden:
           "title": "Hostname",
           "hidden": {
             "conditions": [{
-              "reference": false,
+              "path": false,
               "value": "ingress/enabled"
             }],
             "operator": "and"
