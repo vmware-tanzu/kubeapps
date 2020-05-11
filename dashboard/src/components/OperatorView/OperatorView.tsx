@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { RouterAction } from "connected-react-router";
 import { IPackageManifest } from "../../shared/types";
 import { api } from "../../shared/url";
 import { ErrorSelector } from "../ErrorAlert";
@@ -16,6 +17,7 @@ interface IOperatorViewProps {
   isFetching: boolean;
   namespace: string;
   error?: Error;
+  push: (location: string) => RouterAction;
 }
 
 class OperatorView extends React.Component<IOperatorViewProps> {
@@ -25,7 +27,7 @@ class OperatorView extends React.Component<IOperatorViewProps> {
   }
 
   public render() {
-    const { isFetching, namespace, operatorName, operator, error } = this.props;
+    const { isFetching, namespace, operatorName, operator, error, push } = this.props;
     if (error) {
       return <ErrorSelector error={error} resource={`Operator ${operatorName}`} />;
     }
@@ -52,6 +54,7 @@ class OperatorView extends React.Component<IOperatorViewProps> {
           namespace={namespace}
           provider={operator.status.provider.name}
           namespaced={!namespaced?.supported}
+          push={push}
         />
         <main>
           <div className="container container-fluid">

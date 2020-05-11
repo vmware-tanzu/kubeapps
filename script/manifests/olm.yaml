@@ -129,7 +129,7 @@ spec:
           - '-namespace'
           - olm
           - -configmapServerImage=quay.io/operator-framework/configmap-operator-registry:latest
-          image: quay.io/operator-framework/olm@sha256:fa0163f45f762be20a943ab866b291acf71b8407233f018c0a0cb154feca38ef
+          image: quay.io/operator-framework/olm:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

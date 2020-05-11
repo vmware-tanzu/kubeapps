@@ -10,6 +10,7 @@ const defaultProps = {
   getOperator: jest.fn(),
   isFetching: false,
   namespace: "kubeapps",
+  push: jest.fn(),
 };
 
 const defaultOperator = {

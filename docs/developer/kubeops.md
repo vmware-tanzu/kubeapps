@@ -18,6 +18,7 @@ export GOPATH=~/gopath
 export PATH=$GOPATH/bin:$PATH
 export KUBEAPPS_DIR=$GOPATH/src/github.com/kubeapps/kubeapps
 ```
+
 ## Download the Kubeapps source code
 
 ```bash

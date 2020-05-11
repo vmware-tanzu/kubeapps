@@ -159,6 +159,16 @@ const catalogReducer = (
         ...isFetching(state, "resource", false),
         resource: action.payload,
       };
+    case getType(operators.creatingOperator):
+      return { ...state, ...isFetching(state, "operator", true) };
+    case getType(operators.operatorCreated):
+      return { ...state, ...isFetching(state, "operator", false) };
+    case getType(operators.errorOperatorCreate):
+      return {
+        ...state,
+        ...isFetching(state, "operator", false),
+        errors: { create: action.payload },
+      };
     case LOCATION_CHANGE:
       return { ...state, isOLMInstalled: state.isOLMInstalled, errors: {} };
     case getType(actions.namespace.setNamespace):

@@ -9,6 +9,8 @@ export const app = {
   },
   operators: {
     view: (namespace: string, name: string) => `/ns/${namespace}/operators/${name}`,
+    list: (namespace: string) => `/ns/${namespace}/operators`,
+    new: (namespace: string, name: string) => `/ns/${namespace}/operators/new/${name}`,
   },
   operatorInstances: {
     update: (namespace: string, csvName: string, crdName: string, instanceName: string) =>
@@ -92,5 +94,9 @@ export const api = {
       `${APIBase}/apis/${apiVersion}/${withNS(namespace)}${resource}`,
     resource: (namespace: string, apiVersion: string, resource: string, name: string) =>
       `${APIBase}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
+    operatorGroups: (namespace: string) =>
+      `${APIBase}/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+    subscription: (namespace: string, name: string) =>
+      `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/${name}`,
   },
 };

@@ -1,4 +1,5 @@
 const axios = require("axios");
+const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
   await page.goto(getUrl("/#/config/ns/default/repos"));
@@ -56,18 +57,9 @@ test("Creates a private registry", async () => {
   await expect(page).toClick("button", { text: "Install Repo" });
   await expect(page).toClick("a", { text: "my-repo" });
 
-  let retries = 3;
-  while (retries > 0) {
-    try {
-      await expect(page).toMatch("apache", { timeout: 2000 });
-      break;
-    } catch (e) {
-      // Refresh since the chart will get a bit of time to populate
-      await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
-    } finally {
-      retries--;
-    }
-  }
+  await utils.retryAndRefresh(page, 3, async () => {
+    await expect(page).toMatch("apache", { timeout: 2000 });
+  });
 
   await expect(page).toClick("a", { text: "apache", timeout: 60000 });
 

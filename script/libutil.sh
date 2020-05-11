@@ -38,3 +38,20 @@ retry_while() {
     done
     return $return_value
 }
+
+#########################
+# Redirects output to /dev/null unless debug mode is enabled
+# Globals:
+#   DEBUG_MODE
+# Arguments:
+#   $@ - Command to execute
+# Returns:
+#   None
+#########################
+silence() {
+    if ${DEBUG_MODE:-false}; then
+        "$@"
+    else
+        "$@" >/dev/null 2>&1
+    fi
+}
