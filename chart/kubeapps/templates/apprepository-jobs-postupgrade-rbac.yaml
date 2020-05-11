@@ -9,10 +9,10 @@ metadata:
   labels:
     app: {{ template "kubeapps.apprepository.fullname" . }}
     chart: {{ template "kubeapps.chart" . }}
-    release: {{ .release.name }}
-    heritage: {{ .release.service }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 rules:
-  - apigroups:
+  - apiGroups:
       - ""
     resources:
       - secrets
