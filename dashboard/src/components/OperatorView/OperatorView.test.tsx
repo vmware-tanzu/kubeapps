@@ -3,6 +3,7 @@ import * as React from "react";
 import { NotFoundError } from "../../shared/types";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
 import OperatorDescription from "./OperatorDescription";
+import OperatorHeader from "./OperatorHeader";
 import OperatorView from "./OperatorView";
 
 const defaultProps = {
@@ -11,6 +12,7 @@ const defaultProps = {
   isFetching: false,
   namespace: "kubeapps",
   push: jest.fn(),
+  getCSV: jest.fn(),
 };
 
 const defaultOperator = {
@@ -26,6 +28,7 @@ const defaultOperator = {
     channels: [
       {
         name: "beta",
+        currentCSV: "foo.1.0.0",
         currentCSVDesc: {
           displayName: "Foo",
           version: "1.0.0",
@@ -47,6 +50,24 @@ it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
   shallow(<OperatorView {...defaultProps} getOperator={getOperator} />);
   expect(getOperator).toHaveBeenCalledWith(defaultProps.namespace, defaultProps.operatorName);
+});
+
+it("tries to get the CSV for the current operator", () => {
+  const getCSV = jest.fn();
+  const wrapper = shallow(<OperatorView {...defaultProps} getCSV={getCSV} />);
+  wrapper.setProps({ operator: defaultOperator });
+
+  expect(getCSV).toHaveBeenCalledWith(
+    defaultOperator.metadata.namespace,
+    defaultOperator.status.channels[0].currentCSV,
+  );
+});
+
+it("re-request the operator when changing the namespace", () => {
+  const getOperator = jest.fn();
+  const wrapper = shallow(<OperatorView {...defaultProps} getOperator={getOperator} />);
+  wrapper.setProps({ namespace: "other" });
+  expect(getOperator).toHaveBeenCalledTimes(2);
 });
 
 it("shows an error if it exists", () => {
@@ -88,4 +109,12 @@ it("selects the default channel", () => {
   expect(wrapper.find(OperatorDescription).prop("description")).toEqual(
     "this is a testing operator",
   );
+});
+
+it("disables the Header deploy button if the CSV already exists", () => {
+  const wrapper = shallow(
+    <OperatorView {...defaultProps} operator={defaultOperator} csv={{} as any} />,
+  );
+  const header = wrapper.find(OperatorHeader);
+  expect(header.prop("disableButton")).toBe(true);
 });

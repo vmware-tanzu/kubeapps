@@ -31,7 +31,11 @@ export interface IOperatorInstanceProps {
   ) => Promise<void>;
   deleteResource: (namespace: string, crdName: string, resource: IResource) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  error?: Error;
+  errors: {
+    fetch?: Error;
+    delete?: Error;
+    update?: Error;
+  };
   resource?: IResource;
   csv?: IClusterServiceVersion;
 }
@@ -131,7 +135,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   public render() {
     const {
       isFetching,
-      error,
+      errors,
       resource,
       csv,
       instanceName,
@@ -143,7 +147,7 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
     const { resources } = this.state;
     const onUpdateClick = () =>
       push(app.operatorInstances.update(namespace, csvName, crdName, instanceName));
-
+    const error = errors.fetch || errors.delete || errors.update;
     return (
       <section className="AppView padding-b-big">
         <main>

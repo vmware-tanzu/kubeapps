@@ -256,3 +256,37 @@ it("creates only a subscription if the namespace is operators", async () => {
   expect(axiosWithAuth.get).not.toHaveBeenCalled();
   expect(axiosWithAuth.post).toHaveBeenCalledTimes(1);
 });
+
+it("finds a default channel", () => {
+  const operator = {
+    status: {
+      defaultChannel: "foo",
+      channels: [{ name: "foo" }, { name: "bar" }],
+    },
+  } as any;
+  expect(Operators.getDefaultChannel(operator)).toEqual({ name: "foo" });
+});
+
+describe("#global", () => {
+  [
+    {
+      description: "returns true if the channel support all namespaces",
+      channel: { currentCSVDesc: { installModes: [{ type: "AllNamespaces", supported: true }] } },
+      result: true,
+    },
+    {
+      description: "returns false if the channel support only namespaces",
+      channel: { currentCSVDesc: { installModes: [{ type: "AllNamespaces", supported: false }] } },
+      result: false,
+    },
+    {
+      description: "returns false if the channel is undefined",
+      channel: undefined,
+      result: false,
+    },
+  ].forEach(test => {
+    it(test.description, () => {
+      expect(Operators.global(test.channel as any)).toBe(test.result);
+    });
+  });
+});

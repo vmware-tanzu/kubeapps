@@ -22,3 +22,11 @@ it("omits the button", () => {
   const wrapper = shallow(<OperatorHeader {...defaultProps} hideButton={true} />);
   expect(wrapper.find("button")).not.toExist();
 });
+
+it("disables the button", () => {
+  const wrapper = shallow(<OperatorHeader {...defaultProps} disableButton={true} />);
+  const button = wrapper.find("button");
+  expect(button).toExist();
+  expect(button.prop("disabled")).toBe(true);
+  expect(button.text()).toBe("Deployed");
+});

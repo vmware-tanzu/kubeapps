@@ -6,6 +6,13 @@ import actions from "../actions";
 import { NamespaceAction } from "../actions/namespace";
 import { IClusterServiceVersion, IPackageManifest, IResource } from "../shared/types";
 
+export interface IOperatorsStateError {
+  fetch?: Error;
+  create?: Error;
+  delete?: Error;
+  update?: Error;
+}
+
 export interface IOperatorsState {
   isFetching: boolean;
   isFetchingElem: {
@@ -18,10 +25,9 @@ export interface IOperatorsState {
   operators: IResource[];
   operator?: IPackageManifest;
   errors: {
-    fetch?: Error;
-    create?: Error;
-    delete?: Error;
-    update?: Error;
+    operator: IOperatorsStateError;
+    csv: IOperatorsStateError;
+    resource: IOperatorsStateError;
   };
   csvs: IClusterServiceVersion[];
   csv?: IClusterServiceVersion;
@@ -40,7 +46,11 @@ const initialState: IOperatorsState = {
   isOLMInstalled: false,
   operators: [],
   csvs: [],
-  errors: {},
+  errors: {
+    operator: {},
+    csv: {},
+    resource: {},
+  },
   resources: [],
 };
 
@@ -69,7 +79,7 @@ const catalogReducer = (
       return {
         ...state,
         ...isFetching(state, "OLM", false),
-        errors: { fetch: action.payload },
+        errors: { ...state.errors, operator: { fetch: action.payload } },
       };
     case getType(operators.requestOperators):
       return { ...state, ...isFetching(state, "operator", true) };
@@ -91,7 +101,8 @@ const catalogReducer = (
       return {
         ...state,
         ...isFetching(state, "operator", false),
-        errors: { fetch: action.payload },
+        operator: undefined,
+        errors: { ...state.errors, operator: { fetch: action.payload } },
       };
     case getType(operators.requestCSVs):
       return { ...state, ...isFetching(state, "csv", true) };
@@ -105,7 +116,8 @@ const catalogReducer = (
       return {
         ...state,
         ...isFetching(state, "csv", false),
-        errors: { fetch: action.payload },
+        csv: undefined,
+        errors: { ...state.errors, csv: { fetch: action.payload } },
       };
     case getType(operators.creatingResource):
       return { ...state, ...isFetching(state, "resource", true) };
@@ -123,19 +135,19 @@ const catalogReducer = (
       return {
         ...state,
         ...isFetching(state, "resource", false),
-        errors: { delete: action.payload },
+        errors: { ...state.errors, resource: { delete: action.payload } },
       };
     case getType(operators.errorResourceCreate):
       return {
         ...state,
         ...isFetching(state, "resource", false),
-        errors: { create: action.payload },
+        errors: { ...state.errors, resource: { create: action.payload } },
       };
     case getType(operators.errorResourceUpdate):
       return {
         ...state,
         ...isFetching(state, "resource", false),
-        errors: { update: action.payload },
+        errors: { ...state.errors, resource: { update: action.payload } },
       };
     case getType(operators.requestCustomResources):
       return { ...state, ...isFetching(state, "resource", true) };
@@ -149,7 +161,8 @@ const catalogReducer = (
       return {
         ...state,
         ...isFetching(state, "resource", false),
-        errors: { fetch: action.payload },
+        resource: undefined,
+        errors: { ...state.errors, resource: { fetch: action.payload } },
       };
     case getType(operators.requestCustomResource):
       return { ...state, ...isFetching(state, "resource", true) };
@@ -167,10 +180,14 @@ const catalogReducer = (
       return {
         ...state,
         ...isFetching(state, "operator", false),
-        errors: { create: action.payload },
+        errors: { ...state.errors, operator: { create: action.payload } },
       };
     case LOCATION_CHANGE:
-      return { ...state, isOLMInstalled: state.isOLMInstalled, errors: {} };
+      return {
+        ...state,
+        isOLMInstalled: state.isOLMInstalled,
+        errors: { operator: {}, csv: {}, resource: {} },
+      };
     case getType(actions.namespace.setNamespace):
       return { ...initialState, isOLMInstalled: state.isOLMInstalled };
     default:

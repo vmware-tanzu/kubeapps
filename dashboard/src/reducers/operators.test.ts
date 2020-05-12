@@ -20,7 +20,7 @@ describe("catalogReducer", () => {
       isOLMInstalled: false,
       operators: [],
       csvs: [],
-      errors: {},
+      errors: { operator: {}, resource: {}, csv: {} },
       resources: [],
     };
   });
@@ -116,7 +116,11 @@ describe("catalogReducer", () => {
             type: actionTypes.errorOperators as any,
             payload: new Error("Boom!"),
           }),
-        ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
+        ).toEqual({
+          ...initialState,
+          isFetching: false,
+          errors: { ...initialState.errors, operator: { fetch: new Error("Boom!") } },
+        });
       });
 
       it("unsets an error when changing namespace", () => {
@@ -127,14 +131,14 @@ describe("catalogReducer", () => {
         expect(state).toEqual({
           ...initialState,
           isFetching: false,
-          errors: { fetch: new Error("Boom!") },
+          errors: { ...initialState.errors, operator: { fetch: new Error("Boom!") } },
         });
 
         expect(
           operatorReducer(undefined, {
             type: actionTypes.setNamespace as any,
           }),
-        ).toEqual({ ...initialState, error: undefined });
+        ).toEqual({ ...initialState });
       });
 
       it("sets the initial state when changing namespace", () => {
@@ -144,7 +148,7 @@ describe("catalogReducer", () => {
               ...initialState,
               isFetching: true,
               isFetchingElem: { OLM: true, operator: false, csv: false, resource: false },
-              errors: { fetch: new Error("Boom!") },
+              errors: { ...initialState.errors, operator: { fetch: new Error("Boom!") } },
               operators: [{} as any],
             },
             {
@@ -204,7 +208,11 @@ describe("catalogReducer", () => {
             type: actionTypes.errorCSVs as any,
             payload: new Error("Boom!"),
           }),
-        ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
+        ).toEqual({
+          ...initialState,
+          isFetching: false,
+          errors: { ...initialState.errors, csv: { fetch: new Error("Boom!") } },
+        });
       });
 
       it("sets receive csv", () => {
@@ -258,7 +266,11 @@ describe("catalogReducer", () => {
           type: actionTypes.errorResourceCreate as any,
           payload: new Error("Boom!"),
         }),
-      ).toEqual({ ...initialState, isFetching: false, errors: { create: new Error("Boom!") } });
+      ).toEqual({
+        ...initialState,
+        isFetching: false,
+        errors: { ...initialState.errors, resource: { create: new Error("Boom!") } },
+      });
     });
 
     it("sets receive resources", () => {
@@ -293,7 +305,11 @@ describe("catalogReducer", () => {
           type: actionTypes.errorCustomResource as any,
           payload: new Error("Boom!"),
         }),
-      ).toEqual({ ...initialState, isFetching: false, errors: { fetch: new Error("Boom!") } });
+      ).toEqual({
+        ...initialState,
+        isFetching: false,
+        errors: { ...initialState.errors, resource: { fetch: new Error("Boom!") } },
+      });
     });
 
     it("sets receive resource", () => {
@@ -370,7 +386,7 @@ describe("catalogReducer", () => {
       ).toEqual({ ...initialState, isFetching: false });
     });
 
-    it("sets an error creating a resource", () => {
+    it("sets an error creating an operator", () => {
       const state = operatorReducer(undefined, {
         type: actionTypes.creatingOperator as any,
       });
@@ -384,7 +400,11 @@ describe("catalogReducer", () => {
           type: actionTypes.errorOperatorCreate as any,
           payload: new Error("Boom!"),
         }),
-      ).toEqual({ ...initialState, isFetching: false, errors: { create: new Error("Boom!") } });
+      ).toEqual({
+        ...initialState,
+        isFetching: false,
+        errors: { ...initialState.errors, operator: { create: new Error("Boom!") } },
+      });
     });
   });
 });

@@ -1,7 +1,8 @@
 import * as React from "react";
 
 import { RouterAction } from "connected-react-router";
-import { IPackageManifest } from "../../shared/types";
+import { Operators } from "../../shared/Operators";
+import { IClusterServiceVersion, IPackageManifest } from "../../shared/types";
 import { api } from "../../shared/url";
 import { ErrorSelector } from "../ErrorAlert";
 import UnexpectedErrorPage from "../ErrorAlert/UnexpectedErrorAlert";
@@ -18,6 +19,8 @@ interface IOperatorViewProps {
   namespace: string;
   error?: Error;
   push: (location: string) => RouterAction;
+  getCSV: (namespace: string, name: string) => Promise<IClusterServiceVersion>;
+  csv?: IClusterServiceVersion;
 }
 
 class OperatorView extends React.Component<IOperatorViewProps> {
@@ -26,15 +29,28 @@ class OperatorView extends React.Component<IOperatorViewProps> {
     getOperator(namespace, operatorName);
   }
 
+  public componentDidUpdate(prevProps: IOperatorViewProps) {
+    const { namespace, getOperator, getCSV } = this.props;
+    if (prevProps.operator !== this.props.operator && this.props.operator) {
+      const defaultChannel = Operators.getDefaultChannel(this.props.operator);
+      if (defaultChannel) {
+        getCSV(namespace, defaultChannel.currentCSV);
+      }
+    }
+    if (prevProps.namespace !== this.props.namespace) {
+      getOperator(this.props.namespace, this.props.operatorName);
+    }
+  }
+
   public render() {
-    const { isFetching, namespace, operatorName, operator, error, push } = this.props;
+    const { isFetching, namespace, operatorName, operator, error, push, csv } = this.props;
     if (error) {
       return <ErrorSelector error={error} resource={`Operator ${operatorName}`} />;
     }
     if (isFetching || !operator) {
       return <LoadingWrapper />;
     }
-    const channel = operator.status.channels.find(ch => ch.name === operator.status.defaultChannel);
+    const channel = Operators.getDefaultChannel(operator);
     if (!channel) {
       return (
         <UnexpectedErrorPage
@@ -55,6 +71,7 @@ class OperatorView extends React.Component<IOperatorViewProps> {
           provider={operator.status.provider.name}
           namespaced={!namespaced?.supported}
           push={push}
+          disableButton={!!csv}
         />
         <main>
           <div className="container container-fluid">
