@@ -7,6 +7,7 @@ import { IKubeItem, IResource } from "../../../../shared/types";
 import DeploymentItemRow from "./DeploymentItem/DeploymentItem";
 import OtherResourceItem from "./OtherResourceItem";
 import ResourceTableItem from "./ResourceTableItem";
+import SecretItem from "./SecretItem";
 
 const kubeItem: IKubeItem<IResource> = {
   isFetching: false,
@@ -158,5 +159,35 @@ context("when there is a valid resouce", () => {
       <ResourceTableItem {...defaultProps} resource={kubeItem} name={cm.metadata.name} />,
     );
     expect(wrapper.find(OtherResourceItem)).toExist();
+  });
+
+  it("ignores the namespace if it matches a known type", () => {
+    const deployment = {
+      metadata: {
+        name: "foo",
+        selfLink: "/api/v1/namespaces/deployments/secrets/kubernetes",
+      },
+      status: { replicas: 1, updatedReplicas: 1, availableReplicas: 1 },
+    } as IResource;
+    kubeItem.item = deployment;
+    const wrapper = shallow(
+      <ResourceTableItem {...defaultProps} resource={kubeItem} name={deployment.metadata.name} />,
+    );
+    expect(wrapper.find(SecretItem)).toExist();
+  });
+
+  it("ignores the resource name if it matches a known type", () => {
+    const deployment = {
+      metadata: {
+        name: "foo",
+        selfLink: "/api/v1/namespaces/default/secrets/services",
+      },
+      status: { replicas: 1, updatedReplicas: 1, availableReplicas: 1 },
+    } as IResource;
+    kubeItem.item = deployment;
+    const wrapper = shallow(
+      <ResourceTableItem {...defaultProps} resource={kubeItem} name={deployment.metadata.name} />,
+    );
+    expect(wrapper.find(SecretItem)).toExist();
   });
 });
