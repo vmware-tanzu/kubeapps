@@ -7,10 +7,15 @@ module.exports = {
         break;
       } catch (e) {
         // Refresh since the chart will get a bit of time to populate
-        await page.reload({
-          waitUntil: ["networkidle0", "domcontentloaded"],
-          timeout: 20000,
-        });
+        try {
+          await page.reload({
+            waitUntil: ["domcontentloaded"],
+            timeout: 20000,
+          });
+        } catch (e) {
+          // The reload may fail, ignore this try
+          retriesLeft++;
+        }
       } finally {
         retriesLeft--;
       }
