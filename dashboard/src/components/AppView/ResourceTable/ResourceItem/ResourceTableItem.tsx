@@ -86,19 +86,29 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
 
   private renderResource = (r: IResource | ISecret) => {
     const plainResource = r as IResource;
-    // resource kind may not be available for Lists
-    if (r.metadata.selfLink.match("deployments")) {
-      return <DeploymentItemRow resource={plainResource} />;
-    } else if (r.metadata.selfLink.match("statefulsets")) {
-      return <StatefulSetItemRow resource={plainResource} />;
-    } else if (r.metadata.selfLink.match("daemonsets")) {
-      return <DaemonSetItemRow resource={plainResource} />;
-    } else if (r.metadata.selfLink.match("services")) {
-      return <ServiceItem resource={plainResource} />;
-    } else if (r.metadata.selfLink.match("secrets")) {
-      return <SecretItem resource={r as ISecret} />;
-    } else {
-      return <OtherResourceItem resource={plainResource} />;
+    // The resource kind may not be available for Lists
+    // so we need to infer it from the selfLink
+    const parsedLink = r.metadata.selfLink.split("/");
+    if (parsedLink.length < 2) {
+      // Unknown selflink
+      return "";
+    }
+    // For a single resource, the type is the second-to-last item
+    // e.g. /api/v1/namespaces/default/pods/foo
+    const type = parsedLink[parsedLink.length - 2];
+    switch (type) {
+      case "deployments":
+        return <DeploymentItemRow resource={plainResource} />;
+      case "statefulsets":
+        return <StatefulSetItemRow resource={plainResource} />;
+      case "daemonsets":
+        return <DaemonSetItemRow resource={plainResource} />;
+      case "services":
+        return <ServiceItem resource={plainResource} />;
+      case "secrets":
+        return <SecretItem resource={r as ISecret} />;
+      default:
+        return <OtherResourceItem resource={plainResource} />;
     }
   };
 }
