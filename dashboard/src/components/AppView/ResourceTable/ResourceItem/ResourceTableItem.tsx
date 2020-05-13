@@ -86,8 +86,16 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
 
   private renderResource = (r: IResource | ISecret) => {
     const plainResource = r as IResource;
-    const type = this.typeFromSelfLink(r.metadata.selfLink);
-    // resource kind may not be available for Lists
+    // The resource kind may not be available for Lists
+    // so we need to infer it from the selfLink
+    const parsedLink = r.metadata.selfLink.split("/");
+    if (parsedLink.length < 2) {
+      // Unknown selflink
+      return "";
+    }
+    // For a single resource, the type is the second-to-last item
+    // e.g. /api/v1/namespaces/default/pods/foo
+    const type = parsedLink[parsedLink.length - 2];
     switch (type) {
       case "deployments":
         return <DeploymentItemRow resource={plainResource} />;
@@ -103,17 +111,6 @@ class WorkloadItem extends React.Component<IResourceItemProps> {
         return <OtherResourceItem resource={plainResource} />;
     }
   };
-
-  private typeFromSelfLink(link: string) {
-    const parsedLink = link.split("/");
-    if (parsedLink.length < 2) {
-      // Unknown selflink
-      return "";
-    }
-    // For a single resource, the type is the second-to-last item
-    // e.g. /api/v1/namespaces/default/pods/foo
-    return parsedLink[parsedLink.length - 2];
-  }
 }
 
 export default WorkloadItem;

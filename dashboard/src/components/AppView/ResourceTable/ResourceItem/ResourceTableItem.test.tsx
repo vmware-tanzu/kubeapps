@@ -161,7 +161,7 @@ context("when there is a valid resouce", () => {
     expect(wrapper.find(OtherResourceItem)).toExist();
   });
 
-  it("ignores the namespace if it matches a known type", () => {
+  it("it parses the type from the position in the self-link (it ignores the namespace)", () => {
     const deployment = {
       metadata: {
         name: "foo",
@@ -176,7 +176,7 @@ context("when there is a valid resouce", () => {
     expect(wrapper.find(SecretItem)).toExist();
   });
 
-  it("ignores the resource name if it matches a known type", () => {
+  it("it parses the type from the position in the self-link (it ignores the resource name)", () => {
     const deployment = {
       metadata: {
         name: "foo",
