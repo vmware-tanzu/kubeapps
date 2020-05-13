@@ -17,6 +17,7 @@ limitations under the License.
 package kube
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -161,7 +162,7 @@ func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs 
 	expectedAppRepo := appRepositoryForRequest(appRepoRequest)
 	expectedAppRepo.ObjectMeta.Namespace = requestNamespace
 
-	responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(expectedAppRepo.ObjectMeta.Name, metav1.GetOptions{})
+	responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(context.TODO(), expectedAppRepo.ObjectMeta.Name, metav1.GetOptions{})
 	if err != nil {
 		t.Fatalf("expected data %v not present: %+v", expectedAppRepo, err)
 	}
@@ -184,7 +185,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 	if appRepoRequest.AppRepository.AuthHeader != "" {
 		expectedSecret := secretForRequest(appRepoRequest, responseAppRepo)
 		expectedSecret.ObjectMeta.Namespace = requestNamespace
-		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
+		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(context.TODO(), expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
 
 		if err != nil {
 			t.Errorf("expected data %v not present: %+v", expectedSecret, err)
@@ -203,7 +204,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 		expectedSecret.ObjectMeta.OwnerReferences = nil
 
 		if requestNamespace != kubeappsNamespace {
-			responseSecret, err = handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
+			responseSecret, err = handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), kubeappsSecretName, metav1.GetOptions{})
 			if err != nil {
 				t.Errorf("expected data %v not present: %+v", expectedSecret, err)
 			}
@@ -213,7 +214,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 			}
 		} else {
 			// The copy of the secret should not be created when the request namespace is kubeapps.
-			secret, err := handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(kubeappsSecretName, metav1.GetOptions{})
+			secret, err := handler.clientset.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), kubeappsSecretName, metav1.GetOptions{})
 			if err == nil {
 				t.Fatalf("secret should not be created, found %+v", secret)
 			}
@@ -474,7 +475,7 @@ func TestDeleteAppRepository(t *testing.T) {
 
 			if err == nil {
 				// Ensure the repo has been deleted, so expecting a 404.
-				_, err = cs.KubeappsV1alpha1().AppRepositories(tc.requestNamespace).Get(tc.repoName, metav1.GetOptions{})
+				_, err = cs.KubeappsV1alpha1().AppRepositories(tc.requestNamespace).Get(context.TODO(), tc.repoName, metav1.GetOptions{})
 				if got, want := errorCodeForK8sError(t, err), 404; got != want {
 					t.Errorf("got: %d, want: %d", got, want)
 				}
@@ -483,7 +484,7 @@ func TestDeleteAppRepository(t *testing.T) {
 				// because the fake client does not handle finalizers but verified in real life.
 
 				// Ensure any copy of the repo credentials has been deleted from the kubeapps namespace.
-				_, err = cs.CoreV1().Secrets(kubeappsNamespace).Get(KubeappsSecretNameForRepo(tc.repoName, tc.requestNamespace), metav1.GetOptions{})
+				_, err = cs.CoreV1().Secrets(kubeappsNamespace).Get(context.TODO(), KubeappsSecretNameForRepo(tc.repoName, tc.requestNamespace), metav1.GetOptions{})
 				if got, want := errorCodeForK8sError(t, err), 404; got != want {
 					t.Errorf("got: %d, want: %d", got, want)
 				}
@@ -771,11 +772,11 @@ func TestGetNamespaces(t *testing.T) {
 			}
 
 			for _, ns := range tc.existingNS {
-				cs.Clientset.CoreV1().Namespaces().Create(&corev1.Namespace{
+				cs.Clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: ns,
 					},
-				})
+				}, metav1.CreateOptions{})
 			}
 
 			cs.Clientset.Fake.PrependReactor(

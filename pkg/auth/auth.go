@@ -17,6 +17,7 @@ limitations under the License.
 package auth
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"strings"
@@ -58,11 +59,11 @@ func (u k8sAuth) CanI(verb, group, resource, namespace string) (bool, error) {
 		Verb:      verb,
 		Namespace: namespace,
 	}
-	res, err := u.AuthCli.SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
+	res, err := u.AuthCli.SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
 		Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: attr,
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		return false, err
 	}

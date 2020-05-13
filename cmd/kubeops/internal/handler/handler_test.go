@@ -308,7 +308,7 @@ func TestActions(t *testing.T) {
 				return iKey < jKey
 			})
 			if !cmp.Equal(releases, test.RemainingReleases, releaseComparer) {
-				t.Errorf("Unexpected remaining releases. Diff:\n%s", cmp.Diff(releases, test.RemainingReleases, releaseComparer))
+				t.Errorf("Unexpected remaining releases. Diff:\n%s", cmp.Diff(test.RemainingReleases, releases, releaseComparer))
 			}
 			if test.ResponseBody != "" {
 				if test.ResponseBody != response.Body.String() {
