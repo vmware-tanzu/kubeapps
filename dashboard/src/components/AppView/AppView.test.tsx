@@ -169,7 +169,6 @@ describe("AppViewComponent", () => {
           chart: cm-1.2.3
 `;
 
-      validProps.app.manifest = manifest;
       const props = {
         ...validProps,
         app: {
