@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Bitnami.
+Copyright 2020 Bitnami.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ limitations under the License.
 package fake
 
 import (
+	"context"
+
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	labels "k8s.io/apimachinery/pkg/labels"
@@ -39,7 +41,7 @@ var apprepositoriesResource = schema.GroupVersionResource{Group: "kubeapps.com",
 var apprepositoriesKind = schema.GroupVersionKind{Group: "kubeapps.com", Version: "v1alpha1", Kind: "AppRepository"}
 
 // Get takes name of the appRepository, and returns the corresponding appRepository object, and an error if there is any.
-func (c *FakeAppRepositories) Get(name string, options v1.GetOptions) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Get(ctx context.Context, name string, options v1.GetOptions) (result *v1alpha1.AppRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewGetAction(apprepositoriesResource, c.ns, name), &v1alpha1.AppRepository{})
 
@@ -50,7 +52,7 @@ func (c *FakeAppRepositories) Get(name string, options v1.GetOptions) (result *v
 }
 
 // List takes label and field selectors, and returns the list of AppRepositories that match those selectors.
-func (c *FakeAppRepositories) List(opts v1.ListOptions) (result *v1alpha1.AppRepositoryList, err error) {
+func (c *FakeAppRepositories) List(ctx context.Context, opts v1.ListOptions) (result *v1alpha1.AppRepositoryList, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewListAction(apprepositoriesResource, apprepositoriesKind, c.ns, opts), &v1alpha1.AppRepositoryList{})
 
@@ -62,7 +64,7 @@ func (c *FakeAppRepositories) List(opts v1.ListOptions) (result *v1alpha1.AppRep
 	if label == nil {
 		label = labels.Everything()
 	}
-	list := &v1alpha1.AppRepositoryList{}
+	list := &v1alpha1.AppRepositoryList{ListMeta: obj.(*v1alpha1.AppRepositoryList).ListMeta}
 	for _, item := range obj.(*v1alpha1.AppRepositoryList).Items {
 		if label.Matches(labels.Set(item.Labels)) {
 			list.Items = append(list.Items, item)
@@ -72,14 +74,14 @@ func (c *FakeAppRepositories) List(opts v1.ListOptions) (result *v1alpha1.AppRep
 }
 
 // Watch returns a watch.Interface that watches the requested appRepositories.
-func (c *FakeAppRepositories) Watch(opts v1.ListOptions) (watch.Interface, error) {
+func (c *FakeAppRepositories) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
 	return c.Fake.
 		InvokesWatch(testing.NewWatchAction(apprepositoriesResource, c.ns, opts))
 
 }
 
 // Create takes the representation of a appRepository and creates it.  Returns the server's representation of the appRepository, and an error, if there is any.
-func (c *FakeAppRepositories) Create(appRepository *v1alpha1.AppRepository) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Create(ctx context.Context, appRepository *v1alpha1.AppRepository, opts v1.CreateOptions) (result *v1alpha1.AppRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewCreateAction(apprepositoriesResource, c.ns, appRepository), &v1alpha1.AppRepository{})
 
@@ -90,7 +92,7 @@ func (c *FakeAppRepositories) Create(appRepository *v1alpha1.AppRepository) (res
 }
 
 // Update takes the representation of a appRepository and updates it. Returns the server's representation of the appRepository, and an error, if there is any.
-func (c *FakeAppRepositories) Update(appRepository *v1alpha1.AppRepository) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Update(ctx context.Context, appRepository *v1alpha1.AppRepository, opts v1.UpdateOptions) (result *v1alpha1.AppRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewUpdateAction(apprepositoriesResource, c.ns, appRepository), &v1alpha1.AppRepository{})
 
@@ -101,7 +103,7 @@ func (c *FakeAppRepositories) Update(appRepository *v1alpha1.AppRepository) (res
 }
 
 // Delete takes name of the appRepository and deletes it. Returns an error if one occurs.
-func (c *FakeAppRepositories) Delete(name string, options *v1.DeleteOptions) error {
+func (c *FakeAppRepositories) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
 	_, err := c.Fake.
 		Invokes(testing.NewDeleteAction(apprepositoriesResource, c.ns, name), &v1alpha1.AppRepository{})
 
@@ -109,15 +111,15 @@ func (c *FakeAppRepositories) Delete(name string, options *v1.DeleteOptions) err
 }
 
 // DeleteCollection deletes a collection of objects.
-func (c *FakeAppRepositories) DeleteCollection(options *v1.DeleteOptions, listOptions v1.ListOptions) error {
-	action := testing.NewDeleteCollectionAction(apprepositoriesResource, c.ns, listOptions)
+func (c *FakeAppRepositories) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	action := testing.NewDeleteCollectionAction(apprepositoriesResource, c.ns, listOpts)
 
 	_, err := c.Fake.Invokes(action, &v1alpha1.AppRepositoryList{})
 	return err
 }
 
 // Patch applies the patch and returns the patched appRepository.
-func (c *FakeAppRepositories) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1alpha1.AppRepository, err error) {
+func (c *FakeAppRepositories) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1alpha1.AppRepository, err error) {
 	obj, err := c.Fake.
 		Invokes(testing.NewPatchSubresourceAction(apprepositoriesResource, c.ns, name, pt, data, subresources...), &v1alpha1.AppRepository{})
 

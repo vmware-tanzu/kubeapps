@@ -1,5 +1,5 @@
 /*
-Copyright 2018 Bitnami.
+Copyright 2020 Bitnami.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	time "time"
 
-	apprepository_v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
+	apprepositoryv1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	versioned "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/clientset/versioned"
 	internalinterfaces "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/informers/externalversions/internalinterfaces"
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/client/listers/apprepository/v1alpha1"
@@ -61,16 +62,16 @@ func NewFilteredAppRepositoryInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.KubeappsV1alpha1().AppRepositories(namespace).List(options)
+				return client.KubeappsV1alpha1().AppRepositories(namespace).List(context.TODO(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.KubeappsV1alpha1().AppRepositories(namespace).Watch(options)
+				return client.KubeappsV1alpha1().AppRepositories(namespace).Watch(context.TODO(), options)
 			},
 		},
-		&apprepository_v1alpha1.AppRepository{},
+		&apprepositoryv1alpha1.AppRepository{},
 		resyncPeriod,
 		indexers,
 	)
@@ -81,7 +82,7 @@ func (f *appRepositoryInformer) defaultInformer(client versioned.Interface, resy
 }
 
 func (f *appRepositoryInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apprepository_v1alpha1.AppRepository{}, f.defaultInformer)
+	return f.factory.InformerFor(&apprepositoryv1alpha1.AppRepository{}, f.defaultInformer)
 }
 
 func (f *appRepositoryInformer) Lister() v1alpha1.AppRepositoryLister {
