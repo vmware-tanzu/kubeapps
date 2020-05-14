@@ -229,24 +229,17 @@ func (a *kubeHandler) clientsetForRequest(token string) (combinedClientsetInterf
 	return clientset, err
 }
 
-func parseRepoAndSecret(appRepoBody io.ReadCloser) (*v1alpha1.AppRepository, *corev1.Secret, error) {
+func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) {
 	var appRepoRequest appRepositoryRequest
 	err := json.NewDecoder(appRepoBody).Decode(&appRepoRequest)
 	if err != nil {
 		log.Infof("unable to decode: %v", err)
-		return nil, nil, err
+		return nil, err
 	}
-
-	appRepo := appRepositoryForRequest(appRepoRequest)
-	repoSecret := secretForRequest(appRepoRequest, appRepo)
-	return appRepo, repoSecret, nil
+	return &appRepoRequest, nil
 }
 
 func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, requestNamespace string, appRepo *v1alpha1.AppRepository) error {
-	// TODO(#1655) Fixes the immediate issue, but the proper fix would no
-	// longer set the complete owner reference during secretForRequest and
-	// rather do so explicitly here.
-	repoSecret.ObjectMeta.OwnerReferences[0].UID = appRepo.ObjectMeta.UID
 	_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
 	if err != nil && k8sErrors.IsAlreadyExists(err) {
 		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(repoSecret)
@@ -277,7 +270,12 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
 	}
 
-	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
+	appRepoRequest, err := parseRepoRequest(appRepoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	appRepo := appRepositoryForRequest(appRepoRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -292,6 +290,7 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, err
 	}
 
+	repoSecret := secretForRequest(appRepoRequest, appRepo)
 	if repoSecret != nil {
 		a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
 		if err != nil {
@@ -308,7 +307,12 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, fmt.Errorf("kubeappsNamespace must be configured to enable app repository handler")
 	}
 
-	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
+	appRepoRequest, err := parseRepoRequest(appRepoBody)
+	if err != nil {
+		return nil, err
+	}
+
+	appRepo := appRepositoryForRequest(appRepoRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -329,6 +333,7 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, err
 	}
 
+	repoSecret := secretForRequest(appRepoRequest, appRepo)
 	if repoSecret != nil {
 		a.applyAppRepositorySecret(repoSecret, requestNamespace, appRepo)
 		if err != nil {
@@ -360,7 +365,12 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 }
 
 func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeappsNamespace string) (HTTPClient, *http.Request, error) {
-	appRepo, repoSecret, err := parseRepoAndSecret(appRepoBody)
+	appRepoRequest, err := parseRepoRequest(appRepoBody)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	appRepo := appRepositoryForRequest(appRepoRequest)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -370,6 +380,7 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeapp
 		return nil, nil, ErrGlobalRepositoryWithSecrets
 	}
 
+	repoSecret := secretForRequest(appRepoRequest, appRepo)
 	cli, err := InitNetClient(appRepo, repoSecret, repoSecret, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("Unable to create HTTP client: %w", err)
@@ -413,7 +424,7 @@ func (a *userHandler) GetAppRepository(repoName, repoNamespace string) (*v1alpha
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
-func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppRepository {
+func appRepositoryForRequest(appRepoRequest *appRepositoryRequest) *v1alpha1.AppRepository {
 	appRepo := appRepoRequest.AppRepository
 
 	var auth v1alpha1.AppRepositoryAuth
@@ -457,7 +468,7 @@ func appRepositoryForRequest(appRepoRequest appRepositoryRequest) *v1alpha1.AppR
 }
 
 // secretForRequest takes care of parsing the request data into a secret for an AppRepository.
-func secretForRequest(appRepoRequest appRepositoryRequest, appRepo *v1alpha1.AppRepository) *corev1.Secret {
+func secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.AppRepository) *corev1.Secret {
 	appRepoDetails := appRepoRequest.AppRepository
 	secrets := map[string]string{}
 	if appRepoDetails.AuthHeader != "" {
