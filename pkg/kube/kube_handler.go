@@ -18,8 +18,10 @@ package kube
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -106,7 +108,7 @@ type handler interface {
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
-	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*http.Response, error)
+	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) error
 	GetOperatorLogo(namespace, name string) ([]byte, error)
 }
 
@@ -380,14 +382,28 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeapp
 	return cli, req, nil
 }
 
-func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*http.Response, error) {
+func doValidationRequest(cli HTTPClient, req *http.Request) error {
+	res, err := cli.Do(req)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode != 200 {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("Unable to parse validation response. Got: %v", err)
+		}
+		return errors.New(string(body))
+	}
+	return nil
+}
+
+func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) error {
 	// Split body parsing to a different function for ease testing
 	cli, req, err := getValidationCliAndReq(appRepoBody, requestNamespace, a.kubeappsNamespace)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	return cli.Do(req)
+	return doValidationRequest(cli, req)
 }
 
 // GetAppRepository returns an AppRepository resource from a namespace.

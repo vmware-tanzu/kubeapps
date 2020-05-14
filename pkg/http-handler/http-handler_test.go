@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -253,15 +254,18 @@ func TestValidateAppRepository(t *testing.T) {
 		name         string
 		err          error
 		expectedCode int
+		expectedBody string
 	}{
 		{
 			name:         "it should return OK if no error is detected",
 			expectedCode: 200,
+			expectedBody: "OK",
 		},
 		{
 			name:         "it should return the error code if given",
 			err:          fmt.Errorf("Boom"),
-			expectedCode: 500,
+			expectedCode: 200,
+			expectedBody: "Boom",
 		},
 	}
 	for _, tc := range testCases {
@@ -274,6 +278,11 @@ func TestValidateAppRepository(t *testing.T) {
 
 			if got, want := response.Code, tc.expectedCode; got != want {
 				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+
+			responseBody, _ := ioutil.ReadAll(response.Body)
+			if got, want := string(responseBody), tc.expectedBody; got != want {
+				t.Errorf("got: %s, want: %s\n", got, want)
 			}
 		})
 	}

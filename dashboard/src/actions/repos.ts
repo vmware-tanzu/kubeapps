@@ -308,12 +308,8 @@ export const validateRepo = (
         dispatch(repoValidated(data));
         return true;
       } else {
-        // Unexpected error
         dispatch(
-          errorRepos(
-            new Error(`Unable to parse validation response, got: ${JSON.stringify(data)}`),
-            "validate",
-          ),
+          errorRepos(new Error(`Validation failed, got: ${JSON.stringify(data)}`), "validate"),
         );
         return false;
       }

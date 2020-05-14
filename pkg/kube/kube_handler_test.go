@@ -17,6 +17,7 @@ limitations under the License.
 package kube
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,6 +49,15 @@ type repoStub struct {
 
 type secretStub struct {
 	name string
+}
+
+type fakeHTTPCli struct {
+	response *http.Response
+	err      error
+}
+
+func (f *fakeHTTPCli) Do(*http.Request) (*http.Response, error) {
+	return f.response, f.err
 }
 
 const kubeappsNamespace = "kubeapps"
@@ -812,7 +822,7 @@ func TestGetNamespaces(t *testing.T) {
 
 func TestValidateAppRepository(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
-	testCases := []struct {
+	getValidationCliAndReqTests := []struct {
 		name             string
 		requestData      string
 		requestNamespace string
@@ -841,7 +851,7 @@ func TestValidateAppRepository(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range getValidationCliAndReqTests {
 		t.Run(tc.name, func(t *testing.T) {
 			cli, req, err := getValidationCliAndReq(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
 			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
@@ -855,6 +865,49 @@ func TestValidateAppRepository(t *testing.T) {
 			}
 			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders))
+			}
+		})
+	}
+
+	doValidationRequestTests := []struct {
+		name           string
+		err            error
+		response       *http.Response
+		expectedResult error
+	}{
+		{
+			name:           "returns nil if there is no error and the response is okay",
+			err:            nil,
+			response:       &http.Response{StatusCode: 200},
+			expectedResult: nil,
+		},
+		{
+			name:           "returns an error",
+			err:            fmt.Errorf("Boom"),
+			response:       &http.Response{},
+			expectedResult: fmt.Errorf("Boom"),
+		},
+		{
+			name:           "returns an error from the response",
+			err:            nil,
+			response:       &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
+			expectedResult: fmt.Errorf("Boom"),
+		},
+	}
+	for _, tc := range doValidationRequestTests {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := &fakeHTTPCli{
+				response: tc.response,
+				err:      tc.err,
+			}
+			if got, want := doValidationRequest(cli, &http.Request{}), tc.expectedResult; got != want {
+				if want != nil {
+					if got != nil && got.Error() != want.Error() {
+						t.Errorf("Expected %v got %v", want, got)
+					}
+				} else {
+					t.Errorf("Expected nil got %v", got)
+				}
 			}
 		})
 	}

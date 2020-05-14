@@ -735,7 +735,7 @@ describe("validateRepo", () => {
 
   it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
     AppRepository.validate = jest.fn(() => {
-      return { statusCode: 409 };
+      return { error: "forbidden" };
     });
     const expectedActions = [
       {
@@ -744,7 +744,7 @@ describe("validateRepo", () => {
       {
         type: getType(repoActions.errorRepos),
         payload: {
-          err: new Error('Unable to parse validation response, got: {"statusCode":409}'),
+          err: new Error('Validation failed, got: {"error":"forbidden"}'),
           op: "validate",
         },
       },

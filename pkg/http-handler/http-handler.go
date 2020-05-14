@@ -18,7 +18,6 @@ package httphandler
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -111,22 +110,12 @@ func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		res, err := handler.AsUser(token).ValidateAppRepository(req.Body, mux.Vars(req)["namespace"])
+		err := handler.AsUser(token).ValidateAppRepository(req.Body, mux.Vars(req)["namespace"])
 		if err != nil {
-			returnK8sError(err, w)
+			w.Write([]byte(err.Error()))
 			return
 		}
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			returnK8sError(err, w)
-			return
-		}
-		w.WriteHeader(res.StatusCode)
-		if res.StatusCode == 200 {
-			w.Write([]byte("OK"))
-		} else {
-			w.Write(body)
-		}
+		w.Write([]byte("OK"))
 	}
 }
 

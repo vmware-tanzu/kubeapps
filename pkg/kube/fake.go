@@ -19,9 +19,6 @@ package kube
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
-	"net/http"
-	"strings"
 
 	v1alpha1 "github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -89,8 +86,8 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 }
 
 // ValidateAppRepository fake
-func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*http.Response, error) {
-	return &http.Response{Body: ioutil.NopCloser(strings.NewReader("valid: yaml")), StatusCode: 200}, c.Err
+func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) error {
+	return c.Err
 }
 
 // GetOperatorLogo fake
