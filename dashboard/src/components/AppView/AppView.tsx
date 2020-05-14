@@ -1,7 +1,7 @@
 import { RouterAction } from "connected-react-router";
-import * as yaml from "js-yaml";
 import { assignWith, isEqual } from "lodash";
 import * as React from "react";
+import * as yaml from "yaml";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -91,11 +91,9 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       return;
     }
 
-    // TODO(prydonius): Okay to use non-safe load here since we assume the
-    // manifest is pre-parsed by Helm and Kubernetes. Look into switching back
-    // to safeLoadAll once https://github.com/nodeca/js-yaml/issues/456 is
-    // resolved.
-    let manifest: IResource[] = yaml.loadAll(app.manifest, undefined, { json: true });
+    let manifest: IResource[] = yaml
+      .parseAllDocuments(app.manifest)
+      .map((doc: yaml.ast.Document) => doc.toJSON());
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);

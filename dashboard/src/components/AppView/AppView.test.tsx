@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import context from "jest-plugin-context";
-import { safeDump as yamlSafeDump, YAMLException } from "js-yaml";
+import { safeDump as yamlSafeDump } from "js-yaml";
 import * as React from "react";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
@@ -169,10 +169,38 @@ describe("AppViewComponent", () => {
           chart: cm-1.2.3
 `;
 
-      validProps.app.manifest = manifest;
+      const props = {
+        ...validProps,
+        app: {
+          ...validProps.app,
+          manifest,
+        },
+      };
       expect(() => {
-        wrapper.setProps(validProps);
-      }).not.toThrow(YAMLException);
+        wrapper.setProps(props);
+      }).not.toThrow();
+    });
+
+    it("supports manifests with YAML type casting", () => {
+      const wrapper = shallow(<AppViewComponent {...validProps} />);
+      const manifest = `
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: !!string foo
+`;
+
+      const props = {
+        ...validProps,
+        app: {
+          ...validProps.app,
+          manifest,
+        },
+      };
+      expect(() => {
+        wrapper.setProps(props);
+      }).not.toThrow();
+      expect((wrapper.state("manifest") as IResource[])[0].metadata.name).toEqual("foo");
     });
   });
 
