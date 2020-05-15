@@ -499,8 +499,8 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
     let message = error.message;
     try {
       const parsedMessage = JSON.parse(message);
-      if (parsedMessage.Code && parsedMessage.Message) {
-        message = `Code: ${parsedMessage.Code}. Message: ${parsedMessage.Message}`;
+      if (parsedMessage.code && parsedMessage.message) {
+        message = `Code: ${parsedMessage.code}. Message: ${parsedMessage.message}`;
       }
     } catch (e) {
       // Not a json message

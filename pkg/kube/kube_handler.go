@@ -96,8 +96,8 @@ type userHandler struct {
 
 // ValidationResponse represents the response after validating a repo
 type ValidationResponse struct {
-	Code    int
-	Message string
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
 // This interface is explicitly private so that it cannot be used in function

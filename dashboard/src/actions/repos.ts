@@ -304,7 +304,7 @@ export const validateRepo = (
     try {
       dispatch(repoValidating());
       const data = await AppRepository.validate(repoURL, authHeader, customCA);
-      if (data.Code === 200) {
+      if (data.code === 200) {
         dispatch(repoValidated(data));
         return true;
       } else {
