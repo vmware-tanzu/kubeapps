@@ -873,25 +873,25 @@ func TestValidateAppRepository(t *testing.T) {
 		name           string
 		err            error
 		response       *http.Response
-		expectedResult error
+		expectedResult ValidationResponse
 	}{
 		{
 			name:           "returns nil if there is no error and the response is okay",
 			err:            nil,
-			response:       &http.Response{StatusCode: 200},
-			expectedResult: nil,
+			response:       &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
+			expectedResult: ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
 			name:           "returns an error",
 			err:            fmt.Errorf("Boom"),
 			response:       &http.Response{},
-			expectedResult: fmt.Errorf("Boom"),
+			expectedResult: ValidationResponse{Code: 400, Message: "Boom"},
 		},
 		{
 			name:           "returns an error from the response",
 			err:            nil,
 			response:       &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
-			expectedResult: fmt.Errorf("Boom"),
+			expectedResult: ValidationResponse{Code: 401, Message: "Boom"},
 		},
 	}
 	for _, tc := range doValidationRequestTests {
@@ -900,14 +900,12 @@ func TestValidateAppRepository(t *testing.T) {
 				response: tc.response,
 				err:      tc.err,
 			}
-			if got, want := doValidationRequest(cli, &http.Request{}), tc.expectedResult; got != want {
-				if want != nil {
-					if got != nil && got.Error() != want.Error() {
-						t.Errorf("Expected %v got %v", want, got)
-					}
-				} else {
-					t.Errorf("Expected nil got %v", got)
-				}
+			got, err := doValidationRequest(cli, &http.Request{})
+			if err != nil {
+				t.Errorf("Unexpected error %v", err)
+			}
+			if want := tc.expectedResult; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}

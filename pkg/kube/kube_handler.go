@@ -18,7 +18,6 @@ package kube
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -95,6 +94,12 @@ type userHandler struct {
 	clientset combinedClientsetInterface
 }
 
+// ValidationResponse represents the response after validating a repo
+type ValidationResponse struct {
+	Code    int
+	Message string
+}
+
 // This interface is explicitly private so that it cannot be used in function
 // args, so that call-sites cannot accidentally pass a service handler in place
 // of a user handler.
@@ -108,7 +113,7 @@ type handler interface {
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
-	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) error
+	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (ValidationResponse, error)
 	GetOperatorLogo(namespace, name string) ([]byte, error)
 }
 
@@ -382,26 +387,24 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeapp
 	return cli, req, nil
 }
 
-func doValidationRequest(cli HTTPClient, req *http.Request) error {
+func doValidationRequest(cli HTTPClient, req *http.Request) (ValidationResponse, error) {
 	res, err := cli.Do(req)
 	if err != nil {
-		return err
+		// If the request fail, it's not an internal error
+		return ValidationResponse{Code: 400, Message: err.Error()}, nil
 	}
-	if res.StatusCode != 200 {
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return fmt.Errorf("Unable to parse validation response. Got: %v", err)
-		}
-		return errors.New(string(body))
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return ValidationResponse{}, fmt.Errorf("Unable to parse validation response. Got: %v", err)
 	}
-	return nil
+	return ValidationResponse{Code: res.StatusCode, Message: string(body)}, nil
 }
 
-func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) error {
+func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (ValidationResponse, error) {
 	// Split body parsing to a different function for ease testing
 	cli, req, err := getValidationCliAndReq(appRepoBody, requestNamespace, a.kubeappsNamespace)
 	if err != nil {
-		return err
+		return ValidationResponse{}, err
 	}
 	return doValidationRequest(cli, req)
 }

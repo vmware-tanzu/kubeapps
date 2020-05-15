@@ -304,13 +304,11 @@ export const validateRepo = (
     try {
       dispatch(repoValidating());
       const data = await AppRepository.validate(repoURL, authHeader, customCA);
-      if (data === "OK") {
+      if (data.Code === 200) {
         dispatch(repoValidated(data));
         return true;
       } else {
-        dispatch(
-          errorRepos(new Error(`Validation failed, got: ${JSON.stringify(data)}`), "validate"),
-        );
+        dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
         return false;
       }
     } catch (e) {

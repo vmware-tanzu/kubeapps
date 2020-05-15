@@ -110,12 +110,17 @@ func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		err := handler.AsUser(token).ValidateAppRepository(req.Body, mux.Vars(req)["namespace"])
+		res, err := handler.AsUser(token).ValidateAppRepository(req.Body, mux.Vars(req)["namespace"])
 		if err != nil {
-			w.Write([]byte(err.Error()))
+			returnK8sError(err, w)
 			return
 		}
-		w.Write([]byte("OK"))
+		responseBody, err := json.Marshal(res)
+		if err != nil {
+			JSONError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(responseBody)
 	}
 }
 

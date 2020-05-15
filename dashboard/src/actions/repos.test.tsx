@@ -698,14 +698,16 @@ describe("checkChart", () => {
 
 describe("validateRepo", () => {
   it("dispatches repoValidating and repoValidated if no error", async () => {
-    AppRepository.validate = jest.fn(() => "OK");
+    AppRepository.validate = jest.fn(() => {
+      return { Code: 200, Message: "OK" };
+    });
     const expectedActions = [
       {
         type: getType(repoActions.repoValidating),
       },
       {
         type: getType(repoActions.repoValidated),
-        payload: "OK",
+        payload: { Code: 200, Message: "OK" },
       },
     ];
 
@@ -744,7 +746,7 @@ describe("validateRepo", () => {
       {
         type: getType(repoActions.errorRepos),
         payload: {
-          err: new Error('Validation failed, got: {"error":"forbidden"}'),
+          err: new Error('{"error":"forbidden"}'),
           op: "validate",
         },
       },

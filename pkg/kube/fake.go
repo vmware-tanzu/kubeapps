@@ -86,8 +86,8 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 }
 
 // ValidateAppRepository fake
-func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) error {
-	return c.Err
+func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (ValidationResponse, error) {
+	return ValidationResponse{}, c.Err
 }
 
 // GetOperatorLogo fake
