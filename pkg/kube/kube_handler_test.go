@@ -168,7 +168,7 @@ func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs 
 	}
 
 	// Ensure the expected AppRepository is stored
-	expectedAppRepo := appRepositoryForRequest(appRepoRequest)
+	expectedAppRepo := appRepositoryForRequest(&appRepoRequest)
 	expectedAppRepo.ObjectMeta.Namespace = requestNamespace
 
 	responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(expectedAppRepo.ObjectMeta.Name, metav1.GetOptions{})
@@ -192,7 +192,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 
 	// When appropriate, ensure the expected secret is stored.
 	if appRepoRequest.AppRepository.AuthHeader != "" {
-		expectedSecret := secretForRequest(appRepoRequest, responseAppRepo)
+		expectedSecret := secretForRequest(&appRepoRequest, responseAppRepo)
 		expectedSecret.ObjectMeta.Namespace = requestNamespace
 		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
 
@@ -656,7 +656,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := appRepositoryForRequest(appRepositoryRequest{tc.request}), &tc.appRepo; !cmp.Equal(want, got) {
+			if got, want := appRepositoryForRequest(&appRepositoryRequest{tc.request}), &tc.appRepo; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -739,7 +739,7 @@ func TestSecretForRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := secretForRequest(appRepositoryRequest{tc.request}, &appRepo), tc.secret; !cmp.Equal(want, got) {
+			if got, want := secretForRequest(&appRepositoryRequest{tc.request}, &appRepo), tc.secret; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
