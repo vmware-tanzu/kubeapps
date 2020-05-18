@@ -873,25 +873,25 @@ func TestValidateAppRepository(t *testing.T) {
 		name           string
 		err            error
 		response       *http.Response
-		expectedResult ValidationResponse
+		expectedResult *ValidationResponse
 	}{
 		{
 			name:           "returns nil if there is no error and the response is okay",
 			err:            nil,
 			response:       &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
-			expectedResult: ValidationResponse{Code: 200, Message: "OK"},
+			expectedResult: &ValidationResponse{Code: 200, Message: "OK"},
 		},
 		{
 			name:           "returns an error",
 			err:            fmt.Errorf("Boom"),
 			response:       &http.Response{},
-			expectedResult: ValidationResponse{Code: 400, Message: "Boom"},
+			expectedResult: &ValidationResponse{Code: 400, Message: "Boom"},
 		},
 		{
 			name:           "returns an error from the response",
 			err:            nil,
 			response:       &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
-			expectedResult: ValidationResponse{Code: 401, Message: "Boom"},
+			expectedResult: &ValidationResponse{Code: 401, Message: "Boom"},
 		},
 	}
 	for _, tc := range doValidationRequestTests {

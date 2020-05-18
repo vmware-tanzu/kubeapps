@@ -279,7 +279,7 @@ func TestValidateAppRepository(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			validateAppRepoFunc := ValidateAppRepository(&kube.FakeHandler{ValRes: tc.validationResponse, Err: tc.err})
+			validateAppRepoFunc := ValidateAppRepository(&kube.FakeHandler{ValRes: &tc.validationResponse, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/validate", strings.NewReader("data"))
 
 			response := httptest.NewRecorder()

@@ -113,7 +113,7 @@ type handler interface {
 	GetNamespaces() ([]corev1.Namespace, error)
 	GetSecret(name, namespace string) (*corev1.Secret, error)
 	GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error)
-	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (ValidationResponse, error)
+	ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error)
 	GetOperatorLogo(namespace, name string) ([]byte, error)
 }
 
@@ -387,24 +387,24 @@ func getValidationCliAndReq(appRepoBody io.ReadCloser, requestNamespace, kubeapp
 	return cli, req, nil
 }
 
-func doValidationRequest(cli HTTPClient, req *http.Request) (ValidationResponse, error) {
+func doValidationRequest(cli HTTPClient, req *http.Request) (*ValidationResponse, error) {
 	res, err := cli.Do(req)
 	if err != nil {
 		// If the request fail, it's not an internal error
-		return ValidationResponse{Code: 400, Message: err.Error()}, nil
+		return &ValidationResponse{Code: 400, Message: err.Error()}, nil
 	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return ValidationResponse{}, fmt.Errorf("Unable to parse validation response. Got: %v", err)
+		return nil, fmt.Errorf("Unable to parse validation response. Got: %v", err)
 	}
-	return ValidationResponse{Code: res.StatusCode, Message: string(body)}, nil
+	return &ValidationResponse{Code: res.StatusCode, Message: string(body)}, nil
 }
 
-func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (ValidationResponse, error) {
+func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	// Split body parsing to a different function for ease testing
 	cli, req, err := getValidationCliAndReq(appRepoBody, requestNamespace, a.kubeappsNamespace)
 	if err != nil {
-		return ValidationResponse{}, err
+		return nil, err
 	}
 	return doValidationRequest(cli, req)
 }

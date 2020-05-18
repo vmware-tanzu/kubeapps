@@ -31,7 +31,7 @@ type FakeHandler struct {
 	UpdatedRepo *v1alpha1.AppRepository
 	Namespaces  []corev1.Namespace
 	Secrets     []*corev1.Secret
-	ValRes      ValidationResponse
+	ValRes      *ValidationResponse
 	Err         error
 }
 
@@ -87,7 +87,7 @@ func (c *FakeHandler) GetSecret(name, namespace string) (*corev1.Secret, error) 
 }
 
 // ValidateAppRepository fake
-func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (ValidationResponse, error) {
+func (c *FakeHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNamespace string) (*ValidationResponse, error) {
 	return c.ValRes, c.Err
 }
 
