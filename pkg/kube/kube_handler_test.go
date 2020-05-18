@@ -17,6 +17,7 @@ limitations under the License.
 package kube
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,6 +49,15 @@ type repoStub struct {
 
 type secretStub struct {
 	name string
+}
+
+type fakeHTTPCli struct {
+	response *http.Response
+	err      error
+}
+
+func (f *fakeHTTPCli) Do(*http.Request) (*http.Response, error) {
+	return f.response, f.err
 }
 
 const kubeappsNamespace = "kubeapps"
@@ -158,7 +168,7 @@ func checkAppRepo(t *testing.T, requestData string, requestNamespace string, cs 
 	}
 
 	// Ensure the expected AppRepository is stored
-	expectedAppRepo := appRepositoryForRequest(appRepoRequest)
+	expectedAppRepo := appRepositoryForRequest(&appRepoRequest)
 	expectedAppRepo.ObjectMeta.Namespace = requestNamespace
 
 	responseAppRepo, err := cs.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(expectedAppRepo.ObjectMeta.Name, metav1.GetOptions{})
@@ -182,7 +192,7 @@ func checkSecrets(t *testing.T, requestNamespace string, appRepoRequest appRepos
 
 	// When appropriate, ensure the expected secret is stored.
 	if appRepoRequest.AppRepository.AuthHeader != "" {
-		expectedSecret := secretForRequest(appRepoRequest, responseAppRepo)
+		expectedSecret := secretForRequest(&appRepoRequest, responseAppRepo)
 		expectedSecret.ObjectMeta.Namespace = requestNamespace
 		responseSecret, err := handler.clientset.CoreV1().Secrets(requestNamespace).Get(expectedSecret.ObjectMeta.Name, metav1.GetOptions{})
 
@@ -646,7 +656,7 @@ func TestAppRepositoryForRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := appRepositoryForRequest(appRepositoryRequest{tc.request}), &tc.appRepo; !cmp.Equal(want, got) {
+			if got, want := appRepositoryForRequest(&appRepositoryRequest{tc.request}), &tc.appRepo; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -729,7 +739,7 @@ func TestSecretForRequest(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got, want := secretForRequest(appRepositoryRequest{tc.request}, &appRepo), tc.secret; !cmp.Equal(want, got) {
+			if got, want := secretForRequest(&appRepositoryRequest{tc.request}, &appRepo), tc.secret; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
@@ -812,7 +822,7 @@ func TestGetNamespaces(t *testing.T) {
 
 func TestValidateAppRepository(t *testing.T) {
 	const kubeappsNamespace = "kubeapps"
-	testCases := []struct {
+	getValidationCliAndReqTests := []struct {
 		name             string
 		requestData      string
 		requestNamespace string
@@ -841,7 +851,7 @@ func TestValidateAppRepository(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range getValidationCliAndReqTests {
 		t.Run(tc.name, func(t *testing.T) {
 			cli, req, err := getValidationCliAndReq(ioutil.NopCloser(strings.NewReader(tc.requestData)), tc.requestNamespace, kubeappsNamespace)
 			if (err != nil || tc.expectedError != nil) && !errors.Is(err, tc.expectedError) {
@@ -855,6 +865,47 @@ func TestValidateAppRepository(t *testing.T) {
 			}
 			if tc.expectedHeaders != nil && !cmp.Equal(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(tc.expectedHeaders, cli.(*clientWithDefaultHeaders).defaultHeaders))
+			}
+		})
+	}
+
+	doValidationRequestTests := []struct {
+		name           string
+		err            error
+		response       *http.Response
+		expectedResult *ValidationResponse
+	}{
+		{
+			name:           "returns nil if there is no error and the response is okay",
+			err:            nil,
+			response:       &http.Response{StatusCode: 200, Body: ioutil.NopCloser(bytes.NewReader([]byte("OK")))},
+			expectedResult: &ValidationResponse{Code: 200, Message: "OK"},
+		},
+		{
+			name:           "returns an error",
+			err:            fmt.Errorf("Boom"),
+			response:       &http.Response{},
+			expectedResult: &ValidationResponse{Code: 400, Message: "Boom"},
+		},
+		{
+			name:           "returns an error from the response",
+			err:            nil,
+			response:       &http.Response{StatusCode: 401, Body: ioutil.NopCloser(bytes.NewReader([]byte("Boom")))},
+			expectedResult: &ValidationResponse{Code: 401, Message: "Boom"},
+		},
+	}
+	for _, tc := range doValidationRequestTests {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := &fakeHTTPCli{
+				response: tc.response,
+				err:      tc.err,
+			}
+			got, err := doValidationRequest(cli, &http.Request{})
+			if err != nil {
+				t.Errorf("Unexpected error %v", err)
+			}
+			if want := tc.expectedResult; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}

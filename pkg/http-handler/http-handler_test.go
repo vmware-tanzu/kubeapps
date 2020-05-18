@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -250,23 +251,35 @@ func TestGetNamespaces(t *testing.T) {
 
 func TestValidateAppRepository(t *testing.T) {
 	testCases := []struct {
-		name         string
-		err          error
-		expectedCode int
+		name               string
+		err                error
+		validationResponse kube.ValidationResponse
+		expectedCode       int
+		expectedBody       string
 	}{
 		{
-			name:         "it should return OK if no error is detected",
-			expectedCode: 200,
+			name:               "it should return OK if no error is detected",
+			validationResponse: kube.ValidationResponse{Code: 200, Message: "OK"},
+			expectedCode:       200,
+			expectedBody:       `{"code":200,"message":"OK"}`,
 		},
 		{
-			name:         "it should return the error code if given",
-			err:          fmt.Errorf("Boom"),
-			expectedCode: 500,
+			name:               "it should return the error code if given",
+			err:                fmt.Errorf("Boom"),
+			validationResponse: kube.ValidationResponse{},
+			expectedCode:       500,
+			expectedBody:       "\"Boom\"\n",
+		},
+		{
+			name:               "it should return an error in the validation response",
+			validationResponse: kube.ValidationResponse{Code: 401, Message: "Forbidden"},
+			expectedCode:       200,
+			expectedBody:       `{"code":401,"message":"Forbidden"}`,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			validateAppRepoFunc := ValidateAppRepository(&kube.FakeHandler{Err: tc.err})
+			validateAppRepoFunc := ValidateAppRepository(&kube.FakeHandler{ValRes: &tc.validationResponse, Err: tc.err})
 			req := httptest.NewRequest("POST", "https://foo.bar/backend/v1/namespaces/kubeapps/apprepositories/validate", strings.NewReader("data"))
 
 			response := httptest.NewRecorder()
@@ -274,6 +287,11 @@ func TestValidateAppRepository(t *testing.T) {
 
 			if got, want := response.Code, tc.expectedCode; got != want {
 				t.Errorf("got: %d, want: %d\nBody: %s", got, want, response.Body)
+			}
+
+			responseBody, _ := ioutil.ReadAll(response.Body)
+			if got, want := string(responseBody), tc.expectedBody; got != want {
+				t.Errorf("got: %s, want: %s\n", got, want)
 			}
 		})
 	}

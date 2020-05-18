@@ -358,13 +358,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                 installation.
               </div>
             )}
-            {this.props.validationError && (
-              <UnexpectedErrorAlert
-                title="Validation Failed. Got:"
-                text={this.props.validationError.message}
-                raw={true}
-              />
-            )}
+            {this.props.validationError && this.parseValidationError(this.props.validationError)}
             <div>
               <button
                 className="button button-primary"
@@ -499,5 +493,18 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
       selectedImagePullSecrets[secret.metadata.name] = selected;
     });
     this.setState({ selectedImagePullSecrets });
+  };
+
+  private parseValidationError = (error: Error) => {
+    let message = error.message;
+    try {
+      const parsedMessage = JSON.parse(message);
+      if (parsedMessage.code && parsedMessage.message) {
+        message = `Code: ${parsedMessage.code}. Message: ${parsedMessage.message}`;
+      }
+    } catch (e) {
+      // Not a json message
+    }
+    return <UnexpectedErrorAlert title="Validation Failed. Got:" text={message} raw={true} />;
   };
 }
