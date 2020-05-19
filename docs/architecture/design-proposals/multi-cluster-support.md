@@ -21,8 +21,8 @@ This design aims to utilize the fact that to install apps on additional clusters
 
 The overview displayed below includes an indication of the multi-cluster support for private app repositories, which is discussed further in the design doc below.
 
-![Kubeapps Multi-cluster Overview](img/Kubeapps-Multi-cluster.png)
+![Kubeapps Multi-cluster Overview](img/Kubeapps-Multi-cluster-simple.png)
 
 ## Details and discussion
 
-More details and discussion in the separate [design doc](https://docs.google.com/document/d/1-6cKxOsW6K5u3lK7Om2zQeVYVPxzHT6dVwej5wy3_9A/edit)
+More details, design considerations and discussion is in the separate [design doc](https://docs.google.com/document/d/1-6cKxOsW6K5u3lK7Om2zQeVYVPxzHT6dVwej5wy3_9A/edit).
