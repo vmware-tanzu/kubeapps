@@ -698,14 +698,16 @@ describe("checkChart", () => {
 
 describe("validateRepo", () => {
   it("dispatches repoValidating and repoValidated if no error", async () => {
-    AppRepository.validate = jest.fn(() => "OK");
+    AppRepository.validate = jest.fn(() => {
+      return { code: 200, message: "OK" };
+    });
     const expectedActions = [
       {
         type: getType(repoActions.repoValidating),
       },
       {
         type: getType(repoActions.repoValidated),
-        payload: "OK",
+        payload: { code: 200, message: "OK" },
       },
     ];
 
@@ -735,7 +737,7 @@ describe("validateRepo", () => {
 
   it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
     AppRepository.validate = jest.fn(() => {
-      return { statusCode: 409 };
+      return { code: 409, message: "forbidden" };
     });
     const expectedActions = [
       {
@@ -744,7 +746,7 @@ describe("validateRepo", () => {
       {
         type: getType(repoActions.errorRepos),
         payload: {
-          err: new Error('Unable to parse validation response, got: {"statusCode":409}'),
+          err: new Error('{"code":409,"message":"forbidden"}'),
           op: "validate",
         },
       },

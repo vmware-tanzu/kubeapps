@@ -304,17 +304,11 @@ export const validateRepo = (
     try {
       dispatch(repoValidating());
       const data = await AppRepository.validate(repoURL, authHeader, customCA);
-      if (data === "OK") {
+      if (data.code === 200) {
         dispatch(repoValidated(data));
         return true;
       } else {
-        // Unexpected error
-        dispatch(
-          errorRepos(
-            new Error(`Unable to parse validation response, got: ${JSON.stringify(data)}`),
-            "validate",
-          ),
-        );
+        dispatch(errorRepos(new Error(JSON.stringify(data)), "validate"));
         return false;
       }
     } catch (e) {

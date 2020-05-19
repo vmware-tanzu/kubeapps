@@ -18,7 +18,6 @@ package httphandler
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -116,17 +115,12 @@ func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter,
 			returnK8sError(err, w)
 			return
 		}
-		body, err := ioutil.ReadAll(res.Body)
+		responseBody, err := json.Marshal(res)
 		if err != nil {
-			returnK8sError(err, w)
+			JSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(res.StatusCode)
-		if res.StatusCode == 200 {
-			w.Write([]byte("OK"))
-		} else {
-			w.Write(body)
-		}
+		w.Write(responseBody)
 	}
 }
 
