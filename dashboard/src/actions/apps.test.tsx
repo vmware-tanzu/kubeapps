@@ -363,6 +363,7 @@ describe("rollbackApp", () => {
 
   it("success and re-request apps info", async () => {
     App.rollback = jest.fn().mockImplementationOnce(() => true);
+    App.getRelease = jest.fn().mockImplementationOnce(() => true);
     const res = await store.dispatch(provisionCMD);
     expect(res).toBe(true);
 
@@ -370,9 +371,12 @@ describe("rollbackApp", () => {
       { type: getType(actions.apps.requestRollbackApp) },
       { type: getType(actions.apps.receiveRollbackApp) },
       { type: getType(actions.apps.requestApps) },
+      { type: getType(actions.apps.selectApp), payload: true },
     ];
     expect(store.getActions()).toEqual(expectedActions);
     expect(App.rollback).toHaveBeenCalledWith("my-release", "default", 1);
+    // It should re-get the app after the rollback, note that the parameters are switched
+    expect(App.getRelease).toHaveBeenCalledWith("default", "my-release");
   });
 
   it("dispatches an error", async () => {

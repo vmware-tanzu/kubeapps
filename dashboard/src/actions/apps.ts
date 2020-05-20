@@ -326,7 +326,7 @@ export function rollbackApp(
     try {
       await App.rollback(releaseName, namespace, revision);
       dispatch(receiveRollbackApp());
-      dispatch(getAppWithUpdateInfo(releaseName, namespace));
+      dispatch(getAppWithUpdateInfo(namespace, releaseName));
       return true;
     } catch (e) {
       dispatch(errorApps(e));
