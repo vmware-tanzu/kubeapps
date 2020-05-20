@@ -273,9 +273,11 @@ func TestActions(t *testing.T) {
 			response := httptest.NewRecorder()
 			k := &kubefake.FailingKubeClient{PrintingKubeClient: kubefake.PrintingKubeClient{Out: ioutil.Discard}}
 			if test.KubeError != nil {
-				k.CreateError = test.KubeError
-				k.UpdateError = test.KubeError
-				k.DeleteError = test.KubeError
+				// The helm fake Kube Client runs build before
+				// create/install/upgrade. It also stores a release in storage
+				// even if there were no resources to create so we need to error
+				// before the release is saved.
+				k.BuildError = test.KubeError
 			}
 			cfg := newConfigFixture(t, k)
 			createExistingReleases(t, cfg, test.ExistingReleases)
@@ -308,7 +310,7 @@ func TestActions(t *testing.T) {
 				return iKey < jKey
 			})
 			if !cmp.Equal(releases, test.RemainingReleases, releaseComparer) {
-				t.Errorf("Unexpected remaining releases. Diff:\n%s", cmp.Diff(releases, test.RemainingReleases, releaseComparer))
+				t.Errorf("Unexpected remaining releases. Diff:\n%s", cmp.Diff(test.RemainingReleases, releases, releaseComparer))
 			}
 			if test.ResponseBody != "" {
 				if test.ResponseBody != response.Body.String() {
@@ -388,7 +390,7 @@ func TestRollbackAction(t *testing.T) {
 				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
 				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
 			},
-			responseBody: `{"code":404,"message":"no revision for release \"does-not-exist\""}`,
+			responseBody: `{"code":404,"message":"release: not found"}`,
 		},
 		{
 			name: "errors if the revision does not exist",
@@ -403,7 +405,7 @@ func TestRollbackAction(t *testing.T) {
 				createRelease("apache", releaseName, "default", 1, release.StatusSuperseded),
 				createRelease("apache", releaseName, "default", 2, release.StatusDeployed),
 			},
-			responseBody: `{"code":404,"message":"no revision for release \"apache\""}`,
+			responseBody: `{"code":404,"message":"release: not found"}`,
 		},
 		{
 			name: "errors if the revision is not specified",
@@ -488,7 +490,7 @@ func TestUpgradeAction(t *testing.T) {
 			// expectedReleases is `nil` because nil slice != empty slice
 			// sotrage.ListReleases() returns a nil slice if no releases are found
 			expectedReleases: nil,
-			responseBody:     `{"code":404,"message":"no revision for release \"my-release\""}`,
+			responseBody:     `{"code":404,"message":"release: not found"}`,
 		},
 	}
 

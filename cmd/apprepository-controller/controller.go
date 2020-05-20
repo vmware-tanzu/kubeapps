@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -270,7 +271,7 @@ func (c *Controller) syncHandler(key string) error {
 		if errors.IsNotFound(err) {
 			log.Infof("AppRepository '%s' no longer exists so performing cleanup of charts from the DB", key)
 			// Trigger a Job to perfrom the cleanup of the charts in the DB corresponding to deleted AppRepository
-			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(newCleanupJob(name, namespace, c.kubeappsNamespace))
+			_, err = c.kubeclientset.BatchV1().Jobs(namespace).Create(context.TODO(), newCleanupJob(name, namespace, c.kubeappsNamespace), metav1.CreateOptions{})
 			return nil
 		}
 		return fmt.Errorf("Error fetching object with key %s from store: %v", key, err)
@@ -282,23 +283,23 @@ func (c *Controller) syncHandler(key string) error {
 	// If the resource doesn't exist, we'll create it
 	if errors.IsNotFound(err) {
 		log.Infof("Creating CronJob %q for AppRepository %q", cronjobName, apprepo.GetName())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.kubeappsNamespace).Create(newCronJob(apprepo, c.kubeappsNamespace))
+		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.kubeappsNamespace).Create(context.TODO(), newCronJob(apprepo, c.kubeappsNamespace), metav1.CreateOptions{})
 		if err != nil {
 			return err
 		}
 
 		// Trigger a manual Job for the initial sync
-		_, err = c.kubeclientset.BatchV1().Jobs(c.kubeappsNamespace).Create(newSyncJob(apprepo, c.kubeappsNamespace))
+		_, err = c.kubeclientset.BatchV1().Jobs(c.kubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.kubeappsNamespace), metav1.CreateOptions{})
 	} else if err == nil {
 		// If the resource already exists, we'll update it
 		log.Infof("Updating CronJob %q in namespace %q for AppRepository %q in namespace %q", cronjobName, c.kubeappsNamespace, apprepo.GetName(), apprepo.GetNamespace())
-		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.kubeappsNamespace).Update(newCronJob(apprepo, c.kubeappsNamespace))
+		cronjob, err = c.kubeclientset.BatchV1beta1().CronJobs(c.kubeappsNamespace).Update(context.TODO(), newCronJob(apprepo, c.kubeappsNamespace), metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
 
 		// The AppRepository has changed, launch a manual Job
-		_, err = c.kubeclientset.BatchV1().Jobs(c.kubeappsNamespace).Create(newSyncJob(apprepo, c.kubeappsNamespace))
+		_, err = c.kubeclientset.BatchV1().Jobs(c.kubeappsNamespace).Create(context.TODO(), newSyncJob(apprepo, c.kubeappsNamespace), metav1.CreateOptions{})
 	}
 
 	// If an error occurs during Get/Create, we'll requeue the item so we can

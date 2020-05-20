@@ -17,6 +17,7 @@ limitations under the License.
 package kube
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -245,9 +246,10 @@ func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) 
 }
 
 func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, requestNamespace string, appRepo *v1alpha1.AppRepository) error {
-	_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(repoSecret)
+	// TODO: pass request context through from user request to clientset.
+	_, err := a.clientset.CoreV1().Secrets(requestNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
 	if err != nil && k8sErrors.IsAlreadyExists(err) {
-		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(repoSecret)
+		_, err = a.clientset.CoreV1().Secrets(requestNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
 	}
 	if err != nil {
 		return err
@@ -257,9 +259,9 @@ func (a *userHandler) applyAppRepositorySecret(repoSecret *corev1.Secret, reques
 	if requestNamespace != a.kubeappsNamespace {
 		repoSecret.ObjectMeta.Name = KubeappsSecretNameForRepo(appRepo.ObjectMeta.Name, appRepo.ObjectMeta.Namespace)
 		repoSecret.ObjectMeta.OwnerReferences = nil
-		_, err = a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(repoSecret)
+		_, err = a.svcClientset.CoreV1().Secrets(a.kubeappsNamespace).Create(context.TODO(), repoSecret, metav1.CreateOptions{})
 		if err != nil && k8sErrors.IsAlreadyExists(err) {
-			_, err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Update(repoSecret)
+			_, err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Update(context.TODO(), repoSecret, metav1.UpdateOptions{})
 		}
 		if err != nil {
 			return err
@@ -289,7 +291,7 @@ func (a *userHandler) CreateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, ErrGlobalRepositoryWithSecrets
 	}
 
-	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(appRepo)
+	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Create(context.TODO(), appRepo, metav1.CreateOptions{})
 
 	if err != nil {
 		return nil, err
@@ -326,14 +328,14 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 		return nil, ErrGlobalRepositoryWithSecrets
 	}
 
-	existingAppRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(appRepo.Name, metav1.GetOptions{})
+	existingAppRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Get(context.TODO(), appRepo.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
 	// Update existing repo with the new spec
 	existingAppRepo.Spec = appRepo.Spec
-	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Update(existingAppRepo)
+	appRepo, err = a.clientset.KubeappsV1alpha1().AppRepositories(requestNamespace).Update(context.TODO(), existingAppRepo, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -350,12 +352,12 @@ func (a *userHandler) UpdateAppRepository(appRepoBody io.ReadCloser, requestName
 
 // DeleteAppRepository deletes an AppRepository resource from a namespace.
 func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error {
-	appRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
+	appRepo, err := a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(context.TODO(), repoName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	hasCredentials := appRepo.Spec.Auth.Header != nil || appRepo.Spec.Auth.CustomCA != nil
-	err = a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(repoName, &metav1.DeleteOptions{})
+	err = a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Delete(context.TODO(), repoName, metav1.DeleteOptions{})
 	if err != nil {
 		return err
 	}
@@ -364,7 +366,7 @@ func (a *userHandler) DeleteAppRepository(repoName, repoNamespace string) error 
 	// the repository credentials kept in the kubeapps namespace (the repo credentials in the actual
 	// namespace should be deleted when the owning app repo is deleted).
 	if hasCredentials && repoNamespace != a.kubeappsNamespace {
-		err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(KubeappsSecretNameForRepo(repoName, repoNamespace), &metav1.DeleteOptions{})
+		err = a.clientset.CoreV1().Secrets(a.kubeappsNamespace).Delete(context.TODO(), KubeappsSecretNameForRepo(repoName, repoNamespace), metav1.DeleteOptions{})
 	}
 	return err
 }
@@ -423,7 +425,7 @@ func (a *userHandler) ValidateAppRepository(appRepoBody io.ReadCloser, requestNa
 // GetAppRepository returns an AppRepository resource from a namespace.
 // Optionally set a token to get the AppRepository using a custom serviceaccount
 func (a *userHandler) GetAppRepository(repoName, repoNamespace string) (*v1alpha1.AppRepository, error) {
-	return a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(repoName, metav1.GetOptions{})
+	return a.clientset.KubeappsV1alpha1().AppRepositories(repoNamespace).Get(context.TODO(), repoName, metav1.GetOptions{})
 }
 
 // appRepositoryForRequest takes care of parsing the request data into an AppRepository.
@@ -515,7 +517,7 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) ([]corev1.Namespace, error) {
 	allowedNamespaces := []corev1.Namespace{}
 	for _, namespace := range namespaces.Items {
-		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(&authorizationapi.SelfSubjectAccessReview{
+		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
 			Spec: authorizationapi.SelfSubjectAccessReviewSpec{
 				ResourceAttributes: &authorizationapi.ResourceAttributes{
 					Group:     "",
@@ -524,7 +526,7 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 					Namespace: namespace.Name,
 				},
 			},
-		})
+		}, metav1.CreateOptions{})
 		if err != nil {
 			return nil, err
 		}
@@ -538,11 +540,11 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 // GetNamespaces return the list of namespaces that the user has permission to access
 func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	// Try to list namespaces with the user token, for backward compatibility
-	namespaces, err := a.clientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+	namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
 		if k8sErrors.IsForbidden(err) {
 			// The user doesn't have permissions to list namespaces, use the current serviceaccount
-			namespaces, err = a.svcClientset.CoreV1().Namespaces().List(metav1.ListOptions{})
+			namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 		}
 		if err != nil {
 			return nil, err
@@ -559,10 +561,10 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 
 // GetSecret return the a secret from a namespace using a token if given
 func (a *userHandler) GetSecret(name, namespace string) (*corev1.Secret, error) {
-	return a.clientset.CoreV1().Secrets(namespace).Get(name, metav1.GetOptions{})
+	return a.clientset.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 // GetNamespaces return the list of namespaces that the user has permission to access
 func (a *userHandler) GetOperatorLogo(namespace, name string) ([]byte, error) {
-	return a.clientset.RestClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do().Raw()
+	return a.clientset.RestClient().Get().AbsPath(fmt.Sprintf("/apis/packages.operators.coreos.com/v1/namespaces/%s/packagemanifests/%s/icon", namespace, name)).Do(context.TODO()).Raw()
 }
