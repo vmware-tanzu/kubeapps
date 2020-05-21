@@ -1,5 +1,8 @@
 frontend:
   replicaCount: 1
+  service:
+    type: NodePort
+    nodePort: 30000
 tillerProxy:
   replicaCount: 1
 assetsvc:

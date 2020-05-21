@@ -6,40 +6,31 @@
 
 deploy-dex:
 	kubectl create namespace dex
+	# dex is running on the same node as the API server in the dev environment, so we can
+	# reuse the key and cert from the apiserver, which already includes v3 extensions
+	# for the correct alternative name (using the IP address).
+	kubectl -n kube-system cp kube-apiserver-kubeapps-control-plane:etc/kubernetes/pki/apiserver.crt ./devel/apiserver.crt
+	kubectl -n kube-system cp kube-apiserver-kubeapps-control-plane:etc/kubernetes/pki/apiserver.key ./devel/apiserver.key
 	kubectl -n dex create secret tls dex-web-server-tls \
-		--key ./script/test-certs/dex.key.pem \
-		--cert ./script/test-certs/dex.cert.pem
+		--key ./devel/apiserver.key \
+		--cert ./devel/apiserver.crt
 	helm install dex stable/dex --namespace dex --version 2.4.0 \
 		--values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
-
-# The api server does not have service dns entries (in kind or vanilla k8s), so
-# dex is normally required to be available on an external host. Short-circuit
-# that requirement by ensuring dex.dex resolves to the internal IP address on
-# the apiserver so that it can initialise the oidc plugin.
-update-apiserver-etc-hosts:
-	while ! kubectl -n kube-system get po kube-apiserver-kubeapps-control-plane; do \
-		echo "Waiting for api server" && sleep 1; \
-	done
-	kubectl -n kube-system exec kube-apiserver-kubeapps-control-plane -- \
-		sh -c "echo '$(shell kubectl -n dex get svc -o=jsonpath='{.items[0].spec.clusterIP}') dex.dex' >> /etc/hosts"
 
 deploy-openldap:
 	kubectl create namespace ldap
 	helm install ldap stable/openldap --namespace ldap \
 		--values ./docs/user/manifests/kubeapps-local-dev-openldap-values.yaml
 
-deploy-dev: deploy-dex deploy-openldap update-apiserver-etc-hosts
+deploy-dev: deploy-dex deploy-openldap
 	kubectl create namespace kubeapps
 	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--set useHelm3=true
 	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
-	@echo "\nEnsure you have the entry '127.0.0.1 dex.dex' in your /etc/hosts, then run\n"
-	@echo "kubectl -n dex port-forward svc/dex 32000\n"
-	@echo "and in another terminal using the same cluster,\n"
-	@echo "kubectl -n kubeapps port-forward svc/kubeapps 3000:80\n"
-	@echo "You can then open http://localhost:3000 and login with email as either of"
+	@echo "\nYou can now simply open your browser at http://172.18.0.2:30000 to access Kubeapps!"
+	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"
 	@echo "  kubeapps-user@example.com:password"
 	@echo "or with LDAP as either of"
