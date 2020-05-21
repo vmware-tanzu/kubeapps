@@ -12,9 +12,6 @@ basicConstraints = CA:FALSE
 keyUsage = nonRepudiation, digitalSignature, keyEncipherment
 subjectAltName = @alt_names
 
-[ v3_ca ]
-subjectAltName = @alt_names
-
 [alt_names]
 DNS.1 = localhost
 EOF
