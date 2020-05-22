@@ -24,7 +24,7 @@ export interface IAppViewProps {
   error: Error | undefined;
   deleteError: Error | undefined;
   getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
-  deleteApp: (releaseName: string, namespace: string, purge: boolean) => Promise<boolean>;
+  deleteApp: (namespace: string, releaseName: string, purge: boolean) => Promise<boolean>;
   push: (location: string) => RouterAction;
 }
 
@@ -240,7 +240,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   private deleteApp = (purge: boolean) => {
-    return this.props.deleteApp(this.props.releaseName, this.props.namespace, purge);
+    return this.props.deleteApp(this.props.namespace, this.props.releaseName, purge);
   };
 }
 

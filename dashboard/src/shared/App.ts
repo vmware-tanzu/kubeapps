@@ -21,8 +21,8 @@ export class App {
   }
 
   public static async create(
-    releaseName: string,
     namespace: string,
+    releaseName: string,
     chartNamespace: string,
     chartVersion: IChartVersion,
     values?: string,
@@ -41,8 +41,8 @@ export class App {
   }
 
   public static async upgrade(
-    releaseName: string,
     namespace: string,
+    releaseName: string,
     chartNamespace: string,
     chartVersion: IChartVersion,
     values?: string,
@@ -60,7 +60,7 @@ export class App {
     return data;
   }
 
-  public static async rollback(releaseName: string, namespace: string, revision: number) {
+  public static async rollback(namespace: string, releaseName: string, revision: number) {
     const endpoint = App.getResourceURL(namespace, releaseName);
     const { data } = await axiosWithAuth.put(
       endpoint,
@@ -75,7 +75,7 @@ export class App {
     return data;
   }
 
-  public static async delete(releaseName: string, namespace: string, purge: boolean) {
+  public static async delete(namespace: string, releaseName: string, purge: boolean) {
     let purgeQuery;
     if (purge) {
       purgeQuery = "purge=true";

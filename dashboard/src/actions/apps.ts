@@ -87,8 +87,8 @@ const allActions = [
 export type AppsAction = ActionType<typeof allActions[number]>;
 
 export function getApp(
-  releaseName: string,
   namespace: string,
+  releaseName: string,
 ): ThunkAction<Promise<hapi.release.Release | undefined>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
@@ -164,7 +164,7 @@ export function getAppWithUpdateInfo(
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     try {
-      const app = await dispatch(getApp(releaseName, namespace));
+      const app = await dispatch(getApp(namespace, releaseName));
       if (
         app &&
         app.chart &&
@@ -189,14 +189,14 @@ export function getAppWithUpdateInfo(
 }
 
 export function deleteApp(
-  releaseName: string,
   namespace: string,
+  releaseName: string,
   purge: boolean,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestDeleteApp());
     try {
-      await App.delete(releaseName, namespace, purge);
+      await App.delete(namespace, releaseName, purge);
       dispatch(receiveDeleteApp());
       return true;
     } catch (e) {
@@ -249,8 +249,8 @@ export function fetchAppsWithUpdateInfo(
 export function deployChart(
   chartVersion: IChartVersion,
   chartNamespace: string,
-  releaseName: string,
   namespace: string,
+  releaseName: string,
   values?: string,
   schema?: JSONSchema4,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
@@ -274,7 +274,7 @@ export function deployChart(
           );
         }
       }
-      await App.create(releaseName, namespace, chartNamespace, chartVersion, values);
+      await App.create(namespace, releaseName, chartNamespace, chartVersion, values);
       dispatch(receiveDeployApp());
       return true;
     } catch (e) {
@@ -287,8 +287,8 @@ export function deployChart(
 export function upgradeApp(
   chartVersion: IChartVersion,
   chartNamespace: string,
-  releaseName: string,
   namespace: string,
+  releaseName: string,
   values?: string,
   schema?: JSONSchema4,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
@@ -306,7 +306,7 @@ export function upgradeApp(
           );
         }
       }
-      await App.upgrade(releaseName, namespace, chartNamespace, chartVersion, values);
+      await App.upgrade(namespace, releaseName, chartNamespace, chartVersion, values);
       dispatch(receiveUpgradeApp());
       return true;
     } catch (e) {
@@ -317,14 +317,14 @@ export function upgradeApp(
 }
 
 export function rollbackApp(
-  releaseName: string,
   namespace: string,
+  releaseName: string,
   revision: number,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
     dispatch(requestRollbackApp());
     try {
-      await App.rollback(releaseName, namespace, revision);
+      await App.rollback(namespace, releaseName, revision);
       dispatch(receiveRollbackApp());
       dispatch(getAppWithUpdateInfo(namespace, releaseName));
       return true;

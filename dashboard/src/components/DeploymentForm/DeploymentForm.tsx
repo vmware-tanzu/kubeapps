@@ -25,8 +25,8 @@ export interface IDeploymentFormProps {
   deployChart: (
     version: IChartVersion,
     chartNamespace: string,
-    releaseName: string,
     namespace: string,
+    releaseName: string,
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
@@ -163,8 +163,8 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       const deployed = await deployChart(
         selected.version,
         chartNamespace,
-        releaseName,
         namespace,
+        releaseName,
         appValues,
         selected.schema,
       );

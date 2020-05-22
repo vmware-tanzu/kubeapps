@@ -24,8 +24,8 @@ export interface IUpgradeFormProps {
   upgradeApp: (
     version: IChartVersion,
     chartNamespace: string,
-    releaseName: string,
     namespace: string,
+    releaseName: string,
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
@@ -151,8 +151,8 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
       const deployed = await upgradeApp(
         selected.version,
         repoNamespace,
-        releaseName,
         namespace,
+        releaseName,
         appValues,
         selected.schema,
       );

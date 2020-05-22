@@ -21,8 +21,8 @@ interface IAppUpgradeProps {
   upgradeApp: (
     version: IChartVersion,
     chartNamespace: string,
-    releaseName: string,
     namespace: string,
+    releaseName: string,
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;

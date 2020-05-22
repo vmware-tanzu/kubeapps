@@ -185,8 +185,8 @@ it("triggers a deployment when submitting the form", done => {
   expect(deployChart).toHaveBeenCalledWith(
     versions[0],
     defaultProps.chartNamespace,
-    releaseName,
     namespace,
+    releaseName,
     appValues,
     schema,
   );

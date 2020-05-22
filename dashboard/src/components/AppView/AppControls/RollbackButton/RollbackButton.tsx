@@ -6,7 +6,7 @@ interface IRollbackButtonProps {
   releaseName: string;
   namespace: string;
   revision: number;
-  rollbackApp: (releaseName: string, namespace: string, revision: number) => Promise<boolean>;
+  rollbackApp: (namespace: string, releaseName: string, revision: number) => Promise<boolean>;
   loading: boolean;
   error?: Error;
 }
@@ -60,8 +60,8 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
   private handleRollback = async (revision: number) => {
     this.setState({ loading: true });
     const success = await this.props.rollbackApp(
-      this.props.releaseName,
       this.props.namespace,
+      this.props.releaseName,
       revision,
     );
     // If there is an error it's catched at AppView level

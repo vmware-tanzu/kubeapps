@@ -94,7 +94,7 @@ describe("App", () => {
     } as IChartVersion;
     it("creates an app in a namespace", async () => {
       moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-      expect(await App.create("absent-ant", "default", "kubeapps", testChartVersion)).toBe("ok");
+      expect(await App.create("default", "absent-ant", "kubeapps", testChartVersion)).toBe("ok");
       const request = moxios.requests.mostRecent();
       expect(request.url).toBe(expectedURL);
       expect(request.config.data).toEqual(
@@ -129,7 +129,7 @@ describe("App", () => {
     } as IChartVersion;
     it("upgrades an app in a namespace", async () => {
       moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-      expect(await App.upgrade("absent-ant", "default", "kubeapps", testChartVersion)).toBe("ok");
+      expect(await App.upgrade("default", "absent-ant", "kubeapps", testChartVersion)).toBe("ok");
       const request = moxios.requests.mostRecent();
       expect(request.url).toBe(expectedURL);
       expect(request.config.data).toEqual(
@@ -158,7 +158,7 @@ describe("App", () => {
     ].forEach(t => {
       it(t.description, async () => {
         moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-        expect(await App.delete("foo", "default", t.purge)).toBe("ok");
+        expect(await App.delete("default", "foo", t.purge)).toBe("ok");
         expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
       });
     });
@@ -166,7 +166,7 @@ describe("App", () => {
       moxios.stubRequest(/.*/, { status: 404 });
       let errored = false;
       try {
-        await App.delete("foo", "default", false);
+        await App.delete("default", "foo", false);
       } catch (e) {
         errored = true;
         expect(e.message).toBe("Request failed with status code 404");
@@ -179,7 +179,7 @@ describe("App", () => {
   describe("rollback", () => {
     it("should rollback an application", async () => {
       axiosWithAuth.put = jest.fn().mockReturnValue({ data: "ok" });
-      expect(await App.rollback("foo", "default", 1)).toBe("ok");
+      expect(await App.rollback("default", "foo", 1)).toBe("ok");
       expect(axiosWithAuth.put).toBeCalledWith(
         "api/tiller-deploy/v1/namespaces/default/releases/foo",
         {},
