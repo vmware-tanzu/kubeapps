@@ -6,5 +6,5 @@ authProxy:
   cookieSecret: bm90LWdvb2Qtc2VjcmV0Cg==
   additionalFlags:
     - -cookie-secure=false
-    - -oidc-issuer-url=https://dex.dex:32000
+    - -oidc-issuer-url=https://172.18.0.2:32000
     - -ssl-insecure-skip-verify=true

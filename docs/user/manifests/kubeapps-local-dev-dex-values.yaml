@@ -3,7 +3,10 @@ certs:
   web:
     create: false
 config:
-  issuer: https://dex.dex:32000
+  # TODO: Don't assume that kind network will be the first non-default bridged network (ie. 172.18.0.2)
+  # This means we'll need to generate the certs as well, rather than pre-configuring them.
+  # Or check if we can use cert generated for tls with k8s node?
+  issuer: https://172.18.0.2:32000
   web:
     tlsCert: /etc/dex/tls/https/server/tls.crt
     tlsKey: /etc/dex/tls/https/server/tls.key
@@ -11,7 +14,7 @@ config:
   staticClients:
   - id: kubeapps
     redirectURIs:
-    - 'http://localhost:3000/oauth2/callback'
+    - 'http://172.18.0.2:30000/oauth2/callback'
     name: 'Kubeapps'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
   staticPasswords:
@@ -63,3 +66,5 @@ config:
         # The group name should be the "cn" value.
         nameAttr: cn
 grpc: false
+service:
+  type: NodePort
