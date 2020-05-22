@@ -105,7 +105,7 @@ Note that in some cases, a parameter cause that the rest of parameters are no lo
 }
 ```
 
-When using an `object` to set the `hidden` tag, you can also specify an array of conditions to match, and the conditional operator to use (currently supported: `and`, `or`). The format is shown below:
+When using an `object` to set the `hidden` tag, you can also specify an array of conditions to match, and the conditional operator to use (currently supported: `and`, `or`, `nor`). The format is shown below:
 
 ```json
 {

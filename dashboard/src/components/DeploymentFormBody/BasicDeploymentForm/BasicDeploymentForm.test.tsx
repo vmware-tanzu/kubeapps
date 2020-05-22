@@ -131,8 +131,8 @@ it("should hide an element if it depends on a single param (object)", () => {
       path: "foo",
       type: "string",
       hidden: {
-        value: "bar",
-        path: "enabled",
+        value: "enabled",
+        path: "bar",
       },
     },
     {
@@ -157,12 +157,12 @@ it("should hide an element if it depends on multiple params (object)", () => {
       hidden: {
         conditions: [
           {
-            value: "bar",
-            path: "enabled",
+            value: "enabled",
+            path: "bar",
           },
           {
-            value: "baz",
-            path: "disabled",
+            value: "disabled",
+            path: "baz",
           },
         ],
         operator: "and",
