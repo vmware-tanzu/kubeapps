@@ -221,14 +221,14 @@ apprepository:
   ## Initial chart repositories to configure
   ##
   initialRepos: []
-    # - name: stable
-    #   url: https://kubernetes-charts.storage.googleapis.com
-    # - name: incubator
-    #   url: https://kubernetes-charts-incubator.storage.googleapis.com
-    # - name: svc-cat
-    #   url: https://svc-catalog-charts.storage.googleapis.com
-    # - name: bitnami
-    #   url: https://charts.bitnami.com/bitnami
+    - name: stable
+      url: https://kubernetes-charts.storage.googleapis.com
+    - name: incubator
+      url: https://kubernetes-charts-incubator.storage.googleapis.com
+    - name: svc-cat
+      url: https://svc-catalog-charts.storage.googleapis.com
+    - name: bitnami
+      url: https://charts.bitnami.com/bitnami
   # Additional repositories
   # - name: chartmuseum
   #   url: https://chartmuseum.default:8080
