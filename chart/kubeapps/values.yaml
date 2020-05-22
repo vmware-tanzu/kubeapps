@@ -220,7 +220,7 @@ apprepository:
     # no_proxy: "0.0.0.0/0"
   ## Initial chart repositories to configure
   ##
-  initialRepos: []
+  initialRepos:
     - name: stable
       url: https://kubernetes-charts.storage.googleapis.com
     - name: incubator
