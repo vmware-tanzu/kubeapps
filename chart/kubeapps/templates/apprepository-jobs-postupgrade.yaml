@@ -40,6 +40,7 @@ spec:
       containers:
         - name: invalidate-cache
           image: {{ template "kubeapps.image" (list .Values.apprepository.syncImage .Values.global) }}
+          imagePullPolicy: {{ .Values.apprepository.syncImage.pullPolicy | quote }}
           command:
             - /asset-syncer
           args:
@@ -73,7 +74,8 @@ spec:
         # Helm 3.1 supports a lookup template tag to create a secret if it does not exist
         # but we can't yet restrict to helm 3.1, hence manually doing this with an initContainer.
         - name: ensure-postgres-password
-          image: bitnami/kubectl:1.18.2
+          image: {{ template "kubeapps.image" (list .Values.hooks.image .Values.global) }}
+          imagePullPolicy: {{ .Values.hooks.image.pullPolicy | quote }}
           command:
             - /bin/bash
           args:

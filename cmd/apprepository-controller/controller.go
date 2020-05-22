@@ -480,6 +480,7 @@ func syncJobSpec(apprepo *apprepov1alpha1.AppRepository, kubeappsNamespace strin
 	}
 	podTemplateSpec.Spec.Containers[0].Name = "sync"
 	podTemplateSpec.Spec.Containers[0].Image = repoSyncImage
+	podTemplateSpec.Spec.Containers[0].ImagePullPolicy = "IfNotPresent"
 	podTemplateSpec.Spec.Containers[0].Command = []string{repoSyncCommand}
 	podTemplateSpec.Spec.Containers[0].Args = apprepoSyncJobArgs(apprepo)
 	podTemplateSpec.Spec.Containers[0].Env = append(podTemplateSpec.Spec.Containers[0].Env, apprepoSyncJobEnvVars(apprepo, kubeappsNamespace)...)
@@ -513,10 +514,11 @@ func cleanupJobSpec(repoName, repoNamespace string) batchv1.JobSpec {
 				RestartPolicy: "Never",
 				Containers: []corev1.Container{
 					{
-						Name:    "delete",
-						Image:   repoSyncImage,
-						Command: []string{repoSyncCommand},
-						Args:    apprepoCleanupJobArgs(repoName, repoNamespace),
+						Name:            "delete",
+						Image:           repoSyncImage,
+						ImagePullPolicy: "IfNotPresent",
+						Command:         []string{repoSyncCommand},
+						Args:            apprepoCleanupJobArgs(repoName, repoNamespace),
 						Env: []corev1.EnvVar{
 							{
 								Name: "DB_PASSWORD",
