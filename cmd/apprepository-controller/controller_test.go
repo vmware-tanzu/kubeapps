@@ -78,9 +78,10 @@ func Test_newCronJob(t *testing.T) {
 									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
-											Name:    "sync",
-											Image:   repoSyncImage,
-											Command: []string{"/chart-repo"},
+											Name:            "sync",
+											Image:           repoSyncImage,
+											ImagePullPolicy: "IfNotPresent",
+											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
 												"--database-type=mongodb",
@@ -168,9 +169,10 @@ func Test_newCronJob(t *testing.T) {
 									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
-											Name:    "sync",
-											Image:   repoSyncImage,
-											Command: []string{"/chart-repo"},
+											Name:            "sync",
+											Image:           repoSyncImage,
+											ImagePullPolicy: "IfNotPresent",
+											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
 												"--database-type=mongodb",
@@ -255,9 +257,10 @@ func Test_newCronJob(t *testing.T) {
 									RestartPolicy: "OnFailure",
 									Containers: []corev1.Container{
 										{
-											Name:    "sync",
-											Image:   repoSyncImage,
-											Command: []string{"/chart-repo"},
+											Name:            "sync",
+											Image:           repoSyncImage,
+											ImagePullPolicy: "IfNotPresent",
+											Command:         []string{"/chart-repo"},
 											Args: []string{
 												"sync",
 												"--database-type=mongodb",
@@ -372,9 +375,10 @@ func Test_newSyncJob(t *testing.T) {
 							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
-									Name:    "sync",
-									Image:   repoSyncImage,
-									Command: []string{"/chart-repo"},
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
 										"--database-type=mongodb",
@@ -438,9 +442,10 @@ func Test_newSyncJob(t *testing.T) {
 							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
-									Name:    "sync",
-									Image:   repoSyncImage,
-									Command: []string{"/chart-repo"},
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
 										"--database-type=mongodb",
@@ -518,9 +523,10 @@ func Test_newSyncJob(t *testing.T) {
 							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
-									Name:    "sync",
-									Image:   repoSyncImage,
-									Command: []string{"/chart-repo"},
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
 										"--database-type=mongodb",
@@ -605,9 +611,10 @@ func Test_newSyncJob(t *testing.T) {
 							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
-									Name:    "sync",
-									Image:   repoSyncImage,
-									Command: []string{"/chart-repo"},
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
 										"--database-type=mongodb",
@@ -703,9 +710,10 @@ func Test_newSyncJob(t *testing.T) {
 							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
-									Name:    "sync",
-									Image:   repoSyncImage,
-									Command: []string{"/chart-repo"},
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
 										"--database-type=mongodb",
@@ -819,9 +827,10 @@ func Test_newSyncJob(t *testing.T) {
 							RestartPolicy: "OnFailure",
 							Containers: []corev1.Container{
 								{
-									Name:    "sync",
-									Image:   repoSyncImage,
-									Command: []string{"/chart-repo"},
+									Name:            "sync",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"sync",
 										"--database-type=mongodb",
@@ -895,9 +904,10 @@ func Test_newCleanupJob(t *testing.T) {
 							RestartPolicy: "Never",
 							Containers: []corev1.Container{
 								{
-									Name:    "delete",
-									Image:   repoSyncImage,
-									Command: []string{"/chart-repo"},
+									Name:            "delete",
+									Image:           repoSyncImage,
+									ImagePullPolicy: "IfNotPresent",
+									Command:         []string{"/chart-repo"},
 									Args: []string{
 										"delete",
 										"my-charts",

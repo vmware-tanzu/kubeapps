@@ -106,6 +106,11 @@ frontend:
     registry: docker.io
     repository: bitnami/nginx
     tag: 1.17.10-debian-10-r10
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
   ## Frontend service parameters
   ##
   service:
@@ -189,6 +194,10 @@ apprepository:
     registry: docker.io
     repository: kubeapps/apprepository-controller
     tag: latest
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
   ## Kubeapps assets synchronization tool
   ## Image used to perform chart repository syncs
   ## ref: https://hub.docker.com/r/bitnami/kubeapps-asset-syncer/tags/
@@ -197,6 +206,11 @@ apprepository:
     registry: docker.io
     repository: kubeapps/asset-syncer
     tag: latest
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
   ## Initial charts repo proxies to configure
   ##
   initialReposProxy:
@@ -264,6 +278,11 @@ hooks:
     registry: docker.io
     repository: bitnami/kubectl
     tag: 1.16.3-debian-10-r85
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
   ## Affinity for hooks' pods assignment
   ## Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
   ##
@@ -285,6 +304,11 @@ kubeops:
     registry: docker.io
     repository: kubeapps/kubeops
     tag: latest
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
   service:
     port: 8080
   resources:
@@ -327,6 +351,10 @@ tillerProxy:
     registry: docker.io
     repository: kubeapps/tiller-proxy
     tag: latest
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
 
   ## Tiller Proxy service parameters
   ##
@@ -401,6 +429,11 @@ assetsvc:
     registry: docker.io
     repository: kubeapps/assetsvc
     tag: latest
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
   ## Assetsvc service parameters
   ##
   service:
@@ -461,6 +494,11 @@ dashboard:
     registry: docker.io
     repository: kubeapps/dashboard
     tag: latest
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
   ## Dashboard service parameters
   ##
   service:
@@ -607,6 +645,11 @@ authProxy:
     registry: docker.io
     repository: bitnami/oauth2-proxy
     tag: 5.1.0-debian-10-r24
+    ## Specify a imagePullPolicy
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+
   ## Mandatory parameters
   ##
   provider: ""
