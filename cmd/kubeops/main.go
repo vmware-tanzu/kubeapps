@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -105,6 +108,30 @@ func main() {
 	assetsvcRouter.Methods("GET").Handler(negroni.New(
 		authGate,
 		negroni.Wrap(http.StripPrefix(assetsvcPrefix, assetsvcProxy)),
+	))
+
+	parsedKubernetessvcURL, err := url.Parse("https://kubernetes.local")
+	if err != nil {
+		log.Fatalf("Unable to parse the Kubernetes SVC URL: %v", err)
+	}
+	kubesvcProxy := httputil.NewSingleHostReverseProxy(parsedKubernetessvcURL)
+	//Add rootCA for certificate validate of self signed certificate
+	caCert, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
+	if err != nil {
+		log.Fatalf("Unable to get the CA cert: %v", err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+	kubesvcProxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs: caCertPool,
+		},
+	}
+
+	kubesvcPrefix := "/kube"
+	kubesvcRouter := r.PathPrefix(kubesvcPrefix).Subrouter()
+	kubesvcRouter.Methods("GET").Handler(negroni.New(
+		negroni.Wrap(http.StripPrefix(assetsvcPrefix, kubesvcProxy)),
 	))
 
 	n := negroni.Classic()

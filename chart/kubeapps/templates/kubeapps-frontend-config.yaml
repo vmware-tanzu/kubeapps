@@ -32,9 +32,9 @@ data:
       # Using regexp match instead of prefix one because the application can be
       # deployed under a specific path i.e /kubeapps
       location ~* /api/kube {
-        rewrite /api/kube/(.*) /$1 break;
-        rewrite /api/kube / break;
-        proxy_pass https://kubernetes.default;
+        rewrite /api/kube/(.*) /kube/$1 break;
+        rewrite /api/kube /kube break;
+        proxy_pass {{ include "kubeapps.frontend-config.proxy_pass" . -}};
         # Disable buffering for log streaming
         proxy_buffering off;
         # Hide Www-Authenticate to prevent it triggering a basic auth prompt in
