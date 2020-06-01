@@ -14,6 +14,7 @@ import AdvancedDeploymentForm from "./AdvancedDeploymentForm";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 
 import "react-tabs/style/react-tabs.css";
+import DeploymentTableList from "./DeploymentTableList";
 import Differential from "./Differential";
 import "./Tabs.css";
 
@@ -98,22 +99,12 @@ class DeploymentFormBody extends React.Component<
           closeModal={this.closeRestoreDefaultValuesModal}
         />
         <div>
-          <label htmlFor="chartVersion">Version</label>
-          <select
-            id="chartVersion"
-            onChange={this.handleChartVersionChange}
-            value={version.attributes.version}
-            required={true}
-          >
-            {versions.map(v => (
-              <option key={v.id} value={v.attributes.version}>
-                {v.attributes.version}{" "}
-                {this.props.releaseVersion && v.attributes.version === this.props.releaseVersion
-                  ? "(current)"
-                  : ""}
-              </option>
-            ))}
-          </select>
+          <DeploymentTableList
+            key={"chartVersion"}
+            versions={versions}
+            onDeleteFun={this.handleChartVersionChange}
+            releaseVersion={this.props.releaseVersion}
+          />
         </div>
         {this.renderTabs()}
         <div className="margin-t-big">
@@ -133,18 +124,17 @@ class DeploymentFormBody extends React.Component<
     );
   }
 
-  private handleChartVersionChange = (e: React.FormEvent<HTMLSelectElement>) => {
+  private handleChartVersionChange = (selectedVersion: string) => {
     // TODO(andres): This requires refactoring. Currently, the deploy and upgrade
     // forms behave differently. In the deployment form, a change in the version
     // changes the route but in the case of the upgrade it only changes the state
     const isUpgradeForm = !!this.props.releaseVersion;
-
     if (isUpgradeForm) {
       const { chartID, getChartVersion } = this.props;
-      getChartVersion(chartID, e.currentTarget.value);
+      getChartVersion(chartID, selectedVersion);
     } else {
       this.props.push(
-        `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
+        `/apps/ns/${this.props.namespace}/new/${this.props.chartID}/versions/${selectedVersion}`,
       );
     }
   };

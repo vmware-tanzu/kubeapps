@@ -4,6 +4,8 @@
   "private": true,
   "homepage": "./",
   "dependencies": {
+    "@material-ui/core": "^4.9.8",
+    "@material-ui/icons": "^4.9.1",
     "@types/diff": "^4.0.2",
     "@types/js-yaml": "^3.10.1",
     "@types/json-schema": "^7.0.3",
@@ -36,6 +38,7 @@
     "json-schema": "^0.2.5",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.11",
+    "material-ui": "^0.20.2",
     "mem": "^4.0.0",
     "moniker-native": "^0.1.6",
     "protobufjs": "^6.8.4",

@@ -72,6 +72,7 @@ type ChartVersion struct {
 	Readme     string    `json:"readme" bson:"-"`
 	Values     string    `json:"values" bson:"-"`
 	Schema     string    `json:"schema" bson:"-"`
+	Description string    `json:"description"`
 }
 
 // ChartFiles holds the README and values for a given chart version

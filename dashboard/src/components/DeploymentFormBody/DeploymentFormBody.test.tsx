@@ -81,7 +81,7 @@ const initialValues = "foo: bar";
 const initialSchema = { properties: { foo: { type: "string", form: true } } };
 const chartVersion = {
   id: "foo",
-  attributes: { version: "1.0.0", app_version: "1.0", created: "1" },
+  attributes: { version: "1.0.0", app_version: "1.0", created: "1", description: "test" },
   relationships: {
     chart: {
       data: {

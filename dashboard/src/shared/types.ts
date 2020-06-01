@@ -48,6 +48,7 @@ export interface IChartVersionAttributes {
   version: string;
   app_version: string;
   created: string;
+  description: string;
 }
 
 export interface IChart {
