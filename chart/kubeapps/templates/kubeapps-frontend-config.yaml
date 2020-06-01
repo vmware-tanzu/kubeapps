@@ -52,7 +52,7 @@ data:
         rewrite /api/clusters/default/(.*) /$1 break;
         rewrite /api/clusters/default / break;
         proxy_pass https://kubernetes.default;
-        include "/opt/bitnami/nginx/conf/server_blocks/k8s-api-proxy.conf";
+        include "./server_blocks/k8s-api-proxy.conf";
       }
 
       # TODO: The following location is left for backwards compat but will no longer
@@ -63,7 +63,7 @@ data:
         rewrite /api/kube/(.*) /$1 break;
         rewrite /api/kube / break;
         proxy_pass https://kubernetes.default;
-        include "/opt/bitnami/nginx/conf/server_blocks/k8s-api-proxy.conf";
+        include "./server_blocks/k8s-api-proxy.conf";
       }
 
       location ~* /api/assetsvc {
