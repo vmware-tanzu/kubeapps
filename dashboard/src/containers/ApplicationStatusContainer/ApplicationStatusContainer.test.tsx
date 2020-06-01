@@ -24,7 +24,7 @@ describe("ApplicationStatusContainer", () => {
     const name = "foo";
     const item = { isFetching: false, item: { metadata: { name } } as IResource };
     const store = makeStore({
-      "api/kube/apis/apps/v1/namespaces/wee/deployments/foo": item,
+      "api/clusters/default/apis/apps/v1/namespaces/wee/deployments/foo": item,
     });
     const ref = new ResourceRef({
       apiVersion: "apps/v1",

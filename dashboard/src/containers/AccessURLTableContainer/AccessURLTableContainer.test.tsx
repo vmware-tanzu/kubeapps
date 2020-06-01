@@ -31,8 +31,8 @@ describe("AccessURLTableContainer", () => {
       item: { metadata: { name: `${name}-ingress` } } as IResource,
     };
     const store = makeStore({
-      "api/kube/api/v1/namespaces/wee/services/foo-service": service,
-      "api/kube/api/v1/namespaces/wee/ingresses/foo-ingress": ingress,
+      "api/clusters/default/api/v1/namespaces/wee/services/foo-service": service,
+      "api/clusters/default/api/v1/namespaces/wee/ingresses/foo-ingress": ingress,
     });
     const serviceRef = new ResourceRef({
       apiVersion: "v1",

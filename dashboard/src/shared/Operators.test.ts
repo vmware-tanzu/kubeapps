@@ -9,7 +9,7 @@ it("check if the OLM has been installed", async () => {
   expect(await Operators.isOLMInstalled("ns")).toBe(true);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    "api/kube/apis/packages.operators.coreos.com/v1/namespaces/ns/packagemanifests",
+    "api/clusters/default/apis/packages.operators.coreos.com/v1/namespaces/ns/packagemanifests",
   );
 });
 
@@ -36,7 +36,7 @@ it("get operators", async () => {
   expect(await Operators.getOperators(ns)).toEqual([operator]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    `api/kube/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests`,
+    `api/clusters/default/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests`,
   );
 });
 
@@ -50,7 +50,7 @@ it("get operator", async () => {
   expect(await Operators.getOperator(ns, opName)).toEqual(operator);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    `api/kube/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests/${opName}`,
+    `api/clusters/default/apis/packages.operators.coreos.com/v1/namespaces/${ns}/packagemanifests/${opName}`,
   );
 });
 
@@ -63,7 +63,7 @@ it("get csvs", async () => {
   expect(await Operators.getCSVs(ns)).toEqual([csv]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    `api/kube/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions`,
+    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions`,
   );
 });
 
@@ -76,7 +76,7 @@ it("get global csvs", async () => {
   expect(await Operators.getCSVs(ns)).toEqual([csv]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    "api/kube/apis/operators.coreos.com/v1alpha1/namespaces/operators/clusterserviceversions",
+    "api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/operators/clusterserviceversions",
   );
 });
 
@@ -89,7 +89,7 @@ it("get csv", async () => {
   expect(await Operators.getCSV(ns, "foo")).toEqual(csv);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
-    `api/kube/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions/foo`,
+    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${ns}/clusterserviceversions/foo`,
   );
 });
 
@@ -102,7 +102,7 @@ it("creates a resource", async () => {
   expect(await Operators.createResource(ns, "v1", "pods", resource)).toEqual(resource);
   expect(axiosWithAuth.post).toHaveBeenCalled();
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/v1/namespaces/${ns}/pods`,
+    `api/clusters/default/apis/v1/namespaces/${ns}/pods`,
     resource,
   ]);
 });
@@ -116,7 +116,7 @@ it("list resources", async () => {
   expect(await Operators.listResources(ns, "v1", "pods")).toEqual({ items: [resource] });
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/v1/namespaces/${ns}/pods`,
+    `api/clusters/default/apis/v1/namespaces/${ns}/pods`,
   ]);
 });
 
@@ -129,7 +129,7 @@ it("get a resource", async () => {
   expect(await Operators.getResource(ns, "v1", "pods", "foo")).toEqual(resource);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/v1/namespaces/${ns}/pods/foo`,
+    `api/clusters/default/apis/v1/namespaces/${ns}/pods/foo`,
   ]);
 });
 
@@ -142,7 +142,7 @@ it("deletes a resource", async () => {
   expect(await Operators.deleteResource(ns, "v1", "pods", "foo")).toEqual(resource);
   expect(axiosWithAuth.delete).toHaveBeenCalled();
   expect((axiosWithAuth.delete as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/v1/namespaces/${ns}/pods/foo`,
+    `api/clusters/default/apis/v1/namespaces/${ns}/pods/foo`,
   ]);
 });
 
@@ -157,7 +157,7 @@ it("updates a resource", async () => {
   ).toEqual(resource);
   expect(axiosWithAuth.post).toHaveBeenCalled();
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/v1/namespaces/${ns}/pods`,
+    `api/clusters/default/apis/v1/namespaces/${ns}/pods`,
     resource,
   ]);
 });
@@ -205,15 +205,15 @@ it("creates an operatorgroup and a subscription", async () => {
   );
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+    `api/clusters/default/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
   ]);
   expect(axiosWithAuth.post).toHaveBeenCalledTimes(2);
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+    `api/clusters/default/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
     operatorgroup,
   ]);
   expect((axiosWithAuth.post as jest.Mock).mock.calls[1]).toEqual([
-    `api/kube/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
+    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
     subscription,
   ]);
 });
@@ -232,11 +232,11 @@ it("creates only a subscription if the operator group already exists", async () 
   );
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+    `api/clusters/default/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
   ]);
   expect(axiosWithAuth.post).toHaveBeenCalledTimes(1);
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
-    `api/kube/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
+    `api/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/foo`,
     subscription,
   ]);
 });
