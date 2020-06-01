@@ -11,17 +11,18 @@ interface ILoginFormProps {
   authenticating: boolean;
   authenticationError: string | undefined;
   oauthLoginURI: string;
-  authenticate: (token: string) => any;
+  authenticate: (token: string, stack: string) => any;
   checkCookieAuthentication: () => void;
   location: Location;
 }
 
 interface ILoginFormState {
   token: string;
+  stack: string;
 }
 
 class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
-  public state: ILoginFormState = { token: "" };
+  public state: ILoginFormState = { token: "", stack: "default" };
 
   public componentDidMount() {
     if (this.props.oauthLoginURI) {
@@ -64,12 +65,16 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
 
   private handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { token } = this.state;
-    return token && (await this.props.authenticate(token));
+    const { token, stack } = this.state;
+    return token && (await this.props.authenticate(token, stack));
   };
 
   private handleTokenChange = (e: React.FormEvent<HTMLInputElement>) => {
     this.setState({ token: e.currentTarget.value });
+  };
+
+  private handleStackChange = (e: React.FormEvent<HTMLSelectElement>) => {
+    this.setState({ stack: e.currentTarget.value });
   };
 
   private oauthLogin = () => {
@@ -118,6 +123,14 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
                 onChange={this.handleTokenChange}
                 value={this.state.token}
               />
+              <label htmlFor="stack">Kubernetes Stack</label>
+              <select id="stack" required={true} onChange={this.handleStackChange}>
+                <option selected={true} value="default">
+                  GCP
+                </option>
+                <option value="gcp_devo">GCP Devo</option>
+                <option value="lazada">Lazada</option>
+              </select>
             </div>
             <p>
               <button type="submit" className="button button-accent">

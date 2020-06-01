@@ -13,7 +13,7 @@ describe("Auth", () => {
   it("should get an URL with the given token", async () => {
     const mock = jest.fn();
     Axios.get = mock;
-    await Auth.validateToken("foo");
+    await Auth.validateToken("foo", "default");
     expect(mock.mock.calls[0]).toEqual(["api/kube/", { headers: { Authorization: "Bearer foo" } }]);
   });
 
@@ -49,7 +49,7 @@ describe("Auth", () => {
         // to upgrade jest for `toThrow()` to work with async.
         let err = null;
         try {
-          await Auth.validateToken("foo");
+          await Auth.validateToken("foo", "default");
         } catch (e) {
           err = e;
         } finally {

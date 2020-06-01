@@ -1,6 +1,7 @@
 import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 const AuthTokenKey = "kubeapps_auth_token";
+const StackKey = "kubernetes_stack";
 const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 import { IConfig } from "./Config";
 import { APIBase } from "./Kube";
@@ -10,16 +11,20 @@ export class Auth {
   public static getAuthToken() {
     return localStorage.getItem(AuthTokenKey);
   }
-
-  public static setAuthToken(token: string, oidc: boolean) {
+  public static getStack() {
+    return localStorage.getItem(StackKey);
+  }
+  public static setAuthToken(token: string, stack: string, oidc: boolean) {
     localStorage.setItem(AuthTokenOIDCKey, oidc.toString());
     if (token) {
       localStorage.setItem(AuthTokenKey, token);
+      localStorage.setItem(StackKey, stack);
     }
   }
 
   public static unsetAuthToken() {
     localStorage.removeItem(AuthTokenKey);
+    localStorage.removeItem(StackKey);
   }
 
   public static unsetAuthCookie(config: IConfig) {
@@ -56,9 +61,11 @@ export class Auth {
   }
 
   // Throws an error if the token is invalid
-  public static async validateToken(token: string) {
+  public static async validateToken(token: string, stack: string) {
     try {
-      await Axios.get(APIBase + "/", { headers: { Authorization: `Bearer ${token}` } });
+      await Axios.get(APIBase + "/", {
+        headers: { Authorization: `Bearer ${token}`, Stack: stack },
+      });
     } catch (e) {
       const res = e.response as AxiosResponse;
       if (res.status === 401) {

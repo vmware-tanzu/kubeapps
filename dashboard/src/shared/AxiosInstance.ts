@@ -17,8 +17,10 @@ import {
 export function addAuthHeaders(axiosInstance: AxiosInstance) {
   axiosInstance.interceptors.request.use((config: AxiosRequestConfig) => {
     const authToken = Auth.getAuthToken();
+    const stack = Auth.getStack();
     if (authToken) {
       config.headers.Authorization = `Bearer ${authToken}`;
+      config.headers.Stack = stack;
     }
     return config;
   });

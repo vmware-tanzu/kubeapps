@@ -26,15 +26,16 @@ export type AuthAction = ActionType<typeof allActions[number]>;
 
 export function authenticate(
   token: string,
+  stack: string,
   oidc: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
   return async dispatch => {
     dispatch(authenticating());
     try {
       if (!oidc) {
-        await Auth.validateToken(token);
+        await Auth.validateToken(token, stack);
       }
-      Auth.setAuthToken(token, oidc);
+      Auth.setAuthToken(token, stack, oidc);
       dispatch(setAuthenticated(true, oidc, Auth.defaultNamespaceFromToken(token)));
       if (oidc) {
         dispatch(setSessionExpired(false));
@@ -87,7 +88,7 @@ export function checkCookieAuthentication(): ThunkAction<
     dispatch(authenticating());
     const isAuthed = await Auth.isAuthenticatedWithCookie();
     if (isAuthed) {
-      dispatch(authenticate("", true));
+      dispatch(authenticate("", "", true));
     } else {
       dispatch(setAuthenticated(false, false, ""));
     }

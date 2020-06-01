@@ -7,6 +7,7 @@ import { Auth } from "../shared/Auth";
 
 const mockStore = configureMockStore([thunk]);
 const token = "abcd";
+const stack = "gcp";
 const validationErrorMsg = "Validation error";
 
 let store: any;
@@ -54,7 +55,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
+    return store.dispatch(actions.auth.authenticate(token, stack, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -71,7 +72,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
+    return store.dispatch(actions.auth.authenticate(token, stack, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(Auth.validateToken).toHaveBeenCalledWith(token);
     });
@@ -93,7 +94,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate("ignored", true)).then(() => {
+    return store.dispatch(actions.auth.authenticate("ignored", "test", true)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(Auth.validateToken).not.toHaveBeenCalled();
     });
