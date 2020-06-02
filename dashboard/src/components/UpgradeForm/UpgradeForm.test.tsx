@@ -114,8 +114,8 @@ it("triggers an upgrade when submitting the form", done => {
   expect(upgradeApp).toHaveBeenCalledWith(
     versions[0],
     "kubeapps",
-    releaseName,
     namespace,
+    releaseName,
     appValues,
     schema,
   );

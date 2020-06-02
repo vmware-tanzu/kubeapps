@@ -27,5 +27,5 @@ it("should perform the rollback", async () => {
   expect(dialog).toExist();
   const onConfirm = dialog.prop("onConfirm") as (revision: number) => Promise<any>;
   await onConfirm(1);
-  expect(rollbackApp).toBeCalledWith(defaultProps.releaseName, defaultProps.namespace, 1);
+  expect(rollbackApp).toBeCalledWith(defaultProps.namespace, defaultProps.releaseName, 1);
 });

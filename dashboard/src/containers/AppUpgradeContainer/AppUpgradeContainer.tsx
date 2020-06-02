@@ -62,13 +62,13 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     upgradeApp: (
       version: IChartVersion,
       chartNamespace: string,
-      releaseName: string,
       namespace: string,
+      releaseName: string,
       values?: string,
       schema?: JSONSchema4,
     ) =>
       dispatch(
-        actions.apps.upgradeApp(version, chartNamespace, releaseName, namespace, values, schema),
+        actions.apps.upgradeApp(version, chartNamespace, namespace, releaseName, values, schema),
       ),
     getDeployedChartVersion: (namespace: string, id: string, version: string) =>
       dispatch(actions.charts.getDeployedChartVersion(namespace, id, version)),

@@ -23,8 +23,8 @@ function mapStateToProps({ apps }: IStoreState, props: IButtonProps) {
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    rollbackApp: (releaseName: string, namespace: string, revision: number) =>
-      dispatch(actions.apps.rollbackApp(releaseName, namespace, revision)),
+    rollbackApp: (namespace: string, releaseName: string, revision: number) =>
+      dispatch(actions.apps.rollbackApp(namespace, releaseName, revision)),
   };
 }
 

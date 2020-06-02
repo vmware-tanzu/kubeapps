@@ -183,22 +183,22 @@ describe("delete applications", () => {
     App.delete = deleteAppOrig;
   });
   it("delete an application", async () => {
-    await store.dispatch(actions.apps.deleteApp("foo", "default", false));
+    await store.dispatch(actions.apps.deleteApp("default", "foo", false));
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteApp) },
       { type: getType(actions.apps.receiveDeleteApp) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual(["foo", "default", false]);
+    expect(deleteAppMock.mock.calls[0]).toEqual(["default", "foo", false]);
   });
   it("delete and purge an application", async () => {
-    await store.dispatch(actions.apps.deleteApp("foo", "default", true));
+    await store.dispatch(actions.apps.deleteApp("default", "foo", true));
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteApp) },
       { type: getType(actions.apps.receiveDeleteApp) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual(["foo", "default", true]);
+    expect(deleteAppMock.mock.calls[0]).toEqual(["default", "foo", true]);
   });
   it("delete and throw an error", async () => {
     const error = new Error("something went wrong!");
@@ -209,7 +209,7 @@ describe("delete applications", () => {
     deleteAppMock.mockImplementation(() => {
       throw error;
     });
-    expect(await store.dispatch(actions.apps.deleteApp("foo", "default", true))).toBe(false);
+    expect(await store.dispatch(actions.apps.deleteApp("default", "foo", true))).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -221,12 +221,12 @@ describe("deploy chart", () => {
 
   it("returns true if namespace is correct and deployment is successful", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "chart-namespace", "my-release", "default"),
+      actions.apps.deployChart("my-version" as any, "chart-namespace", "default", "my-release"),
     );
     expect(res).toBe(true);
     expect(App.create).toHaveBeenCalledWith(
-      "my-release",
       "default",
+      "my-release",
       "chart-namespace",
       "my-version",
       undefined,
@@ -243,8 +243,8 @@ describe("deploy chart", () => {
       actions.apps.deployChart(
         "my-version" as any,
         "chart-namespace",
-        "my-release",
         definedNamespaces.all,
+        "my-release",
       ),
     );
     expect(res).toBe(false);
@@ -264,8 +264,8 @@ describe("deploy chart", () => {
       actions.apps.deployChart(
         "my-version" as any,
         "chart-namespace",
-        "my-release",
         "default",
+        "my-release",
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
@@ -290,8 +290,8 @@ describe("upgradeApp", () => {
   const provisionCMD = actions.apps.upgradeApp(
     "my-version" as any,
     "kubeapps-ns",
-    "my-release",
     definedNamespaces.all,
+    "my-release",
   );
 
   it("calls ServiceBinding.delete and returns true if no error", async () => {
@@ -305,8 +305,8 @@ describe("upgradeApp", () => {
     ];
     expect(store.getActions()).toEqual(expectedActions);
     expect(App.upgrade).toHaveBeenCalledWith(
-      "my-release",
       definedNamespaces.all,
+      "my-release",
       "kubeapps-ns",
       "my-version" as any,
       undefined,
@@ -335,8 +335,8 @@ describe("upgradeApp", () => {
       actions.apps.upgradeApp(
         "my-version" as any,
         "kubeapps-ns",
-        "my-release",
         "default",
+        "my-release",
         "foo: 1",
         {
           properties: { foo: { type: "string" } },
@@ -359,10 +359,11 @@ describe("upgradeApp", () => {
 });
 
 describe("rollbackApp", () => {
-  const provisionCMD = actions.apps.rollbackApp("my-release", "default", 1);
+  const provisionCMD = actions.apps.rollbackApp("default", "my-release", 1);
 
   it("success and re-request apps info", async () => {
     App.rollback = jest.fn().mockImplementationOnce(() => true);
+    App.getRelease = jest.fn().mockImplementationOnce(() => true);
     const res = await store.dispatch(provisionCMD);
     expect(res).toBe(true);
 
@@ -370,9 +371,11 @@ describe("rollbackApp", () => {
       { type: getType(actions.apps.requestRollbackApp) },
       { type: getType(actions.apps.receiveRollbackApp) },
       { type: getType(actions.apps.requestApps) },
+      { type: getType(actions.apps.selectApp), payload: true },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.rollback).toHaveBeenCalledWith("my-release", "default", 1);
+    expect(App.rollback).toHaveBeenCalledWith("default", "my-release", 1);
+    expect(App.getRelease).toHaveBeenCalledWith("default", "my-release");
   });
 
   it("dispatches an error", async () => {
