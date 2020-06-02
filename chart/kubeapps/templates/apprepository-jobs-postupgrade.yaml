@@ -1,11 +1,11 @@
 {{- if .Values.featureFlags.invalidateCache }}
-# Ensure db indexes are set and invalidate the chart cache during both install and upgrade.
+# Ensure db indexes are set and invalidate the chart when upgrading.
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ template "kubeapps.apprepository-job-postupgrade.fullname" . }}
   annotations:
-    helm.sh/hook: post-upgrade,post-install
+    helm.sh/hook: post-upgrade
     helm.sh/hook-weight: "0"
     helm.sh/hook-delete-policy: hook-succeeded
   labels:
