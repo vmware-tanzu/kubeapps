@@ -694,3 +694,9 @@ featureFlags:
   reposPerNamespace: true
   invalidateCache: true
   operators: false
+  # additionalClusters is a WIP feature for multi-cluster support.
+  additionalClusters: []
+  # additionalClusters:
+  # - name: second-cluster
+  #   apiServiceURL: https://second-cluster:6443
+  #   certificateAuthorityData: LS0tLS1CRUdJ...

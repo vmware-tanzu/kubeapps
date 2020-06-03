@@ -4,16 +4,11 @@
 # Targets in this helper assume that kubectl is configured with a cluster
 # that has been setup with OIDC support (see ./cluster-kind.mk)
 
-deploy-dex:
+deploy-dex: devel/dex.crt devel/dex.key
 	kubectl create namespace dex
-	# dex is running on the same node as the API server in the dev environment, so we can
-	# reuse the key and cert from the apiserver, which already includes v3 extensions
-	# for the correct alternative name (using the IP address).
-	kubectl -n kube-system cp kube-apiserver-kubeapps-control-plane:etc/kubernetes/pki/apiserver.crt ./devel/apiserver.crt
-	kubectl -n kube-system cp kube-apiserver-kubeapps-control-plane:etc/kubernetes/pki/apiserver.key ./devel/apiserver.key
 	kubectl -n dex create secret tls dex-web-server-tls \
-		--key ./devel/apiserver.key \
-		--cert ./devel/apiserver.crt
+		--key ./devel/dex.key \
+		--cert ./devel/dex.crt
 	helm install dex stable/dex --namespace dex --version 2.4.0 \
 		--values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
@@ -28,7 +23,6 @@ deploy-dev: deploy-dex deploy-openldap
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--set useHelm3=true
-	kubectl apply -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	@echo "\nYou can now simply open your browser at http://172.18.0.2:30000 to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"
