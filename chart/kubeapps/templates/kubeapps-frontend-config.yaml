@@ -26,7 +26,9 @@ data:
     proxy_set_header Authorization "Bearer $http_x_forwarded_access_token";
     {{- end }}
   {{- range .Values.featureFlags.additionalClusters }}
+  {{- if .certificateAuthorityData }}
   {{ .name }}-ca.pem: {{ .certificateAuthorityData }}
+   {{- end }}
   {{- end}}
   vhost.conf: |-
     # Retain the default nginx handling of requests without a "Connection" header
@@ -58,15 +60,16 @@ data:
       }
 
       # Ensure each additional cluster can be reached (should only be
-      # used with an auth-proxy where k8s credentials are never leave
+      # used with an auth-proxy where k8s credentials never leave
       # the cluster). See additionalClusters option.
       {{- range .Values.featureFlags.additionalClusters }}
       location ~* /api/clusters/{{ .name }} {
         rewrite /api/clusters/{{ .name }}/(.*) /$1 break;
         rewrite /api/clusters/{{ .name }} / break;
         proxy_pass {{ .apiServiceURL }};
+        {{- if .certificateAuthorityData }}
         proxy_ssl_trusted_certificate "./server_blocks/{{ .name }}-ca.pem";
-        # Add the cert authority data (check nginx docs)
+        {{- end }}
         include "./server_blocks/k8s-api-proxy.conf";
       }
       {{- end }}
