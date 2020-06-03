@@ -35,12 +35,20 @@ const isV1SupportRequired = false
 // This approach practically eliminates that risk; it is much easier to use WithHandlerConfig to create a handler guaranteed to use a valid handler config.
 type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params)
 
+// AdditionalClusterConfig contains required info to talk to additional clusters.
+type AdditionalClusterConfig struct {
+	Name                     string `json:"name"`
+	ApiServiceURL            string `json:"apiServiceURL"`
+	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
+}
+
 // Options represents options that can be created without a bearer token, i.e. once at application startup.
 type Options struct {
-	ListLimit         int
-	Timeout           int64
-	UserAgent         string
-	KubeappsNamespace string
+	ListLimit          int
+	Timeout            int64
+	UserAgent          string
+	KubeappsNamespace  string
+	AdditionalClusters map[string]AdditionalClusterConfig
 }
 
 // Config represents data needed by each handler to be able to create Helm 3 actions.
