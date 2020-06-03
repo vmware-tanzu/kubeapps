@@ -47,6 +47,11 @@ func newMongoDBManager(config datastore.Config, kubeappsNamespace string) assetM
 // imported into the database as fast as possible. E.g. we want all icons for
 // charts before fetching readmes for each chart and version pair.
 func (m *mongodbAssetManager) Sync(repo models.Repo, charts []models.Chart) error {
+	err := m.InitCollections()
+	if err != nil {
+		return err
+	}
+
 	return m.importCharts(charts, repo)
 }
 
