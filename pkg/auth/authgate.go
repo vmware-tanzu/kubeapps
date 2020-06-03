@@ -22,11 +22,12 @@ const tokenPrefix = "Bearer "
 func AuthGate() negroni.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
 		token := ExtractToken(req.Header.Get("Authorization"))
+		stack := req.Header.Get("Stack")
 		if token == "" {
 			response.NewErrorResponse(http.StatusUnauthorized, "Unauthorized").Write(w)
 			return
 		}
-		userAuth, err := NewAuth(token)
+		userAuth, err := NewAuth(token, stack)
 		if err != nil {
 			response.NewErrorResponse(http.StatusInternalServerError, err.Error()).Write(w)
 			return

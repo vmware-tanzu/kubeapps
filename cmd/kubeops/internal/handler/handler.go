@@ -2,7 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
+	"k8s.io/client-go/tools/clientcmd"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -22,6 +25,7 @@ import (
 
 const (
 	authHeader     = "Authorization"
+	stackHeader    = "Stack"
 	namespaceParam = "namespace"
 	nameParam      = "releaseName"
 	authUserError  = "Unexpected error while configuring authentication"
@@ -33,7 +37,9 @@ const isV1SupportRequired = false
 // because a valid action config (and hence handler config) cannot be created until then.
 // If the handler config were a "this" argument instead of an explicit argument, it would be easy to create a handler with a "zero" config.
 // This approach practically eliminates that risk; it is much easier to use WithHandlerConfig to create a handler guaranteed to use a valid handler config.
+
 type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params)
+type dependentBackendHandler func(authHandler kube.AuthHandler, w http.ResponseWriter, req *http.Request)
 
 // Options represents options that can be created without a bearer token, i.e. once at application startup.
 type Options struct {
@@ -51,15 +57,23 @@ type Config struct {
 	ChartClient  chartUtils.Resolver
 }
 
-// NewInClusterConfig returns an internal cluster config replacing the token.
-func NewInClusterConfig(token string) (*rest.Config, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
+// NewClusterConfig returns an internal cluster config replacing the token.
+func NewClusterConfig(token string, stack string) (config *rest.Config, err error) {
+	if stack == "default" {
+		config, err = rest.InClusterConfig()
+		if err != nil {
+			return
+		}
+	} else {
+		config, err = clientcmd.BuildConfigFromFlags(os.Getenv(stack), "")
+		if err != nil {
+			return
+		}
+		config.CAFile = fmt.Sprintf("/var/run/secrets/kubernetes.io/custom/%s.crt", stack)
 	}
 	config.BearerToken = token
 	config.BearerTokenFile = ""
-	return config, nil
+	return
 }
 
 // WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
@@ -70,10 +84,10 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
 			namespace := params[namespaceParam]
 			token := auth.ExtractToken(req.Header.Get(authHeader))
-
+			stack := req.Header.Get(stackHeader)
 			// User configuration and clients, using user token
 			// Used to perform Helm operations
-			restConfig, err := NewInClusterConfig(token)
+			restConfig, err := NewClusterConfig(token, stack)
 			if err != nil {
 				log.Errorf("Failed to create in-cluster config with user token: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
@@ -92,7 +106,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace)
+			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace, "default")
 			if err != nil {
 				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
@@ -105,6 +119,34 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				ChartClient:  chartUtils.NewChartClient(kubeHandler, options.KubeappsNamespace, options.UserAgent),
 			}
 			f(cfg, w, req, params)
+		}
+	}
+}
+
+// AddRouteWith makes it easier to define routes in main.go and avoids code repetition.
+func AddBackendRouteWith(
+	r *mux.Router,
+	WithBackendHandlerConfig func(dependentBackendHandler) handlerutil.WithBackendParams,
+) func(verb, path string, handler dependentBackendHandler) {
+	return func(verb, path string, handler dependentBackendHandler) {
+		r.Methods(verb).Path(path).Handler(negroni.New(negroni.Wrap(WithBackendHandlerConfig(handler))))
+	}
+}
+
+func WithBackendHandlerConfig() func(f dependentBackendHandler) handlerutil.WithBackendParams {
+	return func(f dependentBackendHandler) handlerutil.WithBackendParams {
+		return func(w http.ResponseWriter, req *http.Request) {
+			stack := req.Header.Get("Stack")
+			if stack == "" {
+				log.Errorf("Stack header is empty")
+				return
+			}
+			backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), stack)
+			if err != nil {
+				log.Errorf("Failed to create handler: %v", err)
+				return
+			}
+			f(backendHandler, w, req)
 		}
 	}
 }

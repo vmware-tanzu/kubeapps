@@ -18,6 +18,10 @@ package auth
 
 import (
 	"fmt"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
+	"os"
 	"regexp"
 	"strings"
 
@@ -28,7 +32,6 @@ import (
 	discovery "k8s.io/client-go/discovery"
 	"k8s.io/client-go/kubernetes"
 	authorizationv1 "k8s.io/client-go/kubernetes/typed/authorization/v1"
-	"k8s.io/client-go/rest"
 )
 
 type resource struct {
@@ -98,9 +101,35 @@ type Checker interface {
 	GetForbiddenActions(namespace, action, manifest string) ([]Action, error)
 }
 
+func newAuthConfig(stack string) (*rest.Config, error) {
+	if stack == "default" {
+		var err error
+		config, err := rest.InClusterConfig()
+		if err != nil {
+			return nil, err
+		}
+		return config, nil
+	}
+	caFile := fmt.Sprintf("/var/run/secrets/kubernetes.io/custom/%s.crt", stack)
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{},
+		&clientcmd.ConfigOverrides{
+			ClusterInfo: clientcmdapi.Cluster{
+				Server:               os.Getenv(stack),
+				CertificateAuthority: caFile,
+			},
+		})
+	config, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	config.TLSClientConfig.CAFile = caFile
+	return config, nil
+}
+
 // NewAuth creates an auth agent
-func NewAuth(token string) (*UserAuth, error) {
-	config, err := rest.InClusterConfig()
+func NewAuth(token string, stack string) (*UserAuth, error) {
+	config, err := newAuthConfig(stack)
 	if err != nil {
 		return nil, err
 	}

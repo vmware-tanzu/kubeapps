@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 
 	log "github.com/sirupsen/logrus"
 	authorizationapi "k8s.io/api/authorization/v1"
@@ -52,9 +53,9 @@ type combinedClientset struct {
 	*kubernetes.Clientset
 }
 
-// kubeHandler handles http requests for operating on app repositories and k8s resources
+// KubeHandler handles http requests for operating on app repositories and k8s resources
 // in Kubeapps, without exposing implementation details to 3rd party integrations.
-type kubeHandler struct {
+type KubeHandler struct {
 	// The config set internally here cannot be used on its own as a valid
 	// token is required. Call-sites use configForToken to obtain a valid
 	// config with a specific token.
@@ -74,7 +75,7 @@ type kubeHandler struct {
 	clientsetForConfig func(*rest.Config) (combinedClientsetInterface, error)
 }
 
-// userHandler is an extension of kubeHandler for a specific service account
+// userHandler is an extension of KubeHandler for a specific service account
 type userHandler struct {
 	// The namespace in which (currently) app repositories are created.
 	kubeappsNamespace string
@@ -100,7 +101,7 @@ type AuthHandler interface {
 	AsSVC() handler
 }
 
-func (a *kubeHandler) AsUser(token string) handler {
+func (a *KubeHandler) AsUser(token string) handler {
 	clientset, err := a.clientsetForConfig(a.configForToken(token))
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
@@ -112,7 +113,7 @@ func (a *kubeHandler) AsUser(token string) handler {
 	}
 }
 
-func (a *kubeHandler) AsSVC() handler {
+func (a *KubeHandler) AsSVC() handler {
 	return &userHandler{
 		kubeappsNamespace: a.kubeappsNamespace,
 		svcClientset:      a.svcClientset,
@@ -137,21 +138,50 @@ type appRepositoryRequestDetails struct {
 // NewHandler returns an AppRepositories and Kubernetes handler configured with
 // the in-cluster config but overriding the token with an empty string, so that
 // configForToken must be called to obtain a valid config.
-func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
-	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&clientcmd.ConfigOverrides{
-			AuthInfo: clientcmdapi.AuthInfo{
-				// These three override their respective file or string
-				// data.
-				ClientCertificateData: []byte{},
-				ClientKeyData:         []byte{},
-				// A non empty value is required to override, it seems.
-				TokenFile: " ",
+func newHandlerStack(stack string) (*rest.Config, error) {
+	if stack == "default" {
+		clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+			clientcmd.NewDefaultClientConfigLoadingRules(),
+			&clientcmd.ConfigOverrides{
+				AuthInfo: clientcmdapi.AuthInfo{
+					// These three override their respective file or string
+					// data.
+					ClientCertificateData: []byte{},
+					ClientKeyData:         []byte{},
+					// A non empty value is required to override, it seems.
+					TokenFile: " ",
+				},
 			},
-		},
-	)
+		)
+		config, err := clientConfig.ClientConfig()
+		if err != nil {
+			return nil, err
+		}
+		return config, nil
+	}
+	caPath := fmt.Sprintf("/var/run/secrets/kubernetes.io/custom/%s.crt", stack)
+	serverURL := os.Getenv(stack)
+	if serverURL == "" {
+		return nil, fmt.Errorf("Kubernetes Stack not found")
+	}
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		&clientcmd.ClientConfigLoadingRules{},
+		&clientcmd.ConfigOverrides{
+			ClusterInfo: clientcmdapi.Cluster{
+				Server:               serverURL,
+				CertificateAuthority: caPath,
+			},
+		})
 	config, err := clientConfig.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	config.TLSClientConfig.CAFile = caPath
+	return config, nil
+}
+func NewHandler(kubeappsNamespace string, stack string) (AuthHandler, error) {
+	config, err := newHandlerStack(stack)
+
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +199,7 @@ func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 		return nil, err
 	}
 
-	return &kubeHandler{
+	return &KubeHandler{
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
@@ -192,13 +222,13 @@ func clientsetForConfig(config *rest.Config) (combinedClientsetInterface, error)
 }
 
 // configForToken returns a new config for a given auth token.
-func (a *kubeHandler) configForToken(token string) *rest.Config {
+func (a *KubeHandler) configForToken(token string) *rest.Config {
 	configCopy := a.config
 	configCopy.BearerToken = token
 	return &configCopy
 }
 
-func (a *kubeHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
+func (a *KubeHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
 	clientset, err := a.clientsetForConfig(a.configForToken(token))
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)

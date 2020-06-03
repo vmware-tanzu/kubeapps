@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -42,6 +43,44 @@ func init() {
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
+}
+
+func kubeAPIHandler(w http.ResponseWriter, r *http.Request) {
+	stack := r.Header.Get("Stack")
+	var proxyURL string
+	var caCertFile string
+	if stack == "default" {
+		proxyURL = "https://kubernetes.default"
+		caCertFile = fmt.Sprintf("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
+	} else {
+		proxyURL = os.Getenv(stack)
+		caCertFile = fmt.Sprintf("/var/run/secrets/kubernetes.io/custom/%s.crt", stack)
+	}
+	if proxyURL == "" {
+		log.Errorf("Unknown kubernetes stack")
+		return
+	}
+	proxyParsedURL, err := url.Parse(proxyURL)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	proxy := httputil.NewSingleHostReverseProxy(proxyParsedURL)
+	caCert, err := ioutil.ReadFile(caCertFile)
+	if err != nil {
+		log.Errorf("Unable to get the CA cert: %v", err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	proxy.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{
+			RootCAs: caCertPool,
+		},
+	}
+
+	proxy.ServeHTTP(w, r)
+
 }
 
 func main() {
@@ -87,16 +126,17 @@ func main() {
 	addRoute("DELETE", "/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())
-	if err != nil {
-		log.Fatalf("Unable to setup backend routes: %+v", err)
-	}
+	withBackendHandlerConfig := handler.WithBackendHandlerConfig()
+	addBackendRoute := handler.AddBackendRouteWith(r.PathPrefix("/backend/v1").Subrouter(), withBackendHandlerConfig)
+	addBackendRoute("GET", "/namespaces", backendHandlers.GetNamespaces)
+	addBackendRoute("POST", "/namespaces/{namespace}/apprepositories", backendHandlers.CreateAppRepository)
+	addBackendRoute("DELETE", "/namespaces/{namespace}/apprepositories/{name}", backendHandlers.DeleteAppRepository)
 
 	// assetsvc reverse proxy
 	authGate := auth.AuthGate()
 	parsedAssetsvcURL, err := url.Parse(assetsvcURL)
 	if err != nil {
-		log.Fatalf("Unable to parse the assetsvc URL: %v", err)
+		log.Errorf("Unable to parse the assetsvc URL: %v", err)
 	}
 	assetsvcProxy := httputil.NewSingleHostReverseProxy(parsedAssetsvcURL)
 	assetsvcPrefix := "/assetsvc"

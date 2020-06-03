@@ -15,10 +15,14 @@ type Params map[string]string
 
 // WithParams can be used to wrap handlers to take an extra arg for path params
 type WithParams func(http.ResponseWriter, *http.Request, Params)
+type WithBackendParams func(http.ResponseWriter, *http.Request)
 
 func (h WithParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	h(w, req, vars)
+}
+func (h WithBackendParams) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	h(w, req)
 }
 
 // WithoutParams can be used to wrap handlers that doesn't take params

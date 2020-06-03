@@ -309,7 +309,7 @@ func TestDeleteAppRepository(t *testing.T) {
 				fakeapprepoclientset.NewSimpleClientset(makeAppRepoObjects(tc.existingRepos)...),
 				fakecoreclientset.NewSimpleClientset(makeSecretsForRepos(tc.existingRepos, kubeappsNamespace)...),
 			}
-			handler := kubeHandler{
+			handler := KubeHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  kubeappsNamespace,
 				svcClientset:       cs,
@@ -353,7 +353,7 @@ func errorCodeForK8sError(t *testing.T, err error) int {
 }
 
 func TestConfigForToken(t *testing.T) {
-	handler := kubeHandler{
+	handler := KubeHandler{
 		config: rest.Config{},
 	}
 	token := "abcd"
@@ -640,7 +640,7 @@ func TestGetNamespaces(t *testing.T) {
 				},
 			)
 
-			handler := kubeHandler{
+			handler := KubeHandler{
 				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
 				kubeappsNamespace:  "kubeapps",
 				svcClientset:       cs,

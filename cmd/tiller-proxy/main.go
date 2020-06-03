@@ -135,7 +135,7 @@ func main() {
 		log.Fatalf("POD_NAMESPACE should be defined")
 	}
 
-	kubeHandler, err := kube.NewHandler(kubeappsNamespace)
+	kubeHandler, err := kube.NewHandler(kubeappsNamespace, "test")
 	if err != nil {
 		log.Fatalf("Failed to create handler: %v", err)
 	}

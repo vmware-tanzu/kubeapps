@@ -19,7 +19,6 @@ package httphandler
 import (
 	"encoding/json"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/kubeapps/kubeapps/cmd/apprepository-controller/pkg/apis/apprepository/v1alpha1"
@@ -52,71 +51,53 @@ func returnK8sError(err error, w http.ResponseWriter) {
 }
 
 // CreateAppRepository creates App Repository
-func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace := mux.Vars(req)["namespace"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		appRepo, err := handler.AsUser(token).CreateAppRepository(req.Body, requestNamespace)
-		if err != nil {
-			returnK8sError(err, w)
-			return
-		}
-		w.WriteHeader(http.StatusCreated)
-		response := appRepositoryResponse{
-			AppRepository: *appRepo,
-		}
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write(responseBody)
+func CreateAppRepository(handler kube.AuthHandler, w http.ResponseWriter, req *http.Request) {
+	requestNamespace := mux.Vars(req)["namespace"]
+	token := auth.ExtractToken(req.Header.Get("Authorization"))
+	appRepo, err := handler.AsUser(token).CreateAppRepository(req.Body, requestNamespace)
+	if err != nil {
+		returnK8sError(err, w)
+		return
 	}
+	w.WriteHeader(http.StatusCreated)
+	response := appRepositoryResponse{
+		AppRepository: *appRepo,
+	}
+	responseBody, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBody)
 }
 
 // DeleteAppRepository deletes an App Repository
-func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		repoNamespace := mux.Vars(req)["namespace"]
-		repoName := mux.Vars(req)["name"]
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
+func DeleteAppRepository(handler kube.AuthHandler, w http.ResponseWriter, req *http.Request) {
+	repoNamespace := mux.Vars(req)["namespace"]
+	repoName := mux.Vars(req)["name"]
+	token := auth.ExtractToken(req.Header.Get("Authorization"))
 
-		err := kubeHandler.AsUser(token).DeleteAppRepository(repoName, repoNamespace)
+	err := handler.AsUser(token).DeleteAppRepository(repoName, repoNamespace)
 
-		if err != nil {
-			returnK8sError(err, w)
-		}
+	if err != nil {
+		returnK8sError(err, w)
 	}
 }
 
 // GetNamespaces return the list of namespaces
-func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
-	return func(w http.ResponseWriter, req *http.Request) {
-		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		namespaces, err := kubeHandler.AsUser(token).GetNamespaces()
-		if err != nil {
-			returnK8sError(err, w)
-		}
-		response := namespacesResponse{
-			Namespaces: namespaces,
-		}
-		responseBody, err := json.Marshal(response)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Write(responseBody)
-	}
-}
-
-// SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router) error {
-	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"))
+func GetNamespaces(handler kube.AuthHandler, w http.ResponseWriter, req *http.Request) {
+	token := auth.ExtractToken(req.Header.Get("Authorization"))
+	namespaces, err := handler.AsUser(token).GetNamespaces()
 	if err != nil {
-		return err
+		returnK8sError(err, w)
 	}
-	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
-	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
-	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
-	return nil
+	response := namespacesResponse{
+		Namespaces: namespaces,
+	}
+	responseBody, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBody)
 }
