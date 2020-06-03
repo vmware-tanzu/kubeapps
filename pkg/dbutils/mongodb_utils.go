@@ -56,6 +56,27 @@ func (m *MongodbAssetManager) Close() error {
 	return nil
 }
 
+// InitCollections ensure indexes of the different collections
+func (m *MongodbAssetManager) InitCollections() error {
+	db, closer := m.DBSession.DB()
+	defer closer()
+
+	err := db.C(ChartCollection).EnsureIndex(mgo.Index{
+		Key:        []string{"chart_id", "repo.namespace", "repo.name"},
+		Unique:     true,
+		DropDups:   true,
+		Background: false,
+	})
+	if err != nil {
+		return err
+	}
+	return db.C(ChartFilesCollection).EnsureIndex(mgo.Index{
+		Key:        []string{"file_id", "repo.namespace", "repo.name"},
+		Background: false,
+	})
+}
+
+// InvalidateCache drops the different collections and initialize them again
 func (m *MongodbAssetManager) InvalidateCache() error {
 	db, closer := m.DBSession.DB()
 	defer closer()
@@ -66,21 +87,10 @@ func (m *MongodbAssetManager) InvalidateCache() error {
 		return err
 	}
 
-	err = db.C(ChartCollection).EnsureIndex(mgo.Index{
-		Key:        []string{"chart_id", "repo.namespace", "repo.name"},
-		Unique:     true,
-		DropDups:   true,
-		Background: false,
-	})
+	err = m.InitCollections()
 	if err != nil {
 		return err
 	}
-	err = db.C(ChartFilesCollection).EnsureIndex(mgo.Index{
-		Key:        []string{"file_id", "repo.namespace", "repo.name"},
-		Background: false,
-	})
-	if err != nil {
-		return err
-	}
+
 	return m.DBSession.Fsync(false)
 }
