@@ -20,9 +20,9 @@ describe("filterByResourceRefs", () => {
   } as IResource;
 
   const items: IKubeState["items"] = {
-    "api/kube/api/v1/namespaces/foo/services/bar": { item: svc1 } as IKubeItem<IResource>,
-    "api/kube/api/v1/namespaces/foo1/services/bar": { item: svc2 } as IKubeItem<IResource>,
-    "api/kube/apis/apps/v1/namespaces/foo1/deployments/bar": { item: deploy } as IKubeItem<
+    "api/clusters/default/api/v1/namespaces/foo/services/bar": { item: svc1 } as IKubeItem<IResource>,
+    "api/clusters/default/api/v1/namespaces/foo1/services/bar": { item: svc2 } as IKubeItem<IResource>,
+    "api/clusters/default/apis/apps/v1/namespaces/foo1/deployments/bar": { item: deploy } as IKubeItem<
       IResource
     >,
   };

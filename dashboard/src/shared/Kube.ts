@@ -4,7 +4,7 @@ import { ResourceKindsWithAPIVersions } from "./ResourceAPIVersion";
 import { ResourceKind, ResourceKindsWithPlurals } from "./ResourceKinds";
 import { IK8sList, IResource } from "./types";
 
-export const APIBase = "api/kube";
+export const APIBase = "api/clusters/default";
 export let WebSocketAPIBase: string;
 if (location.protocol === "https:") {
   WebSocketAPIBase = `wss://${window.location.host}${window.location.pathname}`;

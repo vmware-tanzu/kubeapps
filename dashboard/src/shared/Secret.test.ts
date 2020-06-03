@@ -14,7 +14,7 @@ it("creates a secret", async () => {
   const name = "secret";
   const namespace = "default";
   expect(await Secret.create(name, secrets, owner, namespace)).toEqual("ok");
-  expect(axiosWithAuth.post).toHaveBeenCalledWith("api/kube/api/v1/namespaces/default/secrets", {
+  expect(axiosWithAuth.post).toHaveBeenCalledWith("api/clusters/default/api/v1/namespaces/default/secrets", {
     apiVersion: "v1",
     data: secrets,
     kind: "Secret",
@@ -26,7 +26,7 @@ it("creates a secret", async () => {
 it("deletes a secret", async () => {
   axiosWithAuth.delete = jest.fn();
   await Secret.delete("foo", "bar");
-  expect(axiosWithAuth.delete).toHaveBeenCalledWith("api/kube/api/v1/namespaces/bar/secrets/foo");
+  expect(axiosWithAuth.delete).toHaveBeenCalledWith("api/clusters/default/api/v1/namespaces/bar/secrets/foo");
 });
 
 it("gets a secret", async () => {
@@ -34,7 +34,7 @@ it("gets a secret", async () => {
     return { data: "ok" };
   });
   await Secret.get("foo", "bar");
-  expect(axiosWithAuth.get).toHaveBeenCalledWith("api/kube/api/v1/namespaces/bar/secrets/foo");
+  expect(axiosWithAuth.get).toHaveBeenCalledWith("api/clusters/default/api/v1/namespaces/bar/secrets/foo");
 });
 
 it("lists secrets", async () => {
@@ -42,7 +42,7 @@ it("lists secrets", async () => {
     return { data: "ok" };
   });
   await Secret.list("foo");
-  expect(axiosWithAuth.get).toHaveBeenCalledWith("api/kube/api/v1/namespaces/foo/secrets");
+  expect(axiosWithAuth.get).toHaveBeenCalledWith("api/clusters/default/api/v1/namespaces/foo/secrets");
 });
 
 it("creates a pull secret", async () => {
@@ -56,7 +56,7 @@ it("creates a pull secret", async () => {
   const server = "docker.io";
   const namespace = "default";
   expect(await Secret.createPullSecret(name, user, password, email, server, namespace)).toBe("ok");
-  expect(axiosWithAuth.post).toHaveBeenCalledWith("api/kube/api/v1/namespaces/default/secrets", {
+  expect(axiosWithAuth.post).toHaveBeenCalledWith("api/clusters/default/api/v1/namespaces/default/secrets", {
     apiVersion: "v1",
     stringData: {
       ".dockerconfigjson":

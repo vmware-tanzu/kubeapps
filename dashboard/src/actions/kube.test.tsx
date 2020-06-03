@@ -35,12 +35,12 @@ describe("getResource", () => {
     const expectedActions = [
       {
         type: getType(actions.kube.requestResource),
-        payload: "api/kube/api/v1/namespaces/default/services/foo",
+        payload: "api/clusters/default/api/v1/namespaces/default/services/foo",
       },
       {
         type: getType(actions.kube.receiveResource),
         payload: {
-          key: "api/kube/api/v1/namespaces/default/services/foo",
+          key: "api/clusters/default/api/v1/namespaces/default/services/foo",
           resource: [],
         },
       },
@@ -65,7 +65,7 @@ describe("getResource", () => {
     store = mockStore({
       kube: {
         items: {
-          "api/kube/api/v1/namespaces/default/services/foo": { isFetching: true },
+          "api/clusters/default/api/v1/namespaces/default/services/foo": { isFetching: true },
         },
       },
     });
@@ -103,7 +103,7 @@ describe("getAndWatchResource", () => {
     const expectedActions = [
       {
         type: getType(actions.kube.requestResource),
-        payload: "api/kube/api/v1/namespaces/default/services/foo",
+        payload: "api/clusters/default/api/v1/namespaces/default/services/foo",
       },
       {
         type: getType(actions.kube.openWatchResource),
@@ -140,7 +140,7 @@ describe("getAndWatchResource", () => {
     const expectedActions = [
       {
         type: getType(actions.kube.requestResource),
-        payload: "api/kube/api/v1/namespaces/default/services",
+        payload: "api/clusters/default/api/v1/namespaces/default/services",
       },
       {
         type: getType(actions.kube.openWatchResource),
@@ -162,7 +162,7 @@ describe("getAndWatchResource", () => {
     const newAction = {
       type: getType(actions.kube.receiveResourceFromList),
       payload: {
-        key: "api/kube/api/v1/namespaces/default/services",
+        key: "api/clusters/default/api/v1/namespaces/default/services",
         resource: svc,
       },
     };
