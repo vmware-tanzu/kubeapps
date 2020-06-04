@@ -92,8 +92,10 @@ func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string
 func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
-			cluster := params[clusterParam]
-			if cluster == "" {
+			// Don't assume the cluster name was in the url for backwards compatability
+			// for now.
+			cluster, ok := params[clusterParam]
+			if !ok {
 				cluster = defaultClusterName
 			}
 			namespace := params[namespaceParam]
