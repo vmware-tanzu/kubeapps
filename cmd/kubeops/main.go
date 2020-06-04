@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -23,12 +25,13 @@ import (
 )
 
 var (
-	settings         environment.EnvSettings
-	assetsvcURL      string
-	helmDriverArg    string
-	userAgentComment string
-	listLimit        int
-	timeout          int64
+	additionalClustersConfigPath string
+	assetsvcURL                  string
+	helmDriverArg                string
+	listLimit                    int
+	settings                     environment.EnvSettings
+	timeout                      int64
+	userAgentComment             string
 )
 
 func init() {
@@ -39,6 +42,7 @@ func init() {
 	pflag.StringVar(&userAgentComment, "user-agent-comment", "", "UserAgent comment used during outbound requests")
 	// Default timeout from https://github.com/helm/helm/blob/b0b0accdfc84e154b3d48ec334cd5b4f9b345667/cmd/helm/install.go#L216
 	pflag.Int64Var(&timeout, "timeout", 300, "Timeout to perform release operations (install, upgrade, rollback, delete)")
+	pflag.StringVar(&additionalClustersConfigPath, "additional-clusters-config-path", "", "Configuration for additional clusters")
 }
 
 func main() {
@@ -50,10 +54,20 @@ func main() {
 		log.Fatal("POD_NAMESPACE should be defined")
 	}
 
+	var additionalClusters map[string]handler.AdditionalClusterConfig
+	if additionalClustersConfigPath != "" {
+		var err error
+		additionalClusters, err = parseAdditionalClusterConfig(additionalClustersConfigPath)
+		if err != nil {
+			log.Fatalf("unable to parse additional clusters config: %+v", err)
+		}
+	}
+
 	options := handler.Options{
-		ListLimit:         listLimit,
-		Timeout:           timeout,
-		KubeappsNamespace: kubeappsNamespace,
+		ListLimit:          listLimit,
+		Timeout:            timeout,
+		KubeappsNamespace:  kubeappsNamespace,
+		AdditionalClusters: additionalClusters,
 	}
 
 	storageForDriver := agent.StorageForSecrets
@@ -148,4 +162,22 @@ func main() {
 	srv.Shutdown(ctx)
 	log.Info("All requests have been served. Exiting")
 	os.Exit(0)
+}
+
+func parseAdditionalClusterConfig(path string) (map[string]handler.AdditionalClusterConfig, error) {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var clusterConfigs []handler.AdditionalClusterConfig
+	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
+		return nil, err
+	}
+
+	configs := map[string]handler.AdditionalClusterConfig{}
+	for _, c := range clusterConfigs {
+		configs[c.Name] = c
+	}
+	return configs, nil
 }
