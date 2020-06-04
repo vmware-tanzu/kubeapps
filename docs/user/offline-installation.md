@@ -11,21 +11,13 @@ Since the version 1.10.1 of Kubeapps (Chart version 3.7.0), it's possible to suc
 First, download the tarball containing the Kubeapps chart from the publicly available repository maintained by Bitnami. Note that Internet connection is necessary at this point:
 
 ```bash
-wget https://charts.bitnami.com/bitnami/kubeapps-3.7.0.tgz
+helm pull --untar https://charts.bitnami.com/bitnami/kubeapps-3.7.0.tgz
+helm dep update ./kubeapps
 ```
-
-Note that Kubeapps has a dependency with another chart used for the database. This is either MongoDB or PostgreSQL. You also need to download these charts in advance. To get the exact version needed, you can check the `requirements.lock` file from the chart:
-
-```bash
-wget -P charts/ https://charts.bitnami.com/bitnami/mongodb-7.10.10.tgz
-wget -P charts/ https://charts.bitnami.com/bitnami/postgresql-8.9.1.tgz
-```
-
-Note that the chart should be kept in a `charts/` subfolder.
 
 ## 2. Mirror Kubeapps images
 
-In order to be able to install Kubeapps, it's necessary for the Kubernetes cluster to contain a copy of the images that Kubeapps requires. You can obtain the list of images by checking the `values.yaml` of the chart. For example:
+In order to be able to install Kubeapps, it's necessary to either have a copy of all the images that Kubeapps requires in each node of the cluster or push these images to an internal Docker registry that Kubernetes can access. You can obtain the list of images by checking the `values.yaml` of the chart. For example:
 
 ```yaml
   registry: docker.io
@@ -33,11 +25,19 @@ In order to be able to install Kubeapps, it's necessary for the Kubernetes clust
   tag: 1.17.10-debian-10-r10
 ```
 
-For this guide I am using [Kubernetes in Docker (`kind`)](https://github.com/kubernetes-sigs/kind) so depending on your cluster provider, this process will change. In this case, it's enough to pull the image and load it with `kind`:
+For simplicity, in this guide I am using a cluster with a single node using [Kubernetes in Docker (`kind`)](https://github.com/kubernetes-sigs/kind) so I just need to preload the images in this node.
 
 ```bash
 docker pull bitnami/nginx:1.17.10-debian-10-r10
 kind load docker-image bitnami/nginx:1.17.10-debian-10-r10
+```
+
+In case you are using a private Docker registry, you will need to re-tag the images and push them:
+
+```bash
+docker pull bitnami/nginx:1.17.10-debian-10-r10
+docker tag bitnami/nginx:1.17.10-debian-10-r10 REPO_URL/bitnami/nginx:1.17.10-debian-10-r10
+docker push REPO_URL/bitnami/nginx:1.17.10-debian-10-r10
 ```
 
 You will need to follow a similar process for every image present in the values file.
@@ -50,8 +50,10 @@ For more information about how to create a private repository, follow this [guid
 
 ## 4. Install Kubeapps
 
-Now that you have everything pre-loaded in your cluster, it's possible to install Kubeapps using the tarball from the first step:
+Now that you have everything pre-loaded in your cluster, it's possible to install Kubeapps using the chart directory from the first step:
+
+**NOTE**: If during step 2), you were using a private docker registry, it's necessary to modify the global value used for the registry. This can be set by specifying `--set global.imageRegistry=REPO_URL`.
 
 ```bash
-helm install kubeapps ./kubeapps-3.7.0.tgz [OPTIONS]
+helm install kubeapps ./kubeapps [OPTIONS]
 ```
