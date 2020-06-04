@@ -90,12 +90,19 @@ func main() {
 	// Routes
 	// Auth not necessary here with Helm 3 because it's done by Kubernetes.
 	addRoute := handler.AddRouteWith(r.PathPrefix("/v1").Subrouter(), withHandlerConfig)
+	// Deprecate non-cluster-aware URIs.
 	addRoute("GET", "/releases", handler.ListAllReleases)
 	addRoute("GET", "/namespaces/{namespace}/releases", handler.ListReleases)
 	addRoute("POST", "/namespaces/{namespace}/releases", handler.CreateRelease)
 	addRoute("GET", "/namespaces/{namespace}/releases/{releaseName}", handler.GetRelease)
 	addRoute("PUT", "/namespaces/{namespace}/releases/{releaseName}", handler.OperateRelease)
 	addRoute("DELETE", "/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
+	addRoute("GET", "/clusters/{cluster}/releases", handler.ListAllReleases)
+	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.ListReleases)
+	addRoute("POST", "/clusters/{cluster}/namespaces/{namespace}/releases", handler.CreateRelease)
+	addRoute("GET", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.GetRelease)
+	addRoute("PUT", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.OperateRelease)
+	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
 	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())

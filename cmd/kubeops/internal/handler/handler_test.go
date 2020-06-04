@@ -20,11 +20,16 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	helmTime "helm.sh/helm/v3/pkg/time"
+	"k8s.io/client-go/rest"
 
 	"helm.sh/helm/v3/pkg/release"
 )
 
-const defaultListLimit = 256
+const (
+	defaultListLimit        = 256
+	KUBERNETES_SERVICE_HOST = "KUBERNETES_SERVICE_HOST"
+	KUBERNETES_SERVICE_PORT = "KUBERNETES_SERVICE_PORT"
+)
 
 var (
 	testingTime, _ = helmTime.Parse(time.RFC3339, "1977-09-02T22:04:05Z")
@@ -518,6 +523,78 @@ func TestUpgradeAction(t *testing.T) {
 
 			if got, want := actualReleases, tc.expectedReleases; !cmp.Equal(want, got, releaseComparer) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, releaseComparer))
+			}
+		})
+	}
+}
+
+func TestNewClusterConfig(t *testing.T) {
+	testCases := []struct {
+		name               string
+		token              string
+		cluster            string
+		additionalClusters map[string]AdditionalClusterConfig
+		inClusterConfig    *rest.Config
+		expectedConfig     *rest.Config
+		errorExpected      bool
+	}{
+		{
+			name:    "returns an in-cluster with explicit token for the default cluster",
+			token:   "token-1",
+			cluster: "default",
+			inClusterConfig: &rest.Config{
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+			},
+			expectedConfig: &rest.Config{
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
+		{
+			name:    "returns a config setup for an additional cluster",
+			token:   "token-1",
+			cluster: "cluster-1",
+			additionalClusters: map[string]AdditionalClusterConfig{
+				"cluster-1": AdditionalClusterConfig{
+					ApiServiceURL:            "https://cluster-1.example.com:7890",
+					CertificateAuthorityData: "ca-file-data",
+				},
+			},
+			inClusterConfig: &rest.Config{
+				Host:            "https://something-else.example.com:6443",
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+				TLSClientConfig: rest.TLSClientConfig{
+					CAFile: "/var/run/whatever/ca.crt",
+				},
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://cluster-1.example.com:7890",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+				TLSClientConfig: rest.TLSClientConfig{
+					CAData: []byte("ca-file-data"),
+				},
+			},
+		},
+		{
+			name:            "returns an error if the cluster does not exist",
+			cluster:         "cluster-1",
+			inClusterConfig: &rest.Config{},
+			errorExpected:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			config, err := NewClusterConfig(tc.inClusterConfig, tc.token, tc.cluster, tc.additionalClusters)
+			if got, want := err != nil, tc.errorExpected; got != want {
+				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
+			}
+
+			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})
 	}
