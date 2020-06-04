@@ -80,6 +80,6 @@ spec:
             - /bin/bash
           args:
             - -c
-            - 'kubectl -n {{ .Release.Namespace }} get secret {{ .Values.postgresql.existingSecret }} || kubectl -n {{ .Release.Namespace }} create secret generic {{ .Values.postgresql.existingSecret }} --from-literal=postgresql-password={{ randAlphaNum 10 | quote }} --from-literal=postgres-replication-password={{ randAlphaNum 10 | quote }}'
+            - 'kubectl -n {{ .Release.Namespace }} get secret {{ .Values.postgresql.existingSecret }} || kubectl -n {{ .Release.Namespace }} create secret generic {{ .Values.postgresql.existingSecret }} --from-literal=postgresql-password={{ randAlphaNum 10 | quote }} --from-literal=postgresql-replication-password={{ randAlphaNum 10 | quote }}'
       {{- end }}
 {{- end }}
