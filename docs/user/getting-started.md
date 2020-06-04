@@ -33,7 +33,7 @@ The above commands will deploy Kubeapps into the `kubeapps` namespace in your cl
 
 ## Step 2: Create a Kubernetes API token
 
-Access to the Dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server.
+For trying out Kubeapps, access to the Dashboard requires a Kubernetes API token to authenticate with the Kubernetes API server as shown below, but for any real installation of Kubeapps you should instead [configure an OAuth2/OIDC provider](using-an-OIDC-provider.md).
 
 ```bash
 kubectl create serviceaccount kubeapps-operator
