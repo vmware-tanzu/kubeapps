@@ -24,6 +24,7 @@ import (
 
 	"github.com/kubeapps/common/datastore"
 	"github.com/kubeapps/kubeapps/pkg/chart/models"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -130,9 +131,7 @@ func (m *PostgresAssetManager) QueryAllCharts(query string, args ...interface{})
 	return result, nil
 }
 
-// InitTables creates the required tables for the postgresql backend for assets.
-func (m *PostgresAssetManager) InitTables() error {
-	// Repository table should have a namespace column, and chart table should reference repositories.
+func (m *PostgresAssetManager) createRepositoryTable(tableName string) error {
 	_, err := m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
@@ -141,26 +140,26 @@ CREATE TABLE IF NOT EXISTS %s (
 	checksum varchar,
 	last_update varchar,
 	UNIQUE(namespace, name)
-)`, RepositoryTable))
-	if err != nil {
-		return err
-	}
+)`, tableName))
+	return err
+}
 
-	_, err = m.DB.Exec(fmt.Sprintf(`
-CREATE TABLE IF NOT EXISTS %s (
-	ID serial NOT NULL PRIMARY KEY,
-	repo_name varchar NOT NULL,
-	repo_namespace varchar NOT NULL,
-	chart_id varchar,
-	info jsonb NOT NULL,
-	UNIQUE(repo_name, repo_namespace, chart_id),
-	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE
-)`, ChartTable, RepositoryTable))
-	if err != nil {
-		return err
-	}
+func (m *PostgresAssetManager) createChartTable(chartTable string) error {
+	_, err := m.DB.Exec(fmt.Sprintf(`
+	CREATE TABLE IF NOT EXISTS %s (
+		ID serial NOT NULL PRIMARY KEY,
+		repo_name varchar NOT NULL,
+		repo_namespace varchar NOT NULL,
+		chart_id varchar,
+		info jsonb NOT NULL,
+		UNIQUE(repo_name, repo_namespace, chart_id),
+		FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE
+	)`, chartTable, RepositoryTable))
+	return err
+}
 
-	_, err = m.DB.Exec(fmt.Sprintf(`
+func (m *PostgresAssetManager) createFilesTable(filesTable string) error {
+	_, err := m.DB.Exec(fmt.Sprintf(`
 CREATE TABLE IF NOT EXISTS %s (
 	ID serial NOT NULL PRIMARY KEY,
 	chart_id varchar NOT NULL,
@@ -171,22 +170,83 @@ CREATE TABLE IF NOT EXISTS %s (
 	UNIQUE(repo_namespace, chart_files_ID),
 	FOREIGN KEY (repo_name, repo_namespace) REFERENCES %s (name, namespace) ON DELETE CASCADE,
 	FOREIGN KEY (repo_name, repo_namespace, chart_id) REFERENCES %s (repo_name, repo_namespace, chart_id) ON DELETE CASCADE
-)`, ChartFilesTable, RepositoryTable, ChartTable))
+)`, filesTable, RepositoryTable, ChartTable))
+	return err
+}
+
+// InitTables creates the required tables for the postgresql backend for assets.
+func (m *PostgresAssetManager) InitTables() error {
+	// Repository table should have a namespace column, and chart table should reference repositories.
+	err := m.createRepositoryTable(RepositoryTable)
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable to create %s table: %v", RepositoryTable, err)
+	}
+
+	err = m.createChartTable(ChartTable)
+	if err != nil {
+		return fmt.Errorf("Unable to create %s table: %v", ChartTable, err)
+	}
+
+	err = m.createFilesTable(ChartFilesTable)
+	if err != nil {
+		return fmt.Errorf("Unable to create %s table: %v", ChartFilesTable, err)
 	}
 	return nil
 }
 
+func (m *PostgresAssetManager) tablesAreEqual(table1, table2 string) bool {
+	_, err := m.DB.Exec(fmt.Sprintf(`select * from (
+    (select * from %s limit 0) 
+    union all
+    (select * from %s limit 0)
+) as test`, table1, table2))
+	// If the two tables can be joined, they are compatible
+	return err == nil
+}
+
 // InvalidateCache for postgresql deletes and re-writes the schema
 func (m *PostgresAssetManager) InvalidateCache() error {
-	tables := strings.Join([]string{RepositoryTable, ChartTable, ChartFilesTable}, ",")
-	_, err := m.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tables))
-	if err != nil {
-		return err
-	}
+	tables := []string{RepositoryTable, ChartTable, ChartFilesTable}
+	invalidate := false
 
-	return m.InitTables()
+	// Check if the tables require to be recreated
+	for _, table := range tables {
+		currentTable := fmt.Sprintf("%s_check", table)
+		var err error
+		switch table {
+		case RepositoryTable:
+			err = m.createRepositoryTable(currentTable)
+		case ChartTable:
+			err = m.createChartTable(currentTable)
+		case ChartFilesTable:
+			err = m.createFilesTable(currentTable)
+		}
+		if err != nil {
+			return err
+		}
+		if !m.tablesAreEqual(table, currentTable) {
+			logrus.Infof("Detected a change in the schema of the table %s, invalidating current cache", table)
+			invalidate = true
+		} else {
+			logrus.Infof("Table %s remains unchanged", table)
+		}
+
+		// Delete test table
+		_, err = m.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", currentTable))
+		if err != nil {
+			return err
+		}
+	}
+	if invalidate {
+		tablesString := strings.Join(tables, ",")
+		_, err := m.DB.Exec(fmt.Sprintf("DROP TABLE IF EXISTS %s", tablesString))
+		if err != nil {
+			return err
+		}
+
+		return m.InitTables()
+	}
+	return nil
 }
 
 // EnsureRepoExists upserts to get the primary key of a repo.
