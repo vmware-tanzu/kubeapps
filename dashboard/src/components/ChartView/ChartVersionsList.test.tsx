@@ -10,6 +10,7 @@ const testChart: IChartVersion["relationships"]["chart"] = {
     name: "test",
     repo: {
       name: "testrepo",
+      namespace: "kubeapps",
     },
   },
 } as IChartVersion["relationships"]["chart"];
@@ -72,12 +73,10 @@ it("renders the list of versions", () => {
   const wrapper = shallow(<ChartVersionsList versions={testVersions} selected={testVersions[1]} />);
   const items = wrapper.find("li");
   expect(items).toHaveLength(4);
-  expect(
-    items
-      .at(1)
-      .find(Link)
-      .props().className,
-  ).toBe("type-bold type-color-action");
+  const link = items.at(1).find(Link);
+  expect(link.prop("className")).toBe("type-bold type-color-action");
+  // The link include the namespace
+  expect(link.prop("to")).toBe("/ns/kubeapps/charts/testrepo/test/versions/1.2.2");
 });
 
 it("does not render a the Show All link when there are 5 or less versions", () => {
