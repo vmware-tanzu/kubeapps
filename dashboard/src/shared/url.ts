@@ -5,7 +5,7 @@ import { IChartVersion } from "./types";
 export const app = {
   charts: {
     version: (cv: IChartVersion) =>
-      `/charts/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${cv.attributes.version}`,
+      `/ns/${cv.relationships.chart.data.repo.namespace}/charts/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${cv.attributes.version}`,
   },
   operators: {
     view: (namespace: string, name: string) => `/ns/${namespace}/operators/${name}`,
