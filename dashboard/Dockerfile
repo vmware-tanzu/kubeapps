@@ -10,5 +10,5 @@ RUN curl -L https://unpkg.com/@bitnami/hex@3.2.0/dist/hex.min.css > /app/src/hex
 COPY . /app
 RUN yarn run build
 
-FROM bitnami/nginx:1.17.10-debian-10-r10
+FROM bitnami/nginx:1.18.0-debian-10-r38
 COPY --from=build /app/build /app
