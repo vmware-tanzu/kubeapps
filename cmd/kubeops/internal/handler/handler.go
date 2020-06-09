@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -21,10 +22,12 @@ import (
 )
 
 const (
-	authHeader     = "Authorization"
-	namespaceParam = "namespace"
-	nameParam      = "releaseName"
-	authUserError  = "Unexpected error while configuring authentication"
+	authHeader         = "Authorization"
+	clusterParam       = "clusters"
+	defaultClusterName = "default"
+	namespaceParam     = "namespace"
+	nameParam          = "releaseName"
+	authUserError      = "Unexpected error while configuring authentication"
 )
 
 const isV1SupportRequired = false
@@ -38,7 +41,7 @@ type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request,
 // AdditionalClusterConfig contains required info to talk to additional clusters.
 type AdditionalClusterConfig struct {
 	Name                     string `json:"name"`
-	ApiServiceURL            string `json:"apiServiceURL"`
+	APIServiceURL            string `json:"apiServiceURL"`
 	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
 }
 
@@ -59,14 +62,27 @@ type Config struct {
 	ChartClient  chartUtils.Resolver
 }
 
-// NewInClusterConfig returns an internal cluster config replacing the token.
-func NewInClusterConfig(token string) (*rest.Config, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
+// NewClusterConfig returns a copy of an in-cluster config with a custom token and/or custom cluster host
+func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string, additionalClusters map[string]AdditionalClusterConfig) (*rest.Config, error) {
+	config := rest.CopyConfig(inClusterConfig)
 	config.BearerToken = token
 	config.BearerTokenFile = ""
+
+	if cluster == defaultClusterName {
+		return config, nil
+	}
+
+	additionalCluster, ok := additionalClusters[cluster]
+	if !ok {
+		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
+	}
+
+	config.Host = additionalCluster.APIServiceURL
+	if additionalCluster.CertificateAuthorityData != "" {
+		config.TLSClientConfig = rest.TLSClientConfig{
+			CAData: []byte(additionalCluster.CertificateAuthorityData),
+		}
+	}
 	return config, nil
 }
 
@@ -76,12 +92,23 @@ func NewInClusterConfig(token string) (*rest.Config, error) {
 func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options) func(f dependentHandler) handlerutil.WithParams {
 	return func(f dependentHandler) handlerutil.WithParams {
 		return func(w http.ResponseWriter, req *http.Request, params handlerutil.Params) {
+			// Don't assume the cluster name was in the url for backwards compatability
+			// for now.
+			cluster, ok := params[clusterParam]
+			if !ok {
+				cluster = defaultClusterName
+			}
 			namespace := params[namespaceParam]
 			token := auth.ExtractToken(req.Header.Get(authHeader))
 
-			// User configuration and clients, using user token
-			// Used to perform Helm operations
-			restConfig, err := NewInClusterConfig(token)
+			inClusterConfig, err := rest.InClusterConfig()
+			if err != nil {
+				log.Errorf("Failed to create in-cluster config: %v", err)
+				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
+				return
+			}
+
+			restConfig, err := NewClusterConfig(inClusterConfig, token, cluster, options.AdditionalClusters)
 			if err != nil {
 				log.Errorf("Failed to create in-cluster config with user token: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
