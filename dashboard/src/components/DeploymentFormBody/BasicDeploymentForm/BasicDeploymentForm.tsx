@@ -53,28 +53,28 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
               // Every value matches the referenced
               // value (via jsonpath) in all the conditions
               return hidden.conditions.every(
-                c => getValue(this.props.appValues, c.value) === c.path,
+                c => getValue(this.props.appValues, c.path) === c.value,
               );
             case "or":
               // It is enough if the value matches the referenced
               // value (via jsonpath) in any of the conditions
               return hidden.conditions.some(
-                c => getValue(this.props.appValues, c.value) === c.path,
+                c => getValue(this.props.appValues, c.path) === c.value,
               );
             case "nor":
               // Every value mismatches the referenced
               // value (via jsonpath) in any of the conditions
               return hidden.conditions.every(
-                c => getValue(this.props.appValues, c.value) !== c.path,
+                c => getValue(this.props.appValues, c.path) !== c.value,
               );
             default:
               // we consider 'and' as the default operator
               return hidden.conditions.every(
-                c => getValue(this.props.appValues, c.value) === c.path,
+                c => getValue(this.props.appValues, c.path) === c.value,
               );
           }
         } else {
-          return getValue(this.props.appValues, hidden.value) === hidden.path;
+          return getValue(this.props.appValues, hidden.path) === hidden.value;
         }
       case "undefined":
         return false;
