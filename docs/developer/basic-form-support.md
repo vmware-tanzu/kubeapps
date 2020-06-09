@@ -144,8 +144,8 @@ This is an example for a subsection with a parameter that can be hidden:
           "title": "Hostname",
           "hidden": {
             "conditions": [{
-              "path": false,
-              "value": "ingress/enabled"
+              "path": ingress/enabled,
+              "value": "false"
             }],
             "operator": "and"
           }
@@ -176,7 +176,7 @@ Note that the parameter that hides another parameter doesn't need to be within t
           "type": "string",
           "form": "externalDatabaseHost",
           "title": "Database Host",
-          "hidden": "mariadb.enabled"
+          "hidden": "mariadb/enabled"
         },
       }
     },
