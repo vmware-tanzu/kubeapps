@@ -8,7 +8,7 @@ export interface IStringParamProps {
   param: IBasicFormParam;
   handleBasicFormParamChange: (
     p: IBasicFormParam,
-  ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
 class TextParam extends React.Component<IStringParamProps> {
@@ -29,6 +29,16 @@ class TextParam extends React.Component<IStringParamProps> {
           onChange={this.props.handleBasicFormParamChange(param)}
           value={param.value === undefined ? "" : param.value}
         />
+      );
+    } else if (param.enum != null && param.enum.length > 0) {
+      input = (
+        <select id={id} onChange={this.props.handleBasicFormParamChange(param)}>
+          {param.enum.map(enumValue => (
+            <option key={enumValue} selected={param.value === enumValue}>
+              {enumValue}
+            </option>
+          ))}
+        </select>
       );
     }
     return (

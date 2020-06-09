@@ -85,6 +85,25 @@ In order to render a component as a textArea, it's necessary to specify the tag 
       "render": "textArea"
     }
 ```
+### Drop-down lists
+
+When a property defines a `enum` tag as constraint, it will be rendered as a drop-down list. 
+
+This is an example:
+
+```
+    "databaseType": {
+      "type": "string",
+      "form": true,
+      "enum": ["mariadb", "postgresql"],
+      "title": "Database Type",
+      "description": "Allowed values: \"mariadb\" and \"postgresql\""
+    }
+```
+
+![drop-down](../img/drop-down.png)
+
+A drop-down list cannot be empty or have its value unselected. For this purpose, it is necessary to add an explicit empty value on the enum constraints.
 
 ### Subsections
 

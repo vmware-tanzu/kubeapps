@@ -200,6 +200,27 @@ externalDatabase:
       } as JSONSchema4,
       result: [{ path: "foo", type: "boolean", value: false } as IBasicFormParam],
     },
+    {
+      description: "should retrieve a param with enum values",
+      values: "databaseType: postgresql",
+      schema: {
+        properties: {
+          databaseType: {
+            type: "string",
+            form: true,
+            enum: ["mariadb", "postgresql"],
+          },
+        },
+      } as JSONSchema4,
+      result: [
+        {
+          path: "databaseType",
+          type: "string",
+          value: "postgresql",
+          enum: ["mariadb", "postgresql"],
+        } as IBasicFormParam,
+      ],
+    },
   ].forEach(t => {
     it(t.description, () => {
       expect(retrieveBasicFormParams(t.values, t.schema)).toMatchObject(t.result);

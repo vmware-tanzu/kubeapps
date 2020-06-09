@@ -111,3 +111,66 @@ it("should set the input value as empty if a textArea param value is not defined
   const input = wrapper.find("textarea");
   expect(input.prop("value")).toBe("");
 });
+
+it("should render a string parameter as select with option tags", () => {
+  const tparam = {
+    path: "databaseType",
+    value: "postgresql",
+    type: "string",
+    enum: ["mariadb", "postgresql"],
+  } as IBasicFormParam;
+  const tprops = {
+    id: "foo",
+    name: "databaseType",
+    label: "databaseType",
+    param: tparam,
+    handleBasicFormParamChange: jest.fn(() => jest.fn()),
+  };
+  const wrapper = mount(<TextParam {...tprops} />);
+  const input = wrapper.find("select");
+
+  if (tparam.enum != null) {
+    const options = input.find("option");
+    expect(options.length).toBe(tparam.enum.length);
+    for (let i = 0; i < tparam.enum.length; i++) {
+      const option = options.at(i);
+      expect(option.text()).toBe(tparam.enum[i]);
+
+      if (tparam.value === tparam.enum[i]) {
+        expect(option.prop("selected")).toBe(true);
+      }
+    }
+  }
+});
+
+it("should forward the proper value when using a select", () => {
+  const tparam = {
+    path: "databaseType",
+    value: "postgresql",
+    type: "string",
+    enum: ["mariadb", "postgresql"],
+  } as IBasicFormParam;
+  const tprops = {
+    id: "foo",
+    name: "databaseType",
+    label: "databaseType",
+    param: tparam,
+  };
+  const handler = jest.fn();
+  const handleBasicFormParamChange = jest.fn(() => handler);
+  const wrapper = mount(
+    <TextParam {...tprops} handleBasicFormParamChange={handleBasicFormParamChange} />,
+  );
+  const input = wrapper.find("select");
+
+  const event = { currentTarget: {} } as React.FormEvent<HTMLSelectElement>;
+  (input.prop("onChange") as any)(event);
+
+  expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual({
+    path: "databaseType",
+    type: "string",
+    value: "postgresql",
+    enum: ["mariadb", "postgresql"],
+  });
+  expect(handler.mock.calls[0][0]).toMatchObject(event);
+});
