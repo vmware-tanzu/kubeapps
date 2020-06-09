@@ -26,9 +26,7 @@ import (
 )
 
 const (
-	defaultListLimit        = 256
-	KUBERNETES_SERVICE_HOST = "KUBERNETES_SERVICE_HOST"
-	KUBERNETES_SERVICE_PORT = "KUBERNETES_SERVICE_PORT"
+	defaultListLimit = 256
 )
 
 var (
@@ -556,8 +554,8 @@ func TestNewClusterConfig(t *testing.T) {
 			token:   "token-1",
 			cluster: "cluster-1",
 			additionalClusters: map[string]AdditionalClusterConfig{
-				"cluster-1": AdditionalClusterConfig{
-					ApiServiceURL:            "https://cluster-1.example.com:7890",
+				"cluster-1": {
+					APIServiceURL:            "https://cluster-1.example.com:7890",
 					CertificateAuthorityData: "ca-file-data",
 				},
 			},

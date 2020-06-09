@@ -22,7 +22,7 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 			expectedConfig: map[string]handler.AdditionalClusterConfig{
 				"cluster-2": handler.AdditionalClusterConfig{
 					Name:                     "cluster-2",
-					ApiServiceURL:            "https://example.com",
+					APIServiceURL:            "https://example.com",
 					CertificateAuthorityData: "abcd",
 				},
 			},
@@ -36,12 +36,12 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 			expectedConfig: map[string]handler.AdditionalClusterConfig{
 				"cluster-2": handler.AdditionalClusterConfig{
 					Name:                     "cluster-2",
-					ApiServiceURL:            "https://example.com/cluster-2",
+					APIServiceURL:            "https://example.com/cluster-2",
 					CertificateAuthorityData: "abcd",
 				},
 				"cluster-3": handler.AdditionalClusterConfig{
 					Name:                     "cluster-3",
-					ApiServiceURL:            "https://example.com/cluster-3",
+					APIServiceURL:            "https://example.com/cluster-3",
 					CertificateAuthorityData: "efgh",
 				},
 			},

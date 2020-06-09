@@ -41,7 +41,7 @@ type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request,
 // AdditionalClusterConfig contains required info to talk to additional clusters.
 type AdditionalClusterConfig struct {
 	Name                     string `json:"name"`
-	ApiServiceURL            string `json:"apiServiceURL"`
+	APIServiceURL            string `json:"apiServiceURL"`
 	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
 }
 
@@ -72,15 +72,15 @@ func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string
 		return config, nil
 	}
 
-	clusterConfig, ok := additionalClusters[cluster]
+	additionalCluster, ok := additionalClusters[cluster]
 	if !ok {
 		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
 	}
 
-	config.Host = clusterConfig.ApiServiceURL
-	if clusterConfig.CertificateAuthorityData != "" {
+	config.Host = additionalCluster.APIServiceURL
+	if additionalCluster.CertificateAuthorityData != "" {
 		config.TLSClientConfig = rest.TLSClientConfig{
-			CAData: []byte(clusterConfig.CertificateAuthorityData),
+			CAData: []byte(additionalCluster.CertificateAuthorityData),
 		}
 	}
 	return config, nil
