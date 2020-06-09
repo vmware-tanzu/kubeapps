@@ -37,6 +37,7 @@ export function retrieveBasicFormParams(
           path: itemPath,
           type,
           value,
+          enum: properties[propertyKey].enum?.map(item => item?.toString() ?? ""),
           children:
             properties[propertyKey].type === "object"
               ? retrieveBasicFormParams(defaultValues, properties[propertyKey], `${itemPath}/`)

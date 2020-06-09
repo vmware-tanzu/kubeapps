@@ -540,6 +540,7 @@ export interface IBasicFormParam {
   maximum?: number;
   render?: string;
   description?: string;
+  enum?: string[];
   hidden?:
     | {
         condition: any;
