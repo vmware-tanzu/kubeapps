@@ -13,7 +13,7 @@ ${CLUSTER_CONFIG}:
 		--name ${CLUSTER_NAME} \
 		--config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.json \
 		--retain
-	kubectl apply --kubeconfig=$CLUSTER_CONFIG -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 
 cluster-kind: ${CLUSTER_CONFIG}
 

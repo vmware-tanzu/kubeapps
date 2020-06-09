@@ -50,10 +50,12 @@ spec:
             - --assetsvc-url=http://{{ template "kubeapps.assetsvc.fullname" . }}:{{ .Values.assetsvc.service.port }}
             {{- if .Values.featureFlags.additionalClusters }}
             - --additional-clusters-config-path=/config/additional-clusters.conf
+            {{- end }}
+          {{- if .Values.featureFlags.additionalClusters }}
           volumeMounts:
             - name: kubeops-config
               mountPath: /config
-            {{- end }}
+          {{- end }}
           env:
             - name: POD_NAMESPACE
               valueFrom:
