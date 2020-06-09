@@ -179,6 +179,13 @@ Create name for kubeops based on the fullname
 {{- end -}}
 
 {{/*
+Create name for the kubeops config based on the fullname
+*/}}
+{{- define "kubeapps.kubeops-config.fullname" -}}
+{{ template "kubeapps.fullname" . }}-kubeops-config
+{{- end -}}
+
+{{/*
 Create name for the secrets related to an app repository
 */}}
 {{- define "kubeapps.apprepository-secret.name" -}}
