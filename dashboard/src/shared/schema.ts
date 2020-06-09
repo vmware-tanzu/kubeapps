@@ -76,7 +76,7 @@ function getDefinedPath(allElementsButTheLast: string[], doc: YAML.ast.Document)
 
 function splitPath(path: string): string[] {
   return (
-    path
+    (path ?? "")
       // ignore the first slash, if exists
       .replace(/^\//, "")
       // split by slashes
