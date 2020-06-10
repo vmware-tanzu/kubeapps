@@ -82,7 +82,9 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         );
         break;
       }
-      case "string": {
+      case "string":
+      case "integer":
+      case "number": {
         if (param.render === "slider") {
           const p = param as IBasicFormSliderParam;
           paramComponent = (
