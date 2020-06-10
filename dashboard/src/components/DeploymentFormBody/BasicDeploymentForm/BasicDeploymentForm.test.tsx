@@ -125,14 +125,14 @@ it("should hide an element if it depends on a param (string)", () => {
   expect(hiddenParam).toExist();
 });
 
-it("should hide an element if it depends on a param (object)", () => {
+it("should hide an element if it depends on a single param (object)", () => {
   const params = [
     {
       path: "foo",
       type: "string",
       hidden: {
-        value: "bar",
-        condition: "enabled",
+        value: "enabled",
+        path: "bar",
       },
     },
     {
@@ -141,6 +141,105 @@ it("should hide an element if it depends on a param (object)", () => {
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: enabled";
+  const wrapper = shallow(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+});
+
+it("should hide an element if it depends on multiple params (AND) (object)", () => {
+  const params = [
+    {
+      path: "foo",
+      type: "string",
+      hidden: {
+        conditions: [
+          {
+            value: "enabled",
+            path: "bar",
+          },
+          {
+            value: "disabled",
+            path: "baz",
+          },
+        ],
+        operator: "and",
+      },
+    },
+    {
+      path: "bar",
+      type: "string",
+    },
+  ] as IBasicFormParam[];
+  const appValues = "foo: 1\nbar: enabled\nbaz: disabled";
+  const wrapper = shallow(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+});
+
+it("should hide an element if it depends on multiple params (OR) (object)", () => {
+  const params = [
+    {
+      path: "foo",
+      type: "string",
+      hidden: {
+        conditions: [
+          {
+            value: "enabled",
+            path: "bar",
+          },
+          {
+            value: "disabled",
+            path: "baz",
+          },
+        ],
+        operator: "or",
+      },
+    },
+    {
+      path: "bar",
+      type: "string",
+    },
+  ] as IBasicFormParam[];
+  const appValues = "foo: 1\nbar: enabled\nbaz: enabled";
+  const wrapper = shallow(
+    <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+});
+
+it("should hide an element if it depends on multiple params (NOR) (object)", () => {
+  const params = [
+    {
+      path: "foo",
+      type: "string",
+      hidden: {
+        conditions: [
+          {
+            value: "enabled",
+            path: "bar",
+          },
+          {
+            value: "disabled",
+            path: "baz",
+          },
+        ],
+        operator: "nor",
+      },
+    },
+    {
+      path: "bar",
+      type: "string",
+    },
+  ] as IBasicFormParam[];
+  const appValues = "foo: 1\nbar: disabled\nbaz: enabled";
   const wrapper = shallow(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
   );

@@ -42,8 +42,40 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         // If hidden is a string, it points to the value that should be true
         return getValue(this.props.appValues, hidden) === true;
       case "object":
-        // If hidden is an object, inspect the value it points to
-        return getValue(this.props.appValues, hidden.value) === hidden.condition;
+        // Two type of supported objects
+        // A single condition: {value: string, path: any}
+        // An array of conditions: {conditions: Array<{value: string, path: any}, operator: string}
+        if (hidden.conditions?.length > 0) {
+          // If hidden is an object, a different logic should be applied
+          // based on the operator
+          switch (hidden.operator) {
+            case "and":
+              // Every value matches the referenced
+              // value (via jsonpath) in all the conditions
+              return hidden.conditions.every(
+                c => getValue(this.props.appValues, c.path) === c.value,
+              );
+            case "or":
+              // It is enough if the value matches the referenced
+              // value (via jsonpath) in any of the conditions
+              return hidden.conditions.some(
+                c => getValue(this.props.appValues, c.path) === c.value,
+              );
+            case "nor":
+              // Every value mismatches the referenced
+              // value (via jsonpath) in any of the conditions
+              return hidden.conditions.every(
+                c => getValue(this.props.appValues, c.path) !== c.value,
+              );
+            default:
+              // we consider 'and' as the default operator
+              return hidden.conditions.every(
+                c => getValue(this.props.appValues, c.path) === c.value,
+              );
+          }
+        } else {
+          return getValue(this.props.appValues, hidden.path) === hidden.value;
+        }
       case "undefined":
         return false;
     }

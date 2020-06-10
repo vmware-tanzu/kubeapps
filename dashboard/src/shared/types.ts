@@ -543,8 +543,13 @@ export interface IBasicFormParam {
   enum?: string[];
   hidden?:
     | {
-        condition: any;
+        path: any;
         value: string;
+        conditions: Array<{
+          path: any;
+          value: string;
+        }>;
+        operator: string;
       }
     | string;
   children?: IBasicFormParam[];
