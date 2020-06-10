@@ -3,6 +3,13 @@ import { IServiceBroker } from "./ServiceCatalog";
 import { IChartVersion } from "./types";
 
 export const app = {
+  apps: {
+    new: (cv: IChartVersion, namespace: string, version: string) => {
+      const repoNamespace = cv.relationships.chart.data.repo.namespace;
+      const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
+      return `/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
+    },
+  },
   charts: {
     version: (cv: IChartVersion) =>
       `/ns/${cv.relationships.chart.data.repo.namespace}/charts/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${cv.attributes.version}`,

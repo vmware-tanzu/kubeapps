@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Redirect } from "react-router";
 import { IChartVersion } from "../../shared/types";
+import { app } from "../../shared/url";
 
 interface IChartDeployButtonProps {
   version: IChartVersion;
@@ -19,11 +20,7 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
   public render() {
     const { version } = this.props;
     const { namespace } = this.props;
-    const repoName = version.relationships.chart.data.repo.name;
-    const repoNamespace = version.relationships.chart.data.repo.namespace;
-    const chartName = version.relationships.chart.data.name;
     const versionStr = version.attributes.version;
-    const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
 
     return (
       <div className="ChartDeployButton text-r">
@@ -31,10 +28,7 @@ class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartD
           Deploy
         </button>
         {this.state.clicked && (
-          <Redirect
-            push={true}
-            to={`/ns/${namespace}/apps/${newSegment}/${repoName}/${chartName}/versions/${versionStr}`}
-          />
+          <Redirect push={true} to={app.apps.new(version, namespace, versionStr)} />
         )}
       </div>
     );

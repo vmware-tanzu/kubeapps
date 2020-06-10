@@ -5,6 +5,7 @@ import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { IBasicFormParam, IChartState } from "../../shared/types";
+import * as url from "../../shared/url";
 import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog";
 import { ErrorSelector } from "../ErrorAlert";
@@ -146,14 +147,13 @@ class DeploymentFormBody extends React.Component<
     // forms behave differently. In the deployment form, a change in the version
     // changes the route but in the case of the upgrade it only changes the state
     const isUpgradeForm = !!this.props.releaseVersion;
+    const { namespace, selected } = this.props;
 
     if (isUpgradeForm) {
       const { chartID, chartNamespace, getChartVersion } = this.props;
       getChartVersion(chartNamespace, chartID, e.currentTarget.value);
     } else {
-      this.props.push(
-        `/ns/${this.props.namespace}/apps/new/${this.props.chartID}/versions/${e.currentTarget.value}`,
-      );
+      this.props.push(url.app.apps.new(selected.version!, namespace, e.currentTarget.value));
     }
   };
 
