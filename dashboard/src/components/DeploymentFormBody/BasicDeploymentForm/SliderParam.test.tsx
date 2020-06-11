@@ -13,22 +13,22 @@ const defaultProps = {
   unit: "Gi",
 };
 
-const params = [
+const params: IBasicFormParam[] = [
   {
     value: "10Gi",
     type: "string",
     path: "disk",
-  } as IBasicFormParam,
+  },
   {
     value: 10,
     type: "integer",
     path: "disk",
-  } as IBasicFormParam,
+  },
   {
     value: 10.0,
     type: "number",
     path: "disk",
-  } as IBasicFormParam,
+  },
 ];
 
 it("renders a disk size param with a default value", () => {
@@ -39,33 +39,66 @@ it("renders a disk size param with a default value", () => {
   });
 });
 
-it("changes the value of the string param when the slider changes", () => {
-  params.forEach(param => {
-    const cloneParam = { ...param } as IBasicFormParam;
-    const expected = param.type === "string" ? "20Gi" : 20;
+describe("when changing the slide", () => {
+  it("changes the value of the string param", () => {
+    params.forEach(param => {
+      const cloneParam = { ...param } as IBasicFormParam;
+      const expected = param.type === "string" ? "20Gi" : 20;
 
-    const handleBasicFormParamChange = jest.fn(() => {
-      cloneParam.value = expected;
-      return jest.fn();
+      const handleBasicFormParamChange = jest.fn(() => {
+        cloneParam.value = expected;
+        return jest.fn();
+      });
+
+      const wrapper = shallow(
+        <SliderParam
+          {...defaultProps}
+          param={cloneParam}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+        />,
+      );
+
+      expect(wrapper.state("value")).toBe(10);
+
+      const slider = wrapper.find(Slider);
+      (slider.prop("onChange") as (values: number[]) => void)([20]);
+
+      expect(cloneParam.value).toBe(expected);
+      expect(handleBasicFormParamChange.mock.calls[0]).toEqual([
+        { value: expected, type: param.type, path: param.path },
+      ]);
     });
+  });
 
-    const wrapper = shallow(
-      <SliderParam
-        {...defaultProps}
-        param={cloneParam}
-        handleBasicFormParamChange={handleBasicFormParamChange}
-      />,
-    );
+  it("changes the value of the string param without unit", () => {
+    params.forEach(param => {
+      const cloneParam = { ...param } as IBasicFormParam;
+      const expected = param.type === "string" ? "20" : 20;
 
-    expect(wrapper.state("value")).toBe(10);
+      const handleBasicFormParamChange = jest.fn(() => {
+        cloneParam.value = expected;
+        return jest.fn();
+      });
 
-    const slider = wrapper.find(Slider);
-    (slider.prop("onChange") as (values: number[]) => void)([20]);
+      const wrapper = shallow(
+        <SliderParam
+          {...defaultProps}
+          param={cloneParam}
+          unit=""
+          handleBasicFormParamChange={handleBasicFormParamChange}
+        />,
+      );
 
-    expect(cloneParam.value).toBe(expected);
-    expect(handleBasicFormParamChange.mock.calls[0]).toEqual([
-      { value: expected, type: param.type, path: param.path },
-    ]);
+      expect(wrapper.state("value")).toBe(10);
+
+      const slider = wrapper.find(Slider);
+      (slider.prop("onChange") as (values: number[]) => void)([20]);
+
+      expect(cloneParam.value).toBe(expected);
+      expect(handleBasicFormParamChange.mock.calls[0]).toEqual([
+        { value: expected, type: param.type, path: param.path },
+      ]);
+    });
   });
 });
 
@@ -110,6 +143,31 @@ describe("when changing the value in the input", () => {
       expect(wrapper.state("value")).toBe(20);
 
       const expected = param.type === "string" ? "20Gi" : 20;
+      expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: expected } }]);
+    });
+  });
+
+  it("parses a number and forwards it without unit", () => {
+    params.forEach(param => {
+      const valueChange = jest.fn();
+      const handleBasicFormParamChange = jest.fn(() => valueChange);
+      const wrapper = shallow(
+        <SliderParam
+          {...defaultProps}
+          unit=""
+          param={param}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+        />,
+      );
+      expect(wrapper.state("value")).toBe(10);
+
+      const input = wrapper.find("input#disk");
+      const event = { currentTarget: { value: "20" } } as React.FormEvent<HTMLInputElement>;
+      (input.prop("onChange") as (e: React.FormEvent<HTMLInputElement>) => void)(event);
+
+      expect(wrapper.state("value")).toBe(20);
+
+      const expected = param.type === "string" ? "20" : 20;
       expect(valueChange.mock.calls[0]).toEqual([{ currentTarget: { value: expected } }]);
     });
   });
@@ -187,19 +245,17 @@ describe("when changing the value in the input", () => {
 });
 
 it("uses the param minimum and maximum if defined", () => {
-  const param = {
-    value: "10Gi",
-    type: "string",
-    path: "disk",
-    minimum: 5,
-    maximum: 50,
-  } as IBasicFormParam;
+  params.forEach(param => {
+    const clonedParam = { ...param } as IBasicFormParam;
+    clonedParam.minimum = 5;
+    clonedParam.maximum = 50;
 
-  const wrapper = shallow(<SliderParam {...defaultProps} param={param} />);
+    const wrapper = shallow(<SliderParam {...defaultProps} param={clonedParam} />);
 
-  const slider = wrapper.find(Slider);
-  expect(slider.prop("min")).toBe(5);
-  expect(slider.prop("max")).toBe(50);
+    const slider = wrapper.find(Slider);
+    expect(slider.prop("min")).toBe(5);
+    expect(slider.prop("max")).toBe(50);
+  });
 });
 
 it("defaults to the min if the value is undefined", () => {

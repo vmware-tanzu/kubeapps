@@ -48,7 +48,7 @@ It's possible to render a component as a slider, users can then drag and drop th
 
 In order to render a slider, there are some requirements and additional tags that you may need to set:
 
- - The only supported `type` for the moment is a string. Other types like `integer` will be transformed to a string.
+ - The supported types are `string`, `integer` and `numeric`.
  - It's necessary to specify the tag `render` and set it to `slider`.
  - The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writting a smaller value in the input).
  - The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writting a bigger value in the input).
