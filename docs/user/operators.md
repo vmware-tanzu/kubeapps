@@ -35,7 +35,9 @@ Once you access the dashboard, if you go to Configuration => Operators, you will
 Follow the instructions to install the latest OLM version:
 
 ```bash
-curl -sL https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.14.1/install.sh | bash -s 0.14.1
+curl -L https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/install.sh -o install.sh
+chmod +x install.sh
+./install.sh 0.15.1
 ```
 
 Note that you will need special permissions to manage Operators. If you receive a Forbidden error, apply the following ClusterRole to your admin user:
