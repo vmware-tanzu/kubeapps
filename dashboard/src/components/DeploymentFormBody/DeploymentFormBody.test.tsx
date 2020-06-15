@@ -111,6 +111,22 @@ const props: IDeploymentFormBodyProps = {
   },
 };
 
+it("changes the URL for the new version", () => {
+  const push = jest.fn();
+  const wrapper = shallow(<DeploymentFormBody {...defaultProps} push={push} />);
+  wrapper.setProps({
+    selected: {
+      ...props.selected,
+      versions: [
+        chartVersion,
+        { ...chartVersion, attributes: { ...chartVersion.attributes, version: "2.0.0" } },
+      ],
+    },
+  });
+  wrapper.find("select").simulate("change", { currentTarget: { value: "2.0.0" } });
+  expect(push).toHaveBeenCalledWith("/ns/default/apps/new-from-global/repo/chart/versions/2.0.0");
+});
+
 describe("when there are changes in the selected version", () => {
   it("initializes the local values from props when props set", () => {
     const wrapper = shallow(<DeploymentFormBody {...defaultProps} />);
