@@ -5,6 +5,7 @@ import { StaticRouter } from "react-router";
 import { Redirect, RouteComponentProps } from "react-router-dom";
 
 import NotFound from "../../components/NotFound";
+import { app } from "../../shared/url";
 import RepoListContainer from "../../containers/RepoListContainer";
 import Routes from "./Routes";
 
@@ -41,7 +42,7 @@ it("should render a redirect to the default cluster and namespace", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual("/c/default/ns/default/apps");
+  expect(wrapper.find(Redirect).prop("to")).toEqual(app.apps.list("default"));
 });
 
 it("should render a redirect to the login page", () => {
