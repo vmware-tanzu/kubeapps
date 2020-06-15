@@ -107,7 +107,7 @@ describe("renders a resource", () => {
     expect(deleteResource).toHaveBeenCalledWith(defaultProps.namespace, "foo", resource);
     // wait async calls
     await new Promise(r => r());
-    expect(push).toHaveBeenCalledWith(`/ns/${defaultProps.namespace}/apps`);
+    expect(push).toHaveBeenCalledWith(`/c/default/ns/${defaultProps.namespace}/apps`);
   });
 
   it("updates the state with the CRD resources", () => {
