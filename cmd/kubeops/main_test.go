@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/kubeapps/kubeapps/cmd/kubeops/internal/handler"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
 func TestParseAdditionalClusterConfig(t *testing.T) {
@@ -14,13 +14,13 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 		name           string
 		configJSON     string
 		expectedErr    bool
-		expectedConfig map[string]handler.AdditionalClusterConfig
+		expectedConfig kube.AdditionalClustersConfig
 	}{
 		{
 			name:       "parses a single additional cluster",
 			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "abcd"}]`,
-			expectedConfig: map[string]handler.AdditionalClusterConfig{
-				"cluster-2": handler.AdditionalClusterConfig{
+			expectedConfig: kube.AdditionalClustersConfig{
+				"cluster-2": {
 					Name:                     "cluster-2",
 					APIServiceURL:            "https://example.com",
 					CertificateAuthorityData: "abcd",
@@ -33,13 +33,13 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "abcd"},
 	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "efgh"}
 ]`,
-			expectedConfig: map[string]handler.AdditionalClusterConfig{
-				"cluster-2": handler.AdditionalClusterConfig{
+			expectedConfig: kube.AdditionalClustersConfig{
+				"cluster-2": {
 					Name:                     "cluster-2",
 					APIServiceURL:            "https://example.com/cluster-2",
 					CertificateAuthorityData: "abcd",
 				},
-				"cluster-3": handler.AdditionalClusterConfig{
+				"cluster-3": {
 					Name:                     "cluster-3",
 					APIServiceURL:            "https://example.com/cluster-3",
 					CertificateAuthorityData: "efgh",

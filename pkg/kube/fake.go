@@ -36,7 +36,7 @@ type FakeHandler struct {
 }
 
 // AsUser fakes user auth
-func (c *FakeHandler) AsUser(token string) handler {
+func (c *FakeHandler) AsUser(token, cluster string) handler {
 	return c
 }
 
