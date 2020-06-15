@@ -7,6 +7,7 @@ import { NamespaceAction } from "../actions/namespace";
 import { Auth } from "../shared/Auth";
 
 export interface INamespaceState {
+  cluster: string;
   current: string;
   namespaces: string[];
   error?: { action: string; error: Error };
@@ -15,6 +16,7 @@ export interface INamespaceState {
 const getInitialState: () => INamespaceState = (): INamespaceState => {
   const token = Auth.getAuthToken() || "";
   return {
+    cluster: "default",
     current: Auth.defaultNamespaceFromToken(token),
     namespaces: [],
   };

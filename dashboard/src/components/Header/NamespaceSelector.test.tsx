@@ -88,7 +88,7 @@ it("fetches namespaces and retrive the current namespace", () => {
       {...defaultProps}
       fetchNamespaces={fetchNamespaces}
       getNamespace={getNamespace}
-      namespace={{ current: "foo", namespaces: [] }}
+      namespace={{ cluster: "default", current: "foo", namespaces: [] }}
     />,
   );
   expect(fetchNamespaces).toHaveBeenCalled();
@@ -103,7 +103,7 @@ it("doesnt' get the current namespace if all namespaces is selected", () => {
       {...defaultProps}
       fetchNamespaces={fetchNamespaces}
       getNamespace={getNamespace}
-      namespace={{ current: "_all", namespaces: [] }}
+      namespace={{ cluster: "default", current: "_all", namespaces: [] }}
     />,
   );
   expect(fetchNamespaces).toHaveBeenCalled();

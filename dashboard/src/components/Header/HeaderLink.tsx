@@ -8,7 +8,9 @@ export interface IHeaderLinkProps {
   external?: boolean;
   children?: React.ReactChildren | React.ReactNode | string;
   currentNamespace?: string | null;
-  namespaced?: boolean;
+  currentCluster?: string;
+  // clustered enables some menu items to include a cluster prefix while transitioning.
+  clustered?: boolean;
 }
 
 class HeaderLink extends React.Component<IHeaderLinkProps> {
@@ -18,8 +20,10 @@ class HeaderLink extends React.Component<IHeaderLinkProps> {
   };
 
   public renderInternalLink() {
-    const { currentNamespace, namespaced, to } = this.props;
-    const link = currentNamespace && namespaced ? `/ns/${currentNamespace}/${to}` : to;
+    const { currentCluster, currentNamespace, clustered, to } = this.props;
+
+    let link = currentNamespace ? `/ns/${currentNamespace}/${to}` : to;
+    link = clustered ? `/c/${currentCluster}${link}` : link;
     return (
       <NavLink
         to={link}

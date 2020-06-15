@@ -109,6 +109,7 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
   const createNamespace = jest.fn();
   const getNamespace = jest.fn();
   const namespace = {
+    cluster: "default",
     current: "foo",
     namespaces: ["foo", "bar"],
   };
@@ -136,6 +137,7 @@ it("doesn't call getNamespace when selecting all namespaces", () => {
   const setNamespace = jest.fn();
   const getNamespace = jest.fn();
   const namespace = {
+    cluster: "defalut",
     current: "foo",
     namespaces: ["foo", "bar"],
   };

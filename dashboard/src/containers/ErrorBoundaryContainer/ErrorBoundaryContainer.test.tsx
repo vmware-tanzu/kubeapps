@@ -9,6 +9,7 @@ import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAler
 const mockStore = configureMockStore([thunk]);
 const makeStore = (error?: { action: string; error: Error }) => {
   const state: INamespaceState = {
+    cluster: "default",
     current: "default",
     namespaces: ["default"],
     error,

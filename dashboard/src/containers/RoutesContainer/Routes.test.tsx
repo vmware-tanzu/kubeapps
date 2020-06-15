@@ -27,27 +27,27 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
 it("invalid path should show a 404 error", () => {
   const wrapper = mount(
     <StaticRouter location="/random" context={{}}>
-      <Routes {...emptyRouteComponentProps} namespace={"default"} authenticated={true} />
+      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={"default"} authenticated={true} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).toExist();
   expect(wrapper.text()).toContain("The page you are looking for can't be found.");
 });
 
-it("should render a redirect to the default namespace", () => {
+it("should render a redirect to the default cluster and namespace", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} namespace={"default"} authenticated={true} />
+      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={"default"} authenticated={true} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual("/ns/default/apps");
+  expect(wrapper.find(Redirect).prop("to")).toEqual("/c/default/ns/default/apps");
 });
 
 it("should render a redirect to the login page", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} namespace={""} authenticated={true} />
+      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={""} authenticated={true} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
@@ -57,7 +57,7 @@ it("should render a redirect to the login page", () => {
 it("should render a redirect to the login page (when not authenticated)", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} namespace={"default"} authenticated={false} />
+      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={"default"} authenticated={false} />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
@@ -65,6 +65,7 @@ it("should render a redirect to the login page (when not authenticated)", () => 
 });
 
 describe("Routes depending on feature flags", () => {
+  const cluster = "default";
   const namespace = "default";
   const perNamespacePath = "/config/ns/:namespace/repos";
   const nonNamespacedPath = "/config/repos";
@@ -74,6 +75,7 @@ describe("Routes depending on feature flags", () => {
       <StaticRouter location="/config/repos" context={{}}>
         <Routes
           {...emptyRouteComponentProps}
+          cluster={cluster}
           namespace={namespace}
           authenticated={true}
           featureFlags={{ reposPerNamespace: false, operators: false }}
@@ -95,6 +97,7 @@ describe("Routes depending on feature flags", () => {
       <StaticRouter location="/config/repos" context={{}}>
         <Routes
           {...emptyRouteComponentProps}
+          cluster={cluster}
           namespace={namespace}
           authenticated={true}
           featureFlags={{ reposPerNamespace: true, operators: false }}

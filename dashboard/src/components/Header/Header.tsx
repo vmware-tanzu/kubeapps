@@ -42,17 +42,17 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     {
       children: "Applications",
       exact: true,
-      namespaced: true,
+      clustered: true,
       to: "apps",
     },
     {
       children: "Catalog",
-      namespaced: true,
+      clustered: false,
       to: "catalog",
     },
     {
       children: "Service Instances (alpha)",
-      namespaced: true,
+      clustered: false,
       to: "services/instances",
     },
   ];
@@ -117,7 +117,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 <ul className="header__nav__menu" role="menubar">
                   {this.links.map(link => (
                     <li key={link.to}>
-                      <HeaderLink {...link} currentNamespace={namespace.current} />
+                      <HeaderLink {...link} currentCluster={namespace.cluster} currentNamespace={namespace.current} />
                     </li>
                   ))}
                 </ul>
