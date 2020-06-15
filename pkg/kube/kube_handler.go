@@ -161,25 +161,26 @@ type handler interface {
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
 type AuthHandler interface {
-	AsUser(token, cluster string) handler
+	AsUser(token, cluster string) (handler, error)
 	AsSVC() handler
 }
 
-func (a *kubeHandler) AsUser(token, cluster string) handler {
+func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 	config, err := NewClusterConfig(&a.config, token, cluster, a.additionalClustersConfig)
-	// TODO: Do not swallow errors here and below.
 	if err != nil {
 		log.Errorf("unable to create config: %v", err)
+		return nil, err
 	}
 	clientset, err := a.clientsetForConfig(config)
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
+		return nil, err
 	}
 	return &userHandler{
 		kubeappsNamespace: a.kubeappsNamespace,
 		svcClientset:      a.svcClientset,
 		clientset:         clientset,
-	}
+	}, nil
 }
 
 func (a *kubeHandler) AsSVC() handler {

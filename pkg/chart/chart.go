@@ -280,7 +280,10 @@ func (c *ChartClient) ParseDetails(data []byte) (*Details, error) {
 func (c *ChartClient) parseDetailsForHTTPClient(details *Details, userAuthToken string) (*appRepov1.AppRepository, *corev1.Secret, *corev1.Secret, error) {
 	// We grab the specified app repository (for later access to the repo URL, as well as any specified
 	// auth).
-	client := c.appRepoHandler.AsUser(userAuthToken, kube.DefaultClusterName)
+	client, err := c.appRepoHandler.AsUser(userAuthToken, kube.DefaultClusterName)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("unable to create clientset: %v", err)
+	}
 	if details.AppRepositoryResourceNamespace == c.kubeappsNamespace {
 		// If we're parsing a global repository (from the kubeappsNamespace), use a service client.
 		client = c.appRepoHandler.AsSVC()
@@ -364,7 +367,11 @@ func (c *ChartClient) RegistrySecretsPerDomain() map[string]string {
 
 func getRegistrySecretsPerDomain(appRepoSecrets []string, namespace, token string, authHandler kube.AuthHandler) (map[string]string, error) {
 	secretsPerDomain := map[string]string{}
-	client := authHandler.AsUser(token, kube.DefaultClusterName)
+	client, err := authHandler.AsUser(token, kube.DefaultClusterName)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, secretName := range appRepoSecrets {
 		secret, err := client.GetSecret(secretName, namespace)
 		if err != nil {

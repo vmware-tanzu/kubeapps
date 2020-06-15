@@ -74,7 +74,14 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		appRepo, err := handler.AsUser(token, requestCluster).CreateAppRepository(req.Body, requestNamespace)
+
+		clientset, err := handler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		appRepo, err := clientset.CreateAppRepository(req.Body, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -97,7 +104,14 @@ func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		appRepo, err := handler.AsUser(token, requestCluster).UpdateAppRepository(req.Body, requestNamespace)
+
+		clientset, err := handler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		appRepo, err := clientset.UpdateAppRepository(req.Body, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -120,7 +134,14 @@ func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter,
 	return func(w http.ResponseWriter, req *http.Request) {
 		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		res, err := handler.AsUser(token, requestCluster).ValidateAppRepository(req.Body, requestNamespace)
+
+		clientset, err := handler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		res, err := clientset.ValidateAppRepository(req.Body, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -141,8 +162,13 @@ func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWrite
 		repoName := mux.Vars(req)["name"]
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
 
-		err := kubeHandler.AsUser(token, requestCluster).DeleteAppRepository(repoName, requestNamespace)
+		clientset, err := kubeHandler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
 
+		err = clientset.DeleteAppRepository(repoName, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 		}
@@ -154,7 +180,14 @@ func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
 		_, requestCluster := getNamespaceAndCluster(req)
-		namespaces, err := kubeHandler.AsUser(token, requestCluster).GetNamespaces()
+
+		clientset, err := kubeHandler.AsUser(token, requestCluster)
+		if err != nil {
+			returnK8sError(err, w)
+			return
+		}
+
+		namespaces, err := clientset.GetNamespaces()
 		if err != nil {
 			returnK8sError(err, w)
 		}
