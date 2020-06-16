@@ -1,8 +1,8 @@
 import { getType } from "typesafe-actions";
-
 import actions from "../actions";
 import { ConfigAction } from "../actions/config";
 import { IConfig } from "../shared/Config";
+
 
 export interface IConfigState extends IConfig {
   loaded: boolean;
@@ -15,7 +15,7 @@ const initialState: IConfigState = {
   authProxyEnabled: false,
   oauthLoginURI: "",
   oauthLogoutURI: "",
-  featureFlags: { reposPerNamespace: true, operators: true },
+  featureFlags: { operators: true },
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

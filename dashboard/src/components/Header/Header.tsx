@@ -1,17 +1,17 @@
 import * as React from "react";
+// Icons
+import { LogOut, Settings } from "react-feather";
 import { NavLink } from "react-router-dom";
+import "react-select/dist/react-select.css";
 import logo from "../../logo.svg";
-
 import { INamespaceState } from "../../reducers/namespace";
 import { definedNamespaces } from "../../shared/Namespace";
+import "./Header.css";
 import HeaderLink, { IHeaderLinkProps } from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
 
-// Icons
-import { LogOut, Settings } from "react-feather";
 
-import "react-select/dist/react-select.css";
-import "./Header.css";
+
 
 interface IHeaderProps {
   authenticated: boolean;
@@ -24,7 +24,7 @@ interface IHeaderProps {
   setNamespace: (ns: string) => void;
   createNamespace: (ns: string) => Promise<boolean>;
   getNamespace: (ns: string) => void;
-  featureFlags: { reposPerNamespace: boolean; operators: boolean };
+  featureFlags: { operators: boolean };
 }
 
 interface IHeaderState {
@@ -34,7 +34,7 @@ interface IHeaderState {
 
 class Header extends React.Component<IHeaderProps, IHeaderState> {
   public static defaultProps = {
-    featureFlags: { reposPerNamespace: false, operators: false },
+    featureFlags: { operators: false },
   };
 
   // Defines the route
@@ -89,9 +89,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       this.state.configOpen ? "header__nav__submenu-open" : ""
     }`;
 
-    const reposPath = this.props.featureFlags.reposPerNamespace
-      ? `/config/ns/${namespace.current}/repos`
-      : "/config/repos";
+    const reposPath = `/config/ns/${namespace.current}/repos`;
     return (
       <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
         <div className="container">
