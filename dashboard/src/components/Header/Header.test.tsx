@@ -1,8 +1,9 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-
 import { INamespaceState } from "../../reducers/namespace";
+import { app } from "../../shared/url";
 import Header from "./Header";
+
 
 const defaultProps = {
   authenticated: true,
@@ -24,13 +25,14 @@ it("renders the header links and titles", () => {
   const menubar = wrapper.find(".header__nav__menu").first();
   const items = menubar.children().map(p => p.props().children.props);
   const expectedItems = [
-    { children: "Applications", to: "apps" },
-    { children: "Catalog", to: "catalog" },
-    { children: "Service Instances (alpha)", to: "services/instances" },
+    { children: "Applications", to: app.apps.list("default") },
+    { children: "Catalog", to: app.catalog("default") },
+    { children: "Service Instances (alpha)", to: app.servicesInstances("default") },
   ];
-  items.forEach((item, index) => {
-    expect(item.children).toBe(expectedItems[index].children);
-    expect(item.to).toBe(expectedItems[index].to);
+  expect(items.length).toEqual(expectedItems.length);
+  expectedItems.forEach((expectedItem, index) => {
+    expect(expectedItem.children).toBe(items[index].children);
+    expect(expectedItem.to).toBe(items[index].to);
   });
 });
 

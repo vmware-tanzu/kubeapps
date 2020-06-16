@@ -9,8 +9,10 @@ export const app = {
       const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
       return `/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
     },
-    list: (namespace: string, cluster: string = 'default') => `/c/${cluster}/ns/${namespace}/apps`,
+    list: (namespace: string, cluster: string = "default") => `/c/${cluster}/ns/${namespace}/apps`,
   },
+  catalog: (namespace: string) => `/ns/${namespace}/catalog`,
+  servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
     version: (cv: IChartVersion) =>
       `/ns/${cv.relationships.chart.data.repo.namespace}/charts/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${cv.attributes.version}`,

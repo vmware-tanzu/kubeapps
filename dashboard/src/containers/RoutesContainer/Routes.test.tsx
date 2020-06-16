@@ -3,11 +3,11 @@ import { createMemoryHistory } from "history";
 import * as React from "react";
 import { StaticRouter } from "react-router";
 import { Redirect, RouteComponentProps } from "react-router-dom";
-
 import NotFound from "../../components/NotFound";
-import { app } from "../../shared/url";
 import RepoListContainer from "../../containers/RepoListContainer";
+import { app } from "../../shared/url";
 import Routes from "./Routes";
+
 
 const emptyRouteComponentProps: RouteComponentProps<{}> = {
   history: createMemoryHistory(),
