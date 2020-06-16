@@ -18,9 +18,9 @@ export interface ISliderParamState {
   value: number;
 }
 
-function toNumber(value: string) {
+function toNumber(value: string | number) {
   // Force to return a Number from a string removing any character that is not a digit
-  return Number(value.replace(/[^\d\.]/g, ""));
+  return typeof value === "number" ? value : Number(value.replace(/[^\d\.]/g, ""));
 }
 
 function getDefaultValue(min: number, value?: string) {
@@ -101,7 +101,9 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
 
   private handleParamChange = (value: number) => {
     this.props.handleBasicFormParamChange(this.props.param)({
-      currentTarget: { value: `${value}${this.props.unit}` },
+      currentTarget: {
+        value: this.props.param.type === "string" ? `${value}${this.props.unit}` : value,
+      },
     } as React.FormEvent<HTMLInputElement>);
   };
 }
