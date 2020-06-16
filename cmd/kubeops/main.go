@@ -18,6 +18,7 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/agent"
 	"github.com/kubeapps/kubeapps/pkg/auth"
 	backendHandlers "github.com/kubeapps/kubeapps/pkg/http-handler"
+	"github.com/kubeapps/kubeapps/pkg/kube"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/urfave/negroni"
@@ -54,7 +55,7 @@ func main() {
 		log.Fatal("POD_NAMESPACE should be defined")
 	}
 
-	var additionalClusters map[string]handler.AdditionalClusterConfig
+	var additionalClusters map[string]kube.AdditionalClusterConfig
 	if additionalClustersConfigPath != "" {
 		var err error
 		additionalClusters, err = parseAdditionalClusterConfig(additionalClustersConfigPath)
@@ -171,18 +172,18 @@ func main() {
 	os.Exit(0)
 }
 
-func parseAdditionalClusterConfig(path string) (map[string]handler.AdditionalClusterConfig, error) {
+func parseAdditionalClusterConfig(path string) (kube.AdditionalClustersConfig, error) {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var clusterConfigs []handler.AdditionalClusterConfig
+	var clusterConfigs []kube.AdditionalClusterConfig
 	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
 		return nil, err
 	}
 
-	configs := map[string]handler.AdditionalClusterConfig{}
+	configs := kube.AdditionalClustersConfig{}
 	for _, c := range clusterConfigs {
 		configs[c.Name] = c
 	}

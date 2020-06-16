@@ -514,25 +514,6 @@ func errorCodeForK8sError(t *testing.T, err error) int {
 	return 0
 }
 
-func TestConfigForToken(t *testing.T) {
-	handler := kubeHandler{
-		config: rest.Config{},
-	}
-	token := "abcd"
-
-	configWithToken := handler.configForToken(token)
-
-	// The returned config has the token set.
-	if got, want := configWithToken.BearerToken, token; got != want {
-		t.Errorf("got: %q, want: %q", got, want)
-	}
-
-	// The handler config's BearerToken is still blank.
-	if got, want := handler.config.BearerToken, ""; got != want {
-		t.Errorf("got: %q, want: %q", got, want)
-	}
-}
-
 func TestAppRepositoryForRequest(t *testing.T) {
 	testCases := []struct {
 		name    string
@@ -906,6 +887,101 @@ func TestValidateAppRepository(t *testing.T) {
 				t.Errorf("Unexpected error %v", err)
 			}
 			if want := tc.expectedResult; !cmp.Equal(want, got) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			}
+		})
+	}
+}
+
+func TestNewClusterConfig(t *testing.T) {
+	testCases := []struct {
+		name               string
+		token              string
+		cluster            string
+		additionalClusters AdditionalClustersConfig
+		inClusterConfig    *rest.Config
+		expectedConfig     *rest.Config
+		errorExpected      bool
+	}{
+		{
+			name:    "returns an in-cluster with explicit token for the default cluster",
+			token:   "token-1",
+			cluster: "default",
+			inClusterConfig: &rest.Config{
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+			},
+			expectedConfig: &rest.Config{
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
+		{
+			name:    "returns a config setup for an additional cluster",
+			token:   "token-1",
+			cluster: "cluster-1",
+			additionalClusters: AdditionalClustersConfig{
+				"cluster-1": {
+					APIServiceURL:            "https://cluster-1.example.com:7890",
+					CertificateAuthorityData: "ca-file-data",
+				},
+			},
+			inClusterConfig: &rest.Config{
+				Host:            "https://something-else.example.com:6443",
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+				TLSClientConfig: rest.TLSClientConfig{
+					CAFile: "/var/run/whatever/ca.crt",
+				},
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://cluster-1.example.com:7890",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+				TLSClientConfig: rest.TLSClientConfig{
+					CAData: []byte("ca-file-data"),
+				},
+			},
+		},
+		{
+			name:    "assumes a public cert if no ca data provided",
+			token:   "token-1",
+			cluster: "cluster-1",
+			additionalClusters: AdditionalClustersConfig{
+				"cluster-1": {
+					APIServiceURL: "https://cluster-1.example.com:7890",
+				},
+			},
+			inClusterConfig: &rest.Config{
+				Host:            "https://something-else.example.com:6443",
+				BearerToken:     "something-else",
+				BearerTokenFile: "/foo/bar",
+				TLSClientConfig: rest.TLSClientConfig{
+					CAFile: "/var/run/whatever/ca.crt",
+				},
+			},
+			expectedConfig: &rest.Config{
+				Host:            "https://cluster-1.example.com:7890",
+				BearerToken:     "token-1",
+				BearerTokenFile: "",
+			},
+		},
+		{
+			name:            "returns an error if the cluster does not exist",
+			cluster:         "cluster-1",
+			inClusterConfig: &rest.Config{},
+			errorExpected:   true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			config, err := NewClusterConfig(tc.inClusterConfig, tc.token, tc.cluster, tc.additionalClusters)
+			if got, want := err != nil, tc.errorExpected; got != want {
+				t.Fatalf("got: %t, want: %t. err: %+v", got, want, err)
+			}
+
+			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got) {
 				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
 			}
 		})

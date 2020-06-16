@@ -41,6 +41,44 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 )
 
+const (
+	// DefaultClusterName is the string used to identify the internal cluster.
+	DefaultClusterName = "default"
+)
+
+// AdditionalClusterConfig contains required info to talk to additional clusters.
+type AdditionalClusterConfig struct {
+	Name                     string `json:"name"`
+	APIServiceURL            string `json:"apiServiceURL"`
+	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
+}
+
+// AdditionalClustersConfig is an alias for a map of additional cluster configs.
+type AdditionalClustersConfig map[string]AdditionalClusterConfig
+
+// NewClusterConfig returns a copy of an in-cluster config with a custom token and/or custom cluster host
+func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string, additionalClusters AdditionalClustersConfig) (*rest.Config, error) {
+	config := rest.CopyConfig(inClusterConfig)
+	config.BearerToken = token
+	config.BearerTokenFile = ""
+
+	if cluster == DefaultClusterName {
+		return config, nil
+	}
+
+	additionalCluster, ok := additionalClusters[cluster]
+	if !ok {
+		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
+	}
+
+	config.Host = additionalCluster.APIServiceURL
+	config.TLSClientConfig = rest.TLSClientConfig{}
+	if additionalCluster.CertificateAuthorityData != "" {
+		config.TLSClientConfig.CAData = []byte(additionalCluster.CertificateAuthorityData)
+	}
+	return config, nil
+}
+
 // combinedClientsetInterface provides both the app repository clientset and the corev1 clientset.
 type combinedClientsetInterface interface {
 	KubeappsV1alpha1() v1alpha1typed.KubeappsV1alpha1Interface
@@ -65,15 +103,18 @@ func (c *combinedClientset) RestClient() rest.Interface {
 // in Kubeapps, without exposing implementation details to 3rd party integrations.
 type kubeHandler struct {
 	// The config set internally here cannot be used on its own as a valid
-	// token is required. Call-sites use configForToken to obtain a valid
+	// token is required. Call-sites use NewClusterConfig to obtain a valid
 	// config with a specific token.
 	config rest.Config
 
-	// The namespace in which (currently) app repositories are created.
+	// The namespace in which (currently) app repositories are created on the default cluster.
 	kubeappsNamespace string
 
-	// clientset using the pod serviceaccount
+	// clientset using the pod serviceaccount on the default cluster.
 	svcClientset combinedClientsetInterface
+
+	// Configuration for additional clusters which may be requested.
+	additionalClustersConfig AdditionalClustersConfig
 
 	// clientsetForConfig is a field on the struct only so it can be switched
 	// for a fake version when testing. NewAppRepositoryhandler sets it to the
@@ -88,10 +129,10 @@ type userHandler struct {
 	// The namespace in which (currently) app repositories are created.
 	kubeappsNamespace string
 
-	// clientset using the pod serviceaccount
+	// clientset using the pod serviceaccount for the default cluster
 	svcClientset combinedClientsetInterface
 
-	// clientset for the given serviceccount
+	// clientset for a specific user token on a specific cluster.
 	clientset combinedClientsetInterface
 }
 
@@ -120,12 +161,17 @@ type handler interface {
 
 // AuthHandler exposes Handler functionality as a user or the current serviceaccount
 type AuthHandler interface {
-	AsUser(token string) handler
+	AsUser(token, cluster string) handler
 	AsSVC() handler
 }
 
-func (a *kubeHandler) AsUser(token string) handler {
-	clientset, err := a.clientsetForConfig(a.configForToken(token))
+func (a *kubeHandler) AsUser(token, cluster string) handler {
+	config, err := NewClusterConfig(&a.config, token, cluster, a.additionalClustersConfig)
+	// TODO: Do not swallow errors here and below.
+	if err != nil {
+		log.Errorf("unable to create config: %v", err)
+	}
+	clientset, err := a.clientsetForConfig(config)
 	if err != nil {
 		log.Errorf("unable to create clientset: %v", err)
 	}
@@ -163,9 +209,8 @@ type appRepositoryRequestDetails struct {
 // made to create registry secrets for a global repo.
 var ErrGlobalRepositoryWithSecrets = fmt.Errorf("docker registry secrets cannot be set for app repositories available in all namespaces")
 
-// NewHandler returns an AppRepositories and Kubernetes handler configured with
-// the in-cluster config but overriding the token with an empty string, so that
-// configForToken must be called to obtain a valid config.
+// NewHandler returns a handler configured with a service account client set and a config
+// with a blank token to be copied when creating user client sets with specific tokens.
 func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
@@ -189,11 +234,7 @@ func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 	if err != nil {
 		return nil, err
 	}
-	svcKubeClient, err := kubernetes.NewForConfig(svcRestConfig)
-	if err != nil {
-		return nil, err
-	}
-	svcAppRepoClient, err := apprepoclientset.NewForConfig(svcRestConfig)
+	svcClientset, err := clientsetForConfig(svcRestConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +244,7 @@ func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
 		clientsetForConfig: clientsetForConfig,
-		svcClientset:       &combinedClientset{svcAppRepoClient, svcKubeClient, svcKubeClient.RESTClient()},
+		svcClientset:       svcClientset,
 	}, nil
 }
 
@@ -218,21 +259,6 @@ func clientsetForConfig(config *rest.Config) (combinedClientsetInterface, error)
 		return nil, err
 	}
 	return &combinedClientset{arclientset, coreclientset, coreclientset.RESTClient()}, nil
-}
-
-// configForToken returns a new config for a given auth token.
-func (a *kubeHandler) configForToken(token string) *rest.Config {
-	configCopy := a.config
-	configCopy.BearerToken = token
-	return &configCopy
-}
-
-func (a *kubeHandler) clientsetForRequest(token string) (combinedClientsetInterface, error) {
-	clientset, err := a.clientsetForConfig(a.configForToken(token))
-	if err != nil {
-		log.Errorf("unable to create clientset: %v", err)
-	}
-	return clientset, err
 }
 
 func parseRepoRequest(appRepoBody io.ReadCloser) (*appRepositoryRequest, error) {
@@ -542,6 +568,7 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 	// Try to list namespaces with the user token, for backward compatibility
 	namespaces, err := a.clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
 	if err != nil {
+		// TODO: #1763 Check if we have a service token for getting namespaces on other clusters.
 		if k8sErrors.IsForbidden(err) {
 			// The user doesn't have permissions to list namespaces, use the current serviceaccount
 			namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})

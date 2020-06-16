@@ -60,12 +60,21 @@ func returnK8sError(err error, w http.ResponseWriter) {
 	}
 }
 
+func getNamespaceAndCluster(req *http.Request) (string, string) {
+	requestNamespace := mux.Vars(req)["namespace"]
+	requestCluster, ok := mux.Vars(req)["cluster"]
+	if !ok {
+		requestCluster = kube.DefaultClusterName
+	}
+	return requestNamespace, requestCluster
+}
+
 // CreateAppRepository creates App Repository
 func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace := mux.Vars(req)["namespace"]
+		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		appRepo, err := handler.AsUser(token).CreateAppRepository(req.Body, requestNamespace)
+		appRepo, err := handler.AsUser(token, requestCluster).CreateAppRepository(req.Body, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -86,9 +95,9 @@ func CreateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 // UpdateAppRepository updates an App Repository
 func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		requestNamespace := mux.Vars(req)["namespace"]
+		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		appRepo, err := handler.AsUser(token).UpdateAppRepository(req.Body, requestNamespace)
+		appRepo, err := handler.AsUser(token, requestCluster).UpdateAppRepository(req.Body, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -109,8 +118,9 @@ func UpdateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, r
 // ValidateAppRepository returns a 200 if the connection to the AppRepo can be established
 func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
+		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		res, err := handler.AsUser(token).ValidateAppRepository(req.Body, mux.Vars(req)["namespace"])
+		res, err := handler.AsUser(token, requestCluster).ValidateAppRepository(req.Body, requestNamespace)
 		if err != nil {
 			returnK8sError(err, w)
 			return
@@ -127,11 +137,11 @@ func ValidateAppRepository(handler kube.AuthHandler) func(w http.ResponseWriter,
 // DeleteAppRepository deletes an App Repository
 func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
-		repoNamespace := mux.Vars(req)["namespace"]
+		requestNamespace, requestCluster := getNamespaceAndCluster(req)
 		repoName := mux.Vars(req)["name"]
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
 
-		err := kubeHandler.AsUser(token).DeleteAppRepository(repoName, repoNamespace)
+		err := kubeHandler.AsUser(token, requestCluster).DeleteAppRepository(repoName, requestNamespace)
 
 		if err != nil {
 			returnK8sError(err, w)
@@ -143,7 +153,8 @@ func DeleteAppRepository(kubeHandler kube.AuthHandler) func(w http.ResponseWrite
 func GetNamespaces(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, req *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		token := auth.ExtractToken(req.Header.Get("Authorization"))
-		namespaces, err := kubeHandler.AsUser(token).GetNamespaces()
+		_, requestCluster := getNamespaceAndCluster(req)
+		namespaces, err := kubeHandler.AsUser(token, requestCluster).GetNamespaces()
 		if err != nil {
 			returnK8sError(err, w)
 		}
@@ -185,11 +196,18 @@ func SetupDefaultRoutes(r *mux.Router) error {
 	if err != nil {
 		return err
 	}
+	// Deprecate non-cluster-aware URIs.
 	r.Methods("GET").Path("/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
 	r.Methods("POST").Path("/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
 	r.Methods("PUT").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(UpdateAppRepository(backendHandler)))
 	r.Methods("DELETE").Path("/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
 	r.Methods("GET").Path("/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
+	r.Methods("GET").Path("/clusters/{cluster}/namespaces").Handler(http.HandlerFunc(GetNamespaces(backendHandler)))
+	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories").Handler(http.HandlerFunc(CreateAppRepository(backendHandler)))
+	r.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/validate").Handler(http.HandlerFunc(ValidateAppRepository(backendHandler)))
+	r.Methods("PUT").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(UpdateAppRepository(backendHandler)))
+	r.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/apprepositories/{name}").Handler(http.HandlerFunc(DeleteAppRepository(backendHandler)))
+	r.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/operator/{name}/logo").Handler(http.HandlerFunc(GetOperatorLogo(backendHandler)))
 	return nil
 }

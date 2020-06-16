@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -22,12 +21,11 @@ import (
 )
 
 const (
-	authHeader         = "Authorization"
-	clusterParam       = "clusters"
-	defaultClusterName = "default"
-	namespaceParam     = "namespace"
-	nameParam          = "releaseName"
-	authUserError      = "Unexpected error while configuring authentication"
+	authHeader     = "Authorization"
+	clusterParam   = "clusters"
+	namespaceParam = "namespace"
+	nameParam      = "releaseName"
+	authUserError  = "Unexpected error while configuring authentication"
 )
 
 const isV1SupportRequired = false
@@ -38,20 +36,13 @@ const isV1SupportRequired = false
 // This approach practically eliminates that risk; it is much easier to use WithHandlerConfig to create a handler guaranteed to use a valid handler config.
 type dependentHandler func(cfg Config, w http.ResponseWriter, req *http.Request, params handlerutil.Params)
 
-// AdditionalClusterConfig contains required info to talk to additional clusters.
-type AdditionalClusterConfig struct {
-	Name                     string `json:"name"`
-	APIServiceURL            string `json:"apiServiceURL"`
-	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
-}
-
 // Options represents options that can be created without a bearer token, i.e. once at application startup.
 type Options struct {
 	ListLimit          int
 	Timeout            int64
 	UserAgent          string
 	KubeappsNamespace  string
-	AdditionalClusters map[string]AdditionalClusterConfig
+	AdditionalClusters kube.AdditionalClustersConfig
 }
 
 // Config represents data needed by each handler to be able to create Helm 3 actions.
@@ -60,30 +51,6 @@ type Config struct {
 	ActionConfig *action.Configuration
 	Options      Options
 	ChartClient  chartUtils.Resolver
-}
-
-// NewClusterConfig returns a copy of an in-cluster config with a custom token and/or custom cluster host
-func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string, additionalClusters map[string]AdditionalClusterConfig) (*rest.Config, error) {
-	config := rest.CopyConfig(inClusterConfig)
-	config.BearerToken = token
-	config.BearerTokenFile = ""
-
-	if cluster == defaultClusterName {
-		return config, nil
-	}
-
-	additionalCluster, ok := additionalClusters[cluster]
-	if !ok {
-		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
-	}
-
-	config.Host = additionalCluster.APIServiceURL
-	if additionalCluster.CertificateAuthorityData != "" {
-		config.TLSClientConfig = rest.TLSClientConfig{
-			CAData: []byte(additionalCluster.CertificateAuthorityData),
-		}
-	}
-	return config, nil
 }
 
 // WithHandlerConfig takes a dependentHandler and creates a regular (WithParams) handler that,
@@ -96,7 +63,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 			// for now.
 			cluster, ok := params[clusterParam]
 			if !ok {
-				cluster = defaultClusterName
+				cluster = kube.DefaultClusterName
 			}
 			namespace := params[namespaceParam]
 			token := auth.ExtractToken(req.Header.Get(authHeader))
@@ -108,7 +75,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			restConfig, err := NewClusterConfig(inClusterConfig, token, cluster, options.AdditionalClusters)
+			restConfig, err := kube.NewClusterConfig(inClusterConfig, token, cluster, options.AdditionalClusters)
 			if err != nil {
 				log.Errorf("Failed to create in-cluster config with user token: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
