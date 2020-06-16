@@ -42,6 +42,7 @@ heritage: {{ .Release.Service }}
 helm.sh/chart: {{ template "kubeapps.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/name: {{ include "kubeapps.name" . }}
 {{- end -}}
 
 {{/*
@@ -49,19 +50,7 @@ Common labels
 */}}
 {{- define "kubeapps.labels" -}}
 app: {{ include "kubeapps.name" . }}
-app.kubernetes.io/name: {{ include "kubeapps.name" . }}
 {{ template "kubeapps.extraAppLabels" . }}
-{{- end -}}
-
-{{/*
-Labels to use on deploy.spec.selector.matchLabels and svc.spec.selector
-*/}}
-{{- define "kubeapps.matchLabels" -}}
-app: {{ include "kubeapps.name" . }}
-release: {{ .Release.Name }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-app.kubernetes.io/name: {{ include "kubeapps.name" . }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{/*
