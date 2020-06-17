@@ -102,12 +102,7 @@ installOLM() {
     namespace=olm
 
     kubectl apply -f ${url}/crds.yaml
-
-    # The Pod that populates the catalog gets OOM Killed due to very low limits
-    # This has been fixed here: https://github.com/operator-framework/operator-lifecycle-manager/pull/1389
-    # But the fix has not been published yet. To workaround the issue we are using a newer image
-    # This will be fixed in a version > 0.14.2
-    kubectl apply -f "${ROOT_DIR}/script/manifests/olm.yaml"
+    kubectl apply -f ${url}/olm.yaml
 
     # wait for deployments to be ready
     kubectl rollout status -w deployment/olm-operator --namespace="${namespace}"
@@ -172,7 +167,7 @@ pushChart() {
 
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
-  installOLM 0.14.1
+  installOLM 0.15.1
 fi
 
 info "IMAGE TAG TO BE TESTED: $DEV_TAG"

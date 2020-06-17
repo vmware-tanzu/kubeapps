@@ -30,9 +30,11 @@ class OLMNotFound extends React.Component {
             <div className="Terminal__Tab">
               <pre className="Terminal__Code">
                 <code>
-                  curl -sL
-                  https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.14.1/install.sh
-                  | bash -s 0.14.1
+                  curl -L
+                  https://github.com/operator-framework/operator-lifecycle-manager/releases/download/0.15.1/install.sh
+                  -o install.sh <br />
+                  chmod +x install.sh <br />
+                  ./install.sh 0.15.1
                 </code>
               </pre>
             </div>
