@@ -173,16 +173,17 @@ pushChart() {
 #########################
 installOrUpgradeKubeapps() {
     local chartSource=$1
+    info "Chart source: $chartSource"
+    helm repo add bitnami https://charts.bitnami.com/bitnami
     if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
       # Init Tiller
       tiller-init-rbac
       # Install Kubeapps
       info "Installing Kubeapps..."
-      helm repo add bitnami https://charts.bitnami.com/bitnami
-      if [[ "${chartSource}" =~ "^/.*" ]]; then
+      #if [[ "${chartSource}" =~ "^/.*" ]]; then
         # If it's a local path, update dependencies
         helm dep up "${chartSource}"
-      fi
+      #fi
       helm install --name kubeapps-ci --namespace kubeapps "${chartSource}" \
         "${HELM_CLIENT_TLS_FLAGS[@]}" \
         --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
