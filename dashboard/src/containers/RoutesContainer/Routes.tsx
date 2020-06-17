@@ -62,8 +62,6 @@ class Routes extends React.Component<IRoutesProps> {
     featureFlags: { operators: false },
   };
   public render() {
-    // The path used for AppRepository list depends on a feature flag.
-    // TODO(mnelson, #1256) Remove when feature becomes default.
     const reposPath = "/config/ns/:namespace/repos";
     if (this.props.featureFlags.operators) {
       // Add routes related to operators
