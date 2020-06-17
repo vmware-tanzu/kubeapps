@@ -32,21 +32,25 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Common labels for additional kubeapps applications. Used on resources whose app name is different
+from kubeapps
+*/}}
+{{- define "kubeapps.extraAppLabels" -}}
+chart: {{ include "kubeapps.chart" . }}
+release: {{ .Release.Name }}
+heritage: {{ .Release.Service }}
+helm.sh/chart: {{ template "kubeapps.chart" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+app.kubernetes.io/name: {{ include "kubeapps.name" . }}
+{{- end -}}
+
+{{/*
 Common labels
 */}}
 {{- define "kubeapps.labels" -}}
 app: {{ include "kubeapps.name" . }}
-chart: {{ include "kubeapps.chart" . }}
-release: {{ .Release.Name }}
-heritage: {{ .Release.Service }}
-{{- end -}}
-
-{{/*
-Labels to use on deploy.spec.selector.matchLabels and svc.spec.selector
-*/}}
-{{- define "kubeapps.matchLabels" -}}
-app: {{ include "kubeapps.name" . }}
-release: {{ .Release.Name }}
+{{ template "kubeapps.extraAppLabels" . }}
 {{- end -}}
 
 {{/*
