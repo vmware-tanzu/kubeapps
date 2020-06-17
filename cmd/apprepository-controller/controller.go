@@ -57,7 +57,9 @@ const (
 	// existing.
 	ErrResourceExists = "ErrResourceExists"
 
-	LabelRepoName      = "apprepositories.kubeapps.com/repo-name"
+	// LabelRepoName is the label used to identify the repository name.
+	LabelRepoName = "apprepositories.kubeapps.com/repo-name"
+	// LabelRepoNamespace is the label used to identify the repository namespace.
 	LabelRepoNamespace = "apprepositories.kubeapps.com/repo-namespace"
 
 	// MessageResourceExists is the message used for Events when a resource

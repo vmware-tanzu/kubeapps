@@ -5,15 +5,15 @@ import { AppRepository } from "../shared/AppRepository";
 import Chart from "../shared/Chart";
 import { definedNamespaces } from "../shared/Namespace";
 import Secret from "../shared/Secret";
-import { errorChart } from "./charts";
-
 import {
   IAppRepository,
   IAppRepositoryKey,
   ISecret,
   IStoreState,
-  NotFoundError,
+  NotFoundError
 } from "../shared/types";
+import { errorChart } from "./charts";
+
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
@@ -115,14 +115,10 @@ export const deleteRepo = (
   return async (dispatch, getState) => {
     const {
       namespace: { current },
-      config: { namespace: kubeappsNamespace, featureFlags },
     } = getState();
     try {
       await AppRepository.delete(name, namespace);
-      const fetchFromNamespace: string = featureFlags.reposPerNamespace
-        ? current
-        : kubeappsNamespace;
-      dispatch(fetchRepos(fetchFromNamespace));
+      dispatch(fetchRepos(current));
       return true;
     } catch (e) {
       dispatch(errorRepos(e, "delete"));

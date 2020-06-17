@@ -25,7 +25,7 @@ const defaultState = {
   auth: defaultAuthState,
   router: { location: emptyLocation },
   config: {
-    featureFlags: { reposPerNamespace: true },
+    featureFlags: { operators: true },
   },
 };
 
@@ -43,7 +43,7 @@ describe("HeaderContainer props", () => {
     const store = mockStore({
       ...defaultState,
       config: {
-        featureFlags: { reposPerNamespace: true },
+        featureFlags: { operators: true },
       },
     });
 
@@ -51,7 +51,7 @@ describe("HeaderContainer props", () => {
 
     const form = wrapper.find("Header");
     expect(form).toHaveProp({
-      featureFlags: { reposPerNamespace: true },
+      featureFlags: { operators: true },
     });
   });
 });

@@ -1,20 +1,17 @@
 import { connect } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-
 import actions from "../../actions";
 import AppRepoList from "../../components/Config/AppRepoList";
 import { definedNamespaces } from "../../shared/Namespace";
 import { IAppRepositoryKey, IStoreState } from "../../shared/types";
 
+
 function mapStateToProps({ config, namespace, repos }: IStoreState) {
-  let repoNamespace = config.namespace;
+  const repoNamespace = namespace.current;
   let displayReposPerNamespaceMsg = false;
-  if (config.featureFlags.reposPerNamespace) {
-    repoNamespace = namespace.current;
-    if (repoNamespace !== definedNamespaces.all) {
-      displayReposPerNamespaceMsg = true;
-    }
+  if (repoNamespace !== definedNamespaces.all) {
+    displayReposPerNamespaceMsg = true;
   }
   return {
     errors: repos.errors,
