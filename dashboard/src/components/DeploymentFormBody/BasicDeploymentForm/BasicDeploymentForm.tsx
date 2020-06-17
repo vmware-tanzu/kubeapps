@@ -127,6 +127,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
               param={param}
               min={p.sliderMin || 1}
               max={p.sliderMax || 1000}
+              step={p.sliderStep || 1}
               unit={p.sliderUnit || ""}
             />
           );

@@ -557,5 +557,6 @@ export interface IBasicFormParam {
 export interface IBasicFormSliderParam extends IBasicFormParam {
   sliderMin?: number;
   sliderMax?: number;
+  sliderStep?: number;
   sliderUnit?: string;
 }

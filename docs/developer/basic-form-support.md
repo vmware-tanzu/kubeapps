@@ -52,6 +52,7 @@ In order to render a slider, there are some requirements and additional tags tha
 - It's necessary to specify the tag `render` and set it to `slider`.
 - The tag `sliderMin` identifies the minimum value the slider allows (this can be bypassed writting a smaller value in the input).
 - The tag `sliderMax` identifies the maximum value the slider allows (this can be bypassed writting a bigger value in the input).
+- The tag `sliderStep` identifies the step the slider will increment or decrement the value when moved.
 - The tag `sliderUnit` specifies the unit of the value to set. For example `Gi`.
 
  This is an example of a slider param:
