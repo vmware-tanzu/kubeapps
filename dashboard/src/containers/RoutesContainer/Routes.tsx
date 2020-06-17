@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
-
 import NotFound from "../../components/NotFound";
 import AppListContainer from "../../containers/AppListContainer";
 import AppNewContainer from "../../containers/AppNewContainer";
@@ -23,6 +22,7 @@ import ServiceClassViewContainer from "../../containers/ServiceClassViewContaine
 import ServiceInstanceListContainer from "../../containers/ServiceInstanceListContainer";
 import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewContainer";
 import { app } from "../../shared/url";
+
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
@@ -55,21 +55,16 @@ interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   cluster: string;
   authenticated: boolean;
   featureFlags: {
-    reposPerNamespace: boolean;
     operators: boolean;
   };
 }
 
 class Routes extends React.Component<IRoutesProps> {
   public static defaultProps = {
-    featureFlags: { reposPerNamespace: false, operators: false },
+    featureFlags: { operators: false },
   };
   public render() {
-    // The path used for AppRepository list depends on a feature flag.
-    // TODO(mnelson, #1256) Remove when feature becomes default.
-    const reposPath = this.props.featureFlags.reposPerNamespace
-      ? "/config/ns/:namespace/repos"
-      : "/config/repos";
+    const reposPath = "/config/ns/:namespace/repos";
     if (this.props.featureFlags.operators) {
       // Add routes related to operators
       Object.assign(privateRoutes, {

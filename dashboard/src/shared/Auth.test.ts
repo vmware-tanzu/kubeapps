@@ -171,7 +171,7 @@ describe("Auth", () => {
         oauthLogoutURI,
         namespace: "ns",
         appVersion: "2",
-        featureFlags: { reposPerNamespace: false, operators: false },
+        featureFlags: { operators: false },
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -185,7 +185,7 @@ describe("Auth", () => {
         oauthLogoutURI: "",
         namespace: "ns",
         appVersion: "2",
-        featureFlags: { reposPerNamespace: false, operators: false },
+        featureFlags: { operators: false },
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

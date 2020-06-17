@@ -9,7 +9,6 @@ export interface IConfig {
   oauthLogoutURI: string;
   error?: Error;
   featureFlags: {
-    reposPerNamespace: boolean;
     operators: boolean;
   };
 }

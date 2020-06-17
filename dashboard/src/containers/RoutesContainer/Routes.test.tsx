@@ -69,9 +69,8 @@ describe("Routes depending on feature flags", () => {
   const cluster = "default";
   const namespace = "default";
   const perNamespacePath = "/config/ns/:namespace/repos";
-  const nonNamespacedPath = "/config/repos";
 
-  it("should use a non-namespaced route for app repos without feature flag", () => {
+  it("uses a namespaced route for app repos", () => {
     const wrapper = shallow(
       <StaticRouter location="/config/repos" context={{}}>
         <Routes
@@ -79,29 +78,6 @@ describe("Routes depending on feature flags", () => {
           cluster={cluster}
           namespace={namespace}
           authenticated={true}
-          featureFlags={{ reposPerNamespace: false, operators: false }}
-        />
-      </StaticRouter>,
-    )
-      .dive()
-      .dive()
-      .dive();
-
-    const component = wrapper.find({ component: RepoListContainer });
-
-    expect(component.length).toBe(1);
-    expect(component.props().path).toEqual(nonNamespacedPath);
-  });
-
-  it("should use a namespaced route for app repos when feature flag set", () => {
-    const wrapper = shallow(
-      <StaticRouter location="/config/repos" context={{}}>
-        <Routes
-          {...emptyRouteComponentProps}
-          cluster={cluster}
-          namespace={namespace}
-          authenticated={true}
-          featureFlags={{ reposPerNamespace: true, operators: false }}
         />
       </StaticRouter>,
     )

@@ -25,6 +25,7 @@ import (
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd" // Uncomment the following line to load the gcp plugin (only required to authenticate against GKE clusters).
+
 	// _ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	log "github.com/sirupsen/logrus"
 )
@@ -69,13 +70,7 @@ func main() {
 
 	// We're interested in being informed about cronjobs in kubeapps namespace only, currently.
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactoryWithOptions(kubeClient, 0, kubeinformers.WithNamespace(namespace))
-	// Depending on the flag, we may be interested in AppRepository resources across the cluster.
-	var apprepoInformerFactory informers.SharedInformerFactory
-	if reposPerNamespace {
-		apprepoInformerFactory = informers.NewSharedInformerFactory(apprepoClient, 0)
-	} else {
-		apprepoInformerFactory = informers.NewFilteredSharedInformerFactory(apprepoClient, 0, namespace, nil)
-	}
+	apprepoInformerFactory := informers.NewSharedInformerFactory(apprepoClient, 0)
 
 	controller := NewController(kubeClient, apprepoClient, kubeInformerFactory, apprepoInformerFactory, namespace)
 
@@ -93,7 +88,7 @@ func init() {
 	flag.StringVar(&repoSyncImage, "repo-sync-image", "quay.io/helmpack/chart-repo:latest", "container repo/image to use in CronJobs")
 	flag.StringVar(&repoSyncCommand, "repo-sync-cmd", "/chart-repo", "command used to sync/delete repos for repo-sync-image")
 	flag.StringVar(&namespace, "namespace", "kubeapps", "Namespace to discover AppRepository resources")
-	flag.BoolVar(&reposPerNamespace, "repos-per-namespace", false, "Enables syncing app repositories across all namespaces.")
+	flag.BoolVar(&reposPerNamespace, "repos-per-namespace", true, "UNUSED: This flag will be removed in a future release.")
 	flag.StringVar(&dbType, "database-type", "mongodb", "Database type. Allowed values: mongodb, postgresql")
 	flag.StringVar(&dbURL, "database-url", "localhost", "Database URL")
 	flag.StringVar(&dbUser, "database-user", "root", "Database user")

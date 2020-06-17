@@ -98,35 +98,8 @@ actionTestCases.forEach(tc => {
 describe("deleteRepo", () => {
   context("dispatches requestRepos and receivedRepos after deletion if no error", async () => {
     const currentNamespace = "current-namespace";
-    it("dispatches requestRepos with kubeapps namespace when reposPerNamespace is not set", async () => {
+    it("dispatches requestRepos with current namespace", async () => {
       const storeWithFlag: any = mockStore({
-        config: {
-          namespace: kubeappsNamespace,
-          featureFlags: { reposPerNamespace: false },
-        },
-        namespace: { current: currentNamespace },
-      });
-      const expectedActions = [
-        {
-          type: getType(repoActions.requestRepos),
-          payload: kubeappsNamespace,
-        },
-        {
-          type: getType(repoActions.receiveRepos),
-          payload: { foo: "bar" },
-        },
-      ];
-
-      await storeWithFlag.dispatch(repoActions.deleteRepo("foo", "my-namespace"));
-      expect(storeWithFlag.getActions()).toEqual(expectedActions);
-    });
-
-    it("dispatches requestRepos with current namespace when reposPerNamespace is set", async () => {
-      const storeWithFlag: any = mockStore({
-        config: {
-          namespace: kubeappsNamespace,
-          featureFlags: { reposPerNamespace: true },
-        },
         namespace: { current: currentNamespace },
       });
       const expectedActions = [
