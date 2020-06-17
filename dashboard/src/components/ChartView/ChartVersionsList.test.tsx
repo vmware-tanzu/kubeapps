@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { Link } from "react-router-dom";
 import { IChartVersion } from "../../shared/types";
+import * as url from "../../shared/url";
 import ChartVersionsList from "./ChartVersionsList";
 
 const testChart: IChartVersion["relationships"]["chart"] = {
@@ -76,7 +77,7 @@ it("renders the list of versions", () => {
   const link = items.at(1).find(Link);
   expect(link.prop("className")).toBe("type-bold type-color-action");
   // The link include the namespace
-  expect(link.prop("to")).toBe("/ns/kubeapps/charts/testrepo/test/versions/1.2.2");
+  expect(link.prop("to")).toBe(url.app.charts.version("test", "1.2.2", testChart.data.repo, "kubeapps"));
 });
 
 it("does not render a the Show All link when there are 5 or less versions", () => {

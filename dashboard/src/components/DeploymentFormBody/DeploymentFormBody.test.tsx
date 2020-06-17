@@ -1,9 +1,9 @@
 import { mount, shallow } from "enzyme";
 import * as React from "react";
-
 import { Tab, Tabs } from "react-tabs";
 import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion, NotFoundError } from "../../shared/types";
+import * as url from "../../shared/url";
 import ConfirmDialog from "../ConfirmDialog";
 import { ErrorSelector } from "../ErrorAlert";
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
@@ -11,9 +11,10 @@ import LoadingWrapper from "../LoadingWrapper";
 import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm";
 import DeploymentFormBody, {
   IDeploymentFormBodyProps,
-  IDeploymentFormBodyState,
+  IDeploymentFormBodyState
 } from "./DeploymentFormBody";
 import Differential from "./Differential";
+
 
 const defaultProps = {
   chartNamespace: "chart-namespace",
@@ -124,7 +125,7 @@ it("changes the URL for the new version", () => {
     },
   });
   wrapper.find("select").simulate("change", { currentTarget: { value: "2.0.0" } });
-  expect(push).toHaveBeenCalledWith("/ns/default/apps/new-from-global/repo/chart/versions/2.0.0");
+  expect(push).toHaveBeenCalledWith(url.app.apps.new(chartVersion, defaultProps.namespace, "2.0.0"));
 });
 
 describe("when there are changes in the selected version", () => {

@@ -1,13 +1,14 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-
 import helmIcon from "../../icons/helm.svg";
 import operatorIcon from "../../icons/operator-framework.svg";
 import placeholder from "../../placeholder.png";
 import { IRepo } from "../../shared/types";
+import * as url from "../../shared/url";
 import InfoCard from "../InfoCard";
-
 import "./CatalogItem.css";
+
+
 
 interface ICatalogItemProps {
   item: ICatalogItem;
@@ -45,15 +46,18 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   let subIcon;
   if (type === "chart") {
     tag1 = (
+      // TODO (absoludity): It appears that repo is an optional prop only because the item
+      // may be an operator. We could instead use polymorphism with two separate
+      // types ICatalogItemChart and ICatalogItemOperator which both implement
+      // a required interface for use in the component?
       <Link
         className="ListItem__content__info_tag_link"
-        to={`/ns/${namespace}/catalog/${repo?.name}`}
+        to={url.app.repo(repo?.name || "", namespace)}
       >
         {repo?.name}
       </Link>
     );
-    const chartsSegment = namespace !== repo?.namespace ? "global-charts" : "charts";
-    link = `/ns/${namespace}/${chartsSegment}/${repo?.name}/${name}`;
+    link = url.app.charts.get(name, repo || {} as IRepo, namespace);
     subIcon = helmIcon;
   } else {
     // Cosmetic change, remove the version from the csv name

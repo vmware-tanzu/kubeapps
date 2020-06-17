@@ -1,9 +1,10 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import { Redirect } from "react-router";
-
 import { IChartVersion } from "../../shared/types";
+import * as url from "../../shared/url";
 import ChartDeployButton from "./ChartDeployButton";
+
 
 const testChartVersion: IChartVersion = {
   attributes: {
@@ -34,12 +35,12 @@ it("renders a redirect with the correct URL when the button is clicked", () => {
     {
       namespace: "kubeapps",
       version: "1.2.3",
-      url: "/ns/kubeapps/apps/new/testrepo/test/versions/1.2.3",
+      url: url.app.apps.new(testChartVersion, "kubeapps", "1.2.3"),
     },
     {
       namespace: "foo",
       version: "alpha-0",
-      url: "/ns/foo/apps/new-from-global/testrepo/test/versions/alpha-0",
+      url: url.app.apps.new(testChartVersion, "foo", "alpha-0"),
     },
   ];
 

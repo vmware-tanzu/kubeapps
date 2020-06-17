@@ -1,9 +1,10 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import { Link } from "react-router-dom";
-
+import * as url from "../../shared/url";
 import ChartIcon from "../ChartIcon";
 import ChartHeader from "./ChartHeader";
+
 
 const testProps: any = {
   description: "A Test Chart",
@@ -14,6 +15,7 @@ const testProps: any = {
       app_version: "1.2.3",
     },
   },
+  namespace: "kubeapps",
 };
 
 it("renders a header for the chart", () => {
@@ -22,7 +24,7 @@ it("renders a header for the chart", () => {
   expect(wrapper.text()).toContain("A Test Chart");
   const repoLink = wrapper.find(Link);
   expect(repoLink.exists()).toBe(true);
-  expect(repoLink.props()).toMatchObject({ to: "/catalog/testrepo", children: "testrepo" });
+  expect(repoLink.props()).toMatchObject({ to: url.app.repo("testrepo", "kubeapps"), children: "testrepo" });
   expect(wrapper.find(ChartIcon).exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
 });

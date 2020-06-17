@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-
 import { IChartVersion } from "shared/types";
+import * as url from "../../shared/url";
 import ChartIcon from "../ChartIcon";
 import ChartDeployButton from "./ChartDeployButton";
 import "./ChartHeader.css";
@@ -30,7 +30,7 @@ class ChartHeader extends React.Component<IChartHeaderProps> {
               <h1 className="margin-t-reset">{id}</h1>
               <h5 className="subtitle margin-b-normal">
                 {appVersion && <span>{appVersion} - </span>}
-                <Link to={`/catalog/${repo}`}>{repo}</Link>
+                <Link to={url.app.repo(repo, namespace)}>{repo}</Link>
               </h5>
               <h5 className="subtitle margin-b-reset">{description}</h5>
             </div>
