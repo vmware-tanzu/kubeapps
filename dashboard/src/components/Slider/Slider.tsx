@@ -22,6 +22,7 @@ export interface ISliderProps {
   min: number;
   max: number;
   default: number;
+  step: number;
   values: number;
   onChange: (values: number[]) => void;
   onUpdate: (values: number[]) => void;
@@ -29,13 +30,13 @@ export interface ISliderProps {
 
 class Slider extends React.Component<ISliderProps> {
   public render() {
-    const { min, max, values, onUpdate, onChange } = this.props;
+    const { min, max, step, values, onUpdate, onChange } = this.props;
     const domain = [min, max];
 
     return (
       <ReactSlider
         mode={1}
-        step={1}
+        step={step}
         domain={domain}
         rootStyle={sliderStyle}
         onUpdate={onUpdate}

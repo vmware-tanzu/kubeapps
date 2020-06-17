@@ -10,6 +10,7 @@ const defaultProps = {
   handleBasicFormParamChange: jest.fn(() => jest.fn()),
   min: 1,
   max: 100,
+  step: 1,
   unit: "Gi",
 };
 
@@ -93,6 +94,37 @@ describe("when changing the slide", () => {
 
       const slider = wrapper.find(Slider);
       (slider.prop("onChange") as (values: number[]) => void)([20]);
+
+      expect(cloneParam.value).toBe(expected);
+      expect(handleBasicFormParamChange.mock.calls[0]).toEqual([
+        { value: expected, type: param.type, path: param.path },
+      ]);
+    });
+  });
+
+  it("changes the value of the string param with the step defined", () => {
+    params.forEach(param => {
+      const cloneProps = { ...defaultProps, step: 10 };
+      const cloneParam = { ...param } as IBasicFormParam;
+      const expected = param.type === "string" ? "20Gi" : 20;
+
+      const handleBasicFormParamChange = jest.fn(() => {
+        cloneParam.value = expected;
+        return jest.fn();
+      });
+
+      const wrapper = shallow(
+        <SliderParam
+          {...cloneProps}
+          param={cloneParam}
+          handleBasicFormParamChange={handleBasicFormParamChange}
+        />,
+      );
+
+      expect(wrapper.state("value")).toBe(10);
+
+      const slider = wrapper.find(Slider);
+      (slider.prop("onChange") as (values: number[]) => void)([2]);
 
       expect(cloneParam.value).toBe(expected);
       expect(handleBasicFormParamChange.mock.calls[0]).toEqual([

@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { mount, shallow } from "enzyme";
-import { IBasicFormParam } from "shared/types";
+import { IBasicFormParam, IBasicFormSliderParam } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import Subsection from "./Subsection";
 
@@ -70,6 +70,21 @@ const defaultProps = {
         type: "number",
         render: "slider",
       } as IBasicFormParam,
+    ],
+  },
+  {
+    description: "renders a basic deployment with slider parameters",
+    params: [
+      {
+        path: "size",
+        value: "10Gi",
+        type: "string",
+        render: "slider",
+        sliderMin: 1,
+        sliderMax: 100,
+        sliderStep: 1,
+        sliderUnit: "Gi",
+      } as IBasicFormSliderParam,
     ],
   },
   {

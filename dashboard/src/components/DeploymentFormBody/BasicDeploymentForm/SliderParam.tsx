@@ -9,6 +9,7 @@ export interface ISliderParamProps {
   unit: string;
   min: number;
   max: number;
+  step: number;
   handleBasicFormParamChange: (
     p: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement>) => void;
@@ -60,7 +61,7 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
   };
 
   public render() {
-    const { param, label, min, max } = this.props;
+    const { param, label, min, max, step } = this.props;
     return (
       <div>
         <label htmlFor={this.props.id}>
@@ -75,6 +76,7 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
                     // If the parameter defines a minimum or maximum, maintain those
                     min={Math.min(param.minimum || min, this.state.value)}
                     max={Math.max(param.maximum || max, this.state.value)}
+                    step={step || 1}
                     default={this.state.value}
                     onChange={this.onChangeSlider}
                     onUpdate={this.onUpdateSlider}
