@@ -114,7 +114,6 @@ metadata:
   name: "kubeapps:controller:{{ .Release.Namespace }}:apprepositories-read"
   labels:{{ include "kubeapps.extraAppLabels" . | nindent 4 }}
     app: {{ template "kubeapps.apprepository.fullname" . }}
-    app.kubernetes.io/name: {{ template "kubeapps.apprepository.fullname" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
