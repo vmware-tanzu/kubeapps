@@ -9,14 +9,14 @@ import AppList from "../../components/AppList";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { apps, clusters, operators, config }: IStoreState,
+  { apps, clusters: { currentCluster, clusters}, operators, config }: IStoreState,
   { location }: RouteComponentProps<{}>,
 ) {
   return {
     apps,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
-    cluster: clusters.currentCluster,
-    namespace: clusters.clusters.currentCluster.currentNamespace,
+    cluster: currentCluster,
+    namespace: clusters[currentCluster].currentNamespace,
     customResources: operators.resources,
     isFetchingResources: operators.isFetching,
     csvs: operators.csvs,
