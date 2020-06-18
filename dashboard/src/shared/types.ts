@@ -3,7 +3,7 @@ import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
 import { IConfigState } from "../reducers/config";
-import { INamespaceState } from "../reducers/namespace";
+import { IClustersState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
 import { ResourceKind } from "./ResourceKinds";
@@ -359,7 +359,7 @@ export interface IStoreState {
   config: IConfigState;
   kube: IKubeState;
   repos: IAppRepositoryState;
-  namespace: INamespaceState;
+  namespace: IClustersState;
   operators: IOperatorsState;
 }
 

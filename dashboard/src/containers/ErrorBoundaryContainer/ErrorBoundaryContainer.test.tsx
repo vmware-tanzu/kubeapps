@@ -1,6 +1,6 @@
 import { mount } from "enzyme";
 import * as React from "react";
-import { INamespaceState } from "reducers/namespace";
+import { IClusterState } from "reducers/namespace";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import ErrorBoundaryContainer from ".";
@@ -8,9 +8,8 @@ import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAler
 
 const mockStore = configureMockStore([thunk]);
 const makeStore = (error?: { action: string; error: Error }) => {
-  const state: INamespaceState = {
-    cluster: "default",
-    current: "default",
+  const state: IClusterState = {
+    currentNamespace: "default",
     namespaces: ["default"],
     error,
   };

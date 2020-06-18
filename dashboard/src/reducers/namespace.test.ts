@@ -4,13 +4,17 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { IResource } from "../shared/types";
-import namespaceReducer from "./namespace";
+import clusterReducer, { IClustersState } from "./namespace";
 
 describe("namespaceReducer", () => {
-  const initialState = {
-    cluster: "default",
-    current: "initial-current",
-    namespaces: ["default", "initial-current"],
+  const initialState: IClustersState = {
+    currentCluster: "default",
+    clusters: {
+      default: {
+        currentNamespace: "initial-current",
+        namespaces: ["default", "initial-current"],
+      },
+    },
   };
   context("when LOCATION CHANGE", () => {
     const location = {
@@ -28,14 +32,22 @@ describe("namespaceReducer", () => {
       testCases.forEach(tc => {
         it(tc.path, () =>
           expect(
-            namespaceReducer(initialState, {
+            clusterReducer(initialState, {
               type: LOCATION_CHANGE,
               payload: {
                 location: { ...location, pathname: tc.path },
                 action: "PUSH" as RouterActionType,
               },
             }),
-          ).toEqual({ ...initialState, current: tc.current }),
+          ).toEqual({
+            ...initialState,
+            clusters: {
+              default: {
+                ...initialState.clusters.default,
+                currentNamespace: tc.current,
+              },
+            },
+          } as IClustersState)
         );
       });
     });
@@ -46,87 +58,126 @@ describe("namespaceReducer", () => {
 
     it("when listing leaves namespaces intact and but ignores the error", () => {
       expect(
-        namespaceReducer(initialState, {
+        clusterReducer(initialState, {
           type: getType(actions.namespace.errorNamespaces),
           payload: { err, op: "list" },
         }),
-      ).toEqual({ ...initialState, error: undefined });
+      ).toEqual({
+        ...initialState,
+        clusters: {
+          default: {
+            ...initialState.clusters.default,
+            error: undefined,
+          },
+        },
+      } as IClustersState);
     });
 
     it("leaves namespaces intact and sets the error", () => {
       expect(
-        namespaceReducer(initialState, {
+        clusterReducer(initialState, {
           type: getType(actions.namespace.errorNamespaces),
           payload: { err, op: "create" },
         }),
-      ).toEqual({ ...initialState, error: { action: "create", error: err } });
+      ).toEqual({
+        ...initialState,
+        clusters: {
+          default: { ...initialState.clusters.default, error: { action: "create", error: err } }
+        },
+      } as IClustersState);
     });
   });
 
   context("when CLEAR_NAMESPACES", () => {
     it("returns to the initial state", () => {
-      const dirtyState = {
-        cluster: "default",
-        current: "some-other-namespace",
-        namespaces: ["namespace-one", "namespace-two"],
-      };
       expect(
-        namespaceReducer(dirtyState, {
+        clusterReducer(initialState, {
           type: getType(actions.namespace.clearNamespaces),
         }),
-      ).toEqual({ cluster: "default", current: "_all", namespaces: [] });
+      ).toEqual({
+        ...initialState,
+        clusters: { default: { currentNamespace: "_all", namespaces: [] } }
+      } as IClustersState);
     });
   });
 
   context("when SET_AUTHENTICATED", () => {
     it("sets the current namespace to the users default", () => {
       expect(
-        namespaceReducer(
-          { cluster: "default", current: "default", namespaces: [] },
+        clusterReducer(
+          initialState,
           {
             type: getType(actions.auth.setAuthenticated),
             payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
           },
         ),
-      ).toEqual({ cluster: "default", current: "foo-bar", namespaces: [] });
+      ).toEqual({
+        ...initialState,
+        clusters: {
+          default: { ...initialState.clusters.default, currentNamespace: "foo-bar" },
+        },
+      } as IClustersState);
     });
   });
 
   context("when SET_NAMESPACE", () => {
     it("sets the current namespace and clears error", () => {
       expect(
-        namespaceReducer(
-          {
-            cluster: "default",
-            current: "error",
-            namespaces: [],
-            error: { action: "create", error: new Error("boom") },
+        clusterReducer({
+          ...initialState,
+          clusters: {
+            default: {
+              ...initialState.clusters.default,
+              currentNamespace: "other",
+              error: { action: "create", error: new Error("Bang!") },
+            },
           },
-          {
-            type: getType(actions.namespace.setNamespace),
-            payload: "default",
+        }, {
+          type: getType(actions.namespace.setNamespace),
+          payload: "default",
+        }),
+      ).toEqual({
+        ...initialState,
+        clusters: {
+          default: {
+            ...initialState.clusters.default,
+            currentNamespace: "default",
+            error: undefined,
           },
-        ),
-      ).toEqual({ cluster: "default", current: "default", namespaces: [], error: undefined });
+        },
+      } as IClustersState);
     });
   });
 
   context("when RECEIVE_NAMESPACE", () => {
     it("adds the namespace to the list and clears error", () => {
       expect(
-        namespaceReducer(
+        clusterReducer(
           {
-            cluster: "default",
-            current: "",
-            namespaces: ["default"],
-            error: { action: "create", error: new Error("boom") },
-          },
+            ...initialState,
+            clusters: {
+              default: {
+                currentNamespace: "",
+                namespaces: ["default"],
+                error: { action: "create", error: new Error("boom") },
+              }
+            },
+          } as IClustersState,
           {
             type: getType(actions.namespace.receiveNamespace),
             payload: { metadata: { name: "bar" } } as IResource,
           },
         ),
-      ).toEqual({ cluster: "default", current: "", namespaces: ["bar", "default"], error: undefined });
+      ).toEqual({
+        ...initialState,
+        clusters: {
+          default: {
+            currentNamespace: "",
+            namespaces: ["bar", "default"],
+            error: undefined,
+          },
+        },
+      } as IClustersState);
     });
   });
 });

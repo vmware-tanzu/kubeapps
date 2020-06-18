@@ -1,14 +1,14 @@
 import * as React from "react";
 import * as Select from "react-select";
 
-import { INamespaceState } from "../../reducers/namespace";
+import { IClusterState } from "../../reducers/namespace";
 import { definedNamespaces } from "../../shared/Namespace";
 
 import "./NamespaceSelector.css";
 import NewNamespace from "./NewNamespace";
 
-interface INamespaceSelectorProps {
-  namespace: INamespaceState;
+export interface INamespaceSelectorProps {
+  cluster: IClusterState;
   defaultNamespace: string;
   onChange: (ns: string) => any;
   fetchNamespaces: () => void;
@@ -28,7 +28,7 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
   };
 
   get selected() {
-    return this.props.namespace.current || this.props.defaultNamespace;
+    return this.props.cluster.currentNamespace || this.props.defaultNamespace;
   }
 
   public componentDidMount() {
@@ -40,7 +40,7 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
 
   public render() {
     const {
-      namespace: { namespaces, error },
+      cluster: { namespaces, error },
     } = this.props;
     const options = namespaces.length > 0 ? namespaces.map(n => ({ value: n, label: n })) : [];
     const allOption = { value: definedNamespaces.all, label: "All Namespaces" };

@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { INamespaceState } from "../../reducers/namespace";
+import { IClusterState } from "../../reducers/namespace";
 import { app } from "../../shared/url";
 import Header from "./Header";
 
@@ -9,10 +9,10 @@ const defaultProps = {
   authenticated: true,
   fetchNamespaces: jest.fn(),
   logout: jest.fn(),
-  namespace: {
-    current: "default",
+  cluster: {
+    currentNamespace: "default",
     namespaces: ["default", "other"],
-  } as INamespaceState,
+  } as IClusterState,
   defaultNamespace: "kubeapps-user",
   pathname: "",
   push: jest.fn(),
@@ -87,7 +87,7 @@ it("renders the namespace switcher", () => {
   expect(namespaceSelector.props()).toEqual(
     expect.objectContaining({
       defaultNamespace: defaultProps.defaultNamespace,
-      namespace: defaultProps.namespace,
+      cluster: defaultProps.cluster,
     }),
   );
 });
@@ -96,16 +96,15 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
   const setNamespace = jest.fn();
   const createNamespace = jest.fn();
   const getNamespace = jest.fn();
-  const namespace = {
-    cluster: "default",
-    current: "foo",
+  const cluster = {
+    currentNamespace: "foo",
     namespaces: ["foo", "bar"],
   };
   const wrapper = shallow(
     <Header
       {...defaultProps}
       setNamespace={setNamespace}
-      namespace={namespace}
+      cluster={cluster}
       createNamespace={createNamespace}
       getNamespace={getNamespace}
     />,
@@ -124,16 +123,15 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
 it("doesn't call getNamespace when selecting all namespaces", () => {
   const setNamespace = jest.fn();
   const getNamespace = jest.fn();
-  const namespace = {
-    cluster: "defalut",
-    current: "foo",
+  const cluster = {
+    currentNamespace: "foo",
     namespaces: ["foo", "bar"],
   };
   const wrapper = shallow(
     <Header
       {...defaultProps}
       setNamespace={setNamespace}
-      namespace={namespace}
+      cluster={cluster}
       getNamespace={getNamespace}
     />,
   );

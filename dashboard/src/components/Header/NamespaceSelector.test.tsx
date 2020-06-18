@@ -3,29 +3,29 @@ import * as React from "react";
 import * as ReactModal from "react-modal";
 import * as Select from "react-select";
 
-import { INamespaceState } from "../../reducers/namespace";
-import NamespaceSelector from "./NamespaceSelector";
+import { IClusterState } from "../../reducers/namespace";
+import NamespaceSelector, { INamespaceSelectorProps } from "./NamespaceSelector";
 import NewNamespace from "./NewNamespace";
 
 const defaultProps = {
   fetchNamespaces: jest.fn(),
-  namespace: {
-    current: "namespace-two",
+  cluster: {
+    currentNamespace: "namespace-two",
     namespaces: ["namespace-one", "namespace-two"],
-  } as INamespaceState,
+  } as IClusterState,
   defaultNamespace: "kubeapps-user",
   onChange: jest.fn(),
   createNamespace: jest.fn(),
   getNamespace: jest.fn(),
-};
+} as INamespaceSelectorProps;
 
 it("renders the given namespaces with current selection", () => {
   const wrapper = shallow(<NamespaceSelector {...defaultProps} />);
   const select = wrapper.find(".NamespaceSelector__select").first();
 
   const expectedValue = {
-    label: defaultProps.namespace.current,
-    value: defaultProps.namespace.current,
+    label: defaultProps.cluster.currentNamespace,
+    value: defaultProps.cluster.currentNamespace,
   };
   expect(select.props()).toMatchObject({
     value: expectedValue,
@@ -41,11 +41,11 @@ it("renders the given namespaces with current selection", () => {
 it("render with the default namespace selected if no current selection", () => {
   const props = {
     ...defaultProps,
-    namespace: {
-      ...defaultProps.namespace,
-      current: "",
+    cluster: {
+      ...defaultProps.cluster,
+      currentNamespace: "",
     },
-  };
+  } as INamespaceSelectorProps;
   const wrapper = shallow(<NamespaceSelector {...props} />);
   const select = wrapper.find(".NamespaceSelector__select").first();
 
@@ -88,7 +88,7 @@ it("fetches namespaces and retrive the current namespace", () => {
       {...defaultProps}
       fetchNamespaces={fetchNamespaces}
       getNamespace={getNamespace}
-      namespace={{ cluster: "default", current: "foo", namespaces: [] }}
+      cluster={{ currentNamespace: "foo", namespaces: [] }}
     />,
   );
   expect(fetchNamespaces).toHaveBeenCalled();
@@ -103,7 +103,7 @@ it("doesnt' get the current namespace if all namespaces is selected", () => {
       {...defaultProps}
       fetchNamespaces={fetchNamespaces}
       getNamespace={getNamespace}
-      namespace={{ cluster: "default", current: "_all", namespaces: [] }}
+      cluster={{ currentNamespace: "_all", namespaces: [] }}
     />,
   );
   expect(fetchNamespaces).toHaveBeenCalled();

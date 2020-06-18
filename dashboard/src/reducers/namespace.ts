@@ -6,41 +6,75 @@ import { AuthAction } from "../actions/auth";
 import { NamespaceAction } from "../actions/namespace";
 import { Auth } from "../shared/Auth";
 
-export interface INamespaceState {
-  cluster: string;
-  current: string;
+export interface IClusterState {
+  currentNamespace: string;
   namespaces: string[];
   error?: { action: string; error: Error };
 }
 
-const getInitialState: () => INamespaceState = (): INamespaceState => {
+interface IClustersMap {
+  [cluster: string]: IClusterState;
+}
+
+export interface IClustersState {
+  currentCluster: string;
+  clusters: IClustersMap; 
+}
+
+const getInitialState: () => IClustersState = (): IClustersState => {
   const token = Auth.getAuthToken() || "";
   return {
-    cluster: "default",
-    current: Auth.defaultNamespaceFromToken(token),
-    namespaces: [],
-  };
+    currentCluster: "default",
+    clusters: {
+      "default": {
+        currentNamespace: Auth.defaultNamespaceFromToken(token),
+        namespaces: [],
+      },
+    },
+  } as IClustersState;
 };
-const initialState: INamespaceState = getInitialState();
+const initialState: IClustersState = getInitialState();
 
-const namespaceReducer = (
-  state: INamespaceState = initialState,
+const clusterReducer = (
+  state: IClustersState = initialState,
   action: NamespaceAction | LocationChangeAction | AuthAction,
-): INamespaceState => {
+): IClustersState => {
   switch (action.type) {
     case getType(actions.namespace.receiveNamespace):
-      if (!state.namespaces.includes(action.payload.metadata.name)) {
+      if (!state.clusters.default.namespaces.includes(action.payload.metadata.name)) {
         return {
           ...state,
-          namespaces: state.namespaces.concat(action.payload.metadata.name).sort(),
-          error: undefined,
+          clusters: {
+            default: {
+              ...state.clusters.default,
+              namespaces: state.clusters.default.namespaces.concat(action.payload.metadata.name).sort(),
+              error: undefined,
+            },
+          },
         };
       }
       return state;
     case getType(actions.namespace.receiveNamespaces):
-      return { ...state, namespaces: action.payload };
+      return {
+        ...state,
+        clusters: {
+          default: {
+            ...state.clusters.default,
+            namespaces: action.payload,
+          },
+        },
+      };
     case getType(actions.namespace.setNamespace):
-      return { ...state, current: action.payload, error: undefined };
+      return {
+        ...state,
+        clusters: {
+          default: {
+            ...state.clusters.default,
+            currentNamespace: action.payload,
+            error: undefined,
+          },
+        },
+      };
     case getType(actions.namespace.errorNamespaces):
       // Ignore error listing namespaces since those are expected
       if (action.payload.op === "list") {
@@ -48,27 +82,50 @@ const namespaceReducer = (
       }
       return {
         ...state,
-        error: { action: action.payload.op, error: action.payload.err },
+        clusters: {
+          default: {
+            ...state.clusters.default,
+            error: { action: action.payload.op, error: action.payload.err },
+          },
+        },
       };
     case getType(actions.namespace.clearNamespaces):
+      // TODO(absoludity): this should maintain the keys for all clusters.
       return { ...initialState };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
       // looks for /ns/:namespace in URL
+      // TODO(absoludity): this should match on cluster also to set currentCluster.
       const matches = pathname.match(/\/ns\/([^/]*)/);
       if (matches) {
-        return { ...state, current: matches[1] };
+        return {
+          ...state,
+          clusters: {
+            default: {
+              ...state.clusters.default,
+              currentNamespace: matches[1]
+            },
+          },
+        };
       }
       break;
     case getType(actions.auth.setAuthenticated):
       // Only when a user is authenticated to we set the current namespace from
       // the auth default namespace.
       if (action.payload.authenticated) {
-        return { ...state, current: action.payload.defaultNamespace };
+        return {
+          ...state,
+          clusters: {
+            default: {
+              ...state.clusters.default,
+              currentNamespace: action.payload.defaultNamespace,
+            },
+          },
+        };
       }
     default:
   }
   return state;
 };
 
-export default namespaceReducer;
+export default clusterReducer;
