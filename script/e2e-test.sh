@@ -176,7 +176,7 @@ installOrUpgradeKubeapps() {
     # Install Kubeapps
     info "Installing Kubeapps..."
     if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-      helm upgrade --install --name kubeapps-ci --namespace kubeapps "${chartSource}" \
+      helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
         "${HELM_CLIENT_TLS_FLAGS[@]}" \
         --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
         --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
