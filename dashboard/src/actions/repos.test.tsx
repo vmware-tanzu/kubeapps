@@ -26,7 +26,14 @@ spec:
 beforeEach(() => {
   store = mockStore({
     config: { namespace: kubeappsNamespace },
-    namespace: { current: kubeappsNamespace },
+    clusters: {
+      currentCluster: "default",
+      clusters: {
+        default: {
+          currentNamespace: kubeappsNamespace,
+        },
+      },
+    },
   });
   AppRepository.list = jest.fn().mockImplementationOnce(() => {
     return { items: { foo: "bar" } };
@@ -100,7 +107,14 @@ describe("deleteRepo", () => {
     const currentNamespace = "current-namespace";
     it("dispatches requestRepos with current namespace", async () => {
       const storeWithFlag: any = mockStore({
-        namespace: { current: currentNamespace },
+        clusters: {
+          currentCluster: "default",
+          clusters: {
+            default: {
+              currentNamespace,
+            },
+          },
+        },
       });
       const expectedActions = [
         {
