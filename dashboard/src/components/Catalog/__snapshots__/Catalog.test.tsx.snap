@@ -39,11 +39,11 @@ exports[`renderization when charts available should render the list of charts 1`
                   "name": "bar",
                   "namespace": "chart-namespace",
                 },
-                "type": "chart",
                 "version": "v2.0.0",
               }
             }
             key="chart/bar/bar"
+            type="chart"
           />
           <CatalogItem
             item={
@@ -57,11 +57,11 @@ exports[`renderization when charts available should render the list of charts 1`
                   "name": "foo",
                   "namespace": "chart-namespace",
                 },
-                "type": "chart",
                 "version": "v1.0.0",
               }
             }
             key="chart/foo/foo"
+            type="chart"
           />
         </CardGrid>
       </div>
