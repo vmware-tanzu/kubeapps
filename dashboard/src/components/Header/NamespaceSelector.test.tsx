@@ -3,7 +3,7 @@ import * as React from "react";
 import * as ReactModal from "react-modal";
 import * as Select from "react-select";
 
-import { IClusterState } from "../../reducers/namespace";
+import { IClusterState } from "../../reducers/cluster";
 import NamespaceSelector, { INamespaceSelectorProps } from "./NamespaceSelector";
 import NewNamespace from "./NewNamespace";
 

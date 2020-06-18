@@ -3,7 +3,7 @@ import { LogOut, Settings } from "react-feather";
 import { NavLink } from "react-router-dom";
 import "react-select/dist/react-select.css";
 import logo from "../../logo.svg";
-import { IClusterState } from "../../reducers/namespace";
+import { IClusterState } from "../../reducers/cluster";
 import { definedNamespaces } from "../../shared/Namespace";
 import { app } from "../../shared/url";
 import "./Header.css";
@@ -55,7 +55,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   public render() {
     const {
       fetchNamespaces,
-      cluster: namespace,
+      cluster: cluster,
       defaultNamespace,
       authenticated: showNav,
       createNamespace,
@@ -66,7 +66,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       this.state.configOpen ? "header__nav__submenu-open" : ""
     }`;
 
-    const reposPath = `/config/ns/${namespace.currentNamespace}/repos`;
+    const reposPath = `/config/ns/${cluster.currentNamespace}/repos`;
     return (
       <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
         <div className="container">
@@ -91,13 +91,13 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 </button>
                 <ul className="header__nav__menu" role="menubar">
                   <li>
-                    <HeaderLink to={app.apps.list(namespace.currentNamespace)} exact={true}>Applications</HeaderLink>
+                    <HeaderLink to={app.apps.list(cluster.currentNamespace)} exact={true}>Applications</HeaderLink>
                   </li>
                   <li>
-                    <HeaderLink to={app.catalog(namespace.currentNamespace)}>Catalog</HeaderLink>
+                    <HeaderLink to={app.catalog(cluster.currentNamespace)}>Catalog</HeaderLink>
                   </li>
                   <li>
-                    <HeaderLink to={app.servicesInstances(namespace.currentNamespace)}>Service Instances (alpha)</HeaderLink>
+                    <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>Service Instances (alpha)</HeaderLink>
                   </li>
                 </ul>
               </nav>
@@ -105,7 +105,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
             {showNav && (
               <div className="header__nav header__nav-config">
                 <NamespaceSelector
-                  cluster={namespace}
+                  cluster={cluster}
                   defaultNamespace={defaultNamespace}
                   onChange={this.handleNamespaceChange}
                   fetchNamespaces={fetchNamespaces}
@@ -130,7 +130,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                       {this.props.featureFlags.operators && (
                         <li role="none">
-                          <NavLink to={`/ns/${namespace.currentNamespace}/operators`}>Operators</NavLink>
+                          <NavLink to={`/ns/${cluster.currentNamespace}/operators`}>Operators</NavLink>
                         </li>
                       )}
                     </ul>

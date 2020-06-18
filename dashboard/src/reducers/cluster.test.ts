@@ -4,7 +4,7 @@ import { getType } from "typesafe-actions";
 
 import actions from "../actions";
 import { IResource } from "../shared/types";
-import clusterReducer, { IClustersState } from "./namespace";
+import clusterReducer, { IClustersState } from "./cluster";
 
 describe("namespaceReducer", () => {
   const initialState: IClustersState = {

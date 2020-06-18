@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { IClusterState } from "../../reducers/namespace";
+import { IClusterState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import Header from "./Header";
 

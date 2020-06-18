@@ -1,6 +1,6 @@
 import { mount } from "enzyme";
 import * as React from "react";
-import { IClusterState } from "reducers/namespace";
+import { IClusterState } from "reducers/cluster";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
 import ErrorBoundaryContainer from ".";

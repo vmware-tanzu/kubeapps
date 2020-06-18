@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as Select from "react-select";
 
-import { IClusterState } from "../../reducers/namespace";
+import { IClusterState } from "../../reducers/cluster";
 import { definedNamespaces } from "../../shared/Namespace";
 
 import "./NamespaceSelector.css";
