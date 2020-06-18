@@ -27,6 +27,15 @@ const defaultState = {
   config: {
     featureFlags: { operators: true },
   },
+  clusters: {
+    currentCluster: "default",
+    clusters: {
+      default: {
+        currentNamespace: "default",
+        namespaces: [],
+      },
+    },
+  },
 };
 
 describe("HeaderContainer props", () => {

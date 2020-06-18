@@ -18,7 +18,7 @@ const rootReducer = combineReducers<IStoreState>({
   charts: chartsReducer,
   config: configReducer,
   kube: kubeReducer,
-  namespace: clusterReducer,
+  clusters: clusterReducer,
   repos: reposReducer,
   operators: operatorReducer,
 });

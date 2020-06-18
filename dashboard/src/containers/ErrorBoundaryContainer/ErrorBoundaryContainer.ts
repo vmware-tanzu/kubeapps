@@ -7,9 +7,10 @@ interface IErrorBoundaryProps {
   children: React.ReactChildren | React.ReactNode | string;
 }
 
-function mapStateToProps({ namespace }: IStoreState, { children }: IErrorBoundaryProps) {
+function mapStateToProps({ clusters: { currentCluster, clusters } }: IStoreState, { children }: IErrorBoundaryProps) {
+  const cluster = clusters[currentCluster];
   return {
-    error: namespace.error && namespace.error.error,
+    error: cluster.error && cluster.error.error,
     children,
   };
 }

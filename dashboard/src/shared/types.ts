@@ -359,7 +359,7 @@ export interface IStoreState {
   config: IConfigState;
   kube: IKubeState;
   repos: IAppRepositoryState;
-  namespace: IClustersState;
+  clusters: IClustersState;
   operators: IOperatorsState;
 }
 
