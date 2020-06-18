@@ -173,17 +173,9 @@ pushChart() {
 #########################
 installOrUpgradeKubeapps() {
     local chartSource=$1
-    info "Chart source: $chartSource"
-    helm repo add bitnami https://charts.bitnami.com/bitnami
+    # Install Kubeapps
+    info "Installing Kubeapps..."
     if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
-      # Init Tiller
-      tiller-init-rbac
-      # Install Kubeapps
-      info "Installing Kubeapps..."
-      #if [[ "${chartSource}" =~ "^/.*" ]]; then
-        # If it's a local path, update dependencies
-        helm dep up "${chartSource}"
-      #fi
       helm install --name kubeapps-ci --namespace kubeapps "${chartSource}" \
         "${HELM_CLIENT_TLS_FLAGS[@]}" \
         --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
@@ -193,13 +185,6 @@ installOrUpgradeKubeapps() {
         "${img_flags[@]}" \
         "${db_flags[@]}"
     else
-      # Install Kubeapps
-      info "Installing Kubeapps..."
-      kubectl create ns kubeapps
-      if [[ "${chartSource}" =~ "^/.*" ]]; then
-        # If it's a local path, update dependencies
-        helm dep up "${chartSource}"
-      fi
       helm install kubeapps-ci --namespace kubeapps "${chartSource}" \
         ${invalidateCacheFlag} \
         "${img_flags[@]}" \
@@ -255,6 +240,14 @@ invalidateCacheFlag=""
 if [[ -z "${TEST_LATEST_RELEASE:-}" ]]; then
   invalidateCacheFlag="--set featureFlags.invalidateCache=true"
 fi
+
+if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
+  # Init Tiller
+  tiller-init-rbac
+fi
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm dep up "${ROOT_DIR}/chart/kubeapps"
+kubectl create ns kubeapps
 
 if [[ -n "${TEST_UPGRADE}" ]]; then
   # To test the upgrade, first install the latest version published
