@@ -46,10 +46,8 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   let subIcon;
   if (type === "chart") {
     tag1 = (
-      // TODO (absoludity): It appears that repo is an optional prop only because the item
-      // may be an operator. We could instead use polymorphism with two separate
-      // types ICatalogItemChart and ICatalogItemOperator which both implement
-      // a required interface for use in the component?
+      // TODO(#1803): See #1803 regarding the work-arounds below for the fact
+      // that repo is required if we're dealing with a chart here.
       <Link
         className="ListItem__content__info_tag_link"
         to={url.app.repo(repo?.name || "", namespace)}

@@ -7,6 +7,7 @@ import * as url from "../../shared/url";
 interface IChartVersionsListProps {
   selected: IChartVersion;
   versions: IChartVersion[];
+  targetNamespace: string;
 }
 
 interface IChartVersionsListState {
@@ -31,7 +32,7 @@ class ChartVersionsList extends React.Component<IChartVersionsListProps, IChartV
       // namespace when selecting a specific chart version (as the app currently does).
       return (
         <li key={v.id}>
-          <Link className={selectedClass} to={url.app.charts.version(chartData.name, v.attributes.version, chartData.repo, chartData.repo.namespace)}>
+          <Link className={selectedClass} to={url.app.charts.version(chartData.name, v.attributes.version, chartData.repo, this.props.targetNamespace)}>
             {v.attributes.version} - {this.formatDate(v.attributes.created)}
           </Link>
         </li>

@@ -71,17 +71,17 @@ const extendedVersions: IChartVersion[] = [
 ] as IChartVersion[];
 
 it("renders the list of versions", () => {
-  const wrapper = shallow(<ChartVersionsList versions={testVersions} selected={testVersions[1]} />);
+  const wrapper = shallow(<ChartVersionsList versions={testVersions} selected={testVersions[1]} targetNamespace="targetNamespace" />);
   const items = wrapper.find("li");
   expect(items).toHaveLength(4);
   const link = items.at(1).find(Link);
   expect(link.prop("className")).toBe("type-bold type-color-action");
   // The link include the namespace
-  expect(link.prop("to")).toBe(url.app.charts.version("test", "1.2.2", testChart.data.repo, "kubeapps"));
+  expect(link.prop("to")).toBe(url.app.charts.version("test", "1.2.2", testChart.data.repo, "targetNamespace"));
 });
 
 it("does not render a the Show All link when there are 5 or less versions", () => {
-  const wrapper = shallow(<ChartVersionsList versions={testVersions} selected={testVersions[1]} />);
+  const wrapper = shallow(<ChartVersionsList versions={testVersions} selected={testVersions[1]} targetNamespace="targetNamespace" />);
   expect(wrapper.find("a").exists()).toBe(false);
   wrapper.setProps({
     versions: [
@@ -98,7 +98,7 @@ it("does not render a the Show All link when there are 5 or less versions", () =
 
 it("renders a the Show All link when there are more than 5 versions", () => {
   const wrapper = shallow(
-    <ChartVersionsList versions={extendedVersions} selected={extendedVersions[1]} />,
+    <ChartVersionsList versions={extendedVersions} selected={extendedVersions[1]} targetNamespace="targetNamespace" />,
   );
   const showAllLink = wrapper.find("a");
   expect(showAllLink.exists()).toBe(true);
@@ -109,7 +109,7 @@ it("renders a the Show All link when there are more than 5 versions", () => {
 
 it("shows all the versions when the Show All link is clicked", () => {
   const wrapper = shallow(
-    <ChartVersionsList versions={extendedVersions} selected={extendedVersions[1]} />,
+    <ChartVersionsList versions={extendedVersions} selected={extendedVersions[1]} targetNamespace="targetNamespace" />,
   );
   expect(wrapper.find("li")).toHaveLength(5);
   wrapper.find("a").simulate("click");
