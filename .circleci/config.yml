@@ -273,6 +273,9 @@ jobs:
       - checkout
       - <<: *exports
       - run: make test
+      - setup_remote_docker
+      - run: sudo apt-get install postgresql-client
+      - run: make test-db
   test_dashboard:
     docker:
       - image: circleci/node:8
