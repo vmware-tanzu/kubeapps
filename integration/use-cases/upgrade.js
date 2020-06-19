@@ -37,7 +37,7 @@ test("Upgrades an application", async () => {
 
   await expect(page).toMatch("Update Available", { timeout: 60000 });
 
-  await expect(page).toClick(".button-upgrade");
+  await expect(page).toClick(".upgrade-button");
 
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
