@@ -33,14 +33,15 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("li", { text: "Changes" });
   await expect(page).toMatch("replicaCount: 2");
 
-  await expect(page).toClick("button", { text: "Submit", delay: 1000 });
+  await expect(page).toClick(".button-primary");
 
   await expect(page).toMatch("Update Available", { timeout: 60000 });
 
-  await expect(page).toClick("button", { text: "Upgrade" });
+  await expect(page).toClick(".button-upgrade");
 
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
+  console.log(`Attempting to select latestChartVersion: ${latestChartVersion}`);
   await expect(page).toSelect("#chartVersion", latestChartVersion, {
     delay: 1000
   });
