@@ -165,6 +165,35 @@ pushChart() {
     pkill -f "kubectl port-forward $POD_NAME 8080:8080 --namespace kubeapps"
 }
 
+########################
+# Install Kubeapps or upgrades it if it's already installed
+# Arguments:
+#   $1: chart source
+# Returns: None
+#########################
+installOrUpgradeKubeapps() {
+    local chartSource=$1
+    # Install Kubeapps
+    info "Installing Kubeapps..."
+    if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
+      helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
+        "${HELM_CLIENT_TLS_FLAGS[@]}" \
+        --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
+        --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
+        --set featureFlags.operators=true \
+        ${invalidateCacheFlag} \
+        "${img_flags[@]}" \
+        "${db_flags[@]}"
+    else
+      helm upgrade --install kubeapps-ci --namespace kubeapps "${chartSource}" \
+        ${invalidateCacheFlag} \
+        "${img_flags[@]}" \
+        "${db_flags[@]}" \
+        --set featureFlags.operators=true \
+        --set useHelm3=true
+    fi
+}
+
 # Operators are not supported in GKE 1.14 and flaky in 1.15
 if [[ -z "${GKE_BRANCH-}" ]]; then
   installOLM 0.15.1
@@ -215,31 +244,18 @@ fi
 if [[ "${HELM_VERSION:-}" =~ "v2" ]]; then
   # Init Tiller
   tiller-init-rbac
-  # Install Kubeapps
-  info "Installing Kubeapps..."
-  helm repo add bitnami https://charts.bitnami.com/bitnami
-  helm dep up "${ROOT_DIR}/chart/kubeapps/"
-  helm install --name kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
-    "${HELM_CLIENT_TLS_FLAGS[@]}" \
-    --set tillerProxy.tls.key="$(cat "${CERTS_DIR}/helm.key.pem")" \
-    --set tillerProxy.tls.cert="$(cat "${CERTS_DIR}/helm.cert.pem")" \
-    --set featureFlags.operators=true \
-    ${invalidateCacheFlag} \
-    "${img_flags[@]}" \
-    "${db_flags[@]}"
-else
-  # Install Kubeapps
-  info "Installing Kubeapps..."
-  kubectl create ns kubeapps
-  helm dep up "${ROOT_DIR}/chart/kubeapps/"
-  helm install kubeapps-ci --namespace kubeapps "${ROOT_DIR}/chart/kubeapps" \
-    ${invalidateCacheFlag} \
-    "${img_flags[@]}" \
-    "${db_flags[@]}" \
-    --set featureFlags.operators=true \
-    --set useHelm3=true
+fi
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm dep up "${ROOT_DIR}/chart/kubeapps"
+kubectl create ns kubeapps
+
+if [[ -n "${TEST_UPGRADE}" ]]; then
+  # To test the upgrade, first install the latest version published
+  info "Installing latest Kubeapps chart available"
+  installOrUpgradeKubeapps bitnami/kubeapps
 fi
 
+installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password
 

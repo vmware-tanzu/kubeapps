@@ -334,6 +334,7 @@ jobs:
     environment:
       HELM_VERSION: "v3.0.2"
       KUBEAPPS_DB: "postgresql"
+      TEST_UPGRADE: "1"
     <<: *local_e2e_steps
   GKE_1_15_MASTER:
     <<: *gke_test
