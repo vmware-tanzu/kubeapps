@@ -6,7 +6,7 @@ import actions from "../actions";
 import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState } from "./cluster";
 
-describe("namespaceReducer", () => {
+describe("clusterReducer", () => {
   const initialState: IClustersState = {
     currentCluster: "default",
     clusters: {

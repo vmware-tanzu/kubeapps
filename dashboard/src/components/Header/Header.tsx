@@ -55,7 +55,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   public render() {
     const {
       fetchNamespaces,
-      cluster: cluster,
+      cluster,
       defaultNamespace,
       authenticated: showNav,
       createNamespace,
