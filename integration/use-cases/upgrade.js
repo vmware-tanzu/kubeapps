@@ -47,7 +47,10 @@ test("Upgrades an application", async () => {
 
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
-  await expect(page).toClick("button", { text: "Submit", delay: 1000 });
+  // From comments at https://github.com/puppeteer/puppeteer/issues/3347, try using a
+  // selector rather than element / text for click event.
+  // .button-primary
+  await expect(page).toClick(".button-primary");
 
   await expect(page).toMatch("Up to date", { timeout: 60000 });
 });
