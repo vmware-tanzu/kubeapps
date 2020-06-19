@@ -42,9 +42,8 @@ test("Upgrades an application", async () => {
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
   console.log(`Attempting to select latestChartVersion: ${latestChartVersion}`);
-  await expect(page).toSelect("#chartVersion", latestChartVersion, {
-    delay: 1000
-  });
+  await expect(page).toSelect("#chartVersion", latestChartVersion);
+  await expect(page).toMatch(latestChartVersion);
 
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
