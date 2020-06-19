@@ -1,17 +1,14 @@
 import * as React from "react";
-// Icons
 import { LogOut, Settings } from "react-feather";
 import { NavLink } from "react-router-dom";
 import "react-select/dist/react-select.css";
 import logo from "../../logo.svg";
 import { INamespaceState } from "../../reducers/namespace";
 import { definedNamespaces } from "../../shared/Namespace";
+import { app } from "../../shared/url";
 import "./Header.css";
-import HeaderLink, { IHeaderLinkProps } from "./HeaderLink";
+import HeaderLink from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
-
-
-
 
 interface IHeaderProps {
   authenticated: boolean;
@@ -36,26 +33,6 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   public static defaultProps = {
     featureFlags: { operators: false },
   };
-
-  // Defines the route
-  private readonly links: IHeaderLinkProps[] = [
-    {
-      children: "Applications",
-      exact: true,
-      namespaced: true,
-      to: "apps",
-    },
-    {
-      children: "Catalog",
-      namespaced: true,
-      to: "catalog",
-    },
-    {
-      children: "Service Instances (alpha)",
-      namespaced: true,
-      to: "services/instances",
-    },
-  ];
 
   constructor(props: any) {
     super(props);
@@ -113,11 +90,15 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                   <div />
                 </button>
                 <ul className="header__nav__menu" role="menubar">
-                  {this.links.map(link => (
-                    <li key={link.to}>
-                      <HeaderLink {...link} currentNamespace={namespace.current} />
-                    </li>
-                  ))}
+                  <li>
+                    <HeaderLink to={app.apps.list(namespace.current, namespace.cluster)} exact={true}>Applications</HeaderLink>
+                  </li>
+                  <li>
+                    <HeaderLink to={app.catalog(namespace.current)}>Catalog</HeaderLink>
+                  </li>
+                  <li>
+                    <HeaderLink to={app.servicesInstances(namespace.current)}>Service Instances (alpha)</HeaderLink>
+                  </li>
                 </ul>
               </nav>
             )}

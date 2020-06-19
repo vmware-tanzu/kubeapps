@@ -8,6 +8,7 @@ import namespaceReducer from "./namespace";
 
 describe("namespaceReducer", () => {
   const initialState = {
+    cluster: "default",
     current: "initial-current",
     namespaces: ["default", "initial-current"],
   };
@@ -65,6 +66,7 @@ describe("namespaceReducer", () => {
   context("when CLEAR_NAMESPACES", () => {
     it("returns to the initial state", () => {
       const dirtyState = {
+        cluster: "default",
         current: "some-other-namespace",
         namespaces: ["namespace-one", "namespace-two"],
       };
@@ -72,7 +74,7 @@ describe("namespaceReducer", () => {
         namespaceReducer(dirtyState, {
           type: getType(actions.namespace.clearNamespaces),
         }),
-      ).toEqual({ current: "_all", namespaces: [] });
+      ).toEqual({ cluster: "default", current: "_all", namespaces: [] });
     });
   });
 
@@ -80,13 +82,13 @@ describe("namespaceReducer", () => {
     it("sets the current namespace to the users default", () => {
       expect(
         namespaceReducer(
-          { current: "default", namespaces: [] },
+          { cluster: "default", current: "default", namespaces: [] },
           {
             type: getType(actions.auth.setAuthenticated),
             payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
           },
         ),
-      ).toEqual({ current: "foo-bar", namespaces: [] });
+      ).toEqual({ cluster: "default", current: "foo-bar", namespaces: [] });
     });
   });
 
@@ -95,6 +97,7 @@ describe("namespaceReducer", () => {
       expect(
         namespaceReducer(
           {
+            cluster: "default",
             current: "error",
             namespaces: [],
             error: { action: "create", error: new Error("boom") },
@@ -104,7 +107,7 @@ describe("namespaceReducer", () => {
             payload: "default",
           },
         ),
-      ).toEqual({ current: "default", namespaces: [], error: undefined });
+      ).toEqual({ cluster: "default", current: "default", namespaces: [], error: undefined });
     });
   });
 
@@ -113,6 +116,7 @@ describe("namespaceReducer", () => {
       expect(
         namespaceReducer(
           {
+            cluster: "default",
             current: "",
             namespaces: ["default"],
             error: { action: "create", error: new Error("boom") },
@@ -122,7 +126,7 @@ describe("namespaceReducer", () => {
             payload: { metadata: { name: "bar" } } as IResource,
           },
         ),
-      ).toEqual({ current: "", namespaces: ["bar", "default"], error: undefined });
+      ).toEqual({ cluster: "default", current: "", namespaces: ["bar", "default"], error: undefined });
     });
   });
 });

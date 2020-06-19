@@ -21,12 +21,13 @@ import ServiceClassListContainer from "../../containers/ServiceClassListContaine
 import ServiceClassViewContainer from "../../containers/ServiceClassViewContainer";
 import ServiceInstanceListContainer from "../../containers/ServiceInstanceListContainer";
 import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewContainer";
+import { app } from "../../shared/url";
 
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 const privateRoutes = {
-  "/ns/:namespace/apps": AppListContainer,
+  "/c/:cluster/ns/:namespace/apps": AppListContainer,
   "/ns/:namespace/apps/:releaseName": AppViewContainer,
   "/ns/:namespace/apps/:releaseName/upgrade": AppUpgradeContainer,
   "/ns/:namespace/apps/new/:repo/:id/versions/:version": AppNewContainer,
@@ -51,6 +52,7 @@ const routes = {
 
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   namespace: string;
+  cluster: string;
   authenticated: boolean;
   featureFlags: {
     operators: boolean;
@@ -96,7 +98,7 @@ class Routes extends React.Component<IRoutesProps> {
   }
   private rootNamespacedRedirect = () => {
     if (this.props.namespace && this.props.authenticated) {
-      return <Redirect to={`/ns/${this.props.namespace}/apps`} />;
+      return <Redirect to={app.apps.list(this.props.namespace, this.props.cluster)} />;
     }
     // There is not a default namespace, redirect to login page
     return <Redirect to={"/login"} />;

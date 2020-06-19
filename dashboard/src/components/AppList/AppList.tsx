@@ -14,6 +14,7 @@ import CustomResourceListItem from "./CustomResourceListItem";
 interface IAppListProps {
   apps: IAppState;
   fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
+  cluster: string;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
   filter: string;

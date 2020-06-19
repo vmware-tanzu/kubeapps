@@ -6,6 +6,7 @@ import Routes from "./Routes";
 
 function mapStateToProps({ auth, namespace, config }: IStoreState) {
   return {
+    cluster: namespace.cluster,
     namespace: namespace.current || auth.defaultNamespace,
     authenticated: auth.authenticated,
     featureFlags: config.featureFlags,

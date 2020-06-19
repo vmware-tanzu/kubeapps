@@ -5,6 +5,7 @@ import * as ReactModal from "react-modal";
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import itBehavesLike from "../../shared/specs";
+import { app } from "../../shared/url";
 import AppNotes from "../AppView/AppNotes";
 import AppValues from "../AppView/AppValues";
 import ResourceTable from "../AppView/ResourceTable";
@@ -107,7 +108,7 @@ describe("renders a resource", () => {
     expect(deleteResource).toHaveBeenCalledWith(defaultProps.namespace, "foo", resource);
     // wait async calls
     await new Promise(r => r());
-    expect(push).toHaveBeenCalledWith(`/ns/${defaultProps.namespace}/apps`);
+    expect(push).toHaveBeenCalledWith(app.apps.list(defaultProps.namespace));
   });
 
   it("updates the state with the CRD resources", () => {

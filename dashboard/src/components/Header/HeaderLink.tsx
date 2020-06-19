@@ -5,24 +5,20 @@ import { NavLink } from "react-router-dom";
 export interface IHeaderLinkProps {
   to: string;
   exact?: boolean;
-  external?: boolean;
   children?: React.ReactChildren | React.ReactNode | string;
-  currentNamespace?: string | null;
-  namespaced?: boolean;
 }
 
 class HeaderLink extends React.Component<IHeaderLinkProps> {
   public static defaultProps: Partial<IHeaderLinkProps> = {
     exact: false,
-    external: false,
   };
 
-  public renderInternalLink() {
-    const { currentNamespace, namespaced, to } = this.props;
-    const link = currentNamespace && namespaced ? `/ns/${currentNamespace}/${to}` : to;
+  public render() {
+    const { to } = this.props;
+
     return (
       <NavLink
-        to={link}
+        to={to}
         activeClassName="header__nav__menu__item-active"
         className="header__nav__menu__item"
         exact={this.props.exact}
@@ -30,18 +26,6 @@ class HeaderLink extends React.Component<IHeaderLinkProps> {
         {this.props.children}
       </NavLink>
     );
-  }
-
-  public renderExternalLink() {
-    return (
-      <a href={this.props.to} className="header__nav__menu__item">
-        {this.props.children}
-      </a>
-    );
-  }
-
-  public render() {
-    return this.props.external ? this.renderExternalLink() : this.renderInternalLink();
   }
 }
 

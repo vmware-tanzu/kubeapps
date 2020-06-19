@@ -15,6 +15,7 @@ function mapStateToProps(
   return {
     apps,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
+    cluster: namespace.cluster,
     namespace: namespace.current,
     customResources: operators.resources,
     isFetchingResources: operators.isFetching,
