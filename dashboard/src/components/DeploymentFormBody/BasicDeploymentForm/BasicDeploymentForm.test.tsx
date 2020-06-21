@@ -1,11 +1,12 @@
 import * as React from "react";
 
 import { mount, shallow } from "enzyme";
-import { IBasicFormParam, IBasicFormSliderParam } from "shared/types";
+import { DeploymentEvent, IBasicFormParam, IBasicFormSliderParam } from "shared/types";
 import BasicDeploymentForm from "./BasicDeploymentForm";
 import Subsection from "./Subsection";
 
 const defaultProps = {
+  deploymentEvent: "install" as DeploymentEvent,
   params: [],
   handleBasicFormParamChange: jest.fn(() => jest.fn()),
   appValues: "",
@@ -279,6 +280,91 @@ it("should hide an element if it depends on multiple params (NOR) (object)", () 
   const appValues = "foo: 1\nbar: disabled\nbaz: enabled";
   const wrapper = shallow(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+});
+
+it("should hide an element if it depends on the deploymentEvent (install | upgrade) (object)", () => {
+  const params = [
+    {
+      path: "foo",
+      type: "string",
+      hidden: {
+        event: "upgrade",
+      },
+    },
+  ] as IBasicFormParam[];
+  const appValues = "foo: 1\nbar: disabled\nbaz: enabled";
+  const wrapper = shallow(
+    <BasicDeploymentForm
+      {...defaultProps}
+      deploymentEvent="upgrade"
+      params={params}
+      appValues={appValues}
+    />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).toExist();
+});
+
+it("should NOT hide an element if it depends on the deploymentEvent (install | upgrade) (object)", () => {
+  const params = [
+    {
+      path: "foo",
+      type: "string",
+      hidden: {
+        event: "upgrade",
+      },
+    },
+  ] as IBasicFormParam[];
+  const appValues = "foo: 1\nbar: disabled\nbaz: enabled";
+  const wrapper = shallow(
+    <BasicDeploymentForm
+      {...defaultProps}
+      deploymentEvent="install"
+      params={params}
+      appValues={appValues}
+    />,
+  );
+
+  const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);
+  expect(hiddenParam).not.toExist();
+});
+
+it("should hide an element if it depends on deploymentEvent (install | upgrade) combined with multiple params (object)", () => {
+  const params = [
+    {
+      path: "foo",
+      type: "string",
+      hidden: {
+        conditions: [
+          {
+            event: "upgrade",
+          },
+          {
+            value: "enabled",
+            path: "bar",
+          },
+        ],
+        operator: "or",
+      },
+    },
+    {
+      path: "bar",
+      type: "string",
+    },
+  ] as IBasicFormParam[];
+  const appValues = "foo: 1\nbar: disabled";
+  const wrapper = shallow(
+    <BasicDeploymentForm
+      {...defaultProps}
+      deploymentEvent="upgrade"
+      params={params}
+      appValues={appValues}
+    />,
   );
 
   const hiddenParam = wrapper.find("div").filterWhere(p => p.prop("hidden") === true);

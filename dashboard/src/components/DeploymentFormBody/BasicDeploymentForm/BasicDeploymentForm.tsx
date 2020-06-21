@@ -1,6 +1,6 @@
 import { isArray } from "lodash";
 import * as React from "react";
-import { IBasicFormParam, IBasicFormSliderParam } from "shared/types";
+import { DeploymentEvent, IBasicFormParam, IBasicFormSliderParam } from "shared/types";
 import TextParam from "./TextParam";
 
 import { getValue } from "../../../shared/schema";
@@ -10,6 +10,7 @@ import SliderParam from "./SliderParam";
 import Subsection from "./Subsection";
 
 export interface IBasicDeploymentFormProps {
+  deploymentEvent: DeploymentEvent;
   params: IBasicFormParam[];
   handleBasicFormParamChange: (
     p: IBasicFormParam,
@@ -35,12 +36,31 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
     );
   }
 
+  private evalCondition(
+    path: string,
+    expectedValue?: any,
+    deploymentEvent?: DeploymentEvent,
+  ): boolean {
+    if (deploymentEvent == null) {
+      const pathHidden = getValue(this.props.appValues, path) === (expectedValue ?? true);
+      return pathHidden;
+    } else {
+      const deploymentHidden = deploymentEvent === this.props.deploymentEvent;
+      if (path == null) {
+        return deploymentHidden;
+      } else {
+        const pathHidden = getValue(this.props.appValues, path) === (expectedValue ?? true);
+        return deploymentHidden && pathHidden;
+      }
+    }
+  }
+
   private isHidden = (param: IBasicFormParam) => {
     const hidden = param.hidden;
     switch (typeof hidden) {
       case "string":
         // If hidden is a string, it points to the value that should be true
-        return getValue(this.props.appValues, hidden) === true;
+        return this.evalCondition(hidden);
       case "object":
         // Two type of supported objects
         // A single condition: {value: string, path: any}
@@ -52,29 +72,21 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             case "and":
               // Every value matches the referenced
               // value (via jsonpath) in all the conditions
-              return hidden.conditions.every(
-                c => getValue(this.props.appValues, c.path) === c.value,
-              );
+              return hidden.conditions.every(c => this.evalCondition(c.path, c.value, c.event));
             case "or":
               // It is enough if the value matches the referenced
               // value (via jsonpath) in any of the conditions
-              return hidden.conditions.some(
-                c => getValue(this.props.appValues, c.path) === c.value,
-              );
+              return hidden.conditions.some(c => this.evalCondition(c.path, c.value, c.event));
             case "nor":
               // Every value mismatches the referenced
               // value (via jsonpath) in any of the conditions
-              return hidden.conditions.every(
-                c => getValue(this.props.appValues, c.path) !== c.value,
-              );
+              return hidden.conditions.every(c => !this.evalCondition(c.path, c.value, c.event));
             default:
               // we consider 'and' as the default operator
-              return hidden.conditions.every(
-                c => getValue(this.props.appValues, c.path) === c.value,
-              );
+              return hidden.conditions.every(c => this.evalCondition(c.path, c.value, c.event));
           }
         } else {
-          return getValue(this.props.appValues, hidden.path) === hidden.value;
+          return this.evalCondition(hidden.path, hidden.value, hidden.event);
         }
       case "undefined":
         return false;

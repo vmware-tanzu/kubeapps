@@ -113,6 +113,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
           </div>
           <div className="col-8">
             <DeploymentFormBody
+              deploymentEvent="upgrade"
               chartNamespace={this.props.repoNamespace}
               chartID={chartID}
               chartVersion={this.props.appCurrentVersion}

@@ -16,6 +16,7 @@ import DeploymentFormBody, {
 import Differential from "./Differential";
 
 const defaultProps = {
+  deploymentEvent: "install",
   chartNamespace: "chart-namespace",
   chartID: "foo",
   chartVersion: "1.0.0",
