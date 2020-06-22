@@ -6,6 +6,7 @@ import { Redirect } from "react-router";
 import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
 import { hapi } from "../../../shared/hapi/release";
 import itBehavesLike from "../../../shared/specs";
+import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
 
 import { IRelease } from "shared/types";
@@ -40,7 +41,7 @@ it("calls delete function when clicking the button", done => {
     wrapper.update();
     const redirect = wrapper.find(Redirect);
     expect(redirect.props()).toMatchObject({
-      to: `/ns/${namespace}/apps`,
+      to: url.app.apps.list(namespace),
     } as any);
     done();
   }, 1);

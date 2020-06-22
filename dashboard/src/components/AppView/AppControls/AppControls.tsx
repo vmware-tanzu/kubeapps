@@ -4,6 +4,7 @@ import { Redirect } from "react-router";
 
 import { IRelease } from "shared/types";
 import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
+import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
 import LoadingWrapper from "../../LoadingWrapper";
 import "./AppControls.css";
@@ -83,7 +84,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
             )
           }
         />
-        {this.state.redirectToAppList && <Redirect to={`/ns/${namespace}/apps`} />}
+        {this.state.redirectToAppList && <Redirect to={url.app.apps.list(namespace)} />}
       </div>
     );
   }
