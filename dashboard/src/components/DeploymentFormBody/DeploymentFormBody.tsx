@@ -4,7 +4,7 @@ import * as React from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
-import { IBasicFormParam, IChartState } from "../../shared/types";
+import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
 import * as url from "../../shared/url";
 import { getValueFromEvent } from "../../shared/utils";
 import ConfirmDialog from "../ConfirmDialog";
@@ -19,6 +19,7 @@ import Differential from "./Differential";
 import "./Tabs.css";
 
 export interface IDeploymentFormBodyProps {
+  deploymentEvent: DeploymentEvent;
   chartNamespace: string;
   chartID: string;
   chartVersion: string;
@@ -146,10 +147,9 @@ class DeploymentFormBody extends React.Component<
     // TODO(andres): This requires refactoring. Currently, the deploy and upgrade
     // forms behave differently. In the deployment form, a change in the version
     // changes the route but in the case of the upgrade it only changes the state
-    const isUpgradeForm = !!this.props.releaseVersion;
-    const { namespace, selected } = this.props;
+    const { namespace, selected, deploymentEvent } = this.props;
 
-    if (isUpgradeForm) {
+    if (deploymentEvent === "upgrade") {
       const { chartID, chartNamespace, getChartVersion } = this.props;
       getChartVersion(chartNamespace, chartID, e.currentTarget.value);
     } else {
@@ -197,6 +197,7 @@ class DeploymentFormBody extends React.Component<
           {this.shouldRenderBasicForm() && (
             <TabPanel>
               <BasicDeploymentForm
+                deploymentEvent={this.props.deploymentEvent}
                 params={this.state.basicFormParameters}
                 handleBasicFormParamChange={this.handleBasicFormParamChange}
                 appValues={this.props.appValues}

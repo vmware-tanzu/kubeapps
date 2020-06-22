@@ -3,6 +3,7 @@
 exports[`renders a basic deployment with a disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -346,6 +347,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
 exports[`renders a basic deployment with a email 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -419,6 +421,7 @@ exports[`renders a basic deployment with a email 1`] = `
 exports[`renders a basic deployment with a generic boolean 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -689,6 +692,7 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
 exports[`renders a basic deployment with a generic number 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -764,6 +768,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
 exports[`renders a basic deployment with a generic string 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -839,6 +844,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
 exports[`renders a basic deployment with a integer disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -1182,6 +1188,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
 exports[`renders a basic deployment with a number disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -1525,6 +1532,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
 exports[`renders a basic deployment with a password 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -1598,6 +1606,7 @@ exports[`renders a basic deployment with a password 1`] = `
 exports[`renders a basic deployment with a username 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -1671,6 +1680,7 @@ exports[`renders a basic deployment with a username 1`] = `
 exports[`renders a basic deployment with custom configuration 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -1749,6 +1759,7 @@ exports[`renders a basic deployment with custom configuration 1`] = `
 exports[`renders a basic deployment with slider parameters 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
@@ -2102,6 +2113,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
 exports[`renders a basic deployment with username, password, email and a generic string 1`] = `
 <BasicDeploymentForm
   appValues=""
+  deploymentEvent="install"
   handleBasicFormParamChange={[Function]}
   handleValuesChange={[Function]}
   params={
