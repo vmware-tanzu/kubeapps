@@ -23,6 +23,7 @@ export interface IDeploymentFormBodyProps {
   chartID: string;
   chartVersion: string;
   deployedValues?: string;
+  disabled: boolean;
   namespace: string;
   releaseVersion?: string;
   selected: IChartState["selected"];
@@ -86,7 +87,7 @@ class DeploymentFormBody extends React.Component<
   };
 
   public render() {
-    const { selected, chartID, chartVersion, goBack } = this.props;
+    const { selected, chartID, chartVersion, disabled, goBack } = this.props;
     const { version, versions } = selected;
     if (selected.error) {
       return (
@@ -126,7 +127,7 @@ class DeploymentFormBody extends React.Component<
         </div>
         {this.renderTabs()}
         <div className="margin-t-big">
-          <button className="button button-primary" type="submit">
+          <button className="button button-primary" type="submit" disabled={disabled}>
             Submit
           </button>
           <button className="button" type="button" onClick={this.openRestoreDefaultValuesModal}>

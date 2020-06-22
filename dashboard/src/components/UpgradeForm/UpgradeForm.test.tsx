@@ -14,6 +14,7 @@ const defaultProps = {
   appCurrentVersion: "1.0.0",
   appCurrentValues: "foo: bar",
   chartName: "my-chart",
+  disabled: false,
   namespace: "default",
   releaseName: "my-release",
   repo: "my-repo",

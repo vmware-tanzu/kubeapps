@@ -12,6 +12,7 @@ interface IAppUpgradeProps {
   app: IRelease;
   appsIsFetching: boolean;
   appsError: Error | undefined;
+  disabled: boolean;
   namespace: string;
   releaseName: string;
   repoName: string;
@@ -69,6 +70,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
   public render() {
     const {
       app,
+      disabled,
       namespace,
       appsError,
       releaseName,
@@ -103,6 +105,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
           <UpgradeForm
             appCurrentVersion={app.chart.metadata.version!}
             appCurrentValues={(app.config && app.config.raw) || ""}
+            disabled={disabled}
             chartName={app.chart.metadata.name!}
             repo={repo}
             repoNamespace={repoNamespace}

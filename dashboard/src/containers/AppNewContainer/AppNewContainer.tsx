@@ -32,6 +32,7 @@ function mapStateToProps(
     kubeappsNamespace: config.namespace,
     namespace: params.namespace,
     selected: charts.selected,
+    disabled: charts.isFetching,
   };
 }
 

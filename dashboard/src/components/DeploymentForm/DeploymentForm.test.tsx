@@ -15,6 +15,7 @@ import DeploymentForm from "./DeploymentForm";
 
 const releaseName = "my-release";
 const defaultProps = {
+  disabled: false,
   kubeappsNamespace: "kubeapps",
   chartNamespace: "other-namespace",
   chartID: "foo",

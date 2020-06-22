@@ -33,6 +33,8 @@ The `integration` folder pointed above is self-contained. That means that the di
 
 It's possible to run these tests either locally or in a container environment.
 
+You can setup a configured Kubeapps instance in your cluster with the `script/setup-kubeapps.sh` script.
+
 ### Runing browser tests locally
 
 To run the tests locally you just need to install the required dependencies and set the required environment variables:
