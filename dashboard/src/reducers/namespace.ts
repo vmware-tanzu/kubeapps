@@ -54,7 +54,7 @@ const namespaceReducer = (
       return { ...initialState };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
-      // looks for /ns/:namespace in URL
+      // looks for /ns/:namespace/ in URL
       const matches = pathname.match(/\/ns\/([^/]*)/);
       if (matches) {
         return { ...state, current: matches[1] };
