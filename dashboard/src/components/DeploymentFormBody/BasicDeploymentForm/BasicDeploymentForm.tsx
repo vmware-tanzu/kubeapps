@@ -42,16 +42,9 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
     deploymentEvent?: DeploymentEvent,
   ): boolean {
     if (deploymentEvent == null) {
-      const pathHidden = getValue(this.props.appValues, path) === (expectedValue ?? true);
-      return pathHidden;
+      return getValue(this.props.appValues, path) === (expectedValue ?? true);
     } else {
-      const deploymentHidden = deploymentEvent === this.props.deploymentEvent;
-      if (path == null) {
-        return deploymentHidden;
-      } else {
-        const pathHidden = getValue(this.props.appValues, path) === (expectedValue ?? true);
-        return deploymentHidden && pathHidden;
-      }
+      return deploymentEvent === this.props.deploymentEvent;
     }
   }
 

@@ -147,10 +147,9 @@ class DeploymentFormBody extends React.Component<
     // TODO(andres): This requires refactoring. Currently, the deploy and upgrade
     // forms behave differently. In the deployment form, a change in the version
     // changes the route but in the case of the upgrade it only changes the state
-    const isUpgradeForm = !!this.props.releaseVersion;
-    const { namespace, selected } = this.props;
+    const { namespace, selected, deploymentEvent } = this.props;
 
-    if (isUpgradeForm) {
+    if (deploymentEvent === "upgrade") {
       const { chartID, chartNamespace, getChartVersion } = this.props;
       getChartVersion(chartNamespace, chartID, e.currentTarget.value);
     } else {
