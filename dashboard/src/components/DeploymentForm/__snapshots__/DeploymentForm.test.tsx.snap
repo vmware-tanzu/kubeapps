@@ -38,6 +38,7 @@ exports[`renders the full DeploymentForm 1`] = `
         chartID="foo"
         chartNamespace="other-namespace"
         chartVersion="1.0.0"
+        disabled={false}
         getChartVersion={[Function]}
         namespace="default"
         push={[Function]}
