@@ -1,6 +1,7 @@
 import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { ArrowUpCircle } from "react-feather";
+import * as url from "../../../shared/url";
 
 interface IUpgradeButtonProps {
   newVersion?: boolean;
@@ -11,7 +12,7 @@ interface IUpgradeButtonProps {
 
 const UpgradeButton: React.SFC<IUpgradeButtonProps> = props => {
   const { newVersion, push, releaseName, releaseNamespace } = props;
-  const onClick = () => push(`/ns/${releaseNamespace}/apps/${releaseName}/upgrade`);
+  const onClick = () => push(url.app.apps.upgrade(releaseName, releaseNamespace));
   let upgradeButton = (
     <button className="button" onClick={onClick}>
       Upgrade

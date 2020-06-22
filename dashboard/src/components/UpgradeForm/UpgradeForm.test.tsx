@@ -3,6 +3,7 @@ import * as React from "react";
 import itBehavesLike from "../../shared/specs";
 
 import { IChartState, IChartVersion, UnprocessableEntity } from "../../shared/types";
+import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector } from "../ErrorAlert";
 import UpgradeForm, { IUpgradeFormProps } from "./UpgradeForm";
@@ -120,7 +121,7 @@ it("triggers an upgrade when submitting the form", done => {
     schema,
   );
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith("/ns/default/apps/my-release");
+    expect(push).toHaveBeenCalledWith(url.app.apps.get(releaseName, namespace));
     done();
   }, 1);
 });

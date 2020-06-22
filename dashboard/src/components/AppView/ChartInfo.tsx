@@ -1,12 +1,13 @@
 import * as React from "react";
 import { AlertTriangle, CheckCircle } from "react-feather";
 import { Link } from "react-router-dom";
-
 import { IRelease } from "shared/types";
-import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
-
 import placeholder from "../../placeholder.png";
+import * as url from "../../shared/url";
+import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 import "./ChartInfo.css";
+
+
 
 interface IChartInfoProps {
   app: IRelease;
@@ -99,7 +100,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
               {update}
               <br />
               <span>
-                Click <Link to={`/ns/${app.namespace}/apps/${app.name}/upgrade`}>here</Link> to
+                Click <Link to={url.app.apps.upgrade(app.name, app.namespace)}>here</Link> to
                 upgrade.
               </span>
             </React.Fragment>

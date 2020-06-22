@@ -1,8 +1,8 @@
 import * as React from "react";
-
 import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
 import { IAppOverview } from "../../shared/types";
+import * as url from "../../shared/url";
 import InfoCard from "../InfoCard";
 import "./AppListItem.css";
 
@@ -21,7 +21,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
     return (
       <InfoCard
         key={app.releaseName}
-        link={`/ns/${app.namespace}/apps/${app.releaseName}`}
+        link={url.app.apps.get(app.releaseName, app.namespace)}
         title={app.releaseName}
         icon={icon}
         info={`${app.chart} v${app.version || "-"}`}

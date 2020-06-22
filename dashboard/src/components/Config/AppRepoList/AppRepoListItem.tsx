@@ -2,8 +2,10 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IAppRepository, ISecret } from "shared/types";
+import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
 import { AppRepoAddButton } from "./AppRepoButton";
+
 
 interface IAppRepoListItemProps {
   errors: {
@@ -69,7 +71,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
     return (
       <tr key={repo.metadata.name}>
         <td>
-          <Link to={`/ns/${namespace}/catalog/${repo.metadata.name}`}>{repo.metadata.name}</Link>
+          <Link to={url.app.repo(repo.metadata.name, namespace)}>{repo.metadata.name}</Link>
         </td>
         {renderNamespace && <td>{repo.metadata.namespace}</td>}
         <td>{repo.spec && repo.spec.url}</td>
