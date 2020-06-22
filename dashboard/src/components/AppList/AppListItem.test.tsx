@@ -1,10 +1,11 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 import { Link } from "react-router-dom";
-
 import { IAppOverview } from "../../shared/types";
+import * as url from "../../shared/url";
 import InfoCard from "../InfoCard";
 import AppListItem from "./AppListItem";
+
 
 it("renders an app item", () => {
   const wrapper = shallow(
@@ -32,7 +33,7 @@ it("renders an app item", () => {
       .find(Link)
       .at(0)
       .props().to,
-  ).toBe("/ns/default/apps/foo");
+  ).toBe(url.app.apps.get("foo", "default"));
   expect(card.find(".type-color-light-blue").text()).toBe("myapp v1.0.0");
   expect(card.find(".deployed").exists()).toBe(true);
   expect(card.find(".ListItem__content__info_tag-1").text()).toBe("default");

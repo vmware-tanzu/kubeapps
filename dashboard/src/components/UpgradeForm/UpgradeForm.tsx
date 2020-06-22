@@ -6,6 +6,7 @@ import * as YAML from "yaml";
 
 import { deleteValue, setValue } from "../../shared/schema";
 import { IChartState, IChartVersion } from "../../shared/types";
+import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
@@ -158,7 +159,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
       );
       this.setState({ isDeploying: false });
       if (deployed) {
-        push(`/ns/${namespace}/apps/${releaseName}`);
+        push(url.app.apps.get(releaseName, namespace));
       }
     }
   };

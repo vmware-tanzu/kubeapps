@@ -17,11 +17,11 @@ interface IRouteProps {
   };
 }
 function mapStateToProps(
-  { apps, namespace, operators }: IStoreState,
+  { apps, clusters: { currentCluster, clusters }, operators }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
-    namespace: namespace.current,
+    namespace: clusters[currentCluster].currentNamespace,
     csvName: params.csv,
     crdName: params.crd,
     instanceName: params.instanceName,

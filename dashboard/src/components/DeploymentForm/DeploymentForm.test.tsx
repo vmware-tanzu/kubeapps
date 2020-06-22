@@ -8,6 +8,7 @@ import {
   IChartVersion,
   UnprocessableEntity,
 } from "../../shared/types";
+import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
 import DeploymentForm from "./DeploymentForm";
@@ -191,7 +192,7 @@ it("triggers a deployment when submitting the form", done => {
     schema,
   );
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith("/ns/default/apps/my-release");
+    expect(push).toHaveBeenCalledWith(url.app.apps.get("my-release", "default"));
     done();
   }, 1);
 });

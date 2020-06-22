@@ -29,7 +29,7 @@ exports[`renders a header for the chart 1`] = `
              - 
           </span>
           <Link
-            to="/catalog/testrepo"
+            to="/c/default/ns/kubeapps/catalog/testrepo"
           >
             testrepo
           </Link>
@@ -45,6 +45,7 @@ exports[`renders a header for the chart 1`] = `
       className="col-2 ChartHeader__button"
     >
       <ChartDeployButton
+        namespace="kubeapps"
         version={
           Object {
             "attributes": Object {

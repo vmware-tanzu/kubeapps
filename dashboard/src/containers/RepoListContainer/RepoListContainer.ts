@@ -7,8 +7,8 @@ import { definedNamespaces } from "../../shared/Namespace";
 import { IAppRepositoryKey, IStoreState } from "../../shared/types";
 
 
-function mapStateToProps({ config, namespace, repos }: IStoreState) {
-  const repoNamespace = namespace.current;
+function mapStateToProps({ config, clusters: { currentCluster, clusters }, repos }: IStoreState) {
+  const repoNamespace = clusters[currentCluster].currentNamespace;
   let displayReposPerNamespaceMsg = false;
   if (repoNamespace !== definedNamespaces.all) {
     displayReposPerNamespaceMsg = true;

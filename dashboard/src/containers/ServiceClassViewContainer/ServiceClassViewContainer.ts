@@ -17,13 +17,13 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps({ catalog, namespace }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ catalog, clusters: { currentCluster, clusters } }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     classes: catalog.classes,
     classname: params.className,
     createError: catalog.errors.create,
     error: catalog.errors.fetch,
-    namespace: namespace.current,
+    namespace: clusters[currentCluster].currentNamespace,
     plans: catalog.plans,
   };
 }

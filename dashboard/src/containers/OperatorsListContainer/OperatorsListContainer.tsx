@@ -9,11 +9,11 @@ import OperatorList from "../../components/OperatorList";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { operators, namespace }: IStoreState,
+  { operators, clusters: { currentCluster, clusters } }: IStoreState,
   { location }: RouteComponentProps<{}>,
 ) {
   return {
-    namespace: namespace.current,
+    namespace: clusters[currentCluster].currentNamespace,
     isFetching: operators.isFetching,
     isOLMInstalled: operators.isOLMInstalled,
     operators: operators.operators,

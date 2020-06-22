@@ -5,9 +5,9 @@ import appsReducer from "./apps";
 import authReducer from "./auth";
 import catalogReducer from "./catalog";
 import chartsReducer from "./charts";
+import clusterReducer from "./cluster";
 import configReducer from "./config";
 import kubeReducer from "./kube";
-import namespaceReducer from "./namespace";
 import operatorReducer from "./operators";
 import reposReducer from "./repos";
 
@@ -18,7 +18,7 @@ const rootReducer = combineReducers<IStoreState>({
   charts: chartsReducer,
   config: configReducer,
   kube: kubeReducer,
-  namespace: namespaceReducer,
+  clusters: clusterReducer,
   repos: reposReducer,
   operators: operatorReducer,
 });
