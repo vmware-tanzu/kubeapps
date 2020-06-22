@@ -1,13 +1,14 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-
 import helmIcon from "../../icons/helm.svg";
 import operatorIcon from "../../icons/operator-framework.svg";
 import placeholder from "../../placeholder.png";
 import { IRepo } from "../../shared/types";
+import * as url from "../../shared/url";
 import InfoCard from "../InfoCard";
-
 import "./CatalogItem.css";
+
+
 
 interface ICatalogItemProps {
   item: ICatalogItem;
@@ -45,15 +46,16 @@ const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   let subIcon;
   if (type === "chart") {
     tag1 = (
+      // TODO(#1803): See #1803 regarding the work-arounds below for the fact
+      // that repo is required if we're dealing with a chart here.
       <Link
         className="ListItem__content__info_tag_link"
-        to={`/ns/${namespace}/catalog/${repo?.name}`}
+        to={url.app.repo(repo?.name || "", namespace)}
       >
         {repo?.name}
       </Link>
     );
-    const chartsSegment = namespace !== repo?.namespace ? "global-charts" : "charts";
-    link = `/ns/${namespace}/${chartsSegment}/${repo?.name}/${name}`;
+    link = url.app.charts.get(name, repo || {} as IRepo, namespace);
     subIcon = helmIcon;
   } else {
     // Cosmetic change, remove the version from the csv name

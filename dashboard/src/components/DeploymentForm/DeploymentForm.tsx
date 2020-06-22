@@ -9,6 +9,7 @@ import {
   IChartVersion,
   InternalServerError,
 } from "../../shared/types";
+import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { ErrorSelector, UnexpectedErrorAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
@@ -170,7 +171,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       );
       this.setState({ isDeploying: false });
       if (deployed) {
-        push(`/ns/${namespace}/apps/${releaseName}`);
+        push(url.app.apps.get(releaseName, namespace));
       }
     }
   };

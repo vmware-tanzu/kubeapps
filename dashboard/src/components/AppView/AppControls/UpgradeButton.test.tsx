@@ -3,8 +3,9 @@ import context from "jest-plugin-context";
 import * as React from "react";
 import { ArrowUpCircle } from "react-feather";
 import { Redirect } from "react-router";
-
+import * as url from "../../../shared/url";
 import UpgradeButton from "./UpgradeButton";
+
 
 it("renders a redirect when clicking upgrade", () => {
   const push = jest.fn();
@@ -17,7 +18,7 @@ it("renders a redirect when clicking upgrade", () => {
 
   button.simulate("click");
   expect(push.mock.calls.length).toBe(1);
-  expect(push.mock.calls[0]).toEqual(["/ns/default/apps/foo/upgrade"]);
+  expect(push.mock.calls[0]).toEqual([url.app.apps.upgrade("foo", "default")]);
 });
 
 context("when a new version is available", () => {
