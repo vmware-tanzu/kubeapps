@@ -274,7 +274,6 @@ jobs:
       - <<: *exports
       - run: make test
       - setup_remote_docker
-      - run: sudo apt-get install postgresql-client
       # Integration tests for DB
       - run: |
           docker run -d --name postgresql --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.6.0-debian-9-r0
