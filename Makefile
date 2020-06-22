@@ -27,11 +27,7 @@ kubeapps/dashboard:
 test:
 	$(GO) test $(GO_PACKAGES)
 
-start-db:
-	docker run --rm --publish 5432:5432 -e ALLOW_EMPTY_PASSWORD=yes bitnami/postgresql:11.6.0-debian-9-r0 &
-	until psql -h 127.0.0.1 -U postgres -c "select 1" > /dev/null 2>&1; do echo "Waiting for postgres server..."; sleep 1; done
-
-test-db: start-db
+test-db:
 	cd cmd/asset-syncer; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
 	cd cmd/assetsvc; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
 
