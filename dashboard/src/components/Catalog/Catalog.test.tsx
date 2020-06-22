@@ -200,7 +200,6 @@ describe("renderization", () => {
           name: "bar",
           namespace: "chart-namespace",
         },
-        type: "chart",
         version: "v2.0.0",
       };
       const expectedItem2 = {
@@ -212,7 +211,6 @@ describe("renderization", () => {
           name: "foo",
           namespace: "chart-namespace",
         },
-        type: "chart",
         version: "v1.0.0",
       };
       expect(
@@ -248,7 +246,6 @@ describe("renderization", () => {
           name: "foo",
           namespace: "chart-namespace",
         },
-        type: "chart",
         version: "v1.0.0",
       };
       expect(
@@ -294,7 +291,6 @@ describe("renderization", () => {
           id: "foo-cluster",
           name: "foo-cluster",
           namespace: "kubeapps",
-          type: "operator",
           version: "v1.0.0",
         };
         const csvCard = cardGrid

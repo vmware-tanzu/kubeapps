@@ -6,7 +6,7 @@ import * as React from "react";
 import { IRepo } from "../../shared/types";
 import { CardIcon } from "../Card";
 import InfoCard from "../InfoCard";
-import CatalogItem, { ICatalogItem } from "./CatalogItem";
+import CatalogItem, { IChartCatalogItem, IOperatorCatalogItem } from "./CatalogItem";
 
 jest.mock("../../placeholder.png", () => "placeholder.png");
 
@@ -22,10 +22,10 @@ const defaultItem = {
   } as IRepo,
   namespace: "repo-namespace",
   icon: "icon.png",
-} as ICatalogItem;
+} as IChartCatalogItem;
 
 it("should render a chart item in a namespace", () => {
-  const wrapper = shallow(<CatalogItem item={defaultItem} />);
+  const wrapper = shallow(<CatalogItem item={defaultItem} type="chart" />);
   expect(wrapper).toMatchSnapshot();
 });
 
@@ -37,14 +37,14 @@ it("should render a global chart item in a namespace", () => {
       namespace: "kubeapps",
     } as IRepo,
   };
-  const wrapper = shallow(<CatalogItem item={globalItem} />);
+  const wrapper = shallow(<CatalogItem item={globalItem} type="chart" />);
   expect(wrapper).toMatchSnapshot();
 });
 
 it("should use the default placeholder for the icon if it doesn't exist", () => {
   const chartWithoutIcon = cloneDeep(defaultItem);
   chartWithoutIcon.icon = undefined;
-  const wrapper = shallow(<CatalogItem item={chartWithoutIcon} />);
+  const wrapper = shallow(<CatalogItem item={chartWithoutIcon} type="chart" />);
   // Importing an image returns "undefined"
   expect(
     wrapper
@@ -58,7 +58,7 @@ it("should use the default placeholder for the icon if it doesn't exist", () => 
 it("should place a dash if the version is not avaliable", () => {
   const chartWithoutVersion = cloneDeep(defaultItem);
   chartWithoutVersion.version = "";
-  const wrapper = shallow(<CatalogItem item={chartWithoutVersion} />);
+  const wrapper = shallow(<CatalogItem item={chartWithoutVersion} type="chart" />);
   expect(
     wrapper
       .find(InfoCard)
@@ -71,7 +71,7 @@ it("should place a dash if the version is not avaliable", () => {
 it("show the chart description", () => {
   const chartWithDescription = cloneDeep(defaultItem);
   chartWithDescription.description = "This is a description";
-  const wrapper = shallow(<CatalogItem item={chartWithDescription} />);
+  const wrapper = shallow(<CatalogItem item={chartWithDescription} type="chart" />);
   expect(
     wrapper
       .find(InfoCard)
@@ -86,7 +86,7 @@ context("when the description is too long", () => {
     const chartWithDescription = cloneDeep(defaultItem);
     chartWithDescription.description =
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ultrices velit leo, quis pharetra mi vestibulum quis.";
-    const wrapper = shallow(<CatalogItem item={chartWithDescription} />);
+    const wrapper = shallow(<CatalogItem item={chartWithDescription} type="chart" />);
     expect(
       wrapper
         .find(InfoCard)
@@ -101,18 +101,17 @@ context("when the item is a catalog", () => {
   const catalogItem = {
     ...defaultItem,
     csv: "foo-cluster",
-    type: "operator",
-  } as ICatalogItem;
+  } as IOperatorCatalogItem;
 
   it("shows the proper tag", () => {
-    const wrapper = shallow(<CatalogItem item={catalogItem} />);
+    const wrapper = shallow(<CatalogItem item={catalogItem} type={"operator"} />);
     expect((wrapper.find(InfoCard).prop("tag1Content") as JSX.Element).props.children).toEqual(
       "foo-cluster",
     );
   });
 
   it("has the proper link", () => {
-    const wrapper = shallow(<CatalogItem item={catalogItem} />);
+    const wrapper = shallow(<CatalogItem item={catalogItem} type={"operator"} />);
     expect(wrapper.find(InfoCard).prop("link")).toEqual(
       `/ns/${defaultItem.namespace}/operators-instances/new/foo-cluster/foo1`,
     );
