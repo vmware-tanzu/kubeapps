@@ -23,6 +23,11 @@ test("Upgrades an application", async () => {
   const latestChartVersion = chartVersionValue.split(" ")[0];
 
   await expect(page).toSelect("#chartVersion", "7.3.2", { delay: 1000 });
+  // TODO(absoludity): ensure that the deploy button is disabled until the resulting data
+  // is loaded from the selected chart version to avoid deploying the latest version
+  // even though we think we've selected an old version, then remove the temporary
+  // waitFor's below.
+  await page.waitFor(1000);
 
   // Increase the number of replicas
   await page.focus("#replicaCount-1");

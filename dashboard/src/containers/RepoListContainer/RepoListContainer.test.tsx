@@ -14,7 +14,12 @@ const defaultState = {
   config: {
     namespace: kubeappsNamespace,
   },
-  namespace: { current: currentNamespace },
+  clusters: {
+    currentCluster: "default",
+    clusters: {
+      default: { currentNamespace },
+    },
+  },
   repos: {},
   displayReposPerNamespaceMsg: false,
 };
@@ -40,7 +45,12 @@ describe("RepoListContainer props", () => {
       config: {
         namespace: kubeappsNamespace,
       },
-      namespace: { current: definedNamespaces.all },
+      clusters: {
+        ...defaultState.clusters,
+        clusters: {
+          default: { currentNamespace: definedNamespaces.all },
+        },
+      },
     });
     const wrapper = shallow(<RepoListContainer store={store} />);
 

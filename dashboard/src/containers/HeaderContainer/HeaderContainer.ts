@@ -14,7 +14,7 @@ interface IState extends IStoreState {
 
 function mapStateToProps({
   auth: { authenticated, defaultNamespace },
-  namespace,
+  clusters,
   router: {
     location: { pathname },
   },
@@ -22,7 +22,7 @@ function mapStateToProps({
 }: IState) {
   return {
     authenticated,
-    namespace,
+    cluster: clusters.clusters.default,
     defaultNamespace,
     pathname,
     featureFlags,

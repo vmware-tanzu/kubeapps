@@ -16,11 +16,11 @@ interface IRouteProps {
 }
 
 function mapStateToProps(
-  { operators, namespace }: IStoreState,
+  { operators, clusters: { currentCluster, clusters } }: IStoreState,
   { match: { params } }: IRouteProps,
 ) {
   return {
-    namespace: namespace.current,
+    namespace: clusters[currentCluster].currentNamespace,
     isFetching: operators.isFetching,
     operator: operators.operator,
     errors: operators.errors.operator,

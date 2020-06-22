@@ -4,10 +4,10 @@ import { withRouter } from "react-router";
 import { IStoreState } from "../../shared/types";
 import Routes from "./Routes";
 
-function mapStateToProps({ auth, namespace, config }: IStoreState) {
+function mapStateToProps({ auth, clusters: { currentCluster, clusters }, config }: IStoreState) {
   return {
-    cluster: namespace.cluster,
-    namespace: namespace.current || auth.defaultNamespace,
+    cluster: currentCluster,
+    namespace: clusters[currentCluster].currentNamespace || auth.defaultNamespace,
     authenticated: auth.authenticated,
     featureFlags: config.featureFlags,
   };

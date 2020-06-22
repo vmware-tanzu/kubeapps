@@ -9,7 +9,7 @@ import ServiceInstanceList from "../../components/ServiceInstanceList";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { catalog, namespace }: IStoreState,
+  { catalog, clusters: { currentCluster, clusters } }: IStoreState,
   { location }: RouteComponentProps<{ brokerName: string }>,
 ) {
   const { brokers, classes, plans, instances, isServiceCatalogInstalled } = catalog;
@@ -20,7 +20,7 @@ function mapStateToProps(
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     instances,
     isServiceCatalogInstalled,
-    namespace: namespace.current,
+    namespace: clusters[currentCluster].currentNamespace,
     plans,
   };
 }
