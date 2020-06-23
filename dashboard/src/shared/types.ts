@@ -2,8 +2,8 @@ import * as jsonSchema from "json-schema";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
 import { IServiceCatalogState } from "../reducers/catalog";
+import { IClustersState } from "../reducers/cluster";
 import { IConfigState } from "../reducers/config";
-import { INamespaceState } from "../reducers/namespace";
 import { IAppRepositoryState } from "../reducers/repos";
 import { hapi } from "./hapi/release";
 import { ResourceKind } from "./ResourceKinds";
@@ -29,6 +29,8 @@ export class ConflictError extends CustomError {}
 export class UnprocessableEntity extends CustomError {}
 
 export class InternalServerError extends CustomError {}
+
+export type DeploymentEvent = "install" | "upgrade";
 
 export interface IRepo {
   namespace: string;
@@ -359,7 +361,7 @@ export interface IStoreState {
   config: IConfigState;
   kube: IKubeState;
   repos: IAppRepositoryState;
-  namespace: INamespaceState;
+  clusters: IClustersState;
   operators: IOperatorsState;
 }
 
@@ -543,10 +545,12 @@ export interface IBasicFormParam {
   enum?: string[];
   hidden?:
     | {
-        path: any;
+        event: DeploymentEvent;
+        path: string;
         value: string;
         conditions: Array<{
-          path: any;
+          event: DeploymentEvent;
+          path: string;
           value: string;
         }>;
         operator: string;

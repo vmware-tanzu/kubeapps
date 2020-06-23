@@ -9,7 +9,7 @@ import { MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
-import CatalogItem, { ICatalogItem } from "./CatalogItem";
+import CatalogItem, { ICatalogItemProps, IChartCatalogItem, IOperatorCatalogItem } from "./CatalogItem";
 
 interface ICatalogProps {
   charts: IChartState;
@@ -102,9 +102,10 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     const filteredCharts = this.filteredCharts(allItems);
     const filteredCSVs = this.shouldRenderOperators() ? this.filteredCSVs(csvs) : [];
     const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
-    const items = catalogItems.map(c => (
-      <CatalogItem key={`${c.type}/${c.repo?.name || c.csv}/${c.name}`} item={c} />
-    ));
+    const items = catalogItems.map(c => {
+      const keyComponent = c.type === "operator" ? (c.item as IOperatorCatalogItem).csv : (c.item as IChartCatalogItem).repo.name;
+      return <CatalogItem type={c.type} key={`${c.type}/${keyComponent}/${c.item.name}`} item={c.item} />
+    });
     return (
       <section className="Catalog">
         <PageHeader>
@@ -169,35 +170,39 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     return csvs.filter(c => new RegExp(escapeRegExp(filter), "i").test(c.metadata.name));
   }
 
-  private getCatalogItems(charts: IChart[], csvs: IClusterServiceVersion[]): ICatalogItem[] {
-    let result: ICatalogItem[] = [];
+  private getCatalogItems(charts: IChart[], csvs: IClusterServiceVersion[]): ICatalogItemProps[] {
+    let result: ICatalogItemProps[] = [];
     charts.forEach(c => {
       result = result.concat({
-        id: c.id,
-        name: c.attributes.name,
-        icon: c.attributes.icon ? `api/assetsvc/${c.attributes.icon}` : undefined,
-        version: c.relationships.latestChartVersion.data.app_version,
-        description: c.attributes.description,
         type: "chart",
-        repo: c.attributes.repo,
-        namespace: this.props.namespace,
+        item: {
+          id: c.id,
+          name: c.attributes.name,
+          icon: c.attributes.icon ? `api/assetsvc/${c.attributes.icon}` : undefined,
+          version: c.relationships.latestChartVersion.data.app_version,
+          description: c.attributes.description,
+          repo: c.attributes.repo,
+          namespace: this.props.namespace,
+        },
       });
     });
     csvs.forEach(csv => {
       csv.spec.customresourcedefinitions.owned.forEach(crd => {
         result = result.concat({
-          id: crd.name,
-          name: crd.displayName,
-          icon: `data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`,
-          version: crd.version,
-          description: crd.description,
           type: "operator",
-          csv: csv.metadata.name,
-          namespace: this.props.namespace,
+          item: {
+            id: crd.name,
+            name: crd.displayName,
+            icon: `data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`,
+            version: crd.version,
+            description: crd.description,
+            csv: csv.metadata.name,
+            namespace: this.props.namespace,
+          },
         });
       });
     });
-    return result.sort((a, b) => (a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1));
+    return result.sort((a, b) => (a.item.name.toLowerCase() > b.item.name.toLowerCase() ? 1 : -1));
   }
 
   private toggleListCharts = () => {
