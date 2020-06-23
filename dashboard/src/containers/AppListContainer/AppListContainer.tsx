@@ -9,7 +9,7 @@ import AppList from "../../components/AppList";
 import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
-  { apps, clusters: { currentCluster, clusters}, operators, config }: IStoreState,
+  { apps, clusters: { currentCluster, clusters }, operators, config }: IStoreState,
   { location }: RouteComponentProps<{}>,
 ) {
   return {

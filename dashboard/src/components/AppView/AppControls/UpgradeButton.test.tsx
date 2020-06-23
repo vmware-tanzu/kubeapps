@@ -6,7 +6,6 @@ import { Redirect } from "react-router";
 import * as url from "../../../shared/url";
 import UpgradeButton from "./UpgradeButton";
 
-
 it("renders a redirect when clicking upgrade", () => {
   const push = jest.fn();
   const wrapper = shallow(

@@ -11,10 +11,9 @@ import LoadingWrapper from "../LoadingWrapper";
 import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm";
 import DeploymentFormBody, {
   IDeploymentFormBodyProps,
-  IDeploymentFormBodyState
+  IDeploymentFormBodyState,
 } from "./DeploymentFormBody";
 import Differential from "./Differential";
-
 
 const defaultProps = {
   deploymentEvent: "install",
@@ -126,7 +125,9 @@ it("changes the URL for the new version", () => {
     },
   });
   wrapper.find("select").simulate("change", { currentTarget: { value: "2.0.0" } });
-  expect(push).toHaveBeenCalledWith(url.app.apps.new(chartVersion, defaultProps.namespace, "2.0.0"));
+  expect(push).toHaveBeenCalledWith(
+    url.app.apps.new(chartVersion, defaultProps.namespace, "2.0.0"),
+  );
 });
 
 describe("when there are changes in the selected version", () => {

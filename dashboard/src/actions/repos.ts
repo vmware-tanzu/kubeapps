@@ -10,10 +10,9 @@ import {
   IAppRepositoryKey,
   ISecret,
   IStoreState,
-  NotFoundError
+  NotFoundError,
 } from "../shared/types";
 import { errorChart } from "./charts";
-
 
 export const addRepo = createAction("ADD_REPO");
 export const addedRepo = createAction("ADDED_REPO", resolve => {
@@ -114,7 +113,7 @@ export const deleteRepo = (
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> => {
   return async (dispatch, getState) => {
     const {
-      clusters: { 
+      clusters: {
         clusters: {
           default: { currentNamespace },
         },

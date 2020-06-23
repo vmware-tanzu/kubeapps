@@ -7,8 +7,6 @@ import * as url from "../../shared/url";
 import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
 import "./ChartInfo.css";
 
-
-
 interface IChartInfoProps {
   app: IRelease;
 }

@@ -81,7 +81,11 @@ class ChartView extends React.Component<IChartViewProps> {
                 <aside className="ChartViewSidebar bg-light margin-v-big padding-h-normal padding-b-normal">
                   <div className="ChartViewSidebar__section">
                     <h2>Chart Versions</h2>
-                    <ChartVersionsList selected={version} versions={versions} targetNamespace={namespace} />
+                    <ChartVersionsList
+                      selected={version}
+                      versions={versions}
+                      targetNamespace={namespace}
+                    />
                   </div>
                   {version.attributes.app_version && (
                     <div className="ChartViewSidebar__section">

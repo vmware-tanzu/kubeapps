@@ -5,7 +5,6 @@ import thunk from "redux-thunk";
 import RepoListContainer from ".";
 import { definedNamespaces } from "../../shared/Namespace";
 
-
 const mockStore = configureMockStore([thunk]);
 const currentNamespace = "current-namespace";
 const kubeappsNamespace = "kubeapps-namespace";
