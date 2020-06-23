@@ -30,6 +30,8 @@ export class UnprocessableEntity extends CustomError {}
 
 export class InternalServerError extends CustomError {}
 
+export type DeploymentEvent = "install" | "upgrade";
+
 export interface IRepo {
   namespace: string;
   name: string;
@@ -543,10 +545,12 @@ export interface IBasicFormParam {
   enum?: string[];
   hidden?:
     | {
-        path: any;
+        event: DeploymentEvent;
+        path: string;
         value: string;
         conditions: Array<{
-          path: any;
+          event: DeploymentEvent;
+          path: string;
           value: string;
         }>;
         operator: string;

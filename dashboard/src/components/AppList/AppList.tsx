@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IAppOverview, IAppState, IClusterServiceVersion, IResource } from "../../shared/types";
+import * as url from "../../shared/url";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
 import { ErrorSelector, MessageAlert } from "../ErrorAlert";
@@ -77,7 +78,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
           <div className="col-3 text-r align-center">
             {!error && (
-              <Link to={`/ns/${namespace}/catalog`}>
+              <Link to={url.app.catalog(namespace)}>
                 <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
             )}

@@ -202,6 +202,50 @@ Note that the parameter that hides another parameter doesn't need to be within t
     },
 ```
 
+A parameter can also be hidden based on the deployment event `install` or `upgrade`, wherever they are no longer relevant.
+
+```json
+    "mariadb": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Use a new MariaDB database hosted in the cluster",
+          "form": "useSelfHostedDatabase",
+          "hidden": {
+            "event": "upgrade"
+          }
+        }
+      }
+    },
+```
+
+The `event` condition can be combined into a array of conditions in the same way:
+
+```json
+    "mariadb": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Use a new MariaDB database hosted in the cluster",
+          "form": "useSelfHostedDatabase",
+          "hidden": {
+            "conditions": [
+            {
+              "event": "upgrade"
+            },
+            {
+              "path": "mariadb/enabled",
+              "value": "true"
+            }],
+            "operator": "or"
+          }
+        }
+      }
+    },
+```
+
 ## Example
 
 This is a [working example for the WordPress chart](https://github.com/helm/charts/blob/master/stable/wordpress/values.schema.json)

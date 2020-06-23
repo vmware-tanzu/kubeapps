@@ -130,6 +130,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               />
             </div>
             <DeploymentFormBody
+              deploymentEvent="install"
               chartNamespace={this.props.chartNamespace}
               chartID={this.props.chartID}
               chartVersion={this.props.chartVersion}
