@@ -288,8 +288,12 @@ else
 fi
 
 # Wait for Kubeapps Jobs
-k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=stable
-info "Job apprepositories.kubeapps.com/repo-name=stable ready"
+# Clean up existing jobs
+kubectl delete jobs -n kubeapps --all
+# Trigger update of the bitnami repository
+kubectl patch apprepositories.kubeapps.com -n kubeapps bitnami -p='[{"op": "replace", "path": "/spec/resyncRequests", "value":1}]' --type=json
+k8s_wait_for_job_completed kubeapps apprepositories.kubeapps.com/repo-name=bitnami
+info "Job apprepositories.kubeapps.com/repo-name=bitnami ready"
 
 info "All deployments ready. PODs:"
 kubectl get pods -n kubeapps -o wide
