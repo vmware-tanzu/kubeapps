@@ -24,7 +24,6 @@ import ServiceInstanceListContainer from "../../containers/ServiceInstanceListCo
 import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewContainer";
 import { app } from "../../shared/url";
 
-
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 const privateRoutes = {
@@ -60,7 +59,7 @@ interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
 
 class Routes extends React.Component<IRoutesProps> {
   public static defaultProps = {
-    featureFlags: { operators: false, additionalClusters: [] },
+    featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
   };
   public render() {
     const reposPath = "/config/ns/:namespace/repos";

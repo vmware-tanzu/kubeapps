@@ -14,7 +14,10 @@ describe("Auth", () => {
     const mock = jest.fn();
     Axios.get = mock;
     await Auth.validateToken("foo");
-    expect(mock.mock.calls[0]).toEqual(["api/clusters/default/", { headers: { Authorization: "Bearer foo" } }]);
+    expect(mock.mock.calls[0]).toEqual([
+      "api/clusters/default/",
+      { headers: { Authorization: "Bearer foo" } },
+    ]);
   });
 
   describe("when there is an error", () => {
@@ -171,7 +174,7 @@ describe("Auth", () => {
         oauthLogoutURI,
         namespace: "ns",
         appVersion: "2",
-        featureFlags: { operators: false, additionalClusters: [] },
+        featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -185,7 +188,7 @@ describe("Auth", () => {
         oauthLogoutURI: "",
         namespace: "ns",
         appVersion: "2",
-        featureFlags: { operators: false, additionalClusters: [] },
+        featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");

@@ -25,7 +25,7 @@ const defaultState = {
   auth: defaultAuthState,
   router: { location: emptyLocation },
   config: {
-    featureFlags: { operators: true, additionalClusters: [] },
+    featureFlags: { operators: true, additionalClusters: [], ui: "hex" },
   },
   clusters: {
     currentCluster: "default",

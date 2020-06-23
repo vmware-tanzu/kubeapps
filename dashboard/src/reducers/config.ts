@@ -3,7 +3,6 @@ import actions from "../actions";
 import { ConfigAction } from "../actions/config";
 import { IConfig } from "../shared/Config";
 
-
 export interface IConfigState extends IConfig {
   loaded: boolean;
 }
@@ -15,7 +14,7 @@ const initialState: IConfigState = {
   authProxyEnabled: false,
   oauthLoginURI: "",
   oauthLogoutURI: "",
-  featureFlags: { operators: true, additionalClusters: [] },
+  featureFlags: { operators: true, additionalClusters: [], ui: "hex" },
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {

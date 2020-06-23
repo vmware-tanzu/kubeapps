@@ -5,6 +5,8 @@
   "oauthLoginURI": "/oauth2/start",
   "oauthLogoutURI": "/oauth2/sign_out",
   "featureFlags": {
-    "operators": true
+    "operators": true,
+    "additionalClusters": [],
+    "ui": "hex"
   }
 }
