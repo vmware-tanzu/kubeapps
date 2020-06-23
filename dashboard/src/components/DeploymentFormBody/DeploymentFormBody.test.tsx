@@ -20,8 +20,8 @@ const defaultProps = {
   chartNamespace: "chart-namespace",
   chartID: "foo",
   chartVersion: "1.0.0",
-  disabled: false,
   error: undefined,
+  formIsReady: true,
   releaseName: undefined,
   selected: {} as IChartState["selected"],
   deployChart: jest.fn(),
@@ -144,17 +144,6 @@ describe("when there are changes in the selected version", () => {
       },
     ];
     expect(localState.basicFormParameters).toEqual(basicFormParameters);
-  });
-
-  it("disableds the form while props are fetched (disabled prop set)", () => {
-    const wrapper = shallow(
-      <DeploymentFormBody {...defaultProps} selected={{ versions, version: versions[0] }} />,
-    );
-    wrapper.setProps({ disabled: true });
-
-    const submit = wrapper.find(".button-primary");
-    expect(submit).toExist();
-    expect(submit.props().disabled).toBe(true);
   });
 });
 

@@ -23,6 +23,7 @@ test("Upgrades an application", async () => {
   const latestChartVersion = chartVersionValue.split(" ")[0];
 
   await expect(page).toSelect("#chartVersion", "7.3.2");
+  await expect(page).toMatchElement("#replicaCount-1");
 
   // Increase the number of replicas
   await page.focus("#replicaCount-1");
@@ -33,9 +34,9 @@ test("Upgrades an application", async () => {
   await expect(page).toClick("li", { text: "Changes" });
   await expect(page).toMatch("replicaCount: 2");
 
-  await expect(page).toClick(".button-primary:not([disabled])");
+  await expect(page).toClick(".button-primary");
 
-  await expect(page).toMatch("Update Available", { timeout: 10000 });
+  await expect(page).toMatch("Update Available", { timeout: 60000 });
 
   await expect(page).toClick(".upgrade-button");
 
@@ -47,7 +48,7 @@ test("Upgrades an application", async () => {
 
   // From comments at https://github.com/puppeteer/puppeteer/issues/3347, try using a
   // selector rather than element / text for click event.
-  await expect(page).toClick(".button-primary:not([disabled])");
+  await expect(page).toClick(".button-primary");
 
   await expect(page).toMatch("Up to date", { timeout: 10000 });
 });

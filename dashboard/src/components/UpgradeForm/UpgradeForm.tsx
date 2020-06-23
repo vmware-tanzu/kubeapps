@@ -15,7 +15,7 @@ export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
   chartName: string;
-  disabled: boolean;
+  formIsReady: boolean;
   namespace: string;
   releaseName: string;
   repo: string;
@@ -119,7 +119,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
               chartID={chartID}
               chartVersion={this.props.appCurrentVersion}
               deployedValues={this.state.deployedValues}
-              disabled={this.props.disabled}
+              formIsReady={this.props.formIsReady}
               namespace={this.props.namespace}
               releaseVersion={this.props.appCurrentVersion}
               selected={this.props.selected}

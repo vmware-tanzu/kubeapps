@@ -109,7 +109,6 @@ exports[`renders the full DeploymentFormBody 1`] = `
   >
     <button
       className="button button-primary"
-      disabled={false}
       type="submit"
     >
       Submit

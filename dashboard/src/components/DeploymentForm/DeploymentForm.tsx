@@ -21,8 +21,8 @@ export interface IDeploymentFormProps {
   chartNamespace: string;
   chartID: string;
   chartVersion: string;
-  disabled: boolean;
   error: Error | undefined;
+  formIsReady: boolean;
   selected: IChartState["selected"];
   deployChart: (
     version: IChartVersion,
@@ -133,6 +133,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               chartNamespace={this.props.chartNamespace}
               chartID={this.props.chartID}
               chartVersion={this.props.chartVersion}
+              formIsReady={this.props.formIsReady}
               namespace={this.props.namespace}
               selected={this.props.selected}
               push={this.props.push}
@@ -140,7 +141,6 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
               setValues={this.handleValuesChange}
               appValues={this.state.appValues}
               setValuesModified={this.setValuesModified}
-              disabled={this.props.disabled}
             />
           </div>
         </div>

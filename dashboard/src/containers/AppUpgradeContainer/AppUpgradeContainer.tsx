@@ -24,11 +24,10 @@ function mapStateToProps(
 ) {
   return {
     app: apps.selected,
-    appsIsFetching: apps.isFetching,
+    formIsReady: (!apps.isFetching) && (!charts.isFetching),
     reposIsFetching: repos.isFetching,
     appsError: apps.error,
     chartsError: charts.selected.error,
-    disabled: charts.isFetching,
     kubeappsNamespace: config.namespace,
     namespace: params.namespace,
     releaseName: params.releaseName,
