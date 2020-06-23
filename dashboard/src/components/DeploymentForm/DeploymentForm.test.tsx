@@ -15,7 +15,7 @@ import DeploymentForm, { IDeploymentFormProps} from "./DeploymentForm";
 
 const releaseName = "my-release";
 const defaultProps = {
-  formIsReady: true,
+  chartsIsFetching: false,
   kubeappsNamespace: "kubeapps",
   chartNamespace: "other-namespace",
   chartID: "foo",

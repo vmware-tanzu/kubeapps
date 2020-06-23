@@ -10,7 +10,8 @@ import UpgradeForm from "../UpgradeForm";
 
 export interface IAppUpgradeProps {
   app: IRelease;
-  formIsReady: boolean;
+  appsIsFetching: boolean;
+  chartsIsFetching: boolean;
   appsError: Error | undefined;
   namespace: string;
   releaseName: string;
@@ -72,7 +73,8 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
       namespace,
       appsError,
       releaseName,
-      formIsReady,
+      appsIsFetching,
+      chartsIsFetching,
       repoName,
       repoNamespace,
       selected,
@@ -93,7 +95,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
         />
       );
     }
-    if (!app || !app.updateInfo) {
+    if (appsIsFetching || !app || !app.updateInfo) {
       return <LoadingWrapper />;
     }
     const repo = repoName || app.updateInfo.repository.name;
@@ -104,7 +106,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
             appCurrentVersion={app.chart.metadata.version!}
             appCurrentValues={(app.config && app.config.raw) || ""}
             chartName={app.chart.metadata.name!}
-            formIsReady={formIsReady}
+            chartsIsFetching={chartsIsFetching}
             repo={repo}
             repoNamespace={repoNamespace}
             namespace={namespace}

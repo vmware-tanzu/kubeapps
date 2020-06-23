@@ -23,7 +23,7 @@ export interface IDeploymentFormBodyProps {
   chartID: string;
   chartVersion: string;
   deployedValues?: string;
-  formIsReady: boolean;
+  chartsIsFetching: boolean;
   namespace: string;
   releaseVersion?: string;
   selected: IChartState["selected"];
@@ -87,14 +87,14 @@ class DeploymentFormBody extends React.Component<
   };
 
   public render() {
-    const { formIsReady, selected, chartID, chartVersion, goBack } = this.props;
+    const { chartsIsFetching, selected, chartID, chartVersion, goBack } = this.props;
     const { version, versions } = selected;
     if (selected.error) {
       return (
         <ErrorSelector error={selected.error} resource={`Chart "${chartID}" (${chartVersion})`} />
       );
     }
-    if (!formIsReady || !version || !versions.length) {
+    if (chartsIsFetching || !version || !versions.length) {
       return <LoadingWrapper />;
     }
     return (

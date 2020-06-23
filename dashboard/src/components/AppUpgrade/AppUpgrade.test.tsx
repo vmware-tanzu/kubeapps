@@ -14,7 +14,8 @@ import AppUpgrade, { IAppUpgradeProps } from "./AppUpgrade";
 
 const defaultProps = {
   app: {} as hapi.release.Release,
-  formIsReady: true,
+  appsIsFetching: false,
+  chartsIsFetching: false,
   reposIsFetching: false,
   repoName: "",
   repoNamespace: "chart-namespace",

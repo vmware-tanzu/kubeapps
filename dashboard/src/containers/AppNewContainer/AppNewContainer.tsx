@@ -32,7 +32,7 @@ function mapStateToProps(
     kubeappsNamespace: config.namespace,
     namespace: params.namespace,
     selected: charts.selected,
-    formIsReady: !charts.isFetching,
+    chartsIsFetching: !charts.isFetching,
   };
 }
 
