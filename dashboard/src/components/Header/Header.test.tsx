@@ -39,7 +39,7 @@ it("renders the header links and titles", () => {
 describe("settings", () => {
   it("renders settings", () => {
     const wrapper = shallow(
-      <Header {...defaultProps} featureFlags={{ operators: false }} />,
+      <Header {...defaultProps} featureFlags={{ operators: false, additionalClusters: [] }} />,
     );
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
@@ -55,7 +55,7 @@ describe("settings", () => {
 
   it("renders operators link", () => {
     const wrapper = shallow(
-      <Header {...defaultProps} featureFlags={{ operators: true }} />,
+      <Header {...defaultProps} featureFlags={{ operators: true, additionalClusters: [] }} />,
     );
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());

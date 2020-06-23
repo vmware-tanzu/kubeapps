@@ -6,6 +6,11 @@ interface IAdditionalCluster {
   certificateAuthorityData?: string;
 }
 
+export interface IFeatureFlags {
+  operators: boolean;
+  additionalClusters: IAdditionalCluster[];
+}
+
 // IConfig is the configuration for Kubeapps
 export interface IConfig {
   namespace: string;
@@ -14,10 +19,7 @@ export interface IConfig {
   oauthLoginURI: string;
   oauthLogoutURI: string;
   error?: Error;
-  featureFlags: {
-    operators: boolean;
-    additionalClusters: IAdditionalCluster[];
-  };
+  featureFlags: IFeatureFlags;
 }
 
 export default class Config {
