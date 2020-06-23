@@ -1,5 +1,11 @@
 import axios from "axios";
 
+interface IAdditionalCluster {
+  name: string;
+  apiServiceURL: string;
+  certificateAuthorityData?: string;
+}
+
 // IConfig is the configuration for Kubeapps
 export interface IConfig {
   namespace: string;
@@ -10,6 +16,7 @@ export interface IConfig {
   error?: Error;
   featureFlags: {
     operators: boolean;
+    additionalClusters: IAdditionalCluster[];
   };
 }
 
