@@ -94,7 +94,7 @@ const clusterReducer = (
       return { ...initialState };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
-      // looks for /ns/:namespace in URL
+      // looks for /ns/:namespace/ in URL
       // TODO(absoludity): this should match on cluster also to set currentCluster.
       const matches = pathname.match(/\/ns\/([^/]*)/);
       if (matches) {

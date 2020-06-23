@@ -25,9 +25,9 @@ describe("clusterReducer", () => {
 
     describe("changes the current stored namespace if it is in the URL", () => {
       const testCases = [
-        { path: "/ns/cyberdyne/apps", current: "cyberdyne" },
+        { path: "/c/default/ns/cyberdyne/apps", current: "cyberdyne" },
         { path: "/cyberdyne/apps", current: "initial-current" },
-        { path: "/ns/T-600/charts", current: "T-600" },
+        { path: "/c/barcluster/ns/T-600/charts", current: "T-600" },
       ];
       testCases.forEach(tc => {
         it(tc.path, () =>
