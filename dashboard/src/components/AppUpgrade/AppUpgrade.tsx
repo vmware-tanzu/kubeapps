@@ -8,9 +8,10 @@ import LoadingWrapper from "../LoadingWrapper";
 import SelectRepoForm from "../SelectRepoForm";
 import UpgradeForm from "../UpgradeForm";
 
-interface IAppUpgradeProps {
+export interface IAppUpgradeProps {
   app: IRelease;
   appsIsFetching: boolean;
+  chartsIsFetching: boolean;
   appsError: Error | undefined;
   namespace: string;
   releaseName: string;
@@ -73,6 +74,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
       appsError,
       releaseName,
       appsIsFetching,
+      chartsIsFetching,
       repoName,
       repoNamespace,
       selected,
@@ -104,6 +106,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
             appCurrentVersion={app.chart.metadata.version!}
             appCurrentValues={(app.config && app.config.raw) || ""}
             chartName={app.chart.metadata.name!}
+            chartsIsFetching={chartsIsFetching}
             repo={repo}
             repoNamespace={repoNamespace}
             namespace={namespace}

@@ -27,6 +27,12 @@ kubeapps/dashboard:
 test:
 	$(GO) test $(GO_PACKAGES)
 
+test-db:
+	# It's not supported to run tests that involve a database in parallel since they are currently
+	# using the same PG schema. We need to run them sequentially 
+	cd cmd/asset-syncer; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
+	cd cmd/assetsvc; ENABLE_PG_INTEGRATION_TESTS=1 go test -count=1 ./...
+
 test-all: test-apprepository-controller test-dashboard
 
 test-dashboard:

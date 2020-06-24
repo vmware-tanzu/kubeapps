@@ -10,11 +10,12 @@ import { ErrorSelector, MessageAlert, PermissionsErrorAlert } from "../ErrorAler
 import ErrorPageHeader from "../ErrorAlert/ErrorAlertHeader";
 import SelectRepoForm from "../SelectRepoForm";
 import UpgradeForm from "../UpgradeForm";
-import AppUpgrade from "./AppUpgrade";
+import AppUpgrade, { IAppUpgradeProps } from "./AppUpgrade";
 
 const defaultProps = {
   app: {} as hapi.release.Release,
   appsIsFetching: false,
+  chartsIsFetching: false,
   reposIsFetching: false,
   repoName: "",
   repoNamespace: "chart-namespace",
@@ -40,7 +41,7 @@ const defaultProps = {
   selected: {} as IChartState["selected"],
   upgradeApp: jest.fn(),
   version: "1.0.0",
-};
+} as IAppUpgradeProps;
 
 beforeEach(() => {
   jest.resetAllMocks();

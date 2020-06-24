@@ -11,10 +11,11 @@ import {
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
-import DeploymentForm from "./DeploymentForm";
+import DeploymentForm, { IDeploymentFormProps } from "./DeploymentForm";
 
 const releaseName = "my-release";
 const defaultProps = {
+  chartsIsFetching: false,
   kubeappsNamespace: "kubeapps",
   chartNamespace: "other-namespace",
   chartID: "foo",
@@ -26,7 +27,7 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
   namespace: "default",
-};
+} as IDeploymentFormProps;
 const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 let monikerChooseMock: jest.Mock;
 

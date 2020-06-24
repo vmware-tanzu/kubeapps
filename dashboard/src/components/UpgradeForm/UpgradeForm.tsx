@@ -15,6 +15,7 @@ export interface IUpgradeFormProps {
   appCurrentVersion: string;
   appCurrentValues?: string;
   chartName: string;
+  chartsIsFetching: boolean;
   namespace: string;
   releaseName: string;
   repo: string;
@@ -119,6 +120,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
               chartID={chartID}
               chartVersion={this.props.appCurrentVersion}
               deployedValues={this.state.deployedValues}
+              chartsIsFetching={this.props.chartsIsFetching}
               namespace={this.props.namespace}
               releaseVersion={this.props.appCurrentVersion}
               selected={this.props.selected}
