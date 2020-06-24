@@ -65,12 +65,13 @@ test("Creates a private registry", async () => {
 
   await expect(page).toClick("button", { text: "Deploy" });
 
+  await expect(page).toSelect("#chartVersion", "7.3.15");
   const appName = "my-app" + randomNumber;
   await page.type("#releaseName", appName);
 
   await expect(page).toClick("button", { text: "Submit" });
 
-  await expect(page).toMatch("Ready", { timeout: 60000 });
+  await expect(page).toMatch("Update Available", { timeout: 60000 });
 
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the kubernetes API to get info of the
@@ -85,4 +86,14 @@ test("Creates a private registry", async () => {
   expect(deployment.spec.template.spec.imagePullSecrets).toEqual([
     { name: secret },
   ]);
+
+  // Upgrade apache and verify.
+  await expect(page).toClick(".upgrade-button");
+
+  await expect(page).toSelect("#chartVersion", "7.3.16");
+
+  await expect(page).toClick(".button-primary");
+
+  await expect(page).toMatch("Up to date", { timeout: 60000 });
+  await expect(page).toMatch("Ready", { timeout: 60000 });
 });
