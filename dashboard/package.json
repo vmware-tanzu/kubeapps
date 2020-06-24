@@ -78,6 +78,7 @@
     "eject": "react-scripts-ts eject",
     "tslint-check": "tslint-config-prettier-check ./tslint.ci.json",
     "prettier": "prettier --write 'src/**/*.{ts,tsx,css}'",
+    "prettier-check": "prettier --check 'src/**/*.{ts,tsx,css}'",
     "lint-js": "tslint -c ./tslint.ci.json 'src/**/*.{ts,tsx}'",
     "lint-js-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'",
     "lint-css": "stylelint --config ./.stylelintrc.json 'src/**/*.scss'",
