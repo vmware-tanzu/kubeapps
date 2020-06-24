@@ -29,7 +29,15 @@ class ChartVersionsList extends React.Component<IChartVersionsListProps, IChartV
           : "";
       return (
         <li key={v.id}>
-          <Link className={selectedClass} to={url.app.charts.version(chartData.name, v.attributes.version, chartData.repo, this.props.targetNamespace)}>
+          <Link
+            className={selectedClass}
+            to={url.app.charts.version(
+              chartData.name,
+              v.attributes.version,
+              chartData.repo,
+              this.props.targetNamespace,
+            )}
+          >
             {v.attributes.version} - {this.formatDate(v.attributes.created)}
           </Link>
         </li>

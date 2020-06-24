@@ -11,7 +11,7 @@ import {
 import * as url from "../../shared/url";
 import DeploymentFormBody from "../DeploymentFormBody/DeploymentFormBody";
 import { PermissionsErrorAlert, UnexpectedErrorAlert } from "../ErrorAlert";
-import DeploymentForm, { IDeploymentFormProps} from "./DeploymentForm";
+import DeploymentForm, { IDeploymentFormProps } from "./DeploymentForm";
 
 const releaseName = "my-release";
 const defaultProps = {

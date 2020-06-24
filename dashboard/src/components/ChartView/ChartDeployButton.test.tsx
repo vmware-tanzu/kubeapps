@@ -5,7 +5,6 @@ import { IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import ChartDeployButton from "./ChartDeployButton";
 
-
 const testChartVersion: IChartVersion = {
   attributes: {
     version: "1.2.3",

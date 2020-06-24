@@ -4,7 +4,6 @@ import { IClusterState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import Header from "./Header";
 
-
 const defaultProps = {
   authenticated: true,
   fetchNamespaces: jest.fn(),

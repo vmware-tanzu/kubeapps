@@ -92,13 +92,17 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 </button>
                 <ul className="header__nav__menu" role="menubar">
                   <li>
-                    <HeaderLink to={app.apps.list(cluster.currentNamespace)} exact={true}>Applications</HeaderLink>
+                    <HeaderLink to={app.apps.list(cluster.currentNamespace)} exact={true}>
+                      Applications
+                    </HeaderLink>
                   </li>
                   <li>
                     <HeaderLink to={app.catalog(cluster.currentNamespace)}>Catalog</HeaderLink>
                   </li>
                   <li>
-                    <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>Service Instances (alpha)</HeaderLink>
+                    <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>
+                      Service Instances (alpha)
+                    </HeaderLink>
                   </li>
                 </ul>
               </nav>
@@ -131,7 +135,9 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                       {this.props.featureFlags.operators && (
                         <li role="none">
-                          <NavLink to={`/ns/${cluster.currentNamespace}/operators`}>Operators</NavLink>
+                          <NavLink to={`/ns/${cluster.currentNamespace}/operators`}>
+                            Operators
+                          </NavLink>
                         </li>
                       )}
                     </ul>

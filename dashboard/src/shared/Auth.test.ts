@@ -14,7 +14,10 @@ describe("Auth", () => {
     const mock = jest.fn();
     Axios.get = mock;
     await Auth.validateToken("foo");
-    expect(mock.mock.calls[0]).toEqual(["api/clusters/default/", { headers: { Authorization: "Bearer foo" } }]);
+    expect(mock.mock.calls[0]).toEqual([
+      "api/clusters/default/",
+      { headers: { Authorization: "Bearer foo" } },
+    ]);
   });
 
   describe("when there is an error", () => {
