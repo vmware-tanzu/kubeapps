@@ -324,13 +324,10 @@ export function checkChart(
   chartName: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async (dispatch, getState) => {
-    const {
-      config: { namespace },
-    } = getState();
     dispatch(requestRepo());
-    const appRepository = await AppRepository.get(repo, namespace);
+    const appRepository = await AppRepository.get(repo, repoNamespace);
     try {
-      await Chart.fetchChartVersions(namespace, `${repo}/${chartName}`);
+      await Chart.fetchChartVersions(repoNamespace, `${repo}/${chartName}`);
       dispatch(receiveRepo(appRepository));
       return true;
     } catch (e) {
