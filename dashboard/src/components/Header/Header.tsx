@@ -10,6 +10,7 @@ import { app } from "../../shared/url";
 import "./Header.css";
 import HeaderLink from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
+import UISelector from "./UISelector";
 
 interface IHeaderProps {
   authenticated: boolean;
@@ -57,6 +58,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       authenticated: showNav,
       createNamespace,
       getNamespace,
+      featureFlags,
     } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
@@ -66,6 +68,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     const reposPath = `/config/ns/${cluster.currentNamespace}/repos`;
     return (
       <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
+        <UISelector UI={featureFlags.ui} />
         <div className="container">
           <header className={header}>
             <div className="header__logo">
