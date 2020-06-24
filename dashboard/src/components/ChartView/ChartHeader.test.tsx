@@ -5,7 +5,6 @@ import * as url from "../../shared/url";
 import ChartIcon from "../ChartIcon";
 import ChartHeader from "./ChartHeader";
 
-
 const testProps: any = {
   description: "A Test Chart",
   id: "testrepo/test",
@@ -24,7 +23,10 @@ it("renders a header for the chart", () => {
   expect(wrapper.text()).toContain("A Test Chart");
   const repoLink = wrapper.find(Link);
   expect(repoLink.exists()).toBe(true);
-  expect(repoLink.props()).toMatchObject({ to: url.app.repo("testrepo", "kubeapps"), children: "testrepo" });
+  expect(repoLink.props()).toMatchObject({
+    to: url.app.repo("testrepo", "kubeapps"),
+    children: "testrepo",
+  });
   expect(wrapper.find(ChartIcon).exists()).toBe(true);
   expect(wrapper).toMatchSnapshot();
 });

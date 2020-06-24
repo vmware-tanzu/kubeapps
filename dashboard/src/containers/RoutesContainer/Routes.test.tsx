@@ -8,7 +8,6 @@ import RepoListContainer from "../../containers/RepoListContainer";
 import { app } from "../../shared/url";
 import Routes from "./Routes";
 
-
 const emptyRouteComponentProps: RouteComponentProps<{}> = {
   history: createMemoryHistory(),
   location: {
@@ -28,7 +27,12 @@ const emptyRouteComponentProps: RouteComponentProps<{}> = {
 it("invalid path should show a 404 error", () => {
   const wrapper = mount(
     <StaticRouter location="/random" context={{}}>
-      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={"default"} authenticated={true} />
+      <Routes
+        {...emptyRouteComponentProps}
+        cluster={"default"}
+        namespace={"default"}
+        authenticated={true}
+      />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).toExist();
@@ -38,7 +42,12 @@ it("invalid path should show a 404 error", () => {
 it("should render a redirect to the default cluster and namespace", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={"default"} authenticated={true} />
+      <Routes
+        {...emptyRouteComponentProps}
+        cluster={"default"}
+        namespace={"default"}
+        authenticated={true}
+      />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
@@ -48,7 +57,12 @@ it("should render a redirect to the default cluster and namespace", () => {
 it("should render a redirect to the login page", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={""} authenticated={true} />
+      <Routes
+        {...emptyRouteComponentProps}
+        cluster={"default"}
+        namespace={""}
+        authenticated={true}
+      />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
@@ -58,7 +72,12 @@ it("should render a redirect to the login page", () => {
 it("should render a redirect to the login page (when not authenticated)", () => {
   const wrapper = mount(
     <StaticRouter location="/" context={{}}>
-      <Routes {...emptyRouteComponentProps} cluster={"default"} namespace={"default"} authenticated={false} />
+      <Routes
+        {...emptyRouteComponentProps}
+        cluster={"default"}
+        namespace={"default"}
+        authenticated={false}
+      />
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();

@@ -17,7 +17,10 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps({ catalog, clusters: { currentCluster, clusters } }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps(
+  { catalog, clusters: { currentCluster, clusters } }: IStoreState,
+  { match: { params } }: IRouteProps,
+) {
   return {
     classes: catalog.classes,
     classname: params.className,

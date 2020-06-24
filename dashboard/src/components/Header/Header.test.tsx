@@ -4,7 +4,6 @@ import { IClusterState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import Header from "./Header";
 
-
 const defaultProps = {
   authenticated: true,
   fetchNamespaces: jest.fn(),
@@ -38,9 +37,7 @@ it("renders the header links and titles", () => {
 
 describe("settings", () => {
   it("renders settings", () => {
-    const wrapper = shallow(
-      <Header {...defaultProps} featureFlags={{ operators: false }} />,
-    );
+    const wrapper = shallow(<Header {...defaultProps} featureFlags={{ operators: false }} />);
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
     const expectedItems = [
@@ -54,9 +51,7 @@ describe("settings", () => {
   });
 
   it("renders operators link", () => {
-    const wrapper = shallow(
-      <Header {...defaultProps} featureFlags={{ operators: true }} />,
-    );
+    const wrapper = shallow(<Header {...defaultProps} featureFlags={{ operators: true }} />);
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
     const expectedItems = [

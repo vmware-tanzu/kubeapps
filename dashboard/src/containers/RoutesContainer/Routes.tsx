@@ -23,7 +23,6 @@ import ServiceInstanceListContainer from "../../containers/ServiceInstanceListCo
 import ServiceInstanceViewContainer from "../../containers/ServiceInstanceViewContainer";
 import { app } from "../../shared/url";
 
-
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 const privateRoutes = {

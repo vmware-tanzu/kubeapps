@@ -47,7 +47,7 @@ describe("clusterReducer", () => {
                 currentNamespace: tc.current,
               },
             },
-          } as IClustersState)
+          } as IClustersState),
         );
       });
     });
@@ -82,7 +82,7 @@ describe("clusterReducer", () => {
       ).toEqual({
         ...initialState,
         clusters: {
-          default: { ...initialState.clusters.default, error: { action: "create", error: err } }
+          default: { ...initialState.clusters.default, error: { action: "create", error: err } },
         },
       } as IClustersState);
     });
@@ -96,7 +96,7 @@ describe("clusterReducer", () => {
         }),
       ).toEqual({
         ...initialState,
-        clusters: { default: { currentNamespace: "_all", namespaces: [] } }
+        clusters: { default: { currentNamespace: "_all", namespaces: [] } },
       } as IClustersState);
     });
   });
@@ -104,13 +104,10 @@ describe("clusterReducer", () => {
   context("when SET_AUTHENTICATED", () => {
     it("sets the current namespace to the users default", () => {
       expect(
-        clusterReducer(
-          initialState,
-          {
-            type: getType(actions.auth.setAuthenticated),
-            payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
-          },
-        ),
+        clusterReducer(initialState, {
+          type: getType(actions.auth.setAuthenticated),
+          payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
+        }),
       ).toEqual({
         ...initialState,
         clusters: {
@@ -123,19 +120,22 @@ describe("clusterReducer", () => {
   context("when SET_NAMESPACE", () => {
     it("sets the current namespace and clears error", () => {
       expect(
-        clusterReducer({
-          ...initialState,
-          clusters: {
-            default: {
-              ...initialState.clusters.default,
-              currentNamespace: "other",
-              error: { action: "create", error: new Error("Bang!") },
+        clusterReducer(
+          {
+            ...initialState,
+            clusters: {
+              default: {
+                ...initialState.clusters.default,
+                currentNamespace: "other",
+                error: { action: "create", error: new Error("Bang!") },
+              },
             },
           },
-        }, {
-          type: getType(actions.namespace.setNamespace),
-          payload: "default",
-        }),
+          {
+            type: getType(actions.namespace.setNamespace),
+            payload: "default",
+          },
+        ),
       ).toEqual({
         ...initialState,
         clusters: {
@@ -160,7 +160,7 @@ describe("clusterReducer", () => {
                 currentNamespace: "",
                 namespaces: ["default"],
                 error: { action: "create", error: new Error("boom") },
-              }
+              },
             },
           } as IClustersState,
           {

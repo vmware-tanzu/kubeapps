@@ -18,7 +18,7 @@ interface IClustersMap {
 
 export interface IClustersState {
   currentCluster: string;
-  clusters: IClustersMap; 
+  clusters: IClustersMap;
 }
 
 const getInitialState: () => IClustersState = (): IClustersState => {
@@ -26,7 +26,7 @@ const getInitialState: () => IClustersState = (): IClustersState => {
   return {
     currentCluster: "default",
     clusters: {
-      "default": {
+      default: {
         currentNamespace: Auth.defaultNamespaceFromToken(token),
         namespaces: [],
       },
@@ -47,7 +47,9 @@ const clusterReducer = (
           clusters: {
             default: {
               ...state.clusters.default,
-              namespaces: state.clusters.default.namespaces.concat(action.payload.metadata.name).sort(),
+              namespaces: state.clusters.default.namespaces
+                .concat(action.payload.metadata.name)
+                .sort(),
               error: undefined,
             },
           },
@@ -103,7 +105,7 @@ const clusterReducer = (
           clusters: {
             default: {
               ...state.clusters.default,
-              currentNamespace: matches[1]
+              currentNamespace: matches[1],
             },
           },
         };

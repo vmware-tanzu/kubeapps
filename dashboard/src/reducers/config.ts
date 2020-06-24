@@ -3,7 +3,6 @@ import actions from "../actions";
 import { ConfigAction } from "../actions/config";
 import { IConfig } from "../shared/Config";
 
-
 export interface IConfigState extends IConfig {
   loaded: boolean;
 }
