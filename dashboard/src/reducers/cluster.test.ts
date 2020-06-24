@@ -2,6 +2,7 @@ import { LOCATION_CHANGE, RouterActionType } from "connected-react-router";
 import context from "jest-plugin-context";
 import { getType } from "typesafe-actions";
 
+import { IConfig } from "shared/Config";
 import actions from "../actions";
 import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState } from "./cluster";
@@ -178,6 +179,62 @@ describe("clusterReducer", () => {
           },
         },
       } as IClustersState);
+    });
+  });
+
+  context("when RECEIVE_CONFIG", () => {
+    const config = {
+      namespace: "kubeapps",
+      appVersion: "dev",
+      authProxyEnabled: false,
+      oauthLoginURI: "",
+      oauthLogoutURI: "",
+      featureFlags: {
+        operators: false,
+        additionalClusters: [{
+          name: "additionalCluster1",
+          apiServiceURL: "https://not-used-by-dashboard.example.com/",
+        }, {
+          name: "additionalCluster2",
+          apiServiceURL: "https://not-used-by-dashboard.example.com/",
+        }],
+      }
+    } as IConfig;
+    it("adds the additional clusters to the clusters state", () => {
+      expect(
+        clusterReducer(initialState, {
+          type: getType(actions.config.receiveConfig),
+          payload: config,
+        }),
+      ).toEqual({
+        ...initialState,
+        clusters: {
+          ...initialState.clusters,
+          additionalCluster1: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          additionalCluster2: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("does not error if there is not feature flag", () => {
+      const badConfig = {
+        ...config,
+      };
+      // Manually delete additionalClusters so typescript doesn't complain
+      // while still allowing us to test the case where it is not present.
+      delete badConfig.featureFlags.additionalClusters;
+      expect(
+        clusterReducer(initialState, {
+          type: getType(actions.config.receiveConfig),
+          payload: badConfig,
+        }),
+      ).toEqual(initialState);
     });
   });
 });

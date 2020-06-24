@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
+import { IFeatureFlags } from "shared/Config";
 import { IAppOverview, IAppState, IClusterServiceVersion, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
 import { escapeRegExp } from "../../shared/utils";
@@ -23,7 +24,7 @@ interface IAppListProps {
   customResources: IResource[];
   isFetchingResources: boolean;
   csvs: IClusterServiceVersion[];
-  featureFlags: { operators: boolean };
+  featureFlags: IFeatureFlags;
 }
 
 interface IAppListState {

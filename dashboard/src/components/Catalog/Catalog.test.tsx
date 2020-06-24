@@ -28,7 +28,7 @@ const defaultProps = {
   kubeappsNamespace: "kubeapps",
   csvs: [],
   getCSVs: jest.fn(),
-  featureFlags: { operators: false },
+  featureFlags: { operators: false, additionalClusters: [] },
 };
 
 it("propagates the filter from the props", () => {
@@ -66,7 +66,7 @@ describe("componentDidMount", () => {
         {...defaultProps}
         getCSVs={getCSVs}
         namespace={namespace}
-        featureFlags={{ operators: true }}
+        featureFlags={{ operators: true, additionalClusters: [] }}
       />,
     );
     expect(getCSVs).toHaveBeenCalledWith(namespace);
@@ -77,7 +77,7 @@ describe("componentDidUpdate", () => {
   it("re-fetches csvs if the namespace changes", () => {
     const getCSVs = jest.fn();
     const wrapper = shallow(
-      <Catalog {...defaultProps} getCSVs={getCSVs} featureFlags={{ operators: true }} />,
+      <Catalog {...defaultProps} getCSVs={getCSVs} featureFlags={{ operators: true, additionalClusters: [] }} />,
     );
     wrapper.setProps({ namespace: "a-different-one" });
     expect(getCSVs).toHaveBeenCalledWith("a-different-one");

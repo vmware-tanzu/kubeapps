@@ -2,6 +2,7 @@ import * as React from "react";
 import { LogOut, Settings } from "react-feather";
 import { NavLink } from "react-router-dom";
 import "react-select/dist/react-select.css";
+import { IFeatureFlags } from "shared/Config";
 import logo from "../../logo.svg";
 import { IClusterState } from "../../reducers/cluster";
 import { definedNamespaces } from "../../shared/Namespace";
@@ -21,7 +22,7 @@ interface IHeaderProps {
   setNamespace: (ns: string) => void;
   createNamespace: (ns: string) => Promise<boolean>;
   getNamespace: (ns: string) => void;
-  featureFlags: { operators: boolean };
+  featureFlags: IFeatureFlags;
 }
 
 interface IHeaderState {
@@ -31,7 +32,7 @@ interface IHeaderState {
 
 class Header extends React.Component<IHeaderProps, IHeaderState> {
   public static defaultProps = {
-    featureFlags: { operators: false },
+    featureFlags: { operators: false, additionalClusters: [] },
   };
 
   constructor(props: any) {

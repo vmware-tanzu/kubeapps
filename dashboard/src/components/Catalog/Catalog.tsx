@@ -2,6 +2,7 @@ import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
+import { IFeatureFlags } from "shared/Config";
 import { ForbiddenError, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
@@ -21,7 +22,7 @@ interface ICatalogProps {
   kubeappsNamespace: string;
   getCSVs: (namespace: string) => void;
   csvs: IClusterServiceVersion[];
-  featureFlags: { operators: boolean };
+  featureFlags: IFeatureFlags;
 }
 
 interface ICatalogState {

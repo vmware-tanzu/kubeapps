@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Redirect, Route, RouteComponentProps, RouteProps, Switch } from "react-router";
+import { IFeatureFlags } from "shared/Config";
 import NotFound from "../../components/NotFound";
 import AppListContainer from "../../containers/AppListContainer";
 import AppNewContainer from "../../containers/AppNewContainer";
@@ -54,14 +55,12 @@ interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
   namespace: string;
   cluster: string;
   authenticated: boolean;
-  featureFlags: {
-    operators: boolean;
-  };
+  featureFlags: IFeatureFlags;
 }
 
 class Routes extends React.Component<IRoutesProps> {
   public static defaultProps = {
-    featureFlags: { operators: false },
+    featureFlags: { operators: false, additionalClusters: [] },
   };
   public render() {
     const reposPath = "/config/ns/:namespace/repos";

@@ -25,7 +25,7 @@ const defaultState = {
   auth: defaultAuthState,
   router: { location: emptyLocation },
   config: {
-    featureFlags: { operators: true },
+    featureFlags: { operators: true, additionalClusters: [] },
   },
   clusters: {
     currentCluster: "default",
@@ -52,7 +52,7 @@ describe("HeaderContainer props", () => {
     const store = mockStore({
       ...defaultState,
       config: {
-        featureFlags: { operators: true },
+        featureFlags: { ...defaultState.config.featureFlags, operators: true },
       },
     });
 
@@ -60,7 +60,7 @@ describe("HeaderContainer props", () => {
 
     const form = wrapper.find("Header");
     expect(form).toHaveProp({
-      featureFlags: { operators: true },
+      featureFlags: { ...defaultState.config.featureFlags, operators: true },
     });
   });
 });

@@ -1,8 +1,10 @@
 import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 
+import { IConfig } from "shared/Config";
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
+import { ConfigAction } from "../actions/config";
 import { NamespaceAction } from "../actions/namespace";
 import { Auth } from "../shared/Auth";
 
@@ -37,7 +39,7 @@ const initialState: IClustersState = getInitialState();
 
 const clusterReducer = (
   state: IClustersState = initialState,
-  action: NamespaceAction | LocationChangeAction | AuthAction,
+  action: ConfigAction | NamespaceAction | LocationChangeAction | AuthAction,
 ): IClustersState => {
   switch (action.type) {
     case getType(actions.namespace.receiveNamespace):
@@ -123,6 +125,22 @@ const clusterReducer = (
           },
         };
       }
+    case getType(actions.config.receiveConfig):
+      // Initialize the additional clusters when receiving the config.
+      const clusters = {
+        default: state.clusters.default,
+      };
+      const config = action.payload as IConfig;
+      config.featureFlags.additionalClusters?.forEach(cluster => {
+        clusters[cluster.name] = {
+          currentNamespace: "default",
+          namespaces: [],
+        }
+      });
+      return {
+        ...state,
+        clusters,
+      };
     default:
   }
   return state;

@@ -15,7 +15,7 @@ const initialState: IConfigState = {
   authProxyEnabled: false,
   oauthLoginURI: "",
   oauthLogoutURI: "",
-  featureFlags: { operators: true },
+  featureFlags: { operators: true, additionalClusters: [] },
 };
 
 const configReducer = (state: IConfigState = initialState, action: ConfigAction): IConfigState => {
