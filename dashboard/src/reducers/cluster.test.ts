@@ -221,5 +221,20 @@ describe("clusterReducer", () => {
         },
       } as IClustersState);
     });
+
+    it("does not error if there is not feature flag", () => {
+      const badConfig = {
+        ...config,
+      };
+      // Manually delete additionalClusters so typescript doesn't complain
+      // while still allowing us to test the case where it is not present.
+      delete badConfig.featureFlags.additionalClusters;
+      expect(
+        clusterReducer(initialState, {
+          type: getType(actions.config.receiveConfig),
+          payload: badConfig,
+        }),
+      ).toEqual(initialState);
+    });
   });
 });
