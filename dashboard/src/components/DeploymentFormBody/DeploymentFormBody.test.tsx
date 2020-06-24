@@ -22,6 +22,7 @@ const defaultProps = {
   chartID: "foo",
   chartVersion: "1.0.0",
   error: undefined,
+  chartsIsFetching: false,
   releaseName: undefined,
   selected: {} as IChartState["selected"],
   deployChart: jest.fn(),
