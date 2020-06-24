@@ -8,12 +8,10 @@ export interface IUISelectorProps {
 }
 
 const UISelector: React.FC<IUISelectorProps> = props => (
-  <>
-    <React.Suspense fallback={null}>
-      {props.UI === "hex" && <HEx />}
-      {props.UI === "clarity" && <Clarity />}
-    </React.Suspense>
-  </>
+  <React.Suspense fallback={null}>
+    {props.UI === "hex" && <HEx />}
+    {props.UI === "clarity" && <Clarity />}
+  </React.Suspense>
 );
 
 export default UISelector;
