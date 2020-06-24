@@ -191,14 +191,17 @@ describe("clusterReducer", () => {
       oauthLogoutURI: "",
       featureFlags: {
         operators: false,
-        additionalClusters: [{
-          name: "additionalCluster1",
-          apiServiceURL: "https://not-used-by-dashboard.example.com/",
-        }, {
-          name: "additionalCluster2",
-          apiServiceURL: "https://not-used-by-dashboard.example.com/",
-        }],
-      }
+        additionalClusters: [
+          {
+            name: "additionalCluster1",
+            apiServiceURL: "https://not-used-by-dashboard.example.com/",
+          },
+          {
+            name: "additionalCluster2",
+            apiServiceURL: "https://not-used-by-dashboard.example.com/",
+          },
+        ],
+      },
     } as IConfig;
     it("adds the additional clusters to the clusters state", () => {
       expect(

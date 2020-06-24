@@ -137,7 +137,7 @@ const clusterReducer = (
         clusters[cluster.name] = {
           currentNamespace: "default",
           namespaces: [],
-        }
+        };
       });
       return {
         ...state,

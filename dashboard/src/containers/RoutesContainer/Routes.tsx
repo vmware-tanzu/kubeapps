@@ -59,7 +59,7 @@ interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
 
 class Routes extends React.Component<IRoutesProps> {
   public static defaultProps = {
-    featureFlags: { operators: false, additionalClusters: [] },
+    featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
   };
   public render() {
     const reposPath = "/config/ns/:namespace/repos";

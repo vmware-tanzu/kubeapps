@@ -9,6 +9,7 @@ interface IAdditionalCluster {
 export interface IFeatureFlags {
   operators: boolean;
   additionalClusters: IAdditionalCluster[];
+  ui: string;
 }
 
 // IConfig is the configuration for Kubeapps

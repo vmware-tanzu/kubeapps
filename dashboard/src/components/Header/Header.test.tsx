@@ -18,6 +18,7 @@ const defaultProps = {
   setNamespace: jest.fn(),
   createNamespace: jest.fn(),
   getNamespace: jest.fn(),
+  featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
 };
 it("renders the header links and titles", () => {
   const wrapper = shallow(<Header {...defaultProps} />);
@@ -38,7 +39,10 @@ it("renders the header links and titles", () => {
 describe("settings", () => {
   it("renders settings", () => {
     const wrapper = shallow(
-      <Header {...defaultProps} featureFlags={{ operators: false, additionalClusters: [] }} />,
+      <Header
+        {...defaultProps}
+        featureFlags={{ ...defaultProps.featureFlags, operators: false }}
+      />,
     );
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
@@ -54,7 +58,7 @@ describe("settings", () => {
 
   it("renders operators link", () => {
     const wrapper = shallow(
-      <Header {...defaultProps} featureFlags={{ operators: true, additionalClusters: [] }} />,
+      <Header {...defaultProps} featureFlags={{ ...defaultProps.featureFlags, operators: true }} />,
     );
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
