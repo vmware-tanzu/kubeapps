@@ -89,14 +89,17 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "yarn run lint-js-fix",
-      "prettier --write"
+      "prettier --write",
+      "git add"
     ],
     "*.scss": [
       "yarn run lint-css-fix",
-      "prettier --write"
+      "prettier --write",
+      "git add"
     ],
     "*.{js,json,md}": [
-      "prettier --write"
+      "prettier --write",
+      "git add"
     ]
   },
   "devDependencies": {
