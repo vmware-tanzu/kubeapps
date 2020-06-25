@@ -258,6 +258,7 @@ fi
 installOrUpgradeKubeapps "${ROOT_DIR}/chart/kubeapps"
 installChartmuseum admin password
 pushChart apache 7.3.15 admin password
+pushChart apache 7.3.16 admin password
 
 # Ensure that we are testing the correct image
 info ""
