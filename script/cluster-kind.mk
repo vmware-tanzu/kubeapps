@@ -41,5 +41,6 @@ delete-cluster-kind:
 	kind delete cluster --name ${ADDITIONAL_CLUSTER_NAME} || true
 	rm ${CLUSTER_CONFIG}
 	rm ${ADDITIONAL_CLUSTER_CONFIG} || true
+	rm devel/dex.*
 
 .PHONY: additional-cluster-kind cluster-kind cluster-kind-delete
