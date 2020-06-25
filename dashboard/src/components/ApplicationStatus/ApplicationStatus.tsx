@@ -2,7 +2,7 @@ import { flatten } from "lodash";
 import { get } from "lodash";
 import * as React from "react";
 import PieChart from "react-minimal-pie-chart";
-import * as ReactTooltip from "react-tooltip";
+import ReactTooltip from "react-tooltip";
 
 import { AlertTriangle } from "react-feather";
 import isSomeResourceLoading from "../../components/AppView/helpers";

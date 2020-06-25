@@ -2,7 +2,24 @@
 
 exports[`when the config is not ready loading spinner matches the snapshot 1`] = `
 <LoadingWrapper
-  getConfig={[Function]}
+  getConfig={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+        Array [],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
   loaded={false}
   type={0}
 />

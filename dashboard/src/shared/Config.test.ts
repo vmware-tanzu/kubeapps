@@ -31,7 +31,6 @@ describe("Config", () => {
   });
 
   it("does not returns the overriden namespace if NODE_ENV=production", async () => {
-    process.env.NODE_ENV = "production";
     process.env.REACT_APP_KUBEAPPS_NS = "magic-playground";
     expect(await Config.getConfig()).toEqual(defaultJSON);
   });

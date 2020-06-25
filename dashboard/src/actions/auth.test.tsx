@@ -127,7 +127,6 @@ describe("OIDC authentication", () => {
 
   it("expires the session and logs out ", () => {
     Auth.usingOIDCToken = jest.fn(() => true);
-    localStorage.removeItem = jest.fn();
     document.location.assign = jest.fn();
     const expectedActions = [
       {

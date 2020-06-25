@@ -1,6 +1,6 @@
 import { mount } from "enzyme";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import Modal from "react-modal";
 import { ConflictError, UnprocessableEntity } from "../../../shared/types";
 import { wait } from "../../../shared/utils";
 import ErrorSelector from "../../ErrorAlert/ErrorSelector";
@@ -21,7 +21,7 @@ const defaultProps = {
 
 it("should open a modal with the repository form", () => {
   const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   expect(wrapper).toMatchSnapshot();
 });
@@ -29,7 +29,7 @@ it("should open a modal with the repository form", () => {
 it("should install a repository with a custom auth header", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
   wrapper.find(AppRepoForm).setState({
@@ -53,7 +53,7 @@ it("should install a repository with a custom auth header", async () => {
 it("should install a repository with basic auth", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
   wrapper.find(AppRepoForm).setState({
@@ -85,7 +85,7 @@ it("should install a repository with basic auth", async () => {
 it("should install a repository with a bearer token", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
   wrapper.find(AppRepoForm).setState({
@@ -116,7 +116,7 @@ it("should install a repository with a bearer token", async () => {
 it("should install a repository with a podSpecTemplate", async () => {
   const install = jest.fn(() => true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
   wrapper.find(AppRepoForm).setState({
@@ -147,7 +147,7 @@ it("should install a repository with a podSpecTemplate", async () => {
 describe("render error", () => {
   it("renders a conflict error", async () => {
     const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
-    ReactModal.setAppElement(document.createElement("div"));
+    Modal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true });
     wrapper.update();
     wrapper.find(AppRepoForm).setState({ name: "my-repo" });
@@ -170,7 +170,7 @@ describe("render error", () => {
 
   it("renders an 'unprocessable entity' error", async () => {
     const wrapper = mount(<AppRepoAddButton {...defaultProps} />);
-    ReactModal.setAppElement(document.createElement("div"));
+    Modal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true });
     wrapper.update();
     wrapper.find(AppRepoForm).setState({ name: "my-repo" });

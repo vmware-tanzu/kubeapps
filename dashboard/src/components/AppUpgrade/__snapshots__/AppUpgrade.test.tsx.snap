@@ -10,8 +10,8 @@ exports[`loading spinner matches the snapshot 1`] = `
 exports[`renders the repo selection form if not introduced 1`] = `
 <SelectRepoForm
   chartName="bar"
-  checkChart={[Function]}
-  fetchRepositories={[Function]}
+  checkChart={[MockFunction]}
+  fetchRepositories={[MockFunction]}
   isFetching={false}
   kubeappsNamespace="kubeapps"
   namespace="default"
@@ -36,16 +36,16 @@ exports[`renders the upgrade form when the repo is available 1`] = `
     chartName="bar"
     chartsIsFetching={false}
     deployed={Object {}}
-    fetchChartVersions={[Function]}
-    getChartVersion={[Function]}
-    goBack={[Function]}
+    fetchChartVersions={[MockFunction]}
+    getChartVersion={[MockFunction]}
+    goBack={[MockFunction]}
     namespace="default"
-    push={[Function]}
+    push={[MockFunction]}
     releaseName="foo"
     repo="foobar"
     repoNamespace="chart-namespace"
     selected={Object {}}
-    upgradeApp={[Function]}
+    upgradeApp={[MockFunction]}
   />
 </div>
 `;
@@ -58,16 +58,16 @@ exports[`skips the repo selection form if the app contains upgrade info 1`] = `
     chartName="bar"
     chartsIsFetching={false}
     deployed={Object {}}
-    fetchChartVersions={[Function]}
-    getChartVersion={[Function]}
-    goBack={[Function]}
+    fetchChartVersions={[MockFunction]}
+    getChartVersion={[MockFunction]}
+    goBack={[MockFunction]}
     namespace="default"
-    push={[Function]}
+    push={[MockFunction]}
     releaseName="foo"
     repo="stable"
     repoNamespace="chart-namespace"
     selected={Object {}}
-    upgradeApp={[Function]}
+    upgradeApp={[MockFunction]}
   />
 </div>
 `;

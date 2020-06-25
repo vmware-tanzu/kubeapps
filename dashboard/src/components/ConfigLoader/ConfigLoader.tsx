@@ -1,7 +1,9 @@
 import * as React from "react";
 
 import UnexpectedErrorPage from "../../components/ErrorAlert/UnexpectedErrorAlert";
-import LoadingWrapper, { ILoadingWrapperProps } from "../../components/LoadingWrapper";
+import LoadingWrapper, {
+  ILoadingWrapperProps,
+} from "../../components/LoadingWrapper/LoadingWrapper";
 
 interface IConfigLoaderProps extends ILoadingWrapperProps {
   getConfig: () => void;

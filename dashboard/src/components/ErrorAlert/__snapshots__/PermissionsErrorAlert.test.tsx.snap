@@ -9,7 +9,7 @@ exports[`renders an error message for the action 1`] = `
       You don't have sufficient permissions to 
       unit-test
        
-      <Unknown>
+      <React.Fragment>
         in 
         <span>
           the 
@@ -18,7 +18,7 @@ exports[`renders an error message for the action 1`] = `
           </code>
            namespace
         </span>
-      </Unknown>
+      </React.Fragment>
     </span>
   }
 >

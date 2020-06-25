@@ -1,6 +1,6 @@
 import * as React from "react";
 import { HelpCircle } from "react-feather";
-import * as ReactTooltip from "react-tooltip";
+import ReactTooltip from "react-tooltip";
 
 import "./Hint.css";
 

@@ -21,6 +21,7 @@ interface IAppRepoListItemProps {
     authHeader: string,
     customCA: string,
     syncJobPodTemplate: string,
+    registrySecrets: string[],
   ) => Promise<boolean>;
   validating: boolean;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;

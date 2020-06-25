@@ -5,20 +5,23 @@ exports[`should render a chart item in a namespace 1`] = `
   description={
     <div
       className="ListItem__content__description"
-    />
+    >
+      
+    </div>
   }
   icon="icon.png"
   info="1.0.0"
   key="foo1"
   link="/c/default/ns/repo-namespace/charts/repo-name/foo"
+  subIcon="helm.svg"
   tag1Class="repo-name"
   tag1Content={
-    <Unknown
+    <ForwardRef
       className="ListItem__content__info_tag_link"
       to="/c/default/ns/repo-namespace/catalog/repo-name"
     >
       repo-name
-    </Unknown>
+    </ForwardRef>
   }
   title="foo"
 />
@@ -29,20 +32,23 @@ exports[`should render a global chart item in a namespace 1`] = `
   description={
     <div
       className="ListItem__content__description"
-    />
+    >
+      
+    </div>
   }
   icon="icon.png"
   info="1.0.0"
   key="foo1"
   link="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+  subIcon="helm.svg"
   tag1Class="repo-name"
   tag1Content={
-    <Unknown
+    <ForwardRef
       className="ListItem__content__info_tag_link"
       to="/c/default/ns/repo-namespace/catalog/repo-name"
     >
       repo-name
-    </Unknown>
+    </ForwardRef>
   }
   title="foo"
 />

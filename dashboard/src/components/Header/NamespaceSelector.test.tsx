@@ -1,6 +1,6 @@
 import { mount, shallow } from "enzyme";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import Modal from "react-modal";
 import * as Select from "react-select";
 
 import { IClusterState } from "../../reducers/cluster";
@@ -59,7 +59,7 @@ it("render with the default namespace selected if no current selection", () => {
 it("opens the modal to add a new namespace and creates it", async () => {
   const createNamespace = jest.fn(() => true);
   const wrapper = mount(<NamespaceSelector {...defaultProps} createNamespace={createNamespace} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   const select = wrapper.find(Select.Creatable);
   (select.prop("onChange") as any)({ value: "_new" });
   wrapper.update();

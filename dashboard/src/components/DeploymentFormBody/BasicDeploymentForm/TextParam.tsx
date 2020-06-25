@@ -7,7 +7,7 @@ export interface IStringParamProps {
   inputType?: string;
   param: IBasicFormParam;
   handleBasicFormParamChange: (
-    p: IBasicFormParam,
+    param: IBasicFormParam,
   ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 

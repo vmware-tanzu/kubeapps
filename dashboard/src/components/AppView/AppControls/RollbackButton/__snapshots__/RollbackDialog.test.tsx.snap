@@ -25,7 +25,7 @@ exports[`should render the form if it is not loading 1`] = `
   >
     <button
       className="button"
-      onClick={[Function]}
+      onClick={[MockFunction]}
       type="button"
     >
       Cancel

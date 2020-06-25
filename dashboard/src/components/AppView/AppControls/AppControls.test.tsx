@@ -1,7 +1,7 @@
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import Modal from "react-modal";
 import { Redirect } from "react-router";
 import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
 import { hapi } from "../../../shared/hapi/release";
@@ -54,7 +54,7 @@ it("calls delete function with additional purge", () => {
   const deleteApp = jest.fn(() => false); // Return "false" to avoid redirect when mounting
   // mount() is necessary to render the Modal
   const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} push={jest.fn()} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
 
@@ -102,7 +102,7 @@ context("when the application has been already deleted", () => {
   it("should not show the purge checkbox", () => {
     // mount() is necessary to render the Modal
     const wrapper = mount(<AppControls {...props} push={jest.fn()} />);
-    ReactModal.setAppElement(document.createElement("div"));
+    Modal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true });
     wrapper.update();
 
@@ -116,7 +116,7 @@ context("when the application has been already deleted", () => {
     // mount() is necessary to render the Modal
     const deleteApp = jest.fn(() => false);
     const wrapper = mount(<AppControls {...props} deleteApp={deleteApp} push={jest.fn()} />);
-    ReactModal.setAppElement(document.createElement("div"));
+    Modal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true, purge: false });
     wrapper.update();
 

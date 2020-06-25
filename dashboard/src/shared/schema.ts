@@ -1,7 +1,7 @@
 // WARN: yaml doesn't have updated definitions for TypeScript
 // In particular, it doesn't contain definitions for `get` and `set`
 // that are used in this package
-import * as AJV from "ajv";
+import AJV from "ajv";
 import * as jsonpatch from "fast-json-patch";
 import * as jsonSchema from "json-schema";
 import { isEmpty, set } from "lodash";

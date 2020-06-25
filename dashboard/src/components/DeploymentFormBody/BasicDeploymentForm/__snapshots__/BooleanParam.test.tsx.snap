@@ -2,7 +2,7 @@
 
 exports[`should render a boolean param with title and description 1`] = `
 <BooleanParam
-  handleBasicFormParamChange={[Function]}
+  handleBasicFormParamChange={[MockFunction]}
   id="foo"
   label="Enable Metrics"
   param={

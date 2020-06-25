@@ -1,7 +1,7 @@
 import { IPartialAppViewState } from "components/AppView/AppView";
 import { shallow } from "enzyme";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import Modal from "react-modal";
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import itBehavesLike from "../../shared/specs";
@@ -99,7 +99,7 @@ describe("renders a resource", () => {
       <OperatorInstance {...defaultProps} deleteResource={deleteResource} push={push} />,
     );
     wrapper.setProps({ csv, resource });
-    ReactModal.setAppElement(document.createElement("div"));
+    Modal.setAppElement(document.createElement("div"));
     wrapper.find(".button-danger").simulate("click");
 
     const dialog = wrapper.find(ConfirmDialog);

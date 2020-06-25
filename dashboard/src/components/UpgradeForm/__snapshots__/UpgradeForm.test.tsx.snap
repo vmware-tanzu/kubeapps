@@ -32,10 +32,10 @@ exports[`renders the full UpgradeForm 1`] = `
         chartVersion="1.0.0"
         chartsIsFetching={false}
         deploymentEvent="upgrade"
-        getChartVersion={[Function]}
-        goBack={[Function]}
+        getChartVersion={[MockFunction]}
+        goBack={[MockFunction]}
         namespace="default"
-        push={[Function]}
+        push={[MockFunction]}
         releaseVersion="1.0.0"
         selected={
           Object {

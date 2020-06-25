@@ -1,7 +1,7 @@
 import { shallow } from "enzyme";
 import { has } from "lodash";
 import * as React from "react";
-import * as ReactTooltip from "react-tooltip";
+import ReactTooltip from "react-tooltip";
 
 import { IK8sList, IKubeItem, IResource } from "shared/types";
 import ApplicationStatus from "./ApplicationStatus";

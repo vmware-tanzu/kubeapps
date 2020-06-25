@@ -4,8 +4,8 @@ exports[`renders a basic deployment with a disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={[MockFunction]}
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -28,7 +28,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
         key="size-0"
       >
         <SliderParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
           label="size"
           max={1000}
@@ -198,7 +198,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               <div
                                 className="slider-handles"
                               >
-                                <Component
+                                <Handle
                                   domain={
                                     Array [
                                       1,
@@ -239,7 +239,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Handle>
                               </div>
                             </Handles>
                             <Tracks
@@ -277,7 +277,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                               <div
                                 className="slider-tracks"
                               >
-                                <Component
+                                <Track
                                   getTrackProps={[Function]}
                                   key="$-$$-0"
                                   source={
@@ -311,7 +311,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Track>
                               </div>
                             </Tracks>
                           </div>
@@ -348,8 +348,25 @@ exports[`renders a basic deployment with a email 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "wordpressEmail",
+            "value": "user@example.com",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -370,10 +387,27 @@ exports[`renders a basic deployment with a email 1`] = `
         key="wordpressEmail-0"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "wordpressEmail",
+                    "value": "user@example.com",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="wordpressEmail-0"
           inputType="string"
-          label="nodejs"
+          label="wordpressEmail"
           param={
             Object {
               "path": "wordpressEmail",
@@ -394,7 +428,7 @@ exports[`renders a basic deployment with a email 1`] = `
                   <div
                     className="centered"
                   >
-                    nodejs
+                    wordpressEmail
                   </div>
                 </div>
                 <div
@@ -402,7 +436,7 @@ exports[`renders a basic deployment with a email 1`] = `
                 >
                   <input
                     id="wordpressEmail-0"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="user@example.com"
                   />
@@ -422,8 +456,8 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={[MockFunction]}
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -445,7 +479,7 @@ exports[`renders a basic deployment with a generic boolean 1`] = `
         key="enableMetrics-0"
       >
         <BooleanParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={[MockFunction]}
           id="enableMetrics-0"
           label="enableMetrics"
           param={
@@ -693,8 +727,26 @@ exports[`renders a basic deployment with a generic number 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "replicas",
+            "type": "integer",
+            "value": 1,
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -716,10 +768,28 @@ exports[`renders a basic deployment with a generic number 1`] = `
         key="replicas-0"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "replicas",
+                    "type": "integer",
+                    "value": 1,
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="replicas-0"
           inputType="number"
-          label="nodejs"
+          label="replicas"
           param={
             Object {
               "path": "replicas",
@@ -741,7 +811,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
                   <div
                     className="centered"
                   >
-                    nodejs
+                    replicas
                   </div>
                 </div>
                 <div
@@ -749,7 +819,7 @@ exports[`renders a basic deployment with a generic number 1`] = `
                 >
                   <input
                     id="replicas-0"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="number"
                     value={1}
                   />
@@ -769,8 +839,26 @@ exports[`renders a basic deployment with a generic string 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "blogName",
+            "type": "string",
+            "value": "my-blog",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -792,10 +880,28 @@ exports[`renders a basic deployment with a generic string 1`] = `
         key="blogName-0"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "blogName",
+                    "type": "string",
+                    "value": "my-blog",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="blogName-0"
           inputType="string"
-          label="nodejs"
+          label="blogName"
           param={
             Object {
               "path": "blogName",
@@ -817,7 +923,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
                   <div
                     className="centered"
                   >
-                    nodejs
+                    blogName
                   </div>
                 </div>
                 <div
@@ -825,7 +931,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
                 >
                   <input
                     id="blogName-0"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="my-blog"
                   />
@@ -845,8 +951,8 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={[MockFunction]}
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -869,7 +975,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
         key="size-0"
       >
         <SliderParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
           label="size"
           max={1000}
@@ -1039,7 +1145,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                               <div
                                 className="slider-handles"
                               >
-                                <Component
+                                <Handle
                                   domain={
                                     Array [
                                       1,
@@ -1080,7 +1186,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Handle>
                               </div>
                             </Handles>
                             <Tracks
@@ -1118,7 +1224,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                               <div
                                 className="slider-tracks"
                               >
-                                <Component
+                                <Track
                                   getTrackProps={[Function]}
                                   key="$-$$-0"
                                   source={
@@ -1152,7 +1258,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Track>
                               </div>
                             </Tracks>
                           </div>
@@ -1189,8 +1295,8 @@ exports[`renders a basic deployment with a number disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={[MockFunction]}
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -1213,7 +1319,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
         key="size-0"
       >
         <SliderParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
           label="size"
           max={1000}
@@ -1383,7 +1489,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                               <div
                                 className="slider-handles"
                               >
-                                <Component
+                                <Handle
                                   domain={
                                     Array [
                                       1,
@@ -1424,7 +1530,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Handle>
                               </div>
                             </Handles>
                             <Tracks
@@ -1462,7 +1568,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                               <div
                                 className="slider-tracks"
                               >
-                                <Component
+                                <Track
                                   getTrackProps={[Function]}
                                   key="$-$$-0"
                                   source={
@@ -1496,7 +1602,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Track>
                               </div>
                             </Tracks>
                           </div>
@@ -1533,8 +1639,25 @@ exports[`renders a basic deployment with a password 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "wordpressPassword",
+            "value": "sserpdrow",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -1555,10 +1678,27 @@ exports[`renders a basic deployment with a password 1`] = `
         key="wordpressPassword-0"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "wordpressPassword",
+                    "value": "sserpdrow",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="wordpressPassword-0"
           inputType="string"
-          label="nodejs"
+          label="wordpressPassword"
           param={
             Object {
               "path": "wordpressPassword",
@@ -1579,7 +1719,7 @@ exports[`renders a basic deployment with a password 1`] = `
                   <div
                     className="centered"
                   >
-                    nodejs
+                    wordpressPassword
                   </div>
                 </div>
                 <div
@@ -1587,7 +1727,7 @@ exports[`renders a basic deployment with a password 1`] = `
                 >
                   <input
                     id="wordpressPassword-0"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="sserpdrow"
                   />
@@ -1607,8 +1747,25 @@ exports[`renders a basic deployment with a username 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "wordpressUsername",
+            "value": "user",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -1629,10 +1786,27 @@ exports[`renders a basic deployment with a username 1`] = `
         key="wordpressUsername-0"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "wordpressUsername",
+                    "value": "user",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="wordpressUsername-0"
           inputType="string"
-          label="nodejs"
+          label="wordpressUsername"
           param={
             Object {
               "path": "wordpressUsername",
@@ -1653,7 +1827,7 @@ exports[`renders a basic deployment with a username 1`] = `
                   <div
                     className="centered"
                   >
-                    nodejs
+                    wordpressUsername
                   </div>
                 </div>
                 <div
@@ -1661,7 +1835,7 @@ exports[`renders a basic deployment with a username 1`] = `
                 >
                   <input
                     id="wordpressUsername-0"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="user"
                   />
@@ -1681,15 +1855,34 @@ exports[`renders a basic deployment with custom configuration 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "configuration",
+            "render": "textArea",
+            "value": "First line
+Second line",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
         "path": "configuration",
         "render": "textArea",
         "value": "First line
-    Second line",
+Second line",
       },
     ]
   }
@@ -1705,16 +1898,35 @@ exports[`renders a basic deployment with custom configuration 1`] = `
         key="configuration-0"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "configuration",
+                    "render": "textArea",
+                    "value": "First line
+Second line",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="configuration-0"
           inputType="string"
-          label="nodejs"
+          label="configuration"
           param={
             Object {
               "path": "configuration",
               "render": "textArea",
               "value": "First line
-            Second line",
+Second line",
             }
           }
         >
@@ -1731,7 +1943,7 @@ exports[`renders a basic deployment with custom configuration 1`] = `
                   <div
                     className="centered"
                   >
-                    nodejs
+                    configuration
                   </div>
                 </div>
                 <div
@@ -1739,10 +1951,10 @@ exports[`renders a basic deployment with custom configuration 1`] = `
                 >
                   <input
                     id="configuration-0"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="First line
-                  Second line"
+Second line"
                   />
                 </div>
               </div>
@@ -1760,8 +1972,8 @@ exports[`renders a basic deployment with slider parameters 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={[MockFunction]}
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -1788,7 +2000,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
         key="size-0"
       >
         <SliderParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
           label="size"
           max={100}
@@ -1962,7 +2174,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                               <div
                                 className="slider-handles"
                               >
-                                <Component
+                                <Handle
                                   domain={
                                     Array [
                                       1,
@@ -2003,7 +2215,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Handle>
                               </div>
                             </Handles>
                             <Tracks
@@ -2041,7 +2253,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                               <div
                                 className="slider-tracks"
                               >
-                                <Component
+                                <Track
                                   getTrackProps={[Function]}
                                   key="$-$$-0"
                                   source={
@@ -2075,7 +2287,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                                       }
                                     }
                                   />
-                                </Component>
+                                </Track>
                               </div>
                             </Tracks>
                           </div>
@@ -2114,8 +2326,56 @@ exports[`renders a basic deployment with username, password, email and a generic
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={[Function]}
-  handleValuesChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "wordpressUsername",
+            "value": "user",
+          },
+        ],
+        Array [
+          Object {
+            "path": "wordpressPassword",
+            "value": "sserpdrow",
+          },
+        ],
+        Array [
+          Object {
+            "path": "wordpressEmail",
+            "value": "user@example.com",
+          },
+        ],
+        Array [
+          Object {
+            "path": "blogName",
+            "type": "string",
+            "value": "my-blog",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
+  handleValuesChange={[MockFunction]}
   params={
     Array [
       Object {
@@ -2149,10 +2409,58 @@ exports[`renders a basic deployment with username, password, email and a generic
         key="wordpressUsername-0"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "wordpressUsername",
+                    "value": "user",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressPassword",
+                    "value": "sserpdrow",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressEmail",
+                    "value": "user@example.com",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "blogName",
+                    "type": "string",
+                    "value": "my-blog",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="wordpressUsername-0"
           inputType="string"
-          label="nodejs"
+          label="wordpressUsername"
           param={
             Object {
               "path": "wordpressUsername",
@@ -2173,7 +2481,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    nodejs
+                    wordpressUsername
                   </div>
                 </div>
                 <div
@@ -2181,7 +2489,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                 >
                   <input
                     id="wordpressUsername-0"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="user"
                   />
@@ -2201,10 +2509,58 @@ exports[`renders a basic deployment with username, password, email and a generic
         key="wordpressPassword-1"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "wordpressUsername",
+                    "value": "user",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressPassword",
+                    "value": "sserpdrow",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressEmail",
+                    "value": "user@example.com",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "blogName",
+                    "type": "string",
+                    "value": "my-blog",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="wordpressPassword-1"
           inputType="string"
-          label="nodejs"
+          label="wordpressPassword"
           param={
             Object {
               "path": "wordpressPassword",
@@ -2225,7 +2581,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    nodejs
+                    wordpressPassword
                   </div>
                 </div>
                 <div
@@ -2233,7 +2589,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                 >
                   <input
                     id="wordpressPassword-1"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="sserpdrow"
                   />
@@ -2253,10 +2609,58 @@ exports[`renders a basic deployment with username, password, email and a generic
         key="wordpressEmail-2"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "wordpressUsername",
+                    "value": "user",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressPassword",
+                    "value": "sserpdrow",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressEmail",
+                    "value": "user@example.com",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "blogName",
+                    "type": "string",
+                    "value": "my-blog",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="wordpressEmail-2"
           inputType="string"
-          label="nodejs"
+          label="wordpressEmail"
           param={
             Object {
               "path": "wordpressEmail",
@@ -2277,7 +2681,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    nodejs
+                    wordpressEmail
                   </div>
                 </div>
                 <div
@@ -2285,7 +2689,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                 >
                   <input
                     id="wordpressEmail-2"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="user@example.com"
                   />
@@ -2305,10 +2709,58 @@ exports[`renders a basic deployment with username, password, email and a generic
         key="blogName-3"
       >
         <TextParam
-          handleBasicFormParamChange={[Function]}
+          handleBasicFormParamChange={
+            [MockFunction] {
+              "calls": Array [
+                Array [
+                  Object {
+                    "path": "wordpressUsername",
+                    "value": "user",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressPassword",
+                    "value": "sserpdrow",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "wordpressEmail",
+                    "value": "user@example.com",
+                  },
+                ],
+                Array [
+                  Object {
+                    "path": "blogName",
+                    "type": "string",
+                    "value": "my-blog",
+                  },
+                ],
+              ],
+              "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
+              ],
+            }
+          }
           id="blogName-3"
           inputType="string"
-          label="nodejs"
+          label="blogName"
           param={
             Object {
               "path": "blogName",
@@ -2330,7 +2782,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <div
                     className="centered"
                   >
-                    nodejs
+                    blogName
                   </div>
                 </div>
                 <div
@@ -2338,7 +2790,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                 >
                   <input
                     id="blogName-3"
-                    onChange={[Function]}
+                    onChange={[MockFunction]}
                     type="string"
                     value="my-blog"
                   />

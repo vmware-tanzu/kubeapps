@@ -2,6 +2,7 @@
 
 exports[`renders a card with the service broker 1`] = `
 <InfoCard
+  icon="placeholder.png"
   info="Last updated today"
   title="wall-street"
 >
@@ -22,7 +23,7 @@ exports[`renders a card with the service broker 1`] = `
           },
         }
       }
-      sync={[Function]}
+      sync={[MockFunction]}
     />
   </CardFooter>
 </InfoCard>

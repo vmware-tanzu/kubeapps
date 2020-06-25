@@ -2,14 +2,14 @@
 
 exports[`should open a modal with the repository form 1`] = `
 <AppRepoAddButton
-  createDockerRegistrySecret={[Function]}
+  createDockerRegistrySecret={[MockFunction]}
   errors={Object {}}
-  fetchImagePullSecrets={[Function]}
+  fetchImagePullSecrets={[MockFunction]}
   imagePullSecrets={Array []}
   kubeappsNamespace="kubeapps"
   namespace="kubeapps"
-  onSubmit={[Function]}
-  validate={[Function]}
+  onSubmit={[MockFunction]}
+  validate={[MockFunction]}
   validating={false}
 >
   <button
@@ -43,11 +43,11 @@ exports[`should open a modal with the repository form 1`] = `
             style="position: fixed; top: 0px; left: 0px; right: 0px; bottom: 0px; background-color: rgba(255, 255, 255, 0.75);"
           >
             <div
-              style="position: absolute; top: 40px; left: 40px; right: 40px; bottom: 40px; border: 1px solid #ccc; background: rgb(255, 255, 255); overflow: auto; border-radius: 4px; outline: none; padding: 20px;"
-              class="ReactModal__Content ReactModal__Content--after-open"
-              tabindex="-1"
-              role="dialog"
               aria-label="Modal"
+              class="ReactModal__Content ReactModal__Content--after-open"
+              role="dialog"
+              style="position: absolute; top: 40px; left: 40px; right: 40px; bottom: 40px; border: 1px solid #ccc; background: rgb(255, 255, 255); overflow: auto; border-radius: 4px; outline: none; padding: 20px;"
+              tabindex="-1"
             >
               <form
                 class="container padding-b-bigger"
@@ -70,12 +70,12 @@ exports[`should open a modal with the repository form 1`] = `
                         Name:
                       </label>
                       <input
-                        type="text"
                         id="kubeapps-repo-name"
+                        pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                         placeholder="example"
                         required=""
-                        pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*"
                         title="Use lower case alphanumeric characters, '-' or '.'"
+                        type="text"
                         value=""
                       />
                     </div>
@@ -86,10 +86,10 @@ exports[`should open a modal with the repository form 1`] = `
                         URL:
                       </label>
                       <input
-                        type="url"
                         id="kubeapps-repo-url"
                         placeholder="https://charts.example.com/stable"
                         required=""
+                        type="url"
                         value=""
                       />
                     </div>
@@ -115,11 +115,11 @@ exports[`should open a modal with the repository form 1`] = `
                             for="kubeapps-repo-auth-method-none"
                           >
                             <input
-                              type="radio"
+                              checked=""
                               id="kubeapps-repo-auth-method-none"
                               name="auth"
+                              type="radio"
                               value="none"
-                              checked=""
                             />
                             None
                             <br />
@@ -128,9 +128,9 @@ exports[`should open a modal with the repository form 1`] = `
                             for="kubeapps-repo-auth-method-basic"
                           >
                             <input
-                              type="radio"
                               id="kubeapps-repo-auth-method-basic"
                               name="auth"
+                              type="radio"
                               value="basic"
                             />
                             Basic Auth
@@ -140,9 +140,9 @@ exports[`should open a modal with the repository form 1`] = `
                             for="kubeapps-repo-auth-method-bearer"
                           >
                             <input
-                              type="radio"
                               id="kubeapps-repo-auth-method-bearer"
                               name="auth"
+                              type="radio"
                               value="bearer"
                             />
                             Bearer Token
@@ -152,9 +152,9 @@ exports[`should open a modal with the repository form 1`] = `
                             for="kubeapps-repo-auth-method-custom"
                           >
                             <input
-                              type="radio"
                               id="kubeapps-repo-auth-method-custom"
                               name="auth"
+                              type="radio"
                               value="custom"
                             />
                             Custom
@@ -162,12 +162,12 @@ exports[`should open a modal with the repository form 1`] = `
                           </label>
                         </div>
                         <div
-                          class="col-10"
                           aria-live="polite"
+                          class="col-10"
                         >
                           <div
-                            hidden=""
                             class="secondary-input"
+                            hidden=""
                           >
                             <label
                               for="kubeapps-repo-username"
@@ -175,9 +175,9 @@ exports[`should open a modal with the repository form 1`] = `
                               Username
                             </label>
                             <input
-                              type="text"
                               id="kubeapps-repo-username"
                               placeholder="Username"
+                              type="text"
                               value=""
                             />
                             <label
@@ -186,15 +186,15 @@ exports[`should open a modal with the repository form 1`] = `
                               Password
                             </label>
                             <input
-                              type="password"
                               id="kubeapps-repo-password"
                               placeholder="Password"
+                              type="password"
                               value=""
                             />
                           </div>
                           <div
-                            hidden=""
                             class="secondary-input"
+                            hidden=""
                           >
                             <label
                               for="kubeapps-repo-token"
@@ -208,8 +208,8 @@ exports[`should open a modal with the repository form 1`] = `
                             />
                           </div>
                           <div
-                            hidden=""
                             class="secondary-input"
+                            hidden=""
                           >
                             <label
                               for="kubeapps-repo-custom-header"
@@ -217,9 +217,9 @@ exports[`should open a modal with the repository form 1`] = `
                               Complete Authorization Header
                             </label>
                             <input
-                              type="text"
                               id="kubeapps-repo-custom-header"
                               placeholder="Bearer xrxNcWghpRLdcPHFgVRM73rr4N7qjvjm"
+                              type="text"
                               value=""
                             />
                           </div>
@@ -238,10 +238,10 @@ exports[`should open a modal with the repository form 1`] = `
                         >
                           <textarea
                             class="Code"
-                            rows="4"
                             placeholder="-----BEGIN CERTIFICATE-----
-                          ...
-                          -----END CERTIFICATE-----"
+...
+-----END CERTIFICATE-----"
+                            rows="4"
                           />
                         </pre>
                       </label>
@@ -253,21 +253,21 @@ exports[`should open a modal with the repository form 1`] = `
                         Custom Sync Job Template (optional)
                       </label>
                       <a
-                        data-tip="true"
-                        data-for="syncJobHelp"
                         currentitem="false"
+                        data-for="syncJobHelp"
+                        data-tip="true"
                       >
                         <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
+                          class="icon"
                           fill="#5F6369"
+                          height="24"
                           stroke="white"
-                          stroke-width="2"
                           stroke-linecap="round"
                           stroke-linejoin="round"
-                          class="icon"
+                          stroke-width="2"
+                          viewBox="0 0 24 24"
+                          width="24"
+                          xmlns="http://www.w3.org/2000/svg"
                         >
                           <circle
                             cx="12"
@@ -279,22 +279,23 @@ exports[`should open a modal with the repository form 1`] = `
                           />
                           <line
                             x1="12"
-                            y1="17"
                             x2="12"
+                            y1="17"
                             y2="17"
                           />
                         </svg>
                       </a>
                       <div
                         class="__react_component_tooltip place-top type-dark "
-                        id="syncJobHelp"
                         data-id="tooltip"
+                        id="syncJobHelp"
                       >
                         <span>
                           It's possible to modify the default sync job. More info
+                           
                           <a
-                            target="_blank"
                             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
+                            target="_blank"
                           >
                             here
                           </a>
@@ -306,15 +307,15 @@ exports[`should open a modal with the repository form 1`] = `
                         class="CodeContainer"
                       >
                         <textarea
-                          id="syncJobPodTemplate"
                           class="Code"
-                          rows="4"
+                          id="syncJobPodTemplate"
                           placeholder="spec:
-                          containers:
-                          - env:
-                            - name: FOO
-                              value: BAR
-                        "
+  containers:
+  - env:
+    - name: FOO
+      value: BAR
+"
+                          rows="4"
                         />
                       </pre>
                     </div>
@@ -324,7 +325,7 @@ exports[`should open a modal with the repository form 1`] = `
                       <strong>
                         NOTE:
                       </strong>
-                      This App Repository will be created in the "
+                       This App Repository will be created in the "
                       kubeapps
                       " namespace and charts will be available in all namespaces for installation.
                     </div>

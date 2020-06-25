@@ -24,15 +24,14 @@ export interface ISliderProps {
   default: number;
   step: number;
   values: number;
-  onChange: (values: number[]) => void;
-  onUpdate: (values: number[]) => void;
+  onChange: (values: readonly number[]) => void;
+  onUpdate: (values: readonly number[]) => void;
 }
 
 class Slider extends React.Component<ISliderProps> {
   public render() {
     const { min, max, step, values, onUpdate, onChange } = this.props;
     const domain = [min, max];
-
     return (
       <ReactSlider
         mode={1}

@@ -12,7 +12,7 @@ export interface ISubsectionProps {
     id: string,
     handleBasicFormParamChange: (
       p: IBasicFormParam,
-    ) => (e: React.FormEvent<HTMLInputElement>) => void,
+    ) => (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void,
   ) => JSX.Element | null;
   appValues: string;
 }
@@ -44,7 +44,7 @@ class Subsection extends React.Component<ISubsectionProps> {
   }
 
   private handleChildrenParamChange = (param: IBasicFormParam) => {
-    return (e: React.FormEvent<HTMLInputElement>) => {
+    return (e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
       const value = getValueFromEvent(e);
       this.props.param.children = this.props.param.children!.map(p =>
         p.path === param.path ? { ...param, value } : p,

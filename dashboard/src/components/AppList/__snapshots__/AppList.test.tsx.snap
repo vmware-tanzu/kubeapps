@@ -18,7 +18,7 @@ exports[`when apps available matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[Function]}
+          onSubmit={[MockFunction]}
           placeholder="search apps..."
           value=""
         />
@@ -95,7 +95,7 @@ exports[`when custom resources available matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[Function]}
+          onSubmit={[MockFunction]}
           placeholder="search apps..."
           value=""
         />
@@ -255,7 +255,7 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[Function]}
+          onSubmit={[MockFunction]}
           placeholder="search apps..."
           value=""
         />
@@ -326,7 +326,7 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[Function]}
+          onSubmit={[MockFunction]}
           placeholder="search apps..."
           value=""
         />
@@ -397,7 +397,7 @@ exports[`while fetching apps loading spinner matches the snapshot 2`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[Function]}
+          onSubmit={[MockFunction]}
           placeholder="search apps..."
           value=""
         />
@@ -468,7 +468,7 @@ exports[`while fetching apps matches the snapshot 1`] = `
           className="margin-l-big"
           key="searchFilter"
           onChange={[Function]}
-          onSubmit={[Function]}
+          onSubmit={[MockFunction]}
           placeholder="search apps..."
           value=""
         />

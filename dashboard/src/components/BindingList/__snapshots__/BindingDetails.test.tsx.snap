@@ -18,8 +18,8 @@ exports[`renders information about the binding with a secret 1`] = `
   <TerminalModal
     closeModal={[Function]}
     message="mySecret: content
-  
-  "
+
+"
     modalIsOpen={false}
     title="Secret: bar"
   />

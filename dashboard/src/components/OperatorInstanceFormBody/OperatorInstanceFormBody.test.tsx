@@ -1,6 +1,6 @@
 import { mount, shallow } from "enzyme";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import Modal from "react-modal";
 import { Tabs } from "react-tabs";
 import OperatorInstanceFormBody from ".";
 import itBehavesLike from "../../shared/specs";
@@ -52,7 +52,7 @@ it("renders an error if the creation failed", () => {
 
 it("restores the default values", async () => {
   const wrapper = mount(<OperatorInstanceFormBody {...defaultProps} />);
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setProps({ defaultValues: "foo" });
   wrapper.setState({ values: "not-foo" });
   const restoreButton = wrapper.find("button").filterWhere(b => b.text() === "Restore Defaults");

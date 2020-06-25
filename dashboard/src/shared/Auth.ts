@@ -1,10 +1,11 @@
 import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
-const AuthTokenKey = "kubeapps_auth_token";
-const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 import { IConfig } from "./Config";
 import { APIBase } from "./Kube";
 import { definedNamespaces } from "./Namespace";
+
+const AuthTokenKey = "kubeapps_auth_token";
+const AuthTokenOIDCKey = "kubeapps_auth_token_oidc";
 
 export class Auth {
   public static getAuthToken() {

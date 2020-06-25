@@ -2,6 +2,7 @@ import { RouterAction } from "connected-react-router";
 import { assignWith, isEqual } from "lodash";
 import * as React from "react";
 import * as yaml from "yaml";
+import { hapi } from "../../shared/hapi/release";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -19,7 +20,7 @@ import ResourceTable from "./ResourceTable";
 export interface IAppViewProps {
   namespace: string;
   releaseName: string;
-  app: IRelease;
+  app?: IRelease;
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
@@ -120,11 +121,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       );
     }
 
-    return this.props.app && this.props.app.info ? this.appInfo() : <LoadingWrapper />;
+    return this.props.app && this.props.app.info ? (
+      this.appInfo(this.props.app, this.props.app.info)
+    ) : (
+      <LoadingWrapper />
+    );
   }
 
-  public appInfo() {
-    const { app, push } = this.props;
+  public appInfo(app: IRelease, info: hapi.release.IInfo) {
+    const { push } = this.props;
     const {
       serviceRefs,
       ingressRefs,
@@ -158,7 +163,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                       deployRefs={deployRefs}
                       statefulsetRefs={statefulSetRefs}
                       daemonsetRefs={daemonSetRefs}
-                      info={app.info!}
+                      info={info}
                     />
                   </div>
                   <div className="col-8 text-r">
