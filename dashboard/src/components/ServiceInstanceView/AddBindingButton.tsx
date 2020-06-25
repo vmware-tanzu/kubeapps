@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as Modal from "react-modal";
+import Modal from "react-modal";
 
 import { JSONSchema6 } from "json-schema";
 import { ISubmitEvent } from "react-jsonschema-form";

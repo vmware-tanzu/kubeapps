@@ -212,8 +212,8 @@ exports[`should render the repo form 1`] = `
           </a>
           .
           <AppRepoAddDockerCreds
-            createDockerRegistrySecret={[Function]}
-            fetchImagePullSecrets={[Function]}
+            createDockerRegistrySecret={[MockFunction]}
+            fetchImagePullSecrets={[MockFunction]}
             imagePullSecrets={Array []}
             namespace="default"
             selectedImagePullSecrets={Object {}}
@@ -235,8 +235,8 @@ exports[`should render the repo form 1`] = `
               className="Code"
               onChange={[Function]}
               placeholder="-----BEGIN CERTIFICATE-----
-            ...
-            -----END CERTIFICATE-----"
+...
+-----END CERTIFICATE-----"
               rows={4}
               value=""
             />
@@ -278,11 +278,11 @@ exports[`should render the repo form 1`] = `
             id="syncJobPodTemplate"
             onChange={[Function]}
             placeholder="spec:
-            containers:
-            - env:
-              - name: FOO
-                value: BAR
-          "
+  containers:
+  - env:
+    - name: FOO
+      value: BAR
+"
             rows={4}
             value=""
           />

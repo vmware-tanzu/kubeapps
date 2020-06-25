@@ -11,7 +11,7 @@ exports[`renderization when charts available should render the list of charts 1`
     <SearchFilter
       className="margin-l-big"
       onChange={[Function]}
-      onSubmit={[Function]}
+      onSubmit={[MockFunction]}
       placeholder="search charts..."
       value=""
     />
@@ -81,7 +81,7 @@ exports[`renderization when fetching apps loading spinner matches the snapshot 1
     <SearchFilter
       className="margin-l-big"
       onChange={[Function]}
-      onSubmit={[Function]}
+      onSubmit={[MockFunction]}
       placeholder="search charts..."
       value=""
     />

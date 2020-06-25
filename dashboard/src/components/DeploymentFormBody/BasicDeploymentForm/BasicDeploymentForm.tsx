@@ -141,7 +141,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         if (param.render === "textArea") {
           paramComponent = (
             <TextParam
-              label={param.title || name}
+              label={param.title || param.path}
               handleBasicFormParamChange={handleBasicFormParamChange}
               id={id}
               param={param}
@@ -154,7 +154,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
       default:
         paramComponent = (
           <TextParam
-            label={param.title || name}
+            label={param.title || param.path}
             handleBasicFormParamChange={handleBasicFormParamChange}
             id={id}
             param={param}

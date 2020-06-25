@@ -44,13 +44,13 @@ class SliderParam extends React.Component<ISliderParamProps, ISliderParamState> 
 
   // onChangeSlider is executed when the slider is dropped at one point
   // at that point we update the parameter
-  public onChangeSlider = (values: number[]) => {
+  public onChangeSlider = (values: readonly number[]) => {
     this.handleParamChange(values[0]);
   };
 
   // onUpdateSlider is executed when dragging the slider
   // we just update the state here for a faster response
-  public onUpdateSlider = (values: number[]) => {
+  public onUpdateSlider = (values: readonly number[]) => {
     this.setState({ value: values[0] });
   };
 

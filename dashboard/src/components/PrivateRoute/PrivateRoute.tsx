@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as Modal from "react-modal";
+import Modal from "react-modal";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
 
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;

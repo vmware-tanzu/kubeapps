@@ -9,14 +9,14 @@ import SelectRepoForm from "../SelectRepoForm";
 import UpgradeForm from "../UpgradeForm";
 
 export interface IAppUpgradeProps {
-  app: IRelease;
+  app?: IRelease;
   appsIsFetching: boolean;
   chartsIsFetching: boolean;
   appsError: Error | undefined;
   namespace: string;
   releaseName: string;
-  repoName: string;
-  repoNamespace: string;
+  repoName?: string;
+  repoNamespace?: string;
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
   upgradeApp: (
@@ -27,7 +27,7 @@ export interface IAppUpgradeProps {
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
+  fetchChartVersions: (namespace: string, id: string) => Promise<any>;
   getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
   getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
@@ -62,7 +62,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
         (prevProps.app !== app || prevProps.repoName !== repoName)
       ) {
         const chartID = `${repoName}/${chart.metadata.name}`;
-        this.props.getDeployedChartVersion(repoNamespace, chartID, chart.metadata.version);
+        this.props.getDeployedChartVersion(repoNamespace!, chartID, chart.metadata.version);
       }
     }
   }
@@ -108,7 +108,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
             chartName={app.chart.metadata.name!}
             chartsIsFetching={chartsIsFetching}
             repo={repo}
-            repoNamespace={repoNamespace}
+            repoNamespace={repoNamespace!}
             namespace={namespace}
             releaseName={releaseName}
             selected={selected}

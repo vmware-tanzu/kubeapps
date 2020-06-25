@@ -8,7 +8,7 @@ exports[`renders the snapshot 1`] = `
   closeTimeoutMS={0}
   contentLabel="Modal"
   isOpen={true}
-  onRequestClose={[Function]}
+  onRequestClose={[MockFunction]}
   parentSelector={[Function]}
   portalClassName="ReactModalPortal"
   role="dialog"
@@ -44,7 +44,7 @@ exports[`renders the snapshot 1`] = `
           >
             <input
               id="new-ns"
-              onChange={[Function]}
+              onChange={[MockFunction]}
               type="text"
               value="foo"
             />
@@ -62,7 +62,7 @@ exports[`renders the snapshot 1`] = `
     >
       <button
         className="button"
-        onClick={[Function]}
+        onClick={[MockFunction]}
       >
         Cancel
       </button>

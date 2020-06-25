@@ -6,7 +6,7 @@ import { IK8sList, IResource } from "./types";
 
 export const APIBase = "api/clusters/default";
 export let WebSocketAPIBase: string;
-if (location.protocol === "https:") {
+if (window.location.protocol === "https:") {
   WebSocketAPIBase = `wss://${window.location.host}${window.location.pathname}`;
 } else {
   WebSocketAPIBase = `ws://${window.location.host}${window.location.pathname}`;

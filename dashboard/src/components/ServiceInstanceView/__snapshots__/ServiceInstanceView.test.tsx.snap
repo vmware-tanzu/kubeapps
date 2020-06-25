@@ -156,7 +156,7 @@ exports[`when all the components are loaded shows a fetch error if it exists 1`]
 
 exports[`when all the components are loaded when an instance is available should show the available bindings 1`] = `
 <ServiceInstanceView
-  addBinding={[Function]}
+  addBinding={[MockFunction]}
   bindingsWithSecrets={
     Object {
       "isFetching": false,
@@ -206,12 +206,242 @@ exports[`when all the components are loaded when an instance is available should
       ],
     }
   }
-  deprovision={[Function]}
+  deprovision={[MockFunction]}
   errors={Object {}}
-  getBindings={[Function]}
-  getClasses={[Function]}
-  getInstances={[Function]}
-  getPlans={[Function]}
+  getBindings={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  getClasses={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  getInstances={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+        Array [
+          "default",
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
+  getPlans={
+    [MockFunction] {
+      "calls": Array [
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+        Array [],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+        Object {
+          "type": "return",
+          "value": undefined,
+        },
+      ],
+    }
+  }
   instances={
     Object {
       "isFetching": false,
@@ -261,7 +491,7 @@ exports[`when all the components are loaded when an instance is available should
       "list": Array [],
     }
   }
-  removeBinding={[Function]}
+  removeBinding={[MockFunction]}
 >
   <section
     className="ServiceInstanceView padding-b-big"
@@ -513,7 +743,7 @@ exports[`when all the components are loaded when an instance is available should
                   className="col-8 text-r"
                 >
                   <DeprovisionButton
-                    deprovision={[Function]}
+                    deprovision={[MockFunction]}
                     disabled={false}
                     instance={
                       Object {
@@ -738,7 +968,7 @@ exports[`when all the components are loaded when an instance is available should
                         },
                       ]
                     }
-                    removeBinding={[Function]}
+                    removeBinding={[MockFunction]}
                   >
                     <div
                       className="BindingList"
@@ -787,7 +1017,7 @@ exports[`when all the components are loaded when an instance is available should
                               }
                             }
                             key="binding-my-instance"
-                            removeBinding={[Function]}
+                            removeBinding={[MockFunction]}
                           >
                             <tr>
                               <td>
@@ -1071,7 +1301,7 @@ exports[`when all the components are loaded when an instance is available should
                                       },
                                     }
                                   }
-                                  removeBinding={[Function]}
+                                  removeBinding={[MockFunction]}
                                 >
                                   <div
                                     className="RemoveBindingButton"
@@ -1092,7 +1322,7 @@ exports[`when all the components are loaded when an instance is available should
                     </div>
                   </BindingList>
                   <AddBindingButton
-                    addBinding={[Function]}
+                    addBinding={[MockFunction]}
                     disabled={false}
                     instanceRefName="my-instance"
                     namespace="default"
@@ -1322,7 +1552,7 @@ exports[`when all the components are loaded when an instance is available should
                 className="col-8 text-r"
               >
                 <DeprovisionButton
-                  deprovision={[Function]}
+                  deprovision={[MockFunction]}
                   disabled={false}
                   instance={
                     Object {

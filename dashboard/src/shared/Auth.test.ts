@@ -157,12 +157,9 @@ describe("Auth", () => {
 
   describe("unsetAuthCookie", () => {
     let mockedAssign: jest.Mocked<(url: string) => void>;
-    let mockedLocalStorageRemove: jest.Mocked<(url: string) => void>;
     beforeEach(() => {
       mockedAssign = jest.fn();
       document.location.assign = mockedAssign;
-      mockedLocalStorageRemove = jest.fn();
-      localStorage.removeItem = mockedLocalStorageRemove;
     });
 
     it("uses the config to redirect to a logout URL", () => {
@@ -178,7 +175,7 @@ describe("Auth", () => {
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
-      expect(mockedLocalStorageRemove).toBeCalled();
+      expect(localStorage.removeItem).toBeCalled();
     });
 
     it("defaults to the oauth2-proxy logout URI", () => {

@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as ReactMarkdown from "react-markdown";
+import ReactMarkdown from "react-markdown";
 
 import HeadingRenderer from "../ChartView/HeadingRenderer";
 import LinkRenderer from "../ChartView/LinkRenderer";

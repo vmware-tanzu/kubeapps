@@ -83,7 +83,7 @@ exports[`renders information about the binding with a secret 1`] = `
           }
         }
         key=""
-        removeBinding={[Function]}
+        removeBinding={[MockFunction]}
       />
     </tbody>
   </table>

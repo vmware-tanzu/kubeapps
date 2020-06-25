@@ -1,7 +1,7 @@
 import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
-import * as ReactMarkdown from "react-markdown";
+import ReactMarkdown from "react-markdown";
 import { BrowserRouter } from "react-router-dom";
 import { HashLink as Link } from "react-router-hash-link";
 

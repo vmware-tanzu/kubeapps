@@ -223,7 +223,7 @@ class DeploymentFormBody extends React.Component<
   };
 
   private handleBasicFormParamChange = (param: IBasicFormParam) => {
-    return (e: React.FormEvent<HTMLInputElement>) => {
+    return (e: React.FormEvent<any>) => {
       this.props.setValuesModified();
       const value = getValueFromEvent(e);
       this.setState({

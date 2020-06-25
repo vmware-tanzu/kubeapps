@@ -73,7 +73,7 @@ export class AppRepository {
 
   public static async validate(repoURL: string, authHeader: string, customCA: string) {
     const { data } = await axiosWithAuth.post<any>(url.backend.apprepositories.validate(), {
-      appRepository: { name, repoURL, authHeader, customCA },
+      appRepository: { repoURL, authHeader, customCA },
     });
     return data;
   }

@@ -14,7 +14,7 @@ import { ErrorSelector } from "../ErrorAlert";
 import PermissionsErrorPage from "../ErrorAlert/PermissionsErrorAlert";
 import AppControls from "./AppControls";
 import AppNotes from "./AppNotes";
-import AppViewComponent, { IAppViewProps } from "./AppView";
+import AppViewComponent from "./AppView";
 import ChartInfo from "./ChartInfo";
 import ResourceTable from "./ResourceTable";
 
@@ -33,7 +33,7 @@ describe("AppViewComponent", () => {
     namespace: "weee",
   });
 
-  const validProps: IAppViewProps = {
+  const validProps = {
     app: appRelease,
     deleteApp: jest.fn(),
     deleteError: undefined,

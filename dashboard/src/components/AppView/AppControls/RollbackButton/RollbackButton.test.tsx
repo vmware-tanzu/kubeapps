@@ -1,6 +1,6 @@
 import { shallow, ShallowWrapper } from "enzyme";
 import * as React from "react";
-import * as ReactModal from "react-modal";
+import Modal from "react-modal";
 import RollbackButton from ".";
 import RollbackDialog from "./RollbackDialog";
 
@@ -13,7 +13,7 @@ const defaultProps = {
 };
 
 function openModal(wrapper: ShallowWrapper) {
-  ReactModal.setAppElement(document.createElement("div"));
+  Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();
 }

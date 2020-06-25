@@ -1,6 +1,6 @@
 import * as React from "react";
 import { FileText } from "react-feather";
-import * as ReactMarkdown from "react-markdown";
+import ReactMarkdown from "react-markdown";
 
 import LoadingWrapper from "../LoadingWrapper";
 import HeadingRenderer from "./HeadingRenderer";

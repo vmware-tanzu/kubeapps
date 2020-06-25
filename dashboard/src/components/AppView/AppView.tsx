@@ -19,7 +19,7 @@ import ResourceTable from "./ResourceTable";
 export interface IAppViewProps {
   namespace: string;
   releaseName: string;
-  app: IRelease;
+  app?: IRelease;
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
@@ -149,7 +149,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} />
+                <ChartInfo app={app!} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -158,22 +158,22 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                       deployRefs={deployRefs}
                       statefulsetRefs={statefulSetRefs}
                       daemonsetRefs={daemonSetRefs}
-                      info={app.info!}
+                      info={app!.info!}
                     />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app} deleteApp={this.deleteApp} push={push} />
+                    <AppControls app={app!} deleteApp={this.deleteApp} push={push} />
                   </div>
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
-                <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
+                <AppNotes notes={app!.info && app!.info.status && app!.info.status.notes} />
                 <ResourceTable resourceRefs={secretRefs} title="Secrets" />
                 <ResourceTable resourceRefs={deployRefs} title="Deployments" />
                 <ResourceTable resourceRefs={statefulSetRefs} title="StatefulSets" />
                 <ResourceTable resourceRefs={daemonSetRefs} title="DaemonSets" />
                 <ResourceTable resourceRefs={serviceRefs} title="Services" />
                 <ResourceTable resourceRefs={otherResources} title="Other Resources" />
-                <AppValues values={(app.config && app.config.raw) || ""} />
+                <AppValues values={(app!.config && app!.config.raw) || ""} />
               </div>
             </div>
           </div>

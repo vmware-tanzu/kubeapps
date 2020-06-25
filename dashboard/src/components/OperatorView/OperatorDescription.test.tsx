@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import * as ReactMarkdown from "react-markdown";
+import ReactMarkdown from "react-markdown";
 import OperatorDescription from "./OperatorDescription";
 
 it("renders a description", () => {

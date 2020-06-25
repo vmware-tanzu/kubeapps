@@ -9,7 +9,7 @@ exports[`loading spinner matches the snapshot 1`] = `
     <SearchFilter
       className="margin-l-big"
       onChange={[Function]}
-      onSubmit={[Function]}
+      onSubmit={[MockFunction]}
       placeholder="search operators..."
       value=""
     />
@@ -48,7 +48,7 @@ exports[`render the operator list with installed operators 1`] = `
     <SearchFilter
       className="margin-l-big"
       onChange={[Function]}
-      onSubmit={[Function]}
+      onSubmit={[MockFunction]}
       placeholder="search operators..."
       value=""
     />
@@ -214,7 +214,7 @@ exports[`render the operator list without installed operators 1`] = `
     <SearchFilter
       className="margin-l-big"
       onChange={[Function]}
-      onSubmit={[Function]}
+      onSubmit={[MockFunction]}
       placeholder="search operators..."
       value=""
     />

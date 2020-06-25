@@ -2,7 +2,25 @@
 
 exports[`should render a string parameter with title and description 1`] = `
 <TextParam
-  handleBasicFormParamChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "username",
+            "type": "string",
+            "value": "user",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
   id="foo"
   label="Username"
   param={
@@ -34,7 +52,7 @@ exports[`should render a string parameter with title and description 1`] = `
         >
           <input
             id="foo"
-            onChange={[Function]}
+            onChange={[MockFunction]}
             type="text"
             value="user"
           />
@@ -47,7 +65,38 @@ exports[`should render a string parameter with title and description 1`] = `
 
 exports[`should render a textArea parameter with title and description 1`] = `
 <TextParam
-  handleBasicFormParamChange={[Function]}
+  handleBasicFormParamChange={
+    [MockFunction] {
+      "calls": Array [
+        Array [
+          Object {
+            "path": "configuration",
+            "type": "string",
+            "value": "First line
+Second line",
+          },
+        ],
+        Array [
+          Object {
+            "path": "configuration",
+            "type": "string",
+            "value": "First line
+Second line",
+          },
+        ],
+      ],
+      "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
+      ],
+    }
+  }
   id="bar"
   inputType="textarea"
   label="Configuration"
@@ -56,7 +105,7 @@ exports[`should render a textArea parameter with title and description 1`] = `
       "path": "configuration",
       "type": "string",
       "value": "First line
-    Second line",
+Second line",
     }
   }
 >
@@ -81,9 +130,9 @@ exports[`should render a textArea parameter with title and description 1`] = `
         >
           <textarea
             id="bar"
-            onChange={[Function]}
+            onChange={[MockFunction]}
             value="First line
-          Second line"
+Second line"
           />
         </div>
       </div>

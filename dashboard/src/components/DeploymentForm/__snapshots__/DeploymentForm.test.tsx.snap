@@ -40,9 +40,9 @@ exports[`renders the full DeploymentForm 1`] = `
         chartVersion="1.0.0"
         chartsIsFetching={false}
         deploymentEvent="install"
-        getChartVersion={[Function]}
+        getChartVersion={[MockFunction]}
         namespace="default"
-        push={[Function]}
+        push={[MockFunction]}
         selected={
           Object {
             "version": Object {

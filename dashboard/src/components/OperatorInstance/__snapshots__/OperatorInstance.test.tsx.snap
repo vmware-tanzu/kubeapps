@@ -120,7 +120,7 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
           />
           <AppNotes
             notes="alive: true
-          "
+"
             title="Status"
           />
           <ResourceTable
@@ -169,7 +169,7 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
           />
           <AppValues
             values="test: true
-          "
+"
           />
         </div>
       </div>

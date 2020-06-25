@@ -1,6 +1,6 @@
 import { RouterAction } from "connected-react-router";
 import * as React from "react";
-import * as Modal from "react-modal";
+import Modal from "react-modal";
 
 import { IClusterServiceClass } from "../../shared/ClusterServiceClass";
 import { IServicePlan } from "../../shared/ServiceCatalog";
