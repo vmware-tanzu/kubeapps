@@ -27,7 +27,7 @@ export interface IAppUpgradeProps {
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
-  fetchChartVersions: (namespace: string, id: string) => Promise<any>;
+  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[] | undefined>;
   getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
   getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
@@ -52,7 +52,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
 
   public componentDidUpdate(prevProps: IAppUpgradeProps) {
     const { app, repoName, repoNamespace } = this.props;
-    if (app && repoName) {
+    if (app && repoName && repoNamespace) {
       const { chart } = app;
       if (
         chart &&
@@ -62,7 +62,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
         (prevProps.app !== app || prevProps.repoName !== repoName)
       ) {
         const chartID = `${repoName}/${chart.metadata.name}`;
-        this.props.getDeployedChartVersion(repoNamespace!, chartID, chart.metadata.version);
+        this.props.getDeployedChartVersion(repoNamespace, chartID, chart.metadata.version);
       }
     }
   }
@@ -99,6 +99,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
       return <LoadingWrapper />;
     }
     const repo = repoName || app.updateInfo.repository.name;
+    const repoNS = repoNamespace || app.updateInfo.repository.namespace;
     if (app && app.chart && app.chart.metadata && repo) {
       return (
         <div>
@@ -108,7 +109,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
             chartName={app.chart.metadata.name!}
             chartsIsFetching={chartsIsFetching}
             repo={repo}
-            repoNamespace={repoNamespace!}
+            repoNamespace={repoNS}
             namespace={namespace}
             releaseName={releaseName}
             selected={selected}

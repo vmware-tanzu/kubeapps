@@ -2,16 +2,19 @@ export function escapeRegExp(str: string) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-export function getValueFromEvent(e: React.FormEvent<HTMLInputElement>) {
+export function getValueFromEvent(
+  e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+) {
   let value: any = e.currentTarget.value;
+  console.log("VALUE !!! ", value);
   switch (e.currentTarget.type) {
     case "checkbox":
       // value is a boolean
-      value = e.currentTarget.checked;
+      value = value === "checked";
       break;
     case "number":
       // value is a number
-      value = e.currentTarget.valueAsNumber;
+      value = parseInt(value, 10);
       break;
   }
   return value;

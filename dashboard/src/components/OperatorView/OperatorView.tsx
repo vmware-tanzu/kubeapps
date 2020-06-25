@@ -19,7 +19,7 @@ interface IOperatorViewProps {
   namespace: string;
   error?: Error;
   push: (location: string) => RouterAction;
-  getCSV: (namespace: string, name: string) => Promise<any>;
+  getCSV: (namespace: string, name: string) => Promise<IClusterServiceVersion | undefined>;
   csv?: IClusterServiceVersion;
 }
 

@@ -2,6 +2,7 @@ import { RouterAction } from "connected-react-router";
 import { assignWith, isEqual } from "lodash";
 import * as React from "react";
 import * as yaml from "yaml";
+import { hapi } from "../../shared/hapi/release";
 
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
@@ -120,11 +121,15 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
       );
     }
 
-    return this.props.app && this.props.app.info ? this.appInfo() : <LoadingWrapper />;
+    return this.props.app && this.props.app.info ? (
+      this.appInfo(this.props.app, this.props.app.info)
+    ) : (
+      <LoadingWrapper />
+    );
   }
 
-  public appInfo() {
-    const { app, push } = this.props;
+  public appInfo(app: IRelease, info: hapi.release.IInfo) {
+    const { push } = this.props;
     const {
       serviceRefs,
       ingressRefs,
@@ -149,7 +154,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app!} />
+                <ChartInfo app={app} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">
@@ -158,22 +163,22 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                       deployRefs={deployRefs}
                       statefulsetRefs={statefulSetRefs}
                       daemonsetRefs={daemonSetRefs}
-                      info={app!.info!}
+                      info={info}
                     />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app!} deleteApp={this.deleteApp} push={push} />
+                    <AppControls app={app} deleteApp={this.deleteApp} push={push} />
                   </div>
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />
-                <AppNotes notes={app!.info && app!.info.status && app!.info.status.notes} />
+                <AppNotes notes={app.info && app.info.status && app.info.status.notes} />
                 <ResourceTable resourceRefs={secretRefs} title="Secrets" />
                 <ResourceTable resourceRefs={deployRefs} title="Deployments" />
                 <ResourceTable resourceRefs={statefulSetRefs} title="StatefulSets" />
                 <ResourceTable resourceRefs={daemonSetRefs} title="DaemonSets" />
                 <ResourceTable resourceRefs={serviceRefs} title="Services" />
                 <ResourceTable resourceRefs={otherResources} title="Other Resources" />
-                <AppValues values={(app!.config && app!.config.raw) || ""} />
+                <AppValues values={(app.config && app.config.raw) || ""} />
               </div>
             </div>
           </div>
