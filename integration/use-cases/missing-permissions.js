@@ -2,14 +2,14 @@ test("Fails to deploy an application due to missing permissions", async () => {
   await page.goto(getUrl("/#/login"));
 
   await expect(page).toFillForm("form", {
-    token: process.env.VIEW_TOKEN
+    token: process.env.VIEW_TOKEN,
   });
 
   await expect(page).toClick("button", { text: "Login" });
 
   await expect(page).toClick("a", { text: "Catalog" });
 
-  await expect(page).toClick("a", { text: "aerospike", timeout: 60000 });
+  await expect(page).toClick("a", { text: "apache", timeout: 60000 });
 
   await expect(page).toClick("button", { text: "Deploy" });
 
