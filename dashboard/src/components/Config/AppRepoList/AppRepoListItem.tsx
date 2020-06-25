@@ -6,7 +6,6 @@ import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
 import { AppRepoAddButton } from "./AppRepoButton";
 
-
 interface IAppRepoListItemProps {
   errors: {
     create?: Error;

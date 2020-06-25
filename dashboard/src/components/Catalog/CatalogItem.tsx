@@ -44,7 +44,7 @@ function trimDescription(desc: string): string {
 const CatalogItem: React.SFC<ICatalogItemProps> = props => {
   if (props.type === "operator") {
     const item = props.item as IOperatorCatalogItem;
-    return OperatorCatalogItem(item); 
+    return OperatorCatalogItem(item);
   } else {
     const item = props.item as IChartCatalogItem;
     return ChartCatalogItem(item);
@@ -81,14 +81,11 @@ const ChartCatalogItem: React.SFC<IChartCatalogItem> = props => {
   const { icon, name, repo, version, description, namespace, id } = props;
   const iconSrc = icon || placeholder;
   const tag1 = (
-    <Link
-      className="ListItem__content__info_tag_link"
-      to={url.app.repo(repo.name, namespace)}
-    >
+    <Link className="ListItem__content__info_tag_link" to={url.app.repo(repo.name, namespace)}>
       {repo.name}
     </Link>
   );
-  const link = url.app.charts.get(name, repo || {} as IRepo, namespace);
+  const link = url.app.charts.get(name, repo || ({} as IRepo), namespace);
   const subIcon = helmIcon;
 
   const descriptionC = (

@@ -2,6 +2,7 @@ import * as React from "react";
 import { LogOut, Settings } from "react-feather";
 import { NavLink } from "react-router-dom";
 import "react-select/dist/react-select.css";
+import { IFeatureFlags } from "shared/Config";
 import logo from "../../logo.svg";
 import { IClusterState } from "../../reducers/cluster";
 import { definedNamespaces } from "../../shared/Namespace";
@@ -9,6 +10,7 @@ import { app } from "../../shared/url";
 import "./Header.css";
 import HeaderLink from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
+import UISelector from "./UISelector";
 
 interface IHeaderProps {
   authenticated: boolean;
@@ -21,7 +23,7 @@ interface IHeaderProps {
   setNamespace: (ns: string) => void;
   createNamespace: (ns: string) => Promise<boolean>;
   getNamespace: (ns: string) => void;
-  featureFlags: { operators: boolean };
+  featureFlags: IFeatureFlags;
 }
 
 interface IHeaderState {
@@ -30,10 +32,6 @@ interface IHeaderState {
 }
 
 class Header extends React.Component<IHeaderProps, IHeaderState> {
-  public static defaultProps = {
-    featureFlags: { operators: false },
-  };
-
   constructor(props: any) {
     super(props);
 
@@ -60,6 +58,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       authenticated: showNav,
       createNamespace,
       getNamespace,
+      featureFlags,
     } = this.props;
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
@@ -69,6 +68,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     const reposPath = `/config/ns/${cluster.currentNamespace}/repos`;
     return (
       <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
+        <UISelector UI={featureFlags.ui} />
         <div className="container">
           <header className={header}>
             <div className="header__logo">
@@ -91,13 +91,17 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 </button>
                 <ul className="header__nav__menu" role="menubar">
                   <li>
-                    <HeaderLink to={app.apps.list(cluster.currentNamespace)} exact={true}>Applications</HeaderLink>
+                    <HeaderLink to={app.apps.list(cluster.currentNamespace)} exact={true}>
+                      Applications
+                    </HeaderLink>
                   </li>
                   <li>
                     <HeaderLink to={app.catalog(cluster.currentNamespace)}>Catalog</HeaderLink>
                   </li>
                   <li>
-                    <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>Service Instances (alpha)</HeaderLink>
+                    <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>
+                      Service Instances (alpha)
+                    </HeaderLink>
                   </li>
                 </ul>
               </nav>
@@ -130,7 +134,9 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                       {this.props.featureFlags.operators && (
                         <li role="none">
-                          <NavLink to={`/ns/${cluster.currentNamespace}/operators`}>Operators</NavLink>
+                          <NavLink to={`/ns/${cluster.currentNamespace}/operators`}>
+                            Operators
+                          </NavLink>
                         </li>
                       )}
                     </ul>

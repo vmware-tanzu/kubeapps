@@ -10,19 +10,28 @@ export const app = {
       return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
     },
     list: (namespace: string, cluster: string = "default") => `/c/${cluster}/ns/${namespace}/apps`,
-    get: (releaseName: string, namespace: string, cluster: string = "default") => `${app.apps.list(namespace, cluster)}/${releaseName}`,
-    upgrade: (releaseName: string, namespace: string, cluster: string = "default") => `${app.apps.get(releaseName, namespace, cluster)}/upgrade`,
+    get: (releaseName: string, namespace: string, cluster: string = "default") =>
+      `${app.apps.list(namespace, cluster)}/${releaseName}`,
+    upgrade: (releaseName: string, namespace: string, cluster: string = "default") =>
+      `${app.apps.get(releaseName, namespace, cluster)}/upgrade`,
   },
-  catalog: (namespace: string, cluster: string = "default") => `/c/${cluster}/ns/${namespace}/catalog`,
-  repo: (repo: string, namespace: string, cluster: string = "default") => `${app.catalog(namespace, cluster)}/${repo}`,
+  catalog: (namespace: string, cluster: string = "default") =>
+    `/c/${cluster}/ns/${namespace}/catalog`,
+  repo: (repo: string, namespace: string, cluster: string = "default") =>
+    `${app.catalog(namespace, cluster)}/${repo}`,
   servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
-    get: (chartName: string, repo: IRepo, namespace:string, cluster: string = "default") => {
+    get: (chartName: string, repo: IRepo, namespace: string, cluster: string = "default") => {
       const chartsSegment = namespace !== repo?.namespace ? "global-charts" : "charts";
       return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${chartName}`;
     },
-    version: (chartName: string, chartVersion: string, repo: IRepo, namespace: string, cluster: string = "default") =>
-      `${app.charts.get(chartName, repo, namespace, cluster)}/versions/${chartVersion}`,
+    version: (
+      chartName: string,
+      chartVersion: string,
+      repo: IRepo,
+      namespace: string,
+      cluster: string = "default",
+    ) => `${app.charts.get(chartName, repo, namespace, cluster)}/versions/${chartVersion}`,
   },
   operators: {
     view: (namespace: string, name: string) => `/ns/${namespace}/operators/${name}`,

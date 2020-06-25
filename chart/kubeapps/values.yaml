@@ -699,3 +699,5 @@ featureFlags:
   # - name: second-cluster
   #   apiServiceURL: https://second-cluster:6443
   #   certificateAuthorityData: LS0tLS1CRUdJ...
+  # ui is a WIP feature for the migration to Clarity design system.
+  ui: hex

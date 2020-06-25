@@ -2,6 +2,7 @@ import { RouterAction } from "connected-react-router";
 import * as React from "react";
 import { Link } from "react-router-dom";
 
+import { IFeatureFlags } from "shared/Config";
 import { ForbiddenError, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
@@ -9,7 +10,11 @@ import { MessageAlert } from "../ErrorAlert";
 import LoadingWrapper from "../LoadingWrapper";
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
-import CatalogItem, { ICatalogItemProps, IChartCatalogItem, IOperatorCatalogItem } from "./CatalogItem";
+import CatalogItem, {
+  ICatalogItemProps,
+  IChartCatalogItem,
+  IOperatorCatalogItem,
+} from "./CatalogItem";
 
 interface ICatalogProps {
   charts: IChartState;
@@ -21,7 +26,7 @@ interface ICatalogProps {
   kubeappsNamespace: string;
   getCSVs: (namespace: string) => void;
   csvs: IClusterServiceVersion[];
-  featureFlags: { operators: boolean };
+  featureFlags: IFeatureFlags;
 }
 
 interface ICatalogState {
@@ -103,8 +108,13 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
     const filteredCSVs = this.shouldRenderOperators() ? this.filteredCSVs(csvs) : [];
     const catalogItems = this.getCatalogItems(filteredCharts, filteredCSVs);
     const items = catalogItems.map(c => {
-      const keyComponent = c.type === "operator" ? (c.item as IOperatorCatalogItem).csv : (c.item as IChartCatalogItem).repo.name;
-      return <CatalogItem type={c.type} key={`${c.type}/${keyComponent}/${c.item.name}`} item={c.item} />
+      const keyComponent =
+        c.type === "operator"
+          ? (c.item as IOperatorCatalogItem).csv
+          : (c.item as IChartCatalogItem).repo.name;
+      return (
+        <CatalogItem type={c.type} key={`${c.type}/${keyComponent}/${c.item.name}`} item={c.item} />
+      );
     });
     return (
       <section className="Catalog">

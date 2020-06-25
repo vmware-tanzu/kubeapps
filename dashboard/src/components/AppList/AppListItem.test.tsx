@@ -6,7 +6,6 @@ import * as url from "../../shared/url";
 import InfoCard from "../InfoCard";
 import AppListItem from "./AppListItem";
 
-
 it("renders an app item", () => {
   const wrapper = shallow(
     <AppListItem

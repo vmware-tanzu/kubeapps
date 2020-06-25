@@ -104,6 +104,7 @@ export function getApp(
 }
 
 function getAppUpdateInfo(
+  namespace: string,
   releaseName: string,
   chartName: string,
   currentVersion: string,
@@ -111,9 +112,6 @@ function getAppUpdateInfo(
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async (dispatch, getState) => {
     dispatch(requestAppUpdateInfo());
-    const {
-      config: { namespace },
-    } = getState();
     try {
       const chartsInfo = await Chart.listWithFilters(
         namespace,
@@ -175,6 +173,7 @@ export function getAppWithUpdateInfo(
       ) {
         dispatch(
           getAppUpdateInfo(
+            namespace,
             app.name,
             app.chart.metadata.name,
             app.chart.metadata.version,
@@ -228,14 +227,15 @@ export function fetchApps(
 }
 
 export function fetchAppsWithUpdateInfo(
-  ns?: string,
+  namespace: string,
   all: boolean = false,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    const apps = await dispatch(fetchApps(ns, all));
+    const apps = await dispatch(fetchApps(namespace, all));
     apps.forEach(app =>
       dispatch(
         getAppUpdateInfo(
+          namespace,
           app.releaseName,
           app.chartMetadata.name,
           app.chartMetadata.version,

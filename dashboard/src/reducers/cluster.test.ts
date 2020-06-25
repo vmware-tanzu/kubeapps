@@ -2,6 +2,7 @@ import { LOCATION_CHANGE, RouterActionType } from "connected-react-router";
 import context from "jest-plugin-context";
 import { getType } from "typesafe-actions";
 
+import { IConfig } from "shared/Config";
 import actions from "../actions";
 import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState } from "./cluster";
@@ -47,7 +48,7 @@ describe("clusterReducer", () => {
                 currentNamespace: tc.current,
               },
             },
-          } as IClustersState)
+          } as IClustersState),
         );
       });
     });
@@ -82,7 +83,7 @@ describe("clusterReducer", () => {
       ).toEqual({
         ...initialState,
         clusters: {
-          default: { ...initialState.clusters.default, error: { action: "create", error: err } }
+          default: { ...initialState.clusters.default, error: { action: "create", error: err } },
         },
       } as IClustersState);
     });
@@ -96,7 +97,7 @@ describe("clusterReducer", () => {
         }),
       ).toEqual({
         ...initialState,
-        clusters: { default: { currentNamespace: "_all", namespaces: [] } }
+        clusters: { default: { currentNamespace: "_all", namespaces: [] } },
       } as IClustersState);
     });
   });
@@ -104,13 +105,10 @@ describe("clusterReducer", () => {
   context("when SET_AUTHENTICATED", () => {
     it("sets the current namespace to the users default", () => {
       expect(
-        clusterReducer(
-          initialState,
-          {
-            type: getType(actions.auth.setAuthenticated),
-            payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
-          },
-        ),
+        clusterReducer(initialState, {
+          type: getType(actions.auth.setAuthenticated),
+          payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
+        }),
       ).toEqual({
         ...initialState,
         clusters: {
@@ -123,19 +121,22 @@ describe("clusterReducer", () => {
   context("when SET_NAMESPACE", () => {
     it("sets the current namespace and clears error", () => {
       expect(
-        clusterReducer({
-          ...initialState,
-          clusters: {
-            default: {
-              ...initialState.clusters.default,
-              currentNamespace: "other",
-              error: { action: "create", error: new Error("Bang!") },
+        clusterReducer(
+          {
+            ...initialState,
+            clusters: {
+              default: {
+                ...initialState.clusters.default,
+                currentNamespace: "other",
+                error: { action: "create", error: new Error("Bang!") },
+              },
             },
           },
-        }, {
-          type: getType(actions.namespace.setNamespace),
-          payload: "default",
-        }),
+          {
+            type: getType(actions.namespace.setNamespace),
+            payload: "default",
+          },
+        ),
       ).toEqual({
         ...initialState,
         clusters: {
@@ -160,7 +161,7 @@ describe("clusterReducer", () => {
                 currentNamespace: "",
                 namespaces: ["default"],
                 error: { action: "create", error: new Error("boom") },
-              }
+              },
             },
           } as IClustersState,
           {
@@ -178,6 +179,65 @@ describe("clusterReducer", () => {
           },
         },
       } as IClustersState);
+    });
+  });
+
+  context("when RECEIVE_CONFIG", () => {
+    const config = {
+      namespace: "kubeapps",
+      appVersion: "dev",
+      authProxyEnabled: false,
+      oauthLoginURI: "",
+      oauthLogoutURI: "",
+      featureFlags: {
+        operators: false,
+        additionalClusters: [
+          {
+            name: "additionalCluster1",
+            apiServiceURL: "https://not-used-by-dashboard.example.com/",
+          },
+          {
+            name: "additionalCluster2",
+            apiServiceURL: "https://not-used-by-dashboard.example.com/",
+          },
+        ],
+      },
+    } as IConfig;
+    it("adds the additional clusters to the clusters state", () => {
+      expect(
+        clusterReducer(initialState, {
+          type: getType(actions.config.receiveConfig),
+          payload: config,
+        }),
+      ).toEqual({
+        ...initialState,
+        clusters: {
+          ...initialState.clusters,
+          additionalCluster1: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+          additionalCluster2: {
+            currentNamespace: "default",
+            namespaces: [],
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("does not error if there is not feature flag", () => {
+      const badConfig = {
+        ...config,
+      };
+      // Manually delete additionalClusters so typescript doesn't complain
+      // while still allowing us to test the case where it is not present.
+      delete badConfig.featureFlags.additionalClusters;
+      expect(
+        clusterReducer(initialState, {
+          type: getType(actions.config.receiveConfig),
+          payload: badConfig,
+        }),
+      ).toEqual(initialState);
     });
   });
 });
