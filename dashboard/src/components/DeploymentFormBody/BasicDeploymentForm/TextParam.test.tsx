@@ -9,7 +9,7 @@ const stringProps = {
   id: "foo",
   label: "Username",
   param: stringParam,
-  handleBasicFormParamChange: jest.fn(() => jest.fn()),
+  handleBasicFormParamChange: jest.fn().mockReturnValue(jest.fn()),
 };
 
 it("should render a string parameter with title and description", () => {
@@ -27,7 +27,7 @@ it("should set the input type as number", () => {
 
 it("should forward the proper value when using a string parameter", () => {
   const handler = jest.fn();
-  const handleBasicFormParamChange = jest.fn(() => handler);
+  const handleBasicFormParamChange = jest.fn().mockReturnValue(handler);
   const wrapper = mount(
     <TextParam {...stringProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
   );
@@ -51,7 +51,7 @@ it("should set the input value as empty if a string parameter value is not defin
     name: "username",
     label: "Username",
     param: tparam,
-    handleBasicFormParamChange: jest.fn(() => jest.fn()),
+    handleBasicFormParamChange: jest.fn().mockReturnValue(jest.fn()),
   };
   const wrapper = mount(<TextParam {...tprops} />);
   const input = wrapper.find("input");
@@ -67,7 +67,7 @@ const textAreaProps = {
   id: "bar",
   label: "Configuration",
   param: textAreaParam,
-  handleBasicFormParamChange: jest.fn(() => jest.fn()),
+  handleBasicFormParamChange: jest.fn().mockReturnValue(jest.fn()),
   inputType: "textarea",
 };
 
@@ -80,7 +80,7 @@ it("should render a textArea parameter with title and description", () => {
 
 it("should forward the proper value when using a textArea parameter", () => {
   const handler = jest.fn();
-  const handleBasicFormParamChange = jest.fn(() => handler);
+  const handleBasicFormParamChange = jest.fn().mockReturnValue(handler);
   const wrapper = mount(
     <TextParam {...textAreaProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
   );
@@ -104,7 +104,7 @@ it("should set the input value as empty if a textArea param value is not defined
     name: "configuration",
     label: "Configuration",
     param: tparam,
-    handleBasicFormParamChange: jest.fn(() => jest.fn()),
+    handleBasicFormParamChange: jest.fn().mockReturnValue(jest.fn()),
     inputType: "textarea",
   };
   const wrapper = mount(<TextParam {...tprops} />);
@@ -124,7 +124,7 @@ it("should render a string parameter as select with option tags", () => {
     name: "databaseType",
     label: "databaseType",
     param: tparam,
-    handleBasicFormParamChange: jest.fn(() => jest.fn()),
+    handleBasicFormParamChange: jest.fn().mockReturnValue(jest.fn()),
   };
   const wrapper = mount(<TextParam {...tprops} />);
   const input = wrapper.find("select");
@@ -157,7 +157,7 @@ it("should forward the proper value when using a select", () => {
     param: tparam,
   };
   const handler = jest.fn();
-  const handleBasicFormParamChange = jest.fn(() => handler);
+  const handleBasicFormParamChange = jest.fn().mockReturnValue(handler);
   const wrapper = mount(
     <TextParam {...tprops} handleBasicFormParamChange={handleBasicFormParamChange} />,
   );

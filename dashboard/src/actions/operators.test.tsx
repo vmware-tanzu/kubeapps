@@ -18,7 +18,7 @@ afterEach(jest.resetAllMocks);
 
 describe("checkOLMInstalled", () => {
   it("dispatches OLM_INSTALLED when succeded", async () => {
-    Operators.isOLMInstalled = jest.fn(() => true);
+    Operators.isOLMInstalled = jest.fn().mockReturnValue(true);
     const expectedActions = [
       {
         type: getType(operatorActions.checkingOLM),
@@ -51,10 +51,9 @@ describe("checkOLMInstalled", () => {
 
 describe("getOperators", () => {
   it("returns an ordered list of operators based on the name", async () => {
-    Operators.getOperators = jest.fn(() => [
-      { metadata: { name: "foo" } },
-      { metadata: { name: "bar" } },
-    ]);
+    Operators.getOperators = jest
+      .fn()
+      .mockResolvedValue([{ metadata: { name: "foo" } }, { metadata: { name: "bar" } }]);
     const sortedOperators = [{ metadata: { name: "bar" } }, { metadata: { name: "foo" } }];
     const expectedActions = [
       {
@@ -90,7 +89,7 @@ describe("getOperators", () => {
 describe("getOperator", () => {
   it("returns an an operator", async () => {
     const op = { metadata: { name: "foo" } };
-    Operators.getOperator = jest.fn(() => op);
+    Operators.getOperator = jest.fn().mockReturnValue(op);
     const expectedActions = [
       {
         type: getType(operatorActions.requestOperator),
@@ -124,10 +123,9 @@ describe("getOperator", () => {
 
 describe("getCSVs", () => {
   it("returns an ordered list of csvs based on the name", async () => {
-    Operators.getCSVs = jest.fn(() => [
-      { metadata: { name: "foo" } },
-      { metadata: { name: "bar" } },
-    ]);
+    Operators.getCSVs = jest
+      .fn()
+      .mockResolvedValue([{ metadata: { name: "foo" } }, { metadata: { name: "bar" } }]);
     const sortedCSVs = [{ metadata: { name: "bar" } }, { metadata: { name: "foo" } }];
     const expectedActions = [
       {
@@ -163,7 +161,7 @@ describe("getCSVs", () => {
 describe("getCSV", () => {
   it("returns an an ClusterServiceVersion", async () => {
     const csv = { metadata: { name: "foo" } };
-    Operators.getCSV = jest.fn(() => csv);
+    Operators.getCSV = jest.fn().mockReturnValue(csv);
     const expectedActions = [
       {
         type: getType(operatorActions.requestCSV),
@@ -198,7 +196,7 @@ describe("getCSV", () => {
 describe("createResource", () => {
   it("creates a resource", async () => {
     const resource = {} as IResource;
-    Operators.createResource = jest.fn(() => resource);
+    Operators.createResource = jest.fn().mockReturnValue(resource);
     const expectedActions = [
       {
         type: getType(operatorActions.creatingResource),
@@ -233,7 +231,7 @@ describe("createResource", () => {
 describe("updateResource", () => {
   it("updates a resource", async () => {
     const resource = {} as IResource;
-    Operators.updateResource = jest.fn(() => resource);
+    Operators.updateResource = jest.fn().mockReturnValue(resource);
     const expectedActions = [
       {
         type: getType(operatorActions.updatingResource),
@@ -274,11 +272,9 @@ describe("getResources", () => {
       },
     };
     const resource = { metadata: { name: "resource" } };
-    Operators.getCSVs = jest.fn(() => [csv]);
-    Operators.listResources = jest.fn(() => {
-      return {
-        items: [resource],
-      };
+    Operators.getCSVs = jest.fn().mockReturnValue([csv]);
+    Operators.listResources = jest.fn().mockReturnValue({
+      items: [resource],
     });
     const expectedActions = [
       {
@@ -308,7 +304,7 @@ describe("getResources", () => {
         customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
       },
     };
-    Operators.getCSVs = jest.fn(() => [csv]);
+    Operators.getCSVs = jest.fn().mockReturnValue([csv]);
     Operators.listResources = jest.fn(() => {
       throw new Error("Boom!");
     });
@@ -346,8 +342,8 @@ describe("getResources", () => {
       },
     };
     const resource = { metadata: { name: "resource" } };
-    Operators.getCSV = jest.fn(() => csv);
-    Operators.getResource = jest.fn(() => resource);
+    Operators.getCSV = jest.fn().mockReturnValue(csv);
+    Operators.getResource = jest.fn().mockReturnValue(resource);
     const expectedActions = [
       {
         type: getType(operatorActions.requestCustomResource),
@@ -381,7 +377,7 @@ describe("getResources", () => {
         customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
       },
     };
-    Operators.getCSV = jest.fn(() => csv);
+    Operators.getCSV = jest.fn().mockReturnValue(csv);
     Operators.getResource = jest.fn(() => {
       throw new Error("Boom!");
     });
@@ -406,7 +402,7 @@ describe("getResources", () => {
   });
 
   it("dispatches an error if the given csv is not found", async () => {
-    Operators.getCSV = jest.fn(() => undefined);
+    Operators.getCSV = jest.fn().mockReturnValue(undefined);
     const expectedActions = [
       {
         type: getType(operatorActions.requestCustomResource),
@@ -433,7 +429,7 @@ describe("getResources", () => {
         customresourcedefinitions: { owned: [{ name: "foo.kubeapps.com", version: "v1alpha1" }] },
       },
     };
-    Operators.getCSV = jest.fn(() => csv);
+    Operators.getCSV = jest.fn().mockReturnValue(csv);
     const expectedActions = [
       {
         type: getType(operatorActions.requestCustomResource),
@@ -495,7 +491,7 @@ describe("deleteResource", () => {
 describe("createOperator", () => {
   it("creates an Operator", async () => {
     const resource = {} as IResource;
-    Operators.createOperator = jest.fn(() => resource);
+    Operators.createOperator = jest.fn().mockReturnValue(resource);
     const expectedActions = [
       {
         type: getType(operatorActions.creatingOperator),

@@ -64,7 +64,7 @@ it("renders the form to create a registry secret", () => {
 
 it("submits the new secret and re-request the list", async () => {
   const fetchImagePullSecrets = jest.fn();
-  const createDockerRegistrySecret = jest.fn(() => true);
+  const createDockerRegistrySecret = jest.fn().mockReturnValue(true);
   const wrapper = shallow(
     <AppRepoAddDockerCreds
       {...defaultProps}

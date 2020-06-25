@@ -63,7 +63,6 @@
     "redux-devtools-extension": "^2.13.5",
     "redux-thunk": "^2.2.0",
     "semver": "^5.6.0",
-    "ts-jest": "^22.0.1",
     "typesafe-actions": "^2.0.4",
     "yaml": "1.7.2"
   },
@@ -105,7 +104,7 @@
   "devDependencies": {
     "@types/enzyme": "^3.1.6",
     "@types/enzyme-adapter-react-16": "^1.0.1",
-    "@types/jest": "^22.0.0",
+    "@types/jest": "^26.0.3",
     "@types/node": "^14.0.14",
     "@types/react-dom": "^16.9.4",
     "@types/react-modal": "^3.1.1",
@@ -115,7 +114,7 @@
     "@types/redux-mock-store": "^1.0.0",
     "enzyme": "^3.6.0",
     "husky": "^1.1.0",
-    "jest-enzyme": "^6.0.4",
+    "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",
     "lint-staged": "^10.2.11",
     "mock-socket": "^8.0.2",
@@ -132,6 +131,7 @@
     "tslint": "^5.9.1",
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
+    "ts-jest": "^22.0.1",
     "typescript": "^3.7.2"
   },
   "jest": {

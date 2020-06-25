@@ -129,7 +129,7 @@ describe("createAxiosInterceptorWithAuth", () => {
   });
 
   it("dispatches auth error and logout if 401 with auth proxy", async () => {
-    Auth.usingOIDCToken = jest.fn(() => true);
+    Auth.usingOIDCToken = jest.fn().mockReturnValue(true);
     Auth.unsetAuthCookie = jest.fn();
     const expectedActions = [
       {
@@ -156,7 +156,7 @@ describe("createAxiosInterceptorWithAuth", () => {
   });
 
   it("dispatches auth error and logout if 403 with auth proxy", async () => {
-    Auth.usingOIDCToken = jest.fn(() => true);
+    Auth.usingOIDCToken = jest.fn().mockReturnValue(true);
     Auth.unsetAuthCookie = jest.fn();
     const expectedActions = [
       {

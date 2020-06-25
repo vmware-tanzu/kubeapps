@@ -21,7 +21,7 @@ beforeEach(() => {
   };
 
   Auth.validateToken = jest.fn();
-  Auth.isAuthenticatedWithCookie = jest.fn(() => "token");
+  Auth.isAuthenticatedWithCookie = jest.fn().mockReturnValue("token");
   Auth.setAuthToken = jest.fn();
   Auth.unsetAuthToken = jest.fn();
 
@@ -102,7 +102,7 @@ describe("authenticate", () => {
 
 describe("OIDC authentication", () => {
   it("dispatches authenticating and auth ok if valid", () => {
-    Auth.isAuthenticatedWithCookie = jest.fn(() => true);
+    Auth.isAuthenticatedWithCookie = jest.fn().mockReturnValue(true);
     const expectedActions = [
       {
         type: getType(actions.auth.authenticating),
