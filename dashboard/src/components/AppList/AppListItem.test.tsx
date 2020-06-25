@@ -1,6 +1,5 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { Link } from "react-router-dom";
 import { IAppOverview } from "../../shared/types";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard";
@@ -23,13 +22,13 @@ it("renders an app item", () => {
   const card = wrapper.find(InfoCard).shallow();
   expect(
     card
-      .find(Link)
+      .find("Link")
       .at(0)
       .props().title,
   ).toBe("foo");
   expect(
     card
-      .find(Link)
+      .find("Link")
       .at(0)
       .props().to,
   ).toBe(url.app.apps.get("foo", "default"));

@@ -1,3 +1,5 @@
+import { RouterState } from "connected-react-router";
+import { LocationState } from "history";
 import * as jsonSchema from "json-schema";
 import { IOperatorsState } from "reducers/operators";
 import { IAuthState } from "../reducers/auth";
@@ -354,6 +356,7 @@ export interface IAppState {
 }
 
 export interface IStoreState {
+  router: RouterState<LocationState>;
   catalog: IServiceCatalogState;
   apps: IAppState;
   auth: IAuthState;

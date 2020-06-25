@@ -8,6 +8,8 @@ import Chart from "../shared/Chart";
 import { definedNamespaces } from "../shared/Namespace";
 import { IAppState, UnprocessableEntity } from "../shared/types";
 
+// TODO: do we need to mock the actual modules - https://stackoverflow.com/a/54781786 Check.
+
 const mockStore = configureMockStore([thunk]);
 
 let store: any;
@@ -72,8 +74,8 @@ describe("fetches applications", () => {
           },
         },
       ];
-      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
-      App.listApps = jest.fn(() => appsResponse);
+      Chart.listWithFilters = jest.fn().mockResolvedValue(chartUpdatesResponse);
+      App.listApps = jest.fn().mockResolvedValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
@@ -110,8 +112,8 @@ describe("fetches applications", () => {
           },
         },
       ];
-      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
-      App.listApps = jest.fn(() => appsResponse);
+      Chart.listWithFilters = jest.fn().mockResolvedValue(chartUpdatesResponse);
+      App.listApps = jest.fn().mockResolvedValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
@@ -146,8 +148,8 @@ describe("fetches applications", () => {
           relationships: { latestChartVersion: { data: { version: "1.0" } } },
         },
       ];
-      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
-      App.listApps = jest.fn(() => appsResponse);
+      Chart.listWithFilters = jest.fn().mockResolvedValue(chartUpdatesResponse);
+      App.listApps = jest.fn().mockResolvedValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },

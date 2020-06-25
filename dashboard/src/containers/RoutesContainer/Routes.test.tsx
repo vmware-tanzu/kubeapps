@@ -83,30 +83,3 @@ it("should render a redirect to the login page (when not authenticated)", () => 
   expect(wrapper.find(NotFound)).not.toExist();
   expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
 });
-
-describe("Routes depending on feature flags", () => {
-  const cluster = "default";
-  const namespace = "default";
-  const perNamespacePath = "/config/ns/:namespace/repos";
-
-  it("uses a namespaced route for app repos", () => {
-    const wrapper = shallow(
-      <StaticRouter location="/config/repos" context={{}}>
-        <Routes
-          {...emptyRouteComponentProps}
-          cluster={cluster}
-          namespace={namespace}
-          authenticated={true}
-        />
-      </StaticRouter>,
-    )
-      .dive()
-      .dive()
-      .dive();
-
-    const component = wrapper.find({ component: RepoListContainer });
-
-    expect(component.length).toBe(1);
-    expect(component.props().path).toEqual(perNamespacePath);
-  });
-});

@@ -93,7 +93,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
     let manifest: IResource[] = yaml
       .parseAllDocuments(app.manifest)
-      .map((doc: yaml.ast.Document) => doc.toJSON());
+      .map((doc) => doc.toJSON());
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);

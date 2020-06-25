@@ -1,3 +1,5 @@
+import { connectRouter } from "connected-react-router"
+import { History, LocationState } from "history"
 import { combineReducers } from "redux";
 
 import { IStoreState } from "../shared/types";
@@ -11,7 +13,8 @@ import kubeReducer from "./kube";
 import operatorReducer from "./operators";
 import reposReducer from "./repos";
 
-const rootReducer = combineReducers<IStoreState>({
+export default (history: History<LocationState>) => combineReducers<IStoreState>({
+  router: connectRouter(history),
   apps: appsReducer,
   auth: authReducer,
   catalog: catalogReducer,
@@ -22,5 +25,3 @@ const rootReducer = combineReducers<IStoreState>({
   repos: reposReducer,
   operators: operatorReducer,
 });
-
-export default rootReducer;
