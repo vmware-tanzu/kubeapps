@@ -16,6 +16,8 @@ spec:
       command:
         - bash
         - -c
+        # We are requesting the "wordpress" chart to the chartsvc to check that everything works as expected
+        # Also, we retry several times in case the repository is being populated at the time of executing this test
         - |
             n=0
             until [ "$n" -ge 5 ]; do
@@ -23,6 +25,7 @@ spec:
                 break
               fi
               sleep 10
+              ((n+=1))
             done
             if [ "$n" -eq 5 ]; then
               exit 1
