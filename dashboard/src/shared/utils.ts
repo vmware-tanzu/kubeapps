@@ -6,11 +6,10 @@ export function getValueFromEvent(
   e: React.FormEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
 ) {
   let value: any = e.currentTarget.value;
-  console.log("VALUE !!! ", value);
   switch (e.currentTarget.type) {
     case "checkbox":
       // value is a boolean
-      value = value === "checked";
+      value = value === "true";
       break;
     case "number":
       // value is a number
