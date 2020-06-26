@@ -100,7 +100,7 @@ it("triggers an upgrade when submitting the form", done => {
   const namespace = "default";
   const appValues = "foo: bar";
   const schema = { properties: { foo: { type: "string" } } };
-  const upgradeApp = jest.fn(() => true);
+  const upgradeApp = jest.fn().mockReturnValue(true);
   const push = jest.fn();
   const wrapper = mount(
     <UpgradeForm

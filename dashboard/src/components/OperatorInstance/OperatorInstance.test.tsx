@@ -93,7 +93,7 @@ describe("renders a resource", () => {
   });
 
   it("deletes the resource", async () => {
-    const deleteResource = jest.fn(() => true);
+    const deleteResource = jest.fn().mockReturnValue(true);
     const push = jest.fn();
     const wrapper = shallow(
       <OperatorInstance {...defaultProps} deleteResource={deleteResource} push={push} />,

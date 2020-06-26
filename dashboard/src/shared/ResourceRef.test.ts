@@ -186,8 +186,8 @@ describe("ResourceRef", () => {
 
       const ref = new ResourceRef(r);
       ref.filter = { metadata: { name: "bar" } };
-      Kube.getResource = jest.fn(() => {
-        return { items: [r] };
+      Kube.getResource = jest.fn().mockReturnValue({
+        items: [r],
       });
       const res = await ref.getResource();
       expect(res).toEqual({ items: [] });

@@ -107,7 +107,7 @@ it("disables the submit button if the operators ns is selected", () => {
 });
 
 it("deploys an operator", async () => {
-  const createOperator = jest.fn(() => true);
+  const createOperator = jest.fn().mockReturnValue(true);
   const push = jest.fn();
   const wrapper = shallow(
     <OperatorNew

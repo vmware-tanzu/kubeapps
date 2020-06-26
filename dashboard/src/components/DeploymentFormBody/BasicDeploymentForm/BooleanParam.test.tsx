@@ -21,7 +21,7 @@ it("should render a boolean param with title and description", () => {
 
 it("should send a checkbox event to handleBasicFormParamChange", () => {
   const handler = jest.fn();
-  const handleBasicFormParamChange = jest.fn(() => handler);
+  const handleBasicFormParamChange = jest.fn().mockReturnValue(handler);
   const wrapper = mount(
     <BooleanParam {...defaultProps} handleBasicFormParamChange={handleBasicFormParamChange} />,
   );

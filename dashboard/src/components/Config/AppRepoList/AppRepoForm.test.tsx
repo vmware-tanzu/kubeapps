@@ -38,8 +38,8 @@ it("should show a validation error", () => {
 });
 
 it("should call the install method when the validation success", async () => {
-  const validate = jest.fn(() => true);
-  const install = jest.fn(() => true);
+  const validate = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
   const wrapper = shallow(<AppRepoForm {...defaultProps} validate={validate} onSubmit={install} />);
   const button = wrapper.find("form");
   button.simulate("submit", { preventDefault: jest.fn() });
@@ -49,8 +49,8 @@ it("should call the install method when the validation success", async () => {
 });
 
 it("should not call the install method when the validation fails unless forced", async () => {
-  const validate = jest.fn(() => false);
-  const install = jest.fn(() => true);
+  const validate = jest.fn().mockReturnValue(false);
+  const install = jest.fn().mockReturnValue(true);
   const wrapper = shallow(<AppRepoForm {...defaultProps} validate={validate} onSubmit={install} />);
   let button = wrapper.find("form");
 
@@ -81,8 +81,8 @@ it("should render the docker registry credentials section", () => {
 });
 
 it("should call the install method with the selected docker credentials", async () => {
-  const validate = jest.fn(() => true);
-  const install = jest.fn(() => true);
+  const validate = jest.fn().mockReturnValue(true);
+  const install = jest.fn().mockReturnValue(true);
   const wrapper = shallow(<AppRepoForm {...defaultProps} validate={validate} onSubmit={install} />);
   wrapper.setState({ selectedImagePullSecrets: { "repo-1": true } });
 

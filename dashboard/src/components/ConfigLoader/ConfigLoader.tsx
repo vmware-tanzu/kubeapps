@@ -8,6 +8,7 @@ import LoadingWrapper, {
 interface IConfigLoaderProps extends ILoadingWrapperProps {
   getConfig: () => void;
   error?: Error;
+  children?: any;
 }
 
 class ConfigLoader extends React.Component<IConfigLoaderProps> {

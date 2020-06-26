@@ -9,7 +9,7 @@ import { AppRepoForm } from "./AppRepoForm";
 
 const defaultProps = {
   onSubmit: jest.fn(),
-  validate: jest.fn(() => true),
+  validate: jest.fn().mockReturnValue(true),
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
   validating: false,
@@ -27,7 +27,7 @@ it("should open a modal with the repository form", () => {
 });
 
 it("should install a repository with a custom auth header", async () => {
-  const install = jest.fn(() => true);
+  const install = jest.fn().mockReturnValue(true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
@@ -51,7 +51,7 @@ it("should install a repository with a custom auth header", async () => {
 });
 
 it("should install a repository with basic auth", async () => {
-  const install = jest.fn(() => true);
+  const install = jest.fn().mockReturnValue(true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
@@ -83,7 +83,7 @@ it("should install a repository with basic auth", async () => {
 });
 
 it("should install a repository with a bearer token", async () => {
-  const install = jest.fn(() => true);
+  const install = jest.fn().mockReturnValue(true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
@@ -114,7 +114,7 @@ it("should install a repository with a bearer token", async () => {
 });
 
 it("should install a repository with a podSpecTemplate", async () => {
-  const install = jest.fn(() => true);
+  const install = jest.fn().mockReturnValue(true);
   const wrapper = mount(<AppRepoAddButton {...defaultProps} onSubmit={install} />);
   Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });

@@ -57,7 +57,7 @@ it("render with the default namespace selected if no current selection", () => {
 });
 
 it("opens the modal to add a new namespace and creates it", async () => {
-  const createNamespace = jest.fn(() => true);
+  const createNamespace = jest.fn().mockReturnValue(true);
   const wrapper = mount(<NamespaceSelector {...defaultProps} createNamespace={createNamespace} />);
   Modal.setAppElement(document.createElement("div"));
   const select = wrapper.find(Select.Creatable);

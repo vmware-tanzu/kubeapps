@@ -18,7 +18,7 @@ it("calls delete function when clicking the button", done => {
   const namespace = "bar";
   const app = new hapi.release.Release({ name, namespace });
   const wrapper = shallow(
-    <AppControls app={app} deleteApp={jest.fn(() => true)} push={jest.fn()} />,
+    <AppControls app={app} deleteApp={jest.fn().mockReturnValue(true)} push={jest.fn()} />,
   );
   const button = wrapper
     .find(".AppControls")
@@ -51,7 +51,7 @@ it("calls delete function with additional purge", () => {
   const name = "foo";
   const namespace = "bar";
   const app = new hapi.release.Release({ name, namespace });
-  const deleteApp = jest.fn(() => false); // Return "false" to avoid redirect when mounting
+  const deleteApp = jest.fn().mockReturnValue(false); // Return "false" to avoid redirect when mounting
   // mount() is necessary to render the Modal
   const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} push={jest.fn()} />);
   Modal.setAppElement(document.createElement("div"));
@@ -90,7 +90,7 @@ context("when name or namespace do not exist", () => {
 context("when the application has been already deleted", () => {
   const props = {
     app: new hapi.release.Release({ name: "name", namespace: "my-ns", info: { deleted: {} } }),
-    deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
+    deleteApp: jest.fn().mockReturnValue(false), // Return "false" to avoid redirect when mounting
   };
 
   it("should show Purge instead of Delete in the button title", () => {
@@ -114,7 +114,7 @@ context("when the application has been already deleted", () => {
 
   it("should purge when clicking on delete", () => {
     // mount() is necessary to render the Modal
-    const deleteApp = jest.fn(() => false);
+    const deleteApp = jest.fn().mockReturnValue(false);
     const wrapper = mount(<AppControls {...props} deleteApp={deleteApp} push={jest.fn()} />);
     Modal.setAppElement(document.createElement("div"));
     wrapper.setState({ modalIsOpen: true, purge: false });
@@ -129,7 +129,7 @@ context("when the application has been already deleted", () => {
   });
 
   it("should not show the Upgrade button", () => {
-    const deleteApp = jest.fn(() => false);
+    const deleteApp = jest.fn().mockReturnValue(false);
     const wrapper = shallow(<AppControls {...props} deleteApp={deleteApp} push={jest.fn()} />);
     const buttons = wrapper.find("button");
     expect(buttons.length).toBe(1);
@@ -184,7 +184,7 @@ context("Rollback button", () => {
         version: 2,
         info: {},
       }),
-      deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
+      deleteApp: jest.fn().mockReturnValue(false), // Return "false" to avoid redirect when mounting
     };
     const wrapper = shallow(<AppControls {...props} push={jest.fn()} />);
     const button = wrapper.find(RollbackButtonContainer);
@@ -198,7 +198,7 @@ context("Rollback button", () => {
         version: 1,
         info: {},
       }),
-      deleteApp: jest.fn(() => false), // Return "false" to avoid redirect when mounting
+      deleteApp: jest.fn().mockReturnValue(false), // Return "false" to avoid redirect when mounting
     };
     const wrapper = shallow(<AppControls {...props} push={jest.fn()} />);
     const button = wrapper.find(RollbackButtonContainer);
