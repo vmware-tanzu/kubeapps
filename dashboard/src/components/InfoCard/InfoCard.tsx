@@ -40,7 +40,7 @@ const InfoCard: React.SFC<IServiceInstanceCardProps> = props => {
         {banner && <p className="ListItem__banner">{banner}</p>}
         {subIcon && (
           <div className="Card__subIcon bg-light text-r">
-            <img src={subIcon} />
+            <img src={subIcon} alt="icon" />
           </div>
         )}
       </Link>

@@ -126,7 +126,11 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
             <div>
               Operators integration is under heavy development and currently in alpha state. If you
               find an issue please report it{" "}
-              <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues">
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://github.com/kubeapps/kubeapps/issues"
+              >
                 here.
               </a>
             </div>

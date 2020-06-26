@@ -95,7 +95,11 @@ class OperatorView extends React.Component<IOperatorViewProps> {
                     <h2>Repository</h2>
                     <div className="margin-l-big">
                       <span>
-                        <a href={currentCSVDesc.annotations.repository} target="_blank">
+                        <a
+                          href={currentCSVDesc.annotations.repository}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           {currentCSVDesc.annotations.repository}
                         </a>
                       </span>

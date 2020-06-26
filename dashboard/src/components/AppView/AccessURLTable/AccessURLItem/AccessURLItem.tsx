@@ -22,7 +22,12 @@ const AccessURLItem: React.SFC<IAccessURLItem> = props => {
             } type-small margin-r-small padding-tiny padding-h-normal`}
           >
             {URLItem.isLink ? (
-              <a className="padding-tiny padding-h-normal" href={l} target="_blank">
+              <a
+                className="padding-tiny padding-h-normal"
+                href={l}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {l}
               </a>
             ) : (

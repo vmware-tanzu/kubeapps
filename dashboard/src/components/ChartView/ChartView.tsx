@@ -99,7 +99,7 @@ class ChartView extends React.Component<IChartViewProps> {
                       <div>
                         <ul className="remove-style padding-l-reset margin-b-reset">
                           <li>
-                            <a href={chartAttrs.home} target="_blank">
+                            <a href={chartAttrs.home} target="_blank" rel="noopener noreferrer">
                               {chartAttrs.home}
                             </a>
                           </li>
@@ -123,7 +123,7 @@ class ChartView extends React.Component<IChartViewProps> {
                         <ul className="remove-style padding-l-reset margin-b-reset">
                           {chartAttrs.sources.map((s, i) => (
                             <li key={i}>
-                              <a href={s} target="_blank">
+                              <a href={s} target="_blank" rel="noopener noreferrer">
                                 {s}
                               </a>
                             </li>

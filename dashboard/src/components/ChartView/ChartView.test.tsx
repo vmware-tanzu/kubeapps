@@ -137,7 +137,7 @@ it("renders the home link when set", () => {
   expect(wrapper.contains(<h2>Home</h2>)).toBe(true);
   expect(
     wrapper.contains(
-      <a href="https://example.com" target="_blank">
+      <a href="https://example.com" target="_blank" rel="noopener noreferrer">
         {"https://example.com"}
       </a>,
     ),
@@ -190,14 +190,14 @@ it("renders the sources links when set", () => {
   expect(wrapper.contains(<h2>Related</h2>)).toBe(true);
   expect(
     wrapper.contains(
-      <a href="https://example.com" target="_blank">
+      <a href="https://example.com" target="_blank" rel="noopener noreferrer">
         {"https://example.com"}
       </a>,
     ),
   ).toBe(true);
   expect(
     wrapper.contains(
-      <a href="https://example2.com" target="_blank">
+      <a href="https://example2.com" target="_blank" rel="noopener noreferrer">
         {"https://example2.com"}
       </a>,
     ),

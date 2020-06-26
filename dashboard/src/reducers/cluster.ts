@@ -127,6 +127,7 @@ const clusterReducer = (
           },
         };
       }
+      break;
     case getType(actions.config.receiveConfig):
       // Initialize the additional clusters when receiving the config.
       const clusters = {

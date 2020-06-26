@@ -47,9 +47,9 @@ class ChartVersionsList extends React.Component<IChartVersionsListProps, IChartV
       <div className="ChartVersionsList">
         <ul className="remove-style padding-l-reset margin-b-reset">{items}</ul>
         {!this.state.showAll && this.props.versions.length > 5 && (
-          <a className="type-small" onClick={this.handleShowAll}>
+          <button type="button" className="button type-small" onClick={this.handleShowAll}>
             Show all...
-          </a>
+          </button>
         )}
       </div>
     );
