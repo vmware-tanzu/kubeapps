@@ -27,7 +27,7 @@ export interface IAppUpgradeProps {
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[] | undefined>;
+  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
   getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
   getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
