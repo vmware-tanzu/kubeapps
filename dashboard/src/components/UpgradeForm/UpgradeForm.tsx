@@ -33,7 +33,7 @@ export interface IUpgradeFormProps {
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
   goBack: () => RouterAction;
-  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[] | undefined>;
+  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
   getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
 }
 

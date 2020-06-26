@@ -90,7 +90,7 @@ export function fetchCharts(
 export function fetchChartVersions(
   namespace: string,
   id: string,
-): ThunkAction<Promise<IChartVersion[] | undefined>, IStoreState, null, ChartsAction> {
+): ThunkAction<Promise<IChartVersion[]>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     dispatch(requestCharts());
     try {
@@ -101,7 +101,7 @@ export function fetchChartVersions(
       return versions;
     } catch (e) {
       dispatchError(dispatch, e);
-      return;
+      return [];
     }
   };
 }
@@ -166,7 +166,7 @@ export function fetchChartVersionsAndSelectVersion(
 ): ThunkAction<Promise<void>, IStoreState, null, ChartsAction> {
   return async dispatch => {
     const versions = (await dispatch(fetchChartVersions(namespace, id))) as IChartVersion[];
-    if (versions) {
+    if (versions.length > 0) {
       let cv: IChartVersion = versions[0];
       if (version) {
         const found = versions.find(v => v.attributes.version === version);

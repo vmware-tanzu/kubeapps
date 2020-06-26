@@ -11,7 +11,7 @@ export default class Chart {
     return data.data;
   }
 
-  public static async fetchChartVersions(namespace: string, id: string) {
+  public static async fetchChartVersions(namespace: string, id: string): Promise<IChartVersion[]> {
     const { data } = await axiosWithAuth.get<{ data: IChartVersion[] }>(
       URL.api.charts.listVersions(namespace, id),
     );

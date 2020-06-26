@@ -33,7 +33,7 @@ export interface IDeploymentFormProps {
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   push: (location: string) => RouterAction;
-  fetchChartVersions: (namespace: string, id: string) => void;
+  fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
   getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   namespace: string;
 }

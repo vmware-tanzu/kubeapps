@@ -13,7 +13,7 @@ describe("Config", () => {
 
     defaultJSON = require("../../public/config.json");
 
-    moxios.stubRequest("config.json", { status: 200, response: defaultJSON });
+    moxios.stubRequest("config.json", { status: 200, response: { ...defaultJSON } });
   });
 
   afterEach(() => {
@@ -31,7 +31,13 @@ describe("Config", () => {
   });
 
   it("does not returns the overriden namespace if NODE_ENV=production", async () => {
-    process.env.REACT_APP_KUBEAPPS_NS = "magic-playground";
+    const prodEnv = {
+      ...initialEnv,
+      NODE_ENV: "production",
+      REACT_APP_KUBEAPPS_NS: "magic-playground",
+    };
+    process.env = prodEnv;
+
     expect(await Config.getConfig()).toEqual(defaultJSON);
   });
 });
