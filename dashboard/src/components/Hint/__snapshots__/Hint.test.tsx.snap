@@ -2,7 +2,7 @@
 
 exports[`should render a Hint with additional props and children 1`] = `
 <Fragment>
-  <a
+  <span
     data-for="foobar"
     data-tip={true}
   >
@@ -12,7 +12,7 @@ exports[`should render a Hint with additional props and children 1`] = `
       fill="#5F6369"
       size="24"
     />
-  </a>
+  </span>
   <ReactTooltip
     className="extraClass"
     clickable={false}

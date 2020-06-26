@@ -304,6 +304,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
                        
                       <a
                         href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+                        rel="noopener noreferrer"
                         target="_blank"
                       >
                         access control in Kubeapps
@@ -444,6 +445,7 @@ exports[`when all the brokers are loaded shows a warning to install no service b
                    
                   <a
                     href="https://github.com/osbkit/brokerlist"
+                    rel="noopener noreferrer"
                     target="_blank"
                   >
                     Service Broker

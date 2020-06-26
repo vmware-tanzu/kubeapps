@@ -17,7 +17,7 @@ it("renders the secret datum (hidden by default)", () => {
 it("displays the secret datum value when clicking on the icon", () => {
   const wrapper = shallow(<SecretItemDatum {...testProps} />);
   expect(wrapper.text()).toContain("foo:3 bytes");
-  const icon = wrapper.find("a");
+  const icon = wrapper.find("button");
   expect(icon).toExist();
   icon.simulate("click");
   expect(wrapper.state()).toMatchObject({ hidden: false });

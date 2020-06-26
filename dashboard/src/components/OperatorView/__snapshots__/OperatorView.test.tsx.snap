@@ -65,6 +65,7 @@ exports[`renders a full OperatorView 1`] = `
                 <span>
                   <a
                     href="github.com/kubeapps/kubeapps"
+                    rel="noopener noreferrer"
                     target="_blank"
                   >
                     github.com/kubeapps/kubeapps

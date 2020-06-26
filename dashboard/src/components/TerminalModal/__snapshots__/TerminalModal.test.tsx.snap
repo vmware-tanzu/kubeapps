@@ -38,12 +38,10 @@ exports[`renders the message details modal 1`] = `
       <div
         className="Terminal__Top__Buttons"
       >
-        <a>
-          <span
-            className="Terminal__Top__Button Terminal__Top__Button--red"
-            onClick={[MockFunction]}
-          />
-        </a>
+        <span
+          className="Terminal__Top__Button Terminal__Top__Button--red"
+          onClick={[MockFunction]}
+        />
       </div>
       <div
         className="Terminal__Top__Title"

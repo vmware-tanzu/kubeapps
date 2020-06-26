@@ -56,7 +56,7 @@ it("renders the form to create a registry secret", () => {
 
   expect(wrapper.text()).not.toContain("Secret Name");
 
-  const link = wrapper.find("a").filterWhere(a => a.text().includes("Add new"));
+  const link = wrapper.find("button").filterWhere(b => b.text().includes("Add new"));
   link.simulate("click");
 
   expect(wrapper.text()).toContain("Secret Name");

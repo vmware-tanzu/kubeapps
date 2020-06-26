@@ -12,6 +12,7 @@ exports[`renders the header 1`] = `
         className="ChartIcon"
       >
         <img
+          alt="icon"
           className="ChartIcon__img"
           src="/path/to/icon.png"
         />

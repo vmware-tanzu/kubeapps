@@ -70,7 +70,7 @@ it("renders information about the binding with a secret", () => {
 
 it("should show the secret content when clicking the button", () => {
   const wrapper = shallow(<BindingDetails {...bindingWithSecret} />);
-  const button = wrapper.find("a");
+  const button = wrapper.find("button");
   expect(button).toExist();
 
   expect((wrapper.state() as any).modalIsOpen).toBe(false);
