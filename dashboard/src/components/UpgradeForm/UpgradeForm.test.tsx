@@ -16,6 +16,7 @@ const defaultProps = {
   chartName: "my-chart",
   chartsIsFetching: false,
   namespace: "default",
+  cluster: "default",
   releaseName: "my-release",
   repo: "my-repo",
   repoNamespace: "kubeapps",

@@ -19,6 +19,7 @@ import "react-tabs/style/react-tabs.css";
 export interface IDeploymentFormProps {
   kubeappsNamespace: string;
   chartNamespace: string;
+  cluster: string;
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
@@ -132,6 +133,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             <DeploymentFormBody
               deploymentEvent="install"
               chartNamespace={this.props.chartNamespace}
+              cluster={this.props.cluster}
               chartID={this.props.chartID}
               chartVersion={this.props.chartVersion}
               chartsIsFetching={this.props.chartsIsFetching}

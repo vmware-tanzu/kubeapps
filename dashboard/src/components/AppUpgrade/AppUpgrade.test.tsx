@@ -32,6 +32,7 @@ const defaultProps = {
   getDeployedChartVersion: jest.fn(),
   kubeappsNamespace: "kubeapps",
   namespace: "default",
+  cluster: "default",
   push: jest.fn(),
   goBack: jest.fn(),
   releaseName: "foo",

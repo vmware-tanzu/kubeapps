@@ -29,6 +29,7 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
   namespace: "default",
+  cluster: "default",
   appValues: "foo: bar",
   valuesModified: false,
   setValues: jest.fn(),
@@ -127,7 +128,7 @@ it("changes the URL for the new version", () => {
   });
   wrapper.find("select").simulate("change", { currentTarget: { value: "2.0.0" } });
   expect(push).toHaveBeenCalledWith(
-    url.app.apps.new(chartVersion, defaultProps.namespace, "2.0.0"),
+    url.app.apps.new(chartVersion, defaultProps.cluster, defaultProps.namespace, "2.0.0"),
   );
 });
 

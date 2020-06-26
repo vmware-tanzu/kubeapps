@@ -14,6 +14,7 @@ export interface IAppUpgradeProps {
   chartsIsFetching: boolean;
   appsError: Error | undefined;
   namespace: string;
+  cluster: string;
   releaseName: string;
   repoName?: string;
   repoNamespace?: string;
@@ -71,6 +72,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
     const {
       app,
       namespace,
+      cluster,
       appsError,
       releaseName,
       appsIsFetching,
@@ -111,6 +113,7 @@ class AppUpgrade extends React.Component<IAppUpgradeProps> {
             repo={repo}
             repoNamespace={repoNS}
             namespace={namespace}
+            cluster={cluster}
             releaseName={releaseName}
             selected={selected}
             deployed={deployed}

@@ -12,6 +12,7 @@ import { IChartVersion, IStoreState } from "../../shared/types";
 interface IRouteProps {
   match: {
     params: {
+      cluster: string;
       namespace: string;
       releaseName: string;
     };
@@ -31,6 +32,7 @@ function mapStateToProps(
     chartsError: charts.selected.error,
     kubeappsNamespace: config.namespace,
     namespace: params.namespace,
+    cluster: params.cluster,
     releaseName: params.releaseName,
     repo: repos.repo,
     repoError: repos.errors.fetch,

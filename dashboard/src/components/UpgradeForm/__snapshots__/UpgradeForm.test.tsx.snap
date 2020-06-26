@@ -31,6 +31,7 @@ exports[`renders the full UpgradeForm 1`] = `
         chartNamespace="kubeapps"
         chartVersion="1.0.0"
         chartsIsFetching={false}
+        cluster="default"
         deploymentEvent="upgrade"
         getChartVersion={[MockFunction]}
         goBack={[MockFunction]}
