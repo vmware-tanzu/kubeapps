@@ -76,7 +76,9 @@ test("Creates a private registry", async () => {
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the kubernetes API to get info of the
   // deployment
-  const URL = getUrl("/api/clusters/default/apis/apps/v1/namespaces/default/deployments");
+  const URL = getUrl(
+    "/api/clusters/default/apis/apps/v1/namespaces/default/deployments"
+  );
   const response = await axios.get(URL, {
     headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
   });
@@ -91,6 +93,10 @@ test("Creates a private registry", async () => {
   await expect(page).toClick(".upgrade-button");
 
   await expect(page).toSelect("#chartVersion", "7.3.16");
+
+  await expect(page).toClick("li", { text: "Values (YAML)" });
+
+  await expect(page).toMatch("tag: 2.4.43-debian-10-r54");
 
   await expect(page).toClick(".button-primary");
 
