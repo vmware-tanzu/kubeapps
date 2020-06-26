@@ -1,42 +1,38 @@
+import { push } from "connected-react-router";
 import * as React from "react";
-import { Redirect } from "react-router";
-import { IChartVersion } from "../../shared/types";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { IChartVersion, IStoreState } from "../../shared/types";
 import { app } from "../../shared/url";
 
-interface IChartDeployButtonProps {
+export interface IChartDeployButtonProps {
   version: IChartVersion;
   namespace: string;
 }
 
-interface IChartDeployButtonState {
-  clicked: boolean;
-}
+function ChartDeployButton(props: IChartDeployButtonProps) {
+  const [clicked, setClicked] = useState(false);
+  const setClickedTrue = () => setClicked(true);
 
-class ChartDeployButton extends React.Component<IChartDeployButtonProps, IChartDeployButtonState> {
-  public state: IChartDeployButtonState = {
-    clicked: false,
-  };
+  const currentCluster = useSelector((state: IStoreState) => state.clusters.currentCluster);
+  const dispatch = useDispatch();
 
-  public render() {
-    const { version } = this.props;
-    const { namespace } = this.props;
-    const versionStr = version.attributes.version;
-
-    return (
-      <div className="ChartDeployButton text-r">
-        <button className="button button-primary button-accent" onClick={this.handleClick}>
-          Deploy
-        </button>
-        {this.state.clicked && (
-          <Redirect push={true} to={app.apps.new(version, namespace, versionStr)} />
-        )}
-      </div>
+  if (clicked) {
+    const newAppURL = app.apps.new(
+      props.version,
+      currentCluster,
+      props.namespace,
+      props.version.attributes.version,
     );
+    dispatch(push(newAppURL));
   }
-
-  private handleClick = () => {
-    this.setState({ clicked: true });
-  };
+  return (
+    <div className="ChartDeployButton text-r">
+      <button className="button button-primary button-accent" onClick={setClickedTrue}>
+        Deploy
+      </button>
+    </div>
+  );
 }
 
 export default ChartDeployButton;

@@ -4,7 +4,8 @@ import { IChartVersion, IRepo } from "./types";
 
 export const app = {
   apps: {
-    new: (cv: IChartVersion, namespace: string, version: string, cluster: string = "default") => {
+    // TODO: Switch order so cluster/namespace always first.
+    new: (cv: IChartVersion, cluster: string, namespace: string, version: string) => {
       const repoNamespace = cv.relationships.chart.data.repo.namespace;
       const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
       return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
