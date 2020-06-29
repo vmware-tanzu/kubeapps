@@ -16,6 +16,7 @@ import OperatorInstance, { IOperatorInstanceProps } from "./OperatorInstance";
 const defaultProps: IOperatorInstanceProps = {
   isFetching: false,
   namespace: "default",
+  cluster: "default",
   csvName: "foo",
   crdName: "foo.kubeapps.com",
   instanceName: "foo-cluster",
