@@ -37,7 +37,7 @@ test("Creates a private registry", async () => {
   // Open form to create a new secret
   const randomNumber = Math.floor(Math.random() * Math.floor(100));
   const secret = "my-repo-secret" + randomNumber;
-  await expect(page).toClick("a", { text: "Add new credentials" });
+  await expect(page).toClick("button", { text: "Add new credentials" });
   await page.type("#kubeapps-docker-cred-secret-name", secret);
   await page.type(
     "#kubeapps-docker-cred-server",
@@ -76,7 +76,9 @@ test("Creates a private registry", async () => {
   // Now that the deployment has been created, we check that the imagePullSecret
   // has been added. For doing so, we query the kubernetes API to get info of the
   // deployment
-  const URL = getUrl("/api/clusters/default/apis/apps/v1/namespaces/default/deployments");
+  const URL = getUrl(
+    "/api/clusters/default/apis/apps/v1/namespaces/default/deployments"
+  );
   const response = await axios.get(URL, {
     headers: { Authorization: `Bearer ${process.env.ADMIN_TOKEN}` },
   });
