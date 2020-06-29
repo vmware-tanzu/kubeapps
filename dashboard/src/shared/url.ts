@@ -11,7 +11,7 @@ export const app = {
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (releaseName: string, namespace: string, cluster: string = "default") =>
-      `${app.apps.list(namespace, cluster)}/${releaseName}`,
+      `${app.apps.list(cluster, namespace)}/${releaseName}`,
     upgrade: (releaseName: string, namespace: string, cluster: string = "default") =>
       `${app.apps.get(releaseName, namespace, cluster)}/upgrade`,
   },
