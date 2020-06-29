@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { IClusterState } from "../../reducers/cluster";
+import { IClustersState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import Header from "./Header";
 
@@ -8,10 +8,15 @@ const defaultProps = {
   authenticated: true,
   fetchNamespaces: jest.fn(),
   logout: jest.fn(),
-  cluster: {
-    currentNamespace: "default",
-    namespaces: ["default", "other"],
-  } as IClusterState,
+  clusters: {
+    currentCluster: "default",
+    clusters: {
+      default: {
+        currentNamespace: "default",
+        namespaces: ["default", "other"],
+      },
+    },
+  } as IClustersState,
   defaultNamespace: "kubeapps-user",
   pathname: "",
   push: jest.fn(),
@@ -25,7 +30,7 @@ it("renders the header links and titles", () => {
   const menubar = wrapper.find(".header__nav__menu").first();
   const items = menubar.children().map(p => p.props().children.props);
   const expectedItems = [
-    { children: "Applications", to: app.apps.list("default") },
+    { children: "Applications", to: app.apps.list("default", "default") },
     { children: "Catalog", to: app.catalog("default") },
     { children: "Service Instances (alpha)", to: app.servicesInstances("default") },
   ];
@@ -90,7 +95,7 @@ it("renders the namespace switcher", () => {
   expect(namespaceSelector.props()).toEqual(
     expect.objectContaining({
       defaultNamespace: defaultProps.defaultNamespace,
-      cluster: defaultProps.cluster,
+      cluster: defaultProps.clusters.clusters.default,
     }),
   );
 });

@@ -10,7 +10,8 @@ import LoadingWrapper from "../../LoadingWrapper";
 import "./AppControls.css";
 import UpgradeButton from "./UpgradeButton";
 
-interface IAppControlsProps {
+export interface IAppControlsProps {
+  cluster: string;
   app: IRelease;
   deleteApp: (purge: boolean) => Promise<boolean>;
   push: (location: string) => RouterAction;
@@ -36,7 +37,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
   };
 
   public render() {
-    const { app, push } = this.props;
+    const { app, cluster, push } = this.props;
     const { name, namespace } = app;
     const deleted = app.info && app.info.deleted;
     if (!name || !namespace) {
@@ -84,7 +85,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
             )
           }
         />
-        {this.state.redirectToAppList && <Redirect to={url.app.apps.list(namespace)} />}
+        {this.state.redirectToAppList && <Redirect to={url.app.apps.list(cluster, namespace)} />}
       </div>
     );
   }

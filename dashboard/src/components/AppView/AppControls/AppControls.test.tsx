@@ -10,16 +10,20 @@ import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
 
 import { IRelease } from "shared/types";
-import AppControls from "./AppControls";
+import AppControls, { IAppControlsProps } from "./AppControls";
 import UpgradeButton from "./UpgradeButton";
 
+const namespace = "bar";
+const defaultProps = {
+  cluster: "default",
+  app: new hapi.release.Release({ name: "foo", namespace }),
+  deleteApp: jest.fn(),
+  push: jest.fn(),
+} as IAppControlsProps;
+
 it("calls delete function when clicking the button", done => {
-  const name = "foo";
-  const namespace = "bar";
-  const app = new hapi.release.Release({ name, namespace });
-  const wrapper = shallow(
-    <AppControls app={app} deleteApp={jest.fn().mockReturnValue(true)} push={jest.fn()} />,
-  );
+  const props = { ...defaultProps, deleteApp: jest.fn().mockReturnValue(true) };
+  const wrapper = shallow(<AppControls {...props} />);
   const button = wrapper
     .find(".AppControls")
     .children()
@@ -41,19 +45,18 @@ it("calls delete function when clicking the button", done => {
     wrapper.update();
     const redirect = wrapper.find(Redirect);
     expect(redirect.props()).toMatchObject({
-      to: url.app.apps.list(namespace),
+      to: url.app.apps.list(defaultProps.cluster, namespace),
     } as any);
     done();
   }, 1);
 });
 
 it("calls delete function with additional purge", () => {
-  const name = "foo";
-  const namespace = "bar";
-  const app = new hapi.release.Release({ name, namespace });
-  const deleteApp = jest.fn().mockReturnValue(false); // Return "false" to avoid redirect when mounting
+  // Return "false" to avoid redirect when mounting
+  const deleteApp = jest.fn().mockReturnValue(false);
+  const props = { ...defaultProps, deleteApp };
   // mount() is necessary to render the Modal
-  const wrapper = mount(<AppControls app={app} deleteApp={deleteApp} push={jest.fn()} />);
+  const wrapper = mount(<AppControls {...props} />);
   Modal.setAppElement(document.createElement("div"));
   wrapper.setState({ modalIsOpen: true });
   wrapper.update();

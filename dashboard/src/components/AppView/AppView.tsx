@@ -18,6 +18,7 @@ import ChartInfo from "./ChartInfo";
 import ResourceTable from "./ResourceTable";
 
 export interface IAppViewProps {
+  cluster: string;
   namespace: string;
   releaseName: string;
   app?: IRelease;
@@ -129,7 +130,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   public appInfo(app: IRelease, info: hapi.release.IInfo) {
-    const { push } = this.props;
+    const { cluster, push } = this.props;
     const {
       serviceRefs,
       ingressRefs,
@@ -167,7 +168,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
                     />
                   </div>
                   <div className="col-8 text-r">
-                    <AppControls app={app} deleteApp={this.deleteApp} push={push} />
+                    <AppControls
+                      cluster={cluster}
+                      app={app}
+                      deleteApp={this.deleteApp}
+                      push={push}
+                    />
                   </div>
                 </div>
                 <AccessURLTable serviceRefs={serviceRefs} ingressRefs={ingressRefs} />

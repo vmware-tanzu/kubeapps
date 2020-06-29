@@ -10,6 +10,7 @@ import { IResource, IStoreState } from "../../shared/types";
 interface IRouteProps {
   match: {
     params: {
+      cluster: string;
       namespace: string;
       releaseName: string;
     };
@@ -22,6 +23,7 @@ function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params 
     deleteError: apps.deleteError,
     resources: kube.items,
     error: apps.error,
+    cluster: params.cluster,
     namespace: params.namespace,
     releaseName: params.releaseName,
   };

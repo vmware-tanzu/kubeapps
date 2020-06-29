@@ -17,7 +17,7 @@ function mapStateToProps({
 }: IStoreState) {
   return {
     authenticated,
-    cluster: clusters.clusters.default,
+    clusters,
     defaultNamespace,
     pathname,
     featureFlags,
