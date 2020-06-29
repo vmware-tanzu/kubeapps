@@ -9,7 +9,6 @@ interface IConfigLoaderProps extends ILoadingWrapperProps {
   children: JSX.Element;
   getConfig: () => void;
   error?: Error;
-  children?: any;
 }
 
 class ConfigLoader extends React.Component<IConfigLoaderProps> {
