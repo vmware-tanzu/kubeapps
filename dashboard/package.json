@@ -50,7 +50,7 @@
     "react-markdown": "^4.2.2",
     "react-minimal-pie-chart": "^6.0.1",
     "react-modal": "^3.1.11",
-    "react-redux": "^7.2.0",
+    "react-redux": "^7.1.9",
     "react-router": "^5.1.2",
     "react-router-dom": "^5.1.2",
     "react-router-hash-link": "^1.2.2",
@@ -132,7 +132,7 @@
     "tslint-config-prettier": "^1.6.0",
     "tslint-react": "^3.4.0",
     "ts-jest": "^22.0.1",
-    "typescript": "^3.7.2"
+    "typescript": "^3.9.5"
   },
   "jest": {
     "collectCoverageFrom": [
