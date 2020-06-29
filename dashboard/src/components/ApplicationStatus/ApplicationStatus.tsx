@@ -113,7 +113,7 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
     }
     return (
       <div className="ApplicationStatusPieChart">
-        <a data-tip={true} data-for="app-status">
+        <div data-tip={true} data-for="app-status">
           <h5 className="ApplicationStatusPieChart__title">{ready ? "Ready" : "Not Ready"}</h5>
           <PieChart
             data={[{ value: 1, color: `${ready ? "#1598CB" : "#F58220"}` }]}
@@ -131,7 +131,7 @@ class ApplicationStatus extends React.Component<IApplicationStatusProps, IApplic
             <p className="ApplicationStatusPieChart__label__number">{readyPods}</p>
             <p className="ApplicationStatusPieChart__label__text">Pod{readyPods > 1 ? "s" : ""}</p>
           </div>
-        </a>
+        </div>
         <ReactTooltip id="app-status" className="extraClass" effect="solid" place="right">
           {this.renderWorkloadTable()}
         </ReactTooltip>

@@ -23,6 +23,7 @@ const Footer: React.SFC<IFooterProps> = props => {
                 href="https://github.com/kubeapps/kubeapps/graphs/contributors"
                 className="type-color-white"
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 contributors
               </a>
@@ -68,6 +69,7 @@ const Footer: React.SFC<IFooterProps> = props => {
                 href={`https://github.com/kubeapps/kubeapps/releases/tag/${props.appVersion}`}
                 className="type-color-white"
                 target="_blank"
+                rel="noopener noreferrer"
               >
                 {props.appVersion}
               </a>

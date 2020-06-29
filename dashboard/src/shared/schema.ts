@@ -24,7 +24,7 @@ export function retrieveBasicFormParams(
   let params: IBasicFormParam[] = [];
   if (schema && schema.properties) {
     const properties = schema.properties!;
-    Object.keys(properties).map(propertyKey => {
+    Object.keys(properties).forEach(propertyKey => {
       // The param path is its parent path + the object key
       const itemPath = `${parentPath || ""}${propertyKey}`;
       const { type, form } = properties[propertyKey];

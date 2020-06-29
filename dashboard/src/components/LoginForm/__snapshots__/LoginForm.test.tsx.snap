@@ -28,6 +28,7 @@ exports[`oauth login form renders a login button link 1`] = `
            
           <a
             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md"
+            rel="noopener noreferrer"
             target="_blank"
           >
             Click here
@@ -82,6 +83,7 @@ exports[`token login form displays an error if the authentication error is passe
            
           <a
             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+            rel="noopener noreferrer"
             target="_blank"
           >
             Click here
@@ -155,6 +157,7 @@ exports[`token login form renders a token login form 1`] = `
            
           <a
             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+            rel="noopener noreferrer"
             target="_blank"
           >
             Click here

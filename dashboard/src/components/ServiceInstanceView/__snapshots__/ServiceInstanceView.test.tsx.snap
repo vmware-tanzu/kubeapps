@@ -527,6 +527,7 @@ exports[`when all the components are loaded when an instance is available should
                        
                       <a
                         href="https://github.com/kubeapps/kubeapps/issues"
+                        rel="noopener noreferrer"
                         target="_blank"
                       >
                          
@@ -615,6 +616,7 @@ exports[`when all the components are loaded when an instance is available should
                               className="Card__icon bg-light text-c"
                             >
                               <img
+                                alt="icon"
                                 src="img.png"
                               />
                             </div>
@@ -1165,11 +1167,13 @@ exports[`when all the components are loaded when an instance is available should
                                   >
                                     <dt>
                                        
-                                      <a
+                                      <button
+                                        className="button"
                                         onClick={[Function]}
+                                        type="button"
                                       >
                                         (show)
-                                      </a>
+                                      </button>
                                     </dt>
                                     <TerminalModal
                                       closeModal={[Function]}
@@ -1449,6 +1453,7 @@ exports[`when all the components are loaded when an instance is available should
                  
                 <a
                   href="https://github.com/kubeapps/kubeapps/issues"
+                  rel="noopener noreferrer"
                   target="_blank"
                 >
                    

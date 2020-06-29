@@ -45,6 +45,7 @@ exports[`when all the components are loaded shows a card list with the different
        
       <a
         href="https://github.com/kubeapps/kubeapps/issues"
+        rel="noopener noreferrer"
         target="_blank"
       >
          
@@ -119,6 +120,7 @@ exports[`when all the components are loaded shows a forbiden error if it exists 
        
       <a
         href="https://github.com/kubeapps/kubeapps/issues"
+        rel="noopener noreferrer"
         target="_blank"
       >
          
@@ -215,6 +217,7 @@ exports[`when all the components are loaded shows a warning to install no servic
        
       <a
         href="https://github.com/kubeapps/kubeapps/issues"
+        rel="noopener noreferrer"
         target="_blank"
       >
          
@@ -278,6 +281,7 @@ exports[`when all the components are loaded shows a warning to install the Servi
        
       <a
         href="https://github.com/kubeapps/kubeapps/issues"
+        rel="noopener noreferrer"
         target="_blank"
       >
          
@@ -341,6 +345,7 @@ exports[`when all the components are loaded shows information of how to deploy a
        
       <a
         href="https://github.com/kubeapps/kubeapps/issues"
+        rel="noopener noreferrer"
         target="_blank"
       >
          
@@ -427,6 +432,7 @@ exports[`while fetching components loading spinner matches the snapshot 1`] = `
        
       <a
         href="https://github.com/kubeapps/kubeapps/issues"
+        rel="noopener noreferrer"
         target="_blank"
       >
          
@@ -490,6 +496,7 @@ exports[`while fetching components matches the snapshot 1`] = `
        
       <a
         href="https://github.com/kubeapps/kubeapps/issues"
+        rel="noopener noreferrer"
         target="_blank"
       >
          

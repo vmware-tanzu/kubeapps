@@ -26,6 +26,7 @@ exports[`should show a warning message if there are no classes available 1`] = `
            
           <a
             href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            rel="noopener noreferrer"
             target="_blank"
           >
             here
@@ -136,6 +137,7 @@ exports[`while fetching classes loading spinner matches the snapshot 1`] = `
            
           <a
             href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            rel="noopener noreferrer"
             target="_blank"
           >
             here
@@ -174,6 +176,7 @@ exports[`while fetching classes matches the snapshot 1`] = `
            
           <a
             href="https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
+            rel="noopener noreferrer"
             target="_blank"
           >
             here

@@ -9,11 +9,13 @@ exports[`renders information about the binding with a secret 1`] = `
   >
     bar
      
-    <a
+    <button
+      className="button"
       onClick={[Function]}
+      type="button"
     >
       (show)
-    </a>
+    </button>
   </dt>
   <TerminalModal
     closeModal={[Function]}

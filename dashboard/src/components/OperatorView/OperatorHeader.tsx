@@ -37,7 +37,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
         <div className="ChartView__heading margin-normal row">
           <div className="col-1 ChartHeader__icon">
             <div className="ChartIcon">
-              <img className="ChartIcon__img" src={icon} />
+              <img className="ChartIcon__img" src={icon} alt="icon" />
             </div>
           </div>
           <div className="col-9">

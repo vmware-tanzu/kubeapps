@@ -38,6 +38,7 @@ exports[`renders an error message for the action 1`] = `
        
       <a
         href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+        rel="noopener noreferrer"
         target="_blank"
       >
         access control in Kubeapps

@@ -288,6 +288,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                   <a
                     href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
                     target="_blank"
+                    rel="noopener noreferrer"
                   >
                     here
                   </a>
@@ -310,9 +311,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                   <textarea
                     className="Code"
                     rows={4}
-                    placeholder={
-                      "-----BEGIN CERTIFICATE-----\n" + "...\n" + "-----END CERTIFICATE-----"
-                    }
+                    placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
                     value={this.state.customCA}
                     onChange={this.handleCustomCAChange}
                   />
@@ -326,6 +325,7 @@ export class AppRepoForm extends React.Component<IAppRepoFormProps, IAppRepoForm
                   It's possible to modify the default sync job. More info{" "}
                   <a
                     target="_blank"
+                    rel="noopener noreferrer"
                     href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
                   >
                     here

@@ -23,7 +23,11 @@ export const genericMessage = (
         <code>helm status &lt;kubeapps_release_name&gt;</code>.
       </li>
       <li>
-        <a href="https://github.com/kubeapps/kubeapps/issues/new" target="_blank">
+        <a
+          href="https://github.com/kubeapps/kubeapps/issues/new"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Open an issue on GitHub
         </a>{" "}
         if you think you've encountered a bug.

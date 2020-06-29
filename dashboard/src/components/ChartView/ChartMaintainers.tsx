@@ -13,7 +13,7 @@ class ChartMaintainers extends React.Component<IChartMaintainersProps> {
       let link: string | JSX.Element = v.name;
       if (this.props.githubIDAsNames) {
         link = (
-          <a href={`https://github.com/${v.name}`} target="_blank">
+          <a href={`https://github.com/${v.name}`} target="_blank" rel="noopener noreferrer">
             {v.name}
           </a>
         );

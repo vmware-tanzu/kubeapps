@@ -119,9 +119,9 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                     onMouseLeave={this.closeSubmenu}
                     onClick={this.toggleSubmenu}
                   >
-                    <a>
+                    <div>
                       <Settings size={16} className="icon margin-r-tiny" /> Configuration
-                    </a>
+                    </div>
                     <ul role="menu" aria-label="Products" className={submenu}>
                       <li role="none">
                         <NavLink to={reposPath}>App Repositories</NavLink>

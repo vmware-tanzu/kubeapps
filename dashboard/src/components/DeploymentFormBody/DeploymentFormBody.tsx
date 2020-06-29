@@ -185,7 +185,11 @@ class DeploymentFormBody extends React.Component<
                     This form has been automatically generated based on the chart schema.
                     <br />
                     This feature is currently in a beta state. If you find an issue please report it{" "}
-                    <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues/new">
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href="https://github.com/kubeapps/kubeapps/issues/new"
+                    >
                       here.
                     </a>
                   </span>

@@ -19,9 +19,9 @@ export class Hint extends React.Component<IHintProps> {
         .substring(7);
     return (
       <React.Fragment>
-        <a data-tip={true} data-for={id}>
+        <span data-tip={true} data-for={id}>
           <HelpCircle className="icon" color="white" fill="#5F6369" />
-        </a>
+        </span>
         <ReactTooltip
           id={id}
           className="extraClass"

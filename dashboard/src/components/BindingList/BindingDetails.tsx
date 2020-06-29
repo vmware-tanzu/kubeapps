@@ -35,7 +35,10 @@ class BindingDetails extends React.Component<IServiceBindingWithSecret, IBinding
     return (
       <dl className="BindingDetails container margin-normal">
         <dt key={secretName}>
-          {secretName} <a onClick={this.openModal}>(show)</a>
+          {secretName}{" "}
+          <button type="button" className="button" onClick={this.openModal}>
+            (show)
+          </button>
         </dt>
         <TerminalModal
           modalIsOpen={this.state.modalIsOpen}

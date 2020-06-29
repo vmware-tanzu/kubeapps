@@ -80,6 +80,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
           <a
             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/using-an-OIDC-provider.md"
             target="_blank"
+            rel="noopener noreferrer"
           >
             Click here
           </a>{" "}
@@ -100,6 +101,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
           <a
             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
             target="_blank"
+            rel="noopener noreferrer"
           >
             Click here
           </a>{" "}

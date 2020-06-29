@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Minus, Plus } from "react-feather";
 
 import { ISecret } from "../../../shared/types";
 
@@ -43,7 +42,6 @@ export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, IA
   public render() {
     const { imagePullSecrets, togglePullSecret, selectedImagePullSecrets } = this.props;
     const { showSecretSubForm } = this.state;
-    const iconStyle = { bottom: "-0.5em", position: "relative", width: "1em" };
     return (
       <div className="margin-l-big margin-t-normal">
         {imagePullSecrets.length > 0 ? (
@@ -146,13 +144,17 @@ export class AppRepoAddDockerCreds extends React.Component<IAppRepoFormProps, IA
               >
                 {this.state.creating ? "Creating..." : "Submit"}
               </button>
+              <button onClick={this.toggleCredSubForm} type="button" className="button">
+                Cancel
+              </button>
             </div>
           </div>
         )}
-        <a onClick={this.toggleCredSubForm}>
-          {showSecretSubForm ? <Minus style={iconStyle} /> : <Plus style={iconStyle} />} Add new
-          credentials
-        </a>
+        {!showSecretSubForm && (
+          <button onClick={this.toggleCredSubForm} className="button margin-t-normal" type="button">
+            Add new credentials
+          </button>
+        )}
       </div>
     );
   }
