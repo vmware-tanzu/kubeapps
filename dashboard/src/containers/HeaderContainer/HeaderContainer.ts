@@ -26,6 +26,7 @@ function mapStateToProps({
     defaultNamespace,
     pathname,
     featureFlags,
+    UI: featureFlags.ui,
   };
 }
 
