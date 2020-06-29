@@ -64,13 +64,13 @@ it("dispatches a URL change with the correct URL when the button is clicked", ()
       clustersState: { currentCluster: "default" },
       namespace: "kubeapps",
       version: "1.2.3",
-      url: url.app.apps.new(testChartVersion, "default", "kubeapps", "1.2.3"),
+      url: url.app.apps.new("default", "kubeapps", testChartVersion, "1.2.3"),
     },
     {
       clustersState: { currentCluster: "other-cluster" },
       namespace: "foo",
       version: "alpha-0",
-      url: url.app.apps.new(testChartVersion, "other-cluster", "foo", "alpha-0"),
+      url: url.app.apps.new("other-cluster", "foo", testChartVersion, "alpha-0"),
     },
   ];
 

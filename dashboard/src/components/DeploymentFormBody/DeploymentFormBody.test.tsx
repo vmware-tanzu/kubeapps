@@ -128,7 +128,7 @@ it("changes the URL for the new version", () => {
   });
   wrapper.find("select").simulate("change", { currentTarget: { value: "2.0.0" } });
   expect(push).toHaveBeenCalledWith(
-    url.app.apps.new(chartVersion, defaultProps.cluster, defaultProps.namespace, "2.0.0"),
+    url.app.apps.new(defaultProps.cluster, defaultProps.namespace, chartVersion, "2.0.0"),
   );
 });
 

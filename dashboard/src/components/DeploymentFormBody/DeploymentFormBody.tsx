@@ -156,7 +156,7 @@ class DeploymentFormBody extends React.Component<
       getChartVersion(chartNamespace, chartID, e.currentTarget.value);
     } else {
       this.props.push(
-        url.app.apps.new(selected.version!, cluster, namespace, e.currentTarget.value),
+        url.app.apps.new(cluster, namespace, selected.version!, e.currentTarget.value),
       );
     }
   };

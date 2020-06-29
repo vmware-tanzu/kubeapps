@@ -19,9 +19,9 @@ function ChartDeployButton(props: IChartDeployButtonProps) {
 
   if (clicked) {
     const newAppURL = app.apps.new(
-      props.version,
       currentCluster,
       props.namespace,
+      props.version,
       props.version.attributes.version,
     );
     dispatch(push(newAppURL));
