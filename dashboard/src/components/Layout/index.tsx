@@ -5,6 +5,7 @@ const Layout = React.lazy(() => import("./Layout"));
 const LayoutV2 = React.lazy(() => import("./Layout.v2"));
 
 interface ILayoutSelectorProps {
+  children: JSX.Element;
   UI: string;
   headerComponent: React.ComponentClass<any> | React.StatelessComponent<any>;
 }

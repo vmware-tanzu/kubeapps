@@ -39,6 +39,7 @@ exports[`renders the full DeploymentForm 1`] = `
         chartNamespace="other-namespace"
         chartVersion="1.0.0"
         chartsIsFetching={false}
+        cluster="default"
         deploymentEvent="install"
         getChartVersion={[MockFunction]}
         namespace="default"

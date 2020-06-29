@@ -19,6 +19,7 @@ import LoadingWrapper from "../LoadingWrapper";
 
 export interface IOperatorInstanceProps {
   isFetching: boolean;
+  cluster: string;
   namespace: string;
   csvName: string;
   crdName: string;

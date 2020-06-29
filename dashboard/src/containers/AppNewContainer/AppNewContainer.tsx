@@ -11,6 +11,7 @@ import { IChartVersion, IStoreState } from "../../shared/types";
 interface IRouteProps {
   match: {
     params: {
+      cluster: string;
       namespace: string;
       repo: string;
       global: string;
@@ -27,6 +28,7 @@ function mapStateToProps(
   return {
     chartID: `${params.repo}/${params.id}`,
     chartNamespace: params.global === "global" ? config.namespace : params.namespace,
+    cluster: params.cluster,
     chartVersion: params.version,
     error: apps.error,
     kubeappsNamespace: config.namespace,
