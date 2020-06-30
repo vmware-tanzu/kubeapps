@@ -15,6 +15,7 @@ function mapStateToProps({ config, clusters: { currentCluster, clusters }, repos
   return {
     errors: repos.errors,
     namespace: repoNamespace,
+    cluster: currentCluster,
     repos: repos.repos,
     displayReposPerNamespaceMsg,
     isFetching: repos.isFetching,

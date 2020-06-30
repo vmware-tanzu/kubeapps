@@ -1,9 +1,10 @@
 import * as React from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import helmIcon from "../../icons/helm.svg";
 import operatorIcon from "../../icons/operator-framework.svg";
 import placeholder from "../../placeholder.png";
-import { IRepo } from "../../shared/types";
+import { IRepo, IStoreState } from "../../shared/types";
 import * as url from "../../shared/url";
 import InfoCard from "../InfoCard";
 import "./CatalogItem.css";
@@ -80,8 +81,12 @@ const OperatorCatalogItem: React.SFC<IOperatorCatalogItem> = props => {
 const ChartCatalogItem: React.SFC<IChartCatalogItem> = props => {
   const { icon, name, repo, version, description, namespace, id } = props;
   const iconSrc = icon || placeholder;
+  const cluster = useSelector((state: IStoreState) => state.clusters.currentCluster);
   const tag1 = (
-    <Link className="ListItem__content__info_tag_link" to={url.app.repo(repo.name, namespace)}>
+    <Link
+      className="ListItem__content__info_tag_link"
+      to={url.app.repo(cluster, namespace, repo.name)}
+    >
       {repo.name}
     </Link>
   );

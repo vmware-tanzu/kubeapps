@@ -21,6 +21,7 @@ const defaultProps: IAppListProps = {
   pushSearchFilter: jest.fn(),
   fetchAppsWithUpdateInfo: jest.fn(),
   getCustomResources: jest.fn(),
+  isFetchingResources: false,
   customResources: [],
   csvs: [],
   featureFlags: { operators: true, additionalClusters: [], ui: "hex" },
@@ -219,20 +220,12 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
     ],
     listingAll: false,
   } as IAppState;
-  const wrapper = shallow(
-    <AppList
-      {...defaultProps}
-      apps={apps}
-      toggleListAll={jest.fn((toggle: boolean) => {
-        apps.listingAll = toggle;
-      })}
-    />,
-  );
+  const wrapper = shallow(<AppList {...defaultProps} apps={apps} />);
   const checkbox = wrapper.find('input[type="checkbox"]');
   expect(apps.listingAll).toBe(false);
   checkbox.simulate("change");
   // The last call to fetchApps should list all the apps
-  const fetchCalls = defaultProps.fetchAppsWithUpdateInfo.mock.calls;
+  const fetchCalls = (defaultProps.fetchAppsWithUpdateInfo as jest.Mock).mock.calls;
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
 });
 

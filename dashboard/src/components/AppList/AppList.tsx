@@ -13,7 +13,7 @@ import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
 import CustomResourceListItem from "./CustomResourceListItem";
 
-interface IAppListProps {
+export interface IAppListProps {
   apps: IAppState;
   fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
   cluster: string;

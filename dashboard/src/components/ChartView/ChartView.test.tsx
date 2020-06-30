@@ -9,15 +9,16 @@ import ChartHeader from "./ChartHeader";
 import ChartMaintainers from "./ChartMaintainers";
 import ChartReadme from "./ChartReadme";
 import ChartVersionsList from "./ChartVersionsList";
-import ChartView from "./ChartView";
+import ChartView, { IChartViewProps } from "./ChartView";
 
-const props: any = {
+const props: IChartViewProps = {
   chartID: "testrepo/test",
   chartNamespace: "kubeapps-namespace",
   fetchChartVersionsAndSelectVersion: jest.fn(),
   getChartReadme: jest.fn(),
   isFetching: false,
   namespace: "test",
+  cluster: "default",
   resetChartVersion: jest.fn(),
   selectChartVersion: jest.fn(),
   selected: {} as IChartState["selected"],
@@ -32,12 +33,18 @@ const testChart: IChartVersion["relationships"]["chart"] = {
   },
 } as IChartVersion["relationships"]["chart"];
 
-const testVersion = {
+const testVersion: IChartVersion = {
   attributes: {
     version: "1.2.3",
+    app_version: "4.5.6",
+    created: "",
   },
   id: "1",
   relationships: { chart: testChart },
+};
+
+const defaultSelected: IChartState["selected"] = {
+  versions: [testVersion],
 };
 
 it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
@@ -105,7 +112,9 @@ context("when fetching is true and chart is available", () => {
 });
 
 describe("subcomponents", () => {
-  const wrapper = shallow(<ChartView {...props} selected={{ version: testVersion }} />);
+  const wrapper = shallow(
+    <ChartView {...props} selected={{ ...defaultSelected, version: testVersion }} />,
+  );
 
   for (const component of [ChartHeader, ChartReadme, ChartVersionsList]) {
     it(`renders ${component.name}`, () => {
@@ -115,7 +124,9 @@ describe("subcomponents", () => {
 });
 
 it("does not render the app version, home and sources sections if not set", () => {
-  const wrapper = shallow(<ChartView {...props} selected={{ version: testVersion }} />);
+  const version = { ...testVersion, attributes: { ...testVersion.attributes } };
+  delete version.attributes.app_version;
+  const wrapper = shallow(<ChartView {...props} selected={{ versions: [], version }} />);
   expect(wrapper.contains(<h2>App Version</h2>)).toBe(false);
   expect(wrapper.contains(<h2>Home</h2>)).toBe(false);
   expect(wrapper.contains(<h2>Related</h2>)).toBe(false);
@@ -123,17 +134,17 @@ it("does not render the app version, home and sources sections if not set", () =
 });
 
 it("renders the app version when set", () => {
-  const v = testVersion as IChartVersion;
-  v.attributes.app_version = "1.2.3-appversion";
-  const wrapper = shallow(<ChartView {...props} selected={{ version: v }} />);
+  const wrapper = shallow(
+    <ChartView {...props} selected={{ ...defaultSelected, version: testVersion }} />,
+  );
   expect(wrapper.contains(<h2>App Version</h2>)).toBe(true);
-  expect(wrapper.contains(<div>1.2.3-appversion</div>)).toBe(true);
+  expect(wrapper.contains(<div>{testVersion.attributes.app_version}</div>)).toBe(true);
 });
 
 it("renders the home link when set", () => {
   const v = testVersion as IChartVersion;
   v.relationships.chart.data.home = "https://example.com";
-  const wrapper = shallow(<ChartView {...props} selected={{ version: v }} />);
+  const wrapper = shallow(<ChartView {...props} selected={{ ...defaultSelected, version: v }} />);
   expect(wrapper.contains(<h2>Home</h2>)).toBe(true);
   expect(
     wrapper.contains(
@@ -176,7 +187,9 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
     it(`for ${t.name}`, () => {
       v.relationships.chart.data.maintainers = [{ name: "John Smith" }];
       v.relationships.chart.data.repo.url = t.repoURL;
-      const wrapper = shallow(<ChartView {...props} selected={{ version: v }} />);
+      const wrapper = shallow(
+        <ChartView {...props} selected={{ ...defaultSelected, version: v }} />,
+      );
       const chartMaintainers = wrapper.find(ChartMaintainers);
       expect(chartMaintainers.props().githubIDAsNames).toBe(t.expected);
     });
@@ -186,7 +199,7 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
 it("renders the sources links when set", () => {
   const v = testVersion as IChartVersion;
   v.relationships.chart.data.sources = ["https://example.com", "https://example2.com"];
-  const wrapper = shallow(<ChartView {...props} selected={{ version: v }} />);
+  const wrapper = shallow(<ChartView {...props} selected={{ ...defaultSelected, version: v }} />);
   expect(wrapper.contains(<h2>Related</h2>)).toBe(true);
   expect(
     wrapper.contains(
@@ -206,12 +219,16 @@ it("renders the sources links when set", () => {
 
 describe("renders errors", () => {
   it("renders a not found error if it exists", () => {
-    const wrapper = shallow(<ChartView {...props} selected={{ error: new NotFoundError() }} />);
+    const wrapper = shallow(
+      <ChartView {...props} selected={{ ...defaultSelected, error: new NotFoundError() }} />,
+    );
     expect(wrapper.find(ErrorSelector)).toExist();
     expect(wrapper.find(ErrorSelector).html()).toContain(`Chart ${props.chartID} not found`);
   });
   it("renders a generic error if it exists", () => {
-    const wrapper = shallow(<ChartView {...props} selected={{ error: new Error() }} />);
+    const wrapper = shallow(
+      <ChartView {...props} selected={{ ...defaultSelected, error: new Error() }} />,
+    );
     expect(wrapper.find(ErrorSelector)).toExist();
     expect(wrapper.find(ErrorSelector).html()).toContain("Sorry! Something went wrong");
   });
