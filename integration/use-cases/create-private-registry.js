@@ -92,12 +92,11 @@ test("Creates a private registry", async () => {
   // Upgrade apache and verify.
   await expect(page).toClick(".upgrade-button");
 
-  // Check that the old version is properly loaded
-  await expect(page).toClick("li", { text: "Values (YAML)" });
-
-  await expect(page).toMatch("tag: 2.4.43-debian-10-r25");
+  await new Promise((done) => setTimeout(() => done(), 1000));
 
   await expect(page).toSelect("#chartVersion", "7.3.16");
+
+  await new Promise((done) => setTimeout(() => done(), 1000));
 
   await expect(page).toClick("li", { text: "Changes" });
 
