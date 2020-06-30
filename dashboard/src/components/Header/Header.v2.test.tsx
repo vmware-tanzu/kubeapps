@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { IClusterState } from "../../reducers/cluster";
+import { IClustersState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import Header from "./Header.v2";
 
@@ -8,10 +8,15 @@ const defaultProps = {
   authenticated: true,
   fetchNamespaces: jest.fn(),
   logout: jest.fn(),
-  cluster: {
-    currentNamespace: "default",
-    namespaces: ["default", "other"],
-  } as IClusterState,
+  clusters: {
+    currentCluster: "default",
+    clusters: {
+      default: {
+        currentNamespace: "default",
+        namespaces: ["default", "other"],
+      },
+    },
+  } as IClustersState,
   defaultNamespace: "kubeapps-user",
   pathname: "",
   push: jest.fn(),
@@ -25,7 +30,7 @@ it("renders the header links and titles", () => {
   const wrapper = shallow(<Header {...defaultProps} />);
   const items = wrapper.find(".nav-link");
   const expectedItems = [
-    { children: "Applications", to: app.apps.list("default") },
+    { children: "Applications", to: app.apps.list("default", "default") },
     { children: "Catalog", to: app.catalog("default") },
   ];
   expect(items.length).toEqual(expectedItems.length);

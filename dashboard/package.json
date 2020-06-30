@@ -148,7 +148,7 @@
       "!src/**/*.d.ts"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!@clr|lit-element|lit-html|ramda)"
+      "node_modules/(?!@clr|lit-element|lit-html|ramda|.*css)"
     ]
   },
   "eslintConfig": {
