@@ -2,16 +2,45 @@ import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 import Modal from "react-modal";
-import { Redirect } from "react-router";
+import { Provider } from "react-redux";
+import configureMockStore, { MockStore } from "redux-mock-store";
+import thunk from "redux-thunk";
+
+import { IRelease } from "shared/types";
+import { IStoreState } from "shared/types";
 import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
 import { hapi } from "../../../shared/hapi/release";
 import itBehavesLike from "../../../shared/specs";
 import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
-
-import { IRelease } from "shared/types";
 import AppControls, { IAppControlsProps } from "./AppControls";
 import UpgradeButton from "./UpgradeButton";
+
+const mockStore = configureMockStore([thunk]);
+
+// TODO(absoludity): As we move to function components with (redux) hooks we'll need to
+// be including state in tests, so we may want to put things like initialState
+// and a generalized getWrapper in a test helpers or similar package?
+const initialState = {
+  apps: {},
+  auth: {},
+  catalog: {},
+  charts: {},
+  config: {},
+  kube: {},
+  clusters: {
+    currentCluster: "default-cluster",
+  },
+  repos: {},
+  operators: {},
+} as IStoreState;
+
+const getWrapper = (store: MockStore, props: IAppControlsProps) =>
+  mount(
+    <Provider store={store}>
+      <AppControls {...props} />
+    </Provider>,
+  );
 
 const namespace = "bar";
 const defaultProps = {
@@ -21,54 +50,55 @@ const defaultProps = {
   push: jest.fn(),
 } as IAppControlsProps;
 
-it("calls delete function when clicking the button", done => {
-  const props = { ...defaultProps, deleteApp: jest.fn().mockReturnValue(true) };
-  const wrapper = shallow(<AppControls {...props} />);
-  const button = wrapper
-    .find(".AppControls")
-    .children()
-    .find(".button-danger");
+it("calls delete function without purge when clicking the button", done => {
+  const store = mockStore(initialState);
+  const push = jest.fn();
+  const deleteApp = jest.fn().mockReturnValue(true);
+  const props = {
+    ...defaultProps,
+    deleteApp,
+    push,
+  };
+  const wrapper = getWrapper(store, props);
+  const appControls = wrapper.find(".AppControls");
+  const button = appControls.children().find(".button-danger");
   expect(button.exists()).toBe(true);
   expect(button.text()).toBe("Delete");
   button.simulate("click");
 
-  const confirm = wrapper
-    .find(".AppControls")
-    .children()
-    .find(ConfirmDialog);
+  const confirm = appControls.children().find(ConfirmDialog);
   expect(confirm.exists()).toBe(true);
   confirm.props().onConfirm(); // Simulate confirmation
 
-  expect(wrapper.state("deleting")).toBe(true);
   // Wait for the async action to finish
   setTimeout(() => {
     wrapper.update();
-    const redirect = wrapper.find(Redirect);
-    expect(redirect.props()).toMatchObject({
-      to: url.app.apps.list(defaultProps.cluster, namespace),
-    } as any);
+    expect(push.mock.calls.length).toBe(1);
+    expect(push.mock.calls[0]).toEqual([url.app.apps.list(defaultProps.cluster, namespace)]);
     done();
   }, 1);
+  expect(deleteApp).toHaveBeenCalledWith(false);
 });
 
 it("calls delete function with additional purge", () => {
   // Return "false" to avoid redirect when mounting
   const deleteApp = jest.fn().mockReturnValue(false);
   const props = { ...defaultProps, deleteApp };
-  // mount() is necessary to render the Modal
-  const wrapper = mount(<AppControls {...props} />);
+  const store = mockStore(initialState);
+  const wrapper = getWrapper(store, props);
   Modal.setAppElement(document.createElement("div"));
-  wrapper.setState({ modalIsOpen: true });
-  wrapper.update();
+  const appControls = wrapper.find(".AppControls");
+  const button = appControls.children().find(".button-danger");
+  expect(button.exists()).toBe(true);
+  expect(button.text()).toBe("Delete");
+  button.simulate("click");
 
   // Check that the checkbox changes the AppControls state
   const confirm = wrapper.find(ConfirmDialog);
   expect(confirm.exists()).toBe(true);
   const checkbox = wrapper.find('input[type="checkbox"]');
   expect(checkbox.exists()).toBe(true);
-  expect(wrapper.state("purge")).toBe(false);
   checkbox.simulate("change");
-  expect(wrapper.state("purge")).toBe(true);
 
   // Check that the "purge" state is forwarded to deleteApp
   confirm.props().onConfirm(); // Simulate confirmation

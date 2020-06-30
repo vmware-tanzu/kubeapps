@@ -12,7 +12,7 @@ export const app = {
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (cluster: string, namespace: string, releaseName: string) =>
       `${app.apps.list(cluster, namespace)}/${releaseName}`,
-    upgrade: (releaseName: string, namespace: string, cluster: string = "default") =>
+    upgrade: (cluster: string, namespace: string, releaseName: string) =>
       `${app.apps.get(cluster, namespace, releaseName)}/upgrade`,
   },
   catalog: (namespace: string, cluster: string = "default") =>

@@ -149,7 +149,15 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, push, upgradeApp, releaseName, cluster, namespace, repoNamespace } = this.props;
+    const {
+      selected,
+      push,
+      upgradeApp,
+      releaseName,
+      cluster,
+      namespace,
+      repoNamespace,
+    } = this.props;
     const { appValues } = this.state;
 
     this.setState({ isDeploying: true });

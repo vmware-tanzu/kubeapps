@@ -122,7 +122,9 @@ it("triggers an upgrade when submitting the form", done => {
     schema,
   );
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith(url.app.apps.get(defaultProps.cluster, namespace, releaseName));
+    expect(push).toHaveBeenCalledWith(
+      url.app.apps.get(defaultProps.cluster, namespace, releaseName),
+    );
     done();
   }, 1);
 });
