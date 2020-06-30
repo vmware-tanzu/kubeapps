@@ -1,6 +1,5 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { BrowserRouter } from "react-router-dom";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
