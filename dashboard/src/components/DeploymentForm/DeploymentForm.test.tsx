@@ -27,6 +27,7 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
   namespace: "default",
+  cluster: "default",
 } as IDeploymentFormProps;
 const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 let monikerChooseMock: jest.Mock;

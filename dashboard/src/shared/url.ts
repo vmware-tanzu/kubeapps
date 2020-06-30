@@ -4,14 +4,14 @@ import { IChartVersion, IRepo } from "./types";
 
 export const app = {
   apps: {
-    new: (cv: IChartVersion, namespace: string, version: string, cluster: string = "default") => {
+    new: (cluster: string, namespace: string, cv: IChartVersion, version: string) => {
       const repoNamespace = cv.relationships.chart.data.repo.namespace;
       const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
       return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
     },
-    list: (namespace: string, cluster: string = "default") => `/c/${cluster}/ns/${namespace}/apps`,
+    list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
     get: (releaseName: string, namespace: string, cluster: string = "default") =>
-      `${app.apps.list(namespace, cluster)}/${releaseName}`,
+      `${app.apps.list(cluster, namespace)}/${releaseName}`,
     upgrade: (releaseName: string, namespace: string, cluster: string = "default") =>
       `${app.apps.get(releaseName, namespace, cluster)}/upgrade`,
   },

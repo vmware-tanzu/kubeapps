@@ -10,7 +10,7 @@ import { NavLink } from "react-router-dom";
 import { CdsIcon } from "../Clarity/clarity";
 
 import logo from "../../logo.svg";
-import { IClusterState } from "../../reducers/cluster";
+import { IClustersState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import "./Header.v2.css";
 
@@ -20,7 +20,7 @@ interface IHeaderProps {
   authenticated: boolean;
   fetchNamespaces: () => void;
   logout: () => void;
-  cluster: IClusterState;
+  clusters: IClustersState;
   defaultNamespace: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
@@ -30,10 +30,15 @@ interface IHeaderProps {
 
 class Header extends React.Component<IHeaderProps> {
   public render() {
-    const { cluster, authenticated: showNav } = this.props;
+    const { clusters, authenticated: showNav } = this.props;
+    const cluster = clusters.clusters[clusters.currentCluster];
 
     const routesToRender = [
-      { title: "Applications", path: app.apps.list(cluster.currentNamespace), external: false },
+      {
+        title: "Applications",
+        path: app.apps.list(clusters.currentCluster, cluster.currentNamespace),
+        external: false,
+      },
       { title: "Catalog", path: app.catalog(cluster.currentNamespace), external: false },
     ];
     return (
@@ -69,9 +74,8 @@ class Header extends React.Component<IHeaderProps> {
                     <div className="clr-col-10">
                       <span>Current Context</span>
                       <div>
-                        {/* TODO(andresmgot): Add cluster */}
                         <CdsIcon size="sm" shape="cluster" inverse={true} />
-                        <span className="kubeapps-dropdown-text">default</span>
+                        <span className="kubeapps-dropdown-text">{clusters.currentCluster}</span>
                         <CdsIcon size="sm" shape="file-group" inverse={true} />
                         <span className="kubeapps-dropdown-text">{cluster.currentNamespace}</span>
                       </div>

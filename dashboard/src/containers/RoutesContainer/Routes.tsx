@@ -95,8 +95,8 @@ class Routes extends React.Component<IRoutesProps> {
     );
   }
   private rootNamespacedRedirect = () => {
-    if (this.props.namespace && this.props.authenticated) {
-      return <Redirect to={app.apps.list(this.props.namespace, this.props.cluster)} />;
+    if (this.props.cluster && this.props.namespace && this.props.authenticated) {
+      return <Redirect to={app.apps.list(this.props.cluster, this.props.namespace)} />;
     }
     // There is not a default namespace, redirect to login page
     return <Redirect to={"/login"} />;

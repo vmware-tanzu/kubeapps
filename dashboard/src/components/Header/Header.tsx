@@ -4,7 +4,7 @@ import { NavLink } from "react-router-dom";
 import "react-select/dist/react-select.css";
 import { IFeatureFlags } from "shared/Config";
 import logo from "../../logo.svg";
-import { IClusterState } from "../../reducers/cluster";
+import { IClustersState } from "../../reducers/cluster";
 import { definedNamespaces } from "../../shared/Namespace";
 import { app } from "../../shared/url";
 import "./Header.css";
@@ -15,7 +15,7 @@ export interface IHeaderProps {
   authenticated: boolean;
   fetchNamespaces: () => void;
   logout: () => void;
-  cluster: IClusterState;
+  clusters: IClustersState;
   defaultNamespace: string;
   pathname: string;
   push: (path: string) => void;
@@ -52,12 +52,13 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   public render() {
     const {
       fetchNamespaces,
-      cluster,
+      clusters,
       defaultNamespace,
       authenticated: showNav,
       createNamespace,
       getNamespace,
     } = this.props;
+    const cluster = clusters.clusters[clusters.currentCluster];
     const header = `header ${this.state.mobileOpen ? "header-open" : ""}`;
     const submenu = `header__nav__submenu ${
       this.state.configOpen ? "header__nav__submenu-open" : ""
@@ -88,7 +89,10 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                 </button>
                 <ul className="header__nav__menu" role="menubar">
                   <li>
-                    <HeaderLink to={app.apps.list(cluster.currentNamespace)} exact={true}>
+                    <HeaderLink
+                      to={app.apps.list(clusters.currentCluster, cluster.currentNamespace)}
+                      exact={true}
+                    >
                       Applications
                     </HeaderLink>
                   </li>
