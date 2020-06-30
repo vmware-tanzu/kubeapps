@@ -10,10 +10,10 @@ export const app = {
       return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
     },
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
-    get: (releaseName: string, namespace: string, cluster: string = "default") =>
+    get: (cluster: string, namespace: string, releaseName: string) =>
       `${app.apps.list(cluster, namespace)}/${releaseName}`,
     upgrade: (releaseName: string, namespace: string, cluster: string = "default") =>
-      `${app.apps.get(releaseName, namespace, cluster)}/upgrade`,
+      `${app.apps.get(cluster, namespace, releaseName)}/upgrade`,
   },
   catalog: (namespace: string, cluster: string = "default") =>
     `/c/${cluster}/ns/${namespace}/catalog`,

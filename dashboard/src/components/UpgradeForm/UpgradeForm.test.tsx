@@ -97,8 +97,7 @@ it("forwards the appValues when modified", () => {
 });
 
 it("triggers an upgrade when submitting the form", done => {
-  const releaseName = "my-release";
-  const namespace = "default";
+  const { namespace, releaseName } = defaultProps;
   const appValues = "foo: bar";
   const schema = { properties: { foo: { type: "string" } } };
   const upgradeApp = jest.fn().mockReturnValue(true);
@@ -123,7 +122,7 @@ it("triggers an upgrade when submitting the form", done => {
     schema,
   );
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith(url.app.apps.get(releaseName, namespace));
+    expect(push).toHaveBeenCalledWith(url.app.apps.get(defaultProps.cluster, namespace, releaseName));
     done();
   }, 1);
 });

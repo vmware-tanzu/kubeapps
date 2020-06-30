@@ -129,6 +129,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   public appListItems() {
     const {
       apps: { listOverview },
+      cluster,
       customResources,
     } = this.props;
     const filteredReleases = this.filteredReleases(listOverview || [], this.state.filter);
@@ -148,7 +149,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
       <div>
         <CardGrid>
           {filteredReleases.map(r => {
-            return <AppListItem key={r.releaseName} app={r} />;
+            return <AppListItem key={r.releaseName} app={r} cluster={cluster} />;
           })}
           {filteredCRs.map(r => {
             const csv = this.props.csvs.find(c =>

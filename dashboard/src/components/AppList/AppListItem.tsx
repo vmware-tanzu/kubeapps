@@ -8,11 +8,12 @@ import "./AppListItem.css";
 
 interface IAppListItemProps {
   app: IAppOverview;
+  cluster: string;
 }
 
 class AppListItem extends React.Component<IAppListItemProps> {
   public render() {
-    const { app } = this.props;
+    const { app, cluster } = this.props;
     const icon = app.icon ? app.icon : placeholder;
     const banner =
       app.updateInfo && !app.updateInfo.error && !app.updateInfo.upToDate
@@ -21,7 +22,7 @@ class AppListItem extends React.Component<IAppListItemProps> {
     return (
       <InfoCard
         key={app.releaseName}
-        link={url.app.apps.get(app.releaseName, app.namespace)}
+        link={url.app.apps.get(cluster, app.namespace, app.releaseName)}
         title={app.releaseName}
         icon={icon}
         info={`${app.chart} v${app.version || "-"}`}

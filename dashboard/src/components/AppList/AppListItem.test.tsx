@@ -18,6 +18,7 @@ it("renders an app item", () => {
           chart: "myapp",
         } as IAppOverview
       }
+      cluster={"default"}
     />,
   );
   const card = wrapper.find(InfoCard).shallow();
@@ -32,7 +33,7 @@ it("renders an app item", () => {
       .find(Link)
       .at(0)
       .props().to,
-  ).toBe(url.app.apps.get("foo", "default"));
+  ).toBe(url.app.apps.get("default", "default", "foo"));
   expect(card.find(".type-color-light-blue").text()).toBe("myapp v1.0.0");
   expect(card.find(".deployed").exists()).toBe(true);
   expect(card.find(".ListItem__content__info_tag-1").text()).toBe("default");

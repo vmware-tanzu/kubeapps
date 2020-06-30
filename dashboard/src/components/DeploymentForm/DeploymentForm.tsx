@@ -165,7 +165,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { chartNamespace, selected, deployChart, push, namespace } = this.props;
+    const { chartNamespace, cluster, selected, deployChart, push, namespace } = this.props;
     const { releaseName, appValues } = this.state;
 
     this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
@@ -180,7 +180,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       );
       this.setState({ isDeploying: false });
       if (deployed) {
-        push(url.app.apps.get(releaseName, namespace));
+        push(url.app.apps.get(cluster, namespace, releaseName));
       }
     }
   };
