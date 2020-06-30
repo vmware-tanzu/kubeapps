@@ -97,7 +97,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                     </HeaderLink>
                   </li>
                   <li>
-                    <HeaderLink to={app.catalog(cluster.currentNamespace)}>Catalog</HeaderLink>
+                    <HeaderLink to={app.catalog(clusters.currentCluster, cluster.currentNamespace)}>Catalog</HeaderLink>
                   </li>
                   <li>
                     <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>

@@ -7,17 +7,17 @@ import { IAppOverview, IAppState } from "../../shared/types";
 import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
 import { genericMessage } from "../ErrorAlert/UnexpectedErrorAlert";
-import AppList from "./AppList";
+import AppList, { IAppListProps } from "./AppList";
 import AppListItem from "./AppListItem";
 import CustomResourceListItem from "./CustomResourceListItem";
 
 let props = {} as any;
 
-const defaultProps: any = {
+const defaultProps: IAppListProps = {
   apps: {} as IAppState,
-  fetchApps: jest.fn(),
   filter: "",
   namespace: "default",
+  cluster: "defaultc",
   pushSearchFilter: jest.fn(),
   fetchAppsWithUpdateInfo: jest.fn(),
   getCustomResources: jest.fn(),
