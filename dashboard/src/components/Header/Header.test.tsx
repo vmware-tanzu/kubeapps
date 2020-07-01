@@ -31,7 +31,7 @@ it("renders the header links and titles", () => {
   const items = menubar.children().map(p => p.props().children.props);
   const expectedItems = [
     { children: "Applications", to: app.apps.list("default", "default") },
-    { children: "Catalog", to: app.catalog("default") },
+    { children: "Catalog", to: app.catalog("default", "default") },
     { children: "Service Instances (alpha)", to: app.servicesInstances("default") },
   ];
   expect(items.length).toEqual(expectedItems.length);

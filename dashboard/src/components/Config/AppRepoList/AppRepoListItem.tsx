@@ -28,6 +28,7 @@ interface IAppRepoListItemProps {
   repo: IAppRepository;
   secret?: ISecret;
   renderNamespace: boolean;
+  cluster: string;
   namespace: string;
   kubeappsNamespace: string;
   deleteRepo: (name: string, namespace: string) => Promise<boolean>;
@@ -55,6 +56,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
 
   public render() {
     const {
+      cluster,
       namespace,
       renderNamespace,
       repo,
@@ -71,7 +73,9 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
     return (
       <tr key={repo.metadata.name}>
         <td>
-          <Link to={url.app.repo(repo.metadata.name, namespace)}>{repo.metadata.name}</Link>
+          <Link to={url.app.repo(cluster, namespace, repo.metadata.name)}>
+            {repo.metadata.name}
+          </Link>
         </td>
         {renderNamespace && <td>{repo.metadata.namespace}</td>}
         <td>{repo.spec && repo.spec.url}</td>

@@ -7,20 +7,21 @@ import { IAppOverview, IAppState } from "../../shared/types";
 import { CardGrid } from "../Card";
 import { ErrorSelector } from "../ErrorAlert";
 import { genericMessage } from "../ErrorAlert/UnexpectedErrorAlert";
-import AppList from "./AppList";
+import AppList, { IAppListProps } from "./AppList";
 import AppListItem from "./AppListItem";
 import CustomResourceListItem from "./CustomResourceListItem";
 
 let props = {} as any;
 
-const defaultProps: any = {
+const defaultProps: IAppListProps = {
   apps: {} as IAppState,
-  fetchApps: jest.fn(),
   filter: "",
   namespace: "default",
+  cluster: "defaultc",
   pushSearchFilter: jest.fn(),
   fetchAppsWithUpdateInfo: jest.fn(),
   getCustomResources: jest.fn(),
+  isFetchingResources: false,
   customResources: [],
   csvs: [],
   featureFlags: { operators: true, additionalClusters: [], ui: "hex" },
@@ -204,6 +205,11 @@ it("filters apps", () => {
 });
 
 it("clicking 'List All' checkbox should trigger toggleListAll", () => {
+  const mockFetchAppsWithUpdateInfo = jest.fn();
+  const updatedProps: IAppListProps = {
+    ...defaultProps,
+    fetchAppsWithUpdateInfo: mockFetchAppsWithUpdateInfo,
+  };
   const apps = {
     isFetching: false,
     items: [],
@@ -219,20 +225,12 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
     ],
     listingAll: false,
   } as IAppState;
-  const wrapper = shallow(
-    <AppList
-      {...defaultProps}
-      apps={apps}
-      toggleListAll={jest.fn((toggle: boolean) => {
-        apps.listingAll = toggle;
-      })}
-    />,
-  );
+  const wrapper = shallow(<AppList {...updatedProps} apps={apps} />);
   const checkbox = wrapper.find('input[type="checkbox"]');
   expect(apps.listingAll).toBe(false);
   checkbox.simulate("change");
   // The last call to fetchApps should list all the apps
-  const fetchCalls = defaultProps.fetchAppsWithUpdateInfo.mock.calls;
+  const fetchCalls = mockFetchAppsWithUpdateInfo.mock.calls;
   expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
 });
 

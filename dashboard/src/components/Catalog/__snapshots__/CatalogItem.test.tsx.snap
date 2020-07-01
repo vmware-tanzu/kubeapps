@@ -18,13 +18,135 @@ exports[`should render a chart item in a namespace 1`] = `
   tag1Content={
     <ForwardRef
       className="ListItem__content__info_tag_link"
-      to="/c/default/ns/repo-namespace/catalog/repo-name"
+      to="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
     >
       repo-name
     </ForwardRef>
   }
   title="foo"
-/>
+>
+  <Card
+    className="ListItem"
+    responsive={true}
+  >
+    <article
+      className="Card ListItem Card-responsive"
+    >
+      <div
+        className="Card__inner bg-white elevation-1"
+      >
+        <Link
+          className="ListItem__header"
+          title="foo"
+          to="/c/default/ns/repo-namespace/charts/repo-name/foo"
+        >
+          <LinkAnchor
+            className="ListItem__header"
+            href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+            navigate={[Function]}
+            title="foo"
+          >
+            <a
+              className="ListItem__header"
+              href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+              onClick={[Function]}
+              title="foo"
+            >
+              <CardIcon
+                icon="icon.png"
+              >
+                <div
+                  className="Card__icon bg-light text-c"
+                >
+                  <img
+                    alt="icon"
+                    src="icon.png"
+                  />
+                </div>
+              </CardIcon>
+              <div
+                className="Card__subIcon bg-light text-r"
+              >
+                <img
+                  alt="icon"
+                  src="helm.svg"
+                />
+              </div>
+            </a>
+          </LinkAnchor>
+        </Link>
+        <CardContent>
+          <div
+            className="Card__content padding-normal "
+          >
+            <div
+              className="ListItem__content"
+            >
+              <Link
+                title="foo"
+                to="/c/default/ns/repo-namespace/charts/repo-name/foo"
+              >
+                <LinkAnchor
+                  href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+                  navigate={[Function]}
+                  title="foo"
+                >
+                  <a
+                    href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+                    onClick={[Function]}
+                    title="foo"
+                  >
+                    <h3
+                      className="ListItem__content__title type-big"
+                    >
+                      foo
+                    </h3>
+                  </a>
+                </LinkAnchor>
+              </Link>
+              <div
+                className="ListItem__content__description"
+              />
+              <div
+                className="ListItem__content__info"
+              >
+                <p
+                  className="margin-reset type-small padding-t-tiny type-color-light-blue"
+                >
+                  1.0.0
+                </p>
+                <div>
+                  <span
+                    className="ListItem__content__info_tag ListItem__content__info_tag-1 type-small type-color-white padding-t-tiny padding-h-normal repo-name"
+                  >
+                    <Link
+                      className="ListItem__content__info_tag_link"
+                      to="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
+                    >
+                      <LinkAnchor
+                        className="ListItem__content__info_tag_link"
+                        href="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
+                        navigate={[Function]}
+                      >
+                        <a
+                          className="ListItem__content__info_tag_link"
+                          href="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
+                          onClick={[Function]}
+                        >
+                          repo-name
+                        </a>
+                      </LinkAnchor>
+                    </Link>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </div>
+    </article>
+  </Card>
+</InfoCard>
 `;
 
 exports[`should render a global chart item in a namespace 1`] = `
@@ -45,11 +167,133 @@ exports[`should render a global chart item in a namespace 1`] = `
   tag1Content={
     <ForwardRef
       className="ListItem__content__info_tag_link"
-      to="/c/default/ns/repo-namespace/catalog/repo-name"
+      to="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
     >
       repo-name
     </ForwardRef>
   }
   title="foo"
-/>
+>
+  <Card
+    className="ListItem"
+    responsive={true}
+  >
+    <article
+      className="Card ListItem Card-responsive"
+    >
+      <div
+        className="Card__inner bg-white elevation-1"
+      >
+        <Link
+          className="ListItem__header"
+          title="foo"
+          to="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+        >
+          <LinkAnchor
+            className="ListItem__header"
+            href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+            navigate={[Function]}
+            title="foo"
+          >
+            <a
+              className="ListItem__header"
+              href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+              onClick={[Function]}
+              title="foo"
+            >
+              <CardIcon
+                icon="icon.png"
+              >
+                <div
+                  className="Card__icon bg-light text-c"
+                >
+                  <img
+                    alt="icon"
+                    src="icon.png"
+                  />
+                </div>
+              </CardIcon>
+              <div
+                className="Card__subIcon bg-light text-r"
+              >
+                <img
+                  alt="icon"
+                  src="helm.svg"
+                />
+              </div>
+            </a>
+          </LinkAnchor>
+        </Link>
+        <CardContent>
+          <div
+            className="Card__content padding-normal "
+          >
+            <div
+              className="ListItem__content"
+            >
+              <Link
+                title="foo"
+                to="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+              >
+                <LinkAnchor
+                  href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+                  navigate={[Function]}
+                  title="foo"
+                >
+                  <a
+                    href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+                    onClick={[Function]}
+                    title="foo"
+                  >
+                    <h3
+                      className="ListItem__content__title type-big"
+                    >
+                      foo
+                    </h3>
+                  </a>
+                </LinkAnchor>
+              </Link>
+              <div
+                className="ListItem__content__description"
+              />
+              <div
+                className="ListItem__content__info"
+              >
+                <p
+                  className="margin-reset type-small padding-t-tiny type-color-light-blue"
+                >
+                  1.0.0
+                </p>
+                <div>
+                  <span
+                    className="ListItem__content__info_tag ListItem__content__info_tag-1 type-small type-color-white padding-t-tiny padding-h-normal repo-name"
+                  >
+                    <Link
+                      className="ListItem__content__info_tag_link"
+                      to="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
+                    >
+                      <LinkAnchor
+                        className="ListItem__content__info_tag_link"
+                        href="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
+                        navigate={[Function]}
+                      >
+                        <a
+                          className="ListItem__content__info_tag_link"
+                          href="/c/default-cluster/ns/repo-namespace/catalog/repo-name"
+                          onClick={[Function]}
+                        >
+                          repo-name
+                        </a>
+                      </LinkAnchor>
+                    </Link>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </div>
+    </article>
+  </Card>
+</InfoCard>
 `;

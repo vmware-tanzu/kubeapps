@@ -42,6 +42,7 @@ export interface IAppRepoListProps {
   ) => Promise<boolean>;
   validating: boolean;
   validate: (url: string, authHeader: string, customCA: string) => Promise<any>;
+  cluster: string;
   namespace: string;
   kubeappsNamespace: string;
   displayReposPerNamespaceMsg: boolean;
@@ -108,6 +109,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       repos,
       install,
       update,
+      cluster,
       namespace,
       kubeappsNamespace,
       displayReposPerNamespaceMsg,
@@ -149,6 +151,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
                       resyncRepo={resyncRepo}
                       repo={repo}
                       renderNamespace={renderNamespace}
+                      cluster={cluster}
                       namespace={namespace}
                       kubeappsNamespace={kubeappsNamespace}
                       errors={errors}

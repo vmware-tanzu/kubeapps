@@ -15,10 +15,9 @@ export const app = {
     upgrade: (cluster: string, namespace: string, releaseName: string) =>
       `${app.apps.get(cluster, namespace, releaseName)}/upgrade`,
   },
-  catalog: (namespace: string, cluster: string = "default") =>
-    `/c/${cluster}/ns/${namespace}/catalog`,
-  repo: (repo: string, namespace: string, cluster: string = "default") =>
-    `${app.catalog(namespace, cluster)}/${repo}`,
+  catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
+  repo: (cluster: string, namespace: string, repo: string) =>
+    `${app.catalog(cluster, namespace)}/${repo}`,
   servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
     get: (chartName: string, repo: IRepo, namespace: string, cluster: string = "default") => {

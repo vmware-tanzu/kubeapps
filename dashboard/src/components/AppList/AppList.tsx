@@ -13,7 +13,7 @@ import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
 import CustomResourceListItem from "./CustomResourceListItem";
 
-interface IAppListProps {
+export interface IAppListProps {
   apps: IAppState;
   fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
   cluster: string;
@@ -65,6 +65,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   public render() {
     const {
       apps: { error, isFetching },
+      cluster,
       isFetchingResources,
       namespace,
     } = this.props;
@@ -79,7 +80,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
           <div className="col-3 text-r align-center">
             {!error && (
-              <Link to={url.app.catalog(namespace)}>
+              <Link to={url.app.catalog(cluster, namespace)}>
                 <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
             )}
