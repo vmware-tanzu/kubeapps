@@ -38,7 +38,11 @@ function Header(props: IHeaderProps) {
       path: app.apps.list(clusters.currentCluster, cluster.currentNamespace),
       external: false,
     },
-    { title: "Catalog", path: app.catalog(cluster.currentNamespace), external: false },
+    {
+      title: "Catalog",
+      path: app.catalog(clusters.currentCluster, cluster.currentNamespace),
+      external: false,
+    },
   ];
   return (
     <section>
