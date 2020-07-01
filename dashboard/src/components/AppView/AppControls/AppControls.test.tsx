@@ -60,7 +60,7 @@ it("calls delete function without purge when clicking the button", done => {
     push,
   };
   const wrapper = getWrapper(store, props);
-  const appControls = wrapper.find(".AppControls");
+  const appControls = wrapper.find(AppControls);
   const button = appControls.children().find(".button-danger");
   expect(button.exists()).toBe(true);
   expect(button.text()).toBe("Delete");
@@ -69,6 +69,8 @@ it("calls delete function without purge when clicking the button", done => {
   const confirm = appControls.children().find(ConfirmDialog);
   expect(confirm.exists()).toBe(true);
   confirm.props().onConfirm(); // Simulate confirmation
+
+  expect(appControls.state("deleting")).toBe(true);
 
   // Wait for the async action to finish
   setTimeout(() => {
@@ -87,7 +89,7 @@ it("calls delete function with additional purge", () => {
   const store = mockStore(initialState);
   const wrapper = getWrapper(store, props);
   Modal.setAppElement(document.createElement("div"));
-  const appControls = wrapper.find(".AppControls");
+  const appControls = wrapper.find(AppControls);
   const button = appControls.children().find(".button-danger");
   expect(button.exists()).toBe(true);
   expect(button.text()).toBe("Delete");
@@ -98,7 +100,9 @@ it("calls delete function with additional purge", () => {
   expect(confirm.exists()).toBe(true);
   const checkbox = wrapper.find('input[type="checkbox"]');
   expect(checkbox.exists()).toBe(true);
+  expect(appControls.state("purge")).toBe(false);
   checkbox.simulate("change");
+  expect(appControls.state("purge")).toBe(true);
 
   // Check that the "purge" state is forwarded to deleteApp
   confirm.props().onConfirm(); // Simulate confirmation
