@@ -11,7 +11,7 @@ import "./Header.css";
 import HeaderLink from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
 
-interface IHeaderProps {
+export interface IHeaderProps {
   authenticated: boolean;
   fetchNamespaces: () => void;
   logout: () => void;

@@ -102,8 +102,8 @@ describe("Routes depending on feature flags", () => {
     )
       .dive()
       .dive()
+      .dive()
       .dive();
-
     const component = wrapper.find({ component: RepoListContainer });
 
     expect(component.length).toBe(1);
