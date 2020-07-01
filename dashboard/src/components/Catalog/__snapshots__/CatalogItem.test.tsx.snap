@@ -12,7 +12,7 @@ exports[`should render a chart item in a namespace 1`] = `
   icon="icon.png"
   info="1.0.0"
   key="foo1"
-  link="/c/default/ns/repo-namespace/charts/repo-name/foo"
+  link="/c/default-cluster/ns/repo-namespace/charts/repo-name/foo"
   subIcon="helm.svg"
   tag1Class="repo-name"
   tag1Content={
@@ -38,17 +38,17 @@ exports[`should render a chart item in a namespace 1`] = `
         <Link
           className="ListItem__header"
           title="foo"
-          to="/c/default/ns/repo-namespace/charts/repo-name/foo"
+          to="/c/default-cluster/ns/repo-namespace/charts/repo-name/foo"
         >
           <LinkAnchor
             className="ListItem__header"
-            href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+            href="/c/default-cluster/ns/repo-namespace/charts/repo-name/foo"
             navigate={[Function]}
             title="foo"
           >
             <a
               className="ListItem__header"
-              href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+              href="/c/default-cluster/ns/repo-namespace/charts/repo-name/foo"
               onClick={[Function]}
               title="foo"
             >
@@ -84,15 +84,15 @@ exports[`should render a chart item in a namespace 1`] = `
             >
               <Link
                 title="foo"
-                to="/c/default/ns/repo-namespace/charts/repo-name/foo"
+                to="/c/default-cluster/ns/repo-namespace/charts/repo-name/foo"
               >
                 <LinkAnchor
-                  href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+                  href="/c/default-cluster/ns/repo-namespace/charts/repo-name/foo"
                   navigate={[Function]}
                   title="foo"
                 >
                   <a
-                    href="/c/default/ns/repo-namespace/charts/repo-name/foo"
+                    href="/c/default-cluster/ns/repo-namespace/charts/repo-name/foo"
                     onClick={[Function]}
                     title="foo"
                   >
@@ -161,7 +161,7 @@ exports[`should render a global chart item in a namespace 1`] = `
   icon="icon.png"
   info="1.0.0"
   key="foo1"
-  link="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+  link="/c/default-cluster/ns/repo-namespace/global-charts/repo-name/foo"
   subIcon="helm.svg"
   tag1Class="repo-name"
   tag1Content={
@@ -187,17 +187,17 @@ exports[`should render a global chart item in a namespace 1`] = `
         <Link
           className="ListItem__header"
           title="foo"
-          to="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+          to="/c/default-cluster/ns/repo-namespace/global-charts/repo-name/foo"
         >
           <LinkAnchor
             className="ListItem__header"
-            href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+            href="/c/default-cluster/ns/repo-namespace/global-charts/repo-name/foo"
             navigate={[Function]}
             title="foo"
           >
             <a
               className="ListItem__header"
-              href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+              href="/c/default-cluster/ns/repo-namespace/global-charts/repo-name/foo"
               onClick={[Function]}
               title="foo"
             >
@@ -233,15 +233,15 @@ exports[`should render a global chart item in a namespace 1`] = `
             >
               <Link
                 title="foo"
-                to="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+                to="/c/default-cluster/ns/repo-namespace/global-charts/repo-name/foo"
               >
                 <LinkAnchor
-                  href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+                  href="/c/default-cluster/ns/repo-namespace/global-charts/repo-name/foo"
                   navigate={[Function]}
                   title="foo"
                 >
                   <a
-                    href="/c/default/ns/repo-namespace/global-charts/repo-name/foo"
+                    href="/c/default-cluster/ns/repo-namespace/global-charts/repo-name/foo"
                     onClick={[Function]}
                     title="foo"
                   >

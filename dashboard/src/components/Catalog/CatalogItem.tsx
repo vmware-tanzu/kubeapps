@@ -90,7 +90,7 @@ const ChartCatalogItem: React.SFC<IChartCatalogItem> = props => {
       {repo.name}
     </Link>
   );
-  const link = url.app.charts.get(name, repo || ({} as IRepo), namespace);
+  const link = url.app.charts.get(cluster, namespace, name, repo || ({} as IRepo));
   const subIcon = helmIcon;
 
   const descriptionC = (

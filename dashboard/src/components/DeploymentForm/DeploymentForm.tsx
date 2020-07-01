@@ -26,9 +26,10 @@ export interface IDeploymentFormProps {
   chartsIsFetching: boolean;
   selected: IChartState["selected"];
   deployChart: (
+    targetCluster: string,
+    targetNamespace: string,
     version: IChartVersion,
     chartNamespace: string,
-    namespace: string,
     releaseName: string,
     values?: string,
     schema?: JSONSchema4,
@@ -171,9 +172,10 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
     this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
     if (selected.version) {
       const deployed = await deployChart(
+        cluster,
+        namespace,
         selected.version,
         chartNamespace,
-        namespace,
         releaseName,
         appValues,
         selected.schema,
