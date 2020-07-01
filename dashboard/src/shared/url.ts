@@ -20,17 +20,17 @@ export const app = {
     `${app.catalog(cluster, namespace)}/${repo}`,
   servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
-    get: (chartName: string, repo: IRepo, namespace: string, cluster: string = "default") => {
+    get: (cluster: string, namespace: string, chartName: string, repo: IRepo) => {
       const chartsSegment = namespace !== repo?.namespace ? "global-charts" : "charts";
       return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${chartName}`;
     },
     version: (
+      cluster: string,
+      namespace: string,
       chartName: string,
       chartVersion: string,
       repo: IRepo,
-      namespace: string,
-      cluster: string = "default",
-    ) => `${app.charts.get(chartName, repo, namespace, cluster)}/versions/${chartVersion}`,
+    ) => `${app.charts.get(cluster, namespace, chartName, repo)}/versions/${chartVersion}`,
   },
   operators: {
     view: (namespace: string, name: string) => `/ns/${namespace}/operators/${name}`,

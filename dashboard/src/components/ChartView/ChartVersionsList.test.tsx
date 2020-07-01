@@ -76,6 +76,7 @@ it("renders the list of versions", () => {
       versions={testVersions}
       selected={testVersions[1]}
       targetNamespace="targetNamespace"
+      cluster="default"
     />,
   );
   const items = wrapper.find("li");
@@ -84,7 +85,7 @@ it("renders the list of versions", () => {
   expect(link.prop("className")).toBe("type-bold type-color-action");
   // The link include the namespace
   expect(link.prop("to")).toBe(
-    url.app.charts.version("test", "1.2.2", testChart.data.repo, "targetNamespace"),
+    url.app.charts.version("default", "targetNamespace", "test", "1.2.2", testChart.data.repo),
   );
 });
 
@@ -94,6 +95,7 @@ it("does not render a the Show All link when there are 5 or less versions", () =
       versions={testVersions}
       selected={testVersions[1]}
       targetNamespace="targetNamespace"
+      cluster="default"
     />,
   );
   expect(wrapper.find("a").exists()).toBe(false);
@@ -116,6 +118,7 @@ it("renders a the Show All link when there are more than 5 versions", () => {
       versions={extendedVersions}
       selected={extendedVersions[1]}
       targetNamespace="targetNamespace"
+      cluster="default"
     />,
   );
   const showAllLink = wrapper.find("button");
@@ -131,6 +134,7 @@ it("shows all the versions when the Show All link is clicked", () => {
       versions={extendedVersions}
       selected={extendedVersions[1]}
       targetNamespace="targetNamespace"
+      cluster="default"
     />,
   );
   expect(wrapper.find("li")).toHaveLength(5);
