@@ -65,9 +65,11 @@ export const backend = {
 
 export const kubeops = {
   releases: {
-    list: (namespace: string) => `api/tiller-deploy/v1/namespaces/${namespace}/releases`,
-    listAll: () => "api/tiller-deploy/v1/releases",
-    get: (namespace: string, name: string) => `${kubeops.releases.list(namespace)}/${name}`,
+    list: (cluster: string, namespace: string) =>
+      `api/tiller-deploy/v1/clusters/${cluster}/namespaces/${namespace}/releases`,
+    listAll: (cluster: string) => `api/tiller-deploy/v1/clusters/${cluster}/releases`,
+    get: (cluster: string, namespace: string, name: string) =>
+      `${kubeops.releases.list(cluster, namespace)}/${name}`,
   },
 };
 

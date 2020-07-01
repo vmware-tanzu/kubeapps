@@ -15,7 +15,7 @@ export class App {
     values?: string,
   ) {
     const chartAttrs = chartVersion.relationships.chart.data;
-    const endpoint = url.kubeops.releases.list(namespace);
+    const endpoint = url.kubeops.releases.list(cluster, namespace);
     const { data } = await axiosWithAuth.post(endpoint, {
       appRepositoryResourceName: chartAttrs.repo.name,
       appRepositoryResourceNamespace: chartNamespace,
@@ -28,6 +28,7 @@ export class App {
   }
 
   public static async upgrade(
+    cluster: string,
     namespace: string,
     releaseName: string,
     chartNamespace: string,
@@ -35,7 +36,7 @@ export class App {
     values?: string,
   ) {
     const chartAttrs = chartVersion.relationships.chart.data;
-    const endpoint = url.kubeops.releases.get(namespace, releaseName);
+    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
     const { data } = await axiosWithAuth.put(endpoint, {
       appRepositoryResourceName: chartAttrs.repo.name,
       appRepositoryResourceNamespace: chartNamespace,
@@ -47,8 +48,13 @@ export class App {
     return data;
   }
 
-  public static async rollback(namespace: string, releaseName: string, revision: number) {
-    const endpoint = url.kubeops.releases.get(namespace, releaseName);
+  public static async rollback(
+    cluster: string,
+    namespace: string,
+    releaseName: string,
+    revision: number,
+  ) {
+    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
     const { data } = await axiosWithAuth.put(
       endpoint,
       {},
@@ -62,8 +68,13 @@ export class App {
     return data;
   }
 
-  public static async delete(namespace: string, releaseName: string, purge: boolean) {
-    let endpoint = url.kubeops.releases.get(namespace, releaseName);
+  public static async delete(
+    cluster: string,
+    namespace: string,
+    releaseName: string,
+    purge: boolean,
+  ) {
+    let endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
     if (purge) {
       endpoint += "?purge=true";
     }
@@ -71,10 +82,10 @@ export class App {
     return data;
   }
 
-  public static async listApps(namespace?: string, allStatuses?: boolean) {
+  public static async listApps(cluster: string, namespace?: string, allStatuses?: boolean) {
     let endpoint = namespace
-      ? url.kubeops.releases.list(namespace)
-      : url.kubeops.releases.listAll();
+      ? url.kubeops.releases.list(cluster, namespace)
+      : url.kubeops.releases.listAll(cluster);
     if (allStatuses) {
       endpoint += "?statuses=all";
     }
@@ -82,9 +93,9 @@ export class App {
     return data.data;
   }
 
-  public static async getRelease(namespace: string, name: string) {
+  public static async getRelease(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<{ data: hapi.release.Release }>(
-      url.kubeops.releases.get(namespace, name),
+      url.kubeops.releases.get(cluster, namespace, name),
     );
     return data.data;
   }

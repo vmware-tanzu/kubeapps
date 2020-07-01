@@ -42,18 +42,20 @@ describe("fetches applications", () => {
       { type: getType(actions.apps.listApps), payload: true },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", true));
+    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default", true));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toEqual(["default", true]);
+    expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default", true]);
   });
   it("fetches default applications", async () => {
     const expectedActions = [
       { type: getType(actions.apps.listApps), payload: false },
       { type: getType(actions.apps.receiveAppList), payload: [] },
     ];
-    await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+    await store.dispatch(
+      actions.apps.fetchAppsWithUpdateInfo("default-cluster", "default-ns", false),
+    );
     expect(store.getActions()).toEqual(expectedActions);
-    expect(listAppsMock.mock.calls[0]).toEqual(["default", false]);
+    expect(listAppsMock.mock.calls[0]).toEqual(["default-cluster", "default-ns", false]);
   });
 
   describe("fetches chart updates", () => {
@@ -91,7 +93,7 @@ describe("fetches applications", () => {
           },
         },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
       expect(store.getActions()).toEqual(expectedActions);
     });
 
@@ -129,7 +131,7 @@ describe("fetches applications", () => {
           },
         },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
       expect(store.getActions()).toEqual(expectedActions);
     });
 
@@ -166,7 +168,7 @@ describe("fetches applications", () => {
           },
         },
       ];
-      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default", false));
+      await store.dispatch(actions.apps.fetchAppsWithUpdateInfo("default-c", "default-ns", false));
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -183,22 +185,22 @@ describe("delete applications", () => {
     App.delete = deleteAppOrig;
   });
   it("delete an application", async () => {
-    await store.dispatch(actions.apps.deleteApp("default", "foo", false));
+    await store.dispatch(actions.apps.deleteApp("default-c", "default-ns", "foo", false));
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteApp) },
       { type: getType(actions.apps.receiveDeleteApp) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual(["default", "foo", false]);
+    expect(deleteAppMock.mock.calls[0]).toEqual(["default-c", "default-ns", "foo", false]);
   });
   it("delete and purge an application", async () => {
-    await store.dispatch(actions.apps.deleteApp("default", "foo", true));
+    await store.dispatch(actions.apps.deleteApp("default-c", "default-ns", "foo", true));
     const expectedActions = [
       { type: getType(actions.apps.requestDeleteApp) },
       { type: getType(actions.apps.receiveDeleteApp) },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(deleteAppMock.mock.calls[0]).toEqual(["default", "foo", true]);
+    expect(deleteAppMock.mock.calls[0]).toEqual(["default-c", "default-ns", "foo", true]);
   });
   it("delete and throw an error", async () => {
     const error = new Error("something went wrong!");
@@ -209,7 +211,9 @@ describe("delete applications", () => {
     deleteAppMock.mockImplementation(() => {
       throw error;
     });
-    expect(await store.dispatch(actions.apps.deleteApp("default", "foo", true))).toBe(false);
+    expect(
+      await store.dispatch(actions.apps.deleteApp("default-c", "default-ns", "foo", true)),
+    ).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
 });
@@ -297,8 +301,9 @@ describe("deploy chart", () => {
 
 describe("upgradeApp", () => {
   const provisionCMD = actions.apps.upgradeApp(
-    "my-version" as any,
+    "default-c",
     "kubeapps-ns",
+    "my-version" as any,
     definedNamespaces.all,
     "my-release",
   );
@@ -314,9 +319,10 @@ describe("upgradeApp", () => {
     ];
     expect(store.getActions()).toEqual(expectedActions);
     expect(App.upgrade).toHaveBeenCalledWith(
-      definedNamespaces.all,
-      "my-release",
+      "default-c",
       "kubeapps-ns",
+      "my-release",
+      definedNamespaces.all,
       "my-version" as any,
       undefined,
     );
@@ -342,8 +348,9 @@ describe("upgradeApp", () => {
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
       actions.apps.upgradeApp(
-        "my-version" as any,
+        "default-c",
         "kubeapps-ns",
+        "my-version" as any,
         "default",
         "my-release",
         "foo: 1",
@@ -368,7 +375,7 @@ describe("upgradeApp", () => {
 });
 
 describe("rollbackApp", () => {
-  const provisionCMD = actions.apps.rollbackApp("default", "my-release", 1);
+  const provisionCMD = actions.apps.rollbackApp("default-c", "default-ns", "my-release", 1);
 
   it("success and re-request apps info", async () => {
     App.rollback = jest.fn().mockImplementationOnce(() => true);
@@ -383,8 +390,8 @@ describe("rollbackApp", () => {
       { type: getType(actions.apps.selectApp), payload: true },
     ];
     expect(store.getActions()).toEqual(expectedActions);
-    expect(App.rollback).toHaveBeenCalledWith("default", "my-release", 1);
-    expect(App.getRelease).toHaveBeenCalledWith("default", "my-release");
+    expect(App.rollback).toHaveBeenCalledWith("default-c", "default-ns", "my-release", 1);
+    expect(App.getRelease).toHaveBeenCalledWith("default-c", "default-ns", "my-release");
   });
 
   it("dispatches an error", async () => {
