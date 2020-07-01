@@ -130,7 +130,7 @@ describe("createNamespace", () => {
 describe("getNamespace", () => {
   it("dispatches requested namespace", async () => {
     const ns = { metadata: { name: "default" } };
-    Namespace.get = jest.fn(() => ns);
+    Namespace.get = jest.fn().mockReturnValue(ns);
     const expectedActions = [
       {
         type: getType(requestNamespace),

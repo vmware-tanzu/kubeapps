@@ -51,7 +51,7 @@ it("should render a redirect to the default cluster and namespace", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual(app.apps.list("default"));
+  expect(wrapper.find(Redirect).prop("to")).toEqual(app.apps.list("default", "default"));
 });
 
 it("should render a redirect to the login page", () => {
@@ -102,8 +102,8 @@ describe("Routes depending on feature flags", () => {
     )
       .dive()
       .dive()
+      .dive()
       .dive();
-
     const component = wrapper.find({ component: RepoListContainer });
 
     expect(component.length).toBe(1);

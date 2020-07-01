@@ -9,7 +9,7 @@ import ChartReadme from "./ChartReadme";
 import ChartVersionsList from "./ChartVersionsList";
 import "./ChartView.css";
 
-interface IChartViewProps {
+export interface IChartViewProps {
   chartID: string;
   chartNamespace: string;
   fetchChartVersionsAndSelectVersion: (namespace: string, id: string, version?: string) => void;
@@ -19,6 +19,7 @@ interface IChartViewProps {
   resetChartVersion: () => any;
   getChartReadme: (namespace: string, version: string) => any;
   namespace: string;
+  cluster: string;
   version: string | undefined;
 }
 
@@ -46,7 +47,7 @@ class ChartView extends React.Component<IChartViewProps> {
   }
 
   public render() {
-    const { isFetching, getChartReadme, namespace, chartID, chartNamespace } = this.props;
+    const { isFetching, getChartReadme, cluster, namespace, chartID, chartNamespace } = this.props;
     const { version, readme, error, readmeError, versions } = this.props.selected;
     if (error) {
       return <ErrorSelector error={error} resource={`Chart ${chartID}`} />;
@@ -64,6 +65,7 @@ class ChartView extends React.Component<IChartViewProps> {
           repo={chartAttrs.repo.name}
           version={version}
           namespace={namespace}
+          cluster={cluster}
         />
         <main>
           <div className="container container-fluid">
@@ -99,7 +101,7 @@ class ChartView extends React.Component<IChartViewProps> {
                       <div>
                         <ul className="remove-style padding-l-reset margin-b-reset">
                           <li>
-                            <a href={chartAttrs.home} target="_blank">
+                            <a href={chartAttrs.home} target="_blank" rel="noopener noreferrer">
                               {chartAttrs.home}
                             </a>
                           </li>
@@ -123,7 +125,7 @@ class ChartView extends React.Component<IChartViewProps> {
                         <ul className="remove-style padding-l-reset margin-b-reset">
                           {chartAttrs.sources.map((s, i) => (
                             <li key={i}>
-                              <a href={s} target="_blank">
+                              <a href={s} target="_blank" rel="noopener noreferrer">
                                 {s}
                               </a>
                             </li>

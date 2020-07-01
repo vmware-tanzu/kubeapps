@@ -16,6 +16,7 @@ const defaultProps = {
   chartName: "my-chart",
   chartsIsFetching: false,
   namespace: "default",
+  cluster: "default",
   releaseName: "my-release",
   repo: "my-repo",
   repoNamespace: "kubeapps",
@@ -96,11 +97,10 @@ it("forwards the appValues when modified", () => {
 });
 
 it("triggers an upgrade when submitting the form", done => {
-  const releaseName = "my-release";
-  const namespace = "default";
+  const { namespace, releaseName } = defaultProps;
   const appValues = "foo: bar";
   const schema = { properties: { foo: { type: "string" } } };
-  const upgradeApp = jest.fn(() => true);
+  const upgradeApp = jest.fn().mockReturnValue(true);
   const push = jest.fn();
   const wrapper = mount(
     <UpgradeForm
@@ -122,7 +122,9 @@ it("triggers an upgrade when submitting the form", done => {
     schema,
   );
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith(url.app.apps.get(releaseName, namespace));
+    expect(push).toHaveBeenCalledWith(
+      url.app.apps.get(defaultProps.cluster, namespace, releaseName),
+    );
     done();
   }, 1);
 });

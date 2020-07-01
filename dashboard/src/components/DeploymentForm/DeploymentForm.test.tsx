@@ -27,12 +27,13 @@ const defaultProps = {
   fetchChartVersions: jest.fn(),
   getChartVersion: jest.fn(),
   namespace: "default",
+  cluster: "default",
 } as IDeploymentFormProps;
 const versions = [{ id: "foo", attributes: { version: "1.2.3" } }] as IChartVersion[];
 let monikerChooseMock: jest.Mock;
 
 beforeEach(() => {
-  monikerChooseMock = jest.fn(() => releaseName);
+  monikerChooseMock = jest.fn().mockReturnValue(releaseName);
   Moniker.choose = monikerChooseMock;
 });
 
@@ -130,7 +131,7 @@ it("renders the full DeploymentForm", () => {
 });
 
 it("renders a release name by default, relying in Monickers output", () => {
-  monikerChooseMock.mockImplementationOnce(() => "foo").mockImplementationOnce(() => "bar");
+  monikerChooseMock.mockReturnValueOnce("foo").mockReturnValueOnce("bar");
 
   let wrapper = shallow(
     <DeploymentForm {...defaultProps} selected={{ versions, version: versions[0] }} />,
@@ -171,7 +172,7 @@ it("triggers a deployment when submitting the form", done => {
   const namespace = "default";
   const appValues = "foo: bar";
   const schema = { properties: { foo: { type: "string", form: true } } };
-  const deployChart = jest.fn(() => true);
+  const deployChart = jest.fn().mockReturnValue(true);
   const push = jest.fn();
   const wrapper = mount(
     <DeploymentForm
@@ -193,7 +194,7 @@ it("triggers a deployment when submitting the form", done => {
     schema,
   );
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith(url.app.apps.get("my-release", "default"));
+    expect(push).toHaveBeenCalledWith(url.app.apps.get("default", "default", "my-release"));
     done();
   }, 1);
 });

@@ -8,7 +8,7 @@ class ServiceBrokersNotFoundAlert extends React.Component {
       <NotFoundErrorAlert header="No Service Brokers installed.">
         <p>
           Ask an administrator to install a compatible{" "}
-          <a href="https://github.com/osbkit/brokerlist" target="_blank">
+          <a href="https://github.com/osbkit/brokerlist" target="_blank" rel="noopener noreferrer">
             Service Broker
           </a>{" "}
           to browse, provision and manage external services within Kubeapps.

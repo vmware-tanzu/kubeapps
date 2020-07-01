@@ -1,0 +1,24 @@
+.kubeapps__logo {
+  max-width: 10em;
+}
+
+.kubeapps-nav-link {
+  outline: none !important;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.kubeapps-align-center {
+  display: flex;
+  align-items: center;
+}
+
+.kubeapps-dropdown {
+  opacity: 75%;
+}
+
+.kubeapps-dropdown-text {
+  margin-left: 0.3em;
+  margin-right: 0.3em;
+}

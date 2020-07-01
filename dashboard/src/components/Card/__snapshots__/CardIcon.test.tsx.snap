@@ -5,6 +5,7 @@ exports[`should render the icon if set 1`] = `
   className="Card__icon bg-light text-c"
 >
   <img
+    alt="icon"
     src="foo"
   />
 </div>

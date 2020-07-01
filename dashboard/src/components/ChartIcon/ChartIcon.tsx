@@ -14,7 +14,7 @@ class ChartIcon extends React.Component<IChartIconProps> {
 
     return (
       <div className="ChartIcon">
-        <img className="ChartIcon__img" src={iconSrc} />
+        <img className="ChartIcon__img" src={iconSrc} alt="icon" />
       </div>
     );
   }

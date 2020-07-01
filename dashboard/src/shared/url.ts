@@ -4,21 +4,20 @@ import { IChartVersion, IRepo } from "./types";
 
 export const app = {
   apps: {
-    new: (cv: IChartVersion, namespace: string, version: string, cluster: string = "default") => {
+    new: (cluster: string, namespace: string, cv: IChartVersion, version: string) => {
       const repoNamespace = cv.relationships.chart.data.repo.namespace;
       const newSegment = repoNamespace === namespace ? "new" : "new-from-global";
       return `/c/${cluster}/ns/${namespace}/apps/${newSegment}/${cv.relationships.chart.data.repo.name}/${cv.relationships.chart.data.name}/versions/${version}`;
     },
-    list: (namespace: string, cluster: string = "default") => `/c/${cluster}/ns/${namespace}/apps`,
-    get: (releaseName: string, namespace: string, cluster: string = "default") =>
-      `${app.apps.list(namespace, cluster)}/${releaseName}`,
-    upgrade: (releaseName: string, namespace: string, cluster: string = "default") =>
-      `${app.apps.get(releaseName, namespace, cluster)}/upgrade`,
+    list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/apps`,
+    get: (cluster: string, namespace: string, releaseName: string) =>
+      `${app.apps.list(cluster, namespace)}/${releaseName}`,
+    upgrade: (cluster: string, namespace: string, releaseName: string) =>
+      `${app.apps.get(cluster, namespace, releaseName)}/upgrade`,
   },
-  catalog: (namespace: string, cluster: string = "default") =>
-    `/c/${cluster}/ns/${namespace}/catalog`,
-  repo: (repo: string, namespace: string, cluster: string = "default") =>
-    `${app.catalog(namespace, cluster)}/${repo}`,
+  catalog: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/catalog`,
+  repo: (cluster: string, namespace: string, repo: string) =>
+    `${app.catalog(cluster, namespace)}/${repo}`,
   servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
     get: (chartName: string, repo: IRepo, namespace: string, cluster: string = "default") => {

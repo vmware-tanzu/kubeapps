@@ -10,7 +10,11 @@ class ServiceCatalogNotInstalledAlert extends React.Component {
         <div>
           <p>
             Ask an administrator to install the{" "}
-            <a href="https://github.com/kubernetes-incubator/service-catalog" target="_blank">
+            <a
+              href="https://github.com/kubernetes-incubator/service-catalog"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Kubernetes Service Catalog
             </a>{" "}
             to browse, provision and manage external services within Kubeapps.

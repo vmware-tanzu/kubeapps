@@ -47,8 +47,8 @@ beforeEach(() => {
     return { appRepository: { metadata: { name: "repo-abc" } } };
   });
   Secret.create = jest.fn();
-  Secret.list = jest.fn(() => {
-    return { items: [] };
+  Secret.list = jest.fn().mockReturnValue({
+    items: [],
   });
 });
 
@@ -249,8 +249,8 @@ describe("fetchRepos", () => {
         ],
       },
     };
-    Secret.list = jest.fn(() => {
-      return { items: [appRepoSecret, otherSecret] };
+    Secret.list = jest.fn().mockReturnValue({
+      items: [appRepoSecret, otherSecret],
     });
     const expectedActions = [
       {
@@ -523,12 +523,10 @@ describe("updateRepo", () => {
       spec: { auth: { header: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
     const secret = { metadata: { name: "apprepo-repo-abc" } };
-    AppRepository.update = jest.fn(() => {
-      return { appRepository: r };
+    AppRepository.update = jest.fn().mockReturnValue({
+      appRepository: r,
     });
-    Secret.get = jest.fn(() => {
-      return secret;
-    });
+    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),
@@ -572,12 +570,10 @@ describe("updateRepo", () => {
       spec: { auth: { customCA: { secretKeyRef: { name: "apprepo-repo-abc" } } } },
     };
     const secret = { metadata: { name: "apprepo-repo-abc" } };
-    AppRepository.update = jest.fn(() => {
-      return { appRepository: r };
+    AppRepository.update = jest.fn().mockReturnValue({
+      appRepository: r,
     });
-    Secret.get = jest.fn(() => {
-      return secret;
-    });
+    Secret.get = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.requestRepoUpdate),
@@ -685,8 +681,9 @@ describe("checkChart", () => {
 
 describe("validateRepo", () => {
   it("dispatches repoValidating and repoValidated if no error", async () => {
-    AppRepository.validate = jest.fn(() => {
-      return { code: 200, message: "OK" };
+    AppRepository.validate = jest.fn().mockReturnValue({
+      code: 200,
+      message: "OK",
     });
     const expectedActions = [
       {
@@ -723,8 +720,9 @@ describe("validateRepo", () => {
   });
 
   it("dispatches checkRepo and errorRepos when the validation cannot be parsed", async () => {
-    AppRepository.validate = jest.fn(() => {
-      return { code: 409, message: "forbidden" };
+    AppRepository.validate = jest.fn().mockReturnValue({
+      code: 409,
+      message: "forbidden",
     });
     const expectedActions = [
       {
@@ -752,10 +750,8 @@ describe("fetchImagePullSecrets", () => {
     const secret2 = {
       type: "Opaque",
     };
-    Secret.list = jest.fn(() => {
-      return {
-        items: [secret1, secret2],
-      };
+    Secret.list = jest.fn().mockReturnValue({
+      items: [secret1, secret2],
     });
     const expectedActions = [
       {
@@ -798,7 +794,7 @@ describe("createDockerRegistrySecret", () => {
     const secret = {
       type: "kubernetes.io/dockerconfigjson",
     };
-    Secret.createPullSecret = jest.fn(() => secret);
+    Secret.createPullSecret = jest.fn().mockReturnValue(secret);
     const expectedActions = [
       {
         type: getType(repoActions.createImagePullSecret),

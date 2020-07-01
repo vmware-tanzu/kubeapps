@@ -19,6 +19,7 @@ import LoadingWrapper from "../LoadingWrapper";
 
 export interface IOperatorInstanceProps {
   isFetching: boolean;
+  cluster: string;
   namespace: string;
   csvName: string;
   crdName: string;
@@ -261,12 +262,12 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
   };
 
   private handleDeleteClick = async () => {
-    const { namespace, resource } = this.props;
+    const { cluster, namespace, resource } = this.props;
     const { crd } = this.state;
     const deleted = await this.props.deleteResource(namespace, crd!.name.split(".")[0], resource!);
     this.closeModal();
     if (deleted) {
-      this.props.push(app.apps.list(namespace));
+      this.props.push(app.apps.list(cluster, namespace));
     }
   };
 }

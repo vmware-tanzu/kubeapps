@@ -6,6 +6,7 @@ import Footer from "../../containers/FooterContainer";
 import "./Layout.css";
 
 interface ILayoutProps {
+  children: JSX.Element;
   headerComponent: React.ComponentClass<any> | React.StatelessComponent<any>;
 }
 

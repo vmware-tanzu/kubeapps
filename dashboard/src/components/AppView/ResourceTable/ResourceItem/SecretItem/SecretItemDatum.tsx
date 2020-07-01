@@ -22,7 +22,9 @@ class SecretItemDatum extends React.PureComponent<ISecretItemDatumProps, ISecret
     const decodedValue = atob(value);
     return (
       <span className="flex">
-        <a onClick={this.toggleDisplay}>{hidden ? <Eye /> : <EyeOff />}</a>
+        <button className="secretDatum" onClick={this.toggleDisplay}>
+          {hidden ? <Eye /> : <EyeOff />}
+        </button>
         <span className="flex margin-l-normal">
           <span>{name}:</span>
           {hidden ? (

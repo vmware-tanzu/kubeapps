@@ -3,7 +3,7 @@ import * as React from "react";
 import { IAuthState } from "reducers/auth";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
-import Header from "./HeaderContainer";
+import HeaderContainer from "./HeaderContainer";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -41,8 +41,8 @@ const defaultState = {
 describe("HeaderContainer props", () => {
   it("maps authentication redux states to props", () => {
     const store = mockStore(defaultState);
-    const wrapper = shallow(<Header store={store} />);
-    const form = wrapper.find("Header");
+    const wrapper = shallow(<HeaderContainer store={store} />);
+    const form = wrapper.find("HeaderSelector");
     expect(form).toHaveProp({
       authenticated: true,
     });
@@ -56,9 +56,9 @@ describe("HeaderContainer props", () => {
       },
     });
 
-    const wrapper = shallow(<Header store={store} />);
+    const wrapper = shallow(<HeaderContainer store={store} />);
 
-    const form = wrapper.find("Header");
+    const form = wrapper.find("HeaderSelector");
     expect(form).toHaveProp({
       featureFlags: { ...defaultState.config.featureFlags, operators: true },
     });

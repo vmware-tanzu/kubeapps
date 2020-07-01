@@ -58,6 +58,7 @@ class ServiceClassList extends React.Component<IServiceClassListProps> {
                   information about how the Service Catalog works{" "}
                   <a
                     target="_blank"
+                    rel="noopener noreferrer"
                     href={
                       "https://kubernetes.io/docs/concepts/extend-kubernetes/service-catalog/#usage"
                     }

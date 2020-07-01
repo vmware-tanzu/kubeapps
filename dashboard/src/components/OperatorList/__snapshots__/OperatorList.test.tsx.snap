@@ -23,6 +23,7 @@ exports[`loading spinner matches the snapshot 1`] = `
          
         <a
           href="https://github.com/kubeapps/kubeapps/issues"
+          rel="noopener noreferrer"
           target="_blank"
         >
           here.
@@ -62,6 +63,7 @@ exports[`render the operator list with installed operators 1`] = `
          
         <a
           href="https://github.com/kubeapps/kubeapps/issues"
+          rel="noopener noreferrer"
           target="_blank"
         >
           here.
@@ -228,6 +230,7 @@ exports[`render the operator list without installed operators 1`] = `
          
         <a
           href="https://github.com/kubeapps/kubeapps/issues"
+          rel="noopener noreferrer"
           target="_blank"
         >
           here.

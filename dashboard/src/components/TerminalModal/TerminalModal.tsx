@@ -31,12 +31,10 @@ const TerminalModal: React.SFC<ITerminalModalProps> = props => {
       >
         <div className="Terminal__Top type-small">
           <div className="Terminal__Top__Buttons">
-            <a>
-              <span
-                className="Terminal__Top__Button Terminal__Top__Button--red"
-                onClick={props.closeModal}
-              />
-            </a>
+            <span
+              className="Terminal__Top__Button Terminal__Top__Button--red"
+              onClick={props.closeModal}
+            />
           </div>
           <div className="Terminal__Top__Title">{props.title}</div>
         </div>

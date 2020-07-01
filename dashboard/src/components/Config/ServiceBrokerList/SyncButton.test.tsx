@@ -20,7 +20,7 @@ it("should render the sync button", () => {
 });
 
 it("should execute the sync function with the given broker", done => {
-  const sync = jest.fn(() => new Promise(s => s()));
+  const sync = jest.fn().mockReturnValue(new Promise(s => s()));
   const wrapper = shallow(<SyncButton broker={broker} sync={sync} />);
   wrapper.simulate("click");
   expect(sync).toHaveBeenLastCalledWith(broker);

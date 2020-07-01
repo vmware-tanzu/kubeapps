@@ -3,9 +3,7 @@ import { Operators } from "./Operators";
 import { IClusterServiceVersion, IPackageManifest, IResource } from "./types";
 
 it("check if the OLM has been installed", async () => {
-  axiosWithAuth.get = jest.fn(() => {
-    return { status: 200 };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ status: 200 });
   expect(await Operators.isOLMInstalled("ns")).toBe(true);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
@@ -14,25 +12,19 @@ it("check if the OLM has been installed", async () => {
 });
 
 it("OLM is not installed if the request fails", async () => {
-  axiosWithAuth.get = jest.fn(() => {
-    return { status: 404 };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ status: 404 });
   expect(await Operators.isOLMInstalled("ns")).toBe(false);
 });
 
 it("OLM is not installed if the request returns != 200", async () => {
-  axiosWithAuth.get = jest.fn(() => {
-    return { status: 404 };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ status: 404 });
   expect(await Operators.isOLMInstalled("ns")).toBe(false);
 });
 
 it("get operators", async () => {
   const operator = { metadata: { name: "foo" } } as IPackageManifest;
   const ns = "default";
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: { items: [operator] } };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [operator] } });
   expect(await Operators.getOperators(ns)).toEqual([operator]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
@@ -44,9 +36,7 @@ it("get operator", async () => {
   const operator = { metadata: { name: "foo" } } as IPackageManifest;
   const ns = "default";
   const opName = "foo";
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: operator };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: operator });
   expect(await Operators.getOperator(ns, opName)).toEqual(operator);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
@@ -57,9 +47,7 @@ it("get operator", async () => {
 it("get csvs", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "default";
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: { items: [csv] } };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [csv] } });
   expect(await Operators.getCSVs(ns)).toEqual([csv]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
@@ -70,9 +58,7 @@ it("get csvs", async () => {
 it("get global csvs", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "_all";
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: { items: [csv] } };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [csv] } });
   expect(await Operators.getCSVs(ns)).toEqual([csv]);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
@@ -83,9 +69,7 @@ it("get global csvs", async () => {
 it("get csv", async () => {
   const csv = { metadata: { name: "foo" } } as IClusterServiceVersion;
   const ns = "default";
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: csv };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: csv });
   expect(await Operators.getCSV(ns, "foo")).toEqual(csv);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0][0]).toEqual(
@@ -96,9 +80,7 @@ it("get csv", async () => {
 it("creates a resource", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
-  axiosWithAuth.post = jest.fn(() => {
-    return { data: resource };
-  });
+  axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
   expect(await Operators.createResource(ns, "v1", "pods", resource)).toEqual(resource);
   expect(axiosWithAuth.post).toHaveBeenCalled();
   expect((axiosWithAuth.post as jest.Mock).mock.calls[0]).toEqual([
@@ -110,9 +92,7 @@ it("creates a resource", async () => {
 it("list resources", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: { items: [resource] } };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: { items: [resource] } });
   expect(await Operators.listResources(ns, "v1", "pods")).toEqual({ items: [resource] });
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
@@ -123,9 +103,7 @@ it("list resources", async () => {
 it("get a resource", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: resource };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: resource });
   expect(await Operators.getResource(ns, "v1", "pods", "foo")).toEqual(resource);
   expect(axiosWithAuth.get).toHaveBeenCalled();
   expect((axiosWithAuth.get as jest.Mock).mock.calls[0]).toEqual([
@@ -136,9 +114,7 @@ it("get a resource", async () => {
 it("deletes a resource", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
-  axiosWithAuth.delete = jest.fn(() => {
-    return { data: resource };
-  });
+  axiosWithAuth.delete = jest.fn().mockReturnValue({ data: resource });
   expect(await Operators.deleteResource(ns, "v1", "pods", "foo")).toEqual(resource);
   expect(axiosWithAuth.delete).toHaveBeenCalled();
   expect((axiosWithAuth.delete as jest.Mock).mock.calls[0]).toEqual([
@@ -149,9 +125,7 @@ it("deletes a resource", async () => {
 it("updates a resource", async () => {
   const resource = { metadata: { name: "foo" } } as IResource;
   const ns = "default";
-  axiosWithAuth.put = jest.fn(() => {
-    return { data: resource };
-  });
+  axiosWithAuth.put = jest.fn().mockReturnValue({ data: resource });
   expect(
     await Operators.updateResource(ns, "v1", "pods", resource.metadata.name, resource),
   ).toEqual(resource);
@@ -193,13 +167,9 @@ const operatorgroup = {
 
 it("creates an operatorgroup and a subscription", async () => {
   const operatorGroups = { items: [] };
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: operatorGroups };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: operatorGroups });
   const resource = { metadata: { name: "foo" } } as IResource;
-  axiosWithAuth.post = jest.fn(() => {
-    return { data: resource };
-  });
+  axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
   expect(await Operators.createOperator(namespace, "foo", "alpha", "Manual", "foo.1.0.0")).toEqual(
     resource,
   );
@@ -220,13 +190,9 @@ it("creates an operatorgroup and a subscription", async () => {
 
 it("creates only a subscription if the operator group already exists", async () => {
   const operatorGroups = { items: [{ metadata: { name: "foo" } }] };
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: operatorGroups };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: operatorGroups });
   const resource = { metadata: { name: "foo" } } as IResource;
-  axiosWithAuth.post = jest.fn(() => {
-    return { data: resource };
-  });
+  axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
   expect(await Operators.createOperator(namespace, "foo", "alpha", "Manual", "foo.1.0.0")).toEqual(
     resource,
   );
@@ -243,13 +209,9 @@ it("creates only a subscription if the operator group already exists", async () 
 
 it("creates only a subscription if the namespace is operators", async () => {
   const operatorGroups = { items: [] };
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: operatorGroups };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: operatorGroups });
   const resource = { metadata: { name: "foo" } } as IResource;
-  axiosWithAuth.post = jest.fn(() => {
-    return { data: resource };
-  });
+  axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
   expect(
     await Operators.createOperator("operators", "foo", "alpha", "Manual", "foo.1.0.0"),
   ).toEqual(resource);

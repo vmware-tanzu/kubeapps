@@ -72,8 +72,8 @@ describe("fetches applications", () => {
           },
         },
       ];
-      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
-      App.listApps = jest.fn(() => appsResponse);
+      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.listApps = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
@@ -110,8 +110,8 @@ describe("fetches applications", () => {
           },
         },
       ];
-      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
-      App.listApps = jest.fn(() => appsResponse);
+      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.listApps = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },
@@ -146,8 +146,8 @@ describe("fetches applications", () => {
           relationships: { latestChartVersion: { data: { version: "1.0" } } },
         },
       ];
-      Chart.listWithFilters = jest.fn(() => chartUpdatesResponse);
-      App.listApps = jest.fn(() => appsResponse);
+      Chart.listWithFilters = jest.fn().mockReturnValue(chartUpdatesResponse);
+      App.listApps = jest.fn().mockReturnValue(appsResponse);
       const expectedActions = [
         { type: getType(actions.apps.listApps), payload: false },
         { type: getType(actions.apps.receiveAppList), payload: appsResponse },

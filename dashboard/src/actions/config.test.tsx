@@ -10,7 +10,7 @@ let store: any;
 const testConfig = "have you tried to turn it off and on again";
 
 beforeEach(() => {
-  Config.getConfig = jest.fn(() => testConfig);
+  Config.getConfig = jest.fn().mockReturnValue(testConfig);
 
   store = mockStore();
 });

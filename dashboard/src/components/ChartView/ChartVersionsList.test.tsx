@@ -118,7 +118,7 @@ it("renders a the Show All link when there are more than 5 versions", () => {
       targetNamespace="targetNamespace"
     />,
   );
-  const showAllLink = wrapper.find("a");
+  const showAllLink = wrapper.find("button");
   expect(showAllLink.exists()).toBe(true);
   expect(showAllLink.text()).toBe("Show all...");
   const items = wrapper.find("li");
@@ -134,6 +134,6 @@ it("shows all the versions when the Show All link is clicked", () => {
     />,
   );
   expect(wrapper.find("li")).toHaveLength(5);
-  wrapper.find("a").simulate("click");
+  wrapper.find("button").simulate("click");
   expect(wrapper.find("li")).toHaveLength(7);
 });

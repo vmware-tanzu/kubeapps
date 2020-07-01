@@ -20,6 +20,7 @@ const defaultProps = {
     },
     name: "foo",
   } as hapi.release.Release,
+  cluster: "default",
 };
 
 it("renders a app item", () => {

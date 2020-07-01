@@ -40,6 +40,7 @@ describe("AppViewComponent", () => {
     error: undefined,
     getAppWithUpdateInfo: jest.fn(),
     namespace: "my-happy-place",
+    cluster: "default",
     releaseName: "mr-sunshine",
     push: jest.fn(),
   };

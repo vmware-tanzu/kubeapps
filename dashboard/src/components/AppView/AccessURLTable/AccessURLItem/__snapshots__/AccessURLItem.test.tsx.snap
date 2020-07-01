@@ -31,6 +31,7 @@ exports[`should show only an URL with a link 1`] = `
       <a
         className="padding-tiny padding-h-normal"
         href="http://1.2.3.4:8080"
+        rel="noopener noreferrer"
         target="_blank"
       >
         http://1.2.3.4:8080
@@ -43,6 +44,7 @@ exports[`should show only an URL with a link 1`] = `
       <a
         className="padding-tiny padding-h-normal"
         href="https://foo.bar"
+        rel="noopener noreferrer"
         target="_blank"
       >
         https://foo.bar

@@ -19,6 +19,7 @@ import "react-tabs/style/react-tabs.css";
 export interface IDeploymentFormProps {
   kubeappsNamespace: string;
   chartNamespace: string;
+  cluster: string;
   chartID: string;
   chartVersion: string;
   error: Error | undefined;
@@ -99,7 +100,11 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             <span>
               If you are unable to install the application, contact the chart maintainers or if you
               think the issue is related to Kubeapps, please open an{" "}
-              <a href="https://github.com/kubeapps/kubeapps/issues/new" target="_blank">
+              <a
+                href="https://github.com/kubeapps/kubeapps/issues/new"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 issue in GitHub
               </a>
               .
@@ -132,6 +137,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
             <DeploymentFormBody
               deploymentEvent="install"
               chartNamespace={this.props.chartNamespace}
+              cluster={this.props.cluster}
               chartID={this.props.chartID}
               chartVersion={this.props.chartVersion}
               chartsIsFetching={this.props.chartsIsFetching}
@@ -159,7 +165,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { chartNamespace, selected, deployChart, push, namespace } = this.props;
+    const { chartNamespace, cluster, selected, deployChart, push, namespace } = this.props;
     const { releaseName, appValues } = this.state;
 
     this.setState({ isDeploying: true, latestSubmittedReleaseName: releaseName });
@@ -174,7 +180,7 @@ class DeploymentForm extends React.Component<IDeploymentFormProps, IDeploymentFo
       );
       this.setState({ isDeploying: false });
       if (deployed) {
-        push(url.app.apps.get(releaseName, namespace));
+        push(url.app.apps.get(cluster, namespace, releaseName));
       }
     }
   };

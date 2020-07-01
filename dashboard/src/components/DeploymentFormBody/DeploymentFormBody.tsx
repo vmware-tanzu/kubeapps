@@ -21,6 +21,7 @@ import "./Tabs.css";
 export interface IDeploymentFormBodyProps {
   deploymentEvent: DeploymentEvent;
   chartNamespace: string;
+  cluster: string;
   chartID: string;
   chartVersion: string;
   deployedValues?: string;
@@ -152,13 +153,15 @@ class DeploymentFormBody extends React.Component<
     // TODO(andres): This requires refactoring. Currently, the deploy and upgrade
     // forms behave differently. In the deployment form, a change in the version
     // changes the route but in the case of the upgrade it only changes the state
-    const { namespace, selected, deploymentEvent } = this.props;
+    const { cluster, namespace, selected, deploymentEvent } = this.props;
 
     if (deploymentEvent === "upgrade") {
       const { chartID, chartNamespace, getChartVersion } = this.props;
       getChartVersion(chartNamespace, chartID, e.currentTarget.value);
     } else {
-      this.props.push(url.app.apps.new(selected.version!, namespace, e.currentTarget.value));
+      this.props.push(
+        url.app.apps.new(cluster, namespace, selected.version!, e.currentTarget.value),
+      );
     }
   };
 
@@ -189,7 +192,11 @@ class DeploymentFormBody extends React.Component<
                     This form has been automatically generated based on the chart schema.
                     <br />
                     This feature is currently in a beta state. If you find an issue please report it{" "}
-                    <a target="_blank" href="https://github.com/kubeapps/kubeapps/issues/new">
+                    <a
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href="https://github.com/kubeapps/kubeapps/issues/new"
+                    >
                       here.
                     </a>
                   </span>

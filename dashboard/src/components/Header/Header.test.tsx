@@ -1,6 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import { IClusterState } from "../../reducers/cluster";
+import { IClustersState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import Header from "./Header";
 
@@ -8,10 +8,15 @@ const defaultProps = {
   authenticated: true,
   fetchNamespaces: jest.fn(),
   logout: jest.fn(),
-  cluster: {
-    currentNamespace: "default",
-    namespaces: ["default", "other"],
-  } as IClusterState,
+  clusters: {
+    currentCluster: "default",
+    clusters: {
+      default: {
+        currentNamespace: "default",
+        namespaces: ["default", "other"],
+      },
+    },
+  } as IClustersState,
   defaultNamespace: "kubeapps-user",
   pathname: "",
   push: jest.fn(),
@@ -25,8 +30,8 @@ it("renders the header links and titles", () => {
   const menubar = wrapper.find(".header__nav__menu").first();
   const items = menubar.children().map(p => p.props().children.props);
   const expectedItems = [
-    { children: "Applications", to: app.apps.list("default") },
-    { children: "Catalog", to: app.catalog("default") },
+    { children: "Applications", to: app.apps.list("default", "default") },
+    { children: "Catalog", to: app.catalog("default", "default") },
     { children: "Service Instances (alpha)", to: app.servicesInstances("default") },
   ];
   expect(items.length).toEqual(expectedItems.length);
@@ -90,7 +95,7 @@ it("renders the namespace switcher", () => {
   expect(namespaceSelector.props()).toEqual(
     expect.objectContaining({
       defaultNamespace: defaultProps.defaultNamespace,
-      cluster: defaultProps.cluster,
+      cluster: defaultProps.clusters.clusters.default,
     }),
   );
 });
@@ -99,15 +104,20 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
   const setNamespace = jest.fn();
   const createNamespace = jest.fn();
   const getNamespace = jest.fn();
-  const cluster = {
-    currentNamespace: "foo",
-    namespaces: ["foo", "bar"],
+  const clusters = {
+    ...defaultProps.clusters,
+    clusters: {
+      default: {
+        currentNamespace: "foo",
+        namespaces: ["foo", "bar"],
+      },
+    },
   };
   const wrapper = shallow(
     <Header
       {...defaultProps}
       setNamespace={setNamespace}
-      cluster={cluster}
+      clusters={clusters}
       createNamespace={createNamespace}
       getNamespace={getNamespace}
     />,
@@ -126,15 +136,20 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
 it("doesn't call getNamespace when selecting all namespaces", () => {
   const setNamespace = jest.fn();
   const getNamespace = jest.fn();
-  const cluster = {
-    currentNamespace: "foo",
-    namespaces: ["foo", "bar"],
+  const clusters = {
+    ...defaultProps.clusters,
+    clusters: {
+      default: {
+        currentNamespace: "foo",
+        namespaces: ["foo", "bar"],
+      },
+    },
   };
   const wrapper = shallow(
     <Header
       {...defaultProps}
       setNamespace={setNamespace}
-      cluster={cluster}
+      clusters={clusters}
       getNamespace={getNamespace}
     />,
   );

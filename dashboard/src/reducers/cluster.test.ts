@@ -38,6 +38,7 @@ describe("clusterReducer", () => {
               payload: {
                 location: { ...location, pathname: tc.path },
                 action: "PUSH" as RouterActionType,
+                isFirstRendering: true,
               },
             }),
           ).toEqual({

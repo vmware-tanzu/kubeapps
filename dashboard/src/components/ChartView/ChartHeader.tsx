@@ -13,11 +13,12 @@ interface IChartHeaderProps {
   description: string;
   version: IChartVersion;
   namespace: string;
+  cluster: string;
 }
 
 class ChartHeader extends React.Component<IChartHeaderProps> {
   public render() {
-    const { id, icon, repo, description, version, namespace } = this.props;
+    const { id, icon, repo, description, version, cluster, namespace } = this.props;
     const appVersion = version.attributes.app_version;
     return (
       <header>
@@ -30,7 +31,7 @@ class ChartHeader extends React.Component<IChartHeaderProps> {
               <h1 className="margin-t-reset">{id}</h1>
               <h5 className="subtitle margin-b-normal">
                 {appVersion && <span>{appVersion} - </span>}
-                <Link to={url.app.repo(repo, namespace)}>{repo}</Link>
+                <Link to={url.app.repo(cluster, namespace, repo)}>{repo}</Link>
               </h5>
               <h5 className="subtitle margin-b-reset">{description}</h5>
             </div>

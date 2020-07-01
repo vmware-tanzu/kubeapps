@@ -13,7 +13,7 @@ import SearchFilter from "../SearchFilter";
 import AppListItem from "./AppListItem";
 import CustomResourceListItem from "./CustomResourceListItem";
 
-interface IAppListProps {
+export interface IAppListProps {
   apps: IAppState;
   fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
   cluster: string;
@@ -65,6 +65,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   public render() {
     const {
       apps: { error, isFetching },
+      cluster,
       isFetchingResources,
       namespace,
     } = this.props;
@@ -79,7 +80,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
           </div>
           <div className="col-3 text-r align-center">
             {!error && (
-              <Link to={url.app.catalog(namespace)}>
+              <Link to={url.app.catalog(cluster, namespace)}>
                 <button className="deploy-button button button-accent">Deploy App</button>
               </Link>
             )}
@@ -129,6 +130,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   public appListItems() {
     const {
       apps: { listOverview },
+      cluster,
       customResources,
     } = this.props;
     const filteredReleases = this.filteredReleases(listOverview || [], this.state.filter);
@@ -148,7 +150,7 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
       <div>
         <CardGrid>
           {filteredReleases.map(r => {
-            return <AppListItem key={r.releaseName} app={r} />;
+            return <AppListItem key={r.releaseName} app={r} cluster={cluster} />;
           })}
           {filteredCRs.map(r => {
             const csv = this.props.csvs.find(c =>

@@ -17,6 +17,7 @@ export interface IUpgradeFormProps {
   chartName: string;
   chartsIsFetching: boolean;
   namespace: string;
+  cluster: string;
   releaseName: string;
   repo: string;
   repoNamespace: string;
@@ -122,6 +123,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
               deployedValues={this.state.deployedValues}
               chartsIsFetching={this.props.chartsIsFetching}
               namespace={this.props.namespace}
+              cluster={this.props.cluster}
               releaseVersion={this.props.appCurrentVersion}
               selected={this.props.selected}
               push={this.props.push}
@@ -147,7 +149,15 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
 
   public handleDeploy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const { selected, push, upgradeApp, releaseName, namespace, repoNamespace } = this.props;
+    const {
+      selected,
+      push,
+      upgradeApp,
+      releaseName,
+      cluster,
+      namespace,
+      repoNamespace,
+    } = this.props;
     const { appValues } = this.state;
 
     this.setState({ isDeploying: true });
@@ -162,7 +172,7 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
       );
       this.setState({ isDeploying: false });
       if (deployed) {
-        push(url.app.apps.get(releaseName, namespace));
+        push(url.app.apps.get(cluster, namespace, releaseName));
       }
     }
   };

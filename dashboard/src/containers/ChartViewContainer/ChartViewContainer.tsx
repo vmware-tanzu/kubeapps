@@ -9,6 +9,7 @@ import { IChartVersion, IStoreState } from "../../shared/types";
 interface IRouteProps {
   match: {
     params: {
+      cluster: string;
       namespace: string;
       repo: string;
       global: string;
@@ -23,6 +24,7 @@ function mapStateToProps({ charts, config }: IStoreState, { match: { params } }:
     chartID: chartID(params),
     chartNamespace: params.global === "global" ? config.namespace : params.namespace,
     isFetching: charts.isFetching,
+    cluster: params.cluster,
     namespace: params.namespace,
     selected: charts.selected,
     version: params.version,

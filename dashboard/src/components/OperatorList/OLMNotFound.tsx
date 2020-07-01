@@ -12,6 +12,7 @@ class OLMNotFound extends React.Component {
             <a
               href="https://github.com/operator-framework/operator-lifecycle-manager"
               target="_blank"
+              rel="noopener noreferrer"
             >
               Operator Lifecycle Manager
             </a>{" "}

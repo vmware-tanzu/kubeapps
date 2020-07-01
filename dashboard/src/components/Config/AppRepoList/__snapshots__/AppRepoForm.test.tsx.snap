@@ -206,6 +206,7 @@ exports[`should render the repo form 1`] = `
            
           <a
             href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md"
+            rel="noopener noreferrer"
             target="_blank"
           >
             here
@@ -262,6 +263,7 @@ exports[`should render the repo form 1`] = `
              
             <a
               href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/private-app-repository.md#modifying-the-synchronization-job"
+              rel="noopener noreferrer"
               target="_blank"
             >
               here

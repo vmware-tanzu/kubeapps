@@ -2,9 +2,7 @@ import { axiosWithAuth } from "./AxiosInstance";
 import Secret from "./Secret";
 
 it("creates a secret", async () => {
-  axiosWithAuth.post = jest.fn(() => {
-    return { data: "ok" };
-  });
+  axiosWithAuth.post = jest.fn().mockReturnValue({ data: "ok" });
   const secrets = {
     foo: "bar",
   };
@@ -35,9 +33,7 @@ it("deletes a secret", async () => {
 });
 
 it("gets a secret", async () => {
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: "ok" };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: "ok" });
   await Secret.get("foo", "bar");
   expect(axiosWithAuth.get).toHaveBeenCalledWith(
     "api/clusters/default/api/v1/namespaces/bar/secrets/foo",
@@ -45,9 +41,7 @@ it("gets a secret", async () => {
 });
 
 it("lists secrets", async () => {
-  axiosWithAuth.get = jest.fn(() => {
-    return { data: "ok" };
-  });
+  axiosWithAuth.get = jest.fn().mockReturnValue({ data: "ok" });
   await Secret.list("foo");
   expect(axiosWithAuth.get).toHaveBeenCalledWith(
     "api/clusters/default/api/v1/namespaces/foo/secrets",
@@ -55,9 +49,7 @@ it("lists secrets", async () => {
 });
 
 it("creates a pull secret", async () => {
-  axiosWithAuth.post = jest.fn(() => {
-    return { data: "ok" };
-  });
+  axiosWithAuth.post = jest.fn().mockReturnValue({ data: "ok" });
   const name = "repo-1";
   const user = "foo";
   const password = "pass";

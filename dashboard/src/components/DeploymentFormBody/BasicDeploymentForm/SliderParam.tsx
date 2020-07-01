@@ -21,7 +21,7 @@ export interface ISliderParamState {
 
 function toNumber(value: string | number) {
   // Force to return a Number from a string removing any character that is not a digit
-  return typeof value === "number" ? value : Number(value.replace(/[^\d\.]/g, ""));
+  return typeof value === "number" ? value : Number(value.replace(/[^\d.]/g, ""));
 }
 
 function getDefaultValue(min: number, value?: string) {

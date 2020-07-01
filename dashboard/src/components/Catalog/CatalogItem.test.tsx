@@ -1,14 +1,48 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
-import { cloneDeep } from "lodash";
 import * as React from "react";
+import { Provider } from "react-redux";
+import { BrowserRouter as Router } from "react-router-dom";
+import configureMockStore, { MockStore } from "redux-mock-store";
+import thunk from "redux-thunk";
 
-import { IRepo } from "../../shared/types";
+import { IRepo, IStoreState } from "../../shared/types";
 import { CardIcon } from "../Card";
 import InfoCard from "../InfoCard";
-import CatalogItem, { IChartCatalogItem, IOperatorCatalogItem } from "./CatalogItem";
+import CatalogItem, {
+  ICatalogItemProps,
+  IChartCatalogItem,
+  IOperatorCatalogItem,
+} from "./CatalogItem";
 
 jest.mock("../../placeholder.png", () => "placeholder.png");
+const mockStore = configureMockStore([thunk]);
+
+// TODO(absoludity): As we move to function components with (redux) hooks we'll need to
+// be including state in tests, so we may want to put things like initialState
+// and a generalized getWrapper in a test helpers or similar package?
+const initialState = {
+  apps: {},
+  auth: {},
+  catalog: {},
+  charts: {},
+  config: {},
+  kube: {},
+  clusters: {
+    currentCluster: "default-cluster",
+  },
+  repos: {},
+  operators: {},
+} as IStoreState;
+
+const getWrapper = (store: MockStore, props: ICatalogItemProps) =>
+  mount(
+    <Provider store={store}>
+      <Router>
+        <CatalogItem {...props} />
+      </Router>
+    </Provider>,
+  );
 
 const defaultItem = {
   id: "foo1",
@@ -24,76 +58,84 @@ const defaultItem = {
   icon: "icon.png",
 } as IChartCatalogItem;
 
+const defaultProps: ICatalogItemProps = {
+  item: defaultItem,
+  type: "chart",
+};
+
+const defaultStore = mockStore(initialState);
+
 it("should render a chart item in a namespace", () => {
-  const wrapper = shallow(<CatalogItem item={defaultItem} type="chart" />);
-  expect(wrapper).toMatchSnapshot();
+  const wrapper = getWrapper(defaultStore, defaultProps);
+  // Can't shallow render connected components for easy snapshotting :/
+  // https://github.com/enzymejs/enzyme/issues/2202
+  expect(wrapper.find(InfoCard)).toMatchSnapshot();
 });
 
 it("should render a global chart item in a namespace", () => {
-  const globalItem = {
-    ...defaultItem,
-    repo: {
-      name: "repo-name",
-      namespace: "kubeapps",
-    } as IRepo,
+  const props = {
+    ...defaultProps,
+    item: {
+      ...defaultItem,
+      repo: {
+        name: "repo-name",
+        namespace: "kubeapps",
+      } as IRepo,
+    },
   };
-  const wrapper = shallow(<CatalogItem item={globalItem} type="chart" />);
-  expect(wrapper).toMatchSnapshot();
+  const wrapper = getWrapper(defaultStore, props);
+  expect(wrapper.find(InfoCard)).toMatchSnapshot();
 });
 
 it("should use the default placeholder for the icon if it doesn't exist", () => {
-  const chartWithoutIcon = cloneDeep(defaultItem);
-  chartWithoutIcon.icon = undefined;
-  const wrapper = shallow(<CatalogItem item={chartWithoutIcon} type="chart" />);
+  const props = {
+    ...defaultProps,
+    item: {
+      ...defaultItem,
+      icon: undefined,
+    },
+  };
+  const wrapper = getWrapper(defaultStore, props);
   // Importing an image returns "undefined"
-  expect(
-    wrapper
-      .find(InfoCard)
-      .shallow()
-      .find(CardIcon)
-      .prop("src"),
-  ).toBe(undefined);
+  expect(wrapper.find(CardIcon).prop("src")).toBe(undefined);
 });
 
 it("should place a dash if the version is not avaliable", () => {
-  const chartWithoutVersion = cloneDeep(defaultItem);
-  chartWithoutVersion.version = "";
-  const wrapper = shallow(<CatalogItem item={chartWithoutVersion} type="chart" />);
-  expect(
-    wrapper
-      .find(InfoCard)
-      .shallow()
-      .find(".type-color-light-blue")
-      .text(),
-  ).toBe("-");
+  const props = {
+    ...defaultProps,
+    item: {
+      ...defaultItem,
+      version: "",
+    },
+  };
+  const wrapper = getWrapper(defaultStore, props);
+  expect(wrapper.find(".type-color-light-blue").text()).toBe("-");
 });
 
 it("show the chart description", () => {
-  const chartWithDescription = cloneDeep(defaultItem);
-  chartWithDescription.description = "This is a description";
-  const wrapper = shallow(<CatalogItem item={chartWithDescription} type="chart" />);
-  expect(
-    wrapper
-      .find(InfoCard)
-      .shallow()
-      .find(".ListItem__content__description")
-      .text(),
-  ).toBe(chartWithDescription.description);
+  const props = {
+    ...defaultProps,
+    item: {
+      ...defaultItem,
+      description: "This is a description",
+    },
+  };
+  const wrapper = getWrapper(defaultStore, props);
+  expect(wrapper.find(".ListItem__content__description").text()).toBe(props.item.description);
 });
 
 context("when the description is too long", () => {
   it("trims the description", () => {
-    const chartWithDescription = cloneDeep(defaultItem);
-    chartWithDescription.description =
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ultrices velit leo, quis pharetra mi vestibulum quis.";
-    const wrapper = shallow(<CatalogItem item={chartWithDescription} type="chart" />);
-    expect(
-      wrapper
-        .find(InfoCard)
-        .shallow()
-        .find(".ListItem__content__description")
-        .text(),
-    ).toMatch(/\.\.\.$/);
+    const props = {
+      ...defaultProps,
+      item: {
+        ...defaultItem,
+        description:
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum ultrices velit leo, quis pharetra mi vestibulum quis.",
+      },
+    };
+    const wrapper = getWrapper(defaultStore, props);
+    expect(wrapper.find(".ListItem__content__description").text()).toMatch(/\.\.\.$/);
   });
 });
 

@@ -12,7 +12,7 @@ class CardIcon extends React.PureComponent<ICardIconProps> {
 
     return icon && icon !== "" ? (
       <div className="Card__icon bg-light text-c">
-        <img src={icon} />
+        <img src={icon} alt="icon" />
       </div>
     ) : (
       ""
