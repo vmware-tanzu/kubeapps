@@ -194,7 +194,7 @@ it("triggers a deployment when submitting the form", done => {
     schema,
   );
   setTimeout(() => {
-    expect(push).toHaveBeenCalledWith(url.app.apps.get("my-release", "default"));
+    expect(push).toHaveBeenCalledWith(url.app.apps.get("default", "default", "my-release"));
     done();
   }, 1);
 });

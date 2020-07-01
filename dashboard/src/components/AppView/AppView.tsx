@@ -155,7 +155,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
             )}
             <div className="row collapse-b-tablet">
               <div className="col-3">
-                <ChartInfo app={app} />
+                <ChartInfo app={app} cluster={cluster} />
               </div>
               <div className="col-9">
                 <div className="row padding-t-bigger">

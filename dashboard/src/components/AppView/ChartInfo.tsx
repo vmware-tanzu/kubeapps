@@ -9,6 +9,7 @@ import "./ChartInfo.css";
 
 interface IChartInfoProps {
   app: IRelease;
+  cluster: string;
 }
 
 class ChartInfo extends React.Component<IChartInfoProps> {
@@ -47,7 +48,7 @@ class ChartInfo extends React.Component<IChartInfoProps> {
   }
 
   private updateStatusInfo() {
-    const { app } = this.props;
+    const { app, cluster } = this.props;
     // If update is not set yet we cannot know if there is
     // an update available or not
     if (app.updateInfo) {
@@ -98,8 +99,8 @@ class ChartInfo extends React.Component<IChartInfoProps> {
               {update}
               <br />
               <span>
-                Click <Link to={url.app.apps.upgrade(app.name, app.namespace)}>here</Link> to
-                upgrade.
+                Click <Link to={url.app.apps.upgrade(cluster, app.namespace, app.name)}>here</Link>{" "}
+                to upgrade.
               </span>
             </React.Fragment>
           );

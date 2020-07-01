@@ -1,6 +1,5 @@
 import { RouterAction } from "connected-react-router";
 import * as React from "react";
-import { Redirect } from "react-router";
 
 import { IRelease } from "shared/types";
 import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
@@ -85,7 +84,7 @@ class AppControls extends React.Component<IAppControlsProps, IAppControlsState> 
             )
           }
         />
-        {this.state.redirectToAppList && <Redirect to={url.app.apps.list(cluster, namespace)} />}
+        {this.state.redirectToAppList && push(url.app.apps.list(cluster, namespace))}
       </div>
     );
   }
