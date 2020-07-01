@@ -6,7 +6,7 @@ import LoadingWrapper, {
 } from "../../components/LoadingWrapper/LoadingWrapper";
 
 interface IConfigLoaderProps extends ILoadingWrapperProps {
-  children: JSX.Element;
+  children?: JSX.Element;
   getConfig: () => void;
   error?: Error;
 }

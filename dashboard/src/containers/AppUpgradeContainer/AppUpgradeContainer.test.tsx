@@ -23,18 +23,24 @@ const makeStore = (apps: any, repos: any) => {
   });
 };
 
+const defaultMatch = {
+  params: {
+    cluster: "default",
+    namespace: "default",
+    releaseName: "foo",
+  },
+};
+
 describe("LoginFormContainer props", () => {
   it("repoName is empty if no apps nor repos are available", () => {
     const store = makeStore({}, { errors: {}, repo: {} });
-    const match = { params: { namespace: "default", releaseName: "foo" } };
-    const wrapper = shallow(<Upgrade store={store} match={match} />);
+    const wrapper = shallow(<Upgrade store={store} match={defaultMatch} />);
     expect(wrapper.find(AppUpgrade).prop("repoName")).toBe(undefined);
   });
 
   it("repoName is set using the selected repo", () => {
     const store = makeStore({}, { errors: {}, repo: { metadata: { name: "stable" } } });
-    const match = { params: { namespace: "default", releaseName: "foo" } };
-    const wrapper = shallow(<Upgrade store={store} match={match} />);
+    const wrapper = shallow(<Upgrade store={store} match={defaultMatch} />);
     expect(wrapper.find(AppUpgrade).prop("repoName")).toBe("stable");
   });
 
@@ -43,8 +49,7 @@ describe("LoginFormContainer props", () => {
       { selected: { updateInfo: { repository: { name: "bitnami" } } } },
       { errors: {}, repo: {} },
     );
-    const match = { params: { namespace: "default", releaseName: "foo" } };
-    const wrapper = shallow(<Upgrade store={store} match={match} />);
+    const wrapper = shallow(<Upgrade store={store} match={defaultMatch} />);
     expect(wrapper.find(AppUpgrade).prop("repoName")).toBe("bitnami");
   });
 });
