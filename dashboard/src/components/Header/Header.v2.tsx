@@ -18,14 +18,14 @@ ClarityIcons.addIcons(applicationsIcon, clusterIcon, fileGroupIcon, angleIcon);
 
 interface IHeaderProps {
   authenticated: boolean;
-  fetchNamespaces: () => void;
+  fetchNamespaces: (cluster: string) => void;
   logout: () => void;
   clusters: IClustersState;
   defaultNamespace: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
-  createNamespace: (ns: string) => Promise<boolean>;
-  getNamespace: (ns: string) => void;
+  createNamespace: (cluster: string, ns: string) => Promise<boolean>;
+  getNamespace: (cluster: string, ns: string) => void;
 }
 
 function Header(props: IHeaderProps) {

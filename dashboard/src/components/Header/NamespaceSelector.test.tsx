@@ -9,10 +9,15 @@ import NewNamespace from "./NewNamespace";
 
 const defaultProps = {
   fetchNamespaces: jest.fn(),
-  cluster: {
-    currentNamespace: "namespace-two",
-    namespaces: ["namespace-one", "namespace-two"],
-  } as IClusterState,
+  clusters: {
+    currentCluster: "default",
+    clusters: {
+      default: {
+        currentNamespace: "namespace-two",
+        namespaces: ["namespace-one", "namespace-two"],
+      } as IClusterState,
+    },
+  },
   defaultNamespace: "kubeapps-user",
   onChange: jest.fn(),
   createNamespace: jest.fn(),
@@ -24,8 +29,8 @@ it("renders the given namespaces with current selection", () => {
   const select = wrapper.find(".NamespaceSelector__select").first();
 
   const expectedValue = {
-    label: defaultProps.cluster.currentNamespace,
-    value: defaultProps.cluster.currentNamespace,
+    label: defaultProps.clusters.clusters.default.currentNamespace,
+    value: defaultProps.clusters.clusters.default.currentNamespace,
   };
   expect(select.props()).toMatchObject({
     value: expectedValue,
@@ -41,9 +46,15 @@ it("renders the given namespaces with current selection", () => {
 it("render with the default namespace selected if no current selection", () => {
   const props = {
     ...defaultProps,
-    cluster: {
-      ...defaultProps.cluster,
-      currentNamespace: "",
+    clusters: {
+      ...defaultProps.clusters,
+      clusters: {
+        ...defaultProps.clusters.clusters,
+        default: {
+          currentNamespace: "",
+          namespaces: [],
+        },
+      },
     },
   } as INamespaceSelectorProps;
   const wrapper = shallow(<NamespaceSelector {...props} />);
@@ -69,7 +80,7 @@ it("opens the modal to add a new namespace and creates it", async () => {
   wrapper.update();
 
   wrapper.find(".button-primary").simulate("click");
-  expect(createNamespace).toHaveBeenCalledWith("test");
+  expect(createNamespace).toHaveBeenCalledWith("default", "test");
   // hack to wait for the state to be updated
   await new Promise(res =>
     setTimeout(() => {
@@ -83,29 +94,45 @@ it("opens the modal to add a new namespace and creates it", async () => {
 it("fetches namespaces and retrive the current namespace", () => {
   const fetchNamespaces = jest.fn();
   const getNamespace = jest.fn();
-  shallow(
-    <NamespaceSelector
-      {...defaultProps}
-      fetchNamespaces={fetchNamespaces}
-      getNamespace={getNamespace}
-      cluster={{ currentNamespace: "foo", namespaces: [] }}
-    />,
-  );
+  const props = {
+    ...defaultProps,
+    fetchNamespaces,
+    getNamespace,
+    clusters: {
+      ...defaultProps.clusters,
+      clusters: {
+        ...defaultProps.clusters.clusters,
+        default: {
+          currentNamespace: "foo",
+          namespaces: [],
+        },
+      },
+    },
+  };
+  shallow(<NamespaceSelector {...props} />);
   expect(fetchNamespaces).toHaveBeenCalled();
-  expect(getNamespace).toHaveBeenCalledWith("foo");
+  expect(getNamespace).toHaveBeenCalledWith("default", "foo");
 });
 
 it("doesnt' get the current namespace if all namespaces is selected", () => {
   const fetchNamespaces = jest.fn();
   const getNamespace = jest.fn();
-  shallow(
-    <NamespaceSelector
-      {...defaultProps}
-      fetchNamespaces={fetchNamespaces}
-      getNamespace={getNamespace}
-      cluster={{ currentNamespace: "_all", namespaces: [] }}
-    />,
-  );
+  const props = {
+    ...defaultProps,
+    fetchNamespaces,
+    getNamespace,
+    clusters: {
+      ...defaultProps.clusters,
+      clusters: {
+        ...defaultProps.clusters.clusters,
+        default: {
+          currentNamespace: "_all",
+          namespaces: [],
+        },
+      },
+    },
+  };
+  shallow(<NamespaceSelector {...props} />);
   expect(fetchNamespaces).toHaveBeenCalled();
   expect(getNamespace).not.toHaveBeenCalled();
 });

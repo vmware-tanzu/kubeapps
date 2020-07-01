@@ -95,7 +95,7 @@ it("renders the namespace switcher", () => {
   expect(namespaceSelector.props()).toEqual(
     expect.objectContaining({
       defaultNamespace: defaultProps.defaultNamespace,
-      cluster: defaultProps.clusters.clusters.default,
+      clusters: defaultProps.clusters,
     }),
   );
 });
@@ -129,7 +129,7 @@ it("call setNamespace and getNamespace when selecting a namespace", () => {
   onChange("bar");
 
   expect(setNamespace).toHaveBeenCalledWith("bar");
-  expect(getNamespace).toHaveBeenCalledWith("bar");
+  expect(getNamespace).toHaveBeenCalledWith("default", "bar");
   expect(createNamespace).not.toHaveBeenCalled();
 });
 

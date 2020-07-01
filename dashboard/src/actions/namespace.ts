@@ -41,10 +41,12 @@ const allActions = [
 ];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
 
-export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
+export function fetchNamespaces(
+  cluster: string,
+): ThunkAction<Promise<void>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
-      const namespaceList = await Namespace.list();
+      const namespaceList = await Namespace.list(cluster);
       const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
       dispatch(receiveNamespaces(namespaceStrings));
     } catch (e) {
@@ -55,13 +57,14 @@ export function fetchNamespaces(): ThunkAction<Promise<void>, IStoreState, null,
 }
 
 export function createNamespace(
+  cluster: string,
   ns: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
-      await Namespace.create(ns);
+      await Namespace.create(cluster, ns);
       dispatch(postNamespace(ns));
-      dispatch(fetchNamespaces());
+      dispatch(fetchNamespaces(cluster));
       return true;
     } catch (e) {
       dispatch(errorNamespaces(e, "create"));
@@ -71,12 +74,13 @@ export function createNamespace(
 }
 
 export function getNamespace(
+  cluster: string,
   ns: string,
 ): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
       dispatch(requestNamespace(ns));
-      const namespace = await Namespace.get(ns);
+      const namespace = await Namespace.get(cluster, ns);
       dispatch(receiveNamespace(namespace));
       return true;
     } catch (e) {

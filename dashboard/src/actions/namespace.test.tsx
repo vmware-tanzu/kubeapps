@@ -67,7 +67,7 @@ describe("fetchNamespaces", () => {
       },
     ];
 
-    await store.dispatch(fetchNamespaces());
+    await store.dispatch(fetchNamespaces("default-c"));
     expect(store.getActions()).toEqual(expectedActions);
   });
 
@@ -81,7 +81,7 @@ describe("fetchNamespaces", () => {
       },
     ];
 
-    await store.dispatch(fetchNamespaces());
+    await store.dispatch(fetchNamespaces("default-c"));
 
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -106,7 +106,7 @@ describe("createNamespace", () => {
       },
     ];
 
-    const res = await store.dispatch(createNamespace("overlook-hotel"));
+    const res = await store.dispatch(createNamespace("default-c", "overlook-hotel"));
     expect(res).toBe(true);
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -121,7 +121,7 @@ describe("createNamespace", () => {
       },
     ];
 
-    const res = await store.dispatch(createNamespace("foo"));
+    const res = await store.dispatch(createNamespace("default-c", "foo"));
     expect(res).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -134,14 +134,14 @@ describe("getNamespace", () => {
     const expectedActions = [
       {
         type: getType(requestNamespace),
-        payload: "default",
+        payload: "default-ns",
       },
       {
         type: getType(receiveNamespace),
         payload: ns,
       },
     ];
-    const r = await store.dispatch(getNamespace("default"));
+    const r = await store.dispatch(getNamespace("default-c", "default-ns"));
     expect(r).toBe(true);
     expect(store.getActions()).toEqual(expectedActions);
   });
@@ -152,14 +152,14 @@ describe("getNamespace", () => {
     const expectedActions = [
       {
         type: getType(requestNamespace),
-        payload: "default",
+        payload: "default-ns",
       },
       {
         type: getType(errorNamespaces),
         payload: { err, op: "get" },
       },
     ];
-    const r = await store.dispatch(getNamespace("default"));
+    const r = await store.dispatch(getNamespace("default-c", "default-ns"));
     expect(r).toBe(false);
     expect(store.getActions()).toEqual(expectedActions);
   });
