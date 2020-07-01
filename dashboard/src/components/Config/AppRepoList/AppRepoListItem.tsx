@@ -73,7 +73,7 @@ export class AppRepoListItem extends React.Component<IAppRepoListItemProps, IApp
     return (
       <tr key={repo.metadata.name}>
         <td>
-          <Link to={url.app.repo(cluster, repo.metadata.name, namespace)}>
+          <Link to={url.app.repo(cluster, namespace, repo.metadata.name)}>
             {repo.metadata.name}
           </Link>
         </td>
