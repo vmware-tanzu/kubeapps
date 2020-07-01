@@ -1,0 +1,25 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a PageHeader 1`] = `
+<div
+  className="search-box"
+>
+  <form
+    onSubmit={[Function]}
+  >
+    <ReactWrapperComponent
+      shape="search"
+      size="sm"
+    />
+    <input
+      autoComplete="off"
+      className="padding-l-bigger"
+      id="search"
+      onChange={[Function]}
+      placeholder="search!"
+      type="text"
+      value="test"
+    />
+  </form>
+</div>
+`;

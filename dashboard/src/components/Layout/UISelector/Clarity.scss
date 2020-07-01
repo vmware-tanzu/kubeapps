@@ -1,6 +1,5 @@
-@import "node_modules/@clr/core/styles/global.min.css";
-@import "node_modules/@clr/city/css/bundles/default.min.css";
-
-body {
-  font-family: "Clarity City", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+.clr-row {
+  // By default, a row has negative margin. This causes
+  // that a row for the whole body surpasses its limits
+  margin: 0;
 }

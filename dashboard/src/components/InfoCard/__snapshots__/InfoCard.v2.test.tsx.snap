@@ -1,0 +1,70 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a Card 1`] = `
+<div
+  className="clr-col-lg-3 clr-col-12"
+>
+  <Link
+    className="card clickable"
+    to="/a/link/somewhere"
+  >
+    <div
+      className="card-header"
+    >
+      foo
+    </div>
+    <div
+      className="card-block"
+    >
+      <div
+        className="card-media-block"
+      >
+        <img
+          alt="icon"
+          className="card-media-image"
+          src="an-icon.png"
+        />
+        <div
+          className="card-media-description"
+        >
+          <span
+            className="card-media-text"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      className="card-footer"
+    >
+      <div
+        className="clr-row"
+      >
+        <div
+          className="clr-col-6"
+          style={
+            Object {
+              "padding": 0,
+            }
+          }
+        >
+          foobar
+        </div>
+        <div
+          className="clr-col-6 label-section"
+        >
+          <span
+            className="label blue"
+          >
+            database
+          </span>
+          <span
+            className="label red"
+          >
+            running
+          </span>
+        </div>
+      </div>
+    </div>
+  </Link>
+</div>
+`;

@@ -1,0 +1,28 @@
+.card-media-text {
+  height: 3.4rem;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.card-block {
+  height: 6em;
+}
+
+.card-footer .label-section {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.card-footer img {
+  max-width: 24px;
+}
+
+.card .alert {
+  top: -2rem;
+}
+
+.card.clickable:hover {
+  -webkit-transform: none;
+  transform: none;
+}
