@@ -52,8 +52,12 @@ class DeploymentFormBody extends React.Component<
   };
 
   public componentDidMount() {
-    const { chartID, chartNamespace, getChartVersion, chartVersion } = this.props;
-    getChartVersion(chartNamespace, chartID, chartVersion);
+    const { chartID, chartNamespace, getChartVersion, chartVersion, selected } = this.props;
+    const { version } = selected;
+    if (!version || version.id !== chartID) {
+      // The chart version may have been already populated from the ChartView
+      getChartVersion(chartNamespace, chartID, chartVersion);
+    }
   }
 
   public componentDidUpdate = (prevProps: IDeploymentFormBodyProps) => {
