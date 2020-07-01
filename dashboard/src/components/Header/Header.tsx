@@ -14,15 +14,15 @@ import NamespaceSelector from "./NamespaceSelector";
 export interface IHeaderProps {
   appVersion: string;
   authenticated: boolean;
-  fetchNamespaces: () => void;
+  fetchNamespaces: (cluster: string) => void;
   logout: () => void;
   clusters: IClustersState;
   defaultNamespace: string;
   pathname: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
-  createNamespace: (ns: string) => Promise<boolean>;
-  getNamespace: (ns: string) => void;
+  createNamespace: (cluster: string, ns: string) => Promise<boolean>;
+  getNamespace: (cluster: string, ns: string) => void;
   featureFlags: IFeatureFlags;
 }
 
@@ -113,7 +113,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
             {showNav && (
               <div className="header__nav header__nav-config">
                 <NamespaceSelector
-                  cluster={cluster}
+                  clusters={clusters}
                   defaultNamespace={defaultNamespace}
                   onChange={this.handleNamespaceChange}
                   fetchNamespaces={fetchNamespaces}
@@ -189,11 +189,17 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
   };
 
   private handleNamespaceChange = (ns: string) => {
-    const { pathname, push, setNamespace, getNamespace } = this.props;
+    const {
+      clusters: { currentCluster },
+      pathname,
+      push,
+      setNamespace,
+      getNamespace,
+    } = this.props;
     const to = pathname.replace(/\/ns\/[^/]*/, `/ns/${ns}`);
     setNamespace(ns);
     if (ns !== definedNamespaces.all) {
-      getNamespace(ns);
+      getNamespace(currentCluster, ns);
     }
     if (to !== pathname) {
       push(to);

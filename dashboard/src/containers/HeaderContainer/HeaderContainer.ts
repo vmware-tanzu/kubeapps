@@ -28,12 +28,14 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    fetchNamespaces: () => dispatch(actions.namespace.fetchNamespaces()),
-    createNamespace: (ns: string) => dispatch(actions.namespace.createNamespace(ns)),
+    fetchNamespaces: (cluster: string) => dispatch(actions.namespace.fetchNamespaces(cluster)),
+    createNamespace: (cluster: string, ns: string) =>
+      dispatch(actions.namespace.createNamespace(cluster, ns)),
     logout: () => dispatch(actions.auth.logout()),
     push: (path: string) => dispatch(push(path)),
     setNamespace: (ns: string) => dispatch(actions.namespace.setNamespace(ns)),
-    getNamespace: (ns: string) => dispatch(actions.namespace.getNamespace(ns)),
+    getNamespace: (cluster: string, ns: string) =>
+      dispatch(actions.namespace.getNamespace(cluster, ns)),
   };
 }
 
