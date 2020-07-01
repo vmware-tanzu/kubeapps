@@ -48,8 +48,12 @@ function withNS(namespace: string) {
 }
 
 export const backend = {
+  namespaces: {
+    base: "api/v1/namespaces",
+    list: () => `${backend.namespaces.base}`,
+  },
   apprepositories: {
-    base: (namespace: string) => `api/v1/namespaces/${namespace}/apprepositories`,
+    base: (namespace: string) => `${backend.namespaces.base}/${namespace}/apprepositories`,
     create: (namespace: string) => backend.apprepositories.base(namespace),
     validate: () => `${backend.apprepositories.base("kubeapps")}/validate`,
     delete: (name: string, namespace: string) =>
@@ -57,9 +61,13 @@ export const backend = {
     update: (namespace: string, name: string) =>
       `${backend.apprepositories.base(namespace)}/${name}`,
   },
-  namespaces: {
-    base: "api/v1/namespaces",
-    list: () => `${backend.namespaces.base}`,
+};
+
+export const kubeops = {
+  releases: {
+    list: (namespace: string) => `api/tiller-deploy/v1/namespaces/${namespace}/releases`,
+    listAll: () => "api/tiller-deploy/v1/releases",
+    get: (namespace: string, name: string) => `${kubeops.releases.list(namespace)}/${name}`,
   },
 };
 
