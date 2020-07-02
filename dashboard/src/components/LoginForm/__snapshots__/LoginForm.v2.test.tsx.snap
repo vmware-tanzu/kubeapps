@@ -31,6 +31,7 @@ exports[`oauth login form renders a login button link 1`] = `
       href="/sign/in"
     >
       <ReactWrapperComponent
+        id="login-submit-button"
         status="primary"
       >
         Login via OIDC Provider
@@ -114,6 +115,7 @@ exports[`token login form displays an error if the authentication error is passe
       </div>
     </div>
     <ReactWrapperComponent
+      id="login-submit-button"
       status="primary"
     >
       Submit
@@ -191,6 +193,7 @@ exports[`token login form renders a token login form 1`] = `
       </div>
     </div>
     <ReactWrapperComponent
+      id="login-submit-button"
       status="primary"
     >
       Submit
