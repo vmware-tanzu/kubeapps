@@ -12,8 +12,9 @@ interface IButtonProps {
   revision: number;
 }
 
-function mapStateToProps({ apps }: IStoreState, props: IButtonProps) {
+function mapStateToProps({ apps, clusters }: IStoreState, props: IButtonProps) {
   return {
+    cluster: clusters.currentCluster,
     namespace: props.namespace,
     releaseName: props.releaseName,
     revision: props.revision,
@@ -23,8 +24,8 @@ function mapStateToProps({ apps }: IStoreState, props: IButtonProps) {
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    rollbackApp: (namespace: string, releaseName: string, revision: number) =>
-      dispatch(actions.apps.rollbackApp(namespace, releaseName, revision)),
+    rollbackApp: (cluster: string, namespace: string, releaseName: string, revision: number) =>
+      dispatch(actions.apps.rollbackApp(cluster, namespace, releaseName, revision)),
   };
 }
 

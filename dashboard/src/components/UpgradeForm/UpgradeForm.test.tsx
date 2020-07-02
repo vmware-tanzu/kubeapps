@@ -114,9 +114,10 @@ it("triggers an upgrade when submitting the form", done => {
   wrapper.setState({ releaseName, appValues });
   wrapper.find("form").simulate("submit");
   expect(upgradeApp).toHaveBeenCalledWith(
+    defaultProps.cluster,
+    namespace,
     versions[0],
     "kubeapps",
-    namespace,
     releaseName,
     appValues,
     schema,

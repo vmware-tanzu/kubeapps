@@ -25,9 +25,10 @@ export interface IUpgradeFormProps {
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
   upgradeApp: (
+    cluster: string,
+    namespace: string,
     version: IChartVersion,
     chartNamespace: string,
-    namespace: string,
     releaseName: string,
     values?: string,
     schema?: JSONSchema4,
@@ -163,9 +164,10 @@ class UpgradeForm extends React.Component<IUpgradeFormProps, IUpgradeFormState> 
     this.setState({ isDeploying: true });
     if (selected.version) {
       const deployed = await upgradeApp(
+        cluster,
+        namespace,
         selected.version,
         repoNamespace,
-        namespace,
         releaseName,
         appValues,
         selected.schema,

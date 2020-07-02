@@ -2,11 +2,17 @@ import * as React from "react";
 import Modal from "react-modal";
 import RollbackDialog from "./RollbackDialog";
 
-interface IRollbackButtonProps {
-  releaseName: string;
+export interface IRollbackButtonProps {
+  cluster: string;
   namespace: string;
+  releaseName: string;
   revision: number;
-  rollbackApp: (namespace: string, releaseName: string, revision: number) => Promise<boolean>;
+  rollbackApp: (
+    cluster: string,
+    namespace: string,
+    releaseName: string,
+    revision: number,
+  ) => Promise<boolean>;
   loading: boolean;
   error?: Error;
 }
@@ -60,6 +66,7 @@ class RollbackButton extends React.Component<IRollbackButtonProps> {
   private handleRollback = async (revision: number) => {
     this.setState({ loading: true });
     const success = await this.props.rollbackApp(
+      this.props.cluster,
       this.props.namespace,
       this.props.releaseName,
       revision,

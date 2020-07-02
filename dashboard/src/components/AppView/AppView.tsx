@@ -25,8 +25,13 @@ export interface IAppViewProps {
   // TODO(miguel) how to make optional props? I tried adding error? but the container complains
   error: Error | undefined;
   deleteError: Error | undefined;
-  getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
-  deleteApp: (namespace: string, releaseName: string, purge: boolean) => Promise<boolean>;
+  getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
+  deleteApp: (
+    cluster: string,
+    namespace: string,
+    releaseName: string,
+    purge: boolean,
+  ) => Promise<boolean>;
   push: (location: string) => RouterAction;
 }
 
@@ -79,14 +84,14 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   };
 
   public async componentDidMount() {
-    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
-    getAppWithUpdateInfo(namespace, releaseName);
+    const { releaseName, getAppWithUpdateInfo, cluster, namespace } = this.props;
+    getAppWithUpdateInfo(cluster, namespace, releaseName);
   }
 
   public componentDidUpdate(prevProps: IAppViewProps) {
-    const { releaseName, getAppWithUpdateInfo, namespace, error, app } = this.props;
+    const { releaseName, getAppWithUpdateInfo, cluster, namespace, error, app } = this.props;
     if (prevProps.namespace !== namespace) {
-      getAppWithUpdateInfo(namespace, releaseName);
+      getAppWithUpdateInfo(cluster, namespace, releaseName);
       return;
     }
     if (error || !app) {
@@ -251,7 +256,12 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
   }
 
   private deleteApp = (purge: boolean) => {
-    return this.props.deleteApp(this.props.namespace, this.props.releaseName, purge);
+    return this.props.deleteApp(
+      this.props.cluster,
+      this.props.namespace,
+      this.props.releaseName,
+      purge,
+    );
   };
 }
 
