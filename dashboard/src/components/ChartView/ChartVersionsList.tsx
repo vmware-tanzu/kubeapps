@@ -8,6 +8,7 @@ interface IChartVersionsListProps {
   selected: IChartVersion;
   versions: IChartVersion[];
   targetNamespace: string;
+  cluster: string;
 }
 
 interface IChartVersionsListState {
@@ -32,10 +33,11 @@ class ChartVersionsList extends React.Component<IChartVersionsListProps, IChartV
           <Link
             className={selectedClass}
             to={url.app.charts.version(
+              this.props.cluster,
+              this.props.targetNamespace,
               chartData.name,
               v.attributes.version,
               chartData.repo,
-              this.props.targetNamespace,
             )}
           >
             {v.attributes.version} - {this.formatDate(v.attributes.created)}

@@ -221,11 +221,18 @@ describe("deploy chart", () => {
 
   it("returns true if namespace is correct and deployment is successful", async () => {
     const res = await store.dispatch(
-      actions.apps.deployChart("my-version" as any, "chart-namespace", "default", "my-release"),
+      actions.apps.deployChart(
+        "target-cluster",
+        "target-namespace",
+        "my-version" as any,
+        "chart-namespace",
+        "my-release",
+      ),
     );
     expect(res).toBe(true);
     expect(App.create).toHaveBeenCalledWith(
-      "default",
+      "target-cluster",
+      "target-namespace",
       "my-release",
       "chart-namespace",
       "my-version",
@@ -241,9 +248,10 @@ describe("deploy chart", () => {
   it("returns false and dispatches UnprocessableEntity if the namespace is _all", async () => {
     const res = await store.dispatch(
       actions.apps.deployChart(
+        "target-cluster",
+        definedNamespaces.all,
         "my-version" as any,
         "chart-namespace",
-        definedNamespaces.all,
         "my-release",
       ),
     );
@@ -262,9 +270,10 @@ describe("deploy chart", () => {
   it("returns false and dispatches UnprocessableEntity if the given values don't satisfy the schema ", async () => {
     const res = await store.dispatch(
       actions.apps.deployChart(
+        "target-cluster",
+        "default",
         "my-version" as any,
         "chart-namespace",
-        "default",
         "my-release",
         "foo: 1",
         {

@@ -87,6 +87,7 @@ class ChartView extends React.Component<IChartViewProps> {
                       selected={version}
                       versions={versions}
                       targetNamespace={namespace}
+                      cluster={cluster}
                     />
                   </div>
                   {version.attributes.app_version && (

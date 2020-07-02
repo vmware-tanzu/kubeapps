@@ -247,9 +247,10 @@ export function fetchAppsWithUpdateInfo(
 }
 
 export function deployChart(
+  targetCluster: string,
+  targetNamespace: string,
   chartVersion: IChartVersion,
   chartNamespace: string,
-  namespace: string,
   releaseName: string,
   values?: string,
   schema?: JSONSchema4,
@@ -258,7 +259,7 @@ export function deployChart(
     dispatch(requestDeployApp());
     try {
       // You can not deploy applications unless the namespace is set
-      if (namespace === definedNamespaces.all) {
+      if (targetNamespace === definedNamespaces.all) {
         throw new UnprocessableEntity(
           "Namespace not selected. Please select a namespace using the selector in the top right corner.",
         );
@@ -274,7 +275,14 @@ export function deployChart(
           );
         }
       }
-      await App.create(namespace, releaseName, chartNamespace, chartVersion, values);
+      await App.create(
+        targetCluster,
+        targetNamespace,
+        releaseName,
+        chartNamespace,
+        chartVersion,
+        values,
+      );
       dispatch(receiveDeployApp());
       return true;
     } catch (e) {
