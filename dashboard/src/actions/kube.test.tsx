@@ -46,6 +46,7 @@ describe("getResource", () => {
       },
     ];
     const r = {
+      cluster: "default",
       apiVersion: "v1",
       kind: "Service",
       metadata: {
@@ -58,7 +59,7 @@ describe("getResource", () => {
 
     await store.dispatch(actions.kube.getResource(ref));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(getResourceMock).toHaveBeenCalledWith("v1", "services", "default", "foo");
+    expect(getResourceMock).toHaveBeenCalledWith("default", "v1", "services", "default", "foo");
   });
 
   it("does not fetch a resource that is already being fetched", async () => {
@@ -71,6 +72,7 @@ describe("getResource", () => {
     });
 
     const r = {
+      cluster: "default",
       apiVersion: "v1",
       kind: "Service",
       metadata: {
@@ -90,6 +92,7 @@ describe("getResource", () => {
 describe("getAndWatchResource", () => {
   it("dispatches a getResource and openWatchResource action", () => {
     const r = {
+      cluster: "default",
       apiVersion: "v1",
       kind: "Service",
       metadata: {
@@ -117,7 +120,7 @@ describe("getAndWatchResource", () => {
 
     store.dispatch(actions.kube.getAndWatchResource(ref));
     expect(store.getActions()).toEqual(expectedActions);
-    expect(getResourceMock).toHaveBeenCalledWith("v1", "services", "default", "foo");
+    expect(getResourceMock).toHaveBeenCalledWith("default", "v1", "services", "default", "foo");
   });
 
   it("dispatches a getResource and openWatchResource action for a list", () => {
@@ -127,6 +130,7 @@ describe("getAndWatchResource", () => {
       version: "v1",
     } as IClusterServiceVersionCRD;
     const svc = {
+      cluster: "default",
       apiVersion: "v1",
       kind: "Service",
       metadata: {
@@ -155,7 +159,7 @@ describe("getAndWatchResource", () => {
     store.dispatch(actions.kube.getAndWatchResource(r));
     const testActions = store.getActions();
     expect(testActions).toEqual(expectedActions);
-    expect(getResourceMock).toHaveBeenCalledWith("v1", "services", "default", undefined);
+    expect(getResourceMock).toHaveBeenCalledWith("default", "v1", "services", "default", undefined);
 
     const watchFunction = (testActions[1].payload as any).handler as (e: any) => void;
     watchFunction({ data: `{"object": ${JSON.stringify(svc)}}` });

@@ -9,6 +9,7 @@ export function fromCRD(
   ownerReference: any,
 ) {
   const resource = {
+    cluster: "default",
     apiVersion: Kube.resourceAPIVersion(r.kind as ResourceKind),
     kind: r.kind,
     metadata: {},
@@ -25,6 +26,7 @@ export function fromCRD(
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
 class ResourceRef {
+  public cluster: string;
   public apiVersion: string;
   public kind: ResourceKind;
   public name: string;
@@ -36,6 +38,7 @@ class ResourceRef {
   // TODO: add support for cluster-scoped resources, or add a ClusterResourceRef
   // class.
   constructor(r: IResource, defaultNamespace?: string, defaultFilter?: any) {
+    this.cluster = r.cluster;
     this.apiVersion = r.apiVersion;
     this.kind = r.kind;
     this.name = r.metadata.name;
@@ -47,6 +50,7 @@ class ResourceRef {
   // Gets a full resource URL for the referenced resource
   public getResourceURL() {
     return Kube.getResourceURL(
+      this.cluster,
       this.apiVersion,
       Kube.resourcePlural(this.kind),
       this.namespace,
@@ -56,6 +60,7 @@ class ResourceRef {
 
   public watchResourceURL() {
     return Kube.watchResourceURL(
+      this.cluster,
       this.apiVersion,
       Kube.resourcePlural(this.kind),
       this.namespace,
@@ -65,6 +70,7 @@ class ResourceRef {
 
   public async getResource() {
     const resource = await Kube.getResource(
+      this.cluster,
       this.apiVersion,
       Kube.resourcePlural(this.kind),
       this.namespace,

@@ -23,6 +23,7 @@ deploy-dev: deploy-dex deploy-openldap
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
 		--set useHelm3=true
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
 	@echo "\nYou can now simply open your browser at http://172.18.0.2:30000 to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"

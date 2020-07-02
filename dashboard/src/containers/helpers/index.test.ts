@@ -4,16 +4,19 @@ import { IKubeItem, IKubeState, IResource } from "../../shared/types";
 
 describe("filterByResourceRefs", () => {
   const svc1 = {
+    cluster: "default",
     apiVersion: "v1",
     kind: "Service",
     metadata: { name: "bar", namespace: "foo" },
   } as IResource;
   const svc2 = {
+    cluster: "default",
     apiVersion: "v1",
     kind: "Service",
     metadata: { name: "bar", namespace: "foo1" },
   } as IResource;
   const deploy = {
+    cluster: "default",
     apiVersion: "apps/v1",
     kind: "Deployment",
     metadata: { name: "bar", namespace: "foo1" },

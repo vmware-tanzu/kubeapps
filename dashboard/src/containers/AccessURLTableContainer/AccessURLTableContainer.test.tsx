@@ -35,6 +35,7 @@ describe("AccessURLTableContainer", () => {
       "api/clusters/default/api/v1/namespaces/wee/ingresses/foo-ingress": ingress,
     });
     const serviceRef = new ResourceRef({
+      cluster: "default",
       apiVersion: "v1",
       kind: "Service",
       metadata: {
@@ -43,6 +44,7 @@ describe("AccessURLTableContainer", () => {
       },
     } as IResource);
     const ingressRef = new ResourceRef({
+      cluster: "default",
       apiVersion: "v1",
       kind: "Ingress",
       metadata: {

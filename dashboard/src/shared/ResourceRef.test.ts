@@ -6,6 +6,7 @@ describe("ResourceRef", () => {
   describe("constructor", () => {
     it("it returns a ResourceRef with the correct details", () => {
       const r = {
+        cluster: "default",
         apiVersion: "apps/v1",
         kind: "Deployment",
         metadata: {
@@ -17,6 +18,7 @@ describe("ResourceRef", () => {
       const ref = new ResourceRef(r);
       expect(ref).toBeInstanceOf(ResourceRef);
       expect(ref).toEqual({
+        cluster: r.cluster,
         apiVersion: r.apiVersion,
         kind: r.kind,
         name: r.metadata.name,
@@ -26,6 +28,7 @@ describe("ResourceRef", () => {
 
     it("sets a default namespace if not in the resource", () => {
       const r = {
+        cluster: "default",
         apiVersion: "apps/v1",
         kind: "Deployment",
         metadata: {
@@ -39,6 +42,7 @@ describe("ResourceRef", () => {
 
     it("allows the default namespace to be provided", () => {
       const r = {
+        cluster: "default",
         apiVersion: "apps/v1",
         kind: "Deployment",
         metadata: {
@@ -53,6 +57,7 @@ describe("ResourceRef", () => {
     describe("fromCRD", () => {
       it("creates a resource ref with ownerReference", () => {
         const r = {
+          cluster: "default",
           kind: "Deployment",
           name: "",
           version: "",
@@ -106,6 +111,7 @@ describe("ResourceRef", () => {
     });
     it("calls Kube.getResourceURL with the correct arguments", () => {
       const r = {
+        cluster: "default",
         apiVersion: "v1",
         kind: "Service",
         metadata: {
@@ -117,7 +123,7 @@ describe("ResourceRef", () => {
       const ref = new ResourceRef(r);
 
       ref.getResourceURL();
-      expect(kubeGetResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");
+      expect(kubeGetResourceURLMock).toBeCalledWith("default", "v1", "services", "bar", "foo");
     });
   });
 
@@ -132,6 +138,7 @@ describe("ResourceRef", () => {
     });
     it("calls Kube.watchResourceURL with the correct arguments", () => {
       const r = {
+        cluster: "default",
         apiVersion: "v1",
         kind: "Service",
         metadata: {
@@ -143,7 +150,7 @@ describe("ResourceRef", () => {
       const ref = new ResourceRef(r);
 
       ref.watchResourceURL();
-      expect(kubeWatchResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");
+      expect(kubeWatchResourceURLMock).toBeCalledWith("default", "v1", "services", "bar", "foo");
     });
   });
 
@@ -160,6 +167,7 @@ describe("ResourceRef", () => {
     });
     it("calls Kube.getResource with the correct arguments", () => {
       const r = {
+        cluster: "default",
         apiVersion: "v1",
         kind: "Service",
         metadata: {
@@ -171,7 +179,7 @@ describe("ResourceRef", () => {
       const ref = new ResourceRef(r);
 
       ref.getResource();
-      expect(kubeGetResourceMock).toBeCalledWith("v1", "services", "bar", "foo");
+      expect(kubeGetResourceMock).toBeCalledWith("default", "v1", "services", "bar", "foo");
     });
 
     it("filters out the result when receiving a list", async () => {

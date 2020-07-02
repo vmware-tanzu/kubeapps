@@ -11,7 +11,7 @@ it("creates a secret", async () => {
   } as any;
   const name = "secret";
   const namespace = "default";
-  expect(await Secret.create(name, secrets, owner, namespace)).toEqual("ok");
+  expect(await Secret.create(name, secrets, owner, namespace, "default")).toEqual("ok");
   expect(axiosWithAuth.post).toHaveBeenCalledWith(
     "api/clusters/default/api/v1/namespaces/default/secrets",
     {

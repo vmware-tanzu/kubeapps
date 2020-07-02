@@ -59,6 +59,7 @@ func main() {
 	if additionalClustersConfigPath != "" {
 		var err error
 		additionalClusters, err = parseAdditionalClusterConfig(additionalClustersConfigPath)
+		log.Infof("additional clusters: %+v", additionalClusters)
 		if err != nil {
 			log.Fatalf("unable to parse additional clusters config: %+v", err)
 		}
@@ -106,7 +107,7 @@ func main() {
 	addRoute("DELETE", "/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}", handler.DeleteRelease)
 
 	// Backend routes unrelated to kubeops functionality.
-	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())
+	err := backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), additionalClusters)
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}

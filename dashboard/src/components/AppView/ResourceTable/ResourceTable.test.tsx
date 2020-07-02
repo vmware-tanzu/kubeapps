@@ -15,7 +15,10 @@ it("skips the element if there are no resources", () => {
 
 it("renders a ResourceItem", () => {
   const resourceRefs = [
-    new ResourceRef({ kind: "Deployment", metadata: { name: "foo" } } as IResource, "default"),
+    new ResourceRef(
+      { cluster: "default", kind: "Deployment", metadata: { name: "foo" } } as IResource,
+      "default",
+    ),
   ];
   const wrapper = shallow(<ResourceTable resourceRefs={resourceRefs} title={""} />);
   expect(wrapper).toMatchSnapshot();

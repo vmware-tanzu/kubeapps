@@ -191,7 +191,7 @@ it("creates an operatorgroup and a subscription", async () => {
 it("creates only a subscription if the operator group already exists", async () => {
   const operatorGroups = { items: [{ metadata: { name: "foo" } }] };
   axiosWithAuth.get = jest.fn().mockReturnValue({ data: operatorGroups });
-  const resource = { metadata: { name: "foo" } } as IResource;
+  const resource = { cluster: "default", metadata: { name: "foo" } } as IResource;
   axiosWithAuth.post = jest.fn().mockReturnValue({ data: resource });
   expect(await Operators.createOperator(namespace, "foo", "alpha", "Manual", "foo.1.0.0")).toEqual(
     resource,

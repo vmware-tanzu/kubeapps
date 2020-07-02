@@ -66,6 +66,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string
 		return config, nil
 	}
 
+	log.Infof("creating config for %q. additionalClusters: %+v", cluster, additionalClusters)
 	additionalCluster, ok := additionalClusters[cluster]
 	if !ok {
 		return nil, fmt.Errorf("cluster %q has no configuration", cluster)
@@ -73,8 +74,12 @@ func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string
 
 	config.Host = additionalCluster.APIServiceURL
 	config.TLSClientConfig = rest.TLSClientConfig{}
+	// TODO: Figure out why we see
+	// time="2020-07-02T04:00:06Z" level=error msg="unable to create app repo: Get https://172.18.0.3:6443/api/v1/namespaces: x509: certificate signed by unknown authority"
+	// even though we're setting the CAData (similar https://github.com/argoproj/argo-cd/issues/1965 ? Perhaps can't just convert to byte[]?)
+	config.TLSClientConfig.Insecure = true
 	if additionalCluster.CertificateAuthorityData != "" {
-		config.TLSClientConfig.CAData = []byte(additionalCluster.CertificateAuthorityData)
+		// config.TLSClientConfig.CAData = []byte(additionalCluster.CertificateAuthorityData)
 	}
 	return config, nil
 }
@@ -212,7 +217,7 @@ var ErrGlobalRepositoryWithSecrets = fmt.Errorf("docker registry secrets cannot 
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
-func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace string, additionalClusters AdditionalClustersConfig) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -244,8 +249,9 @@ func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
-		clientsetForConfig: clientsetForConfig,
-		svcClientset:       svcClientset,
+		clientsetForConfig:       clientsetForConfig,
+		svcClientset:             svcClientset,
+		additionalClustersConfig: additionalClusters,
 	}, nil
 }
 

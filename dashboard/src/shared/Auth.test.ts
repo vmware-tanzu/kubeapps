@@ -13,7 +13,7 @@ describe("Auth", () => {
   it("should get an URL with the given token", async () => {
     const mock = jest.fn();
     Axios.get = mock;
-    await Auth.validateToken("foo");
+    await Auth.validateToken("default", "foo");
     expect(mock.mock.calls[0]).toEqual([
       "api/clusters/default/",
       { headers: { Authorization: "Bearer foo" } },
@@ -52,7 +52,7 @@ describe("Auth", () => {
         // to upgrade jest for `toThrow()` to work with async.
         let err = null;
         try {
-          await Auth.validateToken("foo");
+          await Auth.validateToken("default", "foo");
         } catch (e) {
           err = e;
         } finally {
@@ -65,9 +65,9 @@ describe("Auth", () => {
   describe("isAuthenticatedWithCookie", () => {
     it("returns true if request to API root succeeds", async () => {
       Axios.get = jest.fn().mockReturnValue(Promise.resolve({ headers: { status: 200 } }));
-      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      const isAuthed = await Auth.isAuthenticatedWithCookie("default");
 
-      expect(Axios.get).toBeCalledWith(APIBase + "/");
+      expect(Axios.get).toBeCalledWith(APIBase + "/clusters/default/");
       expect(isAuthed).toBe(true);
     });
     it("returns false if the request to api root results in a 403 for an anonymous request", async () => {
@@ -79,7 +79,7 @@ describe("Auth", () => {
           },
         });
       });
-      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      const isAuthed = await Auth.isAuthenticatedWithCookie("default");
       expect(isAuthed).toBe(false);
     });
     it("returns false if the request to api root results in a non-json response (ie. without data.message)", async () => {
@@ -90,7 +90,7 @@ describe("Auth", () => {
           },
         });
       });
-      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      const isAuthed = await Auth.isAuthenticatedWithCookie("default");
       expect(isAuthed).toBe(false);
     });
     it("returns true if the request to api root results in a 403 (but not anonymous)", async () => {
@@ -102,14 +102,14 @@ describe("Auth", () => {
           },
         });
       });
-      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      const isAuthed = await Auth.isAuthenticatedWithCookie("default");
       expect(isAuthed).toBe(true);
     });
     it("should return false if the request results in a 401", async () => {
       Axios.get = jest.fn(() => {
         return Promise.reject({ response: { status: 401 } });
       });
-      const isAuthed = await Auth.isAuthenticatedWithCookie();
+      const isAuthed = await Auth.isAuthenticatedWithCookie("default");
       expect(isAuthed).toBe(false);
     });
   });

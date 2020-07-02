@@ -9,7 +9,7 @@ export const requestNamespace = createAction("REQUEST_NAMESPACE", resolve => {
   return (namespace: string) => resolve(namespace);
 });
 export const receiveNamespace = createAction("RECEIVE_NAMESPACE", resolve => {
-  return (namespace: IResource) => resolve(namespace);
+  return (cluster: string, namespace: IResource) => resolve({ cluster, namespace });
 });
 
 export const setNamespace = createAction("SET_NAMESPACE", resolve => {
@@ -21,7 +21,7 @@ export const postNamespace = createAction("CREATE_NAMESPACE", resolve => {
 });
 
 export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", resolve => {
-  return (namespaces: string[]) => resolve(namespaces);
+  return (cluster: string, namespaces: string[]) => resolve({ cluster, namespaces });
 });
 
 export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
@@ -48,7 +48,7 @@ export function fetchNamespaces(
     try {
       const namespaceList = await Namespace.list(cluster);
       const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
-      dispatch(receiveNamespaces(namespaceStrings));
+      dispatch(receiveNamespaces(cluster, namespaceStrings));
     } catch (e) {
       dispatch(errorNamespaces(e, "list"));
       return;
@@ -81,7 +81,7 @@ export function getNamespace(
     try {
       dispatch(requestNamespace(ns));
       const namespace = await Namespace.get(cluster, ns);
-      dispatch(receiveNamespace(namespace));
+      dispatch(receiveNamespace(cluster, namespace));
       return true;
     } catch (e) {
       dispatch(errorNamespaces(e, "get"));

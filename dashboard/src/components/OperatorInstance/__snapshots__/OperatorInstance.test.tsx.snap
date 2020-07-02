@@ -72,6 +72,7 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
                   Array [
                     ResourceRef {
                       "apiVersion": "apps/v1",
+                      "cluster": "default",
                       "filter": Object {
                         "metadata": Object {
                           "ownerReferences": Array [
@@ -132,6 +133,7 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
               Array [
                 ResourceRef {
                   "apiVersion": "apps/v1",
+                  "cluster": "default",
                   "filter": Object {
                     "metadata": Object {
                       "ownerReferences": Array [

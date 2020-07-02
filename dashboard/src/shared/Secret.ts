@@ -8,6 +8,7 @@ export default class Secret {
     secrets: { [s: string]: string },
     owner: IOwnerReference | undefined,
     namespace: string,
+    cluster: string,
   ) {
     const url = Secret.getLink(namespace);
     const { data } = await axiosWithAuth.post<ISecret>(url, {
@@ -74,6 +75,9 @@ export default class Secret {
   }
 
   private static getLink(namespace: string, name?: string): string {
-    return `${APIBase}/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
+    // TODO: update to be cluster aware.
+    return `${APIBase}/clusters/default/api/v1/namespaces/${namespace}/secrets${
+      name ? `/${name}` : ""
+    }`;
   }
 }

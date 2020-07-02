@@ -104,17 +104,25 @@ describe("AppViewComponent", () => {
       // setProps again so we trigger componentWillReceiveProps
       wrapper.setProps(validProps);
 
+      const expectedDeployment = Object.assign({}, resources.deployment);
+      expectedDeployment.cluster = "default";
       expect(wrapper.state("deployRefs")).toEqual([
-        new ResourceRef(resources.deployment, appRelease.namespace),
+        new ResourceRef(expectedDeployment, appRelease.namespace),
       ]);
+      const expectedService = Object.assign({}, resources.service);
+      expectedService.cluster = "default";
       expect(wrapper.state("serviceRefs")).toEqual([
-        new ResourceRef(resources.service, appRelease.namespace),
+        new ResourceRef(expectedService, appRelease.namespace),
       ]);
+      const expectedIngress = Object.assign({}, resources.ingress);
+      expectedIngress.cluster = "default";
       expect(wrapper.state("ingressRefs")).toEqual([
-        new ResourceRef(resources.ingress, appRelease.namespace),
+        new ResourceRef(expectedIngress, appRelease.namespace),
       ]);
+      const expectedSecret = Object.assign({}, resources.secret);
+      expectedSecret.cluster = "default";
       expect(wrapper.state("secretRefs")).toEqual([
-        new ResourceRef(resources.secret, appRelease.namespace),
+        new ResourceRef(expectedSecret, appRelease.namespace),
       ]);
     });
 
@@ -382,9 +390,11 @@ describe("AppViewComponent", () => {
     // setProps again so we trigger componentWillReceiveProps
     wrapper.setProps(validProps);
 
+    const expectedService = Object.assign({}, resources.service);
+    expectedService.cluster = "default";
     expect(wrapper.state()).toMatchObject({
       deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
-      serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
+      serviceRefs: [new ResourceRef(expectedService, appRelease.namespace)],
       otherResources: [new ResourceRef(obj, appRelease.namespace)],
     });
   });
@@ -402,9 +412,11 @@ describe("AppViewComponent", () => {
     // setProps again so we trigger componentWillReceiveProps
     wrapper.setProps(validProps);
 
+    const expectedService = Object.assign({}, resources.service);
+    expectedService.cluster = "default";
     expect(wrapper.state()).toMatchObject({
       deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
-      serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
+      serviceRefs: [new ResourceRef(expectedService, appRelease.namespace)],
       otherResources: [new ResourceRef(obj, appRelease.namespace)],
     });
   });
@@ -420,11 +432,15 @@ describe("AppViewComponent", () => {
     const applicationStatus = wrapper.find(ApplicationStatusContainer);
     expect(applicationStatus).toExist();
 
+    const expectedStatefulSet = Object.assign({}, resources.statefulset);
+    expectedStatefulSet.cluster = "default";
     expect(applicationStatus.prop("statefulsetRefs")).toEqual([
-      new ResourceRef(resources.statefulset, appRelease.namespace),
+      new ResourceRef(expectedStatefulSet, appRelease.namespace),
     ]);
+    const expectedDaemonSet = Object.assign({}, resources.daemonset);
+    expectedDaemonSet.cluster = "default";
     expect(applicationStatus.prop("daemonsetRefs")).toEqual([
-      new ResourceRef(resources.daemonset, appRelease.namespace),
+      new ResourceRef(expectedDaemonSet, appRelease.namespace),
     ]);
   });
 });

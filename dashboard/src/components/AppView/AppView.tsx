@@ -104,6 +104,11 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     manifest = manifest.filter(r => r && r.kind);
+    // TODO: don't add cluster like this.
+    manifest = manifest.map((r: IResource) => {
+      r.cluster = this.props.cluster;
+      return r;
+    });
     if (!isEqual(manifest, this.state.manifest)) {
       this.setState({ manifest });
     } else {

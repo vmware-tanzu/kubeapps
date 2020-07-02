@@ -54,7 +54,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
+    return store.dispatch(actions.auth.authenticate("default", token, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -71,9 +71,9 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
+    return store.dispatch(actions.auth.authenticate("default", token, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
-      expect(Auth.validateToken).toHaveBeenCalledWith(token);
+      expect(Auth.validateToken).toHaveBeenCalledWith("default", token);
     });
   });
 
@@ -93,7 +93,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate("ignored", true)).then(() => {
+    return store.dispatch(actions.auth.authenticate("default", "ignored", true)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(Auth.validateToken).not.toHaveBeenCalled();
     });
@@ -120,7 +120,7 @@ describe("OIDC authentication", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.checkCookieAuthentication()).then(() => {
+    return store.dispatch(actions.auth.checkCookieAuthentication("default")).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });

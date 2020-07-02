@@ -27,6 +27,7 @@ describe("ApplicationStatusContainer", () => {
       "api/clusters/default/apis/apps/v1/namespaces/wee/deployments/foo": item,
     });
     const ref = new ResourceRef({
+      cluster: "default",
       apiVersion: "apps/v1",
       kind: "Deployment",
       metadata: {

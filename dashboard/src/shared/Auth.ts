@@ -57,9 +57,11 @@ export class Auth {
   }
 
   // Throws an error if the token is invalid
-  public static async validateToken(token: string) {
+  public static async validateToken(cluster: string, token: string) {
     try {
-      await Axios.get(APIBase + "/", { headers: { Authorization: `Bearer ${token}` } });
+      await Axios.get(APIBase + `/clusters/${cluster}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
     } catch (e) {
       const res = e.response as AxiosResponse;
       if (res.status === 401) {
@@ -96,9 +98,9 @@ export class Auth {
   // isAuthenticatedWithCookie() does an anonymous GET request to determine if
   // the request is authenticated with an http-only cookie (there is, by design,
   // no way to determine via client JS whether an http-only cookie is present).
-  public static async isAuthenticatedWithCookie(): Promise<boolean> {
+  public static async isAuthenticatedWithCookie(cluster: string): Promise<boolean> {
     try {
-      await Axios.get(APIBase + "/");
+      await Axios.get(APIBase + `/clusters/${cluster}/`);
     } catch (e) {
       const response = e.response as AxiosResponse;
       // The only error response which can possibly mean we did authenticate is

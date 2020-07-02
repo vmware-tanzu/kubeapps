@@ -32,19 +32,19 @@ interface ITestCase {
 }
 
 const actionTestCases: ITestCase[] = [
-  { name: "setNamespace", action: setNamespace, args: "jack", payload: "jack" },
+  { name: "setNamespace", action: setNamespace, args: ["jack"], payload: "jack" },
   {
     name: "receiveNamespces",
     action: receiveNamespaces,
-    args: ["jack", "danny"],
-    payload: ["jack", "danny"],
+    args: ["default", ["jack", "danny"]],
+    payload: { cluster: "default", namespaces: ["jack", "danny"] },
   },
 ];
 
 actionTestCases.forEach(tc => {
   describe(tc.name, () => {
     it("has expected structure", () => {
-      expect(tc.action.call(null, tc.args)).toEqual({
+      expect(tc.action.call(null, ...tc.args)).toEqual({
         type: getType(tc.action),
         payload: tc.payload,
       });
@@ -63,7 +63,7 @@ describe("fetchNamespaces", () => {
     const expectedActions = [
       {
         type: getType(receiveNamespaces),
-        payload: ["overlook-hotel", "room-217"],
+        payload: { cluster: "default-c", namespaces: ["overlook-hotel", "room-217"] },
       },
     ];
 
@@ -102,7 +102,7 @@ describe("createNamespace", () => {
       },
       {
         type: getType(receiveNamespaces),
-        payload: ["overlook-hotel", "room-217"],
+        payload: { cluster: "default-c", namespaces: ["overlook-hotel", "room-217"] },
       },
     ];
 
@@ -129,8 +129,9 @@ describe("createNamespace", () => {
 
 describe("getNamespace", () => {
   it("dispatches requested namespace", async () => {
-    const ns = { metadata: { name: "default" } };
-    Namespace.get = jest.fn().mockReturnValue(ns);
+    const namespace = { metadata: { name: "default-ns" } };
+    const cluster = "default-c";
+    Namespace.get = jest.fn().mockReturnValue(namespace);
     const expectedActions = [
       {
         type: getType(requestNamespace),
@@ -138,10 +139,10 @@ describe("getNamespace", () => {
       },
       {
         type: getType(receiveNamespace),
-        payload: ns,
+        payload: { cluster, namespace },
       },
     ];
-    const r = await store.dispatch(getNamespace("default-c", "default-ns"));
+    const r = await store.dispatch(getNamespace(cluster, "default-ns"));
     expect(r).toBe(true);
     expect(store.getActions()).toEqual(expectedActions);
   });

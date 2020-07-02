@@ -43,14 +43,15 @@ const clusterReducer = (
 ): IClustersState => {
   switch (action.type) {
     case getType(actions.namespace.receiveNamespace):
-      if (!state.clusters.default.namespaces.includes(action.payload.metadata.name)) {
+      if (!state.clusters.default.namespaces.includes(action.payload.namespace.metadata.name)) {
         return {
           ...state,
           clusters: {
-            default: {
-              ...state.clusters.default,
-              namespaces: state.clusters.default.namespaces
-                .concat(action.payload.metadata.name)
+            ...state.clusters,
+            [action.payload.cluster]: {
+              ...state.clusters[action.payload.cluster],
+              namespaces: state.clusters[action.payload.cluster].namespaces
+                .concat(action.payload.namespace.metadata.name)
                 .sort(),
               error: undefined,
             },
@@ -62,9 +63,11 @@ const clusterReducer = (
       return {
         ...state,
         clusters: {
-          default: {
-            ...state.clusters.default,
-            namespaces: action.payload,
+          ...state.clusters,
+          [action.payload.cluster]: {
+            ...state.clusters[action.payload.cluster],
+            namespaces: action.payload.namespaces,
+            error: undefined,
           },
         },
       };
@@ -72,6 +75,7 @@ const clusterReducer = (
       return {
         ...state,
         clusters: {
+          ...state.clusters,
           default: {
             ...state.clusters.default,
             currentNamespace: action.payload,
@@ -87,6 +91,7 @@ const clusterReducer = (
       return {
         ...state,
         clusters: {
+          ...state.clusters,
           default: {
             ...state.clusters.default,
             error: { action: action.payload.op, error: action.payload.err },
@@ -94,32 +99,44 @@ const clusterReducer = (
         },
       };
     case getType(actions.namespace.clearNamespaces):
-      // TODO(absoludity): this should maintain the keys for all clusters.
-      return { ...initialState };
+      return {
+        ...state,
+        clusters: {
+          ...state.clusters,
+          default: {
+            ...state.clusters.default,
+            currentNamespace: initialState.clusters.default.currentNamespace,
+            namespaces: [],
+          },
+        },
+      };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
-      // looks for /ns/:namespace/ in URL
-      // TODO(absoludity): this should match on cluster also to set currentCluster.
-      const matches = pathname.match(/\/ns\/([^/]*)/);
+      // looks for /c/:cluster/ns/:namespace/ in URL
+      const matches = pathname.match(/\/c\/([^/]*)\/ns\/([^/]*)/);
       if (matches) {
+        const [currentCluster, currentNamespace] = [matches[1], matches[2]];
         return {
           ...state,
+          currentCluster,
           clusters: {
-            default: {
-              ...state.clusters.default,
-              currentNamespace: matches[1],
+            ...state.clusters,
+            [currentCluster]: {
+              ...state.clusters[currentCluster],
+              currentNamespace,
             },
           },
         };
       }
       break;
     case getType(actions.auth.setAuthenticated):
-      // Only when a user is authenticated to we set the current namespace from
+      // Only when a user is authenticated do we set the current namespace from
       // the auth default namespace.
       if (action.payload.authenticated) {
         return {
           ...state,
           clusters: {
+            ...state.clusters,
             default: {
               ...state.clusters.default,
               currentNamespace: action.payload.defaultNamespace,
@@ -131,7 +148,7 @@ const clusterReducer = (
     case getType(actions.config.receiveConfig):
       // Initialize the additional clusters when receiving the config.
       const clusters = {
-        default: state.clusters.default,
+        ...state.clusters,
       };
       const config = action.payload as IConfig;
       config.featureFlags.additionalClusters?.forEach(cluster => {

@@ -27,6 +27,7 @@ describe("ResourceItemContainer", () => {
       "api/clusters/default/apis/apps/v1/namespaces/wee/statefulsets/foo": item,
     });
     const ref = new ResourceRef({
+      cluster: "default",
       apiVersion: "apps/v1",
       kind: "StatefulSet",
       metadata: {

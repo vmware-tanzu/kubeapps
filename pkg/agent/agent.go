@@ -47,6 +47,7 @@ func StorageForMemory(_ string, _ *kubernetes.Clientset) *storage.Storage {
 // ListReleases lists releases in the specified namespace, or all namespaces if the empty string is given.
 func ListReleases(actionConfig *action.Configuration, namespace string, listLimit int, status string) ([]proxy.AppOverview, error) {
 	allNamespaces := namespace == ""
+	log.Infof("Creating NewList action")
 	cmd := action.NewList(actionConfig)
 	if allNamespaces {
 		cmd.AllNamespaces = true
@@ -57,6 +58,7 @@ func ListReleases(actionConfig *action.Configuration, namespace string, listLimi
 	}
 	releases, err := cmd.Run()
 	if err != nil {
+		log.Infof("Error when running NewList action: %+v", err)
 		return nil, err
 	}
 	appOverviews := make([]proxy.AppOverview, 0)
@@ -174,7 +176,9 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 // NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster.
 func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) *genericclioptions.ConfigFlags {
 	impersonateGroup := []string{}
-	insecure := false
+	// TODO: Change back once figured out why CAData isn't working.
+	// Using condition to only set insecure if it's an additional cluster (where we won't have a cafile)
+	insecure := clusterConfig.CAFile == ""
 
 	// CertFile and KeyFile must be nil for the BearerToken to be used for authentication and authorization instead of the pod's service account.
 	return &genericclioptions.ConfigFlags{

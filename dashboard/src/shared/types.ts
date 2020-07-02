@@ -176,6 +176,9 @@ export interface IResourceMetadata {
 }
 
 export interface IResource {
+  // TODO: In retrospect, having the cluster attribute here isn't great
+  // as the interface is otherwise an actual k8s resource.
+  cluster: string;
   apiVersion: string;
   kind: ResourceKind;
   type: string;

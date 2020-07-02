@@ -59,7 +59,11 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
       namespace,
     } = this.props;
     // refetch if new namespace or error removed due to location change
-    if (prevProps.namespace !== namespace || (!error && prevProps.apps.error)) {
+    if (
+      prevProps.namespace !== namespace ||
+      prevProps.cluster !== cluster ||
+      (!error && prevProps.apps.error)
+    ) {
       fetchAppsWithUpdateInfo(cluster, namespace, listingAll);
       if (this.props.featureFlags.operators) {
         getCustomResources(namespace);

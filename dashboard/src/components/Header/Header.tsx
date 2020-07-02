@@ -7,6 +7,7 @@ import logo from "../../logo.svg";
 import { IClustersState } from "../../reducers/cluster";
 import { definedNamespaces } from "../../shared/Namespace";
 import { app } from "../../shared/url";
+import ClusterSelector from "./ClusterSelector";
 import "./Header.css";
 import HeaderLink from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
@@ -111,6 +112,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
             )}
             {showNav && (
               <div className="header__nav header__nav-config">
+                <ClusterSelector clusters={clusters} onChange={this.handleClusterChange} />
                 <NamespaceSelector
                   clusters={clusters}
                   defaultNamespace={defaultNamespace}
@@ -200,6 +202,14 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
     if (ns !== definedNamespaces.all) {
       getNamespace(currentCluster, ns);
     }
+    if (to !== pathname) {
+      push(to);
+    }
+  };
+
+  private handleClusterChange = (cluster: string) => {
+    const { pathname, push } = this.props;
+    const to = pathname.replace(/\/c\/[^/]*/, `/c/${cluster}`);
     if (to !== pathname) {
       push(to);
     }

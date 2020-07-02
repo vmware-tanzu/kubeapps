@@ -49,7 +49,7 @@ function withNS(namespace: string) {
 
 export const backend = {
   namespaces: {
-    list: (cluster: string) => `api/v1/clusters${cluster}/namespaces`,
+    list: (cluster: string) => `api/v1/clusters/${cluster}/namespaces`,
   },
   apprepositories: {
     base: (namespace: string) => `api/v1/namespaces/${namespace}/apprepositories`,
@@ -115,22 +115,26 @@ export const api = {
 
   operators: {
     operators: (namespace: string) =>
-      `${APIBase}/apis/packages.operators.coreos.com/v1/${withNS(namespace)}packagemanifests`,
+      `${APIBase}/clusters/default/apis/packages.operators.coreos.com/v1/${withNS(
+        namespace,
+      )}packagemanifests`,
     operator: (namespace: string, name: string) =>
-      `${APIBase}/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
+      `${APIBase}/clusters/default/apis/packages.operators.coreos.com/v1/namespaces/${namespace}/packagemanifests/${name}`,
     clusterServiceVersions: (namespace: string) =>
-      `${APIBase}/apis/operators.coreos.com/v1alpha1/${withNS(namespace)}clusterserviceversions`,
+      `${APIBase}/clusters/default/apis/operators.coreos.com/v1alpha1/${withNS(
+        namespace,
+      )}clusterserviceversions`,
     clusterServiceVersion: (namespace: string, name: string) =>
-      `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions/${name}`,
+      `${APIBase}/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/clusterserviceversions/${name}`,
     operatorIcon: (namespace: string, name: string) =>
       `api/v1/namespaces/${namespace}/operator/${name}/logo`,
     resources: (namespace: string, apiVersion: string, resource: string) =>
-      `${APIBase}/apis/${apiVersion}/${withNS(namespace)}${resource}`,
+      `${APIBase}/clusters/default/apis/${apiVersion}/${withNS(namespace)}${resource}`,
     resource: (namespace: string, apiVersion: string, resource: string, name: string) =>
-      `${APIBase}/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
+      `${APIBase}/clusters/default/apis/${apiVersion}/namespaces/${namespace}/${resource}/${name}`,
     operatorGroups: (namespace: string) =>
-      `${APIBase}/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
+      `${APIBase}/clusters/default/apis/operators.coreos.com/v1/namespaces/${namespace}/operatorgroups`,
     subscription: (namespace: string, name: string) =>
-      `${APIBase}/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/${name}`,
+      `${APIBase}/clusters/default/apis/operators.coreos.com/v1alpha1/namespaces/${namespace}/subscriptions/${name}`,
   },
 };
