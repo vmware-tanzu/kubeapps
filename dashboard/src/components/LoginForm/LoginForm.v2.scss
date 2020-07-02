@@ -1,0 +1,29 @@
+.login-wrapper .login {
+  min-height: calc(100vh - 3rem);
+}
+
+.login-wrapper .login .login-group {
+  padding: 1rem 0 0 0;
+}
+
+.login-oauth-button {
+  display: grid;
+}
+
+#login-submit-button {
+  display: contents;
+}
+
+.login-moreinfo {
+  display: grid;
+  justify-content: end;
+  margin-top: 0.5rem;
+}
+
+.login-moreinfo svg {
+  margin-top: -0.1rem;
+}
+
+.login-wrapper .login .login-group .error.active {
+  margin-bottom: 1rem;
+}
