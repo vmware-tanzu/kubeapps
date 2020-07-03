@@ -7,5 +7,3 @@ When using the service account authentication, the login form is shown for the u
 ![Dashboard Login](../img/dashboard-login.png)
 
 The goal of the login form is to identify the user and associate it with a Kubernetes service account. This identity information will be used by Kubeapps to authenticate the user against the Kubernetes API. You can find more information about access control in Kubeapps in this [document](./access-control.md).
-
-However, it's possible to disable the form or delegate the authentication to an OAuth2/OIDC provider so users don't need to introduce a token in the login form.
