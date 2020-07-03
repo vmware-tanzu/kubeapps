@@ -8,14 +8,13 @@ interface ILoginFormProps {
 
 function OAuthLogin(props: ILoginFormProps) {
   return (
-    <>
-      <section className="title">
-        <h3 className="welcome">Welcome to</h3>
-        Kubeapps
-        <h5 className="hint">
-          Your cluster operator has enabled login via an authentication provider.
-        </h5>
-      </section>
+    <section className="title" aria-labelledby="login-title" aria-describedby="login-desc">
+      <h3 id="login-title" className="welcome">
+        Welcome to <span>Kubeapps</span>
+      </h3>
+      <p id="login-desc" className="hint">
+        Your cluster operator has enabled login via an authentication provider.
+      </p>
       <div className="login-group">
         {props.authenticationError && (
           <div className="error active">
@@ -23,13 +22,13 @@ function OAuthLogin(props: ILoginFormProps) {
             valid.
           </div>
         )}
+        <a href={props.oauthLoginURI} className="login-submit-button">
+          <CdsButton id="login-submit-button" status="primary">
+            Login via OIDC Provider
+          </CdsButton>
+        </a>
       </div>
-      <a href={props.oauthLoginURI} className="login-oauth-button">
-        <CdsButton id="login-submit-button" status="primary">
-          Login via OIDC Provider
-        </CdsButton>
-      </a>
-    </>
+    </section>
   );
 }
 

@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { ILoginFormProps } from "./LoginForm";
+import { ILoginFormProps } from "./LoginForm.v2";
 
 const LoginForm = React.lazy(() => import("./LoginForm"));
 const LoginFormV2 = React.lazy(() => import("./LoginForm.v2"));

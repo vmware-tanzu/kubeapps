@@ -15,7 +15,7 @@ exports[`oauth login form renders a login button link 1`] = `
       className="login-moreinfo"
     >
       <a
-        href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+        href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
         rel="noopener noreferrer"
         target="_blank"
       >
@@ -31,6 +31,7 @@ exports[`oauth login form renders a login button link 1`] = `
 
 exports[`token login form displays an error if the authentication error is passed 1`] = `
 <LoginForm
+  appVersion="devel"
   authenticate={[MockFunction]}
   authenticated={false}
   authenticating={false}
@@ -59,70 +60,80 @@ exports[`token login form displays an error if the authentication error is passe
         token=""
       >
         <section
+          aria-describedby="login-desc"
+          aria-labelledby="login-title"
           className="title"
         >
           <h3
             className="welcome"
+            id="login-title"
           >
-            Welcome to
+            Welcome to 
+            <span>
+              Kubeapps
+            </span>
           </h3>
-          Kubeapps
-          <h5
+          <p
             className="hint"
+            id="login-desc"
           >
             Your cluster operator should provide you with a Kubernetes API token.
-          </h5>
-        </section>
-        <div
-          className="login-group"
-        >
+          </p>
           <div
-            className="clr-form-control"
+            className="login-group"
           >
-            <label
-              className="clr-control-label"
-              htmlFor="token"
-            >
-              Token
-            </label>
             <div
-              className="clr-control-container"
+              className="clr-form-control"
             >
-              <div
-                className="clr-input-wrapper"
+              <label
+                className="clr-control-label"
+                htmlFor="token"
               >
-                <input
-                  className="clr-input"
-                  id="token"
-                  onChange={[Function]}
-                  placeholder="Paste token here"
-                  required={true}
-                  type="password"
-                  value=""
-                />
+                Token
+              </label>
+              <div
+                className="clr-control-container"
+              >
+                <div
+                  className="clr-input-wrapper"
+                >
+                  <input
+                    className="clr-input"
+                    id="token"
+                    onChange={[Function]}
+                    placeholder="Paste token here"
+                    required={true}
+                    type="password"
+                    value=""
+                  />
+                </div>
               </div>
             </div>
+            <div
+              className="error active "
+            >
+              There was an error connecting to the Kubernetes API. Please check that your token is valid.
+            </div>
+            <div
+              className="login-submit-button"
+            >
+              <ReactWrapperComponent
+                id="login-submit-button"
+                status="primary"
+              >
+                <cds-button>
+                  Submit
+                </cds-button>
+              </ReactWrapperComponent>
+            </div>
           </div>
-          <div
-            className="error active "
-          >
-            There was an error connecting to the Kubernetes API. Please check that your token is valid.
-          </div>
-        </div>
-        <ReactWrapperComponent
-          id="login-submit-button"
-          status="primary"
-        >
-          <cds-button>
-            Submit
-          </cds-button>
-        </ReactWrapperComponent>
+        </section>
       </TokenLogin>
       <div
         className="login-moreinfo"
       >
         <a
-          href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+          href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
           rel="noopener noreferrer"
           target="_blank"
         >
@@ -155,7 +166,7 @@ exports[`token login form renders a token login form 1`] = `
       className="login-moreinfo"
     >
       <a
-        href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+        href="https://github.com/kubeapps/kubeapps/blob/devel/docs/user/access-control.md"
         rel="noopener noreferrer"
         target="_blank"
       >

@@ -9,14 +9,13 @@ interface ILoginFormProps {
 
 function TokenLogin(props: ILoginFormProps) {
   return (
-    <>
-      <section className="title">
-        <h3 className="welcome">Welcome to</h3>
-        Kubeapps
-        <h5 className="hint">
-          Your cluster operator should provide you with a Kubernetes API token.
-        </h5>
-      </section>
+    <section className="title" aria-labelledby="login-title" aria-describedby="login-desc">
+      <h3 id="login-title" className="welcome">
+        Welcome to <span>Kubeapps</span>
+      </h3>
+      <p id="login-desc" className="hint">
+        Your cluster operator should provide you with a Kubernetes API token.
+      </p>
       <div className="login-group">
         <div className="clr-form-control">
           <label htmlFor="token" className="clr-control-label">
@@ -42,11 +41,13 @@ function TokenLogin(props: ILoginFormProps) {
             valid.
           </div>
         )}
+        <div className="login-submit-button">
+          <CdsButton id="login-submit-button" status="primary">
+            Submit
+          </CdsButton>
+        </div>
       </div>
-      <CdsButton id="login-submit-button" status="primary">
-        Submit
-      </CdsButton>
-    </>
+    </section>
   );
 }
 

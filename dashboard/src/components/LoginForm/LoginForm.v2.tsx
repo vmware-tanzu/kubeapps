@@ -12,13 +12,14 @@ import TokenLogin from "./TokenLogin";
 
 ClarityIcons.addIcons(infoCircleIcon);
 
-interface ILoginFormProps {
+export interface ILoginFormProps {
   authenticated: boolean;
   authenticating: boolean;
   authenticationError: string | undefined;
   oauthLoginURI: string;
   authenticate: (token: string) => any;
   checkCookieAuthentication: () => void;
+  appVersion: string;
   location: Location;
 }
 
@@ -65,7 +66,7 @@ function LoginForm(props: ILoginFormProps) {
         )}
         <div className="login-moreinfo">
           <a
-            href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+            href={`https://github.com/kubeapps/kubeapps/blob/${props.appVersion}/docs/user/access-control.md`}
             target="_blank"
             rel="noopener noreferrer"
           >
