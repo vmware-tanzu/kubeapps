@@ -1,11 +1,13 @@
-import { shallow } from "enzyme";
+import { mount, shallow } from "enzyme";
 import { Location } from "history";
 import context from "jest-plugin-context";
 import * as React from "react";
+import { act } from "react-dom/test-utils";
 import { Redirect } from "react-router";
 import itBehavesLike from "../../shared/specs";
-
 import LoginForm from "./LoginForm.v2";
+import OAuthLogin from "./OauthLogin";
+import TokenLogin from "./TokenLogin";
 
 const emptyLocation: Location = {
   hash: "",
@@ -33,13 +35,13 @@ describe("componentDidMount", () => {
       oauthLoginURI: "/sign/in",
     };
     const checkCookieAuthentication = jest.fn();
-    shallow(<LoginForm {...props} checkCookieAuthentication={checkCookieAuthentication} />);
+    mount(<LoginForm {...props} checkCookieAuthentication={checkCookieAuthentication} />);
     expect(checkCookieAuthentication).toHaveBeenCalled();
   });
 
   it("does not call checkCookieAuthentication when oauthLoginURI not provided", () => {
     const checkCookieAuthentication = jest.fn();
-    shallow(<LoginForm {...defaultProps} checkCookieAuthentication={checkCookieAuthentication} />);
+    mount(<LoginForm {...defaultProps} checkCookieAuthentication={checkCookieAuthentication} />);
     expect(checkCookieAuthentication).not.toHaveBeenCalled();
   });
 });
@@ -54,8 +56,8 @@ context("while authenticating", () => {
 describe("token login form", () => {
   it("renders a token login form", () => {
     const wrapper = shallow(<LoginForm {...defaultProps} />);
-    expect(wrapper.find("input#token").exists()).toBe(true);
-    expect(wrapper.find(Redirect).exists()).toBe(false);
+    expect(wrapper.find(TokenLogin)).toExist();
+    expect(wrapper.find(OAuthLogin)).not.toExist();
     expect(wrapper).toMatchSnapshot();
   });
 
@@ -68,9 +70,17 @@ describe("token login form", () => {
   });
 
   it("updates the token in the state when the input is changed", () => {
-    const wrapper = shallow(<LoginForm {...defaultProps} />);
-    wrapper.find("input#token").simulate("change", { currentTarget: { value: "f00b4r" } });
-    expect(wrapper.state("token")).toBe("f00b4r");
+    const wrapper = mount(<LoginForm {...defaultProps} />);
+    let input = wrapper.find("input#token");
+    act(() => {
+      input.simulate("change", {
+        target: { value: "f00b4r" },
+        current: { value: "ff00b4r" },
+      });
+    });
+    wrapper.update();
+    input = wrapper.find("input#token");
+    expect(input.prop("value")).toBe("f00b4r");
   });
 
   describe("redirect if authenticated", () => {
@@ -92,14 +102,19 @@ describe("token login form", () => {
   });
 
   it("calls the authenticate handler when the form is submitted", () => {
-    const wrapper = shallow(<LoginForm {...defaultProps} />);
-    wrapper.find("input#token").simulate("change", { currentTarget: { value: "f00b4r" } });
-    wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
-    expect(defaultProps.authenticate).toBeCalledWith("f00b4r");
+    const authenticate = jest.fn();
+    const wrapper = mount(<LoginForm {...defaultProps} authenticate={authenticate} />);
+    act(() => {
+      wrapper.find("input#token").simulate("change", { target: { value: "f00b4r" } });
+    });
+    act(() => {
+      wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
+    });
+    expect(authenticate).toBeCalledWith("f00b4r");
   });
 
   it("displays an error if the authentication error is passed", () => {
-    const wrapper = shallow(
+    const wrapper = mount(
       <LoginForm {...defaultProps} authenticationError={authenticationError} />,
     );
 
@@ -125,13 +140,13 @@ describe("oauth login form", () => {
     oauthLoginURI: "/sign/in",
   };
   it("does not display the token login if oauthLoginURI provided", () => {
-    const wrapper = shallow(<LoginForm {...props} />);
+    const wrapper = mount(<LoginForm {...props} />);
 
     expect(wrapper.find("input#token").exists()).toBe(false);
   });
 
   it("displays the oauth login if oauthLoginURI provided", () => {
-    const wrapper = shallow(<LoginForm {...props} />);
+    const wrapper = mount(<LoginForm {...props} />);
 
     expect(wrapper.find("a").findWhere(a => a.prop("href") === props.oauthLoginURI)).toExist();
   });

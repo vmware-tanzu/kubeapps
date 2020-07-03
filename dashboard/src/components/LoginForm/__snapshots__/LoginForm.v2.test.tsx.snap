@@ -8,35 +8,9 @@ exports[`oauth login form renders a login button link 1`] = `
     className="login clr-form"
     onSubmit={[Function]}
   >
-    <section
-      className="title"
-    >
-      <h3
-        className="welcome"
-      >
-        Welcome to
-      </h3>
-      Kubeapps
-      <h5
-        className="hint"
-      >
-        Your cluster operator has enabled login via an authentication provider.
-      </h5>
-    </section>
-    <div
-      className="login-group"
+    <OAuthLogin
+      oauthLoginURI="/sign/in"
     />
-    <a
-      className="login-oauth-button"
-      href="/sign/in"
-    >
-      <ReactWrapperComponent
-        id="login-submit-button"
-        status="primary"
-      >
-        Login via OIDC Provider
-      </ReactWrapperComponent>
-    </a>
     <div
       className="login-moreinfo"
     >
@@ -56,86 +30,113 @@ exports[`oauth login form renders a login button link 1`] = `
 `;
 
 exports[`token login form displays an error if the authentication error is passed 1`] = `
-<div
-  className="login-wrapper"
+<LoginForm
+  authenticate={[MockFunction]}
+  authenticated={false}
+  authenticating={false}
+  authenticationError="it's a trap"
+  checkCookieAuthentication={[MockFunction]}
+  location={
+    Object {
+      "hash": "",
+      "pathname": "",
+      "search": "",
+      "state": "",
+    }
+  }
+  oauthLoginURI=""
 >
-  <form
-    className="login clr-form"
-    onSubmit={[Function]}
+  <div
+    className="login-wrapper"
   >
-    <section
-      className="title"
+    <form
+      className="login clr-form"
+      onSubmit={[Function]}
     >
-      <h3
-        className="welcome"
+      <TokenLogin
+        authenticationError="it's a trap"
+        handleTokenChange={[Function]}
+        token=""
       >
-        Welcome to
-      </h3>
-      Kubeapps
-      <h5
-        className="hint"
-      >
-        Your cluster operator should provide you with a Kubernetes API token.
-      </h5>
-    </section>
-    <div
-      className="login-group"
-    >
-      <div
-        className="clr-form-control"
-      >
-        <label
-          className="clr-control-label"
-          htmlFor="token"
+        <section
+          className="title"
         >
-          Token
-        </label>
+          <h3
+            className="welcome"
+          >
+            Welcome to
+          </h3>
+          Kubeapps
+          <h5
+            className="hint"
+          >
+            Your cluster operator should provide you with a Kubernetes API token.
+          </h5>
+        </section>
         <div
-          className="clr-control-container"
+          className="login-group"
         >
           <div
-            className="clr-input-wrapper"
+            className="clr-form-control"
           >
-            <input
-              className="clr-input"
-              id="token"
-              onChange={[Function]}
-              placeholder="Paste token here"
-              required={true}
-              type="password"
-              value=""
-            />
+            <label
+              className="clr-control-label"
+              htmlFor="token"
+            >
+              Token
+            </label>
+            <div
+              className="clr-control-container"
+            >
+              <div
+                className="clr-input-wrapper"
+              >
+                <input
+                  className="clr-input"
+                  id="token"
+                  onChange={[Function]}
+                  placeholder="Paste token here"
+                  required={true}
+                  type="password"
+                  value=""
+                />
+              </div>
+            </div>
+          </div>
+          <div
+            className="error active "
+          >
+            There was an error connecting to the Kubernetes API. Please check that your token is valid.
           </div>
         </div>
-      </div>
-      <div
-        className="error active "
-      >
-        There was an error connecting to the Kubernetes API. Please check that your token is valid.
-      </div>
-    </div>
-    <ReactWrapperComponent
-      id="login-submit-button"
-      status="primary"
-    >
-      Submit
-    </ReactWrapperComponent>
-    <div
-      className="login-moreinfo"
-    >
-      <a
-        href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
-        rel="noopener noreferrer"
-        target="_blank"
-      >
         <ReactWrapperComponent
-          shape="info-circle"
-        />
-        More Info
-      </a>
-    </div>
-  </form>
-</div>
+          id="login-submit-button"
+          status="primary"
+        >
+          <cds-button>
+            Submit
+          </cds-button>
+        </ReactWrapperComponent>
+      </TokenLogin>
+      <div
+        className="login-moreinfo"
+      >
+        <a
+          href="https://github.com/kubeapps/kubeapps/blob/master/docs/user/access-control.md"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <ReactWrapperComponent
+            shape="info-circle"
+          >
+            <cds-icon />
+          </ReactWrapperComponent>
+          More Info
+        </a>
+      </div>
+    </form>
+  </div>
+</LoginForm>
 `;
 
 exports[`token login form renders a token login form 1`] = `
@@ -146,58 +147,10 @@ exports[`token login form renders a token login form 1`] = `
     className="login clr-form"
     onSubmit={[Function]}
   >
-    <section
-      className="title"
-    >
-      <h3
-        className="welcome"
-      >
-        Welcome to
-      </h3>
-      Kubeapps
-      <h5
-        className="hint"
-      >
-        Your cluster operator should provide you with a Kubernetes API token.
-      </h5>
-    </section>
-    <div
-      className="login-group"
-    >
-      <div
-        className="clr-form-control"
-      >
-        <label
-          className="clr-control-label"
-          htmlFor="token"
-        >
-          Token
-        </label>
-        <div
-          className="clr-control-container"
-        >
-          <div
-            className="clr-input-wrapper"
-          >
-            <input
-              className="clr-input"
-              id="token"
-              onChange={[Function]}
-              placeholder="Paste token here"
-              required={true}
-              type="password"
-              value=""
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-    <ReactWrapperComponent
-      id="login-submit-button"
-      status="primary"
-    >
-      Submit
-    </ReactWrapperComponent>
+    <TokenLogin
+      handleTokenChange={[Function]}
+      token=""
+    />
     <div
       className="login-moreinfo"
     >
