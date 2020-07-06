@@ -1,7 +1,10 @@
 import { ClarityIcons, searchIcon } from "@clr/core/icon-shapes";
 import * as React from "react";
 import { CdsIcon } from "../Clarity/clarity";
+import Input from "../js/Input";
 
+import Column from "components/js/Column";
+import Row from "components/js/Row";
 import "./SearchFilter.v2.css";
 
 ClarityIcons.addIcons(searchIcon);
@@ -25,16 +28,23 @@ function SearchFilter(props: ISearchFilterProps) {
   return (
     <div className="search-box">
       <form onSubmit={handleSubmit}>
-        <CdsIcon size="sm" shape="search" />
-        <input
-          id="search"
-          type="text"
-          className="padding-l-bigger"
-          placeholder={props.placeholder}
-          autoComplete="off"
-          onChange={handleChange}
-          value={props.value}
-        />
+        <Row>
+          <Column span={1}>
+            <CdsIcon size="sm" shape="search" />
+          </Column>
+          <Column span={10}>
+            <Input
+              id="search"
+              name="search"
+              type="text"
+              placeholder={props.placeholder}
+              autoComplete="off"
+              onChange={handleChange}
+              value={props.value}
+              {...Input.defaultProps}
+            />
+          </Column>
+        </Row>
       </form>
     </div>
   );

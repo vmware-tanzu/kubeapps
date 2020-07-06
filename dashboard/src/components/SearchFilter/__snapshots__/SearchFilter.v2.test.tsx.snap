@@ -7,19 +7,33 @@ exports[`should render a PageHeader 1`] = `
   <form
     onSubmit={[Function]}
   >
-    <ReactWrapperComponent
-      shape="search"
-      size="sm"
-    />
-    <input
-      autoComplete="off"
-      className="padding-l-bigger"
-      id="search"
-      onChange={[Function]}
-      placeholder="search!"
-      type="text"
-      value="test"
-    />
+    <Row
+      list={false}
+    >
+      <Column
+        listItem={false}
+        span={1}
+      >
+        <ReactWrapperComponent
+          shape="search"
+          size="sm"
+        />
+      </Column>
+      <Column
+        listItem={false}
+        span={10}
+      >
+        <Input
+          autoComplete="off"
+          id="search"
+          name="search"
+          onChange={[Function]}
+          placeholder="search!"
+          type="text"
+          value="test"
+        />
+      </Column>
+    </Row>
   </form>
 </div>
 `;

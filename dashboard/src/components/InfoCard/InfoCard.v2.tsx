@@ -1,7 +1,9 @@
 import { ClarityIcons, infoCircleIcon } from "@clr/core/icon-shapes";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { CdsIcon } from "../Clarity/clarity";
+import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
+import Column from "../js/Column";
+import Row from "../js/Row";
 
 import placeholder from "../../placeholder.png";
 import "./InfoCard.v2.css";
@@ -13,7 +15,6 @@ export interface IInfoCardProps {
   info: string | JSX.Element;
   link?: string;
   icon?: string;
-  banner?: string;
   subIcon?: string;
   description?: string | JSX.Element;
   tag1Class?: string;
@@ -32,52 +33,47 @@ function InfoCard(props: IInfoCardProps) {
     tag1Class,
     tag2Content,
     tag2Class,
-    banner,
     subIcon,
   } = props;
   const icon = props.icon ? props.icon : placeholder;
   return (
-    <div className="clr-col-lg-3 clr-col-12">
-      <Link to={link || "#"} className="card clickable">
-        <div className="card-header">{title}</div>
-        <div className="card-block">
-          <div className="card-media-block">
-            <img src={icon} className="card-media-image" alt="icon" />
-            <div className="card-media-description">
-              <span className="card-media-text">{description}</span>
-            </div>
-          </div>
-          {banner && (
-            <div className="alert alert-info alert-sm" role="alert">
-              <div className="alert-items">
-                <div className="alert-item static">
-                  <div className="alert-icon-wrapper">
-                    <CdsIcon className="alert-icon" shape="info-circle" />
-                  </div>
-                  <span className="alert-text">{banner}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="card-footer">
-          <div className="clr-row">
-            <div className="clr-col-6" style={{ padding: 0 }}>
-              {info}
-            </div>
-            <div className="clr-col-6 label-section">
-              {tag1Content && (
-                <span className={`label ${tag1Class || "label-info"}`}>{tag1Content}</span>
-              )}
-              {tag2Content && (
-                <span className={`label ${tag2Class || "label-info"}`}>{tag2Content}</span>
-              )}
+    <Column span={[12, 6, 3]}>
+      <Card clickable={true}>
+        <Link to={link || "#"}>
+          <CardHeader>
+            <>
+              {title}
               {subIcon && <img src={subIcon} alt="icon" />}
-            </div>
-          </div>
-        </div>
-      </Link>
-    </div>
+            </>
+          </CardHeader>
+          <CardBlock>
+            <Row>
+              <Column span={3}>
+                <img src={icon} alt="icon" sizes="64px" />
+              </Column>
+              <Column span={9}>
+                <span>{description}</span>
+              </Column>
+            </Row>
+          </CardBlock>
+          <CardFooter>
+            <Row>
+              <Column span={6}>{info}</Column>
+              <Column span={6}>
+                <div className="footer-tags">
+                  {tag1Content && (
+                    <span className={`label ${tag1Class || "label-info"}`}>{tag1Content}</span>
+                  )}
+                  {tag2Content && (
+                    <span className={`label ${tag2Class || "label-info"}`}>{tag2Content}</span>
+                  )}
+                </div>
+              </Column>
+            </Row>
+          </CardFooter>
+        </Link>
+      </Card>
+    </Column>
   );
 }
 

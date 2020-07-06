@@ -1,0 +1,20 @@
+.alert {
+  &:not(.alert-app-level) {
+    .alert-action {
+      padding: 0;
+      background: transparent;
+      border: 0;
+      font-size: 13px;
+      margin: 0;
+      text-transform: none;
+      height: auto;
+      letter-spacing: normal;
+      line-height: 1.15;
+      font-weight: 400;
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+  }
+}

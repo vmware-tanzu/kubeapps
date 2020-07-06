@@ -1,5 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
+import Input from "../js/Input";
 import SearchFilter, { ISearchFilterProps } from "./SearchFilter.v2";
 
 const defaultProps: ISearchFilterProps = {
@@ -12,13 +13,13 @@ const defaultProps: ISearchFilterProps = {
 it("should render a PageHeader", () => {
   const wrapper = shallow(<SearchFilter {...defaultProps} value="test" />);
   expect(wrapper).toMatchSnapshot();
-  expect(wrapper.find("input").prop("value")).toBe("test");
+  expect(wrapper.find(Input).prop("value")).toBe("test");
 });
 
 it("changes the filter", () => {
   const onChange = jest.fn();
   const wrapper = shallow(<SearchFilter {...defaultProps} value="test" onChange={onChange} />);
-  wrapper.find("input").simulate("change", { currentTarget: { value: "foo" } });
+  wrapper.find(Input).simulate("change", { currentTarget: { value: "foo" } });
   expect(onChange).toHaveBeenCalledWith("foo");
 });
 

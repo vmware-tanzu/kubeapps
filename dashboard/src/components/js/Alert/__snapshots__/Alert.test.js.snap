@@ -1,0 +1,31 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Alert renders the required HTML structure 1`] = `
+<section
+  className="alert alert-info"
+  role="alert"
+>
+  <div
+    className="alert-items"
+  >
+    <div
+      className="alert-item static"
+    >
+      <div
+        className="alert-icon-wrapper"
+      >
+        <ReactWrapperComponent
+          aria-hidden="true"
+          class="alert-icon"
+          shape="info-circle"
+        />
+      </div>
+      <div
+        className="alert-text"
+      >
+        Test
+      </div>
+    </div>
+  </div>
+</section>
+`;

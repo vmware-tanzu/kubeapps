@@ -1,70 +1,82 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should render a Card 1`] = `
-<div
-  className="clr-col-lg-3 clr-col-12"
+<Column
+  listItem={false}
+  span={
+    Array [
+      12,
+      6,
+      3,
+    ]
+  }
 >
-  <Link
-    className="card clickable"
-    to="/a/link/somewhere"
+  <Card
+    clickable={true}
+    htmlTag="div"
   >
-    <div
-      className="card-header"
+    <Link
+      to="/a/link/somewhere"
     >
-      foo
-    </div>
-    <div
-      className="card-block"
-    >
-      <div
-        className="card-media-block"
+      <CardHeader
+        noBorder={false}
       >
-        <img
-          alt="icon"
-          className="card-media-image"
-          src="an-icon.png"
-        />
-        <div
-          className="card-media-description"
+        foo
+      </CardHeader>
+      <CardBlock>
+        <Row
+          list={false}
         >
-          <span
-            className="card-media-text"
-          />
-        </div>
-      </div>
-    </div>
-    <div
-      className="card-footer"
-    >
-      <div
-        className="clr-row"
-      >
-        <div
-          className="clr-col-6"
-          style={
-            Object {
-              "padding": 0,
-            }
-          }
-        >
-          foobar
-        </div>
-        <div
-          className="clr-col-6 label-section"
-        >
-          <span
-            className="label blue"
+          <Column
+            listItem={false}
+            span={3}
           >
-            database
-          </span>
-          <span
-            className="label red"
+            <img
+              alt="icon"
+              sizes="64px"
+              src="an-icon.png"
+            />
+          </Column>
+          <Column
+            listItem={false}
+            span={9}
           >
-            running
-          </span>
-        </div>
-      </div>
-    </div>
-  </Link>
-</div>
+            <span />
+          </Column>
+        </Row>
+      </CardBlock>
+      <CardFooter>
+        <Row
+          list={false}
+        >
+          <Column
+            listItem={false}
+            span={6}
+          >
+            foobar
+          </Column>
+          <Column
+            listItem={false}
+            span={6}
+          >
+            <div
+              className="footer-tags"
+            >
+              <span
+                className="label blue"
+              >
+                database
+              </span>
+              <span
+                className="label red"
+              >
+                running
+              </span>
+            </div>
+          </Column>
+        </Row>
+      </CardFooter>
+    </Link>
+  </Card>
+</Column>
 `;

@@ -2,7 +2,7 @@
 
 exports[`should render a PageHeader 1`] = `
 <header
-  className="kubeapps-header clr-row"
+  className="kubeapps-header"
 >
   <h1>
     Title!

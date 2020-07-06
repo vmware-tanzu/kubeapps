@@ -1,28 +1,25 @@
-.card-media-text {
-  height: 3.4rem;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.card-block {
+.card-media-block {
   height: 6em;
 }
 
-.card-footer .label-section {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+.card-header {
+  img {
+    max-width: 24px;
+    float: right;
+  }
 }
 
-.card-footer img {
-  max-width: 24px;
+.card-block {
+  img {
+    max-width: 100%;
+  }
 }
 
-.card .alert {
-  top: -2rem;
+.card.clickable a {
+  text-decoration: none;
+  color: black;
 }
 
-.card.clickable:hover {
-  -webkit-transform: none;
-  transform: none;
+.footer-tags {
+  text-align: right;
 }

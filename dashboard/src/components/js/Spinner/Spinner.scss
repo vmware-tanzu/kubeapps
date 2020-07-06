@@ -1,0 +1,12 @@
+.spinner {
+  &-container {
+    &.spinner-center {
+      display: block;
+      text-align: center;
+    }
+  }
+
+  &.spinner-inline {
+    margin-right: 6px;
+  }
+}

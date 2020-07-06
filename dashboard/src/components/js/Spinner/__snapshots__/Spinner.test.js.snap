@@ -1,0 +1,13 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Spinner displays the basic spinner 1`] = `
+<span
+  className="spinner-container spinner-center"
+>
+  <span
+    className="spinner spinner-center"
+  >
+    Loading...
+  </span>
+</span>
+`;

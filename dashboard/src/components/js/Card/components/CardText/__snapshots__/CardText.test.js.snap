@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CardText renders the content correctly 1`] = `
+<div
+  className="card-text"
+>
+  My Text
+</div>
+`;

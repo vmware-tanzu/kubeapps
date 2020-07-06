@@ -1,7 +1,8 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-
 import { Link } from "react-router-dom";
+
+import { CardBlock } from "../js/Card";
 import InfoCard from "./InfoCard.v2";
 
 it("should render a Card", () => {
@@ -68,18 +69,11 @@ it("should parse JSX elements in the tags", () => {
 
 it("should parse a description as text", () => {
   const wrapper = shallow(<InfoCard title="foo" info="foobar" description="a description" />);
-  expect(wrapper.find(".card-media-text").text()).toContain("a description");
+  expect(wrapper.find(CardBlock).html()).toContain("a description");
 });
 
 it("should parse a description as JSX.Element", () => {
   const desc = <div className="description">This is a description</div>;
   const wrapper = shallow(<InfoCard title="foo" info="foobar" description={desc} />);
   expect(wrapper.find(".description").text()).toBe("This is a description");
-});
-
-it("should render a banner if exists", () => {
-  const wrapper = shallow(<InfoCard title="foo" info="foobar" banner="this is important!" />);
-  const banner = wrapper.find(".alert-text");
-  expect(banner).toExist();
-  expect(banner.text()).toBe("this is important!");
 });
