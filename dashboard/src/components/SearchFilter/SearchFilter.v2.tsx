@@ -27,7 +27,7 @@ function SearchFilter(props: ISearchFilterProps) {
   };
   return (
     <div className="search-box">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} role="search" aria-label="Search on the site">
         <Row>
           <Column span={1}>
             <CdsIcon size="sm" shape="search" />

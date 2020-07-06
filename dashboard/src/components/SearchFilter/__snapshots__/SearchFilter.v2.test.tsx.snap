@@ -5,7 +5,9 @@ exports[`should render a PageHeader 1`] = `
   className="search-box"
 >
   <form
+    aria-label="Search on the site"
     onSubmit={[Function]}
+    role="search"
   >
     <Row
       list={false}
