@@ -240,6 +240,8 @@ apprepository:
   #   # It should start with -----BEGIN CERTIFICATE----- or
   #   # -----BEGIN RSA PRIVATE KEY-----
   #   caCert:
+  #   # Create this apprepository in some other namespace
+  #   namespace:
   # https://github.com/kubeapps/kubeapps/issues/478#issuecomment-422979262
   ## AppRepository Controller containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
