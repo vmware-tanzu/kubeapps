@@ -37,7 +37,7 @@ function InfoCard(props: IInfoCardProps) {
   } = props;
   const icon = props.icon ? props.icon : placeholder;
   return (
-    <Column span={[12, 6, 3]}>
+    <Column span={[12, 6, 4, 3]}>
       <Card clickable={true}>
         <Link to={link || "#"}>
           <CardHeader>
@@ -49,7 +49,9 @@ function InfoCard(props: IInfoCardProps) {
           <CardBlock>
             <Row>
               <Column span={3}>
-                <img src={icon} alt="icon" sizes="64px" />
+                <div className="card-icon">
+                  <img src={icon} alt="icon" sizes="64px" />
+                </div>
               </Column>
               <Column span={9}>
                 <span>{description}</span>
