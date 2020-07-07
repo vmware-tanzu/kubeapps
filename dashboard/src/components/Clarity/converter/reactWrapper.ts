@@ -28,10 +28,6 @@ export function createReactComponent<BaseComponent extends HTMLElement>(elementN
           this._updateCustomElementProperty(prop);
         }
       });
-
-      if (this.ref.current) {
-        this.ref.current.focus = this.ref.current.focus;
-      }
     }
 
     public componentDidUpdate(prevProps: any) {
