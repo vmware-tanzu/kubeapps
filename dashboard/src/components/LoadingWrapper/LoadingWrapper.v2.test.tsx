@@ -1,5 +1,6 @@
 import { shallow } from "enzyme";
 import * as React from "react";
+import Spinner from "../js/Spinner";
 import LoadingWrapper from "./LoadingWrapper.v2";
 
 let props = {} as any;
@@ -29,6 +30,23 @@ describe("when loaded is false", () => {
   it("does not render any children", () => {
     const wrapper = renderComponent(props);
     expect(wrapper.find(ChildrenComponent)).not.toExist();
+  });
+
+  it("renders a Spinner", () => {
+    const wrapper = renderComponent(props);
+    expect(wrapper.find(Spinner)).toExist();
+  });
+
+  it("renders a mid size Spinner", () => {
+    const wrapper = renderComponent({ ...props, size: "medium" });
+    expect(wrapper.find(Spinner)).toExist();
+    expect(wrapper.find(Spinner).prop("medium")).toBe(true);
+  });
+
+  it("renders a small Spinner", () => {
+    const wrapper = renderComponent({ ...props, size: "small" });
+    expect(wrapper.find(Spinner)).toExist();
+    expect(wrapper.find(Spinner).prop("small")).toBe(true);
   });
 });
 
