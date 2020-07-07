@@ -4,16 +4,13 @@ import Spinner from "../js/Spinner";
 
 export interface ILoadingWrapperProps {
   loaded?: boolean;
-  size?: string;
+  small?: boolean;
+  medium?: boolean;
   children?: any;
 }
 
 function LoadingWrapper(props: ILoadingWrapperProps) {
-  return props.loaded ? (
-    props.children
-  ) : (
-    <Spinner medium={props.size === "medium"} small={props.size === "small"} />
-  );
+  return props.loaded ? props.children : <Spinner medium={props.medium} small={props.small} />;
 }
 
 export default LoadingWrapper;

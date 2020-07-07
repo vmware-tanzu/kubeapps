@@ -38,13 +38,13 @@ describe("when loaded is false", () => {
   });
 
   it("renders a mid size Spinner", () => {
-    const wrapper = renderComponent({ ...props, size: "medium" });
+    const wrapper = renderComponent({ ...props, medium: true });
     expect(wrapper.find(Spinner)).toExist();
     expect(wrapper.find(Spinner).prop("medium")).toBe(true);
   });
 
   it("renders a small Spinner", () => {
-    const wrapper = renderComponent({ ...props, size: "small" });
+    const wrapper = renderComponent({ ...props, small: true });
     expect(wrapper.find(Spinner)).toExist();
     expect(wrapper.find(Spinner).prop("small")).toBe(true);
   });
