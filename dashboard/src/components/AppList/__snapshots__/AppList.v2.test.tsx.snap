@@ -1,0 +1,503 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when apps available matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+    >
+      <AppListGrid
+        appList={
+          Array [
+            Object {
+              "chartMetadata": Object {
+                "appVersion": "0.1.0",
+                "name": "bar",
+                "version": "1.0.0",
+              },
+              "releaseName": "foo",
+              "status": "deployed",
+            },
+          ]
+        }
+        appVersion="v1.0.0"
+        cluster="defaultc"
+        csvs={Array []}
+        customResources={Array []}
+        filter=""
+        namespace="default"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when custom resources available matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+    >
+      <AppListGrid
+        appVersion="v1.0.0"
+        cluster="defaultc"
+        csvs={
+          Array [
+            Object {
+              "metadata": Object {
+                "name": "foo",
+              },
+              "spec": Object {
+                "customresourcedefinitions": Object {
+                  "owned": Array [
+                    Object {
+                      "kind": "KubeappsCluster",
+                    },
+                  ],
+                },
+              },
+            },
+          ]
+        }
+        customResources={
+          Array [
+            Object {
+              "kind": "KubeappsCluster",
+              "metadata": Object {
+                "name": "foo-cluster",
+              },
+            },
+          ]
+        }
+        filter=""
+        namespace="default"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when error present matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+    >
+      <Alert
+        app={false}
+        compact={false}
+        theme="danger"
+      >
+        Boom!
+      </Alert>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when error present renders a generic error message 1`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+    >
+      <Alert
+        app={false}
+        compact={false}
+        theme="danger"
+      >
+        Boom!
+      </Alert>
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`when fetched but not apps available matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={true}
+    >
+      <AppListGrid
+        appList={Array []}
+        appVersion="v1.0.0"
+        cluster="defaultc"
+        csvs={Array []}
+        customResources={Array []}
+        filter=""
+        namespace="default"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching apps loading spinner matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+    >
+      <AppListGrid
+        appVersion="v1.0.0"
+        cluster="defaultc"
+        csvs={Array []}
+        customResources={Array []}
+        filter=""
+        namespace="default"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching apps loading spinner matches the snapshot 2`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+    >
+      <AppListGrid
+        appVersion="v1.0.0"
+        cluster="defaultc"
+        csvs={Array []}
+        customResources={Array []}
+        filter=""
+        namespace="default"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;
+
+exports[`while fetching apps matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <Column
+      listItem={false}
+      span={10}
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
+      </Row>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
+  </PageHeader>
+  <main>
+    <LoadingWrapper
+      loaded={false}
+    >
+      <AppListGrid
+        appVersion="v1.0.0"
+        cluster="defaultc"
+        csvs={Array []}
+        customResources={Array []}
+        filter=""
+        namespace="default"
+      />
+    </LoadingWrapper>
+  </main>
+</section>
+`;

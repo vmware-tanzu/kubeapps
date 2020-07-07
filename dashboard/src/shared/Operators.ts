@@ -1,3 +1,4 @@
+import placeholder from "../placeholder.png";
 import * as urls from "../shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import {
@@ -170,4 +171,21 @@ export class Operators {
     );
     return result;
   }
+}
+
+export function getIcon(csv: IClusterServiceVersion) {
+  if (csv.spec.icon && csv.spec.icon.length > 0) {
+    return `data:${csv.spec.icon[0].mediatype};base64,${csv.spec.icon[0].base64data}`;
+  }
+  return placeholder;
+}
+
+export function findOwnedKind(csv: IClusterServiceVersion, kind: string) {
+  if (
+    csv.spec.customresourcedefinitions?.owned &&
+    csv.spec.customresourcedefinitions?.owned.length > 0
+  ) {
+    return csv.spec.customresourcedefinitions.owned.find(c => c.kind === kind);
+  }
+  return;
 }

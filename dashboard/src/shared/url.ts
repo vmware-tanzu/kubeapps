@@ -38,6 +38,8 @@ export const app = {
     new: (namespace: string, name: string) => `/ns/${namespace}/operators/new/${name}`,
   },
   operatorInstances: {
+    view: (namespace: string, csvName: string, crdName: string, resourceName: string) =>
+      `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${resourceName}`,
     update: (namespace: string, csvName: string, crdName: string, instanceName: string) =>
       `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${instanceName}/update`,
   },

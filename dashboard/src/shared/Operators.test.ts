@@ -1,5 +1,5 @@
 import { axiosWithAuth } from "./AxiosInstance";
-import { Operators } from "./Operators";
+import { findOwnedKind, getIcon, Operators } from "./Operators";
 import { IClusterServiceVersion, IPackageManifest, IResource } from "./types";
 
 it("check if the OLM has been installed", async () => {
@@ -250,5 +250,38 @@ describe("#global", () => {
     it(test.description, () => {
       expect(Operators.global(test.channel as any)).toBe(test.result);
     });
+  });
+});
+
+describe("#getIcon", () => {
+  it("extracts an icon from a csv", () => {
+    const csv = {
+      spec: { icon: [{ mediatype: "foo", base64data: "bar" }] },
+    } as IClusterServiceVersion;
+    expect(getIcon(csv)).toEqual("data:foo;base64,bar");
+  });
+
+  it("returns a placeholder if no info is found", () => {
+    const csv = {
+      spec: {},
+    } as IClusterServiceVersion;
+    expect(getIcon(csv)).toEqual("placeholder.png");
+  });
+});
+
+describe("#findOwnedKind", () => {
+  it("finds an owned kind", () => {
+    const csv = {
+      spec: {
+        customresourcedefinitions: {
+          owned: [
+            {
+              kind: "foo",
+            },
+          ],
+        },
+      },
+    } as IClusterServiceVersion;
+    expect(findOwnedKind(csv, "foo")).toEqual({ kind: "foo" });
   });
 });
