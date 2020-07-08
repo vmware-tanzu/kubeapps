@@ -1,10 +1,4 @@
-import {
-  angleIcon,
-  applicationsIcon,
-  ClarityIcons,
-  clusterIcon,
-  fileGroupIcon,
-} from "@clr/core/icon-shapes";
+import { applicationsIcon, ClarityIcons } from "@clr/core/icon-shapes";
 import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { CdsIcon } from "../Clarity/clarity";
@@ -12,9 +6,10 @@ import { CdsIcon } from "../Clarity/clarity";
 import logo from "../../logo.svg";
 import { IClustersState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
+import ContextSelector from "./ContextSelector";
 import "./Header.v2.css";
 
-ClarityIcons.addIcons(applicationsIcon, clusterIcon, fileGroupIcon, angleIcon);
+ClarityIcons.addIcons(applicationsIcon);
 
 interface IHeaderProps {
   authenticated: boolean;
@@ -29,7 +24,15 @@ interface IHeaderProps {
 }
 
 function Header(props: IHeaderProps) {
-  const { clusters, authenticated: showNav } = props;
+  const {
+    clusters,
+    authenticated: showNav,
+    defaultNamespace,
+    fetchNamespaces,
+    createNamespace,
+    getNamespace,
+    setNamespace,
+  } = props;
   const cluster = clusters.clusters[clusters.currentCluster];
 
   const routesToRender = [
@@ -72,22 +75,14 @@ function Header(props: IHeaderProps) {
           )}
           {showNav && (
             <section className="header-actions">
-              <div className="dropdown bottom-right kubeapps-align-center kubeapps-nav-link kubeapps-dropdown">
-                <div className="clr-row">
-                  <div className="clr-col-10">
-                    <span>Current Context</span>
-                    <div>
-                      <CdsIcon size="sm" shape="cluster" inverse={true} />
-                      <span className="kubeapps-dropdown-text">{clusters.currentCluster}</span>
-                      <CdsIcon size="sm" shape="file-group" inverse={true} />
-                      <span className="kubeapps-dropdown-text">{cluster.currentNamespace}</span>
-                    </div>
-                  </div>
-                  <div className="clr-col-2 kubeapps-align-center">
-                    <CdsIcon shape="angle" inverse={true} />
-                  </div>
-                </div>
-              </div>
+              <ContextSelector
+                clusters={clusters}
+                fetchNamespaces={fetchNamespaces}
+                getNamespace={getNamespace}
+                createNamespace={createNamespace}
+                defaultNamespace={defaultNamespace}
+                setNamespace={setNamespace}
+              />
               <button
                 className="kubeapps-nav-link nav-icon"
                 aria-label="VMware Cloud services configuration"

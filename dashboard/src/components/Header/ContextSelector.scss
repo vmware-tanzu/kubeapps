@@ -1,0 +1,53 @@
+.angle {
+  margin-left: -0.8rem;
+  height: 100%;
+  &-closed {
+    transform: rotate(180deg);
+    margin-left: -1rem;
+  }
+  &-opened {
+    position: relative;
+    left: 10px;
+  }
+}
+
+.kubeapps-dropdown {
+  opacity: 75%;
+  padding: 0 0.5rem 0 0.5rem;
+  &.open {
+    opacity: 100%;
+    background-color: #25333d;
+  }
+  button {
+    color: var(--clr-header-font-color, #fafafa);
+  }
+}
+
+.kubeapps-dropdown-text {
+  margin-left: 0.3em;
+  margin-right: 0.3em;
+}
+
+.dropdown-menu {
+  background-color: #25333d;
+  width: 15rem;
+  border: 0px;
+  margin-right: 0px !important;
+  .dropdown-menu-padding {
+    padding: 0 1rem 0.6rem 1rem;
+  }
+  .context-selector-header {
+    color: var(--clr-header-font-color, #fafafa);
+    font-size: small;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .clr-select-wrapper {
+    display: block;
+    .clr-page-size-select {
+      color: var(--clr-header-font-color, #fafafa);
+      width: 100%;
+    }
+  }
+}
