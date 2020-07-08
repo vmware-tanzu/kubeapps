@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a PageHeader 1`] = `
+<header
+  className="kubeapps-header"
+>
+  <h1>
+    Title!
+  </h1>
+</header>
+`;

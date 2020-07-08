@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CardHeader renders the content correctly 1`] = `
+<header
+  className="card-header"
+>
+  My Text
+</header>
+`;

@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Row renders the content correctly 1`] = `
+<div
+  className="clr-row"
+>
+  My Text
+</div>
+`;

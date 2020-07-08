@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CardTitle renders the content correctly 1`] = `
+<h1
+  className="card-title"
+>
+  My Text
+</h1>
+`;

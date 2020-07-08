@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CardFooter renders the content correctly 1`] = `
+<footer
+  className="card-footer"
+>
+  My Text
+</footer>
+`;

@@ -1,0 +1,24 @@
+import React from "react";
+import { render, shallow } from "enzyme";
+import CardImage from ".";
+
+describe(CardImage, () => {
+  it("passes the src and alt attributes to the img", () => {
+    const src = "https://example.com";
+    const alt = "The Example page";
+    const wrapper = shallow(<CardImage src={src} alt={alt} />);
+
+    expect(wrapper.find("img").prop("src")).toBe(src);
+    expect(wrapper.find("img").prop("alt")).toBe(alt);
+  });
+
+  it("includes the alt property if it's an empty string", () => {
+    const wrapper = render(<CardImage src="https://example.com" alt="" />);
+    expect(wrapper.find("img").attr("alt")).toBe("");
+  });
+
+  it("includes the expected CSS class", () => {
+    const wrapper = shallow(<CardImage src="https://example.com" alt="" />);
+    expect(wrapper).toHaveClassName("card-img");
+  });
+});

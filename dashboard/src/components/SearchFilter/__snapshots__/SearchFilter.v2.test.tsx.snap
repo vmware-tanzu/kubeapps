@@ -1,0 +1,41 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should render a PageHeader 1`] = `
+<div
+  className="search-box"
+>
+  <form
+    aria-label="Search on the site"
+    onSubmit={[Function]}
+    role="search"
+  >
+    <Row
+      list={false}
+    >
+      <Column
+        listItem={false}
+        span={1}
+      >
+        <ReactWrapperComponent
+          shape="search"
+          size="sm"
+        />
+      </Column>
+      <Column
+        listItem={false}
+        span={10}
+      >
+        <Input
+          autoComplete="off"
+          id="search"
+          name="search"
+          onChange={[Function]}
+          placeholder="search!"
+          type="text"
+          value="test"
+        />
+      </Column>
+    </Row>
+  </form>
+</div>
+`;

@@ -1,0 +1,31 @@
+.card-header {
+  img {
+    max-width: 24px;
+    float: right;
+  }
+}
+
+.card-block {
+  height: 4.5rem;
+  overflow-y: hidden;
+  .card-icon {
+    text-align: center;
+    img {
+      max-height: 3.5rem;
+      max-width: 100%;
+    }
+  }
+}
+
+.card-footer {
+  height: 3.6rem;
+}
+
+.card.clickable a {
+  text-decoration: none;
+  color: black;
+}
+
+.footer-tags {
+  text-align: right;
+}
