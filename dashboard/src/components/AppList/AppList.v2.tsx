@@ -50,51 +50,54 @@ function AppList(props: IAppListProps) {
   useEffect(() => {
     fetchAppsWithUpdateInfo(namespace, true);
     getCustomResources(namespace);
+  }, [namespace, fetchAppsWithUpdateInfo, getCustomResources]);
+
+  useEffect(() => {
     setFilter(filterProps);
-  }, [namespace, filterProps, fetchAppsWithUpdateInfo, getCustomResources]);
+  }, [filterProps]);
 
   return (
     <section>
       <PageHeader>
-        <Column span={10}>
+        <div className="kubeapps-applist-header">
           <Row>
-            <>
-              <h1>Applications</h1>
-              <SearchFilter
-                key="searchFilter"
-                placeholder="search apps..."
-                onChange={setFilter}
-                value={filter}
-                onSubmit={pushSearchFilter}
-              />
-            </>
+            <Column span={10}>
+              <Row>
+                <h1>Applications</h1>
+                <SearchFilter
+                  key="searchFilter"
+                  placeholder="search apps..."
+                  onChange={setFilter}
+                  value={filter}
+                  onSubmit={pushSearchFilter}
+                />
+              </Row>
+            </Column>
+            <Column span={2}>
+              <div className="header-button">
+                <Link to={url.app.catalog(cluster, namespace)}>
+                  <CdsButton status="primary">Deploy</CdsButton>
+                </Link>
+              </div>
+            </Column>
           </Row>
-        </Column>
-        <Column span={2}>
-          <div className="header-button">
-            <Link to={url.app.catalog(cluster, namespace)}>
-              <CdsButton status="primary">Deploy</CdsButton>
-            </Link>
-          </div>
-        </Column>
+        </div>
       </PageHeader>
-      <main>
-        <LoadingWrapper loaded={!isFetching && !isFetchingResources}>
-          {error ? (
-            <Alert theme="danger">{error}</Alert>
-          ) : (
-            <AppListGrid
-              appList={listOverview}
-              customResources={customResources}
-              cluster={cluster}
-              namespace={namespace}
-              appVersion={appVersion}
-              filter={filter}
-              csvs={csvs}
-            />
-          )}
-        </LoadingWrapper>
-      </main>
+      <LoadingWrapper loaded={!isFetching && !isFetchingResources}>
+        {error ? (
+          <Alert theme="danger">{error}</Alert>
+        ) : (
+          <AppListGrid
+            appList={listOverview}
+            customResources={customResources}
+            cluster={cluster}
+            namespace={namespace}
+            appVersion={appVersion}
+            filter={filter}
+            csvs={csvs}
+          />
+        )}
+      </LoadingWrapper>
     </section>
   );
 }

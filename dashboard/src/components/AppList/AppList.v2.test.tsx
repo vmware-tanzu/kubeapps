@@ -65,11 +65,6 @@ context("while fetching apps", () => {
     props: { ...defaultProps, isFetchingResources: true },
   });
 
-  it("matches the snapshot", () => {
-    const wrapper = shallow(<AppList {...props} />);
-    expect(wrapper).toMatchSnapshot();
-  });
-
   it("renders a Application header", () => {
     const wrapper = shallow(<AppList {...props} />);
     expect(wrapper.find("h1").text()).toContain("Applications");
