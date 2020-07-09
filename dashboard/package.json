@@ -110,7 +110,7 @@
     ]
   },
   "devDependencies": {
-    "@types/enzyme": "^3.1.6",
+    "@types/enzyme": "^3.10.5",
     "@types/enzyme-adapter-react-16": "^1.0.1",
     "@types/jest": "^26.0.3",
     "@types/node": "^14.0.14",
@@ -120,7 +120,7 @@
     "@types/react-router": "^5.1.5",
     "@types/react-test-renderer": "^16.0.0",
     "@types/redux-mock-store": "^1.0.0",
-    "enzyme": "^3.6.0",
+    "enzyme": "^3.11.0",
     "husky": "^1.1.0",
     "jest-enzyme": "^7.1.2",
     "jest-plugin-context": "^2.9.0",

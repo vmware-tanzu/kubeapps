@@ -1,0 +1,12 @@
+.info-icon {
+  display: grid;
+  align-items: center;
+  height: 100%;
+  padding-left: 0.4rem;
+  justify-content: center;
+}
+
+/* stylelint-disable-next-line selector-type-no-unknown */
+.is-success cds-icon {
+  --color: var(--clr-color-success-700);
+}

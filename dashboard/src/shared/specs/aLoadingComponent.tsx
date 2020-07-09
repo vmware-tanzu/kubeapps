@@ -1,6 +1,5 @@
 import { shallow } from "enzyme";
 import * as React from "react";
-import LoadingWrapper from "../../components/LoadingWrapper";
 
 // Shared jest examples that checks that the provided component is rendering the Loading Wrapper
 export default (args: any) => {
@@ -18,9 +17,9 @@ export default (args: any) => {
     it("renders a wrapper in loaded state = false", () => {
       const wrapper = renderComponent();
 
-      const loadingWrapper = wrapper.find(LoadingWrapper);
-      expect(wrapper.find(LoadingWrapper)).toExist();
-      expect(loadingWrapper.props().loaded).toEqual(false);
+      const loadingWrapper = wrapper.find("LoadingWrapper");
+      expect(wrapper.find("LoadingWrapper")).toExist();
+      expect(loadingWrapper.prop("loaded")).toEqual(false);
     });
 
     it("matches the snapshot", () => {
