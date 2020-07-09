@@ -42,7 +42,7 @@ context("when changing props", () => {
         />
       </Router>,
     );
-    expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("foo", true);
+    expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("defaultc", "foo", true);
     expect(getCustomResources).toHaveBeenCalledWith("foo");
   });
 
@@ -103,9 +103,9 @@ context("when fetched but not apps available", () => {
   });
 });
 
-context("when error present", () => {
+context("when an error is present", () => {
   beforeEach(() => {
-    props = { ...defaultProps, apps: { error: "Boom!" } };
+    props = { ...defaultProps, apps: { error: new Error("Boom!") } };
   });
 
   it("matches the snapshot", () => {
