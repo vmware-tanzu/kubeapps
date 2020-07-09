@@ -1,14 +1,6 @@
 .angle {
-  margin-left: -0.8rem;
+  margin-left: -0.5rem;
   height: 100%;
-  &-closed {
-    transform: rotate(180deg);
-    margin-left: -1rem;
-  }
-  &-opened {
-    position: relative;
-    left: 10px;
-  }
 }
 
 .kubeapps-dropdown {
@@ -23,9 +15,18 @@
   }
 }
 
+.kubeapps-dropdown-section {
+  text-align: initial;
+}
+
+.kubeapps-dropdown-header {
+  font-size: small;
+}
+
 .kubeapps-dropdown-text {
-  margin-left: 0.3em;
-  margin-right: 0.3em;
+  margin-left: 0.2rem;
+  margin-right: 0.7rem;
+  font-weight: 500;
 }
 
 .dropdown-menu {

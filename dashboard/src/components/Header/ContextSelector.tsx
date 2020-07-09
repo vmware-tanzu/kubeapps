@@ -36,8 +36,8 @@ function ContextSelector({
   const [open, setOpen] = useState(false);
   const currentCluster = clusters.clusters[clusters.currentCluster];
   const namespaceSelected = currentCluster.currentNamespace || defaultNamespace;
-  const [cluster, setCluster] = useState(clusters.currentCluster);
-  const [namespace, setNS] = useState(namespaceSelected);
+  const [cluster, setStateCluster] = useState(clusters.currentCluster);
+  const [namespace, setStateNamespace] = useState(namespaceSelected);
   // Control when users click outside
   const ref = useRef(null);
   useOutsideClick(setOpen, [ref], open);
@@ -51,9 +51,9 @@ function ContextSelector({
 
   const toggleOpen = () => setOpen(!open);
   const selectCluster = (event: React.ChangeEvent<HTMLSelectElement>) =>
-    setCluster(event.target.value);
+    setStateCluster(event.target.value);
   const selectNamespace = (event: React.ChangeEvent<HTMLSelectElement>) =>
-    setNS(event.target.value);
+    setStateNamespace(event.target.value);
   const changeContext = () => {
     setNamespace(namespace);
     dispatch(push(app.apps.list(cluster, namespace)));
@@ -66,22 +66,33 @@ function ContextSelector({
         className={`dropdown kubeapps-align-center kubeapps-dropdown ${open ? "open" : ""}`}
         ref={ref}
       >
-        <button className="kubeapps-nav-link" onClick={toggleOpen} aria-expanded={open}>
+        <button
+          className="kubeapps-nav-link"
+          onClick={toggleOpen}
+          aria-expanded={open}
+          aria-haspopup="menu"
+        >
           <Row>
             <Column span={10}>
-              <span>Current Context</span>
-              <div>
-                <CdsIcon size="sm" shape="cluster" inverse={true} />
-                <span className="kubeapps-dropdown-text">{clusters.currentCluster}</span>
-                <CdsIcon size="sm" shape="file-group" inverse={true} />
-                <span className="kubeapps-dropdown-text">{namespaceSelected}</span>
+              <div className="kubeapps-dropdown-section">
+                <span className="kubeapps-dropdown-header">Current Context</span>
+                <div>
+                  <CdsIcon size="sm" shape="cluster" inverse={true} />
+                  <label htmlFor="clusters" className="kubeapps-dropdown-text">
+                    {clusters.currentCluster}
+                  </label>
+                  <CdsIcon size="sm" shape="file-group" inverse={true} />
+                  <label htmlFor="namespaces" className="kubeapps-dropdown-text">
+                    {namespaceSelected}
+                  </label>
+                </div>
               </div>
             </Column>
             <Column span={2}>
               <div
                 className={`kubeapps-align-center angle ${open ? "angle-opened" : "angle-closed"}`}
               >
-                <CdsIcon shape="angle" inverse={true} />
+                <CdsIcon shape="angle" inverse={true} direction={open ? "up" : "down"} />
               </div>
             </Column>
           </Row>
