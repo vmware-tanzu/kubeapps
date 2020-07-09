@@ -1,5 +1,5 @@
 import * as moxios from "moxios";
-import { App, TILLER_PROXY_ROOT_URL } from "./App";
+import { App, KUBEOPS_ROOT_URL } from "./App";
 import { axiosWithAuth } from "./AxiosInstance";
 import { IAppOverview, IChartVersion } from "./types";
 
@@ -11,35 +11,6 @@ describe("App", () => {
   afterEach(() => {
     moxios.uninstall(axiosWithAuth as any);
     jest.resetAllMocks();
-  });
-  describe("getResourceURL", () => {
-    [
-      {
-        description: "returns the root API URL if no params are given",
-        result: `${TILLER_PROXY_ROOT_URL}/releases`,
-      },
-      {
-        description: "returns namespaced URLs",
-        namespace: "default",
-        result: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases`,
-      },
-      {
-        description: "returns a single release URL",
-        namespace: "default",
-        resourceName: "foo",
-        result: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/foo`,
-      },
-      {
-        description: "returns a URL with a query",
-        namespace: "default",
-        query: "statuses=foo",
-        result: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases?statuses=foo`,
-      },
-    ].forEach(t => {
-      it(t.description, () => {
-        expect(App.getResourceURL(t.namespace, t.resourceName, t.query)).toBe(t.result);
-      });
-    });
   });
 
   describe("listApps", () => {
@@ -53,29 +24,29 @@ describe("App", () => {
     [
       {
         description: "should request all the releases if no namespace is given",
-        expectedURL: `${TILLER_PROXY_ROOT_URL}/releases`,
+        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/releases`,
       },
       {
         description: "should request the releases of a namespace",
-        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases`,
+        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/default/releases`,
         namespace: "default",
       },
       {
         all: true,
         description: "should request the releases of a namespace with any status",
-        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases?statuses=all`,
+        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/default/releases?statuses=all`,
         namespace: "default",
       },
     ].forEach(t => {
       it(t.description, async () => {
-        expect(await App.listApps(t.namespace, t.all)).toEqual(apps);
+        expect(await App.listApps("defaultc", t.namespace, t.all)).toEqual(apps);
         expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
       });
     });
   });
 
   describe("create", () => {
-    const expectedURL = `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases`;
+    const expectedURL = `${KUBEOPS_ROOT_URL}/clusters/defaultc/namespaces/defaultns/releases`;
     const testChartVersion: IChartVersion = {
       attributes: {
         version: "1.2.3",
@@ -94,7 +65,9 @@ describe("App", () => {
     } as IChartVersion;
     it("creates an app in a namespace", async () => {
       moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-      expect(await App.create("default", "absent-ant", "kubeapps", testChartVersion)).toBe("ok");
+      expect(
+        await App.create("defaultc", "defaultns", "absent-ant", "kubeapps", testChartVersion),
+      ).toBe("ok");
       const request = moxios.requests.mostRecent();
       expect(request.url).toBe(expectedURL);
       expect(request.config.data).toEqual(
@@ -110,7 +83,7 @@ describe("App", () => {
   });
 
   describe("upgrade", () => {
-    const expectedURL = `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/absent-ant`;
+    const expectedURL = `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/absent-ant`;
     const testChartVersion: IChartVersion = {
       attributes: {
         version: "1.2.3",
@@ -129,7 +102,9 @@ describe("App", () => {
     } as IChartVersion;
     it("upgrades an app in a namespace", async () => {
       moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-      expect(await App.upgrade("default", "absent-ant", "kubeapps", testChartVersion)).toBe("ok");
+      expect(
+        await App.upgrade("default-c", "default-ns", "absent-ant", "kubeapps", testChartVersion),
+      ).toBe("ok");
       const request = moxios.requests.mostRecent();
       expect(request.url).toBe(expectedURL);
       expect(request.config.data).toEqual(
@@ -147,18 +122,18 @@ describe("App", () => {
     [
       {
         description: "should delete an app in a namespace",
-        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/foo`,
+        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/foo`,
         purge: false,
       },
       {
         description: "should delete and purge an app in a namespace",
-        expectedURL: `${TILLER_PROXY_ROOT_URL}/namespaces/default/releases/foo?purge=true`,
+        expectedURL: `${KUBEOPS_ROOT_URL}/clusters/default-c/namespaces/default-ns/releases/foo?purge=true`,
         purge: true,
       },
     ].forEach(t => {
       it(t.description, async () => {
         moxios.stubRequest(/.*/, { response: "ok", status: 200 });
-        expect(await App.delete("default", "foo", t.purge)).toBe("ok");
+        expect(await App.delete("default-c", "default-ns", "foo", t.purge)).toBe("ok");
         expect(moxios.requests.mostRecent().url).toBe(t.expectedURL);
       });
     });
@@ -166,7 +141,7 @@ describe("App", () => {
       moxios.stubRequest(/.*/, { status: 404 });
       let errored = false;
       try {
-        await App.delete("default", "foo", false);
+        await App.delete("default-c", "default-ns", "foo", false);
       } catch (e) {
         errored = true;
         expect(e.message).toBe("Request failed with status code 404");
@@ -179,9 +154,9 @@ describe("App", () => {
   describe("rollback", () => {
     it("should rollback an application", async () => {
       axiosWithAuth.put = jest.fn().mockReturnValue({ data: "ok" });
-      expect(await App.rollback("default", "foo", 1)).toBe("ok");
+      expect(await App.rollback("default-c", "default-ns", "foo", 1)).toBe("ok");
       expect(axiosWithAuth.put).toBeCalledWith(
-        "api/tiller-deploy/v1/namespaces/default/releases/foo",
+        "api/tiller-deploy/v1/clusters/default-c/namespaces/default-ns/releases/foo",
         {},
         { params: { action: "rollback", revision: 1 } },
       );

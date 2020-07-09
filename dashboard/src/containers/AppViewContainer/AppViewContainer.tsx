@@ -31,10 +31,10 @@ function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params 
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    deleteApp: (namespace: string, releaseName: string, purge: boolean) =>
-      dispatch(actions.apps.deleteApp(namespace, releaseName, purge)),
-    getAppWithUpdateInfo: (namespace: string, releaseName: string) =>
-      dispatch(actions.apps.getAppWithUpdateInfo(namespace, releaseName)),
+    deleteApp: (cluster: string, namespace: string, releaseName: string, purge: boolean) =>
+      dispatch(actions.apps.deleteApp(cluster, namespace, releaseName, purge)),
+    getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) =>
+      dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName)),
     // TODO: remove once WebSockets are moved to Redux store (#882)
     receiveResource: (payload: { key: string; resource: IResource }) =>
       dispatch(actions.kube.receiveResource(payload)),

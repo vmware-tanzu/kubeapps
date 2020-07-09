@@ -15,7 +15,7 @@ import CustomResourceListItem from "./CustomResourceListItem";
 
 export interface IAppListProps {
   apps: IAppState;
-  fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
+  fetchAppsWithUpdateInfo: (cluster: string, ns: string, all: boolean) => void;
   cluster: string;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
@@ -34,8 +34,15 @@ interface IAppListState {
 class AppList extends React.Component<IAppListProps, IAppListState> {
   public state: IAppListState = { filter: "" };
   public componentDidMount() {
-    const { fetchAppsWithUpdateInfo, filter, namespace, apps, getCustomResources } = this.props;
-    fetchAppsWithUpdateInfo(namespace, apps.listingAll);
+    const {
+      fetchAppsWithUpdateInfo,
+      filter,
+      cluster,
+      namespace,
+      apps,
+      getCustomResources,
+    } = this.props;
+    fetchAppsWithUpdateInfo(cluster, namespace, apps.listingAll);
     if (this.props.featureFlags.operators) {
       getCustomResources(namespace);
     }
@@ -48,11 +55,12 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
       fetchAppsWithUpdateInfo,
       getCustomResources,
       filter,
+      cluster,
       namespace,
     } = this.props;
     // refetch if new namespace or error removed due to location change
     if (prevProps.namespace !== namespace || (!error && prevProps.apps.error)) {
-      fetchAppsWithUpdateInfo(namespace, listingAll);
+      fetchAppsWithUpdateInfo(cluster, namespace, listingAll);
       if (this.props.featureFlags.operators) {
         getCustomResources(namespace);
       }
@@ -164,7 +172,11 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
   }
 
   private toggleListAll = () => {
-    this.props.fetchAppsWithUpdateInfo(this.props.namespace, !this.props.apps.listingAll);
+    this.props.fetchAppsWithUpdateInfo(
+      this.props.cluster,
+      this.props.namespace,
+      !this.props.apps.listingAll,
+    );
   };
 
   private filteredReleases(apps: IAppOverview[], filter: string) {

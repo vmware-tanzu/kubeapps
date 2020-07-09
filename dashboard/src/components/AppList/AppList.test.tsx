@@ -39,7 +39,7 @@ context("when changing props", () => {
       />,
     );
     wrapper.setProps({ namespace: "foo" });
-    expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("foo", undefined);
+    expect(fetchAppsWithUpdateInfo).toHaveBeenCalledWith("defaultc", "foo", undefined);
     expect(getCustomResources).toHaveBeenCalledWith("foo");
   });
 
@@ -231,7 +231,7 @@ it("clicking 'List All' checkbox should trigger toggleListAll", () => {
   checkbox.simulate("change");
   // The last call to fetchApps should list all the apps
   const fetchCalls = mockFetchAppsWithUpdateInfo.mock.calls;
-  expect(fetchCalls[fetchCalls.length - 1]).toEqual(["default", true]);
+  expect(fetchCalls[fetchCalls.length - 1]).toEqual(["defaultc", "default", true]);
 });
 
 it("renders the 'Show deleted apps' button even if the app list is empty", () => {

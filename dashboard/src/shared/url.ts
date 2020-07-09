@@ -20,17 +20,17 @@ export const app = {
     `${app.catalog(cluster, namespace)}/${repo}`,
   servicesInstances: (namespace: string) => `/ns/${namespace}/services/instances`,
   charts: {
-    get: (chartName: string, repo: IRepo, namespace: string, cluster: string = "default") => {
+    get: (cluster: string, namespace: string, chartName: string, repo: IRepo) => {
       const chartsSegment = namespace !== repo?.namespace ? "global-charts" : "charts";
       return `/c/${cluster}/ns/${namespace}/${chartsSegment}/${repo.name}/${chartName}`;
     },
     version: (
+      cluster: string,
+      namespace: string,
       chartName: string,
       chartVersion: string,
       repo: IRepo,
-      namespace: string,
-      cluster: string = "default",
-    ) => `${app.charts.get(chartName, repo, namespace, cluster)}/versions/${chartVersion}`,
+    ) => `${app.charts.get(cluster, namespace, chartName, repo)}/versions/${chartVersion}`,
   },
   operators: {
     view: (namespace: string, name: string) => `/ns/${namespace}/operators/${name}`,
@@ -50,8 +50,12 @@ function withNS(namespace: string) {
 }
 
 export const backend = {
+  namespaces: {
+    base: "api/v1/namespaces",
+    list: () => `${backend.namespaces.base}`,
+  },
   apprepositories: {
-    base: (namespace: string) => `api/v1/namespaces/${namespace}/apprepositories`,
+    base: (namespace: string) => `${backend.namespaces.base}/${namespace}/apprepositories`,
     create: (namespace: string) => backend.apprepositories.base(namespace),
     validate: () => `${backend.apprepositories.base("kubeapps")}/validate`,
     delete: (name: string, namespace: string) =>
@@ -59,9 +63,15 @@ export const backend = {
     update: (namespace: string, name: string) =>
       `${backend.apprepositories.base(namespace)}/${name}`,
   },
-  namespaces: {
-    base: "api/v1/namespaces",
-    list: () => `${backend.namespaces.base}`,
+};
+
+export const kubeops = {
+  releases: {
+    list: (cluster: string, namespace: string) =>
+      `api/tiller-deploy/v1/clusters/${cluster}/namespaces/${namespace}/releases`,
+    listAll: (cluster: string) => `api/tiller-deploy/v1/clusters/${cluster}/releases`,
+    get: (cluster: string, namespace: string, name: string) =>
+      `${kubeops.releases.list(cluster, namespace)}/${name}`,
   },
 };
 

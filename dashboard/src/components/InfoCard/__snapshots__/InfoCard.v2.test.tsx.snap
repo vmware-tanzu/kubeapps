@@ -7,6 +7,7 @@ exports[`should render a Card 1`] = `
     Array [
       12,
       6,
+      4,
       3,
     ]
   }
@@ -31,11 +32,15 @@ exports[`should render a Card 1`] = `
             listItem={false}
             span={3}
           >
-            <img
-              alt="icon"
-              sizes="64px"
-              src="an-icon.png"
-            />
+            <div
+              className="card-icon"
+            >
+              <img
+                alt="icon"
+                sizes="64px"
+                src="an-icon.png"
+              />
+            </div>
           </Column>
           <Column
             listItem={false}

@@ -56,22 +56,31 @@ function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) 
     fetchChartVersions: (namespace: string, id: string) =>
       dispatch(actions.charts.fetchChartVersions(namespace, id)),
     fetchRepositories: (namespace: string) => dispatch(actions.repos.fetchRepos(namespace)),
-    getAppWithUpdateInfo: (namespace: string, releaseName: string) =>
-      dispatch(actions.apps.getAppWithUpdateInfo(namespace, releaseName)),
+    getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) =>
+      dispatch(actions.apps.getAppWithUpdateInfo(cluster, namespace, releaseName)),
     getChartVersion: (namespace: string, id: string, version: string) =>
       dispatch(actions.charts.getChartVersion(namespace, id, version)),
     push: (location: string) => dispatch(push(location)),
     goBack: () => dispatch(goBack()),
     upgradeApp: (
+      cluster: string,
+      namespace: string,
       version: IChartVersion,
       chartNamespace: string,
-      namespace: string,
       releaseName: string,
       values?: string,
       schema?: JSONSchema4,
     ) =>
       dispatch(
-        actions.apps.upgradeApp(version, chartNamespace, namespace, releaseName, values, schema),
+        actions.apps.upgradeApp(
+          cluster,
+          namespace,
+          version,
+          chartNamespace,
+          releaseName,
+          values,
+          schema,
+        ),
       ),
     getDeployedChartVersion: (namespace: string, id: string, version: string) =>
       dispatch(actions.charts.getDeployedChartVersion(namespace, id, version)),

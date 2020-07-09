@@ -1,26 +1,13 @@
+import * as url from "shared/url";
 import { axiosWithAuth } from "./AxiosInstance";
 import { hapi } from "./hapi/release";
 import { IAppOverview, IChartVersion } from "./types";
 
-export const TILLER_PROXY_ROOT_URL = "api/tiller-deploy/v1";
+export const KUBEOPS_ROOT_URL = "api/tiller-deploy/v1";
 
 export class App {
-  public static getResourceURL(namespace?: string, name?: string, query?: string) {
-    let url = TILLER_PROXY_ROOT_URL;
-    if (namespace) {
-      url += `/namespaces/${namespace}`;
-    }
-    url += "/releases";
-    if (name) {
-      url += `/${name}`;
-    }
-    if (query) {
-      url += `?${query}`;
-    }
-    return url;
-  }
-
   public static async create(
+    cluster: string,
     namespace: string,
     releaseName: string,
     chartNamespace: string,
@@ -28,7 +15,7 @@ export class App {
     values?: string,
   ) {
     const chartAttrs = chartVersion.relationships.chart.data;
-    const endpoint = App.getResourceURL(namespace);
+    const endpoint = url.kubeops.releases.list(cluster, namespace);
     const { data } = await axiosWithAuth.post(endpoint, {
       appRepositoryResourceName: chartAttrs.repo.name,
       appRepositoryResourceNamespace: chartNamespace,
@@ -41,6 +28,7 @@ export class App {
   }
 
   public static async upgrade(
+    cluster: string,
     namespace: string,
     releaseName: string,
     chartNamespace: string,
@@ -48,7 +36,7 @@ export class App {
     values?: string,
   ) {
     const chartAttrs = chartVersion.relationships.chart.data;
-    const endpoint = App.getResourceURL(namespace, releaseName);
+    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
     const { data } = await axiosWithAuth.put(endpoint, {
       appRepositoryResourceName: chartAttrs.repo.name,
       appRepositoryResourceNamespace: chartNamespace,
@@ -60,8 +48,13 @@ export class App {
     return data;
   }
 
-  public static async rollback(namespace: string, releaseName: string, revision: number) {
-    const endpoint = App.getResourceURL(namespace, releaseName);
+  public static async rollback(
+    cluster: string,
+    namespace: string,
+    releaseName: string,
+    revision: number,
+  ) {
+    const endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
     const { data } = await axiosWithAuth.put(
       endpoint,
       {},
@@ -75,31 +68,34 @@ export class App {
     return data;
   }
 
-  public static async delete(namespace: string, releaseName: string, purge: boolean) {
-    let purgeQuery;
+  public static async delete(
+    cluster: string,
+    namespace: string,
+    releaseName: string,
+    purge: boolean,
+  ) {
+    let endpoint = url.kubeops.releases.get(cluster, namespace, releaseName);
     if (purge) {
-      purgeQuery = "purge=true";
+      endpoint += "?purge=true";
     }
-    const { data } = await axiosWithAuth.delete(
-      App.getResourceURL(namespace, releaseName, purgeQuery),
-    );
+    const { data } = await axiosWithAuth.delete(endpoint);
     return data;
   }
 
-  public static async listApps(namespace?: string, allStatuses?: boolean) {
-    let query;
+  public static async listApps(cluster: string, namespace?: string, allStatuses?: boolean) {
+    let endpoint = namespace
+      ? url.kubeops.releases.list(cluster, namespace)
+      : url.kubeops.releases.listAll(cluster);
     if (allStatuses) {
-      query = "statuses=all";
+      endpoint += "?statuses=all";
     }
-    const { data } = await axiosWithAuth.get<{ data: IAppOverview[] }>(
-      App.getResourceURL(namespace, undefined, query),
-    );
+    const { data } = await axiosWithAuth.get<{ data: IAppOverview[] }>(endpoint);
     return data.data;
   }
 
-  public static async getRelease(namespace: string, name: string) {
+  public static async getRelease(cluster: string, namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<{ data: hapi.release.Release }>(
-      this.getResourceURL(namespace, name),
+      url.kubeops.releases.get(cluster, namespace, name),
     );
     return data.data;
   }

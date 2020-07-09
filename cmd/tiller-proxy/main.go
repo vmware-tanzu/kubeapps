@@ -156,6 +156,7 @@ func main() {
 	}
 
 	// Routes
+	// Deprecate non-cluster-aware URIs.
 	apiv1 := r.PathPrefix("/v1").Subrouter()
 	apiv1.Methods("GET").Path("/releases").Handler(handlerutil.WithoutParams(h.ListAllReleases))
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases").Handler(handlerutil.WithParams(h.ListReleases))
@@ -163,6 +164,12 @@ func main() {
 	apiv1.Methods("GET").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.GetRelease))
 	apiv1.Methods("PUT").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.OperateRelease))
 	apiv1.Methods("DELETE").Path("/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.DeleteRelease))
+	apiv1.Methods("GET").Path("/clusters/{cluster}/releases").Handler(handlerutil.WithoutParams(h.ListAllReleases))
+	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/releases").Handler(handlerutil.WithParams(h.ListReleases))
+	apiv1.Methods("POST").Path("/clusters/{cluster}/namespaces/{namespace}/releases").Handler(handlerutil.WithParams(h.CreateRelease))
+	apiv1.Methods("GET").Path("/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.GetRelease))
+	apiv1.Methods("PUT").Path("/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.OperateRelease))
+	apiv1.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.DeleteRelease))
 
 	// Backend routes unrelated to tiller-proxy functionality.
 	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())

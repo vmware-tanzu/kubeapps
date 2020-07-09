@@ -60,7 +60,7 @@ describe("LoginFormContainer props", () => {
       "/myoauth/start",
     );
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
-    const form = wrapper.find("LoginForm");
+    const form = wrapper.find("LoginFormSelector");
     expect(form).toHaveProp({
       authenticated: true,
       authenticating: true,
@@ -82,7 +82,7 @@ describe("LoginFormContainer props", () => {
       "/myoauth/start",
     );
     const wrapper = shallow(<LoginForm store={store} location={emptyLocation} />);
-    const form = wrapper.find("LoginForm");
+    const form = wrapper.find("LoginFormSelector");
     expect(form).toHaveProp({
       authenticated: true,
       authenticating: true,

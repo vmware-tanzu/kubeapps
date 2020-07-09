@@ -8,13 +8,15 @@ import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
   auth: { authenticated, authenticating, authenticationError },
-  config: { authProxyEnabled, oauthLoginURI },
+  config: { authProxyEnabled, oauthLoginURI, featureFlags, appVersion },
 }: IStoreState) {
   return {
     authenticated,
     authenticating,
     authenticationError,
     oauthLoginURI: authProxyEnabled ? oauthLoginURI : "",
+    UI: featureFlags.ui,
+    appVersion,
   };
 }
 

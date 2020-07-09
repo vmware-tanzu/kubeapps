@@ -6,7 +6,7 @@ import { Redirect } from "react-router";
 import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 
-interface ILoginFormProps {
+export interface ILoginFormProps {
   authenticated: boolean;
   authenticating: boolean;
   authenticationError: string | undefined;

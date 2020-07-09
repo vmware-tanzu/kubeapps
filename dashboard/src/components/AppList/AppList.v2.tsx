@@ -18,7 +18,7 @@ import AppListGrid from "./AppListGrid";
 
 export interface IAppListProps {
   apps: IAppState;
-  fetchAppsWithUpdateInfo: (ns: string, all: boolean) => void;
+  fetchAppsWithUpdateInfo: (cluster: string, ns: string, all: boolean) => void;
   cluster: string;
   namespace: string;
   pushSearchFilter: (filter: string) => any;
@@ -48,9 +48,9 @@ function AppList(props: IAppListProps) {
   } = props;
 
   useEffect(() => {
-    fetchAppsWithUpdateInfo(namespace, true);
+    fetchAppsWithUpdateInfo(cluster, namespace, true);
     getCustomResources(namespace);
-  }, [namespace, fetchAppsWithUpdateInfo, getCustomResources]);
+  }, [cluster, namespace, fetchAppsWithUpdateInfo, getCustomResources]);
 
   useEffect(() => {
     setFilter(filterProps);
@@ -85,7 +85,7 @@ function AppList(props: IAppListProps) {
       </PageHeader>
       <LoadingWrapper loaded={!isFetching && !isFetchingResources}>
         {error ? (
-          <Alert theme="danger">{error}</Alert>
+          <Alert theme="danger">Unable to list apps: {error.message}</Alert>
         ) : (
           <AppListGrid
             appList={listOverview}

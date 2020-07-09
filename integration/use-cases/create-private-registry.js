@@ -94,6 +94,10 @@ test("Creates a private registry", async () => {
 
   await expect(page).toSelect("#chartVersion", "7.3.16");
 
+  await expect(page).toClick("li", { text: "Changes" });
+
+  await expect(page).toMatch("tag: 2.4.43-debian-10-r54");
+
   await expect(page).toClick(".button-primary");
 
   await expect(page).toMatch("Up to date", { timeout: 60000 });

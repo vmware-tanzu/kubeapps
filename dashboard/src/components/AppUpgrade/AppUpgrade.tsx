@@ -21,15 +21,16 @@ export interface IAppUpgradeProps {
   selected: IChartState["selected"];
   deployed: IChartState["deployed"];
   upgradeApp: (
+    cluster: string,
+    namespace: string,
     version: IChartVersion,
     chartNamespace: string,
-    namespace: string,
     releaseName: string,
     values?: string,
     schema?: JSONSchema4,
   ) => Promise<boolean>;
   fetchChartVersions: (namespace: string, id: string) => Promise<IChartVersion[]>;
-  getAppWithUpdateInfo: (namespace: string, releaseName: string) => void;
+  getAppWithUpdateInfo: (cluster: string, namespace: string, releaseName: string) => void;
   getChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   getDeployedChartVersion: (namespace: string, id: string, chartVersion: string) => void;
   push: (location: string) => RouterAction;
@@ -47,8 +48,8 @@ export interface IAppUpgradeProps {
 
 class AppUpgrade extends React.Component<IAppUpgradeProps> {
   public componentDidMount() {
-    const { releaseName, getAppWithUpdateInfo, namespace } = this.props;
-    getAppWithUpdateInfo(namespace, releaseName);
+    const { releaseName, getAppWithUpdateInfo, cluster, namespace } = this.props;
+    getAppWithUpdateInfo(cluster, namespace, releaseName);
   }
 
   public componentDidUpdate(prevProps: IAppUpgradeProps) {

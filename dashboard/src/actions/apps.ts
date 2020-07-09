@@ -87,13 +87,14 @@ const allActions = [
 export type AppsAction = ActionType<typeof allActions[number]>;
 
 export function getApp(
+  cluster: string,
   namespace: string,
   releaseName: string,
 ): ThunkAction<Promise<hapi.release.Release | undefined>, IStoreState, null, AppsAction> {
   return async dispatch => {
     dispatch(requestApps());
     try {
-      const app = await App.getRelease(namespace, releaseName);
+      const app = await App.getRelease(cluster, namespace, releaseName);
       dispatch(selectApp(app));
       return app;
     } catch (e) {
@@ -157,12 +158,13 @@ function getAppUpdateInfo(
 }
 
 export function getAppWithUpdateInfo(
+  cluster: string,
   namespace: string,
   releaseName: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
     try {
-      const app = await dispatch(getApp(namespace, releaseName));
+      const app = await dispatch(getApp(cluster, namespace, releaseName));
       if (
         app &&
         app.chart &&
@@ -188,6 +190,7 @@ export function getAppWithUpdateInfo(
 }
 
 export function deleteApp(
+  cluster: string,
   namespace: string,
   releaseName: string,
   purge: boolean,
@@ -195,7 +198,7 @@ export function deleteApp(
   return async dispatch => {
     dispatch(requestDeleteApp());
     try {
-      await App.delete(namespace, releaseName, purge);
+      await App.delete(cluster, namespace, releaseName, purge);
       dispatch(receiveDeleteApp());
       return true;
     } catch (e) {
@@ -207,6 +210,7 @@ export function deleteApp(
 
 // fetchApps returns a list of apps for other actions to compose on top of it
 export function fetchApps(
+  cluster: string,
   ns?: string,
   all: boolean = false,
 ): ThunkAction<Promise<IAppOverview[]>, IStoreState, null, AppsAction> {
@@ -216,7 +220,7 @@ export function fetchApps(
     }
     dispatch(listApps(all));
     try {
-      const apps = await App.listApps(ns, all);
+      const apps = await App.listApps(cluster, ns, all);
       dispatch(receiveAppList(apps));
       return apps;
     } catch (e) {
@@ -227,11 +231,12 @@ export function fetchApps(
 }
 
 export function fetchAppsWithUpdateInfo(
+  cluster: string,
   namespace: string,
   all: boolean = false,
 ): ThunkAction<Promise<void>, IStoreState, null, AppsAction> {
   return async dispatch => {
-    const apps = await dispatch(fetchApps(namespace, all));
+    const apps = await dispatch(fetchApps(cluster, namespace, all));
     apps.forEach(app =>
       dispatch(
         getAppUpdateInfo(
@@ -247,9 +252,10 @@ export function fetchAppsWithUpdateInfo(
 }
 
 export function deployChart(
+  targetCluster: string,
+  targetNamespace: string,
   chartVersion: IChartVersion,
   chartNamespace: string,
-  namespace: string,
   releaseName: string,
   values?: string,
   schema?: JSONSchema4,
@@ -258,7 +264,7 @@ export function deployChart(
     dispatch(requestDeployApp());
     try {
       // You can not deploy applications unless the namespace is set
-      if (namespace === definedNamespaces.all) {
+      if (targetNamespace === definedNamespaces.all) {
         throw new UnprocessableEntity(
           "Namespace not selected. Please select a namespace using the selector in the top right corner.",
         );
@@ -274,7 +280,14 @@ export function deployChart(
           );
         }
       }
-      await App.create(namespace, releaseName, chartNamespace, chartVersion, values);
+      await App.create(
+        targetCluster,
+        targetNamespace,
+        releaseName,
+        chartNamespace,
+        chartVersion,
+        values,
+      );
       dispatch(receiveDeployApp());
       return true;
     } catch (e) {
@@ -285,9 +298,10 @@ export function deployChart(
 }
 
 export function upgradeApp(
+  cluster: string,
+  namespace: string,
   chartVersion: IChartVersion,
   chartNamespace: string,
-  namespace: string,
   releaseName: string,
   values?: string,
   schema?: JSONSchema4,
@@ -306,7 +320,7 @@ export function upgradeApp(
           );
         }
       }
-      await App.upgrade(namespace, releaseName, chartNamespace, chartVersion, values);
+      await App.upgrade(cluster, namespace, releaseName, chartNamespace, chartVersion, values);
       dispatch(receiveUpgradeApp());
       return true;
     } catch (e) {
@@ -317,6 +331,7 @@ export function upgradeApp(
 }
 
 export function rollbackApp(
+  cluster: string,
   namespace: string,
   releaseName: string,
   revision: number,
@@ -324,9 +339,9 @@ export function rollbackApp(
   return async (dispatch, getState) => {
     dispatch(requestRollbackApp());
     try {
-      await App.rollback(namespace, releaseName, revision);
+      await App.rollback(cluster, namespace, releaseName, revision);
       dispatch(receiveRollbackApp());
-      dispatch(getAppWithUpdateInfo(namespace, releaseName));
+      dispatch(getAppWithUpdateInfo(cluster, namespace, releaseName));
       return true;
     } catch (e) {
       dispatch(errorApps(e));
