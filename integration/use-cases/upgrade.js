@@ -2,7 +2,7 @@ test("Upgrades an application", async () => {
   await page.goto(getUrl("/#/login"));
 
   await expect(page).toFillForm("form", {
-    token: process.env.EDIT_TOKEN
+    token: process.env.EDIT_TOKEN,
   });
 
   await expect(page).toClick("button", { text: "Login" });
@@ -42,11 +42,13 @@ test("Upgrades an application", async () => {
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
   await expect(page).toSelect("#chartVersion", latestChartVersion, {
-    delay: 1000
+    delay: 1000,
   });
 
   await expect(page).toMatchElement("#replicaCount-1", { value: 2 });
 
+  await expect(page).toClick("button", { text: "Submit", delay: 1000 });
+  console.log(page);
   await expect(page).toClick("button", { text: "Submit", delay: 1000 });
 
   await expect(page).toMatch("Up to date", { timeout: 60000 });
