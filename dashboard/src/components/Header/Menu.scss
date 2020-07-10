@@ -1,0 +1,67 @@
+.kubeapps-menu {
+  padding: 0 1rem 0 1rem;
+  &.open {
+    opacity: 100%;
+    background-color: #25333d;
+  }
+}
+
+.dropdown-menu-label {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+  color: #d9e4ea;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.dropdown-menu-link {
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.dropdown-divider {
+  opacity: 0.2;
+}
+
+.dropdown-menu-item {
+  margin-left: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  padding: 0.2rem 0 0.2rem 0;
+  opacity: 0.65;
+  img {
+    margin-right: 0.5rem;
+    max-width: 20px;
+  }
+  &:hover {
+    transform: translateY(-0.1rem);
+    transition: border 0.2s ease, transform 0.2s;
+    opacity: 1;
+  }
+}
+
+.logout-button cds-button {
+  display: grid;
+  width: 100%;
+  --color: #fff;
+  --border-color: #fff;
+  &:hover {
+    --color: #0072a3;
+    --border-color: #0072a3;
+  }
+}
+
+.dropdown-menu-subtext {
+  margin-right: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  text-align: end;
+  font-size: smaller;
+  a:hover {
+    color: #fff;
+  }
+}

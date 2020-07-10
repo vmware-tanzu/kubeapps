@@ -43,6 +43,10 @@ export const app = {
     update: (namespace: string, csvName: string, crdName: string, instanceName: string) =>
       `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${instanceName}/update`,
   },
+  config: {
+    apprepositories: (namespace: string) => `/config/ns/${namespace}/repos`,
+    operators: (namespace: string) => `/ns/${namespace}/operators`,
+  },
 };
 
 function withNS(namespace: string) {

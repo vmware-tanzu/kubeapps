@@ -24,6 +24,7 @@ const defaultProps = {
   createNamespace: jest.fn(),
   getNamespace: jest.fn(),
   featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
+  appVersion: "v2.0.0",
 };
 
 it("renders the header links and titles", () => {

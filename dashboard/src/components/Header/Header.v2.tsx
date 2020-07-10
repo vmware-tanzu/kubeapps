@@ -1,15 +1,12 @@
-import { applicationsIcon, ClarityIcons } from "@clr/core/icon-shapes";
 import * as React from "react";
 import { NavLink } from "react-router-dom";
-import { CdsIcon } from "../Clarity/clarity";
 
 import logo from "../../logo.svg";
 import { IClustersState } from "../../reducers/cluster";
 import { app } from "../../shared/url";
 import ContextSelector from "./ContextSelector";
 import "./Header.v2.css";
-
-ClarityIcons.addIcons(applicationsIcon);
+import Menu from "./Menu";
 
 interface IHeaderProps {
   authenticated: boolean;
@@ -17,6 +14,7 @@ interface IHeaderProps {
   logout: () => void;
   clusters: IClustersState;
   defaultNamespace: string;
+  appVersion: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
   createNamespace: (ns: string) => Promise<boolean>;
@@ -25,6 +23,7 @@ interface IHeaderProps {
 
 function Header(props: IHeaderProps) {
   const {
+    appVersion,
     clusters,
     authenticated: showNav,
     defaultNamespace,
@@ -32,6 +31,7 @@ function Header(props: IHeaderProps) {
     createNamespace,
     getNamespace,
     setNamespace,
+    logout,
   } = props;
   const cluster = clusters.clusters[clusters.currentCluster];
 
@@ -83,12 +83,12 @@ function Header(props: IHeaderProps) {
                 defaultNamespace={defaultNamespace}
                 setNamespace={setNamespace}
               />
-              <button
-                className="kubeapps-nav-link nav-icon"
-                aria-label="VMware Cloud services configuration"
-              >
-                <CdsIcon size="lg" shape="applications" solid={true} />
-              </button>
+              <Menu
+                clusters={clusters}
+                defaultNamespace={defaultNamespace}
+                appVersion={appVersion}
+                logout={logout}
+              />
             </section>
           )}
         </header>
