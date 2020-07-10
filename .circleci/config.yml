@@ -9,11 +9,9 @@ build_always: &build_always
 # Build only in master or in tags
 build_on_master: &build_on_master
   filters:
-    tags:
-      only: /^v.*/
     branches:
       only: master
-build_on_master_and_tag: &build_on_master
+build_on_master_and_tag: &build_on_master_and_tag
   filters:
     tags:
       only: /^v.*/
