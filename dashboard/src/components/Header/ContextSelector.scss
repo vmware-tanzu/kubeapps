@@ -1,0 +1,54 @@
+.angle {
+  margin-left: -0.5rem;
+  height: 100%;
+}
+
+.kubeapps-dropdown {
+  opacity: 75%;
+  padding: 0 0.5rem 0 0.5rem;
+  &.open {
+    opacity: 100%;
+    background-color: #25333d;
+  }
+  button {
+    color: var(--clr-header-font-color, #fafafa);
+  }
+}
+
+.kubeapps-dropdown-section {
+  text-align: initial;
+}
+
+.kubeapps-dropdown-header {
+  font-size: small;
+}
+
+.kubeapps-dropdown-text {
+  margin-left: 0.2rem;
+  margin-right: 0.7rem;
+  font-weight: 500;
+}
+
+.dropdown-menu {
+  background-color: #25333d;
+  width: 15rem;
+  border: 0px;
+  margin-right: 0px !important;
+  .dropdown-menu-padding {
+    padding: 0 1rem 0.6rem 1rem;
+  }
+  .context-selector-header {
+    color: var(--clr-header-font-color, #fafafa);
+    font-size: small;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .clr-select-wrapper {
+    display: block;
+    .clr-page-size-select {
+      color: var(--clr-header-font-color, #fafafa);
+      width: 100%;
+    }
+  }
+}
