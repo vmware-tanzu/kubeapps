@@ -19,6 +19,7 @@ function mapStateToProps(
     namespace: params.namespace,
     kubeappsNamespace: config.namespace,
     featureFlags: config.featureFlags,
+    UI: config.featureFlags.ui,
   };
 }
 

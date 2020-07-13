@@ -36,7 +36,12 @@ function CustomResourceListItem(props: ICustomResourceListItemProps) {
       title={resource.metadata.name}
       icon={icon}
       description={crd.description}
-      info={`${resource.kind} v${csv.spec.version || "-"}`}
+      info={
+        <>
+          <div>{resource.kind}</div>
+          <div>v{csv.spec.version || "-"}</div>
+        </>
+      }
       tag1Content={csv.metadata.name.split(".")[0]}
       subIcon={operatorIcon}
     />

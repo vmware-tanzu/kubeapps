@@ -1,0 +1,29 @@
+// This breakpoints matches the ones stated in Clarity at: https://v2.clarity.design/grid
+
+// small
+@media (min-width: 576px) {
+  .multicheckbox-wrapper {
+    columns: var(--col-sm-num);
+  }
+}
+
+// medium
+@media (min-width: 768px) {
+  .multicheckbox-wrapper {
+    columns: var(--col-md-num);
+  }
+}
+
+// large
+@media (min-width: 992px) {
+  .multicheckbox-wrapper {
+    columns: var(--col-lg-num);
+  }
+}
+
+// extra large
+@media (min-width: 1200px) {
+  .multicheckbox-wrapper {
+    columns: var(--col-xl-num);
+  }
+}

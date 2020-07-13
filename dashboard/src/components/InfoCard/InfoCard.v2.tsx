@@ -42,7 +42,7 @@ function InfoCard(props: IInfoCardProps) {
         <Link to={link || "#"}>
           <CardHeader>
             <>
-              {title}
+              <div className="card-title">{title}</div>
               {subIcon && <img src={subIcon} alt="icon" />}
             </>
           </CardHeader>
@@ -60,17 +60,19 @@ function InfoCard(props: IInfoCardProps) {
           </CardBlock>
           <CardFooter>
             <Row>
-              <Column span={6}>{info}</Column>
-              <Column span={6}>
-                <div className="footer-tags">
-                  {tag1Content && (
-                    <span className={`label ${tag1Class || "label-info"}`}>{tag1Content}</span>
-                  )}
-                  {tag2Content && (
-                    <span className={`label ${tag2Class || "label-info"}`}>{tag2Content}</span>
-                  )}
+              <div className="kubeapps-card-footer">
+                <div className="kubeapps-card-footer-col1">{info}</div>
+                <div className="kubeapps-card-footer-col2">
+                  <div className="footer-tags">
+                    {tag1Content && (
+                      <span className={`label ${tag1Class || "label-info"}`}>{tag1Content}</span>
+                    )}
+                    {tag2Content && (
+                      <span className={`label ${tag2Class || "label-info"}`}>{tag2Content}</span>
+                    )}
+                  </div>
                 </div>
-              </Column>
+              </div>
             </Row>
           </CardFooter>
         </Link>
