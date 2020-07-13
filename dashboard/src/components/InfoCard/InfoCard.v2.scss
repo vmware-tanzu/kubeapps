@@ -16,9 +16,11 @@
   height: 4.5rem;
   overflow-y: hidden;
   .card-icon {
+    display: flex;
+    align-items: center;
     text-align: center;
+    height: 3.5rem;
     img {
-      max-height: 3.5rem;
       max-width: 100%;
     }
   }
