@@ -70,13 +70,16 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_15_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
+      # TODO(andresmgot): Latest release was made on a fork so the current
+      # tests are not fully compatible. Reenable these tests after the next
+      # release.
+      # - GKE_1_15_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
       - GKE_1_14_MASTER:
           <<: *build_on_master
           requires:
@@ -84,13 +87,13 @@ workflows:
             - test_dashboard
             - build_go_images
             - build_dashboard
-      - GKE_1_14_LATEST_RELEASE:
-          <<: *build_on_master
-          requires:
-            - test_go
-            - test_dashboard
-            - build_go_images
-            - build_dashboard
+      # - GKE_1_14_LATEST_RELEASE:
+      #     <<: *build_on_master
+      #     requires:
+      #       - test_go
+      #       - test_dashboard
+      #       - build_go_images
+      #       - build_dashboard
       - sync_chart:
           <<: *build_on_master
           requires:
@@ -99,9 +102,9 @@ workflows:
             - local_e2e_tests_mongodb_helm2
             - local_e2e_tests_mongodb_helm3
             - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
+            # - GKE_1_15_LATEST_RELEASE
             - GKE_1_14_MASTER
-            - GKE_1_14_LATEST_RELEASE
+            # - GKE_1_14_LATEST_RELEASE
       - push_images:
           <<: *build_on_master
           requires:
@@ -110,9 +113,9 @@ workflows:
             - local_e2e_tests_mongodb_helm2
             - local_e2e_tests_mongodb_helm3
             - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
+            # - GKE_1_15_LATEST_RELEASE
             - GKE_1_14_MASTER
-            - GKE_1_14_LATEST_RELEASE
+            # - GKE_1_14_LATEST_RELEASE
       - release:
           <<: *build_on_tag
           requires:
@@ -121,9 +124,9 @@ workflows:
             - local_e2e_tests_mongodb_helm2
             - local_e2e_tests_mongodb_helm3
             - GKE_1_15_MASTER
-            - GKE_1_15_LATEST_RELEASE
+            # - GKE_1_15_LATEST_RELEASE
             - GKE_1_14_MASTER
-            - GKE_1_14_LATEST_RELEASE
+            # - GKE_1_14_LATEST_RELEASE
 
 ## Definitions
 install_gcloud_sdk: &install_gcloud_sdk
@@ -349,26 +352,26 @@ jobs:
       HELM_VERSION: "v3.0.2"
       GKE_BRANCH: "1.15"
       KUBEAPPS_DB: "postgresql"
-  GKE_1_15_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      HELM_VERSION: "v3.0.2"
-      GKE_BRANCH: "1.15"
-      KUBEAPPS_DB: "postgresql"
-      TEST_LATEST_RELEASE: 1
+  # GKE_1_15_LATEST_RELEASE:
+  #   <<: *gke_test
+  #   environment:
+  #     HELM_VERSION: "v3.0.2"
+  #     GKE_BRANCH: "1.15"
+  #     KUBEAPPS_DB: "postgresql"
+  #     TEST_LATEST_RELEASE: 1
   GKE_1_14_MASTER:
     <<: *gke_test
     environment:
       HELM_VERSION: "v3.0.2"
       GKE_BRANCH: "1.14"
       KUBEAPPS_DB: "postgresql"
-  GKE_1_14_LATEST_RELEASE:
-    <<: *gke_test
-    environment:
-      HELM_VERSION: "v3.0.2"
-      GKE_BRANCH: "1.14"
-      KUBEAPPS_DB: "postgresql"
-      TEST_LATEST_RELEASE: 1
+  # GKE_1_14_LATEST_RELEASE:
+  #   <<: *gke_test
+  #   environment:
+  #     HELM_VERSION: "v3.0.2"
+  #     GKE_BRANCH: "1.14"
+  #     KUBEAPPS_DB: "postgresql"
+  #     TEST_LATEST_RELEASE: 1
   sync_chart:
     docker:
       - image: circleci/golang:1.13
