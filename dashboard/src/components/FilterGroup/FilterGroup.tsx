@@ -10,7 +10,7 @@ interface IFilterGroupProps {
 
 function FilterGroup({ name, options, onChange: propsOnChange }: IFilterGroupProps) {
   const [value, setValue] = useState([] as string[]);
-  const onChange = (e: any) => {
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value: targetValue } = e.target;
     const index = value.indexOf(targetValue);
     let newValue = [];

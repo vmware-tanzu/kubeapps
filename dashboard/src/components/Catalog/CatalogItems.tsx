@@ -13,7 +13,7 @@ export default function CatalogItems({ charts, csvs, namespace }: ICatalogItemsP
   const chartItems: ICatalogItemProps[] = charts.map(c => {
     return {
       type: "chart",
-      key: `chart/${c.attributes.repo.name}/${c.id}`,
+      id: `chart/${c.attributes.repo.name}/${c.id}`,
       item: {
         id: c.id,
         name: c.attributes.name,
@@ -31,7 +31,7 @@ export default function CatalogItems({ charts, csvs, namespace }: ICatalogItemsP
         return csv.spec.customresourcedefinitions.owned.map(crd => {
           return {
             type: "operator",
-            key: `operator/${csv.metadata.name}/${crd.name}`,
+            id: `operator/${csv.metadata.name}/${crd.name}`,
             item: {
               id: crd.name,
               name: crd.displayName || crd.name,
@@ -53,10 +53,13 @@ export default function CatalogItems({ charts, csvs, namespace }: ICatalogItemsP
     .concat(crdItems)
     .sort((a, b) => (a.item.name.toLowerCase() > b.item.name.toLowerCase() ? 1 : -1));
 
+  if (sortedItems.length === 0) {
+    return <p>No application matches the current filter.</p>;
+  }
   return (
     <>
       {sortedItems.map(i => (
-        <CatalogItem type={i.type} key={i.key} item={i.item} />
+        <CatalogItem key={i.id} {...i} />
       ))}
     </>
   );

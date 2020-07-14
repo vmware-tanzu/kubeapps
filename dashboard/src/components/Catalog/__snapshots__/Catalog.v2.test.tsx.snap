@@ -1,0 +1,73 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when fetching apps loading spinner matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <div
+      className="kubeapps-header"
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Catalog
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search charts..."
+          value=""
+        />
+      </Row>
+    </div>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={false}
+  >
+    <Alert
+      app={false}
+      compact={false}
+      theme="warning"
+    >
+      Charts not found. Manage your Helm chart repositories in Kubeapps by visiting the
+       
+      <Link
+        to="/config/ns/kubeapps/repos"
+      >
+        App repositories configuration
+      </Link>
+       
+      page.
+    </Alert>
+    <Row
+      list={false}
+    >
+      <Column
+        listItem={false}
+        span={2}
+      >
+        <div
+          className="filters-menu"
+        >
+          <h5>
+            Filters
+          </h5>
+        </div>
+      </Column>
+      <Column
+        listItem={false}
+        span={10}
+      >
+        <CardGrid>
+          <CatalogItems
+            charts={Array []}
+            csvs={Array []}
+            namespace="kubeapps"
+          />
+        </CardGrid>
+      </Column>
+    </Row>
+  </LoadingWrapper>
+</section>
+`;

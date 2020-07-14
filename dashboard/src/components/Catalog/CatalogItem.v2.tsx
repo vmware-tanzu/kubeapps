@@ -12,16 +12,18 @@ export interface ICatalogItem {
 }
 
 export interface IChartCatalogItem extends ICatalogItem {
+  id: string;
   repo: IRepo;
 }
 
 export interface IOperatorCatalogItem extends ICatalogItem {
+  id: string;
   csv: string;
 }
 
 export interface ICatalogItemProps {
   type: string;
-  key: string;
+  id: string;
   item: IChartCatalogItem | IOperatorCatalogItem;
 }
 

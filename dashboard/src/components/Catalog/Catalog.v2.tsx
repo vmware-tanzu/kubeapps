@@ -15,6 +15,7 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
 
+import { app } from "shared/url";
 import "./Catalog.v2.css";
 import CatalogItems from "./CatalogItems";
 
@@ -32,10 +33,6 @@ interface ICatalogProps {
 }
 
 function Catalog(props: ICatalogProps) {
-  const [searchFilter, setSearchFilter] = useState("");
-  const [typeFilter, setTypeFilter] = useState([] as string[]);
-  const [repoFilter, setRepoFilter] = useState([] as string[]);
-
   const {
     charts: {
       isFetching,
@@ -50,7 +47,13 @@ function Catalog(props: ICatalogProps) {
     repo,
     filter: propsFilter,
   } = props;
+  const [searchFilter, setSearchFilter] = useState(propsFilter);
+  const [typeFilter, setTypeFilter] = useState([] as string[]);
+  const [repoFilter, setRepoFilter] = useState([] as string[]);
+  const [operatorProviderFilter, setOperatorProviderFilter] = useState([] as string[]);
+
   const allRepos = uniq(charts.map(c => c.attributes.repo.name));
+  const allProviders = uniq(csvs.map(c => c.spec.provider.name));
 
   useEffect(() => {
     fetchCharts(namespace, repo);
@@ -63,12 +66,18 @@ function Catalog(props: ICatalogProps) {
 
   const filteredCharts = charts
     .filter(() => typeFilter.length === 0 || typeFilter.includes("Charts"))
+    .filter(() => operatorProviderFilter.length === 0)
     .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.id))
     .filter(c => repoFilter.length === 0 || repoFilter.includes(c.attributes.repo.name));
   const filteredCSVs = csvs
     .filter(() => typeFilter.length === 0 || typeFilter.includes("Operators"))
     .filter(() => repoFilter.length === 0)
-    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name));
+    .filter(c => new RegExp(escapeRegExp(searchFilter), "i").test(c.metadata.name))
+    .filter(
+      c =>
+        operatorProviderFilter.length === 0 ||
+        operatorProviderFilter.includes(c.spec.provider.name),
+    );
 
   return (
     <section>
@@ -87,11 +96,14 @@ function Catalog(props: ICatalogProps) {
         </div>
       </PageHeader>
       <LoadingWrapper loaded={!isFetching}>
-        {error && <Alert theme="danger">Unable to fetch catalog: {error.message}</Alert>}
+        {error && (
+          <Alert theme="danger">Found en error fetching the catalog: {error.message}</Alert>
+        )}
         {charts.length === 0 && csvs.length === 0 && (
           <Alert theme="warning">
             Charts not found. Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-            <Link to={`/config/ns/${namespace}/repos`}>App repositories configuration</Link> page.
+            <Link to={app.config.apprepositories(namespace)}>App repositories configuration</Link>{" "}
+            page.
           </Alert>
         )}
         <Row>
@@ -108,8 +120,22 @@ function Catalog(props: ICatalogProps) {
                   />
                 </>
               )}
-              <div className="filter-label">Application Repository:</div>
-              <FilterGroup name="apprepo" options={allRepos} onChange={setRepoFilter} />
+              {allRepos.length > 0 && (
+                <>
+                  <div className="filter-label">Application Repository:</div>
+                  <FilterGroup name="apprepo" options={allRepos} onChange={setRepoFilter} />
+                </>
+              )}
+              {allProviders.length > 0 && (
+                <>
+                  <div className="filter-label">Operator Provider:</div>
+                  <FilterGroup
+                    name="operator-provider"
+                    options={allProviders}
+                    onChange={setOperatorProviderFilter}
+                  />
+                </>
+              )}
             </div>
           </Column>
           <Column span={10}>
