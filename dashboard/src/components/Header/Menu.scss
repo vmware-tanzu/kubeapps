@@ -1,9 +1,53 @@
+.drawer {
+  position: absolute;
+  overflow: hidden;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+
 .kubeapps-menu {
-  padding: 0 1rem 0 1rem;
+  display: flex;
+  opacity: 75%;
+  align-items: center;
+  &:hover {
+    opacity: 100%;
+    background-color: #25333d;
+  }
   &.open {
     opacity: 100%;
     background-color: #25333d;
   }
+  button {
+    padding: 0 1.5rem 0 1.5rem;
+    height: 100%;
+  }
+}
+
+.drawer-backdrop {
+  z-index: 1015;
+  position: absolute;
+  top: 3rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #313131;
+  opacity: 0.85;
+  height: calc(100vh - 3rem);
+}
+
+.dropdown-configuration-menu {
+  height: calc(100vh - 3rem);
+  z-index: 1017;
+  position: absolute;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dropdown-menu {
+  margin-top: 0 !important;
 }
 
 .dropdown-menu-label {

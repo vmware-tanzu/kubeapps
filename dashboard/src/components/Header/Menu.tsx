@@ -41,10 +41,8 @@ function Menu({ clusters, defaultNamespace, appVersion, logout }: IContextSelect
 
   return (
     <>
-      <div
-        className={`dropdown kubeapps-align-center kubeapps-menu ${open ? "open" : ""}`}
-        ref={ref}
-      >
+      <div className={open ? "drawer-backdrop" : ""} />
+      <div className={`dropdown kubeapps-menu ${open ? "open" : ""}`} ref={ref}>
         <button
           className="kubeapps-nav-link"
           onClick={toggleOpen}
@@ -52,51 +50,56 @@ function Menu({ clusters, defaultNamespace, appVersion, logout }: IContextSelect
           aria-haspopup="menu"
         >
           <Row>
-            <CdsIcon size="lg" shape="applications" solid={true} />
+            <CdsIcon size="md" shape="applications" solid={true} inverse={true} />
           </Row>
         </button>
-        <div className="dropdown-menu" role="menu">
-          <label className="dropdown-menu-padding dropdown-menu-label">Administration</label>
-          <Link
-            to={app.config.apprepositories(namespaceSelected)}
-            className="dropdown-menu-link"
-            onClick={toggleOpen}
-          >
-            <div className="dropdown-menu-item" role="menuitem">
-              <img src={helmIcon} alt="helm-icon" />
-              <span>App Repositories</span>
-            </div>
-          </Link>
-          <div className="dropdown-divider" role="separator" />
-          <Link
-            to={app.config.operators(namespaceSelected)}
-            className="dropdown-menu-link"
-            onClick={toggleOpen}
-          >
-            <div className="dropdown-menu-item" role="menuitem">
-              <img src={operatorIcon} alt="helm-icon" />
-              <span>Operators</span>
-            </div>
-          </Link>
-          <div className="dropdown-divider" role="separator" />
-          <div className="dropdown-menu-subtext">
-            Made with <CdsIcon size="sm" shape="heart" inverse={true} solid={true} /> by Bitnami and{" "}
-            <a
-              href="https://github.com/kubeapps/kubeapps/graphs/contributors"
-              className="type-color-white"
-              target="_blank"
-              rel="noopener noreferrer"
+        <div className="dropdown-menu dropdown-configuration-menu" role="menu">
+          <div>
+            <label className="dropdown-menu-padding dropdown-menu-label">Administration</label>
+            <Link
+              to={app.config.apprepositories(namespaceSelected)}
+              className="dropdown-menu-link"
+              onClick={toggleOpen}
             >
-              contributors
-            </a>
-            .
-            <br />
-            {appVersion}
+              <div className="dropdown-menu-item" role="menuitem">
+                <img src={helmIcon} alt="helm-icon" />
+                <span>App Repositories</span>
+              </div>
+            </Link>
+            <div className="dropdown-divider" role="separator" />
+            <Link
+              to={app.config.operators(namespaceSelected)}
+              className="dropdown-menu-link"
+              onClick={toggleOpen}
+            >
+              <div className="dropdown-menu-item" role="menuitem">
+                <img src={operatorIcon} alt="helm-icon" />
+                <span>Operators</span>
+              </div>
+            </Link>
+            <div className="dropdown-divider" role="separator" />
           </div>
-          <div className="dropdown-menu-padding logout-button">
-            <CdsButton status="primary" size="sm" action="outline" onClick={logout}>
-              Log out
-            </CdsButton>
+          <div>
+            <div className="dropdown-menu-subtext">
+              Made with <CdsIcon size="sm" shape="heart" inverse={true} solid={true} /> by Bitnami
+              and{" "}
+              <a
+                href="https://github.com/kubeapps/kubeapps/graphs/contributors"
+                className="type-color-white"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                contributors
+              </a>
+              .
+              <br />
+              {appVersion}
+            </div>
+            <div className="dropdown-menu-padding logout-button">
+              <CdsButton status="primary" size="sm" action="outline" onClick={logout}>
+                Log out
+              </CdsButton>
+            </div>
           </div>
         </div>
       </div>

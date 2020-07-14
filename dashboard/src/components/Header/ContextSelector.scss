@@ -6,6 +6,10 @@
 .kubeapps-dropdown {
   opacity: 75%;
   padding-left: 0.5rem;
+  &:hover {
+    opacity: 100%;
+    background-color: #25333d;
+  }
   &.open {
     opacity: 100%;
     background-color: #25333d;
