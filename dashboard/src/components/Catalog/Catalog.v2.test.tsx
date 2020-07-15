@@ -86,11 +86,11 @@ it("shows all the elements", () => {
   expect(wrapper.find(InfoCard)).toHaveLength(3);
 });
 
-it("should render a warning if there are no elements in the catalog", () => {
+it("should render a message if there are no elements in the catalog", () => {
   const wrapper = mountWrapper(defaultStore, <Catalog {...defaultProps} />);
-  const alert = wrapper.find(Alert);
-  expect(alert).toExist();
-  expect(alert).toIncludeText("Charts not found");
+  const message = wrapper.find(".empty-catalog");
+  expect(message).toExist();
+  expect(message).toIncludeText("The current catalog is empty");
 });
 
 it("should render an error if it exists", () => {

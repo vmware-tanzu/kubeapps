@@ -25,49 +25,26 @@ exports[`when fetching apps loading spinner matches the snapshot 1`] = `
   <LoadingWrapper
     loaded={false}
   >
-    <Alert
-      app={false}
-      compact={false}
-      theme="warning"
+    <div
+      className="empty-catalog"
     >
-      Charts not found. Manage your Helm chart repositories in Kubeapps by visiting the
-       
+      <ReactWrapperComponent
+        shape="bundle"
+      />
+      <p>
+        The current catalog is empty.
+      </p>
+      <p>
+        Manage your Helm chart repositories in Kubeapps by visiting the App repositories configuration page.
+      </p>
       <Link
         to="/config/ns/kubeapps/repos"
       >
-        App repositories configuration
+        <ReactWrapperComponent>
+          Manage App Repositories
+        </ReactWrapperComponent>
       </Link>
-       
-      page.
-    </Alert>
-    <Row
-      list={false}
-    >
-      <Column
-        listItem={false}
-        span={2}
-      >
-        <div
-          className="filters-menu"
-        >
-          <h5>
-            Filters
-          </h5>
-        </div>
-      </Column>
-      <Column
-        listItem={false}
-        span={10}
-      >
-        <CardGrid>
-          <CatalogItems
-            charts={Array []}
-            csvs={Array []}
-            namespace="kubeapps"
-          />
-        </CardGrid>
-      </Column>
-    </Row>
+    </div>
   </LoadingWrapper>
 </section>
 `;

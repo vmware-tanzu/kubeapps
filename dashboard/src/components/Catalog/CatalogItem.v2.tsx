@@ -1,3 +1,4 @@
+import React from "react";
 import { IRepo } from "../../shared/types";
 import ChartCatalogItem from "./ChartCatalogItem";
 import OperatorCatalogItem from "./OperatorCatalogItem";
@@ -30,10 +31,10 @@ export interface ICatalogItemProps {
 function CatalogItem(props: ICatalogItemProps) {
   if (props.type === "operator") {
     const item = props.item as IOperatorCatalogItem;
-    return OperatorCatalogItem(item);
+    return <OperatorCatalogItem {...item} />;
   } else {
     const item = props.item as IChartCatalogItem;
-    return ChartCatalogItem(item);
+    return <ChartCatalogItem {...item} />;
   }
 }
 

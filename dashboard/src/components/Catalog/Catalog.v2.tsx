@@ -1,7 +1,9 @@
+import { bundleIcon, ClarityIcons } from "@clr/core/icon-shapes";
 import { RouterAction } from "connected-react-router";
 import { uniq } from "lodash";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { CdsIcon } from "../Clarity/clarity";
 
 import FilterGroup from "components/FilterGroup/FilterGroup";
 import Alert from "components/js/Alert";
@@ -15,9 +17,12 @@ import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import PageHeader from "../PageHeader/PageHeader.v2";
 import SearchFilter from "../SearchFilter/SearchFilter.v2";
 
+import { CdsButton } from "components/Clarity/clarity";
 import { app } from "shared/url";
 import "./Catalog.v2.css";
 import CatalogItems from "./CatalogItems";
+
+ClarityIcons.addIcons(bundleIcon);
 
 interface ICatalogProps {
   charts: IChartState;
@@ -99,51 +104,58 @@ function Catalog(props: ICatalogProps) {
         {error && (
           <Alert theme="danger">Found en error fetching the catalog: {error.message}</Alert>
         )}
-        {charts.length === 0 && csvs.length === 0 && (
-          <Alert theme="warning">
-            Charts not found. Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-            <Link to={app.config.apprepositories(namespace)}>App repositories configuration</Link>{" "}
-            page.
-          </Alert>
+        {charts.length === 0 && csvs.length === 0 ? (
+          <div className="empty-catalog">
+            <CdsIcon shape="bundle" />
+            <p>The current catalog is empty.</p>
+            <p>
+              Manage your Helm chart repositories in Kubeapps by visiting the App repositories
+              configuration page.
+            </p>
+            <Link to={app.config.apprepositories(namespace)}>
+              <CdsButton>Manage App Repositories</CdsButton>
+            </Link>
+          </div>
+        ) : (
+          <Row>
+            <Column span={2}>
+              <div className="filters-menu">
+                <h5>Filters</h5>
+                {csvs.length > 0 && (
+                  <div className="filter-section">
+                    <label>Application Type:</label>
+                    <FilterGroup
+                      name="apptype"
+                      options={["Operators", "Charts"]}
+                      onChange={setTypeFilter}
+                    />
+                  </div>
+                )}
+                {allRepos.length > 0 && (
+                  <div className="filter-section">
+                    <label>Application Repository:</label>
+                    <FilterGroup name="apprepo" options={allRepos} onChange={setRepoFilter} />
+                  </div>
+                )}
+                {allProviders.length > 0 && (
+                  <div className="filter-section">
+                    <label className="filter-label">Operator Provider:</label>
+                    <FilterGroup
+                      name="operator-provider"
+                      options={allProviders}
+                      onChange={setOperatorProviderFilter}
+                    />
+                  </div>
+                )}
+              </div>
+            </Column>
+            <Column span={10}>
+              <CardGrid>
+                <CatalogItems charts={filteredCharts} csvs={filteredCSVs} namespace={namespace} />
+              </CardGrid>
+            </Column>
+          </Row>
         )}
-        <Row>
-          <Column span={2}>
-            <div className="filters-menu">
-              <h5>Filters</h5>
-              {csvs.length > 0 && (
-                <>
-                  <div className="filter-label">Application Type:</div>
-                  <FilterGroup
-                    name="apptype"
-                    options={["Operators", "Charts"]}
-                    onChange={setTypeFilter}
-                  />
-                </>
-              )}
-              {allRepos.length > 0 && (
-                <>
-                  <div className="filter-label">Application Repository:</div>
-                  <FilterGroup name="apprepo" options={allRepos} onChange={setRepoFilter} />
-                </>
-              )}
-              {allProviders.length > 0 && (
-                <>
-                  <div className="filter-label">Operator Provider:</div>
-                  <FilterGroup
-                    name="operator-provider"
-                    options={allProviders}
-                    onChange={setOperatorProviderFilter}
-                  />
-                </>
-              )}
-            </div>
-          </Column>
-          <Column span={10}>
-            <CardGrid>
-              <CatalogItems charts={filteredCharts} csvs={filteredCSVs} namespace={namespace} />
-            </CardGrid>
-          </Column>
-        </Row>
       </LoadingWrapper>
     </section>
   );
