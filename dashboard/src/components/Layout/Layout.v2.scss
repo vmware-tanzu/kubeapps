@@ -1,0 +1,25 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  flex-direction: column;
+}
+
+.kubeapps-main-container {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 1px;
+  height: calc(100vh - 3rem);
+
+  .content-area {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+  }
+}
+
+.layout > main {
+  flex: 1;
+}
