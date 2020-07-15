@@ -12,6 +12,7 @@ import HeaderLink from "./HeaderLink";
 import NamespaceSelector from "./NamespaceSelector";
 
 export interface IHeaderProps {
+  appVersion: string;
   authenticated: boolean;
   fetchNamespaces: () => void;
   logout: () => void;

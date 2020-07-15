@@ -1,0 +1,129 @@
+.drawer {
+  position: absolute;
+  overflow: hidden;
+  bottom: 0;
+  right: 0;
+  left: 0;
+}
+
+.kubeapps-menu {
+  display: flex;
+  opacity: 75%;
+  align-items: center;
+  &:hover {
+    opacity: 100%;
+    background-color: #25333d;
+  }
+  &.open {
+    opacity: 100%;
+    background-color: #25333d;
+  }
+  button {
+    padding: 0 1.5rem 0 1.5rem;
+    height: 100%;
+  }
+}
+
+.drawer-backdrop {
+  z-index: 1015;
+  position: absolute;
+  top: 3rem;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #313131;
+  opacity: 0.85;
+  height: calc(100vh - 3rem);
+}
+
+.dropdown-configuration-menu {
+  height: calc(100vh - 3rem);
+  z-index: 1017;
+  position: absolute;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dropdown-menu {
+  margin-top: 0 !important;
+}
+
+.dropdown-menu-label {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+  color: #d9e4ea;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.dropdown-menu-link {
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.dropdown-divider {
+  opacity: 0.2;
+}
+
+.dropdown-menu-item {
+  margin-left: 1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  padding: 0.2rem 0 0.2rem 0;
+  opacity: 0.65;
+  img {
+    margin-right: 0.5rem;
+    max-width: 20px;
+  }
+  &:hover {
+    transform: translateY(-0.1rem);
+    transition: border 0.2s ease, transform 0.2s;
+    opacity: 1;
+  }
+}
+
+.logout-button cds-button {
+  display: grid;
+  width: 100%;
+  --color: #fff;
+  --border-color: #fff;
+  &:hover {
+    --color: #0072a3;
+    --border-color: #0072a3;
+  }
+}
+
+.dropdown-menu-subtext {
+  margin-right: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  text-align: end;
+  font-size: smaller;
+  a:hover {
+    color: #fff;
+  }
+}
+
+.transition-drawer-enter {
+  opacity: 0;
+  transform: translateX(15rem);
+}
+.transition-drawer-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms, transform 300ms;
+}
+.transition-drawer-exit {
+  opacity: 1;
+}
+.transition-drawer-exit-active {
+  opacity: 0;
+  transform: translateX(15rem);
+  transition: opacity 300ms, transform 300ms;
+}

@@ -13,7 +13,7 @@ function mapStateToProps({
   router: {
     location: { pathname },
   },
-  config: { featureFlags },
+  config: { featureFlags, appVersion },
 }: IStoreState) {
   return {
     authenticated,
@@ -22,6 +22,7 @@ function mapStateToProps({
     pathname,
     featureFlags,
     UI: featureFlags.ui,
+    appVersion,
   };
 }
 
