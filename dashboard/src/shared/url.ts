@@ -42,6 +42,8 @@ export const app = {
       `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${resourceName}`,
     update: (namespace: string, csvName: string, crdName: string, instanceName: string) =>
       `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${instanceName}/update`,
+    new: (namespace: string, csvName: string, crdName: string) =>
+      `/ns/${namespace}/operators-instances/new/${csvName}/${crdName}`,
   },
   config: {
     apprepositories: (namespace: string) => `/config/ns/${namespace}/repos`,

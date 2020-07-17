@@ -22,7 +22,11 @@ exports[`should render a Card 1`] = `
       <CardHeader
         noBorder={false}
       >
-        foo
+        <div
+          className="card-title"
+        >
+          foo
+        </div>
       </CardHeader>
       <CardBlock>
         <Row
@@ -54,31 +58,33 @@ exports[`should render a Card 1`] = `
         <Row
           list={false}
         >
-          <Column
-            listItem={false}
-            span={6}
-          >
-            foobar
-          </Column>
-          <Column
-            listItem={false}
-            span={6}
+          <div
+            className="kubeapps-card-footer"
           >
             <div
-              className="footer-tags"
+              className="kubeapps-card-footer-col1"
             >
-              <span
-                className="label blue"
-              >
-                database
-              </span>
-              <span
-                className="label red"
-              >
-                running
-              </span>
+              foobar
             </div>
-          </Column>
+            <div
+              className="kubeapps-card-footer-col2"
+            >
+              <div
+                className="footer-tags"
+              >
+                <span
+                  className="label blue"
+                >
+                  database
+                </span>
+                <span
+                  className="label red"
+                >
+                  running
+                </span>
+              </div>
+            </div>
+          </div>
         </Row>
       </CardFooter>
     </Link>

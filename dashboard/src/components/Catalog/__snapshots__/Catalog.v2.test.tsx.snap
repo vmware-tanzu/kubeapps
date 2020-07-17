@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`when fetching apps loading spinner matches the snapshot 1`] = `
+<section>
+  <PageHeader>
+    <div
+      className="kubeapps-header"
+    >
+      <Row
+        list={false}
+      >
+        <h1>
+          Catalog
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search charts..."
+          value=""
+        />
+      </Row>
+    </div>
+  </PageHeader>
+  <LoadingWrapper
+    loaded={false}
+  >
+    <div
+      className="empty-catalog"
+    >
+      <ReactWrapperComponent
+        shape="bundle"
+      />
+      <p>
+        The current catalog is empty.
+      </p>
+      <p>
+        Manage your Helm chart repositories in Kubeapps by visiting the App repositories configuration page.
+      </p>
+      <Link
+        to="/config/ns/kubeapps/repos"
+      >
+        <ReactWrapperComponent>
+          Manage App Repositories
+        </ReactWrapperComponent>
+      </Link>
+    </div>
+  </LoadingWrapper>
+</section>
+`;

@@ -1,0 +1,30 @@
+.filters-menu {
+  padding-left: 1.2rem;
+  h5 {
+    text-transform: uppercase;
+    font-size: small;
+    font-weight: 500;
+  }
+  .filter-section {
+    font-weight: 500;
+    margin: 0.7rem 0 0.5rem 0;
+  }
+}
+
+.empty-catalog {
+  text-align: center;
+  width: 100%;
+  height: calc(100vh - 6rem);
+  // margin-top: 2rem;
+  cds-icon {
+    margin-top: 2rem;
+    width: 4rem;
+    height: 4rem;
+  }
+  cds-button {
+    margin-top: 2rem;
+  }
+  p {
+    margin-top: 0.6rem;
+  }
+}

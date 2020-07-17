@@ -16,7 +16,7 @@ import CatalogItem, {
   IOperatorCatalogItem,
 } from "./CatalogItem";
 
-interface ICatalogProps {
+export interface ICatalogProps {
   charts: IChartState;
   repo: string;
   filter: string;
