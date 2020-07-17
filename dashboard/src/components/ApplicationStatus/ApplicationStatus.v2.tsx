@@ -170,7 +170,7 @@ export default function ApplicationStatus({
     );
   }
   return (
-    <div className="application-status-pie-chart">
+    <section aria-label="Application status" className="application-status-pie-chart">
       <div data-tip={true} data-for="application-status">
         <h5 className="application-status-pie-chart-title">{ready ? "Ready" : "Not Ready"}</h5>
         <PieChart
@@ -212,6 +212,6 @@ export default function ApplicationStatus({
           </tbody>
         </table>
       </ReactTooltip>
-    </div>
+    </section>
   );
 }

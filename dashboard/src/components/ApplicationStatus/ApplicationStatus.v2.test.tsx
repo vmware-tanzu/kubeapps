@@ -315,6 +315,7 @@ describe("isFetching", () => {
         statefulsets: t.statefulsets,
         daemonsets: t.daemonsets,
       });
+      wrapper.update();
       const getItem = (i?: IResource | IK8sList<IResource, {}>): IResource => {
         return has(i, "items") ? (i as IK8sList<IResource, {}>).items[0] : (i as IResource);
       };
