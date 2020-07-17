@@ -66,7 +66,7 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
             <div
               className="col-4"
             >
-              <Connect(ApplicationStatus)
+              <Connect(ApplicationStatusSelector)
                 daemonsetRefs={Array []}
                 deployRefs={
                   Array [

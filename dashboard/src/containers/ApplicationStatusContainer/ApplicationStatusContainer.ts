@@ -16,13 +16,14 @@ interface IApplicationStatusContainerProps {
   info?: hapi.release.IInfo;
 }
 
-function mapStateToProps({ kube }: IStoreState, props: IApplicationStatusContainerProps) {
+function mapStateToProps({ kube, config }: IStoreState, props: IApplicationStatusContainerProps) {
   const { deployRefs, statefulsetRefs, daemonsetRefs, info } = props;
   return {
     deployments: filterByResourceRefs(deployRefs, kube.items),
     statefulsets: filterByResourceRefs(statefulsetRefs, kube.items),
     daemonsets: filterByResourceRefs(daemonsetRefs, kube.items),
     info,
+    UI: config.featureFlags.ui,
   };
 }
 

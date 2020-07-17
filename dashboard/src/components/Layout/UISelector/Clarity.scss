@@ -1,0 +1,31 @@
+.color-icon-info {
+  cds-icon {
+    --color: var(--clr-alert-info-icon-color, #0072a3);
+  }
+}
+
+.color-icon-success {
+  cds-icon {
+    --color: var(--clr-alert-success-icon-color, #3c8500);
+  }
+}
+
+.color-icon-warning {
+  cds-icon {
+    --color: var(--clr-alert-warning-icon-color, #666666);
+  }
+}
+
+.color-icon-danger {
+  cds-icon {
+    --color: var(--clr-alert-danger-icon-color, #c21d00);
+  }
+}
+
+.center {
+  display: grid;
+  height: 100%;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}

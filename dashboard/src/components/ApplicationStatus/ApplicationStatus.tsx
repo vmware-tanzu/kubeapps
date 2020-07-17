@@ -10,7 +10,7 @@ import { hapi } from "../../shared/hapi/release";
 import { IK8sList, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.css";
 
-interface IApplicationStatusProps {
+export interface IApplicationStatusProps {
   deployments: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   statefulsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   daemonsets: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;

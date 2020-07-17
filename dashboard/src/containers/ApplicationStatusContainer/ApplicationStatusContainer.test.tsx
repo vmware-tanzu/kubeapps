@@ -15,7 +15,7 @@ const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
     items: resources,
     sockets: {},
   };
-  return mockStore({ kube: state });
+  return mockStore({ kube: state, config: { featureFlags: {} } });
 };
 
 describe("ApplicationStatusContainer", () => {
