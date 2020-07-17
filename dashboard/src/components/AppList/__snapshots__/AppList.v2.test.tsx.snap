@@ -4,7 +4,7 @@ exports[`when an error is present matches the snapshot 1`] = `
 <section>
   <PageHeader>
     <div
-      className="kubeapps-applist-header"
+      className="kubeapps-header"
     >
       <Row
         list={false}
@@ -68,7 +68,7 @@ exports[`when an error is present renders a generic error message 1`] = `
 <section>
   <PageHeader>
     <div
-      className="kubeapps-applist-header"
+      className="kubeapps-header"
     >
       <Row
         list={false}
@@ -132,7 +132,7 @@ exports[`when apps available matches the snapshot 1`] = `
 <section>
   <PageHeader>
     <div
-      className="kubeapps-applist-header"
+      className="kubeapps-header"
     >
       <Row
         list={false}
@@ -209,7 +209,7 @@ exports[`when custom resources available matches the snapshot 1`] = `
 <section>
   <PageHeader>
     <div
-      className="kubeapps-applist-header"
+      className="kubeapps-header"
     >
       <Row
         list={false}
@@ -299,7 +299,7 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
 <section>
   <PageHeader>
     <div
-      className="kubeapps-applist-header"
+      className="kubeapps-header"
     >
       <Row
         list={false}
@@ -364,7 +364,7 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
 <section>
   <PageHeader>
     <div
-      className="kubeapps-applist-header"
+      className="kubeapps-header"
     >
       <Row
         list={false}
@@ -428,7 +428,7 @@ exports[`while fetching apps loading spinner matches the snapshot 2`] = `
 <section>
   <PageHeader>
     <div
-      className="kubeapps-applist-header"
+      className="kubeapps-header"
     >
       <Row
         list={false}

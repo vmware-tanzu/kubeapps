@@ -22,3 +22,14 @@ export function getValueFromEvent(
 export async function wait(ms: number = 1) {
   await new Promise(resolve => setTimeout(() => resolve(), ms));
 }
+
+// 3 lines description max
+const MAX_DESC_LENGTH = 90;
+
+export function trimDescription(desc: string): string {
+  if (desc.length > MAX_DESC_LENGTH) {
+    // Trim to the last word under the max length
+    return desc.substr(0, desc.lastIndexOf(" ", MAX_DESC_LENGTH)).concat("...");
+  }
+  return desc;
+}

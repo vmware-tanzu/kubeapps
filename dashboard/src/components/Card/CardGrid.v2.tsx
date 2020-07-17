@@ -3,7 +3,7 @@ import Row from "../js/Row";
 
 import "./CardGrid.v2.css";
 
-function CardGrid(props: { children: JSX.Element }) {
+function CardGrid(props: { children: JSX.Element | JSX.Element[] }) {
   return (
     <div className="card-grid">
       <Row>{props.children}</Row>

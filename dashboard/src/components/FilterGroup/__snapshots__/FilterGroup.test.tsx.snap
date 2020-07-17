@@ -1,0 +1,116 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a multicheckbox 1`] = `
+<Provider
+  store={
+    Object {
+      "clearActions": [Function],
+      "dispatch": [Function],
+      "getActions": [Function],
+      "getState": [Function],
+      "replaceReducer": [Function],
+      "subscribe": [Function],
+    }
+  }
+>
+  <BrowserRouter>
+    <Router
+      history={
+        Object {
+          "action": "POP",
+          "block": [Function],
+          "createHref": [Function],
+          "go": [Function],
+          "goBack": [Function],
+          "goForward": [Function],
+          "length": 1,
+          "listen": [Function],
+          "location": Object {
+            "hash": "",
+            "pathname": "/",
+            "search": "",
+            "state": undefined,
+          },
+          "push": [Function],
+          "replace": [Function],
+        }
+      }
+    >
+      <FilterGroup
+        name="test"
+        onChange={[MockFunction]}
+        options={
+          Array [
+            "foo",
+            "bar",
+          ]
+        }
+      >
+        <MultiCheckbox
+          name="test"
+          onChange={[Function]}
+          options={
+            Array [
+              "foo",
+              "bar",
+            ]
+          }
+          span={1}
+          value={Array []}
+        >
+          <div
+            className="multicheckbox-wrapper"
+            style={
+              Object {
+                "--col-lg-num": 1,
+                "--col-md-num": 1,
+                "--col-sm-num": 1,
+                "--col-xl-num": 1,
+              }
+            }
+          >
+            <div
+              className="clr-checkbox-wrapper"
+              key="0"
+            >
+              <input
+                checked={false}
+                id="test-0"
+                name="test"
+                onChange={[Function]}
+                type="checkbox"
+                value="foo"
+              />
+              <label
+                className="clr-control-label"
+                htmlFor="test-0"
+              >
+                foo
+              </label>
+            </div>
+            <div
+              className="clr-checkbox-wrapper"
+              key="1"
+            >
+              <input
+                checked={false}
+                id="test-1"
+                name="test"
+                onChange={[Function]}
+                type="checkbox"
+                value="bar"
+              />
+              <label
+                className="clr-control-label"
+                htmlFor="test-1"
+              >
+                bar
+              </label>
+            </div>
+          </div>
+        </MultiCheckbox>
+      </FilterGroup>
+    </Router>
+  </BrowserRouter>
+</Provider>
+`;

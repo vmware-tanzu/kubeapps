@@ -59,7 +59,7 @@ function AppList(props: IAppListProps) {
   return (
     <section>
       <PageHeader>
-        <div className="kubeapps-applist-header">
+        <div className="kubeapps-header">
           <Row>
             <Column span={10}>
               <Row>
