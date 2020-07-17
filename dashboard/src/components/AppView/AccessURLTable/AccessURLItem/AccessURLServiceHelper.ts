@@ -2,8 +2,9 @@ import { IResource, IServiceSpec, IServiceStatus } from "shared/types";
 import { IURLItem } from "./IURLItem";
 
 // isLink returns true if there are any link in the Item
-function isLink(loadBalancerService: IResource): boolean {
+function isLink(loadBalancerService?: IResource): boolean {
   if (
+    loadBalancerService &&
     loadBalancerService.status &&
     loadBalancerService.status.loadBalancer.ingress &&
     loadBalancerService.status.loadBalancer.ingress.length
@@ -14,7 +15,10 @@ function isLink(loadBalancerService: IResource): boolean {
 }
 
 // URLs returns the list of URLs obtained from the service status
-function URLs(loadBalancerService: IResource): string[] {
+function URLs(loadBalancerService?: IResource): string[] {
+  if (!loadBalancerService) {
+    return ["Pending"];
+  }
   const res: string[] = [];
   const status: IServiceStatus = loadBalancerService.status;
   if (status && status.loadBalancer.ingress && status.loadBalancer.ingress.length) {
@@ -42,9 +46,9 @@ function getURL(base: string, port: number) {
   return `${protocol}://${base}${portSuffix}`;
 }
 
-export function GetURLItemFromService(loadBalancerService: IResource) {
+export function GetURLItemFromService(loadBalancerService?: IResource) {
   return {
-    name: loadBalancerService.metadata.name,
+    name: loadBalancerService?.metadata.name,
     type: "Service LoadBalancer",
     isLink: isLink(loadBalancerService),
     URLs: URLs(loadBalancerService),

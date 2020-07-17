@@ -1,0 +1,15 @@
+.table {
+  &-valign {
+    &-top tr td {
+      vertical-align: top;
+    }
+
+    &-center tr td {
+      vertical-align: middle;
+    }
+
+    &-bottom tr td {
+      vertical-align: bottom;
+    }
+  }
+}
