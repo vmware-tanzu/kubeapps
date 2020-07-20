@@ -176,9 +176,9 @@ export default function AccessURLTable({
     result = <Table data={data} columns={columns} />;
   }
   return (
-    <>
-      <h6>Access URLs</h6>
+    <section aria-labelledby="access-urls-title">
+      <h6 id="access-urls-title">Access URLs</h6>
       {result}
-    </>
+    </section>
   );
 }
