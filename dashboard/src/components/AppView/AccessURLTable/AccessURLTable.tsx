@@ -8,7 +8,7 @@ import AccessURLItem from "./AccessURLItem";
 import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 
-interface IAccessURLTableProps {
+export interface IAccessURLTableProps {
   services: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   ingresses: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   ingressRefs: ResourceRef[];
