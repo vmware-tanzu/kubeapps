@@ -20,4 +20,14 @@ export const ResourceKindsWithPlurals = {
   Pod: "pods",
 } as const;
 
+export const isNamespaced = (resource: string) => {
+  switch (resource) {
+    case "clusterroles":
+    case "clusterrolebindings":
+      return false;
+    default:
+      return true;
+  }
+};
+
 export type ResourceKind = keyof typeof ResourceKindsWithPlurals;
