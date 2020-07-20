@@ -1,0 +1,11 @@
+.section-title {
+  font-weight: 600;
+}
+.app-notes {
+  background: var(--clr-color-neutral-100);
+  color: var(--clr-color-on-neutral-100);
+  .terminal-code {
+    padding: 0.6rem;
+    white-space: pre-wrap;
+  }
+}
