@@ -17,7 +17,8 @@ import ResourceRef from "shared/ResourceRef";
 import SecretItemDatum from "./ResourceItem/SecretItem/SecretItemDatum.v2";
 
 interface IResourceTableProps {
-  title: string;
+  id: string;
+  title?: string;
   resourceRefs: ResourceRef[];
   resources: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
   requestResources?: boolean;
@@ -220,6 +221,7 @@ function getData(
 }
 
 function ResourceTable({
+  id,
   title,
   resourceRefs,
   requestResources,
@@ -246,8 +248,8 @@ function ResourceTable({
       return true;
     });
     section = (
-      <section aria-labelledby={`${title}-table`}>
-        <h6 id={`${title}-table`}>{title}</h6>
+      <section aria-labelledby={`${id}-table`}>
+        {title && <h6 id={`${id}-table`}>{title}</h6>}
         <Table
           columns={columns}
           data={resourcesWithoutLists.map(ref =>

@@ -7,12 +7,7 @@ import ResourceTable from "../../components/AppView/ResourceTable/ResourceTable.
 import ResourceRef from "../../shared/ResourceRef";
 import { IStoreState } from "../../shared/types";
 
-interface IResourceTableItemContainerProps {
-  title: string;
-  resourceRefs: ResourceRef[];
-}
-
-function mapStateToProps({ kube }: IStoreState, props: IResourceTableItemContainerProps) {
+function mapStateToProps({ kube }: IStoreState) {
   return {
     resources: kube.items,
   };
