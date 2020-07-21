@@ -1,46 +1,27 @@
 import { axiosWithAuth } from "./AxiosInstance";
-import { APIBase } from "./Kube";
-import { IK8sList, IOwnerReference, ISecret } from "./types";
+import { IK8sList, ISecret } from "./types";
+import * as url from "./url";
 
 export default class Secret {
-  public static async create(
-    name: string,
-    secrets: { [s: string]: string },
-    owner: IOwnerReference | undefined,
-    namespace: string,
-  ) {
-    const url = Secret.getLink(namespace);
-    const { data } = await axiosWithAuth.post<ISecret>(url, {
-      apiVersion: "v1",
-      data: secrets,
-      kind: "Secret",
-      metadata: {
-        name,
-        ownerReferences: [owner],
-      },
-      type: "Opaque",
-    });
-    return data;
-  }
-
   public static async delete(name: string, namespace: string) {
-    const url = this.getLink(namespace, name);
-    return axiosWithAuth.delete(url);
+    const u = url.api.k8s.secret("default", namespace, name);
+    return axiosWithAuth.delete(u);
   }
 
-  public static async get(name: string, namespace: string) {
-    const url = this.getLink(namespace, name);
-    const { data } = await axiosWithAuth.get<ISecret>(url);
+  public static async get(cluster: string, name: string, namespace: string) {
+    const u = url.api.k8s.secret(cluster, namespace, name);
+    const { data } = await axiosWithAuth.get<ISecret>(u);
     return data;
   }
 
-  public static async list(namespace: string) {
-    const url = Secret.getLink(namespace);
-    const { data } = await axiosWithAuth.get<IK8sList<ISecret, {}>>(url);
+  public static async list(cluster: string, namespace: string) {
+    const u = url.api.k8s.secrets(cluster, namespace);
+    const { data } = await axiosWithAuth.get<IK8sList<ISecret, {}>>(u);
     return data;
   }
 
   public static async createPullSecret(
+    cluster: string,
     name: string,
     user: string,
     password: string,
@@ -48,7 +29,7 @@ export default class Secret {
     server: string,
     namespace: string,
   ) {
-    const url = Secret.getLink(namespace);
+    const u = url.api.k8s.secrets(cluster, namespace);
     const dockercfg = {
       auths: {
         [server]: {
@@ -59,7 +40,7 @@ export default class Secret {
         },
       },
     };
-    const { data } = await axiosWithAuth.post<ISecret>(url, {
+    const { data } = await axiosWithAuth.post<ISecret>(u, {
       apiVersion: "v1",
       stringData: {
         ".dockerconfigjson": JSON.stringify(dockercfg),
@@ -71,9 +52,5 @@ export default class Secret {
       type: "kubernetes.io/dockerconfigjson",
     });
     return data;
-  }
-
-  private static getLink(namespace: string, name?: string): string {
-    return `${APIBase}/api/v1/namespaces/${namespace}/secrets${name ? `/${name}` : ""}`;
   }
 }

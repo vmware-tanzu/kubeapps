@@ -26,7 +26,7 @@ export class ServiceCatalog {
 
   public static async syncBroker(broker: IServiceBroker) {
     const { data } = await axiosWithAuth.patch<IStatus>(
-      urls.api.clusterservicebrokers.sync(broker),
+      urls.api.k8s.clusterservicebrokers.sync(broker),
       {
         spec: {
           relistRequests: broker.spec.relistRequests + 1,

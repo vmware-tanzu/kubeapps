@@ -1,6 +1,7 @@
 import { axiosWithAuth } from "./AxiosInstance";
 import { APIBase } from "./Kube";
 import { ICondition, ServiceCatalog } from "./ServiceCatalog";
+import * as url from "./url";
 
 interface IK8sApiSecretResponse {
   kind: string;
@@ -54,8 +55,8 @@ export class ServiceBinding {
     namespace: string,
     parameters: {},
   ) {
-    const url = ServiceBinding.getLink(namespace);
-    const { data } = await axiosWithAuth.post<IServiceBinding>(url, {
+    const u = ServiceBinding.getLink(namespace);
+    const { data } = await axiosWithAuth.post<IServiceBinding>(u, {
       metadata: {
         name: bindingName,
       },
@@ -70,13 +71,13 @@ export class ServiceBinding {
   }
 
   public static async delete(name: string, namespace: string) {
-    const url = this.getLink(namespace, name);
-    return axiosWithAuth.delete(url);
+    const u = this.getLink(namespace, name);
+    return axiosWithAuth.delete(u);
   }
 
   public static async get(namespace: string, name: string) {
-    const url = this.getLink(namespace, name);
-    const { data } = await axiosWithAuth.get<IServiceBinding>(url);
+    const u = this.getLink(namespace, name);
+    const { data } = await axiosWithAuth.get<IServiceBinding>(u);
     return data;
   }
 
@@ -88,7 +89,7 @@ export class ServiceBinding {
         const { secretName } = binding.spec;
         const ns = binding.metadata.namespace;
         return axiosWithAuth
-          .get<IK8sApiSecretResponse>(this.secretEndpoint(ns) + secretName)
+          .get<IK8sApiSecretResponse>(url.api.k8s.secret("default", ns, secretName))
           .then(response => {
             return { binding, secret: response.data };
           })
@@ -104,9 +105,5 @@ export class ServiceBinding {
     return `${APIBase}/apis/servicecatalog.k8s.io/v1beta1${
       namespace ? `/namespaces/${namespace}` : ""
     }/servicebindings${name ? `/${name}` : ""}`;
-  }
-
-  private static secretEndpoint(namespace: string): string {
-    return `${APIBase}/api/v1/namespaces/${namespace}/secrets/`;
   }
 }
