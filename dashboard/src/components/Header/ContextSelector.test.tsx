@@ -45,6 +45,7 @@ it("fetches namespaces", () => {
 
   expect(fetchNamespaces).toHaveBeenCalled();
   expect(getNamespace).toHaveBeenCalledWith(
+    defaultProps.clusters.currentCluster,
     defaultProps.clusters.clusters.default.currentNamespace,
   );
 });

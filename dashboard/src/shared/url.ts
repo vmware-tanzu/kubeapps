@@ -57,7 +57,7 @@ function withNS(namespace: string) {
 
 export const backend = {
   namespaces: {
-    list: (cluster: string) => `api/v1/clusters${cluster}/namespaces`,
+    list: (cluster: string) => `api/v1/clusters/${cluster}/namespaces`,
   },
   apprepositories: {
     base: (namespace: string) => `api/v1/namespaces/${namespace}/apprepositories`,
