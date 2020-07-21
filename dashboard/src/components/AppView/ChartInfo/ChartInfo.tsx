@@ -1,10 +1,10 @@
+import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "components/Card";
 import * as React from "react";
 import { AlertTriangle, CheckCircle } from "react-feather";
 import { Link } from "react-router-dom";
 import { IRelease } from "shared/types";
-import placeholder from "../../placeholder.png";
-import * as url from "../../shared/url";
-import Card, { CardContent, CardFooter, CardGrid, CardIcon } from "../Card";
+import * as url from "shared/url";
+import placeholder from "../../../placeholder.png";
 import "./ChartInfo.css";
 
 interface IChartInfoProps {

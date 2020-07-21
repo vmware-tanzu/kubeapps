@@ -9,9 +9,10 @@ interface IChartInfoProps {
 
 function ChartInfo({ app }: IChartInfoProps) {
   const metadata = app.chart && app.chart.metadata;
-  let notes = <div />;
+  let versionsInfo;
+  let descriptionInfo;
   if (metadata) {
-    notes = (
+    versionsInfo = (
       <section className="chartinfo-subsection" aria-labelledby="chartinfo-versions">
         <h5 className="chartinfo-subsection-title" id="chartinfo-versions">
           Versions
@@ -22,16 +23,19 @@ function ChartInfo({ app }: IChartInfoProps) {
         </div>
       </section>
     );
-  }
-  return (
-    <>
+    descriptionInfo = (
       <section className="chartinfo-subsection" aria-labelledby="chartinfo-description">
         <h5 className="chartinfo-subsection-title" id="chartinfo-description">
           Description
         </h5>
-        <span>{metadata?.description}</span>
+        <span>{metadata.description}</span>
       </section>
-      {notes}
+    );
+  }
+  return (
+    <>
+      {descriptionInfo}
+      {versionsInfo}
       <ChartUpdateInfo app={app} />
     </>
   );
