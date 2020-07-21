@@ -9,33 +9,33 @@ interface IChartInfoProps {
 
 function ChartInfo({ app }: IChartInfoProps) {
   const metadata = app.chart && app.chart.metadata;
-  let versionsInfo;
-  let descriptionInfo;
-  if (metadata) {
-    versionsInfo = (
-      <section className="chartinfo-subsection" aria-labelledby="chartinfo-versions">
-        <h5 className="chartinfo-subsection-title" id="chartinfo-versions">
-          Versions
-        </h5>
-        <div>
-          {metadata.appVersion && <div>App Version: {metadata.appVersion}</div>}
-          <span>Chart Version: {metadata.version}</span>
-        </div>
-      </section>
-    );
-    descriptionInfo = (
-      <section className="chartinfo-subsection" aria-labelledby="chartinfo-description">
-        <h5 className="chartinfo-subsection-title" id="chartinfo-description">
-          Description
-        </h5>
-        <span>{metadata.description}</span>
-      </section>
-    );
-  }
   return (
     <>
-      {descriptionInfo}
-      {versionsInfo}
+      {metadata && (
+        <section className="chartinfo-subsection" aria-labelledby="chartinfo-versions">
+          <h5 className="chartinfo-subsection-title" id="chartinfo-versions">
+            Versions
+          </h5>
+          <div>
+            {metadata.appVersion && (
+              <div>
+                App Version: <strong>{metadata.appVersion}</strong>
+              </div>
+            )}
+            <span>
+              Chart Version: <strong>{metadata.version}</strong>
+            </span>
+          </div>
+        </section>
+      )}
+      {metadata && (
+        <section className="chartinfo-subsection" aria-labelledby="chartinfo-description">
+          <h5 className="chartinfo-subsection-title" id="chartinfo-description">
+            Description
+          </h5>
+          <span>{metadata.description}</span>
+        </section>
+      )}
       <ChartUpdateInfo app={app} />
     </>
   );
