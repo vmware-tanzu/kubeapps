@@ -18,9 +18,9 @@ ClarityIcons.addIcons(clusterIcon, fileGroupIcon, angleIcon);
 export interface IContextSelectorProps {
   clusters: IClustersState;
   defaultNamespace: string;
-  fetchNamespaces: () => void;
-  createNamespace: (ns: string) => Promise<boolean>;
-  getNamespace: (ns: string) => void;
+  fetchNamespaces: (cluster: string) => void;
+  createNamespace: (cluster: string, ns: string) => Promise<boolean>;
+  getNamespace: (cluster: string, ns: string) => void;
   setNamespace: (ns: string) => void;
 }
 
@@ -43,9 +43,9 @@ function ContextSelector({
   useOutsideClick(setOpen, [ref], open);
 
   useEffect(() => {
-    fetchNamespaces();
+    fetchNamespaces(clusters.currentCluster);
     if (namespaceSelected !== definedNamespaces.all) {
-      getNamespace(namespaceSelected);
+      getNamespace(clusters.currentCluster, namespaceSelected);
     }
   }, [fetchNamespaces, namespaceSelected, getNamespace]);
 

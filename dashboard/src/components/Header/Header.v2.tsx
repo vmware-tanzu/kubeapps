@@ -10,15 +10,15 @@ import Menu from "./Menu";
 
 interface IHeaderProps {
   authenticated: boolean;
-  fetchNamespaces: () => void;
+  fetchNamespaces: (cluster: string) => void;
   logout: () => void;
   clusters: IClustersState;
   defaultNamespace: string;
   appVersion: string;
   push: (path: string) => void;
   setNamespace: (ns: string) => void;
-  createNamespace: (ns: string) => Promise<boolean>;
-  getNamespace: (ns: string) => void;
+  createNamespace: (cluster: string, ns: string) => Promise<boolean>;
+  getNamespace: (cluster: string, ns: string) => void;
 }
 
 function Header(props: IHeaderProps) {

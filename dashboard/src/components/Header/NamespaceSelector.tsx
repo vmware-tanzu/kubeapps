@@ -1,19 +1,19 @@
 import * as React from "react";
 import * as Select from "react-select";
 
-import { IClusterState } from "../../reducers/cluster";
+import { IClustersState } from "../../reducers/cluster";
 import { definedNamespaces } from "../../shared/Namespace";
 
 import "./NamespaceSelector.css";
 import NewNamespace from "./NewNamespace";
 
 export interface INamespaceSelectorProps {
-  cluster: IClusterState;
+  clusters: IClustersState;
   defaultNamespace: string;
   onChange: (ns: string) => any;
-  fetchNamespaces: () => void;
-  createNamespace: (ns: string) => Promise<boolean>;
-  getNamespace: (ns: string) => void;
+  fetchNamespaces: (cluster: string) => void;
+  createNamespace: (cluster: string, s: string) => Promise<boolean>;
+  getNamespace: (cluster: string, ns: string) => void;
 }
 
 interface INamespaceSelectorState {
@@ -28,20 +28,20 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
   };
 
   get selected() {
-    return this.props.cluster.currentNamespace || this.props.defaultNamespace;
+    const cluster = this.props.clusters.clusters[this.props.clusters.currentCluster];
+    return cluster.currentNamespace || this.props.defaultNamespace;
   }
 
   public componentDidMount() {
-    this.props.fetchNamespaces();
+    this.props.fetchNamespaces(this.props.clusters.currentCluster);
     if (this.selected !== definedNamespaces.all) {
-      this.props.getNamespace(this.selected);
+      this.props.getNamespace(this.props.clusters.currentCluster, this.selected);
     }
   }
 
   public render() {
-    const {
-      cluster: { namespaces, error },
-    } = this.props;
+    const cluster = this.props.clusters.clusters[this.props.clusters.currentCluster];
+    const { namespaces, error } = cluster;
     const options = namespaces.length > 0 ? namespaces.map(n => ({ value: n, label: n })) : [];
     const allOption = { value: definedNamespaces.all, label: "All Namespaces" };
     options.unshift(allOption);
@@ -90,7 +90,10 @@ class NamespaceSelector extends React.Component<INamespaceSelectorProps, INamesp
   };
 
   private onConfirmNewNS = async () => {
-    const success = await this.props.createNamespace(this.state.newNamespace);
+    const success = await this.props.createNamespace(
+      this.props.clusters.currentCluster,
+      this.state.newNamespace,
+    );
     if (success) {
       this.handleNamespaceChange({ value: this.state.newNamespace });
       this.closeModal();
