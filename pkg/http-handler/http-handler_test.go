@@ -213,7 +213,7 @@ func TestGetNamespaces(t *testing.T) {
 	}{
 		{
 			name:         "it should return the list of namespaces and a 200 if the repo is created",
-			namespaces:   []corev1.Namespace{corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
+			namespaces:   []corev1.Namespace{{ObjectMeta: metav1.ObjectMeta{Name: "foo"}}},
 			expectedCode: 200,
 		},
 		{

@@ -22,7 +22,7 @@ import (
 
 const (
 	authHeader     = "Authorization"
-	clusterParam   = "clusters"
+	clusterParam   = "cluster"
 	namespaceParam = "namespace"
 	nameParam      = "releaseName"
 	authUserError  = "Unexpected error while configuring authentication"
@@ -94,7 +94,7 @@ func WithHandlerConfig(storageForDriver agent.StorageForDriver, options Options)
 				return
 			}
 
-			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace)
+			kubeHandler, err := kube.NewHandler(options.KubeappsNamespace, options.AdditionalClusters)
 			if err != nil {
 				log.Errorf("Failed to create handler: %v", err)
 				response.NewErrorResponse(http.StatusInternalServerError, authUserError).Write(w)
