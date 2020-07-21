@@ -15,24 +15,19 @@ export default class Namespace {
   }
 
   public static async create(cluster: string, name: string) {
-    const { data } = await axiosWithAuth.post<IResource>(
-      url.api.k8s.namespaces(cluster),
-      {
-        apiVersion: "v1",
-        kind: "Namespace",
-        metadata: {
-          name,
-        },
+    const { data } = await axiosWithAuth.post<IResource>(url.api.k8s.namespaces(cluster), {
+      apiVersion: "v1",
+      kind: "Namespace",
+      metadata: {
+        name,
       },
-    );
+    });
     return data;
   }
 
   public static async get(cluster: string, name: string) {
     try {
-      const { data } = await axiosWithAuth.get<IResource>(
-        url.api.k8s.namespace(cluster, name),
-      );
+      const { data } = await axiosWithAuth.get<IResource>(url.api.k8s.namespace(cluster, name));
       return data;
     } catch (err) {
       switch (err.constructor) {

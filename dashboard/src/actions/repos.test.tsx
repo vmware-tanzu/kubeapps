@@ -46,7 +46,6 @@ beforeEach(() => {
   AppRepository.create = jest.fn().mockImplementationOnce(() => {
     return { appRepository: { metadata: { name: "repo-abc" } } };
   });
-  Secret.create = jest.fn();
   Secret.list = jest.fn().mockReturnValue({
     items: [],
   });
@@ -327,11 +326,6 @@ describe("installRepo", () => {
       );
     });
 
-    it("does not create the K8s secret as API includes this", async () => {
-      await store.dispatch(installRepoCMDAuth);
-      expect(Secret.create).not.toHaveBeenCalled();
-    });
-
     it("returns true", async () => {
       const res = await store.dispatch(installRepoCMDAuth);
       expect(res).toBe(true);
@@ -360,11 +354,6 @@ describe("installRepo", () => {
         {},
         [],
       );
-    });
-
-    it("does not create the K8s secret as API includes this", async () => {
-      await store.dispatch(installRepoCMDAuth);
-      expect(Secret.create).not.toHaveBeenCalled();
     });
 
     it("returns true", async () => {

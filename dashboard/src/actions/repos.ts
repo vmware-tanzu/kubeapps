@@ -160,7 +160,7 @@ export const fetchRepoSecrets = (
     // TODO(andresmgot): Create an endpoint for returning credentials related to an AppRepository
     // to avoid listing secrets
     // https://github.com/kubeapps/kubeapps/issues/1686
-    const secrets = await Secret.list(namespace);
+    const secrets = await Secret.list("default", namespace);
     const repoSecrets = secrets.items?.filter(s =>
       s.metadata.ownerReferences?.some(ownerRef => ownerRef.kind === "AppRepository"),
     );
@@ -173,7 +173,7 @@ export const fetchRepoSecret = (
   name: string,
 ): ThunkAction<Promise<void>, IStoreState, null, AppReposAction> => {
   return async dispatch => {
-    const secret = await Secret.get(name, namespace);
+    const secret = await Secret.get("default", name, namespace);
     dispatch(receiveReposSecret(secret));
   };
 };
@@ -347,7 +347,7 @@ export function fetchImagePullSecrets(
       // TODO(andresmgot): Create an endpoint for returning just the list of secret names
       // to avoid listing all the secrets with protected information
       // https://github.com/kubeapps/kubeapps/issues/1686
-      const secrets = await Secret.list(namespace);
+      const secrets = await Secret.list("default", namespace);
       const imgPullSecrets = secrets.items?.filter(
         s => s.type === "kubernetes.io/dockerconfigjson",
       );
@@ -368,7 +368,15 @@ export function createDockerRegistrySecret(
 ): ThunkAction<Promise<boolean>, IStoreState, null, AppReposAction> {
   return async dispatch => {
     try {
-      const secret = await Secret.createPullSecret(name, user, password, email, server, namespace);
+      const secret = await Secret.createPullSecret(
+        "default",
+        name,
+        user,
+        password,
+        email,
+        server,
+        namespace,
+      );
       dispatch(createImagePullSecret(secret));
       return true;
     } catch (e) {
