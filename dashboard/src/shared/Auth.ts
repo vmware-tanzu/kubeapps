@@ -2,7 +2,6 @@ import Axios, { AxiosResponse } from "axios";
 import * as jwt from "jsonwebtoken";
 import * as url from "shared/url";
 import { IConfig } from "./Config";
-import { APIBase } from "./Kube";
 import { definedNamespaces } from "./Namespace";
 
 const AuthTokenKey = "kubeapps_auth_token";
@@ -60,7 +59,9 @@ export class Auth {
   // Throws an error if the token is invalid
   public static async validateToken(cluster: string, token: string) {
     try {
-      await Axios.get(url.api.k8s.base(cluster) + "/", { headers: { Authorization: `Bearer ${token}` } });
+      await Axios.get(url.api.k8s.base(cluster) + "/", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
     } catch (e) {
       const res = e.response as AxiosResponse;
       if (res.status === 401) {

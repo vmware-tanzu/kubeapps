@@ -121,7 +121,7 @@ describe("OIDC authentication", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.checkCookieAuthentication()).then(() => {
+    return store.dispatch(actions.auth.checkCookieAuthentication("default")).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });

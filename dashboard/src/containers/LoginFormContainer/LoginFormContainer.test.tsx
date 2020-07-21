@@ -2,6 +2,7 @@ import { shallow } from "enzyme";
 import { Location } from "history";
 import * as React from "react";
 import { IAuthState } from "reducers/auth";
+import { IClustersState } from "reducers/cluster";
 import { IConfigState } from "reducers/config";
 import configureMockStore from "redux-mock-store";
 import thunk from "redux-thunk";
@@ -36,7 +37,16 @@ const makeStore = (
     oauthLogoutURI: "",
     featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
   };
-  return mockStore({ auth, config });
+  const clusters: IClustersState = {
+    currentCluster: "default",
+    clusters: {
+      default: {
+        currentNamespace: "default",
+        namespaces: [],
+      },
+    },
+  };
+  return mockStore({ auth, config, clusters });
 };
 
 const emptyLocation: Location = {
