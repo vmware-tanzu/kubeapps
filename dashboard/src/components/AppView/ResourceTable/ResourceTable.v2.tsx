@@ -1,20 +1,16 @@
-import { get, isEmpty } from "lodash";
-import React, { useEffect } from "react";
-import {
-  IK8sList,
-  IKubeItem,
-  IPort,
-  IResource,
-  ISecret,
-  IServiceSpec,
-  IServiceStatus,
-} from "shared/types";
+import React, { useEffect, useMemo } from "react";
+import { IK8sList, IKubeItem, IResource, ISecret } from "shared/types";
 
 import { CdsIcon } from "components/Clarity/clarity";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import ResourceRef from "shared/ResourceRef";
-import SecretItemDatum from "./ResourceItem/SecretItem/SecretItemDatum.v2";
+import { DaemonSetColumns } from "./ResourceData/DaemonSet";
+import { DeploymentColumns } from "./ResourceData/Deployment";
+import { OtherResourceColumns } from "./ResourceData/OtherResource";
+import { SecretColumns } from "./ResourceData/Secret";
+import { ServiceColumns } from "./ResourceData/Service";
+import { StatefulSetColumns } from "./ResourceData/StatefulSet";
 
 interface IResourceTableProps {
   id: string;
@@ -27,164 +23,20 @@ interface IResourceTableProps {
   avoidEmptyResource?: boolean;
 }
 
-function getServiceExternalIP(service: IResource): string {
-  const spec: IServiceSpec = service.spec;
-  const status: IServiceStatus = service.status;
-  if (spec.type !== "LoadBalancer") {
-    return "None";
-  }
-  if (status.loadBalancer.ingress && status.loadBalancer.ingress.length > 0) {
-    return (
-      status.loadBalancer.ingress[0].hostname || status.loadBalancer.ingress[0].ip || "Pending"
-    );
-  }
-  return "Pending";
-}
-
-function getServicePorts(service: IResource): string {
-  if (service.spec.ports) {
-    return service.spec.ports
-      .map((p: IPort) => `${p.port}${p.nodePort ? `:${p.nodePort}` : ""}/${p.protocol || "TCP"}`)
-      .join(", ");
-  }
-  return "";
-}
-
-function getSecretData(secret: ISecret) {
-  const data = secret.data;
-  if (isEmpty(data)) {
-    return "This Secret is empty";
-  }
-  return Object.keys(data).map(k => (
-    <SecretItemDatum key={`${secret.metadata.name}/${k}`} name={k} value={data[k]} />
-  ));
-}
-
 function getColumns(r: ResourceRef) {
   switch (r.kind) {
     case "Deployment":
-      return [
-        {
-          accessor: "name",
-          Header: "NAME",
-          getter: (target: IResource) => get(target, "metadata.name"),
-        },
-        {
-          accessor: "desired",
-          Header: "DESIRED",
-          getter: (target: IResource) => get(target, "status.replicas"),
-        },
-        {
-          accessor: "upToDate",
-          Header: "UP-TO-DATE",
-          getter: (target: IResource) => get(target, "status.updatedReplicas"),
-        },
-        {
-          accessor: "available",
-          Header: "AVAILABLE",
-          getter: (target: IResource) => get(target, "status.availableReplicas"),
-        },
-      ];
+      return DeploymentColumns;
     case "StatefulSet":
-      return [
-        {
-          accessor: "name",
-          Header: "NAME",
-          getter: (target: IResource) => get(target, "metadata.name"),
-        },
-        {
-          accessor: "desired",
-          Header: "DESIRED",
-          getter: (target: IResource) => get(target, "spec.replicas"),
-        },
-        {
-          accessor: "upToDate",
-          Header: "UP-TO-DATE",
-          getter: (target: IResource) => get(target, "status.updatedReplicas"),
-        },
-        {
-          accessor: "ready",
-          Header: "READY",
-          getter: (target: IResource) => get(target, "status.readyReplicas"),
-        },
-      ];
+      return StatefulSetColumns;
     case "DaemonSet":
-      return [
-        {
-          accessor: "name",
-          Header: "NAME",
-          getter: (target: IResource) => get(target, "metadata.name"),
-        },
-        {
-          accessor: "desired",
-          Header: "DESIRED",
-          getter: (target: IResource) => get(target, "status.currentNumberScheduled"),
-        },
-        {
-          accessor: "available",
-          Header: "AVAILABLE",
-          getter: (target: IResource) => get(target, "status.numberReady"),
-        },
-      ];
+      return DaemonSetColumns;
     case "Service":
-      return [
-        {
-          accessor: "name",
-          Header: "NAME",
-          getter: (target: IResource) => get(target, "metadata.name"),
-        },
-        {
-          accessor: "type",
-          Header: "TYPE",
-          getter: (target: IResource) => get(target, "spec.type"),
-        },
-        {
-          accessor: "clusterIP",
-          Header: "CLUSTER-IP",
-          getter: (target: IResource) => get(target, "spec.clusterIP"),
-        },
-        {
-          accessor: "externalIP",
-          Header: "EXTERNAL-IP",
-          getter: (target: IResource) => getServiceExternalIP(target),
-        },
-        {
-          accessor: "ports",
-          Header: "PORT(S)",
-          getter: (target: IResource) => getServicePorts(target),
-        },
-      ];
+      return ServiceColumns;
     case "Secret":
-      return [
-        {
-          accessor: "name",
-          Header: "NAME",
-          getter: (target: IResource) => get(target, "metadata.name"),
-        },
-        {
-          accessor: "type",
-          Header: "TYPE",
-          getter: (target: IResource) => get(target, "type"),
-        },
-        {
-          accessor: "data",
-          Header: "DATA",
-          getter: (target: ISecret) => getSecretData(target),
-        },
-      ];
+      return SecretColumns;
     default:
-      return [
-        {
-          accessor: "name",
-          Header: "NAME",
-          getter: (target: IResource) => get(target, "metadata.name"),
-        },
-        {
-          accessor: "kind",
-          Header: "KIND",
-          getter: (target: IResource) => get(target, "kind"),
-        },
-      ];
+      return OtherResourceColumns;
   }
 }
 
@@ -238,7 +90,7 @@ function ResourceTable({
 
   let section: JSX.Element | null = null;
   if (resourceRefs.length > 0) {
-    const columns = getColumns(resourceRefs[0]);
+    const columns = useMemo(() => getColumns(resourceRefs[0]), resourceRefs);
     // TODO(andresmgot): Add support for lists
     const resourcesWithoutLists = resourceRefs.filter(ref => {
       const resource = resources[ref.getResourceURL()];
@@ -247,20 +99,22 @@ function ResourceTable({
       }
       return true;
     });
+    const data = useMemo(
+      () =>
+        resourcesWithoutLists.map(ref =>
+          getData(
+            ref.name,
+            columns.map(c => c.accessor),
+            columns.map(c => c.getter),
+            resources[ref.getResourceURL()] as IKubeItem<IResource>,
+          ),
+        ),
+      [resourceRefs, resources],
+    );
     section = (
       <section aria-labelledby={`${id}-table`}>
         {title && <h6 id={`${id}-table`}>{title}</h6>}
-        <Table
-          columns={columns}
-          data={resourcesWithoutLists.map(ref =>
-            getData(
-              ref.name,
-              columns.map(c => c.accessor),
-              columns.map(c => c.getter),
-              resources[ref.getResourceURL()] as IKubeItem<IResource>,
-            ),
-          )}
-        />
+        <Table columns={columns} data={data} />
       </section>
     );
   }
