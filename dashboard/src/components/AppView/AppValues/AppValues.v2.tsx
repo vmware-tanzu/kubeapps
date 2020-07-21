@@ -7,20 +7,10 @@ interface IAppValuesProps {
   values: string;
 }
 
-const AppValues: React.SFC<IAppValuesProps> = props => {
-  if (props.values === "") {
-    return (
-      <React.Fragment>
-        <h6>Installation Values</h6>
-        <p>The current application was installed without specifying any values</p>
-      </React.Fragment>
-    );
-  }
-  return (
-    <section aria-labelledby="installation-values">
-      <h5 className="section-title" id="installation-values">
-        Installation Values
-      </h5>
+function AppValues(props: IAppValuesProps) {
+  let values = <p>The current application was installed without specifying any values</p>;
+  if (props.values !== "") {
+    values = (
       <AceEditor
         mode="yaml"
         theme="xcode"
@@ -33,8 +23,16 @@ const AppValues: React.SFC<IAppValuesProps> = props => {
         value={props.values}
         readOnly={true}
       />
+    );
+  }
+  return (
+    <section aria-labelledby="installation-values">
+      <h5 className="section-title" id="installation-values">
+        Installation Values
+      </h5>
+      {values}
     </section>
   );
-};
+}
 
 export default AppValues;
