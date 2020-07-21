@@ -5,6 +5,7 @@ import { getType } from "typesafe-actions";
 import actions from ".";
 import { Auth } from "../shared/Auth";
 
+const defaultCluster = "default";
 const mockStore = configureMockStore([thunk]);
 const token = "abcd";
 const validationErrorMsg = "Validation error";
@@ -54,7 +55,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
+    return store.dispatch(actions.auth.authenticate("default", token, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
     });
   });
@@ -71,9 +72,9 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate(token, false)).then(() => {
+    return store.dispatch(actions.auth.authenticate(defaultCluster, token, false)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
-      expect(Auth.validateToken).toHaveBeenCalledWith(token);
+      expect(Auth.validateToken).toHaveBeenCalledWith(defaultCluster, token);
     });
   });
 
@@ -93,7 +94,7 @@ describe("authenticate", () => {
       },
     ];
 
-    return store.dispatch(actions.auth.authenticate("ignored", true)).then(() => {
+    return store.dispatch(actions.auth.authenticate(defaultCluster, "ignored", true)).then(() => {
       expect(store.getActions()).toEqual(expectedActions);
       expect(Auth.validateToken).not.toHaveBeenCalled();
     });

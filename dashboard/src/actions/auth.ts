@@ -25,6 +25,7 @@ const allActions = [setAuthenticated, authenticating, authenticationError, setSe
 export type AuthAction = ActionType<typeof allActions[number]>;
 
 export function authenticate(
+  cluster: string,
   token: string,
   oidc: boolean,
 ): ThunkAction<Promise<void>, IStoreState, null, AuthAction> {
@@ -32,7 +33,7 @@ export function authenticate(
     dispatch(authenticating());
     try {
       if (!oidc) {
-        await Auth.validateToken(token);
+        await Auth.validateToken(cluster, token);
       }
       Auth.setAuthToken(token, oidc);
       dispatch(setAuthenticated(true, oidc, Auth.defaultNamespaceFromToken(token)));
@@ -74,7 +75,7 @@ export function expireSession(): ThunkAction<Promise<void>, IStoreState, null, A
   };
 }
 
-export function checkCookieAuthentication(): ThunkAction<
+export function checkCookieAuthentication(cluster: string): ThunkAction<
   Promise<void>,
   IStoreState,
   null,
@@ -85,9 +86,9 @@ export function checkCookieAuthentication(): ThunkAction<
     // but we dispatch it early so that the login screen is shown as
     // loading while we query isAuthenticatedWithCookie().
     dispatch(authenticating());
-    const isAuthed = await Auth.isAuthenticatedWithCookie();
+    const isAuthed = await Auth.isAuthenticatedWithCookie(cluster);
     if (isAuthed) {
-      dispatch(authenticate("", true));
+      dispatch(authenticate(cluster, "", true));
     } else {
       dispatch(setAuthenticated(false, false, ""));
     }
