@@ -59,7 +59,7 @@ export default function ResourceTabs({
       <h5 className="section-title" id="resources-table">
         Application Resources
       </h5>
-      <Tabs columns={columns} data={data} />
+      <Tabs id="resource-table-tabs" columns={columns} data={data} />
     </section>
   );
 }

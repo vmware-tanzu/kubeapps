@@ -14,12 +14,14 @@ exports[`renders several tabs 1`] = `
       "BAR",
     ]
   }
+  id="tabs"
 >
   <div
     className="tabs"
   >
     <ul
       className="nav"
+      id="tabs"
       role="tablist"
     >
       <li
@@ -28,9 +30,9 @@ exports[`renders several tabs 1`] = `
         role="presentation"
       >
         <button
-          aria-controls="panel0"
+          aria-controls="tabs-panel0"
           className="btn btn-link nav-link tab-button active"
-          id="tab0"
+          id="tabs-tab0"
           onClick={[Function]}
           type="button"
         >
@@ -43,9 +45,9 @@ exports[`renders several tabs 1`] = `
         role="presentation"
       >
         <button
-          aria-controls="panel1"
+          aria-controls="tabs-panel1"
           className="btn btn-link nav-link tab-button "
-          id="tab1"
+          id="tabs-tab1"
           onClick={[Function]}
           type="button"
         >
@@ -55,18 +57,18 @@ exports[`renders several tabs 1`] = `
     </ul>
     <section
       aria-hidden="false"
-      aria-labelledby="tab0"
-      id="panel0"
-      key="panel0"
+      aria-labelledby="tabs-tab0"
+      id="tabs-panel0"
+      key="tabs-panel0"
       role="tabpanel"
     >
       FOO
     </section>
     <section
       aria-hidden="true"
-      aria-labelledby="tab1"
-      id="panel1"
-      key="panel1"
+      aria-labelledby="tabs-tab1"
+      id="tabs-panel1"
+      key="tabs-panel1"
       role="tabpanel"
     >
       BAR
