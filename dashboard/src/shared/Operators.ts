@@ -11,20 +11,20 @@ import {
 
 export class Operators {
   public static async isOLMInstalled(namespace: string) {
-    const { status } = await axiosWithAuth.get(urls.api.operators.operators(namespace));
+    const { status } = await axiosWithAuth.get(urls.api.k8s.operators.operators(namespace));
     return status === 200;
   }
 
   public static async getOperators(namespace: string) {
     const { data } = await axiosWithAuth.get<IK8sList<IPackageManifest, {}>>(
-      urls.api.operators.operators(namespace),
+      urls.api.k8s.operators.operators(namespace),
     );
     return data.items;
   }
 
   public static async getOperator(namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<IPackageManifest>(
-      urls.api.operators.operator(namespace, name),
+      urls.api.k8s.operators.operator(namespace, name),
     );
     return data;
   }
@@ -33,14 +33,14 @@ export class Operators {
     // Global operators are installed in the "operators" namespace
     const reqNamespace = namespace === "_all" ? "operators" : namespace;
     const { data } = await axiosWithAuth.get<IK8sList<IClusterServiceVersion, {}>>(
-      urls.api.operators.clusterServiceVersions(reqNamespace),
+      urls.api.k8s.operators.clusterServiceVersions(reqNamespace),
     );
     return data.items;
   }
 
   public static async getCSV(namespace: string, name: string) {
     const { data } = await axiosWithAuth.get<IClusterServiceVersion>(
-      urls.api.operators.clusterServiceVersion(namespace, name),
+      urls.api.k8s.operators.clusterServiceVersion(namespace, name),
     );
     return data;
   }
@@ -52,7 +52,7 @@ export class Operators {
     body: object,
   ) {
     const { data } = await axiosWithAuth.post<IResource>(
-      urls.api.operators.resources(namespace, apiVersion, resource),
+      urls.api.k8s.operators.resources(namespace, apiVersion, resource),
       body,
     );
     return data;
@@ -60,7 +60,7 @@ export class Operators {
 
   public static async listResources(namespace: string, apiVersion: string, resource: string) {
     const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
-      urls.api.operators.resources(namespace, apiVersion, resource),
+      urls.api.k8s.operators.resources(namespace, apiVersion, resource),
     );
     return data;
   }
@@ -72,7 +72,7 @@ export class Operators {
     name: string,
   ) {
     const { data } = await axiosWithAuth.get<IResource>(
-      urls.api.operators.resource(namespace, apiVersion, crd, name),
+      urls.api.k8s.operators.resource(namespace, apiVersion, crd, name),
     );
     return data;
   }
@@ -84,7 +84,7 @@ export class Operators {
     name: string,
   ) {
     const { data } = await axiosWithAuth.delete<any>(
-      urls.api.operators.resource(namespace, apiVersion, plural, name),
+      urls.api.k8s.operators.resource(namespace, apiVersion, plural, name),
     );
     return data;
   }
@@ -97,7 +97,7 @@ export class Operators {
     body: object,
   ) {
     const { data } = await axiosWithAuth.put<IResource>(
-      urls.api.operators.resource(namespace, apiVersion, resource, name),
+      urls.api.k8s.operators.resource(namespace, apiVersion, resource, name),
       body,
     );
     return data;
@@ -114,7 +114,7 @@ export class Operators {
     await this.createOperatorGroupIfNotExists(namespace);
     // Now create the subscription
     const { data: result } = await axiosWithAuth.post<IResource>(
-      urls.api.operators.subscription(namespace, name),
+      urls.api.k8s.operators.subscription(namespace, name),
       {
         apiVersion: "operators.coreos.com/v1alpha1",
         kind: "Subscription",
@@ -149,14 +149,14 @@ export class Operators {
       return;
     }
     const { data } = await axiosWithAuth.get<IK8sList<IResource, {}>>(
-      urls.api.operators.operatorGroups(namespace),
+      urls.api.k8s.operators.operatorGroups(namespace),
     );
     if (data.items.length > 0) {
       // An operatorgroup already exists, do nothing
       return;
     }
     const { data: result } = await axiosWithAuth.post<IK8sList<IResource, {}>>(
-      urls.api.operators.operatorGroups(namespace),
+      urls.api.k8s.operators.operatorGroups(namespace),
       {
         apiVersion: "operators.coreos.com/v1",
         kind: "OperatorGroup",

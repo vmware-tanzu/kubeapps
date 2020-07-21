@@ -16,7 +16,7 @@ export default class Namespace {
 
   public static async create(cluster: string, name: string) {
     const { data } = await axiosWithAuth.post<IResource>(
-      `api/clusters/${cluster}/api/v1/namespaces/`,
+      url.api.k8s.namespaces(cluster),
       {
         apiVersion: "v1",
         kind: "Namespace",
@@ -31,7 +31,7 @@ export default class Namespace {
   public static async get(cluster: string, name: string) {
     try {
       const { data } = await axiosWithAuth.get<IResource>(
-        `api/clusters/${cluster}/api/v1/namespaces/${name}`,
+        url.api.k8s.namespace(cluster, name),
       );
       return data;
     } catch (err) {
