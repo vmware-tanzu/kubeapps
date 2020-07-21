@@ -1,0 +1,39 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders a app item 1`] = `
+<CardGrid
+  className="ChartInfo"
+>
+  <Card>
+    <CardIcon
+      icon="icon.png"
+    />
+    <CardContent>
+      <h5>
+        foo
+      </h5>
+      <p
+        className="margin-b-reset"
+      >
+        test chart
+      </p>
+    </CardContent>
+    <CardFooter>
+      <small>
+        <div>
+          <div>
+            App Version: 
+            0.0.1
+          </div>
+          <div>
+            <span>
+              Chart Version: 
+              1.0.0
+            </span>
+          </div>
+        </div>
+      </small>
+    </CardFooter>
+  </Card>
+</CardGrid>
+`;
