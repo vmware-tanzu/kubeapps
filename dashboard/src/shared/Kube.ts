@@ -1,7 +1,7 @@
 import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { ResourceKindsWithAPIVersions } from "./ResourceAPIVersion";
-import { ResourceKind, ResourceKindsWithPlurals } from "./ResourceKinds";
+import { isNamespaced, ResourceKind, ResourceKindsWithPlurals } from "./ResourceKinds";
 import { IK8sList, IResource } from "./types";
 
 export const APIBase = "api/clusters/default";
@@ -24,7 +24,7 @@ export class Kube {
     query?: string,
   ) {
     let url = `${APIBase}/${apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`}`;
-    if (namespace) {
+    if (namespace && isNamespaced(resource)) {
       url += `/namespaces/${namespace}`;
     }
     url += `/${resource}`;

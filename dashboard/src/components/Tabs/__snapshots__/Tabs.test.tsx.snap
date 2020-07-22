@@ -1,0 +1,78 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders several tabs 1`] = `
+<Tabs
+  columns={
+    Array [
+      "foo",
+      "bar",
+    ]
+  }
+  data={
+    Array [
+      "FOO",
+      "BAR",
+    ]
+  }
+  id="tabs"
+>
+  <div
+    className="tabs"
+  >
+    <ul
+      className="nav"
+      id="tabs"
+      role="tablist"
+    >
+      <li
+        className="nav-item"
+        key="foo-0"
+        role="presentation"
+      >
+        <button
+          aria-controls="tabs-panel0"
+          className="btn btn-link nav-link tab-button active"
+          id="tabs-tab0"
+          onClick={[Function]}
+          type="button"
+        >
+          foo
+        </button>
+      </li>
+      <li
+        className="nav-item"
+        key="bar-1"
+        role="presentation"
+      >
+        <button
+          aria-controls="tabs-panel1"
+          className="btn btn-link nav-link tab-button "
+          id="tabs-tab1"
+          onClick={[Function]}
+          type="button"
+        >
+          bar
+        </button>
+      </li>
+    </ul>
+    <section
+      aria-hidden="false"
+      aria-labelledby="tabs-tab0"
+      id="tabs-panel0"
+      key="tabs-panel0"
+      role="tabpanel"
+    >
+      FOO
+    </section>
+    <section
+      aria-hidden="true"
+      aria-labelledby="tabs-tab1"
+      id="tabs-panel1"
+      key="tabs-panel1"
+      role="tabpanel"
+    >
+      BAR
+    </section>
+  </div>
+</Tabs>
+`;
