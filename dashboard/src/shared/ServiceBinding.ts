@@ -57,6 +57,8 @@ export class ServiceBinding {
   ) {
     const u = ServiceBinding.getLink(namespace);
     const { data } = await axiosWithAuth.post<IServiceBinding>(u, {
+      apiVersion: "servicecatalog.k8s.io/v1beta1",
+      kind: "ServiceBinding",
       metadata: {
         name: bindingName,
       },
