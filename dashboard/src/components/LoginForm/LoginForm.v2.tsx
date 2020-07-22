@@ -13,12 +13,13 @@ import TokenLogin from "./TokenLogin";
 ClarityIcons.addIcons(infoCircleIcon);
 
 export interface ILoginFormProps {
+  cluster: string;
   authenticated: boolean;
   authenticating: boolean;
   authenticationError: string | undefined;
   oauthLoginURI: string;
-  authenticate: (token: string) => any;
-  checkCookieAuthentication: () => void;
+  authenticate: (cluster: string, token: string) => any;
+  checkCookieAuthentication: (cluster: string) => void;
   appVersion: string;
   location: Location;
 }
@@ -28,7 +29,7 @@ function LoginForm(props: ILoginFormProps) {
   const { oauthLoginURI, checkCookieAuthentication } = props;
   useEffect(() => {
     if (oauthLoginURI) {
-      checkCookieAuthentication();
+      checkCookieAuthentication(props.cluster);
     }
   }, [oauthLoginURI, checkCookieAuthentication]);
 
@@ -42,7 +43,7 @@ function LoginForm(props: ILoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    return token && (await props.authenticate(token));
+    return token && (await props.authenticate(props.cluster, token));
   };
 
   const handleTokenChange = (e: React.ChangeEvent<HTMLInputElement>) => {

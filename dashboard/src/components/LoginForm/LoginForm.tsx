@@ -7,12 +7,13 @@ import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.css";
 
 export interface ILoginFormProps {
+  cluster: string;
   authenticated: boolean;
   authenticating: boolean;
   authenticationError: string | undefined;
   oauthLoginURI: string;
-  authenticate: (token: string) => any;
-  checkCookieAuthentication: () => void;
+  authenticate: (cluster: string, token: string) => any;
+  checkCookieAuthentication: (cluster: string) => void;
   location: Location;
 }
 
@@ -25,7 +26,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
 
   public componentDidMount() {
     if (this.props.oauthLoginURI) {
-      this.props.checkCookieAuthentication();
+      this.props.checkCookieAuthentication(this.props.cluster);
     }
   }
 
@@ -65,7 +66,7 @@ class LoginForm extends React.Component<ILoginFormProps, ILoginFormState> {
   private handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const { token } = this.state;
-    return token && (await this.props.authenticate(token));
+    return token && (await this.props.authenticate(this.props.cluster, token));
   };
 
   private handleTokenChange = (e: React.FormEvent<HTMLInputElement>) => {

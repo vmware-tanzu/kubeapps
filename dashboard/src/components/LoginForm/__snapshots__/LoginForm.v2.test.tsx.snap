@@ -37,6 +37,7 @@ exports[`token login form displays an error if the authentication error is passe
   authenticating={false}
   authenticationError="it's a trap"
   checkCookieAuthentication={[MockFunction]}
+  cluster="default"
   location={
     Object {
       "hash": "",

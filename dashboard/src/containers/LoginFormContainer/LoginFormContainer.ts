@@ -9,11 +9,13 @@ import { IStoreState } from "../../shared/types";
 function mapStateToProps({
   auth: { authenticated, authenticating, authenticationError },
   config: { authProxyEnabled, oauthLoginURI, featureFlags, appVersion },
+  clusters,
 }: IStoreState) {
   return {
     authenticated,
     authenticating,
     authenticationError,
+    cluster: clusters.currentCluster,
     oauthLoginURI: authProxyEnabled ? oauthLoginURI : "",
     UI: featureFlags.ui,
     appVersion,
@@ -22,8 +24,10 @@ function mapStateToProps({
 
 function mapDispatchToProps(dispatch: ThunkDispatch<IStoreState, null, Action>) {
   return {
-    authenticate: (token: string) => dispatch(actions.auth.authenticate(token, false)),
-    checkCookieAuthentication: () => dispatch(actions.auth.checkCookieAuthentication()),
+    authenticate: (cluster: string, token: string) =>
+      dispatch(actions.auth.authenticate(cluster, token, false)),
+    checkCookieAuthentication: (cluster: string) =>
+      dispatch(actions.auth.checkCookieAuthentication(cluster)),
   };
 }
 

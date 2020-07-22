@@ -16,7 +16,10 @@ const emptyLocation: Location = {
   state: "",
 };
 
+const defaultCluster = "default";
+
 const defaultProps = {
+  cluster: defaultCluster,
   authenticate: jest.fn(),
   authenticated: false,
   authenticating: false,
@@ -111,7 +114,7 @@ describe("token login form", () => {
     act(() => {
       wrapper.find("form").simulate("submit", { preventDefault: jest.fn() });
     });
-    expect(authenticate).toBeCalledWith("f00b4r");
+    expect(authenticate).toBeCalledWith(defaultCluster, "f00b4r");
   });
 
   it("displays an error if the authentication error is passed", () => {
