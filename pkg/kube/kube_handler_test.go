@@ -275,7 +275,7 @@ func TestAppRepositoryCreate(t *testing.T) {
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "bitnami"}}`,
 			existingRepos: map[string][]repoStub{
-				"kubeapps": []repoStub{repoStub{name: "bitnami"}},
+				"kubeapps": {repoStub{name: "bitnami"}},
 			},
 			expectedError: fmt.Errorf(`apprepositories.kubeapps.com "bitnami" already exists`),
 		},
@@ -284,8 +284,8 @@ func TestAppRepositoryCreate(t *testing.T) {
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "bitnami"}}`,
 			existingRepos: map[string][]repoStub{
-				"kubeapps-other-ns-1": []repoStub{repoStub{name: "bitnami"}},
-				"kubeapps-other-ns-2": []repoStub{repoStub{name: "bitnami"}},
+				"kubeapps-other-ns-1": {repoStub{name: "bitnami"}},
+				"kubeapps-other-ns-2": {repoStub{name: "bitnami"}},
 			},
 		},
 		{
@@ -345,7 +345,7 @@ func TestAppRepositoryUpdate(t *testing.T) {
 			requestNamespace: kubeappsNamespace,
 			requestData:      `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo"}}`,
 			existingRepos: map[string][]repoStub{
-				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+				"kubeapps": {repoStub{name: "test-repo"}},
 			},
 		},
 		{
@@ -359,14 +359,14 @@ func TestAppRepositoryUpdate(t *testing.T) {
 			requestNamespace: "default",
 			requestData:      `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo"}}`,
 			existingRepos: map[string][]repoStub{
-				"default": []repoStub{repoStub{name: "test-repo"}},
+				"default": {repoStub{name: "test-repo"}},
 			},
 		},
 		{
 			name:             "it creates a secret if the auth header is set",
 			requestNamespace: kubeappsNamespace,
 			existingRepos: map[string][]repoStub{
-				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+				"kubeapps": {repoStub{name: "test-repo"}},
 			},
 			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
 		},
@@ -374,8 +374,8 @@ func TestAppRepositoryUpdate(t *testing.T) {
 			name:             "it creates a secret if the auth header is set in different namespaces",
 			requestNamespace: "default",
 			existingRepos: map[string][]repoStub{
-				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
-				"default":  []repoStub{repoStub{name: "test-repo"}},
+				"kubeapps": {repoStub{name: "test-repo"}},
+				"default":  {repoStub{name: "test-repo"}},
 			},
 			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
 		},
@@ -383,10 +383,10 @@ func TestAppRepositoryUpdate(t *testing.T) {
 			name:             "it updates a secret if the auth header is set",
 			requestNamespace: kubeappsNamespace,
 			existingRepos: map[string][]repoStub{
-				"kubeapps": []repoStub{repoStub{name: "test-repo"}},
+				"kubeapps": {repoStub{name: "test-repo"}},
 			},
 			existingSecrets: map[string][]secretStub{
-				"kubeapps": []secretStub{secretStub{name: "apprepo-test-repo"}},
+				"kubeapps": {secretStub{name: "apprepo-test-repo"}},
 			},
 			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
 		},
@@ -394,11 +394,11 @@ func TestAppRepositoryUpdate(t *testing.T) {
 			name:             "it updates a secret if the auth header is set in both default and kubeapps namespace",
 			requestNamespace: "default",
 			existingRepos: map[string][]repoStub{
-				"default": []repoStub{repoStub{name: "test-repo"}},
+				"default": {repoStub{name: "test-repo"}},
 			},
 			existingSecrets: map[string][]secretStub{
-				"kubeapps": []secretStub{secretStub{name: "default-apprepo-test-repo"}},
-				"default":  []secretStub{secretStub{name: "apprepo-test-repo"}},
+				"kubeapps": {secretStub{name: "default-apprepo-test-repo"}},
+				"default":  {secretStub{name: "apprepo-test-repo"}},
 			},
 			requestData: `{"appRepository": {"name": "test-repo", "url": "http://example.com/test-repo", "authHeader": "test-me"}}`,
 		},
@@ -441,26 +441,26 @@ func TestDeleteAppRepository(t *testing.T) {
 			name:             "it deletes an existing repo from a namespace",
 			repoName:         "my-repo",
 			requestNamespace: "my-namespace",
-			existingRepos:    map[string][]repoStub{"my-namespace": []repoStub{repoStub{name: "my-repo"}}},
+			existingRepos:    map[string][]repoStub{"my-namespace": {repoStub{name: "my-repo"}}},
 		},
 		{
 			name:             "it deletes an existing repo with credentials from a namespace",
 			repoName:         "my-repo",
 			requestNamespace: "my-namespace",
-			existingRepos:    map[string][]repoStub{"my-namespace": []repoStub{repoStub{name: "my-repo", private: true}}},
+			existingRepos:    map[string][]repoStub{"my-namespace": {repoStub{name: "my-repo", private: true}}},
 		},
 		{
 			name:              "it returns not found when repo does not exist in specified namespace",
 			repoName:          "my-repo",
 			requestNamespace:  "other-namespace",
-			existingRepos:     map[string][]repoStub{"my-namespace": []repoStub{repoStub{name: "my-repo"}}},
+			existingRepos:     map[string][]repoStub{"my-namespace": {repoStub{name: "my-repo"}}},
 			expectedErrorCode: 404,
 		},
 		{
 			name:             "it deletes an existing repo from kubeapps' namespace",
 			repoName:         "my-repo",
 			requestNamespace: kubeappsNamespace,
-			existingRepos:    map[string][]repoStub{kubeappsNamespace: []repoStub{repoStub{name: "my-repo"}}},
+			existingRepos:    map[string][]repoStub{kubeappsNamespace: {repoStub{name: "my-repo"}}},
 		},
 	}
 
@@ -661,7 +661,7 @@ func TestSecretForRequest(t *testing.T) {
 	// And the same owner references expectation.
 	blockOwnerDeletion := true
 	ownerRefs := []metav1.OwnerReference{
-		metav1.OwnerReference{
+		{
 			APIVersion:         "kubeapps.com/v1alpha1",
 			Kind:               "AppRepository",
 			Name:               "test-repo",
@@ -739,7 +739,7 @@ func TestGetNamespaces(t *testing.T) {
 			name:       "it list namespaces",
 			existingNS: []string{"foo"},
 			expectedResponse: []corev1.Namespace{
-				corev1.Namespace{
+				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "foo",
 					},

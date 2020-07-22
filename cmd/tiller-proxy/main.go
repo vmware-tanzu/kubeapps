@@ -133,7 +133,7 @@ func main() {
 		log.Fatalf("POD_NAMESPACE should be defined")
 	}
 
-	kubeHandler, err := kube.NewHandler(kubeappsNamespace)
+	kubeHandler, err := kube.NewHandler(kubeappsNamespace, kube.AdditionalClustersConfig{})
 	if err != nil {
 		log.Fatalf("Failed to create handler: %v", err)
 	}
@@ -172,7 +172,7 @@ func main() {
 	apiv1.Methods("DELETE").Path("/clusters/{cluster}/namespaces/{namespace}/releases/{releaseName}").Handler(handlerutil.WithParams(h.DeleteRelease))
 
 	// Backend routes unrelated to tiller-proxy functionality.
-	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter())
+	err = backendHandlers.SetupDefaultRoutes(r.PathPrefix("/backend/v1").Subrouter(), kube.AdditionalClustersConfig{})
 	if err != nil {
 		log.Fatalf("Unable to setup backend routes: %+v", err)
 	}

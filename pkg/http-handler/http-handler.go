@@ -224,8 +224,8 @@ func GetOperatorLogo(kubeHandler kube.AuthHandler) func(w http.ResponseWriter, r
 }
 
 // SetupDefaultRoutes enables call-sites to use the backend api's default routes with minimal setup.
-func SetupDefaultRoutes(r *mux.Router) error {
-	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"))
+func SetupDefaultRoutes(r *mux.Router, additionalClusters kube.AdditionalClustersConfig) error {
+	backendHandler, err := kube.NewHandler(os.Getenv("POD_NAMESPACE"), additionalClusters)
 	if err != nil {
 		return err
 	}

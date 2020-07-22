@@ -212,7 +212,7 @@ var ErrGlobalRepositoryWithSecrets = fmt.Errorf("docker registry secrets cannot 
 
 // NewHandler returns a handler configured with a service account client set and a config
 // with a blank token to be copied when creating user client sets with specific tokens.
-func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
+func NewHandler(kubeappsNamespace string, additionalClusters AdditionalClustersConfig) (AuthHandler, error) {
 	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
 		clientcmd.NewDefaultClientConfigLoadingRules(),
 		&clientcmd.ConfigOverrides{
@@ -244,8 +244,9 @@ func NewHandler(kubeappsNamespace string) (AuthHandler, error) {
 		config:            *config,
 		kubeappsNamespace: kubeappsNamespace,
 		// See comment in the struct defn above.
-		clientsetForConfig: clientsetForConfig,
-		svcClientset:       svcClientset,
+		clientsetForConfig:       clientsetForConfig,
+		svcClientset:             svcClientset,
+		additionalClustersConfig: additionalClusters,
 	}, nil
 }
 
@@ -518,7 +519,7 @@ func secretForRequest(appRepoRequest *appRepositoryRequest, appRepo *v1alpha1.Ap
 		ObjectMeta: metav1.ObjectMeta{
 			Name: secretNameForRepo(appRepo.Name),
 			OwnerReferences: []metav1.OwnerReference{
-				metav1.OwnerReference{
+				{
 					APIVersion:         "kubeapps.com/v1alpha1",
 					Kind:               "AppRepository",
 					Name:               appRepo.ObjectMeta.Name,
