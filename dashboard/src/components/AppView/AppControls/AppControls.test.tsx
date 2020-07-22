@@ -2,12 +2,8 @@ import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
 import Modal from "react-modal";
-import { Provider } from "react-redux";
-import configureMockStore, { MockStore } from "redux-mock-store";
-import thunk from "redux-thunk";
 
 import { IRelease } from "shared/types";
-import { IStoreState } from "shared/types";
 import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
 import { hapi } from "../../../shared/hapi/release";
 import itBehavesLike from "../../../shared/specs";
@@ -15,32 +11,7 @@ import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
 import AppControls, { IAppControlsProps } from "./AppControls";
 import UpgradeButton from "./UpgradeButton";
-
-const mockStore = configureMockStore([thunk]);
-
-// TODO(absoludity): As we move to function components with (redux) hooks we'll need to
-// be including state in tests, so we may want to put things like initialState
-// and a generalized getWrapper in a test helpers or similar package?
-const initialState = {
-  apps: {},
-  auth: {},
-  catalog: {},
-  charts: {},
-  config: {},
-  kube: {},
-  clusters: {
-    currentCluster: "default-cluster",
-  },
-  repos: {},
-  operators: {},
-} as IStoreState;
-
-const getWrapper = (store: MockStore, props: IAppControlsProps) =>
-  mount(
-    <Provider store={store}>
-      <AppControls {...props} />
-    </Provider>,
-  );
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 
 const namespace = "bar";
 const defaultProps = {
@@ -51,7 +22,7 @@ const defaultProps = {
 } as IAppControlsProps;
 
 it("calls delete function without purge when clicking the button", done => {
-  const store = mockStore(initialState);
+  const store = getStore({});
   const push = jest.fn();
   const deleteApp = jest.fn().mockReturnValue(true);
   const props = {
@@ -59,7 +30,7 @@ it("calls delete function without purge when clicking the button", done => {
     deleteApp,
     push,
   };
-  const wrapper = getWrapper(store, props);
+  const wrapper = mountWrapper(store, <AppControls {...props} />);
   const appControls = wrapper.find(AppControls);
   const button = appControls.children().find(".button-danger");
   expect(button.exists()).toBe(true);
@@ -86,8 +57,8 @@ it("calls delete function with additional purge", () => {
   // Return "false" to avoid redirect when mounting
   const deleteApp = jest.fn().mockReturnValue(false);
   const props = { ...defaultProps, deleteApp };
-  const store = mockStore(initialState);
-  const wrapper = getWrapper(store, props);
+  const store = getStore({});
+  const wrapper = mountWrapper(store, <AppControls {...props} />);
   Modal.setAppElement(document.createElement("div"));
   const appControls = wrapper.find(AppControls);
   const button = appControls.children().find(".button-danger");

@@ -163,3 +163,39 @@ it("doesn't call getNamespace when selecting all namespaces", () => {
   expect(setNamespace).toHaveBeenCalledWith("_all");
   expect(getNamespace).not.toHaveBeenCalled();
 });
+
+describe("ClusterSelector", () => {
+  it("does not render the cluster switcher when there is only one cluster", () => {
+    const wrapper = shallow(<Header {...defaultProps} />);
+
+    const clusterSelector = wrapper.find("ClusterSelector");
+
+    expect(clusterSelector).not.toExist();
+  });
+
+  it("renders the cluster switcher when there are multiple clusters", () => {
+    const props = {
+      ...defaultProps,
+      clusters: {
+        ...defaultProps.clusters,
+        clusters: {
+          ...defaultProps.clusters.clusters,
+          other: {
+            currentNamespace: "default",
+            namespaces: ["default", "other"],
+          },
+        },
+      } as IClustersState,
+    };
+    const wrapper = shallow(<Header {...props} />);
+
+    const clusterSelector = wrapper.find("ClusterSelector");
+
+    expect(clusterSelector).toExist();
+    expect(clusterSelector.props()).toEqual(
+      expect.objectContaining({
+        clusters: props.clusters,
+      }),
+    );
+  });
+});
