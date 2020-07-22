@@ -3,51 +3,43 @@
 exports[`when an error is present matches the snapshot 1`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Column
+      listItem={false}
+      span={10}
     >
       <Row
         list={false}
       >
-        <Column
-          listItem={false}
-          span={10}
-        >
-          <Row
-            list={false}
-          >
-            <h1>
-              Applications
-            </h1>
-            <SearchFilter
-              key="searchFilter"
-              onChange={[Function]}
-              onSubmit={[MockFunction]}
-              placeholder="search apps..."
-              value=""
-            />
-          </Row>
-        </Column>
-        <Column
-          listItem={false}
-          span={2}
-        >
-          <div
-            className="header-button"
-          >
-            <Link
-              to="/c/defaultc/ns/default/catalog"
-            >
-              <ReactWrapperComponent
-                status="primary"
-              >
-                Deploy
-              </ReactWrapperComponent>
-            </Link>
-          </div>
-        </Column>
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
       </Row>
-    </div>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
   </PageHeader>
   <LoadingWrapper
     loaded={true}
@@ -67,51 +59,43 @@ exports[`when an error is present matches the snapshot 1`] = `
 exports[`when an error is present renders a generic error message 1`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Column
+      listItem={false}
+      span={10}
     >
       <Row
         list={false}
       >
-        <Column
-          listItem={false}
-          span={10}
-        >
-          <Row
-            list={false}
-          >
-            <h1>
-              Applications
-            </h1>
-            <SearchFilter
-              key="searchFilter"
-              onChange={[Function]}
-              onSubmit={[MockFunction]}
-              placeholder="search apps..."
-              value=""
-            />
-          </Row>
-        </Column>
-        <Column
-          listItem={false}
-          span={2}
-        >
-          <div
-            className="header-button"
-          >
-            <Link
-              to="/c/defaultc/ns/default/catalog"
-            >
-              <ReactWrapperComponent
-                status="primary"
-              >
-                Deploy
-              </ReactWrapperComponent>
-            </Link>
-          </div>
-        </Column>
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
       </Row>
-    </div>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
   </PageHeader>
   <LoadingWrapper
     loaded={true}
@@ -131,51 +115,43 @@ exports[`when an error is present renders a generic error message 1`] = `
 exports[`when apps available matches the snapshot 1`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Column
+      listItem={false}
+      span={10}
     >
       <Row
         list={false}
       >
-        <Column
-          listItem={false}
-          span={10}
-        >
-          <Row
-            list={false}
-          >
-            <h1>
-              Applications
-            </h1>
-            <SearchFilter
-              key="searchFilter"
-              onChange={[Function]}
-              onSubmit={[MockFunction]}
-              placeholder="search apps..."
-              value=""
-            />
-          </Row>
-        </Column>
-        <Column
-          listItem={false}
-          span={2}
-        >
-          <div
-            className="header-button"
-          >
-            <Link
-              to="/c/defaultc/ns/default/catalog"
-            >
-              <ReactWrapperComponent
-                status="primary"
-              >
-                Deploy
-              </ReactWrapperComponent>
-            </Link>
-          </div>
-        </Column>
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
       </Row>
-    </div>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
   </PageHeader>
   <LoadingWrapper
     loaded={true}
@@ -208,51 +184,43 @@ exports[`when apps available matches the snapshot 1`] = `
 exports[`when custom resources available matches the snapshot 1`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Column
+      listItem={false}
+      span={10}
     >
       <Row
         list={false}
       >
-        <Column
-          listItem={false}
-          span={10}
-        >
-          <Row
-            list={false}
-          >
-            <h1>
-              Applications
-            </h1>
-            <SearchFilter
-              key="searchFilter"
-              onChange={[Function]}
-              onSubmit={[MockFunction]}
-              placeholder="search apps..."
-              value=""
-            />
-          </Row>
-        </Column>
-        <Column
-          listItem={false}
-          span={2}
-        >
-          <div
-            className="header-button"
-          >
-            <Link
-              to="/c/defaultc/ns/default/catalog"
-            >
-              <ReactWrapperComponent
-                status="primary"
-              >
-                Deploy
-              </ReactWrapperComponent>
-            </Link>
-          </div>
-        </Column>
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
       </Row>
-    </div>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
   </PageHeader>
   <LoadingWrapper
     loaded={true}
@@ -298,51 +266,43 @@ exports[`when custom resources available matches the snapshot 1`] = `
 exports[`when fetched but not apps available matches the snapshot 1`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Column
+      listItem={false}
+      span={10}
     >
       <Row
         list={false}
       >
-        <Column
-          listItem={false}
-          span={10}
-        >
-          <Row
-            list={false}
-          >
-            <h1>
-              Applications
-            </h1>
-            <SearchFilter
-              key="searchFilter"
-              onChange={[Function]}
-              onSubmit={[MockFunction]}
-              placeholder="search apps..."
-              value=""
-            />
-          </Row>
-        </Column>
-        <Column
-          listItem={false}
-          span={2}
-        >
-          <div
-            className="header-button"
-          >
-            <Link
-              to="/c/defaultc/ns/default/catalog"
-            >
-              <ReactWrapperComponent
-                status="primary"
-              >
-                Deploy
-              </ReactWrapperComponent>
-            </Link>
-          </div>
-        </Column>
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
       </Row>
-    </div>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
   </PageHeader>
   <LoadingWrapper
     loaded={true}
@@ -363,51 +323,43 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
 exports[`while fetching apps loading spinner matches the snapshot 1`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Column
+      listItem={false}
+      span={10}
     >
       <Row
         list={false}
       >
-        <Column
-          listItem={false}
-          span={10}
-        >
-          <Row
-            list={false}
-          >
-            <h1>
-              Applications
-            </h1>
-            <SearchFilter
-              key="searchFilter"
-              onChange={[Function]}
-              onSubmit={[MockFunction]}
-              placeholder="search apps..."
-              value=""
-            />
-          </Row>
-        </Column>
-        <Column
-          listItem={false}
-          span={2}
-        >
-          <div
-            className="header-button"
-          >
-            <Link
-              to="/c/defaultc/ns/default/catalog"
-            >
-              <ReactWrapperComponent
-                status="primary"
-              >
-                Deploy
-              </ReactWrapperComponent>
-            </Link>
-          </div>
-        </Column>
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
       </Row>
-    </div>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
   </PageHeader>
   <LoadingWrapper
     loaded={false}
@@ -427,51 +379,43 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
 exports[`while fetching apps loading spinner matches the snapshot 2`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Column
+      listItem={false}
+      span={10}
     >
       <Row
         list={false}
       >
-        <Column
-          listItem={false}
-          span={10}
-        >
-          <Row
-            list={false}
-          >
-            <h1>
-              Applications
-            </h1>
-            <SearchFilter
-              key="searchFilter"
-              onChange={[Function]}
-              onSubmit={[MockFunction]}
-              placeholder="search apps..."
-              value=""
-            />
-          </Row>
-        </Column>
-        <Column
-          listItem={false}
-          span={2}
-        >
-          <div
-            className="header-button"
-          >
-            <Link
-              to="/c/defaultc/ns/default/catalog"
-            >
-              <ReactWrapperComponent
-                status="primary"
-              >
-                Deploy
-              </ReactWrapperComponent>
-            </Link>
-          </div>
-        </Column>
+        <h1>
+          Applications
+        </h1>
+        <SearchFilter
+          key="searchFilter"
+          onChange={[Function]}
+          onSubmit={[MockFunction]}
+          placeholder="search apps..."
+          value=""
+        />
       </Row>
-    </div>
+    </Column>
+    <Column
+      listItem={false}
+      span={2}
+    >
+      <div
+        className="header-button"
+      >
+        <Link
+          to="/c/defaultc/ns/default/catalog"
+        >
+          <ReactWrapperComponent
+            status="primary"
+          >
+            Deploy
+          </ReactWrapperComponent>
+        </Link>
+      </div>
+    </Column>
   </PageHeader>
   <LoadingWrapper
     loaded={false}
