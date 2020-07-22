@@ -34,7 +34,7 @@ const secret = {
 
 it("shows a message if there are no secrets", () => {
   const wrapper = mountWrapper(defaultStore, <AppSecrets {...defaultProps} />);
-  expect(wrapper.text()).toContain("The current application doesn't include any secret");
+  expect(wrapper.text()).toContain("The current application does not include secrets");
 });
 
 it("renders a secretItemDatum per secret", () => {

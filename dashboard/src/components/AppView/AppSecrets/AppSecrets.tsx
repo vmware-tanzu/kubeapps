@@ -30,7 +30,7 @@ function AppSecrets({ secretRefs }: IResourceTableProps) {
   );
   let content;
   if (secretRefs.length === 0) {
-    content = "The current application doesn't include any secret";
+    content = "The current application does not include secrets";
   } else {
     content = secrets.map(secret => {
       if (secret && secret.item) {

@@ -174,7 +174,7 @@ export default function ApplicationStatus({
       <div data-tip={true} data-for="application-status">
         <h5 className="application-status-pie-chart-title">{ready ? "Ready" : "Not Ready"}</h5>
         <PieChart
-          data={[{ value: 1, color: `${ready ? "#0072a3" : "#fff4c7"}` }]}
+          data={[{ value: 1, color: "#0072a3" }]}
           reveal={(readyPods / totalPods) * 100}
           animate={true}
           animationDuration={1000}

@@ -1,56 +1,94 @@
-import { mount, shallow } from "enzyme";
 import context from "jest-plugin-context";
 import * as React from "react";
+import * as ReactRedux from "react-redux";
 
-import itBehavesLike from "../../../shared/specs";
-
-import ResourceRef from "shared/ResourceRef";
+import actions from "actions";
+import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
+import { defaultStore, initialState, mockStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
 import AccessURLTable from "./AccessURLTable.v2";
 
 const defaultProps = {
-  services: [],
-  ingresses: [],
+  serviceRefs: [],
   ingressRefs: [],
-  getResource: jest.fn(),
 };
+
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.kube };
+beforeEach(() => {
+  actions.kube = {
+    ...actions.kube,
+    getResource: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.kube = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
 
 describe("when receiving ingresses", () => {
   it("fetches ingresses at mount time", () => {
-    const ingress = { name: "ing" } as ResourceRef;
+    const ingress = { name: "ing", getResourceURL: jest.fn() } as any;
     const mock = jest.fn();
-    mount(<AccessURLTable {...defaultProps} ingressRefs={[ingress]} getResource={mock} />);
+    actions.kube.getResource = mock;
+    mountWrapper(defaultStore, <AccessURLTable {...defaultProps} ingressRefs={[ingress]} />);
     expect(mock).toHaveBeenCalledWith(ingress);
   });
 
   it("fetches when new ingress refs received", () => {
-    const ingress = { name: "ing" } as ResourceRef;
+    const ingress = { name: "ing", getResourceURL: jest.fn() } as any;
     const mock = jest.fn();
-    const wrapper = mount(<AccessURLTable {...defaultProps} getResource={mock} />);
+    actions.kube.getResource = mock;
+    const wrapper = mountWrapper(
+      defaultStore,
+      <AccessURLTable {...defaultProps} ingressRefs={[ingress]} />,
+    );
     wrapper.setProps({ ingressRefs: [ingress] });
     expect(mock).toHaveBeenCalledWith(ingress);
   });
 });
 
-context("when fetching ingresses or services", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: AccessURLTable,
-    props: {
-      ...defaultProps,
-      ingresses: [{ isFetching: true }],
-    },
+context("when some resource is fetching", () => {
+  it("shows a loadingWrapper when fetching services", () => {
+    const serviceItem = { isFetching: true };
+    const svcUrl = "svc";
+    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];
+    const state = {
+      ...initialState,
+      kube: { items: { [svcUrl]: serviceItem } },
+    };
+    const store = mockStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} />,
+    );
+
+    expect(wrapper.find(LoadingWrapper)).toExist();
   });
-  itBehavesLike("aLoadingComponent", {
-    component: AccessURLTable,
-    props: {
-      ...defaultProps,
-      services: [{ isFetching: true }],
-    },
+
+  it("displays the error", () => {
+    const ingressItem = { isFetching: true };
+    const ingressUrl = "ingress";
+    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
+    const state = {
+      ...initialState,
+      kube: { items: { [ingressUrl]: ingressItem } },
+    };
+    const store = mockStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} />,
+    );
+
+    expect(wrapper.find(LoadingWrapper)).toExist();
   });
 });
 
 it("doesn't render anything if the application has no URL", () => {
-  const wrapper = shallow(<AccessURLTable {...defaultProps} />);
+  const wrapper = mountWrapper(defaultStore, <AccessURLTable {...defaultProps} />);
   expect(wrapper.find("table")).not.toExist();
 });
 
@@ -70,8 +108,15 @@ context("when the app contains services", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = [{ isFetching: false, item: service }];
-    const wrapper = shallow(<AccessURLTable {...defaultProps} services={services} />);
+    const serviceItem = { isFetching: false, item: service };
+    const url = service.metadata.selfLink;
+    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
+    const state = { ...initialState, kube: { items: { [url]: serviceItem } } };
+    const store = mockStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} />,
+    );
     expect(wrapper.text()).toContain("The current application does not expose a public URL");
   });
 
@@ -90,10 +135,16 @@ context("when the app contains services", () => {
         loadBalancer: {},
       } as IServiceStatus,
     } as IResource;
-    const services = [{ isFetching: false, item: service }];
-    const wrapper = shallow(<AccessURLTable {...defaultProps} services={services} />);
+    const serviceItem = { isFetching: false, item: service };
+    const url = service.metadata.selfLink;
+    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
+    const state = { ...initialState, kube: { items: { [url]: serviceItem } } };
+    const store = mockStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} />,
+    );
     expect(wrapper.find("Table")).toExist();
-    expect(wrapper).toMatchSnapshot();
   });
 });
 
@@ -116,8 +167,15 @@ context("when the app contains ingresses", () => {
         ],
       } as IIngressSpec,
     } as IResource;
-    const ingresses = [{ isFetching: false, item: ingress }];
-    const wrapper = mount(<AccessURLTable {...defaultProps} ingresses={ingresses} />);
+    const ingressItem = { isFetching: false, item: ingress };
+    const url = ingress.metadata.selfLink;
+    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
+    const state = { ...initialState, kube: { items: { [url]: ingressItem } } };
+    const store = mockStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} />,
+    );
     expect(wrapper.find("Table")).toExist();
     expect(wrapper.find("a").findWhere(a => a.prop("href") === "http://foo.bar/ready")).toExist();
     expect(wrapper).toMatchSnapshot();
@@ -146,7 +204,9 @@ context("when the app contains services and ingresses", () => {
         },
       } as IServiceStatus,
     } as IResource;
-    const services = [{ isFetching: false, item: service }];
+    const serviceItem = { isFetching: false, item: service };
+    const svcUrl = service.metadata.selfLink;
+    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];
     const ingress = {
       kind: "Ingress",
       metadata: {
@@ -164,9 +224,17 @@ context("when the app contains services and ingresses", () => {
         ],
       } as IIngressSpec,
     } as IResource;
-    const ingresses = [{ isFetching: false, item: ingress }];
-    const wrapper = mount(
-      <AccessURLTable {...defaultProps} services={services} ingresses={ingresses} />,
+    const ingressItem = { isFetching: false, item: ingress };
+    const ingressUrl = ingress.metadata.selfLink;
+    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
+    const state = {
+      ...initialState,
+      kube: { items: { [svcUrl]: serviceItem, [ingressUrl]: ingressItem } },
+    };
+    const store = mockStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} serviceRefs={serviceRefs} />,
     );
     expect(wrapper.find("a").findWhere(a => a.prop("href") === "http://1.2.3.4:8080")).toExist();
     expect(wrapper.find("a").findWhere(a => a.prop("href") === "http://foo.bar/ready")).toExist();
@@ -176,10 +244,20 @@ context("when the app contains services and ingresses", () => {
 
 context("when the app contains resources with errors", () => {
   it("displays the error", () => {
-    const services = [{ isFetching: false, error: new Error("could not find Service") }];
-    const ingresses = [{ isFetching: false, error: new Error("could not find Ingress") }];
-    const wrapper = mount(
-      <AccessURLTable {...defaultProps} services={services} ingresses={ingresses} />,
+    const serviceItem = { isFetching: false, error: new Error("could not find Service") };
+    const svcUrl = "svc";
+    const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];
+    const ingressItem = { isFetching: false, error: new Error("could not find Ingress") };
+    const ingressUrl = "ingress";
+    const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
+    const state = {
+      ...initialState,
+      kube: { items: { [svcUrl]: serviceItem, [ingressUrl]: ingressItem } },
+    };
+    const store = mockStore(state);
+    const wrapper = mountWrapper(
+      store,
+      <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} ingressRefs={ingressRefs} />,
     );
 
     // The Service error is not shown, as it is filtered out because without the
