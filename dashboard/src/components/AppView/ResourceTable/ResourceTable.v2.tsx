@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo } from "react";
-import { IK8sList, IKubeItem, IResource, ISecret } from "shared/types";
+import { IKubeItem, IResource, ISecret, IStoreState } from "shared/types";
 
+import actions from "actions";
 import { CdsIcon } from "components/Clarity/clarity";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
+import { useDispatch, useSelector } from "react-redux";
 import ResourceRef from "shared/ResourceRef";
+import { flattenResources } from "shared/utils";
 import { DaemonSetColumns } from "./ResourceData/DaemonSet";
 import { DeploymentColumns } from "./ResourceData/Deployment";
 import { OtherResourceColumns } from "./ResourceData/OtherResource";
@@ -16,10 +19,6 @@ interface IResourceTableProps {
   id: string;
   title?: string;
   resourceRefs: ResourceRef[];
-  resources: { [s: string]: IKubeItem<IResource | IK8sList<IResource, {}>> };
-  requestResources?: boolean;
-  watchResource: (r: ResourceRef) => void;
-  closeWatch: (r: ResourceRef) => void;
   avoidEmptyResource?: boolean;
 }
 
@@ -72,45 +71,34 @@ function getData(
   return;
 }
 
-function ResourceTable({
-  id,
-  title,
-  resourceRefs,
-  requestResources,
-  resources,
-  watchResource,
-  closeWatch,
-}: IResourceTableProps) {
+function ResourceTable({ id, title, resourceRefs }: IResourceTableProps) {
+  const dispatch = useDispatch();
   useEffect(() => {
-    resourceRefs.forEach(r => watchResource(r));
+    resourceRefs.forEach(r => dispatch(actions.kube.getAndWatchResource(r)));
     return function cleanup() {
-      resourceRefs.forEach(r => closeWatch(r));
+      resourceRefs.forEach(r => dispatch(actions.kube.closeWatchResource(r)));
     };
-  }, [requestResources, resourceRefs, watchResource, closeWatch]);
+  }, [resourceRefs, dispatch]);
+  const resources = useSelector((state: IStoreState) =>
+    flattenResources(resourceRefs, state.kube.items),
+  );
+
+  const columns = useMemo(() => getColumns(resourceRefs[0]), [resourceRefs]);
+  const data = useMemo(
+    () =>
+      resources.map((resource, index) =>
+        getData(
+          resourceRefs[index].name,
+          columns.map(c => c.accessor),
+          columns.map(c => c.getter),
+          resource,
+        ),
+      ),
+    [columns, resourceRefs, resources],
+  );
 
   let section: JSX.Element | null = null;
   if (resourceRefs.length > 0) {
-    const columns = useMemo(() => getColumns(resourceRefs[0]), resourceRefs);
-    // TODO(andresmgot): Add support for lists
-    const resourcesWithoutLists = resourceRefs.filter(ref => {
-      const resource = resources[ref.getResourceURL()];
-      if (resource && resource.item && (resource.item as IK8sList<IResource, {}>).items) {
-        return false;
-      }
-      return true;
-    });
-    const data = useMemo(
-      () =>
-        resourcesWithoutLists.map(ref =>
-          getData(
-            ref.name,
-            columns.map(c => c.accessor),
-            columns.map(c => c.getter),
-            resources[ref.getResourceURL()] as IKubeItem<IResource>,
-          ),
-        ),
-      [resourceRefs, resources],
-    );
     section = (
       <section aria-labelledby={`${id}-table`}>
         {title && <h6 id={`${id}-table`}>{title}</h6>}

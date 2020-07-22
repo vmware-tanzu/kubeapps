@@ -49,11 +49,12 @@ exports[`when the app contains ingresses should show the table with available in
   <section
     aria-labelledby="access-urls-title"
   >
-    <h6
+    <h5
+      className="section-title"
       id="access-urls-title"
     >
       Access URLs
-    </h6>
+    </h5>
     <Table
       className=""
       columns={
@@ -314,11 +315,12 @@ exports[`when the app contains resources with errors displays the error 1`] = `
   <section
     aria-labelledby="access-urls-title"
   >
-    <h6
+    <h5
+      className="section-title"
       id="access-urls-title"
     >
       Access URLs
-    </h6>
+    </h5>
     <Table
       className=""
       columns={
@@ -508,11 +510,12 @@ exports[`when the app contains services and ingresses should show the table with
   <section
     aria-labelledby="access-urls-title"
   >
-    <h6
+    <h5
+      className="section-title"
       id="access-urls-title"
     >
       Access URLs
-    </h6>
+    </h5>
     <Table
       className=""
       columns={
@@ -838,11 +841,12 @@ exports[`when the app contains services should show the table if any service is 
 <section
   aria-labelledby="access-urls-title"
 >
-  <h6
+  <h5
+    className="section-title"
     id="access-urls-title"
   >
     Access URLs
-  </h6>
+  </h5>
   <Table
     className=""
     columns={

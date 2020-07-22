@@ -1,15 +1,16 @@
+import actions from "actions";
 import Table from "components/js/Table";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
-import { mount } from "enzyme";
 import * as React from "react";
+import * as ReactRedux from "react-redux";
 import ResourceRef from "shared/ResourceRef";
+import { defaultStore, initialState, mockStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IResource } from "shared/types";
 import ResourceTable from "./ResourceTable.v2";
 
 const defaultProps = {
   id: "test",
   resourceRefs: [],
-  resources: {},
   watchResource: jest.fn(),
   closeWatch: jest.fn(),
 };
@@ -37,16 +38,34 @@ const deployment = {
   },
 };
 
-it("watches the given resources and close watchers", () => {
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.kube };
+beforeEach(() => {
+  actions.kube = {
+    ...actions.kube,
+    getAndWatchResource: jest.fn(),
+    closeWatchResource: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.kube = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
+
+it("watches the given resources and close watchers", async () => {
   const watchResource = jest.fn();
   const closeWatch = jest.fn();
-  const wrapper = mount(
-    <ResourceTable
-      {...defaultProps}
-      watchResource={watchResource}
-      closeWatch={closeWatch}
-      resourceRefs={[sampleResourceRef]}
-    />,
+  actions.kube = {
+    ...actions.kube,
+    getAndWatchResource: watchResource,
+    closeWatchResource: closeWatch,
+  };
+  const wrapper = mountWrapper(
+    defaultStore,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
   );
   expect(watchResource).toHaveBeenCalledWith(sampleResourceRef);
   wrapper.unmount();
@@ -54,17 +73,20 @@ it("watches the given resources and close watchers", () => {
 });
 
 it("renders a table with a resource", () => {
-  const wrapper = mount(
-    <ResourceTable
-      {...defaultProps}
-      resourceRefs={[sampleResourceRef]}
-      resources={{
+  const state = mockStore({
+    ...initialState,
+    kube: {
+      items: {
         "deployment-foo": {
           isFetching: false,
           item: deployment as IResource,
         },
-      }}
-    />,
+      },
+    },
+  });
+  const wrapper = mountWrapper(
+    state,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
   );
   expect(wrapper.find(Table).prop("data")).toEqual([
     { name: "foo", desired: 1, upToDate: 0, available: 0 },
@@ -72,17 +94,21 @@ it("renders a table with a resource", () => {
 });
 
 it("renders a table with a loading resource", () => {
-  const wrapper = mount(
-    <ResourceTable
-      {...defaultProps}
-      resourceRefs={[sampleResourceRef]}
-      resources={{
+  const state = mockStore({
+    ...initialState,
+    kube: {
+      items: {
         "deployment-foo": {
           isFetching: true,
         },
-      }}
-    />,
+      },
+    },
+  });
+  const wrapper = mountWrapper(
+    state,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
   );
+
   const data = wrapper.find(Table).prop("data");
   const row = data[0];
   expect(row.name).toEqual("foo");
@@ -90,18 +116,22 @@ it("renders a table with a loading resource", () => {
 });
 
 it("renders a table with an error", () => {
-  const wrapper = mount(
-    <ResourceTable
-      {...defaultProps}
-      resourceRefs={[sampleResourceRef]}
-      resources={{
+  const state = mockStore({
+    ...initialState,
+    kube: {
+      items: {
         "deployment-foo": {
           isFetching: false,
           error: new Error("Boom!"),
         },
-      }}
-    />,
+      },
+    },
+  });
+  const wrapper = mountWrapper(
+    state,
+    <ResourceTable {...defaultProps} resourceRefs={[sampleResourceRef]} />,
   );
+
   const data = wrapper.find(Table).prop("data");
   const row = data[0];
   expect(row.name).toEqual("foo");

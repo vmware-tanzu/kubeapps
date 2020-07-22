@@ -177,7 +177,9 @@ export default function AccessURLTable({
   }
   return (
     <section aria-labelledby="access-urls-title">
-      <h6 id="access-urls-title">Access URLs</h6>
+      <h5 className="section-title" id="access-urls-title">
+        Access URLs
+      </h5>
       {result}
     </section>
   );

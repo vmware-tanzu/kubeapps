@@ -7,15 +7,17 @@ import thunk from "redux-thunk";
 
 import { IStoreState } from "../../shared/types";
 
-const mockStore = configureMockStore([thunk]);
+export const mockStore = configureMockStore([thunk]);
 
-const initialState = {
+export const initialState = {
   apps: {},
   auth: {},
   catalog: {},
   charts: {},
   config: {},
-  kube: {},
+  kube: {
+    items: {},
+  },
   clusters: {
     currentCluster: "default-cluster",
   },

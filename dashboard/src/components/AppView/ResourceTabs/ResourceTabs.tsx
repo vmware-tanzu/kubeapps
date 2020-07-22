@@ -23,10 +23,6 @@ export default function ResourceTabs({
 }: IAppViewResourceRefs) {
   const columns = [];
   const data = [];
-  if (secrets.length) {
-    columns.push("Secrets");
-    data.push(<ResourceTable resourceRefs={secrets} key="secrets" id="secrets" />);
-  }
   if (deployments.length) {
     columns.push("Deployments");
     data.push(<ResourceTable resourceRefs={deployments} key="deployments" id="deployments" />);
@@ -39,6 +35,10 @@ export default function ResourceTabs({
     columns.push("DaemonSets");
     data.push(<ResourceTable resourceRefs={daemonsets} key="daemonsets" id="daemonsets" />);
   }
+  if (secrets.length) {
+    columns.push("Secrets");
+    data.push(<ResourceTable resourceRefs={secrets} key="secrets" id="secrets" />);
+  }
   if (services.length) {
     columns.push("Services");
     data.push(<ResourceTable resourceRefs={services} key="services" id="services" />);
@@ -46,12 +46,7 @@ export default function ResourceTabs({
   if (otherResources.length) {
     columns.push("Other Resources");
     data.push(
-      <ResourceTable
-        resourceRefs={otherResources}
-        requestResources={false}
-        key="otherResources"
-        id="otherResources"
-      />,
+      <ResourceTable resourceRefs={otherResources} key="otherResources" id="otherResources" />,
     );
   }
   return (
