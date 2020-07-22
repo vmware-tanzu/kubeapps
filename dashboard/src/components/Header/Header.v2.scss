@@ -2,11 +2,40 @@
   max-width: 10em;
 }
 
+@mixin separator() {
+  display: inline-block;
+  position: absolute;
+  content: "";
+  background: #fafafa;
+  background: var(--clr-header-font-color, #fafafa);
+  opacity: var(--clr-header-divider-opacity, 0.15);
+  opacity: 0.15;
+  height: 2rem;
+  width: 0.05rem;
+  width: var(--clr-global-borderwidth, 0.05rem);
+  top: 0.5rem;
+}
+
 .kubeapps-nav-link {
   outline: none !important;
   background-color: transparent;
   border: none;
   cursor: pointer;
+  &::before {
+    @include separator();
+    left: 0;
+  }
+  &:hover {
+    &::before {
+      @include separator();
+      opacity: 0;
+    }
+  }
+}
+
+.nav-link::after {
+  @include separator();
+  right: 0;
 }
 
 .kubeapps-align-center {
