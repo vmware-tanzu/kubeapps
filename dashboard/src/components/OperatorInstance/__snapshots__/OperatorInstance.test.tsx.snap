@@ -114,7 +114,7 @@ exports[`renders a resource renders the resource and CSV info 1`] = `
               />
             </div>
           </div>
-          <Connect(AccessURLTableSelector)
+          <Connect(AccessURLTable)
             ingressRefs={Array []}
             serviceRefs={Array []}
           />
