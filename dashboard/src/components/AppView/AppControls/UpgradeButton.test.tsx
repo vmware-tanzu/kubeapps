@@ -2,9 +2,9 @@ import context from "jest-plugin-context";
 import * as React from "react";
 import { ArrowUpCircle } from "react-feather";
 import { Redirect } from "react-router";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import * as url from "shared/url";
 import UpgradeButton, { IUpgradeButtonProps } from "./UpgradeButton";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 
 const defaultProps = {
   releaseName: "foo",

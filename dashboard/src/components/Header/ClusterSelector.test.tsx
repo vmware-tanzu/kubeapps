@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import ClusterSelector, { IClusterSelectorProps } from "./ClusterSelector";
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import ClusterSelector, { IClusterSelectorProps } from "./ClusterSelector";
 
 const defaultProps = {
   onChange: jest.fn(),

@@ -1,8 +1,8 @@
 import * as React from "react";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import ChartDeployButton, { IChartDeployButtonProps } from "./ChartDeployButton";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 
 const testChartVersion: IChartVersion = {
   attributes: {

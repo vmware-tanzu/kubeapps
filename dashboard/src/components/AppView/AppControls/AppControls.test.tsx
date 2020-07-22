@@ -3,6 +3,7 @@ import context from "jest-plugin-context";
 import * as React from "react";
 import Modal from "react-modal";
 
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IRelease } from "shared/types";
 import RollbackButtonContainer from "../../../containers/RollbackButtonContainer";
 import { hapi } from "../../../shared/hapi/release";
@@ -11,7 +12,6 @@ import * as url from "../../../shared/url";
 import ConfirmDialog from "../../ConfirmDialog";
 import AppControls, { IAppControlsProps } from "./AppControls";
 import UpgradeButton from "./UpgradeButton";
-import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 
 const namespace = "bar";
 const defaultProps = {
