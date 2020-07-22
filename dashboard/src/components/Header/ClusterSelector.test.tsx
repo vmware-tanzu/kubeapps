@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as ReactRedux from "react-redux";
 
 import { getStore, mountWrapper } from "shared/specs/mountWrapper";
 import ClusterSelector, { IClusterSelectorProps } from "./ClusterSelector";
@@ -39,6 +40,8 @@ it("dispatches fetchNamespaces and calls onChange prop when changed", () => {
     ...defaultProps,
     onChange,
   };
+  const mockDispatch = jest.fn();
+  const spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
 
   const wrapper = mountWrapper(store, <ClusterSelector {...props} />);
   const select = wrapper.find("Select");
@@ -48,7 +51,10 @@ it("dispatches fetchNamespaces and calls onChange prop when changed", () => {
   expect(selectOnChange).toBeDefined();
   selectOnChange!({ value: "other" } as any);
 
-  // TODO: how can we see the action for fetchNamespace?
-  expect(store.getActions()).toEqual([]);
+  // fetchNamespaces returns an async thunk action - hand to test more than dispatch
+  // was called once.
+  expect(mockDispatch).toBeCalledTimes(1);
   expect(onChange).toBeCalledWith("other");
+
+  spyOnUseDispatch.mockRestore();
 });
