@@ -15,7 +15,7 @@ const initialState = {
   auth: {},
   catalog: {},
   charts: {},
-  config: {},
+  config: { featureFlags: {} },
   kube: {
     items: {},
   },
