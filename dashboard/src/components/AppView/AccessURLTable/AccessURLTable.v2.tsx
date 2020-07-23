@@ -1,20 +1,21 @@
 import { get } from "lodash";
 import React, { useEffect } from "react";
 
+import actions from "actions";
 import Table from "components/js/Table";
 import Tooltip from "components/js/Tooltip";
+import { useDispatch, useSelector } from "react-redux";
 import ResourceRef from "shared/ResourceRef";
+import { flattenResources } from "shared/utils";
 import LoadingWrapper from "../../../components/LoadingWrapper/LoadingWrapper.v2";
-import { IK8sList, IKubeItem, IResource, IServiceSpec } from "../../../shared/types";
+import { IK8sList, IKubeItem, IResource, IServiceSpec, IStoreState } from "../../../shared/types";
 import isSomeResourceLoading from "../helpers";
 import { GetURLItemFromIngress } from "./AccessURLItem/AccessURLIngressHelper";
 import { GetURLItemFromService } from "./AccessURLItem/AccessURLServiceHelper";
 
 interface IAccessURLTableProps {
-  services: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
-  ingresses: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;
   ingressRefs: ResourceRef[];
-  getResource: (r: ResourceRef) => void;
+  serviceRefs: ResourceRef[];
 }
 
 function elemHasItems(i: IKubeItem<IResource | IK8sList<IResource, {}>>) {
@@ -31,10 +32,7 @@ function elemHasItems(i: IKubeItem<IResource | IK8sList<IResource, {}>>) {
   return false;
 }
 
-function hasItems(
-  svcs: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>,
-  ingresses: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>,
-) {
+function hasItems(svcs: Array<IKubeItem<IResource>>, ingresses: Array<IKubeItem<IResource>>) {
   return (
     (svcs.length && svcs.some(svc => elemHasItems(svc))) ||
     (ingresses.length && ingresses.some(ingress => elemHasItems(ingress)))
@@ -114,17 +112,20 @@ function getNotes(resource?: IResource) {
   );
 }
 
-export default function AccessURLTable({
-  services,
-  ingresses,
-  ingressRefs,
-  getResource,
-}: IAccessURLTableProps) {
+export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLTableProps) {
+  const dispatch = useDispatch();
+
   useEffect(() => {
     // Fetch all related Ingress resources. We don't need to fetch Services as
     // they are expected to be watched by the ServiceTable.
-    ingressRefs.forEach(r => getResource(r));
-  }, [ingressRefs, getResource]);
+    ingressRefs.forEach(r => dispatch(actions.kube.getResource(r)));
+  }, [ingressRefs]);
+  const ingresses = useSelector((state: IStoreState) =>
+    flattenResources(ingressRefs, state.kube.items),
+  ) as Array<IKubeItem<IResource>>;
+  const services = useSelector((state: IStoreState) =>
+    flattenResources(serviceRefs, state.kube.items),
+  ) as Array<IKubeItem<IResource>>;
 
   if (isSomeResourceLoading(ingresses.concat(services))) {
     return <LoadingWrapper loaded={false} />;
@@ -177,7 +178,9 @@ export default function AccessURLTable({
   }
   return (
     <section aria-labelledby="access-urls-title">
-      <h6 id="access-urls-title">Access URLs</h6>
+      <h5 className="section-title" id="access-urls-title">
+        Access URLs
+      </h5>
       {result}
     </section>
   );

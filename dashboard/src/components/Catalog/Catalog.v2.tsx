@@ -87,18 +87,16 @@ function Catalog(props: ICatalogProps) {
   return (
     <section>
       <PageHeader>
-        <div className="kubeapps-header">
-          <Row>
-            <h1>Catalog</h1>
-            <SearchFilter
-              key="searchFilter"
-              placeholder="search charts..."
-              onChange={setSearchFilter}
-              value={searchFilter}
-              onSubmit={pushSearchFilter}
-            />
-          </Row>
-        </div>
+        <Row>
+          <h1>Catalog</h1>
+          <SearchFilter
+            key="searchFilter"
+            placeholder="search charts..."
+            onChange={setSearchFilter}
+            value={searchFilter}
+            onSubmit={pushSearchFilter}
+          />
+        </Row>
       </PageHeader>
       <LoadingWrapper loaded={!isFetching}>
         {error && (

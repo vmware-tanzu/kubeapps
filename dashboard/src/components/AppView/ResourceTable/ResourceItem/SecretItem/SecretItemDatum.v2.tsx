@@ -35,7 +35,9 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
       </Column>
       <Column span={11}>
         <div className="secret-datum-text" id={`secret-item-datum-${name}-ref`}>
-          {name}: {hidden ? `${decodedValue.length} bytes` : `${decodedValue}`}
+          <span>
+            {name}: {hidden ? `${decodedValue.length} bytes` : <strong>{decodedValue}</strong>}
+          </span>
         </div>
       </Column>
     </Row>

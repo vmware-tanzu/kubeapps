@@ -15,8 +15,10 @@ const initialState = {
   auth: {},
   catalog: {},
   charts: {},
-  config: {},
-  kube: {},
+  config: { featureFlags: {} },
+  kube: {
+    items: {},
+  },
   clusters: {
     currentCluster: "default-cluster",
   },

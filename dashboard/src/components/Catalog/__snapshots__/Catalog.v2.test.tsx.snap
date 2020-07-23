@@ -3,24 +3,20 @@
 exports[`when fetching apps loading spinner matches the snapshot 1`] = `
 <section>
   <PageHeader>
-    <div
-      className="kubeapps-header"
+    <Row
+      list={false}
     >
-      <Row
-        list={false}
-      >
-        <h1>
-          Catalog
-        </h1>
-        <SearchFilter
-          key="searchFilter"
-          onChange={[Function]}
-          onSubmit={[MockFunction]}
-          placeholder="search charts..."
-          value=""
-        />
-      </Row>
-    </div>
+      <h1>
+        Catalog
+      </h1>
+      <SearchFilter
+        key="searchFilter"
+        onChange={[Function]}
+        onSubmit={[MockFunction]}
+        placeholder="search charts..."
+        value=""
+      />
+    </Row>
   </PageHeader>
   <LoadingWrapper
     loaded={false}

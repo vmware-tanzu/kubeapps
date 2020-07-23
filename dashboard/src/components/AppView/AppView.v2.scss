@@ -1,0 +1,25 @@
+.appview-header {
+  width: 100%;
+}
+
+.control-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  .header-button {
+    margin-left: 0.5rem;
+  }
+}
+
+.appview-separator {
+  border-bottom: 2px solid #f1f1f1;
+  padding-bottom: 1.2rem;
+}
+
+.appview-first-row {
+  display: flex;
+  section {
+    margin-right: 2rem;
+  }
+}

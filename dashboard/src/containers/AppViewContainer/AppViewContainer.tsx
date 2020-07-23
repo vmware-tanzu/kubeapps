@@ -17,7 +17,7 @@ interface IRouteProps {
   };
 }
 
-function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params } }: IRouteProps) {
+function mapStateToProps({ apps, kube, config }: IStoreState, { match: { params } }: IRouteProps) {
   return {
     app: apps.selected,
     deleteError: apps.deleteError,
@@ -26,6 +26,7 @@ function mapStateToProps({ apps, kube, charts }: IStoreState, { match: { params 
     cluster: params.cluster,
     namespace: params.namespace,
     releaseName: params.releaseName,
+    UI: config.featureFlags.ui,
   };
 }
 

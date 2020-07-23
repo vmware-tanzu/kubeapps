@@ -59,29 +59,25 @@ function AppList(props: IAppListProps) {
   return (
     <section>
       <PageHeader>
-        <div className="kubeapps-header">
+        <Column span={10}>
           <Row>
-            <Column span={10}>
-              <Row>
-                <h1>Applications</h1>
-                <SearchFilter
-                  key="searchFilter"
-                  placeholder="search apps..."
-                  onChange={setFilter}
-                  value={filter}
-                  onSubmit={pushSearchFilter}
-                />
-              </Row>
-            </Column>
-            <Column span={2}>
-              <div className="header-button">
-                <Link to={url.app.catalog(cluster, namespace)}>
-                  <CdsButton status="primary">Deploy</CdsButton>
-                </Link>
-              </div>
-            </Column>
+            <h1>Applications</h1>
+            <SearchFilter
+              key="searchFilter"
+              placeholder="search apps..."
+              onChange={setFilter}
+              value={filter}
+              onSubmit={pushSearchFilter}
+            />
           </Row>
-        </div>
+        </Column>
+        <Column span={2}>
+          <div className="header-button">
+            <Link to={url.app.catalog(cluster, namespace)}>
+              <CdsButton status="primary">Deploy</CdsButton>
+            </Link>
+          </div>
+        </Column>
       </PageHeader>
       <LoadingWrapper loaded={!isFetching && !isFetchingResources}>
         {error ? (
