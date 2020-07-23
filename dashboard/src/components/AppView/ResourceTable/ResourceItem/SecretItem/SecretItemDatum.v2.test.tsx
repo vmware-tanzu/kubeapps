@@ -11,16 +11,23 @@ const testProps = {
 
 it("renders the secret datum (hidden by default)", () => {
   const wrapper = mount(<SecretItemDatum {...testProps} />);
-  expect(wrapper.find(CdsIcon).prop("shape")).toBe("eye");
+  expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "eye")).toExist();
+  expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "copy-to-clipboard")).toExist();
   expect(wrapper).toMatchSnapshot();
 });
 
 it("displays the secret datum value when clicking on the icon", () => {
   const wrapper = mount(<SecretItemDatum {...testProps} />);
-  expect(wrapper.find(".secret-datum-text").text()).toContain("foo: 3 bytes");
-  const icon = wrapper.find("button");
+  expect(wrapper.find("input").props()).toMatchObject({
+    type: "password",
+    value: "bar",
+  });
+  const icon = wrapper.find("button").findWhere(b => b.prop("aria-label") === "Show Secret");
   icon.simulate("click");
   wrapper.update();
-  expect(wrapper.find(CdsIcon).prop("shape")).toBe("eye-hide");
-  expect(wrapper.find(".secret-datum-text").text()).toContain("foo: bar");
+  expect(wrapper.find(CdsIcon).findWhere(i => i.prop("shape") === "eye-hide")).toExist();
+  expect(wrapper.find("input").props()).toMatchObject({
+    type: "text",
+    value: "bar",
+  });
 });
