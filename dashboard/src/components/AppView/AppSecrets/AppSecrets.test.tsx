@@ -1,6 +1,6 @@
 import * as React from "react";
 import ResourceRef from "shared/ResourceRef";
-import { defaultStore, initialState, mockStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { ISecret } from "shared/types";
 import SecretItemDatum from "../ResourceTable/ResourceItem/SecretItem/SecretItemDatum.v2";
 import AppSecrets from "./AppSecrets";
@@ -38,8 +38,7 @@ it("shows a message if there are no secrets", () => {
 });
 
 it("renders a secretItemDatum per secret", () => {
-  const state = mockStore({
-    ...initialState,
+  const state = getStore({
     kube: {
       items: {
         "secret-foo": {

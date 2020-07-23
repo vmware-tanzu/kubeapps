@@ -8,9 +8,9 @@ import thunk from "redux-thunk";
 
 import { IStoreState } from "../../shared/types";
 
-export const mockStore = configureMockStore([thunk]);
+const mockStore = configureMockStore([thunk]);
 
-export const initialState = {
+const initialState = {
   apps: {},
   auth: {},
   catalog: {},

@@ -4,7 +4,7 @@ import * as ReactRedux from "react-redux";
 
 import actions from "actions";
 import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
-import { defaultStore, initialState, mockStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IIngressSpec, IResource, IServiceSpec, IServiceStatus } from "../../../shared/types";
 import AccessURLTable from "./AccessURLTable.v2";
 
@@ -57,10 +57,9 @@ context("when some resource is fetching", () => {
     const svcUrl = "svc";
     const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => svcUrl) } as any];
     const state = {
-      ...initialState,
       kube: { items: { [svcUrl]: serviceItem } },
     };
-    const store = mockStore(state);
+    const store = getStore(state);
     const wrapper = mountWrapper(
       store,
       <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} />,
@@ -74,10 +73,9 @@ context("when some resource is fetching", () => {
     const ingressUrl = "ingress";
     const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
     const state = {
-      ...initialState,
       kube: { items: { [ingressUrl]: ingressItem } },
     };
-    const store = mockStore(state);
+    const store = getStore(state);
     const wrapper = mountWrapper(
       store,
       <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} />,
@@ -111,8 +109,8 @@ context("when the app contains services", () => {
     const serviceItem = { isFetching: false, item: service };
     const url = service.metadata.selfLink;
     const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
-    const state = { ...initialState, kube: { items: { [url]: serviceItem } } };
-    const store = mockStore(state);
+    const state = { kube: { items: { [url]: serviceItem } } };
+    const store = getStore(state);
     const wrapper = mountWrapper(
       store,
       <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} />,
@@ -138,8 +136,8 @@ context("when the app contains services", () => {
     const serviceItem = { isFetching: false, item: service };
     const url = service.metadata.selfLink;
     const serviceRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
-    const state = { ...initialState, kube: { items: { [url]: serviceItem } } };
-    const store = mockStore(state);
+    const state = { kube: { items: { [url]: serviceItem } } };
+    const store = getStore(state);
     const wrapper = mountWrapper(
       store,
       <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} />,
@@ -170,8 +168,8 @@ context("when the app contains ingresses", () => {
     const ingressItem = { isFetching: false, item: ingress };
     const url = ingress.metadata.selfLink;
     const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => url) } as any];
-    const state = { ...initialState, kube: { items: { [url]: ingressItem } } };
-    const store = mockStore(state);
+    const state = { kube: { items: { [url]: ingressItem } } };
+    const store = getStore(state);
     const wrapper = mountWrapper(
       store,
       <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} />,
@@ -228,10 +226,9 @@ context("when the app contains services and ingresses", () => {
     const ingressUrl = ingress.metadata.selfLink;
     const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
     const state = {
-      ...initialState,
       kube: { items: { [svcUrl]: serviceItem, [ingressUrl]: ingressItem } },
     };
-    const store = mockStore(state);
+    const store = getStore(state);
     const wrapper = mountWrapper(
       store,
       <AccessURLTable {...defaultProps} ingressRefs={ingressRefs} serviceRefs={serviceRefs} />,
@@ -251,10 +248,9 @@ context("when the app contains resources with errors", () => {
     const ingressUrl = "ingress";
     const ingressRefs = [{ name: "svc", getResourceURL: jest.fn(() => ingressUrl) } as any];
     const state = {
-      ...initialState,
       kube: { items: { [svcUrl]: serviceItem, [ingressUrl]: ingressItem } },
     };
-    const store = mockStore(state);
+    const store = getStore(state);
     const wrapper = mountWrapper(
       store,
       <AccessURLTable {...defaultProps} serviceRefs={serviceRefs} ingressRefs={ingressRefs} />,

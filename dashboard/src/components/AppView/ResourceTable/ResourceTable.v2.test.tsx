@@ -4,7 +4,7 @@ import LoadingWrapper from "components/LoadingWrapper/LoadingWrapper.v2";
 import * as React from "react";
 import * as ReactRedux from "react-redux";
 import ResourceRef from "shared/ResourceRef";
-import { defaultStore, initialState, mockStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IResource } from "shared/types";
 import ResourceTable from "./ResourceTable.v2";
 
@@ -73,8 +73,7 @@ it("watches the given resources and close watchers", async () => {
 });
 
 it("renders a table with a resource", () => {
-  const state = mockStore({
-    ...initialState,
+  const state = getStore({
     kube: {
       items: {
         "deployment-foo": {
@@ -94,8 +93,7 @@ it("renders a table with a resource", () => {
 });
 
 it("renders a table with a loading resource", () => {
-  const state = mockStore({
-    ...initialState,
+  const state = getStore({
     kube: {
       items: {
         "deployment-foo": {
@@ -116,8 +114,7 @@ it("renders a table with a loading resource", () => {
 });
 
 it("renders a table with an error", () => {
-  const state = mockStore({
-    ...initialState,
+  const state = getStore({
     kube: {
       items: {
         "deployment-foo": {
