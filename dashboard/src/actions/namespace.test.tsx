@@ -77,7 +77,7 @@ describe("fetchNamespaces", () => {
     const expectedActions = [
       {
         type: getType(errorNamespaces),
-        payload: { err, op: "list" },
+        payload: { cluster: "default-c", err, op: "list" },
       },
     ];
 
@@ -117,7 +117,7 @@ describe("createNamespace", () => {
     const expectedActions = [
       {
         type: getType(errorNamespaces),
-        payload: { err, op: "create" },
+        payload: { cluster: "default-c", err, op: "create" },
       },
     ];
 
@@ -156,7 +156,7 @@ describe("getNamespace", () => {
       },
       {
         type: getType(errorNamespaces),
-        payload: { err, op: "get" },
+        payload: { cluster: "default-c", err, op: "get" },
       },
     ];
     const r = await store.dispatch(getNamespace("default-c", "default-ns"));

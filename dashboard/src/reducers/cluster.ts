@@ -35,7 +35,7 @@ const getInitialState: () => IClustersState = (): IClustersState => {
     },
   } as IClustersState;
 };
-const initialState: IClustersState = getInitialState();
+export const initialState: IClustersState = getInitialState();
 
 const clusterReducer = (
   state: IClustersState = initialState,
@@ -92,24 +92,17 @@ const clusterReducer = (
         ...state,
         clusters: {
           ...state.clusters,
-          // TODO(absoludity): Update errorNamespaces to include cluster?
-          default: {
-            ...state.clusters.default,
+          [action.payload.cluster]: {
+            ...state.clusters[action.payload.cluster],
             error: { action: action.payload.op, error: action.payload.err },
           },
         },
       };
-    case getType(actions.namespace.clearNamespaces):
-      // TODO(absoludity): Update to include cluster in the payload to clear namespaces for cluster.
+    case getType(actions.namespace.clearClusters):
       return {
         ...state,
         clusters: {
-          ...state.clusters,
-          default: {
-            ...state.clusters.default,
-            currentNamespace: initialState.clusters.default.currentNamespace,
-            namespaces: [],
-          },
+          ...initialState.clusters,
         },
       };
     case LOCATION_CHANGE:

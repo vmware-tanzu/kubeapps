@@ -25,10 +25,10 @@ export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", resolve => {
 });
 
 export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
-  return (err: Error, op: string) => resolve({ err, op });
+  return (cluster: string, err: Error, op: string) => resolve({ cluster, err, op });
 });
 
-export const clearNamespaces = createAction("CLEAR_NAMESPACES");
+export const clearClusters = createAction("CLEAR_CLUSTERS");
 
 const allActions = [
   requestNamespace,
@@ -36,7 +36,7 @@ const allActions = [
   setNamespace,
   receiveNamespaces,
   errorNamespaces,
-  clearNamespaces,
+  clearClusters,
   postNamespace,
 ];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
@@ -50,7 +50,7 @@ export function fetchNamespaces(
       const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
       dispatch(receiveNamespaces(cluster, namespaceStrings));
     } catch (e) {
-      dispatch(errorNamespaces(e, "list"));
+      dispatch(errorNamespaces(cluster, e, "list"));
       return;
     }
   };
@@ -67,7 +67,7 @@ export function createNamespace(
       dispatch(fetchNamespaces(cluster));
       return true;
     } catch (e) {
-      dispatch(errorNamespaces(e, "create"));
+      dispatch(errorNamespaces(cluster, e, "create"));
       return false;
     }
   };
@@ -84,7 +84,7 @@ export function getNamespace(
       dispatch(receiveNamespace(cluster, namespace));
       return true;
     } catch (e) {
-      dispatch(errorNamespaces(e, "get"));
+      dispatch(errorNamespaces(cluster, e, "get"));
       return false;
     }
   };
