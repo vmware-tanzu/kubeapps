@@ -53,7 +53,7 @@ Next, create a `telepresence` shell to swap the `kubeapps-internal-dashboard` de
 telepresence --namespace kubeapps --method inject-tcp --swap-deployment kubeapps-internal-dashboard --expose 3000:8080 --run-shell
 ```
 
-> **NOTE**: If you encounter issues getting this setup working correctly, please try switching the telepresence proxying method in the above command to `vpn-tcp`. Refer to [the telepresence docs](https://www.telepresence.io/reference/methods) to learn more about the available proxying methods and their limitations.
+> **NOTE**: If you encounter issues getting this setup working correctly, please try switching the telepresence proxying method in the above command to `vpn-tcp`. Refer to [the telepresence docs](https://www.telepresence.io/reference/methods) to learn more about the available proxying methods and their limitations. If this doesn't work you can use the [Telepresence alternative](#telepresence-alternative).
 
 Finally, launch the dashboard within the telepresence shell:
 
@@ -63,6 +63,20 @@ yarn run start
 ```
 
 > **NOTE**: The commands above assume you install Kubeapps in the `kubeapps` namespace. Please update the environment variable `TELEPRESENCE_CONTAINER_NAMESPACE` if you are using a different namespace.
+
+#### Telepresence alternative
+
+As an alternative to using [Telepresence](https://www.telepresence.io/) you can use the default [Create React App API proxy](https://create-react-app.dev/docs/proxying-api-requests-in-development/) functionality.
+
+To use this a run Kubeapps per the [getting-started documentation](../../docs/user/getting-started.md#step-3-start-the-kubeapps-dashboard). This will start Kubeapps running on port `8080`.
+
+Next you can launch the dashboard.
+
+```bash
+yarn run start
+```
+
+> **NOTE**: The [proxy](../../dashboard/package.json#L176) `key:value` has already added to the `package.json` for convenience but you can change the `host:port` values to meet your needs.
 
 You can now access the local development server simply by accessing the dashboard as you usually would (e.g. doing a port-forward or accesing the Ingress URL).
 

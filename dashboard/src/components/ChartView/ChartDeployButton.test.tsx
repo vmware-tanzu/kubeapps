@@ -1,35 +1,8 @@
-import { mount } from "enzyme";
 import * as React from "react";
-import { Provider } from "react-redux";
-import configureMockStore, { MockStore } from "redux-mock-store";
-import thunk from "redux-thunk";
-import { IChartVersion, IStoreState } from "../../shared/types";
+import { getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IChartVersion } from "../../shared/types";
 import * as url from "../../shared/url";
 import ChartDeployButton, { IChartDeployButtonProps } from "./ChartDeployButton";
-
-const mockStore = configureMockStore([thunk]);
-
-// TODO(absoludity): As we move to function components with (redux) hooks we'll need to
-// be including state in tests, so we may want to put things like initialState
-// and a generalized getWrapper in a test helpers or similar package?
-const initialState = {
-  apps: {},
-  auth: {},
-  catalog: {},
-  charts: {},
-  config: {},
-  kube: {},
-  clusters: {},
-  repos: {},
-  operators: {},
-} as IStoreState;
-
-const getWrapper = (store: MockStore, props: IChartDeployButtonProps) =>
-  mount(
-    <Provider store={store}>
-      <ChartDeployButton {...props} />
-    </Provider>,
-  );
 
 const testChartVersion: IChartVersion = {
   attributes: {
@@ -49,10 +22,11 @@ const testChartVersion: IChartVersion = {
 } as IChartVersion;
 
 it("renders a button to deploy the chart version", () => {
-  const wrapper = getWrapper(mockStore(initialState), {
+  const props = {
     version: testChartVersion,
     namespace: "kubeapps",
-  });
+  } as IChartDeployButtonProps;
+  const wrapper = mountWrapper(getStore({}), <ChartDeployButton {...props} />);
   const button = wrapper.find("button");
   expect(button.exists()).toBe(true);
   expect(button.text()).toBe("Deploy");
@@ -61,13 +35,13 @@ it("renders a button to deploy the chart version", () => {
 it("dispatches a URL change with the correct URL when the button is clicked", () => {
   const testCases = [
     {
-      clustersState: { currentCluster: "default" },
+      clustersState: { currentCluster: "default", clusters: {} },
       namespace: "kubeapps",
       version: "1.2.3",
       url: url.app.apps.new("default", "kubeapps", testChartVersion, "1.2.3"),
     },
     {
-      clustersState: { currentCluster: "other-cluster" },
+      clustersState: { currentCluster: "other-cluster", clusters: {} },
       namespace: "foo",
       version: "alpha-0",
       url: url.app.apps.new("other-cluster", "foo", testChartVersion, "alpha-0"),
@@ -75,11 +49,19 @@ it("dispatches a URL change with the correct URL when the button is clicked", ()
   ];
 
   testCases.forEach(t => {
-    const store = mockStore({ ...initialState, clusters: t.clustersState });
-    const version = Object.assign({}, testChartVersion);
-    version.attributes.version = t.version;
+    const props = {
+      version: {
+        ...testChartVersion,
+        attributes: {
+          ...testChartVersion.attributes,
+          version: t.version,
+        },
+      },
+      namespace: t.namespace,
+    } as IChartDeployButtonProps;
+    const store = getStore({ clusters: t.clustersState });
 
-    const wrapper = getWrapper(store, { version, namespace: t.namespace });
+    const wrapper = mountWrapper(store, <ChartDeployButton {...props} />);
 
     const button = wrapper.find("button");
     expect(button.exists()).toBe(true);
