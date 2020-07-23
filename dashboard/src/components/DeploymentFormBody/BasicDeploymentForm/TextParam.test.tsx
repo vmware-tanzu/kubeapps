@@ -60,7 +60,7 @@ it("should set the input value as empty if a string parameter value is not defin
 
 const textAreaParam = {
   path: "configuration",
-  value: "First line\n" + "Second line",
+  value: "First line\nSecond line",
   type: "string",
 } as IBasicFormParam;
 const textAreaProps = {
@@ -92,7 +92,7 @@ it("should forward the proper value when using a textArea parameter", () => {
   expect(handleBasicFormParamChange.mock.calls[0][0]).toEqual({
     path: "configuration",
     type: "string",
-    value: "First line\n" + "Second line",
+    value: "First line\nSecond line",
   });
   expect(handler.mock.calls[0][0]).toMatchObject(event);
 });

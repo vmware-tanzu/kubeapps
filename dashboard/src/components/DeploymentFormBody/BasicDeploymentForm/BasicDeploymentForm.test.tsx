@@ -35,7 +35,7 @@ const defaultProps = {
     params: [
       {
         path: "configuration",
-        value: "First line\n" + "Second line",
+        value: "First line\nSecond line",
         render: "textArea",
       } as IBasicFormParam,
     ],
@@ -118,7 +118,7 @@ const defaultProps = {
     );
     expect(wrapper).toMatchSnapshot();
 
-    t.params.map((param, i) => {
+    t.params.forEach((param, i) => {
       wrapper.find(`input#${param.path}-${i}`).simulate("change");
       const mockCalls = handleBasicFormParamChange.mock.calls;
       expect(mockCalls[i]).toEqual([param]);

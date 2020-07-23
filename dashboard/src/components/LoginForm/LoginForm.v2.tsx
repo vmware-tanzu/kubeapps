@@ -31,7 +31,7 @@ function LoginForm(props: ILoginFormProps) {
     if (oauthLoginURI) {
       checkCookieAuthentication(props.cluster);
     }
-  }, [oauthLoginURI, checkCookieAuthentication]);
+  }, [oauthLoginURI, checkCookieAuthentication, props.cluster]);
 
   if (props.authenticating) {
     return <LoadingWrapper />;
