@@ -1,7 +1,7 @@
 import { ClarityIcons, copyToClipboardIcon, eyeHideIcon, eyeIcon } from "@clr/core/icon-shapes";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
-import * as React from "react";
+import React, { useEffect, useRef } from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { CdsIcon } from "../../../../Clarity/clarity";
 
@@ -18,22 +18,35 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
   const [hidden, setHidden] = React.useState(true);
   const [copied, setCopied] = React.useState(false);
   const toggleDisplay = () => setHidden(!hidden);
+  const copyTimeout = useRef({} as NodeJS.Timeout);
   const setCopiedTrue = () => {
     setCopied(true);
-    setTimeout(() => {
-      setCopied(false);
-    }, 1000);
   };
+  useEffect(() => {
+    if (copied) {
+      copyTimeout.current = setTimeout(() => {
+        setCopied(false);
+      }, 1000);
+    }
+    return () => {
+      if (copyTimeout.current != null) {
+        clearTimeout(copyTimeout.current);
+      }
+    };
+  }, [copied]);
   const decodedValue = atob(value);
 
   return (
     <Row>
       <Column span={5}>
-        <div className="secret-datum-text">{name}</div>
+        <label htmlFor={`secret-datum-content-${name}`} className="secret-datum-text">
+          {name}
+        </label>
       </Column>
       <Column span={5}>
         <input
           type={hidden ? "password" : "text"}
+          id={`secret-datum-content-${name}`}
           className="clr-input secret-datum-content"
           value={decodedValue}
           readOnly={true}
@@ -58,7 +71,12 @@ function SecretItemDatum({ name, value }: ISecretItemDatumProps) {
         <button className="secret-datum-icon" aria-expanded={!hidden} onClick={setCopiedTrue}>
           <div data-tip={true} data-for="app-status">
             <CopyToClipboard text={decodedValue}>
-              <CdsIcon shape="copy-to-clipboard" size="md" solid={true} />
+              <CdsIcon
+                shape="copy-to-clipboard"
+                size="md"
+                solid={true}
+                aria-label={`Copy ${name} secret value to the clipboard`}
+              />
             </CopyToClipboard>
           </div>
         </button>
