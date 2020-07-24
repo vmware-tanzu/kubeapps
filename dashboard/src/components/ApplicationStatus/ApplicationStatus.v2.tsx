@@ -1,4 +1,3 @@
-import { ClarityIcons, exclamationTriangleIcon } from "@clr/core/icon-shapes";
 import { flatten } from "lodash";
 import { get } from "lodash";
 import React, { useEffect, useState } from "react";
@@ -11,8 +10,6 @@ import isSomeResourceLoading from "../../components/AppView/helpers";
 import { hapi } from "../../shared/hapi/release";
 import { IK8sList, IKubeItem, IResource } from "../../shared/types";
 import "./ApplicationStatus.v2.css";
-
-ClarityIcons.addIcons(exclamationTriangleIcon);
 
 interface IApplicationStatusProps {
   deployments: Array<IKubeItem<IResource | IK8sList<IResource, {}>>>;

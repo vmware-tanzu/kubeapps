@@ -35,7 +35,11 @@ exports[`when an error is present matches the snapshot 1`] = `
           <ReactWrapperComponent
             status="primary"
           >
-            Deploy
+            <ReactWrapperComponent
+              inverse={true}
+              shape="deploy"
+            />
+             Deploy
           </ReactWrapperComponent>
         </Link>
       </div>
@@ -91,7 +95,11 @@ exports[`when an error is present renders a generic error message 1`] = `
           <ReactWrapperComponent
             status="primary"
           >
-            Deploy
+            <ReactWrapperComponent
+              inverse={true}
+              shape="deploy"
+            />
+             Deploy
           </ReactWrapperComponent>
         </Link>
       </div>
@@ -147,7 +155,11 @@ exports[`when apps available matches the snapshot 1`] = `
           <ReactWrapperComponent
             status="primary"
           >
-            Deploy
+            <ReactWrapperComponent
+              inverse={true}
+              shape="deploy"
+            />
+             Deploy
           </ReactWrapperComponent>
         </Link>
       </div>
@@ -216,7 +228,11 @@ exports[`when custom resources available matches the snapshot 1`] = `
           <ReactWrapperComponent
             status="primary"
           >
-            Deploy
+            <ReactWrapperComponent
+              inverse={true}
+              shape="deploy"
+            />
+             Deploy
           </ReactWrapperComponent>
         </Link>
       </div>
@@ -298,7 +314,11 @@ exports[`when fetched but not apps available matches the snapshot 1`] = `
           <ReactWrapperComponent
             status="primary"
           >
-            Deploy
+            <ReactWrapperComponent
+              inverse={true}
+              shape="deploy"
+            />
+             Deploy
           </ReactWrapperComponent>
         </Link>
       </div>
@@ -355,7 +375,11 @@ exports[`while fetching apps loading spinner matches the snapshot 1`] = `
           <ReactWrapperComponent
             status="primary"
           >
-            Deploy
+            <ReactWrapperComponent
+              inverse={true}
+              shape="deploy"
+            />
+             Deploy
           </ReactWrapperComponent>
         </Link>
       </div>
@@ -411,7 +435,11 @@ exports[`while fetching apps loading spinner matches the snapshot 2`] = `
           <ReactWrapperComponent
             status="primary"
           >
-            Deploy
+            <ReactWrapperComponent
+              inverse={true}
+              shape="deploy"
+            />
+             Deploy
           </ReactWrapperComponent>
         </Link>
       </div>

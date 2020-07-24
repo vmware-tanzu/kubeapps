@@ -1,4 +1,3 @@
-import { bundleIcon, circleArrowIcon, ClarityIcons } from "@clr/core/icon-shapes";
 import * as React from "react";
 import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
@@ -10,8 +9,6 @@ import InfoCard from "../InfoCard/InfoCard.v2";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import "./AppListItem.v2.css";
-
-ClarityIcons.addIcons(bundleIcon, circleArrowIcon);
 
 export interface IAppListItemProps {
   app: IAppOverview;

@@ -28,6 +28,7 @@ function mapStateToProps({ charts, config }: IStoreState, { match: { params } }:
     namespace: params.namespace,
     selected: charts.selected,
     version: params.version,
+    UI: config.featureFlags.ui,
   };
 }
 

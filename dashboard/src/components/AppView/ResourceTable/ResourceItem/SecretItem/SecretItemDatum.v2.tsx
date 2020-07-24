@@ -1,10 +1,8 @@
-import { ClarityIcons, eyeHideIcon, eyeIcon } from "@clr/core/icon-shapes";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import * as React from "react";
 import { CdsIcon } from "../../../../Clarity/clarity";
 import "./SecretItemDatum.v2.css";
-ClarityIcons.addIcons(eyeIcon, eyeHideIcon);
 
 interface ISecretItemDatumProps {
   name: string;

@@ -1,4 +1,3 @@
-import { ClarityIcons, infoCircleIcon } from "@clr/core/icon-shapes";
 import { Location } from "history";
 import * as React from "react";
 import { useEffect, useState } from "react";
@@ -9,8 +8,6 @@ import LoadingWrapper from "../../components/LoadingWrapper";
 import "./LoginForm.v2.css";
 import OAuthLogin from "./OauthLogin";
 import TokenLogin from "./TokenLogin";
-
-ClarityIcons.addIcons(infoCircleIcon);
 
 export interface ILoginFormProps {
   cluster: string;

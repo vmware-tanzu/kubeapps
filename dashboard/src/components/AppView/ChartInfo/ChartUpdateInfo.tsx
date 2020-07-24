@@ -1,16 +1,8 @@
-import {
-  checkCircleIcon,
-  circleArrowIcon,
-  ClarityIcons,
-  exclamationTriangleIcon,
-} from "@clr/core/icon-shapes";
 import { CdsIcon } from "components/Clarity/clarity";
 import * as React from "react";
 
 import { hapi } from "shared/hapi/release";
 import { IChartUpdateInfo, IRelease } from "shared/types";
-
-ClarityIcons.addIcons(exclamationTriangleIcon, checkCircleIcon, circleArrowIcon);
 
 interface IChartInfoProps {
   app: IRelease;
@@ -59,8 +51,8 @@ export default function ChartUpdateInfo(props: IChartInfoProps) {
   // an update available or not
   if (app.updateInfo && app.chart?.metadata) {
     updateInfo = (
-      <section className="chartinfo-subsection" aria-labelledby="chartinfo-update-info">
-        <h5 className="chartinfo-subsection-title" id="chartinfo-update-info">
+      <section className="left-menu-subsection" aria-labelledby="chartinfo-update-info">
+        <h5 className="left-menu-subsection-title" id="chartinfo-update-info">
           Update Info
         </h5>
         {getUpdateInfo(app.updateInfo, app.chart.metadata)}

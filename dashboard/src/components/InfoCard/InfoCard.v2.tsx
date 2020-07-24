@@ -1,4 +1,3 @@
-import { ClarityIcons, infoCircleIcon } from "@clr/core/icon-shapes";
 import * as React from "react";
 import { Link } from "react-router-dom";
 import Card, { CardBlock, CardFooter, CardHeader } from "../js/Card";
@@ -7,8 +6,6 @@ import Row from "../js/Row";
 
 import placeholder from "../../placeholder.png";
 import "./InfoCard.v2.css";
-
-ClarityIcons.addIcons(infoCircleIcon);
 
 export interface IInfoCardProps {
   title: string;

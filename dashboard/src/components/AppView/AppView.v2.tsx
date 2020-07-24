@@ -1,4 +1,3 @@
-import { ClarityIcons, rewindIcon, trashIcon, uploadCloudIcon } from "@clr/core/icon-shapes";
 import { RouterAction } from "connected-react-router";
 import { assignWith } from "lodash";
 import { get } from "lodash";
@@ -25,8 +24,6 @@ import AppValues from "./AppValues/AppValues.v2";
 import "./AppView.v2.css";
 import ChartInfo from "./ChartInfo/ChartInfo.v2";
 import ResourceTabs from "./ResourceTabs";
-
-ClarityIcons.addIcons(rewindIcon, trashIcon, uploadCloudIcon);
 
 export interface IAppViewProps {
   cluster: string;
@@ -164,7 +161,7 @@ export default function AppView({
   return (
     <section>
       <PageHeader>
-        <div className="appview-header">
+        <div className="kubeapps-header-content">
           <Row>
             <Column span={7}>
               <Row>

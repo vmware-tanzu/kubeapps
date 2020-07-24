@@ -25,7 +25,7 @@ const defaultProps = {
 it("renders a app item", () => {
   const wrapper = mount(<ChartInfo {...defaultProps} />);
   // Renders info about the description and versions
-  const subsections = wrapper.find(".chartinfo-subsection");
+  const subsections = wrapper.find(".left-menu-subsection");
   expect(subsections).toHaveLength(2);
 });
 

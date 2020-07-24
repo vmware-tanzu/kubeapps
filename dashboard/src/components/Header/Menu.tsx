@@ -2,14 +2,6 @@ import React, { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CSSTransition } from "react-transition-group";
 
-import {
-  angleIcon,
-  applicationsIcon,
-  ClarityIcons,
-  clusterIcon,
-  fileGroupIcon,
-  heartIcon,
-} from "@clr/core/icon-shapes";
 import { CdsButton, CdsIcon } from "../Clarity/clarity";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
 
@@ -20,8 +12,6 @@ import { app } from "shared/url";
 import helmIcon from "../../icons/helm-white.svg";
 import operatorIcon from "../../icons/operator-framework-white.svg";
 import "./Menu.css";
-
-ClarityIcons.addIcons(clusterIcon, fileGroupIcon, angleIcon, applicationsIcon, heartIcon);
 
 export interface IContextSelectorProps {
   clusters: IClustersState;

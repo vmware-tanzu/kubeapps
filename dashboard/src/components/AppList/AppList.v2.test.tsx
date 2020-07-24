@@ -73,7 +73,7 @@ context("while fetching apps", () => {
   it("shows the search filter and deploy button", () => {
     const wrapper = shallow(<AppList {...props} />);
     expect(wrapper.find("SearchFilter")).toExist();
-    expect(wrapper.find("Link").findWhere(l => l.text() === "Deploy")).toExist();
+    expect(wrapper.find("Link").findWhere(l => l.text().includes("Deploy"))).toExist();
   });
 });
 
@@ -99,7 +99,7 @@ context("when fetched but not apps available", () => {
   it("shows the search filter and deploy button", () => {
     const wrapper = shallow(<AppList {...props} />);
     expect(wrapper.find("SearchFilter")).toExist();
-    expect(wrapper.find("Link").findWhere(l => l.text() === "Deploy")).toExist();
+    expect(wrapper.find("Link").findWhere(l => l.text().includes("Deploy"))).toExist();
   });
 });
 

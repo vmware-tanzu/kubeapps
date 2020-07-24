@@ -1,4 +1,3 @@
-import { ClarityIcons, searchIcon } from "@clr/core/icon-shapes";
 import * as React from "react";
 import { CdsIcon } from "../Clarity/clarity";
 import Input from "../js/Input";
@@ -6,8 +5,6 @@ import Input from "../js/Input";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import "./SearchFilter.v2.css";
-
-ClarityIcons.addIcons(searchIcon);
 
 export interface ISearchFilterProps {
   value: string;
