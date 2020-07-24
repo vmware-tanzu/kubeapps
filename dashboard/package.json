@@ -92,12 +92,15 @@
     "lint-js-fix": "tslint -c ./tslint.ci.json --fix 'src/**/*.{ts,tsx}'",
     "lint-css": "stylelint --config ./.stylelintrc.json 'src/**/*.scss'",
     "lint-css-fix": "stylelint --config ./.stylelintrc.json --fix 'src/**/*.scss'",
-    "lint": "npm-run-all lint-js lint-css",
+    "eslint": "eslint '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --max-warnings=0",
+    "eslint-fix": "eslint '**/*.{ts,tsx}' --ignore-pattern '**/*.d.ts' --fix --max-warnings=0",
+    "lint": "npm-run-all lint-js lint-css eslint",
     "ts-compile-check": "tsc -p tsconfig.json --noEmit"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
       "yarn run lint-js-fix",
+      "yarn run eslint-fix",
       "prettier --write",
       "git add"
     ],

@@ -47,7 +47,7 @@ function ContextSelector({
     if (namespaceSelected !== definedNamespaces.all) {
       getNamespace(clusters.currentCluster, namespaceSelected);
     }
-  }, [fetchNamespaces, namespaceSelected, getNamespace]);
+  }, [fetchNamespaces, namespaceSelected, getNamespace, clusters.currentCluster]);
 
   const toggleOpen = () => setOpen(!open);
   const selectCluster = (event: React.ChangeEvent<HTMLSelectElement>) =>

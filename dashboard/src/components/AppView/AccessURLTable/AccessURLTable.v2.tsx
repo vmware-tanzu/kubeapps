@@ -119,7 +119,7 @@ export default function AccessURLTable({ ingressRefs, serviceRefs }: IAccessURLT
     // Fetch all related Ingress resources. We don't need to fetch Services as
     // they are expected to be watched by the ServiceTable.
     ingressRefs.forEach(r => dispatch(actions.kube.getResource(r)));
-  }, [ingressRefs]);
+  }, [dispatch, ingressRefs]);
   const ingresses = useSelector((state: IStoreState) =>
     flattenResources(ingressRefs, state.kube.items),
   ) as Array<IKubeItem<IResource>>;
