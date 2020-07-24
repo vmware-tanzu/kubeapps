@@ -8,3 +8,5 @@ authProxy:
     - -cookie-secure=false
     - -oidc-issuer-url=https://172.18.0.2:32000
     - -ssl-insecure-skip-verify=true
+    # If you need to access the actual token in the frontend for testing, uncomment the following.
+    # - -set-authorization-header=true
