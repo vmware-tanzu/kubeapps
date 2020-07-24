@@ -18,6 +18,8 @@ import AppViewComponent from "./AppView";
 import ChartInfo from "./ChartInfo";
 import ResourceTable from "./ResourceTable";
 
+const clusterName = "cluster-name";
+
 describe("AppViewComponent", () => {
   // Generates a Yaml file separated by --- containing every object passed.
   const generateYamlManifest = (items: any[]): string => {
@@ -40,7 +42,7 @@ describe("AppViewComponent", () => {
     error: undefined,
     getAppWithUpdateInfo: jest.fn(),
     namespace: "my-happy-place",
-    cluster: "default",
+    cluster: clusterName,
     releaseName: "mr-sunshine",
     push: jest.fn(),
   };
@@ -105,16 +107,16 @@ describe("AppViewComponent", () => {
       wrapper.setProps(validProps);
 
       expect(wrapper.state("deployRefs")).toEqual([
-        new ResourceRef(resources.deployment, appRelease.namespace),
+        new ResourceRef(resources.deployment, clusterName, appRelease.namespace),
       ]);
       expect(wrapper.state("serviceRefs")).toEqual([
-        new ResourceRef(resources.service, appRelease.namespace),
+        new ResourceRef(resources.service, clusterName, appRelease.namespace),
       ]);
       expect(wrapper.state("ingressRefs")).toEqual([
-        new ResourceRef(resources.ingress, appRelease.namespace),
+        new ResourceRef(resources.ingress, clusterName, appRelease.namespace),
       ]);
       expect(wrapper.state("secretRefs")).toEqual([
-        new ResourceRef(resources.secret, appRelease.namespace),
+        new ResourceRef(resources.secret, clusterName, appRelease.namespace),
       ]);
     });
 
@@ -270,7 +272,7 @@ describe("AppViewComponent", () => {
         },
       },
     };
-    const ingressRefs = [new ResourceRef(ingress.item as IResource, "default")];
+    const ingressRefs = [new ResourceRef(ingress.item as IResource, clusterName, "default")];
     const service = {
       isFetching: false,
       item: {
@@ -282,7 +284,7 @@ describe("AppViewComponent", () => {
         spec: {},
       },
     };
-    const serviceRefs = [new ResourceRef(service.item as IResource, "default")];
+    const serviceRefs = [new ResourceRef(service.item as IResource, clusterName, "default")];
 
     wrapper.setState({ ingressRefs, serviceRefs });
 
@@ -303,7 +305,7 @@ describe("AppViewComponent", () => {
       },
       spec: {},
     };
-    const deployRefs = [new ResourceRef(deployment as IResource, "default")];
+    const deployRefs = [new ResourceRef(deployment as IResource, clusterName, "default")];
 
     wrapper.setState({ deployRefs });
 
@@ -322,7 +324,7 @@ describe("AppViewComponent", () => {
       },
       spec: {},
     };
-    const ref = [new ResourceRef(r as IResource, "default")];
+    const ref = [new ResourceRef(r as IResource, clusterName, "default")];
 
     wrapper.setState({ statefulSetRefs: ref });
 
@@ -341,7 +343,7 @@ describe("AppViewComponent", () => {
       },
       spec: {},
     };
-    const ref = [new ResourceRef(r as IResource, "default")];
+    const ref = [new ResourceRef(r as IResource, clusterName, "default")];
 
     wrapper.setState({ daemonSetRefs: ref });
 
@@ -383,9 +385,9 @@ describe("AppViewComponent", () => {
     wrapper.setProps(validProps);
 
     expect(wrapper.state()).toMatchObject({
-      deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
-      serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
-      otherResources: [new ResourceRef(obj, appRelease.namespace)],
+      deployRefs: [new ResourceRef(resources.deployment, clusterName, appRelease.namespace)],
+      serviceRefs: [new ResourceRef(resources.service, clusterName, appRelease.namespace)],
+      otherResources: [new ResourceRef(obj, clusterName, appRelease.namespace)],
     });
   });
 
@@ -403,9 +405,9 @@ describe("AppViewComponent", () => {
     wrapper.setProps(validProps);
 
     expect(wrapper.state()).toMatchObject({
-      deployRefs: [new ResourceRef(resources.deployment, appRelease.namespace)],
-      serviceRefs: [new ResourceRef(resources.service, appRelease.namespace)],
-      otherResources: [new ResourceRef(obj, appRelease.namespace)],
+      deployRefs: [new ResourceRef(resources.deployment, clusterName, appRelease.namespace)],
+      serviceRefs: [new ResourceRef(resources.service, clusterName, appRelease.namespace)],
+      otherResources: [new ResourceRef(obj, clusterName, appRelease.namespace)],
     });
   });
 
@@ -421,10 +423,10 @@ describe("AppViewComponent", () => {
     expect(applicationStatus).toExist();
 
     expect(applicationStatus.prop("statefulsetRefs")).toEqual([
-      new ResourceRef(resources.statefulset, appRelease.namespace),
+      new ResourceRef(resources.statefulset, clusterName, appRelease.namespace),
     ]);
     expect(applicationStatus.prop("daemonsetRefs")).toEqual([
-      new ResourceRef(resources.daemonset, appRelease.namespace),
+      new ResourceRef(resources.daemonset, clusterName, appRelease.namespace),
     ]);
   });
 });
