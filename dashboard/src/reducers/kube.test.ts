@@ -4,6 +4,8 @@ import ResourceRef from "../shared/ResourceRef";
 import { IKubeState, IResource } from "../shared/types";
 import kubeReducer from "./kube";
 
+const clusterName = "cluster-name";
+
 describe("authReducer", () => {
   let initialState: IKubeState;
 
@@ -16,14 +18,17 @@ describe("authReducer", () => {
     receiveResourceFromList: getType(actions.kube.receiveResourceFromList),
   };
 
-  const ref = new ResourceRef({
-    apiVersion: "v1",
-    kind: "Service",
-    metadata: {
-      name: "foo",
-      namespace: "default",
-    },
-  } as IResource);
+  const ref = new ResourceRef(
+    {
+      apiVersion: "v1",
+      kind: "Service",
+      metadata: {
+        name: "foo",
+        namespace: "default",
+      },
+    } as IResource,
+    clusterName,
+  );
 
   beforeEach(() => {
     initialState = {

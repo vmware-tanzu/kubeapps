@@ -9,6 +9,7 @@ import ResourceRef from "../../shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
+const clusterName = "cluster-Name";
 
 const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
@@ -24,16 +25,19 @@ describe("ApplicationStatusContainer", () => {
     const name = "foo";
     const item = { isFetching: false, item: { metadata: { name } } as IResource };
     const store = makeStore({
-      "api/clusters/default/apis/apps/v1/namespaces/wee/deployments/foo": item,
+      [`api/clusters/${clusterName}/apis/apps/v1/namespaces/wee/deployments/foo`]: item,
     });
-    const ref = new ResourceRef({
-      apiVersion: "apps/v1",
-      kind: "Deployment",
-      metadata: {
-        namespace: ns,
-        name,
-      },
-    } as IResource);
+    const ref = new ResourceRef(
+      {
+        apiVersion: "apps/v1",
+        kind: "Deployment",
+        metadata: {
+          namespace: ns,
+          name,
+        },
+      } as IResource,
+      clusterName,
+    );
     const wrapper = shallow(
       <ApplicationStatusContainer
         store={store}

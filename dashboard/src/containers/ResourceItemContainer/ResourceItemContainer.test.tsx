@@ -9,6 +9,7 @@ import ResourceItem from "../../components/AppView/ResourceTable/ResourceItem/Re
 import ResourceRef from "../../shared/ResourceRef";
 
 const mockStore = configureMockStore([thunk]);
+const clusterName = "cluster-name";
 
 const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
@@ -23,17 +24,23 @@ describe("ResourceItemContainer", () => {
     const ns = "wee";
     const name = "foo";
     const item = { isFetching: false, item: { metadata: { name } } as IResource };
+    const expectedURL = `api/clusters/${clusterName}/apis/apps/v1/namespaces/wee/statefulsets/foo`;
     const store = makeStore({
-      "api/clusters/default/apis/apps/v1/namespaces/wee/statefulsets/foo": item,
+      [expectedURL]: item,
     });
-    const ref = new ResourceRef({
-      apiVersion: "apps/v1",
-      kind: "StatefulSet",
-      metadata: {
-        namespace: ns,
-        name,
-      },
-    } as IResource);
+
+    const ref = new ResourceRef(
+      {
+        apiVersion: "apps/v1",
+        kind: "StatefulSet",
+        metadata: {
+          namespace: ns,
+          name,
+        },
+      } as IResource,
+      clusterName,
+    );
+    expect(ref.getResourceURL()).toEqual(expectedURL);
     const wrapper = shallow(<ResourceItemContainer store={store} resourceRef={ref} />);
     const form = wrapper.find(ResourceItem);
     expect(form).toHaveProp({

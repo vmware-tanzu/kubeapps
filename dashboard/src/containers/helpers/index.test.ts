@@ -2,6 +2,8 @@ import { filterByResourceRefs } from ".";
 import ResourceRef from "../../shared/ResourceRef";
 import { IKubeItem, IKubeState, IResource } from "../../shared/types";
 
+const clusterName = "cluster-name";
+
 describe("filterByResourceRefs", () => {
   const svc1 = {
     apiVersion: "v1",
@@ -20,18 +22,21 @@ describe("filterByResourceRefs", () => {
   } as IResource;
 
   const items: IKubeState["items"] = {
-    "api/clusters/default/api/v1/namespaces/foo/services/bar": { item: svc1 } as IKubeItem<
+    [`api/clusters/${clusterName}/api/v1/namespaces/foo/services/bar`]: { item: svc1 } as IKubeItem<
       IResource
     >,
-    "api/clusters/default/api/v1/namespaces/foo1/services/bar": { item: svc2 } as IKubeItem<
-      IResource
-    >,
-    "api/clusters/default/apis/apps/v1/namespaces/foo1/deployments/bar": {
+    [`api/clusters/${clusterName}/api/v1/namespaces/foo1/services/bar`]: {
+      item: svc2,
+    } as IKubeItem<IResource>,
+    [`api/clusters/${clusterName}/apis/apps/v1/namespaces/foo1/deployments/bar`]: {
       item: deploy,
     } as IKubeItem<IResource>,
   };
   it("returns the IKubeItems in the state referenced by each ResourceRef", () => {
-    const resourceRefs: ResourceRef[] = [new ResourceRef(svc1), new ResourceRef(svc2)];
+    const resourceRefs: ResourceRef[] = [
+      new ResourceRef(svc1, clusterName),
+      new ResourceRef(svc2, clusterName),
+    ];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc1 }, { item: svc2 }]);
   });
@@ -45,7 +50,10 @@ describe("filterByResourceRefs", () => {
         namespace: "foo1",
       },
     } as IResource;
-    const resourceRefs: ResourceRef[] = [new ResourceRef(svc2), new ResourceRef(missingSvc)];
+    const resourceRefs: ResourceRef[] = [
+      new ResourceRef(svc2, clusterName),
+      new ResourceRef(missingSvc, clusterName),
+    ];
 
     expect(filterByResourceRefs(resourceRefs, items)).toEqual([{ item: svc2 }]);
   });

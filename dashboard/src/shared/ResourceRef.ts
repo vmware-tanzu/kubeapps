@@ -5,6 +5,7 @@ import { IClusterServiceVersionCRDResource, IK8sList, IResource } from "./types"
 
 export function fromCRD(
   r: IClusterServiceVersionCRDResource,
+  cluster: string,
   namespace: string,
   ownerReference: any,
 ) {
@@ -17,7 +18,7 @@ export function fromCRD(
   // TODO(andresmgot): This won't work for new resource types, we would need to dinamically
   // resolve those
   const resourceNamespace = r.kind.startsWith("Cluster") ? "" : namespace;
-  return new ResourceRef(resource, resourceNamespace, {
+  return new ResourceRef(resource, cluster, resourceNamespace, {
     metadata: { ownerReferences: [ownerReference] },
   });
 }
@@ -25,6 +26,7 @@ export function fromCRD(
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
 // provides helpers to retrieve the resource URL
 class ResourceRef {
+  public cluster: string;
   public apiVersion: string;
   public kind: ResourceKind;
   public name: string;
@@ -33,9 +35,8 @@ class ResourceRef {
 
   // Creates a new ResourceRef instance from an existing IResource. Provide
   // defaultNamespace to set if the IResource doesn't specify a namespace.
-  // TODO: add support for cluster-scoped resources, or add a ClusterResourceRef
-  // class.
-  constructor(r: IResource, defaultNamespace?: string, defaultFilter?: any) {
+  constructor(r: IResource, cluster: string, defaultNamespace?: string, defaultFilter?: any) {
+    this.cluster = cluster;
     this.apiVersion = r.apiVersion;
     this.kind = r.kind;
     this.name = r.metadata.name;
@@ -47,6 +48,7 @@ class ResourceRef {
   // Gets a full resource URL for the referenced resource
   public getResourceURL() {
     return Kube.getResourceURL(
+      this.cluster,
       this.apiVersion,
       Kube.resourcePlural(this.kind),
       this.namespace,
@@ -56,6 +58,7 @@ class ResourceRef {
 
   public watchResourceURL() {
     return Kube.watchResourceURL(
+      this.cluster,
       this.apiVersion,
       Kube.resourcePlural(this.kind),
       this.namespace,
@@ -65,6 +68,7 @@ class ResourceRef {
 
   public async getResource() {
     const resource = await Kube.getResource(
+      this.cluster,
       this.apiVersion,
       Kube.resourcePlural(this.kind),
       this.namespace,
@@ -84,6 +88,7 @@ class ResourceRef {
   // the socket.
   public watchResource() {
     return Kube.watchResource(
+      this.cluster,
       this.apiVersion,
       Kube.resourcePlural(this.kind),
       this.namespace,

@@ -84,25 +84,25 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
           crd.resources?.forEach(r => {
             switch (r.kind) {
               case "Deployment":
-                result.deployRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                result.deployRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
                 break;
               case "StatefulSet":
-                result.statefulSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                result.statefulSetRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
                 break;
               case "DaemonSet":
-                result.daemonSetRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                result.daemonSetRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
                 break;
               case "Service":
-                result.serviceRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                result.serviceRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
                 break;
               case "Ingress":
-                result.ingressRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                result.ingressRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
                 break;
               case "Secret":
-                result.secretRefs.push(fromCRD(r, this.props.namespace, ownerRef));
+                result.secretRefs.push(fromCRD(r, "default", this.props.namespace, ownerRef));
                 break;
               default:
-                result.otherResources.push(fromCRD(r, this.props.namespace, ownerRef));
+                result.otherResources.push(fromCRD(r, "default", this.props.namespace, ownerRef));
             }
           });
         } else {
@@ -110,21 +110,38 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
           // The CRD definition doesn't define any service so pull everything
           result = {
             deployRefs: [
-              fromCRD({ ...emptyCRD, kind: "Deployment" }, this.props.namespace, ownerRef),
+              fromCRD(
+                { ...emptyCRD, kind: "Deployment" },
+                "default",
+                this.props.namespace,
+                ownerRef,
+              ),
             ],
             ingressRefs: [
-              fromCRD({ ...emptyCRD, kind: "Ingress" }, this.props.namespace, ownerRef),
+              fromCRD({ ...emptyCRD, kind: "Ingress" }, "default", this.props.namespace, ownerRef),
             ],
             statefulSetRefs: [
-              fromCRD({ ...emptyCRD, kind: "StatefulSet" }, this.props.namespace, ownerRef),
+              fromCRD(
+                { ...emptyCRD, kind: "StatefulSet" },
+                "default",
+                this.props.namespace,
+                ownerRef,
+              ),
             ],
             daemonSetRefs: [
-              fromCRD({ ...emptyCRD, kind: "DaemonSet" }, this.props.namespace, ownerRef),
+              fromCRD(
+                { ...emptyCRD, kind: "DaemonSet" },
+                "default",
+                this.props.namespace,
+                ownerRef,
+              ),
             ],
             serviceRefs: [
-              fromCRD({ ...emptyCRD, kind: "Service" }, this.props.namespace, ownerRef),
+              fromCRD({ ...emptyCRD, kind: "Service" }, "default", this.props.namespace, ownerRef),
             ],
-            secretRefs: [fromCRD({ ...emptyCRD, kind: "Secret" }, this.props.namespace, ownerRef)],
+            secretRefs: [
+              fromCRD({ ...emptyCRD, kind: "Secret" }, "default", this.props.namespace, ownerRef),
+            ],
             otherResources: [],
           };
         }

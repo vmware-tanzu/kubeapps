@@ -1,3 +1,4 @@
+import * as url from "shared/url";
 import { Auth } from "./Auth";
 import { axiosWithAuth } from "./AxiosInstance";
 import { ResourceKindsWithAPIVersions } from "./ResourceAPIVersion";
@@ -17,45 +18,50 @@ if (window.location.protocol === "https:") {
 // directly.
 export class Kube {
   public static getResourceURL(
+    cluster: string,
     apiVersion: string,
     resource: string,
     namespace?: string,
     name?: string,
     query?: string,
   ) {
-    let url = `${APIBase}/${apiVersion === "v1" ? "api/v1" : `apis/${apiVersion}`}`;
+    let u = `${url.api.k8s.base(cluster)}/${
+      apiVersion === "v1" || !apiVersion ? "api/v1" : `apis/${apiVersion}`
+    }`;
     if (namespace && isNamespaced(resource)) {
-      url += `/namespaces/${namespace}`;
+      u += `/namespaces/${namespace}`;
     }
-    url += `/${resource}`;
+    u += `/${resource}`;
     if (name) {
-      url += `/${name}`;
+      u += `/${name}`;
     }
     if (query) {
-      url += `?${query}`;
+      u += `?${query}`;
     }
-    return url;
+    return u;
   }
 
   public static watchResourceURL(
+    cluster: string,
     apiVersion: string,
     resource: string,
     namespace?: string,
     name?: string,
     query?: string,
   ) {
-    let url = this.getResourceURL(apiVersion, resource, namespace);
-    url = `${WebSocketAPIBase}${url}?watch=true`;
+    let u = this.getResourceURL(cluster, apiVersion, resource, namespace);
+    u = `${WebSocketAPIBase}${u}?watch=true`;
     if (name) {
-      url += `&fieldSelector=metadata.name%3D${name}`;
+      u += `&fieldSelector=metadata.name%3D${name}`;
     }
     if (query) {
-      url += `&${query}`;
+      u += `&${query}`;
     }
-    return url;
+    return u;
   }
 
   public static async getResource(
+    cluster: string,
     apiVersion: string,
     resource: string,
     namespace?: string,
@@ -63,7 +69,7 @@ export class Kube {
     query?: string,
   ) {
     const { data } = await axiosWithAuth.get<IResource | IK8sList<IResource, {}>>(
-      this.getResourceURL(apiVersion, resource, namespace, name, query),
+      this.getResourceURL(cluster, apiVersion, resource, namespace, name, query),
     );
     return data;
   }
@@ -73,6 +79,7 @@ export class Kube {
   // returned WebSocket can be attached to an event listener to read data from
   // the socket.
   public static watchResource(
+    cluster: string,
     apiVersion: string,
     resource: string,
     namespace?: string,
@@ -80,7 +87,7 @@ export class Kube {
     query?: string,
   ) {
     return new WebSocket(
-      this.watchResourceURL(apiVersion, resource, namespace, name, query),
+      this.watchResourceURL(cluster, apiVersion, resource, namespace, name, query),
       Auth.wsProtocols(),
     );
   }

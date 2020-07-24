@@ -1,6 +1,8 @@
 import * as moxios from "moxios";
 import { axiosWithAuth } from "./AxiosInstance";
-import { APIBase, Kube, WebSocketAPIBase } from "./Kube";
+import { Kube } from "./Kube";
+
+const clusterName = "cluster-name";
 
 describe("App", () => {
   beforeEach(() => {
@@ -14,29 +16,44 @@ describe("App", () => {
     [
       {
         description: "returns the version and resource",
-        args: ["v1", "pods"],
-        result: `${APIBase}/api/v1/pods`,
+        args: [clusterName, "v1", "pods"],
+        result: `api/clusters/${clusterName}/api/v1/pods`,
+      },
+      {
+        description: "returns the version and resource",
+        args: [clusterName, "v1", "pods"],
+        result: `api/clusters/${clusterName}/api/v1/pods`,
+      },
+      {
+        description: "returns the version and resource",
+        args: [clusterName, "v1", "pods"],
+        result: `api/clusters/${clusterName}/api/v1/pods`,
+      },
+      {
+        description: "defaults version to api/v1 if undefined",
+        args: [clusterName, "", "pods"],
+        result: `api/clusters/${clusterName}/api/v1/pods`,
       },
       {
         description: "returns the version, resource in a namespace",
-        args: ["v1", "pods", "default"],
-        result: `${APIBase}/api/v1/namespaces/default/pods`,
+        args: [clusterName, "v1", "pods", "default"],
+        result: `api/clusters/${clusterName}/api/v1/namespaces/default/pods`,
       },
       {
         description: "returns the version, resource in a namespace with a name",
-        args: ["v1", "pods", "default", "foo"],
-        result: `${APIBase}/api/v1/namespaces/default/pods/foo`,
+        args: [clusterName, "v1", "pods", "default", "foo"],
+        result: `api/clusters/${clusterName}/api/v1/namespaces/default/pods/foo`,
       },
       {
         description: "returns the version, resource in a namespace with a name and a query",
-        args: ["v1", "pods", "default", "foo", "label=bar"],
-        result: `${APIBase}/api/v1/namespaces/default/pods/foo?label=bar`,
+        args: [clusterName, "v1", "pods", "default", "foo", "label=bar"],
+        result: `api/clusters/${clusterName}/api/v1/namespaces/default/pods/foo?label=bar`,
       },
     ].forEach(t => {
       it(t.description, () => {
-        expect(Kube.getResourceURL(t.args[0], t.args[1], t.args[2], t.args[3], t.args[4])).toBe(
-          t.result,
-        );
+        expect(
+          Kube.getResourceURL(t.args[0], t.args[1], t.args[2], t.args[3], t.args[4], t.args[5]),
+        ).toBe(t.result);
       });
     });
   });
@@ -45,29 +62,29 @@ describe("App", () => {
     [
       {
         description: "returns the version and resource",
-        args: ["v1", "pods"],
-        result: `${WebSocketAPIBase}${APIBase}/api/v1/pods?watch=true`,
+        args: [clusterName, "v1", "pods"],
+        result: `ws://localhost/api/clusters/${clusterName}/api/v1/pods?watch=true`,
       },
       {
         description: "returns the version, resource in a namespace",
-        args: ["v1", "pods", "default"],
-        result: `${WebSocketAPIBase}${APIBase}/api/v1/namespaces/default/pods?watch=true`,
+        args: [clusterName, "v1", "pods", "default"],
+        result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true`,
       },
       {
         description: "returns the version, resource in a namespace with a name",
-        args: ["v1", "pods", "default", "foo"],
-        result: `${WebSocketAPIBase}${APIBase}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
+        args: [clusterName, "v1", "pods", "default", "foo"],
+        result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
       },
       {
         description: "returns the version, resource in a namespace with a name and a query",
-        args: ["v1", "pods", "default", "foo", "label=bar"],
-        result: `${WebSocketAPIBase}${APIBase}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo&label=bar`,
+        args: [clusterName, "v1", "pods", "default", "foo", "label=bar"],
+        result: `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo&label=bar`,
       },
     ].forEach(t => {
       it(t.description, () => {
-        expect(Kube.watchResourceURL(t.args[0], t.args[1], t.args[2], t.args[3], t.args[4])).toBe(
-          t.result,
-        );
+        expect(
+          Kube.watchResourceURL(t.args[0], t.args[1], t.args[2], t.args[3], t.args[4], t.args[5]),
+        ).toBe(t.result);
       });
     });
   });
@@ -81,20 +98,22 @@ describe("App", () => {
       });
     });
     it("should request a resource", async () => {
-      expect(await Kube.getResource("v1", "pods", "default", "foo", "label=bar")).toEqual({
+      expect(
+        await Kube.getResource(clusterName, "v1", "pods", "default", "foo", "label=bar"),
+      ).toEqual({
         data: resource,
       });
       expect(moxios.requests.mostRecent().url).toBe(
-        `${APIBase}/api/v1/namespaces/default/pods/foo?label=bar`,
+        `api/clusters/${clusterName}/api/v1/namespaces/default/pods/foo?label=bar`,
       );
     });
   });
 
   describe("watchResource", () => {
     it("should open a socket", async () => {
-      const socket = Kube.watchResource("v1", "pods", "default", "foo");
+      const socket = Kube.watchResource(clusterName, "v1", "pods", "default", "foo");
       expect(socket.url).toBe(
-        `${WebSocketAPIBase}${APIBase}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
+        `ws://localhost/api/clusters/${clusterName}/api/v1/namespaces/default/pods?watch=true&fieldSelector=metadata.name%3Dfoo`,
       );
       // it's a mock socket, so doesn't actually need to be closed
       socket.close();

@@ -9,6 +9,7 @@ import AccessURLTable from "../../components/AppView/AccessURLTable";
 import ResourceRef from "../../shared/ResourceRef";
 
 const mockStore = configureMockStore([thunk]);
+const clusterName = "cluster-name";
 
 const makeStore = (resources: { [s: string]: IKubeItem<IResource> }) => {
   const state: IKubeState = {
@@ -31,25 +32,31 @@ describe("AccessURLTableContainer", () => {
       item: { metadata: { name: `${name}-ingress` } } as IResource,
     };
     const store = makeStore({
-      "api/clusters/default/api/v1/namespaces/wee/services/foo-service": service,
-      "api/clusters/default/api/v1/namespaces/wee/ingresses/foo-ingress": ingress,
+      [`api/clusters/${clusterName}/api/v1/namespaces/wee/services/foo-service`]: service,
+      [`api/clusters/${clusterName}/api/v1/namespaces/wee/ingresses/foo-ingress`]: ingress,
     });
-    const serviceRef = new ResourceRef({
-      apiVersion: "v1",
-      kind: "Service",
-      metadata: {
-        namespace: ns,
-        name: `${name}-service`,
-      },
-    } as IResource);
-    const ingressRef = new ResourceRef({
-      apiVersion: "v1",
-      kind: "Ingress",
-      metadata: {
-        namespace: ns,
-        name: `${name}-ingress`,
-      },
-    } as IResource);
+    const serviceRef = new ResourceRef(
+      {
+        apiVersion: "v1",
+        kind: "Service",
+        metadata: {
+          namespace: ns,
+          name: `${name}-service`,
+        },
+      } as IResource,
+      clusterName,
+    );
+    const ingressRef = new ResourceRef(
+      {
+        apiVersion: "v1",
+        kind: "Ingress",
+        metadata: {
+          namespace: ns,
+          name: `${name}-ingress`,
+        },
+      } as IResource,
+      clusterName,
+    );
     const wrapper = shallow(
       <AccessURLTableContainer
         store={store}
