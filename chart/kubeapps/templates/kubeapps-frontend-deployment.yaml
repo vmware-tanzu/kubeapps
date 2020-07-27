@@ -71,6 +71,7 @@ spec:
             - -skip-auth-regex=^\/favicon.*\.png$
             - -skip-auth-regex=^\/static\/
             - -skip-auth-regex=^\/$
+            - -scope=openid email groups
             {{- range .Values.authProxy.additionalFlags }}
             - {{ . }}
             {{- end }}

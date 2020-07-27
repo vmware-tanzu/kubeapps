@@ -9,6 +9,7 @@ import {
   circleArrowIcon,
   ClarityIcons as Icons,
   clusterIcon,
+  copyToClipboardIcon,
   deployIcon,
   exclamationCircleIcon,
   exclamationTriangleIcon,
@@ -59,4 +60,5 @@ Icons.addIcons(
   timesIcon,
   deployIcon,
   fileIcon,
+  copyToClipboardIcon,
 );

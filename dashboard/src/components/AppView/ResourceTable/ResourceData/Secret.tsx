@@ -3,13 +3,19 @@ import React from "react";
 import { IResource, ISecret } from "shared/types";
 import SecretItemDatum from "../ResourceItem/SecretItem/SecretItemDatum.v2";
 
+import "./Secret.css";
+
 function getSecretData(secret: ISecret) {
   const data = secret.data;
   if (isEmpty(data)) {
     return "This Secret is empty";
   }
   return Object.keys(data).map(k => (
-    <SecretItemDatum key={`${secret.metadata.name}/${k}`} name={k} value={data[k]} />
+    <div className="secret-table-cel">
+      <div className="secret-table-content">
+        <SecretItemDatum key={`${secret.metadata.name}/${k}`} name={k} value={data[k]} />
+      </div>
+    </div>
   ));
 }
 

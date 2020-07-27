@@ -267,7 +267,9 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
     const deleted = await this.props.deleteResource(namespace, crd!.name.split(".")[0], resource!);
     this.closeModal();
     if (deleted) {
-      this.props.push(app.apps.list(cluster, namespace));
+      // TODO: The operator routes do not currently include the cluster so ensure
+      // it has a default.
+      this.props.push(app.apps.list(cluster || "default", namespace));
     }
   };
 }
