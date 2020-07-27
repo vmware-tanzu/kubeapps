@@ -32,19 +32,19 @@ interface ITestCase {
 }
 
 const actionTestCases: ITestCase[] = [
-  { name: "setNamespace", action: setNamespace, args: "jack", payload: "jack" },
+  { name: "setNamespace", action: setNamespace, args: ["jack"], payload: "jack" },
   {
     name: "receiveNamespces",
     action: receiveNamespaces,
-    args: ["jack", "danny"],
-    payload: ["jack", "danny"],
+    args: ["default", ["jack", "danny"]],
+    payload: { cluster: "default", namespaces: ["jack", "danny"] },
   },
 ];
 
 actionTestCases.forEach(tc => {
   describe(tc.name, () => {
     it("has expected structure", () => {
-      expect(tc.action.call(null, tc.args)).toEqual({
+      expect(tc.action.call(null, ...tc.args)).toEqual({
         type: getType(tc.action),
         payload: tc.payload,
       });
@@ -63,7 +63,7 @@ describe("fetchNamespaces", () => {
     const expectedActions = [
       {
         type: getType(receiveNamespaces),
-        payload: ["overlook-hotel", "room-217"],
+        payload: { cluster: "default-c", namespaces: ["overlook-hotel", "room-217"] },
       },
     ];
 
@@ -77,7 +77,7 @@ describe("fetchNamespaces", () => {
     const expectedActions = [
       {
         type: getType(errorNamespaces),
-        payload: { err, op: "list" },
+        payload: { cluster: "default-c", err, op: "list" },
       },
     ];
 
@@ -98,11 +98,11 @@ describe("createNamespace", () => {
     const expectedActions = [
       {
         type: getType(postNamespace),
-        payload: "overlook-hotel",
+        payload: { cluster: "default-c", namespace: "overlook-hotel" },
       },
       {
         type: getType(receiveNamespaces),
-        payload: ["overlook-hotel", "room-217"],
+        payload: { cluster: "default-c", namespaces: ["overlook-hotel", "room-217"] },
       },
     ];
 
@@ -117,7 +117,7 @@ describe("createNamespace", () => {
     const expectedActions = [
       {
         type: getType(errorNamespaces),
-        payload: { err, op: "create" },
+        payload: { cluster: "default-c", err, op: "create" },
       },
     ];
 
@@ -134,11 +134,11 @@ describe("getNamespace", () => {
     const expectedActions = [
       {
         type: getType(requestNamespace),
-        payload: "default-ns",
+        payload: { cluster: "default-c", namespace: "default-ns" },
       },
       {
         type: getType(receiveNamespace),
-        payload: ns,
+        payload: { cluster: "default-c", namespace: ns },
       },
     ];
     const r = await store.dispatch(getNamespace("default-c", "default-ns"));
@@ -152,11 +152,11 @@ describe("getNamespace", () => {
     const expectedActions = [
       {
         type: getType(requestNamespace),
-        payload: "default-ns",
+        payload: { cluster: "default-c", namespace: "default-ns" },
       },
       {
         type: getType(errorNamespaces),
-        payload: { err, op: "get" },
+        payload: { cluster: "default-c", err, op: "get" },
       },
     ];
     const r = await store.dispatch(getNamespace("default-c", "default-ns"));

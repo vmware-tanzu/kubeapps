@@ -90,7 +90,7 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
 
   public componentDidUpdate(prevProps: IAppViewProps) {
     const { releaseName, getAppWithUpdateInfo, cluster, namespace, error, app } = this.props;
-    if (prevProps.namespace !== namespace) {
+    if (prevProps.namespace !== namespace || prevProps.cluster !== cluster) {
       getAppWithUpdateInfo(cluster, namespace, releaseName);
       return;
     }

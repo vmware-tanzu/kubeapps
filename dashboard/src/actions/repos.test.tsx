@@ -102,7 +102,7 @@ actionTestCases.forEach(tc => {
 
 // Async action creators
 describe("deleteRepo", () => {
-  context("dispatches requestRepos and receivedRepos after deletion if no error", async () => {
+  context("dispatches requestRepos and receivedRepos after deletion if no error", () => {
     const currentNamespace = "current-namespace";
     it("dispatches requestRepos with current namespace", async () => {
       const storeWithFlag: any = mockStore({

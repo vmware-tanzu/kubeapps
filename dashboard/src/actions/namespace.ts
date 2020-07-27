@@ -6,10 +6,10 @@ import Namespace from "../shared/Namespace";
 import { IResource, IStoreState } from "../shared/types";
 
 export const requestNamespace = createAction("REQUEST_NAMESPACE", resolve => {
-  return (namespace: string) => resolve(namespace);
+  return (cluster: string, namespace: string) => resolve({ cluster, namespace });
 });
 export const receiveNamespace = createAction("RECEIVE_NAMESPACE", resolve => {
-  return (namespace: IResource) => resolve(namespace);
+  return (cluster: string, namespace: IResource) => resolve({ cluster, namespace });
 });
 
 export const setNamespace = createAction("SET_NAMESPACE", resolve => {
@@ -17,18 +17,18 @@ export const setNamespace = createAction("SET_NAMESPACE", resolve => {
 });
 
 export const postNamespace = createAction("CREATE_NAMESPACE", resolve => {
-  return (namespace: string) => resolve(namespace);
+  return (cluster: string, namespace: string) => resolve({ cluster, namespace });
 });
 
 export const receiveNamespaces = createAction("RECEIVE_NAMESPACES", resolve => {
-  return (namespaces: string[]) => resolve(namespaces);
+  return (cluster: string, namespaces: string[]) => resolve({ cluster, namespaces });
 });
 
 export const errorNamespaces = createAction("ERROR_NAMESPACES", resolve => {
-  return (err: Error, op: string) => resolve({ err, op });
+  return (cluster: string, err: Error, op: string) => resolve({ cluster, err, op });
 });
 
-export const clearNamespaces = createAction("CLEAR_NAMESPACES");
+export const clearClusters = createAction("CLEAR_CLUSTERS");
 
 const allActions = [
   requestNamespace,
@@ -36,7 +36,7 @@ const allActions = [
   setNamespace,
   receiveNamespaces,
   errorNamespaces,
-  clearNamespaces,
+  clearClusters,
   postNamespace,
 ];
 export type NamespaceAction = ActionType<typeof allActions[number]>;
@@ -48,9 +48,9 @@ export function fetchNamespaces(
     try {
       const namespaceList = await Namespace.list(cluster);
       const namespaceStrings = namespaceList.namespaces.map((n: IResource) => n.metadata.name);
-      dispatch(receiveNamespaces(namespaceStrings));
+      dispatch(receiveNamespaces(cluster, namespaceStrings));
     } catch (e) {
-      dispatch(errorNamespaces(e, "list"));
+      dispatch(errorNamespaces(cluster, e, "list"));
       return;
     }
   };
@@ -63,11 +63,11 @@ export function createNamespace(
   return async dispatch => {
     try {
       await Namespace.create(cluster, ns);
-      dispatch(postNamespace(ns));
+      dispatch(postNamespace(cluster, ns));
       dispatch(fetchNamespaces(cluster));
       return true;
     } catch (e) {
-      dispatch(errorNamespaces(e, "create"));
+      dispatch(errorNamespaces(cluster, e, "create"));
       return false;
     }
   };
@@ -79,12 +79,12 @@ export function getNamespace(
 ): ThunkAction<Promise<boolean>, IStoreState, null, NamespaceAction> {
   return async dispatch => {
     try {
-      dispatch(requestNamespace(ns));
+      dispatch(requestNamespace(cluster, ns));
       const namespace = await Namespace.get(cluster, ns);
-      dispatch(receiveNamespace(namespace));
+      dispatch(receiveNamespace(cluster, namespace));
       return true;
     } catch (e) {
-      dispatch(errorNamespaces(e, "get"));
+      dispatch(errorNamespaces(cluster, e, "get"));
       return false;
     }
   };

@@ -3,7 +3,7 @@ import { ActionType, createAction } from "typesafe-actions";
 
 import { Auth } from "../shared/Auth";
 import { IStoreState } from "../shared/types";
-import { clearNamespaces, NamespaceAction } from "./namespace";
+import { clearClusters, NamespaceAction } from "./namespace";
 
 export const setAuthenticated = createAction("SET_AUTHENTICATED", resolve => {
   return (authenticated: boolean, oidc: boolean, defaultNamespace: string) =>
@@ -61,7 +61,7 @@ export function logout(): ThunkAction<
     } else {
       Auth.unsetAuthToken();
       dispatch(setAuthenticated(false, false, ""));
-      dispatch(clearNamespaces());
+      dispatch(clearClusters());
     }
   };
 }
