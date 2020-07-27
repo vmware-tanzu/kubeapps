@@ -7,6 +7,8 @@ import { IResource } from "../../../shared/types";
 import OtherResourceItem from "./ResourceItem/OtherResourceItem";
 import ResourceTable from "./ResourceTable";
 
+const clusterName = "cluster-name";
+
 it("skips the element if there are no resources", () => {
   const wrapper = shallow(<ResourceTable resourceRefs={[]} title={""} />);
   expect(wrapper.find(ResourceItemContainer)).not.toExist();
@@ -15,7 +17,11 @@ it("skips the element if there are no resources", () => {
 
 it("renders a ResourceItem", () => {
   const resourceRefs = [
-    new ResourceRef({ kind: "Deployment", metadata: { name: "foo" } } as IResource, "default"),
+    new ResourceRef(
+      { kind: "Deployment", metadata: { name: "foo" } } as IResource,
+      clusterName,
+      "default",
+    ),
   ];
   const wrapper = shallow(<ResourceTable resourceRefs={resourceRefs} title={""} />);
   expect(wrapper).toMatchSnapshot();
@@ -24,8 +30,16 @@ it("renders a ResourceItem", () => {
 
 it("renders two resources", () => {
   const deployRefs = [
-    new ResourceRef({ kind: "Deployment", metadata: { name: "foo" } } as IResource, "default"),
-    new ResourceRef({ kind: "Deployment", metadata: { name: "bar" } } as IResource, "default"),
+    new ResourceRef(
+      { kind: "Deployment", metadata: { name: "foo" } } as IResource,
+      clusterName,
+      "default",
+    ),
+    new ResourceRef(
+      { kind: "Deployment", metadata: { name: "bar" } } as IResource,
+      clusterName,
+      "default",
+    ),
   ];
   const wrapper = shallow(<ResourceTable resourceRefs={deployRefs} title={""} />);
   expect(wrapper.find(ResourceItemContainer).length).toBe(2);
@@ -45,7 +59,11 @@ it("renders two resources", () => {
 
 it("renders OtherResourceItem", () => {
   const resourceRefs = [
-    new ResourceRef({ kind: "ConfigMap", metadata: { name: "foo" } } as IResource, "default"),
+    new ResourceRef(
+      { kind: "ConfigMap", metadata: { name: "foo" } } as IResource,
+      clusterName,
+      "default",
+    ),
   ];
   const wrapper = shallow(<ResourceTable resourceRefs={resourceRefs} title={""} />);
   expect(wrapper.find(OtherResourceItem)).toExist();
@@ -54,7 +72,11 @@ it("renders OtherResourceItem", () => {
 
 it("renders OtherResource as ItemContainer", () => {
   const resourceRefs = [
-    new ResourceRef({ kind: "ConfigMap", metadata: { name: "foo" } } as IResource, "default"),
+    new ResourceRef(
+      { kind: "ConfigMap", metadata: { name: "foo" } } as IResource,
+      clusterName,
+      "default",
+    ),
   ];
   const wrapper = shallow(
     <ResourceTable resourceRefs={resourceRefs} title={""} requestOtherResources={true} />,

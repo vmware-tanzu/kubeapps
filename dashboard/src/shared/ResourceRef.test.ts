@@ -2,6 +2,8 @@ import { Kube } from "./Kube";
 import ResourceRef, { fromCRD } from "./ResourceRef";
 import { IClusterServiceVersionCRDResource, IResource } from "./types";
 
+const clusterName = "cluster-name";
+
 describe("ResourceRef", () => {
   describe("constructor", () => {
     it("it returns a ResourceRef with the correct details", () => {
@@ -14,9 +16,10 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r);
+      const ref = new ResourceRef(r, clusterName);
       expect(ref).toBeInstanceOf(ResourceRef);
       expect(ref).toEqual({
+        cluster: clusterName,
         apiVersion: r.apiVersion,
         kind: r.kind,
         name: r.metadata.name,
@@ -33,7 +36,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, "default");
+      const ref = new ResourceRef(r, clusterName, "default");
       expect(ref.namespace).toBe("default");
     });
 
@@ -46,7 +49,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r, "bar");
+      const ref = new ResourceRef(r, clusterName, "bar");
       expect(ref.namespace).toBe("bar");
     });
 
@@ -62,7 +65,7 @@ describe("ResourceRef", () => {
             name: "test",
           },
         };
-        const res = fromCRD(r, "default", ownerRef);
+        const res = fromCRD(r, clusterName, "default", ownerRef);
         expect(res).toMatchObject({
           apiVersion: "apps/v1",
           kind: "Deployment",
@@ -83,7 +86,7 @@ describe("ResourceRef", () => {
             name: "test",
           },
         };
-        const res = fromCRD(r, "default", ownerRef);
+        const res = fromCRD(r, clusterName, "default", ownerRef);
         expect(res).toMatchObject({
           apiVersion: "rbac.authorization.k8s.io/v1",
           kind: "ClusterRole",
@@ -114,10 +117,10 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r);
+      const ref = new ResourceRef(r, clusterName);
 
       ref.getResourceURL();
-      expect(kubeGetResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");
+      expect(kubeGetResourceURLMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
     });
   });
 
@@ -140,10 +143,10 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r);
+      const ref = new ResourceRef(r, clusterName);
 
       ref.watchResourceURL();
-      expect(kubeWatchResourceURLMock).toBeCalledWith("v1", "services", "bar", "foo");
+      expect(kubeWatchResourceURLMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
     });
   });
 
@@ -168,10 +171,10 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r);
+      const ref = new ResourceRef(r, clusterName);
 
       ref.getResource();
-      expect(kubeGetResourceMock).toBeCalledWith("v1", "services", "bar", "foo");
+      expect(kubeGetResourceMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
     });
 
     it("filters out the result when receiving a list", async () => {
@@ -184,7 +187,7 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r);
+      const ref = new ResourceRef(r, clusterName);
       ref.filter = { metadata: { name: "bar" } };
       Kube.getResource = jest.fn().mockReturnValue({
         items: [r],
@@ -213,10 +216,10 @@ describe("ResourceRef", () => {
         },
       } as IResource;
 
-      const ref = new ResourceRef(r);
+      const ref = new ResourceRef(r, clusterName);
 
       ref.watchResource();
-      expect(kubeWatchResourceMock).toBeCalledWith("v1", "services", "bar", "foo");
+      expect(kubeWatchResourceMock).toBeCalledWith(clusterName, "v1", "services", "bar", "foo");
     });
   });
 });

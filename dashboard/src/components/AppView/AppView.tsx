@@ -230,25 +230,39 @@ class AppView extends React.Component<IAppViewProps, IAppViewState> {
         const resource = { isFetching: true, item };
         switch (i.kind) {
           case "Deployment":
-            result.deployRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            result.deployRefs.push(
+              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
+            );
             break;
           case "StatefulSet":
-            result.statefulSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            result.statefulSetRefs.push(
+              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
+            );
             break;
           case "DaemonSet":
-            result.daemonSetRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            result.daemonSetRefs.push(
+              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
+            );
             break;
           case "Service":
-            result.serviceRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            result.serviceRefs.push(
+              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
+            );
             break;
           case "Ingress":
-            result.ingressRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            result.ingressRefs.push(
+              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
+            );
             break;
           case "Secret":
-            result.secretRefs.push(new ResourceRef(resource.item, releaseNamespace));
+            result.secretRefs.push(
+              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
+            );
             break;
           default:
-            result.otherResources.push(new ResourceRef(resource.item, releaseNamespace));
+            result.otherResources.push(
+              new ResourceRef(resource.item, this.props.cluster, releaseNamespace),
+            );
         }
       }
     });

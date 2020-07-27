@@ -10,6 +10,7 @@ const defaultProps = {
 };
 
 const sampleResourceRef = {
+  cluster: "cluster-name",
   apiVersion: "v1",
   kind: "Secret",
   name: "foo",
