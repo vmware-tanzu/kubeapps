@@ -91,13 +91,18 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
 
   public componentDidUpdate(prevProps: IAppRepoListProps) {
     const {
+      cluster,
       errors: { fetch },
       fetchRepos,
       fetchImagePullSecrets,
       namespace,
     } = this.props;
     // refetch if namespace changes or if error removed due to location change
-    if (prevProps.namespace !== namespace || (prevProps.errors.fetch && !fetch)) {
+    if (
+      prevProps.namespace !== namespace ||
+      prevProps.cluster !== cluster ||
+      (prevProps.errors.fetch && !fetch)
+    ) {
       fetchRepos(namespace);
       fetchImagePullSecrets(namespace);
     }
