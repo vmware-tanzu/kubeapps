@@ -8,12 +8,15 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
 subjects:
+# dex does not allow group claims when using the static connector
+# https://github.com/dexidp/dex/issues/1080
+# So instead use the testing of groups with the ldap access only.
 - apiGroup: rbac.authorization.k8s.io
   kind: User
   name: oidc:kubeapps-operator@example.com
 - apiGroup: rbac.authorization.k8s.io
-  kind: User
-  name: oidc:kubeapps-operator-ldap@example.org
+  kind: Group
+  name: oidc:kubeapps-operators
 # kubeapps-user has access only to the kubeapps-user-namespace namespace
 ---
 kind: Namespace
@@ -35,8 +38,8 @@ subjects:
   kind: User
   name: oidc:kubeapps-user@example.com
 - apiGroup: rbac.authorization.k8s.io
-  kind: User
-  name: oidc:kubeapps-user-ldap@example.org
+  kind: Group
+  name: oidc:kubeapps-users
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -52,9 +55,12 @@ subjects:
   kind: User
   name: oidc:kubeapps-user@example.com
 - apiGroup: rbac.authorization.k8s.io
-  kind: User
-  name: oidc:kubeapps-user-ldap@example.org
+  kind: Group
+  name: oidc:kubeapps-users
 ---
+# Currently unnecessary (when kubeapps operators are already cluster-admin) but
+# included to be explicit and plan to replace cluster-admin for kubeapps
+# operators with something less privileged.
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
@@ -69,6 +75,6 @@ subjects:
   kind: User
   name: oidc:kubeapps-operator@example.com
 - apiGroup: rbac.authorization.k8s.io
-  kind: User
-  name: oidc:kubeapps-operator-ldap@example.org
+  kind: Group
+  name: oidc:kubeapps-operators
 
