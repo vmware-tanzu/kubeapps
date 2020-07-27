@@ -18,9 +18,11 @@ export function fromCRD(
   // TODO(andresmgot): This won't work for new resource types, we would need to dinamically
   // resolve those
   const resourceNamespace = r.kind.startsWith("Cluster") ? "" : namespace;
-  return new ResourceRef(resource, cluster, resourceNamespace, {
+  const ref = new ResourceRef(resource, cluster, resourceNamespace);
+  ref.filter = {
     metadata: { ownerReferences: [ownerReference] },
-  });
+  };
+  return ref;
 }
 
 // ResourceRef defines a reference to a namespaced Kubernetes API Object and
@@ -35,13 +37,12 @@ class ResourceRef {
 
   // Creates a new ResourceRef instance from an existing IResource. Provide
   // defaultNamespace to set if the IResource doesn't specify a namespace.
-  constructor(r: IResource, cluster: string, defaultNamespace?: string, defaultFilter?: any) {
+  constructor(r: IResource, cluster: string, defaultNamespace?: string) {
     this.cluster = cluster;
     this.apiVersion = r.apiVersion;
     this.kind = r.kind;
     this.name = r.metadata.name;
     this.namespace = r.metadata.namespace || defaultNamespace || "";
-    this.filter = defaultFilter;
     return this;
   }
 
