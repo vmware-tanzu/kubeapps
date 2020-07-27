@@ -56,13 +56,15 @@ export default function ChartSummary({ version, chartAttrs }: IChartSummaryProps
             Related
           </h5>
           <div>
-            {chartAttrs.sources.map((s, i) => (
-              <li key={i}>
-                <a href={s} target="_blank" rel="noopener noreferrer">
-                  {s}
-                </a>
-              </li>
-            ))}
+            <ul>
+              {chartAttrs.sources.map((s, i) => (
+                <li key={i}>
+                  <a href={s} target="_blank" rel="noopener noreferrer">
+                    {s}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </section>
       )}

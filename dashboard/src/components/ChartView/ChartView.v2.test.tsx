@@ -138,19 +138,19 @@ describe("ChartMaintainers githubIDAsNames prop value", () => {
   }> = [
     {
       expected: true,
-      name: "stable Helm repo",
+      name: "the stable Helm repo uses github IDs",
       maintainers: [{ name: "Bitnami" }],
       repoURL: "https://kubernetes-charts.storage.googleapis.com",
     },
     {
       expected: true,
-      name: "incubator Helm repo",
+      name: "the incubator Helm repo uses github IDs",
       maintainers: [{ name: "Bitnami", email: "email: containers@bitnami.com" }],
       repoURL: "https://kubernetes-charts-incubator.storage.googleapis.com",
     },
     {
       expected: false,
-      name: "random Helm repo",
+      name: "a random Helm repo does not use github IDs as names",
       maintainers: [{ name: "Bitnami" }],
       repoURL: "https://examplerepo.com",
     },
