@@ -2,6 +2,7 @@ import { LOCATION_CHANGE, LocationChangeAction } from "connected-react-router";
 import { getType } from "typesafe-actions";
 
 import { IConfig } from "shared/Config";
+import { definedNamespaces } from "shared/Namespace";
 import actions from "../actions";
 import { AuthAction } from "../actions/auth";
 import { ConfigAction } from "../actions/config";
@@ -122,22 +123,41 @@ const clusterReducer = (
             },
           },
         };
+      } else {
+        // Default to previous behaviour for non-clustered routes.
+        // Looks for /ns/:namespace/ in URL
+        const matchesNSOnly = pathname.match(/\/ns\/([^/]*)/);
+        if (matchesNSOnly) {
+          const currentNamespace = matchesNSOnly[1];
+          return {
+            ...state,
+            clusters: {
+              ...state.clusters,
+              [state.currentCluster]: {
+                ...state.clusters[state.currentCluster],
+                currentNamespace,
+              },
+            },
+          };
+        }
       }
       break;
     case getType(actions.auth.setAuthenticated):
       // Only when a user is authenticated to we set the current namespace from
       // the auth default namespace.
       if (action.payload.authenticated) {
-        return {
-          ...state,
-          clusters: {
-            ...state.clusters,
-            default: {
-              ...state.clusters.default,
-              currentNamespace: action.payload.defaultNamespace,
+        if (state.clusters[state.currentCluster].currentNamespace === definedNamespaces.all) {
+          return {
+            ...state,
+            clusters: {
+              ...state.clusters,
+              [state.currentCluster]: {
+                ...state.clusters[state.currentCluster],
+                currentNamespace: action.payload.defaultNamespace,
+              },
             },
-          },
-        };
+          };
+        }
       }
       break;
     case getType(actions.config.receiveConfig):

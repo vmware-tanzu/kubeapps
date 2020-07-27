@@ -3,6 +3,7 @@ import context from "jest-plugin-context";
 import { getType } from "typesafe-actions";
 
 import { IConfig } from "shared/Config";
+import { definedNamespaces } from "shared/Namespace";
 import actions from "../actions";
 import { IResource } from "../shared/types";
 import clusterReducer, { IClustersState, initialState } from "./cluster";
@@ -44,6 +45,12 @@ describe("clusterReducer", () => {
           path: "/c/barcluster/ns/T-600/charts",
           currentNamespace: "T-600",
           currentCluster: "barcluster",
+        },
+        {
+          // It still updates the current namespace for a non-multicluster route.
+          path: "/config/ns/default/repos",
+          currentNamespace: "default",
+          currentCluster: "initial-cluster",
         },
       ];
       testCases.forEach(tc => {
@@ -129,19 +136,51 @@ describe("clusterReducer", () => {
   });
 
   context("when SET_AUTHENTICATED", () => {
-    it("sets the current namespace to the users default", () => {
+    it("sets the current namespace to the users default if not already set", () => {
+      const stateWithoutCurrentNamespace = {
+        ...initialTestState,
+        clusters: {
+          ...initialTestState.clusters,
+          [initialTestState.currentCluster]: {
+            ...initialTestState.clusters[initialTestState.currentCluster],
+            currentNamespace: definedNamespaces.all,
+          },
+        },
+      };
       expect(
-        clusterReducer(initialTestState, {
+        clusterReducer(stateWithoutCurrentNamespace, {
           type: getType(actions.auth.setAuthenticated),
           payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
         }),
       ).toEqual({
+        ...stateWithoutCurrentNamespace,
+        clusters: {
+          ...initialTestState.clusters,
+          [initialTestState.currentCluster]: {
+            ...initialTestState.clusters[initialTestState.currentCluster],
+            currentNamespace: "foo-bar",
+          },
+        },
+      } as IClustersState);
+    });
+
+    it("does not set the current namespace to the users default already set (from the route, for eg)", () => {
+      const stateWithCurrentNamespace = {
         ...initialTestState,
         clusters: {
           ...initialTestState.clusters,
-          default: { ...initialTestState.clusters.default, currentNamespace: "foo-bar" },
+          [initialTestState.currentCluster]: {
+            ...initialTestState.clusters[initialTestState.currentCluster],
+            currentNamespace: "default",
+          },
         },
-      } as IClustersState);
+      };
+      expect(
+        clusterReducer(stateWithCurrentNamespace, {
+          type: getType(actions.auth.setAuthenticated),
+          payload: { authenticated: true, oidc: false, defaultNamespace: "foo-bar" },
+        }),
+      ).toEqual(stateWithCurrentNamespace);
     });
   });
 
