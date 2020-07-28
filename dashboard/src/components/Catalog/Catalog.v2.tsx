@@ -1,4 +1,3 @@
-import { bundleIcon, ClarityIcons } from "@clr/core/icon-shapes";
 import { RouterAction } from "connected-react-router";
 import { uniq } from "lodash";
 import React, { useEffect, useState } from "react";
@@ -21,8 +20,6 @@ import { CdsButton } from "components/Clarity/clarity";
 import { app } from "shared/url";
 import "./Catalog.v2.css";
 import CatalogItems from "./CatalogItems";
-
-ClarityIcons.addIcons(bundleIcon);
 
 interface ICatalogProps {
   charts: IChartState;

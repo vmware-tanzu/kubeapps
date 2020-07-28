@@ -2,11 +2,8 @@ import React, { useState } from "react";
 import cs from "classnames";
 import PropTypes from "prop-types";
 import { CdsIcon } from "../../Clarity/clarity";
-import { ClarityIcons, helpIcon } from "@clr/core/icon-shapes";
 
 import "./Tooltip.scss";
-
-ClarityIcons.addIcons(helpIcon);
 
 // Constants
 export const TooltipPositions = {
@@ -20,13 +17,16 @@ export const TooltipPositions = {
 
 const Tooltip = ({ children, position, icon, iconProps, id, label, extraSmall, small, large }) => {
   const [open, setOpen] = useState(false);
-
+  let timer;
   const openTooltip = () => {
     setOpen(true);
+    clearTimeout(timer);
   };
 
   const closeTooltip = () => {
-    setOpen(false);
+    timer = setTimeout(() => {
+      setOpen(false);
+    }, 1000);
   };
 
   const escapeFromTooltip = e => {

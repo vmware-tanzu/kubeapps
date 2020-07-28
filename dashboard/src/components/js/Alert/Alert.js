@@ -3,25 +3,9 @@ import AlerTypes from "./Alert.types";
 import PropTypes from "prop-types";
 import Button from "../Button";
 import cs from "classnames";
-import {
-  ClarityIcons,
-  infoCircleIcon,
-  exclamationCircleIcon,
-  checkCircleIcon,
-  exclamationTriangleIcon,
-  timesIcon,
-} from "@clr/core/icon-shapes";
 import { CdsIcon } from "../../Clarity/clarity";
 
 import "./Alert.scss";
-
-ClarityIcons.addIcons(
-  infoCircleIcon,
-  exclamationCircleIcon,
-  checkCircleIcon,
-  exclamationTriangleIcon,
-  timesIcon,
-);
 
 // Constants
 export const AlertThemes = {

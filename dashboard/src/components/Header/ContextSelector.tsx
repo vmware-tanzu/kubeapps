@@ -2,7 +2,6 @@ import { push } from "connected-react-router";
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
-import { angleIcon, ClarityIcons, clusterIcon, fileGroupIcon } from "@clr/core/icon-shapes";
 import { IClustersState } from "../../reducers/cluster";
 import { CdsButton, CdsIcon } from "../Clarity/clarity";
 import useOutsideClick from "../js/hooks/useOutsideClick/useOutsideClick";
@@ -12,8 +11,6 @@ import { definedNamespaces } from "shared/Namespace";
 import { app } from "shared/url";
 import Row from "../js/Row";
 import "./ContextSelector.css";
-
-ClarityIcons.addIcons(clusterIcon, fileGroupIcon, angleIcon);
 
 export interface IContextSelectorProps {
   clusters: IClustersState;

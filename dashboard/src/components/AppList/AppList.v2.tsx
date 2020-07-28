@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CdsButton } from "../Clarity/clarity";
+import { CdsButton, CdsIcon } from "../Clarity/clarity";
 
 import { IFeatureFlags } from "../../shared/Config";
 import { IAppState, IClusterServiceVersion, IResource } from "../../shared/types";
@@ -74,7 +74,9 @@ function AppList(props: IAppListProps) {
         <Column span={2}>
           <div className="header-button">
             <Link to={url.app.catalog(cluster, namespace)}>
-              <CdsButton status="primary">Deploy</CdsButton>
+              <CdsButton status="primary">
+                <CdsIcon shape="deploy" inverse={true} /> Deploy
+              </CdsButton>
             </Link>
           </div>
         </Column>

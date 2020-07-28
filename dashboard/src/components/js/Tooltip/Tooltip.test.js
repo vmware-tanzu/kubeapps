@@ -8,6 +8,8 @@ const defaultProps = {
   label: "this is a test",
 };
 
+jest.useFakeTimers();
+
 describe(Tooltip, () => {
   it("renders a button element", () => {
     const wrapper = shallow(<Tooltip {...defaultProps}>test</Tooltip>);
@@ -42,6 +44,7 @@ describe(Tooltip, () => {
         wrapper.simulate("mouseLeave");
       });
       wrapper.update();
+      jest.runAllTimers();
       expect(wrapper).not.toHaveClassName("tooltip-open");
     });
 
@@ -58,6 +61,7 @@ describe(Tooltip, () => {
         wrapper.simulate("blur");
       });
       wrapper.update();
+      jest.runAllTimers();
       expect(wrapper).not.toHaveClassName("tooltip-open");
     });
 

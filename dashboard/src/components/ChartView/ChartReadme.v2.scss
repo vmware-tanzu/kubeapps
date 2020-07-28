@@ -1,0 +1,40 @@
+.readme-not-found {
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 12rem);
+  text-align: center;
+}
+
+.chart-readme {
+  p {
+    margin: 0.625em 0;
+  }
+
+  pre {
+    margin: 0.625em 0;
+    border-radius: 5px;
+    overflow: auto;
+    padding: 0.6rem;
+    background: var(--clr-color-neutral-1000);
+    color: var(--clr-color-on-neutral-1000);
+  }
+
+  blockquote {
+    margin: 1em 0 1em 0;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #f1f1f1;
+    padding: 0.1em 1em;
+    max-width: 100%;
+  }
+
+  blockquote:before,
+  blockquote:after {
+    background-image: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+}

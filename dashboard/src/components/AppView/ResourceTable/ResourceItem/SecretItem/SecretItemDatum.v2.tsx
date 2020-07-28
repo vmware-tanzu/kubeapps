@@ -1,4 +1,3 @@
-import { ClarityIcons, copyToClipboardIcon, eyeHideIcon, eyeIcon } from "@clr/core/icon-shapes";
 import Column from "components/js/Column";
 import Row from "components/js/Row";
 import React, { useEffect, useRef } from "react";
@@ -7,7 +6,6 @@ import { CdsIcon } from "../../../../Clarity/clarity";
 
 import ReactTooltip from "react-tooltip";
 import "./SecretItemDatum.v2.css";
-ClarityIcons.addIcons(eyeIcon, eyeHideIcon, copyToClipboardIcon);
 
 interface ISecretItemDatumProps {
   name: string;
