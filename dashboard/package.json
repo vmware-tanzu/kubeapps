@@ -79,7 +79,7 @@
   "scripts": {
     "build-css": "node-sass-chokidar src/ -o src/",
     "watch-css": "yarn run build-css && node-sass-chokidar src/ -o src/ --watch --recursive",
-    "start-js": "BROWSER=none DANGEROUSLY_DISABLE_HOST_CHECK=true REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts start",
+    "start-js": "BROWSER=none REACT_APP_KUBEAPPS_NS=${TELEPRESENCE_CONTAINER_NAMESPACE} react-scripts start",
     "build-js": "react-scripts build",
     "start": "npm-run-all -p watch-css start-js",
     "build": "npm-run-all build-css build-js",
@@ -175,6 +175,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "proxy": "http://127.0.0.1:8080"
+  }
 }
