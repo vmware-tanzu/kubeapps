@@ -73,6 +73,9 @@ func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string
 
 	config.Host = additionalCluster.APIServiceURL
 	config.TLSClientConfig = rest.TLSClientConfig{}
+	// If no CAFile was included in the config, assume an insecure connection.
+	// This should be an intentional decision at the CLI.
+	config.TLSClientConfig.Insecure = additionalCluster.CertificateAuthorityData == ""
 	if additionalCluster.CertificateAuthorityData != "" {
 		config.TLSClientConfig.CAData = []byte(additionalCluster.CertificateAuthorityData)
 	}

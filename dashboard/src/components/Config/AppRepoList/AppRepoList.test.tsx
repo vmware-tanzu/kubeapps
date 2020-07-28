@@ -1,6 +1,7 @@
 import { shallow } from "enzyme";
 import * as React from "react";
 
+import { MessageAlert } from "components/ErrorAlert";
 import AppRepoList from "./AppRepoList";
 
 const defaultNamespace = "default-namespace";
@@ -117,6 +118,21 @@ describe("AppRepoList", () => {
     };
     const wrapper = shallow(<AppRepoList {...props} />);
 
+    const addButton = wrapper.find("AppRepoAddButton");
+    expect(addButton.length).toBe(0);
+  });
+
+  it("displays not-supported alert when an additional cluster is selected", () => {
+    const props = {
+      ...defaultProps,
+      cluster: "other-cluster",
+    };
+
+    const wrapper = shallow(<AppRepoList {...props} />);
+
+    const msgAlert = wrapper.find(MessageAlert);
+    expect(msgAlert.length).toBe(1);
+    expect(msgAlert.prop("header")).toEqual("AppRepositories are available on the default cluster only");
     const addButton = wrapper.find("AppRepoAddButton");
     expect(addButton.length).toBe(0);
   });

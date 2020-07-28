@@ -130,6 +130,28 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
       createDockerRegistrySecret,
     } = this.props;
     const renderNamespace = namespace === definedNamespaces.all;
+
+    // We do not currently support app repositories on additional clusters.
+    if (cluster !== "default") {
+      return (
+        <MessageAlert header="AppRepositories are available on the default cluster only">
+          <div>
+            <p className="margin-v-normal">
+              Currently the multi-cluster support in Kubeapps supports AppRepositories on the
+              default cluster only.
+            </p>
+            <p className="margin-v-normal">
+              The catalog of charts from AppRepositories on the default cluster which are available
+              for all namespaces will be avaialble on additional clusters also, but you can not
+              currently create a private AppRepository for a particular namespace of an additional
+              cluster. We may in the future support AppRepositories on additional clusters but for
+              now you will need to switch back to your default cluster.
+            </p>
+          </div>
+        </MessageAlert>
+      );
+    }
+
     return (
       <div className="app-repo-list">
         <h1>App Repositories</h1>
