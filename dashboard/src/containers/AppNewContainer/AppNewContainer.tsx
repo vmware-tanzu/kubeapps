@@ -35,6 +35,7 @@ function mapStateToProps(
     namespace: params.namespace,
     selected: charts.selected,
     chartsIsFetching: charts.isFetching,
+    UI: config.featureFlags.ui,
   };
 }
 

@@ -119,9 +119,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
         );
         break;
       }
-      case "string":
-      case "integer":
-      case "number":
+      default:
         if (param.render === "slider") {
           const p = param as IBasicFormSliderParam;
           paramComponent = (
@@ -136,6 +134,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
               unit={p.sliderUnit || ""}
             />
           );
+          break;
         }
         if (param.render === "textArea") {
           paramComponent = (
@@ -147,6 +146,7 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
               inputType="textarea"
             />
           );
+          break;
         }
         paramComponent = (
           <TextParam
@@ -154,20 +154,10 @@ class BasicDeploymentForm extends React.Component<IBasicDeploymentFormProps> {
             handleBasicFormParamChange={handleBasicFormParamChange}
             id={id}
             param={param}
-            inputType="number"
+            inputType={type === "integer" ? "number" : "string"}
           />
         );
         break;
-      default:
-        paramComponent = (
-          <TextParam
-            label={param.title || param.path}
-            handleBasicFormParamChange={handleBasicFormParamChange}
-            id={id}
-            param={param}
-            inputType="string"
-          />
-        );
     }
     return (
       <div key={id} hidden={this.isHidden(param)}>

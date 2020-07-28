@@ -24,6 +24,7 @@ export interface ISliderProps {
   default: number;
   step: number;
   values: number;
+  sliderStyle?: React.CSSProperties;
   onChange: (values: readonly number[]) => void;
   onUpdate: (values: readonly number[]) => void;
 }
@@ -37,7 +38,10 @@ class Slider extends React.Component<ISliderProps> {
         mode={1}
         step={step}
         domain={domain}
-        rootStyle={sliderStyle}
+        rootStyle={{
+          ...sliderStyle,
+          ...this.props.sliderStyle,
+        }}
         onUpdate={onUpdate}
         onChange={onChange}
         values={[values]}
