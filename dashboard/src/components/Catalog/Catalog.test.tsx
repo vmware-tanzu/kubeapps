@@ -24,6 +24,7 @@ const defaultProps = {
   filter: "",
   fetchCharts: jest.fn(),
   pushSearchFilter: jest.fn(),
+  cluster: "default",
   namespace: "kubeapps",
   kubeappsNamespace: "kubeapps",
   csvs: [],

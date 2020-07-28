@@ -34,7 +34,7 @@ exports[`when fetching apps loading spinner matches the snapshot 1`] = `
         Manage your Helm chart repositories in Kubeapps by visiting the App repositories configuration page.
       </p>
       <Link
-        to="/config/ns/kubeapps/repos"
+        to="/c/default/ns/kubeapps/config/repos"
       >
         <ReactWrapperComponent>
           Manage App Repositories

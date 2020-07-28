@@ -62,7 +62,7 @@ class Routes extends React.Component<IRoutesProps> {
     featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
   };
   public render() {
-    const reposPath = "/config/ns/:namespace/repos";
+    const reposPath = "/c/:cluster/ns/:namespace/config/repos";
     if (this.props.featureFlags.operators) {
       // Add routes related to operators
       Object.assign(privateRoutes, {

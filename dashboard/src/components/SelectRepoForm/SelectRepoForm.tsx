@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
+import * as url from "shared/url";
 import { IAppRepository, IRBACRole } from "../../shared/types";
 import LoadingWrapper from "../LoadingWrapper";
 
@@ -8,6 +9,7 @@ import { ErrorSelector, MessageAlert } from "../ErrorAlert";
 
 interface ISelectRepoFormProps {
   isFetching: boolean;
+  cluster: string;
   namespace: string;
   kubeappsNamespace: string;
   repoError?: Error;
@@ -58,7 +60,7 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
             <div>
               <h5>Chart repositories not found.</h5>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={`/config/ns/${this.props.namespace}/repos`}>
+              <Link to={url.app.config.apprepositories(this.props.cluster, this.props.namespace)}>
                 App repositories configuration
               </Link>{" "}
               page.
@@ -101,7 +103,10 @@ class SelectRepoForm extends React.Component<ISelectRepoFormProps, ISelectRepoFo
             <p>
               {" "}
               * If the repository containing {this.props.chartName} is not in the list add it{" "}
-              <a href="/config/repos"> here </a>.{" "}
+              <a href={url.app.config.apprepositories(this.props.cluster, this.props.namespace)}>
+                here
+              </a>
+              .{" "}
             </p>
           </div>
         </div>

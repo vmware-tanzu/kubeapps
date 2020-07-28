@@ -30,6 +30,7 @@ interface ICatalogProps {
   filter: string;
   fetchCharts: (namespace: string, repo: string) => void;
   pushSearchFilter: (filter: string) => RouterAction;
+  cluster: string;
   namespace: string;
   kubeappsNamespace: string;
   getCSVs: (namespace: string) => void;
@@ -45,6 +46,7 @@ function Catalog(props: ICatalogProps) {
       items: charts,
     },
     fetchCharts,
+    cluster,
     namespace,
     pushSearchFilter,
     getCSVs,
@@ -110,7 +112,7 @@ function Catalog(props: ICatalogProps) {
               Manage your Helm chart repositories in Kubeapps by visiting the App repositories
               configuration page.
             </p>
-            <Link to={app.config.apprepositories(namespace)}>
+            <Link to={app.config.apprepositories(cluster, namespace)}>
               <CdsButton>Manage App Repositories</CdsButton>
             </Link>
           </div>

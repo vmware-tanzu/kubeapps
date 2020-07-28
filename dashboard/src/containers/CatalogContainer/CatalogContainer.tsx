@@ -9,13 +9,17 @@ import { IStoreState } from "../../shared/types";
 
 function mapStateToProps(
   { charts, operators, config }: IStoreState,
-  { match: { params }, location }: RouteComponentProps<{ namespace: string; repo: string }>,
+  {
+    match: { params },
+    location,
+  }: RouteComponentProps<{ cluster: string; namespace: string; repo: string }>,
 ) {
   return {
     charts,
     filter: qs.parse(location.search, { ignoreQueryPrefix: true }).q || "",
     repo: params.repo,
     csvs: operators.csvs,
+    cluster: params.cluster,
     namespace: params.namespace,
     kubeappsNamespace: config.namespace,
     featureFlags: config.featureFlags,

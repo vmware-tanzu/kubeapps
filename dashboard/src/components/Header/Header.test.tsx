@@ -53,7 +53,7 @@ describe("settings", () => {
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
     const expectedItems = [
-      { children: "App Repositories", to: "/config/ns/default/repos" },
+      { children: "App Repositories", to: "/c/default/ns/default/config/repos" },
       { children: "Service Brokers", to: "/config/brokers" },
     ];
     items.forEach((item, index) => {
@@ -69,7 +69,7 @@ describe("settings", () => {
     const settingsbar = wrapper.find(".header__nav__submenu").first();
     const items = settingsbar.find("NavLink").map(p => p.props());
     const expectedItems = [
-      { children: "App Repositories", to: "/config/ns/default/repos" },
+      { children: "App Repositories", to: "/c/default/ns/default/config/repos" },
       { children: "Service Brokers", to: "/config/brokers" },
       { children: "Operators", to: "/ns/default/operators" },
     ];
