@@ -118,7 +118,8 @@ exports[`renderization when no charts should render an error 1`] = `
     >
       App repositories configuration
     </Link>
-     page.
+     
+    page.
   </div>
 </MessageAlertPage>
 `;
