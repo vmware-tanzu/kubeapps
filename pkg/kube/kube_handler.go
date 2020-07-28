@@ -51,6 +51,7 @@ type AdditionalClusterConfig struct {
 	Name                     string `json:"name"`
 	APIServiceURL            string `json:"apiServiceURL"`
 	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
+	Insecure                 bool   `json:"insecure"`
 }
 
 // AdditionalClustersConfig is an alias for a map of additional cluster configs.
@@ -73,9 +74,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string
 
 	config.Host = additionalCluster.APIServiceURL
 	config.TLSClientConfig = rest.TLSClientConfig{}
-	// If no CAFile was included in the config, assume an insecure connection.
-	// This should be an intentional decision at the CLI.
-	config.TLSClientConfig.Insecure = additionalCluster.CertificateAuthorityData == ""
+	config.TLSClientConfig.Insecure = additionalCluster.Insecure
 	if additionalCluster.CertificateAuthorityData != "" {
 		config.TLSClientConfig.CAData = []byte(additionalCluster.CertificateAuthorityData)
 	}
