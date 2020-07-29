@@ -171,19 +171,38 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 	return actionConfig, nil
 }
 
+// ConfigFlags implements the RESTConfigGetter interface.
+// The genericclioptions.ConfigFlags struct includes only a CAFile field, not
+// a CAData field.
+// https://github.com/kubernetes/cli-runtime/issues/8
+// Rather than writing the CA data to a file unnecessarily, we embed the ConfigFlags implementation
+// and update the ToRestConfig method only.
+type ConfigFlags struct {
+	genericclioptions.ConfigFlags
+	clusterConfig *rest.Config
+}
+
+// ToRESTConfig overrides the embedded genericclioptions.ConfigFlags.ToToRESTConfig
+func (cf *ConfigFlags) ToRESTConfig() (*rest.Config, error) {
+	return cf.clusterConfig, nil
+}
+
 // NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster.
-func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) *genericclioptions.ConfigFlags {
+func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) genericclioptions.RESTClientGetter {
 	impersonateGroup := []string{}
 
 	// CertFile and KeyFile must be nil for the BearerToken to be used for authentication and authorization instead of the pod's service account.
-	return &genericclioptions.ConfigFlags{
-		Insecure:         &clusterConfig.TLSClientConfig.Insecure,
-		Timeout:          stringptr("0"),
-		Namespace:        stringptr(namespace),
-		APIServer:        stringptr(clusterConfig.Host),
-		CAFile:           stringptr(clusterConfig.CAFile),
-		BearerToken:      stringptr(clusterConfig.BearerToken),
-		ImpersonateGroup: &impersonateGroup,
+	return &ConfigFlags{
+		ConfigFlags: genericclioptions.ConfigFlags{
+			Insecure:         &clusterConfig.TLSClientConfig.Insecure,
+			Timeout:          stringptr("0"),
+			Namespace:        stringptr(namespace),
+			APIServer:        stringptr(clusterConfig.Host),
+			CAFile:           stringptr(clusterConfig.CAFile),
+			BearerToken:      stringptr(clusterConfig.BearerToken),
+			ImpersonateGroup: &impersonateGroup,
+		},
+		clusterConfig: clusterConfig,
 	}
 }
 
