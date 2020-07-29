@@ -91,7 +91,7 @@ function DeploymentFormBody({
   if (selected.error) {
     return (
       <Alert theme="danger">
-        Unable to fetch chart "{chartID}" ({chartVersion}): Got {selected.error}
+        Unable to fetch chart "{chartID}" ({chartVersion}): Got {selected.error.message}
       </Alert>
     );
   }
@@ -145,7 +145,7 @@ function DeploymentFormBody({
       </div>
       <div className="deployment-form-control-buttons">
         <CdsButton status="primary" type="submit">
-          <CdsIcon shape="deploy" inverse={true} /> Deploy v{chartVersion}
+          <CdsIcon shape="deploy" inverse={true} /> Deploy v{selected.version?.attributes.version}
         </CdsButton>
         <CdsButton action="outline" type="button" onClick={openRestoreDefaultValuesModal}>
           <CdsIcon shape="backup-restore" inverse={true} /> Restore Defaults

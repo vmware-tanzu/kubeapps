@@ -1,0 +1,13 @@
+.select-repo-form {
+  display: grid;
+  justify-content: center;
+  margin-top: 5rem;
+  &-label {
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    display: block;
+  }
+  .clr-page-size-select {
+    width: 100%;
+  }
+}

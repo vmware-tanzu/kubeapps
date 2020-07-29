@@ -13,6 +13,8 @@ interface IChartHeaderProps {
   chartAttrs: IChartAttributes;
   versions: IChartVersion[];
   onSelect: (event: React.ChangeEvent<HTMLSelectElement>) => void;
+  releaseName?: string;
+  currentVersion?: string;
   children?: JSX.Element;
 }
 
@@ -20,6 +22,8 @@ export default function ChartHeader({
   chartAttrs,
   versions,
   onSelect,
+  releaseName,
+  currentVersion,
   children,
 }: IChartHeaderProps) {
   return (
@@ -33,7 +37,11 @@ export default function ChartHeader({
                 alt="app-icon"
               />
               <div className="kubeapps-title-block">
-                <h3>{`${chartAttrs.repo.name}/${chartAttrs.name}`}</h3>
+                <h3>
+                  {releaseName
+                    ? `${releaseName} (${chartAttrs.repo.name}/${chartAttrs.name})`
+                    : `${chartAttrs.repo.name}/${chartAttrs.name}`}
+                </h3>
                 <div className="kubeapps-header-subtitle">
                   <img src={helmIcon} alt="helm-icon" />
                   <span>Helm Chart</span>
@@ -76,6 +84,7 @@ export default function ChartHeader({
                           value={v.attributes.version}
                         >
                           {v.attributes.version} / App Version {v.attributes.app_version}
+                          {currentVersion === v.attributes.version ? " (current)" : ""}
                         </option>
                       );
                     })}
