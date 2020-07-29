@@ -4,6 +4,7 @@ import { CdsIcon as Icon, ClarityIcons as ClrIcons } from "@clr/core/icon-shapes
 import {
   angleIcon,
   applicationsIcon,
+  backupRestoreIcon,
   bundleIcon,
   checkCircleIcon,
   circleArrowIcon,
@@ -61,4 +62,5 @@ Icons.addIcons(
   deployIcon,
   fileIcon,
   copyToClipboardIcon,
+  backupRestoreIcon,
 );

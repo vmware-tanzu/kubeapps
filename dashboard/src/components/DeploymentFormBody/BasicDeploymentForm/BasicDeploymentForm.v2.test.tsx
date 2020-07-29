@@ -1,9 +1,10 @@
 import * as React from "react";
 
-import { mount, shallow } from "enzyme";
+import { mount } from "enzyme";
+import { Slider } from "react-compound-slider";
 import { DeploymentEvent, IBasicFormParam, IBasicFormSliderParam } from "shared/types";
-import BasicDeploymentForm from "./BasicDeploymentForm";
-import Subsection from "./Subsection";
+import BasicDeploymentForm from "./BasicDeploymentForm.v2";
+import Subsection from "./Subsection.v2";
 
 const defaultProps = {
   deploymentEvent: "install" as DeploymentEvent,
@@ -37,6 +38,7 @@ const defaultProps = {
         path: "configuration",
         value: "First line\nSecond line",
         render: "textArea",
+        type: "string",
       } as IBasicFormParam,
     ],
   },
@@ -119,9 +121,36 @@ const defaultProps = {
     expect(wrapper).toMatchSnapshot();
 
     t.params.forEach((param, i) => {
-      wrapper
-        .find(`${param.render === "textArea" ? "textarea" : "input"}#${param.path}-${i}`)
-        .simulate("change");
+      let input = wrapper.find(`input#${param.path}-${i}`);
+      switch (param.type) {
+        case "number":
+        case "integer":
+          if (param.render === "slider") {
+            expect(wrapper.find(Slider)).toExist();
+            break;
+          }
+          expect(input.prop("type")).toBe("number");
+          break;
+        case "string":
+          if (param.render === "slider") {
+            expect(wrapper.find(Slider)).toExist();
+            break;
+          }
+          if (param.render === "textArea") {
+            input = wrapper.find(`textarea#${param.path}-${i}`);
+            expect(input).toExist();
+            break;
+          }
+          if (param.path.match("Password")) {
+            expect(input.prop("type")).toBe("password");
+            break;
+          }
+          expect(input.prop("type")).toBe("string");
+          break;
+        default:
+        // Ignore the rest of cases
+      }
+      input.simulate("change");
       const mockCalls = handleBasicFormParamChange.mock.calls;
       expect(mockCalls[i]).toEqual([param]);
       expect(onChange.mock.calls.length).toBe(i + 1);
@@ -157,7 +186,7 @@ it("should hide an element if it depends on a param (string)", () => {
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: true";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
   );
 
@@ -181,7 +210,7 @@ it("should hide an element if it depends on a single param (object)", () => {
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: enabled";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
   );
 
@@ -214,7 +243,7 @@ it("should hide an element if it depends on multiple params (AND) (object)", () 
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: enabled\nbaz: disabled";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
   );
 
@@ -247,7 +276,7 @@ it("should hide an element if it depends on multiple params (OR) (object)", () =
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: enabled\nbaz: enabled";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
   );
 
@@ -280,7 +309,7 @@ it("should hide an element if it depends on multiple params (NOR) (object)", () 
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: disabled\nbaz: enabled";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm {...defaultProps} params={params} appValues={appValues} />,
   );
 
@@ -299,7 +328,7 @@ it("should hide an element if it depends on the deploymentEvent (install | upgra
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: disabled\nbaz: enabled";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm
       {...defaultProps}
       deploymentEvent="upgrade"
@@ -323,7 +352,7 @@ it("should NOT hide an element if it depends on the deploymentEvent (install | u
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: disabled\nbaz: enabled";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm
       {...defaultProps}
       deploymentEvent="install"
@@ -360,7 +389,7 @@ it("should hide an element if it depends on deploymentEvent (install | upgrade) 
     },
   ] as IBasicFormParam[];
   const appValues = "foo: 1\nbar: disabled";
-  const wrapper = shallow(
+  const wrapper = mount(
     <BasicDeploymentForm
       {...defaultProps}
       deploymentEvent="upgrade"

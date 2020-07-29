@@ -1,9 +1,9 @@
-import context from "jest-plugin-context";
 import * as React from "react";
+import * as ReactRedux from "react-redux";
 
+import actions from "actions";
 import Alert from "components/js/Alert";
 import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
-import itBehavesLike from "../../shared/specs";
 import { IChartState, IChartVersion } from "../../shared/types";
 import ChartMaintainers from "./ChartMaintainers";
 import ChartView, { IChartViewProps } from "./ChartView.v2";
@@ -11,12 +11,9 @@ import ChartView, { IChartViewProps } from "./ChartView.v2";
 const props: IChartViewProps = {
   chartID: "testrepo/test",
   chartNamespace: "kubeapps-namespace",
-  fetchChartVersionsAndSelectVersion: jest.fn(),
   isFetching: false,
   namespace: "test",
   cluster: "default",
-  resetChartVersion: jest.fn(),
-  selectChartVersion: jest.fn(),
   selected: { versions: [] } as IChartState["selected"],
   version: undefined,
 };
@@ -43,9 +40,28 @@ const defaultSelected: IChartState["selected"] = {
   versions: [testVersion],
 };
 
+let spyOnUseDispatch: jest.SpyInstance;
+const kubeaActions = { ...actions.kube };
+beforeEach(() => {
+  actions.charts = {
+    ...actions.charts,
+    fetchChartVersionsAndSelectVersion: jest.fn(),
+    resetChartVersion: jest.fn(),
+    selectChartVersion: jest.fn(),
+  };
+  const mockDispatch = jest.fn();
+  spyOnUseDispatch = jest.spyOn(ReactRedux, "useDispatch").mockReturnValue(mockDispatch);
+});
+
+afterEach(() => {
+  actions.kube = { ...kubeaActions };
+  spyOnUseDispatch.mockRestore();
+});
+
 it("triggers the fetchChartVersionsAndSelectVersion when mounting", () => {
   const spy = jest.fn();
-  mountWrapper(defaultStore, <ChartView {...props} fetchChartVersionsAndSelectVersion={spy} />);
+  actions.charts.fetchChartVersionsAndSelectVersion = spy;
+  mountWrapper(defaultStore, <ChartView {...props} />);
   expect(spy).toHaveBeenCalledWith("kubeapps-namespace", "testrepo/test", undefined);
 });
 
@@ -53,40 +69,39 @@ describe("when receiving new props", () => {
   it("finds and selects the chart version when version changes", () => {
     const versions = [{ attributes: { version: "1.2.3" } }] as IChartVersion[];
     const spy = jest.fn();
-    mountWrapper(
-      defaultStore,
-      <ChartView {...props} selectChartVersion={spy} selected={{ versions }} version={"1.2.3"} />,
-    );
+    actions.charts = {
+      ...actions.charts,
+      selectChartVersion: spy,
+    };
+    mountWrapper(defaultStore, <ChartView {...props} selected={{ versions }} version={"1.2.3"} />);
     expect(spy).toHaveBeenCalledWith(versions[0]);
   });
 });
 
 it("triggers resetChartVersion when unmounting", () => {
   const spy = jest.fn();
-  const wrapper = mountWrapper(defaultStore, <ChartView {...props} resetChartVersion={spy} />);
+  actions.charts = {
+    ...actions.charts,
+    resetChartVersion: spy,
+  };
+  const wrapper = mountWrapper(defaultStore, <ChartView {...props} />);
   wrapper.unmount();
   expect(spy).toHaveBeenCalled();
 });
 
-context("when fetching is false but no chart is available", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: ChartView,
-    props: {
-      ...props,
-      isFetching: false,
-    },
-  });
+it("behaves as a loading component when fetching is false but no chart is available", () => {
+  const wrapper = mountWrapper(defaultStore, <ChartView {...props} isFetching={false} />);
+  expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
-context("when fetching is true and chart is available", () => {
-  itBehavesLike("aLoadingComponent", {
-    component: ChartView,
-    props: {
-      ...props,
-      isFetching: true,
-      selected: { version: {} as IChartVersion },
-    },
-  });
+it("behaves as a loading component when fetching is true and chart is available", () => {
+  const versions = [{ attributes: { version: "1.2.3" } }] as IChartVersion[];
+
+  const wrapper = mountWrapper(
+    defaultStore,
+    <ChartView {...props} isFetching={true} selected={{ versions, version: versions[0] }} />,
+  );
+  expect(wrapper.find("LoadingWrapper")).toExist();
 });
 
 it("does not render the app version, home and sources sections if not set", () => {

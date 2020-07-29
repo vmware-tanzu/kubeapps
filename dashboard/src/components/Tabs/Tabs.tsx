@@ -4,7 +4,7 @@ import "./Tabs.scss";
 
 interface ITabsProps {
   id: string;
-  columns: string[];
+  columns: Array<string | JSX.Element | JSX.Element[]>;
   data: Array<string | JSX.Element | JSX.Element[]>;
 }
 

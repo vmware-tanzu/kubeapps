@@ -4,26 +4,7 @@ exports[`renders a basic deployment with a disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "size",
-            "render": "slider",
-            "type": "string",
-            "value": "10Gi",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -46,30 +27,12 @@ exports[`renders a basic deployment with a disk size 1`] = `
         hidden={false}
         key="size-0"
       >
-        <TextParam
-          handleBasicFormParamChange={
-            [MockFunction] {
-              "calls": Array [
-                Array [
-                  Object {
-                    "path": "size",
-                    "render": "slider",
-                    "type": "string",
-                    "value": "10Gi",
-                  },
-                ],
-              ],
-              "results": Array [
-                Object {
-                  "type": "return",
-                  "value": [MockFunction],
-                },
-              ],
-            }
-          }
+        <SliderParam
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
-          inputType="number"
           label="size"
+          max={1000}
+          min={1}
           param={
             Object {
               "path": "size",
@@ -78,6 +41,8 @@ exports[`renders a basic deployment with a disk size 1`] = `
               "value": "10Gi",
             }
           }
+          step={1}
+          unit=""
         >
           <div>
             <label
@@ -98,17 +63,280 @@ exports[`renders a basic deployment with a disk size 1`] = `
                 <div
                   className="col-9 margin-t-small"
                 >
-                  <input
-                    id="size-0"
-                    onChange={[MockFunction]}
-                    type="number"
-                    value="10Gi"
-                  />
+                  <div
+                    className="row"
+                  >
+                    <div
+                      className="col-9"
+                    >
+                      <Slider
+                        default={10}
+                        max={1000}
+                        min={1}
+                        onChange={[Function]}
+                        onUpdate={[Function]}
+                        step={1}
+                        values={10}
+                      >
+                        <Slider
+                          component="div"
+                          disabled={false}
+                          domain={
+                            Array [
+                              1,
+                              1000,
+                            ]
+                          }
+                          flatten={false}
+                          mode={1}
+                          onChange={[Function]}
+                          onSlideEnd={[Function]}
+                          onSlideStart={[Function]}
+                          onUpdate={[Function]}
+                          reversed={false}
+                          rootProps={Object {}}
+                          rootStyle={
+                            Object {
+                              "margin": "1.2em",
+                              "position": "relative",
+                              "width": "90%",
+                            }
+                          }
+                          step={1}
+                          values={
+                            Array [
+                              10,
+                            ]
+                          }
+                          vertical={false}
+                          warnOnChanges={false}
+                        >
+                          <div
+                            style={
+                              Object {
+                                "margin": "1.2em",
+                                "position": "relative",
+                                "width": "90%",
+                              }
+                            }
+                          >
+                            <Rail
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".0"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                onMouseDown={[Function]}
+                                onTouchStart={[Function]}
+                                style={
+                                  Object {
+                                    "backgroundColor": "rgb(155,155,155)",
+                                    "borderRadius": 7,
+                                    "cursor": "pointer",
+                                    "height": 14,
+                                    "position": "absolute",
+                                    "width": "100%",
+                                  }
+                                }
+                              />
+                            </Rail>
+                            <Handles
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".1"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-handles"
+                              >
+                                <Handle
+                                  domain={
+                                    Array [
+                                      1,
+                                      1000,
+                                    ]
+                                  }
+                                  getHandleProps={[Function]}
+                                  handle={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 0.9009009009009009,
+                                      "value": 10,
+                                    }
+                                  }
+                                  key="$$-0"
+                                >
+                                  <div
+                                    aria-valuemax={1000}
+                                    aria-valuemin={1}
+                                    aria-valuenow={10}
+                                    onKeyDown={[Function]}
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    role="slider"
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#34568f",
+                                        "borderRadius": "50%",
+                                        "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
+                                        "cursor": "pointer",
+                                        "height": 24,
+                                        "left": "0.9009009009009009%",
+                                        "marginLeft": "-11px",
+                                        "marginTop": "-6px",
+                                        "position": "absolute",
+                                        "width": 24,
+                                        "zIndex": 2,
+                                      }
+                                    }
+                                  />
+                                </Handle>
+                              </div>
+                            </Handles>
+                            <Tracks
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".2"
+                              left={true}
+                              right={false}
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-tracks"
+                              >
+                                <Track
+                                  getTrackProps={[Function]}
+                                  key="$-$$-0"
+                                  source={
+                                    Object {
+                                      "id": "$",
+                                      "percent": 0,
+                                      "value": 1,
+                                    }
+                                  }
+                                  target={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 0.9009009009009009,
+                                      "value": 10,
+                                    }
+                                  }
+                                >
+                                  <div
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#7aa0c4",
+                                        "borderRadius": 7,
+                                        "cursor": "pointer",
+                                        "height": 14,
+                                        "left": "0%",
+                                        "position": "absolute",
+                                        "width": "0.9009009009009009%",
+                                        "zIndex": 1,
+                                      }
+                                    }
+                                  />
+                                </Track>
+                              </div>
+                            </Tracks>
+                          </div>
+                        </Slider>
+                      </Slider>
+                    </div>
+                    <div
+                      className="col-3"
+                    >
+                      <input
+                        className="disk_size_input"
+                        id="size-0"
+                        onChange={[Function]}
+                        value={10}
+                      />
+                      <span
+                        className="margin-l-normal"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </label>
           </div>
-        </TextParam>
+        </SliderParam>
       </div>
       <hr />
     </div>
@@ -672,7 +900,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
             }
           }
           id="blogName-0"
-          inputType="number"
+          inputType="string"
           label="blogName"
           param={
             Object {
@@ -704,7 +932,7 @@ exports[`renders a basic deployment with a generic string 1`] = `
                   <input
                     id="blogName-0"
                     onChange={[MockFunction]}
-                    type="number"
+                    type="string"
                     value="my-blog"
                   />
                 </div>
@@ -723,26 +951,7 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "size",
-            "render": "slider",
-            "type": "integer",
-            "value": 10,
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -765,30 +974,12 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
         hidden={false}
         key="size-0"
       >
-        <TextParam
-          handleBasicFormParamChange={
-            [MockFunction] {
-              "calls": Array [
-                Array [
-                  Object {
-                    "path": "size",
-                    "render": "slider",
-                    "type": "integer",
-                    "value": 10,
-                  },
-                ],
-              ],
-              "results": Array [
-                Object {
-                  "type": "return",
-                  "value": [MockFunction],
-                },
-              ],
-            }
-          }
+        <SliderParam
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
-          inputType="number"
           label="size"
+          max={1000}
+          min={1}
           param={
             Object {
               "path": "size",
@@ -797,6 +988,8 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
               "value": 10,
             }
           }
+          step={1}
+          unit=""
         >
           <div>
             <label
@@ -817,17 +1010,280 @@ exports[`renders a basic deployment with a integer disk size 1`] = `
                 <div
                   className="col-9 margin-t-small"
                 >
-                  <input
-                    id="size-0"
-                    onChange={[MockFunction]}
-                    type="number"
-                    value={10}
-                  />
+                  <div
+                    className="row"
+                  >
+                    <div
+                      className="col-9"
+                    >
+                      <Slider
+                        default={10}
+                        max={1000}
+                        min={1}
+                        onChange={[Function]}
+                        onUpdate={[Function]}
+                        step={1}
+                        values={10}
+                      >
+                        <Slider
+                          component="div"
+                          disabled={false}
+                          domain={
+                            Array [
+                              1,
+                              1000,
+                            ]
+                          }
+                          flatten={false}
+                          mode={1}
+                          onChange={[Function]}
+                          onSlideEnd={[Function]}
+                          onSlideStart={[Function]}
+                          onUpdate={[Function]}
+                          reversed={false}
+                          rootProps={Object {}}
+                          rootStyle={
+                            Object {
+                              "margin": "1.2em",
+                              "position": "relative",
+                              "width": "90%",
+                            }
+                          }
+                          step={1}
+                          values={
+                            Array [
+                              10,
+                            ]
+                          }
+                          vertical={false}
+                          warnOnChanges={false}
+                        >
+                          <div
+                            style={
+                              Object {
+                                "margin": "1.2em",
+                                "position": "relative",
+                                "width": "90%",
+                              }
+                            }
+                          >
+                            <Rail
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".0"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                onMouseDown={[Function]}
+                                onTouchStart={[Function]}
+                                style={
+                                  Object {
+                                    "backgroundColor": "rgb(155,155,155)",
+                                    "borderRadius": 7,
+                                    "cursor": "pointer",
+                                    "height": 14,
+                                    "position": "absolute",
+                                    "width": "100%",
+                                  }
+                                }
+                              />
+                            </Rail>
+                            <Handles
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".1"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-handles"
+                              >
+                                <Handle
+                                  domain={
+                                    Array [
+                                      1,
+                                      1000,
+                                    ]
+                                  }
+                                  getHandleProps={[Function]}
+                                  handle={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 0.9009009009009009,
+                                      "value": 10,
+                                    }
+                                  }
+                                  key="$$-0"
+                                >
+                                  <div
+                                    aria-valuemax={1000}
+                                    aria-valuemin={1}
+                                    aria-valuenow={10}
+                                    onKeyDown={[Function]}
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    role="slider"
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#34568f",
+                                        "borderRadius": "50%",
+                                        "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
+                                        "cursor": "pointer",
+                                        "height": 24,
+                                        "left": "0.9009009009009009%",
+                                        "marginLeft": "-11px",
+                                        "marginTop": "-6px",
+                                        "position": "absolute",
+                                        "width": 24,
+                                        "zIndex": 2,
+                                      }
+                                    }
+                                  />
+                                </Handle>
+                              </div>
+                            </Handles>
+                            <Tracks
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".2"
+                              left={true}
+                              right={false}
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-tracks"
+                              >
+                                <Track
+                                  getTrackProps={[Function]}
+                                  key="$-$$-0"
+                                  source={
+                                    Object {
+                                      "id": "$",
+                                      "percent": 0,
+                                      "value": 1,
+                                    }
+                                  }
+                                  target={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 0.9009009009009009,
+                                      "value": 10,
+                                    }
+                                  }
+                                >
+                                  <div
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#7aa0c4",
+                                        "borderRadius": 7,
+                                        "cursor": "pointer",
+                                        "height": 14,
+                                        "left": "0%",
+                                        "position": "absolute",
+                                        "width": "0.9009009009009009%",
+                                        "zIndex": 1,
+                                      }
+                                    }
+                                  />
+                                </Track>
+                              </div>
+                            </Tracks>
+                          </div>
+                        </Slider>
+                      </Slider>
+                    </div>
+                    <div
+                      className="col-3"
+                    >
+                      <input
+                        className="disk_size_input"
+                        id="size-0"
+                        onChange={[Function]}
+                        value={10}
+                      />
+                      <span
+                        className="margin-l-normal"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </label>
           </div>
-        </TextParam>
+        </SliderParam>
       </div>
       <hr />
     </div>
@@ -839,26 +1295,7 @@ exports[`renders a basic deployment with a number disk size 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "size",
-            "render": "slider",
-            "type": "number",
-            "value": 10,
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -881,30 +1318,12 @@ exports[`renders a basic deployment with a number disk size 1`] = `
         hidden={false}
         key="size-0"
       >
-        <TextParam
-          handleBasicFormParamChange={
-            [MockFunction] {
-              "calls": Array [
-                Array [
-                  Object {
-                    "path": "size",
-                    "render": "slider",
-                    "type": "number",
-                    "value": 10,
-                  },
-                ],
-              ],
-              "results": Array [
-                Object {
-                  "type": "return",
-                  "value": [MockFunction],
-                },
-              ],
-            }
-          }
+        <SliderParam
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
-          inputType="number"
           label="size"
+          max={1000}
+          min={1}
           param={
             Object {
               "path": "size",
@@ -913,6 +1332,8 @@ exports[`renders a basic deployment with a number disk size 1`] = `
               "value": 10,
             }
           }
+          step={1}
+          unit=""
         >
           <div>
             <label
@@ -933,17 +1354,280 @@ exports[`renders a basic deployment with a number disk size 1`] = `
                 <div
                   className="col-9 margin-t-small"
                 >
-                  <input
-                    id="size-0"
-                    onChange={[MockFunction]}
-                    type="number"
-                    value={10}
-                  />
+                  <div
+                    className="row"
+                  >
+                    <div
+                      className="col-9"
+                    >
+                      <Slider
+                        default={10}
+                        max={1000}
+                        min={1}
+                        onChange={[Function]}
+                        onUpdate={[Function]}
+                        step={1}
+                        values={10}
+                      >
+                        <Slider
+                          component="div"
+                          disabled={false}
+                          domain={
+                            Array [
+                              1,
+                              1000,
+                            ]
+                          }
+                          flatten={false}
+                          mode={1}
+                          onChange={[Function]}
+                          onSlideEnd={[Function]}
+                          onSlideStart={[Function]}
+                          onUpdate={[Function]}
+                          reversed={false}
+                          rootProps={Object {}}
+                          rootStyle={
+                            Object {
+                              "margin": "1.2em",
+                              "position": "relative",
+                              "width": "90%",
+                            }
+                          }
+                          step={1}
+                          values={
+                            Array [
+                              10,
+                            ]
+                          }
+                          vertical={false}
+                          warnOnChanges={false}
+                        >
+                          <div
+                            style={
+                              Object {
+                                "margin": "1.2em",
+                                "position": "relative",
+                                "width": "90%",
+                              }
+                            }
+                          >
+                            <Rail
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".0"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                onMouseDown={[Function]}
+                                onTouchStart={[Function]}
+                                style={
+                                  Object {
+                                    "backgroundColor": "rgb(155,155,155)",
+                                    "borderRadius": 7,
+                                    "cursor": "pointer",
+                                    "height": 14,
+                                    "position": "absolute",
+                                    "width": "100%",
+                                  }
+                                }
+                              />
+                            </Rail>
+                            <Handles
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".1"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-handles"
+                              >
+                                <Handle
+                                  domain={
+                                    Array [
+                                      1,
+                                      1000,
+                                    ]
+                                  }
+                                  getHandleProps={[Function]}
+                                  handle={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 0.9009009009009009,
+                                      "value": 10,
+                                    }
+                                  }
+                                  key="$$-0"
+                                >
+                                  <div
+                                    aria-valuemax={1000}
+                                    aria-valuemin={1}
+                                    aria-valuenow={10}
+                                    onKeyDown={[Function]}
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    role="slider"
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#34568f",
+                                        "borderRadius": "50%",
+                                        "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
+                                        "cursor": "pointer",
+                                        "height": 24,
+                                        "left": "0.9009009009009009%",
+                                        "marginLeft": "-11px",
+                                        "marginTop": "-6px",
+                                        "position": "absolute",
+                                        "width": 24,
+                                        "zIndex": 2,
+                                      }
+                                    }
+                                  />
+                                </Handle>
+                              </div>
+                            </Handles>
+                            <Tracks
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 0.9009009009009009,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".2"
+                              left={true}
+                              right={false}
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    1000,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-tracks"
+                              >
+                                <Track
+                                  getTrackProps={[Function]}
+                                  key="$-$$-0"
+                                  source={
+                                    Object {
+                                      "id": "$",
+                                      "percent": 0,
+                                      "value": 1,
+                                    }
+                                  }
+                                  target={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 0.9009009009009009,
+                                      "value": 10,
+                                    }
+                                  }
+                                >
+                                  <div
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#7aa0c4",
+                                        "borderRadius": 7,
+                                        "cursor": "pointer",
+                                        "height": 14,
+                                        "left": "0%",
+                                        "position": "absolute",
+                                        "width": "0.9009009009009009%",
+                                        "zIndex": 1,
+                                      }
+                                    }
+                                  />
+                                </Track>
+                              </div>
+                            </Tracks>
+                          </div>
+                        </Slider>
+                      </Slider>
+                    </div>
+                    <div
+                      className="col-3"
+                    >
+                      <input
+                        className="disk_size_input"
+                        id="size-0"
+                        onChange={[Function]}
+                        value={10}
+                      />
+                      <span
+                        className="margin-l-normal"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </label>
           </div>
-        </TextParam>
+        </SliderParam>
       </div>
       <hr />
     </div>
@@ -1182,8 +1866,20 @@ exports[`renders a basic deployment with custom configuration 1`] = `
 Second line",
           },
         ],
+        Array [
+          Object {
+            "path": "configuration",
+            "render": "textArea",
+            "value": "First line
+Second line",
+          },
+        ],
       ],
       "results": Array [
+        Object {
+          "type": "return",
+          "value": [MockFunction],
+        },
         Object {
           "type": "return",
           "value": [MockFunction],
@@ -1225,8 +1921,20 @@ Second line",
 Second line",
                   },
                 ],
+                Array [
+                  Object {
+                    "path": "configuration",
+                    "render": "textArea",
+                    "value": "First line
+Second line",
+                  },
+                ],
               ],
               "results": Array [
+                Object {
+                  "type": "return",
+                  "value": [MockFunction],
+                },
                 Object {
                   "type": "return",
                   "value": [MockFunction],
@@ -1235,7 +1943,7 @@ Second line",
             }
           }
           id="configuration-0"
-          inputType="string"
+          inputType="textarea"
           label="configuration"
           param={
             Object {
@@ -1265,10 +1973,9 @@ Second line",
                 <div
                   className="col-9 margin-t-small"
                 >
-                  <input
+                  <textarea
                     id="configuration-0"
                     onChange={[MockFunction]}
-                    type="string"
                     value="First line
 Second line"
                   />
@@ -1288,30 +1995,7 @@ exports[`renders a basic deployment with slider parameters 1`] = `
 <BasicDeploymentForm
   appValues=""
   deploymentEvent="install"
-  handleBasicFormParamChange={
-    [MockFunction] {
-      "calls": Array [
-        Array [
-          Object {
-            "path": "size",
-            "render": "slider",
-            "sliderMax": 100,
-            "sliderMin": 1,
-            "sliderStep": 1,
-            "sliderUnit": "Gi",
-            "type": "string",
-            "value": "10Gi",
-          },
-        ],
-      ],
-      "results": Array [
-        Object {
-          "type": "return",
-          "value": [MockFunction],
-        },
-      ],
-    }
-  }
+  handleBasicFormParamChange={[MockFunction]}
   handleValuesChange={[MockFunction]}
   params={
     Array [
@@ -1338,34 +2022,12 @@ exports[`renders a basic deployment with slider parameters 1`] = `
         hidden={false}
         key="size-0"
       >
-        <TextParam
-          handleBasicFormParamChange={
-            [MockFunction] {
-              "calls": Array [
-                Array [
-                  Object {
-                    "path": "size",
-                    "render": "slider",
-                    "sliderMax": 100,
-                    "sliderMin": 1,
-                    "sliderStep": 1,
-                    "sliderUnit": "Gi",
-                    "type": "string",
-                    "value": "10Gi",
-                  },
-                ],
-              ],
-              "results": Array [
-                Object {
-                  "type": "return",
-                  "value": [MockFunction],
-                },
-              ],
-            }
-          }
+        <SliderParam
+          handleBasicFormParamChange={[MockFunction]}
           id="size-0"
-          inputType="number"
           label="size"
+          max={100}
+          min={1}
           param={
             Object {
               "path": "size",
@@ -1378,6 +2040,8 @@ exports[`renders a basic deployment with slider parameters 1`] = `
               "value": "10Gi",
             }
           }
+          step={1}
+          unit="Gi"
         >
           <div>
             <label
@@ -1398,17 +2062,282 @@ exports[`renders a basic deployment with slider parameters 1`] = `
                 <div
                   className="col-9 margin-t-small"
                 >
-                  <input
-                    id="size-0"
-                    onChange={[MockFunction]}
-                    type="number"
-                    value="10Gi"
-                  />
+                  <div
+                    className="row"
+                  >
+                    <div
+                      className="col-9"
+                    >
+                      <Slider
+                        default={10}
+                        max={100}
+                        min={1}
+                        onChange={[Function]}
+                        onUpdate={[Function]}
+                        step={1}
+                        values={10}
+                      >
+                        <Slider
+                          component="div"
+                          disabled={false}
+                          domain={
+                            Array [
+                              1,
+                              100,
+                            ]
+                          }
+                          flatten={false}
+                          mode={1}
+                          onChange={[Function]}
+                          onSlideEnd={[Function]}
+                          onSlideStart={[Function]}
+                          onUpdate={[Function]}
+                          reversed={false}
+                          rootProps={Object {}}
+                          rootStyle={
+                            Object {
+                              "margin": "1.2em",
+                              "position": "relative",
+                              "width": "90%",
+                            }
+                          }
+                          step={1}
+                          values={
+                            Array [
+                              10,
+                            ]
+                          }
+                          vertical={false}
+                          warnOnChanges={false}
+                        >
+                          <div
+                            style={
+                              Object {
+                                "margin": "1.2em",
+                                "position": "relative",
+                                "width": "90%",
+                              }
+                            }
+                          >
+                            <Rail
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 9.090909090909092,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".0"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    100,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                onMouseDown={[Function]}
+                                onTouchStart={[Function]}
+                                style={
+                                  Object {
+                                    "backgroundColor": "rgb(155,155,155)",
+                                    "borderRadius": 7,
+                                    "cursor": "pointer",
+                                    "height": 14,
+                                    "position": "absolute",
+                                    "width": "100%",
+                                  }
+                                }
+                              />
+                            </Rail>
+                            <Handles
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 9.090909090909092,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".1"
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    100,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-handles"
+                              >
+                                <Handle
+                                  domain={
+                                    Array [
+                                      1,
+                                      100,
+                                    ]
+                                  }
+                                  getHandleProps={[Function]}
+                                  handle={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 9.090909090909092,
+                                      "value": 10,
+                                    }
+                                  }
+                                  key="$$-0"
+                                >
+                                  <div
+                                    aria-valuemax={100}
+                                    aria-valuemin={1}
+                                    aria-valuenow={10}
+                                    onKeyDown={[Function]}
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    role="slider"
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#34568f",
+                                        "borderRadius": "50%",
+                                        "boxShadow": "1px 1px 1px 1px rgba(0, 0, 0, 0.2)",
+                                        "cursor": "pointer",
+                                        "height": 24,
+                                        "left": "9.090909090909092%",
+                                        "marginLeft": "-11px",
+                                        "marginTop": "-6px",
+                                        "position": "absolute",
+                                        "width": 24,
+                                        "zIndex": 2,
+                                      }
+                                    }
+                                  />
+                                </Handle>
+                              </div>
+                            </Handles>
+                            <Tracks
+                              activeHandleID={null}
+                              emitKeyboard={[Function]}
+                              emitMouse={[Function]}
+                              emitTouch={[Function]}
+                              getEventData={[Function]}
+                              handles={
+                                Array [
+                                  Object {
+                                    "id": "$$-0",
+                                    "percent": 9.090909090909092,
+                                    "value": 10,
+                                  },
+                                ]
+                              }
+                              key=".2"
+                              left={true}
+                              right={false}
+                              scale={
+                                LinearScale {
+                                  "domain": Array [
+                                    1,
+                                    100,
+                                  ],
+                                  "interpolator": [Function],
+                                  "range": Array [
+                                    0,
+                                    100,
+                                  ],
+                                }
+                              }
+                            >
+                              <div
+                                className="slider-tracks"
+                              >
+                                <Track
+                                  getTrackProps={[Function]}
+                                  key="$-$$-0"
+                                  source={
+                                    Object {
+                                      "id": "$",
+                                      "percent": 0,
+                                      "value": 1,
+                                    }
+                                  }
+                                  target={
+                                    Object {
+                                      "id": "$$-0",
+                                      "percent": 9.090909090909092,
+                                      "value": 10,
+                                    }
+                                  }
+                                >
+                                  <div
+                                    onMouseDown={[Function]}
+                                    onTouchStart={[Function]}
+                                    style={
+                                      Object {
+                                        "backgroundColor": "#7aa0c4",
+                                        "borderRadius": 7,
+                                        "cursor": "pointer",
+                                        "height": 14,
+                                        "left": "0%",
+                                        "position": "absolute",
+                                        "width": "9.090909090909092%",
+                                        "zIndex": 1,
+                                      }
+                                    }
+                                  />
+                                </Track>
+                              </div>
+                            </Tracks>
+                          </div>
+                        </Slider>
+                      </Slider>
+                    </div>
+                    <div
+                      className="col-3"
+                    >
+                      <input
+                        className="disk_size_input"
+                        id="size-0"
+                        onChange={[Function]}
+                        value={10}
+                      />
+                      <span
+                        className="margin-l-normal"
+                      >
+                        Gi
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </label>
           </div>
-        </TextParam>
+        </SliderParam>
       </div>
       <hr />
     </div>
@@ -1853,7 +2782,7 @@ exports[`renders a basic deployment with username, password, email and a generic
             }
           }
           id="blogName-3"
-          inputType="number"
+          inputType="string"
           label="blogName"
           param={
             Object {
@@ -1885,7 +2814,7 @@ exports[`renders a basic deployment with username, password, email and a generic
                   <input
                     id="blogName-3"
                     onChange={[MockFunction]}
-                    type="number"
+                    type="string"
                     value="my-blog"
                   />
                 </div>
