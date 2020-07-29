@@ -1,0 +1,5 @@
+featureFlags:
+  additionalClusters:
+   - name: second-cluster
+     apiServiceURL: https://172.18.0.3:6443
+     insecure: true

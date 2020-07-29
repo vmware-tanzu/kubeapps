@@ -174,11 +174,10 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 // NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster.
 func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) *genericclioptions.ConfigFlags {
 	impersonateGroup := []string{}
-	insecure := false
 
 	// CertFile and KeyFile must be nil for the BearerToken to be used for authentication and authorization instead of the pod's service account.
 	return &genericclioptions.ConfigFlags{
-		Insecure:         &insecure,
+		Insecure:         &clusterConfig.TLSClientConfig.Insecure,
 		Timeout:          stringptr("0"),
 		Namespace:        stringptr(namespace),
 		APIServer:        stringptr(clusterConfig.Host),
