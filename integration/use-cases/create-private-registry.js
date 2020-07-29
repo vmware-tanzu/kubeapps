@@ -2,7 +2,7 @@ const axios = require("axios");
 const utils = require("./lib/utils");
 
 test("Creates a private registry", async () => {
-  await page.goto(getUrl("/#/config/ns/default/repos"));
+  await page.goto(getUrl("/#/c/default/ns/default/config/repos"));
 
   await expect(page).toFillForm("form", {
     token: process.env.ADMIN_TOKEN,

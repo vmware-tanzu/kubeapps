@@ -67,7 +67,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       this.state.configOpen ? "header__nav__submenu-open" : ""
     }`;
 
-    const reposPath = `/config/ns/${cluster.currentNamespace}/repos`;
+    const reposPath = app.config.apprepositories(clusters.currentCluster, cluster.currentNamespace);
     return (
       <section className="gradient-135-brand type-color-reverse type-color-reverse-anchor-reset">
         <div className="container">

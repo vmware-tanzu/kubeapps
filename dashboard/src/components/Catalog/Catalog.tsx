@@ -3,6 +3,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { IFeatureFlags } from "shared/Config";
+import { app } from "shared/url";
 import { ForbiddenError, IChart, IChartState, IClusterServiceVersion } from "../../shared/types";
 import { escapeRegExp } from "../../shared/utils";
 import { CardGrid } from "../Card";
@@ -22,6 +23,7 @@ export interface ICatalogProps {
   filter: string;
   fetchCharts: (namespace: string, repo: string) => void;
   pushSearchFilter: (filter: string) => RouterAction;
+  cluster: string;
   namespace: string;
   kubeappsNamespace: string;
   getCSVs: (namespace: string) => void;
@@ -70,6 +72,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
         selected: { error },
         items: allItems,
       },
+      cluster,
       namespace,
       pushSearchFilter,
       csvs,
@@ -98,7 +101,10 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
             <div>
               <h5>Charts not found.</h5>
               Manage your Helm chart repositories in Kubeapps by visiting the{" "}
-              <Link to={`/config/ns/${namespace}/repos`}>App repositories configuration</Link> page.
+              <Link to={app.config.apprepositories(cluster, namespace)}>
+                App repositories configuration
+              </Link>{" "}
+              page.
             </div>
           }
         />

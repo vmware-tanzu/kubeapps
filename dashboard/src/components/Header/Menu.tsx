@@ -49,7 +49,7 @@ function Menu({ clusters, defaultNamespace, appVersion, logout }: IContextSelect
             <div>
               <label className="dropdown-menu-padding dropdown-menu-label">Administration</label>
               <Link
-                to={app.config.apprepositories(namespaceSelected)}
+                to={app.config.apprepositories(clusters.currentCluster, namespaceSelected)}
                 className="dropdown-menu-link"
                 onClick={toggleOpen}
               >

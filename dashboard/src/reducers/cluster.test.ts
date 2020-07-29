@@ -48,7 +48,7 @@ describe("clusterReducer", () => {
         },
         {
           // It still updates the current namespace for a non-multicluster route.
-          path: "/config/ns/default/repos",
+          path: "/ns/default/operators",
           currentNamespace: "default",
           currentCluster: "initial-cluster",
         },
