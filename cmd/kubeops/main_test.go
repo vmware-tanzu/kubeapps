@@ -18,37 +18,42 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 	}{
 		{
 			name:       "parses a single additional cluster",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "abcd"}]`,
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="}]`,
 			expectedConfig: kube.AdditionalClustersConfig{
 				"cluster-2": {
 					Name:                     "cluster-2",
 					APIServiceURL:            "https://example.com",
-					CertificateAuthorityData: "abcd",
+					CertificateAuthorityData: "ca-cert-data\n",
 				},
 			},
 		},
 		{
 			name: "parses multiple additional clusters",
 			configJSON: `[
-	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "abcd"},
-	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "efgh"}
+	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="},
+	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
 ]`,
 			expectedConfig: kube.AdditionalClustersConfig{
 				"cluster-2": {
 					Name:                     "cluster-2",
 					APIServiceURL:            "https://example.com/cluster-2",
-					CertificateAuthorityData: "abcd",
+					CertificateAuthorityData: "ca-cert-data\n",
 				},
 				"cluster-3": {
 					Name:                     "cluster-3",
 					APIServiceURL:            "https://example.com/cluster-3",
-					CertificateAuthorityData: "efgh",
+					CertificateAuthorityData: "ca-cert-data-additional\n",
 				},
 			},
 		},
 		{
 			name:        "errors if the cluster configs cannot be parsed",
 			configJSON:  `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "extracomma",}]`,
+			expectedErr: true,
+		},
+		{
+			name:        "errors if any CAData cannot be decoded",
+			configJSON:  `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "not-base64-encoded"}]`,
 			expectedErr: true,
 		},
 	}

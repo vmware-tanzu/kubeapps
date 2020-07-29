@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -185,6 +186,15 @@ func parseAdditionalClusterConfig(path string) (kube.AdditionalClustersConfig, e
 
 	configs := kube.AdditionalClustersConfig{}
 	for _, c := range clusterConfigs {
+		// We need to decode the base64-encoded cadata from the input.
+		if c.CertificateAuthorityData != "" {
+			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
+			if err != nil {
+				return nil, err
+			}
+			c.CertificateAuthorityData = string(decodedCAData)
+			// time="2020-07-28T06:59:23Z" level=error msg="unable to create app repo: Get https://172.18.0.3:6443/api/v1/namespaces: x509: certificate signed by unknown authority (possibly because of \"crypto/rsa: verification error\" while trying to verify candidate authority certificate \"kubernetes\")"
+		}
 		configs[c.Name] = c
 	}
 	return configs, nil
