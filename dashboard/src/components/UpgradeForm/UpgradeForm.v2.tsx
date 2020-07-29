@@ -105,10 +105,10 @@ function UpgradeForm({
   }, [deployed.values, appCurrentValues, modifications]);
 
   useEffect(() => {
-    if (selected.versions.length) {
-      getChartVersion(repoNamespace, chartID, selected.versions[0].attributes.version);
+    if (deployed.chartVersion?.attributes.version) {
+      getChartVersion(repoNamespace, chartID, deployed.chartVersion?.attributes.version);
     }
-  }, [getChartVersion, repoNamespace, chartID, selected.versions]);
+  }, [getChartVersion, repoNamespace, chartID, deployed.chartVersion]);
 
   useEffect(() => {
     if (!valuesModified && selected.values) {
