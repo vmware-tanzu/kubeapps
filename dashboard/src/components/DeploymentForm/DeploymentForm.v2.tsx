@@ -70,7 +70,6 @@ function DeploymentForm({
     }
   }, [selected.values, valuesModified]);
   useEffect(() => {
-    // TODO(andresmgot): use version.attributes.version
     dispatch(actions.charts.getChartVersion(chartNamespace, chartID, chartVersion));
   }, [chartNamespace, chartID, chartVersion, dispatch]);
 

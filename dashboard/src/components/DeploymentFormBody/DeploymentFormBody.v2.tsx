@@ -6,7 +6,7 @@ import Alert from "components/js/Alert";
 import { retrieveBasicFormParams, setValue } from "../../shared/schema";
 import { DeploymentEvent, IBasicFormParam, IChartState } from "../../shared/types";
 import { getValueFromEvent } from "../../shared/utils";
-import ConfirmDialog from "../ConfirmDialog";
+import ConfirmDialog from "../ConfirmDialog/ConfirmDialog.v2";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import AdvancedDeploymentForm from "./AdvancedDeploymentForm.v2";
 import BasicDeploymentForm from "./BasicDeploymentForm/BasicDeploymentForm.v2";
