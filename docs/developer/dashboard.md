@@ -68,6 +68,16 @@ yarn run start
 
 As an alternative to using [Telepresence](https://www.telepresence.io/) you can use the default [Create React App API proxy](https://create-react-app.dev/docs/proxying-api-requests-in-development/) functionality.
 
+First add the desired host:port to the package.json:
+
+```patch
+-  }
++  },
++  "proxy": "http://127.0.0.1:8080"
+```
+
+> **NOTE**: Add the [proxy](../../dashboard/package.json#L176) `key:value` to the end of the `package.json`. For convenience, you can change the `host:port` values to meet your needs.
+
 To use this a run Kubeapps per the [getting-started documentation](../../docs/user/getting-started.md#step-3-start-the-kubeapps-dashboard). This will start Kubeapps running on port `8080`.
 
 Next you can launch the dashboard.
@@ -75,8 +85,6 @@ Next you can launch the dashboard.
 ```bash
 yarn run start
 ```
-
-> **NOTE**: The [proxy](../../dashboard/package.json#L176) `key:value` has already added to the `package.json` for convenience but you can change the `host:port` values to meet your needs.
 
 You can now access the local development server simply by accessing the dashboard as you usually would (e.g. doing a port-forward or accesing the Ingress URL).
 
