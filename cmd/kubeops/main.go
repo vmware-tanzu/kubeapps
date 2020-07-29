@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -59,10 +60,12 @@ func main() {
 	var additionalClusters map[string]kube.AdditionalClusterConfig
 	if additionalClustersConfigPath != "" {
 		var err error
-		additionalClusters, err = parseAdditionalClusterConfig(additionalClustersConfigPath)
+		var deferFn func()
+		additionalClusters, deferFn, err = parseAdditionalClusterConfig(additionalClustersConfigPath)
 		if err != nil {
 			log.Fatalf("unable to parse additional clusters config: %+v", err)
 		}
+		defer deferFn()
 	}
 
 	options := handler.Options{
@@ -173,15 +176,20 @@ func main() {
 	os.Exit(0)
 }
 
-func parseAdditionalClusterConfig(path string) (kube.AdditionalClustersConfig, error) {
+func parseAdditionalClusterConfig(path string) (kube.AdditionalClustersConfig, func(), error) {
+	caFilesDir, err := ioutil.TempDir("", "additional-clusters-cafiles-")
+	if err != nil {
+		return nil, func() {}, err
+	}
+	deferFn := func() { os.RemoveAll(caFilesDir) }
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, deferFn, err
 	}
 
 	var clusterConfigs []kube.AdditionalClusterConfig
 	if err = json.Unmarshal(content, &clusterConfigs); err != nil {
-		return nil, err
+		return nil, deferFn, err
 	}
 
 	configs := kube.AdditionalClustersConfig{}
@@ -190,12 +198,20 @@ func parseAdditionalClusterConfig(path string) (kube.AdditionalClustersConfig, e
 		if c.CertificateAuthorityData != "" {
 			decodedCAData, err := base64.StdEncoding.DecodeString(c.CertificateAuthorityData)
 			if err != nil {
-				return nil, err
+				return nil, deferFn, err
 			}
 			c.CertificateAuthorityData = string(decodedCAData)
-			// time="2020-07-28T06:59:23Z" level=error msg="unable to create app repo: Get https://172.18.0.3:6443/api/v1/namespaces: x509: certificate signed by unknown authority (possibly because of \"crypto/rsa: verification error\" while trying to verify candidate authority certificate \"kubernetes\")"
+
+			// We also need a CAFile field because Helm uses the genericclioptions.ConfigFlags
+			// struct which does not support CAData.
+			// https://github.com/kubernetes/cli-runtime/issues/8
+			c.CAFile = filepath.Join(caFilesDir, c.Name)
+			err = ioutil.WriteFile(c.CAFile, decodedCAData, 0644)
+			if err != nil {
+				return nil, deferFn, err
+			}
 		}
 		configs[c.Name] = c
 	}
-	return configs, nil
+	return configs, deferFn, nil
 }

@@ -6,8 +6,31 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 )
+
+// configComparer is a custom comparer to include CAFile contents
+var configComparer = cmp.Comparer(func(want, got kube.AdditionalClusterConfig) bool {
+	if !(want.Name == got.Name &&
+		want.APIServiceURL == got.APIServiceURL &&
+		want.CertificateAuthorityData == got.CertificateAuthorityData &&
+		want.Insecure == got.Insecure) {
+		return false
+	}
+
+	if want.CertificateAuthorityData != "" {
+		caBytes, err := ioutil.ReadFile(got.CAFile)
+		if err != nil {
+			return false
+		}
+
+		if string(caBytes) != want.CertificateAuthorityData {
+			return false
+		}
+	}
+	return true
+})
 
 func TestParseAdditionalClusterConfig(t *testing.T) {
 	testCases := []struct {
@@ -58,18 +81,33 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 		},
 	}
 
+	ignoreCAFile := cmpopts.IgnoreFields(kube.AdditionalClusterConfig{}, "CAFile")
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 
-			config, err := parseAdditionalClusterConfig(path)
+			config, deferFn, err := parseAdditionalClusterConfig(path)
 			if got, want := err != nil, tc.expectedErr; got != want {
 				t.Errorf("got: %t, want: %t", got, want)
 			}
+			defer deferFn()
 
-			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got, ignoreCAFile) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreCAFile))
+			}
+
+			for clusterName, clusterConfig := range tc.expectedConfig {
+				if clusterConfig.CertificateAuthorityData != "" {
+					fileCAData, err := ioutil.ReadFile(config[clusterName].CAFile)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+					if got, want := string(fileCAData), clusterConfig.CertificateAuthorityData; got != want {
+						t.Errorf("got: %q, want: %q", got, want)
+					}
+				}
 			}
 		})
 	}

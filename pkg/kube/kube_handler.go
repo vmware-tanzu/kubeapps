@@ -51,7 +51,14 @@ type AdditionalClusterConfig struct {
 	Name                     string `json:"name"`
 	APIServiceURL            string `json:"apiServiceURL"`
 	CertificateAuthorityData string `json:"certificateAuthorityData,omitempty"`
-	Insecure                 bool   `json:"insecure"`
+	// The genericclioptions.ConfigFlags struct includes only a CAFile field, not
+	// a CAData field.
+	// https://github.com/kubernetes/cli-runtime/issues/8
+	// Embedding genericclioptions.ConfigFlags in a struct which includes the actual rest.Config
+	// and returning that for ToRESTConfig() isn't enough, so we each configured cert out and
+	// include a CAFile field in the config.
+	CAFile   string
+	Insecure bool `json:"insecure"`
 }
 
 // AdditionalClustersConfig is an alias for a map of additional cluster configs.
@@ -77,6 +84,7 @@ func NewClusterConfig(inClusterConfig *rest.Config, token string, cluster string
 	config.TLSClientConfig.Insecure = additionalCluster.Insecure
 	if additionalCluster.CertificateAuthorityData != "" {
 		config.TLSClientConfig.CAData = []byte(additionalCluster.CertificateAuthorityData)
+		config.CAFile = additionalCluster.CAFile
 	}
 	return config, nil
 }

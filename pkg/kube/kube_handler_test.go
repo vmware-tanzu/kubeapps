@@ -924,6 +924,7 @@ func TestNewClusterConfig(t *testing.T) {
 				"cluster-1": {
 					APIServiceURL:            "https://cluster-1.example.com:7890",
 					CertificateAuthorityData: "ca-file-data",
+					CAFile:                   "/tmp/ca-file-data",
 				},
 			},
 			inClusterConfig: &rest.Config{
@@ -940,6 +941,7 @@ func TestNewClusterConfig(t *testing.T) {
 				BearerTokenFile: "",
 				TLSClientConfig: rest.TLSClientConfig{
 					CAData: []byte("ca-file-data"),
+					CAFile: "/tmp/ca-file-data",
 				},
 			},
 		},

@@ -15,7 +15,6 @@ import (
 	"helm.sh/helm/v3/pkg/storage"
 	"helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
 	chartv1 "k8s.io/helm/pkg/proto/hapi/chart"
 
 	"github.com/google/go-cmp/cmp"
@@ -707,22 +706,5 @@ func TestUpgradeRelease(t *testing.T) {
 				t.Errorf("got: %q, want: %q", got, want)
 			}
 		})
-	}
-}
-
-func TestNewConfigFlagsFromCluster(t *testing.T) {
-	caData := []byte("ca-data-not-from-file")
-	tlsClientConfig := rest.TLSClientConfig{CAData: caData}
-	clientConfig := &rest.Config{TLSClientConfig: tlsClientConfig}
-
-	flags := NewConfigFlagsFromCluster("mynamespace", clientConfig)
-
-	returnedClientConfig, err := flags.ToRESTConfig()
-	if err != nil {
-		t.Fatalf("%+v", err)
-	}
-
-	if got, want := returnedClientConfig, clientConfig; !cmp.Equal(want, got) {
-		t.Errorf(cmp.Diff(want, got))
 	}
 }
