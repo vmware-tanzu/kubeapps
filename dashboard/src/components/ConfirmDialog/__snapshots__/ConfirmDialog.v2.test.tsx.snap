@@ -11,9 +11,9 @@ exports[`when loading is true loading spinner matches the snapshot 1`] = `
   <div
     className="confirmation-modal"
   >
-    <div>
+    <span>
       Loading, please wait
-    </div>
+    </span>
     <LoadingWrapper
       loaded={false}
     />

@@ -1,4 +1,5 @@
 import { CdsButton } from "components/Clarity/clarity";
+import Alert from "components/js/Alert";
 import Modal from "components/js/Modal/Modal";
 import React from "react";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
@@ -10,6 +11,7 @@ interface IConfirmDialogProps {
   extraElem?: JSX.Element;
   confirmationText?: string;
   confirmationButtonText?: string;
+  error?: Error;
   onConfirm: () => any;
   closeModal: () => any;
 }
@@ -22,17 +24,19 @@ function ConfirmDialog({
   confirmationText,
   onConfirm,
   closeModal,
+  error,
 }: IConfirmDialogProps) {
   return (
     <Modal showModal={modalIsOpen} onModalClose={closeModal}>
+      {error && <Alert theme="danger">Found error: {error.message}</Alert>}
       {loading === true ? (
         <div className="confirmation-modal">
-          <div>Loading, please wait</div>
+          <span>Loading, please wait</span>
           <LoadingWrapper loaded={false} />
         </div>
       ) : (
         <div className="confirmation-modal">
-          <div>{confirmationText || "Are you sure you want to delete this?"}</div>
+          <span>{confirmationText || "Are you sure you want to delete this?"}</span>
           {extraElem}
           <div className="confirmation-modal-buttons">
             <CdsButton action="outline" type="button" onClick={closeModal}>

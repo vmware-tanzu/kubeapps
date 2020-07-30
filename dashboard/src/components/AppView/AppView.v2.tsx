@@ -18,6 +18,8 @@ import { IK8sList, IRelease, IResource } from "../../shared/types";
 import * as url from "../../shared/url";
 import LoadingWrapper from "../LoadingWrapper/LoadingWrapper.v2";
 import AccessURLTable from "./AccessURLTable/AccessURLTable.v2";
+import DeleteButton from "./AppControls/DeleteButton/DeleteButton.v2";
+import RollbackButton from "./AppControls/RollbackButton/RollbackButton.v2";
 import AppNotes from "./AppNotes.v2";
 import AppSecrets from "./AppSecrets";
 import AppValues from "./AppValues/AppValues.v2";
@@ -187,18 +189,19 @@ export default function AppView({
                     </Link>
                   </div>
                   <div className="header-button">
-                    <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
-                      <CdsButton status="primary">
-                        <CdsIcon shape="rewind" inverse={true} /> Rollback
-                      </CdsButton>
-                    </Link>
+                    <RollbackButton
+                      cluster={cluster}
+                      namespace={namespace}
+                      releaseName={releaseName}
+                      revision={app?.version || 0}
+                    />
                   </div>
                   <div className="header-button">
-                    <Link to={url.app.apps.upgrade(cluster, namespace, releaseName)}>
-                      <CdsButton status="danger">
-                        <CdsIcon shape="trash" inverse={true} /> Delete
-                      </CdsButton>
-                    </Link>
+                    <DeleteButton
+                      cluster={cluster}
+                      namespace={namespace}
+                      releaseName={releaseName}
+                    />
                   </div>
                 </Row>
               </div>
@@ -207,9 +210,7 @@ export default function AppView({
         </div>
       </PageHeader>
 
-      {error && (
-        <Alert theme="danger">Unable to load the application. Received: {error.message}</Alert>
-      )}
+      {error && <Alert theme="danger">Found an error: {error.message}</Alert>}
       {deleteError && (
         <Alert theme="danger">
           Unable to delete the application. Received: {deleteError.message}
