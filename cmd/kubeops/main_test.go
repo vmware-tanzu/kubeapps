@@ -10,28 +10,6 @@ import (
 	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
-// configComparer is a custom comparer to include CAFile contents
-var configComparer = cmp.Comparer(func(want, got kube.AdditionalClusterConfig) bool {
-	if !(want.Name == got.Name &&
-		want.APIServiceURL == got.APIServiceURL &&
-		want.CertificateAuthorityData == got.CertificateAuthorityData &&
-		want.Insecure == got.Insecure) {
-		return false
-	}
-
-	if want.CertificateAuthorityData != "" {
-		caBytes, err := ioutil.ReadFile(got.CAFile)
-		if err != nil {
-			return false
-		}
-
-		if string(caBytes) != want.CertificateAuthorityData {
-			return false
-		}
-	}
-	return true
-})
-
 func TestParseAdditionalClusterConfig(t *testing.T) {
 	testCases := []struct {
 		name           string

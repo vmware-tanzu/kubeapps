@@ -171,22 +171,6 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 	return actionConfig, nil
 }
 
-// ConfigFlags implements the RESTConfigGetter interface.
-// The genericclioptions.ConfigFlags struct includes only a CAFile field, not
-// a CAData field.
-// https://github.com/kubernetes/cli-runtime/issues/8
-// Rather than writing the CA data to a file unnecessarily, we embed the ConfigFlags implementation
-// and update the ToRestConfig method only.
-type ConfigFlags struct {
-	genericclioptions.ConfigFlags
-	clusterConfig *rest.Config
-}
-
-// ToRESTConfig overrides the embedded genericclioptions.ConfigFlags.ToToRESTConfig
-func (cf *ConfigFlags) ToRESTConfig() (*rest.Config, error) {
-	return cf.clusterConfig, nil
-}
-
 // NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster.
 func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) genericclioptions.RESTClientGetter {
 	impersonateGroup := []string{}
