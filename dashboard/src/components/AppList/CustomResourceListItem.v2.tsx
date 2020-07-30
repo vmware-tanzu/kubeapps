@@ -38,8 +38,8 @@ function CustomResourceListItem(props: ICustomResourceListItemProps) {
       description={crd.description}
       info={
         <>
-          <div>{resource.kind}</div>
-          <div>v{csv.spec.version || "-"}</div>
+          <div>App: {resource.kind}</div>
+          <div>Operator: v{csv.spec.version || "-"}</div>
         </>
       }
       tag1Content={csv.metadata.name.split(".")[0]}

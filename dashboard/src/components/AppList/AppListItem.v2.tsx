@@ -3,11 +3,8 @@ import helmIcon from "../../icons/helm.svg";
 import placeholder from "../../placeholder.png";
 import { IAppOverview } from "../../shared/types";
 import * as url from "../../shared/url";
-import { CdsIcon } from "../Clarity/clarity";
 import InfoCard from "../InfoCard/InfoCard.v2";
 
-import Column from "components/js/Column";
-import Row from "components/js/Row";
 import "./AppListItem.v2.css";
 
 export interface IAppListItemProps {
@@ -35,18 +32,11 @@ function AppListItem(props: IAppListItemProps) {
       title={app.releaseName}
       icon={icon}
       info={
-        <Row aria-label="Chart version information">
-          <Column span={2}>
-            <div className={`info-icon ${updateAvailable ? "is-success" : ""}`}>
-              <CdsIcon shape={updateAvailable ? "circle-arrow" : "bundle"} />
-            </div>
-          </Column>
-          <Column span={10}>
-            <span>App: {app.chartMetadata.appVersion}</span>
-            <br />
-            <span>Chart: {app.chartMetadata.version}</span>
-          </Column>
-        </Row>
+        <div>
+          <span>App: {app.chartMetadata.appVersion}</span>
+          <br />
+          <span>Chart: {app.chartMetadata.version}</span>
+        </div>
       }
       description={app.chartMetadata.description}
       tag1Content={`Status: ${appStatus}`}
