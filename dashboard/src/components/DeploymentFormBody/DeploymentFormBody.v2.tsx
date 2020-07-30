@@ -145,7 +145,7 @@ function DeploymentFormBody({
       </div>
       <div className="deployment-form-control-buttons">
         <CdsButton status="primary" type="submit">
-          <CdsIcon shape="deploy" inverse={true} /> Deploy v{selected.version?.attributes.version}
+          <CdsIcon shape="deploy" inverse={true} /> Deploy v{version.attributes.version}
         </CdsButton>
         <CdsButton action="outline" type="button" onClick={openRestoreDefaultValuesModal}>
           <CdsIcon shape="backup-restore" inverse={true} /> Restore Defaults
