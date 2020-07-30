@@ -172,7 +172,7 @@ func NewActionConfig(storageForDriver StorageForDriver, config *rest.Config, cli
 }
 
 // NewConfigFlagsFromCluster returns ConfigFlags with default values set from within cluster.
-func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) *genericclioptions.ConfigFlags {
+func NewConfigFlagsFromCluster(namespace string, clusterConfig *rest.Config) genericclioptions.RESTClientGetter {
 	impersonateGroup := []string{}
 
 	// CertFile and KeyFile must be nil for the BearerToken to be used for authentication and authorization instead of the pod's service account.

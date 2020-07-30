@@ -696,6 +696,9 @@ featureFlags:
   invalidateCache: true
   operators: false
   # additionalClusters is a WIP feature for multi-cluster support.
+  # The base64-encoded certificateAuthorityData can be obtained from the additional cluster's kube config
+  # file, for example:
+  # kubectl --kubeconfig ~/.kube/kind-config-kubeapps-additional config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authority-data}'
   additionalClusters: []
   # additionalClusters:
   # - name: second-cluster

@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/kubeapps/kubeapps/pkg/kube"
 )
 
@@ -18,31 +19,31 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 	}{
 		{
 			name:       "parses a single additional cluster",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "abcd"}]`,
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="}]`,
 			expectedConfig: kube.AdditionalClustersConfig{
 				"cluster-2": {
 					Name:                     "cluster-2",
 					APIServiceURL:            "https://example.com",
-					CertificateAuthorityData: "abcd",
+					CertificateAuthorityData: "ca-cert-data\n",
 				},
 			},
 		},
 		{
 			name: "parses multiple additional clusters",
 			configJSON: `[
-	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "abcd"},
-	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "efgh"}
+	{"name": "cluster-2", "apiServiceURL": "https://example.com/cluster-2", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="},
+	{"name": "cluster-3", "apiServiceURL": "https://example.com/cluster-3", "certificateAuthorityData": "Y2EtY2VydC1kYXRhLWFkZGl0aW9uYWwK"}
 ]`,
 			expectedConfig: kube.AdditionalClustersConfig{
 				"cluster-2": {
 					Name:                     "cluster-2",
 					APIServiceURL:            "https://example.com/cluster-2",
-					CertificateAuthorityData: "abcd",
+					CertificateAuthorityData: "ca-cert-data\n",
 				},
 				"cluster-3": {
 					Name:                     "cluster-3",
 					APIServiceURL:            "https://example.com/cluster-3",
-					CertificateAuthorityData: "efgh",
+					CertificateAuthorityData: "ca-cert-data-additional\n",
 				},
 			},
 		},
@@ -51,20 +52,40 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 			configJSON:  `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "extracomma",}]`,
 			expectedErr: true,
 		},
+		{
+			name:        "errors if any CAData cannot be decoded",
+			configJSON:  `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "not-base64-encoded"}]`,
+			expectedErr: true,
+		},
 	}
+
+	ignoreCAFile := cmpopts.IgnoreFields(kube.AdditionalClusterConfig{}, "CAFile")
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 
-			config, err := parseAdditionalClusterConfig(path)
+			config, deferFn, err := parseAdditionalClusterConfig(path, "/tmp")
 			if got, want := err != nil, tc.expectedErr; got != want {
 				t.Errorf("got: %t, want: %t", got, want)
 			}
+			defer deferFn()
 
-			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got) {
-				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got))
+			if got, want := config, tc.expectedConfig; !cmp.Equal(want, got, ignoreCAFile) {
+				t.Errorf("mismatch (-want +got):\n%s", cmp.Diff(want, got, ignoreCAFile))
+			}
+
+			for clusterName, clusterConfig := range tc.expectedConfig {
+				if clusterConfig.CertificateAuthorityData != "" {
+					fileCAData, err := ioutil.ReadFile(config[clusterName].CAFile)
+					if err != nil {
+						t.Fatalf("%+v", err)
+					}
+					if got, want := string(fileCAData), clusterConfig.CertificateAuthorityData; got != want {
+						t.Errorf("got: %q, want: %q", got, want)
+					}
+				}
 			}
 		})
 	}

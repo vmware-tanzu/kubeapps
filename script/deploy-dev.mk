@@ -37,10 +37,6 @@ reset-dev:
 	helm -n kubeapps delete kubeapps || true
 	helm -n dex delete dex || true
 	helm -n ldap delete ldap || true
-	# In case helm installations fail, still delete non-namespaced resources.
-	kubectl delete clusterrole dex kubeapps:controller:apprepository-reader-kubeapps || true
-	kubectl delete clusterrolebinding dex kubeapps:controller:apprepository-reader-kubeapps || true
 	kubectl delete namespace --wait dex ldap kubeapps || true
-	kubectl delete --wait -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml || true
 
 .PHONY: deploy-dex deploy-dev deploy-openldap reset-dev update-apiserver-etc-hosts
