@@ -16,6 +16,9 @@ useHelm3: false
 ## When set to true, Kubeapps creates a ClusterRole to be able to list namespaces.
 allowNamespaceDiscovery: true
 
+## Enable IPv6 Configuration for Nginx
+enableIPv6: true
+
 ## The frontend service is the main reverse proxy used to access the Kubeapps UI
 ## To expose Kubeapps externally either configure the ingress object below or
 ## set frontend.service.type=LoadBalancer in the frontend configuration.

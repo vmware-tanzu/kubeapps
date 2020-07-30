@@ -198,6 +198,16 @@ kubectl delete namespace kubeapps
 
 ## Troubleshooting
 
+### Nginx Ipv6 error
+
+When starting the application, the Nginx server present in the services `kubeapps` and `kubeapps-internal-dashboard` may fail with the following:
+
+```
+nginx: [emerg] socket() [::]:8080 failed (97: Address family not supported by protocol)
+```
+
+This usually means that your cluster is not compatible with IPv6. To disable it, install kubeapps with the flag: `--set enableIPv6=false`.
+
 ### Forbidden error while installing the Chart
 
 If during installation you run into an error similar to:
