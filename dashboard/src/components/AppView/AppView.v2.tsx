@@ -54,6 +54,7 @@ interface IAppViewResourceRefs {
 
 function parseResources(
   resources: Array<IResource | IK8sList<IResource, {}>>,
+  cluster: string,
   releaseNamespace: string,
 ) {
   const result: IAppViewResourceRefs = {
@@ -75,7 +76,7 @@ function parseResources(
       // the List, concatenating items from both.
       assignWith(
         result,
-        parseResources((i as IK8sList<IResource, {}>).items, releaseNamespace),
+        parseResources((i as IK8sList<IResource, {}>).items, cluster, releaseNamespace),
         // Merge the list with the current result
         (prev, newArray) => prev.concat(newArray),
       );
@@ -84,25 +85,25 @@ function parseResources(
       const resource = { isFetching: true, item };
       switch (i.kind) {
         case "Deployment":
-          result.deployments.push(new ResourceRef(resource.item, releaseNamespace));
+          result.deployments.push(new ResourceRef(resource.item, cluster, releaseNamespace));
           break;
         case "StatefulSet":
-          result.statefulsets.push(new ResourceRef(resource.item, releaseNamespace));
+          result.statefulsets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
           break;
         case "DaemonSet":
-          result.daemonsets.push(new ResourceRef(resource.item, releaseNamespace));
+          result.daemonsets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
           break;
         case "Service":
-          result.services.push(new ResourceRef(resource.item, releaseNamespace));
+          result.services.push(new ResourceRef(resource.item, cluster, releaseNamespace));
           break;
         case "Ingress":
-          result.ingresses.push(new ResourceRef(resource.item, releaseNamespace));
+          result.ingresses.push(new ResourceRef(resource.item, cluster, releaseNamespace));
           break;
         case "Secret":
-          result.secrets.push(new ResourceRef(resource.item, releaseNamespace));
+          result.secrets.push(new ResourceRef(resource.item, cluster, releaseNamespace));
           break;
         default:
-          result.otherResources.push(new ResourceRef(resource.item, releaseNamespace));
+          result.otherResources.push(new ResourceRef(resource.item, cluster, releaseNamespace));
       }
     }
   });
@@ -145,8 +146,8 @@ export default function AppView({
     // Filter out elements in the manifest that does not comply
     // with { kind: foo }
     parsedManifest = parsedManifest.filter(r => r && r.kind);
-    setResourceRefs(parseResources(parsedManifest, app.namespace));
-  }, [app]);
+    setResourceRefs(parseResources(parsedManifest, cluster, app.namespace));
+  }, [app, cluster]);
 
   const {
     services,

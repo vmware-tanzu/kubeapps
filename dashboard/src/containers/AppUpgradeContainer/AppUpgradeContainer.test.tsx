@@ -19,7 +19,7 @@ const makeStore = (apps: any, repos: any) => {
     repos,
     router: { location: emptyLocation },
     charts: { selected: {} },
-    config: {},
+    config: { featureFlags: {} },
   });
 };
 
@@ -31,7 +31,7 @@ const defaultMatch = {
   },
 };
 
-describe("LoginFormContainer props", () => {
+describe("AppUpgradeContainer props", () => {
   it("repoName is empty if no apps nor repos are available", () => {
     const store = makeStore({}, { errors: {}, repo: {} });
     const wrapper = shallow(<Upgrade store={store} match={defaultMatch} />);

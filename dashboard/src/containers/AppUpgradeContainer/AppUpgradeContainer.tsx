@@ -45,6 +45,7 @@ function mapStateToProps(
     repoNamespace:
       (repos.repo.metadata && repos.repo.metadata.namespace) ||
       (apps.selected && apps.selected.updateInfo && apps.selected.updateInfo.repository.namespace),
+    UI: config.featureFlags.ui,
   };
 }
 
