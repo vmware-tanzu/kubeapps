@@ -5,8 +5,10 @@ authProxy:
   clientSecret: ZXhhbXBsZS1hcHAtc2VjcmV0
   cookieSecret: bm90LWdvb2Qtc2VjcmV0Cg==
   additionalFlags:
-    - -cookie-secure=false
-    - -oidc-issuer-url=https://172.18.0.2:32000
-    - -ssl-insecure-skip-verify=true
+    # Can't use secure cookies locally without running frontend with ssl
+    - --cookie-secure=false
+    - --oidc-issuer-url=https://172.18.0.2:32000
+    # Can't verify ssl of dex locally without setting --provider-ca-file and mounting etc.
+    - --ssl-insecure-skip-verify=true
     # If you need to access the actual token in the frontend for testing, uncomment the following.
-    # - -set-authorization-header=true
+    # - --set-authorization-header=true

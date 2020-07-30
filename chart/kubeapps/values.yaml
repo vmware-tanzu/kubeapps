@@ -646,7 +646,7 @@ authProxy:
   image:
     registry: docker.io
     repository: bitnami/oauth2-proxy
-    tag: 5.1.1-debian-10-r58
+    tag: 6.0.0-debian-10-r23
     ## Specify a imagePullPolicy
     ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
     ##
@@ -668,10 +668,10 @@ authProxy:
   ## Additional flags for oauth2-proxy
   ##
   additionalFlags: []
-  # - -ssl-insecure-skip-verify
-  # - -cookie-secure=false
-  # - -scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform
-  # - -oidc-issuer-url=https://accounts.google.com # Only needed if provider is oidc
+  # - --ssl-insecure-skip-verify
+  # - --cookie-secure=false
+  # - --scope=https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/cloud-platform
+  # - --oidc-issuer-url=https://accounts.google.com # Only needed if provider is oidc
   ## OAuth2 Proxy containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
   ##
