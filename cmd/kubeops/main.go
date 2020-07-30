@@ -27,6 +27,8 @@ import (
 	"k8s.io/helm/pkg/helm/environment"
 )
 
+const additionalClustersCAFilesPrefix = "/etc/additional-clusters-cafiles"
+
 var (
 	additionalClustersConfigPath string
 	assetsvcURL                  string
@@ -60,12 +62,12 @@ func main() {
 	var additionalClusters map[string]kube.AdditionalClusterConfig
 	if additionalClustersConfigPath != "" {
 		var err error
-		var deferFn func()
-		additionalClusters, deferFn, err = parseAdditionalClusterConfig(additionalClustersConfigPath)
+		var cleanupCAFiles func()
+		additionalClusters, cleanupCAFiles, err = parseAdditionalClusterConfig(additionalClustersConfigPath, additionalClustersCAFilesPrefix)
 		if err != nil {
 			log.Fatalf("unable to parse additional clusters config: %+v", err)
 		}
-		defer deferFn()
+		defer cleanupCAFiles()
 	}
 
 	options := handler.Options{
@@ -176,13 +178,13 @@ func main() {
 	os.Exit(0)
 }
 
-func parseAdditionalClusterConfig(path string) (kube.AdditionalClustersConfig, func(), error) {
-	caFilesDir, err := ioutil.TempDir("", "additional-clusters-cafiles-")
+func parseAdditionalClusterConfig(configPath, caFilesPrefix string) (kube.AdditionalClustersConfig, func(), error) {
+	caFilesDir, err := ioutil.TempDir(caFilesPrefix, "")
 	if err != nil {
 		return nil, func() {}, err
 	}
 	deferFn := func() { os.RemoveAll(caFilesDir) }
-	content, err := ioutil.ReadFile(path)
+	content, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return nil, deferFn, err
 	}

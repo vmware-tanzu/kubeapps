@@ -54,8 +54,8 @@ spec:
           volumeMounts:
             - name: kubeops-config
               mountPath: /config
-            - name: tmp-dir
-              mountPath: /tmp
+            - name: ca-certs
+              mountPath: /etc/additional-clusters-cafiles
           {{- end }}
           env:
             - name: POD_NAMESPACE
@@ -79,7 +79,7 @@ spec:
         - name: kubeops-config
           configMap:
             name: {{ template "kubeapps.kubeops-config.fullname" . }}
-        - name: tmp-dir
+        - name: ca-certs
           emptyDir: {}
       {{- end }}
 

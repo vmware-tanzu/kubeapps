@@ -66,7 +66,7 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 			path := createConfigFile(t, tc.configJSON)
 			defer os.Remove(path)
 
-			config, deferFn, err := parseAdditionalClusterConfig(path)
+			config, deferFn, err := parseAdditionalClusterConfig(path, "/tmp")
 			if got, want := err != nil, tc.expectedErr; got != want {
 				t.Errorf("got: %t, want: %t", got, want)
 			}
