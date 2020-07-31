@@ -9,7 +9,7 @@ interface IConfirmDialogProps {
   modalIsOpen: boolean;
   loading: boolean;
   extraElem?: JSX.Element;
-  confirmationText?: string;
+  confirmationText: string;
   confirmationButtonText?: string;
   error?: Error;
   onConfirm: () => any;
@@ -36,7 +36,7 @@ function ConfirmDialog({
         </div>
       ) : (
         <div className="confirmation-modal">
-          <span>{confirmationText || "Are you sure you want to delete this?"}</span>
+          <span>{confirmationText}</span>
           {extraElem}
           <div className="confirmation-modal-buttons">
             <CdsButton action="outline" type="button" onClick={closeModal}>

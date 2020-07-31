@@ -43,6 +43,7 @@ export default function DeleteButton({ cluster, namespace, releaseName }: IDelet
         loading={deleting}
         onConfirm={handleDeleteClick}
         closeModal={closeModal}
+        confirmationText="Are you sure you want to delete the application?"
         error={error}
       />
     </>
