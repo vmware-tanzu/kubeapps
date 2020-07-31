@@ -1,0 +1,22 @@
+.rollback-menu {
+  overflow-y: hidden;
+  &-text {
+    color: var(--clr-p-color, black);
+    text-align: center;
+  }
+  &-label {
+    color: var(--clr-p-color, black);
+    display: inline-block;
+    margin-top: 0.6rem;
+  }
+  .clr-select-wrapper {
+    margin-left: 0.6rem;
+  }
+  &-buttons {
+    margin-top: 0.6rem;
+    text-align: center;
+    cds-button {
+      margin: 0 0.3rem 0 0.3rem;
+    }
+  }
+}

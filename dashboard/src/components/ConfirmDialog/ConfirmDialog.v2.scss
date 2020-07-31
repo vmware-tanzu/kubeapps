@@ -1,6 +1,9 @@
 .confirmation-modal {
   text-align: center;
   overflow-y: hidden;
+  span {
+    color: var(--clr-p-color, black);
+  }
   &-buttons {
     margin-top: 0.6rem;
     cds-button {
