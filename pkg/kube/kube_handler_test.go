@@ -33,6 +33,7 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	fakecoreclientset "k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/rest"
@@ -730,47 +731,72 @@ func TestSecretForRequest(t *testing.T) {
 
 func TestGetNamespaces(t *testing.T) {
 	testCases := []struct {
-		name             string
-		existingNS       []string
-		expectedResponse []corev1.Namespace
-		allowed          bool
+		name               string
+		existingNamespaces []string
+		allowed            bool
+		userClientErr      error
+		svcClientErr       error
+		expectedNamespaces []string
 	}{
 		{
-			name:       "it list namespaces",
-			existingNS: []string{"foo"},
-			expectedResponse: []corev1.Namespace{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "foo",
-					},
-				},
-			},
-			allowed: true,
+			name:               "it lists namespaces if the user client returns the namespaces",
+			existingNamespaces: []string{"foo", "bar", "zed"},
+			expectedNamespaces: []string{"foo", "bar", "zed"},
+			allowed:            true,
 		},
 		{
-			name:             "it returns an empty list if not allowed",
-			existingNS:       []string{"foo"},
-			expectedResponse: []corev1.Namespace{},
-			allowed:          false,
+			name:               "it does not filter the namespaces if returned by the user client",
+			existingNamespaces: []string{"foo", "bar", "zed"},
+			expectedNamespaces: []string{"foo", "bar", "zed"},
+			allowed:            false,
+		},
+		{
+			name:               "it lists namespaces if the userclient fails but the service client succeeds",
+			existingNamespaces: []string{"foo"},
+			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			expectedNamespaces: []string{"foo"},
+			allowed:            true,
+		},
+		{
+			name:               "it filters the namespaces if the userclient fails but the service client succeeds",
+			existingNamespaces: []string{"foo"},
+			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			expectedNamespaces: []string{},
+			allowed:            false,
+		},
+		{
+			name:               "it returns an empty list if both the user and service account forbidden",
+			existingNamespaces: []string{"foo"},
+			userClientErr:      k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			svcClientErr:       k8sErrors.NewForbidden(schema.GroupResource{}, "bang", fmt.Errorf("Bang")),
+			expectedNamespaces: []string{},
+			allowed:            true,
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cs := fakeCombinedClientset{
+			userClientSet := fakeCombinedClientset{
 				fakeapprepoclientset.NewSimpleClientset(),
 				fakecoreclientset.NewSimpleClientset(),
 				&fakeRest.RESTClient{},
 			}
 
-			for _, ns := range tc.existingNS {
-				cs.Clientset.CoreV1().Namespaces().Create(context.TODO(), &corev1.Namespace{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: ns,
-					},
-				}, metav1.CreateOptions{})
+			svcClientSet := fakeCombinedClientset{
+				fakeapprepoclientset.NewSimpleClientset(),
+				fakecoreclientset.NewSimpleClientset(),
+				&fakeRest.RESTClient{},
 			}
 
-			cs.Clientset.Fake.PrependReactor(
+			setClientsetData(userClientSet, tc.existingNamespaces, tc.userClientErr)
+			setClientsetData(svcClientSet, tc.existingNamespaces, tc.svcClientErr)
+
+			// Set whether the userClientSet is allowed to create self subject access reviews.
+			// The handler for the reactor has only the action as input, which does not convey
+			// enough info to be able to decide whether an individual namespace is allowed
+			// (as action.GetNamespace() is always empty as self subject access reviews are
+			// *not* themselves namespaced - the spec includes the namespace but is not contained
+			// in the action). As a result, we can only filter everything or nothing in tests.
+			userClientSet.Clientset.Fake.PrependReactor(
 				"create",
 				"selfsubjectaccessreviews",
 				func(action k8stesting.Action) (handled bool, ret runtime.Object, err error) {
@@ -785,21 +811,46 @@ func TestGetNamespaces(t *testing.T) {
 			)
 
 			handler := kubeHandler{
-				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return cs, nil },
+				clientsetForConfig: func(*rest.Config) (combinedClientsetInterface, error) { return userClientSet, nil },
 				kubeappsNamespace:  "kubeapps",
-				svcClientset:       cs,
+				svcClientset:       svcClientSet,
 			}
 
-			namespaces, err := handler.AsSVC().GetNamespaces()
+			userHandler, err := handler.AsUser("token", "default")
+			if err != nil {
+				t.Errorf("Unexpected error %v", err)
+			}
+			namespaces, err := userHandler.GetNamespaces()
 			if err != nil {
 				t.Errorf("Unexpected error %v", err)
 			}
 
-			if !cmp.Equal(namespaces, tc.expectedResponse) {
-				t.Errorf("Unexpected response: %s", cmp.Diff(namespaces, tc.expectedResponse))
+			namespaceNames := []string{}
+			for _, ns := range namespaces {
+				namespaceNames = append(namespaceNames, ns.ObjectMeta.Name)
+			}
+			if !cmp.Equal(namespaceNames, tc.expectedNamespaces) {
+				t.Errorf("Unexpected response: %s", cmp.Diff(namespaces, tc.expectedNamespaces))
 			}
 		})
 	}
+}
+
+// setClientsetData configures the fake clientset with the return and error.
+func setClientsetData(cs fakeCombinedClientset, namespaceNames []string, err error) {
+	namespaces := []corev1.Namespace{}
+	for _, ns := range namespaceNames {
+		namespaces = append(namespaces, corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{Name: ns},
+		})
+	}
+	cs.Clientset.Fake.PrependReactor(
+		"list",
+		"namespaces",
+		func(action k8stesting.Action) (bool, runtime.Object, error) {
+			return true, &corev1.NamespaceList{Items: namespaces}, err
+		},
+	)
 }
 
 func TestValidateAppRepository(t *testing.T) {

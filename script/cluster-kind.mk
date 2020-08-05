@@ -37,6 +37,7 @@ ${ADDITIONAL_CLUSTER_CONFIG}: devel/dex.crt
 		--retain \
 		--wait 10s
 	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-namespace-discovery-rbac.yaml
 
 additional-cluster-kind: ${ADDITIONAL_CLUSTER_CONFIG}
 

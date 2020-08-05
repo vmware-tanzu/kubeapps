@@ -57,7 +57,13 @@ type AdditionalClusterConfig struct {
 	// Embedding genericclioptions.ConfigFlags in a struct which includes the actual rest.Config
 	// and returning that for ToRESTConfig() isn't enough, so we each configured cert out and
 	// include a CAFile field in the config.
-	CAFile   string
+	CAFile string
+	// ServiceToken can be configured so that the Kubeapps application itself
+	// has access to get all namespaces on additional clusters, for example. It
+	// should *not* be for reading secrets or similar, but limited to the
+	// required functionality.
+	ServiceToken string
+
 	Insecure bool `json:"insecure"`
 }
 
@@ -186,9 +192,33 @@ func (a *kubeHandler) AsUser(token, cluster string) (handler, error) {
 		log.Errorf("unable to create clientset: %v", err)
 		return nil, err
 	}
+
+	// Just use the service clientset if we're on the default cluster, but otherwise
+	// create a new clientset using a configured service token for a specific cluster.
+	// This is used when requesting the namespaces for a cluster (to populate the selector)
+	// iff the users own credential does not suffice. If a service token is not configured
+	// for the cluster, the namespace selector remains unpopulated.
+	var svcClientset combinedClientsetInterface
+	if cluster == DefaultClusterName {
+		svcClientset = a.svcClientset
+	} else {
+		additionalCluster, ok := a.additionalClustersConfig[cluster]
+		if !ok {
+			return nil, fmt.Errorf("cluster %q has no configuration", cluster)
+		}
+		svcConfig := *config
+		svcConfig.BearerToken = additionalCluster.ServiceToken
+
+		svcClientset, err = a.clientsetForConfig(config)
+		if err != nil {
+			log.Errorf("unable to create clientset: %v", err)
+			return nil, err
+		}
+	}
+
 	return &userHandler{
 		kubeappsNamespace: a.kubeappsNamespace,
-		svcClientset:      a.svcClientset,
+		svcClientset:      svcClientset,
 		clientset:         clientset,
 	}, nil
 }
@@ -552,7 +582,7 @@ func KubeappsSecretNameForRepo(repoName, namespace string) string {
 	return fmt.Sprintf("%s-%s", namespace, secretNameForRepo(repoName))
 }
 
-func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) ([]corev1.Namespace, error) {
+func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespaces *corev1.NamespaceList) (*corev1.NamespaceList, error) {
 	allowedNamespaces := []corev1.Namespace{}
 	for _, namespace := range namespaces.Items {
 		res, err := userClientset.AuthorizationV1().SelfSubjectAccessReviews().Create(context.TODO(), &authorizationapi.SelfSubjectAccessReview{
@@ -572,7 +602,8 @@ func filterAllowedNamespaces(userClientset combinedClientsetInterface, namespace
 			allowedNamespaces = append(allowedNamespaces, namespace)
 		}
 	}
-	return allowedNamespaces, nil
+	namespaces.Items = allowedNamespaces
+	return namespaces, nil
 }
 
 // GetNamespaces return the list of namespaces that the user has permission to access
@@ -584,18 +615,23 @@ func (a *userHandler) GetNamespaces() ([]corev1.Namespace, error) {
 		if k8sErrors.IsForbidden(err) {
 			// The user doesn't have permissions to list namespaces, use the current serviceaccount
 			namespaces, err = a.svcClientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
-		}
-		if err != nil {
+			if err != nil && k8sErrors.IsForbidden(err) {
+				// If the configured svcclient doesn't have permission, just return an empty list.
+				return []corev1.Namespace{}, nil
+			}
+
+			// Only if we obtained the namespaces from the svc client do we filter it using
+			// the user clientset.
+			namespaces, err = filterAllowedNamespaces(a.clientset, namespaces)
+			if err != nil {
+				return nil, err
+			}
+		} else {
 			return nil, err
 		}
 	}
 
-	allowedNamespaces, err := filterAllowedNamespaces(a.clientset, namespaces)
-	if err != nil {
-		return nil, err
-	}
-
-	return allowedNamespaces, nil
+	return namespaces.Items, nil
 }
 
 // GetSecret return the a secret from a namespace using a token if given

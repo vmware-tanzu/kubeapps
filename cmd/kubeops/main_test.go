@@ -19,12 +19,13 @@ func TestParseAdditionalClusterConfig(t *testing.T) {
 	}{
 		{
 			name:       "parses a single additional cluster",
-			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg=="}]`,
+			configJSON: `[{"name": "cluster-2", "apiServiceURL": "https://example.com", "certificateAuthorityData": "Y2EtY2VydC1kYXRhCg==", "serviceToken": "abcd"}]`,
 			expectedConfig: kube.AdditionalClustersConfig{
 				"cluster-2": {
 					Name:                     "cluster-2",
 					APIServiceURL:            "https://example.com",
 					CertificateAuthorityData: "ca-cert-data\n",
+					ServiceToken:             "abcd",
 				},
 			},
 		},
