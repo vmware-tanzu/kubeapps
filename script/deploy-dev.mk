@@ -9,7 +9,7 @@ deploy-dex: devel/dex.crt devel/dex.key
 	kubectl -n dex create secret tls dex-web-server-tls \
 		--key ./devel/dex.key \
 		--cert ./devel/dex.crt
-	helm install dex stable/dex --namespace dex --version 2.4.0 \
+	helm install dex stable/dex --namespace dex --version 2.13.0 \
 		--values ./docs/user/manifests/kubeapps-local-dev-dex-values.yaml
 
 deploy-openldap:
