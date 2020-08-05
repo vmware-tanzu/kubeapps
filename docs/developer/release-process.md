@@ -14,7 +14,19 @@ while the [dashboard/Dockerfile](../../dashboard/Dockerfile) uses bitnami/nginx 
 
 All tags for these images should be updated to their latest compatible versions and security patches.
 
-The chart [requirements.yaml](../../chart/kubeapps/requirements.yaml) should also be updated to use the latest dependent chart releases.
+The chart [requirements.yaml](../../chart/kubeapps/requirements.yaml) should also be checked to ensure the version includes the latest dependent charts. You can then run
+
+```bash
+helm dependency list ./chart/kubeapps
+```
+
+to see if the latest versions are included, and
+
+```bash
+helm dependency upgrade ./chart/kubeapps
+```
+
+to update the requirements.lock file.
 
 ## 1 - Create a new git tag
 
