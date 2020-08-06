@@ -644,6 +644,9 @@ testImage:
 authProxy:
   # Set to true to enable the OIDC proxy
   enabled: false
+  # Set to true if an external auth proxy is setup to provide cookie authentication
+  # at the oauthLoginURI and oauthLogoutURI values below.
+  externallyEnabled: false
   ## Bitnami OAuth2 Proxy image
   ## ref: https://hub.docker.com/r/bitnami/oauth2-proxy/tags/
   ##

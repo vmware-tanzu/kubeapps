@@ -41,7 +41,7 @@ data:
     {
       "namespace": "{{ .Release.Namespace }}",
       "appVersion": "{{ .Chart.AppVersion }}",
-      "authProxyEnabled": {{ .Values.authProxy.enabled }},
+      "authProxyEnabled": {{ or .Values.authProxy.enabled .Values.authProxy.externallyEnabled }},
       "oauthLoginURI": {{ .Values.authProxy.oauthLoginURI | quote }},
       "oauthLogoutURI": {{ .Values.authProxy.oauthLogoutURI | quote }},
       "featureFlags": {{ .Values.featureFlags | toJson }}
