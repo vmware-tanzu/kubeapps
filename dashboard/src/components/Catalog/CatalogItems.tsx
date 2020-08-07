@@ -29,7 +29,7 @@ export default function CatalogItems({ charts, csvs, cluster, namespace }: ICata
           },
         };
       }),
-    [charts, namespace],
+    [charts, cluster, namespace],
   );
   const crdItems: ICatalogItemProps[] = useMemo(
     () =>
@@ -57,7 +57,7 @@ export default function CatalogItems({ charts, csvs, cluster, namespace }: ICata
           }
         })
         .flat(),
-    [csvs, namespace],
+    [csvs, cluster, namespace],
   );
 
   const sortedItems = chartItems
