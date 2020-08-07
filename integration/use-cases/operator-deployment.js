@@ -1,7 +1,7 @@
 const utils = require("./lib/utils");
 
 test("Deploys an Operator", async () => {
-  await page.goto(getUrl("/#/ns/kubeapps/operators"));
+  await page.goto(getUrl("/#/c/default/ns/kubeapps/operators"));
 
   await expect(page).toFillForm("form", {
     token: process.env.ADMIN_TOKEN,
