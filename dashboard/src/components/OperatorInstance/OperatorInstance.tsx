@@ -2,6 +2,7 @@ import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
 import * as React from "react";
 
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import AccessURLTable from "../../containers/AccessURLTableContainer";
 import ApplicationStatus from "../../containers/ApplicationStatusContainer";
 import placeholder from "../../placeholder.png";
@@ -163,6 +164,9 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
       namespace,
       push,
     } = this.props;
+    if (cluster !== "default") {
+      return <OperatorNotSupported namespace={namespace} />;
+    }
     const { resources } = this.state;
     const onUpdateClick = () =>
       push(app.operatorInstances.update(cluster, namespace, csvName, crdName, instanceName));

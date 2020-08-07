@@ -3,6 +3,7 @@ import * as yaml from "js-yaml";
 import { get } from "lodash";
 import * as React from "react";
 
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody";
@@ -12,6 +13,7 @@ export interface IOperatorInstanceFormProps {
   csvName: string;
   crdName: string;
   isFetching: boolean;
+  cluster: string;
   namespace: string;
   getCSV: (namespace: string, csvName: string) => void;
   createResource: (
@@ -72,8 +74,11 @@ class DeploymentFormBody extends React.Component<
   }
 
   public render() {
-    const { isFetching, errors, csvName, crdName, namespace } = this.props;
+    const { isFetching, errors, csvName, crdName, cluster, namespace } = this.props;
     const { crd, defaultValues } = this.state;
+    if (cluster !== "default") {
+      return <OperatorNotSupported namespace={namespace} />;
+    }
     if (!errors.fetch && !isFetching && !crd) {
       return (
         <NotFoundErrorPage

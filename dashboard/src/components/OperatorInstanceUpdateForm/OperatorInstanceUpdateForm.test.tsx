@@ -1,3 +1,4 @@
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { mount, shallow } from "enzyme";
 import * as React from "react";
 import OperatorInstanceUpdateForm from ".";
@@ -8,6 +9,7 @@ const defaultProps: IOperatorInstanceUpgradeFormProps = {
   csvName: "foo",
   crdName: "foo-cluster",
   isFetching: false,
+  cluster: "default",
   namespace: "kubeapps",
   resourceName: "my-foo",
   getResource: jest.fn(),
@@ -23,6 +25,12 @@ const defaultResource = {
     name: "my-foo",
   },
 } as any;
+
+it("displays an alert if rendered for an additional cluster", () => {
+  const props = { ...defaultProps, cluster: "other-cluster" };
+  const wrapper = shallow(<OperatorInstanceUpdateForm {...props} />);
+  expect(wrapper.find(OperatorNotSupported)).toExist();
+});
 
 it("gets a resource", () => {
   const getResource = jest.fn();

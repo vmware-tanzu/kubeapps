@@ -1,4 +1,5 @@
 import { IPartialAppViewState } from "components/AppView/AppView";
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { shallow } from "enzyme";
 import * as React from "react";
 import Modal from "react-modal";
@@ -29,6 +30,12 @@ const defaultProps: IOperatorInstanceProps = {
 itBehavesLike("aLoadingComponent", {
   component: OperatorInstance,
   props: { ...defaultProps, isFetching: true },
+});
+
+it("displays an alert if rendered for an additional cluster", () => {
+  const props = { ...defaultProps, cluster: "other-cluster" };
+  const wrapper = shallow(<OperatorInstance {...props} />);
+  expect(wrapper.find(OperatorNotSupported)).toExist();
 });
 
 it("gets a resource when loading the component", () => {
