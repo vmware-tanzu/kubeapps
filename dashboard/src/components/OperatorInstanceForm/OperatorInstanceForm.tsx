@@ -4,6 +4,7 @@ import { get } from "lodash";
 import * as React from "react";
 
 import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
+import * as url from "shared/url";
 import { IClusterServiceVersion, IClusterServiceVersionCRD, IResource } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody";
@@ -112,7 +113,7 @@ class DeploymentFormBody extends React.Component<
   }
 
   private handleDeploy = async (resource: IResource) => {
-    const { createResource, push, namespace, csv } = this.props;
+    const { createResource, push, cluster, namespace, csv } = this.props;
     const { crd } = this.state;
     if (!crd || !csv) {
       // Unexpected error, CRD and CSV should have been previously populated
@@ -122,7 +123,13 @@ class DeploymentFormBody extends React.Component<
     const created = await createResource(namespace, resource.apiVersion, resourceType, resource);
     if (created) {
       push(
-        `/ns/${namespace}/operators-instances/${csv.metadata.name}/${crd.name}/${resource.metadata.name}`,
+        url.app.operatorInstances.view(
+          cluster,
+          namespace,
+          csv.metadata.name,
+          crd.name,
+          resource.metadata.name,
+        ),
       );
     }
   };

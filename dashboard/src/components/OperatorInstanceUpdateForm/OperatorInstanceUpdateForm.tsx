@@ -3,6 +3,7 @@ import * as yaml from "js-yaml";
 import * as React from "react";
 
 import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
+import * as url from "shared/url";
 import { IClusterServiceVersion, IResource } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody";
@@ -94,7 +95,7 @@ class DeploymentFormBody extends React.Component<
   }
 
   private handleDeploy = async (resource: IResource) => {
-    const { updateResource, crdName, resourceName, namespace, push, csvName } = this.props;
+    const { updateResource, crdName, resourceName, cluster, namespace, push, csvName } = this.props;
 
     const created = await updateResource(
       namespace,
@@ -104,7 +105,7 @@ class DeploymentFormBody extends React.Component<
       resource,
     );
     if (created) {
-      push(`/ns/${namespace}/operators-instances/${csvName}/${crdName}/${resourceName}`);
+      push(url.app.operatorInstances.view(cluster, namespace, csvName, crdName, resourceName));
     }
   };
 }
