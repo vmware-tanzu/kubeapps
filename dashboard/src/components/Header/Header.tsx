@@ -149,7 +149,12 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       </li>
                       {this.props.featureFlags.operators && (
                         <li role="none">
-                          <NavLink to={app.operators.list(clusters.currentCluster, cluster.currentNamespace)}>
+                          <NavLink
+                            to={app.operators.list(
+                              clusters.currentCluster,
+                              cluster.currentNamespace,
+                            )}
+                          >
                             Operators
                           </NavLink>
                         </li>
