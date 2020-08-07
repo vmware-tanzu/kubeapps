@@ -32,9 +32,11 @@ export const app = {
     ) => `${app.charts.get(cluster, namespace, chartName, repo)}/versions/${chartVersion}`,
   },
   operators: {
-    view: (namespace: string, name: string) => `/ns/${namespace}/operators/${name}`,
-    list: (namespace: string) => `/ns/${namespace}/operators`,
-    new: (namespace: string, name: string) => `/ns/${namespace}/operators/new/${name}`,
+    view: (cluster: string, namespace: string, name: string) =>
+      `/ns/${namespace}/operators/${name}`,
+    list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
+    new: (cluster: string, namespace: string, name: string) =>
+      `/c/${cluster}/ns/${namespace}/operators/new/${name}`,
   },
   operatorInstances: {
     view: (namespace: string, csvName: string, crdName: string, resourceName: string) =>

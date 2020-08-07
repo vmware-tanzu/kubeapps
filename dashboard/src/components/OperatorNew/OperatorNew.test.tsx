@@ -1,3 +1,4 @@
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { shallow } from "enzyme";
 import * as React from "react";
 import { NotFoundError } from "../../shared/types";
@@ -8,6 +9,7 @@ const defaultProps = {
   operatorName: "foo",
   getOperator: jest.fn(),
   isFetching: false,
+  cluster: "default",
   namespace: "kubeapps",
   push: jest.fn(),
   createOperator: jest.fn(),
@@ -44,6 +46,12 @@ const defaultOperator = {
     ],
   },
 } as any;
+
+it("displays an alert if rendered for an additional cluster", () => {
+  const props = { ...defaultProps, cluster: "other-cluster" };
+  const wrapper = shallow(<OperatorNew {...props} />);
+  expect(wrapper.find(OperatorNotSupported)).toExist();
+});
 
 it("calls getOperator when mounting the component", () => {
   const getOperator = jest.fn();
@@ -122,5 +130,5 @@ it("deploys an operator", async () => {
   await onSubmit();
 
   expect(createOperator).toHaveBeenCalledWith("operators", "foo", "beta", "Automatic", "foo.1.0.0");
-  expect(push).toHaveBeenCalledWith("/ns/operators/operators");
+  expect(push).toHaveBeenCalledWith("/c/default/ns/operators/operators");
 });

@@ -6,6 +6,7 @@ const defaultProps = {
   id: "foo",
   icon: "/path/to/icon.png",
   description: "this is a description",
+  cluster: "default",
   namespace: "kubeapps",
   version: "1.0.0",
   provider: "Kubeapps",

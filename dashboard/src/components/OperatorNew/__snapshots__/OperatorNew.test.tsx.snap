@@ -5,6 +5,7 @@ exports[`renders a full OperatorNew 1`] = `
   className="ChartView padding-b-big"
 >
   <OperatorHeader
+    cluster="default"
     description="Foo"
     hideButton={true}
     icon="api/v1/namespaces/kubeapps/operator/foo/logo"

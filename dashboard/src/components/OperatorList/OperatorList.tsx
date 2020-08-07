@@ -23,6 +23,7 @@ import {
 import PageHeader from "../PageHeader";
 import SearchFilter from "../SearchFilter";
 import OLMNotFound from "./OLMNotFound";
+import OperatorNotSupported from "./OperatorsNotSupported";
 
 import "./OperatorList.css";
 
@@ -30,6 +31,7 @@ export interface IOperatorListProps {
   isFetching: boolean;
   checkOLMInstalled: (namespace: string) => Promise<boolean>;
   isOLMInstalled: boolean;
+  cluster: string;
   namespace: string;
   getOperators: (namespace: string) => Promise<void>;
   operators: IPackageManifest[];
@@ -108,7 +110,10 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
   }
 
   public render() {
-    const { isFetching, pushSearchFilter } = this.props;
+    const { cluster, namespace, isFetching, pushSearchFilter } = this.props;
+    if (cluster !== "default") {
+      return <OperatorNotSupported namespace={namespace} />;
+    }
     return (
       <div>
         <PageHeader>
@@ -275,7 +280,11 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
                 return (
                   <InfoCard
                     key={operator.metadata.name}
-                    link={app.operators.view(this.props.namespace, operator.metadata.name)}
+                    link={app.operators.view(
+                      this.props.cluster,
+                      this.props.namespace,
+                      operator.metadata.name,
+                    )}
                     title={operator.metadata.name}
                     icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
                     info={`v${operator.status.channels[0].currentCSVDesc.version}`}
@@ -293,7 +302,11 @@ class OperatorList extends React.Component<IOperatorListProps, IOperatorListStat
             return (
               <InfoCard
                 key={operator.metadata.name}
-                link={app.operators.view(this.props.namespace, operator.metadata.name)}
+                link={app.operators.view(
+                  this.props.cluster,
+                  this.props.namespace,
+                  operator.metadata.name,
+                )}
                 title={operator.metadata.name}
                 icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
                 info={`v${operator.status.channels[0].currentCSVDesc.version}`}

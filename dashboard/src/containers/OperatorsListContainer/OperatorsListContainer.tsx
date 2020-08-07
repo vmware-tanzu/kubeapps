@@ -13,6 +13,7 @@ function mapStateToProps(
   { location }: RouteComponentProps<{}>,
 ) {
   return {
+    cluster: currentCluster,
     namespace: clusters[currentCluster].currentNamespace,
     isFetching: operators.isFetching,
     isOLMInstalled: operators.isOLMInstalled,

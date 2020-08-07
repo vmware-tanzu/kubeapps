@@ -9,6 +9,7 @@ interface IOperatorHeaderProps {
   hideButton?: boolean;
   disableButton?: boolean;
   description: string;
+  cluster: string;
   namespace: string;
   version: string;
   provider: string;
@@ -69,7 +70,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
   }
 
   public redirect = () => {
-    this.props.push(app.operators.new(this.props.namespace, this.props.id));
+    this.props.push(app.operators.new(this.props.cluster, this.props.namespace, this.props.id));
   };
 }
 
