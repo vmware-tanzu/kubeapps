@@ -1,5 +1,7 @@
 import * as React from "react";
 
+import { Link } from "react-router-dom";
+import * as url from "shared/url";
 import LoadingWrapper from "../../../components/LoadingWrapper";
 import PageHeader from "../../../components/PageHeader";
 import { IServiceCatalogState } from "../../../reducers/catalog";
@@ -8,6 +10,7 @@ import { IRBACRole } from "../../../shared/types";
 import { CardGrid } from "../../Card";
 import {
   ErrorSelector,
+  MessageAlert,
   ServiceBrokersNotFoundAlert,
   ServiceCatalogNotInstalledAlert,
 } from "../../ErrorAlert";
@@ -23,6 +26,7 @@ interface IServiceBrokerListProps {
   sync: (broker: IServiceBroker) => Promise<any>;
   checkCatalogInstalled: () => Promise<any>;
   isInstalled: boolean;
+  cluster: string;
 }
 
 export const RequiredRBACRoles: { [s: string]: IRBACRole[] } = {
@@ -51,7 +55,7 @@ class ServiceBrokerList extends React.Component<IServiceBrokerListProps> {
   }
 
   public render() {
-    const { brokers, errors, sync, isInstalled } = this.props;
+    const { brokers, errors, sync } = this.props;
     let body = <span />;
     if (errors.fetch) {
       body = (
@@ -91,11 +95,34 @@ class ServiceBrokerList extends React.Component<IServiceBrokerListProps> {
         <PageHeader>
           <h1>Service Brokers</h1>
         </PageHeader>
-        <LoadingWrapper loaded={!brokers.isFetching}>
-          {!isInstalled ? <ServiceCatalogNotInstalledAlert /> : <main>{body}</main>}
-        </LoadingWrapper>
+        <LoadingWrapper loaded={!brokers.isFetching}>{this.renderBody(body)}</LoadingWrapper>
       </section>
     );
+  }
+
+  private renderBody(body: React.ReactFragment) {
+    const { cluster, isInstalled } = this.props;
+    if (cluster !== "default") {
+      return (
+        <MessageAlert header="Service brokers can be created on the default cluster only">
+          <div>
+            <p className="margin-v-normal">
+              Kubeapps' Service Broker support enables the addition of{" "}
+              <Link to={url.app.config.brokers("default")}>
+                service brokers on the default cluster only
+              </Link>
+              .
+            </p>
+          </div>
+        </MessageAlert>
+      );
+    }
+
+    if (!isInstalled) {
+      return <ServiceCatalogNotInstalledAlert />;
+    }
+
+    return <main>{body}</main>;
   }
 }
 

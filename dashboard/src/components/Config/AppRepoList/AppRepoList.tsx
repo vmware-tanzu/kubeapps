@@ -145,7 +145,7 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
             <p className="margin-v-normal">
               You cannot currently create an app repository on an additional cluster, but you can
               create an app repository with charts available for installation across clusters and
-              namespaces in the
+              namespaces in the{" "}
               <Link to={url.app.config.apprepositories("default", definedNamespaces.all)}>
                 default cluster's app repository listing for all namespaces
               </Link>

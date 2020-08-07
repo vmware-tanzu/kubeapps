@@ -139,7 +139,9 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                         <NavLink to={reposPath}>App Repositories</NavLink>
                       </li>
                       <li role="none">
-                        <NavLink to="/config/brokers">Service Brokers</NavLink>
+                        <NavLink to={app.config.brokers(clusters.currentCluster)}>
+                          Service Brokers
+                        </NavLink>
                       </li>
                       {this.props.featureFlags.operators && (
                         <li role="none">

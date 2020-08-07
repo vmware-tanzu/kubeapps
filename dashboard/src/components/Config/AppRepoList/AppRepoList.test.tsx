@@ -131,7 +131,7 @@ describe("AppRepoList", () => {
     const wrapper = shallow(<AppRepoList {...props} />);
 
     const msgAlert = wrapper.find(MessageAlert);
-    expect(msgAlert.length).toBe(1);
+    expect(msgAlert).toExist();
     expect(msgAlert.prop("header")).toEqual(
       "AppRepositories can be created on the default cluster only",
     );

@@ -38,7 +38,7 @@ const privateRoutes = {
   "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id": ChartViewContainer,
   "/c/:cluster/ns/:namespace/charts/:repo/:id/versions/:version": ChartViewContainer,
   "/c/:cluster/ns/:namespace/:global(global)-charts/:repo/:id/versions/:version": ChartViewContainer,
-  "/config/brokers": ServiceBrokerListContainer,
+  "/c/:cluster/config/brokers": ServiceBrokerListContainer,
   "/services/brokers/:brokerName/classes/:className": ServiceClassViewContainer,
   "/services/brokers/:brokerName/instances/ns/:namespace/:instanceName": ServiceInstanceViewContainer,
   "/services/classes": ServiceClassListContainer,

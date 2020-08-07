@@ -7,11 +7,12 @@ import ServiceBrokerList from "../../components/Config/ServiceBrokerList";
 import { IServiceBroker } from "../../shared/ServiceCatalog";
 import { IStoreState } from "../../shared/types";
 
-function mapStateToProps({ catalog }: IStoreState) {
+function mapStateToProps({ catalog, clusters }: IStoreState) {
   return {
     brokers: catalog.brokers,
     errors: catalog.errors,
     isInstalled: catalog.isServiceCatalogInstalled,
+    cluster: clusters.currentCluster,
   };
 }
 

@@ -100,6 +100,7 @@ exports[`when all the brokers are loaded shows a forbiden (resync) error if it e
       ],
     }
   }
+  cluster="default"
   errors={
     Object {
       "update": [Error],
@@ -344,6 +345,7 @@ exports[`when all the brokers are loaded shows a warning to install no service b
       ],
     }
   }
+  cluster="default"
   errors={Object {}}
   getBrokers={
     [MockFunction] {
