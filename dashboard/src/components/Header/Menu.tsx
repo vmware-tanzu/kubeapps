@@ -60,7 +60,7 @@ function Menu({ clusters, defaultNamespace, appVersion, logout }: IContextSelect
               </Link>
               <div className="dropdown-divider" role="separator" />
               <Link
-                to={app.config.operators(namespaceSelected)}
+                to={app.config.operators(clusters.currentCluster, namespaceSelected)}
                 className="dropdown-menu-link"
                 onClick={toggleOpen}
               >

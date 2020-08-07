@@ -37,7 +37,7 @@ exports[`renders the header 1`] = `
              - Provided by 
           </span>
           <Link
-            to="/ns/kubeapps/operators"
+            to="/c/default/ns/kubeapps/operators"
           >
             Kubeapps
           </Link>

@@ -33,7 +33,7 @@ export const app = {
   },
   operators: {
     view: (cluster: string, namespace: string, name: string) =>
-      `/ns/${namespace}/operators/${name}`,
+      `/c/${cluster}/ns/${namespace}/operators/${name}`,
     list: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
     new: (cluster: string, namespace: string, name: string) =>
       `/c/${cluster}/ns/${namespace}/operators/new/${name}`,
@@ -50,7 +50,7 @@ export const app = {
     apprepositories: (cluster: string, namespace: string) =>
       `/c/${cluster}/ns/${namespace}/config/repos`,
     brokers: (cluster: string) => `/c/${cluster}/config/brokers`,
-    operators: (namespace: string) => `/ns/${namespace}/operators`,
+    operators: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
   },
 };
 

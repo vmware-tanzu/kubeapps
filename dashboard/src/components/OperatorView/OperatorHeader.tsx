@@ -27,6 +27,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
       id,
       icon,
       description,
+      cluster,
       namespace,
       version,
       provider,
@@ -47,7 +48,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
               <h5 className="subtitle margin-b-normal">
                 {/* TODO(andresmgot): Filter by provider */}
                 <span>{version} - Provided by </span>
-                <Link to={`/ns/${namespace}/operators`}>{provider}</Link>
+                <Link to={app.operators.list(cluster, namespace)}>{provider}</Link>
               </h5>
               <h5 className="subtitle margin-b-reset">{description}</h5>
             </div>
