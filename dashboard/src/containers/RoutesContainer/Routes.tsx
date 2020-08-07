@@ -69,9 +69,9 @@ class Routes extends React.Component<IRoutesProps> {
         "/c/:cluster/ns/:namespace/operators": OperatorsListContainer,
         "/c/:cluster/ns/:namespace/operators/:operator": OperatorViewContainer,
         "/c/:cluster/ns/:namespace/operators/new/:operator": OperatorNewContainer,
-        "/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
-        "/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
-        "/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
+        "/c/:cluster/ns/:namespace/operators-instances/new/:csv/:crd": OperatorInstanceCreateContainer,
+        "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName": OperatorInstanceViewContainer,
+        "/c/:cluster/ns/:namespace/operators-instances/:csv/:crd/:instanceName/update": OperatorInstanceUpdateContainer,
       });
     }
     return (

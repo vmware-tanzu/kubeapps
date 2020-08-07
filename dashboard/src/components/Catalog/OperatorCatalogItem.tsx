@@ -6,22 +6,13 @@ import placeholder from "../../placeholder.png";
 import InfoCard from "../InfoCard/InfoCard.v2";
 import { IOperatorCatalogItem } from "./CatalogItem.v2";
 
-export interface ICatalogItem {
-  id: string;
-  name: string;
-  version: string;
-  description: string;
-  namespace: string;
-  icon?: string;
-}
-
 export default function OperatorCatalogItem(props: IOperatorCatalogItem) {
-  const { icon, name, csv, version, description, namespace, id } = props;
+  const { icon, name, csv, version, description, cluster, namespace, id } = props;
   const iconSrc = icon || placeholder;
   // Cosmetic change, remove the version from the csv name
   const csvName = props.csv.split(".")[0];
   const tag1 = <span>{csvName}</span>;
-  const link = app.operatorInstances.new(namespace, csv, id);
+  const link = app.operatorInstances.new(cluster, namespace, csv, id);
   const subIcon = operatorIcon;
   return (
     <InfoCard

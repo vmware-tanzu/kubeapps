@@ -8,6 +8,7 @@ export interface ICatalogItem {
   name: string;
   version: string;
   description: string;
+  cluster: string;
   namespace: string;
   icon?: string;
 }

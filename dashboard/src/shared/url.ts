@@ -39,12 +39,12 @@ export const app = {
       `/c/${cluster}/ns/${namespace}/operators/new/${name}`,
   },
   operatorInstances: {
-    view: (namespace: string, csvName: string, crdName: string, resourceName: string) =>
-      `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${resourceName}`,
-    update: (namespace: string, csvName: string, crdName: string, instanceName: string) =>
-      `/ns/${namespace}/operators-instances/${csvName}/${crdName}/${instanceName}/update`,
-    new: (namespace: string, csvName: string, crdName: string) =>
-      `/ns/${namespace}/operators-instances/new/${csvName}/${crdName}`,
+    view: (cluster: string, namespace: string, csvName: string, crdName: string, resourceName: string) =>
+      `/c/${cluster}/ns/${namespace}/operators-instances/${csvName}/${crdName}/${resourceName}`,
+    update: (cluster: string, namespace: string, csvName: string, crdName: string, instanceName: string) =>
+      `/c/${cluster}/ns/${namespace}/operators-instances/${csvName}/${crdName}/${instanceName}/update`,
+    new: (cluster: string, namespace: string, csvName: string, crdName: string) =>
+      `/c/${cluster}/ns/${namespace}/operators-instances/new/${csvName}/${crdName}`,
   },
   config: {
     apprepositories: (cluster: string, namespace: string) =>

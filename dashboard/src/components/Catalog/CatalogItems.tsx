@@ -6,10 +6,11 @@ import CatalogItem, { ICatalogItemProps } from "./CatalogItem.v2";
 interface ICatalogItemsProps {
   charts: IChart[];
   csvs: IClusterServiceVersion[];
+  cluster: string;
   namespace: string;
 }
 
-export default function CatalogItems({ charts, csvs, namespace }: ICatalogItemsProps) {
+export default function CatalogItems({ charts, csvs, cluster, namespace }: ICatalogItemsProps) {
   const chartItems: ICatalogItemProps[] = useMemo(
     () =>
       charts.map(c => {
@@ -23,6 +24,7 @@ export default function CatalogItems({ charts, csvs, namespace }: ICatalogItemsP
             version: c.relationships.latestChartVersion.data.app_version,
             description: c.attributes.description,
             repo: c.attributes.repo,
+            cluster,
             namespace,
           },
         };
@@ -45,6 +47,7 @@ export default function CatalogItems({ charts, csvs, namespace }: ICatalogItemsP
                   version: crd.version,
                   description: crd.description,
                   csv: csv.metadata.name,
+                  cluster,
                   namespace,
                 },
               };

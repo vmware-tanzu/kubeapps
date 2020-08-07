@@ -199,6 +199,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
           description: c.attributes.description,
           repo: c.attributes.repo,
           namespace: this.props.namespace,
+          cluster: this.props.cluster,
         },
       });
     });
@@ -214,6 +215,7 @@ class Catalog extends React.Component<ICatalogProps, ICatalogState> {
             description: crd.description,
             csv: csv.metadata.name,
             namespace: this.props.namespace,
+            cluster: this.props.cluster,
           },
         });
       });

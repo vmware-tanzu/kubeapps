@@ -159,12 +159,13 @@ class OperatorInstance extends React.Component<IOperatorInstanceProps, IOperator
       instanceName,
       csvName,
       crdName,
+      cluster,
       namespace,
       push,
     } = this.props;
     const { resources } = this.state;
     const onUpdateClick = () =>
-      push(app.operatorInstances.update(namespace, csvName, crdName, instanceName));
+      push(app.operatorInstances.update(cluster, namespace, csvName, crdName, instanceName));
     const error = errors.fetch || errors.delete || errors.update;
     return (
       <section className="AppView padding-b-big">
