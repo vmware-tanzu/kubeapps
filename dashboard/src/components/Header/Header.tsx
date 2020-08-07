@@ -25,6 +25,7 @@ export interface IHeaderProps {
   createNamespace: (cluster: string, ns: string) => Promise<boolean>;
   getNamespace: (cluster: string, ns: string) => void;
   featureFlags: IFeatureFlags;
+  isServiceCatalogInstalled: boolean;
 }
 
 interface IHeaderState {
@@ -59,6 +60,7 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
       authenticated: showNav,
       createNamespace,
       getNamespace,
+      isServiceCatalogInstalled,
     } = this.props;
     const showClusterSelector = Object.keys(clusters.clusters).length > 1;
     const cluster = clusters.clusters[clusters.currentCluster];
@@ -104,11 +106,13 @@ class Header extends React.Component<IHeaderProps, IHeaderState> {
                       Catalog
                     </HeaderLink>
                   </li>
-                  <li>
-                    <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>
-                      Service Instances (alpha)
-                    </HeaderLink>
-                  </li>
+                  {isServiceCatalogInstalled && (
+                    <li>
+                      <HeaderLink to={app.servicesInstances(cluster.currentNamespace)}>
+                        Service Instances (alpha)
+                      </HeaderLink>
+                    </li>
+                  )}
                 </ul>
               </nav>
             )}

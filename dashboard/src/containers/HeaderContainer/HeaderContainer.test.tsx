@@ -27,6 +27,7 @@ const defaultState = {
   config: {
     featureFlags: { operators: true, additionalClusters: [], ui: "hex" },
   },
+  catalog: { isServiceCatalogInstalled: false },
   clusters: {
     currentCluster: "default",
     clusters: {

@@ -14,6 +14,7 @@ function mapStateToProps({
     location: { pathname },
   },
   config: { featureFlags, appVersion },
+  catalog: { isServiceCatalogInstalled },
 }: IStoreState) {
   return {
     authenticated,
@@ -23,6 +24,7 @@ function mapStateToProps({
     featureFlags,
     UI: featureFlags.ui,
     appVersion,
+    isServiceCatalogInstalled,
   };
 }
 
