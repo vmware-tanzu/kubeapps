@@ -58,7 +58,7 @@ const OperatorCatalogItem: React.SFC<IOperatorCatalogItem> = props => {
   // Cosmetic change, remove the version from the csv name
   const csvName = props.csv.split(".v")[0];
   const tag1 = <span>{csvName}</span>;
-  const link = `/ns/${namespace}/operators-instances/new/${csv}/${id}`;
+  const link = url.app.operatorInstances.new(namespace, csv, id);
   const subIcon = operatorIcon;
   const descriptionC = (
     <div className="ListItem__content__description">{trimDescription(description)}</div>
