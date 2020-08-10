@@ -83,6 +83,10 @@ spec:
           {{- if .Values.authProxy.resources }}
           resources: {{- toYaml .Values.authProxy.resources | nindent 12 }}
           {{- end }}
+        {{- else }}
+          {{- if and .Values.featureFlags.additionalClusters (not .Values.authProxy.externallyEnabled) }}
+            {{ fail "additionalClusters can be configured only when using an authenticate proxy for cluster oidc authentication."}}
+          {{ end -}}
         {{- end }}
       volumes:
         - name: vhost
