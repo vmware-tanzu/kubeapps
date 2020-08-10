@@ -131,9 +131,9 @@ describe("AppRepoList", () => {
     const wrapper = shallow(<AppRepoList {...props} />);
 
     const msgAlert = wrapper.find(MessageAlert);
-    expect(msgAlert.length).toBe(1);
+    expect(msgAlert).toExist();
     expect(msgAlert.prop("header")).toEqual(
-      "AppRepositories are available on the default cluster only",
+      "AppRepositories can be created on the default cluster only",
     );
     const addButton = wrapper.find("AppRepoAddButton");
     expect(addButton.length).toBe(0);

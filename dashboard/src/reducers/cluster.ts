@@ -108,10 +108,12 @@ const clusterReducer = (
       };
     case LOCATION_CHANGE:
       const pathname = action.payload.location.pathname;
-      // looks for /c/:cluster/ns/:namespace/ in URL
-      const matches = pathname.match(/\/c\/([^/]*)\/ns\/([^/]*)/);
-      if (matches) {
-        const [currentCluster, currentNamespace] = [matches[1], matches[2]];
+      // looks for either or both of /c/:cluster and /ns/:namespace in URL
+      const matches = pathname.match(/(?:\/c\/(?<cluster>[^/]*))?(?:\/ns\/(?<namespace>[^/]*))?/);
+      if (matches && matches.groups) {
+        let [currentCluster, currentNamespace] = [matches.groups.cluster, matches.groups.namespace];
+        currentCluster = currentCluster || state.currentCluster;
+        currentNamespace = currentNamespace || state.clusters[currentCluster].currentNamespace;
         return {
           ...state,
           currentCluster,
@@ -123,23 +125,6 @@ const clusterReducer = (
             },
           },
         };
-      } else {
-        // Default to previous behaviour for non-clustered routes.
-        // Looks for /ns/:namespace/ in URL
-        const matchesNSOnly = pathname.match(/\/ns\/([^/]*)/);
-        if (matchesNSOnly) {
-          const currentNamespace = matchesNSOnly[1];
-          return {
-            ...state,
-            clusters: {
-              ...state.clusters,
-              [state.currentCluster]: {
-                ...state.clusters[state.currentCluster],
-                currentNamespace,
-              },
-            },
-          };
-        }
       }
       break;
     case getType(actions.auth.setAuthenticated):

@@ -5,6 +5,7 @@ import * as React from "react";
 import ServiceBrokerList from ".";
 import {
   ErrorSelector,
+  MessageAlert,
   ServiceBrokersNotFoundAlert,
   ServiceCatalogNotInstalledAlert,
 } from "../../../components/ErrorAlert";
@@ -19,6 +20,7 @@ let defaultProps = {
   errors: {},
   checkCatalogInstalled: jest.fn(),
   isInstalled: true,
+  cluster: "default",
 };
 
 beforeEach(() => {
@@ -30,6 +32,7 @@ beforeEach(() => {
     errors: {},
     checkCatalogInstalled: jest.fn(),
     isInstalled: true,
+    cluster: "default",
   };
 });
 
@@ -49,6 +52,24 @@ context("if the service broker is not installed", () => {
     const wrapper = shallow(<ServiceBrokerList {...props} />);
     expect(wrapper.find(ServiceCatalogNotInstalledAlert)).toExist();
     expect(wrapper).toMatchSnapshot();
+  });
+});
+
+context("if the service brokers are accessed on an additional cluster", () => {
+  it("shows an alert with info", () => {
+    const props = { ...defaultProps, cluster: "other-cluster" };
+    const wrapper = shallow(<ServiceBrokerList {...props} />);
+    const msgAlert = wrapper.find(MessageAlert);
+    expect(msgAlert).toExist();
+    expect(msgAlert.prop("header")).toEqual(
+      "Service brokers can be created on the default cluster only",
+    );
+  });
+
+  it("does not show an alert with info on the default cluster", () => {
+    const wrapper = shallow(<ServiceBrokerList {...defaultProps} />);
+    const msgAlert = wrapper.find(MessageAlert);
+    expect(msgAlert).not.toExist();
   });
 });
 

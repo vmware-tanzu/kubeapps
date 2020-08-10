@@ -74,7 +74,7 @@ describe("settings", () => {
     const items = settingsbar.find("NavLink").map(p => p.props());
     const expectedItems = [
       { children: "App Repositories", to: "/c/default/ns/default/config/repos" },
-      { children: "Service Brokers", to: "/config/brokers" },
+      { children: "Service Brokers", to: "/c/default/config/brokers" },
     ];
     items.forEach((item, index) => {
       expect(item.children).toBe(expectedItems[index].children);
@@ -90,7 +90,7 @@ describe("settings", () => {
     const items = settingsbar.find("NavLink").map(p => p.props());
     const expectedItems = [
       { children: "App Repositories", to: "/c/default/ns/default/config/repos" },
-      { children: "Service Brokers", to: "/config/brokers" },
+      { children: "Service Brokers", to: "/c/default/config/brokers" },
       { children: "Operators", to: "/ns/default/operators" },
     ];
     items.forEach((item, index) => {

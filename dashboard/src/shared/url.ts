@@ -47,6 +47,7 @@ export const app = {
   config: {
     apprepositories: (cluster: string, namespace: string) =>
       `/c/${cluster}/ns/${namespace}/config/repos`,
+    brokers: (cluster: string) => `/c/${cluster}/config/brokers`,
     operators: (namespace: string) => `/ns/${namespace}/operators`,
   },
 };

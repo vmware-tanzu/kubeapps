@@ -1,5 +1,7 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 
+import * as url from "shared/url";
 import { definedNamespaces } from "../../../shared/Namespace";
 import { IAppRepository, IAppRepositoryKey, IRBACRole, ISecret } from "../../../shared/types";
 import { ErrorSelector, MessageAlert } from "../../ErrorAlert";
@@ -134,18 +136,20 @@ class AppRepoList extends React.Component<IAppRepoListProps> {
     // We do not currently support app repositories on additional clusters.
     if (cluster !== "default") {
       return (
-        <MessageAlert header="AppRepositories are available on the default cluster only">
+        <MessageAlert header="AppRepositories can be created on the default cluster only">
           <div>
             <p className="margin-v-normal">
-              Currently the multi-cluster support in Kubeapps supports AppRepositories on the
-              default cluster only.
+              Kubeapps' multi-cluster support currently enables creation of custom app repositories
+              on the default cluster only.
             </p>
             <p className="margin-v-normal">
-              The catalog of charts from AppRepositories on the default cluster which are available
-              for all namespaces will be avaialble on additional clusters also, but you can not
-              currently create a private AppRepository for a particular namespace of an additional
-              cluster. We may in the future support AppRepositories on additional clusters but for
-              now you will need to switch back to your default cluster.
+              You cannot currently create an app repository on an additional cluster, but you can
+              create an app repository with charts available for installation across clusters and
+              namespaces in the{" "}
+              <Link to={url.app.config.apprepositories("default", definedNamespaces.all)}>
+                default cluster's app repository listing for all namespaces
+              </Link>
+              .
             </p>
           </div>
         </MessageAlert>
