@@ -65,6 +65,12 @@ context("if the service brokers are accessed on an additional cluster", () => {
       "Service brokers can be created on the default cluster only",
     );
   });
+
+  it("does not show an alert with info on the default cluster", () => {
+    const wrapper = shallow(<ServiceBrokerList {...defaultProps} />);
+    const msgAlert = wrapper.find(MessageAlert);
+    expect(msgAlert).not.toExist();
+  });
 });
 
 context("while fetching brokers", () => {
