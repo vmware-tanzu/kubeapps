@@ -168,7 +168,14 @@ class AppList extends React.Component<IAppListProps, IAppListState> {
             const csv = this.props.csvs.find(c =>
               c.spec.customresourcedefinitions.owned.some(crd => crd.kind === r.kind),
             );
-            return <CustomResourceListItem key={r.metadata.name} resource={r} csv={csv!} />;
+            return (
+              <CustomResourceListItem
+                cluster={cluster}
+                key={r.metadata.name}
+                resource={r}
+                csv={csv!}
+              />
+            );
           })}
         </CardGrid>
       </div>

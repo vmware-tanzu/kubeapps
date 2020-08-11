@@ -24,6 +24,7 @@ const defaultItem = {
     name: "repo-name",
     namespace: "repo-namespace",
   } as IRepo,
+  cluster: "default",
   namespace: "repo-namespace",
   icon: "icon.png",
 } as IChartCatalogItem;
@@ -125,7 +126,7 @@ context("when the item is a catalog", () => {
   it("has the proper link", () => {
     const wrapper = shallow(<CatalogItem item={catalogItem} type={"operator"} />);
     expect(wrapper.find(InfoCard).prop("link")).toEqual(
-      `/ns/${defaultItem.namespace}/operators-instances/new/foo-cluster/foo1`,
+      `/c/default/ns/${defaultItem.namespace}/operators-instances/new/foo-cluster/foo1`,
     );
   });
 });

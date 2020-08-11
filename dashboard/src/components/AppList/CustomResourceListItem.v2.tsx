@@ -8,12 +8,13 @@ import InfoCard from "../InfoCard/InfoCard.v2";
 import Alert from "../js/Alert";
 
 interface ICustomResourceListItemProps {
+  cluster: string;
   resource: IResource;
   csv: IClusterServiceVersion;
 }
 
 function CustomResourceListItem(props: ICustomResourceListItemProps) {
-  const { resource, csv } = props;
+  const { cluster, resource, csv } = props;
   const crd = findOwnedKind(csv, resource.kind);
   if (!crd) {
     // Unexpected error, CRD should be present if resource is defined
@@ -28,6 +29,7 @@ function CustomResourceListItem(props: ICustomResourceListItemProps) {
     <InfoCard
       key={resource.metadata.name}
       link={app.operatorInstances.view(
+        cluster,
         resource.metadata.namespace,
         csv.metadata.name,
         crd.name,

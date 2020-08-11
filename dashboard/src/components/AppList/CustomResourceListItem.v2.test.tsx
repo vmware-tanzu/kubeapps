@@ -5,6 +5,7 @@ import InfoCard from "../InfoCard/InfoCard.v2";
 import CustomResourceListItem from "./CustomResourceListItem.v2";
 
 const defaultProps = {
+  cluster: "default",
   resource: {
     kind: "Something",
     metadata: {
@@ -42,6 +43,7 @@ it("renders an cr item", () => {
     description: crd.description,
     icon: "placeholder.png",
     link: app.operatorInstances.view(
+      defaultProps.cluster,
       resource.metadata.namespace,
       csv.metadata.name,
       crd.name,

@@ -47,6 +47,7 @@ const csv = {
 const defaultProps = {
   charts: [],
   csvs: [],
+  cluster: "default",
   namespace: "default",
 };
 const populatedProps = {

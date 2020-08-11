@@ -22,6 +22,7 @@ function mapStateToProps(
   { match: { params } }: IRouteProps,
 ) {
   return {
+    cluster: currentCluster,
     namespace: clusters[currentCluster].currentNamespace,
     isFetching: operators.isFetching,
     csv: operators.csv,

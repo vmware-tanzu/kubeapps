@@ -136,6 +136,7 @@ exports[`when custom resources available matches the snapshot 1`] = `
       <div>
         <CardGrid>
           <CustomResourceListItem
+            cluster="defaultc"
             csv={
               Object {
                 "spec": Object {

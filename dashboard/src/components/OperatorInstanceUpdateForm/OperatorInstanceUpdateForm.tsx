@@ -2,6 +2,8 @@ import { RouterAction } from "connected-react-router";
 import * as yaml from "js-yaml";
 import * as React from "react";
 
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
+import * as url from "shared/url";
 import { IClusterServiceVersion, IResource } from "../../shared/types";
 import NotFoundErrorPage from "../ErrorAlert/NotFoundErrorAlert";
 import OperatorInstanceFormBody from "../OperatorInstanceFormBody";
@@ -11,6 +13,7 @@ export interface IOperatorInstanceUpgradeFormProps {
   csvName: string;
   crdName: string;
   isFetching: boolean;
+  cluster: string;
   namespace: string;
   resourceName: string;
   getResource: (
@@ -62,8 +65,12 @@ class DeploymentFormBody extends React.Component<
   }
 
   public render() {
-    const { isFetching, errors, resourceName, namespace, resource, csvName } = this.props;
+    const { isFetching, errors, resourceName, cluster, namespace, resource, csvName } = this.props;
     const { defaultValues } = this.state;
+
+    if (cluster !== "default") {
+      return <OperatorNotSupported namespace={namespace} />;
+    }
 
     if (!errors.fetch && !isFetching && !resource) {
       return <NotFoundErrorPage resource={resourceName} namespace={namespace} />;
@@ -88,7 +95,7 @@ class DeploymentFormBody extends React.Component<
   }
 
   private handleDeploy = async (resource: IResource) => {
-    const { updateResource, crdName, resourceName, namespace, push, csvName } = this.props;
+    const { updateResource, crdName, resourceName, cluster, namespace, push, csvName } = this.props;
 
     const created = await updateResource(
       namespace,
@@ -98,7 +105,7 @@ class DeploymentFormBody extends React.Component<
       resource,
     );
     if (created) {
-      push(`/ns/${namespace}/operators-instances/${csvName}/${crdName}/${resourceName}`);
+      push(url.app.operatorInstances.view(cluster, namespace, csvName, crdName, resourceName));
     }
   };
 }

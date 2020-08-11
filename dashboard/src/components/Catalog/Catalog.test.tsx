@@ -201,6 +201,7 @@ describe("renderization", () => {
         id: "bar",
         name: "bar",
         namespace: "kubeapps",
+        cluster: "default",
         repo: {
           name: "bar",
           namespace: "chart-namespace",
@@ -212,6 +213,7 @@ describe("renderization", () => {
         id: "foo",
         name: "foo",
         namespace: "kubeapps",
+        cluster: "default",
         repo: {
           name: "foo",
           namespace: "chart-namespace",
@@ -247,6 +249,7 @@ describe("renderization", () => {
         id: "foo",
         name: "foo",
         namespace: "kubeapps",
+        cluster: "default",
         repo: {
           name: "foo",
           namespace: "chart-namespace",

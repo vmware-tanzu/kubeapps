@@ -30,6 +30,7 @@ exports[`renderization when charts available should render the list of charts 1`
           <CatalogItem
             item={
               Object {
+                "cluster": "default",
                 "description": "",
                 "icon": undefined,
                 "id": "bar",
@@ -48,6 +49,7 @@ exports[`renderization when charts available should render the list of charts 1`
           <CatalogItem
             item={
               Object {
+                "cluster": "default",
                 "description": "",
                 "icon": undefined,
                 "id": "foo",

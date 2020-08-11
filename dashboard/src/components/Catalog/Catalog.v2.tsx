@@ -148,7 +148,12 @@ function Catalog(props: ICatalogProps) {
             </Column>
             <Column span={10}>
               <CardGrid>
-                <CatalogItems charts={filteredCharts} csvs={filteredCSVs} namespace={namespace} />
+                <CatalogItems
+                  charts={filteredCharts}
+                  csvs={filteredCSVs}
+                  cluster={cluster}
+                  namespace={namespace}
+                />
               </CardGrid>
             </Column>
           </Row>
