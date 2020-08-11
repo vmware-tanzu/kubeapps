@@ -6,11 +6,13 @@ import { IStoreState } from "../../shared/types";
 
 function mapStateToProps({
   auth: { authenticated, oidcAuthenticated, sessionExpired },
+  clusters: { currentCluster },
 }: IStoreState) {
   return {
     sessionExpired,
     authenticated,
     oidcAuthenticated,
+    cluster: currentCluster,
   };
 }
 

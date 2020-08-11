@@ -47,7 +47,7 @@ const privateRoutes = {
 
 // Public routes that don't require authentication
 const routes = {
-  "/login": LoginFormContainer,
+  "/c/:cluster/login": LoginFormContainer,
 } as const;
 
 interface IRoutesProps extends IRouteComponentPropsAndRouteProps {
@@ -99,7 +99,7 @@ class Routes extends React.Component<IRoutesProps> {
       return <Redirect to={app.apps.list(this.props.cluster, this.props.namespace)} />;
     }
     // There is not a default namespace, redirect to login page
-    return <Redirect to={"/login"} />;
+    return <Redirect to={app.login(this.props.cluster)} />;
   };
 }
 

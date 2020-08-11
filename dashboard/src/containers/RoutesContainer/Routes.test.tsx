@@ -65,7 +65,7 @@ it("should render a redirect to the login page", () => {
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
+  expect(wrapper.find(Redirect).prop("to")).toEqual("/c/default/login");
 });
 
 it("should render a redirect to the login page (when not authenticated)", () => {
@@ -80,5 +80,5 @@ it("should render a redirect to the login page (when not authenticated)", () => 
     </StaticRouter>,
   );
   expect(wrapper.find(NotFound)).not.toExist();
-  expect(wrapper.find(Redirect).prop("to")).toEqual("/login");
+  expect(wrapper.find(Redirect).prop("to")).toEqual("/c/default/login");
 });

@@ -52,6 +52,7 @@ export const app = {
     brokers: (cluster: string) => `/c/${cluster}/config/brokers`,
     operators: (cluster: string, namespace: string) => `/c/${cluster}/ns/${namespace}/operators`,
   },
+  login: (cluster: string) => `/c/${cluster}/login`,
 };
 
 function withNS(namespace: string) {

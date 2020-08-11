@@ -2,11 +2,14 @@ import * as React from "react";
 import Modal from "react-modal";
 import { Redirect, Route, RouteComponentProps, RouteProps } from "react-router";
 
+import * as url from "shared/url";
+
 type IRouteComponentPropsAndRouteProps = RouteProps & RouteComponentProps<any>;
 
 interface IPrivateRouteProps extends IRouteComponentPropsAndRouteProps {
   authenticated: boolean;
   sessionExpired: boolean;
+  cluster: string;
 }
 
 class PrivateRoute extends React.Component<IPrivateRouteProps> {
@@ -36,7 +39,11 @@ class PrivateRoute extends React.Component<IPrivateRouteProps> {
         </Modal>
       );
     }
-    return <Redirect to={{ pathname: "/login", state: { from: props.location } }} />;
+    return (
+      <Redirect
+        to={{ pathname: url.app.login(this.props.cluster), state: { from: props.location } }}
+      />
+    );
   };
 
   private reload() {

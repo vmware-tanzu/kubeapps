@@ -28,6 +28,7 @@ it("redirects to the /login route if not authenticated", () => {
     <PrivateRoute
       sessionExpired={false}
       authenticated={false}
+      cluster="my-cluster"
       path="/test"
       component={MockComponent}
       {...emptyRouteComponentProps}
@@ -37,7 +38,7 @@ it("redirects to the /login route if not authenticated", () => {
   const wrapper2 = shallow(<RenderMethod {...emptyRouteComponentProps} />);
   expect(wrapper2.find(Redirect).exists()).toBe(true);
   expect(wrapper2.find(Redirect).props()).toMatchObject({
-    to: { pathname: "/login" },
+    to: { pathname: "/c/my-cluster/login" },
   } as any);
 });
 
@@ -46,6 +47,7 @@ it("renders the given component when authenticated", () => {
     <PrivateRoute
       sessionExpired={false}
       authenticated={true}
+      cluster="default"
       path="/test"
       component={MockComponent}
       {...emptyRouteComponentProps}
@@ -58,7 +60,12 @@ it("renders the given component when authenticated", () => {
 
 it("renders modal to reload the page if the session is expired", () => {
   const wrapper = shallow(
-    <PrivateRoute sessionExpired={true} authenticated={false} {...emptyRouteComponentProps} />,
+    <PrivateRoute
+      sessionExpired={true}
+      authenticated={false}
+      cluster="default"
+      {...emptyRouteComponentProps}
+    />,
   );
   const renderization: JSX.Element = wrapper.prop("render")();
   expect(renderization.type.toString()).toContain("Modal");
