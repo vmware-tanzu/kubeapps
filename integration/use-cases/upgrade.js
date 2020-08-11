@@ -1,5 +1,5 @@
 test("Upgrades an application", async () => {
-  await page.goto(getUrl("/#/login"));
+  await page.goto(getUrl("/#/c/default/login"));
 
   await expect(page).toFillForm("form", {
     token: process.env.EDIT_TOKEN

@@ -1,5 +1,5 @@
 test("Deploys an application with the values by default", async () => {
-  await page.goto(getUrl("/#/login"));
+  await page.goto(getUrl("/#/c/default/login"));
 
   await expect(page).toFillForm("form", {
     token: process.env.ADMIN_TOKEN,
