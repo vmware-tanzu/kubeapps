@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { RouterAction } from "connected-react-router";
 import { IOperatorsStateError } from "../../reducers/operators";
 import { Operators } from "../../shared/Operators";
@@ -17,6 +18,7 @@ interface IOperatorNewProps {
   operator?: IPackageManifest;
   getOperator: (namespace: string, name: string) => Promise<void>;
   isFetching: boolean;
+  cluster: string;
   namespace: string;
   errors: IOperatorsStateError;
   createOperator: (
@@ -66,7 +68,10 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
   }
 
   public render() {
-    const { isFetching, namespace, operatorName, operator, errors, push } = this.props;
+    const { cluster, isFetching, namespace, operatorName, operator, errors, push } = this.props;
+    if (cluster !== "default") {
+      return <OperatorNotSupported namespace={namespace} />;
+    }
     const {
       updateChannel,
       updateChannelGlobal,
@@ -97,6 +102,7 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
           description={currentCSVDesc.displayName}
           icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
           version={currentCSVDesc.version}
+          cluster={cluster}
           namespace={namespace}
           provider={operator.status.provider.name}
           namespaced={!updateChannelGlobal}
@@ -244,7 +250,7 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
   };
 
   private handleDeploy = async () => {
-    const { namespace, operator, createOperator, push } = this.props;
+    const { cluster, namespace, operator, createOperator, push } = this.props;
     const { updateChannel, installationModeGlobal, approvalStrategyAutomatic } = this.state;
     const targetNS = installationModeGlobal ? "operators" : namespace;
     const approvalStrategy = approvalStrategyAutomatic ? "Automatic" : "Manual";
@@ -257,7 +263,7 @@ class OperatorNew extends React.Component<IOperatorNewProps, IOperatorNewState> 
     );
     if (deployed) {
       // Success, redirect to operator page
-      push(app.operators.list(namespace));
+      push(app.operators.list(cluster, namespace));
     }
   };
 }

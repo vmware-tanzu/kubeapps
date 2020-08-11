@@ -91,7 +91,7 @@ describe("settings", () => {
     const expectedItems = [
       { children: "App Repositories", to: "/c/default/ns/default/config/repos" },
       { children: "Service Brokers", to: "/c/default/config/brokers" },
-      { children: "Operators", to: "/ns/default/operators" },
+      { children: "Operators", to: "/c/default/ns/default/operators" },
     ];
     items.forEach((item, index) => {
       expect(item.children).toBe(expectedItems[index].children);

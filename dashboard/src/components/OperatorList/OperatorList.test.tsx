@@ -9,12 +9,14 @@ import LoadingWrapper from "../LoadingWrapper";
 import { AUTO_PILOT, BASIC_INSTALL } from "../OperatorView/OperatorCapabilityLevel";
 import OLMNotFound from "./OLMNotFound";
 import OperatorList, { IOperatorListProps } from "./OperatorList";
+import OperatorNotSupported from "./OperatorsNotSupported";
 
 const defaultProps: IOperatorListProps = {
   isFetching: false,
   checkOLMInstalled: jest.fn(),
   isOLMInstalled: false,
   operators: [],
+  cluster: "default",
   namespace: "default",
   getOperators: jest.fn(),
   getCSVs: jest.fn(),
@@ -78,6 +80,12 @@ it("call the OLM check and render the NotFound message if not found", () => {
   const wrapper = shallow(<OperatorList {...defaultProps} checkOLMInstalled={checkOLMInstalled} />);
   expect(checkOLMInstalled).toHaveBeenCalled();
   expect(wrapper.find(OLMNotFound)).toExist();
+});
+
+it("displays an alert if rendered for an additional cluster", () => {
+  const props = { ...defaultProps, cluster: "other-cluster" };
+  const wrapper = shallow(<OperatorList {...props} />);
+  expect(wrapper.find(OperatorNotSupported)).toExist();
 });
 
 it("call the OLM check and render the a Forbidden message if it could do the check", () => {

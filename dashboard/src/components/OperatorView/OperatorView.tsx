@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import OperatorNotSupported from "components/OperatorList/OperatorsNotSupported";
 import { RouterAction } from "connected-react-router";
 import { Operators } from "../../shared/Operators";
 import { IClusterServiceVersion, IPackageManifest } from "../../shared/types";
@@ -16,6 +17,7 @@ interface IOperatorViewProps {
   operator?: IPackageManifest;
   getOperator: (namespace: string, name: string) => Promise<void>;
   isFetching: boolean;
+  cluster: string;
   namespace: string;
   error?: Error;
   push: (location: string) => RouterAction;
@@ -43,7 +45,10 @@ class OperatorView extends React.Component<IOperatorViewProps> {
   }
 
   public render() {
-    const { isFetching, namespace, operatorName, operator, error, push, csv } = this.props;
+    const { isFetching, cluster, namespace, operatorName, operator, error, push, csv } = this.props;
+    if (cluster !== "default") {
+      return <OperatorNotSupported namespace={namespace} />;
+    }
     if (error) {
       return <ErrorSelector error={error} resource={`Operator ${operatorName}`} />;
     }
@@ -67,6 +72,7 @@ class OperatorView extends React.Component<IOperatorViewProps> {
           description={currentCSVDesc.displayName}
           icon={api.operators.operatorIcon(this.props.namespace, operator.metadata.name)}
           version={currentCSVDesc.version}
+          cluster={cluster}
           namespace={namespace}
           provider={operator.status.provider.name}
           namespaced={!namespaced?.supported}

@@ -9,6 +9,7 @@ interface IOperatorHeaderProps {
   hideButton?: boolean;
   disableButton?: boolean;
   description: string;
+  cluster: string;
   namespace: string;
   version: string;
   provider: string;
@@ -26,6 +27,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
       id,
       icon,
       description,
+      cluster,
       namespace,
       version,
       provider,
@@ -46,7 +48,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
               <h5 className="subtitle margin-b-normal">
                 {/* TODO(andresmgot): Filter by provider */}
                 <span>{version} - Provided by </span>
-                <Link to={`/ns/${namespace}/operators`}>{provider}</Link>
+                <Link to={app.operators.list(cluster, namespace)}>{provider}</Link>
               </h5>
               <h5 className="subtitle margin-b-reset">{description}</h5>
             </div>
@@ -69,7 +71,7 @@ class OperatorHeader extends React.Component<IOperatorHeaderProps> {
   }
 
   public redirect = () => {
-    this.props.push(app.operators.new(this.props.namespace, this.props.id));
+    this.props.push(app.operators.new(this.props.cluster, this.props.namespace, this.props.id));
   };
 }
 
