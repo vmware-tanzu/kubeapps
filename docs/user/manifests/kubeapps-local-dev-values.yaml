@@ -14,3 +14,8 @@ kubeops:
 postgresql:
   replication:
     enabled: false
+ingress:
+  enabled: true
+  hostname: localhost
+  tls: true
+

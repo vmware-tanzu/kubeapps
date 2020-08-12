@@ -13,10 +13,17 @@ ${CLUSTER_CONFIG}:
 	kind create cluster \
 		--kubeconfig ${CLUSTER_CONFIG} \
 		--name ${CLUSTER_NAME} \
-		--config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.json \
+		--config=./docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml \
 		--retain \
 		--wait 10s
 	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
+	kubectl apply --kubeconfig=${CLUSTER_CONFIG} -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v0.34.1/deploy/static/provider/kind/deploy.yaml
+	# TODO: need to add wait for condition=exists or similar - https://github.com/kubernetes/kubernetes/issues/83242
+	sleep 5
+	kubectl wait --namespace ingress-nginx \
+		--for=condition=ready pod \
+		--selector=app.kubernetes.io/component=controller \
+		--timeout=120s
 
 cluster-kind: ${CLUSTER_CONFIG}
 
