@@ -55,17 +55,16 @@ func ErrorCode(err error) int {
 
 // ErrorCodeWithDefault returns the int representing an error with a default value.
 func ErrorCodeWithDefault(err error, defaultCode int) int {
-	errCode := defaultCode
 	if isAlreadyExists(err) {
-		errCode = http.StatusConflict
+		return http.StatusConflict
 	} else if isForbidden(err) {
-		errCode = http.StatusForbidden
+		return http.StatusForbidden
 	} else if isNotFound(err) {
-		errCode = http.StatusNotFound
+		return http.StatusNotFound
 	} else if isUnprocessable(err) {
-		errCode = http.StatusUnprocessableEntity
+		return http.StatusUnprocessableEntity
 	}
-	return errCode
+	return defaultCode
 }
 
 // ParseAndGetChart request and parse a chart.
