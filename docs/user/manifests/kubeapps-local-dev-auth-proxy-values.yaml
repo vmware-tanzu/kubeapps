@@ -1,7 +1,7 @@
 authProxy:
   enabled: true
   provider: oidc
-  clientID: kubeapps
+  clientID: default
   clientSecret: ZXhhbXBsZS1hcHAtc2VjcmV0
   cookieSecret: bm90LWdvb2Qtc2VjcmV0Cg==
   additionalFlags:

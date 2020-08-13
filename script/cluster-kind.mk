@@ -6,6 +6,7 @@ ADDITIONAL_CLUSTER_NAME ?= kubeapps-additional
 
 CLUSTER_CONFIG = ${KUBE}/kind-config-${CLUSTER_NAME}
 ADDITIONAL_CLUSTER_CONFIG = ${KUBE}/kind-config-${ADDITIONAL_CLUSTER_NAME}
+ADDITIONAL_CLUSTER_CLIENTID ?= shared
 
 # The --wait 10s in the create cluster calls is not sufficient for the control-plane node to be ready,
 # but is sufficient for the pod to be created so that we can copy the certs below.
@@ -40,7 +41,7 @@ ${ADDITIONAL_CLUSTER_CONFIG}: devel/dex.crt
 	kind create cluster \
 		--kubeconfig ${ADDITIONAL_CLUSTER_CONFIG} \
 		--name ${ADDITIONAL_CLUSTER_NAME} \
-		--config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
+		--config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config-${ADDITIONAL_CLUSTER_CLIENTID}-clientid.yaml \
 		--retain \
 		--wait 10s
 	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml

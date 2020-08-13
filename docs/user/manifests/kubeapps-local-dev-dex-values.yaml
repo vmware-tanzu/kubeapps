@@ -12,11 +12,20 @@ config:
     tlsKey: /etc/dex/tls/https/server/tls.key
   # Instead of reading from an external storage, use this list of clients.
   staticClients:
-  - id: kubeapps
+  # The default client is what is used for a single-cluster setup, as well as a multi-cluster
+  # setup where each cluster uses the same client id.
+  - id: default
     redirectURIs:
     - 'https://localhost/oauth2/callback'
-    name: 'Kubeapps'
+    name: 'Default-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+  # The second-cluster clientid is only used in the multi-cluster setup where each cluster
+  # has its own clientid.
+  - id: second-cluster
+    redirectURIs:
+    - 'https://localhost/oauth2/callback'
+    name: 'Second-Cluster'
+    secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
   staticPasswords:
   # Both users have a bcrypt hash of the string "password"
   - email: "kubeapps-operator@example.com"
