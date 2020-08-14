@@ -12,11 +12,36 @@ config:
     tlsKey: /etc/dex/tls/https/server/tls.key
   # Instead of reading from an external storage, use this list of clients.
   staticClients:
-  - id: kubeapps
+  # The default client is in this setup the client used by Kubeapps'
+  # auth-proxy, though importantly, any additional clients used by additional
+  # k8s api servers trust this first client as a peer so that it can create
+  # tokens which can be used against those additional clients which trust this
+  # one.
+  - id: default
     redirectURIs:
     - 'https://localhost/oauth2/callback'
-    name: 'Kubeapps'
+    name: 'Default-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+  # The second-cluster clientid exists for the additional cluster but not used
+  # by Kubeapps at all. Importantly, it lists the client-id used by Kubeapps as
+  # a trusted peer.
+  - id: second-cluster
+    redirectURIs:
+    - 'https://localhost/oauth2/callback'
+    name: 'Second-Cluster'
+    secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
+    trustedPeers:
+    - default
+  # The thired-cluster clientid is completely fabricated and exists only to
+  # verify that more than one additional audience will be present on the
+  # returned id_token.
+  - id: third-cluster
+    redirectURIs:
+    - 'https://localhost/oauth2/callback'
+    name: 'Third-Cluster'
+    secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
+    trustedPeers:
+    - default
   staticPasswords:
   # Both users have a bcrypt hash of the string "password"
   - email: "kubeapps-operator@example.com"
