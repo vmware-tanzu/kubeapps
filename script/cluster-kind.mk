@@ -40,7 +40,7 @@ ${ADDITIONAL_CLUSTER_CONFIG}: devel/dex.crt
 	kind create cluster \
 		--kubeconfig ${ADDITIONAL_CLUSTER_CONFIG} \
 		--name ${ADDITIONAL_CLUSTER_NAME} \
-		--config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.json \
+		--config=./docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml \
 		--retain \
 		--wait 10s
 	kubectl apply --kubeconfig=${ADDITIONAL_CLUSTER_CONFIG} -f ./docs/user/manifests/kubeapps-local-dev-users-rbac.yaml
