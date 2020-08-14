@@ -2,6 +2,10 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
+  extraMounts:
+  - readOnly: true
+    hostPath: ./devel/dex.crt
+    containerPath: /etc/ssl/certs/dex.crt
   kubeadmConfigPatches:
   - |
     kind: ClusterConfiguration
@@ -9,7 +13,7 @@ nodes:
       extraArgs:
         oidc-issuer-url: https://172.18.0.2:32000
         oidc-client-id: default
-        oidc-ca-file: /etc/kubernetes/pki/apiserver.crt
+        oidc-ca-file: /etc/ssl/certs/dex.crt
         oidc-username-claim: email
         oidc-username-prefix: "oidc:"
         oidc-groups-claim: groups

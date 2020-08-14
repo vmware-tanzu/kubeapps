@@ -47,7 +47,7 @@ deploy-dev-own-clientids: deploy-dependencies
 		--values ./docs/user/manifests/kubeapps-local-dev-additional-kind-cluster.yaml \
 		--set useHelm3=true --set authProxy.enabled=false --set authProxy.externallyEnabled=true \
 		--set ingress.enabled=false --set frontend.service.type=ClusterIP
-	kubectl apply --namespace kubeapps ./docs/user/manifests/kubeapps-local-dev-additional-auth-proxy.yaml
+	kubectl apply --namespace kubeapps -f ./docs/user/manifests/kubeapps-local-dev-additional-auth-proxy.yaml
 	@echo "\nYou can now simply open your browser at https://localhost/ to access Kubeapps!"
 	@echo "When logging in, you will be redirected to dex (with a self-signed cert) and can login with email as either of"
 	@echo "  kubeapps-operator@example.com:password"

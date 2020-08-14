@@ -125,8 +125,9 @@ spec:
             - --scope=openid email groups
             - --oidc-issuer-url=https://172.18.0.2:32000
             - --ssl-insecure-skip-verify=true
-            - --redirect-url=https://localhost/oauth2/callback
+            - --redirect-url=https://localhost/clusters/default/oauth2/callback
             - --cookie-name=_oauth2_proxy_default
+            - --proxy-prefix=/clusters/default/oauth2
           image: docker.io/bitnami/oauth2-proxy:6.0.0-debian-10-r23
           imagePullPolicy: "IfNotPresent"
           ports:
@@ -154,8 +155,9 @@ spec:
             - --scope=openid email groups
             - --oidc-issuer-url=https://172.18.0.2:32000
             - --ssl-insecure-skip-verify=true
-            - --redirect-url=https://localhost/oauth2/callback
+            - --redirect-url=https://localhost/clusters/second-cluster/oauth2/callback
             - --cookie-name=_oauth2_proxy_second_cluster
+            - --proxy-prefix=/clusters/second-cluster/oauth2
           image: docker.io/bitnami/oauth2-proxy:6.0.0-debian-10-r23
           imagePullPolicy: "IfNotPresent"
           ports:

@@ -17,15 +17,32 @@ config:
   - id: default
     redirectURIs:
     - 'https://localhost/oauth2/callback'
+    - 'https://localhost/clusters/default/oauth2/callback'
     name: 'Default-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0
+    trustedPeers:
+    - second-cluster
+    - third-cluster
   # The second-cluster clientid is only used in the multi-cluster setup where each cluster
   # has its own clientid.
   - id: second-cluster
     redirectURIs:
     - 'https://localhost/oauth2/callback'
+    - 'https://localhost/clusters/second-cluster/oauth2/callback'
     name: 'Second-Cluster'
     secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
+    trustedPeers:
+    - default
+    - third-cluster
+  - id: third-cluster
+    redirectURIs:
+    - 'https://localhost/oauth2/callback'
+    - 'https://localhost/clusters/third-cluster/oauth2/callback'
+    name: 'Third-Cluster'
+    secret: ZXhhbXBsZS1hcHAtc2VjcmV0LXNlY29uZC1jbHVzdGVy
+    trustedPeers:
+    - default
+    - second-cluster
   staticPasswords:
   # Both users have a bcrypt hash of the string "password"
   - email: "kubeapps-operator@example.com"
