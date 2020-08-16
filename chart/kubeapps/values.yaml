@@ -17,7 +17,7 @@ useHelm3: false
 allowNamespaceDiscovery: true
 
 ## Enable IPv6 Configuration for Nginx
-enableIPv6: true
+enableIPv6: false
 
 ## The frontend service is the main reverse proxy used to access the Kubeapps UI
 ## To expose Kubeapps externally either configure the ingress object below or
