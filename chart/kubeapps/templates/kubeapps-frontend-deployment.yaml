@@ -85,7 +85,7 @@ spec:
           {{- end }}
         {{- else }}
           {{- if and .Values.featureFlags.additionalClusters (not .Values.authProxy.externallyEnabled) }}
-            {{ fail "additionalClusters can be configured only when using an authenticate proxy for cluster oidc authentication."}}
+            {{ fail "additionalClusters can be configured only when using an auth proxy for cluster oidc authentication."}}
           {{ end -}}
         {{- end }}
       volumes:

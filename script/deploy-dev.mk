@@ -20,11 +20,13 @@ deploy-openldap:
 devel/localhost-cert.pem:
 	mkcert -key-file ./devel/localhost-key.pem -cert-file ./devel/localhost-cert.pem localhost 172.18.0.2
 
-deploy-dev: deploy-dex deploy-openldap devel/localhost-cert.pem
+deploy-dependencies: deploy-dex deploy-openldap devel/localhost-cert.pem
 	kubectl create namespace kubeapps
 	kubectl -n kubeapps create secret tls localhost-tls \
 		--key ./devel/localhost-key.pem \
 		--cert ./devel/localhost-cert.pem
+
+deploy-dev: deploy-dependencies
 	helm install kubeapps ./chart/kubeapps --namespace kubeapps \
 		--values ./docs/user/manifests/kubeapps-local-dev-values.yaml \
 		--values ./docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml \
@@ -45,4 +47,4 @@ reset-dev:
 	helm -n ldap delete ldap || true
 	kubectl delete namespace --wait dex ldap kubeapps || true
 
-.PHONY: deploy-dex deploy-dev deploy-openldap reset-dev update-apiserver-etc-hosts
+.PHONY: deploy-dex deploy-dependencies deploy-dev deploy-openldap reset-dev update-apiserver-etc-hosts
