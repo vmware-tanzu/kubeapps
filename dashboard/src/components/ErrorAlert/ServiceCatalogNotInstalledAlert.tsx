@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
 
 import NotFoundErrorAlert from "./NotFoundErrorAlert";
 
@@ -19,9 +18,6 @@ class ServiceCatalogNotInstalledAlert extends React.Component {
             </a>{" "}
             to browse, provision and manage external services within Kubeapps.
           </p>
-          <Link className="button button-primary button-small" to={"/charts/svc-cat/catalog"}>
-            Install Catalog
-          </Link>
         </div>
       </NotFoundErrorAlert>
     );
