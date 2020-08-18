@@ -50,5 +50,4 @@ data:
         {{- $sanitizedClusters = append $sanitizedClusters (pick . "name" "apiServiceURL") }}
       {{- end }}
       "clusters": {{ $sanitizedClusters | toJson }}
-      ]
     }
