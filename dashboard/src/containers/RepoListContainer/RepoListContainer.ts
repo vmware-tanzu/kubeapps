@@ -23,6 +23,7 @@ function mapStateToProps({ config, clusters: { currentCluster, clusters }, repos
     validating: repos.validating,
     imagePullSecrets: repos.imagePullSecrets,
     kubeappsNamespace: config.namespace,
+    UI: config.featureFlags.ui,
   };
 }
 

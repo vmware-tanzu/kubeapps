@@ -1,5 +1,6 @@
 .login {
   &-wrapper {
+    width: calc(100vw + 0.6rem);
     .login {
       min-height: calc(100vh - 3rem);
       .login-group {

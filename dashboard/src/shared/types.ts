@@ -412,7 +412,7 @@ export interface IAppRepository
     {
       type: string;
       url: string;
-      auth: {
+      auth?: {
         header?: {
           secretKeyRef: {
             name: string;
