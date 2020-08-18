@@ -35,7 +35,8 @@ const makeStore = (
     namespace: "",
     appVersion: "",
     oauthLogoutURI: "",
-    featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
+    featureFlags: { operators: false, ui: "hex" },
+    clusters: [],
   };
   const clusters: IClustersState = {
     currentCluster: "default",

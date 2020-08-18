@@ -1,6 +1,6 @@
 import axios from "axios";
 
-interface IAdditionalCluster {
+interface ICluster {
   name: string;
   apiServiceURL: string;
   certificateAuthorityData?: string;
@@ -8,7 +8,6 @@ interface IAdditionalCluster {
 
 export interface IFeatureFlags {
   operators: boolean;
-  additionalClusters: IAdditionalCluster[];
   ui: string;
 }
 
@@ -21,6 +20,7 @@ export interface IConfig {
   oauthLogoutURI: string;
   error?: Error;
   featureFlags: IFeatureFlags;
+  clusters: ICluster[];
 }
 
 export default class Config {

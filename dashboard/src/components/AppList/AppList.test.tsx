@@ -24,7 +24,7 @@ const defaultProps: IAppListProps = {
   isFetchingResources: false,
   customResources: [],
   csvs: [],
-  featureFlags: { operators: true, additionalClusters: [], ui: "hex" },
+  featureFlags: { operators: true, ui: "hex" },
 };
 
 context("when changing props", () => {

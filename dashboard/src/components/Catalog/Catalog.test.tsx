@@ -29,7 +29,7 @@ const defaultProps = {
   kubeappsNamespace: "kubeapps",
   csvs: [],
   getCSVs: jest.fn(),
-  featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
+  featureFlags: { operators: false, ui: "hex" },
 };
 
 it("propagates the filter from the props", () => {

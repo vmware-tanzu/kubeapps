@@ -316,17 +316,17 @@ describe("clusterReducer", () => {
       oauthLogoutURI: "",
       featureFlags: {
         operators: false,
-        additionalClusters: [
-          {
-            name: "additionalCluster1",
-            apiServiceURL: "https://not-used-by-dashboard.example.com/",
-          },
-          {
-            name: "additionalCluster2",
-            apiServiceURL: "https://not-used-by-dashboard.example.com/",
-          },
-        ],
       },
+      clusters: [
+        {
+          name: "additionalCluster1",
+          apiServiceURL: "https://not-used-by-dashboard.example.com/",
+        },
+        {
+          name: "additionalCluster2",
+          apiServiceURL: "https://not-used-by-dashboard.example.com/",
+        },
+      ],
     } as IConfig;
     it("adds the additional clusters to the clusters state", () => {
       expect(
@@ -354,9 +354,9 @@ describe("clusterReducer", () => {
       const badConfig = {
         ...config,
       };
-      // Manually delete additionalClusters so typescript doesn't complain
+      // Manually delete clusters so typescript doesn't complain
       // while still allowing us to test the case where it is not present.
-      delete badConfig.featureFlags.additionalClusters;
+      delete badConfig.clusters;
       expect(
         clusterReducer(initialTestState, {
           type: getType(actions.config.receiveConfig),

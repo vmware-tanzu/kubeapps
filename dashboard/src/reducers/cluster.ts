@@ -151,7 +151,7 @@ const clusterReducer = (
         ...state.clusters,
       };
       const config = action.payload as IConfig;
-      config.featureFlags.additionalClusters?.forEach(cluster => {
+      config.clusters?.forEach(cluster => {
         clusters[cluster.name] = {
           currentNamespace: "default",
           namespaces: [],

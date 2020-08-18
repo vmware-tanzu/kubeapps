@@ -23,7 +23,7 @@ const defaultProps = {
   setNamespace: jest.fn(),
   createNamespace: jest.fn(),
   getNamespace: jest.fn(),
-  featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
+  featureFlags: { operators: false, ui: "hex" },
   appVersion: "v2.0.0",
 };
 
