@@ -1,4 +1,4 @@
-{{- if .Values.clusters -}}
+{{- if gt (len .Values.clusters) 0 -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
