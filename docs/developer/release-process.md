@@ -6,11 +6,11 @@ The purpose of this document is to guide you through the process of releasing a 
 
 The [values.yaml](../../chart/kubeapps/values.yaml) uses the following Bitnami images for various services:
 
-* bitnami/nginx
-* bitnami/kubectl
-* bitnami/oauth2-proxy
+* [bitnami/nginx](https://hub.docker.com/r/bitnami/nginx/tags)
+* [bitnami/kubectl](https://hub.docker.com/r/bitnami/kubectl/tags)
+* [bitnami/oauth2-proxy](https://hub.docker.com/r/bitnami/oauth2-proxy/tags)
 
-while the [dashboard/Dockerfile](../../dashboard/Dockerfile) uses bitnami/nginx also.
+while the [dashboard/Dockerfile](../../dashboard/Dockerfile) uses bitnami/nginx and [bitnami/node](https://hub.docker.com/r/bitnami/node/tags) also (though the latter is a rolling tag since it's a build-only image).
 
 All tags for these images should be updated to their latest compatible versions and security patches.
 
@@ -23,10 +23,18 @@ helm dependency list ./chart/kubeapps
 to see if the latest versions are included, and
 
 ```bash
-helm dependency upgrade ./chart/kubeapps
+helm dependency update ./chart/kubeapps
 ```
 
 to update the requirements.lock file.
+
+Lastly, running
+
+```bash
+yarn upgrade
+```
+
+in the dashboard directory will update the frontend packages to the latest compatible versions.
 
 ## 1 - Create a new git tag
 
