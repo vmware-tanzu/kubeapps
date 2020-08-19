@@ -29,7 +29,7 @@ const defaultProps = {
   kubeappsNamespace: "kubeapps",
   csvs: [],
   getCSVs: jest.fn(),
-  featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
+  featureFlags: { operators: false, ui: "hex" },
 };
 const chartItem = {
   id: "foo",

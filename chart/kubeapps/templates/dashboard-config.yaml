@@ -44,5 +44,6 @@ data:
       "authProxyEnabled": {{ or .Values.authProxy.enabled .Values.authProxy.externallyEnabled }},
       "oauthLoginURI": {{ .Values.authProxy.oauthLoginURI | quote }},
       "oauthLogoutURI": {{ .Values.authProxy.oauthLogoutURI | quote }},
-      "featureFlags": {{ .Values.featureFlags | toJson }}
+      "featureFlags": {{ .Values.featureFlags | toJson }},
+      "clusters": {{ .Values.clusters | toJson }}
     }

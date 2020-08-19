@@ -168,7 +168,8 @@ describe("Auth", () => {
         oauthLogoutURI,
         namespace: "ns",
         appVersion: "2",
-        featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
+        featureFlags: { operators: false, ui: "hex" },
+        clusters: [],
       });
 
       expect(mockedAssign).toBeCalledWith(oauthLogoutURI);
@@ -182,7 +183,8 @@ describe("Auth", () => {
         oauthLogoutURI: "",
         namespace: "ns",
         appVersion: "2",
-        featureFlags: { operators: false, additionalClusters: [], ui: "hex" },
+        featureFlags: { operators: false, ui: "hex" },
+        clusters: [],
       });
 
       expect(mockedAssign).toBeCalledWith("/oauth2/sign_out");
