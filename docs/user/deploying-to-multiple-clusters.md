@@ -76,11 +76,11 @@ Your Kubeapps installation will also need to be [configured to use OIDC for auth
 
 ## Clusters with different client-ids
 
-Some multi-cluster environments configure each cluster's API server with its own client-id for the chosen OAuth2 provider. For example, part of the [configuration of an OIDC-enabled workload cluster in TKG](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.0/vmware-tanzu-kubernetes-grid-10/GUID-manage-instance-gangway-aws.html) has you creating a separate client ID for the new cluster:
+Some multi-cluster environments configure each cluster's API server with its own client-id for the chosen OAuth2 provider. For example, part of the [configuration of an OIDC-enabled workload cluster in TKG](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.0/vmware-tanzu-kubernetes-grid-10/GUID-manage-instance-gangway-aws.html) has you creating a separate client ID in the Dex configuration for the new cluster:
 
 ![TKG instructions requiring a new client-id](../img/tkg-separate-client-ids-per-cluster.png "TKG OIDC setup")
 
-In this case, there is some extra configuration required to ensure the OIDC token used by Kubeapps is accepted by the different clusters.
+In this case, there is some extra configuration required to ensure the OIDC token used by Kubeapps is accepted by the different clusters as follows.
 
 ### Configuring the OIDC Provider to trust peer client ids
 
