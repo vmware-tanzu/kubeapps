@@ -21,6 +21,8 @@ import {
   heartIcon,
   helpIcon,
   infoCircleIcon,
+  plusCircleIcon,
+  refreshIcon,
   rewindIcon,
   searchIcon,
   timesIcon,
@@ -63,4 +65,6 @@ Icons.addIcons(
   fileIcon,
   copyToClipboardIcon,
   backupRestoreIcon,
+  refreshIcon,
+  plusCircleIcon,
 );

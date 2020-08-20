@@ -12,6 +12,7 @@ const kubeappsNamespace = "kubeapps-namespace";
 const defaultState = {
   config: {
     namespace: kubeappsNamespace,
+    featureFlags: { ui: "clarity" },
   },
   clusters: {
     currentCluster: "default",
@@ -30,7 +31,7 @@ describe("RepoListContainer props", () => {
     });
     const wrapper = shallow(<RepoListContainer store={store} />);
 
-    const component = wrapper.find("AppRepoList");
+    const component = wrapper.find("AppRepoListSelector");
 
     expect(component).toHaveProp({
       namespace: currentNamespace,
@@ -41,9 +42,6 @@ describe("RepoListContainer props", () => {
   it("passes _all through as a normal namespace to be handled by the component", () => {
     const store = mockStore({
       ...defaultState,
-      config: {
-        namespace: kubeappsNamespace,
-      },
       clusters: {
         ...defaultState.clusters,
         clusters: {
@@ -53,7 +51,7 @@ describe("RepoListContainer props", () => {
     });
     const wrapper = shallow(<RepoListContainer store={store} />);
 
-    const component = wrapper.find("AppRepoList");
+    const component = wrapper.find("AppRepoListSelector");
 
     expect(component).toHaveProp({
       namespace: definedNamespaces.all,

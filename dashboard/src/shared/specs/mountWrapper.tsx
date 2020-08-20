@@ -1,12 +1,13 @@
 import { mount } from "enzyme";
 import { merge } from "lodash";
+import { cloneDeep } from "lodash";
 import * as React from "react";
 import { Provider } from "react-redux";
 import { BrowserRouter as Router } from "react-router-dom";
 import configureMockStore, { MockStore } from "redux-mock-store";
 import thunk from "redux-thunk";
 
-import { IStoreState } from "../../shared/types";
+import { IAppRepository, ISecret, IStoreState } from "../../shared/types";
 
 const mockStore = configureMockStore([thunk]);
 
@@ -22,7 +23,11 @@ const initialState = {
   clusters: {
     currentCluster: "default-cluster",
   },
-  repos: {},
+  repos: {
+    errors: {},
+    repos: [] as IAppRepository[],
+    repoSecrets: [] as ISecret[],
+  },
   operators: {},
 } as IStoreState;
 
@@ -31,7 +36,7 @@ export const defaultStore = mockStore(initialState);
 // getStore returns a store initialised with a merge of
 // the initial state with any passed extra state.
 export const getStore = (extraState: object) => {
-  const state = { ...initialState };
+  const state = cloneDeep(initialState);
   return mockStore(merge(state, extraState));
 };
 
