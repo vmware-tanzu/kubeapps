@@ -6,6 +6,7 @@ import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
 import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { IAppRepository } from "shared/types";
 import { AppRepoAddButton } from "./AppRepoButton.v2";
 import { AppRepoForm } from "./AppRepoForm.v2";
 
@@ -81,14 +82,36 @@ it("should render an error", () => {
   expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
-it("calls updateRepo when submitting", () => {
+it("calls installRepo when submitting", () => {
+  const installRepo = jest.fn();
+  actions.repos = {
+    ...actions.repos,
+    installRepo,
+  };
+
+  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  act(() => {
+    (wrapper.find(CdsButton).prop("onClick") as any)();
+  });
+  wrapper.update();
+  (wrapper.find(AppRepoForm).prop("onSubmit") as any)();
+  expect(installRepo).toHaveBeenCalled();
+});
+
+it("calls updateRepo when submitting and there is a repo available", () => {
   const updateRepo = jest.fn();
   actions.repos = {
     ...actions.repos,
     updateRepo,
   };
 
-  const wrapper = mountWrapper(defaultStore, <AppRepoAddButton {...defaultProps} />);
+  const wrapper = mountWrapper(
+    defaultStore,
+    <AppRepoAddButton
+      {...defaultProps}
+      repo={{ metadata: { name: "foo" }, spec: {} } as IAppRepository}
+    />,
+  );
   act(() => {
     (wrapper.find(CdsButton).prop("onClick") as any)();
   });

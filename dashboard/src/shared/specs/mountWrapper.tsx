@@ -27,6 +27,7 @@ const initialState = {
     errors: {},
     repos: [] as IAppRepository[],
     repoSecrets: [] as ISecret[],
+    imagePullSecrets: [] as ISecret[],
   },
   operators: {},
 } as IStoreState;

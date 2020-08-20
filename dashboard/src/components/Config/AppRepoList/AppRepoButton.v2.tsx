@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Action } from "redux";
 import { ThunkDispatch } from "redux-thunk";
 import { IAppRepository, ISecret, IStoreState } from "../../../shared/types";
-import "./AppRepo.css";
+import "./AppRepoButton.v2.css";
 import { AppRepoForm } from "./AppRepoForm.v2";
 
 interface IAppRepoAddButtonProps {
@@ -41,18 +41,33 @@ export function AppRepoAddButton({
     customCA: string,
     syncJobPodTemplate: string,
     registrySecrets: string[],
-  ) =>
-    dispatch(
-      actions.repos.updateRepo(
-        name,
-        namespace,
-        url,
-        authHeader,
-        customCA,
-        syncJobPodTemplate,
-        registrySecrets,
-      ),
-    );
+  ) => {
+    if (repo) {
+      return dispatch(
+        actions.repos.updateRepo(
+          name,
+          namespace,
+          url,
+          authHeader,
+          customCA,
+          syncJobPodTemplate,
+          registrySecrets,
+        ),
+      );
+    } else {
+      return dispatch(
+        actions.repos.installRepo(
+          name,
+          namespace,
+          url,
+          authHeader,
+          customCA,
+          syncJobPodTemplate,
+          registrySecrets,
+        ),
+      );
+    }
+  };
 
   return (
     <>
@@ -60,12 +75,15 @@ export function AppRepoAddButton({
         {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
         {text || "Add App Repository"}
       </CdsButton>
-      <Modal showModal={modalIsOpen} onModalClose={closeModal}>
+      <Modal showModal={modalIsOpen} onModalClose={closeModal} modalSize="lg">
         {errors.create && (
           <Alert theme="danger">
             Found an error creating the repository: {errors.create.message}
           </Alert>
         )}
+        <div className="modal-close" onClick={closeModal}>
+          <CdsIcon shape="times-circle" size="md" solid={true} />
+        </div>
         <AppRepoForm
           onSubmit={onSubmit}
           onAfterInstall={closeModal}

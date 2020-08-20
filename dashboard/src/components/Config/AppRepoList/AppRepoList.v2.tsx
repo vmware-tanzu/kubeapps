@@ -74,11 +74,6 @@ function AppRepoList({ cluster, namespace, kubeappsNamespace }: IAppRepoListProp
               Found an error deleting the repository: {errors.delete.message}
             </Alert>
           )}
-          {errors.update && (
-            <Alert theme="danger">
-              Found an error updating the repositories: {errors.update.message}
-            </Alert>
-          )}
           {!errors.fetch && (
             <>
               <LoadingWrapper loaded={!isFetching}>
