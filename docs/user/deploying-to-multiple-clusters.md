@@ -90,7 +90,7 @@ First your OIDC Provider needs to be configured so that tokens issued for the cl
 
 The second part of the additional configuration is to ensure that when Kubeapps' auth-proxy requests a token that it includes extra scopes, such as `audience:server:client_id:second-cluster` for each additional audience that it requires in the issued token. For example, you can view the [auth-proxy configuration used in the local development environment](/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml) and see the additional scopes included there to ensure that the `second-cluster` and `third-cluster` are included in the audience of the resulting token.
 
-## Updating multicluster options
+## Updating multi-cluster options
 
 Updating the value of the `clusters` chart option is just like updating any other helm chart value:
 
