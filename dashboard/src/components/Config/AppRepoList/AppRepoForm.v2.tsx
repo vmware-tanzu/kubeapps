@@ -65,6 +65,22 @@ export function AppRepoForm({
   } = useSelector((state: IStoreState) => state.repos);
 
   useEffect(() => {
+    // Select the pull secrets if they are already selected in the existing repo
+    imagePullSecrets.forEach(pullSecret => {
+      const secretName = pullSecret.metadata.name;
+      if (
+        repo?.spec?.dockerRegistrySecrets?.some(s => s === secretName) &&
+        !selectedImagePullSecrets[secretName]
+      ) {
+        setSelectedImagePullSecrets({
+          ...selectedImagePullSecrets,
+          [pullSecret.metadata.name]: true,
+        });
+      }
+    });
+  }, [imagePullSecrets, repo, selectedImagePullSecrets]);
+
+  useEffect(() => {
     if (repo) {
       setName(repo.metadata.name);
       setURL(repo.spec?.url || "");
@@ -93,27 +109,12 @@ export function AppRepoForm({
     }
   }, [repo, secret, authHeader]);
 
-  useEffect(() => {
-    // Select the pull secrets based on the current status and if they are already
-    // selected in the existing repo info
-    const newSelectedImagePullSecrets = { ...selectedImagePullSecrets };
-    imagePullSecrets.forEach(pullSecret => {
-      let selected = false;
-      // If it has been already selected
-      if (newSelectedImagePullSecrets[pullSecret.metadata.name]) {
-        selected = true;
-      }
-      // Or if it's already selected in the existing repo
-      if (repo?.spec?.dockerRegistrySecrets?.some(s => s === pullSecret.metadata.name)) {
-        selected = true;
-      }
-      newSelectedImagePullSecrets[pullSecret.metadata.name] = selected;
-    });
-    setSelectedImagePullSecrets(newSelectedImagePullSecrets);
-  }, [imagePullSecrets, repo, selectedImagePullSecrets]);
-
   const handleInstallClick = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    install();
+  };
+
+  const install = async () => {
     let finalHeader = "";
     switch (authMethod) {
       case AUTH_METHOD_CUSTOM:
@@ -257,7 +258,7 @@ export function AppRepoForm({
         </span>
         <div className="clr-form-columns">
           <Row>
-            <Column span={2}>
+            <Column span={3}>
               <label
                 htmlFor="kubeapps-repo-auth-method-none"
                 className="clr-control-label clr-control-label-radio"
@@ -319,7 +320,7 @@ export function AppRepoForm({
                 <br />
               </label>
             </Column>
-            <Column span={10}>
+            <Column span={9}>
               <div className="column-valing-center clr-control-container">
                 <div hidden={authMethod !== AUTH_METHOD_BASIC}>
                   <label className="clr-control-label" htmlFor="kubeapps-repo-username">
@@ -478,7 +479,7 @@ export function AppRepoForm({
         </Alert>
       )}
       <div className="clr-form-separator">
-        <CdsButton type="submit" disabled={validating}>
+        <CdsButton disabled={validating} onClick={install}>
           {validating
             ? "Validating..."
             : `${repo ? "Update" : "Install"} Repo ${validated === false ? "(force)" : ""}`}

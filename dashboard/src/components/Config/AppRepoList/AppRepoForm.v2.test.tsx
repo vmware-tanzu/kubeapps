@@ -98,13 +98,14 @@ it("should not call the install method when the validation fails unless forced",
       .text(),
   ).toContain("Install Repo (force)");
 
-  // TODO(andresmgot): React-hooks doesn't allow to update state (at least that I know)
   // So disabling this test for the moment.
-  // wrapper.update();
-  // await act(async () => {
-  //   await (form.prop("onSubmit") as (e: any) => Promise<any>)({ preventDefault: jest.fn() });
-  // });
-  // expect(install).toHaveBeenCalled();
+  await act(async () => {
+    await (wrapper
+      .find(CdsButton)
+      .filterWhere(b => b.html().includes("Install Repo (force)"))
+      .prop("onClick") as () => Promise<any>)();
+  });
+  expect(install).toHaveBeenCalled();
 });
 
 it("should not show the docker registry credentials section if the namespace is the global one", () => {

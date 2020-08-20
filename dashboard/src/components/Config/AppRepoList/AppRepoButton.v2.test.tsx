@@ -1,11 +1,10 @@
 import actions from "actions";
 import { CdsButton, CdsIcon } from "components/Clarity/clarity";
-import Alert from "components/js/Alert";
 import Modal from "components/js/Modal/Modal";
 import * as React from "react";
 import { act } from "react-dom/test-utils";
 import * as ReactRedux from "react-redux";
-import { defaultStore, getStore, mountWrapper } from "shared/specs/mountWrapper";
+import { defaultStore, mountWrapper } from "shared/specs/mountWrapper";
 import { IAppRepository } from "shared/types";
 import { AppRepoAddButton } from "./AppRepoButton.v2";
 import { AppRepoForm } from "./AppRepoForm.v2";
@@ -68,18 +67,6 @@ it("should render a secondary button", () => {
   );
   expect(wrapper.find(CdsButton).prop("action")).toBe("outline");
   expect(wrapper.find(CdsIcon)).not.toExist();
-});
-
-it("should render an error", () => {
-  const wrapper = mountWrapper(
-    getStore({ repos: { errors: { create: new Error("boom!") } } }),
-    <AppRepoAddButton {...defaultProps} />,
-  );
-  act(() => {
-    (wrapper.find(CdsButton).prop("onClick") as any)();
-  });
-  wrapper.update();
-  expect(wrapper.find(Alert)).toIncludeText("boom!");
 });
 
 it("calls installRepo when submitting", () => {

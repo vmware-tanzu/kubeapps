@@ -2,6 +2,7 @@
   color: var(--clr-table-font-color, #666666);
   white-space: normal;
   text-align: left;
+  width: 97%;
   h2 {
     margin-top: 0;
   }
@@ -45,9 +46,11 @@
   }
   .clr-form-separator-sm {
     margin-top: 0.3rem;
+    width: 100%;
   }
   .clr-form-separator {
     margin-top: 1.2rem;
+    width: 100%;
   }
   .clr-checkbox-wrapper input[type="checkbox"] {
     opacity: 1;
