@@ -22,19 +22,17 @@ interface IAppRepoAddButtonProps {
 
 export function AppRepoAddButton({
   text,
-  primary,
   namespace,
   kubeappsNamespace,
   repo,
   secret,
+  primary = true,
 }: IAppRepoAddButtonProps) {
   const dispatch: ThunkDispatch<IStoreState, null, Action> = useDispatch();
   const [modalIsOpen, setModalOpen] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
   const { errors } = useSelector((state: IStoreState) => state.repos);
-  // Primary by default
-  const isPrimary = primary !== false;
 
   const onSubmit = (
     name: string,
@@ -58,8 +56,8 @@ export function AppRepoAddButton({
 
   return (
     <>
-      <CdsButton onClick={openModal} action={isPrimary ? "solid" : "outline"}>
-        {isPrimary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
+      <CdsButton onClick={openModal} action={primary ? "solid" : "outline"}>
+        {primary ? <CdsIcon shape="plus-circle" inverse={true} /> : <></>}{" "}
         {text || "Add App Repository"}
       </CdsButton>
       <Modal showModal={modalIsOpen} onModalClose={closeModal}>
