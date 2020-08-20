@@ -92,7 +92,24 @@ The second part of the additional configuration is to ensure that when Kubeapps'
 
 ## Updating multicluster options
 
-TBD
+Updating the value of the `clusters` chart option is just like updating any other helm chart value:
+
+* Edit your file with the values
+* Upgrade the Kubeapps release with the new values, being sure to leave the chart version unchanged
+
+So if you had originally installed Kubeapps with a command like:
+
+```bash
+helm install kubeapps bitnami/kubeapps --namespace kubeapps --values ./path/to/my/values.yaml
+```
+
+then to modify the clusters configured for Kubeapps at some later point you will need to
+
+* edit the `./path/to/my/values.yaml`
+* find the exact chart version that you have installed with `helm list --namespace kubeapps`
+* "upgrade" to the new values with `helm upgrade kubeapps bitnami/kubeapps --version X.Y.Z --values ./path/to/my/values`, where the version `X.Y.Z` is the chart version found in the previous step.
+
+Once the pods have cycled, Kubeapps will be ready with your new configured clusters.
 
 ## Running a local multi-cluster development environment
 
