@@ -14,19 +14,37 @@ You can watch a brief demonstration of deploying to an additional cluster (we wi
 
 ## Requirements
 
+To use the multi-cluster support in Kubeapps, you must first setup your clusters to use the OIDC authentication plugin configured with a chosen OIDC/OAuth2 provider. This setup depends on various choices that you make and is out of the scope of this document, but some specific points are mentioned below to help with the setup.
+
 ### Configuring your Kubernetes API servers for OIDC
 
-To use this feature, you need to have your Kubernetes API servers for each cluster configured to trust the same OpenID Connect provider, whether that be a specific commercial OAuth2 provider such as Google, Azure or Github, or an instance of [Dex](https://github.com/dexidp/dex).
+The multi-cluster feature requires that each of your Kubernetes API servers trusts the same OpenID Connect provider, whether that be a specific commercial OAuth2 provider such as Google, Azure or Github, or an instance of [Dex](https://github.com/dexidp/dex/blob/master/Documentation/kubernetes.md). After you have selected your OIDC provider you will need to configure at least one OAuth2 client to use. For example, if you are using Dex, you could use the following Dex configuration to create a single client id which can be used by your API servers:
 
-Once you have selected and configured your OIDC provider, refer to the [Kubernetes docs to configure your API servers to trust the OIDC provider](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server).
+```yaml
+  staticClients:
+  - id: kubeapps
+    redirectURIs:
+    - 'https://localhost/oauth2/callback'
+    name: 'Kubeapps-Cluster'
+    secret: ABcdefGHIjklmnoPQRStuvw0
+```
 
-Certain multi-cluster environments, such as Tanzu Kubernetes Grid, have specific instructions for configuring their workload clusters to trust an instance of Dex. See the [Deploying an Authentication-Enabled Cluster](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.0/vmware-tanzu-kubernetes-grid-10/GUID-manage-instance-deploy-oidc-cluster.html) in the TKG documentation for an example. [Clusters with different client-ids](#clusters-with-different-client-ids) is also relevant for the TKG setup.
+The Kubernetes documentation has more information about [configuring your Kubernetes API server to trust an OIDC provider](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#configuring-the-api-server). For more information about running Kubeapps with various OIDC providers see [Using an OIDC provider](/docs/user/using-an-OIDC-provider.md).
 
-If you are testing the multi-cluster support on a local [Kubernetes-in-Docker cluster](https://kind.sigs.k8s.io/), you can view the example configuration files used for configuring a kind clusters including the [Kubeapps cluster](/docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml) and an [additional cluster](/docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml). These are used with a local instance of Dex running with a [matching configuration](/docs/user/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps [configured with its own auth-proxy](/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
+Certain multi-cluster environments, such as Tanzu Kubernetes Grid, have specific instructions for configuring their workload clusters to trust an instance of Dex. See the [Deploying an Authentication-Enabled Cluster](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.0/vmware-tanzu-kubernetes-grid-10/GUID-manage-instance-deploy-oidc-cluster.html) in the TKG documentation for an example. For a multi-cluster Kubeapps setup on TKG you will also need to configure [Kubeapps and Dex to support the different client-ids used by each cluster](#clusters-with-different-client-ids).
 
-## A Configuration example
+If you are testing the multi-cluster support on a local [Kubernetes-in-Docker cluster](https://kind.sigs.k8s.io/), you can view the example configuration files used for configuring two kind clusters in a local development environment:
 
-The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name and api service URL of a cluster:
+* [Kubeapps cluster API server config](/docs/user/manifests/kubeapps-local-dev-apiserver-config.yaml)
+* An [additional cluster API server config](/docs/user/manifests/kubeapps-local-dev-additional-apiserver-config.yaml)
+
+These are used with an instance of Dex running in the Kubeapps cluster with a [matching configuration](/docs/user/manifests/kubeapps-local-dev-dex-values.yaml) and Kubeapps itself [configured with its own auth-proxy](/docs/user/manifests/kubeapps-local-dev-auth-proxy-values.yaml).
+
+## A Kubeapps Configuration example
+
+Once you have the cluster configuration for OIDC authentication sorted, we then need to ensure that Kubeapps is aware of the different clusters to which it can deploy applications.
+
+The `clusters` option available in the Kubeapps' chart `values.yaml` is a list of yaml maps, each defining at least the name and api service URL of a cluster. For example:
 
 ```yaml
 clusters:
@@ -58,7 +76,11 @@ Your Kubeapps installation will also need to be [configured to use OIDC for auth
 
 ## Clusters with different client-ids
 
-Some multi-cluster environments configure each cluster's API server with its own client-id for the chosen OAuth2 provider. In this case, there is some extra configuration required to ensure the OIDC token used by Kubeapps is accepted by the different clusters.
+Some multi-cluster environments configure each cluster's API server with its own client-id for the chosen OAuth2 provider. For example, part of the [configuration of an OIDC-enabled workload cluster in TKG](https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/1.0/vmware-tanzu-kubernetes-grid-10/GUID-manage-instance-gangway-aws.html) has you creating a separate client ID for the new cluster:
+
+![TKG instructions requiring a new client-id](../img/tkg-separate-client-ids-per-cluster.png "TKG OIDC setup")
+
+In this case, there is some extra configuration required to ensure the OIDC token used by Kubeapps is accepted by the different clusters.
 
 ### Configuring the OIDC Provider to trust peer client ids
 
