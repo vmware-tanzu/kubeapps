@@ -474,7 +474,7 @@ export function AppRepoForm({
       )}
       {updateError && (
         <Alert theme="danger">
-          An error occurred while creating the repository: {updateError.message}
+          An error occurred while updating the repository: {updateError.message}
         </Alert>
       )}
       <div className="clr-form-separator">
