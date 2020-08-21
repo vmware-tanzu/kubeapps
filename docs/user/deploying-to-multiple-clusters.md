@@ -116,7 +116,7 @@ Once the pods have cycled, Kubeapps will be ready with your new configured clust
 You can run Kubeapps locally in a multi-cluster development environment from a linux environment (untested in other environments) with the following tools available:
 
 * `apt install build-essential` (or otherwise have the `make` tool available)
-* [Docker Desktop](https://www.docker.com/get-started)
+* [Docker](https://docs.docker.com/get-docker/)
 * [kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
 * [mkcert](https://github.com/FiloSottile/mkcert)
 
